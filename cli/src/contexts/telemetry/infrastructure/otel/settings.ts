@@ -17,7 +17,9 @@ import {
 import { readSettings } from "./files.js";
 
 export const OPENCODE_CONFIG_ID = "opencode";
-export const OTEL_CONFIGS = ["claude", "codex", OPENCODE_CONFIG_ID] as const;
+export const CLAUDE_CONFIG_ID = "claude";
+export const CODEX_CONFIG_ID = "codex";
+export const OTEL_CONFIGS = [CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, OPENCODE_CONFIG_ID] as const;
 export const OTEL_ENDPOINTS = ["dev", "prod"] as const;
 export type Config = (typeof OTEL_CONFIGS)[number];
 export type Endpoint = (typeof OTEL_ENDPOINTS)[number];
@@ -110,6 +112,8 @@ export async function openCodeVersion(host: Host): Promise<"1" | "2"> {
   }
   const version = /^\s*(?:opencode\s+)?v?([12])\.(\d+)\.(\d+)\s*$/i.exec(output);
   if (version && (version[1] === "1" || version[1] === "2")) {
+    // Native export from 1.18.35 was verified locally; other older releases remain unverified.
+    if (version[1] === "1" && Number(version[2]) === 18 && Number(version[3]) === 35) return "1";
     const minimumMinor = version[1] === "1" ? 19 : 2;
     const minor = Number(version[2]);
     if (minor > minimumMinor || (minor === minimumMinor && Number(version[3]) >= 5)) {
@@ -117,7 +121,7 @@ export async function openCodeVersion(host: Host): Promise<"1" | "2"> {
     }
   }
   throw new Error(
-    "Unsupported OpenCode version. Use an OpenCode 1 release from 1.19.5 or 2 from 2.2.5."
+    "Unsupported OpenCode version. Use OpenCode 1.18.35, a 1.x release from 1.19.5, or 2.x from 2.2.5."
   );
 }
 

@@ -17,10 +17,36 @@ describe.skipIf(process.platform === "win32")("native OTLP launch", () => {
       expect(init.exitCode).toBe(0);
       const missing = await runCli(["telemetry", "otel", "verify", ...args], projectDir, fakeHome);
       expect(missing.exitCode).not.toBe(0);
-      await writeFile(join(directory, "claude.jsonl"), '{"signal":"logs"}\n', { mode: 0o600 });
+      await writeFile(
+        join(directory, "claude.jsonl"),
+        `${JSON.stringify({
+          signal: "logs",
+          payload: {
+            resourceLogs: [
+              {
+                scopeLogs: [
+                  {
+                    logRecords: [
+                      {
+                        attributes: [
+                          { key: "event.name", value: { stringValue: "user_prompt" } },
+                          { key: "prompt", value: { stringValue: "private-example" } },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        })}\n`,
+        { mode: 0o600 }
+      );
       const verified = await runCli(["telemetry", "otel", "verify", ...args], projectDir, fakeHome);
       expect(verified.exitCode).toBe(0);
       expect(verified.stdout).toContain("1 captured lines");
+      expect(verified.stdout).toContain("1 normalized observations");
+      expect(verified.stdout).not.toContain("private-example");
       expect(verified.stdout).not.toContain("test-token");
     } finally {
       await cleanup();

@@ -167,4 +167,16 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     );
     expect(await readFile(path, "utf8")).toBe(original);
   });
+
+  it("initializes the locally verified v1.18.35 without admitting unverified earlier versions", async () => {
+    await seedToken();
+    const options = { home, env: {}, opencodeVersion: async () => "1.18.35" };
+    expect(await initializeOtel("opencode", "dev", options)).toMatchObject({ changed: true });
+    expect(
+      JSON.parse(await readFile(join(home, ".config/opencode/opencode.json"), "utf8"))
+    ).toMatchObject({ experimental: { openTelemetry: true } });
+    await expect(
+      initializeOtel("opencode", "dev", { ...options, opencodeVersion: async () => "1.18.34" })
+    ).rejects.toThrow(/OpenCode version/);
+  });
 });

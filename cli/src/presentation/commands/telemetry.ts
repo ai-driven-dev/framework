@@ -179,6 +179,9 @@ export function registerTelemetryCommand(program: Command): void {
               output.info(
                 `${result.lines} captured lines in ${result.capture}; last modified ${result.modifiedAt}`
               );
+              output.info(
+                `${result.observations} normalized observations; ${result.eventLines} event lines; ${result.unrecognisedLines} unrecognised lines`
+              );
               output.info("Existing capture does not prove delivery from the current session.");
             }
           } catch (error) {

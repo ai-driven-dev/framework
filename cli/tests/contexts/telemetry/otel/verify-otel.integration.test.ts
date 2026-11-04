@@ -54,6 +54,60 @@ describe.skipIf(process.platform === "win32")("OTLP verification", () => {
     expect(await verifyOtel("opencode", "dev", host)).toMatchObject({ lines: 1 });
   });
 
+  it("counts normalized observations without returning raw content", async () => {
+    await initializeOtel("claude", "dev", { home, env: {} });
+    const record = {
+      signal: "logs",
+      payload: {
+        resourceLogs: [
+          {
+            resource: { attributes: [] },
+            scopeLogs: [
+              {
+                logRecords: [
+                  {
+                    attributes: [
+                      { key: "event.name", value: { stringValue: "user_prompt" } },
+                      { key: "prompt", value: { stringValue: "private-example" } },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    await writeFile(capture, `${JSON.stringify(record)}\ninvalid\n`, { mode: 0o600 });
+    const result = await verifyOtel("claude", "dev", { home, env: {} });
+    expect(result).toMatchObject({ lines: 2, observations: 1, unrecognisedLines: 1 });
+    expect(JSON.stringify(result)).not.toContain("private-example");
+  });
+
+  it("also counts a local OpenCode SSE capture when present", async () => {
+    const host = {
+      home,
+      env: { OPENCODE_CONFIG_CONTENT: '{"experimental":{"openTelemetry":true}}' },
+      opencodeVersion: async () => "1.19.5",
+    };
+    await initializeOtel("opencode", "dev", host);
+    const directory = join(home, ".local/share/aidd-otel-observation");
+    await writeFile(join(directory, "opencode.jsonl"), "{}\n", { mode: 0o600 });
+    await mkdir(join(directory, "opencode"));
+    await writeFile(
+      join(directory, "opencode/events.jsonl"),
+      `${JSON.stringify({
+        type: "session.step.ended",
+        data: { tokens: { input: 4 } },
+      })}\n`,
+      { mode: 0o600 }
+    );
+    expect(await verifyOtel("opencode", "dev", host)).toMatchObject({
+      observations: 1,
+      eventLines: 1,
+    });
+  });
+
   it("refuses production", async () => {
     await expect(verifyOtel("claude", "prod", { home, env: {} })).rejects.toThrow(/production/);
   });

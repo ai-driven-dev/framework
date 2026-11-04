@@ -63,6 +63,7 @@ src/
 │   │   │   ├── consent/    # a clone's identity, and when it consented
 │   │   │   ├── identity/    # the identifier a person chose to be named by
 │   │   │   ├── legacy/    # what the previous version wrote, by name and location, and its key and id rules
+│   │   │   ├── observations/    # native telemetry fields before display or aggregation
 │   │   │   ├── ports/
 │   │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
 │   │   │   │   ├── forget/
