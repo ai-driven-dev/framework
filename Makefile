@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help setup doctor check reload
+.PHONY: help setup doctor check reload check-hosts
 
 help: ## List targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*## /\t/' | sort
@@ -18,3 +18,6 @@ check: ## Run the pre-commit checks
 reload: ## Dev: reload all plugins into Claude, Codex, OpenCode, Kilo, Copilot, and Cursor via aidd setup --global
 	pnpm --dir cli build
 	scripts/dev-sync.sh
+
+check-hosts: ## Dev: table what each installed tool really loads of the plugins
+	node scripts/check-hosts.cjs
