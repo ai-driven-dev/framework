@@ -4,12 +4,12 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens, put } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
 
 // The impact command is driven as a subprocess, as the skill calls it: its refs on the command
 // line, its report as JSON on stdout.
-const ENGINE = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/aidd-ui.cjs");
-const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
+const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/aidd-ui.cjs");
+const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { reached } = require(path.join(LIB, "graph.cjs"));
 

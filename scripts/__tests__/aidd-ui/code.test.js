@@ -4,12 +4,12 @@ const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach, mock } = require("node:test");
 const childProcess = require("node:child_process");
-const { UI, writeProject, edit, put, git, commitAll } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, put, git, commitAll } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green. Link
 // mutations land on search-field: it owns no file and is not coded, so none orphans a file.
-const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
+const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const code = require(path.join(LIB, "code.cjs"));
 

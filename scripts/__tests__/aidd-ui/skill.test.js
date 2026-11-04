@@ -4,12 +4,12 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens, put, commitAll } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit, editTokens, put, commitAll } = require("../fixtures/aidd-ui/project.js");
 
 // The record templates are what the skill's model starts from, so each is filled the way an
 // action says and the design system around it must still validate. A placeholder the table does
 // not know fails the test: a template cannot grow a slot nothing here fills.
-const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-ui");
+const PLUGIN = path.resolve(__dirname, "../../../plugins/aidd-ui");
 const SKILL = path.join(PLUGIN, "skills/01-system");
 const ENGINE = path.join(PLUGIN, "hooks/aidd-ui.cjs");
 

@@ -4,13 +4,13 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, put, record, history } = require("./fixtures/aidd-ui/project.js");
-const { WEB_CSS, MOBILE_TS } = require("./fixtures/aidd-ui/token-sources.js");
+const { UI, put, record, history } = require("../fixtures/aidd-ui/project.js");
+const { WEB_CSS, MOBILE_TS } = require("../fixtures/aidd-ui/token-sources.js");
 
 // The extract command is driven as a subprocess, as the skill calls it. Its output is judged by the
 // engine itself: `tokens` then `validate` must find no token rule broken in what it wrote.
-const ENGINE = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/aidd-ui.cjs");
-const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
+const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/aidd-ui.cjs");
+const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { pathsOf } = require(path.join(LIB, "extract.cjs"));
 const { fromCss, fromNumber } = require(path.join(LIB, "values.cjs"));
 const { objectsOf } = require(path.join(LIB, "script.cjs"));

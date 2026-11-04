@@ -4,11 +4,11 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, edit } = require("../fixtures/aidd-ui/project.js");
 
 // The bump command is driven as a subprocess, as the skill calls it, and judged by the engine's own
 // validator once the change it carries is made.
-const ENGINE = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/aidd-ui.cjs");
+const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/aidd-ui.cjs");
 const TASK = "aidd_docs/tasks/recolour";
 const REACHED = ["components/button", "components/dialog", "components/search-field", "reviews/first-pass", "screens/home"].map((name) => `${UI}/${name}.md`);
 

@@ -3,11 +3,11 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, generateStylesheet, edit, editTokens, put } = require("./fixtures/aidd-ui/project.js");
+const { UI, writeProject, generateStylesheet, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
-const LIB = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib");
+const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const tokens = require(path.join(LIB, "tokens.cjs"));
 const renders = require(path.join(LIB, "renders.cjs"));

@@ -6,7 +6,7 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -42,7 +42,9 @@ function ancestorsOf(file) {
 
 /** A spec is its own dependency, so editing one runs it. */
 function pluginSpecsReaching(files) {
-  const specs = readdirSync(join(ROOT, PLUGIN_SUITE_DIR)).filter((n) => n.endsWith(".test.js"));
+  const specs = readdirSync(join(ROOT, PLUGIN_SUITE_DIR), { recursive: true })
+    .filter((n) => n.endsWith(".test.js"))
+    .map((n) => n.split(sep).join("/"));
   return specs.filter((spec) => {
     const path = `${PLUGIN_SUITE_DIR}/${spec}`;
     if (files.includes(path)) return true;
