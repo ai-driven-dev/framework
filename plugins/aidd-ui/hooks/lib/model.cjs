@@ -3,6 +3,11 @@
 const { list, table } = require("./markdown.cjs");
 
 const SYSTEM_ID = "system";
+const STEPS_SECTION = "Steps";
+const STATUS_DEPRECATED = "deprecated";
+const BREAKING = "yes"; // a history row's Breaking cell
+const NOT_BREAKING = "no";
+const BREAKING_VALUES = [BREAKING, NOT_BREAKING];
 const BREAKPOINTS_SECTION = "Breakpoints";
 const FOLDER_KINDS = {
   "": ["system", "brand"],
@@ -69,4 +74,4 @@ const breakpointsOf = (system) => breakpointRows(system).map((row) => row.Name);
 const systemOf = (project) => readable(project).find((record) => fm(record).kind === SYSTEM_ID);
 const isSystem = (record) => fm(record).kind === SYSTEM_ID;
 
-module.exports = { breakpointRows, breakpointsOf, SYSTEM_ID, AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };
+module.exports = { breakpointRows, breakpointsOf, SYSTEM_ID, STEPS_SECTION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING, BREAKING_VALUES, AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };

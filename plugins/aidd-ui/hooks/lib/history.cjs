@@ -4,22 +4,18 @@
 // slow machine must not block a turn.
 const fs = require("node:fs");
 const nodePath = require("node:path");
-const { list, parseRecord } = require("./markdown.cjs");
-const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, SYSTEM_ID, INTEGER_VERSION, SEMVER } = require("./model.cjs");
+const { list, parseRecord, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, SYSTEM_ID, INTEGER_VERSION, SEMVER, STATUS_DEPRECATED, BREAKING, BREAKING_VALUES } = require("./model.cjs");
 const { checkOf, text, UI_DIR, HISTORY_FILE, WARNING } = require("./project.cjs");
 const { committed, baseline, changed } = require("./committed.cjs");
 const { customProperty, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 const { cssFileOf } = require("./tokens.cjs");
 const { renderOf } = require("./renders.cjs");
 
-const BREAKING_VALUES = ["yes", "no"];
-const BREAKING = "yes";
 const TASKS_DIR = "aidd_docs/tasks/";
 const VALIDATED = "validated";
-const HELD_STATUSES = [VALIDATED, "deprecated"]; // a proposed element is still being designed
+const HELD_STATUSES = [VALIDATED, STATUS_DEPRECATED]; // a proposed element is still being designed
 const UNVERSIONED_KEYS = ["status", "code"]; // a review, a code catch-up: no new version
-const FRONT_MATTER_FENCE = "---";
-const LINE_BREAK = "\n";
 
 const rowsOf = (project, id) => project.history.filter((row) => row.Id === id);
 const inHistory = (message) => problem({ file: HISTORY_FILE }, message);
@@ -115,7 +111,7 @@ function taskProblems(project) {
 
 function deprecationProblems(project) {
   return versioned(project)
-    .filter((record) => isElement(record) && fm(record).status === "deprecated")
+    .filter((record) => isElement(record) && fm(record).status === STATUS_DEPRECATED)
     .filter((record) => {
       const last = byVersion(rowsOf(project, fm(record).id), false).at(-1);
       return last && last.row.Breaking !== BREAKING;
@@ -126,7 +122,7 @@ function deprecationProblems(project) {
 /** A record's text without what a version never covers: the status and the code links. */
 function substance(content) {
   const lines = content.split(LINE_BREAK);
-  const close = lines.findIndex((line, index) => index > 0 && line.trimEnd() === FRONT_MATTER_FENCE);
+  const close = frontMatterEnd(lines);
   return lines.filter((line, index) => index > close || !UNVERSIONED_KEYS.some((key) => line.startsWith(`${key}:`))).join(LINE_BREAK);
 }
 

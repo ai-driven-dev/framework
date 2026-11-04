@@ -1,6 +1,8 @@
-// Reads a UI record: flat front matter, `## ` sections, and a section's first table.
+// Reads a UI record: flat front matter, `## ` sections, and a section's first table; the text helpers its readers share.
 
 const LINE_BREAK = "\n";
+const NOT_LINE_BREAK = /[^\n]/g;
+const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 const SECTION_PREFIX = "## ";
 const TABLE_CELL_SEPARATOR = "|";
 
@@ -26,10 +28,22 @@ function parseValue(raw) {
 
 const isFence = (line) => line.trimEnd() === "---";
 
+/** The index of the line closing the front matter of `lines`, -1 when none does. */
+const frontMatterEnd = (lines) => lines.findIndex((line, index) => index > 0 && isFence(line));
+
+/** `text` with every character but its line breaks blanked, so a position still names its line. */
+const blank = (text) => text.replace(NOT_LINE_BREAK, " ");
+
+/** The line, from 1, that holds `offset` of `text`. */
+const lineOf = (text, offset) => text.slice(0, offset).split(LINE_BREAK).length;
+
+/** `word` as a pattern source matching it literally. */
+const escapeRegex = (word) => word.replace(REGEX_SPECIALS, "\\$&");
+
 /** Front matter between the first two `---` lines, with one problem per line that is neither
  * `key: value` nor `key: [a, b]`. Lines are numbered as in the file. */
 function parseFrontMatter(lines) {
-  const close = lines.findIndex((line, index) => index > 0 && isFence(line));
+  const close = frontMatterEnd(lines);
   if (!isFence(lines[0]) || close < 0) return { found: false, values: {}, end: 0, problems: [{ line: 1, message: NO_FRONT_MATTER }] };
   const values = {};
   const problems = [];
@@ -94,4 +108,4 @@ function list(value) {
   return Array.isArray(value) ? value : [value];
 }
 
-module.exports = { parseRecord, table, list, cells };
+module.exports = { parseRecord, table, list, cells, frontMatterEnd, blank, lineOf, escapeRegex, LINE_BREAK };

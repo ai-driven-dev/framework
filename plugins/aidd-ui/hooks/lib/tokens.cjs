@@ -6,19 +6,15 @@ const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, breakpointsOf, TOKENED_KINDS } = require("./model.cjs");
-const { text, checkOf } = require("./project.cjs");
-const { RESOLVER_FILE, RESOLVER_VERSION, MEDIA_EXTENSION, MIN_THEMES_FOR_MODIFIER, resolverOfProject } = require("./resolver.cjs");
+const { text, checkOf, besideTokens, RESOLVER_FILE, CSS_FILE } = require("./project.cjs");
+const { MODIFIERS, RESOLVER_VERSION, MEDIA_EXTENSION, MIN_THEMES_FOR_MODIFIER, orderRef, resolverOfProject } = require("./resolver.cjs");
 const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
 const PROPERTY_PREFIX = "$";
 const PATH_SEPARATOR = ".";
-const CSS_FILE = "tokens.css";
-const THEME_MODIFIER = "theme";
-const PLATFORM_MODIFIER = "platform";
-const BREAKPOINT_MODIFIER = "breakpoint";
-const orderRef = (modifier) => `#/modifiers/${modifier}`;
+const [THEME_MODIFIER, PLATFORM_MODIFIER, BREAKPOINT_MODIFIER] = MODIFIERS;
 const MISSING = "missing";
 const QUERY = "Query";
 const NOT_JSON = "not JSON";
@@ -219,9 +215,9 @@ function aliasProblems(tree, project) {
   });
 }
 
-const resolverFileOf = (project) => nodePath.posix.join(nodePath.posix.dirname(project.tokensFile), RESOLVER_FILE);
+const resolverFileOf = (project) => besideTokens(project, RESOLVER_FILE);
 /** The generated stylesheet beside tokens.json, project-relative. */
-const cssFileOf = (project) => nodePath.posix.join(nodePath.posix.dirname(project.tokensFile), CSS_FILE);
+const cssFileOf = (project) => besideTokens(project, CSS_FILE);
 
 const applies = (resolver, modifier) => (resolver.resolutionOrder ?? []).some((step) => step?.$ref === orderRef(modifier));
 
@@ -441,7 +437,7 @@ function contextLoopProblems(tree, project) {
 function modifierOrder(project) {
   const resolver = readJson(project, resolverFileOf(project)).value ?? {};
   const steps = (resolver.resolutionOrder ?? []).map((step) => step?.$ref);
-  return [THEME_MODIFIER, PLATFORM_MODIFIER, BREAKPOINT_MODIFIER].filter((modifier) => steps.includes(orderRef(modifier))).sort((a, b) => steps.indexOf(orderRef(a)) - steps.indexOf(orderRef(b)));
+  return MODIFIERS.filter((modifier) => steps.includes(orderRef(modifier))).sort((a, b) => steps.indexOf(orderRef(a)) - steps.indexOf(orderRef(b)));
 }
 
 /** The stylesheet of tokens that have no error, `{css, problems}`: `css` is null when a composite

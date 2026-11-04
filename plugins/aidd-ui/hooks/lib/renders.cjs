@@ -1,20 +1,18 @@
 // V1 to V9: each component and screen has its HTML render, showing every variant, axis and state
 // through the tokens its record declares alone, from the stylesheet generated out of the tokens.
 const path = require("node:path");
-const { list } = require("./markdown.cjs");
+const { list, blank, lineOf, LINE_BREAK } = require("./markdown.cjs");
 const { placed, byId, tokensUsedBy, variantOf, TOKENED_KINDS } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, painted, declaresRightToLeft } = require("./literals.cjs");
 const { VAR_REFERENCE, customProperty } = require("./css.cjs");
 const { cssNames } = require("./tokens.cjs");
-const { text, checkOf, RENDER_EXTENSION } = require("./project.cjs");
+const { text, checkOf, RENDER_EXTENSION, CSS_FILE } = require("./project.cjs");
 
-const LINE_BREAK = "\n";
-const STYLESHEET_HREF = "../tokens.css"; // renders sit one folder below the generated stylesheet
+const STYLESHEET_HREF = `../${CSS_FILE}`; // renders sit one folder below the generated stylesheet
 const STYLESHEET_LINK = `<link rel="stylesheet" href="${STYLESHEET_HREF}">`;
 const LINK_TAG = /<link\b[^>]*>/g;
 const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
 
-const NOT_LINE_BREAK = /[^\n]/g;
 const NOT_MARKUP = /<!--[\s\S]*?-->|<(style|script)\b[\s\S]*?<\/\1\s*>/gi; // copy and code, not tags
 const TAG = /<([a-z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
 const QUOTED_VALUE = /"[^"]*"|'[^']*'/g;
@@ -90,13 +88,13 @@ function declaredProblems(project) {
 /** A theme or a platform is shown by the document's own attribute, so it is set on `<html>` alone. */
 function switchProblems(project) {
   return project.renders.flatMap((file) => {
-    const markup = readRender(project, file).replace(NOT_MARKUP, (found) => found.replace(NOT_LINE_BREAK, " "));
+    const markup = readRender(project, file).replace(NOT_MARKUP, blank);
     return [...markup.matchAll(TAG)]
       .filter(([, tag]) => tag.toLowerCase() !== SWITCHED_ELEMENT)
       .flatMap(({ 1: tag, 2: attributes, index }) =>
         [...attributes.replace(QUOTED_VALUE, "").matchAll(SWITCH_ATTRIBUTE)].map(([, kind]) => ({
           file,
-          message: `line ${markup.slice(0, index).split(LINE_BREAK).length}: data-${kind.toLowerCase()} on <${tag.toLowerCase()}>, set it on <html> alone`,
+          message: `line ${lineOf(markup, index)}: data-${kind.toLowerCase()} on <${tag.toLowerCase()}>, set it on <html> alone`,
         }))
       );
   });

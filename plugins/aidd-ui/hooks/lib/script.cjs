@@ -1,7 +1,8 @@
 // The exported object literals of a script file, read as far as a token file goes: `export const
 // name = { key: "literal" or number, group: { key: literal } }`. Anything else in one is returned as
 // such, never guessed.
-const LINE_BREAK = "\n";
+const { LINE_BREAK, lineOf } = require("./markdown.cjs");
+
 const EXPORT = /export\s+const\s+[A-Za-z_$][\w$]*\s*(?::[^=]+)?=\s*\{/g;
 const KEY = /[\w$]+/y;
 const NUMBER = /[+-]?(?:\d+\.?\d*|\.\d+)(?![\w$.])/y;
@@ -13,7 +14,6 @@ const OPENERS = { "(": ")", "[": "]", "{": "}" };
  * is written as). */
 function objectsOf(source) {
   let at = 0;
-  const lineOf = (offset) => source.slice(0, offset).split(LINE_BREAK).length;
 
   function skipBlank() {
     for (;;) {
@@ -89,7 +89,7 @@ function objectsOf(source) {
         at += 1;
         continue;
       }
-      const line = lineOf(at);
+      const line = lineOf(source, at);
       const start = at;
       let key;
       if (QUOTES.includes(source[at])) key = readString();

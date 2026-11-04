@@ -3,9 +3,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf, HISTORY_FILE } = require("./project.cjs");
-const { breakpointsOf, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { breakpointsOf, STEPS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
-const STATUSES = ["proposed", "validated", "deprecated"];
+const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
 const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
 const FORMAT = "1"; // the record format this validator reads
 const ASSET_TYPES = ["icon", "image", "illustration"];
@@ -16,7 +16,6 @@ const FOCUS_STATE = "focus"; // a component taking focus is driven by the keyboa
 const KEYBOARD_SECTION = "Keyboard";
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
-const STEPS_SECTION = "Steps";
 const VERDICTS_SECTION = "Verdicts";
 const BRAND_HEADINGS = ["Project", "Users", "Domain", "Platforms", "Personality and tone", "References", "Anti-references"];
 
@@ -37,7 +36,7 @@ const KIND_KEYS = {
 const AXIS_NAME = /^[a-z][a-z-]*$/;
 const TAKEN_AXES = { state: "data-state shows the states", variant: "data-variant shows the bare variants", theme: "data-theme switches the token theme" };
 const listWithOr = (values) => `${values.slice(0, -1).join(", ")} or ${values.at(-1)}`;
-const isDeprecated = (record) => fm(record).status === "deprecated";
+const isDeprecated = (record) => fm(record).status === STATUS_DEPRECATED;
 const folderLabel = (folder) => (folder ? `${folder}/` : "aidd_docs/ui/");
 
 function frontMatterProblems(project) {

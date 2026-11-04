@@ -1,23 +1,8 @@
 #!/usr/bin/env node
-// Usage: node aidd-ui.cjs <validate|tokens> [project-root]
-//        node aidd-ui.cjs impact <id or token>… [--root <dir>]
-//        node aidd-ui.cjs extract [--force] [--root <dir>]
-// The design system engine the hook and every skill call, one command per job:
-//   validate  checks records, history, tokens, renders and code links. Prints VALID, or one line
-//             per problem, and exits 1 when an error remains. Prints nothing without a design system.
-//   tokens    writes aidd_docs/ui/tokens.resolver.json from system.md and the context files, then
-//             aidd_docs/ui/tokens.css from the tokens, and prints its path. Writes no stylesheet and
-//             exits 1 while a token has an error or a composite token has no raw CSS.
-//   impact    prints as JSON what a change to those tokens, by path or CSS name, or elements reaches:
-//             tokens, the tokens holding the same value without citing them, elements, screens, journeys, renders and code
-//             files, each sorted. An unknown ref is named on stderr and exits 2.
-//   bump      raises the versions a change to those refs reaches, or with --created writes the first row of the
-//             records they name, and prints as JSON the files it changed. A refusal before any write exits 2.
-//   extract   writes the token files from the code-tokens files of system.md, and prints as JSON what it wrote and
-//             what it left. Exits 1 with a message when it cannot, or when tokens.json exists and --force is not given.
+// The design system engine every skill and the hook call, one command per job; usage is in `main` and the *_USAGE constants.
 const fs = require("node:fs");
 const path = require("node:path");
-const { load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
+const { Refusal, load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
 const tokens = require("./lib/tokens.cjs");
@@ -27,7 +12,6 @@ const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const { extract } = require("./lib/extract.cjs");
 const { bump } = require("./lib/bump.cjs");
-const { parse, Refusal } = require("./lib/args.cjs");
 
 const CHECKS = { records, history, tokens, renders, code };
 const VERDICT_VALID = "VALID";
@@ -107,6 +91,23 @@ const BREAKING_FLAG = "--breaking";
 const CREATED_FLAG = "--created";
 const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
 const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
+
+/** `args` as `{values, flags, rest}`: `values` holds each of `options` given with its value, `flags`
+ * the set of `flags` given, `rest` every other argument in order. An option last on the line has no
+ * value: `error` names it. */
+function parse(args, { options = [], flags = [] }) {
+  const values = {};
+  const given = new Set();
+  const rest = [];
+  for (let at = 0; at < args.length; at += 1) {
+    if (options.includes(args[at])) {
+      if (at + 1 >= args.length) return { error: `${args[at]} needs a value` };
+      values[args[at]] = args[(at += 1)];
+    } else if (flags.includes(args[at])) given.add(args[at]);
+    else rest.push(args[at]);
+  }
+  return { values, flags: given, rest };
+}
 
 /** What the tokens and elements named change, read from the same graph the hook uses. */
 function impact(args) {

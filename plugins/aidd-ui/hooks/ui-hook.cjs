@@ -1,11 +1,4 @@
-// Runs the design system checks at three moments, and prints the same short text on every host (Cursor's camelCase events included):
-// problem lines, then at most one line counting the errors left out. After a write under
-// aidd_docs/ui/ or a code root, the turn is marked and the errors of the files the write reached
-// come back, with the warnings of the written files; a shell command that runs the engine or writes
-// under aidd_docs/ui/ marks the turn and prints nothing. At Stop, a marked turn gets its errors back
-// once, as the reason to keep working; warnings never block. At session start the errors are
-// counted and the first few printed. A file that cannot be read is one problem; anything else
-// unexpected exits 0 in silence, so a broken check never blocks a session.
+// Runs the design system checks after a write, at Stop and at session start, printing the same short text on every host.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");

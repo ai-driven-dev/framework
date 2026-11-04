@@ -4,7 +4,7 @@
 // limit.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list } = require("./markdown.cjs");
+const { list, blank, escapeRegex } = require("./markdown.cjs");
 const { placed, systemOf, fm, IMPLEMENTED_KINDS, INTEGER_VERSION } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
 const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
@@ -37,14 +37,12 @@ const LINK_FORM = "path[#Export]@<version> or package:<name>[#Export]@<version>"
 
 const isTest = (file) => TEST_FOLDER.test(file) || TEST_NAME.test(file);
 
-const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
-const NOT_LINE_BREAK = /[^\n]/g;
 // a comment, then a string or template literal, then any other character
 const SCRIPT_TOKEN = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\[\s\S]|[^`\\])*`)|[^\n"'`/]+|[^\n]/g;
 
 /** A script with all but its string and template literals blanked, lines kept: a colour in
  * code lives in a string, and a `#` in a comment is an issue number. */
-const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? found.replace(NOT_LINE_BREAK, " "));
+const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? blank(found));
 
 /** An `ignore` list as normalised path prefixes, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
@@ -95,7 +93,7 @@ const linked = (project) =>
     .filter((record) => IMPLEMENTED_KINDS.includes(fm(record).kind) && "code" in fm(record))
     .flatMap((record) => list(fm(record).code).map((value) => ({ record, value, link: parseLink(value) })));
 
-const hasWord = (text, word) => new RegExp(`(?<![\\w$])${word.replace(REGEX_SPECIALS, "\\$&")}(?![\\w$])`).test(text);
+const hasWord = (text, word) => new RegExp(`(?<![\\w$])${escapeRegex(word)}(?![\\w$])`).test(text);
 
 /** The code's token files system.md names, normalised. */
 const codeTokens = (project) => tokenEntries(project).map((entry) => entry.path);

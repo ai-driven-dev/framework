@@ -5,17 +5,15 @@
 // exports, and lists what it leaves rather than guess it.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list } = require("./markdown.cjs");
+const { list, escapeRegex } = require("./markdown.cjs");
 const { systemOf, fm, breakpointRows, breakpointsOf } = require("./model.cjs");
-const { load, text, UI_DIR } = require("./project.cjs");
+const { Refusal, NO_DESIGN_SYSTEM, load, text, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE } = require("./project.cjs");
 const { tokenEntries, platformOfFile } = require("./code.cjs");
-const { rulesOf, declarationsIn, RAW_CSS_EXTENSION } = require("./css.cjs");
-const { RESOLVER_FILE, resolverOf, fileOf } = require("./resolver.cjs");
+const { rulesOf, declarationsIn, citedBy, RAW_CSS_EXTENSION } = require("./css.cjs");
+const { resolverOf, fileOf, jsonText } = require("./resolver.cjs");
 const { objectsOf } = require("./script.cjs");
-const { fromCss, fromNumber, citedProperties } = require("./values.cjs");
-const { Refusal } = require("./args.cjs");
+const { fromCss, fromNumber } = require("./values.cjs");
 
-const TOKENS_FILE = "tokens.json";
 const STYLE_EXTENSION = ".css";
 const SCRIPT_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"];
 const ROOT_SELECTORS = [":root", "html"];
@@ -24,7 +22,6 @@ const WIDTH_QUERY = /\b(?:min|max)-width\b/;
 const LENGTH = /(?<![\d.])\d*\.?\d+(?:px|rem|em)\b/g;
 const WHITESPACE = /\s+/g;
 const CAPITAL = /[A-Z]/g;
-const REGEX_SPECIALS = /[.*+?^${}()|[\]\\]/g;
 const DASHES = "--";
 const NAME_SEPARATOR = "-";
 const PATH_SEPARATOR = ".";
@@ -93,7 +90,7 @@ function readScript(source, leave) {
   return found;
 }
 
-const mentions = (words, length) => new RegExp(`(?<![\\d.])${length.replace(REGEX_SPECIALS, "\\$&")}(?!\\w)`).test(words);
+const mentions = (words, length) => new RegExp(`(?<![\\d.])${escapeRegex(length)}(?!\\w)`).test(words);
 
 /** Each width query's breakpoint among system.md's but the first, which is the default: the one
  * whose `## Breakpoints` row holds every length the query names and no other query's, else the next
@@ -183,7 +180,8 @@ function gather(project, sources, leave) {
   return { base, contexts, themes, platforms, breakpoints };
 }
 
-const cites = (node) => (node.kind === "alias" ? [node.alias] : node.kind === "raw" ? citedProperties(node.raw) : []);
+// An alias node already names a CSS property; `citedBy` reads a raw one.
+const cites = (node) => (node.kind === "alias" ? [node.alias] : citedBy(node));
 
 /** Drops what the token files cannot hold: a context entry equal to the base's or setting a token the
  * base lacks, and any entry citing a custom property that is no token, which makes a token of the
@@ -269,8 +267,8 @@ const compareLeft = (a, b) => compare(a.file, b.file) || (a.line ?? 0) - (b.line
  * `{written, left}`. A refusal is a `Refusal`: nothing is written then. */
 function extract(root, { force }) {
   const project = load(root);
-  if (project === null) throw new Refusal(`no design system under ${UI_DIR}`, 1);
-  if (!systemOf(project)) throw new Refusal(`${UI_DIR}/system.md is missing, write it first`, 1);
+  if (project === null) throw new Refusal(NO_DESIGN_SYSTEM, 1);
+  if (!systemOf(project)) throw new Refusal(`${UI_DIR}/${SYSTEM_FILE} is missing, write it first`, 1);
   const entries = tokenEntries(project);
   if (!entries.length) throw new Refusal("system.md lists no code-tokens", 1);
   if (fs.existsSync(path.join(root, project.tokensFile)) && !force) throw new Refusal(`${project.tokensFile} already exists, --force replaces it`, 1);
@@ -292,7 +290,7 @@ function extract(root, { force }) {
   const dir = path.posix.dirname(project.tokensFile);
   for (const [name, tree] of output) {
     fs.mkdirSync(path.dirname(path.join(root, dir, name)), { recursive: true });
-    fs.writeFileSync(path.join(root, dir, name), `${JSON.stringify(tree, null, 2)}\n`);
+    fs.writeFileSync(path.join(root, dir, name), jsonText(tree));
   }
   return { written: [...output.keys()].map((name) => path.posix.join(dir, name)), left: left.sort(compareLeft) };
 }

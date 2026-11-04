@@ -6,17 +6,20 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list } = require("./markdown.cjs");
 const { systemOf, fm, breakpointRows, breakpointsOf } = require("./model.cjs");
+const { TOKENS_FILE, RESOLVER_FILE, besideTokens } = require("./project.cjs");
 
-const RESOLVER_FILE = "tokens.resolver.json";
 const RESOLVER_VERSION = "2025.10";
 const MEDIA_EXTENSION = "dev.ai-driven.media"; // a breakpoint's media query, verbatim: DTCG has no place for one
-const MODIFIERS = { theme: "theme", platform: "platform", breakpoint: "breakpoint" };
+const MODIFIERS = ["theme", "platform", "breakpoint"]; // the modifiers a Resolver can hold, weakest first: a context's kind, its modifier's name
 const FOLDERS = { theme: "themes", platform: "platforms", breakpoint: "breakpoints" };
+const CONTEXT_FOLDERS = Object.values(FOLDERS);
 const MIN_THEMES_FOR_MODIFIER = 2;
 const QUERY_COLUMN = "Query";
-const TOKENS_FILE = "tokens.json";
 
 const fileOf = (kind, name) => `${FOLDERS[kind]}/${name}.json`;
+
+/** The `resolutionOrder` step that applies a modifier. */
+const orderRef = (modifier) => `#/modifiers/${modifier}`;
 
 /** The Resolver for these declarations as an object, or null when nothing asks for one.
  * `exists(file)` says whether a context file, relative to the folder of tokens.json, is there; a
@@ -28,8 +31,8 @@ function resolverOf({ themes, platforms, breakpoints, queries, exists }) {
   const modifiers = {};
   const order = [{ $ref: "#/sets/base" }];
   const add = (kind, modifier) => {
-    modifiers[MODIFIERS[kind]] = modifier;
-    order.push({ $ref: `#/modifiers/${MODIFIERS[kind]}` });
+    modifiers[kind] = modifier;
+    order.push({ $ref: orderRef(kind) });
   };
   const contextsOf = (kind, names) => Object.fromEntries(names.map((name, at) => [name, at > 0 && exists(fileOf(kind, name)) ? [{ $ref: fileOf(kind, name) }] : []]));
   const held = (kind, names) => names.slice(1).filter((name) => exists(fileOf(kind, name)));
@@ -56,15 +59,15 @@ function resolverOfProject(project) {
   return resolverOf({ themes, platforms, breakpoints, queries, exists: (file) => fs.existsSync(path.join(dir, file)) });
 }
 
-/** The Resolver as it is written to disk. */
-const textOf = (resolver) => `${JSON.stringify(resolver, null, 2)}\n`;
+/** A token file or the Resolver as it is written to disk. */
+const jsonText = (tree) => `${JSON.stringify(tree, null, 2)}\n`;
 
 /** Writes the Resolver beside tokens.json; returns whether there was one to write. */
 function writeResolver(project) {
   const resolver = resolverOfProject(project);
   if (resolver === null) return false;
-  fs.writeFileSync(path.join(project.root, path.posix.dirname(project.tokensFile), RESOLVER_FILE), textOf(resolver));
+  fs.writeFileSync(path.join(project.root, besideTokens(project, RESOLVER_FILE)), jsonText(resolver));
   return true;
 }
 
-module.exports = { MIN_THEMES_FOR_MODIFIER, resolverOf, resolverOfProject, writeResolver, textOf, fileOf, RESOLVER_FILE, RESOLVER_VERSION, MEDIA_EXTENSION, MODIFIERS, FOLDERS };
+module.exports = { MIN_THEMES_FOR_MODIFIER, MODIFIERS, CONTEXT_FOLDERS, resolverOf, resolverOfProject, writeResolver, jsonText, fileOf, orderRef, RESOLVER_VERSION, MEDIA_EXTENSION };

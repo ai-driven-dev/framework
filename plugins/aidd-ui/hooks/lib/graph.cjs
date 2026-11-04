@@ -3,16 +3,16 @@
 // without repeating the whole design system. Before a change: the tokens, elements, screens,
 // journeys, renders and code files that depend on the tokens or elements it touches.
 const { list, table } = require("./markdown.cjs");
-const { placed, fm, COMPONENT_KINDS } = require("./model.cjs");
+const { placed, fm, COMPONENT_KINDS, STEPS_SECTION } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { codeOwner, codeFilesOf, codeTokens } = require("./code.cjs");
 const { citations, resolvedValues, tokenNameOf } = require("./tokens.cjs");
-const { isUnder, UI_DIR } = require("./project.cjs");
+const { CONTEXT_FOLDERS } = require("./resolver.cjs");
+const { isUnder, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE } = require("./project.cjs");
 
 // Files every record reads: a write to one reaches the whole design system.
-const SHARED_FILES = ["system.md", "tokens.json", "tokens.resolver.json"].map((name) => `${UI_DIR}/${name}`);
-const SHARED_DIRS = [`${UI_DIR}/themes`, `${UI_DIR}/platforms`, `${UI_DIR}/breakpoints`];
-const STEPS_SECTION = "Steps";
+const SHARED_FILES = [SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE].map((name) => `${UI_DIR}/${name}`);
+const SHARED_DIRS = CONTEXT_FOLDERS.map((folder) => `${UI_DIR}/${folder}`);
 
 const isShared = (file) => SHARED_FILES.includes(file) || SHARED_DIRS.some((dir) => isUnder(file, dir));
 

@@ -1,10 +1,13 @@
 // One read of a project's design system, shared by every check.
 const fs = require("node:fs");
 const path = require("node:path");
-const { parseRecord, table } = require("./markdown.cjs");
+const { parseRecord, table, LINE_BREAK } = require("./markdown.cjs");
 
 const UI_DIR = "aidd_docs/ui";
+const SYSTEM_FILE = "system.md";
 const TOKENS_FILE = "tokens.json";
+const RESOLVER_FILE = "tokens.resolver.json";
+const CSS_FILE = "tokens.css";
 const HISTORY_FILE = `${UI_DIR}/history.md`; // the engine's: one row per version of each record, no record itself
 const SHOWCASE_DIR = "showcase";
 const RECORD_EXTENSION = ".md";
@@ -18,12 +21,28 @@ const TRAILING_SEPARATORS = /\/+$/;
 const BYTE_ORDER_MARK = /^﻿/;
 const WINDOWS_LINE_ENDING = /\r\n/g;
 
+/** A request the engine declines before it writes anything; `code` is the exit status. */
+class Refusal extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+}
+
+const NO_DESIGN_SYSTEM = `no design system under ${UI_DIR}`;
+
 /** A path relative to the project root, with forward slashes on every platform. */
 const relative = (root, file) => path.relative(root, file).split(path.sep).join(PATH_SEPARATOR);
 
+/** `path` without the separators ending it. */
+const withoutTrailingSeparators = (path) => path.replace(TRAILING_SEPARATORS, "");
+
+/** The project-relative path of `name`, a file beside tokens.json. */
+const besideTokens = (project, name) => path.posix.join(path.posix.dirname(project.tokensFile), name);
+
 /** Whether `file` is `prefix` or lies under it, both relative to the project root. */
 function isUnder(file, prefix) {
-  const folder = prefix.replace(TRAILING_SEPARATORS, "");
+  const folder = withoutTrailingSeparators(prefix);
   return file === folder || file.startsWith(`${folder}${PATH_SEPARATOR}`);
 }
 
@@ -47,7 +66,7 @@ function walk(dir, skip = () => false, unlisted = () => {}) {
 }
 
 /** A text without a byte order mark and with `\n` line ends, as Windows editors may write otherwise. */
-const clean = (content) => content.replace(BYTE_ORDER_MARK, "").replace(WINDOWS_LINE_ENDING, "\n");
+const clean = (content) => content.replace(BYTE_ORDER_MARK, "").replace(WINDOWS_LINE_ENDING, LINE_BREAK);
 
 /** A file's text, read once per run, cleaned; null when it cannot be read, which `unreadable`
  * reports. */
@@ -95,9 +114,9 @@ function load(root) {
   const unlisted = (dir) => project.texts.set(relative(root, dir), null);
   const files = walk(uiDir, (dir) => dir === showcase, unlisted).map((file) => relative(root, file));
   project.records = files.filter((file) => file.endsWith(RECORD_EXTENSION) && file !== HISTORY_FILE).flatMap((file) => readRecord(project, file));
-  project.history = files.includes(HISTORY_FILE) ? table({ lines: (text(project, HISTORY_FILE) ?? "").split("\n") }) : [];
+  project.history = files.includes(HISTORY_FILE) ? table({ lines: (text(project, HISTORY_FILE) ?? "").split(LINE_BREAK) }) : [];
   project.renders = files.filter((file) => file.endsWith(RENDER_EXTENSION));
   return project;
 }
 
-module.exports = { load, walk, text, clean, unreadable, relative, isUnder, checkOf, UI_DIR, HISTORY_FILE, RENDER_EXTENSION, ERROR, WARNING };
+module.exports = { Refusal, NO_DESIGN_SYSTEM, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, RENDER_EXTENSION, ERROR, WARNING };

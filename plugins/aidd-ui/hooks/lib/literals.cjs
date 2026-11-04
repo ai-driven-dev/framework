@@ -1,5 +1,5 @@
 // The literals a render or UI code must not hold, found line by line.
-const { list } = require("./markdown.cjs");
+const { list, blank, LINE_BREAK } = require("./markdown.cjs");
 const { systemOf } = require("./model.cjs");
 const { ERROR, WARNING } = require("./project.cjs");
 
@@ -8,11 +8,9 @@ const LOCALE_SEPARATOR = /[-_]/;
 const VAR_CALL = /var\([^()]*\)/g; // a fallback inside var() is the token's, not a literal
 const QUERY_PRELUDE = /@(?:media|container)\b[^{]*/g; // a query's lengths are breakpoints, not styles
 const HAIRLINE_PX = 2; // up to 2px: a border or outline width code keeps literal
-const LINE_BREAK = "\n";
-const NOT_LINE_BREAK = /[^\n]/g;
 const STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>|\sstyle\s*=\s*"([^"]*)"|\sstyle\s*=\s*'([^']*)'/gid; // a style block, or a style attribute's value
 const PAINT = /\s(?:fill|stroke|color|bgcolor)\s*=\s*(?:"([^"]*)"|'([^']*)')/gid; // an attribute's value that may hold a colour
-const TOKEN_VALUE = /^\s*var\(/; // a fallback inside var() is the token's, not a literal
+const TOKEN_VALUE = /^\s*var\(/;
 
 /** Literals a render or UI code must not hold, each with the message it earns. */
 const PATTERNS = {
@@ -31,8 +29,6 @@ const PATTERNS = {
     message: (found) => `physical property "${found}", use its logical form`,
   },
 };
-
-const blank = (text) => text.replace(NOT_LINE_BREAK, " ");
 
 /** `source` with what `regex` captures passed through `own` and the rest through `other`; lines are kept. */
 function split(source, regex, other, own = (kept) => kept) {

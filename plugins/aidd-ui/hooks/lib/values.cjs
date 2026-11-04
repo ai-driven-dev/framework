@@ -3,8 +3,6 @@
 // rgb() colour, a length in px or rem, a duration, a lone var(). Anything else is raw CSS, which
 // the stylesheet writes back verbatim; it carries a `$type` only when it is a colour function or a
 // font stack, since DTCG has no value for those.
-const { VAR_REFERENCE } = require("./css.cjs");
-
 const NUMBER = "[+-]?(?:\\d+\\.?\\d*|\\.\\d+)";
 const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const RGB = new RegExp(`^rgba?\\(\\s*(${NUMBER})(?:\\s*,\\s*|\\s+)(${NUMBER})(?:\\s*,\\s*|\\s+)(${NUMBER})(?:\\s*[,/]\\s*(${NUMBER}))?\\s*\\)$`, "i");
@@ -62,9 +60,6 @@ function fromCss(text) {
   return isFontStack(css) ? { kind: "raw", type: "fontFamily", raw: css, css } : { kind: "raw", raw: css, css };
 }
 
-/** The custom properties a raw value cites. */
-const citedProperties = (raw) => [...raw.matchAll(VAR_REFERENCE)].map((match) => match[1]);
-
 /** A bare number of a script under `name`, a CSS name without its dashes: a px length when the name
  * holds a size, a radius or a space, else a number. */
 function fromNumber(name, number) {
@@ -72,4 +67,4 @@ function fromNumber(name, number) {
   return measure ? { kind: "value", type: "dimension", value: { value: number, unit: "px" }, css: `${number}px` } : { kind: "value", type: "number", value: number, css: String(number) };
 }
 
-module.exports = { fromCss, fromNumber, citedProperties };
+module.exports = { fromCss, fromNumber };

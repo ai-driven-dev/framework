@@ -1,39 +1,29 @@
-// Applies a change to the versions it reaches: each element or screen `impact` reaches is raised by
-// one and set `proposed` with a row in history.md, once per task; a later breaking change to one
-// already raised for the task turns that row to breaking instead. A deprecated one is left unless
-// the change breaks a token it cites, directly or through what it uses. Each review naming a raised
-// screen gets a `pending` verdict per state at its new version. A creation writes the first row of
-// each record named.
+// Raises the versions a change reaches and writes their history rows, or the first row of a created record.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list, cells } = require("./markdown.cjs");
-const { placed, byId, isSystem, fm, INTEGER_VERSION } = require("./model.cjs");
-const { load, HISTORY_FILE } = require("./project.cjs");
+const { list, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { placed, byId, isSystem, fm, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
+const { Refusal, NO_DESIGN_SYSTEM, load, withoutTrailingSeparators, HISTORY_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
+const { citations, tokenNameOf } = require("./tokens.cjs");
 const { TASKS_DIR } = require("./history.cjs");
-const { Refusal } = require("./args.cjs");
 
 const EXIT_REFUSED = 2;
-const FENCE = "---";
-const LINE_BREAK = "\n";
 const ROW_START = "|";
 const HISTORY_HEADER = ["# History", "", "| Id | Version | Change | Breaking | Task |", "| --- | --- | --- | --- | --- |"].join(LINE_BREAK) + LINE_BREAK;
 const FIRST_VERSION = "1";
 const FIRST_SYSTEM_VERSION = "1.0.0";
 const CREATED = "created";
 const VERDICTS_HEADING = "## Verdicts";
-const DEPRECATED = "deprecated";
-const BREAKING = "yes";
 const ALREADY_RAISED = "already raised for this task";
 const CARRIAGE_RETURN = "\r";
 const CELL_BREAKERS = /[|\r\n]/;
-const TRAILING_SEPARATORS = /\/+$/;
 
 const refuse = (message) => new Refusal(message, EXIT_REFUSED);
 
 /** `lines` with the front matter line `key: value` set, ending as `end` says; its absence is a refusal. */
 function setFront(lines, key, value, end, file) {
-  const close = lines.findIndex((line, at) => at > 0 && line.trimEnd() === FENCE);
+  const close = frontMatterEnd(lines);
   const at = lines.findIndex((line, index) => index > 0 && index < close && line.startsWith(`${key}:`));
   if (at < 0) throw refuse(`${file} has no ${key} line in its front matter`);
   lines[at] = `${key}: ${value}${end}`;
@@ -84,7 +74,7 @@ const rowAt = (lines, id, version) => lines.findIndex((line) => {
  * first publication is 1.0.0. */
 function create(root, folder, ids) {
   const project = load(root);
-  if (project === null) throw refuse("no design system under aidd_docs/ui");
+  if (project === null) throw refuse(NO_DESIGN_SYSTEM);
   const index = byId(project);
   const files = editing(root);
   const { lines, end } = files.editOf(HISTORY_FILE, HISTORY_HEADER);
@@ -92,7 +82,7 @@ function create(root, folder, ids) {
     const record = index.get(id);
     if (!record || fm(record).kind === "brand") throw refuse(`no versioned record named "${id}"`);
     if (project.history.some((row) => row.Id === id)) throw refuse(`"${id}" already has history`);
-    addRow(lines, null, rowOf(id, isSystem(record) ? FIRST_SYSTEM_VERSION : FIRST_VERSION, CREATED, "no", folder), end, HISTORY_FILE);
+    addRow(lines, null, rowOf(id, isSystem(record) ? FIRST_SYSTEM_VERSION : FIRST_VERSION, CREATED, NOT_BREAKING, folder), end, HISTORY_FILE);
   }
   return { changed: files.save() };
 }
@@ -102,29 +92,30 @@ function create(root, folder, ids) {
  * reached and not raised with why: deprecated, or already raised for this task and left as its row
  * says. A refusal is a `Refusal`, thrown before any file is written. */
 function bump(root, { task, change, breaking, created, refs }) {
-  const folder = path.posix.normalize(task).replace(TRAILING_SEPARATORS, "");
+  const folder = withoutTrailingSeparators(path.posix.normalize(task));
   if (!folder.startsWith(TASKS_DIR)) throw refuse(`the task "${task}" must be a folder under ${TASKS_DIR}`);
   if (created) return create(root, folder, refs);
   if (!change.trim() || CELL_BREAKERS.test(change)) throw refuse('the change must be one line without "|"');
   const project = load(root);
-  if (project === null) throw refuse("no design system under aidd_docs/ui");
+  if (project === null) throw refuse(NO_DESIGN_SYSTEM);
   const { unknown, ...report } = usages(project, refs);
   if (unknown) throw refuse(`no token or element named ${unknown.map((ref) => `"${ref}"`).join(", ")}`);
 
   const records = placed(project);
   const reached = new Set([...report.elements, ...report.screens]);
   // A deprecated element follows a rename or a deletion: it cites the token, or uses what does.
-  const tokenRefs = refs.filter((ref) => usages(project, [ref]).tokens.length);
-  const followed = breaking ? new Set([...usages(project, tokenRefs).elements, ...usages(project, tokenRefs).screens]) : new Set();
+  const cites = citations(project);
+  const viaTokens = breaking ? usages(project, refs.filter((ref) => cites.has(tokenNameOf(project, ref)))) : { elements: [], screens: [] };
+  const followed = new Set([...viaTokens.elements, ...viaTokens.screens]);
   const raised = new Map(); // id -> new version
   const left = [];
   const files = editing(root);
   const historyOf = () => files.editOf(HISTORY_FILE, HISTORY_HEADER);
   for (const record of records.filter((each) => reached.has(fm(each).id))) {
     const { id } = fm(record);
-    const held = fm(record).status === DEPRECATED;
+    const held = fm(record).status === STATUS_DEPRECATED;
     const current = project.history.find((row) => row.Id === id && row.Version === fm(record).version);
-    if (held && !followed.has(id)) left.push({ id, why: DEPRECATED });
+    if (held && !followed.has(id)) left.push({ id, why: STATUS_DEPRECATED });
     else if (current?.Task === folder) {
       if (!breaking || current.Breaking === BREAKING) left.push({ id, why: ALREADY_RAISED });
       else {
@@ -139,7 +130,7 @@ function bump(root, { task, change, breaking, created, refs }) {
       setFront(lines, "version", version, end, record.file);
       if (!held) setFront(lines, "status", "proposed", end, record.file);
       const history = historyOf();
-      addRow(history.lines, null, rowOf(id, version, change.trim(), breaking ? BREAKING : "no", folder), history.end, HISTORY_FILE);
+      addRow(history.lines, null, rowOf(id, version, change.trim(), breaking ? BREAKING : NOT_BREAKING, folder), history.end, HISTORY_FILE);
       raised.set(id, version);
     }
   }
