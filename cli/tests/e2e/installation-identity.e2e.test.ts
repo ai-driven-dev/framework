@@ -1,8 +1,7 @@
-import { execFileSync } from "node:child_process";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { createTestEnv, FRAMEWORK_PATH, runCli } from "./helpers.js";
+import { createTestEnv, FRAMEWORK_PATH, gitInit, runCli } from "./helpers.js";
 
 describe.skipIf(process.platform === "win32")("installation identity across commands", () => {
   it("reuses the setup ID for telemetry and keeps a manually chosen person ID", async () => {
@@ -30,7 +29,7 @@ describe.skipIf(process.platform === "win32")("installation identity across comm
       const first = await readFile(path, "utf8");
       expect((await runCli(setup, projectDir, fakeHome)).exitCode).toBe(0);
       expect(await readFile(path, "utf8")).toBe(first);
-      execFileSync("git", ["init", "--quiet"], { cwd: projectDir });
+      await gitInit(projectDir);
       const turnOn = await runCli(["telemetry", "on", "--yes"], projectDir, fakeHome);
       expect(turnOn.exitCode, turnOn.stderr).toBe(0);
       expect(await readFile(path, "utf8")).toBe(first);
@@ -93,8 +92,9 @@ describe.skipIf(process.platform === "win32")("installation identity across comm
     try {
       expect((await runCli(args, projectDir, fakeHome)).exitCode).not.toBe(0);
       await expect(stat(path)).rejects.toThrow();
-      execFileSync("git", ["init", "--quiet"], { cwd: projectDir });
-      expect((await runCli(args, projectDir, fakeHome)).exitCode).toBe(0);
+      await gitInit(projectDir);
+      const turnOn = await runCli(args, projectDir, fakeHome);
+      expect(turnOn.exitCode, turnOn.stderr).toBe(0);
       const initial = await readFile(path, "utf8");
       expect((await runCli(args, projectDir, fakeHome)).exitCode).toBe(0);
       expect(await readFile(path, "utf8")).toBe(initial);
