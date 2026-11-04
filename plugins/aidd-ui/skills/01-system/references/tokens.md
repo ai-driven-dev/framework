@@ -12,5 +12,5 @@ DTCG 2025.10 in `aidd_docs/ui/tokens.json`.
 | nesting | a token never has child tokens, aliases aside: the hover of token `a.b` is `a.b-hover` |
 | themes, platforms, breakpoints | the first of each is `tokens.json`; each other with its own values is `themes/<theme>.json`, `platforms/<name>.json` or `breakpoints/<name>.json`, a breakpoint's media query being the `Query` of its `## Breakpoints` row in `system.md`, in the order of the table, the winning query last |
 | context file | redefines base tokens only, keeping their type; `$type` left out, as `extract` writes it |
-| `tokens.resolver.json` | written by `tokens` and `extract` from `system.md` and those files, never by hand; a token several modifiers set takes the value of the later one |
+| `tokens.resolver.json` | written by `tokens` and `extract` when a second theme or a context file needs one, never by hand; a token several modifiers set takes the value of the later one |
 | `tokens.css` | written by `tokens` only, never by hand; tracked |

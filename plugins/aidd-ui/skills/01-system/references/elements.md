@@ -8,8 +8,7 @@
 | `states` | `default`; `focus` when the element itself takes focus, not when only an element it uses does, and then a `## Keyboard` section, else none; `hover`, `disabled`, `loading`, `error` when they exist |
 | `variants` | bare items, or `axis=value` for a prop varying on its own; never `state`, `variant` or `theme` as an axis |
 | `platforms` | optional, a subset of `system.md`'s; absent means all |
-| `code` | one link or a list, each `path[#Export]@<version>` or `package:<name>[#Export]@<version>`; `#Export` when the techno has one; `<version>` the one the code implements, at most `version`; at most one link per platform, a path link on its code root's |
-| package link | `platform=package:<name>#Export@<version>` when `system.md` lists several platforms |
+| `code` | one link or a list, each `path[#Export]@<version>` or `[platform=]package:<name>[#Export]@<version>`, `platform=` when `system.md` lists several platforms; `#Export` when the techno has one; `<version>` the one the code implements, at most `version`; at most one link per platform, a path link on its code root's |
 | no link | an assembled molecule or composition whose used elements are all coded, an element coded nowhere yet |
 | render coverage | each variant value and each state at least once, on an element: `data-variant`, `data-<axis>`, `data-state`; no product of axes |
 | render theme, platform | `data-theme` and `data-platform` on `<html>` alone, the base needing none; another is another document or a toggle of that attribute, never a wrapper |

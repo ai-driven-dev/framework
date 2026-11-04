@@ -22,4 +22,5 @@ role: {{accessible role}}
 
 <!--
 - Replace every `{{...}}` and delete every comment.
+- Delete `## Keyboard` when `states` has no `focus`.
 -->

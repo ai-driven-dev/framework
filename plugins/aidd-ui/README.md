@@ -23,7 +23,7 @@ flowchart LR
   Skill -->|"calls"| Engine["hooks/aidd-ui.cjs"]
   Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
   Host["host event"] --> Hook["hooks/ui-hook.cjs"]
-  Hook -->|"scoped validate"| Engine
+  Hook -->|"checks what a write reached"| Engine
   Hook -->|"problems"| Host
 ```
 
@@ -38,7 +38,7 @@ flowchart LR
 - Windows is untested.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
-- A shell write outside the known forms (redirection, `tee`, `sed -i`, the engine) is not seen.
+- A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
 - H8 and C4 read `HEAD`: without `git` or a commit, H8 stays silent and C4 counts every colour literal as new.
 - Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
 - A render shows a variant or state when its text holds the attribute; native behaviour (focus, validity) no render shows.
