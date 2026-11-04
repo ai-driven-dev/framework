@@ -131,13 +131,6 @@ describe("aidd-ui code link", () => {
     });
   });
 
-  describe("C2 libraries", () => {
-    it("names a package system.md does not list", () => {
-      edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root@1", "package:left-pad#Pad@1");
-      assert.deepEqual(problems(), [`${DIALOG}: package "left-pad" is not in system.md libraries`]);
-    });
-  });
-
   describe("C3 coverage", () => {
     it("names a file under a code root no record links and no ignore covers", () => {
       put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
@@ -524,16 +517,24 @@ describe("aidd-ui code link", () => {
   });
 
   describe("C6 logical properties in code", () => {
-    it("names a physical property in a stylesheet when rtl is declared", () => {
+    it("names a physical property in a stylesheet when a locale is written right to left", () => {
       linkedStylesheet(".SearchField { margin-left: 0; }\n");
       assert.deepEqual(problems(), [`${SEARCH_CSS}: line 1: physical property "margin-left", use its logical form`]);
     });
 
-    it("allows it when only ltr is declared", () => {
-      edit(tmp, SYSTEM, "directions: [ltr, rtl]", "directions: [ltr]");
+    it("allows it when no locale is written right to left", () => {
+      edit(tmp, SYSTEM, "locales: [fr, ar]", "locales: [fr, en]");
       linkedStylesheet(".SearchField { margin-left: 0; }\n");
       assert.deepEqual(problems(), []);
     });
+
+    for (const locale of ["he", "fa-AF", "ur_PK", "AR-eg"]) {
+      it(`takes ${locale} as right to left`, () => {
+        edit(tmp, SYSTEM, "locales: [fr, ar]", `locales: [fr, ${locale}]`);
+        linkedStylesheet(".SearchField { margin-left: 0; }\n");
+        assert.equal(problems().length, 1);
+      });
+    }
   });
 
   describe("C8 code tokens", () => {

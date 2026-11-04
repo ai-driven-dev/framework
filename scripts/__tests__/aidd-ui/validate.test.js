@@ -50,7 +50,7 @@ const FIXTURE_STYLESHEET = [
 const FAILURES = [
   `${BRAND} R14 lacks "## Users"`,
   `${TOKENS} T4 space.md: unit "em" must be px or rem`,
-  `${DIALOG} C2 package "left-pad" is not in system.md libraries`,
+  `${DIALOG} C1 code "package:@radix-ui/react-dialog#Root" lacks its version, @<version>`,
 ];
 const [BRAND_FAILURE, , DIALOG_FAILURE] = FAILURES;
 
@@ -73,7 +73,7 @@ afterEach(() => {
 function breakOnePerFamily() {
   edit(tmp, BRAND, "## Users\n\nAnalysts.\n\n", "");
   editTokens(tmp, (tree) => (tree.space.md.$value = { value: 1, unit: "em" }));
-  edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root@1", "package:left-pad#Pad@1");
+  edit(tmp, DIALOG, "package:@radix-ui/react-dialog#Root@1", "package:@radix-ui/react-dialog#Root");
 }
 
 const lines = (text) => text.split("\n").filter(Boolean);

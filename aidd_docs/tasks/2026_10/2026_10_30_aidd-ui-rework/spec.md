@@ -37,7 +37,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Le
 
 | Fiche | Contient en plus |
 | --- | --- |
-| `system.md` | version du format des fiches, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
+| `system.md` | version du format des fiches, plateformes, breakpoints (le tableau `## Breakpoints`, seule source), thèmes, langues (`ar`, `he`, `fa` et `ur` s'écrivent de droite à gauche, ce qui donne le sens d'écriture), groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés ; règles transverses s'il y en a |
 | `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
 | atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
@@ -108,8 +108,8 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 ### i18n et accessibilité
 
-- `system.md` déclare les langues et les sens d'écriture.
-- Les rendus utilisent des propriétés logiques plutôt que physiques quand un sens droite-gauche est déclaré, et aucune largeur fixe sur du texte.
+- `system.md` déclare les langues, dont se déduit le sens d'écriture.
+- Les rendus utilisent des propriétés logiques plutôt que physiques quand une langue déclarée s'écrit de droite à gauche, et aucune largeur fixe sur du texte.
 - Dates et nombres suivent la langue.
 - Base d'accessibilité : WCAG 2.2 AA, mobile d'abord, texte qui suit la taille choisie par la personne, aucun comportement qui n'existe qu'au survol sur écran tactile.
 
@@ -123,7 +123,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
   - aucune valeur en dur dans les rendus, aucune couleur en dur nouvelle dans le code, quelle que soit sa techno (documents, données et images exclus) : erreur dans un fichier modifié ou non suivi par rapport à `HEAD`, ou quand git ne sait pas répondre ; avertissement dans un fichier identique à `HEAD`, dette existante ;
   - aucun token primitif dans un composant ;
   - versions en double dans un historique ;
-  - propriétés physiques quand un sens droite-gauche est déclaré.
+  - propriétés physiques quand une langue déclarée s'écrit de droite à gauche.
 - Chaque problème porte sa règle et sa gravité, sur une ligne `<fichier>[:<ligne>] <règle> [warning] <message>` (`:<ligne>` seulement quand il a une ligne, `warning` seulement pour un avertissement). Une erreur bloque la fin du tour ; un avertissement informe sans bloquer : fichier de code sans fiche, couleur en dur déjà committée, trait fin en px, échec de git. Le hook donne le même texte court sur chaque outil, sans phrase d'introduction, et rien quand il n'y a rien à dire. Après une écriture, l'IA voit les erreurs des fichiers écrits et de ceux qui en dépendent (le rendu de l'élément écrit, les fiches qui le citent), ou toutes quand elle a écrit un fichier partagé (tokens, thèmes, `system.md`), et les avertissements des fichiers écrits seuls, au plus dix lignes, puis une ligne `+N more: <commande>` quand des erreurs sont coupées ou ailleurs ; en fin de tour, les erreurs seules, au plus dix, même ligne ; au début de session, le nombre d'erreurs et au plus cinq d'entre elles. Une commande shell qui lance le moteur ou nomme `aidd_docs/ui/` marque le tour sans rien afficher, pour que la fin de tour relise ce qu'elle a laissé ; la commande à la main montre tout.
 - Une règle qui plante devient un problème qui la nomme, jamais un silence.
 - Un seul moteur porte la lecture des fiches, la vérification et, plus tard, le graphe, la génération des tokens, la vitrine et la page de review ; chaque skill l'appelle par sous-commande.

@@ -311,6 +311,11 @@ describe("aidd-ui records and history", () => {
   });
 
   describe("R11 breakpoints", () => {
+    it("reads the declared breakpoints from the system's table", () => {
+      change(SYSTEM, "| desktop | (min-width: 64rem) |", "| wide | (min-width: 64rem) |");
+      assert.deepEqual(problems(), [`${HOME}: breakpoint "desktop" is not in system.md`]);
+    });
+
     it("names a screen breakpoint system.md lacks", () => {
       change(HOME, "breakpoints: [mobile, desktop]", "breakpoints: [mobile, tablet, desktop]");
       assert.deepEqual(problems(), [`${HOME}: breakpoint "tablet" is not in system.md`]);

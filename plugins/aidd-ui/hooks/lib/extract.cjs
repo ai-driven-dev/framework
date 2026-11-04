@@ -5,8 +5,8 @@
 // exports, and lists what it leaves rather than guess it.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list, table } = require("./markdown.cjs");
-const { systemOf, fm } = require("./model.cjs");
+const { list } = require("./markdown.cjs");
+const { systemOf, fm, breakpointRows, breakpointsOf } = require("./model.cjs");
 const { load, text, UI_DIR } = require("./project.cjs");
 const { tokenEntries, platformOfFile } = require("./code.cjs");
 const { rulesOf, declarationsIn, RAW_CSS_EXTENSION } = require("./css.cjs");
@@ -16,7 +16,6 @@ const { fromCss, fromNumber, citedProperties } = require("./values.cjs");
 const { Refusal } = require("./args.cjs");
 
 const TOKENS_FILE = "tokens.json";
-const BREAKPOINTS_SECTION = "Breakpoints";
 const STYLE_EXTENSION = ".css";
 const SCRIPT_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"];
 const ROOT_SELECTORS = [":root", "html"];
@@ -100,7 +99,7 @@ const mentions = (words, length) => new RegExp(`(?<![\\d.])${length.replace(REGE
  * whose `## Breakpoints` row holds every length the query names and no other query's, else the next
  * free one in order when as many breakpoints are left as queries. */
 function placeQueries(queries, project, breakpoints) {
-  const rows = table(systemOf(project).sections[BREAKPOINTS_SECTION]);
+  const rows = breakpointRows(systemOf(project));
   const widthOf = (name) => rows.find((row) => row.Name === name)?.Query ?? "";
   const open = breakpoints.slice(1);
   const placed = new Map();
@@ -145,7 +144,8 @@ function pathsOf(names) {
  * the base and listed. */
 function gather(project, sources, leave) {
   const system = fm(systemOf(project));
-  const [themes, platforms, breakpoints] = ["themes", "platforms", "breakpoints"].map((key) => list(system[key]));
+  const [themes, platforms] = ["themes", "platforms"].map((key) => list(system[key]));
+  const breakpoints = breakpointsOf(systemOf(project));
   const basePlatform = platforms[0] ?? null;
   const [held, themed, queried] = [new Map(), new Map(), new Map()]; // by platform, by theme, by media query
   const put = (map, key, entry) => map.set(key, (map.get(key) ?? new Map()).set(entry.name, entry));

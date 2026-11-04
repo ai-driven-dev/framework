@@ -5,7 +5,7 @@
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
+const { placed, systemOf, breakpointsOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
 const { RESOLVER_FILE, RESOLVER_VERSION, MEDIA_EXTENSION, MIN_THEMES_FOR_MODIFIER, resolverOfProject } = require("./resolver.cjs");
 const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
@@ -340,7 +340,7 @@ function resolverProblems(tree, project) {
   if (resolver.problem === MISSING) return resolverOfProject(project) === null ? [] : [{ file, message: `${MISSING}, generate it ${REGENERATE}` }];
   if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem }] : [];
   const kinds = [themeKind(project), platformKind(project)].map((kind) => ({ ...kind, ...namedContexts(resolver.value, kind, file) }));
-  const breakpoints = breakpointContexts(resolver.value, list(systemOf(project)?.frontMatter.breakpoints), file);
+  const breakpoints = breakpointContexts(resolver.value, breakpointsOf(systemOf(project)), file);
   const found = [...resolverBaseProblems(resolver.value, project, file), ...kinds.flatMap((kind) => kind.problems), ...breakpoints.problems];
   if (tree.unusable) return found; // a context file is read against tokens.json, which T1 names
   return [
@@ -404,7 +404,7 @@ const platformTrees = (project) => regionTrees(project, platformKind(project));
 /** What each breakpoint context redefines, in the Resolver's order: `{breakpoint, media, files: [{file, tree}]}`. */
 function breakpointTrees(project) {
   const resolver = readJson(project, resolverFileOf(project));
-  const { contexts } = resolver.value ? breakpointContexts(resolver.value, list(systemOf(project)?.frontMatter.breakpoints), resolverFileOf(project)) : { contexts: [] };
+  const { contexts } = resolver.value ? breakpointContexts(resolver.value, breakpointsOf(systemOf(project)), resolverFileOf(project)) : { contexts: [] };
   return contexts.map(({ files, ...context }) => ({ ...context, files: files.map((file) => ({ file, tree: readTree(project, file) })) }));
 }
 

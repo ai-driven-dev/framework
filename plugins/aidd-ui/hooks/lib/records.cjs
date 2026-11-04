@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf, HISTORY_FILE } = require("./project.cjs");
-const { SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { breakpointsOf, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", "deprecated"];
 const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
@@ -24,7 +24,7 @@ const COMMON_KEYS = ["id", "kind"];
 const VERSIONED_KEYS = ["status", "version"]; // all but the system, whose versions are its publications, and the brand
 const COMPONENT_KEYS = [...VERSIONED_KEYS, "uses", "tokens", "variants", "states", "role"];
 const KIND_KEYS = {
-  system: ["format", "platforms", "breakpoints", "themes", "locales", "directions", "primitives", "code-roots", "ignore", "libraries"],
+  system: ["format", "platforms", "themes", "locales", "primitives", "code-roots", "ignore"],
   brand: [],
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
@@ -174,7 +174,7 @@ function deprecatedUseProblems(project) {
 function breakpointProblems(project) {
   const system = systemOf(project);
   if (!system) return [];
-  const declared = list(fm(system).breakpoints);
+  const declared = breakpointsOf(system);
   return placed(project)
     .filter((record) => fm(record).kind === "screen")
     .flatMap((record) =>

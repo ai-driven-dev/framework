@@ -297,7 +297,7 @@ describe("aidd-ui tokens and renders", () => {
       const TABLET = `${UI}/breakpoints/tablet.json`;
       /** Three breakpoints in system.md, with the resolver's contexts in `order`. */
       const threeBreakpoints = (declared, order, defaultContext) => {
-        edit(tmp, `${UI}/system.md`, "breakpoints: [mobile, desktop]", `breakpoints: [${declared.join(", ")}]`);
+        edit(tmp, `${UI}/system.md`, "| mobile | |\n| desktop | (min-width: 64rem) |", declared.map((name, at) => `| ${name} | ${at ? "(min-width: 64rem)" : ""} |`).join("\n"));
         put(tmp, TABLET, JSON.stringify({ space: { md: { $type: "dimension", $value: { value: 1.25, unit: "rem" } } } }));
         const files = { tablet: [{ $ref: "breakpoints/tablet.json" }], desktop: [{ $ref: "breakpoints/desktop.json" }], mobile: [{ $ref: "breakpoints/desktop.json" }] };
         editJson(RESOLVER, (r) => {
@@ -902,13 +902,13 @@ describe("aidd-ui tokens and renders", () => {
   });
 
   describe("V5 logical properties", () => {
-    it("names a physical property when rtl is declared", () => {
+    it("names a physical property when a locale is written right to left", () => {
       addToRender('<p style="margin-left: 0">x</p>');
       assert.deepEqual(problems(), [`${BUTTON_RENDER}: line ${INSERTED_LINE}: physical property "margin-left", use its logical form`]);
     });
 
-    it("allows it when only ltr is declared", () => {
-      edit(tmp, SYSTEM, "directions: [ltr, rtl]", "directions: [ltr]");
+    it("allows it when no locale is written right to left", () => {
+      edit(tmp, SYSTEM, "locales: [fr, ar]", "locales: [fr, en]");
       addToRender('<p style="margin-left: 0">x</p>');
       assert.deepEqual(problems(), []);
     });

@@ -34,7 +34,7 @@ function setup({ platforms = ["web"], themes = ["light", "dark"], breakpoints = 
     tmp,
     `${UI}/system.md`,
     record(
-      ["id: system", "kind: system", "format: 1", `platforms: [${platforms.join(", ")}]`, `breakpoints: [${breakpoints.join(", ")}]`, `themes: [${themes.join(", ")}]`, "locales: [en]", "directions: [ltr]", "primitives: []", `code-roots: [${roots.join(", ")}]`, `code-tokens: [${tokens.join(", ")}]`, "ignore: []", "libraries: []"],
+      ["id: system", "kind: system", "format: 1", `platforms: [${platforms.join(", ")}]`, `themes: [${themes.join(", ")}]`, "locales: [en]", "primitives: []", `code-roots: [${roots.join(", ")}]`, `code-tokens: [${tokens.join(", ")}]`, "ignore: []"],
       "# Design system",
       `## Breakpoints\n\n| Name | Query |\n| --- | --- |\n${rows.join("\n")}`
     )

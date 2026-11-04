@@ -20,15 +20,12 @@ const TASK = "aidd_docs/tasks/ds-init";
 const FILLS = {
   system: {
     platforms: "web",
-    "breakpoints, the winning query last": "mobile, desktop",
     "themes, the base first": "light, dark",
     locales: "fr, ar",
-    "ltr, rtl": "ltr, rtl",
     "primitive token groups": "color.brand",
     "UI folders of the code": "src/ui",
     "token file of the code, or one per app": "[src/ui/tokens.css]",
     "paths no record links": "src/ui/vendor",
-    "component packages used": "@radix-ui/react-dialog",
     "breakpoint name": "mobile",
     "its media query, empty for the first": "",
   },
@@ -117,7 +114,8 @@ describe("aidd-ui 01-system templates", () => {
   });
 
   it("validate once filled, among the rest of a design system", () => {
-    put(tmp, `${UI}/system.md`, filled("system"));
+    // the template holds one breakpoint row; the model adds the others
+    put(tmp, `${UI}/system.md`, filled("system").replace("| mobile |  |", "| mobile |  |\n| desktop | (min-width: 64rem) |"));
     put(tmp, `${UI}/brand.md`, filled("brand"));
     put(tmp, `${UI}/components/badge.md`, filled("component"));
     put(tmp, `${UI}/components/badge.html`, filled("render"));

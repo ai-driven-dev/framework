@@ -1,4 +1,4 @@
-// C1 to C9: each code link resolves and names the version it implements, every file under a code
+// C1 to C9, C2 retired: each code link resolves and names the version it implements, every file under a code
 // root is linked or ignored, UI code outside its tests holds no new colour literal, the code's
 // token file exists, and each link sits on a platform its record lists. Other literals are a stated
 // limit.
@@ -167,13 +167,6 @@ function linkProblems(project) {
   });
 }
 
-function libraryProblems(project) {
-  const libraries = list(systemOf(project)?.frontMatter.libraries);
-  return linked(project)
-    .filter(({ link }) => link && link.library !== null && !libraries.includes(link.library))
-    .map(({ record, link }) => ({ file: record.file, message: `package "${link.library}" is not in system.md libraries` }));
-}
-
 /** The base name of a file up to its first dot: `ui-button.component.tsx` gives `ui-button`. */
 const stem = (file) => path.posix.basename(file).split(".")[0];
 
@@ -281,7 +274,6 @@ function platformProblems(project) {
 
 const RULES = {
   C1: linkProblems,
-  C2: libraryProblems,
   C3: coverageProblems,
   C4: colourProblems,
   C5: sharedLinkProblems,

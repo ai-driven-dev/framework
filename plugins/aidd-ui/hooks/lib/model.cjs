@@ -1,8 +1,9 @@
 // The record model every check reads: which kinds exist, where each lives, and the records a
 // rule can trust.
-const { list } = require("./markdown.cjs");
+const { list, table } = require("./markdown.cjs");
 
 const SYSTEM_ID = "system";
+const BREAKPOINTS_SECTION = "Breakpoints";
 const FOLDER_KINDS = {
   "": ["system", "brand"],
   components: ["atom", "molecule", "composition"],
@@ -61,7 +62,11 @@ function variantOf(item) {
   return at < 0 ? { axis: VARIANT_AXIS, value: item } : { axis: item.slice(0, at), value: item.slice(at + 1) };
 }
 
+/** The rows of the system's `## Breakpoints` table, `Name` and `Query`: the only place breakpoints are declared. */
+const breakpointRows = (system) => table(system?.sections[BREAKPOINTS_SECTION]);
+const breakpointsOf = (system) => breakpointRows(system).map((row) => row.Name);
+
 const systemOf = (project) => readable(project).find((record) => fm(record).kind === SYSTEM_ID);
 const isSystem = (record) => fm(record).kind === SYSTEM_ID;
 
-module.exports = { SYSTEM_ID, AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };
+module.exports = { breakpointRows, breakpointsOf, SYSTEM_ID, AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, TOKENED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, tokensUsedBy };

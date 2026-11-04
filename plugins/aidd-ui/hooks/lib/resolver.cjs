@@ -4,8 +4,8 @@
 // default, which tokens.json itself holds.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list, table } = require("./markdown.cjs");
-const { systemOf, fm } = require("./model.cjs");
+const { list } = require("./markdown.cjs");
+const { systemOf, fm, breakpointRows, breakpointsOf } = require("./model.cjs");
 
 const RESOLVER_FILE = "tokens.resolver.json";
 const RESOLVER_VERSION = "2025.10";
@@ -13,7 +13,6 @@ const MEDIA_EXTENSION = "dev.ai-driven.media"; // a breakpoint's media query, ve
 const MODIFIERS = { theme: "theme", platform: "platform", breakpoint: "breakpoint" };
 const FOLDERS = { theme: "themes", platform: "platforms", breakpoint: "breakpoints" };
 const MIN_THEMES_FOR_MODIFIER = 2;
-const BREAKPOINTS_SECTION = "Breakpoints";
 const QUERY_COLUMN = "Query";
 const TOKENS_FILE = "tokens.json";
 
@@ -50,8 +49,9 @@ function resolverOf({ themes, platforms, breakpoints, queries, exists }) {
 function resolverOfProject(project) {
   const system = systemOf(project);
   if (!system) return null;
-  const [themes, platforms, breakpoints] = ["themes", "platforms", "breakpoints"].map((key) => list(fm(system)[key]));
-  const queries = Object.fromEntries(table(system.sections[BREAKPOINTS_SECTION]).map((row) => [row.Name, row[QUERY_COLUMN]]));
+  const [themes, platforms] = ["themes", "platforms"].map((key) => list(fm(system)[key]));
+  const breakpoints = breakpointsOf(system);
+  const queries = Object.fromEntries(breakpointRows(system).map((row) => [row.Name, row[QUERY_COLUMN]]));
   const dir = path.join(project.root, path.posix.dirname(project.tokensFile));
   return resolverOf({ themes, platforms, breakpoints, queries, exists: (file) => fs.existsSync(path.join(dir, file)) });
 }

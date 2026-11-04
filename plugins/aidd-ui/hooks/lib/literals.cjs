@@ -3,7 +3,8 @@ const { list } = require("./markdown.cjs");
 const { systemOf } = require("./model.cjs");
 const { ERROR, WARNING } = require("./project.cjs");
 
-const RIGHT_TO_LEFT = "rtl";
+const RIGHT_TO_LEFT_LANGUAGES = ["ar", "he", "fa", "ur"]; // the languages of a locale written right to left
+const LOCALE_SEPARATOR = /[-_]/;
 const VAR_CALL = /var\([^()]*\)/g; // a fallback inside var() is the token's, not a literal
 const QUERY_PRELUDE = /@(?:media|container)\b[^{]*/g; // a query's lengths are breakpoints, not styles
 const HAIRLINE_PX = 2; // up to 2px: a border or outline width code keeps literal
@@ -61,7 +62,8 @@ function findLiterals(text, pattern) {
   });
 }
 
-/** Whether the design system declares a right-to-left direction. */
-const declaresRightToLeft = (project) => list(systemOf(project)?.frontMatter.directions).includes(RIGHT_TO_LEFT);
+/** Whether a locale of the design system is written right to left, as its language says. */
+const declaresRightToLeft = (project) =>
+  list(systemOf(project)?.frontMatter.locales).some((locale) => RIGHT_TO_LEFT_LANGUAGES.includes(locale.split(LOCALE_SEPARATOR)[0].toLowerCase()));
 
 module.exports = { PATTERNS, findLiterals, styled, painted, declaresRightToLeft };
