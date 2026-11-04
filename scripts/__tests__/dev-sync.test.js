@@ -206,7 +206,11 @@ test("the global install runs from HOME, never the checkout whose settings enabl
     recordingCli(source, 'fs.writeFileSync(path.join(process.env.HOME, "observed-cwd"), process.cwd());');
     const result = runSync(fakeBin, home, [], {}, source);
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(realpathSync(readFileSync(join(home, "observed-cwd"), "utf8").trim()), realpathSync(home));
+    // `.native` expands a Windows 8.3 short name (`RUNNER~1`), which bash's `cd "$HOME"` keeps.
+    assert.equal(
+      realpathSync.native(readFileSync(join(home, "observed-cwd"), "utf8").trim()),
+      realpathSync.native(home)
+    );
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
