@@ -93,13 +93,19 @@ function line({ file, line: at, rule, message }) {
   return `${file}:${at} ${rule} ${message}`;
 }
 
+/** The command as the shell hands it on: `'\''` back to `'`, and a backslash before `` ` `` `"` `\` `$` dropped. */
+function unescaped(command) {
+  return command.replace(/'\\''/gu, "'").replace(/\\([`"\\$])/gu, "$1");
+}
+
 /** The errors of one written file that stand on the lines this write produced. */
 function ownErrors(root, { file, chunks, quoted }) {
   const errors = lintFile(root, file).filter(({ severity }) => severity === "error");
   const text = fs.readFileSync(file, "utf8");
   if (quoted !== undefined) {
     const lines = text.split("\n");
-    return errors.filter(({ line: at }) => lines[at - 1].trim() !== "" && quoted.includes(lines[at - 1].trim()));
+    const sources = [quoted, unescaped(quoted)];
+    return errors.filter(({ line: at }) => lines[at - 1].trim() !== "" && sources.some((source) => source.includes(lines[at - 1].trim())));
   }
   if (chunks === null) return errors;
   const written = new Set(chunks.flatMap((chunk) => linesOf(text, chunk)));
