@@ -12,11 +12,11 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit",
+        "matcher": "Write|Edit|MultiEdit|Bash|Shell|bash|powershell",
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory-hook.js",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory-hook.cjs",
             "timeout": 5
           }
         ]

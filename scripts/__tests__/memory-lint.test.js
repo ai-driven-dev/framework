@@ -5,7 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/hooks/memory-lint.js");
+const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/hooks/memory-lint.cjs");
 const { lintFile, lintBank, RULES } = require(ENGINE);
 
 const MEMORY = "aidd_docs/memory";
@@ -85,6 +85,22 @@ test("M2: counts of things, dates and time words are errors", () => {
   ]) {
     assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
   }
+});
+
+test("each error message names its excerpt and its fix", () => {
+  const message = (text, files) => lint(text, files)[0].message;
+  assert.equal(message(`# T\n\n${words(26)}\n`), "prose line of 26 words, over 25: make it a table, a list or a heading");
+  assert.equal(message("# T\n\nWe have 41 commits.\n"), '"41 commits" goes stale: name the thing, not how many');
+  assert.equal(message("# T\n\nShipped 2026-01-02.\n"), '"2026-01-02" goes stale: state what is true, not when');
+  assert.equal(message("# T\n\nIt is Currently fine.\n"), '"Currently" goes stale: state what is true, not when');
+  assert.equal(message("# T\n\nA {{slot}} here.\n"), '"{{" unfinished: fill it or remove it');
+  assert.equal(message("# T\n\nDo TBD later.\n"), '"TBD" unfinished: fill it or remove it');
+  assert.equal(message("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "`src/gone.cfg` names nothing on disk: fix the path or remove it");
+});
+
+test("an excerpt over 40 characters is cut with an ellipsis", () => {
+  const long = "x".repeat(60);
+  assert.equal(lint(`# T\n\nSee \`src/${long}.cfg\`.\n`, { "src/here.cfg": "" })[0].message, `\`src/${"x".repeat(35)}…\` names nothing on disk: fix the path or remove it`);
 });
 
 test("M2: today, so far, a version, and a fence stay quiet", () => {

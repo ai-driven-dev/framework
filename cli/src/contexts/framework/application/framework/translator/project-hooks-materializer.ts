@@ -111,7 +111,7 @@ export class ProjectHooksMaterializer {
       const relativePath = format.scriptPath(dist.manifest.name, file.relativePath);
       if (previous?.scripts.has(relativePath) === true) continue;
       if (await this.fs.fileExists(join(projectRoot, relativePath))) {
-        throw new Error(`Cursor hook script '${relativePath}' is user-owned; install refused.`);
+        throw new Error(`Hook script '${relativePath}' is user-owned; install refused.`);
       }
     }
   }

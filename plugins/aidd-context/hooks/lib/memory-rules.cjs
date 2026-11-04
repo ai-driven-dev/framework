@@ -13,6 +13,7 @@ const WARNING = "warning";
 const PROSE_WORD_LIMIT = 25;
 const ITEM_WORD_LIMIT = 35;
 const FILE_WORD_LIMIT = 400;
+const EXCERPT_LIMIT = 40;
 const SENTENCE_WORD_FLOOR = 12;
 
 const FENCE = /^(?:```|~~~)/u;
@@ -41,6 +42,11 @@ const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/u;
 
 function problem(file, line, rule, severity, message) {
   return { file, line, rule, severity, message };
+}
+
+/** A quoted excerpt of the offending text, cut so one line stays short. */
+function excerpt(text) {
+  return text.length > EXCERPT_LIMIT ? `${text.slice(0, EXCERPT_LIMIT - 1)}…` : text;
 }
 
 function wordsIn(text) {
@@ -90,9 +96,10 @@ function readableLines(text) {
 function longProseLines({ file, text }) {
   return readableLines(text)
     .filter(({ line }) => line !== "" && !STRUCTURAL_LINE.test(line))
-    .filter(({ line }) => wordsIn(line).length > PROSE_WORD_LIMIT)
-    .map(({ number }) =>
-      problem(file, number, "M1", ERROR, `prose line over ${PROSE_WORD_LIMIT} words: make it a table, a list or a heading`)
+    .map(({ number, line }) => ({ number, count: wordsIn(line).length }))
+    .filter(({ count }) => count > PROSE_WORD_LIMIT)
+    .map(({ number, count }) =>
+      problem(file, number, "M1", ERROR, `prose line of ${count} words, over ${PROSE_WORD_LIMIT}: make it a table, a list or a heading`)
     );
 }
 
@@ -100,17 +107,21 @@ function volatileFacts({ file, text }) {
   const found = [];
   for (const { number, line } of readableLines(text)) {
     const prose = line.replace(INLINE_CODE, "");
-    if (COUNT_OF_THINGS.test(prose)) found.push(problem(file, number, "M2", ERROR, "a count of things goes stale: name the thing, not how many"));
-    else if (ISO_DATE.test(prose)) found.push(problem(file, number, "M2", ERROR, "a date goes stale: state what is true, not when"));
-    else if (TIME_WORDS.test(prose)) found.push(problem(file, number, "M2", ERROR, "a time word goes stale: state what is true, not when"));
+    const count = prose.match(COUNT_OF_THINGS);
+    const date = prose.match(ISO_DATE);
+    const time = prose.match(TIME_WORDS);
+    if (count) found.push(problem(file, number, "M2", ERROR, `"${excerpt(count[0])}" goes stale: name the thing, not how many`));
+    else if (date) found.push(problem(file, number, "M2", ERROR, `"${excerpt(date[0])}" goes stale: state what is true, not when`));
+    else if (time) found.push(problem(file, number, "M2", ERROR, `"${excerpt(time[0])}" goes stale: state what is true, not when`));
   }
   return found;
 }
 
 function unfinishedMarkers({ file, text }) {
   return readableLines(text)
-    .filter(({ line }) => line.includes(TEMPLATE_MARKER) || PLACEHOLDER.test(line))
-    .map(({ number }) => problem(file, number, "M3", ERROR, "an unfinished marker (template slot, TODO or TBD): fill it or remove it"));
+    .map(({ number, line }) => ({ number, marker: line.includes(TEMPLATE_MARKER) ? TEMPLATE_MARKER : line.match(PLACEHOLDER)?.[0] }))
+    .filter(({ marker }) => marker !== undefined)
+    .map(({ number, marker }) => problem(file, number, "M3", ERROR, `"${marker}" unfinished: fill it or remove it`));
 }
 
 /** Copied from `scripts/check-referenced-paths.js`: a plugin never links outside itself. */
@@ -128,7 +139,7 @@ function deadReferences({ file, text, exists, entries }) {
       // A `*.local.*` file is the reader's own and ignored by git: its absence is its normal state.
       if (/\.local\./u.test(token)) continue;
       if (!entries.has(token.split("/")[0])) continue;
-      if (!exists(token)) found.push(problem(file, number, "M4", ERROR, `\`${token}\` names nothing on disk`));
+      if (!exists(token)) found.push(problem(file, number, "M4", ERROR, `\`${excerpt(token)}\` names nothing on disk: fix the path or remove it`));
     }
   }
 
