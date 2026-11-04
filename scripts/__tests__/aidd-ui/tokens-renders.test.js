@@ -1,43 +1,27 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, generateStylesheet, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
+const { UI, PATHS, LIB, makeTmp, removeTmp, writeProject, generateStylesheet, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
-const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const tokens = require(path.join(LIB, "tokens.cjs"));
 const renders = require(path.join(LIB, "renders.cjs"));
 
-const TOKENS = `${UI}/tokens.json`;
-const SYSTEM = `${UI}/system.md`;
-const BUTTON = `${UI}/components/button.md`;
-const BUTTON_RENDER = `${UI}/components/button.html`;
-const DIALOG = `${UI}/components/dialog.md`;
-const DIALOG_RENDER = `${UI}/components/dialog.html`;
-const HOME = `${UI}/screens/home.md`;
-const HOME_RENDER = `${UI}/screens/home.html`;
-const STYLESHEET = `${UI}/tokens.css`;
+const { TOKENS, SYSTEM, BUTTON, BUTTON_RENDER, DIALOG, DIALOG_RENDER, HOME, HOME_RENDER, STYLESHEET, RESOLVER, DARK, DESKTOP } = PATHS;
 const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">\n';
-const RESOLVER = `${UI}/tokens.resolver.json`;
-const DARK = `${UI}/themes/dark.json`;
-const DESKTOP = `${UI}/breakpoints/desktop.json`;
 const INSERTED_LINE = 28; // the line before </body> in button.html
 
 let tmp;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-tokens-renders-"));
+  tmp = makeTmp("aidd-ui-tokens-renders-");
   writeProject(tmp);
 });
 
-afterEach(() => {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(fs.existsSync(tmp), false);
-});
+afterEach(() => removeTmp(tmp));
 
 /** Every problem both checks find, as `file: message`. */
 function problems() {

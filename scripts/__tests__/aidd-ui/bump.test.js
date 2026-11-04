@@ -1,39 +1,31 @@
 const assert = require("node:assert/strict");
-const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, HISTORY, writeProject, edit, put, record } = require("../fixtures/aidd-ui/project.js");
+const { UI, HISTORY, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit, put, record } = require("../fixtures/aidd-ui/project.js");
 
 // The bump command is driven as a subprocess, as the skill calls it, and judged by the engine's own
 // validator once the change it carries is made.
-const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/aidd-ui.cjs");
 const TASK = "aidd_docs/tasks/recolour";
 const REACHED = ["components/button", "components/dialog", "components/search-field", "history", "reviews/first-pass", "screens/home"].map((name) => `${UI}/${name}.md`);
 
 let tmp;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-bump-"));
+  tmp = makeTmp("aidd-ui-bump-");
   writeProject(tmp);
 });
 
-afterEach(() => {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(fs.existsSync(tmp), false);
-});
+afterEach(() => removeTmp(tmp));
 
-const run = (...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8" });
 const bump = (...args) => {
-  const done = run("bump", "--root", tmp, ...args);
+  const done = engine("bump", "--root", tmp, ...args);
   return { code: done.status, report: done.stdout ? JSON.parse(done.stdout) : null, err: done.stderr };
 };
 const change = (...extra) => bump("--task", TASK, "--change", "new action colour", ...extra);
 const read = (name) => fs.readFileSync(path.join(tmp, name), "utf8");
-const validate = () => ({ code: run("validate", tmp).status, out: run("validate", tmp).stdout.split("\n").filter(Boolean) });
 /** Every file of the project with its bytes, to prove a refusal wrote nothing. */
-const snapshot = (dir = tmp) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? snapshot(path.join(dir, entry.name)) : [[path.join(dir, entry.name), fs.readFileSync(path.join(dir, entry.name), "utf8")]]));
+const snapshot = () => filesUnder(tmp).map((file) => [file, fs.readFileSync(file, "utf8")]);
 
 describe("aidd-ui bump", () => {
   describe("a token change", () => {
@@ -80,7 +72,7 @@ describe("aidd-ui bump", () => {
       assert.ok(read(`${UI}/components/button.md`).includes("\nversion: 2\n"));
       assert.equal(read(HISTORY).split("| button | 2 |").length, 2);
       assert.equal(read(`${UI}/reviews/first-pass.md`).split("| home | default | 2 | pending | |").length, 2);
-      assert.equal(validate().code, 0);
+      assert.equal(validate(tmp).code, 0);
     });
 
     it("leaves an element already raised as breaking, and one a non-breaking change reaches again, as they were", () => {
@@ -213,11 +205,11 @@ describe("aidd-ui bump", () => {
 
     it("writes the first row of a new record, its version 1, and leaves the design system valid", () => {
       addLogo();
-      assert.equal(validate().code, 1);
+      assert.equal(validate(tmp).code, 1);
       const { code, report, err } = create("logo");
       assert.deepEqual([code, err, report], [0, "", { changed: [HISTORY] }]);
       assert.ok(read(HISTORY).includes(`| logo | 1 | created | no | ${TASK} |\n`));
-      assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
     it("writes the first publication of the system as 1.0.0, and builds history.md when there is none", () => {

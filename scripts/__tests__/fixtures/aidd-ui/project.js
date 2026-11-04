@@ -1,10 +1,15 @@
-const { execFileSync } = require("node:child_process");
+const assert = require("node:assert/strict");
+const { execFileSync, spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
-const HOOKS = path.resolve(__dirname, "../../../../plugins/aidd-ui/hooks/lib");
-const { load } = require(path.join(HOOKS, "project.cjs"));
-const tokensCheck = require(path.join(HOOKS, "tokens.cjs"));
+const HOOKS = path.resolve(__dirname, "../../../../plugins/aidd-ui/hooks");
+const LIB = path.join(HOOKS, "lib");
+const ENGINE = path.join(HOOKS, "aidd-ui.cjs");
+const HOOK = path.join(HOOKS, "ui-hook.cjs");
+const { load } = require(path.join(LIB, "project.cjs"));
+const tokensCheck = require(path.join(LIB, "tokens.cjs"));
 
 // One complete, valid aidd-ui project: every record kind, tokens, renders, and the code they
 // link to. Each validator test writes it, breaks one thing, and expects exactly one problem.
@@ -12,6 +17,28 @@ const tokensCheck = require(path.join(HOOKS, "tokens.cjs"));
 const UI = "aidd_docs/ui";
 
 const HISTORY = `${UI}/history.md`;
+
+/** The files of the valid project that more than one spec names. */
+const PATHS = {
+  SYSTEM: `${UI}/system.md`,
+  BRAND: `${UI}/brand.md`,
+  TOKENS: `${UI}/tokens.json`,
+  RESOLVER: `${UI}/tokens.resolver.json`,
+  STYLESHEET: `${UI}/tokens.css`,
+  DARK: `${UI}/themes/dark.json`,
+  DESKTOP: `${UI}/breakpoints/desktop.json`,
+  BUTTON: `${UI}/components/button.md`,
+  SEARCH: `${UI}/components/search-field.md`,
+  DIALOG: `${UI}/components/dialog.md`,
+  OLD: `${UI}/components/old-button.md`,
+  HOME: `${UI}/screens/home.md`,
+  JOURNEY: `${UI}/journeys/onboarding.md`,
+  ICON: `${UI}/assets/icon-search.md`,
+  REVIEW: `${UI}/reviews/first-pass.md`,
+  BUTTON_RENDER: `${UI}/components/button.html`,
+  DIALOG_RENDER: `${UI}/components/dialog.html`,
+  HOME_RENDER: `${UI}/screens/home.html`,
+};
 
 const row = (...cells) => `| ${cells.join(" | ")} |`;
 
@@ -284,11 +311,7 @@ function generateStylesheet(dir) {
 
 /** Writes the valid project under `dir`. */
 function writeProject(dir) {
-  for (const [name, content] of Object.entries(FILES)) {
-    const file = path.join(dir, name);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, content);
-  }
+  for (const [name, content] of Object.entries(FILES)) put(dir, name, content);
   generateStylesheet(dir);
 }
 
@@ -323,6 +346,30 @@ function put(dir, name, content) {
   fs.writeFileSync(file, content);
 }
 
+/** A new empty directory in the OS temp dir, its name starting with `prefix`. */
+const makeTmp = (prefix) => fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+
+/** Removes a directory made by `makeTmp`, and proves it is gone. */
+function removeTmp(dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.equal(fs.existsSync(dir), false);
+}
+
+/** Every file under `dir`, whole path. */
+const filesUnder = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? filesUnder(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
+
+/** The engine run as a subprocess from `cwd`, or from here. */
+const engineIn = (cwd, ...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8", cwd });
+const engine = (...args) => engineIn(undefined, ...args);
+
+const lines = (text) => text.split("\n").filter(Boolean);
+
+/** The `validate` command on `root`: its exit status, its lines and its stderr. */
+function validate(root) {
+  const run = engine("validate", root);
+  return { code: run.status, out: lines(run.stdout), err: run.stderr };
+}
+
 /** git in `dir` without the variables a commit hook exports, which would point it at the real repository. */
 const git = (dir, ...args) =>
   execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
@@ -338,4 +385,4 @@ function commitAll(dir) {
   git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");
 }
 
-module.exports = { UI, HISTORY, addHistory, writeProject, generateStylesheet, edit, editTokens, put, record, history, git, commitAll };
+module.exports = { UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, put, record, history, git, commitAll };

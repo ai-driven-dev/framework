@@ -4,32 +4,25 @@ const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach, mock } = require("node:test");
 const childProcess = require("node:child_process");
-const { UI, writeProject, edit, put, git, commitAll } = require("../fixtures/aidd-ui/project.js");
+const { PATHS, LIB, makeTmp, removeTmp, writeProject, edit, put, git, commitAll } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green. Link
 // mutations land on search-field: it owns no file and is not coded, so none orphans a file.
-const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const code = require(path.join(LIB, "code.cjs"));
 
-const SYSTEM = `${UI}/system.md`;
-const BUTTON = `${UI}/components/button.md`;
-const SEARCH = `${UI}/components/search-field.md`;
-const DIALOG = `${UI}/components/dialog.md`;
+const { SYSTEM, BUTTON, SEARCH, DIALOG } = PATHS;
 const SEARCH_CSS = "src/ui/SearchField.css";
 
 let tmp;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-code-"));
+  tmp = makeTmp("aidd-ui-code-");
   writeProject(tmp);
 });
 
-afterEach(() => {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(fs.existsSync(tmp), false);
-});
+afterEach(() => removeTmp(tmp));
 
 const problems = () => code.check(load(tmp)).map((problem) => `${problem.file}: ${problem.message}`);
 

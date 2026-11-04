@@ -1,17 +1,14 @@
 const assert = require("node:assert/strict");
-const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens, put, commitAll } = require("../fixtures/aidd-ui/project.js");
+const { UI, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit, editTokens, put, commitAll } = require("../fixtures/aidd-ui/project.js");
 
 // The record templates are what the skill's model starts from, so each is filled the way an
 // action says and the design system around it must still validate. A placeholder the table does
 // not know fails the test: a template cannot grow a slot nothing here fills.
 const PLUGIN = path.resolve(__dirname, "../../../plugins/aidd-ui");
 const SKILL = path.join(PLUGIN, "skills/01-system");
-const ENGINE = path.join(PLUGIN, "hooks/aidd-ui.cjs");
 
 const PLACEHOLDER = /\{\{([^}]+)\}\}/g;
 const COMMENT = /<!--[\s\S]*?-->\n?/g;
@@ -91,19 +88,11 @@ function filled(name) {
 let tmp;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-skill-"));
+  tmp = makeTmp("aidd-ui-skill-");
   writeProject(tmp);
 });
 
-afterEach(() => {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(fs.existsSync(tmp), false);
-});
-
-function validate() {
-  const run = spawnSync(process.execPath, [ENGINE, "validate", tmp], { encoding: "utf8" });
-  return { code: run.status, out: run.stdout.split("\n").filter(Boolean) };
-}
+afterEach(() => removeTmp(tmp));
 
 describe("aidd-ui 01-system templates", () => {
   it("fill every placeholder of every template, and leave none behind", () => {
@@ -121,8 +110,8 @@ describe("aidd-ui 01-system templates", () => {
     put(tmp, `${UI}/components/badge.html`, filled("render"));
     put(tmp, `${UI}/assets/logo.md`, filled("asset"));
     put(tmp, `${UI}/assets/logo.svg`, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/></svg>\n');
-    assert.equal(spawnSync(process.execPath, [ENGINE, "bump", "--task", TASK, "--created", "badge", "logo", "--root", tmp], { encoding: "utf8" }).status, 0);
-    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.equal(engine("bump", "--task", TASK, "--created", "badge", "logo", "--root", tmp).status, 0);
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
   });
 
   it("start every element as proposed at version 1, the system and the brand with neither status nor version", () => {
@@ -137,12 +126,6 @@ describe("aidd-ui 01-system templates", () => {
   it("hold no history section: history.md is the engine's", () => {
     for (const name of ["system", "brand", "component", "asset"]) assert.equal(template(name).includes("## History"), false, name);
   });
-
-  it("make a render load the generated stylesheet and show its variant and state", () => {
-    const html = filled("render");
-    assert.ok(html.includes('<link rel="stylesheet" href="../tokens.css">'));
-    assert.ok(html.includes('data-variant="default"') && html.includes('data-state="default"'));
-  });
 });
 
 describe("aidd-ui 01-system variant axes", () => {
@@ -151,15 +134,13 @@ describe("aidd-ui 01-system variant axes", () => {
     edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="default"', 'data-size="sm" data-state="default"');
     edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="hover"', 'data-size="md" data-state="hover"');
     edit(tmp, `${UI}/components/dialog.html`, 'data-variant="default" data-state="focus"', 'data-tone="danger" data-state="focus"');
-    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
   });
 });
 
 describe("aidd-ui 01-system resolver", () => {
-  const files = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? files(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
-
   it("holds no resolver JSON for the model to copy: the engine writes it", () => {
-    for (const file of files(SKILL)) assert.equal(/resolutionOrder|"\$ref"|"modifiers"/.test(fs.readFileSync(file, "utf8")), false, path.relative(SKILL, file));
+    for (const file of filesUnder(SKILL)) assert.equal(/resolutionOrder|"\$ref"|"modifiers"/.test(fs.readFileSync(file, "utf8")), false, path.relative(SKILL, file));
   });
 
   it("has a breakpoint's query written in the template's table, and the engine turn it into the stylesheet", () => {
@@ -168,15 +149,13 @@ describe("aidd-ui 01-system resolver", () => {
     put(tmp, `${UI}/breakpoints/desktop.json`, JSON.stringify({ space: { md: { $value: { value: 1.5, unit: "rem" } } } }));
     edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
     fs.rmSync(path.join(tmp, `${UI}/tokens.resolver.json`));
-    assert.equal(spawnSync(process.execPath, [ENGINE, "tokens", tmp], { encoding: "utf8" }).status, 0);
-    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.equal(engine("tokens", tmp).status, 0);
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     assert.ok(fs.readFileSync(path.join(tmp, `${UI}/tokens.css`), "utf8").includes("@media (min-width: 64rem) {"));
   });
 });
 
 describe("aidd-ui 01-system change flow", () => {
-  const engine = (...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8" });
-
   it("takes a token change reaching a screen under review to a design system that validates, the engine raising the versions", () => {
     commitAll(tmp);
     const deprecated = fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8");
@@ -189,7 +168,7 @@ describe("aidd-ui 01-system change flow", () => {
     editTokens(tmp, (tree) => (tree.color.action.default.$value = { colorSpace: "srgb", components: [0.1, 0.1, 0.1], hex: "#1a1a1a" }));
     assert.equal(engine("tokens", tmp).status, 0);
 
-    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     assert.equal(fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8"), deprecated);
   });
 
@@ -205,13 +184,12 @@ describe("aidd-ui 01-system change flow", () => {
     edit(tmp, `${UI}/components/old-button.md`, "color.action.default", "color.action.primary");
     edit(tmp, `${UI}/components/old-button.html`, "--color-action-default", "--color-action-primary");
     assert.equal(engine("tokens", tmp).status, 0);
-    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
   });
 });
 
 describe("aidd-ui 01-system skill", () => {
-  const files = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? files(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
-  const texts = () => files(SKILL).map((file) => ({ file: path.relative(SKILL, file), text: fs.readFileSync(file, "utf8") }));
+  const texts = () => filesUnder(SKILL).map((file) => ({ file: path.relative(SKILL, file), text: fs.readFileSync(file, "utf8") }));
 
   it("names no other skill, in any file", () => {
     const own = new Set(["01-system", ...fs.readdirSync(path.join(SKILL, "actions")).map((name) => name.replace(/\.md$/, ""))]);

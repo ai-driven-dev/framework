@@ -1,16 +1,12 @@
 const assert = require("node:assert/strict");
-const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, put, record } = require("../fixtures/aidd-ui/project.js");
+const { UI, LIB, makeTmp, removeTmp, engine, validate, put, record } = require("../fixtures/aidd-ui/project.js");
 const { WEB_CSS, MOBILE_TS } = require("../fixtures/aidd-ui/token-sources.js");
 
 // The extract command is driven as a subprocess, as the skill calls it. Its output is judged by the
 // engine itself: `tokens` then `validate` must find no token rule broken in what it wrote.
-const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/aidd-ui.cjs");
-const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { pathsOf } = require(path.join(LIB, "extract.cjs"));
 const { fromCss, fromNumber } = require(path.join(LIB, "values.cjs"));
 const { objectsOf } = require(path.join(LIB, "script.cjs"));
@@ -19,13 +15,10 @@ const { customProperty } = require(path.join(LIB, "css.cjs"));
 let tmp;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-extract-"));
+  tmp = makeTmp("aidd-ui-extract-");
 });
 
-afterEach(() => {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(fs.existsSync(tmp), false);
-});
+afterEach(() => removeTmp(tmp));
 
 /** Writes `system.md` for these settings and each token file of `files`; `tokens` are the ones it names. */
 function setup({ platforms = ["web"], themes = ["light", "dark"], breakpoints = ["mobile", "desktop"], widths = { desktop: "(min-width: 48rem)" }, roots = ["src"], tokens = ["src/tokens.css"], files = { "src/tokens.css": WEB_CSS } } = {}) {
@@ -42,17 +35,16 @@ function setup({ platforms = ["web"], themes = ["light", "dark"], breakpoints = 
   for (const [name, content] of Object.entries(files)) put(tmp, name, content);
 }
 
-const run = (...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8" });
 const extract = (...args) => {
-  const done = run("extract", "--root", tmp, ...args);
+  const done = engine("extract", "--root", tmp, ...args);
   return { code: done.status, report: done.stdout ? JSON.parse(done.stdout) : null, err: done.stderr };
 };
 const read = (name) => JSON.parse(fs.readFileSync(path.join(tmp, UI, name), "utf8"));
 const bytesOf = (names) => names.map((name) => fs.readFileSync(path.join(tmp, name), "utf8")).join("\n====\n");
 /** The token rules the engine finds broken after `tokens` has generated the stylesheet. */
 function tokenProblems() {
-  const generated = run("tokens", tmp);
-  const found = run("validate", tmp).stdout.split("\n").filter((line) => /\(T\d+\)/.test(line));
+  const generated = engine("tokens", tmp);
+  const found = validate(tmp).out.filter((line) => /\(T\d+\)/.test(line));
   return { generated: generated.status, found };
 }
 const leftNames = (report, why) => report.left.filter((each) => each.why.includes(why)).map((each) => each.name);
@@ -109,7 +101,7 @@ describe("aidd-ui extract", () => {
     it("writes the resolver the tokens command would write, from the same writer", () => {
       extract();
       const first = bytesOf([`${UI}/tokens.resolver.json`]);
-      run("tokens", tmp);
+      engine("tokens", tmp);
       assert.equal(bytesOf([`${UI}/tokens.resolver.json`]), first);
     });
 
@@ -154,7 +146,7 @@ describe("aidd-ui extract", () => {
 
     it("prints the usage and exits 2 for an argument it does not know", () => {
       setup();
-      const done = run("extract", "stray", "--root", tmp);
+      const done = engine("extract", "stray", "--root", tmp);
       assert.deepEqual([done.status, done.stderr], [2, "usage: node aidd-ui.cjs extract [--force] [--root <dir>]\n"]);
     });
   });

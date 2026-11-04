@@ -1,35 +1,28 @@
 const assert = require("node:assert/strict");
-const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, writeProject, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
+const { UI, PATHS, LIB, makeTmp, removeTmp, engine, engineIn, writeProject, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
 
 // The impact command is driven as a subprocess, as the skill calls it: its refs on the command
 // line, its report as JSON on stdout.
-const ENGINE = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/aidd-ui.cjs");
-const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { reached } = require(path.join(LIB, "graph.cjs"));
 
-const BUTTON = `${UI}/components/button.md`;
+const { BUTTON } = PATHS;
 
 let tmp;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-impact-"));
+  tmp = makeTmp("aidd-ui-impact-");
   writeProject(tmp);
 });
 
-afterEach(() => {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(fs.existsSync(tmp), false);
-});
+afterEach(() => removeTmp(tmp));
 
 /** The command's exit code, its stdout as JSON when it is some, and its stderr. */
 function impact(...args) {
-  const run = spawnSync(process.execPath, [ENGINE, "impact", ...args], { encoding: "utf8" });
+  const run = engine("impact", ...args);
   return { code: run.status, report: run.stdout ? JSON.parse(run.stdout) : null, out: run.stdout, err: run.stderr };
 }
 
@@ -257,7 +250,7 @@ describe("aidd-ui impact", () => {
     });
 
     it("defaults to the current directory when no --root is given", () => {
-      const run = spawnSync(process.execPath, [ENGINE, "impact", "dialog"], { cwd: tmp, encoding: "utf8" });
+      const run = engineIn(tmp, "impact", "dialog");
       assert.deepEqual(JSON.parse(run.stdout).screens, ["home"]);
     });
   });

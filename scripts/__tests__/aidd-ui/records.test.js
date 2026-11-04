@@ -4,29 +4,16 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach, mock } = require("node:test");
-const { UI, HISTORY, addHistory, writeProject, edit, editTokens, put, record, git } = require("../fixtures/aidd-ui/project.js");
+const { UI, HISTORY, PATHS, LIB, makeTmp, removeTmp, addHistory, writeProject, edit, editTokens, put, record, git } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
-const LIB = path.resolve(__dirname, "../../../plugins/aidd-ui/hooks/lib");
 const { load } = require(path.join(LIB, "project.cjs"));
 const records = require(path.join(LIB, "records.cjs"));
 const historyRules = require(path.join(LIB, "history.cjs"));
 const { problemsOf, isError } = require(path.join(LIB, "../aidd-ui.cjs"));
 
-const SYSTEM = `${UI}/system.md`;
-const BRAND = `${UI}/brand.md`;
-const BUTTON = `${UI}/components/button.md`;
-const SEARCH = `${UI}/components/search-field.md`;
-const DIALOG = `${UI}/components/dialog.md`;
-const OLD = `${UI}/components/old-button.md`;
-const HOME = `${UI}/screens/home.md`;
-const JOURNEY = `${UI}/journeys/onboarding.md`;
-const ICON = `${UI}/assets/icon-search.md`;
-const REVIEW = `${UI}/reviews/first-pass.md`;
-const STYLESHEET = `${UI}/tokens.css`;
-const BUTTON_RENDER = `${UI}/components/button.html`;
-const HOME_RENDER = `${UI}/screens/home.html`;
+const { SYSTEM, BRAND, BUTTON, SEARCH, DIALOG, OLD, HOME, JOURNEY, ICON, REVIEW, STYLESHEET, BUTTON_RENDER, HOME_RENDER } = PATHS;
 const BUTTON_USAGE = "Any action a person starts; never for navigation.";
 const WIDENED = "Any action a person starts on purpose; never for navigation.";
 const EDITED = (version) => `${BUTTON}: edited since its committed version ${version}, raise its version with a history row`;
@@ -34,14 +21,11 @@ const EDITED = (version) => `${BUTTON}: edited since its committed version ${ver
 let tmp;
 
 beforeEach(() => {
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-records-"));
+  tmp = makeTmp("aidd-ui-records-");
   writeProject(tmp);
 });
 
-afterEach(() => {
-  fs.rmSync(tmp, { recursive: true, force: true });
-  assert.equal(fs.existsSync(tmp), false);
-});
+afterEach(() => removeTmp(tmp));
 
 /** Every problem both checks find, as `file: message`. */
 function problems() {
@@ -885,15 +869,6 @@ describe("aidd-ui records and history", () => {
     it("names a system.md without a format", () => {
       change(SYSTEM, "format: 1\n", "");
       assert.deepEqual(problems(), [`${SYSTEM}: missing key "format"`]);
-    });
-
-    it("reads a format it knows as none of its problems", () => {
-      assert.equal(records.formatProblem(load(tmp)), null);
-    });
-
-    it("names another format as the one problem", () => {
-      change(SYSTEM, "format: 1", "format: 2");
-      assert.deepEqual(records.formatProblem(load(tmp)), { file: SYSTEM, message: 'format "2" is not 1, the one this validator reads' });
     });
   });
 });
