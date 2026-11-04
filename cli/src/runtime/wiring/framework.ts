@@ -105,6 +105,7 @@ import type { CredentialStore } from "../auth/ports/credential-store.js";
 import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
+import { checkInstallationId, ensureInstallationId } from "../filesystem/installation-identity.js";
 import { HttpClient } from "../http/http-client.js";
 import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
@@ -126,6 +127,8 @@ interface GlobalOptions {
 }
 
 interface Deps {
+  checkInstallationId: () => Promise<string | null>;
+  ensureInstallationId: () => Promise<string>;
   fs: FileReader & FileWriter & FileMerger;
   manifestRepo: ManifestRepository;
   /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
@@ -589,6 +592,8 @@ export async function createDeps(
   const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
   const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
   const deps: Deps = {
+    checkInstallationId: () => checkInstallationId(userConfigDir()),
+    ensureInstallationId: () => ensureInstallationId(userConfigDir()),
     validateRecipesUseCase: new ValidateRecipesUseCase(new RecipeFilesAdapter()),
     fs,
     manifestRepo,

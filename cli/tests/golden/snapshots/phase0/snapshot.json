@@ -55,6 +55,7 @@
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/hooks/session-start.js",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/skills/commit/SKILL.md",
       "cache/built/<VERSION>/aidd-framework/claude/plugins/aidd-test/skills/hello.md",
+      "installation/id.json",
       "manifest.json",
       "marketplaces.json",
       "references.json"
@@ -704,6 +705,7 @@
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/hooks/session-start.js",
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/skills/commit/SKILL.md",
       "cache/built/<VERSION>/aidd-framework/cursor/plugins/aidd-test/skills/hello.md",
+      "installation/id.json",
       "manifest.json",
       "marketplaces.json",
       "references.json"
@@ -827,7 +829,7 @@
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": null,
-    "userConfigFiles": ["manifest.json", "marketplaces.json"],
+    "userConfigFiles": ["installation/id.json", "manifest.json", "marketplaces.json"],
     "userManifest": {
       "version": 8,
       "tools": {
@@ -847,7 +849,7 @@
     "stderr": "",
     "filesWritten": [],
     "manifest": null,
-    "userConfigFiles": ["marketplaces.json"],
+    "userConfigFiles": ["installation/id.json", "marketplaces.json"],
     "userManifest": null
   },
   {

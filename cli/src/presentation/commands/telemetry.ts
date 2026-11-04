@@ -25,6 +25,7 @@ import {
 } from "../../contexts/telemetry/domain/report/usage-report.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage-record.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
+import { finishInstallationId } from "../../runtime/filesystem/installation-identity.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
 import {
@@ -248,7 +249,11 @@ export function registerTelemetryCommand(program: Command): void {
           );
           process.exit(1);
         }
+        await deps.checkInstallationId();
         const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot, choice);
+        if (result.status === "on") {
+          await finishInstallationId(deps.ensureInstallationId, "Measurement is on");
+        }
         printOnResult(output, result);
         if (result.status === "refused") process.exit(1);
       });

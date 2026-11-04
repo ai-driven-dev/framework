@@ -7,6 +7,12 @@ import {
   OTEL_CONFIGS,
   OTEL_ENDPOINTS,
 } from "../../contexts/telemetry/infrastructure/otel/settings.js";
+import {
+  checkInstallationId,
+  ensureInstallationId,
+  finishInstallationId,
+} from "../filesystem/installation-identity.js";
+import { userConfigDirOf } from "../user-config-dir.js";
 
 export const otelOptions = {
   configs: OTEL_CONFIGS,
@@ -14,11 +20,16 @@ export const otelOptions = {
   launchConfigs: [OPENCODE_CONFIG_ID],
 };
 
-export function configureOtel(
+export async function configureOtel(
   config: (typeof OTEL_CONFIGS)[number],
   endpoint: (typeof OTEL_ENDPOINTS)[number]
 ) {
-  return initializeOtel(config, endpoint, { home: homedir(), env: process.env });
+  const home = homedir();
+  const directory = userConfigDirOf(process.env, home);
+  if (endpoint !== "prod") await checkInstallationId(directory);
+  const result = await initializeOtel(config, endpoint, { home, env: process.env });
+  await finishInstallationId(() => ensureInstallationId(directory), "OTLP configuration completed");
+  return result;
 }
 
 export function launchOtel(args: readonly string[]) {

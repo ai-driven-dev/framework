@@ -19,9 +19,13 @@ const confirm = vi.fn();
 const select = vi.fn();
 const input = vi.fn();
 const propose = vi.fn();
+const ensureInstallationId = vi.fn();
+const checkInstallationId = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
+    ensureInstallationId,
+    checkInstallationId,
     prompter: { confirm, select, input },
     telemetry: {
       telemetryOnUseCase: { execute: turnOn },
@@ -434,6 +438,7 @@ describe("aidd telemetry on", () => {
   it("turns measurement on in the directory it was run from, without asking, with --yes and a choice", async () => {
     expect(await run("on", "--yes", "--anonymous")).toBeNull();
     expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
+    expect(ensureInstallationId).toHaveBeenCalledOnce();
     expect(confirm).not.toHaveBeenCalled();
     expect(stdout()).toContain("Measurement is on");
   });
@@ -455,6 +460,7 @@ describe("aidd telemetry on", () => {
     expect(await run("on", "--yes")).toBe(1);
     expect(turnOn).not.toHaveBeenCalled();
     expect(propose).not.toHaveBeenCalled();
+    expect(ensureInstallationId).not.toHaveBeenCalled();
     expect(stderr()).toContain("--as <id>");
     expect(stderr()).toContain("--anonymous");
   });
@@ -584,6 +590,16 @@ describe("aidd telemetry on", () => {
     turnOn.mockResolvedValue({ status: "refused", reason: "identity-set" });
     expect(await run("on", "--yes", "--anonymous")).toBe(1);
     expect(stderr()).toContain("aidd telemetry identity --off");
+    expect(ensureInstallationId).not.toHaveBeenCalled();
+  });
+
+  it("reports that measurement is on if saving the installation ID fails afterward", async () => {
+    ensureInstallationId.mockRejectedValueOnce(new Error("disk full"));
+    expect(await run("on", "--yes", "--anonymous")).toBe(1);
+    expect(turnOn).toHaveBeenCalled();
+    expect(stderr()).toContain(
+      "Measurement is on, but the installation ID could not be saved: disk full"
+    );
   });
 });
 
