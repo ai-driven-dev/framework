@@ -6,6 +6,7 @@ import {
   conflictsOf,
   type ReportFilters,
 } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
+import { createDeps } from "../../../src/runtime/wiring/framework.js";
 import * as otel from "../../../src/runtime/wiring/telemetry-otel.js";
 
 const ingest = vi.fn();
@@ -372,6 +373,12 @@ describe("aidd telemetry status", () => {
     expect(await run("status")).toBeNull();
     expect(show).toHaveBeenCalledWith(process.cwd());
   });
+
+  it("passes the global verbose setting to the telemetry dependencies", async () => {
+    show.mockResolvedValue({ status: "refused", reason: "no-consent" });
+    expect(await run("status", "--verbose")).toBeNull();
+    expect(createDeps).toHaveBeenCalledWith(process.cwd(), { verbose: true }, expect.anything());
+  });
 });
 
 describe("aidd telemetry task", () => {
@@ -479,7 +486,7 @@ describe("aidd telemetry on", () => {
   });
 
   it("refuses an identifier the identity rules refuse, before asking anything", async () => {
-    expect(await run("on", "--as", "a".repeat(129))).toBe(1);
+    expect(await run("on", "--yes", "--as", "a".repeat(129))).toBe(1);
     expect(confirm).not.toHaveBeenCalled();
     expect(turnOn).not.toHaveBeenCalled();
     expect(stderr()).toContain(

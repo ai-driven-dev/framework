@@ -2,12 +2,13 @@ import { appendFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/pro
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it as test } from "vitest";
 import {
   selectTransfers,
   syncOtel,
 } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync.js";
 
+const it = test.skipIf(process.platform === "win32");
 const attr = (key: string, value: string) => ({ key, value: { stringValue: value } });
 const record = (session: string, event: string) => ({
   timeUnixNano: "1793763900000000000",
@@ -31,7 +32,7 @@ describe("OTLP capture sync", () => {
     server = undefined;
   });
 
-  it("retains numeric metric data but excludes exemplars and unknown properties", () => {
+  test("retains numeric metric data but excludes exemplars and unknown properties", () => {
     const source = JSON.stringify({
       signal: "metrics",
       payload: {
@@ -147,7 +148,7 @@ describe("OTLP capture sync", () => {
     expect(await readFile(file, "utf8")).toBe(before);
   });
 
-  it("refuses a non-loopback destination before reading capture or sending credentials", async () => {
+  test("refuses a non-loopback destination before reading capture or sending credentials", async () => {
     await expect(
       syncOtel(
         {

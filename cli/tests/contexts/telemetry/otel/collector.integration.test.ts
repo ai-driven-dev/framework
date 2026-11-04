@@ -3,9 +3,10 @@ import { Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
-import { expect, it, vi } from "vitest";
+import { expect, it as test, vi } from "vitest";
 import { startOtelCollector } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/collect.js";
 
+const it = test.skipIf(process.platform === "win32");
 const TOKEN = "example-private-collector-token";
 
 async function seedToken(home: string): Promise<void> {
@@ -134,6 +135,17 @@ it("serializes concurrent appends into complete records", async () => {
     ]);
   } finally {
     await collector.close();
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test.runIf(process.platform === "win32")("clearly refuses collection on Windows", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-collector-windows-"));
+  try {
+    await expect(startOtelCollector({ home, port: 0 })).rejects.toThrow(
+      "OTLP collection requires private POSIX files"
+    );
+  } finally {
     await rm(home, { recursive: true, force: true });
   }
 });

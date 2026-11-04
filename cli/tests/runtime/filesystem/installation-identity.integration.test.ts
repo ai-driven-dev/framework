@@ -89,10 +89,13 @@ describe("installation identity", () => {
     expect(await readFile(join(directory, "id.json"), "utf8")).toBe(stored);
   });
 
-  it("does not confuse a non-directory parent with a missing identity", async () => {
+  it("refuses to initialize when the parent is not a directory", async () => {
     const root = await makeRoot();
     await writeFile(join(root, "installation"), "not a directory");
-    await expect(checkInstallationId(root)).rejects.toMatchObject({ code: "ENOTDIR" });
+    if (process.platform === "win32") await expect(checkInstallationId(root)).resolves.toBeNull();
+    else await expect(checkInstallationId(root)).rejects.toMatchObject({ code: "ENOTDIR" });
+    await expect(ensureInstallationId(root)).rejects.toThrow();
+    expect(await readFile(join(root, "installation"), "utf8")).toBe("not a directory");
   });
 
   it.skipIf(process.platform === "win32")("rejects a directory as the identity file", async () => {

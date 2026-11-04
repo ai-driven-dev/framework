@@ -2,9 +2,10 @@ import { appendFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "no
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it as test } from "vitest";
 import { syncAllOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync-all.js";
 
+const it = test.skipIf(process.platform === "win32");
 const attribute = (key: string, value: string) => ({ key, value: { stringValue: value } });
 function line(session: string) {
   return `${JSON.stringify({

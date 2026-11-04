@@ -38,6 +38,8 @@ The examples are fictional. `C` is Claude Code, `X` is Codex, `O1` is OpenCode 1
 
 ## Local Gouvernail sync
 
+Local OTLP collection and sync require private POSIX files and are not supported on Windows.
+
 With the local OTLP capture already running, start one process per configured provider:
 
 ```sh
