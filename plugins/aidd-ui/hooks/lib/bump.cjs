@@ -152,7 +152,7 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
     const held = fm(record).status === STATUS_DEPRECATED;
     const current = project.history.find((row) => row.Id === id && row.Version === fm(record).version);
     if (held && !followed.has(id)) left.push({ id, why: STATUS_DEPRECATED });
-    else if (current?.Task === folder) {
+    else if (current?.Task === folder && !current.Fingerprint) { // a sealed version is never edited, even in its own task
       if (!breaking || current.Breaking === BREAKING) left.push({ id, why: ALREADY_RAISED });
       else {
         const { lines, end } = historyOf();

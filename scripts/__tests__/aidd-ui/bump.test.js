@@ -87,6 +87,15 @@ describe("aidd-ui bump", () => {
       assert.equal(read(HISTORY), before);
     });
 
+    it("raises again an element this task raised and the user then validated, so its sealed version is never edited", () => {
+      change("color.action.default");
+      assert.equal(engine("publish", "--root", tmp, "button").status, 0);
+      const again = bump("--task", TASK, "--change", "darker still", "button");
+      assert.ok(again.report.changed.includes(`${UI}/components/button.md`));
+      assert.ok(read(`${UI}/components/button.md`).includes("version: 3"));
+      assert.ok(read(HISTORY).includes("| button | 3 | darker still | no | aidd_docs/tasks/recolour |"));
+    });
+
     it("keeps the line ends of a row it turns to breaking", () => {
       change("color.action.default");
       fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).replace(/\n/g, "\r\n"));
