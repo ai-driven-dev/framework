@@ -48,4 +48,5 @@ A theme, platform or breakpoint added or removed changes the fingerprint of ever
 | T6, resolver missing | `tokens` ran |
 | T10, `tokens.css` missing or stale | `tokens` ran |
 | H1, record without a row in `history.md` | `bump --created` ran |
+| C4, `code-debt.json` missing | `bump --created system` ran |
 | V1, record without render | its render is written |
