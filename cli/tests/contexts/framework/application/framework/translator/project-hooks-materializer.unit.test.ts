@@ -304,7 +304,12 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
       lint: { Stop: [{ command: "./lint.sh" }] },
       [PLUGIN_NAME]: {
         SessionStart: [
-          { type: "command", command: `cd .. && node ./.agents/hooks/${PLUGIN_NAME}/pre.js` },
+          {
+            type: "command",
+            command: expect.stringContaining(
+              Buffer.from(`node ./.agents/hooks/${PLUGIN_NAME}/pre.js`).toString("base64")
+            ),
+          },
         ],
       },
     });

@@ -1948,7 +1948,7 @@
     ".kilo/agents/aidd-dev-reviewer.md": "58b25536395be2be05f14a6213b667011dd16f94fca689cedfc46cda7438e2b9"
   },
   "antigravity:flat": {
-    ".agents/hooks.json": "d0e9c0b5770709182a2b8769fbc93a510047d3f6fe85066bb2dc2afb51f4dd51",
+    ".agents/hooks.json": "1fab9aa1297d10d2718f926708be5c45b0b644d846d40c9f74dc83c4fe4b8d36",
     ".agents/skills/aidd-vcs-04-issue-create/SKILL.md": "3983ed1c71124786fdf737ec5447637a31b1cc146eff43003978cec50c2ddc67",
     ".agents/skills/aidd-vcs-04-issue-create/evals/scenarios.json": "d113c62aae4867e425737948c39c9f687f56c3d37234eca345a2f65f1a234c30",
     ".agents/skills/aidd-vcs-04-issue-create/assets/CONTRIBUTING.md": "1372c7512c02c26e21643ae523a98d7c90ff92c03633532a8c417b4ca8d9e75f",
