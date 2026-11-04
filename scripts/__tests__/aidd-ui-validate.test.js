@@ -200,6 +200,67 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
+    describe("the resolver", () => {
+      const RESOLVER = `${UI}/tokens.resolver.json`;
+      const resolverOf = () => JSON.parse(fs.readFileSync(path.join(tmp, RESOLVER), "utf8"));
+      // The fixture's own resolver is what system.md and its context files imply: the engine must give it back.
+      const held = () => {
+        const resolver = resolverOf();
+        fs.rmSync(path.join(tmp, RESOLVER));
+        return resolver;
+      };
+
+      it("writes the resolver system.md and the context files imply, before the stylesheet", () => {
+        const expected = held();
+        fs.rmSync(path.join(tmp, STYLESHEET));
+        assert.deepEqual(generate(tmp).out, [STYLESHEET]);
+        assert.deepEqual(resolverOf(), expected);
+        assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+      });
+
+      it("takes a breakpoint's media query from the Query column of system.md", () => {
+        held();
+        edit(tmp, `${UI}/system.md`, "(min-width: 64rem)", "(min-width: 80rem)");
+        assert.equal(generate(tmp).code, 0);
+        assert.equal(resolverOf().modifiers.breakpoint.$extensions["dev.ai-driven.media"].desktop, "(min-width: 80rem)");
+        assert.ok(fs.readFileSync(path.join(tmp, STYLESHEET), "utf8").includes("@media (min-width: 80rem) {"));
+      });
+
+      it("rewrites a resolver that no longer matches the context files", () => {
+        fs.rmSync(path.join(tmp, UI, "themes/dark.json"));
+        fs.writeFileSync(path.join(tmp, UI, "breakpoints/desktop.json"), "{}\n");
+        generate(tmp);
+        assert.deepEqual(resolverOf().modifiers.theme.contexts, { light: [], dark: [] });
+      });
+
+      it("writes a platform modifier only once a platform other than the first has a file", () => {
+        edit(tmp, `${UI}/system.md`, "platforms: [web]", "platforms: [web, mobile]");
+        edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [web=src/ui, mobile=src/mobile]");
+        edit(tmp, `${UI}/components/dialog.md`, "code: package", "code: web=package");
+        generate(tmp);
+        assert.equal(resolverOf().modifiers.platform, undefined);
+        fs.mkdirSync(path.join(tmp, UI, "platforms"));
+        fs.writeFileSync(path.join(tmp, UI, "platforms/mobile.json"), JSON.stringify({ border: { thin: { $value: { value: 0.125, unit: "rem" } } } }));
+        generate(tmp);
+        assert.deepEqual(resolverOf().modifiers.platform, { default: "web", contexts: { web: [], mobile: [{ $ref: "platforms/mobile.json" }] } });
+        assert.deepEqual(resolverOf().resolutionOrder.map((step) => step.$ref), ["#/sets/base", "#/modifiers/theme", "#/modifiers/platform", "#/modifiers/breakpoint"]);
+      });
+
+      it("writes none while one theme and no context file ask for none", () => {
+        held();
+        edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
+        fs.rmSync(path.join(tmp, UI, "themes"), { recursive: true });
+        fs.rmSync(path.join(tmp, UI, "breakpoints"), { recursive: true });
+        assert.equal(generate(tmp).code, 0);
+        assert.equal(fs.existsSync(path.join(tmp, RESOLVER)), false);
+      });
+
+      it("names a breakpoint file whose row has no query, and leaves the fix to system.md", () => {
+        edit(tmp, `${UI}/system.md`, "| desktop | (min-width: 64rem) |", "| desktop | |");
+        assert.deepEqual(generate(tmp).out, [`✗ ${RESOLVER}: context "desktop" has no media string under dev.ai-driven.media: give it a Query in system.md, then run the engine's tokens command (T6)`]);
+      });
+    });
+
     it("writes nothing, names the error and exits 1 while the tokens have one", () => {
       fs.rmSync(path.join(tmp, STYLESHEET));
       editTokens(tmp, (tree) => (tree.space.md.$value = { value: 1, unit: "em" }));

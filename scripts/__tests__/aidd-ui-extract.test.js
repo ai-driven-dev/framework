@@ -29,7 +29,7 @@ afterEach(() => {
 });
 
 /** Writes `system.md` for these settings and each token file of `files`; `tokens` are the ones it names. */
-function setup({ platforms = ["web"], themes = ["light", "dark"], breakpoints = ["mobile", "desktop"], widths = { desktop: "48rem and up" }, roots = ["src"], tokens = ["src/tokens.css"], files = { "src/tokens.css": WEB_CSS } } = {}) {
+function setup({ platforms = ["web"], themes = ["light", "dark"], breakpoints = ["mobile", "desktop"], widths = { desktop: "(min-width: 48rem)" }, roots = ["src"], tokens = ["src/tokens.css"], files = { "src/tokens.css": WEB_CSS } } = {}) {
   const rows = breakpoints.map((name, at) => `| ${name} | ${widths[name] ?? (at === 0 ? "below the next" : "")} |`);
   put(
     tmp,
@@ -37,7 +37,7 @@ function setup({ platforms = ["web"], themes = ["light", "dark"], breakpoints = 
     record(
       ["id: system", "kind: system", "status: proposed", "version: 1.0.0", "format: 1", `platforms: [${platforms.join(", ")}]`, `breakpoints: [${breakpoints.join(", ")}]`, `themes: [${themes.join(", ")}]`, "locales: [en]", "directions: [ltr]", "primitives: []", `code-roots: [${roots.join(", ")}]`, `code-tokens: [${tokens.join(", ")}]`, "ignore: []", "libraries: []"],
       "# Design system",
-      `## Breakpoints\n\n| Name | Width |\n| --- | --- |\n${rows.join("\n")}`,
+      `## Breakpoints\n\n| Name | Query |\n| --- | --- |\n${rows.join("\n")}`,
       history(FIRST_ROW)
     )
   );
@@ -106,6 +106,13 @@ describe("aidd-ui extract", () => {
         },
         resolutionOrder: [{ $ref: "#/sets/base" }, { $ref: "#/modifiers/theme" }, { $ref: "#/modifiers/breakpoint" }],
       });
+    });
+
+    it("writes the resolver the tokens command would write, from the same writer", () => {
+      extract();
+      const first = bytesOf([`${UI}/tokens.resolver.json`]);
+      run("tokens", tmp);
+      assert.equal(bytesOf([`${UI}/tokens.resolver.json`]), first);
     });
 
     it("leaves a design system whose tokens generate and break no token rule, every source name in the stylesheet", () => {

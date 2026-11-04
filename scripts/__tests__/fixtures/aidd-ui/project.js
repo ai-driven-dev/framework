@@ -43,7 +43,7 @@ const SYSTEM = record(
     "libraries: [@radix-ui/react-dialog]",
   ],
   "# Design system",
-  "## Breakpoints\n\n| Name | Width |\n| --- | --- |\n| mobile | below 64rem |\n| desktop | 64rem and up |",
+  "## Breakpoints\n\n| Name | Query |\n| --- | --- |\n| mobile | |\n| desktop | (min-width: 64rem) |",
   history(["1.0.0", "first system", "no", "aidd_docs/tasks/ds-init"], ["2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"])
 );
 

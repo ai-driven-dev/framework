@@ -7,22 +7,20 @@ const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf } = require("./project.cjs");
+const { RESOLVER_FILE, RESOLVER_VERSION, MEDIA_EXTENSION, MIN_THEMES_FOR_MODIFIER, resolverOfProject } = require("./resolver.cjs");
 const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 
 const RESERVED_KEYS = ["$value", "$type", "$description", "$extensions", "$deprecated", "$extends", "$schema"];
 const ROOT_KEY = "$root"; // a stated limit: a group's own token is a named child here
 const PROPERTY_PREFIX = "$";
 const PATH_SEPARATOR = ".";
-const RESOLVER_FILE = "tokens.resolver.json";
 const CSS_FILE = "tokens.css";
-const RESOLVER_VERSION = "2025.10";
 const THEME_MODIFIER = "theme";
 const PLATFORM_MODIFIER = "platform";
 const BREAKPOINT_MODIFIER = "breakpoint";
-const MEDIA_EXTENSION = "dev.ai-driven.media"; // a breakpoint's media query, verbatim: DTCG has no place for one
-const MIN_THEMES_FOR_RESOLVER = 2;
 const orderRef = (modifier) => `#/modifiers/${modifier}`;
 const MISSING = "missing";
+const QUERY = "Query";
 const NOT_JSON = "not JSON";
 
 const PRIMITIVE_TYPES = ["color", "dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "number"];
@@ -247,7 +245,7 @@ function resolverBaseProblems(resolver, project, file) {
  * whose modifier is optional. `names` are those system.md declares, the first being the base. */
 const themeKind = (project) => {
   const names = list(systemOf(project)?.frontMatter.themes);
-  return { modifier: THEME_MODIFIER, names, required: names.length >= MIN_THEMES_FOR_RESOLVER, region: "themed" };
+  return { modifier: THEME_MODIFIER, names, required: names.length >= MIN_THEMES_FOR_MODIFIER, region: "themed" };
 };
 const platformKind = (project) => ({ modifier: PLATFORM_MODIFIER, names: list(systemOf(project)?.frontMatter.platforms), required: false, region: "platform" });
 
@@ -300,7 +298,7 @@ function breakpointContexts(resolver, breakpoints, file) {
       continue;
     }
     const media = queries[breakpoint];
-    if (typeof media !== "string" || !media.trim()) problems.push(at(`context "${breakpoint}" has no media string under ${MEDIA_EXTENSION}`));
+    if (typeof media !== "string" || !media.trim()) problems.push(at(`context "${breakpoint}" has no media string under ${MEDIA_EXTENSION}: give it a ${QUERY} in system.md, then run the engine's tokens command`));
     contexts.push({ breakpoint, media, files: contextFiles(breakpoint, sources, file, problems) });
   }
   return { problems, contexts };
@@ -339,7 +337,7 @@ function redefinitionProblems(tree, project, owner, file) {
 function resolverProblems(tree, project) {
   const file = resolverFileOf(project);
   const resolver = readJson(project, file);
-  if (resolver.problem === MISSING && !themeKind(project).required) return [];
+  if (resolver.problem === MISSING) return resolverOfProject(project) === null ? [] : [{ file, message: `${MISSING}, generate it ${REGENERATE}` }];
   if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem }] : [];
   const kinds = [themeKind(project), platformKind(project)].map((kind) => ({ ...kind, ...namedContexts(resolver.value, kind, file) }));
   const breakpoints = breakpointContexts(resolver.value, list(systemOf(project)?.frontMatter.breakpoints), file);
@@ -540,4 +538,4 @@ function resolvedValues(project) {
  * itself when it names none. */
 const tokenNameOf = (project, ref) => namesByProperty(read(project)).get(ref) ?? ref;
 
-module.exports = { check, blockers, generate, citations, resolvedValues, tokenNameOf, cssNames, cssFileOf, RESOLVER_FILE, RESOLVER_VERSION, MEDIA_EXTENSION, MODIFIERS: { theme: THEME_MODIFIER, platform: PLATFORM_MODIFIER, breakpoint: BREAKPOINT_MODIFIER } };
+module.exports = { check, blockers, generate, citations, resolvedValues, tokenNameOf, cssNames, cssFileOf };

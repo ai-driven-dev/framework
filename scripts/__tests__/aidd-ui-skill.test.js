@@ -30,7 +30,7 @@ const FILLS = {
     "paths no record links": "src/ui/vendor",
     "component packages used": "@radix-ui/react-dialog",
     "breakpoint name": "mobile",
-    "the widths it covers": "below 64rem",
+    "its media query, empty for the first": "",
     "task folder": TASK,
   },
   brand: {
@@ -156,34 +156,22 @@ describe("aidd-ui 01-system variant axes", () => {
   });
 });
 
-describe("aidd-ui 01-system breakpoints", () => {
-  it("gives an example of a resolver for breakpoints alone that validates as written", () => {
-    const steps = fs.readFileSync(path.join(SKILL, "references/tokens.md"), "utf8");
-    const [resolver] = steps.match(/\{"version": "2025\.10"[^`]*"dev\.ai-driven\.media"[^`]*\}/);
-    const [file] = steps.match(/\{"space": [^`]*\}/);
-    put(tmp, `${UI}/tokens.resolver.json`, resolver);
-    assert.equal(Object.hasOwn(JSON.parse(file).space.md, "$type"), false);
-    put(tmp, `${UI}/breakpoints/desktop.json`, file);
+describe("aidd-ui 01-system resolver", () => {
+  const files = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? files(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
+
+  it("holds no resolver JSON for the model to copy: the engine writes it", () => {
+    for (const file of files(SKILL)) assert.equal(/resolutionOrder|"\$ref"|"modifiers"/.test(fs.readFileSync(file, "utf8")), false, path.relative(SKILL, file));
+  });
+
+  it("has a breakpoint's query written in the template's table, and the engine turn it into the stylesheet", () => {
+    const template = fs.readFileSync(path.join(SKILL, "assets/system.md"), "utf8");
+    assert.ok(template.includes("| Name | Query |"));
+    put(tmp, `${UI}/breakpoints/desktop.json`, JSON.stringify({ space: { md: { $value: { value: 1.5, unit: "rem" } } } }));
     edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
+    fs.rmSync(path.join(tmp, `${UI}/tokens.resolver.json`));
     assert.equal(spawnSync(process.execPath, [ENGINE, "tokens", tmp], { encoding: "utf8" }).status, 0);
     assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
     assert.ok(fs.readFileSync(path.join(tmp, `${UI}/tokens.css`), "utf8").includes("@media (min-width: 64rem) {"));
-  });
-});
-
-describe("aidd-ui 01-system platforms", () => {
-  it("gives an example of a resolver for platforms that validates as written, among platform roots and links", () => {
-    const steps = fs.readFileSync(path.join(SKILL, "references/tokens.md"), "utf8");
-    const [resolver] = steps.match(/\{"version": "2025\.10"[^`]*"platform"[^`]*\}/);
-    put(tmp, `${UI}/tokens.resolver.json`, resolver);
-    put(tmp, `${UI}/platforms/mobile.json`, JSON.stringify({ border: { thin: { $type: "dimension", $value: { value: 0.125, unit: "rem" } } } }));
-    edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
-    edit(tmp, `${UI}/system.md`, "platforms: [web]", "platforms: [web, mobile]");
-    edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [web=src/ui, mobile=src/mobile]");
-    edit(tmp, `${UI}/components/dialog.md`, "code: package", "code: web=package");
-    assert.equal(spawnSync(process.execPath, [ENGINE, "tokens", tmp], { encoding: "utf8" }).status, 0);
-    assert.deepEqual(validate(), { code: 0, out: ["VALID"] });
-    assert.ok(fs.readFileSync(path.join(tmp, `${UI}/tokens.css`), "utf8").includes('[data-platform="mobile"] {'));
   });
 });
 

@@ -189,11 +189,12 @@ describe("aidd-ui tokens and renders", () => {
 
     it("names a missing resolver when system.md declares more than one theme", () => {
       fs.rmSync(path.join(tmp, RESOLVER));
-      assert.deepEqual(problems(), [`${RESOLVER}: missing`]);
+      assert.deepEqual(problems(), [`${RESOLVER}: missing, generate it with the engine's tokens command`]);
     });
 
-    it("needs no resolver for one theme", () => {
+    it("needs no resolver for one theme and no other context file", () => {
       fs.rmSync(path.join(tmp, RESOLVER));
+      fs.rmSync(path.join(tmp, UI, "breakpoints"), { recursive: true });
       edit(tmp, SYSTEM, "themes: [light, dark]", "themes: [light]");
       generateStylesheet(tmp);
       assert.deepEqual(problems(), []);
@@ -270,6 +271,7 @@ describe("aidd-ui tokens and renders", () => {
   describe("T6 breakpoints", () => {
     const modifier = (resolver) => resolver.modifiers.breakpoint;
     const media = (resolver) => modifier(resolver).$extensions["dev.ai-driven.media"];
+    const NO_QUERY = 'context "desktop" has no media string under dev.ai-driven.media: give it a Query in system.md, then run the engine\'s tokens command';
 
     const resolverCases = [
       ["a modifier without contexts", (r) => delete modifier(r).contexts, 'no "breakpoint" modifier with contexts'],
@@ -280,8 +282,8 @@ describe("aidd-ui tokens and renders", () => {
       ["a default context listing a source its block would never carry", (r) => modifier(r).contexts.mobile.push({ $ref: "breakpoints/desktop.json" }), 'context "mobile" is the default, held by tokens.json: it lists no source'],
       ["a media query for the default context", (r) => (media(r).mobile = "(max-width: 10rem)"), 'dev.ai-driven.media "mobile" names no context outside the default'],
       ["a media query for no context", (r) => (media(r).tablet = "(min-width: 40rem)"), 'dev.ai-driven.media "tablet" names no context outside the default'],
-      ["a context without its media query", (r) => delete media(r).desktop, 'context "desktop" has no media string under dev.ai-driven.media'],
-      ["an empty media query", (r) => (media(r).desktop = " "), 'context "desktop" has no media string under dev.ai-driven.media'],
+      ["a context without its media query", (r) => delete media(r).desktop, NO_QUERY],
+      ["an empty media query", (r) => (media(r).desktop = " "), NO_QUERY],
       ["a source that is no file reference", (r) => modifier(r).contexts.desktop.push({ space: {} }), 'context "desktop": each source is {"$ref": "<file>"}'],
     ];
     for (const [name, change, message] of resolverCases) {

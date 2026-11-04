@@ -5,7 +5,8 @@
 // The design system engine the hook and every skill call, one command per job:
 //   validate  checks records, history, tokens, renders and code links. Prints VALID, or one line
 //             per problem, and exits 1 when an error remains. Prints nothing without a design system.
-//   tokens    writes aidd_docs/ui/tokens.css from the tokens and prints its path. Writes nothing and
+//   tokens    writes aidd_docs/ui/tokens.resolver.json from system.md and the context files, then
+//             aidd_docs/ui/tokens.css from the tokens, and prints its path. Writes no stylesheet and
 //             exits 1 while a token has an error or a composite token has no raw CSS.
 //   impact    prints as JSON what a change to those tokens, by path or CSS name, or elements reaches:
 //             tokens, the tokens holding the same value without citing them, elements, screens, journeys, renders and code
@@ -20,6 +21,7 @@ const { load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
 const tokens = require("./lib/tokens.cjs");
+const { writeResolver } = require("./lib/resolver.cjs");
 const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
@@ -68,11 +70,14 @@ function validate([root = process.cwd()]) {
   return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
 }
 
-/** Regenerates the stylesheet the renders load. A token with an error, or a composite token with no
- * raw CSS, leaves it untouched: the problems are printed instead. */
+/** Writes the Resolver from system.md and the context files, then regenerates the stylesheet the
+ * renders load. A token with an error, or a composite token with no raw CSS, leaves the stylesheet
+ * untouched: the problems are printed instead. */
 function generateTokens([root = process.cwd()]) {
-  const project = load(root);
-  if (project === null) return EXIT_VALID;
+  const first = load(root);
+  if (first === null) return EXIT_VALID;
+  writeResolver(first);
+  const project = load(root); // read again: the checks below read the Resolver just written
   const blocked = tokens.blockers(project);
   const { css, problems } = blocked.length ? { css: null, problems: blocked } : tokens.generate(project);
   if (css === null) {

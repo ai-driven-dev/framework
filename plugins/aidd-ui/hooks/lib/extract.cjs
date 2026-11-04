@@ -1,7 +1,8 @@
 // Reads the files `system.md` names as `code-tokens` and writes the tokens they hold as the token
 // files the T rules read: tokens.json, a file per theme, platform and breakpoint, and the Resolver
-// naming them. It reads the custom properties of `:root`, `[data-theme]` and `@media :root` blocks and
-// the object literals a script exports, and lists what it leaves rather than guess it.
+// naming them, written by the same function as the tokens command's. It reads the custom
+// properties of `:root`, `[data-theme]` and `@media :root` blocks and the object literals a script
+// exports, and lists what it leaves rather than guess it.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
@@ -9,7 +10,7 @@ const { systemOf, fm } = require("./model.cjs");
 const { load, text, UI_DIR } = require("./project.cjs");
 const { tokenEntries, platformOfFile } = require("./code.cjs");
 const { rulesOf, declarationsIn, RAW_CSS_EXTENSION } = require("./css.cjs");
-const { RESOLVER_FILE, RESOLVER_VERSION, MEDIA_EXTENSION, MODIFIERS } = require("./tokens.cjs");
+const { RESOLVER_FILE, resolverOf, fileOf } = require("./resolver.cjs");
 const { objectsOf } = require("./script.cjs");
 const { fromCss, fromNumber, citedProperties } = require("./values.cjs");
 const { Refusal } = require("./args.cjs");
@@ -29,7 +30,6 @@ const DASHES = "--";
 const NAME_SEPARATOR = "-";
 const PATH_SEPARATOR = ".";
 const PREVIEW = 40;
-const FOLDERS = { theme: "themes", platform: "platforms", breakpoint: "breakpoints" };
 const BASE = { kind: "base" };
 
 /** A script key as the CSS name part it stands for: `colorAccent` is `color-accent`. */
@@ -101,7 +101,7 @@ const mentions = (words, length) => new RegExp(`(?<![\\d.])${length.replace(REGE
  * free one in order when as many breakpoints are left as queries. */
 function placeQueries(queries, project, breakpoints) {
   const rows = table(systemOf(project).sections[BREAKPOINTS_SECTION]);
-  const widthOf = (name) => rows.find((row) => row.Name === name)?.Width ?? "";
+  const widthOf = (name) => rows.find((row) => row.Name === name)?.Query ?? "";
   const open = breakpoints.slice(1);
   const placed = new Map();
   const free = () => open.filter((name) => ![...placed.values()].includes(name));
@@ -255,25 +255,11 @@ function filesOf(model) {
     return root;
   };
   const files = new Map([[TOKENS_FILE, tree(model.base, false)]]);
-  const written = (context) => `${FOLDERS[context.kind]}/${context.name}.json`;
-  for (const context of model.contexts.filter((each) => each.entries.size)) files.set(written(context), tree(context.entries, true));
-  const ref = (name, kind) => (files.has(`${FOLDERS[kind]}/${name}.json`) ? [{ $ref: `${FOLDERS[kind]}/${name}.json` }] : []);
-  const contextsOf = (kind, names) => Object.fromEntries(names.map((name, at) => [name, at === 0 ? [] : ref(name, kind)]));
-  const order = [{ $ref: "#/sets/base" }];
-  const modifiers = {};
-  const modify = (kind, modifier) => {
-    modifiers[MODIFIERS[kind]] = modifier;
-    order.push({ $ref: `#/modifiers/${MODIFIERS[kind]}` });
-  };
+  for (const context of model.contexts.filter((each) => each.entries.size)) files.set(fileOf(context.kind, context.name), tree(context.entries, true));
+  const queries = Object.fromEntries(model.contexts.filter((context) => context.kind === "breakpoint").map((context) => [context.name, context.query]));
   const { themes, platforms, breakpoints } = model;
-  if (themes.length >= 2) modify("theme", { default: themes[0], contexts: contextsOf("theme", themes) });
-  if (platforms.some((name, at) => at > 0 && files.has(`platforms/${name}.json`))) modify("platform", { default: platforms[0], contexts: contextsOf("platform", platforms) });
-  const placed = model.contexts.filter((context) => context.kind === "breakpoint" && files.has(written(context)));
-  if (placed.length) {
-    const names = breakpoints.filter((name) => name === breakpoints[0] || placed.some((context) => context.name === name));
-    modify("breakpoint", { default: breakpoints[0], contexts: contextsOf("breakpoint", names), $extensions: { [MEDIA_EXTENSION]: Object.fromEntries(placed.map((context) => [context.name, context.query])) } });
-  }
-  if (order.length > 1) files.set(RESOLVER_FILE, { version: RESOLVER_VERSION, sets: { base: { sources: [{ $ref: TOKENS_FILE }] } }, modifiers, resolutionOrder: order });
+  const resolver = resolverOf({ themes, platforms, breakpoints, queries, exists: (file) => files.has(file) });
+  if (resolver) files.set(RESOLVER_FILE, resolver);
   return files;
 }
 

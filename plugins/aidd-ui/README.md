@@ -24,7 +24,7 @@ aidd_docs/ui/
 ├── system.md                the design system
 ├── brand.md                 the brand
 ├── tokens.json              tokens of the base theme and platform, DTCG 2025.10
-├── tokens.resolver.json     the other themes, platforms and breakpoints, DTCG Resolver 2025.10
+├── tokens.resolver.json     generated from system.md and the files below by the engine, DTCG Resolver 2025.10
 ├── themes/<theme>.json      the tokens one theme redefines
 ├── platforms/<name>.json    the tokens one platform redefines
 ├── breakpoints/<name>.json  the tokens one breakpoint redefines
@@ -43,7 +43,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 | Record | Front matter | Body |
 | --- | --- | --- |
 | every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `deprecated`), `version` | `## History` |
-| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite, nested such as `color.brand` too), `code-roots` (`platform=path`, or a bare path when one platform is declared), `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list, each `platform=path` like `code-roots` | `## Breakpoints`: Name, Width, one row per breakpoint; optional `## Rules`: Id, Rule |
+| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite, nested such as `color.brand` too), `code-roots` (`platform=path`, or a bare path when one platform is declared), `ignore`, `libraries`, each `[]` when empty; optional `code-tokens`, one file or a list, each `platform=path` like `code-roots` | `## Breakpoints`: Name, Query (a media query such as `(min-width: 64rem)`, none for the first), one row per breakpoint; optional `## Rules`: Id, Rule |
 | `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
 | atom, molecule, composition | `uses`, `tokens`, `variants` (a bare value, or `axis=value` per independent prop), `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `platforms` | `## Usage`, and `## Keyboard` when interactive |
 | screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `platforms` | |
@@ -69,9 +69,7 @@ Every record opens with flat front matter, `key: value` or `key: [a, b]`, and cl
 - An axis matches `[a-z][a-z-]*`, is never `state`, `variant` or `theme`, and its value is never empty.
 - Each `code-roots` item belongs to a platform: `platform=path`, required once `system.md` declares several, whose names it must list; a bare path belongs to the only one declared.
 - `code-tokens` names the file where the code consumes the tokens, or a list, one per app; each is never checked for literals or coverage. An item is `platform=path` like a `code-roots` item, so a file outside every code root has its platform; a bare one belongs to the only platform declared, else to the platform of the root holding it.
-- Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json`, required from two themes on and checked whenever present, has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, an empty context, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. Another context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
-- Platforms: the first platform in `system.md` is held by `tokens.json`. A value that depends on the platform is a context of an optional `platform` modifier, built like the theme one, with `{"$ref": "#/modifiers/platform"}` in `resolutionOrder`: one context per platform, the base as `default` and an empty context, another listing `{"$ref": "<file>"}` sources, such as `platforms/<name>.json`, each redefining base tokens with their type.
-- Breakpoints: a value that depends on the width is a context of an optional `breakpoint` modifier, with `{"$ref": "#/modifiers/breakpoint"}` in `resolutionOrder`. Its `default` is the breakpoint `tokens.json` holds, an empty context, since the Resolver needs one to resolve without an input. The other contexts follow the order of `breakpoints` in `system.md`, which the `@media` blocks take. Each is a breakpoint in `system.md` listing `{"$ref": "<file>"}` sources, like a theme's, with its media query verbatim in the modifier's `"$extensions": {"dev.ai-driven.media": {"<breakpoint>": "<query>"}}`.
+- Themes, platforms, breakpoints: the first of each in `system.md` is held by `tokens.json`; each other with values of its own is a context file, `themes/<t>.json`, `platforms/<p>.json`, `breakpoints/<b>.json`, redefining base tokens with their type. A breakpoint's media query is the `Query` of its `## Breakpoints` row, and the breakpoints follow the order of `breakpoints` in `system.md`, which the `@media` blocks take. `tokens.resolver.json` is written by the engine from these, `tokens` and `extract` alike, and T6 still checks one written by hand or left stale: a Resolver in this plugin's one profile, a `theme` modifier from two themes on, `platform` and `breakpoint` modifiers once a context other than the first has a file, each in `resolutionOrder` and listing its files as `{"$ref": "<file>"}`.
 - A token several modifiers redefine takes the value of the one later in `resolutionOrder`, and a theme, a platform and a breakpoint may redefine the same one. A token depending on tokens of two of them recomputes through its `var()`s.
 - A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`. Each `var()` in it must name a token. No value may lead back to its own token, through an alias or a `var()`, across the base and the context it sits in: the browser would compute nothing. A theme or breakpoint file may redefine a token this way too.
 - `$root` is not supported: name the token. A token holding both `$value` and child tokens is an error: its children would be dropped.
@@ -101,7 +99,7 @@ node <plugin>/hooks/aidd-ui.cjs bump --task <aidd_docs/tasks/…> --change "<tex
 | Command | Does |
 | --- | --- |
 | `validate` | checks the whole design system |
-| `tokens` | writes `aidd_docs/ui/tokens.css` and prints its path; writes nothing and exits 1 while a token has an error or a composite token has no raw CSS |
+| `tokens` | writes `aidd_docs/ui/tokens.resolver.json`, then `aidd_docs/ui/tokens.css`, and prints the stylesheet's path; writes no stylesheet and exits 1 while a token has an error or a composite token has no raw CSS. The resolver lists the themes, and the platforms and breakpoints that have a file; none is written while one theme and no such file ask for none |
 | `impact` | prints as JSON the `tokens`, the tokens that hold a reached token's value in some context without citing it (`same-value`), and the `elements`, `screens`, `journeys`, `renders` and `code` files a change to those tokens or elements reaches, each sorted; a token is named by its path or its CSS name, and any token reached adds the `code-tokens` files to `code`; a name that is neither exits 2 |
 | `extract` | writes the token files from the `code-tokens` files and prints `{"written": […], "left": [{file, line, name, why}]}`, the same bytes on a second run; exits 1 with a message when `system.md` or its `code-tokens` are missing, a file is unreadable, or `tokens.json` exists and `--force` is absent |
 | `bump` | raises the versions a change to those refs reaches and prints `{"changed": […], "left": [{id, why}]}`, `left` naming each element reached and not raised, `deprecated` or `already raised for this task`, an element raised for the task having its History row turned to breaking, its change text extended with the new one after `; `, when a later change is `--breaking` and the row is not; exits 2 with a message, before any write, on an unknown ref, a task outside `aidd_docs/tasks/`, a change that is empty or holds a pipe or a line break, or a record it cannot raise |
@@ -178,7 +176,6 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, 
 - Deleting a validated record is not caught.
 - A Task cell's folder is not checked for existence.
 - Two token paths with one CSS name are not detected.
-- A breakpoint's table width and its media query are not compared.
 - An opaque colour with a `hex` is written as that `hex`, which drops a wider gamut its `colorSpace` holds.
 - A review validates screens only for now, so components are validated by hand until the review page exists.
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.

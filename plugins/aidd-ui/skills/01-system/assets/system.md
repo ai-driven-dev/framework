@@ -20,9 +20,9 @@ libraries: [{{component packages used}}]
 
 ## Breakpoints
 
-| Name | Width |
+| Name | Query |
 | --- | --- |
-| {{breakpoint name}} | {{the widths it covers}} |
+| {{breakpoint name}} | {{its media query, empty for the first}} |
 
 ## History
 
@@ -34,5 +34,5 @@ libraries: [{{component packages used}}]
 - Replace every `{{...}}` and delete every comment.
 - A list with no answer is `[]`; only `code-tokens` may go.
 - With several platforms, each `code-roots` item is `platform=path`, and so is a `code-tokens` item outside every code root.
-- One `## Breakpoints` row per breakpoint.
+- One `## Breakpoints` row per breakpoint; the query is a media query such as `(min-width: 64rem)`, and the first breakpoint, held by `tokens.json`, has none.
 -->
