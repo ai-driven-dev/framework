@@ -32,7 +32,9 @@ describe("antigravityProjectHooksFormat", () => {
           SessionStart: [
             {
               type: "command",
-              command: "cd .. && node ./.agents/hooks/aidd-context/update_memory.js",
+              command: expect.stringContaining(
+                Buffer.from("node ./.agents/hooks/aidd-context/update_memory.js").toString("base64")
+              ),
             },
           ],
         },
@@ -70,7 +72,12 @@ describe("antigravityProjectHooksFormat", () => {
         "aidd-context": {
           enabled,
           SessionStart: [
-            { type: "command", command: "cd .. && node ./.agents/hooks/aidd-context/refresh.js" },
+            {
+              type: "command",
+              command: expect.stringContaining(
+                Buffer.from("node ./.agents/hooks/aidd-context/refresh.js").toString("base64")
+              ),
+            },
           ],
         },
       });
@@ -145,7 +152,9 @@ describe("antigravityProjectHooksFormat", () => {
           event: "SessionStart",
           entry: {
             type: "command",
-            command: "cd .. && node ./.agents/hooks/aidd-context/update_memory.js",
+            command: expect.stringContaining(
+              Buffer.from("node ./.agents/hooks/aidd-context/update_memory.js").toString("base64")
+            ),
           },
         },
       ]);

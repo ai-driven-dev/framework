@@ -6,8 +6,11 @@ import { ANTIGRAVITY_HOOKS_DIR } from "./antigravity-paths.js";
 const HOOKS_PREFIX = "hooks/";
 // Claude and `agy` name their tools differently, so only the tool-free event is carried over.
 const MAPPED_EVENTS = new Set(["SessionStart"]);
-// agy runs a workspace hook through a shell from `<repo>/.agents`, and rejects nested groups.
-const FROM_REPO_ROOT = "cd .. && ";
+// agy runs from `<repo>/.agents` and requires JSON stdout even for a silent hook.
+const JSON_RESPONSE =
+  "const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});" +
+  "let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});" +
+  "p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});";
 
 type NamedHook = {
   enabled?: boolean;
@@ -26,7 +29,7 @@ function scriptPath(pluginName: string, hooksRelativePath: string): string {
 function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
   const handler: ProjectHookEntry = {
     type: "command",
-    command: `${FROM_REPO_ROOT}${hook.command}`,
+    command: `node -e "${JSON_RESPONSE}" ${Buffer.from(hook.command).toString("base64")}`,
   };
   if (hook.timeout !== undefined) handler.timeout = hook.timeout;
   return handler;
