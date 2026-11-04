@@ -267,17 +267,17 @@ const compareLeft = (a, b) => compare(a.file, b.file) || (a.line ?? 0) - (b.line
  * `{written, left}`. A refusal is a `Refusal`: nothing is written then. */
 function extract(root, { force }) {
   const project = load(root);
-  if (project === null) throw new Refusal(NO_DESIGN_SYSTEM, 1);
-  if (!systemOf(project)) throw new Refusal(`${UI_DIR}/${SYSTEM_FILE} is missing, write it first`, 1);
+  if (project === null) throw new Refusal(NO_DESIGN_SYSTEM);
+  if (!systemOf(project)) throw new Refusal(`${UI_DIR}/${SYSTEM_FILE} is missing, write it first`);
   const entries = tokenEntries(project);
-  if (!entries.length) throw new Refusal("system.md lists no code-tokens", 1);
-  if (fs.existsSync(path.join(root, project.tokensFile)) && !force) throw new Refusal(`${project.tokensFile} already exists, --force replaces it`, 1);
+  if (!entries.length) throw new Refusal("system.md lists no code-tokens");
+  if (fs.existsSync(path.join(root, project.tokensFile)) && !force) throw new Refusal(`${project.tokensFile} already exists, --force replaces it`);
   const left = [];
   const leave = (file, line, name, why) => left.push({ file, line, name, why });
   const sources = [];
   for (const { path: file, named, platform: written } of entries) {
     const source = fs.existsSync(path.join(root, file)) && fs.statSync(path.join(root, file)).isFile() ? text(project, file) : null;
-    if (source === null) throw new Refusal(`code-tokens "${file}" is no readable file`, 1);
+    if (source === null) throw new Refusal(`code-tokens "${file}" is no readable file`);
     const { platform, unknown } = named ? { platform: written } : platformOfFile(project, file);
     if (path.extname(file) !== STYLE_EXTENSION && !SCRIPT_EXTENSIONS.includes(path.extname(file))) leave(file, null, null, "neither a stylesheet nor a script");
     else if (named && !list(fm(systemOf(project)).platforms).includes(written)) leave(file, null, null, `platform "${written}" is not in system.md`);

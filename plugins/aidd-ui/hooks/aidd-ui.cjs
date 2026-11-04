@@ -18,6 +18,7 @@ const VERDICT_VALID = "VALID";
 const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
 const EXIT_USAGE = 2;
+const EXIT_REFUSED = 2; // a request declined before anything is written
 const WARNING_WORD = "warning";
 // A message that opens with the line it is about; the line moves to the file.
 const LINE_PREFIX = /^line (\d+): /;
@@ -134,7 +135,7 @@ function refusing(run) {
   } catch (error) {
     if (!(error instanceof Refusal)) throw error;
     console.error(`aidd-ui: ${error.message}`);
-    return error.code;
+    return EXIT_REFUSED;
   }
 }
 

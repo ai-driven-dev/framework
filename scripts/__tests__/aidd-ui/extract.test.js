@@ -131,7 +131,7 @@ describe("aidd-ui extract", () => {
     it("refuses to replace tokens.json, writing nothing, unless --force is given", () => {
       put(tmp, `${UI}/tokens.json`, "{}\n");
       const refused = extract();
-      assert.deepEqual(refused, { code: 1, report: null, err: "aidd-ui: aidd_docs/ui/tokens.json already exists, --force replaces it\n" });
+      assert.deepEqual(refused, { code: 2, report: null, err: "aidd-ui: aidd_docs/ui/tokens.json already exists, --force replaces it\n" });
       assert.equal(fs.readFileSync(path.join(tmp, UI, "tokens.json"), "utf8"), "{}\n");
       assert.equal(extract("--force").code, 0);
       assert.ok(read("tokens.json").color);
@@ -144,12 +144,12 @@ describe("aidd-ui extract", () => {
       fs.mkdirSync(path.join(tmp, UI), { recursive: true });
       assert.equal(extract().err, "aidd-ui: aidd_docs/ui/system.md is missing, write it first\n");
       setup({ tokens: [] });
-      assert.deepEqual(extract(), { code: 1, report: null, err: "aidd-ui: system.md lists no code-tokens\n" });
+      assert.deepEqual(extract(), { code: 2, report: null, err: "aidd-ui: system.md lists no code-tokens\n" });
     });
 
     it("names a code-tokens file that does not exist", () => {
       setup({ tokens: ["src/missing.css"], files: {} });
-      assert.deepEqual(extract(), { code: 1, report: null, err: 'aidd-ui: code-tokens "src/missing.css" is no readable file\n' });
+      assert.deepEqual(extract(), { code: 2, report: null, err: 'aidd-ui: code-tokens "src/missing.css" is no readable file\n' });
     });
 
     it("prints the usage and exits 2 for an argument it does not know", () => {

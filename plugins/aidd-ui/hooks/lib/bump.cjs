@@ -8,7 +8,6 @@ const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
 const { TASKS_DIR } = require("./history.cjs");
 
-const EXIT_REFUSED = 2;
 const ROW_START = "|";
 const HISTORY_HEADER = ["# History", "", "| Id | Version | Change | Breaking | Task |", "| --- | --- | --- | --- | --- |"].join(LINE_BREAK) + LINE_BREAK;
 const FIRST_VERSION = "1";
@@ -19,13 +18,11 @@ const ALREADY_RAISED = "already raised for this task";
 const CARRIAGE_RETURN = "\r";
 const CELL_BREAKERS = /[|\r\n]/;
 
-const refuse = (message) => new Refusal(message, EXIT_REFUSED);
-
 /** `lines` with the front matter line `key: value` set, ending as `end` says; its absence is a refusal. */
 function setFront(lines, key, value, end, file) {
   const close = frontMatterEnd(lines);
   const at = lines.findIndex((line, index) => index > 0 && index < close && line.startsWith(`${key}:`));
-  if (at < 0) throw refuse(`${file} has no ${key} line in its front matter`);
+  if (at < 0) throw new Refusal(`${file} has no ${key} line in its front matter`);
   lines[at] = `${key}: ${value}${end}`;
 }
 
@@ -33,7 +30,7 @@ function setFront(lines, key, value, end, file) {
 function lastRowOf(lines, heading, file) {
   const section = heading === null ? -1 : lines.findIndex((line) => line.trim() === heading);
   const start = heading !== null && section < 0 ? -1 : lines.findIndex((line, at) => at > section && line.trim().startsWith(ROW_START));
-  if (start < 0) throw refuse(heading === null ? `${file} has no table` : `${file} has no table under "${heading}"`);
+  if (start < 0) throw new Refusal(heading === null ? `${file} has no table` : `${file} has no table under "${heading}"`);
   let last = start;
   while (lines[last + 1]?.trim().startsWith(ROW_START)) last += 1;
   return last;
@@ -74,14 +71,14 @@ const rowAt = (lines, id, version) => lines.findIndex((line) => {
  * first publication is 1.0.0. */
 function create(root, folder, ids) {
   const project = load(root);
-  if (project === null) throw refuse(NO_DESIGN_SYSTEM);
+  if (project === null) throw new Refusal(NO_DESIGN_SYSTEM);
   const index = byId(project);
   const files = editing(root);
   const { lines, end } = files.editOf(HISTORY_FILE, HISTORY_HEADER);
   for (const id of new Set(ids)) {
     const record = index.get(id);
-    if (!record || fm(record).kind === "brand") throw refuse(`no versioned record named "${id}"`);
-    if (project.history.some((row) => row.Id === id)) throw refuse(`"${id}" already has history`);
+    if (!record || fm(record).kind === "brand") throw new Refusal(`no versioned record named "${id}"`);
+    if (project.history.some((row) => row.Id === id)) throw new Refusal(`"${id}" already has history`);
     addRow(lines, null, rowOf(id, isSystem(record) ? FIRST_SYSTEM_VERSION : FIRST_VERSION, CREATED, NOT_BREAKING, folder), end, HISTORY_FILE);
   }
   return { changed: files.save() };
@@ -93,13 +90,13 @@ function create(root, folder, ids) {
  * says. A refusal is a `Refusal`, thrown before any file is written. */
 function bump(root, { task, change, breaking, created, refs }) {
   const folder = withoutTrailingSeparators(path.posix.normalize(task));
-  if (!folder.startsWith(TASKS_DIR)) throw refuse(`the task "${task}" must be a folder under ${TASKS_DIR}`);
+  if (!folder.startsWith(TASKS_DIR)) throw new Refusal(`the task "${task}" must be a folder under ${TASKS_DIR}`);
   if (created) return create(root, folder, refs);
-  if (!change.trim() || CELL_BREAKERS.test(change)) throw refuse('the change must be one line without "|"');
+  if (!change.trim() || CELL_BREAKERS.test(change)) throw new Refusal('the change must be one line without "|"');
   const project = load(root);
-  if (project === null) throw refuse(NO_DESIGN_SYSTEM);
+  if (project === null) throw new Refusal(NO_DESIGN_SYSTEM);
   const { unknown, ...report } = usages(project, refs);
-  if (unknown) throw refuse(`no token or element named ${unknown.map((ref) => `"${ref}"`).join(", ")}`);
+  if (unknown) throw new Refusal(`no token or element named ${unknown.map((ref) => `"${ref}"`).join(", ")}`);
 
   const records = placed(project);
   const reached = new Set([...report.elements, ...report.screens]);
@@ -124,7 +121,7 @@ function bump(root, { task, change, breaking, created, refs }) {
       }
     }
     else {
-      if (!INTEGER_VERSION.test(fm(record).version ?? "")) throw refuse(`${record.file}: version "${fm(record).version}" is no integer`);
+      if (!INTEGER_VERSION.test(fm(record).version ?? "")) throw new Refusal(`${record.file}: version "${fm(record).version}" is no integer`);
       const version = Number(fm(record).version) + 1;
       const { lines, end } = files.editOf(record.file);
       setFront(lines, "version", version, end, record.file);

@@ -21,13 +21,8 @@ const TRAILING_SEPARATORS = /\/+$/;
 const BYTE_ORDER_MARK = /^﻿/;
 const WINDOWS_LINE_ENDING = /\r\n/g;
 
-/** A request the engine declines before it writes anything; `code` is the exit status. */
-class Refusal extends Error {
-  constructor(message, code) {
-    super(message);
-    this.code = code;
-  }
-}
+/** A request the engine declines, with the reason, before it writes anything. */
+class Refusal extends Error {}
 
 const NO_DESIGN_SYSTEM = `no design system under ${UI_DIR}`;
 
