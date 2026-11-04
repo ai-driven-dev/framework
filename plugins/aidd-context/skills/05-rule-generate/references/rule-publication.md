@@ -13,7 +13,7 @@
 
 Copilot `<name>` drops the slug's numeric prefix: category `01-standards`, slug `1-local-names` → `01-local-names.instructions.md`.
 
-The writer refuses Antigravity output over 24,000 bytes. Scoped activation remains unverified in the host.
+The writer refuses raw rendered Antigravity output over 24,000 bytes; the host applies its limit after expanding includes, so the writer's check does not guarantee their expanded size fits. Scoped activation remains unverified in the host.
 
 ## Operations
 

@@ -40,7 +40,9 @@ describe("buildAntigravityFlatContract", () => {
         SessionStart: [
           {
             type: "command",
-            command: "cd .. && node ./.agents/hooks/aidd-context/update_memory.js",
+            command: expect.stringContaining(
+              Buffer.from("node ./.agents/hooks/aidd-context/update_memory.js").toString("base64")
+            ),
           },
         ],
       },
