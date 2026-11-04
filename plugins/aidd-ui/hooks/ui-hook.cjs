@@ -1,8 +1,10 @@
-// Runs the design system checks at three moments. After a write under aidd_docs/ui/ or a code
-// root, the turn is marked and the problems of the files the write reached come back as context.
-// At Stop, a marked turn gets its errors back once, as the reason to keep working; warnings never
-// block. At session start the counts and the errors are printed as context. Each moment prints
-// at most LIMIT problem lines. A file that cannot be read is one problem; anything else
+// Runs the design system checks at three moments, and prints the same short text on every host:
+// problem lines, then at most one line counting the errors left out. After a write under
+// aidd_docs/ui/ or a code root, the turn is marked and the errors of the files the write reached
+// come back, with the warnings of the written files; a shell command that runs the engine or names
+// aidd_docs/ui/ marks the turn and prints nothing. At Stop, a marked turn gets its errors back
+// once, as the reason to keep working; warnings never block. At session start the errors are
+// counted and the first few printed. A file that cannot be read is one problem; anything else
 // unexpected exits 0 in silence, so a broken check never blocks a session.
 const fs = require("node:fs");
 const os = require("node:os");
@@ -16,12 +18,15 @@ const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
 const STOP = "Stop";
 const EXIT_SILENT = 0;
-const LIMIT = 20; // problem lines a hook prints; the validator by hand prints them all
+const LIMIT = 10; // problem lines after a write and at Stop; the validator by hand prints them all
+const START_LIMIT = 5; // error lines at session start
 const ENGINE = path.join(__dirname, "aidd-ui.cjs");
 // A session id is a file-name part, so only these characters reach the mark's path.
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
 const PATCHED_FILE = /^\*\*\* (?:Add|Update) File: (.+)$/gm;
+// A shell command that runs the engine (flat or plugin install alike) or names the design system's folder.
+const ENGINE_COMMAND = /aidd-ui\.cjs|aidd_docs\/ui\//;
 
 /** The JSON on stdin, or null when it is none. */
 function readPayload() {
@@ -35,14 +40,20 @@ function readPayload() {
 /** Whether a project-relative file belongs to the design system or to its code. */
 const isWatched = (project, file) => [UI_DIR, ...codeRoots(project)].some((prefix) => isUnder(file, prefix));
 
+/** The text a tool ran: a patch or a shell command, as a string or as `command`. */
+const commandOf = (toolInput) => (typeof toolInput === "string" ? toolInput : toolInput?.command);
+
 /** The files a write tool touched: Claude Code and Copilot name one, a patch one per header line. */
 function writtenFiles(toolInput) {
   if (typeof toolInput?.file_path === "string") return [toolInput.file_path];
   if (typeof toolInput?.path === "string") return [toolInput.path];
-  const patch = typeof toolInput === "string" ? toolInput : toolInput?.command;
+  const patch = commandOf(toolInput);
   if (typeof patch !== "string") return [];
   return [...patch.matchAll(PATCHED_FILE)].map((match) => match[1]);
 }
+
+/** Whether a tool ran a shell command that reaches the design system: it is no patch. */
+const isEngineCommand = (toolInput) => !writtenFiles(toolInput).length && ENGINE_COMMAND.test(commandOf(toolInput) ?? "");
 
 /** The mark a turn leaves for its Stop: one empty file per session, in the OS temp dir. */
 function markFile(sessionId) {
@@ -61,6 +72,12 @@ function leaveMark(mark) {
   }
 }
 
+/** Marks the turn for its Stop. */
+function markTurn(payload) {
+  const mark = markFile(payload.session_id);
+  if (mark) leaveMark(mark);
+}
+
 /** Copilot's payload carries tool_result where Claude Code and Codex carry tool_response. */
 function isCopilot(payload) {
   return "tool_result" in payload && !("tool_response" in payload);
@@ -68,31 +85,34 @@ function isCopilot(payload) {
 
 const errorsOf = (problems) => problems.filter(isError);
 
-/** At most LIMIT problem lines, errors before warnings so the cap never cuts an error for a
- * warning, then one saying how many are left and how to see them. */
-function capped(project, problems) {
-  const rest = problems.length - LIMIT;
-  const ordered = [...errorsOf(problems), ...problems.filter((problem) => !isError(problem))];
-  return [...format(ordered.slice(0, LIMIT)), ...(rest > 0 ? [`… and ${rest} more: node ${ENGINE} validate ${project.root}`] : [])];
+/** The command that prints every problem, the engine relative to the project when it sits under it. */
+function validateCommand(project) {
+  const engine = relative(project.root, ENGINE);
+  return engine.startsWith("../") || path.isAbsolute(engine) ? `node ${ENGINE} validate ${project.root}` : `node ${engine} validate`;
 }
 
+/** At most `limit` lines of problems, errors first so the cap never cuts an error for a warning,
+ * then one line counting the `total` errors it leaves out and how to see them. */
+function lean(project, problems, limit, total) {
+  const shown = problems.slice(0, limit);
+  const left = total - errorsOf(shown).length;
+  return [...format(shown), ...(left > 0 ? [`+${left} more errors: ${validateCommand(project)}`] : [])];
+}
+
+/** Marks the turn, then hands the model what the write broke: the errors of the written files and
+ * of what they reach, the warnings of the written files; nothing when there are none. */
 function afterWrite(project, payload) {
   const written = writtenFiles(payload.tool_input)
     .map((file) => relative(project.root, path.resolve(project.root, file)))
     .filter((file) => isWatched(project, file));
   if (!written.length) return EXIT_SILENT;
-  const mark = markFile(payload.session_id);
-  if (mark) leaveMark(mark);
+  markTurn(payload);
   const problems = problemsOf(project);
   const scope = reached(project, written);
-  const shown = scope ? problems.filter((problem) => scope.has(problem.file)) : problems;
+  const errors = errorsOf(problems);
+  const shown = [...errors.filter((problem) => !scope || scope.has(problem.file)), ...problems.filter((problem) => !isError(problem) && written.includes(problem.file))];
   if (!shown.length) return EXIT_SILENT;
-  const elsewhere = errorsOf(problems).length - errorsOf(shown).length;
-  const text = [
-    "aidd-ui: the write was saved, fix these problems:",
-    ...capped(project, shown),
-    ...(elsewhere > 0 ? [`${elsewhere} more errors elsewhere in the design system`] : []),
-  ].join("\n");
+  const text = lean(project, shown, LIMIT, errors.length).join("\n");
   // Each host reads one key: Copilot the top level, Claude Code and Codex hookSpecificOutput.
   const output = isCopilot(payload)
     ? { additionalContext: text }
@@ -114,22 +134,25 @@ function consumeMark(payload) {
 function atStop(project) {
   const errors = errorsOf(problemsOf(project));
   if (!errors.length) return EXIT_SILENT;
-  const reason = [`aidd-ui: the design system has ${errors.length} errors, fix them before you finish:`, ...capped(project, errors)].join("\n");
-  process.stdout.write(JSON.stringify({ decision: "block", reason }));
+  process.stdout.write(JSON.stringify({ decision: "block", reason: lean(project, errors, LIMIT, errors.length).join("\n") }));
   return EXIT_SILENT;
 }
 
 function atSessionStart(project) {
-  const problems = problemsOf(project);
-  if (!problems.length) return EXIT_SILENT;
-  const errors = errorsOf(problems);
-  process.stdout.write(`${[`aidd-ui: ${errors.length} errors, ${problems.length - errors.length} warnings`, ...capped(project, errors)].join("\n")}\n`);
+  const errors = errorsOf(problemsOf(project));
+  if (!errors.length) return EXIT_SILENT;
+  process.stdout.write(`${[`aidd-ui: ${errors.length} errors`, ...format(errors.slice(0, START_LIMIT))].join("\n")}\n`);
   return EXIT_SILENT;
 }
 
 function run() {
   const payload = readPayload();
   if (typeof payload?.hook_event_name !== "string") return EXIT_SILENT;
+  // A shell command reaching the design system marks the turn and costs no read of the project; any other does nothing.
+  if (payload.hook_event_name === POST_TOOL_USE && isEngineCommand(payload.tool_input)) {
+    markTurn(payload);
+    return EXIT_SILENT;
+  }
   // Stop fires on every turn: one that wrote no watched file costs no read of the project.
   if (payload.hook_event_name === STOP && !consumeMark(payload)) return EXIT_SILENT;
   const project = load(typeof payload.cwd === "string" ? payload.cwd : process.cwd());

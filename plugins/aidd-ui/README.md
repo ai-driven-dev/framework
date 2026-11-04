@@ -137,15 +137,14 @@ For each element or screen the refs reach: `version` +1, `status: proposed`, a H
 
 `validate` prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, a colour literal in a code file identical to `HEAD`, a render length of 2px or less, and a failure of `git` in H8. A colour literal in a code file changed or untracked since `HEAD`, or where `git` cannot answer, whatever the reason, is an error that says which.
 
-A hook runs the same check:
+A hook runs the same check and prints the same text on every host, only the JSON around it differing: problem lines in the `validate` format, then at most one line `+N more errors: <command>`, the engine relative to the project when it sits under it. Nothing is printed when there is nothing to show.
 
 | Moment | Prints |
 | --- | --- |
-| Session start | the counts, then the errors |
-| After a write under `aidd_docs/ui/` or a code root | the problems of the written files, their record's render and the records citing it, or all of them after a write to `system.md`, the tokens, a theme, a platform or a breakpoint; then the count of other errors |
-| End of a turn that wrote such a file | the errors, as a reason to continue, once |
-
-Each output lists errors before warnings, stops at 20 problem lines and names the command that prints the rest.
+| Session start | when an error exists, `aidd-ui: N errors` and the first 5 |
+| After a write under `aidd_docs/ui/` or a code root | the errors of the written files, their record's render and the records citing it, or of all after a write to `system.md`, the tokens, a theme, a platform or a breakpoint, then the warnings of the written files only; 10 lines at most, errors first; the count line carries the errors cut and those elsewhere |
+| After a shell command running the engine or naming `aidd_docs/ui/` | nothing, the turn is marked; any other shell command does nothing |
+| End of a turn that wrote such a file or ran such a command | the errors, as a reason to continue, once; 10 lines at most, then the count line |
 
 Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, code C1 to C9.
 
@@ -155,7 +154,8 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, 
 - After a write, the problems reach the model in the same turn on Claude Code, Codex, Copilot CLI, OpenCode and Kilo. At turn end, OpenCode and Kilo receive the errors as the next prompt. A forced continuation is never asked again. The turn mark lives in the OS temp directory; without a session id, no end-of-turn check runs.
 - Cursor is unverified.
 - Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
-- A file written by a shell command, or deleted by a patch, is not seen.
+- A file written by a shell command is not seen when it is written: the command is, so the turn end reads it, and only when it runs the engine or names `aidd_docs/ui/`. A file deleted by a patch is not seen.
+- Windows is untested.
 - A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
 - The Resolver is read in one profile: `theme`, `platform` and `breakpoint` modifiers with file sources. Inline sources and other modifiers are not checked.
 - Breakpoint blocks cascade in the stylesheet, where the Resolver applies one context: at a width two queries match, a token only the earlier one redefines keeps that value.
@@ -180,7 +180,7 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, 
 - A review validates screens only for now, so components are validated by hand until the review page exists.
 - `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
 - A render shows a variant or state when its text holds the attribute, whatever the element; an export exists when its name is a word of the linked file, a comment included, so `stylesheet#word` passes C1 and covers the whole stylesheet.
-- The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
+- The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here, and the OpenCode and Kilo bridges replay only that exact form: a plugin path with spaces breaks it.
 - In code, only colour literals are found, outside tests and mocks, which C3 leaves out of the backlog too; other literals are left to the UI audit. A test is a file in a `__tests__` or `__mocks__` folder or named `.test.` or `.spec.`, whatever the techno.
 - Under a code root, documents (`.md`, `.mdx`, `.txt`, `.rst`, `.adoc`), data (`.json`, `.yaml`, `.yml`, `.csv`, `.toml`, `.xml`), images (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.avif`, `.ico`, `.bmp`, `.svg`), fonts (`.woff`, `.woff2`, `.ttf`, `.otf`, `.eot`) and any file with a NUL byte in its first 8000 are neither covered by C3 nor scanned by C4.
 - Stylesheets and `.html` are read whole. Every other file, scripts and `.vue` and `.svelte` and any techno included, has its colours found in string literals only, comments left out; an `.astro` file also in its `<style>` blocks. A colour written as a number, such as Dart's `0xFF336699`, or by a constructor, is not found.

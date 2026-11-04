@@ -298,7 +298,7 @@ function breakpointContexts(resolver, breakpoints, file) {
       continue;
     }
     const media = queries[breakpoint];
-    if (typeof media !== "string" || !media.trim()) problems.push(at(`context "${breakpoint}" has no media string under ${MEDIA_EXTENSION}: give it a ${QUERY} in system.md, then run the engine's tokens command`));
+    if (typeof media !== "string" || !media.trim()) problems.push(at(`context "${breakpoint}" has no media string: give it a ${QUERY} in system.md, then run the engine's tokens command`));
     contexts.push({ breakpoint, media, files: contextFiles(breakpoint, sources, file, problems) });
   }
   return { problems, contexts };

@@ -271,7 +271,7 @@ describe("aidd-ui tokens and renders", () => {
   describe("T6 breakpoints", () => {
     const modifier = (resolver) => resolver.modifiers.breakpoint;
     const media = (resolver) => modifier(resolver).$extensions["dev.ai-driven.media"];
-    const NO_QUERY = 'context "desktop" has no media string under dev.ai-driven.media: give it a Query in system.md, then run the engine\'s tokens command';
+    const NO_QUERY = 'context "desktop" has no media string: give it a Query in system.md, then run the engine\'s tokens command';
 
     const resolverCases = [
       ["a modifier without contexts", (r) => delete modifier(r).contexts, 'no "breakpoint" modifier with contexts'],
