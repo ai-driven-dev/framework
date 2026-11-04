@@ -23,10 +23,10 @@ Where the engine is, and what it gives.
 
 H8 holds a validated element to the fingerprint `publish <id>` wrote: the first 12 hex characters of a sha256 over, in order, each part as its label, a NUL, its content and a NUL:
 
-1. `record`: the record without its `status` and `code` lines, line ends as `\n`;
-2. `render`: its render, when there is one;
+1. `record`: the record without its `status` and `code` lines, without a byte order mark, line ends as `\n`;
+2. `render`: its render, read as the record is, when there is one;
 3. `asset`: an asset's `file`, byte for byte, when there is one;
-4. `tokens`: one `<token> TAB <context> TAB <value>` line per token it uses, its own and those of the elements it uses, and per context of `tokens.css`, the value resolved, the lines sorted.
+4. `tokens`, always: one `<token> TAB <context> TAB <value>` line per token it uses, its own and those of the elements it uses, and per context of `tokens.css` where it resolves, sorted and joined by `\n`; empty when none resolves.
 
 A theme, platform or breakpoint added or removed changes the fingerprint of every element using a token. An asset file whose line ends change, as a checkout may, changes its fingerprint.
 
