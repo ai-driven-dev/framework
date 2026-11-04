@@ -48,10 +48,10 @@ function write(files) {
   return dir;
 }
 
-const good = (tree) => ({
+const good = (tree, laterTree) => ({
   "plan.md": fill(template("plan-template.md")),
   "phase-1.md": fill(template("phase-template.md"), tree),
-  "phase-2.md": fill(template("phase-template.md")),
+  "phase-2.md": fill(template("phase-template.md"), laterTree),
 });
 
 function run(files, skill = SKILL) {
@@ -71,6 +71,7 @@ before(() => {
   project = path.join(root, "project");
   fs.mkdirSync(path.join(project, "src"), { recursive: true });
   fs.writeFileSync(path.join(project, "src/a.js"), "");
+  fs.writeFileSync(path.join(project, "src/old.js"), "");
 });
 after(() => fs.rmSync(root, { recursive: true, force: true }));
 
@@ -176,6 +177,26 @@ describe("validate-plan", () => {
     });
     it("accepts a file to create that is absent", () => {
       assert.match(run(good(tree(["└── ✅ src/new.js"]))).out, /^VALID$/);
+    });
+    it("accepts a file an earlier phase creates, modified by a later one", () => {
+      assert.match(run(good(tree(["└── ✅ src/new.js"]), tree(["└── ✏️ src/new.js"]))).out, /^VALID$/);
+    });
+    it("refuses a file no phase creates and the disk lacks, in a later phase", () => {
+      assert.match(run(good(undefined, tree(["└── ✏️ src/ghost.js"]))).out, /phase-2\.md: src\/ghost\.js is marked modify but does not exist/);
+    });
+    it("refuses a file an earlier phase deletes, modified by a later one", () => {
+      const r = run(good(tree(["└── ❌ src/old.js"]), tree(["└── ✏️ src/old.js"])));
+      assert.match(r.out, /phase-2\.md: src\/old\.js is marked modify but does not exist/);
+    });
+    it("accepts a file an earlier phase deletes, a later phase creates again and a third modifies", () => {
+      const files = good(tree(["└── ❌ src/old.js"]), tree(["└── ✅ src/old.js"]));
+      files["plan.md"] = files["plan.md"].replace(/(\| 2 .*\n)/, "$1| 3 | x | x | none |\n");
+      files["phase-3.md"] = fill(template("phase-template.md"), tree(["└── ✏️ src/old.js"]));
+      assert.match(run(files).out, /^VALID$/);
+    });
+    it("refuses a file only a later phase creates, modified by an earlier one", () => {
+      const r = run(good(tree(["└── ✏️ src/late.js"]), tree(["└── ✅ src/late.js"])));
+      assert.match(r.out, /phase-1\.md: src\/late\.js is marked modify but does not exist/);
     });
   });
 

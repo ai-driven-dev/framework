@@ -11,6 +11,24 @@ const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 const DEFAULT_HOOKS_FORMAT: HooksContentFormat = "matchers";
 
 /**
+ * How a tool's project-scope hooks file takes one plugin's hooks and gives them back: the
+ * merge rewrites the plugin's commands to where its scripts land and keeps the plugin's own
+ * earlier entries from doubling; the unmerge removes this plugin's entries alone.
+ */
+export interface ProjectHooksFormat {
+  readonly merge: (
+    existingJson: string | null,
+    pluginHooksJson: string,
+    pluginName: string
+  ) => { content: string; warnings: readonly string[] };
+  readonly unmerge: (existingJson: string, pluginName: string) => string;
+  /** Where a hook script lands in the project, given its path relative to the plugin root. */
+  readonly scriptPath: (pluginName: string, hooksRelativePath: string) => string;
+  /** The directory holding one plugin's copied scripts, which nothing else writes to. */
+  readonly scriptDir: (pluginName: string) => string;
+}
+
+/**
  * A tool that writes its own marketplace registration, through its own CLI: driving the
  * command is preferred to writing the file, so the tool owns its own configuration.
  * `binary` keys the matching `NativePluginActivator`.
@@ -78,6 +96,9 @@ export interface NativePluginsParams {
   /** Where the project-scope hooks file merges into, relative to the project root. Required
    * exactly when `hooksDestination` is `"project"` — nothing reads it otherwise. */
   projectHooksRelativePath?: string;
+  /** How that file takes a plugin's hooks. Required exactly when `hooksDestination` is
+   * `"project"`, and refused otherwise. */
+  projectHooksFormat?: ProjectHooksFormat;
   acceptsMcp?: boolean;
   /** The variable this tool expands to the installed plugin's directory, as written in a
    * hook or MCP command. Absent means nothing is substituted. */
@@ -173,6 +194,9 @@ export class PluginsCapability {
   readonly hooksDestination: "plugin" | "project";
   /** Relative to the project root, or `null` when `hooksDestination` is `"plugin"`. */
   readonly projectHooksRelativePath: string | null;
+  /** See {@link NativePluginsParams.projectHooksFormat}, or `null` when `hooksDestination` is
+   * `"plugin"`. */
+  readonly projectHooksFormat: ProjectHooksFormat | null;
   /** Where a flat-mode hook lands, relative to the project root, or `null` when this
    * capability accepts no hooks. */
   readonly flatHooksDir: string | null;
@@ -206,6 +230,7 @@ export class PluginsCapability {
       this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = params.hooksDestination ?? "plugin";
       this.projectHooksRelativePath = params.projectHooksRelativePath ?? null;
+      this.projectHooksFormat = params.projectHooksFormat ?? null;
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
@@ -231,6 +256,7 @@ export class PluginsCapability {
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = "plugin";
       this.projectHooksRelativePath = null;
+      this.projectHooksFormat = null;
       this.marketplaceSettings = null;
       this.nativeActivation = null;
       this._userPluginsDir = undefined;
@@ -251,6 +277,7 @@ export class PluginsCapability {
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = "plugin";
       this.projectHooksRelativePath = null;
+      this.projectHooksFormat = null;
       this.marketplaceSettings = null;
       this.nativeActivation = null;
       this._userPluginsDir = undefined;
@@ -297,6 +324,11 @@ export class PluginsCapability {
     if (params.hooksDestination === "project" && params.projectHooksRelativePath === undefined) {
       throw new CapabilityConfigError(
         "hooksDestination 'project' requires a projectHooksRelativePath."
+      );
+    }
+    if ((params.hooksDestination === "project") !== (params.projectHooksFormat !== undefined)) {
+      throw new CapabilityConfigError(
+        "projectHooksFormat is required exactly when hooksDestination is 'project'."
       );
     }
   }

@@ -7,18 +7,7 @@
  * Matchers ignore case, since Kilo names its tools in lowercase.
  */
 
-interface ClaudeHookItem {
-  readonly command?: string;
-}
-
-interface ClaudeMatcherGroup {
-  readonly matcher?: string;
-  readonly hooks?: readonly ClaudeHookItem[];
-}
-
-interface ClaudeHooksShape {
-  readonly hooks?: Record<string, readonly ClaudeMatcherGroup[]>;
-}
+import type { PluginHooksShape, PluginMatcherGroup } from "../../formats/plugin-hooks-shape.js";
 
 interface ParsedHookCall {
   readonly script: string;
@@ -36,7 +25,7 @@ function parseCommand(command: string | undefined): ParsedHookCall | null {
   return { script, args: rest.trim().length === 0 ? [] : rest.trim().split(/\s+/) };
 }
 
-function parseGroups(groups: readonly ClaudeMatcherGroup[] = []): readonly ParsedHookCall[] {
+function parseGroups(groups: readonly PluginMatcherGroup[] = []): readonly ParsedHookCall[] {
   return groups.flatMap((group) =>
     (group.hooks ?? []).flatMap((hook) => {
       const parsedHook = parseCommand(hook.command);
@@ -57,7 +46,7 @@ function toIdentifier(plugin: string): string {
 
 /** Generates Kilo's default descriptor; failed hooks report without blocking its session. */
 export function generateKiloHooksBridge(rawHooksJson: string, plugin: string): string | null {
-  const hooks = (JSON.parse(rawHooksJson) as ClaudeHooksShape).hooks;
+  const hooks = (JSON.parse(rawHooksJson) as PluginHooksShape).hooks;
   const sessionStart = parseGroups(hooks?.SessionStart);
   const stop = parseGroups(hooks?.Stop);
   const postToolUse = parseGroups(hooks?.PostToolUse);

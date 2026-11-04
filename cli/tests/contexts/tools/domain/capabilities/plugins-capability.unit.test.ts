@@ -290,6 +290,35 @@ describe("PluginsCapability base directory resolution", () => {
       "hooksDestination 'project' requires a projectHooksRelativePath."
     );
   });
+
+  it("refuses a project hooks destination that carries no format, and a format without one", () => {
+    const projectHooksFormat = {
+      merge: () => ({ content: "", warnings: [] }),
+      unmerge: () => "",
+      scriptPath: () => "",
+      scriptDir: () => "",
+    };
+    const message = "projectHooksFormat is required exactly when hooksDestination is 'project'.";
+
+    expect(
+      () =>
+        new PluginsCapability({
+          ...native,
+          hooksDestination: "project",
+          projectHooksRelativePath: ".x/hooks.json",
+        })
+    ).toThrow(message);
+    expect(() => new PluginsCapability({ ...native, projectHooksFormat })).toThrow(message);
+    expect(
+      new PluginsCapability({
+        ...native,
+        hooksDestination: "project",
+        projectHooksRelativePath: ".x/hooks.json",
+        projectHooksFormat,
+      }).projectHooksFormat
+    ).toBe(projectHooksFormat);
+    expect(new PluginsCapability(native).projectHooksFormat).toBeNull();
+  });
 });
 
 describe("PluginsCapability defaults each mode falls back to", () => {

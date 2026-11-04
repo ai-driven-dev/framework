@@ -133,7 +133,7 @@ Beta, alpha and preview plugins are off the recommended path.
 <a href="plugins/aidd-context/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🧭 aidd-context</h3>
-14 skills · 1 hook<br />
+14 skills · 2 hooks<br />
 Project memory, context generation, learning
 </a>
 </td>

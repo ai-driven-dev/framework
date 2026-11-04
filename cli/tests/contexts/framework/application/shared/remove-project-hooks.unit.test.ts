@@ -308,6 +308,21 @@ describe("removeProjectHooks", () => {
     expect(fs.getFile(otherScript)).toBe("other plugin script");
   });
 
+  it("removes entries an older install wrote without a matcher, their digests still matching", async () => {
+    const script = "module.exports = () => {};";
+    const fs = new InMemoryFileAdapter({
+      [HOOKS_PATH]: hooksFile(PLUGIN, OTHER),
+      [SCRIPT_PATH]: script,
+    });
+
+    await removeProjectHooks(fs, plugin({ entry: true, script }), "cursor", PROJECT_ROOT);
+
+    expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null")).toStrictEqual({
+      version: 1,
+      hooks: { preToolUse: [entry(OTHER)] },
+    });
+  });
+
   it.each(["metadata", "event"] as const)(
     "refuses changed hook %s despite an unchanged command, before deleting any tracked script",
     async (change) => {

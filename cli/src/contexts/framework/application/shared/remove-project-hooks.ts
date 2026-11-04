@@ -3,10 +3,7 @@ import { dirname, join, posix } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import {
-  cursorProjectHooksScriptDir,
-  unmergeCursorProjectHooksJson,
-} from "../../../tools/domain/formats/cursor-hooks-project-merge.js";
+import type { ProjectHooksFormat } from "../../../tools/domain/capabilities/plugins-capability.js";
 import { resolvePluginsCapability } from "../../../tools/domain/registry.js";
 import type {
   InstalledPlugin,
@@ -25,16 +22,21 @@ export async function assertProjectHooksUnchanged(
   projectRoot: string
 ): Promise<{ existing: string | null }> {
   const cap = resolvePluginsCapability(toolId);
-  if (cap?.hooksDestination !== "project" || cap.projectHooksRelativePath === null) {
+  if (
+    cap?.hooksDestination !== "project" ||
+    cap.projectHooksRelativePath === null ||
+    cap.projectHooksFormat === null
+  ) {
     return { existing: null };
   }
+  const format = cap.projectHooksFormat;
   const hooksPath = join(projectRoot, cap.projectHooksRelativePath);
   await assertProjectPathWithinRoot(fs, projectRoot, hooksPath);
   const existing = await readExistingJson(fs, hooksPath);
-  const scriptDir = join(projectRoot, cursorProjectHooksScriptDir(pluginName));
+  const scriptDir = join(projectRoot, format.scriptDir(pluginName));
   await assertProjectPathWithinRoot(fs, projectRoot, scriptDir);
   const scriptsPresent = (await fs.fileExists(scriptDir)) ? await fs.listDirectory(scriptDir) : [];
-  const currentEntries = existing === null ? [] : contributedEntries(existing, pluginName);
+  const currentEntries = existing === null ? [] : contributedEntries(existing, pluginName, format);
   if (provenance === undefined) {
     if (currentEntries.length > 0 || scriptsPresent.length > 0) {
       throw new Error(
@@ -58,7 +60,7 @@ export async function assertProjectHooksUnchanged(
     );
   }
   for (const [relativePath, digest] of provenance.scripts) {
-    assertScriptPath(pluginName, relativePath);
+    assertScriptPath(pluginName, relativePath, format);
     const path = join(projectRoot, relativePath);
     await assertProjectPathWithinRoot(fs, projectRoot, path);
     if (!(await fs.fileExists(path))) continue;
@@ -94,7 +96,14 @@ export async function removeRecordedProjectHooks(
   projectRoot: string
 ): Promise<boolean> {
   const cap = resolvePluginsCapability(toolId);
-  if (cap?.hooksDestination !== "project" || cap.projectHooksRelativePath === null) return false;
+  if (
+    cap?.hooksDestination !== "project" ||
+    cap.projectHooksRelativePath === null ||
+    cap.projectHooksFormat === null
+  ) {
+    return false;
+  }
+  const format = cap.projectHooksFormat;
   const { existing } = await assertProjectHooksUnchanged(
     fs,
     pluginName,
@@ -103,10 +112,11 @@ export async function removeRecordedProjectHooks(
     projectRoot
   );
   const hooksPath = join(projectRoot, cap.projectHooksRelativePath);
-  const hasEntries = existing !== null && contributedEntries(existing, pluginName).length > 0;
+  const hasEntries =
+    existing !== null && contributedEntries(existing, pluginName, format).length > 0;
   if (hasEntries && existing !== null) {
     await assertProjectPathWithinRoot(fs, projectRoot, hooksPath);
-    const unmerged = unmergeCursorProjectHooksJson(existing, pluginName);
+    const unmerged = format.unmerge(existing, pluginName);
     if (isHooksFileEmpty(unmerged)) await fs.deleteFile(hooksPath);
     else await fs.writeFile(hooksPath, unmerged);
   }
@@ -133,10 +143,11 @@ export async function removeProjectHooks(
 
 function contributedEntries(
   content: string,
-  pluginName: string
+  pluginName: string,
+  format: ProjectHooksFormat
 ): readonly { event: string; entry: HookEntry }[] {
   const parsed = JSON.parse(content) as { hooks?: Record<string, HookEntry[]> };
-  const marker = cursorProjectHooksScriptDir(pluginName);
+  const marker = format.scriptDir(pluginName);
   return Object.entries(parsed.hooks ?? {}).flatMap(([event, entries]) =>
     entries
       .filter((entry) => typeof entry.command === "string" && entry.command.includes(marker))
@@ -151,17 +162,22 @@ export function digestEntry(entry: HookEntry): string {
 
 export function recordedProjectHookEntries(
   content: string,
-  pluginName: string
+  pluginName: string,
+  format: ProjectHooksFormat
 ): ProjectHooksProvenance["entries"] {
-  return contributedEntries(content, pluginName).map(({ event, entry }) => ({
+  return contributedEntries(content, pluginName, format).map(({ event, entry }) => ({
     event,
     command: entry.command,
     digest: digestEntry(entry),
   }));
 }
 
-function assertScriptPath(pluginName: string, relativePath: string): void {
-  const prefix = cursorProjectHooksScriptDir(pluginName);
+function assertScriptPath(
+  pluginName: string,
+  relativePath: string,
+  format: ProjectHooksFormat
+): void {
+  const prefix = format.scriptDir(pluginName);
   if (
     !relativePath.startsWith(prefix) ||
     posix.isAbsolute(relativePath) ||

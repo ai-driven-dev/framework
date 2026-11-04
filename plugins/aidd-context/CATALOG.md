@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/00-onboard`](#skills00-onboard)
   - [`skills/01-bootstrap`](#skills01-bootstrap)
@@ -37,7 +38,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [hooks.json](hooks/hooks.json) |
+| [memory-hook.cjs](hooks/memory-hook.cjs) |
+| [memory-lint.cjs](hooks/memory-lint.cjs) |
 | [update_memory.js](hooks/update_memory.js) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
 
 ### `skills`
 
@@ -124,6 +133,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [rule-discovery.md](skills/05-rule-generate/references/rule-discovery.md) | - |
 | `references` | [rule-publication.md](skills/05-rule-generate/references/rule-publication.md) | - |
+| `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
 | `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`

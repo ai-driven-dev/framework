@@ -1,11 +1,8 @@
 import { dirname, join } from "node:path";
-import {
-  cursorProjectHooksScriptPath,
-  mergeCursorProjectHooksJson,
-} from "../../../../../contexts/tools/domain/formats/cursor-hooks-project-merge.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
+import type { ProjectHooksFormat } from "../../../../tools/domain/capabilities/plugins-capability.js";
 import { resolvePluginsCapability } from "../../../../tools/domain/registry.js";
 import {
   type PluginComponentFile,
@@ -50,7 +47,8 @@ export class ProjectHooksMaterializer {
     const pluginsCap = resolvePluginsCapability(toolId);
     if (pluginsCap === null || pluginsCap.hooksDestination !== "project") return { skipped: [] };
     const projectHooksRelativePath = pluginsCap.projectHooksRelativePath;
-    if (projectHooksRelativePath === null) return { skipped: [] };
+    const format = pluginsCap.projectHooksFormat;
+    if (projectHooksRelativePath === null || format === null) return { skipped: [] };
     const manifestFile = dist.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST_PATH);
     if (manifestFile === undefined) {
       if (previous !== undefined) {
@@ -65,14 +63,15 @@ export class ProjectHooksMaterializer {
       return { skipped: [] };
     }
     await assertProjectHooksUnchanged(this.fs, dist.manifest.name, previous, toolId, projectRoot);
-    await this.assertScriptsNotUserOwned(dist, projectRoot, previous);
+    await this.assertScriptsNotUserOwned(dist, projectRoot, format, previous);
     const { warnings, entries } = await this.mergeProjectHooksJson(
       dist,
       manifestFile,
       projectRoot,
-      projectHooksRelativePath
+      projectHooksRelativePath,
+      format
     );
-    const scripts = await this.writeProjectHooksScripts(dist, projectRoot);
+    const scripts = await this.writeProjectHooksScripts(dist, projectRoot, format);
     await this.removeObsoleteScripts(previous, scripts, projectRoot);
     return {
       skipped: warnings.map(
@@ -91,42 +90,41 @@ export class ProjectHooksMaterializer {
     dist: PluginDistribution,
     manifestFile: PluginComponentFile,
     projectRoot: string,
-    projectHooksRelativePath: string
+    projectHooksRelativePath: string,
+    format: ProjectHooksFormat
   ): Promise<{ warnings: readonly string[]; entries: ProjectHooksProvenance["entries"] }> {
     const destPath = join(projectRoot, projectHooksRelativePath);
     const existing = await this.readExistingJson(destPath);
-    const { content, warnings } = mergeCursorProjectHooksJson(
-      existing,
-      manifestFile.content,
-      dist.manifest.name
-    );
+    const { content, warnings } = format.merge(existing, manifestFile.content, dist.manifest.name);
     await this.fs.writeFile(destPath, content);
-    return { warnings, entries: recordedProjectHookEntries(content, dist.manifest.name) };
+    return { warnings, entries: recordedProjectHookEntries(content, dist.manifest.name, format) };
   }
 
   private async assertScriptsNotUserOwned(
     dist: PluginDistribution,
     projectRoot: string,
+    format: ProjectHooksFormat,
     previous?: ProjectHooksProvenance
   ): Promise<void> {
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const relativePath = cursorProjectHooksScriptPath(dist.manifest.name, file.relativePath);
+      const relativePath = format.scriptPath(dist.manifest.name, file.relativePath);
       if (previous?.scripts.has(relativePath) === true) continue;
       if (await this.fs.fileExists(join(projectRoot, relativePath))) {
-        throw new Error(`Cursor hook script '${relativePath}' is user-owned; install refused.`);
+        throw new Error(`Hook script '${relativePath}' is user-owned; install refused.`);
       }
     }
   }
 
   private async writeProjectHooksScripts(
     dist: PluginDistribution,
-    projectRoot: string
+    projectRoot: string,
+    format: ProjectHooksFormat
   ): Promise<ReadonlyMap<string, string>> {
     const scripts = new Map<string, string>();
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
-      const dest = cursorProjectHooksScriptPath(dist.manifest.name, file.relativePath);
+      const dest = format.scriptPath(dist.manifest.name, file.relativePath);
       await this.fs.writeFile(join(projectRoot, dest), file.content);
       scripts.set(dest, (await this.fs.readFileHash(join(projectRoot, dest))).value);
     }
