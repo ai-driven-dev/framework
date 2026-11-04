@@ -526,13 +526,13 @@ describe("aidd-ui validator entries", () => {
 
     it("reads the project from the first workspace root when the payload has no cwd", () => {
       breakOnePerFamily();
-      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", workspace_roots: [tmp, os.tmpdir()], tool_input: { file_path: BRAND } });
+      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", workspace_roots: [tmp, os.tmpdir()], tool_name: "Write", tool_input: { file_path: BRAND } });
       assert.deepEqual(hook(input), { code: 0, out: JSON.stringify({ additional_context: text([BRAND_FAILURE], 2) }), err: "" });
     });
 
     it("prefers cwd over the workspace roots", () => {
       breakOnePerFamily();
-      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", cwd: tmp, workspace_roots: [os.tmpdir()], tool_input: { file_path: BRAND } });
+      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", cwd: tmp, workspace_roots: [os.tmpdir()], tool_name: "Write", tool_input: { file_path: BRAND } });
       assert.deepEqual(hook(input), { code: 0, out: JSON.stringify({ additional_context: text([BRAND_FAILURE], 2) }), err: "" });
     });
 
@@ -563,13 +563,38 @@ describe("aidd-ui validator entries", () => {
       breakOnePerFamily();
       assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 0 })), silent);
     });
+
+    // Cursor sends every tool to the hook, and a Read carries file_path like a Write does.
+    it("does not take a Read of a watched file for a write: no feedback, no mark", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Read", tool_input: { file_path: path.join(tmp, BRAND) }, tool_output: "" })), silent);
+      assert.equal(cursorMarked(), false);
+    });
+
+    it("ignores any other tool, whatever its input names", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Grep", tool_input: { path: path.join(tmp, BRAND), command: `node ${ENGINE} tokens` } })), silent);
+      assert.equal(cursorMarked(), false);
+    });
+
+    it("sends its Shell tool through the shell rule: an engine command marks the turn", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Shell", tool_input: { command: `node ${ENGINE} tokens` } })), silent);
+      assert.equal(cursorMarked(), true);
+    });
+
+    it("does not mark the turn for a Shell command that only reads", () => {
+      breakOnePerFamily();
+      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Shell", tool_input: { command: "cat aidd_docs/ui/brand.md" } })), silent);
+      assert.equal(cursorMarked(), false);
+    });
   });
 
   describe("E11 engine commands", () => {
     const ENGINE_COMMANDS = [
       ["runs the engine", `node ${ENGINE} tokens ${tmp}`],
       ["runs the engine installed flat", "node .claude/hooks/aidd-ui/aidd-ui.cjs bump --task aidd_docs/tasks/x --change y color.brand.primary"],
-      ["names aidd_docs/ui/", "sed -i s/a/b/ aidd_docs/ui/brand.md"],
+      ["names aidd_docs/ui/ and writes", "sed -i s/a/b/ aidd_docs/ui/brand.md"],
     ];
     for (const [name, command] of ENGINE_COMMANDS) {
       it(`marks the turn and prints nothing when a shell command ${name}, so Stop blocks once on what it left`, () => {
@@ -585,6 +610,46 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(copilotShell(`node ${ENGINE} tokens`)), silent);
       assert.deepEqual(hook(stop()), finish(FAILURES));
     });
+
+    const WRITES = [
+      "echo x > aidd_docs/ui/brand.md",
+      "echo x >> aidd_docs/ui/brand.md",
+      "echo x | tee aidd_docs/ui/brand.md",
+      "sed -i s/a/b/ aidd_docs/ui/brand.md",
+      "mv a.md aidd_docs/ui/brand.md",
+      "cp a.md aidd_docs/ui/brand.md",
+      "rm aidd_docs/ui/brand.md",
+      "touch aidd_docs/ui/brand.md",
+      "mkdir aidd_docs/ui/components",
+      "patch aidd_docs/ui/brand.md fix.diff",
+      "apply_patch aidd_docs/ui/brand.md",
+      "git apply aidd_docs/ui/fix.diff",
+      "git checkout -- aidd_docs/ui/brand.md",
+      "git restore aidd_docs/ui/brand.md",
+    ];
+    for (const command of WRITES) {
+      it(`marks the turn when a command names aidd_docs/ui/ and writes: ${command}`, () => {
+        breakOnePerFamily();
+        assert.deepEqual(hook(shell(command)), silent);
+        assert.equal(marked(), true);
+      });
+    }
+
+    const READS = [
+      "cat aidd_docs/ui/brand.md",
+      "sed -n '1,40p' aidd_docs/ui/brand.md",
+      "grep -rn color aidd_docs/ui/ 2>/dev/null",
+      "ls aidd_docs/ui/components",
+      "head -5 aidd_docs/ui/brand.md 2>&1",
+    ];
+    for (const command of READS) {
+      it(`does not mark the turn when a command only reads aidd_docs/ui/: ${command}`, () => {
+        breakOnePerFamily();
+        assert.deepEqual(hook(shell(command)), silent);
+        assert.equal(marked(), false);
+        assert.deepEqual(hook(stop()), silent);
+      });
+    }
 
     it("does nothing for any other shell command: no mark, no output at Stop", () => {
       breakOnePerFamily();

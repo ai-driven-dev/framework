@@ -1,8 +1,8 @@
 // Runs the design system checks at three moments, and prints the same short text on every host (Cursor's camelCase events included):
 // problem lines, then at most one line counting the errors left out. After a write under
 // aidd_docs/ui/ or a code root, the turn is marked and the errors of the files the write reached
-// come back, with the warnings of the written files; a shell command that runs the engine or names
-// aidd_docs/ui/ marks the turn and prints nothing. At Stop, a marked turn gets its errors back
+// come back, with the warnings of the written files; a shell command that runs the engine or writes
+// under aidd_docs/ui/ marks the turn and prints nothing. At Stop, a marked turn gets its errors back
 // once, as the reason to keep working; warnings never block. At session start the errors are
 // counted and the first few printed. A file that cannot be read is one problem; anything else
 // unexpected exits 0 in silence, so a broken check never blocks a session.
@@ -27,8 +27,19 @@ const ENGINE = path.join(__dirname, "aidd-ui.cjs");
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
 const PATCHED_FILE = /^\*\*\* (?:Add|Update) File: (.+)$/gm;
-// A shell command that runs the engine (flat or plugin install alike) or names the design system's folder.
-const ENGINE_COMMAND = /aidd-ui\.cjs|aidd_docs\/ui\//;
+// A shell command marks the turn when it runs the engine (flat or plugin install alike), or when it names
+// the design system's folder together with one of these writes. Any other command only reads.
+const ENGINE_COMMAND = /aidd-ui\.cjs/;
+const UI_FOLDER = /aidd_docs\/ui\//;
+const SHELL_WRITES = [
+  /(?<![\d&])>(?!&)(?!\s*\/dev\/null)/, // a redirection, not 2>&1 or >/dev/null
+  /\btee\b/,
+  /\bsed\b[^|;&]*\s-(?:[a-zA-Z]*i|-in-place)/,
+  /(?<![\w./-])(?:mv|cp|rm|touch|mkdir|patch|apply_patch)(?![\w./-])/,
+  /\bgit\s+(?:apply|checkout|restore)\b/,
+];
+// Cursor sends every tool to the hook, and a Read carries file_path like a Write: only these two count.
+const CURSOR_TOOLS = { Write: "write", Shell: "shell" };
 
 /** The JSON on stdin, or null when it is none. */
 function readPayload() {
@@ -54,11 +65,21 @@ function writtenFiles(toolInput) {
   return [...patch.matchAll(PATCHED_FILE)].map((match) => match[1]);
 }
 
-/** Whether a tool ran a shell command that reaches the design system: it is no patch. */
-const isEngineCommand = (toolInput) => !writtenFiles(toolInput).length && ENGINE_COMMAND.test(commandOf(toolInput) ?? "");
+/** Whether a shell command changes the design system or runs the engine, which may. */
+function marksTurn(command) {
+  if (typeof command !== "string") return false;
+  return ENGINE_COMMAND.test(command) || (UI_FOLDER.test(command) && SHELL_WRITES.some((write) => write.test(command)));
+}
 
 /** Cursor sends cursor_version on every payload, as no other host does. */
 const isCursor = (payload) => "cursor_version" in payload;
+
+/** What a tool did: "write", "shell", or null for a tool the hook ignores. Cursor names its tools;
+ * the other hosts are told apart by the files the input names. */
+function toolKind(payload) {
+  if (isCursor(payload)) return CURSOR_TOOLS[payload.tool_name] ?? null;
+  return writtenFiles(payload.tool_input).length ? "write" : "shell";
+}
 
 /** What identifies the turn's session: Cursor's conversation_id, which its documentation lists on every event, else session_id. */
 const sessionOf = (payload) => (isCursor(payload) ? payload.conversation_id : payload.session_id);
@@ -170,10 +191,13 @@ function run() {
   const payload = readPayload();
   const event = EVENTS[payload?.hook_event_name];
   if (!event) return EXIT_SILENT;
-  // A shell command reaching the design system marks the turn and costs no read of the project; any other does nothing.
-  if (event === POST_TOOL_USE && isEngineCommand(payload.tool_input)) {
-    markTurn(payload);
-    return EXIT_SILENT;
+  // A shell command marks the turn or does nothing, and an ignored tool does nothing: neither reads the project.
+  if (event === POST_TOOL_USE) {
+    const kind = toolKind(payload);
+    if (kind !== "write") {
+      if (kind === "shell" && marksTurn(commandOf(payload.tool_input))) markTurn(payload);
+      return EXIT_SILENT;
+    }
   }
   // Stop fires on every turn: one that wrote no watched file costs no read of the project.
   if (event === STOP && !consumeMark(payload)) return EXIT_SILENT;

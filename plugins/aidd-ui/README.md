@@ -143,7 +143,7 @@ A hook runs the same check and prints the same text on every host, only the JSON
 | --- | --- |
 | Session start | when an error exists, `aidd-ui: N errors` and the first 5 |
 | After a write under `aidd_docs/ui/` or a code root | the errors of the written files, their record's render and the records citing it, or of all after a write to `system.md`, the tokens, a theme, a platform or a breakpoint, then the warnings of the written files only; 10 lines at most, errors first; the count line carries the errors cut and those elsewhere |
-| After a shell command running the engine or naming `aidd_docs/ui/` | nothing, the turn is marked; any other shell command does nothing |
+| After a shell command running the engine, or naming `aidd_docs/ui/` with a write | nothing, the turn is marked; any other shell command, a read included, does nothing |
 | End of a turn that wrote such a file or ran such a command | the errors, as a reason to continue, once; 10 lines at most, then the count line |
 
 Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, code C1 to C9.
@@ -152,9 +152,9 @@ Rules: records R1 to R17, history H1 to H8, tokens T1 to T10, renders V1 to V9, 
 
 - Without `node` on `PATH`, the hook does nothing.
 - After a write, the problems reach the model in the same turn on Claude Code, Codex, Copilot CLI, OpenCode and Kilo. At turn end, OpenCode and Kilo receive the errors as the next prompt. A forced continuation is never asked again. The turn mark lives in the OS temp directory; without a session id, no end-of-turn check runs.
-- Cursor: the hook protocol is handled and checked on a payload, with its camelCase events, `workspace_roots` and `additional_context` / `followup_message` output; `stop` was not observed in `cursor-agent -p`. The end-of-turn follow-up is asked once (`loop_count` 0), and the turn is marked by `conversation_id`. `cursor-agent` writes `~/.cursor/ai-tracking` even with its config and data directories overridden.
+- Cursor: the hook protocol is handled and checked on a payload, with its camelCase events, `workspace_roots` and `additional_context` / `followup_message` output; Cursor sends every tool, so only `Write` counts as a write and `Shell` goes through the shell rule; `stop` was not observed in `cursor-agent -p`, so its turn-end check is unproven. The end-of-turn follow-up is asked once (`loop_count` 0), and the turn is marked by `conversation_id`. `cursor-agent` writes `~/.cursor/ai-tracking` even with its config and data directories overridden.
 - Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
-- A file written by a shell command is not seen when it is written: the command is, so the turn end reads it, and only when it runs the engine or names `aidd_docs/ui/`. A file deleted by a patch is not seen.
+- A file written by a shell command is not seen when it is written: the command is, so the turn end reads it, and only when it runs the engine, or names `aidd_docs/ui/` with a redirection, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `git apply`, `git checkout` or `git restore`. A shell write that list does not know is not seen. A file deleted by a patch is not seen.
 - Windows is untested.
 - A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
 - The Resolver is read in one profile: `theme`, `platform` and `breakpoint` modifiers with file sources. Inline sources and other modifiers are not checked.
