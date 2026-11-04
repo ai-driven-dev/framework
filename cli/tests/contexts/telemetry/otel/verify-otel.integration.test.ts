@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -84,6 +84,46 @@ describe.skipIf(process.platform === "win32")("OTLP verification", () => {
     expect(JSON.stringify(result)).not.toContain("private-example");
   });
 
+  it("refuses a capture symlink and a directory without reading either target", async () => {
+    await initializeOtel("claude", "dev", { home, env: {} });
+    const target = join(home, "outside.jsonl");
+    await writeFile(target, "private\n", { mode: 0o600 });
+    await symlink(target, capture);
+    await expect(verifyOtel("claude", "dev", { home, env: {} })).rejects.toThrow();
+    expect(await readFile(target, "utf8")).toBe("private\n");
+    await rm(capture);
+    await mkdir(capture);
+    await expect(verifyOtel("claude", "dev", { home, env: {} })).rejects.toThrow(/regular file/);
+  });
+
+  it("reports counts for valid and malformed lines while ignoring blank lines", async () => {
+    await initializeOtel("claude", "dev", { home, env: {} });
+    const record = {
+      signal: "logs",
+      payload: {
+        resourceLogs: [
+          {
+            scopeLogs: [
+              {
+                logRecords: [
+                  { attributes: [{ key: "event.name", value: { stringValue: "user_prompt" } }] },
+                  { attributes: [{ key: "event.name", value: { stringValue: "tool_result" } }] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    await writeFile(capture, `\n${JSON.stringify(record)}\nnot-json\n\n`, { mode: 0o600 });
+    expect(await verifyOtel("claude", "dev", { home, env: {} })).toMatchObject({
+      lines: 2,
+      observations: 2,
+      unrecognisedLines: 1,
+      eventLines: 0,
+    });
+  });
+
   it("also counts a local OpenCode SSE capture when present", async () => {
     const host = {
       home,
@@ -106,6 +146,21 @@ describe.skipIf(process.platform === "win32")("OTLP verification", () => {
       observations: 1,
       eventLines: 1,
     });
+  });
+
+  it("refuses an OpenCode event capture that is not a regular file", async () => {
+    const host = {
+      home,
+      env: { OPENCODE_CONFIG_CONTENT: '{"experimental":{"openTelemetry":true}}' },
+      opencodeVersion: async () => "1.19.5",
+    };
+    await initializeOtel("opencode", "dev", host);
+    const directory = join(home, ".local/share/aidd-otel-observation");
+    await writeFile(join(directory, "opencode.jsonl"), "{}\n", { mode: 0o600 });
+    await mkdir(join(directory, "opencode", "events.jsonl"), { recursive: true });
+    await expect(verifyOtel("opencode", "dev", host)).rejects.toThrow(
+      /event capture must be a regular file/
+    );
   });
 
   it("refuses production", async () => {

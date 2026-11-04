@@ -91,7 +91,7 @@ describe.skipIf(process.platform === "win32")("installation identity across comm
     const args = ["telemetry", "on", "--yes", "--anonymous"];
     try {
       expect((await runCli(args, projectDir, fakeHome)).exitCode).not.toBe(0);
-      await expect(stat(path)).rejects.toThrow();
+      await expect(readFile(path, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
       await gitInit(projectDir);
       const turnOn = await runCli(args, projectDir, fakeHome);
       expect(turnOn.exitCode, turnOn.stderr).toBe(0);

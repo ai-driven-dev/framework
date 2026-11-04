@@ -65,7 +65,12 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     expect(await initializeOtel("claude", "dev", { home, env: {} })).toMatchObject({
       changed: false,
     });
-    expect(await readFile(path, "utf8")).toBe(content);
+    const after = await open(path, "r");
+    try {
+      expect(await after.readFile("utf8")).toBe(content);
+    } finally {
+      await after.close();
+    }
   });
 
   it("refuses a symlink without reading or replacing its target", async () => {

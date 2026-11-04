@@ -36,6 +36,23 @@ The examples are fictional. `C` is Claude Code, `X` is Codex, `O1` is OpenCode 1
 - OpenCode 2's rich session events are SSE, not the observed OTLP logs. The O1 schema above does not prove its fields are emitted over OTLP. The schema event's `durable.version` is not an application major version.
 - Prompts, responses, tool arguments and results can contain secrets. Capture and retain them only with the appropriate consent and local access controls.
 
+## Local Gouvernail sync
+
+With the local OTLP capture already running, start one process per configured provider:
+
+```sh
+# Set the relevant connector token in the environment without putting it in command arguments.
+export AIDD_OTEL_TOKEN='<connector token>'
+aidd telemetry otel sync --config=claude --tenant=acme --endpoint=http://127.0.0.1:3011 --follow
+# In another shell, use the Codex connector token and --config=codex.
+```
+
+The origin must be loopback HTTP; no token or prompt content is printed. Only supported observations from sessions admitted by the local ledger and covered by an uninterrupted consent interval are sent. A Claude cumulative metric whose whole interval is not covered is excluded. A successful HTTP response does not prove that Gouvernail matched a member: check its session view.
+
+An automatic follower starts with new capture events and keeps a private checkpoint. Network errors and HTTP 5xx responses are reported and retried with bounded backoff; permanent HTTP failures stop the follower. Restarting resumes from the checkpoint, and a failed post is replayed, so the receiver must remain idempotent. Unknown sessions wait for their transcript to be admitted using private byte-range indexes, without holding up other sessions. These indexes can grow until admission and depend on retaining the original capture; replaced or truncated captures require recovery rather than silently skipping data. Running a follower for each provider is an explicit operation; it does not start automatically after a machine restart. Linked session identifiers and the minimum provider identity are stored privately to detect later ambiguity, including after restart. Older sync state without identity must be refreshed with a session replay.
+
+To replay one consented session already in the capture, pass `--session=<id>` without `--follow`. Add `--follow` to follow only that session. A feature link is sent only when every recorded call agrees on a single observed branch and a declared canonical ticket such as `owner/repo#123`; otherwise it remains unlinked. If a linked session later becomes ambiguous, an irreversible invalidation keeps it unlinked even if events arrive out of order.
+
 ## Sources
 
 Read on 2026-11-04:

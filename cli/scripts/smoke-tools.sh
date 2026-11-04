@@ -30,6 +30,7 @@ ALL_COMMANDS=(
   "auth login" "auth logout" "auth status"
   "telemetry on" "telemetry off" "telemetry forget" "telemetry ingest"
   "telemetry task" "telemetry status" "telemetry report" "telemetry identity"
+  "telemetry otel init" "telemetry otel verify" "telemetry otel run" "telemetry otel sync" "telemetry otel collect"
 )
 
 PASS=0; FAIL=0; SKIP=0
@@ -66,7 +67,7 @@ project_tree_hash() {
 
 PARENTS=" plugin marketplace auth framework telemetry "
 # A parent one level deeper than PARENTS, so a covered key needs three words there, not two.
-GRANDPARENTS=" "
+GRANDPARENTS=" telemetry otel "
 derive_key() {
   local first="$1" second="${2:-}" third="${3:-}"
   if [[ "$GRANDPARENTS" == *" $first $second "* ]]; then
@@ -165,6 +166,8 @@ export AIDD_TOKEN="$TOKEN"
 # HOME does not move Codex: it reads that variable and falls back to the real `~/.codex`.
 export HOME="$TMPROOT/home"; mkdir -p "$HOME"
 export CODEX_HOME="$TMPROOT/codex-home"; mkdir -p "$CODEX_HOME"
+export XDG_CONFIG_HOME="$HOME/.config"
+unset OPENCODE_CONFIG OPENCODE_CONFIG_DIR OPENCODE_CONFIG_CONTENT
 
 # ════════════════════════════════════════════════════════════════
 # OFFLINE / LOCAL — runs without a token
@@ -224,6 +227,73 @@ run "telemetry off" 0 "Measurement is off" "$P_TEL" -- telemetry off
 run "telemetry forget (preview)" 0 "Nothing was removed" "$P_TEL" -- telemetry forget
 run "telemetry forget --yes" 0 "Removed" "$P_TEL" -- telemetry forget --yes
 run "telemetry off (after forget)" 0 "Measurement was not on" "$P_TEL" -- telemetry off
+
+section "native telemetry (sandboxed profile)"
+OTEL_CAPTURE="$HOME/.local/share/aidd-otel-observation"
+mkdir -p "$OTEL_CAPTURE" "$TMPROOT/otel-bin"
+chmod 700 "$OTEL_CAPTURE"
+printf '%s\n' 'test-token' > "$OTEL_CAPTURE/collector-token"
+chmod 600 "$OTEL_CAPTURE/collector-token"
+run "telemetry otel init (Claude)" 0 "Updated" "$P_TEL" -- \
+  telemetry otel init --config=claude --endpoint=dev
+printf '%s\n' '{"signal":"logs","payload":{"resourceLogs":[{"scopeLogs":[{"logRecords":[{"attributes":[{"key":"event.name","value":{"stringValue":"user_prompt"}}]}]}]}]}}' > "$OTEL_CAPTURE/claude.jsonl"
+run "telemetry otel verify (Claude)" 0 "1 normalized observations" "$P_TEL" -- \
+  telemetry otel verify --config=claude --endpoint=dev
+# Exercise the actual built collector on a free loopback port using only the test profile.
+if node - "$CLI" "$OTEL_CAPTURE/claude.jsonl" >"$TMPROOT/collector-smoke.log" 2>&1 <<'NODE'
+const { spawn } = require("node:child_process");
+const { readFile } = require("node:fs/promises");
+const [cli, capture] = process.argv.slice(2);
+const child = spawn(process.execPath, [cli, "telemetry", "otel", "collect", "--port", "0"]);
+let output = "";
+child.stderr.on("data", data => { output += data; });
+const port = new Promise((resolve, reject) => {
+  const timer = setTimeout(() => reject(new Error("collector did not start")), 10000);
+  child.once("exit", () => { clearTimeout(timer); reject(new Error(`collector exited: ${output}`)); });
+  child.stdout.on("data", data => {
+    output += data;
+    const match = output.match(/listening on http:\/\/127\.0\.0\.1:(\d+)/);
+    if (match) { clearTimeout(timer); resolve(match[1]); }
+  });
+});
+(async () => {
+  try {
+    const url = `http://127.0.0.1:${await port}/claude/v1/logs`;
+    const before = await readFile(capture, "utf8");
+    const denied = await fetch(url, { method: "POST", body: "{}" });
+    if (denied.status !== 403 || await readFile(capture, "utf8") !== before) throw new Error("unauthorized capture was not rejected");
+    const accepted = await fetch(url, { method: "POST", headers: { Authorization: "Bearer test-token" }, body: "{}" });
+    const lines = (await readFile(capture, "utf8")).trim().split("\n");
+    const recorded = JSON.parse(lines.at(-1));
+    if (accepted.status !== 200 || lines.length !== 2 || recorded.signal !== "logs" || JSON.stringify(recorded.payload) !== "{}") throw new Error("authorized capture was not recorded");
+    if (output.includes("test-token")) throw new Error("collector printed its token");
+  } catch (error) { console.error(error); process.exitCode = 1; }
+  finally { child.kill("SIGTERM"); }
+})();
+NODE
+then mark_covered "telemetry otel collect"; ok "telemetry otel collect (authenticated local capture)"
+else bad "telemetry otel collect (authenticated local capture)" "$(cat "$TMPROOT/collector-smoke.log")"; fi
+# The fake executable validates the environment handed to OpenCode 1 without using a real
+# provider, changing the user's configuration, or relying on an installed OpenCode version.
+cat > "$TMPROOT/otel-bin/opencode" <<'SCRIPT'
+#!/usr/bin/env bash
+if [[ "${1:-}" == "--version" ]]; then echo '1.18.35'; exit 0; fi
+[[ "${OTEL_EXPORTER_OTLP_ENDPOINT:-}" == 'http://127.0.0.1:14318/opencode' ]] || exit 1
+[[ "${OTEL_EXPORTER_OTLP_HEADERS:-}" == 'Authorization=Bearer test-token' ]] || exit 1
+echo 'OpenCode received local OTLP settings'
+SCRIPT
+chmod 700 "$TMPROOT/otel-bin/opencode"
+SMOKE_ORIGINAL_PATH="$PATH"
+export PATH="$TMPROOT/otel-bin:$PATH"
+unset OTEL_EXPORTER_OTLP_ENDPOINT OTEL_EXPORTER_OTLP_HEADERS
+run "telemetry otel init (OpenCode 1)" 0 "OpenCode 1" "$P_TEL" -- \
+  telemetry otel init --config=opencode --endpoint=dev
+run "telemetry otel run (OpenCode 1)" 0 "OpenCode received local OTLP settings" "$P_TEL" -- \
+  telemetry otel run --config=opencode -- --version-check
+unset AIDD_OTEL_TOKEN
+run "telemetry otel sync (no consented session)" 1 "No consented usage found" "$P_TEL" -- \
+  telemetry otel sync --config=codex --session=missing --tenant=smoke --endpoint=http://127.0.0.1:4318
+export PATH="$SMOKE_ORIGINAL_PATH"
 
 section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?

@@ -53,6 +53,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // OpenCode 1 launcher (+15.9 KB over the 710.8 KB build above); 0.2% measured headroom.
 // 746 KB: 744.9 KB, provider observation transformers and a persistent installation ID
 // (+18.2 KB over the 726.7 KB build above); 0.1% measured headroom.
+// 784 KB: 783.7 KB, local OTLP collector and consent-aware resumable provider sync,
+// explicit metric sanitization, retry and durable feature invalidation (+38.8 KB over 744.9 KB);
+// 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

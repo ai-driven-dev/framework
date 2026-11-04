@@ -30,9 +30,12 @@ import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
 import {
   checkOtel,
+  collectOtel,
   configureOtel,
+  followCapturedSessions,
   launchOtel,
   otelOptions,
+  syncCapturedSession,
 } from "../../runtime/wiring/telemetry-otel.js";
 import {
   printForgetResult,
@@ -190,6 +193,100 @@ export function registerTelemetryCommand(program: Command): void {
         }
       );
   }
+
+  otel
+    .command("collect")
+    .description("Capture authenticated OTLP on a local loopback port")
+    .option("--port <port>", "Loopback TCP port; 0 selects a free port", "14318")
+    .action(async (options: { port: string }) => {
+      const { output } = parseGlobalOptions(program);
+      try {
+        if (!/^\d+$/.test(options.port)) throw new Error("Collector port must be an integer.");
+        const collector = await collectOtel(Number(options.port));
+        output.info(`OTLP collector listening on http://127.0.0.1:${collector.port}`);
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
+
+  otel
+    .command("sync")
+    .description("Send one consented session's local telemetry to a loopback Gouvernail")
+    .addOption(
+      new Option("--config <tool>", "Tool to sync")
+        .choices(otelOptions.syncConfigs)
+        .makeOptionMandatory()
+    )
+    .option("--session <id>", "Exact provider session ID; omit with --follow to discover sessions")
+    .requiredOption("--tenant <slug>", "Gouvernail tenant slug")
+    .requiredOption("--endpoint <origin>", "Loopback HTTP origin")
+    .option("--follow", "Follow new events for this session", false)
+    .action(
+      async (options: {
+        config: (typeof otelOptions.syncConfigs)[number];
+        session?: string;
+        tenant: string;
+        endpoint: string;
+        follow: boolean;
+      }) => {
+        const { output, run } = commandOf(program);
+        if (!options.session && !options.follow) {
+          output.error("Pass --session for a bounded sync, or --follow to discover new sessions.");
+          process.exitCode = 1;
+          return;
+        }
+        await run(async (deps) => {
+          const tool = otelOptions.usageTool(options.config);
+          if (!options.session) {
+            output.info("Following new consented sessions; press Ctrl-C to stop.");
+            const result = await followCapturedSessions(
+              {
+                config: options.config,
+                tenant: options.tenant,
+                endpoint: options.endpoint,
+                token: process.env.AIDD_OTEL_TOKEN ?? "",
+              },
+              () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
+              (admission, at, start) =>
+                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start)
+            );
+            output.info(
+              `Sent ${result.sent} observations; ${result.denied} were outside consent; ${result.pending} await confirmation.`
+            );
+            return;
+          }
+          const session = options.session;
+          let admission = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(session);
+          const resolve = async () => {
+            admission = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(session);
+            if (!admission)
+              throw new Error("No consented usage found for this session; no capture was sent.");
+            return admission.feature;
+          };
+          await resolve();
+          if (options.follow) output.info("Following the selected session; press Ctrl-C to stop.");
+          const result = await syncCapturedSession(
+            { ...options, session, token: process.env.AIDD_OTEL_TOKEN ?? "" },
+            resolve,
+            async (transfer) =>
+              Boolean(
+                admission &&
+                  transfer.at &&
+                  (await deps.telemetry.sessionFeatureUseCase.permits(
+                    admission,
+                    transfer.at,
+                    transfer.start
+                  )) === "allow"
+              )
+          );
+          output.info(
+            `Sent ${result.sent} observations; ${result.skipped} were outside a known consent interval. Receiver acceptance does not prove member attribution.`
+          );
+          if (result.partialLine)
+            output.info("The last incomplete capture line was left for the next sync.");
+        });
+      }
+    );
 
   otel
     .command("run [args...]")

@@ -1,4 +1,14 @@
-import { chmod, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -29,6 +39,7 @@ describe("installation identity", () => {
     expect(await ensureInstallationId(root)).toBe(ids[0]);
     const path = join(root, "installation", "id.json");
     expect(JSON.parse(await readFile(path, "utf8"))).toEqual({ installation_id: ids[0] });
+    expect(await readdir(join(root, "installation"))).toEqual(["id.json"]);
     if (process.platform !== "win32") expect((await stat(path)).mode & 0o777).toBe(0o600);
   });
 
@@ -52,6 +63,42 @@ describe("installation identity", () => {
     expect(await readFile(join(directory, "id.json"), "utf8")).toBe(
       '{"installation_id":"invalid"}'
     );
+  });
+
+  it("checks an absent installation without creating one", async () => {
+    const root = await makeRoot();
+    expect(await checkInstallationId(root)).toBeNull();
+    expect(await readdir(root)).toEqual([]);
+  });
+
+  it.each([
+    '{"installation_id":"prefix-a720868e-d80a-4c71-96aa-2ce56936b35d"}',
+    '{"installation_id":"a720868e-d80a-4c71-96aa-2ce56936b35d-suffix"}',
+    '{"installation_id":"a720868e-d80a-1c71-96aa-2ce56936b35d"}',
+    '{"installation_id":null}',
+    "{}",
+    "[]",
+    "{invalid",
+  ])("refuses malformed stored identity %s", async (stored) => {
+    const root = await makeRoot();
+    const directory = join(root, "installation");
+    await mkdir(directory);
+    await writeFile(join(directory, "id.json"), stored, { mode: 0o600 });
+    await expect(checkInstallationId(root)).rejects.toThrow("existing file was left unchanged");
+    await expect(ensureInstallationId(root)).rejects.toThrow("existing file was left unchanged");
+    expect(await readFile(join(directory, "id.json"), "utf8")).toBe(stored);
+  });
+
+  it("does not confuse a non-directory parent with a missing identity", async () => {
+    const root = await makeRoot();
+    await writeFile(join(root, "installation"), "not a directory");
+    await expect(checkInstallationId(root)).rejects.toMatchObject({ code: "ENOTDIR" });
+  });
+
+  it.skipIf(process.platform === "win32")("rejects a directory as the identity file", async () => {
+    const root = await makeRoot();
+    await mkdir(join(root, "installation", "id.json"), { recursive: true });
+    await expect(checkInstallationId(root)).rejects.toThrow("private regular file");
   });
 
   it.skipIf(process.platform === "win32")("refuses a symlink without following it", async () => {
@@ -89,5 +136,13 @@ describe("installation identity", () => {
     ).rejects.toThrow(
       "OTLP configuration completed, but the installation ID could not be saved: disk full"
     );
+  });
+
+  it("reports non-Error failures after the earlier action already succeeded", async () => {
+    await expect(
+      finishInstallationId(async () => {
+        throw "disk full";
+      }, "Measurement is on")
+    ).rejects.toThrow("Measurement is on, but the installation ID could not be saved: disk full");
   });
 });

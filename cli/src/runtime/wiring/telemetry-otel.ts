@@ -1,11 +1,27 @@
 import { homedir } from "node:os";
+import type {
+  SessionAdmission,
+  SessionFeature,
+} from "../../contexts/telemetry/domain/report/session-feature.js";
+import { startOtelCollector } from "../../contexts/telemetry/infrastructure/otel/actions/collect.js";
 import { initializeOtel } from "../../contexts/telemetry/infrastructure/otel/actions/init.js";
 import { runOtelOpenCode } from "../../contexts/telemetry/infrastructure/otel/actions/run.js";
+import {
+  type SyncOptions,
+  syncOtel,
+  type Transfer,
+} from "../../contexts/telemetry/infrastructure/otel/actions/sync.js";
+import {
+  type AllOptions,
+  syncAllOtel,
+} from "../../contexts/telemetry/infrastructure/otel/actions/sync-all.js";
 import { verifyOtel } from "../../contexts/telemetry/infrastructure/otel/actions/verify.js";
 import {
   OPENCODE_CONFIG_ID,
   OTEL_CONFIGS,
   OTEL_ENDPOINTS,
+  OTEL_SYNC_CONFIGS,
+  usageToolForOtel,
 } from "../../contexts/telemetry/infrastructure/otel/settings.js";
 import {
   checkInstallationId,
@@ -13,9 +29,36 @@ import {
   finishInstallationId,
 } from "../filesystem/installation-identity.js";
 import { userConfigDirOf } from "../user-config-dir.js";
+import { telemetryDir } from "./telemetry.js";
+
+export function collectOtel(port: number) {
+  return startOtelCollector({ home: homedir(), port });
+}
+
+export function syncCapturedSession(
+  options: Omit<SyncOptions, "home" | "stateDir">,
+  resolve: () => Promise<SessionFeature>,
+  permits: (transfer: Transfer) => Promise<boolean>
+) {
+  return syncOtel({ ...options, home: homedir(), stateDir: telemetryDir() }, resolve, permits);
+}
+
+export function followCapturedSessions(
+  options: Omit<AllOptions, "home" | "stateDir">,
+  snapshot: () => Promise<ReadonlyMap<string, SessionAdmission>>,
+  permits: (
+    admission: SessionAdmission,
+    at: string,
+    start?: string
+  ) => Promise<"allow" | "deny" | "unknown">
+) {
+  return syncAllOtel({ ...options, home: homedir(), stateDir: telemetryDir() }, snapshot, permits);
+}
 
 export const otelOptions = {
   configs: OTEL_CONFIGS,
+  syncConfigs: OTEL_SYNC_CONFIGS,
+  usageTool: usageToolForOtel,
   endpoints: OTEL_ENDPOINTS,
   launchConfigs: [OPENCODE_CONFIG_ID],
 };

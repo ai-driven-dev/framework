@@ -4,6 +4,7 @@ import { open } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { claudeConfigDir } from "../../domain/claude-projects-root.js";
+import type { UsageTool } from "../../domain/usage-record.js";
 import claudeTemplate from "./config/claude.json" with { type: "json" };
 import codexTemplate from "./config/codex.json" with { type: "json" };
 import opencodeTemplate from "./config/opencode.json" with { type: "json" };
@@ -20,6 +21,13 @@ export const OPENCODE_CONFIG_ID = "opencode";
 export const CLAUDE_CONFIG_ID = "claude";
 export const CODEX_CONFIG_ID = "codex";
 export const OTEL_CONFIGS = [CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, OPENCODE_CONFIG_ID] as const;
+export const OTEL_SYNC_CONFIGS = [CLAUDE_CONFIG_ID, CODEX_CONFIG_ID] as const;
+export type SyncConfig = (typeof OTEL_SYNC_CONFIGS)[number];
+const usageToolByOtelConfig: Record<SyncConfig, UsageTool> = {
+  [CLAUDE_CONFIG_ID]: "claude-code",
+  [CODEX_CONFIG_ID]: CODEX_CONFIG_ID,
+};
+export const usageToolForOtel = (config: SyncConfig): UsageTool => usageToolByOtelConfig[config];
 export const OTEL_ENDPOINTS = ["dev", "prod"] as const;
 export type Config = (typeof OTEL_CONFIGS)[number];
 export type Endpoint = (typeof OTEL_ENDPOINTS)[number];

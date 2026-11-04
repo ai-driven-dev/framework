@@ -6,6 +6,7 @@ import {
   conflictsOf,
   type ReportFilters,
 } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
+import * as otel from "../../../src/runtime/wiring/telemetry-otel.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();
@@ -21,6 +22,8 @@ const input = vi.fn();
 const propose = vi.fn();
 const ensureInstallationId = vi.fn();
 const checkInstallationId = vi.fn();
+const sessionSnapshot = vi.fn();
+const sessionPermits = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
@@ -37,6 +40,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
       reportUsageUseCase: { execute: report },
       manageIdentityUseCase: identity,
       proposeIdentityUseCase: { execute: propose },
+      sessionFeatureUseCase: { snapshot: sessionSnapshot, permits: sessionPermits },
     },
   })),
   createMenuDeps: vi.fn(),
@@ -73,6 +77,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 async function run(...args: string[]): Promise<number | null> {
@@ -379,7 +384,8 @@ describe("aidd telemetry task", () => {
 
   it("declares the task it is given, with its ticket", async () => {
     declare.mockResolvedValue(declared);
-    await run("task", "checkout", "--ticket", "P-1");
+    expect(await run("task", "checkout", "--ticket", "P-1")).toBeNull();
+    expect(stdout()).toContain('Declared task "checkout"');
     expect(declare).toHaveBeenCalledWith({
       cwd: process.cwd(),
       request: { kind: "task", task: "checkout", ticket: "P-1" },
@@ -414,6 +420,7 @@ describe("aidd telemetry task", () => {
   it("exits 1 when the declaration is refused", async () => {
     declare.mockResolvedValue({ status: "refused", reason: "no-consent" });
     expect(await run("task", "x")).toBe(1);
+    expect(stderr()).toContain("no task was declared");
   });
 });
 
@@ -669,5 +676,234 @@ describe("telemetry otel init", () => {
     expect(await run("otel", "init", "--config=codex", "--endpoint=prod")).toBe(1);
     expect(stderr()).toContain("Gouvernail");
     expect(turnOn).not.toHaveBeenCalled();
+  });
+});
+
+describe("native telemetry commands", () => {
+  let previousExitCode: typeof process.exitCode;
+
+  beforeEach(() => {
+    previousExitCode = process.exitCode;
+  });
+
+  afterEach(() => {
+    process.exitCode = previousExitCode;
+  });
+
+  it("starts the local collector on its default or requested port", async () => {
+    const collect = vi.spyOn(otel, "collectOtel").mockResolvedValue({
+      port: 54321,
+      close: async () => {},
+    });
+    expect(await run("otel", "collect")).toBeNull();
+    expect(collect).toHaveBeenCalledWith(14318);
+    expect(stdout()).toContain("OTLP collector listening on http://127.0.0.1:54321");
+    expect(await run("otel", "collect", "--port=0")).toBeNull();
+    expect(collect).toHaveBeenLastCalledWith(0);
+  });
+
+  it("rejects malformed collector ports and reports binding failures", async () => {
+    const collect = vi.spyOn(otel, "collectOtel").mockRejectedValue(new Error("port in use"));
+    for (const value of ["abc", "prefix42", "42suffix"]) {
+      expect(await run("otel", "collect", `--port=${value}`)).toBe(1);
+      expect(stderr()).toContain("Collector port must be an integer");
+    }
+    expect(collect).not.toHaveBeenCalled();
+    expect(await run("otel", "collect", "--port=42")).toBe(1);
+    expect(stderr()).toContain("port in use");
+  });
+
+  it("reports a new exporter, then reports the same configuration unchanged", async () => {
+    const configure = vi
+      .spyOn(otel, "configureOtel")
+      .mockResolvedValueOnce({
+        path: "/config/claude",
+        launch: "Restart Claude Code",
+        changed: true,
+      })
+      .mockResolvedValueOnce({
+        path: "/config/claude",
+        launch: "Restart Claude Code",
+        changed: false,
+      });
+    const args = ["otel", "init", "--config=claude", "--endpoint=dev"];
+    expect(await run(...args), stderr()).toBeNull();
+    expect(stdout()).toContain("Updated ");
+    expect(stdout()).toContain("Restart Claude Code");
+    expect(stdout()).toContain(
+      "Local OTLP capture may include prompts, responses, commands and tool output."
+    );
+    out = [];
+    expect(await run(...args), stderr()).toBeNull();
+    expect(stdout()).toContain("Already configured in ");
+    expect(configure).toHaveBeenCalledTimes(2);
+    expect(configure).toHaveBeenCalledWith("claude", "dev");
+    expect(turnOn).not.toHaveBeenCalled();
+  });
+
+  it("reports capture counts without exposing their content, and fails when no capture exists", async () => {
+    const check = vi
+      .spyOn(otel, "checkOtel")
+      .mockRejectedValueOnce(new Error("No OTLP capture found"))
+      .mockResolvedValueOnce({
+        path: "/config/claude",
+        capture: "/capture/claude.jsonl",
+        lines: 1,
+        modifiedAt: "2026-11-04T00:00:00.000Z",
+        observations: 1,
+        eventLines: 0,
+        unrecognisedLines: 0,
+      });
+    expect(await run("otel", "verify", "--config=claude", "--endpoint=dev")).toBe(1);
+    expect(stderr()).toContain("No OTLP capture found");
+    out = [];
+    expect(await run("otel", "verify", "--config=claude", "--endpoint=dev")).toBeNull();
+    expect(stdout()).toContain("Configuration verified in /config/claude");
+    expect(stdout()).toContain("1 captured lines");
+    expect(stdout()).toContain("1 normalized observations; 0 event lines; 0 unrecognised lines");
+    expect(stdout()).toContain(
+      "Existing capture does not prove delivery from the current session."
+    );
+    expect(check).toHaveBeenCalledWith("claude", "dev");
+  });
+
+  it("forwards the launched OpenCode exit code", async () => {
+    const launch = vi
+      .spyOn(otel, "launchOtel")
+      .mockResolvedValueOnce(7)
+      .mockRejectedValueOnce(new Error("Cannot launch OpenCode"));
+    expect(await run("otel", "run", "--config=opencode", "--", "check")).toBeNull();
+    expect(launch).toHaveBeenCalledWith(["check"]);
+    expect(process.exitCode).toBe(7);
+    expect(await run("otel", "run", "--config=opencode", "--", "check")).toBe(1);
+    expect(stderr()).toContain("Cannot launch OpenCode");
+  });
+
+  it("forwards one consented session without printing its token", async () => {
+    vi.stubEnv("AIDD_OTEL_TOKEN", "private-test-token");
+    const admission = { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" };
+    sessionSnapshot.mockResolvedValue(new Map([["s1", admission]]));
+    sessionPermits.mockResolvedValueOnce("allow").mockResolvedValueOnce("deny");
+    const sync = vi.spyOn(otel, "syncCapturedSession").mockResolvedValue({
+      sent: 2,
+      skipped: 0,
+      offset: 12,
+      partialLine: true,
+    });
+    expect(
+      await run(
+        "otel",
+        "sync",
+        "--config=claude",
+        "--session=s1",
+        "--tenant=acme",
+        "--endpoint=http://127.0.0.1:3000"
+      )
+    ).toBeNull();
+    expect(sessionSnapshot).toHaveBeenCalledWith("claude-code");
+    const call = sync.mock.calls[0];
+    if (!call) throw new Error("the session was not passed to the exporter");
+    expect(call[0]).toMatchObject({
+      config: "claude",
+      session: "s1",
+      tenant: "acme",
+      endpoint: "http://127.0.0.1:3000",
+      token: "private-test-token",
+      follow: false,
+    });
+    expect(await call[1]()).toEqual({ state: "unbound" });
+    const transfer = { signal: "logs" as const, payload: {}, at: "2026-11-04T00:00:00Z" };
+    expect(await call[2](transfer)).toBe(true);
+    expect(await call[2](transfer)).toBe(false);
+    expect(await call[2]({ signal: "logs", payload: {} })).toBe(false);
+    expect(stdout()).toContain("Sent 2 observations");
+    expect(stdout()).toContain("last incomplete capture line");
+    expect(stdout()).not.toContain("private-test-token");
+  });
+
+  it("never sends a session that lacks consent", async () => {
+    sessionSnapshot.mockResolvedValue(new Map());
+    const sync = vi.spyOn(otel, "syncCapturedSession");
+    expect(
+      await run(
+        "otel",
+        "sync",
+        "--config=codex",
+        "--session=s2",
+        "--tenant=acme",
+        "--endpoint=http://127.0.0.1:3000"
+      )
+    ).toBe(1);
+    expect(sessionSnapshot).toHaveBeenCalledWith("codex");
+    expect(stderr()).toContain("No consented usage found");
+    expect(sync).not.toHaveBeenCalled();
+  });
+
+  it("stops admitting events when a followed session loses consent", async () => {
+    vi.stubEnv("AIDD_OTEL_TOKEN", "");
+    const admission = { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" };
+    sessionSnapshot
+      .mockResolvedValueOnce(new Map([["s1", admission]]))
+      .mockResolvedValueOnce(new Map([["s1", admission]]))
+      .mockResolvedValueOnce(new Map());
+    sessionPermits.mockResolvedValue("allow");
+    const sync = vi.spyOn(otel, "syncCapturedSession").mockResolvedValue({
+      sent: 1,
+      skipped: 0,
+      offset: 1,
+      partialLine: false,
+    });
+    expect(
+      await run(
+        "otel",
+        "sync",
+        "--config=codex",
+        "--session=s1",
+        "--tenant=acme",
+        "--endpoint=http://127.0.0.1:3000",
+        "--follow"
+      )
+    ).toBeNull();
+    expect(stdout()).toContain("Following the selected session");
+    expect(stdout()).not.toContain("last incomplete capture line");
+    const call = sync.mock.calls[0];
+    if (!call) throw new Error("the session was not passed to the exporter");
+    expect(call[0]).toMatchObject({ follow: true, token: "" });
+    await expect(call[1]()).rejects.toThrow("No consented usage found");
+    expect(await call[2]({ signal: "logs", payload: {}, at: "2026-11-04T00:00:00Z" })).toBe(false);
+  });
+
+  it("requires a session for one-shot sync and discovers sessions only with follow", async () => {
+    vi.stubEnv("AIDD_OTEL_TOKEN", "private-test-token");
+    const follow = vi
+      .spyOn(otel, "followCapturedSessions")
+      .mockResolvedValue({ sent: 3, denied: 1, pending: 2 });
+    const args = [
+      "otel",
+      "sync",
+      "--config=codex",
+      "--tenant=acme",
+      "--endpoint=http://127.0.0.1:3000",
+    ];
+    expect(await run(...args)).toBeNull();
+    expect(process.exitCode).toBe(1);
+    expect(stderr()).toContain("Pass --session");
+    expect(follow).not.toHaveBeenCalled();
+    process.exitCode = previousExitCode;
+    sessionSnapshot.mockResolvedValue(new Map());
+    sessionPermits.mockResolvedValue("unknown");
+    expect(await run(...args, "--follow")).toBeNull();
+    const call = follow.mock.calls[0];
+    if (!call) throw new Error("the session follower was not started");
+    expect(call[0]).toMatchObject({ config: "codex", tenant: "acme", token: "private-test-token" });
+    expect(await call[1]()).toEqual(new Map());
+    const admission = {
+      feature: { state: "unbound" as const },
+      cwd: "/project",
+      repositoryId: "repo",
+    };
+    expect(await call[2](admission, "2026-11-04T00:00:00Z")).toBe("unknown");
+    expect(stdout()).toContain("Sent 3 observations; 1 were outside consent; 2 await confirmation");
+    expect(stdout()).not.toContain("private-test-token");
   });
 });
