@@ -10,7 +10,8 @@ import { genericFlatHooksScriptPath } from "../../../../../kernel/materializatio
 import type { PluginHooksShape, PluginMatcherGroup } from "../../formats/plugin-hooks-shape.js";
 import type { ProjectHookEntry, ProjectHooksFormat } from "../../hooks-format.js";
 
-type CursorHookEntry = { command: string; matcher?: string };
+// `timeout` is in seconds on both sides: Claude's hooks.json and Cursor's per-script option.
+type CursorHookEntry = { command: string; matcher?: string; timeout?: number };
 type CursorFlatShape = { version: 1; hooks: Record<string, CursorHookEntry[]> };
 
 // `Stop` fans out to two Cursor events, not one: interactive sessions fire `stop` and headless
@@ -64,11 +65,11 @@ function extractCursorEntries(matchers: PluginMatcherGroup[]): CursorHookEntry[]
   for (const group of matchers) {
     for (const item of group.hooks ?? []) {
       if (typeof item.command !== "string") continue;
-      entries.push(
-        group.matcher
-          ? { command: item.command, matcher: group.matcher }
-          : { command: item.command }
-      );
+      entries.push({
+        command: item.command,
+        ...(group.matcher ? { matcher: group.matcher } : {}),
+        ...(typeof item.timeout === "number" ? { timeout: item.timeout } : {}),
+      });
     }
   }
   return entries;
