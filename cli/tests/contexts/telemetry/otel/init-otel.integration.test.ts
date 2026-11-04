@@ -47,9 +47,7 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     );
     const result = await initializeOtel("claude", "dev", { home, env: {} });
     expect(result.changed).toBe(true);
-    const handle = await open(path, "r");
-    const content = await handle.readFile("utf8");
-    await handle.close();
+    const content = await readFile(path, "utf8");
     expect(JSON.parse(content)).toMatchObject({
       permissions: { allow: [] },
       env: {
@@ -64,13 +62,8 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     expect(await initializeOtel("claude", "dev", { home, env: {} })).toMatchObject({
       changed: false,
     });
-    const after = await open(path, "r");
-    try {
-      expect(await after.readFile("utf8")).toBe(content);
-      expect((await after.stat()).mode & 0o777).toBe(0o600);
-    } finally {
-      await after.close();
-    }
+    expect(await readFile(path, "utf8")).toBe(content);
+    expect((await stat(path)).mode & 0o777).toBe(0o600);
   });
 
   it("writes Claude settings privately on the first initialization", async () => {
