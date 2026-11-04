@@ -17,6 +17,7 @@ Source: pull request 2 of aidd_docs/tasks/2026_10/2026_10_30_aidd-ui-rework/road
 | 4   | Run it on the pilots | [`phase-4.md`](./phase-4.md) | 3 |
 | 5   | Platform-agnostic norm | [`phase-5.md`](./phase-5.md) | 4 |
 | 6   | Engine owns the mechanics | [`phase-6.md`](./phase-6.md) | 5 |
+| 7   | Surgical hook, generated resolver | [`phase-7.md`](./phase-7.md) | 6 |
 
 ## External sources
 
