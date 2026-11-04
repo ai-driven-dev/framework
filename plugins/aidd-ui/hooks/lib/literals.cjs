@@ -50,11 +50,11 @@ const styled = (source, other = blank) => split(source, STYLE, other);
  * that are no token. */
 const painted = (source) => styled(source, (rest) => split(rest, PAINT, blank, (value) => (TOKEN_VALUE.test(value) ? blank(value) : value)));
 
-/** Each match of `pattern` in `text`, as `{severity, message}`, lines numbered from 1. */
+/** Each match of `pattern` in `text`, as `{severity, message, literal}`, lines numbered from 1. */
 function findLiterals(text, pattern) {
   return text.split(LINE_BREAK).flatMap((line, index) => {
     const searched = (pattern.strip ?? []).reduce((kept, regex) => kept.replace(regex, ""), line);
-    return [...searched.matchAll(pattern.regex)].map(([found]) => ({ severity: pattern.severity?.(found) ?? ERROR, message: `line ${index + 1}: ${pattern.message(found)}` }));
+    return [...searched.matchAll(pattern.regex)].map(([found]) => ({ severity: pattern.severity?.(found) ?? ERROR, message: `line ${index + 1}: ${pattern.message(found)}`, literal: found }));
   });
 }
 

@@ -1,14 +1,13 @@
 // C1 to C9, C2 retired: each code link resolves and names the version it implements, every file under a code
-// root is linked or ignored, UI code outside its tests holds no new colour literal, the code's
-// token file exists, and each link sits on a platform its record lists. Other literals are a stated
-// limit.
+// root is linked or ignored, UI code outside its tests holds no colour literal beyond the debt
+// code-debt.json records, the code's token file exists, and each link sits on a platform its
+// record lists. Other literals are a stated limit.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, blank, escapeRegex } = require("./markdown.cjs");
 const { placed, systemOf, fm, IMPLEMENTED_KINDS, INTEGER_VERSION } = require("./model.cjs");
 const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
-const { walk, text, relative, isUnder, checkOf, WARNING } = require("./project.cjs");
-const { unclearedByHead } = require("./committed.cjs");
+const { walk, text, relative, isUnder, checkOf, CODE_DEBT_FILE, WARNING } = require("./project.cjs");
 
 const EXPORT_SEPARATOR = "#";
 const PACKAGE_PREFIX = "package:";
@@ -186,21 +185,39 @@ function coverageProblems(project) {
     .map((file) => ({ severity: WARNING, file, message: "no record links it and no ignore covers it" }));
 }
 
-const literalProblems = (pattern, extensions = null, applies = () => true) => (project) =>
-  applies(project)
-    ? scanned(project, extensions)
-        .filter((file) => !isTest(file))
-        .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })))
-    : [];
+/** Each literal of `pattern` in the code outside its tests, with its file and the literal itself. */
+const literalsOf = (project, pattern, extensions = null) =>
+  scanned(project, extensions)
+    .filter((file) => !isTest(file))
+    .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })));
 
-/** A colour literal is new drift, an error saying why git could not clear it, unless git confirms
- * its file is as HEAD holds it: then it is existing debt, a warning, since nothing in this change
- * wrote it. */
+const literalProblems = (pattern, extensions = null, applies = () => true) => (project) =>
+  applies(project) ? literalsOf(project, pattern, extensions).map(({ literal, ...found }) => found) : [];
+
+/** How many times each colour literal occurs in each code file, as code-debt.json holds it: files
+ * and literals sorted. */
+function colourDebt(project) {
+  const debt = {};
+  for (const { file, literal } of literalsOf(project, PATTERNS.colour)) {
+    debt[file] ??= {};
+    debt[file][literal] = (debt[file][literal] ?? 0) + 1;
+  }
+  const sorted = (object) => Object.fromEntries(Object.keys(object).sort().map((key) => [key, object[key]]));
+  return Object.fromEntries(Object.entries(sorted(debt)).map(([file, literals]) => [file, sorted(literals)]));
+}
+
+/** A colour literal is existing debt, a warning, while its file holds it no more times than
+ * code-debt.json records; beyond, every occurrence of it in that file is an error, as no line can
+ * say which one is new. Without code-debt.json, every one is an error. */
 function colourProblems(project) {
-  const found = literalProblems(PATTERNS.colour)(project);
-  if (!found.length) return [];
-  const uncleared = unclearedByHead(project, [...new Set(found.map((each) => each.file))]);
-  return found.map((each) => (uncleared.has(each.file) ? { ...each, message: `${each.message} (counted as new: ${uncleared.get(each.file)})` } : { ...each, severity: WARNING }));
+  const found = colourDebt(project);
+  if (!Object.keys(found).length) return [];
+  const recorded = fs.existsSync(path.join(project.root, CODE_DEBT_FILE)) ? JSON.parse(text(project, CODE_DEBT_FILE)) : null;
+  return literalsOf(project, PATTERNS.colour).map(({ literal, ...each }) => {
+    if (recorded === null) return { ...each, message: `${each.message} (counted as new: ${CODE_DEBT_FILE} is missing)` };
+    const [count, debt] = [found[each.file][literal], recorded[each.file]?.[literal] ?? 0];
+    return count <= debt ? { ...each, severity: WARNING, message: `${each.message} (existing debt)` } : { ...each, message: `${each.message} (found ${count}, debt ${debt})` };
+  });
 }
 
 function codeTokensProblems(project) {
@@ -284,4 +301,4 @@ const RULES = {
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, codeRoots, codeOwner, codeFilesOf, codeTokens, tokenEntries, platformOfFile };
+module.exports = { check, colourDebt, codeRoots, codeOwner, codeFilesOf, codeTokens, tokenEntries, platformOfFile };

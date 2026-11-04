@@ -1,10 +1,8 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
-const { describe, it, beforeEach, afterEach, mock } = require("node:test");
-const childProcess = require("node:child_process");
-const { PATHS, LIB, makeTmp, removeTmp, writeProject, edit, put, git, commitAll } = require("../fixtures/aidd-ui/project.js");
+const { describe, it, beforeEach, afterEach } = require("node:test");
+const { UI, PATHS, LIB, makeTmp, removeTmp, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green. Link
@@ -14,6 +12,7 @@ const code = require(path.join(LIB, "code.cjs"));
 
 const { SYSTEM, BUTTON, SEARCH, DIALOG } = PATHS;
 const SEARCH_CSS = "src/ui/SearchField.css";
+const DEBT = `${UI}/code-debt.json`;
 
 let tmp;
 
@@ -35,8 +34,9 @@ function linkedStylesheet(css) {
   linkSearch(`${SEARCH_CSS}#SearchField@1`);
 }
 
+// The fixture's code-debt.json records no literal, so any one found is above its debt.
+const NEW = " (found 1, debt 0)";
 /** Appends one line to a file of the project. */
-const NO_COMMIT = " (counted as new: no git commit to compare it with)";
 const append = (file, line) => fs.appendFileSync(path.join(tmp, file), `${line}\n`);
 
 describe("aidd-ui code link", () => {
@@ -162,7 +162,7 @@ describe("aidd-ui code link", () => {
   describe("C4 colour literals", () => {
     it("names a colour literal in UI code, with its line", () => {
       append("src/ui/Button.tsx", 'const style = "color: #ff0000";');
-      assert.deepEqual(problems(), [`src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token${NO_COMMIT}`]);
+      assert.deepEqual(problems(), [`src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token${NEW}`]);
     });
 
     it("leaves a hex word in a script comment alone", () => {
@@ -193,139 +193,41 @@ describe("aidd-ui code link", () => {
 
   describe("C4 severity", () => {
     const LITERAL = 'const style = "color: #ff0000";';
-    const WARNING = "warning";
-    const ERROR = "error";
-    /** Each C4 problem's severity and file. */
-    const severities = (project = load(tmp)) => code.check(project).filter((found) => found.rule === "C4").map((found) => `${found.severity} ${found.file}`);
     const BUTTON_FILE = "src/ui/Button.tsx";
     const HOME_FILE = "src/ui/HomePage.tsx";
-    /** Each C4 problem's message, what follows the literal saying why git could not clear it. */
-    const reasons = (project = load(tmp)) => code.check(project).filter((found) => found.rule === "C4").map((found) => found.message.split("use a token")[1]);
-    const CHANGED = " (counted as new: its bytes differ from HEAD's)";
-    const NOT_COMMITTED = " (counted as new: it is not committed)";
+    /** Each C4 problem as `<severity> <file>:<what follows the literal>`. */
+    const verdicts = () =>
+      code
+        .check(load(tmp))
+        .filter((found) => found.rule === "C4")
+        .map((found) => `${found.severity} ${found.file}:${found.message.split("use a token")[1]}`);
+    const owe = (debt) => put(tmp, DEBT, `${JSON.stringify(debt, null, 2)}\n`);
 
-    it("warns on a literal in a file identical to HEAD: existing debt", () => {
+    it("warns on a literal its file holds no more times than the debt records", () => {
       append(BUTTON_FILE, LITERAL);
-      commitAll(tmp);
-      assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`]);
-    });
-
-    it("still warns on a committed file touched without a change, as a formatter leaves it", () => {
       append(BUTTON_FILE, LITERAL);
-      commitAll(tmp);
-      const later = new Date(Date.now() + 60_000);
-      fs.utimesSync(path.join(tmp, BUTTON_FILE), later, later);
-      assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`]);
+      owe({ [BUTTON_FILE]: { "#ff0000": 2 } });
+      assert.deepEqual(verdicts(), [`warning ${BUTTON_FILE}: (existing debt)`, `warning ${BUTTON_FILE}: (existing debt)`]);
     });
 
-    it("errs on every literal of a file edited since HEAD, the old ones with the new", () => {
+    it("errs on every occurrence of a literal its file holds more times than the debt records, naming both counts", () => {
       append(BUTTON_FILE, LITERAL);
-      commitAll(tmp);
-      append(BUTTON_FILE, "// edited");
-      assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
-      assert.deepEqual(reasons(), [CHANGED]);
-    });
-
-    it("errs on a literal in an untracked file, and warns on the committed one beside it", () => {
       append(BUTTON_FILE, LITERAL);
-      commitAll(tmp);
-      put(tmp, "src/ui/New.tsx", `${LITERAL}\n`);
-      assert.deepEqual(severities(), [`${WARNING} ${BUTTON_FILE}`, `${ERROR} src/ui/New.tsx`]);
-      assert.deepEqual(reasons(), ["", NOT_COMMITTED]);
+      owe({ [BUTTON_FILE]: { "#ff0000": 1 } });
+      assert.deepEqual(verdicts(), [`error ${BUTTON_FILE}: (found 2, debt 1)`, `error ${BUTTON_FILE}: (found 2, debt 1)`]);
     });
 
-    it("says a gitignored file is not committed", () => {
-      put(tmp, ".gitignore", "src/ui/generated.css\n");
-      commitAll(tmp);
-      put(tmp, "src/ui/generated.css", "a { color: #123456; }\n");
-      assert.deepEqual(severities(), [`${ERROR} src/ui/generated.css`]);
-      assert.deepEqual(reasons(), [NOT_COMMITTED]);
-    });
-
-    it("errs in a folder that is no repository", () => {
+    it("counts by file and by literal: another file's debt, or another literal's, covers nothing", () => {
       append(BUTTON_FILE, LITERAL);
-      assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
-      assert.deepEqual(reasons(), [NO_COMMIT]);
+      append(HOME_FILE, LITERAL);
+      owe({ [BUTTON_FILE]: { "#ff0000": 1 }, [HOME_FILE]: { "#0000ff": 1 } });
+      assert.deepEqual(verdicts(), [`warning ${BUTTON_FILE}: (existing debt)`, `error ${HOME_FILE}: (found 1, debt 0)`]);
     });
 
-    it("errs in a repository with no commit, which is no failure of git", () => {
+    it("errs on every literal, saying the debt file is missing, when there is none", () => {
       append(BUTTON_FILE, LITERAL);
-      git(tmp, "init", "-q");
-      const project = load(tmp);
-      assert.deepEqual(severities(project), [`${ERROR} ${BUTTON_FILE}`]);
-      assert.equal(project.gitFailure, undefined);
-    });
-
-    it("errs when git is not installed", () => {
-      append(BUTTON_FILE, LITERAL);
-      commitAll(tmp);
-      const path_ = process.env.PATH;
-      process.env.PATH = os.tmpdir();
-      try {
-        assert.deepEqual(severities(), [`${ERROR} ${BUTTON_FILE}`]);
-      } finally {
-        process.env.PATH = path_;
-      }
-    });
-
-    it("reads the files of a project below the repository's root", () => {
-      const inner = path.join(tmp, "apps/web");
-      writeProject(inner);
-      append(`apps/web/${BUTTON_FILE}`, LITERAL);
-      commitAll(tmp);
-      assert.deepEqual(severities(load(inner)), [`${WARNING} ${BUTTON_FILE}`]);
-    });
-
-    describe("a git that fails", { skip: process.platform === "win32" }, () => {
-      const withGit = (script, read) => {
-        const bin = `${tmp}-bin`;
-        const path_ = process.env.PATH;
-        fs.mkdirSync(bin);
-        fs.writeFileSync(path.join(bin, "git"), `#!/bin/sh\n${script}\n`, { mode: 0o755 });
-        process.env.PATH = `${bin}${path.delimiter}${path_}`;
-        try {
-          return read();
-        } finally {
-          process.env.PATH = path_;
-          fs.rmSync(bin, { recursive: true, force: true });
-        }
-      };
-
-      it("keeps the error when it refuses the repository", () => {
-        append(BUTTON_FILE, LITERAL);
-        commitAll(tmp);
-        assert.deepEqual(withGit('echo "fatal: detected dubious ownership" >&2\nexit 128', severities), [`${ERROR} ${BUTTON_FILE}`]);
-        assert.deepEqual(withGit('echo "fatal: detected dubious ownership" >&2\nexit 128', reasons), [" (counted as new: git failed: fatal: detected dubious ownership)"]);
-      });
-
-      it("keeps the error when only the hash of the current files fails", () => {
-        append(BUTTON_FILE, LITERAL);
-        commitAll(tmp);
-        const real = `PATH='${process.env.PATH}' exec git "$@"`;
-        assert.deepEqual(withGit(`[ "$1" = hash-object ] && { echo "fatal: cannot hash" >&2; exit 128; }\n${real}`, severities), [`${ERROR} ${BUTTON_FILE}`]);
-        assert.deepEqual(withGit(`[ "$1" = hash-object ] && { echo "fatal: cannot hash" >&2; exit 128; }\n${real}`, reasons), [" (counted as new: git failed: fatal: cannot hash)"]);
-      });
-    });
-
-    describe("git calls", () => {
-      afterEach(() => mock.restoreAll());
-      const gitCalls = () => {
-        const spy = mock.method(childProcess, "execFileSync");
-        severities();
-        return spy.mock.calls.map((call) => call.arguments[1][0]);
-      };
-
-      it("asks git nothing when C4 finds nothing", () => {
-        commitAll(tmp);
-        assert.deepEqual(gitCalls(), []);
-      });
-
-      it("asks git the same two questions however many files hold a literal", () => {
-        append(BUTTON_FILE, LITERAL);
-        append(HOME_FILE, LITERAL);
-        commitAll(tmp);
-        assert.deepEqual(gitCalls(), ["ls-tree", "hash-object"]);
-      });
+      fs.rmSync(path.join(tmp, DEBT));
+      assert.deepEqual(verdicts(), [`error ${BUTTON_FILE}: (counted as new: ${DEBT} is missing)`]);
     });
   });
 
@@ -356,12 +258,12 @@ describe("aidd-ui code link", () => {
 
     it("finds a colour literal in its style block, with its line", () => {
       hero("---\n---\n<style>\n  h1 { color: #ff0000; }\n</style>\n");
-      assert.deepEqual(problems(), [`${HERO}: line 4: colour literal "#ff0000", use a token${NO_COMMIT}`]);
+      assert.deepEqual(problems(), [`${HERO}: line 4: colour literal "#ff0000", use a token${NEW}`]);
     });
 
     it("finds a colour literal in a string, and leaves one in its markup text alone", () => {
       hero('---\nconst c = "#ff0000";\n---\n<p>Rapport #412 and #add</p>\n');
-      assert.deepEqual(problems(), [`${HERO}: line 2: colour literal "#ff0000", use a token${NO_COMMIT}`]);
+      assert.deepEqual(problems(), [`${HERO}: line 2: colour literal "#ff0000", use a token${NEW}`]);
     });
   });
 
@@ -371,7 +273,7 @@ describe("aidd-ui code link", () => {
       put(tmp, CARD, body);
       linkSearch(`${CARD}#Card@1`);
     };
-    const RED = (line) => `${CARD}: line ${line}: colour literal "#ff0000", use a token${NO_COMMIT}`;
+    const RED = (line) => `${CARD}: line ${line}: colour literal "#ff0000", use a token${NEW}`;
 
     it("finds a colour literal in a string of a file it has no reader for, with its line", () => {
       card('struct Card {}\nlet c = "#ff0000"\n');

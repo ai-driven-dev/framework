@@ -112,7 +112,7 @@ function stylesheetProblems(project) {
 }
 
 const literalProblems = (pattern, { applies = () => true, scanned = styled } = {}) => (project) =>
-  applies(project) ? project.renders.flatMap((file) => findLiterals(scanned(readRender(project, file)), pattern).map((found) => ({ file, ...found }))) : [];
+  applies(project) ? project.renders.flatMap((file) => findLiterals(scanned(readRender(project, file)), pattern).map(({ literal, ...found }) => ({ file, ...found }))) : [];
 
 const RULES = {
   V1: presenceProblems,

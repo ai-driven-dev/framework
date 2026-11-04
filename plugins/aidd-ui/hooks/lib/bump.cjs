@@ -4,9 +4,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { placed, byId, isSystem, isElement, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
-const { Refusal, NO_DESIGN_SYSTEM, load, withoutTrailingSeparators, HISTORY_FILE } = require("./project.cjs");
+const { Refusal, NO_DESIGN_SYSTEM, load, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
+const { colourDebt } = require("./code.cjs");
+const { jsonText } = require("./resolver.cjs");
 const { fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks } = require("./history.cjs");
 
 const ROW_START = "|";
@@ -95,7 +97,10 @@ function create(root, folder, ids) {
     if (project.history.some((row) => row.Id === id)) throw new Refusal(`"${id}" already has history`);
     addRow(lines, null, rowOf(id, isSystem(record) ? FIRST_SYSTEM_VERSION : FIRST_VERSION, CREATED, NOT_BREAKING, folder, ""), end, HISTORY_FILE);
   }
-  return { changed: files.save() };
+  const changed = files.save();
+  if (!ids.includes(SYSTEM_ID)) return { changed };
+  fs.writeFileSync(path.join(root, CODE_DEBT_FILE), jsonText(colourDebt(project))); // the debt C4 holds the code to from now on
+  return { changed: [...changed, CODE_DEBT_FILE].sort() };
 }
 
 /** Writes a `removed` row for each id named, one version above its last, breaking: the record and

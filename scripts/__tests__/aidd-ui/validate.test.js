@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, lines, validate, writeProject, edit, editTokens, propose, commitAll } = require("../fixtures/aidd-ui/project.js");
+const { UI, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, lines, validate, writeProject, edit, editTokens, propose } = require("../fixtures/aidd-ui/project.js");
 
 // The entries are scripts a user's machine runs, so each is driven as a subprocess with its
 // argument or its hook payload on stdin, which is what ships.
@@ -151,10 +151,10 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(stop()), silent);
     });
 
-    it("takes a committed colour literal as a warning: it fails no check and blocks no turn", () => {
+    it("takes a colour literal the debt records as a warning: it fails no check and blocks no turn", () => {
       fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
-      commitAll(tmp);
-      assert.deepEqual(validate(tmp), { code: 0, out: ['src/ui/Button.tsx:4 C4 warning colour literal "#ff0000", use a token'], err: "" });
+      fs.writeFileSync(path.join(tmp, UI, "code-debt.json"), `${JSON.stringify({ "src/ui/Button.tsx": { "#ff0000": 1 } })}\n`);
+      assert.deepEqual(validate(tmp), { code: 0, out: ['src/ui/Button.tsx:4 C4 warning colour literal "#ff0000", use a token (existing debt)'], err: "" });
       hook(postToolUse(path.join(tmp, BRAND)));
       assert.deepEqual(hook(stop()), silent);
     });
@@ -357,6 +357,11 @@ describe("aidd-ui validator entries", () => {
     it("names the problems of a written record's render", () => {
       edit(tmp, `${UI}/components/button.md`, "variants: [primary, secondary]", "variants: [primary, secondary, ghost]");
       assert.deepEqual(hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))), claudeFeedback([`${UI}/components/button.html V2 no data-variant="ghost"`]));
+    });
+
+    it("names the code's colour errors after a write to code-debt.json, which every code file reads", () => {
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
+      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "code-debt.json"))), claudeFeedback(['src/ui/Button.tsx:4 C4 colour literal "#ff0000", use a token (found 1, debt 0)']));
     });
 
     it("names every problem after a write to a file every record reads", () => {

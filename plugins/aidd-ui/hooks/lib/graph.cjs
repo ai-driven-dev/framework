@@ -8,10 +8,10 @@ const { renderOf } = require("./renders.cjs");
 const { codeOwner, codeFilesOf, codeTokens } = require("./code.cjs");
 const { citations, resolvedValues, tokenNameOf } = require("./tokens.cjs");
 const { CONTEXT_FOLDERS } = require("./resolver.cjs");
-const { isUnder, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE } = require("./project.cjs");
+const { isUnder, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 
-// Files every record reads: a write to one reaches the whole design system.
-const SHARED_FILES = [SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE].map((name) => `${UI_DIR}/${name}`);
+// Files every record, or every code file, reads: a write to one reaches the whole design system.
+const SHARED_FILES = [...[SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE].map((name) => `${UI_DIR}/${name}`), CODE_DEBT_FILE];
 const SHARED_DIRS = CONTEXT_FOLDERS.map((folder) => `${UI_DIR}/${folder}`);
 
 const isShared = (file) => SHARED_FILES.includes(file) || SHARED_DIRS.some((dir) => isUnder(file, dir));

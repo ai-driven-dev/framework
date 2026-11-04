@@ -7,6 +7,7 @@ const { UI, HISTORY, makeTmp, removeTmp, filesUnder, engine, validate, writeProj
 // The bump command is driven as a subprocess, as the skill calls it, and judged by the engine's own
 // validator once the change it carries is made.
 const TASK = "aidd_docs/tasks/recolour";
+const DEBT = `${UI}/code-debt.json`;
 const REACHED = ["components/button", "components/dialog", "components/search-field", "history", "reviews/first-pass", "screens/home"].map((name) => `${UI}/${name}.md`);
 
 let tmp;
@@ -218,6 +219,25 @@ describe("aidd-ui bump", () => {
       fs.rmSync(path.join(tmp, HISTORY));
       create("system");
       assert.equal(read(HISTORY), `# History\n\n| Id | Version | Change | Breaking | Task | Fingerprint |\n| --- | --- | --- | --- | --- | --- |\n| system | 1.0.0 | created | no | ${TASK} | |\n`);
+    });
+
+    it("writes the code's colour literals as its debt when it creates the system, files and literals sorted", () => {
+      fs.rmSync(path.join(tmp, HISTORY));
+      fs.rmSync(path.join(tmp, DEBT));
+      fs.appendFileSync(path.join(tmp, "src/ui/HomePage.tsx"), 'const a = "#ff0000";\nconst b = "#00ff00";\nconst c = "#ff0000";\n');
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const a = "rgba(0, 0, 0, 0.5)";\n');
+      assert.deepEqual(create("system").report, { changed: [DEBT, HISTORY] });
+      assert.equal(read(DEBT), `${JSON.stringify({ "src/ui/Button.tsx": { "rgba(": 1 }, "src/ui/HomePage.tsx": { "#00ff00": 1, "#ff0000": 2 } }, null, 2)}\n`);
+    });
+
+    it("writes an empty debt when the code holds no colour literal, and none for another record", () => {
+      fs.rmSync(path.join(tmp, DEBT));
+      addLogo();
+      assert.deepEqual(create("logo").report, { changed: [HISTORY] });
+      assert.equal(fs.existsSync(path.join(tmp, DEBT)), false);
+      fs.rmSync(path.join(tmp, HISTORY));
+      create("system");
+      assert.equal(read(DEBT), "{}\n");
     });
 
     it("writes one row per id, once", () => {

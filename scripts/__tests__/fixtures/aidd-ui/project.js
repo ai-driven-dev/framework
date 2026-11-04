@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { execFileSync, spawnSync } = require("node:child_process");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -290,6 +290,7 @@ const FILES = {
   [`${UI}/system.md`]: SYSTEM,
   [`${UI}/brand.md`]: BRAND,
   [HISTORY]: history(...ROWS),
+  [`${UI}/code-debt.json`]: "{}\n",
   [`${UI}/tokens.json`]: `${JSON.stringify(TOKENS, null, 2)}\n`,
   [`${UI}/tokens.resolver.json`]: `${JSON.stringify(RESOLVER, null, 2)}\n`,
   [`${UI}/themes/dark.json`]: `${JSON.stringify(DARK, null, 2)}\n`,
@@ -395,19 +396,4 @@ function validate(root) {
   return { code: run.status, out: lines(run.stdout), err: run.stderr };
 }
 
-/** git in `dir` without the variables a commit hook exports, which would point it at the real repository. */
-const git = (dir, ...args) =>
-  execFileSync("git", ["-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", ...args], {
-    cwd: dir,
-    env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_"))),
-    stdio: "ignore",
-  });
-
-/** Makes `dir` a repository whose one commit holds everything in it. */
-function commitAll(dir) {
-  git(dir, "init", "-q");
-  git(dir, "add", "-A");
-  git(dir, "commit", "-q", "--no-verify", "-m", "snapshot");
-}
-
-module.exports = { UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history, git, commitAll };
+module.exports = { UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };
