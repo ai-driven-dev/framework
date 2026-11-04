@@ -34,8 +34,9 @@ const VERDICT_VALID = "VALID";
 const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
 const EXIT_USAGE = 2;
-const ERROR_MARK = "✗";
-const WARNING_MARK = "⚠";
+const WARNING_WORD = "warning";
+// A message that opens with the line it is about; the line moves to the file.
+const LINE_PREFIX = /^line (\d+): /;
 
 /** Every problem of a loaded project, check by check, then each file no check could read. A
  * check that throws is one problem naming it, so the others still speak. A design system
@@ -58,9 +59,16 @@ function problemsOf(project, checks = CHECKS) {
 /** Whether a problem blocks: anything a rule does not call a warning. */
 const isError = (problem) => problem.severity !== WARNING;
 
-/** One `✗ <file>: <message> (<rule>)` line per problem, `⚠` for a warning, the file relative to
- * the project root. */
-const format = (problems) => problems.map((problem) => `${isError(problem) ? ERROR_MARK : WARNING_MARK} ${problem.file}: ${problem.message}${problem.rule ? ` (${problem.rule})` : ""}`);
+/** One `<file>[:<line>] <rule> [warning] <message>` line per problem, the file relative to the
+ * project root. A problem without a rule leaves the rule out. */
+function format(problems) {
+  return problems.map((problem) => {
+    const [, line] = problem.message.match(LINE_PREFIX) ?? [];
+    const message = line ? problem.message.replace(LINE_PREFIX, "") : problem.message;
+    const head = [line ? `${problem.file}:${line}` : problem.file, problem.rule, isError(problem) ? null : WARNING_WORD, message];
+    return head.filter(Boolean).join(" ");
+  });
+}
 
 function validate([root = process.cwd()]) {
   const project = load(root);

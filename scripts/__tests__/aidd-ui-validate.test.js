@@ -48,9 +48,9 @@ const FIXTURE_STYLESHEET = [
 
 /** One mutation from each family: records, tokens, code. */
 const FAILURES = [
-  `✗ ${BRAND}: lacks "## Users" (R14)`,
-  `✗ ${TOKENS}: space.md: unit "em" must be px or rem (T4)`,
-  `✗ ${DIALOG}: package "left-pad" is not in system.md libraries (C2)`,
+  `${BRAND} R14 lacks "## Users"`,
+  `${TOKENS} T4 space.md: unit "em" must be px or rem`,
+  `${DIALOG} C2 package "left-pad" is not in system.md libraries`,
 ];
 const [BRAND_FAILURE, , DIALOG_FAILURE] = FAILURES;
 
@@ -109,7 +109,7 @@ const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd
 const stop = (active = false) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active });
 const silent = { code: 0, out: "", err: "" };
 /** The one text every host gets: the lines, then how many errors they leave out and the command that prints them. */
-const text = (lines, more, command = `node ${ENGINE} validate ${tmp}`) => [...lines, ...(more ? [`+${more} more errors: ${command}`] : [])].join("\n");
+const text = (lines, more, command = `node ${ENGINE} validate ${tmp}`) => [...lines, ...(more ? [`+${more} more: ${command}`] : [])].join("\n");
 // Claude Code and Codex read additionalContext under hookSpecificOutput; Codex fails the hook on any other key.
 const claudeFeedback = (lines, more = 0) => ({ code: 0, out: JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: text(lines, more) } }), err: "" });
 // Copilot reads only a top-level additionalContext.
@@ -118,8 +118,8 @@ const finish = (errors, more = 0) => ({ code: 0, out: JSON.stringify({ decision:
 const RENDER = `${UI}/components/button.html`;
 /** A render holding `errors` colour literals and `warnings` hairlines, one line each, from line 28. */
 const littering = (errors, warnings) => edit(tmp, RENDER, "</body>", `${'<p style="color: #000000">x</p>\n'.repeat(errors)}${'<p style="border-width: 1px">x</p>\n'.repeat(warnings)}</body>`);
-const literal = (line) => `✗ ${RENDER}: line ${line}: colour literal "#000000", use a token (V4)`;
-const hairline = (line) => `⚠ ${RENDER}: line ${line}: literal "1px", only tokens carry values (V6)`;
+const literal = (line) => `${RENDER}:${line} V4 colour literal "#000000", use a token`;
+const hairline = (line) => `${RENDER}:${line} V6 warning literal "1px", only tokens carry values`;
 const range = (from, count) => Array.from({ length: count }, (_, index) => from + index);
 
 // The plugin's own declaration: every host builds its hooks from this file, so a missing event
@@ -145,7 +145,7 @@ describe("aidd-ui validator entries", () => {
   });
 
   describe("E8 warnings", () => {
-    const ORPHAN = "⚠ src/ui/Orphan.tsx: no record links it and no ignore covers it (C3)";
+    const ORPHAN = "src/ui/Orphan.tsx C3 warning no record links it and no ignore covers it";
     const orphan = () => fs.writeFileSync(path.join(tmp, "src/ui/Orphan.tsx"), "export function Orphan() {}\n");
 
     it("prints a warning and exits 0, since only errors fail the check", () => {
@@ -167,7 +167,7 @@ describe("aidd-ui validator entries", () => {
     it("takes a committed colour literal as a warning: it fails no check and blocks no turn", () => {
       fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
       commitAll(tmp);
-      assert.deepEqual(validate(tmp), { code: 0, out: ['⚠ src/ui/Button.tsx: line 4: colour literal "#ff0000", use a token (C4)'], err: "" });
+      assert.deepEqual(validate(tmp), { code: 0, out: ['src/ui/Button.tsx:4 C4 warning colour literal "#ff0000", use a token'], err: "" });
       hook(postToolUse(path.join(tmp, BRAND)));
       assert.deepEqual(hook(stop()), silent);
     });
@@ -177,8 +177,8 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(validate(tmp), {
         code: 1,
         out: [
-          `⚠ ${UI}/components/button.html: line 28: literal "1px", only tokens carry values (V6)`,
-          `✗ ${UI}/components/button.html: line 28: literal "3px", only tokens carry values (V6)`,
+          `${UI}/components/button.html:28 V6 warning literal "1px", only tokens carry values`,
+          `${UI}/components/button.html:28 V6 literal "3px", only tokens carry values`,
         ],
         err: "",
       });
@@ -270,14 +270,14 @@ describe("aidd-ui validator entries", () => {
 
       it("names a breakpoint file whose row has no query, and leaves the fix to system.md", () => {
         edit(tmp, `${UI}/system.md`, "| desktop | (min-width: 64rem) |", "| desktop | |");
-        assert.deepEqual(generate(tmp).out, [`✗ ${RESOLVER}: context "desktop" has no media string: give it a Query in system.md, then run the engine's tokens command (T6)`]);
+        assert.deepEqual(generate(tmp).out, [`${RESOLVER} T6 context "desktop" has no media string: give it a Query in system.md, then run the engine's tokens command`]);
       });
     });
 
     it("writes nothing, names the error and exits 1 while the tokens have one", () => {
       fs.rmSync(path.join(tmp, STYLESHEET));
       editTokens(tmp, (tree) => (tree.space.md.$value = { value: 1, unit: "em" }));
-      assert.deepEqual(generate(tmp), { code: 1, out: [`✗ ${TOKENS}: space.md: unit "em" must be px or rem (T4)`], err: "", css: null });
+      assert.deepEqual(generate(tmp), { code: 1, out: [`${TOKENS} T4 space.md: unit "em" must be px or rem`], err: "", css: null });
     });
 
     it("writes nothing, names the token and exits 1 for a composite without raw CSS", () => {
@@ -285,7 +285,7 @@ describe("aidd-ui validator entries", () => {
       editTokens(tmp, (tree) => (tree.elevation = { low: { $type: "shadow", $value: { color: "#000000" } } }));
       assert.deepEqual(generate(tmp), {
         code: 1,
-        out: [`✗ ${TOKENS}: elevation.low: a shadow has no CSS of its own, give it a dev.ai-driven.css value`],
+        out: [`${TOKENS} elevation.low: a shadow has no CSS of its own, give it a dev.ai-driven.css value`],
         err: "",
         css: null,
       });
@@ -313,14 +313,14 @@ describe("aidd-ui validator entries", () => {
     it("prints one line, never an avalanche, for a design system written in another format", () => {
       breakOnePerFamily();
       edit(tmp, `${UI}/system.md`, "format: 1", "format: 2");
-      assert.deepEqual(validate(tmp), { code: 1, out: [`✗ ${UI}/system.md: format "2" is not 1, the one this validator reads`], err: "" });
+      assert.deepEqual(validate(tmp), { code: 1, out: [`${UI}/system.md format "2" is not 1, the one this validator reads`], err: "" });
     });
 
     it("names a check that throws and still runs the others", () => {
       breakOnePerFamily();
       const broken = { check: () => { throw new Error("boom"); } };
       const found = problemsOf(load(tmp), { broken, records: require(path.join(HOOKS, "lib/records.cjs")) });
-      assert.deepEqual(format(found), [`✗ ${UI}: check "broken" failed: boom`, FAILURES[0]]);
+      assert.deepEqual(format(found), [`${UI} check "broken" failed: boom`, FAILURES[0]]);
     });
   });
 
@@ -364,12 +364,12 @@ describe("aidd-ui validator entries", () => {
 
     it("names the problem a write causes in a record citing the written one", () => {
       edit(tmp, `${UI}/components/button.md`, "kind: atom", "kind: composition");
-      assert.deepEqual(hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))), claudeFeedback([`✗ ${UI}/components/search-field.md: molecule cannot use composition "button" (R6)`]));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))), claudeFeedback([`${UI}/components/search-field.md R6 molecule cannot use composition "button"`]));
     });
 
     it("names the problems of a written record's render", () => {
       edit(tmp, `${UI}/components/button.md`, "variants: [primary, secondary]", "variants: [primary, secondary, ghost]");
-      assert.deepEqual(hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))), claudeFeedback([`✗ ${UI}/components/button.html: no data-variant="ghost" (V2)`]));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))), claudeFeedback([`${UI}/components/button.html V2 no data-variant="ghost"`]));
     });
 
     it("names every problem after a write to a file every record reads", () => {
@@ -400,16 +400,19 @@ describe("aidd-ui validator entries", () => {
 
     it("prints the warnings of the written files only", () => {
       for (const name of ["Orphan", "Stray"]) fs.writeFileSync(path.join(tmp, `src/ui/${name}.tsx`), `export function ${name}() {}\n`);
-      const orphan = (name) => `⚠ src/ui/${name}.tsx: no record links it and no ignore covers it (C3)`;
+      const orphan = (name) => `src/ui/${name}.tsx C3 warning no record links it and no ignore covers it`;
       assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Orphan.tsx"))), claudeFeedback([orphan("Orphan")]));
       assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), silent);
     });
 
-    it("names the engine relative to the project when it sits under it", () => {
+    it("names the engine relative to the project when it sits under it, and the project root only when the hook ran elsewhere", () => {
       fs.cpSync(HOOKS, path.join(tmp, ".claude/hooks/aidd-ui"), { recursive: true });
       breakOnePerFamily();
-      const run = spawnSync(process.execPath, [path.join(tmp, ".claude/hooks/aidd-ui/ui-hook.cjs")], { input: postToolUse(path.join(tmp, BRAND)), encoding: "utf8" });
-      assert.equal(run.stdout, claudeFeedback([BRAND_FAILURE], 2).out.replace(`node ${ENGINE} validate ${tmp}`, "node .claude/hooks/aidd-ui/aidd-ui.cjs validate"));
+      const hookHere = path.join(tmp, ".claude/hooks/aidd-ui/ui-hook.cjs");
+      const run = (cwd) => spawnSync(process.execPath, [hookHere], { input: postToolUse(path.join(tmp, BRAND)), encoding: "utf8", cwd }).stdout;
+      const withCommand = (command) => claudeFeedback([BRAND_FAILURE], 2).out.replace(`node ${ENGINE} validate ${tmp}`, command);
+      assert.equal(run(tmp), withCommand("node .claude/hooks/aidd-ui/aidd-ui.cjs validate"));
+      assert.equal(run(os.tmpdir()), withCommand(`node .claude/hooks/aidd-ui/aidd-ui.cjs validate ${tmp}`));
     });
 
     it("stays silent when a write lands elsewhere", () => {
@@ -623,7 +626,7 @@ describe("aidd-ui validator entries", () => {
 
   describe("E6 unreadable files", { skip: process.platform === "win32" }, () => {
     const DANGLING = `${UI}/dangling.md`;
-    const UNREADABLE = `✗ ${DANGLING}: unreadable`;
+    const UNREADABLE = `${DANGLING} unreadable`;
 
     it("names an unreadable record and checks the rest, in every entry", () => {
       fs.symlinkSync(path.join(tmp, "nowhere.md"), path.join(tmp, DANGLING));
@@ -636,7 +639,7 @@ describe("aidd-ui validator entries", () => {
       fs.symlinkSync(path.join(tmp, "src/ui"), path.join(tmp, "src/ui/Folder.css"));
       assert.deepEqual(validate(tmp), {
         code: 1,
-        out: ["⚠ src/ui/Folder.css: no record links it and no ignore covers it (C3)", "✗ src/ui/Folder.css: unreadable"],
+        out: ["src/ui/Folder.css C3 warning no record links it and no ignore covers it", "src/ui/Folder.css unreadable"],
         err: "",
       });
     });
@@ -645,7 +648,7 @@ describe("aidd-ui validator entries", () => {
       fs.symlinkSync(path.join(tmp, "src/ui"), path.join(tmp, "src/ui/Folder.swift"));
       assert.deepEqual(validate(tmp), {
         code: 1,
-        out: ["⚠ src/ui/Folder.swift: no record links it and no ignore covers it (C3)", "✗ src/ui/Folder.swift: unreadable"],
+        out: ["src/ui/Folder.swift C3 warning no record links it and no ignore covers it", "src/ui/Folder.swift unreadable"],
         err: "",
       });
     });
@@ -654,7 +657,7 @@ describe("aidd-ui validator entries", () => {
       const folder = path.join(tmp, UI, "journeys");
       fs.chmodSync(folder, 0o000);
       try {
-        assert.deepEqual(validate(tmp), { code: 1, out: [`✗ ${UI}/journeys: unreadable`], err: "" });
+        assert.deepEqual(validate(tmp), { code: 1, out: [`${UI}/journeys unreadable`], err: "" });
       } finally {
         fs.chmodSync(folder, 0o755);
       }

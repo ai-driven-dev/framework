@@ -135,9 +135,9 @@ For each element or screen the refs reach: `version` +1, `status: proposed`, a H
 
 ## Validation
 
-`validate` prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, a colour literal in a code file identical to `HEAD`, a render length of 2px or less, and a failure of `git` in H8. A colour literal in a code file changed or untracked since `HEAD`, or where `git` cannot answer, whatever the reason, is an error that says which.
+`validate` prints `VALID`, or one `<file>[:<line>] <rule> <message>` line per error, `<rule> warning <message>` per warning (`:<line>` only when the problem has a line), and exits 1 when an error remains. Example: `apps/web/src/ui/Button.tsx:4 C4 colour literal "#ff0000", use a token`. Warnings: a file under a code root no record links, a colour literal in a code file identical to `HEAD`, a render length of 2px or less, and a failure of `git` in H8. A colour literal in a code file changed or untracked since `HEAD`, or where `git` cannot answer, whatever the reason, is an error that says which.
 
-A hook runs the same check and prints the same text on every host, only the JSON around it differing: problem lines in the `validate` format, then at most one line `+N more errors: <command>`, the engine relative to the project when it sits under it. Nothing is printed when there is nothing to show.
+A hook runs the same check and prints the same text on every host, only the JSON around it differing: problem lines in the `validate` format, then at most one line `+N more: <command>`, the `validate` command: the engine relative to the project when it sits under it, else absolute, and the project root only when the hook ran elsewhere. Nothing is printed when there is nothing to show.
 
 | Moment | Prints |
 | --- | --- |

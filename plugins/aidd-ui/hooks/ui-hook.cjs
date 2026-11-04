@@ -94,10 +94,12 @@ function isCopilot(payload) {
 
 const errorsOf = (problems) => problems.filter(isError);
 
-/** The command that prints every problem, the engine relative to the project when it sits under it. */
+/** The command that prints every problem: the engine relative to the project when it sits under
+ * it, and the project root only when the hook did not run in it. */
 function validateCommand(project) {
   const engine = relative(project.root, ENGINE);
-  return engine.startsWith("../") || path.isAbsolute(engine) ? `node ${ENGINE} validate ${project.root}` : `node ${engine} validate`;
+  const shown = engine.startsWith("../") || path.isAbsolute(engine) ? ENGINE : engine;
+  return `node ${shown} validate${path.resolve(project.root) === process.cwd() ? "" : ` ${project.root}`}`;
 }
 
 /** At most `limit` lines of problems, errors first so the cap never cuts an error for a warning,
@@ -105,7 +107,7 @@ function validateCommand(project) {
 function lean(project, problems, limit, total) {
   const shown = problems.slice(0, limit);
   const left = total - errorsOf(shown).length;
-  return [...format(shown), ...(left > 0 ? [`+${left} more errors: ${validateCommand(project)}`] : [])];
+  return [...format(shown), ...(left > 0 ? [`+${left} more: ${validateCommand(project)}`] : [])];
 }
 
 /** Marks the turn, then hands the model what the write broke: the errors of the written files and

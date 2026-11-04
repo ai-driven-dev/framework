@@ -9,7 +9,7 @@ Run it with node from the project root.
 
 | Command | Gives |
 | --- | --- |
-| `validate` | `VALID` when nothing is wrong, else one line per problem with its rule; exit 1 only on an error |
+| `validate` | `VALID` when nothing is wrong, else one line per problem, `<file>[:<line>] <rule> [warning] <message>`; exit 1 only on an error |
 | `tokens` | writes `aidd_docs/ui/tokens.resolver.json` from `system.md` and the context files, then `aidd_docs/ui/tokens.css`; exit 1 names what blocks it |
 | `impact <token or id>…` | JSON: tokens, same-value, elements, screens, journeys, renders, code; a token as its path or its CSS name; exit 2 on an unknown one |
 | `extract [--force]` | writes `tokens.json`, the context files and the resolver from the `code-tokens` files; JSON `written` and `left`; exit 1 with a message when it cannot, or when `tokens.json` exists without `--force` |
