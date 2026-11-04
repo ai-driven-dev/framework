@@ -5,7 +5,6 @@
 #
 # NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
 # whose CLI is absent is skipped, and the first run needs network.
-# The agents' provider is whatever `aidd setup --global --provider` last recorded.
 #
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled. Kilo
@@ -99,7 +98,7 @@ release_native_plugins
 output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
   --plugins all --yes 2>&1)" || {
   echo "FAIL"; printf '%s\n' "$output" >&2
-  echo "aidd setup --global failed for ${hosts[*]}." >&2; exit 1
+  echo "aidd setup --global failed for ${hosts[*]}; their plugins were released, so rerun make reload once fixed." >&2; exit 1
 }
 echo "ok ($(IFS=,; echo "${hosts[*]}"))"
 
