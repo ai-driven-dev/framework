@@ -18,6 +18,8 @@ aidd_docs/ui/
 ├── tokens.resolver.json      thèmes, plateformes et breakpoints, module Resolver de DTCG 2025.10, écrit par le moteur
 ├── themes/<thème>.json       valeurs qui changent pour un thème
 ├── breakpoints/<nom>.json    valeurs qui changent à un breakpoint
+├── history.md                historique de tout, écrit par le moteur, jamais à la main
+├── platforms/<nom>.json      valeurs qui changent pour une plateforme
 ├── tokens.css                généré depuis les tokens, jamais écrit à la main
 ├── assets/<id>.md            icône, image, illustration, avec son fichier à côté
 ├── components/<id>.md        atome, molécule ou composition
@@ -49,9 +51,9 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Le
 
 Deux axes, jamais mêlés : où en est le design, et quelle version le code implémente.
 
-- `status` dit le design : `proposé` (créé, pas encore validé), `validé` (rendu approuvé en review), `déprécié` (ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas).
+- `status` dit le design : `proposed` (créé, pas encore validé), `validated` (rendu approuvé en review), `deprecated` (ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas).
 - Chaque lien vers le code porte la version de l'élément que ce code implémente. Une plateforme est à jour quand elle égale `version`, en retard quand elle est plus petite ; un élément sans lien n'est codé nulle part, sauf une molécule ou une composition implémentée par ce qu'elle utilise.
-- Modifier un élément implémenté monte sa `version` et le repasse à `proposé` ; les versions de ses liens ne bougent pas, et le retard de chaque plateforme reste visible jusqu'à ce que la feature fasse suivre son code.
+- Modifier un élément implémenté monte sa `version` et le repasse à `proposed` ; les versions de ses liens ne bougent pas, et le retard de chaque plateforme reste visible jusqu'à ce que la feature fasse suivre son code.
 - Un élément non déprécié n'utilise jamais un élément déprécié.
 
 ### Lien avec le code

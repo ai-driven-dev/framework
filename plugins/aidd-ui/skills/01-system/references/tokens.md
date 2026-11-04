@@ -13,5 +13,4 @@ DTCG 2025.10 in `aidd_docs/ui/tokens.json`.
 | themes, platforms, breakpoints | the first of each is `tokens.json`; each other with its own values is `themes/<theme>.json`, `platforms/<name>.json` or `breakpoints/<name>.json`, a breakpoint's media query being the `Query` of its `## Breakpoints` row in `system.md`, in the order of the table, the winning query last |
 | context file | redefines base tokens only, keeping their type; `$type` left out, as `extract` writes it |
 | `tokens.resolver.json` | written by `tokens` and `extract` from `system.md` and those files, never by hand; a token several modifiers set takes the value of the later one |
-| code | `code-tokens` names the file the code consumes them from, or one per app |
-| `tokens.css` | written by `tokens` only, never by hand; tracked, since the version guard reads the committed one |
+| `tokens.css` | written by `tokens` only, never by hand; tracked |

@@ -34,10 +34,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-prepare.md](skills/01-system/actions/01-prepare.md) | - |
 | `actions` | [02-write.md](skills/01-system/actions/02-write.md) | - |
 | `actions` | [03-conclude.md](skills/01-system/actions/03-conclude.md) | - |
-| `assets` | [asset.md](skills/01-system/assets/asset.md) | - |
-| `assets` | [brand.md](skills/01-system/assets/brand.md) | - |
-| `assets` | [component.md](skills/01-system/assets/component.md) | - |
-| `assets` | [system.md](skills/01-system/assets/system.md) | - |
+| `assets` | [asset-template.md](skills/01-system/assets/asset-template.md) | - |
+| `assets` | [brand-template.md](skills/01-system/assets/brand-template.md) | - |
+| `assets` | [component-template.md](skills/01-system/assets/component-template.md) | - |
+| `assets` | [system-template.md](skills/01-system/assets/system-template.md) | - |
+| `references` | [cases.md](skills/01-system/references/cases.md) | - |
 | `references` | [elements.md](skills/01-system/references/elements.md) | - |
 | `references` | [engine.md](skills/01-system/references/engine.md) | - |
 | `references` | [extraction.md](skills/01-system/references/extraction.md) | - |

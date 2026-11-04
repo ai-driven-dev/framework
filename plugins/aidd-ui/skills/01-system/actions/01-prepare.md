@@ -8,16 +8,8 @@ The request.
 
 ## Process
 
-1. Find the engine file per [engine](../references/engine.md); none: stop and say it is missing. Below, `<engine>` is its path: run it as `node <engine> <command>` from the project root.
-2. Read `aidd_docs/ui/` and the UI code, whatever its platforms, and name the case:
-
-   | Case | When |
-   | --- | --- |
-   | from scratch | no `aidd_docs/ui/system.md`, no UI code |
-   | from the code | no `aidd_docs/ui/system.md`, UI code exists |
-   | new elements | `system.md` exists, the request adds tokens or elements |
-   | change | `system.md` exists, the request changes or removes a token or an element |
-
+1. Find the engine file per [engine](../references/engine.md); none: stop and say it is missing. Below, `<engine>` is its path: run it as `node <engine> <command>`.
+2. Read `aidd_docs/ui/` and the UI code, whatever its platforms, and name the case per [cases](../references/cases.md).
 3. Take the task folder the user named, else ask for it. It is only cited in `history.md` rows: it need not exist, nothing is written in it.
 4. Change only:
    - vague: ask which token or element changes, and to which value;

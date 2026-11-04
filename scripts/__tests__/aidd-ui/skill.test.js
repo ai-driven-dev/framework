@@ -67,11 +67,11 @@ const FILLS = {
 };
 
 const TEMPLATES = {
-  system: "system.md",
-  brand: "brand.md",
-  component: "component.md",
-  asset: "asset.md",
-  render: "render.html",
+  system: "system-template.md",
+  brand: "brand-template.md",
+  component: "component-template.md",
+  asset: "asset-template.md",
+  render: "render-template.html",
 };
 
 const template = (name) => fs.readFileSync(path.join(SKILL, "assets", TEMPLATES[name]), "utf8");
@@ -144,7 +144,7 @@ describe("aidd-ui 01-system resolver", () => {
   });
 
   it("has a breakpoint's query written in the template's table, and the engine turn it into the stylesheet", () => {
-    const template = fs.readFileSync(path.join(SKILL, "assets/system.md"), "utf8");
+    const template = fs.readFileSync(path.join(SKILL, "assets/system-template.md"), "utf8");
     assert.ok(template.includes("| Name | Query |"));
     put(tmp, `${UI}/breakpoints/desktop.json`, JSON.stringify({ space: { md: { $value: { value: 1.5, unit: "rem" } } } }));
     edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
