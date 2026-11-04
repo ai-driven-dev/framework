@@ -28,8 +28,8 @@ function telemetryHelp() {
   assert.ok(group, "the help golden has no `aidd telemetry` entry");
   const commands = new Map();
   for (const entry of entries) {
-    const name = entry.invocation.trim().split(/\s+/u)[2];
-    if (name === undefined) continue;
+    const name = entry.invocation.trim().split(/\s+/u).slice(2).join(" ");
+    if (name === "") continue;
     const help = entry.help.replace(/\s+/gu, " ");
     const choices = new Map();
     for (const match of help.matchAll(/(--[a-z-]+)(?:(?!--)[^(])*\(choices: ([^)]*)\)/gu)) {
@@ -64,12 +64,27 @@ function codeRegions(markdown) {
 /** Every `aidd telemetry ...` a skill's code names, as `{ file, text, sub, rest }`. */
 function mentions() {
   const found = [];
+  const commands = telemetryHelp();
   for (const file of markdownUnder(SKILLS)) {
     const relative = path.relative(ROOT, file).split(path.sep).join("/");
     for (const region of codeRegions(fs.readFileSync(file, "utf8"))) {
       for (const match of region.matchAll(COMMAND)) {
         const words = match[1].trim().split(/\s+/u).filter(Boolean);
-        found.push({ file: relative, text: `aidd telemetry${match[1]}`.trim(), sub: words[0], rest: words.slice(1) });
+        let count = 0;
+        while (count < words.length && commands.has(words.slice(0, count + 1).join(" "))) {
+          count++;
+        }
+        // A command group cannot accept an unknown child as an argument.
+        const prefix = `${words.slice(0, count).join(" ")} `;
+        const hasChildren = [...commands.keys()].some((name) => name.startsWith(prefix));
+        if (count > 0 && hasChildren && /^[a-z][a-z-]*$/u.test(words[count] ?? "")) count++;
+        if (count === 0 && words.length > 0) count = 1;
+        found.push({
+          file: relative,
+          text: `aidd telemetry${match[1]}`.trim(),
+          sub: words.slice(0, count).join(" ") || undefined,
+          rest: words.slice(count),
+        });
       }
     }
   }
@@ -104,12 +119,22 @@ describe("the telemetry skills name only commands the CLI has", () => {
       const command = help.get(mention.sub);
       if (command === undefined) continue;
       mention.rest.forEach((word, at) => {
-        if (word.startsWith("--") && !command.flags.has(word)) {
-          wrong.push(`${mention.file}: \`${mention.text}\` has no ${word}`);
+        const [flag, inlineValue] = word.split("=", 2);
+        if (word.startsWith("--") && !command.flags.has(flag)) {
+          wrong.push(`${mention.file}: \`${mention.text}\` has no ${flag}`);
         }
         const allowed = command.choices.get(mention.rest[at - 1]);
         if (allowed !== undefined && /^[a-z]+$/u.test(word) && !allowed.has(word)) {
           wrong.push(`${mention.file}: \`${mention.text}\` gives ${mention.rest[at - 1]} the value ${word}`);
+        }
+        const inlineChoices = command.choices.get(flag);
+        if (
+          inlineChoices !== undefined &&
+          inlineValue !== undefined &&
+          /^[a-z]+$/u.test(inlineValue) &&
+          !inlineChoices.has(inlineValue)
+        ) {
+          wrong.push(`${mention.file}: \`${mention.text}\` gives ${flag} the value ${inlineValue}`);
         }
       });
     }

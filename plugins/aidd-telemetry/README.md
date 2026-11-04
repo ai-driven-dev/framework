@@ -45,10 +45,14 @@ Codex: trust the plugin's hooks once, with `/hooks` in the TUI.
 - Each model call counts once, whatever the axis.
 - Where you are asked for a task, and the limits: see the usage contract.
 
-## Privacy
+## Local usage measurement privacy
 
 - Nothing leaves your machine.
 - Consent is per clone and never committed.
 - Data lives in `~/.config/aidd/telemetry` and the clone's git config.
 - You are named only if you choose to be.
-- `AIDD_TELEMETRY=0` refuses measurement everywhere.
+- `AIDD_TELEMETRY=0` refuses AIDD usage measurement everywhere.
+
+## Provider OpenTelemetry
+
+`aidd telemetry otel init --config=<claude|codex|opencode> --endpoint=<dev|prod>` configures the selected provider to send its native OpenTelemetry to the selected collector. This is a separate opt-in from local usage measurement. Raw provider telemetry can contain sensitive data, including secrets. The private development collector listens at `http://127.0.0.1:14318` and requires a bearer token in `~/.local/share/aidd-otel-observation/collector-token`. Start the collector separately before sending telemetry. Production is refused until its destination is configured.

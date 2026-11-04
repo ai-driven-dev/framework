@@ -647,3 +647,11 @@ describe("the telemetry command surface", () => {
     expect(stderr()).toContain("disk full");
   });
 });
+
+describe("telemetry otel init", () => {
+  it("refuses the production endpoint through the command without touching ledger wiring", async () => {
+    expect(await run("otel", "init", "--config=codex", "--endpoint=prod")).toBe(1);
+    expect(stderr()).toContain("Gouvernail");
+    expect(turnOn).not.toHaveBeenCalled();
+  });
+});

@@ -27,6 +27,7 @@ import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
+import { configureOtel, launchOtel, otelOptions } from "../../runtime/wiring/telemetry-otel.js";
 import {
   printForgetResult,
   printIdentityRule,
@@ -128,6 +129,57 @@ export function registerTelemetryCommand(program: Command): void {
   const telemetry = program
     .command("telemetry")
     .description("Measure what Claude Code and Codex sessions consume, locally");
+  const otel = telemetry.command("otel").description("Configure native OpenTelemetry exporters");
+  otel
+    .command("init")
+    .description("Enable detailed local OTLP export in one tool's user configuration")
+    .addOption(
+      new Option("--config <tool>", "User configuration to merge")
+        .choices(otelOptions.configs)
+        .makeOptionMandatory()
+    )
+    .addOption(
+      new Option("--endpoint <environment>", "Collector destination")
+        .choices(otelOptions.endpoints)
+        .makeOptionMandatory()
+    )
+    .action(
+      async (options: {
+        config: (typeof otelOptions.configs)[number];
+        endpoint: (typeof otelOptions.endpoints)[number];
+      }) => {
+        const { output } = parseGlobalOptions(program);
+        try {
+          const result = await configureOtel(options.config, options.endpoint);
+          output.info(
+            result.changed ? `Updated ${result.path}` : `Already configured in ${result.path}`
+          );
+          output.info(
+            "Local OTLP capture may include prompts, responses, commands and tool output."
+          );
+          output.info(result.launch);
+        } catch (error) {
+          new ErrorHandler(output).handle(error);
+        }
+      }
+    );
+
+  otel
+    .command("run [args...]")
+    .description("Launch OpenCode 1 with local OTLP export. Pass tool arguments after --")
+    .addOption(
+      new Option("--config <tool>", "Tool to launch")
+        .choices(otelOptions.launchConfigs)
+        .makeOptionMandatory()
+    )
+    .action(async (args: string[]) => {
+      const { output } = parseGlobalOptions(program);
+      try {
+        process.exitCode = await launchOtel(args);
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
 
   telemetry
     .command("on")

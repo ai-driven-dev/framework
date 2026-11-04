@@ -137,7 +137,7 @@
   {
     "invocation": "aidd telemetry",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code and Codex sessions consume, locally\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  on [options]             Measure this clone, and remove what the previous\n                           version left in it\n  off                      Stop measuring this clone; what was measured stays\n  forget [options]         Show everything measurement keeps on this machine, or\n                           remove it with --yes\n  ingest [options]         Read new transcripts into the local ledger, for\n                           clones that opted in\n  task [options] [name]    Declare the task the current work belongs to\n  status                   Show if this clone is measured, since when, and its\n                           task\n  report [options]         Show what the work consumed, split along one axis,\n                           after reading new transcripts\n  identity [options] [id]  Choose to be named on your own measurement, or show\n                           or remove that choice\n  help [command]           display help for command"
+    "help": "Usage: aidd telemetry [options] [command]\n\nMeasure what Claude Code and Codex sessions consume, locally\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  otel                     Configure native OpenTelemetry exporters\n  on [options]             Measure this clone, and remove what the previous\n                           version left in it\n  off                      Stop measuring this clone; what was measured stays\n  forget [options]         Show everything measurement keeps on this machine, or\n                           remove it with --yes\n  ingest [options]         Read new transcripts into the local ledger, for\n                           clones that opted in\n  task [options] [name]    Declare the task the current work belongs to\n  status                   Show if this clone is measured, since when, and its\n                           task\n  report [options]         Show what the work consumed, split along one axis,\n                           after reading new transcripts\n  identity [options] [id]  Choose to be named on your own measurement, or show\n                           or remove that choice\n  help [command]           display help for command"
   },
   {
     "invocation": "aidd telemetry forget",
@@ -163,6 +163,21 @@
     "invocation": "aidd telemetry on",
     "exitCode": 0,
     "help": "Usage: aidd telemetry on [options]\n\nMeasure this clone, and remove what the previous version left in it\n\nOptions:\n  --yes        Do not ask first (default: false)\n  --as <id>    Name you by this identifier on your own measurement\n  --anonymous  Name nobody on your own measurement (default: false)\n  -h, --help   display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel [options] [command]\n\nConfigure native OpenTelemetry exporters\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  init [options]           Enable detailed local OTLP export in one tool's user\n                           configuration\n  run [options] [args...]  Launch OpenCode 1 with local OTLP export. Pass tool\n                           arguments after --\n  help [command]           display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel init",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel init [options]\n\nEnable detailed local OTLP export in one tool's user configuration\n\nOptions:\n  --config <tool>           User configuration to merge (choices: \"claude\",\n                            \"codex\", \"opencode\")\n  --endpoint <environment>  Collector destination (choices: \"dev\", \"prod\")\n  -h, --help                display help for command"
+  },
+  {
+    "invocation": "aidd telemetry otel run",
+    "exitCode": 0,
+    "help": "Usage: aidd telemetry otel run [options] [args...]\n\nLaunch OpenCode 1 with local OTLP export. Pass tool arguments after --\n\nOptions:\n  --config <tool>  Tool to launch (choices: \"opencode\")\n  -h, --help       display help for command"
   },
   {
     "invocation": "aidd telemetry report",

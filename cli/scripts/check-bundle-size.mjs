@@ -49,6 +49,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 712 KB: 710.8 KB, a Stop block continuing the turn on OpenCode V1 and Kilo, and V2's
 // tool answers reaching the model through its tool hook (+1.8 KB over the 709 KB ceiling);
 // 0.2% measured headroom.
+// 728 KB: 726.7 KB, explicit native OTLP configuration for three tools and the
+// OpenCode 1 launcher (+15.9 KB over the 710.8 KB build above); 0.2% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

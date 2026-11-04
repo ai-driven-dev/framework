@@ -34,9 +34,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |-------|------|---|
 | `actions` | [forget.md](skills/00-init/actions/forget.md) | - |
 | `actions` | [identity.md](skills/00-init/actions/identity.md) | - |
+| `actions` | [otel.md](skills/00-init/actions/otel.md) | - |
 | `actions` | [start.md](skills/00-init/actions/start.md) | - |
 | `actions` | [stop.md](skills/00-init/actions/stop.md) | - |
-| `-` | [SKILL.md](skills/00-init/SKILL.md) | `Turn AIDD measurement on for a project after explicit consent, stop it, choose to be named on your own measurement, or delete what was measured. Use when the user wants to start or stop measuring what their work consumes, add or remove their name, or forget measured data. Not for answering what a period consumed.` |
+| `-` | [SKILL.md](skills/00-init/SKILL.md) | `Turn AIDD measurement on for a project after explicit consent, stop it, choose to be named on your own measurement, or delete what was measured. Use when the user wants to start or stop measuring what their work consumes, add or remove their name, or forget measured data. Also use for explicit requests to configure provider-native OpenTelemetry export. Not for answering what a period consumed.` |
 
 #### `skills/01-usage`
 

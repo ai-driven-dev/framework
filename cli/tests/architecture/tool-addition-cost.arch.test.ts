@@ -92,6 +92,8 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   },
   // Claude Code's own settings files, read to say how long it keeps a transcript.
   { path: "src/contexts/telemetry/infrastructure/switch/claude-settings-adapter.ts", named: 1 },
+  // OTLP is an explicit, separate support surface: three observed native exporters.
+  { path: "src/contexts/telemetry/infrastructure/otel/init-otel.ts", named: 3 },
   // Cursor's project hooks file, named after the tool whose file it is: the directory it
   // writes into is Cursor's own, not a list a sixth tool joins.
   { path: "src/contexts/tools/domain/formats/cursor-hooks-project-merge.ts", named: 1 },

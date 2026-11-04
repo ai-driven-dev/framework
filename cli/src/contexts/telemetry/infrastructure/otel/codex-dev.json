@@ -1,0 +1,16 @@
+{
+  "defaults": {
+    "environment": "local",
+    "log_user_prompt": true,
+    "log_agent_responses": true,
+    "log_guardian_assessments": true
+  },
+  "toolResult": {
+    "max_bytes": 262144
+  },
+  "exporters": {
+    "exporter": "{collector}/codex/v1/logs",
+    "metrics_exporter": "{collector}/codex/v1/metrics",
+    "trace_exporter": "{collector}/codex/v1/traces"
+  }
+}
