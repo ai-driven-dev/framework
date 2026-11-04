@@ -1,17 +1,19 @@
 # 03 - Conclude
 
-Leave a design system that validates, and say what follows.
+Leave a design system that validates, and tell the user what follows.
 
 ## Input
 
-What write wrote.
+`<engine>`, the files written, and `bump`'s JSON for a change.
 
 ## Process
 
-1. Run `validate` and fix each error it reports.
-2. List the warnings left: colour literals in the code, files no record links yet, lengths no token holds.
-3. Reply with the elements this run created or raised, and their versions, the elements `bump` left (its `left`: deprecated, or already raised for this task), that the code is untouched, and that a review is expected.
+1. Run `node <engine> validate` and fix each line that has no `warning`; repeat until none is left.
+2. Reply to the user with:
+   - the elements created or raised, with their versions; for a change, also those `bump` left, from its `left` list;
+   - the warnings left, from `validate`: colour literals in the code, code files no record links yet, lengths no token holds;
+   - that the code is untouched and a review is expected.
 
 ## Output
 
-The reply.
+The reply to the user.

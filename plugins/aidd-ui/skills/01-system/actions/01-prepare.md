@@ -1,6 +1,6 @@
 # 01 - Prepare
 
-Settle what the run writes.
+Settle the case and what the run writes.
 
 ## Input
 
@@ -8,18 +8,23 @@ The request.
 
 ## Process
 
-1. Find the [engine](../references/engine.md); none: stop and say it is missing.
-2. Read `aidd_docs/ui/` and the UI code, whatever its platforms, and name the state:
-   - no `system.md`, no UI code: blank;
-   - no `system.md`, UI code: existing code;
-   - `system.md`: design system.
-3. Take the task folder named, else ask for it: History rows cite its path, the folder need not exist, nothing is written in it.
-4. For a change:
-   - vague: ask which token or element, and which value;
-   - run `impact` on it and show the report, its `same-value` tokens for the user to include or leave;
-   - wait; refused: stop.
+1. Find the engine file per [engine](../references/engine.md); none: stop and say it is missing. Below, `<engine>` is its path: run it as `node <engine> <command>` from the project root.
+2. Read `aidd_docs/ui/` and the UI code, whatever its platforms, and name the case:
+
+   | Case | When |
+   | --- | --- |
+   | from scratch | no `aidd_docs/ui/system.md`, no UI code |
+   | from the code | no `aidd_docs/ui/system.md`, UI code exists |
+   | new elements | `system.md` exists, the request adds tokens or elements |
+   | change | `system.md` exists, the request changes or removes a token or an element |
+
+3. Take the task folder the user named, else ask for it. It is only cited in History rows: it need not exist, nothing is written in it.
+4. Change only:
+   - vague: ask which token or element changes, and to which value;
+   - run `node <engine> impact <token or id>…` and show the user its report, with its `same-value` tokens for them to include or leave;
+   - wait for the user's agreement; refused: stop.
 5. Read [write](02-write.md).
 
 ## Output
 
-The state, the task folder, and for a change its agreed impact.
+The case, `<engine>`, the task folder, and for a change its agreed impact.
