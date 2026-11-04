@@ -4,7 +4,7 @@ Where the engine is, and what it gives.
 
 | Install | Path |
 | --- | --- |
-| plugin | `hooks/aidd-ui.cjs` in the plugin folder holding this skill's `skills/` folder |
+| plugin | `../../hooks/aidd-ui.cjs` from this skill's folder |
 | flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode` |
 
 | Command | Gives |
