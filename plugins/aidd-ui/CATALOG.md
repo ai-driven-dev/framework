@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/01-hello`](#skills01-hello)
 
@@ -23,7 +24,24 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
+| [aidd-ui.cjs](hooks/aidd-ui.cjs) |
 | [hooks.json](hooks/hooks.json) |
+| [ui-hook.cjs](hooks/ui-hook.cjs) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [code.cjs](hooks/lib/code.cjs) |
+| [graph.cjs](hooks/lib/graph.cjs) |
+| [history.cjs](hooks/lib/history.cjs) |
+| [literals.cjs](hooks/lib/literals.cjs) |
+| [markdown.cjs](hooks/lib/markdown.cjs) |
+| [model.cjs](hooks/lib/model.cjs) |
+| [project.cjs](hooks/lib/project.cjs) |
+| [records.cjs](hooks/lib/records.cjs) |
+| [renders.cjs](hooks/lib/renders.cjs) |
+| [tokens.cjs](hooks/lib/tokens.cjs) |
 
 ### `skills`
 

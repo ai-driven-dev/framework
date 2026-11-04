@@ -112,6 +112,15 @@ test("a Write with seven problems prints five error lines then the remainder", (
   });
 });
 
+test("the cut line leaves out the root when the hook runs in it", () => {
+  const text = `# T\n\n${Array(7).fill(words(26)).join("\n\n")}\n\n- ${words(60)}\n`;
+  inProject({ "a.md": text }, (made) => {
+    const root = fs.realpathSync(made);
+    const { stdout } = hook(claude(root, "a.md", { content: text }), root);
+    assert.equal(textOf(stdout).split("\n")[5], `+2 more: node ${ENGINE}`);
+  });
+});
+
 test("a warning alone prints nothing", () => {
   inProject({ "a.md": `# T\n\n- ${words(60)}\n` }, (root) => {
     assert.deepEqual(hook(claude(root, "a.md", {})), { status: 0, stdout: "" });
@@ -279,4 +288,32 @@ test("the hook and the engine require only node:fs, node:path and their own modu
     const required = [...fs.readFileSync(file, "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/g)].map((m) => m[1]);
     for (const name of required) assert.ok(["node:fs", "node:path"].includes(name) || name.startsWith("./"), `${path.basename(file)} requires ${name}`);
   }
+});
+
+const DIRTY = `# T\n\n${words(26)}\n\nSee 3 issues.\n`;
+
+test("a shell append of a clean line to a file already holding an error reports nothing", () => {
+  inProject({ "a.md": `${DIRTY}- clean line\n` }, (root) => {
+    assert.deepEqual(hook(shell(root, `printf '%s\\n' '- clean line' >> ${MEMORY}/a.md`)), { status: 0, stdout: "" });
+  });
+});
+
+test("a shell append of an error line reports that line only", () => {
+  inProject({ "a.md": `${DIRTY}Now 41 commits.\n` }, (root) => {
+    const { stdout } = hook(shell(root, `echo 'Now 41 commits.' >> ${MEMORY}/a.md`));
+    assert.equal(textOf(stdout), 'aidd_docs/memory/a.md:6 M2 "41 commits" goes stale: name the thing, not how many');
+  });
+});
+
+test("a shell read of a file just modified reports nothing", () => {
+  inProject({ "a.md": DIRTY }, (root) => {
+    assert.deepEqual(hook(shell(root, `cat ${MEMORY}/a.md`)), { status: 0, stdout: "" });
+  });
+});
+
+test("a PowerShell command naming the bank with backslashes reports the line it writes", () => {
+  inProject({ "a.md": `${DIRTY}Now 41 commits.\n` }, (root) => {
+    const { stdout } = hook(shell(root, `Add-Content aidd_docs\\memory\\a.md 'Now 41 commits.'`, "powershell"));
+    assert.equal(textOf(stdout), 'aidd_docs/memory/a.md:6 M2 "41 commits" goes stale: name the thing, not how many');
+  });
 });
