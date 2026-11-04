@@ -155,11 +155,6 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${JOURNEY}: status "done" must be proposed, validated or deprecated`]);
     });
 
-    it("names an interactive value that is neither yes nor no", () => {
-      change(SEARCH, "interactive: yes", "interactive: maybe");
-      assert.deepEqual(problems(), [`${SEARCH}: interactive "maybe" must be yes or no`]);
-    });
-
     it("names an unknown asset type", () => {
       change(ICON, "type: icon", "type: photo");
       assert.deepEqual(problems(), [`${ICON}: type "photo" must be icon, image or illustration`]);
@@ -218,13 +213,14 @@ describe("aidd-ui records and history", () => {
   });
 
   describe("R7 states and keyboard", () => {
-    it("names an interactive component without focus", () => {
-      change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, hover, disabled]");
-      assert.deepEqual(problems(), [`${BUTTON}: interactive component lacks state "focus"`]);
+    it("accepts a component with focus and no hover or disabled, which exist only when it has them", () => {
+      change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, focus]");
+      assert.deepEqual(problems(), []);
     });
 
-    it("accepts an interactive component without hover or disabled, which exist only when it has them", () => {
-      change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, focus]");
+    it("accepts a component without focus and without a keyboard section", () => {
+      change(BUTTON, "states: [default, hover, focus, disabled]", "states: [default, hover, disabled]");
+      change(BUTTON, "## Keyboard\n\nTab focuses it, Enter or Space activates it.\n\n", "");
       assert.deepEqual(problems(), []);
     });
 
@@ -238,9 +234,9 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${HOME}: screen lacks state "default"`]);
     });
 
-    it("names an interactive component without a keyboard section", () => {
+    it("names a component with focus and without a keyboard section", () => {
       change(DIALOG, "## Keyboard\n\nEscape closes it; focus stays inside while it is open.\n\n", "");
-      assert.deepEqual(problems(), [`${DIALOG}: interactive component lacks a "## Keyboard" section`]);
+      assert.deepEqual(problems(), [`${DIALOG}: state "focus" needs a "## Keyboard" section`]);
     });
   });
 

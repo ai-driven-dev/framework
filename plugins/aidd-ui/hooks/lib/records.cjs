@@ -3,17 +3,16 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf } = require("./project.cjs");
-const { AXIS_SEPARATOR, variantOf, COMPONENT_KINDS, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", "deprecated"];
 const DESIGN_STATUSES = ["proposed", "validated"]; // R16: system, brand and reviews are never deprecated
 const FORMAT = "1"; // the record format this validator reads
-const YES_NO = ["yes", "no"];
 const ASSET_TYPES = ["icon", "image", "illustration"];
 const VERDICTS = ["ok", "ko", "pending"];
 const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
-const INTERACTIVE_STATE = "focus"; // hover and disabled only when they exist
+const FOCUS_STATE = "focus"; // a component taking focus is driven by the keyboard
 const KEYBOARD_SECTION = "Keyboard";
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
@@ -22,7 +21,7 @@ const VERDICTS_SECTION = "Verdicts";
 const BRAND_HEADINGS = ["Project", "Users", "Domain", "Platforms", "Personality and tone", "References", "Anti-references"];
 
 const COMMON_KEYS = ["id", "kind", "status", "version"];
-const COMPONENT_KEYS = ["uses", "tokens", "variants", "states", "interactive", "role"];
+const COMPONENT_KEYS = ["uses", "tokens", "variants", "states", "role"];
 const KIND_KEYS = {
   system: ["format", "platforms", "breakpoints", "themes", "locales", "directions", "primitives", "code-roots", "ignore", "libraries"],
   brand: [],
@@ -64,10 +63,9 @@ function variantProblem(item) {
 }
 
 function valueProblems(record) {
-  const { status, interactive, type, kind } = fm(record);
+  const { status, type, kind } = fm(record);
   return [
     ...(status !== undefined && !STATUSES.includes(status) ? [`status "${status}" must be ${listWithOr(STATUSES)}`] : []),
-    ...(COMPONENT_KINDS.includes(kind) && interactive !== undefined && !YES_NO.includes(interactive) ? [`interactive "${interactive}" must be ${listWithOr(YES_NO)}`] : []),
     ...(kind === "asset" && type !== undefined && !ASSET_TYPES.includes(type) ? [`type "${type}" must be ${listWithOr(ASSET_TYPES)}`] : []),
     ...list(fm(record).variants).filter((item) => item.includes(AXIS_SEPARATOR)).map(variantProblem).filter(Boolean),
   ].map((message) => problem(record, message));
@@ -123,11 +121,9 @@ function stateProblems(project) {
     const states = list(fm(record).states);
     if (fm(record).kind === "screen") return states.includes(DEFAULT_STATE) ? [] : [problem(record, `screen lacks state "${DEFAULT_STATE}"`)];
     if (!isComponent(record)) return [];
-    const interactive = fm(record).interactive === "yes";
     return [
       ...(states.includes(DEFAULT_STATE) ? [] : [`component lacks state "${DEFAULT_STATE}"`]),
-      ...(interactive && !states.includes(INTERACTIVE_STATE) ? [`interactive component lacks state "${INTERACTIVE_STATE}"`] : []),
-      ...(interactive && !(KEYBOARD_SECTION in record.sections) ? [`interactive component lacks a "## ${KEYBOARD_SECTION}" section`] : []),
+      ...(states.includes(FOCUS_STATE) && !(KEYBOARD_SECTION in record.sections) ? [`state "${FOCUS_STATE}" needs a "## ${KEYBOARD_SECTION}" section`] : []),
     ].map((message) => problem(record, message));
   });
 }

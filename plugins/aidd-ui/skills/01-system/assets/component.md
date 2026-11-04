@@ -7,7 +7,6 @@ uses: [{{ids it uses}}]
 tokens: [{{semantic tokens}}]
 variants: [{{variants}}]
 states: [{{states}}]
-interactive: {{yes or no}}
 role: {{accessible role}}
 ---
 
@@ -30,7 +29,7 @@ role: {{accessible role}}
 <!--
 - Replace every `{{...}}` and delete every comment.
 - An axis is `axis=value`, such as `variants: [size=sm, size=md, tone=danger]`; a bare item is a plain variant.
-- Delete `## Keyboard` when `interactive` is `no`.
+- Delete `## Keyboard` when `states` lacks `focus`.
 - Once coded, add `code` to the front matter: `path[#Export]@<version>`, a list for several platforms.
 - Add `platforms: [..]`, a subset of the system's, only when the component is not on all of them.
 -->
