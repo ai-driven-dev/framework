@@ -88,10 +88,11 @@ function markFile(payload) {
   return path.join(os.tmpdir(), `aidd-ui-turn-${sessionId}`);
 }
 
-/** The mark's lines; none when it is missing or no regular file, as a planted link is not. */
+/** The mark's lines; none when it is missing. A link planted at its path can only change which
+ * errors Stop reports, never what the hook writes, so it is read like the mark. */
 function markLines(mark) {
   try {
-    return fs.lstatSync(mark).isFile() ? fs.readFileSync(mark, "utf8").split("\n").filter(Boolean) : [];
+    return fs.readFileSync(mark, "utf8").split("\n").filter(Boolean);
   } catch {
     return [];
   }
