@@ -36,9 +36,6 @@ const CURSOR_TOOLS = { Write: "write", Shell: "shell" };
 // The mark's line for a shell command, which may have written any file: Stop then reads them all.
 const ANY_FILE = "*";
 // A link planted at the mark's path is never followed, on a platform that can refuse one.
-const NO_FOLLOW = fs.constants.O_NOFOLLOW ?? 0;
-const APPEND_FLAGS = fs.constants.O_WRONLY | fs.constants.O_APPEND | NO_FOLLOW;
-const READ_FLAGS = fs.constants.O_RDONLY | NO_FOLLOW;
 
 /** The JSON on stdin, or null when it is none. */
 function readPayload() {
@@ -91,22 +88,26 @@ function markFile(payload) {
   return path.join(os.tmpdir(), `aidd-ui-turn-${sessionId}`);
 }
 
-/** Creates the mark only where nothing exists, then appends `lines` to it, never through a link.
- * The mark serves Stop alone: a mark that cannot be written never costs the write its feedback. */
-function leaveMark(mark, lines) {
+/** The mark's lines; none when it is missing or no regular file, as a planted link is not. */
+function markLines(mark) {
   try {
-    fs.writeFileSync(mark, "", { flag: "wx", mode: 0o600 });
+    return fs.lstatSync(mark).isFile() ? fs.readFileSync(mark, "utf8").split("\n").filter(Boolean) : [];
   } catch {
-    // already marked this turn, or no writable temp dir
+    return [];
   }
-  let descriptor;
+}
+
+/** Adds `lines` to the mark by writing a new file beside it, created only where nothing exists,
+ * then renaming it over the mark: a rename replaces a link planted at the mark's path instead of
+ * writing through it, on every system. A mark that cannot be written never costs the write its
+ * feedback. */
+function leaveMark(mark, lines) {
+  const next = `${mark}.${process.pid}`;
   try {
-    descriptor = fs.openSync(mark, APPEND_FLAGS);
-    fs.writeSync(descriptor, lines.map((line) => `${line}\n`).join(""));
+    fs.writeFileSync(next, [...markLines(mark), ...lines].map((line) => `${line}\n`).join(""), { flag: "wx", mode: 0o600 });
+    fs.renameSync(next, mark);
   } catch {
-    // a link planted at its path, or no writable temp dir
-  } finally {
-    if (descriptor !== undefined) fs.closeSync(descriptor);
+    fs.rmSync(next, { force: true }); // no writable temp dir, or a file left at the new file's path
   }
 }
 
@@ -114,19 +115,6 @@ function leaveMark(mark, lines) {
 function markTurn(payload, lines) {
   const mark = markFile(payload);
   if (mark) leaveMark(mark, lines);
-}
-
-/** The mark's lines; none when it cannot be read, as a planted link cannot. */
-function markLines(mark) {
-  let descriptor;
-  try {
-    descriptor = fs.openSync(mark, READ_FLAGS);
-    return fs.readFileSync(descriptor, "utf8").split("\n").filter(Boolean);
-  } catch {
-    return [];
-  } finally {
-    if (descriptor !== undefined) fs.closeSync(descriptor);
-  }
 }
 
 /** Copilot's payload carries tool_result where Claude Code and Codex carry tool_response. */

@@ -12,7 +12,7 @@ const records = require(path.join(LIB, "records.cjs"));
 const historyRules = require(path.join(LIB, "history.cjs"));
 const { problemsOf } = require(path.join(LIB, "../aidd-ui.cjs"));
 
-const { SYSTEM, BRAND, BUTTON, SEARCH, DIALOG, OLD, HOME, JOURNEY, ICON, REVIEW, STYLESHEET, BUTTON_RENDER, HOME_RENDER } = PATHS;
+const { SYSTEM, BRAND, BUTTON, SEARCH, DIALOG, OLD, HOME, JOURNEY, ICON, REVIEW, BUTTON_RENDER, HOME_RENDER } = PATHS;
 const BUTTON_USAGE = "Any action a person starts; never for navigation.";
 const WIDENED = "Any action a person starts on purpose; never for navigation.";
 
