@@ -216,7 +216,10 @@ function validate(root, ids) {
     const record = index.get(id);
     if (!record || !isElement(record)) throw new Refusal(`no element named "${id}"`);
     if (fm(record).status === STATUS_DEPRECATED) throw new Refusal(`"${id}" is deprecated, nothing to validate`);
-    if (!currentRow(project, record)) throw new Refusal(`"${id}" has no history row at its version ${fm(record).version}`);
+    const row = currentRow(project, record);
+    if (!row) throw new Refusal(`"${id}" has no history row at its version ${fm(record).version}`);
+    // A sealed version is never sealed again: an edit since would pass H8 without a raise.
+    if (row.Fingerprint) throw new Refusal(`"${id}" version ${fm(record).version} is already validated, raise its version with bump to change it`);
     return record;
   });
   const files = editing(root);

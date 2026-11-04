@@ -103,12 +103,18 @@ describe("aidd-ui publish", () => {
       };
 
       it("names an id that is no element, writing nothing", () => {
+        fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).replace(/ \| [0-9a-f]{12} \|$/gm, " |  |"));
         refused(["button", "onboarding"], 'no element named "onboarding"');
         refused(["ghost"], 'no element named "ghost"');
       });
 
       it("names a deprecated element, writing nothing", () => {
         refused(["old-button"], '"old-button" is deprecated, nothing to validate');
+      });
+
+      it("names an element whose version already holds a fingerprint, so an edit is never sealed without a raise", () => {
+        edit(tmp, BUTTON, "## Usage", "## Usage\n\nEdited after validation.");
+        refused(["button"], '"button" version 1 is already validated, raise its version with bump to change it');
       });
 
       it("names an element without a row at its version, writing nothing", () => {

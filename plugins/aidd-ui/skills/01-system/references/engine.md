@@ -17,7 +17,7 @@ Where the engine is, and what it gives.
 | `bump --task <task folder> --created <id>…` | writes the first row in `history.md` of each record named, `system` as 1.0.0, and with `system` writes `aidd_docs/ui/code-debt.json`; `brand` and an id that has rows refused; JSON `changed`; exit 2 with a message, nothing written |
 | `bump --task <task folder> --removed <id>…` | writes a `removed` row one version above each id's last, breaking; an id without rows and `system` refused; JSON `changed`; exit 2 with a message, nothing written |
 | `publish [--breaking]` | appends the `system` row to `history.md`: its Task lists every task with an element row and no earlier publication, sorted; major when one of them broke an element or with `--breaking` for tokens alone, else minor; JSON `version` and `tasks`; exit 2 with a message, nothing written, when no task is unpublished |
-| `publish <id>…` | sets each element `validated` and writes its fingerprint in the `history.md` row of its version; JSON `validated`, each `id`, `version`, `fingerprint`; exit 2 with a message, nothing written, for an id that is no element, is deprecated, or has no row at its version |
+| `publish <id>…` | sets each element `validated` and writes its fingerprint in the `history.md` row of its version; JSON `validated`, each `id`, `version`, `fingerprint`; exit 2 with a message, nothing written, for an id that is no element, is deprecated, has no row at its version, or whose row already holds a fingerprint: a change of a validated element goes through `bump` |
 
 ## Fingerprint
 
@@ -38,6 +38,7 @@ A theme, platform or breakpoint added or removed changes the fingerprint of ever
 - A moved or renamed code file loses its debt.
 - A code root added later has no debt.
 - A `code-debt.json` that is not JSON fails the whole code check, as one problem.
+- A deleted `code-debt.json` is never written again: every literal stays an error.
 
 ## Owed by a later step
 
