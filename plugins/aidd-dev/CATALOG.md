@@ -41,6 +41,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [findings.md](skills/01-plan/references/findings.md) | - |
 | `references` | [plan-checks.md](skills/01-plan/references/plan-checks.md) | - |
 | `references` | [wireframe-conventions.md](skills/01-plan/references/wireframe-conventions.md) | - |
+| `scripts` | [validate-plan.cjs](skills/01-plan/scripts/validate-plan.cjs) | - |
 | `-` | [SKILL.md](skills/01-plan/SKILL.md) | `Turn a request, ticket, or file into a phased implementation plan. Use to plan a feature before building, or to turn a ticket into phases. Not for writing code or reviewing a diff.` |
 
 #### `skills/02-implement`
@@ -53,6 +54,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [run-template.md](skills/02-implement/assets/run-template.md) | - |
 | `references` | [commits.md](skills/02-implement/references/commits.md) | - |
 | `references` | [stop.md](skills/02-implement/references/stop.md) | - |
+| `scripts` | [validate-implement.cjs](skills/02-implement/scripts/validate-implement.cjs) | - |
 | `-` | [SKILL.md](skills/02-implement/SKILL.md) | `Write an existing plan's code, phase by phase, until every acceptance criterion holds. Use when a plan exists and needs implementing. Do NOT use to write a plan, review a diff.` |
 
 #### `skills/03-assert`

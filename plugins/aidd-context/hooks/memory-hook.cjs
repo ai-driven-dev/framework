@@ -8,7 +8,8 @@ const MEMORY_DIR = path.join("aidd_docs", "memory");
 const EXCLUDED_FILE = "README.md";
 const LIMIT = 5; // problem lines the hook prints; the engine by hand prints them all
 // The hook fires right after a shell command ends and a model's next action is seconds away, so
-// a file changed longer ago was not this command's: a later `cat` does not re-report it.
+// a file changed longer ago was not this command's. A shell write carries its text in the command,
+// a read does not: only errors on lines the command quotes are reported (a `sed -i` or `cp` is not).
 const SHELL_WINDOW_MS = 2000;
 const ENGINE = path.join(__dirname, "memory-lint.cjs");
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
@@ -93,23 +94,27 @@ function line({ file, line: at, rule, message }) {
 }
 
 /** The errors of one written file that stand on the lines this write produced. */
-function ownErrors(root, { file, chunks }) {
+function ownErrors(root, { file, chunks, quoted }) {
   const errors = lintFile(root, file).filter(({ severity }) => severity === "error");
-  if (chunks === null) return errors;
   const text = fs.readFileSync(file, "utf8");
+  if (quoted !== undefined) {
+    const lines = text.split("\n");
+    return errors.filter(({ line: at }) => lines[at - 1].trim() !== "" && quoted.includes(lines[at - 1].trim()));
+  }
+  if (chunks === null) return errors;
   const written = new Set(chunks.flatMap((chunk) => linesOf(text, chunk)));
   return errors.filter(({ line: at }) => written.has(at));
 }
 
 /** The bank files a shell command that names the bank has just changed, as whole-file writes. */
 function shellWrites(root, command) {
-  if (!command.includes("aidd_docs/memory")) return;
+  if (!/aidd_docs[/\\]memory/u.test(command)) return;
   const dir = path.join(root, MEMORY_DIR);
   return fs
     .readdirSync(dir)
     .map((name) => path.join(dir, name))
     .filter((file) => isMemoryFile(root, file) && Date.now() - fs.statSync(file).mtimeMs <= SHELL_WINDOW_MS)
-    .map((file) => ({ file, chunks: null }));
+    .map((file) => ({ file, chunks: null, quoted: command }));
 }
 
 function run() {
@@ -120,11 +125,11 @@ function run() {
   let written = writes(payload.tool_input);
   if (!written.length && typeof command === "string" && !command.includes("*** Begin Patch")) written = shellWrites(root, command) ?? [];
   if (!written.length) return;
-  const targets = written.map(({ file, chunks }) => ({ file: path.resolve(root, file), chunks })).filter(({ file }) => isMemoryFile(root, file));
+  const targets = written.map(({ file, ...rest }) => ({ file: path.resolve(root, file), ...rest })).filter(({ file }) => isMemoryFile(root, file));
   const problems = targets.flatMap((target) => ownErrors(root, target));
   if (!problems.length) return;
   const rest = problems.length - LIMIT;
-  const text = [...problems.slice(0, LIMIT).map(line), ...(rest > 0 ? [`+${rest} more: node ${ENGINE} ${root}`] : [])].join("\n");
+  const text = [...problems.slice(0, LIMIT).map(line), ...(rest > 0 ? [`+${rest} more: node ${ENGINE}${root === process.cwd() ? "" : ` ${root}`}`] : [])].join("\n");
   // Each host reads one key: Copilot the top level, Claude Code, Codex and Cursor hookSpecificOutput.
   const output = isCopilot(payload)
     ? { additionalContext: text }
