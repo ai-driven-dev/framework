@@ -1,18 +1,19 @@
-// Raises the versions a change reaches and writes their history rows, or the first row of a created record.
+// Writes the history rows: the versions a change raises, the first row of a created record, a publication of the system.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, byId, isSystem, fm, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
+const { placed, byId, isSystem, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
 const { Refusal, NO_DESIGN_SYSTEM, load, withoutTrailingSeparators, HISTORY_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
-const { TASKS_DIR } = require("./history.cjs");
+const { TASKS_DIR, byVersion, rowsOf, taskList, brokenTasks } = require("./history.cjs");
 
 const ROW_START = "|";
 const HISTORY_HEADER = ["# History", "", "| Id | Version | Change | Breaking | Task |", "| --- | --- | --- | --- | --- |"].join(LINE_BREAK) + LINE_BREAK;
 const FIRST_VERSION = "1";
 const FIRST_SYSTEM_VERSION = "1.0.0";
 const CREATED = "created";
+const PUBLISHED = "published";
 const VERDICTS_HEADING = "## Verdicts";
 const ALREADY_RAISED = "already raised for this task";
 const CARRIAGE_RETURN = "\r";
@@ -143,4 +144,27 @@ function bump(root, { task, change, breaking, created, refs }) {
   return { changed: files.save(), left: left.sort((a, b) => (a.id < b.id ? -1 : 1)) };
 }
 
-module.exports = { bump };
+/** Appends the system's next publication to history.md: its Task lists every task folder with an
+ * element row and no earlier publication, sorted. The version raises the major when one of them
+ * broke an element or `breaking` says the tokens alone did, else the minor. Returns
+ * `{version, tasks}`; a refusal is thrown before the file is written. */
+function publish(root, { breaking }) {
+  const project = load(root);
+  if (project === null) throw new Refusal(NO_DESIGN_SYSTEM);
+  const last = byVersion(rowsOf(project, SYSTEM_ID), true).at(-1);
+  if (!last) throw new Refusal(`${HISTORY_FILE} has no system row, write the first with bump --created system`);
+  const published = new Set(rowsOf(project, SYSTEM_ID).flatMap((row) => taskList(row.Task)));
+  const tasks = [...new Set(project.history.filter((row) => row.Id !== SYSTEM_ID).map((row) => row.Task))].filter((task) => !published.has(task)).sort();
+  if (!tasks.length) throw new Refusal("no unpublished task, nothing to publish");
+  const broken = brokenTasks(project);
+  const breaks = breaking || tasks.some((task) => broken.has(task));
+  const [major, minor] = last.parts;
+  const version = breaks ? `${major + 1}.0.0` : `${major}.${minor + 1}.0`;
+  const files = editing(root);
+  const { lines, end } = files.editOf(HISTORY_FILE);
+  addRow(lines, null, rowOf(SYSTEM_ID, version, PUBLISHED, breaks ? BREAKING : NOT_BREAKING, tasks.join(", ")), end, HISTORY_FILE);
+  files.save();
+  return { version, tasks };
+}
+
+module.exports = { bump, publish };

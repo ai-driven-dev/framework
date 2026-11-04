@@ -14,6 +14,7 @@ Run it with node from the project root.
 | `impact <token or id>…` | JSON: tokens, same-value, elements, screens, journeys, renders, code; a token as its path or its CSS name; exit 2 on an unknown one |
 | `extract [--force]` | writes `tokens.json`, the context files and the resolver from the `code-tokens` files; JSON `written` and `left`; exit 2 with a message, nothing written, when it cannot, or when `tokens.json` exists without `--force` |
 | `bump --task <task folder> --change "<text>" [--breaking] <token or id>…` | raises the versions the refs reach, with their rows in `history.md` and their Verdicts rows; JSON `changed`; exit 2 with a message, nothing written |
+| `publish [--breaking]` | appends the `system` row to `history.md`: its Task lists every task with an element row and no earlier publication, sorted; major when one of them broke an element or with `--breaking` for tokens alone, else minor; JSON `version` and `tasks`; exit 2 with a message, nothing written, when no task is unpublished |
 | `bump --task <task folder> --created <id>…` | writes the first row in `history.md` of each record named, `system` as 1.0.0, `brand` refused; JSON `changed`; exit 2 with a message, nothing written |
 
 ## Owed by a later step

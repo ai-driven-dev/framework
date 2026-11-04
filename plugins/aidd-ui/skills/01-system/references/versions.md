@@ -16,6 +16,6 @@ Within one task an element is raised once: a later `--breaking` change turns its
 | `validated` | set by the user only, after looking at the render |
 | deprecating | `replaced-by: <id>`, or `none` with a `## Deprecation` section |
 | history | `aidd_docs/ui/history.md` is the engine's, one row per version of each record, no history in a record; `bump` appends, `bump --created` writes the first row |
-| system version | its rows in `history.md`, id `system`, semver; a publication adds one, its Task listing the published tasks, written by whoever publishes; a run is no publication |
+| system version | its rows in `history.md`, id `system`, semver; a publication adds one, its Task listing the published tasks, written by `publish`; a run is no publication |
 
 The engine applies the rest.

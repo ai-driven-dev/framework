@@ -84,12 +84,15 @@ function breakingProblems(project) {
   return project.history.filter((row) => !BREAKING_VALUES.includes(row.Breaking)).map((row) => inHistory(`breaking "${row.Breaking}" in version ${row.Version} of ${row.Id} must be yes or no`));
 }
 
+/** The task folders a task of which broke an element: the Task of every breaking row. */
+const brokenTasks = (project) => new Set(project.history.filter((row) => row.Breaking === BREAKING).map((row) => row.Task));
+
 /** A system row publishes a list of tasks. It breaks, and raises the major version, when one of
  * them broke an element or when it says so itself, for tokens alone; otherwise it raises the
  * minor. A task no row lists yet is unpublished, never a problem. */
 function publicationProblems(project) {
   if (!systemOf(project)) return [];
-  const breaking = new Set(project.history.filter((row) => row.Breaking === BREAKING).map((row) => row.Task));
+  const breaking = brokenTasks(project);
   const ordered = byVersion(rowsOf(project, SYSTEM_ID), true);
   return ordered.slice(1).flatMap(({ row, parts: now }, index) => {
     const before = ordered[index].parts;
@@ -206,4 +209,4 @@ const RULES = {
 /** Every broken history rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, TASKS_DIR };
+module.exports = { check, TASKS_DIR, byVersion, rowsOf, taskList, brokenTasks };

@@ -174,7 +174,7 @@ describe("aidd-ui validator entries", () => {
   describe("E9 commands", () => {
     it("names the commands and exits 2 on one it does not know", () => {
       const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
-      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created) <token or id>… [--root <dir>]\n" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created) <token or id>… [--root <dir>]\n       node aidd-ui.cjs publish [--breaking] [--root <dir>]\n" });
     });
   });
 

@@ -11,7 +11,7 @@ const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const { extract } = require("./lib/extract.cjs");
-const { bump } = require("./lib/bump.cjs");
+const { bump, publish } = require("./lib/bump.cjs");
 
 const CHECKS = { records, history, tokens, renders, code };
 const VERDICT_VALID = "VALID";
@@ -91,6 +91,7 @@ const CHANGE_FLAG = "--change";
 const BREAKING_FLAG = "--breaking";
 const CREATED_FLAG = "--created";
 const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
+const PUBLISH_USAGE = `node aidd-ui.cjs publish [${BREAKING_FLAG}] [${ROOT_FLAG} <dir>]`;
 const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
 
 /** `args` as `{values, flags, rest}`: `values` holds each of `options` given with its value, `flags`
@@ -168,11 +169,24 @@ function bumpVersions(args) {
   });
 }
 
-const COMMANDS = { validate, tokens: generateTokens, impact, extract: extractTokens, bump: bumpVersions };
+/** Writes the system's next publication, as the versions rules say. */
+function publishSystem(args) {
+  const { values, flags, rest, error } = parse(args, { options: [ROOT_FLAG], flags: [BREAKING_FLAG] });
+  if (error || rest.length) {
+    console.error(`usage: ${PUBLISH_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    console.log(JSON.stringify(publish(values[ROOT_FLAG] ?? process.cwd(), { breaking: flags.has(BREAKING_FLAG) }), null, 2));
+    return EXIT_VALID;
+  });
+}
+
+const COMMANDS = { validate, tokens: generateTokens, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem };
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}`);
+  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}\n       ${PUBLISH_USAGE}`);
   return EXIT_USAGE;
 }
 
