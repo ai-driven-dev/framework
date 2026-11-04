@@ -410,7 +410,7 @@ describe("aidd-ui validator entries", () => {
       breakOnePerFamily();
       const hookHere = path.join(tmp, ".claude/hooks/aidd-ui/ui-hook.cjs");
       const run = (cwd) => spawnSync(process.execPath, [hookHere], { input: postToolUse(path.join(tmp, BRAND)), encoding: "utf8", cwd }).stdout;
-      const withCommand = (command) => claudeFeedback([BRAND_FAILURE], 2).out.replace(`node ${ENGINE} validate ${tmp}`, command);
+      const withCommand = (command) => JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: [BRAND_FAILURE, `+2 more: ${command}`].join("\n") } });
       assert.equal(run(tmp), withCommand("node .claude/hooks/aidd-ui/aidd-ui.cjs validate"));
       assert.equal(run(os.tmpdir()), withCommand(`node .claude/hooks/aidd-ui/aidd-ui.cjs validate ${tmp}`));
     });
