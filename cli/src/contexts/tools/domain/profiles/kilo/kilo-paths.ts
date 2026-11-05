@@ -14,19 +14,35 @@ export const KILO_PROJECT_CONFIG_JSONC = `${KILO_DIRECTORY}kilo.jsonc`;
 const KILO_LEGACY_CONFIG_JSON = "kilo.json";
 const KILO_LEGACY_CONFIG_JSONC = "kilo.jsonc";
 
+/** Every config file Kilo may keep, relative to the project root. */
+export const KILO_CONFIG_CANDIDATES = [
+  KILO_PROJECT_CONFIG_JSON,
+  KILO_PROJECT_CONFIG_JSONC,
+  KILO_LEGACY_CONFIG_JSON,
+  KILO_LEGACY_CONFIG_JSONC,
+] as const;
+
 /** Prefer the config beside Kilo's project artifacts. Existing root-level configuration stays
  * user-owned and is reused rather than creating a second configuration variant. */
-export async function resolveKiloConfigPath(projectRoot: string, fs: FileReader): Promise<string> {
-  const projectJson = await fs.fileExists(join(projectRoot, KILO_PROJECT_CONFIG_JSON));
-  const projectJsonc = await fs.fileExists(join(projectRoot, KILO_PROJECT_CONFIG_JSONC));
+export function chooseKiloConfigPath(exists: (relPath: string) => boolean): string {
+  const projectJson = exists(KILO_PROJECT_CONFIG_JSON);
+  const projectJsonc = exists(KILO_PROJECT_CONFIG_JSONC);
   if (projectJson && projectJsonc) throw new KiloDualConfigError();
   if (projectJsonc) return KILO_PROJECT_CONFIG_JSONC;
   if (projectJson) return KILO_PROJECT_CONFIG_JSON;
 
-  const legacyJson = await fs.fileExists(join(projectRoot, KILO_LEGACY_CONFIG_JSON));
-  const legacyJsonc = await fs.fileExists(join(projectRoot, KILO_LEGACY_CONFIG_JSONC));
+  const legacyJson = exists(KILO_LEGACY_CONFIG_JSON);
+  const legacyJsonc = exists(KILO_LEGACY_CONFIG_JSONC);
   if (legacyJson && legacyJsonc) throw new KiloDualConfigError();
   if (legacyJsonc) return KILO_LEGACY_CONFIG_JSONC;
   if (legacyJson) return KILO_LEGACY_CONFIG_JSON;
   return KILO_PROJECT_CONFIG_JSONC;
+}
+
+export async function resolveKiloConfigPath(projectRoot: string, fs: FileReader): Promise<string> {
+  const present = new Set<string>();
+  for (const candidate of KILO_CONFIG_CANDIDATES) {
+    if (await fs.fileExists(join(projectRoot, candidate))) present.add(candidate);
+  }
+  return chooseKiloConfigPath((relPath) => present.has(relPath));
 }

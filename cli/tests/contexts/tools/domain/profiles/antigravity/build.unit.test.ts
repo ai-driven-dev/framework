@@ -100,6 +100,6 @@ describe("buildAntigravityFlatContract", () => {
     const contract = buildAntigravityFlatContract();
     expect(contract.manifestFileRelative).toBeNull();
     expect(contract.buildMarketplaceCatalog).toBeNull();
-    expect(contract.emitConfigArtifact).toBeUndefined();
+    expect(contract.configArtifact).toBeUndefined();
   });
 });

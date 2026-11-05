@@ -9,7 +9,6 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { ArtifactContract, ToolBuildContract } from "../../../tools/domain/build-contract.js";
-import type { JsonSchemaValidator } from "../../../tools/domain/ports/schema-validator.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
@@ -23,7 +22,6 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
 
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly jsonSchemaValidator: JsonSchemaValidator,
     private readonly assetProvider: AssetProvider,
     private readonly contract: ToolBuildContract,
     private readonly force: boolean,
@@ -102,16 +100,37 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     builtPlugins: readonly { name: string }[],
     outDir: string
   ): Promise<number> {
-    if (!this.contract.emitConfigArtifact) return 0;
+    const step = this.contract.configArtifact;
+    if (!step) return 0;
     const names = builtPlugins.map((p) => p.name);
-    return this.contract.emitConfigArtifact(
-      names,
-      outDir,
-      this.sourceDir,
-      this.fs,
-      this.jsonSchemaValidator,
-      this.assetProvider
-    );
+    const files = step.emit({
+      builtPlugins: names,
+      pluginMcp: await this.readEach(names, (name) =>
+        join(this.sourceDir, "plugins", name, PLUGIN_MCP_RELATIVE)
+      ),
+      existing: await this.readEach(step.reads(names), (relPath) => join(outDir, relPath)),
+      assets: new Map(
+        step.assets.names.map((name) => [
+          name,
+          this.assetProvider.loadConfigAsset(step.assets.tool, name),
+        ])
+      ),
+    });
+    for (const file of files) await this.fs.writeFile(join(outDir, file.path), file.content);
+    return files.length;
+  }
+
+  /** Each key's file content, for the keys whose file exists. */
+  private async readEach(
+    keys: readonly string[],
+    pathOf: (key: string) => string
+  ): Promise<ReadonlyMap<string, string>> {
+    const found = new Map<string, string>();
+    for (const key of keys) {
+      const path = pathOf(key);
+      if (await this.fs.fileExists(path)) found.set(key, await this.fs.readFile(path));
+    }
+    return found;
   }
 
   private async writeFlatAgent(
@@ -124,7 +143,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const srcRelPath = `agents/${relative(agentsSrc, absPath).replace(/\\/g, "/")}`;
     const content = await this.fs.readFile(absPath);
     assertNoToolsPlaceholder(content, pluginName, srcRelPath);
-    const flatRelPath = artifact.path(pluginName, `agents/${agentBaseName}`);
+    const flatRelPath = this.flatAgentPath(artifact, pluginName, agentBaseName);
     const destPath = join(this.absOut, flatRelPath);
     await this.checkCollision(destPath, pluginName);
     const outContent = artifact.transform
@@ -132,6 +151,15 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
       : this.rewriteAgentForFlat(content, flatRelPath, pluginName);
     await this.fs.writeFile(destPath, outContent);
     return 1;
+  }
+
+  /** Where an agent lands: the one path both its writer and a reference to it resolve to. */
+  private flatAgentPath(
+    artifact: Extract<ArtifactContract, { supported: true }>,
+    pluginName: string,
+    agentFile: string
+  ): string {
+    return artifact.path(pluginName, `agents/${agentFile}`);
   }
 
   private rewriteAgentForFlat(content: string, flatRelPath: string, pluginName: string): string {
@@ -302,10 +330,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   private resolveSuffixToFlatPath(suffix: string, pluginName: string): string {
     const art = this.contract.artifacts;
     if (suffix.startsWith("agents/") && art.agents.supported) {
-      const rest = suffix.slice("agents/".length);
-      const withoutMd = rest.endsWith(".md") ? rest.slice(0, -3) : rest;
-      const ext = art.agents.ext ?? ".agent.md";
-      return art.agents.path(pluginName, `agents/${withoutMd}${ext}`);
+      return this.flatAgentPath(art.agents, pluginName, suffix.slice("agents/".length));
     }
     if (suffix.startsWith("skills/") && art.skills.supported) {
       return art.skills.path(pluginName, `skills/${suffix.slice("skills/".length)}`);

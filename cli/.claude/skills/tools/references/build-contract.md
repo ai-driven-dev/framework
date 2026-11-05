@@ -19,7 +19,7 @@ contract exposes ONE `ArtifactContract` per kind — never a kind-specific field
 `transformAgent`). Each kind is either:
 
 - `{ supported: false }` → warn-and-skip (no native concept in this tool), or
-- `{ supported: true, source, path, ext?, transform?, merge?, mergeDest?, mcpServersKey?, hooksFile?, skipHooksJson?, hooksBridge? }`.
+- `{ supported: true, source, path, transform?, merge?, mergeDest?, mcpServersKey?, hooksFile?, skipHooksJson?, hooksBridge? }`.
 
 The orchestrators contain **zero** `if (tool === …)` and **zero** `if (kind === "agents")`
 branches. Adding a tool means writing its contract; adding tool-specific behavior means adding a
@@ -30,8 +30,7 @@ field to the contract — never a branch in an orchestrator.
 | Field | Role |
 |---|---|
 | `source` | where input files come from: `filteredTree` (e.g. agents `.md`), `fullTree` (skills), `configFile` (mcp `.mcp.json`), `hooksBundle` (hooks.json + scripts) |
-| `path(plugin, relPath)` | output path for one file — reuse the profile's own `buildInstallPath`; the orchestrator adds the per-plugin namespace in flat mode |
-| `ext?` | output extension override (e.g. `.agent.md`, `.toml`); absent means preserve source ext |
+| `path(plugin, relPath)` | output path for one file, extension included — reuse the profile's own `buildInstallPath`; the orchestrator adds the per-plugin namespace in flat mode |
 | `transform?(content, plugin, basename)` | per-kind content transform; default is identity. Examples: strip `tools`/`color` frontmatter; markdown → TOML |
 | `merge?` / `mergeDest?` / `mcpServersKey?` | for config-file kinds (mcp) merging into one shared file rather than a per-plugin write; reuse an existing merge helper, never reimplement |
 | `hooksFile?` | the hooks file a plugin's hooks.json becomes: its `path`, whether every plugin `shared`s it, and the `merge` built from the tool's hooks descriptor by `flatHooksArtifact` (one engine, `formats/hooks-merge.ts`); never written by hand in a contract |

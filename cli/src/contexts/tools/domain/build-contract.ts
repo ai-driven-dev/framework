@@ -1,7 +1,7 @@
-import type { AssetProvider, SchemaName } from "../../../kernel/ports/asset-provider.js";
+import type { ConfigAsset, SchemaName } from "../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import type { JsonSchemaValidator } from "./ports/schema-validator.js";
+import type { ToolId } from "../../../kernel/tool.js";
 
 /** How a plugin's artifact files are sourced: a sub-directory walked with an extension filter
  * or in full, a single plugin-relative file, or hooks.json plus its sibling scripts. */
@@ -17,8 +17,6 @@ export type ArtifactContract =
       readonly supported: true;
       readonly source: ArtifactSource;
       readonly path: (plugin: string, relPath: string) => string;
-      /** Absent preserves the source extension. */
-      readonly ext?: string;
       /** Defaults to identity, a byte-copy. */
       readonly transform?: (content: string, plugin: string, basename: string) => string;
       /** VS Code Copilot discovers a skill by its parent folder name, so flat mode rewrites
@@ -95,18 +93,9 @@ export interface ToolBuildContract {
     readonly commands: ArtifactContract;
   };
 
-  /** Post-build step emitting a tool config artifact (codex's config.toml, opencode.json),
-   * returning the count of files written. */
-  readonly emitConfigArtifact?:
-    | ((
-        builtPlugins: readonly string[],
-        outDir: string,
-        sourceDir: string,
-        fs: FileReader & FileWriter,
-        jsonSchemaValidator: JsonSchemaValidator,
-        assetProvider: AssetProvider
-      ) => Promise<number>)
-    | undefined;
+  /** The tool's own config file (Codex's config.toml, opencode.json), built once every plugin
+   * is written. */
+  readonly configArtifact?: ConfigArtifact;
 
   /** Builds the marketplace catalog once every plugin is written, to write and validate.
    * `null` where the tool has no marketplace. */
@@ -131,6 +120,32 @@ export interface ToolBuildContract {
         fs: FileReader & FileWriter
       ) => Promise<Record<string, unknown>>)
     | null;
+}
+
+/** A config file a tool builds from every plugin at once. The build reads what it names and
+ * writes what `emit` returns, so the decision itself touches no disk. */
+export interface ConfigArtifact {
+  /** Files under the output root `emit` needs, read when they exist. */
+  readonly reads: (builtPlugins: readonly string[]) => readonly string[];
+  /** The tool's bundled config assets `emit` builds on. */
+  readonly assets: { readonly tool: ToolId; readonly names: readonly string[] };
+  readonly emit: (input: ConfigArtifactInput) => readonly ConfigArtifactFile[];
+}
+
+export interface ConfigArtifactInput {
+  readonly builtPlugins: readonly string[];
+  /** Each built plugin's own `.mcp.json`, by plugin; a plugin shipping none is absent. */
+  readonly pluginMcp: ReadonlyMap<string, string>;
+  /** Each file `reads` named that exists, by its path under the output root. */
+  readonly existing: ReadonlyMap<string, string>;
+  /** Each asset `assets` named, by file name. */
+  readonly assets: ReadonlyMap<string, ConfigAsset>;
+}
+
+export interface ConfigArtifactFile {
+  /** Relative to the output root. */
+  readonly path: string;
+  readonly content: string;
 }
 
 /** Minimal reference to the source marketplace catalog, so `domain/` need not import the

@@ -1,7 +1,6 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import { join } from "node:path";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   flatMcpKeyPrefix,
@@ -9,8 +8,6 @@ import {
   genericFlatSkillTreePath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
-import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ToolBuildContract } from "../../build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
@@ -18,9 +15,7 @@ import { transformMcpToOpencode } from "../opencode/build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import { KILO_DIRECTORY, resolveKiloConfigPath } from "./kilo-paths.js";
-
-type FsType = FileReader & FileWriter;
+import { chooseKiloConfigPath, KILO_CONFIG_CANDIDATES, KILO_DIRECTORY } from "./kilo-paths.js";
 
 function kiloFlatAgentPath(plugin: string, rel: string): string {
   return genericFlatAgentPath(
@@ -51,16 +46,15 @@ function transformKiloFlatAgent(content: string, plugin: string, outName: string
   return serializeFrontmatter(kiloAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
-async function collectKiloMcp(
+function collectKiloMcp(
   builtPlugins: readonly string[],
-  sourceDir: string,
-  fs: FsType
-): Promise<Record<string, unknown>> {
+  pluginMcp: ReadonlyMap<string, string>
+): Record<string, unknown> {
   const incoming: Record<string, unknown> = {};
   for (const plugin of builtPlugins) {
-    const mcpSrc = `${sourceDir}/plugins/${plugin}/.mcp.json`;
-    if (!(await fs.fileExists(mcpSrc))) continue;
-    const transformed = JSON.parse(transformMcpToOpencode(await fs.readFile(mcpSrc))) as {
+    const raw = pluginMcp.get(plugin);
+    if (raw === undefined) continue;
+    const transformed = JSON.parse(transformMcpToOpencode(raw)) as {
       mcp?: Record<string, unknown>;
     };
     for (const [key, value] of Object.entries(transformed.mcp ?? {})) {
@@ -95,14 +89,17 @@ export function buildKiloFlatContract(): ToolBuildContract {
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
-    emitConfigArtifact: async (builtPlugins, outDir, sourceDir, fs, _validator, assetProvider) => {
-      const configPath = join(outDir, await resolveKiloConfigPath(outDir, fs));
-      const existing = (await fs.fileExists(configPath)) ? await fs.readFile(configPath) : null;
-      const incoming = await collectKiloMcp(builtPlugins, sourceDir, fs);
-      const asset = assetProvider.loadConfigAsset("kilo", "kilo.json");
-      const base = typeof asset === "string" ? asset : JSON.stringify(asset);
-      await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming));
-      return 1;
+    configArtifact: {
+      reads: () => KILO_CONFIG_CANDIDATES,
+      assets: { tool: "kilo", names: ["kilo.json"] },
+      emit: ({ builtPlugins, pluginMcp, existing, assets }) => {
+        const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));
+        const incoming = collectKiloMcp(builtPlugins, pluginMcp);
+        const asset = assets.get("kilo.json");
+        const base = typeof asset === "string" ? asset : JSON.stringify(asset);
+        const config = buildOpencodeFlatConfig(base, existing.get(configPath) ?? null, incoming);
+        return [{ path: configPath, content: config }];
+      },
     },
   };
 }
