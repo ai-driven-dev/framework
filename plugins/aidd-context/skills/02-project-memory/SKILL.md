@@ -9,7 +9,7 @@ argument-hint: setup | refresh | rewire
 ```mermaid
 flowchart LR
   new([no argument, or setup]) --> scan --> write --> sync --> wired([memory wired])
-  update([refresh]) --> scan --> check --> write
+  update([refresh]) --> scan --> check --> write --> sync
   rewire([rewire]) --> sync
   scan -.-> empty([nothing to remember])
 ```
@@ -22,8 +22,12 @@ Run the flow above, reading only the next action file.
 | ------ | ------------------------------- |
 | scan   | read the project                |
 | write  | write the memory                |
-| check  | show what drifted, change nothing |
-| sync   | pick the tools, wire it in      |
+| check  | print what drifted, change nothing |
+| sync   | wire it into the tools          |
+
+## Engine
+
+`memory-lint.cjs` and `update_memory.js` sit in `hooks/`: beside `skills/` in a plugin install, in `hooks/aidd-context/` under the tool's folder in a flat install from `aidd translate`. Run them from the project root.
 
 ## Transversal rules
 

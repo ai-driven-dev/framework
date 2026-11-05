@@ -8,7 +8,7 @@ The project root.
 
 ## Output
 
-The confirmed capabilities and external tools, printed nowhere.
+The confirmed capabilities and external tools.
 
 ## Process
 

@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Lean actions: a file where it belongs, check prints, refresh syncs
@@ -73,3 +73,5 @@ status: pending
 | 2 | on a Claude Code plugin install and on one flat install, check runs the engine; refresh prints three blocks and writes no file unless asked |
 | 3 | after setup, `memory-lint.cjs` prints no error; after a refresh that adds a file, each wired tool's block lists it |
 | 4 | fewer words than the base; the eval cases pass on Haiku |
+
+Task 4 "the eval cases pass on Haiku" is deferred to the measured run of phase 15; the cases here are validated for structure only.

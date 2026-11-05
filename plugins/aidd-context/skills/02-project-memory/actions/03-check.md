@@ -8,31 +8,29 @@ The bank in `aidd_docs/memory/`, and the capabilities the scan found.
 
 ## Output
 
-A report file under `aidd_docs/tasks/`, a short summary printed, and the findings the user approved.
+Three blocks printed, Structure, Format and Content, then the question, and the findings the user approved. A file only on request.
 
 ## Process
 
-1. **Match.** Compare the bank against [capabilities.md](../references/capabilities.md).
-   - A file no row produces: flag it, and name the row it should have come from.
-   - A found capability, or a scaffolded path, with nothing on disk: flag it missing.
-2. **Review.** Have each memory file reviewed against [review-protocol.md](../references/review-protocol.md) in parallel.
-3. **Prune.** Offer to remove each file whose capability the scan did not find, and none when the scan asked nothing.
-4. **Report.** Fill [report.md](../assets/report.md), write it to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_memory-check/report.md`, and print the summary with that path.
-   - The folder already holds a report: ask before replacing it.
-5. **Offer.** Ask which findings to apply, and hand the approved ones to write.
+1. **Structure.** Compare the bank against [capabilities.md](../references/capabilities.md).
+   - A root file no row produces is the team's: keep it, unless a row's Former files names it, then offer to merge it into that row's file.
+   - A row's file under `internal/` or a subfolder, or a folder under `memory/` other than `internal/` and `external/`: misplaced, offer to move it to the root, a folder under `internal/`.
+   - A file of an always row, or of a found capability that got an answer, with nothing on disk: missing.
+   - Offer to remove each file whose capability the scan did not find, and none when the scan asked nothing.
+2. **Format.** Run `memory-lint.cjs` and keep its findings. No engine: apply the rule table of [memory-rules.md](../references/memory-rules.md).
+3. **Content.** Have each memory file reviewed against [review-protocol.md](../references/review-protocol.md) in parallel.
+4. **Print.** Print the three blocks in that order, then ask which findings to apply, and hand the approved ones to write.
    - Nothing drifted: call the bank current, hand nothing on.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
-| Any run | no file under `aidd_docs/memory/` changed |
-| Any finding | the summary holds no table, names the report path, ends on the question |
+| Any run | no file changed or created; three blocks, then the question, no step named |
 | Nothing drifted | nothing offered, the bank called current |
-| Report | structural gaps and reviewer findings under separate headings |
-| Report | no step of this skill named in it |
-| Orphan | flagged, with the row it should have come from |
-| Missing | a found capability with no file is flagged |
-| Contradiction | flagged, the line left in place |
-| Duplicate | flagged, both files left as they are |
+| Team file | a root file no row produces is not flagged, not offered for removal |
+| Misplaced | flagged with the move offered, no root copy made |
+| Former file | offered a merge into its row's file |
+| Missing | an always file with nothing on disk is flagged; a conditional one with no answer is not |
+| Contradiction, duplicate | flagged, the lines left in place |
 | Removal declined | the file is still there |
