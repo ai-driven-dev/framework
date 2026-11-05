@@ -14,10 +14,12 @@ if [[ "${REVIEW_REPOSITORY:-}" != ai-driven-dev/framework || ! "${REVIEW_HEAD:-}
 fi
 : "${REVIEW_CACHE:?Missing review cache}"
 if [[ ! -d "$REVIEW_CACHE/snapshot" ]]; then
-  # curl 7.x cannot enforce --max-filesize when the server omits Content-Length.
-  ( ulimit -f 102400; curl --fail --silent --show-error --location --max-time 120 --max-filesize 100000000 \
-      --output "$REVIEW_CACHE/snapshot.tar.gz" \
-      "https://codeload.github.com/$REVIEW_REPOSITORY/tar.gz/$REVIEW_HEAD" )
+  # Reuse the verified Git objects instead of downloading the same commit again.
+  ( ulimit -f 102400
+    GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 GIT_ATTR_NOSYSTEM=1 \
+      git --git-dir="$REVIEW_CACHE/git" -c core.attributesFile=/dev/null archive \
+      --format=tar --prefix=source/ "$REVIEW_HEAD" | gzip -n > "$REVIEW_CACHE/snapshot.tar.gz"
+  )
   PYTHONDONTWRITEBYTECODE=1 python3 "$script_dir/snapshot.py" "$REVIEW_CACHE/snapshot.tar.gz" "$REVIEW_CACHE/snapshot.tmp"
   mv "$REVIEW_CACHE/snapshot.tmp" "$REVIEW_CACHE/snapshot"
 fi

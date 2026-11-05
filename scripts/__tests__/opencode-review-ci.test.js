@@ -1,42 +1,29 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { execFileSync, spawnSync } = require('node:child_process');
-const { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { join, resolve } = require('node:path');
-const { reviewPullRequest, reportFromEvents, retryStore, runModel, splitInput } = require('../opencode-review/ci.mjs');
-const { stateStore } = require('../opencode-review/state.mjs');
+const { createHash } = require('node:crypto');
+const { reviewPullRequest, reportFromEvents, retryStore, run, runModel, splitInput } = require('../opencode-review/ci.mjs');
 
-const ALEX = 8973343, head = 'a'.repeat(40), base = 'b'.repeat(40), sha = 'c'.repeat(40);
-const changed = (name) => ({ filename: name, status: 'modified', sha, additions: 1, deletions: 1, patch: '@@ -1 +1 @@\n-old\n+new' });
-const candidate = { number: 42, reviewId: 10, head: 'd'.repeat(40), base };
-
-test('runs its entrypoint when installed through a symlink', (t) => {
-  const dir = mkdtempSync(join(tmpdir(), 'aidd-review-entrypoint-'));
-  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
-  const entry = join(dir, 'ci.mjs');
-  symlinkSync(resolve('scripts/opencode-review/ci.mjs'), entry);
-  const result = spawnSync(process.execPath, [entry], { encoding: 'utf8', env: { ...process.env, OPENCODE_REVIEW_STATE_DIR: dir, OPENCODE_REVIEW_REPOSITORY: 'invalid', OPENCODE_REVIEW_ENABLED_AT: 'invalid' } });
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Invalid review state|Invalid repository/);
-});
+const ALEX = 8973343, head = 'a'.repeat(40), base = 'b'.repeat(40);
+const changed = (name, patch = '@@ -1 +1 @@\n-old\n+new') => ({ filename: name, status: 'modified', patch, fingerprint: createHash('sha256').update(name + patch).digest('hex') });
+const candidate = { number: 42, reviewId: 10, head, base };
 
 function fixture() {
   const records = new Map();
   const store = { load: (number) => structuredClone(records.get(number) ?? { state: null, draft: null }), save: (number, record) => records.set(number, structuredClone(record)) };
-  const server = { pr: { state: 'open', head: { sha: head, repo: { full_name: 'external/fork' } }, base: { sha: base }, changed_files: 2, title: 'Title', body: 'Context' }, files: [changed('a.js'), { ...changed('image.png'), patch: undefined }], comments: [], calls: [] };
+  const server = { pr: { state: 'open', head: { sha: head }, base: { sha: base }, changed_files: 2, title: 'Title', body: 'Context' }, files: [changed('a.js'), changed('b.js')], skipped: [], comments: [] };
   const query = (path, method, body) => {
-    server.calls.push({ path, method, body });
     if (path.endsWith('/pulls/42')) return server.pr;
-    if (path.includes('/reviews/')) return { id: Number(path.split('/').at(-1)), user: { id: ALEX }, state: server.reviewState ?? 'COMMENTED' };
-    if (method === 'POST') {
-      server.comments.push({ id: server.comments.length + 1, user: { id: ALEX }, created_at: `2026-11-05T00:00:${String(server.comments.length).padStart(2, '0')}Z`, body: body.body });
-      if (server.loseResponse) { server.loseResponse = false; throw new Error('response lost'); }
-      return {};
+    if (path.includes('/reviews/')) {
+      const id = Number(path.split('/').at(-1));
+      return { id, user: { id: ALEX }, state: server.reviewStates?.[id] ?? server.reviewState ?? 'COMMENTED' };
     }
-    if (method === 'PATCH') {
-      const comment = server.comments.find((item) => path.endsWith(`/${item.id}`));
-      comment.body = body.body;
+    if (method === 'POST') {
+      server.comments.push({ user: { id: ALEX }, body: body.body });
+      if (server.loseResponse) { server.loseResponse = false; throw new Error('response lost'); }
       return {};
     }
     throw new Error(`Unexpected request: ${path}`);
@@ -44,294 +31,156 @@ function fixture() {
   const queryPages = (path) => path.includes('/comments?') ? server.comments : server.files;
   const calls = [];
   const model = (args) => { calls.push(args); return { report: 'No actionable defect found.', verdict: 'approve', reviewed: args.files }; };
-  const fetchObjects = () => { server.fetches = (server.fetches ?? 0) + 1; return { mergeBase: base }; };
-  const inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100644' })), skipped: [] });
-  const recover = ({ files }) => ({ files: [], skipped: files.map((file) => ({ filename: file.filename, reason: 'missing patch' })) });
-  const options = { repository: 'owner/repo', authorId: ALEX, store, query, queryPages, model, fetchObjects, inspectModes, recover };
+  const fetchObjects = () => ({ mergeBase: base });
+  const getDiffs = ({ files }) => ({ files: files.filter((file) => !file.skipped), skipped: server.skipped });
+  const options = { repository: 'owner/repo', authorId: ALEX, store, query, queryPages, model, fetchObjects, getDiffs };
   return { server, calls, options, store };
 }
 
-test('reviews a fork current head, skips binaries, and does not rerun for unchanged files', () => {
+test('reviews only changed files and signals omitted files', () => {
   const f = fixture();
+  f.server.files.push({ filename: 'image.png', skipped: true }); f.server.pr.changed_files++;
+  f.server.skipped.push({ filename: 'image.png', reason: 'binary' });
   assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.equal(f.calls.length, 1);
-  assert.deepEqual(f.calls[0].files, ['a.js']);
-  assert.match(f.server.comments[0].body, /image\.png.*missing patch/);
-  assert.equal(f.store.load(42).state.head, head);
-  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
-  assert.equal(f.calls.length, 1);
-  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
-  assert.equal(f.calls.length, 1, 'unchanged files do not call the model');
-  assert.equal(f.server.fetches, 2, 'an omitted file is retried on the next submission');
-  assert.equal(f.server.comments.length, 1, 'unchanged omissions do not create another comment');
-  f.server.files[1] = changed('image.png');
-  f.server.pr.head.sha = 'f'.repeat(40);
-  reviewPullRequest({ ...candidate, reviewId: 12 }, f.options);
-  assert.equal(f.calls.length, 2);
-  assert.deepEqual(f.calls[1].files, ['image.png']);
-});
-
-test('reviews a mode change even when the text patch and blob are unchanged', () => {
-  const f = fixture(); f.server.files = [changed('app.js')]; f.server.pr.changed_files = 1;
-  reviewPullRequest(candidate, f.options);
-  assert.equal(f.server.fetches, 1);
-  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
-  assert.equal(f.server.fetches, 1);
-  assert.equal(f.server.comments.length, 1);
-  f.server.pr.head.sha = 'f'.repeat(40);
-  f.options.inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100755' })), skipped: [] });
-  reviewPullRequest({ ...candidate, reviewId: 12 }, f.options);
-  assert.equal(f.calls.length, 2);
-  assert.match(f.calls[1].inputs.find((input) => input.file.startsWith('diff-')).text, /Git mode: 100644 → 100755/);
-});
-
-test('signals an unavailable mode and retries only that file on a later submission', () => {
-  const f = fixture(); f.server.files[1] = changed('b.js');
-  f.options.inspectModes = ({ files }) => ({ files: [{ ...files[0], oldMode: '100644', newMode: '100644' }], skipped: [{ filename: 'b.js', reason: 'mode unavailable' }] });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.match(f.server.comments[0].body, /b\.js.*mode unavailable/);
-  assert.deepEqual(f.store.load(42).state.unreviewed, ['b.js']);
-  assert.equal(f.store.load(42).state.pending, undefined);
-  f.options.inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100644' })), skipped: [] });
-  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
-  assert.deepEqual(f.calls[1].files, ['b.js']);
-  assert.equal(f.store.load(42).state.unreviewed, undefined);
-});
-
-test('a sole invalid mode is reported once without recording a hash or retry loop', () => {
-  const f = fixture(); f.server.files = [changed('bad.js')]; f.server.pr.changed_files = 1;
-  f.options.inspectModes = () => ({ files: [], skipped: [{ filename: 'bad.js', reason: 'mode unavailable' }] });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.match(f.server.comments[0].body, /bad\.js.*mode unavailable/);
-  assert.deepEqual(f.store.load(42).state.files, {});
-  assert.deepEqual(f.store.load(42).state.unreviewed, ['bad.js']);
-  assert.equal(f.store.load(42).state.pending, undefined);
-  assert.equal(f.calls.length, 0);
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
-  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
-  assert.equal(f.server.comments.length, 1);
-});
-
-test('only reuses a historical hash after a skipped mode is verified again', () => {
-  const f = fixture(); f.server.files = [changed('a.js'), changed('b.js')];
-  reviewPullRequest(candidate, f.options);
-  f.server.pr.head.sha = 'f'.repeat(40);
-  f.options.inspectModes = ({ files }) => ({ files: [files[0] && { ...files[0], oldMode: '100644', newMode: '100644' }], skipped: [{ filename: 'b.js', reason: 'mode unavailable' }] });
-  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
-  assert.deepEqual(Object.keys(f.store.load(42).state.files).sort(), ['a.js', 'b.js']);
-  assert.deepEqual(f.store.load(42).state.unreviewed, ['b.js']);
-  f.options.inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100644' })), skipped: [] });
-  assert.equal(reviewPullRequest({ ...candidate, reviewId: 12 }, f.options).status, 'unchanged');
-  assert.equal(f.calls.length, 1, 'unchanged historical file is not reviewed again');
-  assert.equal(f.store.load(42).state.unreviewed, undefined);
-});
-
-test('only checkpoints confirmed files and retries the remaining files for the same submission', () => {
-  const f = fixture();
-  f.server.files[1] = changed('b.js');
-  f.options.model = () => ({ report: 'One file reviewed.', verdict: 'approve', reviewed: ['a.js'] });
-  const first = reviewPullRequest(candidate, f.options);
-  assert.equal(first.status, 'partial');
-  assert.deepEqual(first.reviewed, ['a.js']);
-  assert.match(f.server.comments[0].body, /b\.js.*did not confirm/);
-  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
-  assert.equal(f.store.load(42).state.pending, true);
-  f.options.model = (args) => { f.calls.push(args); return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
-  reviewPullRequest(candidate, f.options);
-  assert.deepEqual(f.calls[0].files, ['b.js']);
-  assert.equal(f.store.load(42).state.pending, undefined);
-  assert.deepEqual(Object.keys(f.store.load(42).state.files).sort(), ['a.js', 'b.js']);
-});
-
-test('aggregates the strictest verdict across partial runs on the same commit', () => {
-  const f = fixture(); f.server.files[1] = changed('b.js');
-  f.options.model = () => ({ report: 'A defect.', verdict: 'changes-requested', reviewed: ['a.js'] });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
-  f.options.model = (args) => ({ report: 'No defect in this segment.', verdict: 'approve', reviewed: args.files });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.match(f.server.comments.at(-1).body, /Verdict des fichiers de ce commentaire : approve/);
-  assert.match(f.server.comments.at(-1).body, /Verdict cumulé des fichiers examinés sur ce commit : changes-requested/);
-});
-
-test('resumes a long report after a lost POST response without repeating the model or a comment', () => {
-  const f = fixture(); let calls = 0;
-  f.options.model = (args) => { calls++; return { report: 'é'.repeat(80000), verdict: 'approve', reviewed: args.files }; };
-  f.server.loseResponse = true;
-  assert.throws(() => reviewPullRequest(candidate, f.options), /response lost/);
-  const draft = f.store.load(42).draft;
-  assert.ok(draft.chunks.length > 1);
-  assert.equal(f.store.load(42).state, null);
-  f.server.comments[0].body += '\nEdited by Alex.';
-  f.server.comments.push({ id: 999, user: { id: 12345 }, created_at: '2026-11-05T00:00:10Z', body: `<!-- aidd-opencode-review-v2 ${draft.id} 2/${draft.chunks.length} -->` });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.equal(calls, 1);
-  assert.equal(f.server.comments.filter((comment) => comment.user.id === ALEX).length, draft.chunks.length);
-  assert.ok(f.server.comments.filter((comment) => comment.user.id === ALEX).every((comment) => Buffer.byteLength(comment.body) < 60000));
-  assert.equal(f.store.load(42).state.reviewId, '10');
-});
-
-test('preserves an unpublished legacy draft for manual migration', () => {
-  const f = fixture();
-  const legacy = { state: null, draft: { reviewId: 10, nextState: { version: 1, head, base, reviewId: '10', files: {} }, chunks: ['Unpublished findings'] } };
-  f.store.save(42, legacy);
-  assert.throws(() => reviewPullRequest(candidate, f.options), /Legacy review draft requires manual migration; draft preserved/);
-  assert.deepEqual(f.store.load(42), legacy);
-  assert.equal(f.server.comments.length, 0);
-  assert.equal(f.calls.length, 0);
-});
-
-test('reconstructs omitted text patches before deciding which files are reviewable', () => {
-  const f = fixture(); let recovered = 0;
-  f.options.recover = ({ files }) => { recovered++; return { files: files.map((file) => ({ ...file, ...changed(file.filename) })), skipped: [] }; };
-  reviewPullRequest(candidate, f.options);
-  assert.equal(recovered, 1);
-  assert.deepEqual(f.calls[0].files, ['a.js', 'image.png']);
-  assert.deepEqual(Object.keys(f.store.load(42).state.files).sort(), ['a.js', 'image.png']);
-});
-
-test('publishes readable files when Git recovery fails and retries only the rest', () => {
-  const f = fixture();
-  f.options.recover = () => { throw new Error('Git temporarily offline'); };
-  const first = reviewPullRequest(candidate, f.options);
-  assert.equal(first.status, 'partial');
-  assert.deepEqual(first.reviewed, ['a.js']);
-  assert.match(f.server.comments[0].body, /Git recovery temporarily unavailable/);
-  f.options.recover = ({ files }) => ({ files: files.map((file) => ({ ...file, ...changed(file.filename) })), skipped: [] });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.deepEqual(f.calls[1].files, ['image.png']);
-});
-
-test('does not checkpoint a transient failure and schedules a new review if the head moves', () => {
-  const f = fixture();
-  f.options.model = () => { throw new Error('Temporary failure'); };
-  assert.throws(() => reviewPullRequest(candidate, f.options), /Temporary failure/);
-  assert.equal(f.server.comments.length, 0);
-  f.options.model = (args) => { f.server.pr.head.sha = 'f'.repeat(40); return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
-  assert.equal(f.server.comments.length, 1);
-  assert.match(f.server.comments[0].body, new RegExp(head));
-  assert.equal(f.store.load(42).state.pending, true);
-});
-
-test('does not publish when Alex dismisses the review while the model runs', () => {
-  const f = fixture();
-  f.options.model = (args) => { f.server.reviewState = 'DISMISSED'; return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
-  assert.throws(() => reviewPullRequest(candidate, f.options), /no longer a submission by Alex/);
-  assert.equal(f.server.comments.length, 0);
-});
-
-test('keeps each multi-chunk file together when it fits in one model session', () => {
-  const f = fixture();
-  const large = (name) => ({ ...changed(name), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(80000)}` });
-  f.server.files = [large('a.js'), large('b.js')];
-  reviewPullRequest(candidate, f.options);
-  assert.deepEqual(f.calls.map((call) => call.files), [['a.js'], ['b.js']]);
-  for (const call of f.calls) {
-    const parts = call.inputs.filter((input) => input.file.startsWith('diff-'));
-    assert.ok(parts.length > 1);
-    const total = Number(parts[0].text.match(/part \d+\/(\d+)/)[1]);
-    assert.equal(parts.length, total);
-  }
-});
-
-test('still groups multiple complete files together when they fit', () => {
-  const f = fixture();
-  f.server.files = [changed('a.js'), changed('b.js')];
-  reviewPullRequest(candidate, f.options);
-  assert.equal(f.calls.length, 1);
   assert.deepEqual(f.calls[0].files, ['a.js', 'b.js']);
-});
-
-test('reports an oversized file without calling the model or checkpointing it', () => {
-  const f = fixture();
-  f.server.files = [{ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(130000)}` }];
-  f.server.pr.changed_files = 1;
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.equal(f.calls.length, 0);
-  assert.match(f.server.comments[0].body, /large\.js.*Diff trop volumineux/);
-  assert.match(f.server.comments[0].body, /La revue est partielle/);
-  assert.deepEqual(f.store.load(42).state.files, {});
-  assert.deepEqual(f.store.load(42).state.unreviewed, ['large.js']);
-});
-
-test('rejects a 10 MiB single-line diff before allocating wrapped segments', () => {
-  const f = fixture();
-  f.server.files = [{ ...changed('huge.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(10 * 1024 * 1024)}` }];
-  f.server.pr.changed_files = 1;
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.equal(f.calls.length, 0);
-  assert.match(f.server.comments[0].body, /huge\.js.*Diff trop volumineux/);
-  assert.deepEqual(f.store.load(42).state.files, {});
-});
-
-test('reviews small files alongside an oversized omission without redoing them on resubmission', () => {
-  const f = fixture();
-  f.server.files = [changed('small.js'), { ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(130000)}` }];
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.deepEqual(f.calls.map((call) => call.files), [['small.js']]);
-  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['small.js']);
-  assert.deepEqual(f.store.load(42).state.unreviewed, ['large.js']);
+  assert.match(f.server.comments[0].body, /image\.png.*binary/);
   assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
   assert.equal(f.calls.length, 1);
   assert.equal(f.server.comments.length, 1);
+  f.server.pr.head.sha = 'f'.repeat(40);
+  f.server.files[1] = changed('b.js', '@@ -1 +1 @@\n-old\n+changed');
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 12 }, f.options).status, 'published');
+  assert.deepEqual(f.calls[1].files, ['b.js']);
 });
 
-test('invalidates a legacy credited oversized file without reviewing it', () => {
-  const f = fixture();
-  const large = { ...changed('large.js'), oldMode: '100644', newMode: '100644', patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(130000)}` };
-  const { planReview } = require('../opencode-review/state.mjs');
-  f.server.files = [large]; f.server.pr.changed_files = 1;
-  f.store.save(42, { state: { version: 1, head, base, reviewId: '9', modes: true, files: planReview([large]).current }, draft: null });
+test('retries a lost POST response without repeating the model or comment', () => {
+  const f = fixture(); f.server.loseResponse = true;
+  assert.throws(() => reviewPullRequest(candidate, f.options), /response lost/);
+  assert.ok(f.store.load(42).draft);
   assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.equal(f.calls.length, 0);
-  assert.deepEqual(f.store.load(42).state.files, {});
-  assert.deepEqual(f.store.load(42).state.unreviewed, ['large.js']);
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.server.comments.length, 1);
+  assert.equal(f.store.load(42).draft, null);
 });
 
-test('rechecks legacy credited small files once instead of silently trusting split sessions', () => {
+test('discards a draft only after GitHub confirms its review was dismissed', () => {
+  const f = fixture(); f.server.loseResponse = true;
+  assert.throws(() => reviewPullRequest(candidate, f.options), /response lost/);
+  const query = f.options.query;
+  f.options.query = (path, ...args) => {
+    if (path.endsWith('/reviews/10')) throw new Error('network failure');
+    return query(path, ...args);
+  };
+  assert.throws(() => reviewPullRequest({ ...candidate, reviewId: 11 }, f.options), /network failure/);
+  assert.ok(f.store.load(42).draft);
+  f.options.query = query;
+  f.server.reviewStates = { 10: 'DISMISSED' };
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
+  assert.equal(f.store.load(42).draft, null);
+  assert.equal(f.store.load(42).state.reviewId, '11');
+  assert.equal(f.calls.length, 2);
+});
+
+test('preserves old drafts for manual migration and rejects oversized reports without crediting files', () => {
   const f = fixture();
-  const file = { ...changed('old.js'), oldMode: '100644', newMode: '100644' };
-  const { planReview } = require('../opencode-review/state.mjs');
-  f.server.files = [file]; f.server.pr.changed_files = 1;
-  f.store.save(42, { state: { version: 1, head, base, reviewId: '10', modes: true, pending: true, files: planReview([file]).current }, draft: null });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
-  assert.equal(f.calls.length, 0);
-  f.store.save(42, { state: { version: 1, head, base, reviewId: '9', modes: true, files: planReview([file]).current }, draft: null });
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.deepEqual(f.calls[0].files, ['old.js']);
-  assert.equal(f.store.load(42).state.atomicFiles, true);
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
+  f.store.save(42, { state: null, draft: { id: 'legacy' } });
+  assert.throws(() => reviewPullRequest(candidate, f.options), /draft preserved/);
+  assert.ok(f.store.load(42).draft);
+  f.store.save(42, { state: null, draft: null });
+  f.options.model = (args) => ({ report: 'x'.repeat(61000), verdict: 'approve', reviewed: args.files });
+  assert.throws(() => reviewPullRequest(candidate, f.options), /comment limit/);
+  assert.equal(f.store.load(42).state, null);
+  assert.equal(f.store.load(42).draft, null);
+  assert.equal(f.server.comments.length, 0);
+});
+
+test('does not finalize an unchanged checkpoint if the PR moves during the check', () => {
+  const f = fixture();
+  reviewPullRequest(candidate, f.options);
+  const query = f.options.query; let reads = 0;
+  f.options.query = (path, ...args) => {
+    if (path.endsWith('/pulls/42') && ++reads === 2) f.server.pr.head.sha = 'f'.repeat(40);
+    return query(path, ...args);
+  };
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'partial');
+  assert.equal(f.store.load(42).state.pending, true);
   assert.equal(f.calls.length, 1);
 });
 
-test('checkpoints completed files when a later batch fails, then retries only unfinished files', () => {
+test('retries only unconfirmed files after partial coverage', () => {
   const f = fixture();
-  const large = (name) => ({ ...changed(name), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(80000)}` });
-  f.server.files = [large('a.js'), large('b.js')];
-  let attempt = 0;
-  f.options.model = (args) => { attempt++; if (attempt === 2) throw new Error('temporary outage'); return { report: 'Reviewed batch.', verdict: 'approve', reviewed: args.files }; };
-  const partial = reviewPullRequest(candidate, f.options);
-  assert.equal(partial.status, 'partial');
-  assert.deepEqual(partial.reviewed, ['a.js']);
+  f.options.model = () => ({ report: 'One file reviewed.', verdict: 'approve', reviewed: ['a.js'] });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
   assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
-  f.options.model = (args) => { f.calls.push(args); return { report: 'Finished.', verdict: 'approve', reviewed: args.files }; };
+  f.options.model = (args) => { f.calls.push(args); return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
   assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.ok(f.calls.every((call) => call.files.length === 1 && call.files[0] === 'b.js'));
+  assert.deepEqual(f.calls[0].files, ['b.js']);
 });
 
-test('checkpoints completed batches before the run time budget expires', () => {
-  const f = fixture(); let now = 0, calls = 0;
-  const large = (name) => ({ ...changed(name), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(80000)}` });
-  f.server.files = [large('a.js'), large('b.js')];
-  f.options.now = () => now;
-  f.options.deadline = 1;
-  f.options.model = (args) => { calls++; now = 1; return { report: 'Reviewed batch.', verdict: 'approve', reviewed: args.files }; };
-  const result = reviewPullRequest(candidate, f.options);
-  assert.equal(result.status, 'partial');
-  assert.deepEqual(result.reviewed, ['a.js']);
-  assert.equal(calls, 1);
+test('keeps each file in one session and includes context in the session limit', () => {
+  const f = fixture();
+  f.server.pr.body = 'context\n'.repeat(2000);
+  f.server.files = [changed('a.js', 'a'.repeat(80000)), changed('b.js', 'b'.repeat(80000))];
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  assert.equal(f.calls.length, 1);
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.equal(f.calls.length, 2);
+  assert.ok(f.calls.every((call) => call.inputs.reduce((size, input) => size + Buffer.byteLength(input.text) + Buffer.byteLength(input.begin) + Buffer.byteLength(input.end) + 2, 0) <= 120000));
+  assert.deepEqual(f.calls.map((call) => call.files), [['a.js'], ['b.js']]);
+  f.server.pr.head.sha = 'f'.repeat(40);
+  f.server.files[0] = changed('a.js', 'a'.repeat(115000));
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
+  assert.match(f.server.comments.at(-1).body, /a\.js.*volumineux/);
+  assert.equal(Object.hasOwn(f.store.load(42).state.files, 'a.js'), false);
+  assert.equal(f.calls.length, 2);
+});
+
+test('a later model failure preserves completed files and retries only the remaining batch', () => {
+  const f = fixture(); let count = 0;
+  f.server.files = [changed('a.js', 'a'.repeat(80000)), changed('b.js', 'b'.repeat(80000))];
+  f.options.model = (args) => {
+    if (++count === 2) throw new Error('temporary failure');
+    return { report: 'Done.', verdict: 'approve', reviewed: args.files };
+  };
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
+  assert.throws(() => reviewPullRequest(candidate, f.options), /temporary failure/);
+  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
+  f.options.model = (args) => { f.calls.push(args); return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.deepEqual(f.calls[0].files, ['b.js']);
+});
+
+test('normal continuation uses the next timer without a failure backoff', () => {
+  const f = fixture();
+  f.server.pr.number = 42;
+  f.server.files = [changed('a.js', 'a'.repeat(80000)), changed('b.js', 'b'.repeat(80000))];
+  const query = (path, ...args) => path === 'user' ? { id: ALEX } : f.options.query(path, ...args);
+  const queryPages = (path) => path.includes('state=open') ? [f.server.pr] : path.includes('/reviews?') ? [{ id: 10, user: { id: ALEX }, state: 'COMMENTED', submitted_at: '2026-11-05T00:01:00Z' }] : f.options.queryPages(path);
+  const retry = { ready: () => true, success: () => { retry.succeeded++; }, failure: () => { retry.failed++; }, succeeded: 0, failed: 0 };
+  run({ repository: 'owner/repo', enabledAt: '2026-11-05T00:00:00Z', store: f.store, query, queryPages, model: f.options.model, review: (item, opts) => reviewPullRequest(item, { ...opts, ...f.options }), retry, log: () => {} });
+  assert.equal(retry.failed, 0);
+  assert.equal(retry.succeeded, 1);
   assert.equal(f.store.load(42).state.pending, true);
+});
+
+test('announces unsupported files once across multiple lots', () => {
+  const f = fixture();
+  f.server.files = [changed('a.js', 'a'.repeat(80000)), changed('b.js', 'b'.repeat(80000)), { filename: 'image.png', skipped: true }];
+  f.server.skipped = [{ filename: 'image.png', reason: 'binary' }];
+  f.server.pr.changed_files = 3;
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  assert.match(f.server.comments[0].body, /image\.png.*binary/);
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.doesNotMatch(f.server.comments[1].body, /image\.png/);
+});
+
+test('does not publish a dismissed review or an incomplete GitHub file list', () => {
+  const f = fixture(); f.server.reviewState = 'DISMISSED';
+  assert.throws(() => reviewPullRequest(candidate, f.options), /no longer a submission/);
+  f.server.reviewState = 'COMMENTED'; f.server.pr.changed_files = 3;
+  assert.throws(() => reviewPullRequest(candidate, f.options), /Incomplete PR file list/);
+  assert.equal(f.server.comments.length, 0);
 });
 
 test('passes the OpenCode cache path without passing GitHub tokens or unrelated secrets', (t) => {

@@ -10,12 +10,10 @@ The timer starts from an explicit activation time, runs serially, and retries
 transient errors with bounded backoff. Incomplete reviews checkpoint only files
 whose inputs were read and reported. Binary or unsupported files are named as
 not reviewed. Each file is reviewed in one session; a diff larger than
-120,000 bytes is named as not reviewed. Missing text patches are reconstructed
-from Git without checkout.
-Git file modes are included in the review input and fingerprints.
-Reports too large for one comment are split; a persistent draft allows retries
-without publishing the same part twice. Losing the state volume loses the review
-history and may cause files to be reviewed again.
+120,000 bytes is named as not reviewed. Diffs and Git file modes come directly
+from Git without checkout. Each batch has its own comment; a persistent draft
+allows publication retries without repeating the model call or comment. Losing
+the state volume loses the review history and may cause files to be reviewed again.
 
 OpenCode runs outside any Git worktree with a read-only review agent and no
 GitHub token in its environment. These OpenCode permissions are not an OS
@@ -31,8 +29,8 @@ server. A server version change pauses reviews until it is revalidated.
   actions and a PR diff, and returned a report accepted by the coverage
   verifier. An external sentinel read was denied; another global skill was
   unavailable. OpenCode's existing OAuth login was used without copying tokens.
-- A real Git recovery on PR #1145 retained a 2,276-byte line omitted by the
-  former size limit. No PR content was executed.
+- A real Git diff on PR #1150 returned all 17 files, including modes, without
+  executing PR content.
 - The installed timer detected a submitted review on PR #1150 and published a
   report. A second submission on the same commit advanced its checkpoint without
   creating another OpenCode session or comment. The reported file-mode gap is

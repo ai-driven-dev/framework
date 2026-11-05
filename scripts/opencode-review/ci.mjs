@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { discover, pages } from './discover.mjs';
-import { planReview, stateStore, validateState } from './state.mjs';
-import { fetchReviewObjects, fileModes, recoverPatches } from './git.mjs';
+import { stateStore } from './state.mjs';
+import { fetchReviewObjects, diffFiles } from './git.mjs';
 
 const ALEX = 8973343;
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
@@ -127,44 +127,37 @@ function assertSubmission(query, root, number, reviewId) {
   if (submission.id !== reviewId || submission.user?.id !== ALEX || !['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED'].includes(submission.state)) throw new Error('Review is no longer a submission by Alex');
 }
 
-function splitReport(text) {
-  const result = []; let part = '', bytes = 0;
-  for (const char of text) {
-    const size = Buffer.byteLength(char);
-    if (bytes + size > 55_000) { result.push(part); part = ''; bytes = 0; }
-    part += char; bytes += size;
-  }
-  if (part) result.push(part);
-  return result;
-}
-
-function draftId(draft) {
-  return createHash('sha256').update(JSON.stringify([draft.head, draft.base, draft.reviewId, draft.nextState, draft.chunks])).digest('hex');
-}
-
-function publishDraft({ record, store, number, root, authorId, query, queryPages, deadline, now }) {
-  const draft = record.draft;
-  if (!draft || !SHA.test(draft.head ?? '') || !SHA.test(draft.base ?? '') || !Number.isSafeInteger(draft.reviewId) || draft.reviewId < 1 ||
-      !Array.isArray(draft.chunks) || !draft.chunks.length || draft.chunks.some((chunk) => typeof chunk !== 'string' || Buffer.byteLength(chunk) > 55_000) ||
-      !draft.nextState || validateState(draft.nextState).head !== draft.head || draft.nextState.base !== draft.base || draft.nextState.reviewId !== String(draft.reviewId) || draftId(draft) !== draft.id) throw new Error('Invalid saved review draft');
+// A single durable draft makes publication idempotent if GitHub accepts a POST
+// but its response is lost. Do not discard an older, incompatible draft.
+function publishDraft({ record, store, number, root, authorId, query, queryPages }) {
+  const { draft } = record;
+  if (typeof draft?.body !== 'string' || typeof draft.id !== 'string' || !draft.nextState) throw new Error('Review draft requires manual migration; draft preserved');
+  if (Buffer.byteLength(draft.body) > 60_000) throw new Error('Review report exceeds the GitHub comment limit; draft preserved');
+  const marker = `<!-- aidd-opencode-review-v3 ${draft.id} -->`;
   const comments = queryPages(`${root}/issues/${number}/comments?per_page=100`);
-  for (const [index, chunk] of draft.chunks.entries()) {
-    const marker = `<!-- aidd-opencode-review-v2 ${draft.id} ${index + 1}/${draft.chunks.length} -->`;
-    const body = `## Revue OpenCode — ${index + 1}/${draft.chunks.length}\n\nCommit examiné : \`${draft.head}\` ; la PR peut avoir évolué depuis.\n\n${chunk}\n\n${marker}`;
-    if (comments.some((comment) => comment?.user?.id === authorId && typeof comment.body === 'string' && comment.body.includes(marker))) continue;
-    if (now() >= deadline) return { status: 'publishing' };
+  if (!comments.some((comment) => comment?.user?.id === authorId && typeof comment.body === 'string' && comment.body.includes(marker))) {
     assertSubmission(query, root, number, draft.reviewId);
-    query(`${root}/issues/${number}/comments`, 'POST', { body });
+    query(`${root}/issues/${number}/comments`, 'POST', { body: `${draft.body}\n\n${marker}` });
   }
-  const current = query(`${root}/pulls/${number}`);
-  const stale = current.state !== 'open' || current.head?.sha !== draft.head || current.base?.sha !== draft.base;
+  const pr = query(`${root}/pulls/${number}`);
+  const stale = pr.state !== 'open' || pr.head?.sha !== draft.head || pr.base?.sha !== draft.base;
   const state = stale ? { ...draft.nextState, pending: true } : draft.nextState;
   store.save(number, { state, draft: null });
-  return { status: state.pending ? 'partial' : 'published' };
+  return { status: state.pending ? 'partial' : 'published', ...(draft.error ? { error: draft.error } : {}) };
 }
 
-/** Process one submitted review. Only successfully reviewed files enter the checkpoint. */
-export function reviewPullRequest(candidate, { repository, authorId, store, query = api, queryPages = pages, model = runModel, fetchObjects = fetchReviewObjects, inspectModes = fileModes, recover = recoverPatches, deadline = Infinity, now = Date.now }) {
+const inputSize = (input) => Buffer.byteLength(input.text) + Buffer.byteLength(input.begin) + Buffer.byteLength(input.end) + 2;
+
+function saveUnchanged({ store, number, state, query, root }) {
+  assertSubmission(query, root, number, Number(state.reviewId));
+  const pr = query(`${root}/pulls/${number}`);
+  const stale = pr.state !== 'open' || pr.head?.sha !== state.head || pr.base?.sha !== state.base;
+  store.save(number, { state: stale ? { ...state, pending: true } : state, draft: null });
+  return { status: stale ? 'partial' : 'unchanged' };
+}
+
+/** Process one submitted review. Only files read and reported enter the checkpoint. */
+export function reviewPullRequest(candidate, { repository, authorId, store, query = api, queryPages = pages, model = runModel, fetchObjects = fetchReviewObjects, getDiffs = diffFiles, deadline = Infinity, now = Date.now }) {
   if (!REPO.test(repository ?? '') || !Number.isSafeInteger(candidate?.number) || candidate.number < 1 || !Number.isSafeInteger(candidate.reviewId) || candidate.reviewId < 1 || authorId !== ALEX || !store) throw new Error('Invalid review parameters');
   const root = `repos/${repository}`, number = candidate.number;
   const pr = query(`${root}/pulls/${number}`);
@@ -173,127 +166,81 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
   assertSubmission(query, root, number, candidate.reviewId);
   let record = store.load(number);
   if (record.draft) {
-    if (!record.draft.nextState?.atomicFiles) throw new Error('Legacy review draft requires manual migration; draft preserved');
+    if (typeof record.draft.body !== 'string' || !Number.isSafeInteger(record.draft.reviewId)) throw new Error('Review draft requires manual migration; draft preserved');
     const savedReview = query(`${root}/pulls/${number}/reviews/${record.draft.reviewId}`);
-    if (savedReview.id === record.draft.reviewId && savedReview.user?.id === ALEX && ['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED'].includes(savedReview.state)) {
-      return publishDraft({ record, store, number, root, authorId, query, queryPages, deadline: deadline + 15 * 60_000, now });
+    if (savedReview.id !== record.draft.reviewId || savedReview.user?.id !== ALEX) throw new Error('Invalid saved review; draft preserved');
+    if (savedReview.state === 'DISMISSED') {
+      record = { state: record.state, draft: null };
+      store.save(number, record);
+    } else {
+      return publishDraft({ record, store, number, root, authorId, query, queryPages });
     }
-    record = { state: record.state, draft: null };
-    store.save(number, record);
   }
   const previous = record.state;
-  if (previous?.reviewId === String(candidate.reviewId) && (!previous.atomicFiles || !previous.pending)) return { status: 'already-processed' };
-  if (previous?.modes && previous.atomicFiles && !previous.pending && !previous.unreviewed?.length && previous.head === head && previous.base === base) {
-    assertSubmission(query, root, number, candidate.reviewId);
-    const latest = query(`${root}/pulls/${number}`);
-    const stale = latest.state !== 'open' || latest.head?.sha !== head || latest.base?.sha !== base;
-    store.save(number, { state: { ...previous, reviewId: String(candidate.reviewId), ...(stale ? { pending: true } : {}) }, draft: null });
-    return { status: stale ? 'partial' : 'unchanged' };
+  if (previous?.reviewId === String(candidate.reviewId) && !previous.pending) return { status: 'already-processed' };
+  if (previous && !previous.pending && !previous.unreviewed?.length && previous.head === head && previous.base === base) {
+    return saveUnchanged({ store, number, state: { ...previous, reviewId: String(candidate.reviewId) }, query, root });
   }
-  let files = queryPages(`${root}/pulls/${number}/files?per_page=100`);
-  if (files.length !== pr.changed_files) throw new Error('Incomplete PR file list');
-  const cache = files.length ? mkdtempSync(join(tmpdir(), 'aidd-opencode-review-cache-')) : null;
+  const listed = queryPages(`${root}/pulls/${number}/files?per_page=100`);
+  if (listed.length !== pr.changed_files) throw new Error('Incomplete PR file list');
+  const cache = listed.length ? mkdtempSync(join(tmpdir(), 'aidd-opencode-review-cache-')) : null;
   try {
-    let recoveryError = null;
-    let mergeBase, modeSkipped = [];
-    if (files.length) {
-      ({ mergeBase } = fetchObjects({ repository, number, head, base, cache }));
-      const inspected = inspectModes({ files, mergeBase, head, cache });
-      files = inspected.files;
-      modeSkipped = inspected.skipped;
-    }
-    const priorFiles = previous?.atomicFiles ? previous.files : {};
-    let plan = planReview(files, priorFiles);
-    if (plan.skipped.length) {
-      try {
-        const names = new Set(plan.skipped.map((item) => item.filename));
-        const result = recover({ files: files.filter((file) => names.has(file.filename)), mergeBase, head, cache });
-        const replacements = new Map(result.files.map((file) => [file.filename, file]));
-        files = files.map((file) => replacements.get(file.filename) ?? file);
-        plan = planReview(files, priorFiles);
-        const reasons = new Map(result.skipped.map((item) => [item.filename, item.reason]));
-        plan.skipped = plan.skipped.map((item) => ({ ...item, reason: reasons.get(item.filename) ?? item.reason }));
-      } catch (error) {
-        recoveryError = error;
-        plan.skipped = plan.skipped.map((item) => ({ ...item, reason: 'Git recovery temporarily unavailable; retry planned' }));
-      }
-    }
+    const { mergeBase } = listed.length ? fetchObjects({ repository, number, head, base, cache }) : {};
+    const { files, skipped } = listed.length ? getDiffs({ files: listed, mergeBase, head, cache }) : { files: [], skipped: [] };
     const context = splitInput(`Title: ${pr.title ?? ''}\n\n${pr.body ?? ''}`, 'context');
-    const selected = new Set(plan.selected.map((file) => file.filename));
-    const groups = [], oversized = [];
+    const contextBytes = context.reduce((sum, part) => sum + inputSize(part), 0);
+    const current = Object.fromEntries(files.filter((file) => Object.hasOwn(previous?.files ?? {}, file.filename) && previous.files[file.filename] === file.fingerprint).map((file) => [file.filename, file.fingerprint]));
+    const groups = [], omitted = [...skipped];
     for (const [index, file] of files.entries()) {
-      if (!Object.hasOwn(plan.current, file.filename)) continue;
-      if (!selected.has(file.filename) && previous?.atomicFiles) continue;
-      const rawBytes = Buffer.byteLength(file.patch);
-      if (rawBytes > MAX_BATCH) {
-        oversized.push({ filename: file.filename, reason: `Diff trop volumineux pour une seule session (${rawBytes} octets ; limite ${MAX_BATCH})` });
-        continue;
-      }
+      if (Object.hasOwn(current, file.filename)) continue;
       const parts = splitInput(file.patch, `diff-${String(index + 1).padStart(4, '0')}`, [file.filename]);
-      for (const [partIndex, part] of parts.entries()) {
-        const header = [`## ${JSON.stringify(file.filename)} (${file.status}), part ${partIndex + 1}/${parts.length}`, file.previous_filename ? `Previous path: ${JSON.stringify(file.previous_filename)}` : '', `Git mode: ${file.oldMode ?? 'absent'} → ${file.newMode ?? 'absent'}`].filter(Boolean).join('\n');
-        part.text = `${header}\n\n\`\`\`diff\n${part.text}\n\`\`\``;
-      }
-      const bytes = parts.reduce((sum, part) => sum + Buffer.byteLength(part.text) + Buffer.byteLength(part.begin) + Buffer.byteLength(part.end) + 2, 0);
-      if (bytes > MAX_BATCH) oversized.push({ filename: file.filename, reason: `Diff trop volumineux pour une seule session (${bytes} octets ; limite ${MAX_BATCH})` });
-      else if (selected.has(file.filename)) groups.push({ filename: file.filename, parts, bytes });
+      for (const part of parts) part.text = `## ${JSON.stringify(file.filename)} (${file.status})\n\n\`\`\`diff\n${part.text}\n\`\`\``;
+      const size = parts.reduce((sum, part) => sum + inputSize(part), 0);
+      if (contextBytes + size > MAX_BATCH) omitted.push({ filename: file.filename, reason: 'Diff trop volumineux pour une seule session' });
+      else groups.push({ file, parts, size });
     }
-    const batches = []; let batch = [], size = 0;
-    const flush = () => { if (batch.length) batches.push(batch); batch = []; size = 0; };
+    const batches = []; let batch = [], size = contextBytes;
     for (const group of groups) {
-      if (batch.length && size + group.bytes > MAX_BATCH) flush();
-      batch.push(...group.parts); size += group.bytes;
+      if (batch.length && size + group.size > MAX_BATCH) { batches.push(batch); batch = []; size = contextBytes; }
+      batch.push(group); size += group.size;
     }
     if (batch.length) batches.push(batch);
-    const coverage = new Map(groups.map((group) => [group.filename, false]));
-    const reports = []; let modelError = null;
-    let verdict = previous?.atomicFiles && previous.pending && previous.head === head && previous.base === base ? previous.verdict : undefined;
-    let currentVerdict;
-    for (const group of batches) {
-      const names = [...new Set(group.flatMap((chunk) => chunk.files))];
+    const reports = [], reviewed = []; let error = null;
+    // Publish and checkpoint each lot before the timer continues with the next.
+    for (const batch of batches.slice(0, 1)) {
+      const names = batch.map(({ file }) => file.filename);
       try {
         if (now() >= deadline) throw new Error('Review run time budget exhausted');
-        const result = model({ inputs: [...context, ...group], files: names, repository, number, head, base, cache });
+        const result = model({ inputs: [...context, ...batch.flatMap(({ parts }) => parts)], files: names, repository, number, head, base, cache });
         if (!result || typeof result.report !== 'string' || !result.report.trim() || !VERDICTS.includes(result.verdict) || !Array.isArray(result.reviewed) || result.reviewed.some((name) => !names.includes(name)) || new Set(result.reviewed).size !== result.reviewed.length) throw new Error('Invalid model result');
-        for (const name of result.reviewed) coverage.set(name, true);
-        reports.push(result.report.trim());
-        if (verdict === undefined || VERDICTS.indexOf(result.verdict) > VERDICTS.indexOf(verdict)) verdict = result.verdict;
-        if (currentVerdict === undefined || VERDICTS.indexOf(result.verdict) > VERDICTS.indexOf(currentVerdict)) currentVerdict = result.verdict;
-      } catch (error) {
-        modelError = error;
-        break;
-      }
+        for (const group of batch) if (result.reviewed.includes(group.file.filename)) {
+          Object.defineProperty(current, group.file.filename, { value: group.file.fingerprint, enumerable: true, configurable: true });
+          reviewed.push(group.file.filename);
+        }
+        reports.push(`### Lot ${reports.length + 1}\n\n${result.report.trim()}\n\n**Verdict de ce lot : ${result.verdict}**`);
+      } catch (cause) { error = cause; break; }
     }
-    const reviewed = [...coverage].filter(([, covered]) => covered).map(([name]) => name);
-    const unfinished = [...coverage].filter(([, covered]) => !covered);
-    const pending = Boolean(recoveryError) || unfinished.length > 0;
-    if (pending && !reviewed.length) throw modelError ?? recoveryError ?? new Error('OpenCode did not confirm any selected file');
-    const notReviewed = [...modeSkipped, ...plan.skipped.map((item) => ({ filename: item.filename, reason: item.reason })), ...oversized, ...unfinished.map(([filename]) => ({ filename, reason: 'OpenCode did not confirm complete review' }))];
-    const unreviewed = [...new Set(notReviewed.map(({ filename }) => filename))].sort((a, b) => String(a ?? '').localeCompare(String(b ?? '')));
-    const tooLarge = new Set(oversized.map(({ filename }) => filename));
-    const currentEntries = Object.entries(plan.current).filter(([name]) => !tooLarge.has(name) && (!coverage.has(name) || coverage.get(name)));
-    // A skipped mode cannot validate the current file. Keep the old hash only as history;
-    // unreviewed prevents a fast path until the mode and fingerprint are checked again.
-    if (previous?.atomicFiles && previous.files) for (const { filename } of modeSkipped) if (typeof filename === 'string' && Object.hasOwn(previous.files, filename)) currentEntries.push([filename, previous.files[filename]]);
-    const current = Object.fromEntries(currentEntries);
-    const nextState = validateState({ version: 1, files: current, head, base, reviewId: String(candidate.reviewId), modes: true, atomicFiles: true, pending, ...(unreviewed.length ? { unreviewed } : {}), ...(verdict ? { verdict } : {}) });
-    assertSubmission(query, root, number, candidate.reviewId);
-    const sameOmissions = !pending && !previous?.pending && previous?.head === head && previous?.base === base && JSON.stringify(previous?.unreviewed ?? []) === JSON.stringify(unreviewed);
-    if (!reports.length && previous && (!notReviewed.length || sameOmissions)) {
-      const latest = query(`${root}/pulls/${number}`);
-      const stale = latest.state !== 'open' || latest.head?.sha !== head || latest.base?.sha !== base;
-      store.save(number, { state: stale ? { ...nextState, pending: true } : nextState, draft: null });
-      return { status: stale ? 'partial' : 'unchanged' };
+    const attempted = batches[0] ?? [];
+    const failed = attempted.filter(({ file }) => !Object.hasOwn(current, file.filename));
+    const unfinished = groups.filter(({ file }) => !Object.hasOwn(current, file.filename));
+    const pending = unfinished.length > 0;
+    if (pending && !reviewed.length) throw error ?? new Error('OpenCode did not confirm any selected file');
+    const unreviewed = [...new Set(omitted.map(({ filename }) => filename))].sort((a, b) => String(a ?? '').localeCompare(String(b ?? '')));
+    const nextState = { version: 1, files: current, head, base, reviewId: String(candidate.reviewId), atomicFiles: true, ...(pending ? { pending: true } : {}), ...(unreviewed.length ? { unreviewed } : {}) };
+    const sameOmissions = !pending && previous?.head === head && previous?.base === base && JSON.stringify(previous?.unreviewed ?? []) === JSON.stringify(unreviewed);
+    if (!reports.length && previous && (!omitted.length || sameOmissions)) {
+      return saveUnchanged({ store, number, state: nextState, query, root });
     }
-    const notes = notReviewed.length ? `\n\n### Fichiers non revus\n\n${notReviewed.map(({ filename, reason }) => `- ${JSON.stringify(filename)} : ${reason}`).join('\n')}` : '';
-    const summary = `${pending ? 'La revue est partielle ; les fichiers restants seront réessayés.\n\n' : notReviewed.length ? 'La revue est partielle ; certains fichiers n’ont pas été revus.\n\n' : ''}${reports.map((report, index) => `### Lot ${index + 1}/${reports.length}\n\n${report}`).join('\n\n---\n\n') || 'Aucun fichier revu dans ce passage.'}${notes}${currentVerdict ? `\n\n**Verdict des fichiers de ce commentaire : ${currentVerdict}**` : ''}${previous?.pending && previous.head === head && previous.base === base && verdict ? `\n\n**Verdict cumulé des fichiers examinés sur ce commit : ${verdict}**` : ''}`;
-    const draft = { head, base, reviewId: candidate.reviewId, nextState, chunks: splitReport(summary) };
-    draft.id = draftId(draft);
-    record = { state: previous, draft };
-    store.save(number, record);
-    const publication = publishDraft({ record, store, number, root, authorId, query, queryPages, deadline: deadline + 15 * 60_000, now });
-    const error = modelError ?? recoveryError;
-    return { ...publication, reviewed, skipped: notReviewed, ...(error ? { error: error.message } : {}) };
+    const known = previous?.head === head && previous?.base === base ? new Set(previous.unreviewed ?? []) : new Set();
+    const notesList = [...omitted.filter(({ filename }) => !known.has(filename)), ...failed.map(({ file }) => ({ filename: file.filename, reason: 'OpenCode did not confirm complete review; retry planned' }))];
+    const notes = notesList.length ? `\n\n### Fichiers non revus\n\n${notesList.map(({ filename, reason }) => `- ${JSON.stringify(filename)} : ${reason}`).join('\n')}` : '';
+    const body = `## Revue OpenCode\n\nCommit examiné : \`${head}\` ; la PR peut avoir évolué depuis.\n\n${pending ? 'La revue est partielle ; les fichiers restants seront réessayés.\n\n' : omitted.length ? 'La revue est partielle.\n\n' : ''}${reports.join('\n\n---\n\n') || 'Aucun fichier revu dans ce passage.'}${notes}`;
+    if (Buffer.byteLength(body) > 60_000) throw new Error('Review report exceeds the GitHub comment limit; state preserved');
+    const id = createHash('sha256').update(JSON.stringify([candidate.reviewId, head, base, nextState, body])).digest('hex');
+    const draft = { head, base, reviewId: candidate.reviewId, nextState, body, id, ...(failed.length ? { error: error?.message ?? 'OpenCode did not confirm all files in the lot' } : {}) };
+    store.save(number, { state: previous, draft });
+    const publication = publishDraft({ record: { state: previous, draft }, store, number, root, authorId, query, queryPages });
+    return { ...publication, reviewed, skipped: notesList };
   } finally {
     if (cache) discard(cache);
   }
@@ -320,7 +267,7 @@ export function retryStore(path, now = Date.now) {
   };
 }
 
-export function run({ repository, enabledAt, store, query = api, queryPages = pages, model = runModel, retry, log = console.error, now = Date.now }) {
+export function run({ repository, enabledAt, store, query = api, queryPages = pages, model = runModel, review = reviewPullRequest, retry, log = console.error, now = Date.now }) {
   if (!REPO.test(repository ?? '') || !Number.isFinite(Date.parse(enabledAt)) || !store) throw new Error('Invalid repository, activation time or state store');
   const deadline = now() + 40 * 60_000;
   const authorId = query('user').id;
@@ -331,8 +278,8 @@ export function run({ repository, enabledAt, store, query = api, queryPages = pa
     const key = `${candidate.number}:${candidate.reviewId}:${candidate.head}:${candidate.base}`;
     if (retry && !retry.ready(key)) continue;
     try {
-      const result = reviewPullRequest(candidate, { repository, authorId, store, query, queryPages, model, deadline, now });
-      if (result.status === 'partial' || result.status === 'publishing') {
+      const result = review(candidate, { repository, authorId, store, query, queryPages, model, deadline, now });
+      if (result.error) {
         retry?.failure(key);
         log(`PR #${candidate.number}: partial review; remaining files will be retried${result.error ? `: ${result.error}` : ''}`);
       } else retry?.success(key);
