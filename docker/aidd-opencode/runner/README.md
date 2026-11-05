@@ -25,7 +25,8 @@ add `SETUID`, `SETGID`, `CHOWN`, `AUDIT_WRITE`, `DAC_OVERRIDE`, and `KILL`.
 `no-new-privileges` prevents sudo from changing UID and is incompatible.
 
 Runner registration and lifecycle are not part of the image. Restrict any
-production runner group to the trusted default-branch workflow. Stop the runner
+production runner group to the trusted default-branch workflow. Run `umask 077`
+before `config.sh` so the registration files are private. Stop the runner
 gracefully before restarting it so GitHub can close its session. A separate UID
 and container reduce access; they do not prove that prompt injection cannot
 expose the model credential available to the reviewer. A persistent runner can

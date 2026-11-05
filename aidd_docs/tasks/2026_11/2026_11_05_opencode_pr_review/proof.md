@@ -25,6 +25,13 @@ and read the supplied diffs before a file is checkpointed.
   found the seeded `average([])` regression and confirmed `average.py` in the
   validated coverage. A separate UID prevented the reviewer from reading a
   synthetic GitHub token or writing the snapshot.
+- With Codex OAuth, a simulated publication failure resumed from the saved
+  draft without another model call; an unchanged file was skipped.
+- A persistent runner reconnected after a graceful Docker stop and start with
+  `RUNNER_MANUALLY_TRAP_SIG=1`. Registration files are restricted to mode 600.
+- GitHub Actions run 41999398223 used the real workflow steps and app token on
+  a temporary restricted runner. A future activation date prevented reviews
+  and publication; the temporary branch trigger and runner were removed.
 
 The new scheduled workflow is not active until it exists on the repository's
 default branch and its dedicated runner and activation timestamp are configured.
