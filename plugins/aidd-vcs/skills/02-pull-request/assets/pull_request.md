@@ -15,7 +15,6 @@ argument-hint: N/A
 <!--
 Instructions:
   - At least one of these must be checked.
-  - If you do not know which one to pick, pick "Feature".
   - Base yourself on commit history.
 -->
 
@@ -34,15 +33,18 @@ Instructions:
 - put important details here if necessary, in **bold**.
 -->
 
-## 🚶‍➡️ Behavior
+## 📌 Main changes
 
 <!--
 Instructions:
-- Summarize the behavior changes in a few sentences.
-- Use bullet points.
+- List the main changes as concise bullet points; reuse them in the final summary.
 - Focus on the user experience.
 - Be precise, not vague.
 -->
+
+## 🛠️ How it works
+
+<!-- Explain the approach and non-obvious trade-offs; use a numbered list for an ordered process. -->
 
 ## 🧪 Steps to test
 

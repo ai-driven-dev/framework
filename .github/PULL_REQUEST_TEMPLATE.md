@@ -8,13 +8,19 @@
 
 <!-- One or two sentences: what this changes and the problem it solves. -->
 
+## 📌 Main changes
+
+<!-- Concise bullet points describing the main changes; reuse them in the final summary. -->
+
+-
+
 ## 🛠️ How it works
 
 <!--
 Walk a reviewer through the technical resolution: the approach you took, why
 this way over the alternatives, and anything non-obvious (trade-offs, edge
-cases, follow-ups). This narrative is the point of the PR. The conventional
-title and pre-commit hooks are already enforced by CI, so don't
+cases, follow-ups). Use a numbered list when the approach has an order. This
+narrative is the point of the PR. The conventional title and pre-commit hooks are already enforced by CI, so don't
 re-assert them here. Spend your words on the *how*.
 -->
 
