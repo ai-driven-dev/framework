@@ -63,7 +63,7 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
 
       const sync = await runCli(["sync", "--global"], projectDir, fakeHome);
       expect(sync.exitCode).toBe(0);
-      expect(sync.stdout).toContain("Refreshed machine files for: aidd-dev");
+      expect(sync.stdout).toContain("Refreshed global files for: aidd-dev");
 
       const clean = await runCli(["clean", "--global", "--force"], projectDir, fakeHome);
       expect(clean.exitCode).toBe(0);

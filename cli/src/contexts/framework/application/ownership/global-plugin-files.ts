@@ -4,7 +4,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import { machineFilesOf } from "../../../tools/domain/registry.js";
+import { globalFilesOf } from "../../../tools/domain/registry.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
@@ -13,14 +13,14 @@ import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-conta
  * A plugin's machine-scope files, read from the tool's built tree and keyed by their path under
  * the tool's user configuration directory. Empty for a tool that copies none.
  */
-export async function readMachinePluginFiles(
+export async function readGlobalPluginFiles(
   fs: FileReader,
   hasher: Hasher,
   builtDir: string,
   toolId: AiToolId,
   dist: PluginDistribution
 ): Promise<InstallationFile[]> {
-  const machine = machineFilesOf(toolId);
+  const machine = globalFilesOf(toolId);
   if (machine === null) return [];
   const plugin = {
     name: dist.manifest.name,
@@ -48,7 +48,7 @@ export async function readMachinePluginFiles(
  * file already there that this plugin does not own is never overwritten unless it already holds
  * the same bytes. Creates the user directory itself when the host has not yet.
  */
-export async function assertMachineFilesWritable(
+export async function assertGlobalFilesWritable(
   fs: FileReader & FileWriter,
   toolId: AiToolId,
   plugin: Pick<InstalledPlugin, "name" | "files"> | undefined,
@@ -56,7 +56,7 @@ export async function assertMachineFilesWritable(
   files: readonly InstallationFile[],
   homedir: string
 ): Promise<string> {
-  const machine = machineFilesOf(toolId);
+  const machine = globalFilesOf(toolId);
   if (machine === null) throw new Error(`${toolId}: no machine-scope directory is declared.`);
   const boundary = machine.dir(homedir);
   await fs.createDirectory(boundary);

@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { machineFilesOf } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { globalFilesOf } from "../../../../../../src/contexts/tools/domain/registry.js";
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };
 
 describe("the kilo profile's machine-scope files", () => {
-  const machine = machineFilesOf("kilo");
+  const machine = globalFilesOf("kilo");
 
   it("land in ~/.config/kilo under the home directory", () => {
     expect(machine?.dir("/home/me")).toBe(join("/home/me", ".config/kilo"));

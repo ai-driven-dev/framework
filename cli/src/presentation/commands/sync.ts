@@ -25,7 +25,7 @@ interface SyncCmdOptions {
 }
 
 /** A user-scope install writes nothing under any project, so this skips `restoreAllUseCase`:
- * it rebuilds the machine files aidd copied into each tool's user directory from the shared
+ * it rebuilds the global files aidd copied into each tool's user directory from the shared
  * source, then drives native activation, through `deps.userManifestRepo` and never this
  * project's own manifest. */
 async function runUserScopeSync(

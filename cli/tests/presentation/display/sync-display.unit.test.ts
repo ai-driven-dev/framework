@@ -164,12 +164,12 @@ describe("printActivationOutcome", () => {
 });
 
 describe("printUserScopeSyncOutcome", () => {
-  it("names the plugins whose machine files were rebuilt, and nothing else when no host was driven", () => {
+  it("names the plugins whose global files were rebuilt, and nothing else when no host was driven", () => {
     const output = new CapturingOutput(false);
 
     printUserScopeSyncOutcome(output, [], ["aidd-dev", "aidd-pm"]);
 
-    expect(output.at("success")).toEqual(["Refreshed machine files for: aidd-dev, aidd-pm"]);
+    expect(output.at("success")).toEqual(["Refreshed global files for: aidd-dev, aidd-pm"]);
   });
 
   it("reports both the rebuilt files and the hosts driven", () => {
@@ -178,7 +178,7 @@ describe("printUserScopeSyncOutcome", () => {
     printUserScopeSyncOutcome(output, ["claude"], ["aidd-dev"]);
 
     expect(output.at("success")).toEqual([
-      "Refreshed machine files for: aidd-dev",
+      "Refreshed global files for: aidd-dev",
       "Synced native activation for: claude",
     ]);
   });

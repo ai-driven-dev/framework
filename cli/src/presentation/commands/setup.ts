@@ -5,7 +5,7 @@ import { SetupUseCase } from "../../contexts/framework/application/setup-use-cas
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import {
   assertToolIdsMatchCategory,
-  copiesPluginFilesForMachine,
+  copiesPluginFilesGlobally,
   getAllRegisteredTools,
   nativeActivationOf,
   resolvePluginsCapability,
@@ -104,7 +104,7 @@ export function parsePluginsFlag(
 export function globalSetupHelp(): string {
   const tools = [...getAllRegisteredTools().keys()].filter(supportsUserScopeActivation).sort();
   const native = tools.filter((id) => nativeActivationOf(id) !== undefined);
-  const copying = tools.filter(copiesPluginFilesForMachine);
+  const copying = tools.filter(copiesPluginFilesGlobally);
   const where = (id: ToolId) =>
     resolvePluginsCapability(id)?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
   return [

@@ -134,11 +134,11 @@ describe("SetupFlow", () => {
       }
     });
 
-    it("accepts an AI tool that copies machine files at --scope user (kilo)", () => {
+    it("accepts an AI tool that copies global files at --scope user (kilo)", () => {
       expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).not.toThrow();
     });
 
-    it("accepts an AI tool that copies machine files at --scope user (opencode)", () => {
+    it("accepts an AI tool that copies global files at --scope user (opencode)", () => {
       expect(() => makeFlow({ scope: "user", aiTools: ["opencode"] })).not.toThrow();
     });
 

@@ -24,16 +24,16 @@ export type SetupResult =
       install: SetupToolsResult;
       activation: MarketplaceSyncSettingsResult;
       context?: ProjectContext;
-      /** Set by a machine-scope run: the plugins it installed for every project. */
-      machinePlugins?: readonly string[];
+      /** Set by a global run: the plugins it installed for every project. */
+      globalPlugins?: readonly string[];
     }
   | {
       kind: "up-to-date";
       install: SetupToolsResult;
       activation: MarketplaceSyncSettingsResult;
       context?: ProjectContext;
-      /** Set by a machine-scope run: the plugins it installed for every project. */
-      machinePlugins?: readonly string[];
+      /** Set by a global run: the plugins it installed for every project. */
+      globalPlugins?: readonly string[];
     };
 
 export class SetupUseCase {

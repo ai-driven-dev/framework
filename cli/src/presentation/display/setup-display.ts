@@ -11,7 +11,7 @@ interface ToolInstallOutcome {
 interface SetupOutcome {
   readonly kind: "initialized" | "up-to-date";
   readonly install: { readonly results: readonly ToolInstallOutcome[] };
-  readonly machinePlugins?: readonly string[];
+  readonly globalPlugins?: readonly string[];
 }
 
 function displayInstall(
@@ -38,11 +38,11 @@ function displayInstall(
 }
 
 export function printSetupOutcome(output: CLIOutput, result: SetupOutcome, verbose: boolean): void {
-  if (result.machinePlugins !== undefined) {
+  if (result.globalPlugins !== undefined) {
     output.success(
-      result.machinePlugins.length === 0
+      result.globalPlugins.length === 0
         ? "Registered for every project on this machine."
-        : `Installed for every project on this machine: ${result.machinePlugins.join(", ")}.`
+        : `Installed for every project on this machine: ${result.globalPlugins.join(", ")}.`
     );
     return;
   }

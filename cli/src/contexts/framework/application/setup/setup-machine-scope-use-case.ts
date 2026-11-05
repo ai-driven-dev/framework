@@ -8,7 +8,7 @@ import type {
 } from "../flows/marketplace-sync-settings-use-case.js";
 import type { SetupResult } from "../setup-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "../shared/setup-marketplace-registration-use-case.js";
-import type { InstallMachinePluginsUseCase } from "./install-machine-plugins-use-case.js";
+import type { InstallGlobalPluginsUseCase } from "./install-global-plugins-use-case.js";
 import type { SetupToolsResult } from "./setup-tools-use-case.js";
 
 /**
@@ -28,7 +28,7 @@ export class SetupMachineScopeUseCase {
     private readonly setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase,
     private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettings,
     private readonly currentVersionProvider: VersionReader,
-    private readonly installMachinePluginsUseCase?: InstallMachinePluginsUseCase
+    private readonly installGlobalPluginsUseCase?: InstallGlobalPluginsUseCase
   ) {}
 
   async execute(flow: SetupFlow): Promise<SetupResult> {
@@ -46,7 +46,7 @@ export class SetupMachineScopeUseCase {
     const isNew = await this.initUserManifest();
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
     await this.registerUserScopeTools(flow);
-    const plugins = await this.installMachinePlugins(flow);
+    const plugins = await this.installGlobalPlugins(flow);
     const activation: MarketplaceSyncSettingsResult =
       await this.marketplaceSyncSettingsUseCase.execute({
         projectRoot: flow.projectRoot,
@@ -56,17 +56,17 @@ export class SetupMachineScopeUseCase {
         enablePlugins: plugins,
       });
     const install: SetupToolsResult = { results: [] };
-    const outcome = { install, activation, context: undefined, machinePlugins: plugins };
+    const outcome = { install, activation, context: undefined, globalPlugins: plugins };
     return isNew ? { kind: "initialized", ...outcome } : { kind: "up-to-date", ...outcome };
   }
 
-  /** Copies the chosen plugins' machine files and returns their names, which every tool with
+  /** Copies the chosen plugins' global files and returns their names, which every tool with
    * native activation then enables machine-wide. */
-  private async installMachinePlugins(flow: SetupFlow): Promise<readonly string[]> {
-    if (this.installMachinePluginsUseCase === undefined) return [];
+  private async installGlobalPlugins(flow: SetupFlow): Promise<readonly string[]> {
+    if (this.installGlobalPluginsUseCase === undefined) return [];
     const manifest = await this.userManifestRepo.load();
     if (manifest === null) return [];
-    const { plugins } = await this.installMachinePluginsUseCase.execute(
+    const { plugins } = await this.installGlobalPluginsUseCase.execute(
       manifest,
       {
         projectRoot: flow.projectRoot,

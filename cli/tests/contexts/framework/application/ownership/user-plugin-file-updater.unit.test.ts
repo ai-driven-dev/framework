@@ -89,7 +89,7 @@ describe("UserPluginFileUpdater public update contract", () => {
     expect(f.logger.warnMessages.filter((m) => m.includes("left in place"))).toEqual([]);
   });
 
-  it("refuses to rebuild machine files without the shared source, rather than write a project's layout", async () => {
+  it("refuses to rebuild global files without the shared source, rather than write a project's layout", async () => {
     const f = fixture();
     await expect(f.updater.update(f.plugin, "opencode", "/A", f.logger)).rejects.toThrow(
       "run `aidd setup --global`"

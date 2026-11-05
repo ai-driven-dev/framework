@@ -2,13 +2,13 @@
  * contract can read the same values: the profile imports the contract, so the contract cannot
  * import the profile back. */
 
-import { flatMachineFilePath } from "../../capabilities/plugins-capability.js";
+import { flatGlobalFilePath } from "../../capabilities/plugins-capability.js";
 
 export const OPENCODE_DIRECTORY = ".opencode/";
 
 /** A machine-scope install puts a plugin's skills and agents where OpenCode loads them for every
  * project: its global config directory. */
-export const opencodeMachineFilePath = flatMachineFilePath(OPENCODE_DIRECTORY);
+export const opencodeGlobalFilePath = flatGlobalFilePath(OPENCODE_DIRECTORY);
 
 /**
  * The directory OpenCode's own plugin loader scans (`{plugin,plugins}/*.{ts,js}`, one level, no

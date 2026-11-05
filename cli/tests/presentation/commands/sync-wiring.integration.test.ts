@@ -247,14 +247,14 @@ describe("aidd sync --scope user", () => {
     ]);
   });
 
-  it("rebuilds the machine files a tool owns before driving activation, under --global", async () => {
+  it("rebuilds the global files a tool owns before driving activation, under --global", async () => {
     userManifestRepo.load.mockResolvedValue({
       getInstalledToolIds: () => ["claude", "opencode"],
       getPlugins: (toolId: string) => (toolId === "opencode" ? [{ scope: "user" }] : []),
     });
     userPluginUpdate.mockResolvedValue(["aidd-dev", "aidd-dev"]);
 
-    expect(await run("--global")).toEqual(["Refreshed machine files for: aidd-dev"]);
+    expect(await run("--global")).toEqual(["Refreshed global files for: aidd-dev"]);
     expect(userPluginUpdate).toHaveBeenCalledWith({
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,

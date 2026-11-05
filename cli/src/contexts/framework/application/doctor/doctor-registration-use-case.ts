@@ -35,8 +35,8 @@ export interface DoctorRegistrationOptions {
   manifest: Manifest;
   projectRoot: string;
   allowedIds: Set<string> | null;
-  /** A machine-wide install declares nothing in a project's settings, so it skips that check. */
-  machine?: boolean;
+  /** A global install declares nothing in a project's settings, so it skips that check. */
+  globalInstall?: boolean;
 }
 
 /** One plugin `doctor` expects a native-activation tool's own registry to carry, and the ref to
@@ -86,7 +86,7 @@ export class DoctorRegistrationUseCase {
 
   async execute(options: DoctorRegistrationOptions): Promise<DoctorIssue[]> {
     return [
-      ...(options.machine === true ? [] : await this.checkDeclaredMarketplaces(options)),
+      ...(options.globalInstall === true ? [] : await this.checkDeclaredMarketplaces(options)),
       ...(await this.checkNativeRegistrations(options)),
       ...(await this.checkMarketplaceSources(options)),
     ];

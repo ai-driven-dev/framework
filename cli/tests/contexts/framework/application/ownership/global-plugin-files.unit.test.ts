@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import {
-  assertMachineFilesWritable,
-  readMachinePluginFiles,
-} from "../../../../../src/contexts/framework/application/ownership/machine-plugin-files.js";
+  assertGlobalFilesWritable,
+  readGlobalPluginFiles,
+} from "../../../../../src/contexts/framework/application/ownership/global-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
@@ -32,9 +32,9 @@ const tree = new InMemoryFileAdapter({
   [`${BUILT}/.opencode/commands/aidd-dev-plan.md`]: "command",
 });
 
-describe("readMachinePluginFiles", () => {
+describe("readGlobalPluginFiles", () => {
   it("reads the plugin's skills and the agents its source ships, keyed under the user directory", async () => {
-    const files = await readMachinePluginFiles(
+    const files = await readGlobalPluginFiles(
       tree,
       new DeterministicHasher(),
       BUILT,
@@ -49,7 +49,7 @@ describe("readMachinePluginFiles", () => {
   });
 
   it("reads nothing for a plugin whose source ships no agent and no skill in the tree", async () => {
-    const files = await readMachinePluginFiles(
+    const files = await readGlobalPluginFiles(
       tree,
       new DeterministicHasher(),
       BUILT,
@@ -60,9 +60,9 @@ describe("readMachinePluginFiles", () => {
     expect(files).toEqual([]);
   });
 
-  it("reads nothing for a tool that copies no machine file, which has no directory to write either", async () => {
+  it("reads nothing for a tool that copies no global file, which has no directory to write either", async () => {
     await expect(
-      assertMachineFilesWritable(
+      assertGlobalFilesWritable(
         new InMemoryFileAdapter(),
         "claude",
         undefined,
@@ -73,8 +73,8 @@ describe("readMachinePluginFiles", () => {
     ).rejects.toThrow("claude: no machine-scope directory is declared.");
   });
 
-  it("reads nothing for a tool that copies no machine file", async () => {
-    const files = await readMachinePluginFiles(
+  it("reads nothing for a tool that copies no global file", async () => {
+    const files = await readGlobalPluginFiles(
       tree,
       new DeterministicHasher(),
       BUILT,
@@ -86,7 +86,7 @@ describe("readMachinePluginFiles", () => {
   });
 });
 
-describe("assertMachineFilesWritable", () => {
+describe("assertGlobalFilesWritable", () => {
   const hasher = new DeterministicHasher();
   const HOME = "/home/me";
   const DIR = join(HOME, ".config", "opencode");
@@ -98,7 +98,7 @@ describe("assertMachineFilesWritable", () => {
     const fs = new InMemoryFileAdapter({}, hasher);
 
     await expect(
-      assertMachineFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
+      assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
     ).resolves.toBe(DIR);
   });
 
@@ -108,7 +108,7 @@ describe("assertMachineFilesWritable", () => {
       const fs = new InMemoryFileAdapter({}, hasher);
 
       await expect(
-        assertMachineFilesWritable(fs, "opencode", undefined, "aidd-dev", [file(path)], HOME)
+        assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file(path)], HOME)
       ).rejects.toThrow(`opencode: 'aidd-dev' path '${path}' escapes ${DIR}.`);
     }
   );
@@ -118,7 +118,7 @@ describe("assertMachineFilesWritable", () => {
     fs.setSymlink(under("agents"), "/elsewhere");
 
     await expect(
-      assertMachineFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
+      assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
     ).rejects.toThrow(`opencode: 'aidd-dev' parent '${under("agents")}' escapes ${DIR}.`);
   });
 
@@ -126,7 +126,7 @@ describe("assertMachineFilesWritable", () => {
     const fs = new InMemoryFileAdapter({ [under("agents", "a.md")]: "mine" }, hasher);
 
     await expect(
-      assertMachineFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
+      assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
     ).rejects.toThrow(
       `opencode: '${under("agents", "a.md")}' already exists and was not installed by aidd`
     );
@@ -146,7 +146,7 @@ describe("assertMachineFilesWritable", () => {
     ).withFiles(new Map([["agents/owned.md", "0".repeat(32)]]));
 
     await expect(
-      assertMachineFilesWritable(
+      assertGlobalFilesWritable(
         fs,
         "opencode",
         owned,

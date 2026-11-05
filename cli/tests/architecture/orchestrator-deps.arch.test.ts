@@ -21,7 +21,7 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // tool install, plugin prompt, settings sync, version, plus the machine-scope handoff.
   { path: "src/contexts/framework/application/setup-use-case.ts", injected: 11 },
   // Its machine-scope counterpart names the same stages for the machine: the machine manifest,
-  // source registration, the plugins' machine files, native activation, and the version each
+  // source registration, the plugins' global files, native activation, and the version each
   // registered tool records.
   {
     path: "src/contexts/framework/application/setup/setup-machine-scope-use-case.ts",
