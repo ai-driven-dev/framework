@@ -17,7 +17,7 @@ The title, body, and base ready to create.
    - Give the fewest concrete verification steps needed for the changed behavior.
      - State the expected result for each step.
      - Omit generic test commands and CI summaries; describe behavior a reviewer can verify instead.
-     - Use checkboxes for reviewer verification steps; check only steps actually verified. Record material verification gaps without implying they passed.
+     - Use unchecked checkboxes for reviewer verification steps. Record material verification gaps without implying they passed.
 3. **Proceed.** Apply any supplied overrides and pass the result to `03-create` without an approval round.
 
 ## Test
