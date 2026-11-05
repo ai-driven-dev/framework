@@ -4,7 +4,7 @@
  * host was seen sending (the repository's hook-payload fixtures); where a case was never seen,
  * the test name says it is derived from a captured payload.
  * OpenCode and Kilo receive what their bridge sends, so they are read through the bridge in
- * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all six here.
+ * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all five adapters here.
  */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -16,7 +16,7 @@ import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 // Beside this package, never the repository's: a mutation run mutates its own copy.
 const RUNTIME = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
-const HOSTS = ["claude", "codex", "copilot", "cursor", "opencode", "kilo"] as const;
+const HOSTS = ["claude", "codex", "copilot", "cursor", "bridge"] as const;
 
 const require = createRequire(import.meta.url);
 const fs = require("node:fs") as typeof import("node:fs");

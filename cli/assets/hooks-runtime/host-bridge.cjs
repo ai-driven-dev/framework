@@ -1,14 +1,14 @@
 "use strict";
 /**
- * OpenCode's side of the one interface every framework hook speaks: `readEvent()` turns
- * what the OpenCode bridge sends on stdin into a neutral event, `answer()` and `continueTurn()` print the host's own
- * answer. The build puts one such adapter per tool at `hooks/lib/host.cjs`; the plugin tree
- * ships Claude Code's. Node built-ins only; anything unreadable is no event, and prints nothing.
+ * OpenCode's and Kilo's side of the one interface every framework hook speaks: `readEvent()`
+ * turns what the host's bridge sends on stdin into a neutral event, `answer()` and `continueTurn()`
+ * print the host's own answer. Each host's descriptor stamps its name into `HOST` and the build
+ * puts the result at `hooks/lib/host.cjs`. Node built-ins only; anything unreadable is no event.
  */
 const fs = require("node:fs");
 const path = require("node:path");
 
-const HOST = "opencode";
+const HOST = "unstamped";
 const EVENTS = new Map([
   ["SessionStart", "SessionStart"],
   ["PostToolUse", "PostToolUse"],

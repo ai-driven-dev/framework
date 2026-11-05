@@ -2,7 +2,7 @@
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/aidd-context/lib/host.cjs
-script, identical to the host adapter host-opencode.cjs
+script, differs from the plugin source
 
 ## out-flat/.opencode/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source

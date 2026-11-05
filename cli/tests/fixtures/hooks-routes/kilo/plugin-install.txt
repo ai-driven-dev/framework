@@ -2,7 +2,7 @@
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-context/lib/host.cjs
-script, identical to the host adapter host-kilo.cjs
+script, differs from the plugin source
 
 ## project/.kilo/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
