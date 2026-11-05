@@ -149,7 +149,8 @@ describe("OTLP runtime wiring", () => {
     expect(automatic).toHaveBeenCalledWith(
       { ...options, home: "/profile", stateDir: "/profile/telemetry" },
       snapshot,
-      permits
+      permits,
+      undefined
     );
   });
 });

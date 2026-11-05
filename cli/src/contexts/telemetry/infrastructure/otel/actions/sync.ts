@@ -33,7 +33,7 @@ export interface SyncOptions {
   readonly onRepositoryUnavailable?: () => void;
   readonly onTitleUnavailable?: () => void;
   readonly titlesOnly?: boolean;
-  readonly admission?: { readonly cwd: string; readonly repositoryId: string };
+  readonly admission?: { readonly cwd: string; readonly repositoryId: string | null };
 }
 
 type RecordObject = Record<string, unknown>;
@@ -41,6 +41,12 @@ const object = (value: unknown): RecordObject => asPlainObject(value) ?? {};
 const array = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 const MAX_PAYLOAD = 2 * 1024 * 1024;
 const MAX_LINE = 32 * 1024 * 1024;
+
+export class OtelObservationTooLargeError extends Error {
+  constructor() {
+    super("An OTLP observation exceeds the receiver's 2 MiB limit.");
+  }
+}
 const INTERVAL_MS = 5000;
 const CLAUDE_METRICS = new Set([
   "claude_code.active_time.total",
@@ -315,14 +321,14 @@ export interface Transfer {
   readonly consentAt?: string;
 }
 
-/** Each item was separately consent-checked. Only points at the same instant and from the
- * same session are combined, with a hard upper bound matching the receiver. */
+/** Each item was separately consent-checked. The receiver's size limit remains mandatory. */
 export function packTransfers(
-  transfers: readonly Transfer[]
+  transfers: readonly Transfer[],
+  groupByTimestamp = true
 ): Array<{ transfer: Transfer; count: number; items: Transfer[] }> {
   const groups = new Map<string, Array<{ transfer: Transfer; count: number; items: Transfer[] }>>();
   for (const item of transfers) {
-    const key = `${item.signal}\0${item.at ?? ""}`;
+    const key = groupByTimestamp ? `${item.signal}\0${item.at ?? ""}` : item.signal;
     const root = item.signal === "logs" ? "resourceLogs" : "resourceMetrics";
     const resources = array(item.payload[root]);
     const batches = groups.get(key) ?? [];
@@ -331,7 +337,7 @@ export function packTransfers(
     const body = { [root]: merged };
     if (Buffer.byteLength(JSON.stringify(body)) > MAX_PAYLOAD) {
       if (Buffer.byteLength(JSON.stringify(item.payload)) > MAX_PAYLOAD)
-        throw new Error("An OTLP observation exceeds the receiver's 2 MiB limit.");
+        throw new OtelObservationTooLargeError();
       batches.push({ transfer: item, count: 1, items: [item] });
     } else if (last) {
       batches[batches.length - 1] = {
@@ -729,8 +735,10 @@ export interface BindingDetails {
   readonly binding: string;
   readonly conflict?: boolean;
   readonly identityProof?: {
-    readonly version: 1;
+    readonly version: 1 | 2;
     readonly admissionKey: string;
+    readonly cwdKey?: string;
+    readonly cloneKey?: string;
     readonly sources: IdentityEvidence[];
   };
 }
@@ -741,9 +749,14 @@ function readIdentityProof(
 ): BindingDetails["identityProof"] {
   const proof = object(value);
   if (
-    proof.version !== 1 ||
+    (proof.version !== 1 && proof.version !== 2) ||
     typeof proof.admissionKey !== "string" ||
     !/^[a-f0-9]{64}$/.test(proof.admissionKey) ||
+    (proof.version === 2 &&
+      (typeof proof.cwdKey !== "string" ||
+        !/^[a-f0-9]{64}$/.test(proof.cwdKey) ||
+        typeof proof.cloneKey !== "string" ||
+        !/^[a-f0-9]{64}$/.test(proof.cloneKey))) ||
     !Array.isArray(proof.sources) ||
     proof.sources.length === 0 ||
     proof.sources.length > 4
@@ -776,7 +789,14 @@ function readIdentityProof(
     });
   }
   if (seen.size !== keys.size || keys.size === 0) return undefined;
-  return { version: 1, admissionKey: proof.admissionKey, sources };
+  return {
+    version: proof.version as 1 | 2,
+    admissionKey: proof.admissionKey,
+    ...(proof.version === 2
+      ? { cwdKey: proof.cwdKey as string, cloneKey: proof.cloneKey as string }
+      : {}),
+    sources,
+  };
 }
 
 export async function readBindingDetails(

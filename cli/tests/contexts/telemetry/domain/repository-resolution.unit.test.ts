@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CloneIdentity } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   cwdKey,
-  ownerAt,
+  ownersAt,
   parseResolutions,
   type RepositoryResolution,
   renderResolutions,
@@ -119,18 +119,18 @@ describe("the clone that answers for a call", () => {
   const next = { ...resolution, clone: { ...CLONE, ino: "2", birthtimeMs: 5_000 } };
 
   it("is the only clone there is, whenever the call was made", () => {
-    expect(ownerAt([old], 0)).toBe(old);
-    expect(ownerAt([old], 1e12)).toBe(old);
+    expect(ownersAt([old], 0)).toEqual([old]);
+    expect(ownersAt([old], 1e12)).toEqual([old]);
   });
 
   it("is the latest clone born by then", () => {
-    expect(ownerAt([next, old], 4_999)).toBe(old);
-    expect(ownerAt([next, old], 5_000)).toBe(next);
-    expect(ownerAt([old, next], 9_000)).toBe(next);
+    expect(ownersAt([next, old], 4_999)).toEqual([old]);
+    expect(ownersAt([next, old], 5_000)).toEqual([next]);
+    expect(ownersAt([old, next], 9_000)).toEqual([next]);
   });
 
   it("is the first when the call is older than every clone", () => {
-    expect(ownerAt([next, old], 10)).toBe(old);
+    expect(ownersAt([next, old], 10)).toEqual([old]);
   });
 
   it("goes by the time ingest first saw the directory, where a clone has no birth time", () => {
@@ -144,12 +144,13 @@ describe("the clone that answers for a call", () => {
       clone: { ...next.clone, birthtimeMs: 0 },
       seen_at: "2026-10-05T00:00:00.000Z",
     };
-    expect(ownerAt([late, early], Date.parse("2026-10-04T00:00:00.000Z"))).toBe(early);
-    expect(ownerAt([early, late], Date.parse("2026-10-05T00:00:00.000Z"))).toBe(late);
+    expect(ownersAt([late, early], Date.parse("2026-10-04T00:00:00.000Z"))).toEqual([early]);
+    expect(ownersAt([early, late], Date.parse("2026-10-05T00:00:00.000Z"))).toEqual([late]);
   });
 
-  it("is the same whichever order the clones are given in", () => {
+  it("leaves tied birth times unresolved", () => {
     const tie = { ...old, clone: { ...old.clone, ino: "3" } };
-    expect(ownerAt([old, tie], 1_000)).toBe(ownerAt([tie, old], 1_000));
+    expect(ownersAt([old, tie], 1_000)).toEqual([old, tie]);
+    expect(ownersAt([tie, old], 1_000)).toEqual([tie, old]);
   });
 });

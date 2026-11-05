@@ -653,8 +653,7 @@ describe("where a call was made", () => {
 
   it("answers two spellings of a directory with one remembered resolution on a case-insensitive one", async () => {
     const s = setup({ caseInsensitive: true });
-    s.locator.directories.set("/Work/A", repository("/Work/A"));
-    s.optIn("/Work/A/.git");
+    s.locator.directories.set("/Work/A", repository("/Work/A", { clone: A }));
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/Work/A" })]);
     await s.ingest.execute();
     s.locator.directories.delete("/Work/A");
@@ -1048,6 +1047,41 @@ describe("a directory that is gone is judged by the clone it was seen in", () =>
 describe("a call is judged at its own time", () => {
   const EPOCH = "1970-01-01T00:00:00.000Z";
   const B = cloneOf("/work/a/.git", { ino: "99", birthtimeMs: 5_000 });
+
+  it("keeps tied macOS clone identities pending even when only one has consented", async () => {
+    const s = setup();
+    const current = cloneOf(A.path, { dev: "0" });
+    s.history.written.length = 0;
+    s.history.consented(A, "2026-10-01T00:00:00.000Z");
+    s.history.written.push({ kind: "close", token: tokenOf(A), at: "2026-10-05T00:00:00.000Z" });
+    s.history.consented(current, "2026-10-06T00:00:00.000Z");
+    s.resolutions.resolutions.set(resolutionKey("/work/a", A), sighting("/work/a", A));
+    s.locator.directories.set("/work/a", repository("/work/a", { clone: current }));
+    s.consents.clones.delete(cloneKey(A));
+    s.consents.cloneSays(current, grantedBy(current));
+    s.transcripts.files.set("/t/1.jsonl", [
+      line("old", 1, {}, "2026-10-04T00:00:00.000Z"),
+      line("gap", 2, {}, "2026-10-05T00:00:00.000Z"),
+      line("new", 3, {}, "2026-10-07T00:00:00.000Z"),
+    ]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records).toEqual([]);
+    expect(result.notStored["unreadable-consent"]).toBe(3);
+  });
+
+  it("does not choose between tied clones whose consent intervals overlap", async () => {
+    const s = setup();
+    const current = cloneOf(A.path, { dev: "0" });
+    s.history.consented(current);
+    s.resolutions.resolutions.set(resolutionKey("/work/a", A), sighting("/work/a", A));
+    s.locator.directories.set("/work/a", repository("/work/a", { clone: current }));
+    s.consents.clones.delete(cloneKey(A));
+    s.consents.cloneSays(current, grantedBy(current));
+    s.transcripts.files.set("/t/1.jsonl", [line("ambiguous", 1)]);
+    const result = await s.ingest.execute();
+    expect(s.ledger.records).toEqual([]);
+    expect(result.notStored["unreadable-consent"]).toBe(1);
+  });
 
   it("gives a clone two owners of one directory, each its own calls", async () => {
     const s = setup();

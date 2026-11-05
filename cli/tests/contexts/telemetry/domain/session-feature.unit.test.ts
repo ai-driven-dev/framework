@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AttributionFacts } from "../../../../src/contexts/telemetry/domain/report/attribution.js";
 import {
   coversConsentWindow,
+  sameSessionAdmission,
   sessionFeatureOf,
 } from "../../../../src/contexts/telemetry/domain/report/session-feature.js";
 import type { StoredUsage } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
@@ -55,7 +56,21 @@ describe("session feature binding", () => {
     expect(sessionFeatureOf([call, { ...call, git_branch: null }], declared)).toEqual({
       state: "ambiguous",
     });
+    expect(sessionFeatureOf([call, { ...call, repository_uncertain: true }], declared)).toEqual({
+      state: "ambiguous",
+    });
   });
+});
+
+it("keeps an uncertain repository unlinked while allowing the same session to continue", () => {
+  const uncertain = { feature: { state: "ambiguous" as const }, cwd: "/work", repositoryId: null };
+  expect(sameSessionAdmission(uncertain, uncertain)).toBe(true);
+  expect(sameSessionAdmission(uncertain, { ...uncertain, cwd: "/elsewhere" })).toBe(false);
+  const confirmed = {
+    ...uncertain,
+    feature: { state: "confirmed" as const, feature: "owner/repo#7", branch: "work" },
+  };
+  expect(sameSessionAdmission(confirmed, confirmed)).toBe(false);
 });
 
 it("never exports a cumulative metric across an off/on consent gap", () => {

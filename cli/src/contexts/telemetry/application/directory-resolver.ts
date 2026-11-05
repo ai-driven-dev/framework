@@ -7,10 +7,10 @@ import { repositoryIdOf } from "../domain/repository-identity.js";
 import {
   cwdKey,
   type NotStoredReason,
-  ownerAt,
+  ownersAt,
   type RepositoryResolution,
+  rememberResolution,
   resolutionKey,
-  sameResolution,
 } from "../domain/repository-resolution.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
 import { ConsentLog } from "./consent-log.js";
@@ -140,7 +140,13 @@ export class ResolutionRun {
     const directory = await this.directoryOf(cwd);
     if ("skipped" in directory) return directory;
     const instant = Date.parse(at);
-    const owner = ownerAt(directory.owners, instant);
+    const candidates = ownersAt(directory.owners, instant);
+    // Equal birth times cannot establish which clone made the call. Consent alone
+    // cannot identify the owner, so leave it pending rather than guessing.
+    if (candidates.length !== 1) return { skipped: "unreadable-consent" };
+    const selected = candidates[0] as RepositoryResolution;
+    // Another directory in this run may have revealed a changed origin for this clone.
+    const owner = this.remembered.get(resolutionKey(selected.dir, selected.clone)) ?? selected;
     if (this.unreadable.has(cloneKey(owner.clone))) return { skipped: "unreadable-consent" };
     const live = directory.current !== null && sameClone(directory.current.clone, owner.clone);
     if (!this.consents.covers(owner.clone, instant)) {
@@ -196,19 +202,13 @@ export class ResolutionRun {
     root: string,
     clone: CloneIdentity
   ): RepositoryResolution {
-    const key = resolutionKey(dir, clone);
-    const held = this.remembered.get(key);
-    const seen = {
-      dir,
-      repository_id: repositoryId,
-      root,
-      clone,
-      seen_at: held?.seen_at ?? this.environment.now().toISOString(),
-    };
-    if (sameResolution(held, seen)) return seen;
-    this.remembered.set(key, seen);
-    this.changed = true;
-    return seen;
+    const result = rememberResolution(
+      this.remembered,
+      { dir, repository_id: repositoryId, root, clone },
+      this.environment.now().toISOString()
+    );
+    if (result.changed) this.changed = true;
+    return result.resolution;
   }
 
   private ownersOf(dir: string): RepositoryResolution[] {

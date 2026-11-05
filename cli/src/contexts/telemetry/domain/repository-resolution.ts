@@ -1,6 +1,11 @@
 import { tryParseJson } from "../../../kernel/reading/json-file.js";
 import { asPlainObject } from "../../../kernel/reading/plain-object.js";
-import { type CloneIdentity, cloneKey, parseCloneIdentity } from "./consent/clone-identity.js";
+import {
+  type CloneIdentity,
+  cloneKey,
+  parseCloneIdentity,
+  sameClone,
+} from "./consent/clone-identity.js";
 import { compareText } from "./text-order.js";
 
 /** What a working directory was found to be, the first time it was seen alive in a clone. A
@@ -16,6 +21,8 @@ export interface RepositoryResolution {
   readonly clone: CloneIdentity;
   /** When ingest first saw the directory in this clone. */
   readonly seen_at: string;
+  /** Before a detected change, the origin of a call cannot be established. */
+  readonly repository_uncertain_before?: string | null;
 }
 
 /** The key a directory is remembered under. File systems that ignore case (macOS, Windows)
@@ -34,7 +41,73 @@ export function sameResolution(
   a: RepositoryResolution | undefined,
   b: RepositoryResolution
 ): boolean {
-  return a !== undefined && a.repository_id === b.repository_id && a.root === b.root;
+  return (
+    a !== undefined &&
+    a.repository_id === b.repository_id &&
+    a.root === b.root &&
+    a.repository_uncertain_before === b.repository_uncertain_before
+  );
+}
+
+/** Remember a detected repository change across all directories in the same clone. */
+export function rememberResolution(
+  resolutions: Map<string, RepositoryResolution>,
+  found: Omit<RepositoryResolution, "seen_at" | "repository_uncertain_before">,
+  at: string
+): { readonly resolution: RepositoryResolution; readonly changed: boolean } {
+  const key = resolutionKey(found.dir, found.clone);
+  const previous = resolutions.get(key);
+  const related = [...resolutions.entries()].filter(([, value]) =>
+    sameClone(value.clone, found.clone)
+  );
+  const changedRepository = related.some(
+    ([, value]) => value.repository_id !== found.repository_id
+  );
+  const boundaries = related.flatMap(([, value]) =>
+    value.repository_uncertain_before ? [value.repository_uncertain_before] : []
+  );
+  if (changedRepository) boundaries.push(at);
+  const uncertainBefore = related.some(([, value]) => value.repository_uncertain_before === null)
+    ? null
+    : boundaries.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1);
+  let changed = false;
+  if (changedRepository) {
+    for (const [otherKey, value] of related) {
+      const replacement = {
+        ...value,
+        repository_id: found.repository_id,
+        repository_uncertain_before: uncertainBefore,
+      };
+      if (!sameResolution(value, replacement)) {
+        resolutions.set(otherKey, replacement);
+        changed = true;
+      }
+    }
+  }
+  const resolution: RepositoryResolution = {
+    ...found,
+    // A root observed during opt-in establishes the first observation for its clone,
+    // including working directories first visited later.
+    seen_at:
+      previous?.seen_at ??
+      related.map(([, value]) => value.seen_at).sort((a, b) => Date.parse(a) - Date.parse(b))[0] ??
+      at,
+    ...(uncertainBefore !== undefined ? { repository_uncertain_before: uncertainBefore } : {}),
+  };
+  if (!sameResolution(resolutions.get(key), resolution)) {
+    resolutions.set(key, resolution);
+    changed = true;
+  }
+  return { resolution, changed };
+}
+
+export function repositoryUncertain(resolution: RepositoryResolution, at: string): boolean {
+  return (
+    Date.parse(at) < Date.parse(resolution.seen_at) ||
+    resolution.repository_uncertain_before === null ||
+    (resolution.repository_uncertain_before !== undefined &&
+      Date.parse(at) <= Date.parse(resolution.repository_uncertain_before))
+  );
 }
 
 /** The instant from which a clone answered for a directory: its birth, else the time ingest
@@ -45,22 +118,20 @@ function answeringFrom(resolution: RepositoryResolution): number {
     : Date.parse(resolution.seen_at);
 }
 
-/** The clone that answers for a call made at `at` in a directory several clones have lived in:
- * the latest to have started by then. A call older than all of them goes to the first, because
+/** The clones that may answer for a call made at `at` in a directory several clones have lived in:
+ * those latest to have started by then. A call older than all of them goes to the earliest, because
  * a clone with no birth time is known only from the day ingest first saw a directory in it, and
  * a call made before that day in a directory of its own is still its call. That is no consent
  * on its own: the owner's interval must cover the call, and none opens before the clone's `on`. */
-export function ownerAt(
+export function ownersAt(
   owners: readonly [RepositoryResolution, ...RepositoryResolution[]],
   at: number
-): RepositoryResolution {
-  const [first, ...later] = [...owners].sort(
-    (a, b) =>
-      answeringFrom(a) - answeringFrom(b) || compareText(resolutionKeyOf(a), resolutionKeyOf(b))
-  );
-  let owner = first as RepositoryResolution;
-  for (const candidate of later) if (answeringFrom(candidate) <= at) owner = candidate;
-  return owner;
+): readonly RepositoryResolution[] {
+  const eligible = owners.filter((owner) => answeringFrom(owner) <= at);
+  const candidates = eligible.length ? eligible : owners;
+  const times = candidates.map(answeringFrom);
+  const selected = eligible.length ? Math.max(...times) : Math.min(...times);
+  return candidates.filter((owner) => answeringFrom(owner) === selected);
 }
 
 function resolutionKeyOf(resolution: RepositoryResolution): string {
@@ -72,12 +143,31 @@ function parseResolution(value: unknown): RepositoryResolution | null {
   if (object === null) return null;
   const clone = parseCloneIdentity(object.clone);
   if (clone === null) return null;
-  const { dir, repository_id: repositoryId, root, seen_at: seenAt } = object;
+  const {
+    dir,
+    repository_id: repositoryId,
+    root,
+    seen_at: seenAt,
+    repository_uncertain_before: uncertainBefore,
+  } = object;
   if (typeof dir !== "string" || dir === "") return null;
   if (typeof repositoryId !== "string" || repositoryId === "") return null;
   if (typeof root !== "string") return null;
   if (typeof seenAt !== "string" || Number.isNaN(Date.parse(seenAt))) return null;
-  return { dir, repository_id: repositoryId, root, clone, seen_at: seenAt };
+  const uncertainty =
+    uncertainBefore === undefined
+      ? undefined
+      : typeof uncertainBefore === "string" && !Number.isNaN(Date.parse(uncertainBefore))
+        ? uncertainBefore
+        : null;
+  return {
+    dir,
+    repository_id: repositoryId,
+    root,
+    clone,
+    seen_at: seenAt,
+    ...(uncertainty !== undefined ? { repository_uncertain_before: uncertainty } : {}),
+  };
 }
 
 /** The format of `roots.json`. A file of another format, among them every file written before

@@ -7,6 +7,7 @@ import {
   ReportUsageUseCase,
   type RequestedFilters,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
+import { ReportLedger } from "../../../../../src/contexts/telemetry/application/report/repository-uncertainty.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
@@ -21,6 +22,7 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
+import { rememberResolution } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import {
   ALREADY_MIGRATED,
   AUTUMN,
@@ -74,13 +76,15 @@ function setup(options: { refused?: boolean } = {}) {
   const snapshotStore = new InMemorySnapshots(events);
   const sessions = new InMemorySessions(events);
   const identity = new InMemoryIdentity();
+  const resolutions = new InMemoryResolutions();
+  const directories = new DirectoryResolver(locator, consents, resolutions, history, {
+    caseInsensitiveFileSystem: false,
+    now: () => new Date("2026-10-09T00:00:00.000Z"),
+  });
   const ingest = new IngestUsageUseCase(
     [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
     ledger,
-    new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
-      caseInsensitiveFileSystem: false,
-      now: () => new Date("2026-10-09T00:00:00.000Z"),
-    }),
+    directories,
     new SnapshotBindingsUseCase(
       bindings,
       snapshotStore,
@@ -98,17 +102,33 @@ function setup(options: { refused?: boolean } = {}) {
     remote: "https://github.com/acme/widgets.git",
     rootCommit: "c0ffee",
   });
+  rememberResolution(
+    resolutions.resolutions,
+    { dir: "/work/a", root: "/work/a", clone: cloneOf("/work/a/.git"), repository_id: widgets() },
+    "2026-01-01T00:00:00.000Z"
+  );
   consents.cloneSays(cloneOf("/work/a/.git"), grantedBy(cloneOf("/work/a/.git")));
   history.consented(cloneOf("/work/a/.git"));
   const report = new ReportUsageUseCase(
     ingest,
-    ledger,
+    new ReportLedger(ledger, directories),
     new DeclaredBindings(sessions, snapshotStore),
     identity,
     locator,
     { refusedByEnvironment: options.refused ?? false }
   );
-  return { transcripts, ledger, bindings, sessions, identity, report, events, locator, consents };
+  return {
+    transcripts,
+    ledger,
+    bindings,
+    sessions,
+    identity,
+    report,
+    events,
+    locator,
+    consents,
+    resolutions,
+  };
 }
 
 async function rows(s: ReturnType<typeof setup>, axis: ReportAxis, period = ANY) {
@@ -118,6 +138,39 @@ async function rows(s: ReturnType<typeof setup>, axis: ReportAxis, period = ANY)
 }
 
 describe("reporting usage", () => {
+  it("keeps tokens but stops attributing old usage after an origin change, even when it changes back", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    expect(await rows(s, "repository")).toEqual([[{ kind: "value", value: widgets() }, 11]]);
+    const original = s.locator.directories.get("/work/a");
+    if (original?.status !== "repository") throw new Error("missing repository");
+    s.locator.directories.set("/work/a", {
+      ...original,
+      remote: "https://github.com/acme/other.git",
+    });
+    expect(await rows(s, "repository")).toEqual([[{ kind: "absent" }, 11]]);
+    expect(await rows(s, "task")).toEqual([[{ kind: "unattributed", reason: "no-binding" }, 11]]);
+    s.locator.directories.set("/work/a", original);
+    expect(await rows(s, "repository")).toEqual([[{ kind: "absent" }, 11]]);
+  });
+
+  it("keeps tokens without repository attribution when resolution history was lost", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    expect(await rows(s, "repository")).toEqual([[{ kind: "value", value: widgets() }, 11]]);
+    s.resolutions.resolutions.clear();
+    expect(await rows(s, "repository")).toEqual([[{ kind: "absent" }, 11]]);
+  });
+
+  it("keeps tokens without repository or task attribution when a directory is gone", async () => {
+    const s = setup();
+    s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);
+    expect(await rows(s, "repository")).toEqual([[{ kind: "value", value: widgets() }, 11]]);
+    s.locator.directories.delete("/work/a");
+    expect(await rows(s, "repository")).toEqual([[{ kind: "absent" }, 11]]);
+    expect(await rows(s, "task")).toEqual([[{ kind: "unattributed", reason: "no-binding" }, 11]]);
+  });
+
   it("settles a call held in two partitions under the ledger lock", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 10, "2026-10-07T10:00:00.000Z")]);

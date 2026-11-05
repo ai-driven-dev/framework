@@ -52,6 +52,28 @@ function setup(history = new InMemoryConsentHistory()) {
 }
 
 describe("consent for an observed session", () => {
+  it("proves the consented clone and refuses a replacement at the same path", async () => {
+    const s = setup();
+    const original = await s.checker.proof(admission, at, start, "2026-10-07T11:00:00.000Z");
+    expect(original).toMatch(/^[a-f0-9]{64}$/);
+    expect(await s.checker.proof(admission, at, start, "2026-10-07T11:00:00.000Z")).toBe(original);
+    const replacement = cloneOf(`${cwd}/.git`, {
+      ino: "9",
+      birthtimeMs: Date.parse("2026-10-07T10:45:00.000Z"),
+    });
+    s.locator.directories.set(cwd, {
+      status: "repository",
+      root: cwd,
+      mainRoot: cwd,
+      clone: replacement,
+      remote: null,
+      rootCommit: repo,
+    });
+    s.history.consented(replacement, "2026-10-07T10:45:00.000Z");
+    s.source.cloneSays(replacement, grantedBy(replacement));
+    expect(await s.checker.proof(admission, at, start, "2026-10-07T11:00:00.000Z")).toBeNull();
+  });
+
   it("allows an instant or whole interval only inside one clone's consent", async () => {
     const s = setup();
     expect(await s.checker.permits(admission, at)).toBe("allow");
@@ -107,6 +129,42 @@ describe("consent for an observed session", () => {
     expect(await s.checker.permits({ ...admission, repositoryId: "other" }, at)).toBe("deny");
   });
 
+  it("allows unlinked token observations without a repository only for the same consented clone", async () => {
+    const s = setup();
+    const uncertain = { ...admission, repositoryId: null };
+    expect(await s.checker.permits(uncertain, at, start)).toBe("allow");
+    expect(
+      await s.checker.permits(
+        { ...uncertain, feature: { state: "confirmed", feature: "owner/repo#1", branch: "work" } },
+        at
+      )
+    ).toBe("unknown");
+    const replacement = cloneOf(`${cwd}/.git`, {
+      ino: "9",
+      birthtimeMs: Date.parse("2026-10-07T10:45:00.000Z"),
+    });
+    s.resolutions.resolutions.set(resolutionKey(cwd, s.clone), {
+      dir: cwd,
+      root: cwd,
+      repository_id: repo,
+      clone: s.clone,
+      seen_at: "2026-10-07T09:00:00.000Z",
+    });
+    s.locator.directories.set(cwd, {
+      status: "repository",
+      root: cwd,
+      mainRoot: cwd,
+      clone: replacement,
+      remote: null,
+      rootCommit: repo,
+    });
+    s.history.consented(replacement, "2026-10-07T10:45:00.000Z");
+    s.source.cloneSays(replacement, grantedBy(replacement));
+    expect(await s.checker.permits(uncertain, at, undefined, "2026-10-07T11:00:00.000Z")).toBe(
+      "deny"
+    );
+  });
+
   it.each(["start", "end"] as const)(
     "keeps a window unknown when its %s is unreadable and its other end is denied",
     async (unreadable) => {
@@ -155,7 +213,6 @@ describe("consent for an observed session", () => {
   it.each([
     [{ ...admission, cwd: null }, at, undefined],
     [{ ...admission, cwd: "" }, at, undefined],
-    [{ ...admission, repositoryId: null }, at, undefined],
     [admission, "invalid", undefined],
     [admission, at, "invalid"],
     [admission, start, at],

@@ -10,6 +10,8 @@ import { USAGE_AGENTS, USAGE_TOOLS, type UsageRecord } from "./usage-record.js";
  * be gone by the time anyone reports. */
 export interface StoredUsage extends UsageRecord {
   readonly repository_id: string;
+  /** The ID is retained for clone consent, but must not be displayed or attributed. */
+  readonly repository_uncertain?: true;
 }
 
 const COUNTERS = [
@@ -144,6 +146,7 @@ function isStoredUsage(
     typeof object.at === "string" &&
     dayOf(object.at) !== null &&
     isText(object.repository_id) &&
+    (object.repository_uncertain === undefined || object.repository_uncertain === true) &&
     isNullableText(object.tool_version) &&
     isNullableText(object.model) &&
     isNullableText(object.cwd) &&

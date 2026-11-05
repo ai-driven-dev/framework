@@ -44,6 +44,7 @@ The local ledger and provider OTLP captures are separate sources. The OTLP sync 
 - `aidd telemetry off` stops local measurement for the current clone; it does **not** disable provider exporters or stop the OTLP collector. A process started with `AIDD_TELEMETRY=0` refuses local measurement and sync, not raw collection; changing an environment variable does not change an already running process.
 - `aidd telemetry forget` previews or deletes local usage measurement. It does **not** delete OTLP capture files, sync state, or data already received by Gouvernail. Production deletion is not available; the requested production policy is to disallow it.
 - Raw captures are private local files, but have no automatic retention limit. They can contain sensitive content. The local collector and sync processes do not restart automatically.
+- Automatic sync sends each session's capture line as one request. A line over 2 MiB remains pending and is reported; later lines continue. A timeout after receiver acceptance cannot guarantee exactly-once delivery without receiver-side idempotence.
 
 ### Three different identifiers
 
@@ -74,6 +75,9 @@ Codex: trust the plugin's hooks once, with `/hooks` in the TUI.
 - Only clones that ran `on` are measured, from then on.
 - A task and a ticket come only from what you declare.
 - Each model call counts once, whatever the axis.
+- If an origin change is observed in the same clone, usage before its detection keeps its tokens but loses repository and task attribution. Changes made and reversed between observations, or changes overwritten before this protection existed, cannot be detected retrospectively.
+- Repository attribution is unavailable for usage older than the first recorded observation of its clone. If the local resolution history is lost, attribution remains unavailable for earlier usage.
+- A directory that is no longer available cannot establish its current origin, so its usage keeps its tokens without repository or task attribution.
 - Where you are asked for a task, and the limits: see the usage contract.
 
 ## Local usage measurement privacy

@@ -116,7 +116,7 @@ export function axisValueOf(
     case "day":
       return value(new Date(record.at).toISOString().slice(0, 10));
     case "repository":
-      return value(record.repository_id);
+      return value(record.repository_uncertain ? null : record.repository_id);
     case "task":
       return attribution.state === "attributed"
         ? value(attribution.task)

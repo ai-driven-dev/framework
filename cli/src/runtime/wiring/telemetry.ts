@@ -13,6 +13,7 @@ import { StoredUsageMigration } from "../../contexts/telemetry/application/legac
 import { ReadUsageUseCase } from "../../contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsageUseCase } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
+import { ReportLedger } from "../../contexts/telemetry/application/report/repository-uncertainty.js";
 import { SessionConsent } from "../../contexts/telemetry/application/report/session-consent.js";
 import { SessionFeatureUseCase } from "../../contexts/telemetry/application/report/session-feature-use-case.js";
 import { SnapshotBindingsUseCase } from "../../contexts/telemetry/application/snapshot-bindings-use-case.js";
@@ -181,7 +182,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     snapshotBindingsUseCase,
     reportUsageUseCase: new ReportUsageUseCase(
       ingestUsageUseCase,
-      ledger,
+      new ReportLedger(ledger, directoryResolver),
       new DeclaredBindings(sessions, snapshotStore),
       identity,
       locator,
@@ -189,7 +190,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     ),
     sessionFeatureUseCase: new SessionFeatureUseCase(
       ingestUsageUseCase,
-      ledger,
+      new ReportLedger(ledger, directoryResolver),
       new DeclaredBindings(sessions, snapshotStore),
       new SessionConsent(ledger, directoryResolver, consentHistory)
     ),

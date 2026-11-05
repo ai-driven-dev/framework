@@ -1,6 +1,6 @@
 import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
 import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
-import type { LeftOutReason, UsageLedger } from "../../domain/ports/usage-ledger.js";
+import type { LeftOutReason } from "../../domain/ports/usage-ledger.js";
 import { attribute } from "../../domain/report/attribution.js";
 import { inPeriod, type Period, windowOf } from "../../domain/report/period.js";
 import {
@@ -20,8 +20,8 @@ import {
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import type { StoredUsage } from "../../domain/stored-usage.js";
 import type { IngestResult, IngestUsageUseCase } from "../ingest-usage-use-case.js";
-import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
+import type { ReportLedger } from "./repository-uncertainty.js";
 
 /** The filters as typed: a session or repository may be the start of an id. A repository is
  * either typed, or `--repository .`, the directory `here` whose repository is asked for; never
@@ -105,7 +105,7 @@ export class ReportUsageUseCase {
   constructor(
     /** Only its run is used: whatever it found is the report's `run`, never a figure. */
     private readonly ingest: Pick<IngestUsageUseCase, "execute">,
-    private readonly ledger: UsageLedger,
+    private readonly ledger: ReportLedger,
     private readonly declared: DeclaredBindings,
     private readonly identity: PersonIdentityStore,
     private readonly locator: RepositoryLocator,
@@ -123,10 +123,8 @@ export class ReportUsageUseCase {
     if (located === null) return { status: "not-a-repository" };
     const { filesRead, unrecognised, notStored, consentLogDamaged, oldestTranscriptAt } =
       await this.ingest.execute();
-    const [held, leftOut] = await this.ledger.exclusively(async () => [
-      await settleLedger(this.ledger, windowOf(request.period)),
-      await this.ledger.leftOut.counts(),
-    ]);
+    const held = await this.ledger.read(windowOf(request.period), undefined, true);
+    const leftOut = held.leftOut as Readonly<Record<LeftOutReason, number>>;
     const records = held.records.filter((record) => inPeriod(record.at, request.period));
     const session = resolvedIn(records, "session", asked.session);
     if ("status" in session) return session;
@@ -174,7 +172,13 @@ function resolvedIn(
   if (typed === null) return { id: null };
   const found = resolveId(
     typed,
-    records.map((record) => (flag === "session" ? record.session_id : record.repository_id))
+    records.flatMap((record) =>
+      flag === "session"
+        ? [record.session_id]
+        : record.repository_uncertain
+          ? []
+          : [record.repository_id]
+    )
   );
   if (found.kind === "ambiguous") return { status: "ambiguous", flag, typed, ids: found.ids };
   return { id: found.kind === "found" ? found.id : typed };

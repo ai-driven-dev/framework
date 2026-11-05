@@ -24,6 +24,7 @@ import {
   evidenceTransfers,
   type Identity,
   type IdentityEvidence,
+  OtelObservationTooLargeError,
   observeIdentity,
   packTransfers,
   readBindingDetails,
@@ -47,11 +48,15 @@ interface Pending {
   /** This range was admitted but could not be delivered; preserve it even if later denied. */
   readonly hold?: boolean;
   readonly admissionKey?: string;
+  readonly cwdKey?: string;
+  readonly cloneKey?: string;
 }
 interface SessionState {
   readonly identity: Identity;
   readonly identityEvidence: IdentityEvidence[];
   identityAdmissionKey: string | null;
+  identityAdmission: SessionAdmission | null;
+  identityCloneKey: string | null;
   previousLinkUnverified: boolean;
   savedIdentity: BindingDetails | null;
   mayHaveLinked: boolean;
@@ -78,6 +83,9 @@ function asOptions(options: AllOptions, session: string): SyncOptions {
 }
 function admissionKey(admission: SessionAdmission): string {
   return admissionFingerprint(admission);
+}
+function cwdKey(cwd: string): string {
+  return createHash("sha256").update(cwd).digest("hex");
 }
 async function privateDirectory(path: string) {
   await mkdir(path, { recursive: true, mode: 0o700 });
@@ -135,7 +143,7 @@ async function saveCheckpoint(path: string, value: Checkpoint) {
 
 function pendingLine(item: Pending): string {
   if (item.hold && !item.admissionKey) throw new Error("Sync pending admission is unavailable.");
-  return `${item.offset} ${item.length}${item.hold ? ` hold ${item.admissionKey}` : ""}\n`;
+  return `${item.offset} ${item.length}${item.hold ? ` hold ${item.admissionKey}${item.cwdKey && item.cloneKey ? ` ${item.cwdKey} ${item.cloneKey}` : ""}` : ""}\n`;
 }
 
 /** A pending journal contains only byte ranges, not source text or provider identities. */
@@ -179,7 +187,8 @@ async function pendingRanges(path: string): Promise<Pending[]> {
     const lines = contents.split("\n");
     lines.pop(); // A crash can leave an incomplete last append; its source line is replayed.
     for (const line of lines) {
-      const parts = /^(\d+) (\d+)(?: hold ([a-f0-9]{64}))?$/.exec(line);
+      const parts =
+        /^(\d+) (\d+)(?: hold ([a-f0-9]{64})(?: ([a-f0-9]{64}) ([a-f0-9]{64}))?)?$/.exec(line);
       if (!parts) throw new Error("Sync pending journal is invalid.");
       const offset = Number(parts[1]);
       const length = Number(parts[2]);
@@ -194,11 +203,18 @@ async function pendingRanges(path: string): Promise<Pending[]> {
       const previous = ranges.get(rangeKey);
       if (previous?.admissionKey && parts[3] && previous.admissionKey !== parts[3])
         throw new Error("Sync pending journal has conflicting admissions.");
+      if (
+        (previous?.cwdKey && parts[4] && previous.cwdKey !== parts[4]) ||
+        (previous?.cloneKey && parts[5] && previous.cloneKey !== parts[5])
+      )
+        throw new Error("Sync pending journal has conflicting clone proofs.");
       ranges.set(rangeKey, {
         offset,
         length,
         hold: !!parts[3] || previous?.hold,
         admissionKey: parts[3] ?? previous?.admissionKey,
+        cwdKey: parts[4] ?? previous?.cwdKey,
+        cloneKey: parts[5] ?? previous?.cloneKey,
       });
     }
     return [...ranges.values()];
@@ -252,7 +268,13 @@ export async function syncAllOtel(
     at: string,
     start?: string,
     current?: string
-  ) => Promise<Consent>
+  ) => Promise<Consent>,
+  cloneProof?: (
+    admission: SessionAdmission,
+    at: string,
+    start?: string,
+    current?: string
+  ) => Promise<string | null>
 ) {
   const base = asOptions(options, "auto");
   destination(base, "logs");
@@ -308,6 +330,7 @@ export async function syncAllOtel(
     const sessions = new Map<string, SessionState>();
     let sent = 0;
     let denied = 0;
+    const oversized = new Set<string>();
     const pendingDirectory = join(directory, `${key(options, "auto")}.pending`);
     await privateDirectory(pendingDirectory);
     const pendingPath = (id: string) => join(pendingDirectory, `${key(options, id)}.jsonl`);
@@ -324,6 +347,8 @@ export async function syncAllOtel(
         },
         identityEvidence: [] as IdentityEvidence[],
         identityAdmissionKey: null,
+        identityAdmission: null,
+        identityCloneKey: null,
         previousLinkUnverified: saved?.mayHaveLinked === true,
         savedIdentity: saved?.details ?? null,
         mayHaveLinked: saved?.mayHaveLinked === true,
@@ -352,6 +377,8 @@ export async function syncAllOtel(
           },
           identityEvidence: [],
           identityAdmissionKey: null,
+          identityAdmission: null,
+          identityCloneKey: null,
           previousLinkUnverified: saved.mayHaveLinked,
           savedIdentity: saved.details,
           mayHaveLinked: saved.mayHaveLinked,
@@ -383,24 +410,111 @@ export async function syncAllOtel(
       const saved = state.savedIdentity;
       const proof = saved?.identityProof;
       if (
+        saved &&
+        proof?.version === 2 &&
+        proof.admissionKey !== admissionKey(admission) &&
+        admission.cwd &&
+        admission.repositoryId === null &&
+        admission.feature.state === "ambiguous" &&
+        proof.cwdKey === cwdKey(admission.cwd) &&
+        proof.cloneKey &&
+        cloneProof &&
+        state.mayHaveLinked &&
+        saved.binding !== "invalidated"
+      ) {
+        const matches = async () => {
+          if (
+            !(await stillPermitted(
+              id,
+              admission,
+              evidenceTransfers(proof.sources),
+              admission.feature
+            ))
+          )
+            return false;
+          const now = new Date().toISOString();
+          for (const source of proof.sources)
+            if ((await cloneProof(admission, source.at, source.start, now)) !== proof.cloneKey)
+              return false;
+          return true;
+        };
+        if (!(await matches())) return;
+        const event = bindingTransfer(
+          asOptions(options, id),
+          { values: new Map(saved.identity), conflict: saved.conflict === true },
+          { state: "ambiguous" }
+        );
+        if (!event || !(await deliver(id, event, matches))) return;
+        sent++;
+        await saveBindingState(
+          join(directory, `${key(options, id)}.json`),
+          directory,
+          { session: id, identity: [], binding: "invalidated" },
+          false
+        );
+        state.binding = "invalidated";
+        state.mayHaveLinked = false;
+        state.previousLinkUnverified = false;
+        state.savedIdentity = null;
+        return;
+      }
+      if (
         !saved ||
         !proof ||
         proof.admissionKey !== admissionKey(admission) ||
         !(await stillPermitted(id, admission, evidenceTransfers(proof.sources)))
       )
         return;
+      if (proof.version === 2) {
+        if (
+          !admission.cwd ||
+          proof.cwdKey !== cwdKey(admission.cwd) ||
+          !proof.cloneKey ||
+          !cloneProof
+        )
+          return;
+        const now = new Date().toISOString();
+        for (const source of proof.sources)
+          if ((await cloneProof(admission, source.at, source.start, now)) !== proof.cloneKey)
+            return;
+      }
       state.identity.values.clear();
       for (const [name, value] of saved.identity) state.identity.values.set(name, value);
       state.identity.conflict ||= saved.conflict === true;
       state.identityEvidence.splice(0, state.identityEvidence.length, ...proof.sources);
       state.identityAdmissionKey = proof.admissionKey;
+      state.identityAdmission = admission;
+      state.identityCloneKey = proof.version === 2 ? (proof.cloneKey ?? null) : null;
       state.previousLinkUnverified = false;
       state.savedIdentity = null;
     };
-    const stateProof = (state: SessionState): BindingDetails["identityProof"] =>
-      state.identityAdmissionKey && state.identityEvidence.length
-        ? { version: 1, admissionKey: state.identityAdmissionKey, sources: state.identityEvidence }
-        : undefined;
+    const stateProof = async (state: SessionState): Promise<BindingDetails["identityProof"]> => {
+      if (!state.identityAdmissionKey || !state.identityEvidence.length) return undefined;
+      const admission = state.identityAdmission;
+      if (cloneProof && admission?.cwd) {
+        let clone: string | null = null;
+        const now = new Date().toISOString();
+        for (const source of state.identityEvidence) {
+          const found = await cloneProof(admission, source.at, source.start, now);
+          if (!found || (clone && found !== clone)) return undefined;
+          clone = found;
+        }
+        if (clone && state.identityCloneKey === clone)
+          return {
+            version: 2,
+            admissionKey: state.identityAdmissionKey,
+            cwdKey: cwdKey(admission.cwd),
+            cloneKey: clone,
+            sources: state.identityEvidence,
+          };
+        return undefined;
+      }
+      return {
+        version: 1,
+        admissionKey: state.identityAdmissionKey,
+        sources: state.identityEvidence,
+      };
+    };
     const deliver = async (id: string, transfer: Transfer, guard: () => Promise<boolean>) => {
       try {
         await send(asOptions(options, id), transfer, guard);
@@ -410,31 +524,107 @@ export async function syncAllOtel(
         throw error;
       }
     };
+    const proofForTransfers = async (
+      admission: SessionAdmission,
+      transfers: readonly Transfer[]
+    ) => {
+      if (!cloneProof || !admission.cwd || transfers.length === 0) return null;
+      const now = new Date().toISOString();
+      let clone: string | null = null;
+      for (const transfer of transfers) {
+        if (!transfer.at || (transfer.signal === "metrics" && !transfer.start)) return null;
+        const found = await cloneProof(admission, transfer.at, transfer.start, now);
+        if (!found || (clone && found !== clone)) return null;
+        clone = found;
+      }
+      return clone;
+    };
+    const reconcileIdentity = async (
+      id: string,
+      admission: SessionAdmission,
+      state: SessionState
+    ) => {
+      if (!state.identityEvidence.length) return true;
+      const current = (await snapshot()).get(id);
+      if (!current || !sameSessionAdmission(admission, current)) return false;
+      if (state.identityAdmissionKey === admissionKey(admission)) {
+        const consentAt = new Date().toISOString();
+        let allowed = true;
+        for (const item of evidenceTransfers(state.identityEvidence))
+          if (!item.at || (await permits(current, item.at, item.start, consentAt)) !== "allow") {
+            allowed = false;
+            break;
+          }
+        if (allowed) return true;
+      }
+
+      const previous = state.identityAdmission;
+      if (
+        state.mayHaveLinked &&
+        state.binding !== "invalidated" &&
+        previous?.cwd &&
+        previous.repositoryId &&
+        state.identityAdmissionKey === admissionKey(previous) &&
+        admission.cwd === previous.cwd &&
+        admission.repositoryId === null &&
+        admission.feature.state === "ambiguous" &&
+        (!cloneProof ||
+          (state.identityCloneKey &&
+            (await proofForTransfers(admission, evidenceTransfers(state.identityEvidence))) ===
+              state.identityCloneKey))
+      ) {
+        const event = bindingTransfer(asOptions(options, id), state.identity, {
+          state: "ambiguous",
+        });
+        if (event) {
+          const evidence = [event, ...evidenceTransfers(state.identityEvidence)];
+          if (
+            !(await deliver(id, event, () =>
+              stillPermitted(id, admission, evidence, admission.feature)
+            ))
+          )
+            return false;
+          sent++;
+          state.binding = "invalidated";
+          await saveBindingState(
+            join(directory, `${key(options, id)}.json`),
+            directory,
+            {
+              session: id,
+              identity: [],
+              binding: state.binding,
+            },
+            false
+          );
+          state.mayHaveLinked = false;
+        }
+      }
+      if (state.mayHaveLinked) state.previousLinkUnverified = true;
+      state.identity.values.clear();
+      state.identityEvidence.length = 0;
+      state.identityAdmissionKey = null;
+      state.identityAdmission = null;
+      state.identityCloneKey = null;
+      return true;
+    };
     const process = async (
       id: string,
       items: readonly Transfer[],
       admission: SessionAdmission,
       state: SessionState,
-      hold = false
+      hold = false,
+      expectedClone?: string,
+      captured?: { clone: string | null }
     ): Promise<"resolved" | "unknown" | "hold"> => {
       let wait = false;
+      let rejected = 0;
       const allowed: Transfer[] = [];
       const verdicts = new Map<string, Consent>();
       await restoreIdentity(id, admission, state);
-      const currentAdmissionKey = admissionKey(admission);
-      if (
-        state.identityEvidence.length > 0 &&
-        (state.identityAdmissionKey !== currentAdmissionKey ||
-          !(await stillPermitted(id, admission, evidenceTransfers(state.identityEvidence))))
-      ) {
-        if (state.mayHaveLinked) state.previousLinkUnverified = true;
-        state.identity.values.clear();
-        state.identityEvidence.length = 0;
-        state.identityAdmissionKey = null;
-      }
+      if (!(await reconcileIdentity(id, admission, state))) return "unknown";
       for (const transfer of items) {
         if (!transfer.at || (transfer.signal === "metrics" && !transfer.start)) {
-          denied++;
+          rejected++;
           continue;
         }
         const stamp = `${transfer.at}\0${transfer.start ?? ""}`;
@@ -445,12 +635,49 @@ export async function syncAllOtel(
         }
         if (verdict === "unknown") wait = true;
         else if (verdict === "deny") {
+          // A repository can change between the snapshot and the consent check. A denial
+          // against that stale admission is not evidence that the call lacked consent.
+          if (!sameSessionAdmission(admission, (await snapshot()).get(id))) return "unknown";
           if (hold) wait = true;
-          else denied++;
+          else rejected++;
         } else {
           allowed.push(transfer);
-          observeIdentity(transfer, asOptions(options, id), state.identity, state.identityEvidence);
-          if (state.identityEvidence.length) state.identityAdmissionKey = currentAdmissionKey;
+        }
+      }
+      // Retrying a partly sent source line would resend its earlier observations.
+      if (wait) return hold ? "hold" : "unknown";
+      let batches: ReturnType<typeof packTransfers>;
+      try {
+        batches = packTransfers(allowed, false);
+      } catch (error) {
+        if (!(error instanceof OtelObservationTooLargeError)) throw error;
+        batches = [];
+      }
+      if (allowed.length > 0 && batches.length !== 1) {
+        if (!oversized.has(id)) {
+          console.error(
+            "A captured OTLP line exceeds the 2 MiB delivery limit; it remains pending."
+          );
+          oversized.add(id);
+        }
+        return hold ? "hold" : "unknown";
+      }
+      const clone = allowed.length ? await proofForTransfers(admission, allowed) : null;
+      if (
+        allowed.length &&
+        cloneProof &&
+        (!clone ||
+          (expectedClone && clone !== expectedClone) ||
+          (state.identityCloneKey && state.identityCloneKey !== clone))
+      )
+        return hold ? "hold" : "unknown";
+      if (captured) captured.clone = clone;
+      for (const transfer of allowed) {
+        observeIdentity(transfer, asOptions(options, id), state.identity, state.identityEvidence);
+        if (state.identityEvidence.length) {
+          state.identityAdmissionKey = admissionKey(admission);
+          state.identityAdmission = admission;
+          state.identityCloneKey ??= clone;
         }
       }
       if (state.identity.conflict && !state.previousLinkUnverified)
@@ -462,21 +689,31 @@ export async function syncAllOtel(
             identity: [...state.identity.values],
             binding: state.binding,
             conflict: true,
-            identityProof: stateProof(state),
+            identityProof: await stateProof(state),
           },
           state.mayHaveLinked
         );
-      for (const batch of packTransfers(allowed)) {
-        if (!(await deliver(id, batch.transfer, () => stillPermitted(id, admission, batch.items))))
+      for (const batch of batches) {
+        if (
+          !(await deliver(
+            id,
+            batch.transfer,
+            async () =>
+              (await stillPermitted(id, admission, batch.items)) &&
+              (!clone || (await proofForTransfers(admission, batch.items)) === clone)
+          ))
+        )
           return "hold";
         sent += batch.count;
       }
-      return wait ? (hold ? "hold" : "unknown") : "resolved";
+      denied += rejected;
+      return "resolved";
     };
     const bindings = async () => {
       for (const [id, state] of sessions) {
         const admission = held.get(id);
         if (admission) await restoreIdentity(id, admission, state);
+        if (admission && !(await reconcileIdentity(id, admission, state))) continue;
         if (!admission || state.previousLinkUnverified) continue;
         const feature: SessionFeature = admission.feature;
         const next =
@@ -515,7 +752,7 @@ export async function syncAllOtel(
               session: id,
               identity: [...state.identity.values],
               binding: state.binding,
-              identityProof: stateProof(state),
+              identityProof: await stateProof(state),
             });
           }
         } else if (
@@ -525,21 +762,31 @@ export async function syncAllOtel(
         ) {
           const event = bindingTransfer(asOptions(options, id), state.identity, feature);
           if (event) {
+            const proof = await stateProof(state);
+            if (cloneProof && proof?.version !== 2) continue;
             await saveBindingState(join(directory, `${key(options, id)}.json`), directory, {
               session: id,
               identity: [...state.identity.values],
               binding: next,
-              identityProof: stateProof(state),
+              identityProof: proof,
             });
             state.mayHaveLinked = true;
             if (
-              !(await deliver(id, event, () =>
-                stillPermitted(
-                  id,
-                  admission,
-                  [event, ...evidenceTransfers(state.identityEvidence)],
-                  feature
-                )
+              !(await deliver(
+                id,
+                event,
+                async () =>
+                  (await stillPermitted(
+                    id,
+                    admission,
+                    [event, ...evidenceTransfers(state.identityEvidence)],
+                    feature
+                  )) &&
+                  (!proof?.cloneKey ||
+                    (await proofForTransfers(
+                      admission,
+                      evidenceTransfers(state.identityEvidence)
+                    )) === proof.cloneKey)
               ))
             )
               continue;
@@ -578,10 +825,6 @@ export async function syncAllOtel(
         const state = await sessionState(id);
         const waiting: Pending[] = [];
         for (const item of await pendingRanges(path)) {
-          if (item.hold && item.admissionKey !== admissionKey(admission)) {
-            waiting.push(item);
-            continue;
-          }
           const raw = Buffer.alloc(item.length);
           const read = await file?.read(raw, 0, item.length, item.offset);
           if (!read || read.bytesRead !== item.length || raw.at(-1) !== 10)
@@ -590,13 +833,40 @@ export async function syncAllOtel(
             values: new Map(),
             conflict: false,
           });
-          const status = await process(id, transfers, admission, state, item.hold);
+          const changedAdmission = item.hold && item.admissionKey !== admissionKey(admission);
+          if (
+            changedAdmission &&
+            (!item.cwdKey ||
+              !item.cloneKey ||
+              !admission.cwd ||
+              admission.repositoryId !== null ||
+              admission.feature.state !== "ambiguous" ||
+              item.cwdKey !== cwdKey(admission.cwd))
+          ) {
+            waiting.push(item);
+            continue;
+          }
+          const captured = { clone: null as string | null };
+          const status = await process(
+            id,
+            transfers,
+            admission,
+            state,
+            item.hold,
+            item.cloneKey,
+            captured
+          );
           if (status !== "resolved")
             waiting.push({
               ...item,
-              hold: status === "hold",
+              hold: item.hold || status === "hold",
               admissionKey:
-                status === "hold" ? (item.admissionKey ?? admissionKey(admission)) : undefined,
+                item.hold || status === "hold"
+                  ? (item.admissionKey ?? admissionKey(admission))
+                  : undefined,
+              ...(status === "hold" && admission.cwd && captured.clone && !item.hold
+                ? { cwdKey: cwdKey(admission.cwd), cloneKey: captured.clone }
+                : {}),
             });
         }
         await replacePending(path, waiting);
@@ -627,11 +897,12 @@ export async function syncAllOtel(
                 conflict: false,
               });
               const admission = held.get(id);
+              const captured = { clone: null as string | null };
               const status =
                 items.length === 0
                   ? "resolved"
                   : admission
-                    ? await process(id, items, admission, state)
+                    ? await process(id, items, admission, state, false, undefined, captured)
                     : "unknown";
               if (status !== "resolved")
                 await appendPending(pendingPath(id), {
@@ -640,6 +911,9 @@ export async function syncAllOtel(
                   hold: status === "hold",
                   admissionKey:
                     status === "hold" && admission ? admissionKey(admission) : undefined,
+                  ...(status === "hold" && admission?.cwd && captured.clone
+                    ? { cwdKey: cwdKey(admission.cwd), cloneKey: captured.clone }
+                    : {}),
                 });
             }
           offset += newline + 1;

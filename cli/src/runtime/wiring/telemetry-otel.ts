@@ -57,9 +57,20 @@ export function followCapturedSessions(
     at: string,
     start?: string,
     current?: string
-  ) => Promise<"allow" | "deny" | "unknown">
+  ) => Promise<"allow" | "deny" | "unknown">,
+  proof?: (
+    admission: SessionAdmission,
+    at: string,
+    start?: string,
+    current?: string
+  ) => Promise<string | null>
 ) {
-  return syncAllOtel({ ...options, home: homedir(), stateDir: telemetryDir() }, snapshot, permits);
+  return syncAllOtel(
+    { ...options, home: homedir(), stateDir: telemetryDir() },
+    snapshot,
+    permits,
+    proof
+  );
 }
 
 export function syncCapturedSessionTitles(

@@ -26,6 +26,7 @@ export interface AttributableUsage {
   readonly at: string;
   readonly git_branch: string | null;
   readonly repository_id: string;
+  readonly repository_uncertain?: true;
 }
 
 const NO_BINDING: Attribution = { state: "unattributed", reason: "no-binding" };
@@ -153,6 +154,7 @@ function branchVerdict(
  * session's declaration, else the session's carry, else the branch's declaration, else no
  * task. Sub-agent and advisor calls name their parent's session, so they follow it. */
 export function attribute(record: AttributableUsage, facts: AttributionFacts): Attribution {
+  if (record.repository_uncertain) return NO_BINDING;
   const at = Date.parse(record.at);
   return sessionVerdict(record, at, facts) ?? branchVerdict(record, at, facts) ?? NO_BINDING;
 }

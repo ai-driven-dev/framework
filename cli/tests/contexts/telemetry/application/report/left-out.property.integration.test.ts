@@ -9,6 +9,7 @@ import { ReadUsageUseCase } from "../../../../../src/contexts/telemetry/applicat
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
+import { ReportLedger } from "../../../../../src/contexts/telemetry/application/report/repository-uncertainty.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
@@ -206,7 +207,7 @@ function machine() {
   );
   const report = new ReportUsageUseCase(
     ingest,
-    ledger,
+    new ReportLedger(ledger),
     new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots()),
     new InMemoryIdentity(),
     locator,

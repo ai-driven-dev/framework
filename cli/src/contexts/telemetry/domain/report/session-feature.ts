@@ -20,9 +20,12 @@ export function sameSessionAdmission(
 ): boolean {
   return Boolean(
     expected?.cwd &&
-      expected.repositoryId &&
       current?.cwd === expected.cwd &&
-      current.repositoryId === expected.repositoryId
+      current.repositoryId === expected.repositoryId &&
+      (expected.repositoryId ||
+        (expected.repositoryId === null &&
+          expected.feature.state !== "confirmed" &&
+          current.feature.state !== "confirmed"))
   );
 }
 
@@ -66,6 +69,7 @@ export function sessionFeatureOf(
   let candidate: { feature: string; branch: string } | undefined;
   let missing = false;
   for (const record of records) {
+    if (record.repository_uncertain) return { state: "ambiguous" };
     const resolution = attribute(record, facts);
     const feature = resolution.state === "attributed" ? resolution.ticket : null;
     const branch = record.git_branch;

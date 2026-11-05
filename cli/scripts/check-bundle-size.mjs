@@ -67,6 +67,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 810 KB: 809.79 KB with separately opted-in, sanitized Codex repository metadata.
 // 813 KB: 812.66 KB with consent and session-admission checks on every delivery attempt.
 // 819 KB: 818.39 KB with per-identifier provenance and isolated pending session ranges.
+// 829 KB: 828.93 KB with repository uncertainty and clone-proven resume after origin changes.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

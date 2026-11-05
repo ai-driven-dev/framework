@@ -1,6 +1,6 @@
 import { isRequestless, requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
 import type { LeftOutEntry, UsageLedger } from "../domain/ports/usage-ledger.js";
-import type { NotStoredReason } from "../domain/repository-resolution.js";
+import { type NotStoredReason, repositoryUncertain } from "../domain/repository-resolution.js";
 import { dayOf, type StoredUsage } from "../domain/stored-usage.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { UsageRecord } from "../domain/usage-record.js";
@@ -149,7 +149,11 @@ export class IngestUsageUseCase {
         leftOut.push({ reason: "requestless", of: requestlessCallOf(record) });
         continue;
       }
-      toStore.push({ ...record, repository_id: outcome.stored.repository_id });
+      toStore.push({
+        ...record,
+        repository_id: outcome.stored.repository_id,
+        ...(repositoryUncertain(outcome.stored, record.at) ? { repository_uncertain: true } : {}),
+      });
       if (outcome.live) live.set(outcome.stored.repository_id, outcome.stored.root);
     }
 

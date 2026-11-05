@@ -335,7 +335,9 @@ export function registerTelemetryCommand(program: Command): void {
               },
               () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
               (admission, at, start, current) =>
-                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start, current)
+                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start, current),
+              (admission, at, start, current) =>
+                deps.telemetry.sessionFeatureUseCase.cloneProof(admission, at, start, current)
             );
             output.info(
               `Sent ${result.sent} observations; ${result.denied} were outside consent; ${result.pending} await confirmation.`
@@ -357,9 +359,15 @@ export function registerTelemetryCommand(program: Command): void {
             }
             if (
               !initialAdmission.cwd ||
-              !initialAdmission.repositoryId ||
+              (!initialAdmission.repositoryId &&
+                !(
+                  initialAdmission.repositoryId === null &&
+                  initialAdmission.feature.state !== "confirmed"
+                )) ||
               current.cwd !== initialAdmission.cwd ||
-              current.repositoryId !== initialAdmission.repositoryId
+              (current.repositoryId !== initialAdmission.repositoryId &&
+                !(current.repositoryId === null && current.feature.state === "ambiguous")) ||
+              (current.repositoryId === null && current.feature.state === "confirmed")
             ) {
               admission = undefined;
               throw new Error(
@@ -378,7 +386,10 @@ export function registerTelemetryCommand(program: Command): void {
               onProjectUnavailable,
               onRepositoryUnavailable,
               session,
-              ...(initialAdmission.cwd && initialAdmission.repositoryId
+              ...(initialAdmission.cwd &&
+              (initialAdmission.repositoryId ||
+                (initialAdmission.repositoryId === null &&
+                  initialAdmission.feature.state !== "confirmed"))
                 ? {
                     admission: {
                       cwd: initialAdmission.cwd,

@@ -13,6 +13,7 @@ import {
   type ReportRequest,
   ReportUsageUseCase,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
+import { ReportLedger } from "../../../../../src/contexts/telemetry/application/report/repository-uncertainty.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
@@ -140,7 +141,7 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
       { refusedByEnvironment: false },
       ALREADY_MIGRATED
     ),
-    ledger,
+    new ReportLedger(ledger),
     new DeclaredBindings(sessions, snapshots),
     identity,
     new FakeLocator(),
