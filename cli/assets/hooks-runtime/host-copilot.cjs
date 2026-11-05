@@ -31,12 +31,9 @@ function readPayload() {
 /** Every file a patch names, once each, in the order it names them: added, updated, moved
  * to, or deleted. */
 function patchedFiles(patch, cwd) {
-  const paths = [];
-  for (const [, named] of patch.matchAll(PATCH_FILE)) {
-    const file = path.resolve(cwd, named.trim());
-    if (!paths.includes(file)) paths.push(file);
-  }
-  return paths.map((file) => ({ path: file }));
+  const paths = new Set();
+  for (const [, named] of patch.matchAll(PATCH_FILE)) paths.add(path.resolve(cwd, named.trim()));
+  return [...paths].map((file) => ({ path: file }));
 }
 
 /** A file write arrives as an `Edit` whose whole `tool_input` is the patch text; every other
@@ -70,9 +67,10 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Asks the model to go on before the turn ends, with `text` as what it must do. */
+/** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
+ * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
-  if (typeof text !== "string" || text === "") return;
+  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
   print({ decision: "block", reason: text });
 }
 

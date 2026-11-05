@@ -44,7 +44,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 ## 4. Rules
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. aidd-context also owns the layout of `aidd_docs/`: which plugin owns which folder, and a file out of its place. It never checks the content of another plugin's folder.
-2. **One neutral interface.** A hook reads its event and answers through `hooks/lib/host.cjs` (`readEvent`, `answer`, `continueTurn`), never a host's payload directly. The CLI puts each tool's adapter there at build time (section 6).
+2. **One neutral interface.** A hook reads its event and answers through `hooks/lib/host.cjs` (`readEvent`, `answer`, `continueTurn`), never a host's payload directly. The CLI puts each tool's adapter there at build time (section 6). A `files` entry may no longer exist, a deletion or a move's source, so a hook tolerates `ENOENT`; a shell `rm` reaches it only through `command`; `continueTurn` asks once, printing nothing when the Stop is already a continuation.
 3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error of a written file, one line each; errors of files the change reached, grouped by rule and fix; then the warnings, capped at 10: the highest count both Haiku and Qwen fixed with no finding missed and no content lost (`measure.md`):
 
 ```

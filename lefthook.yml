@@ -111,7 +111,7 @@ pre-commit:
         fi
         node scripts/check-referenced-paths.js
     hook-rule-copies:
-      glob: "plugins/*/hooks/lib/common-rules.cjs"
+      glob: "{plugins/*/hooks/lib/common-rules.cjs,plugins/*/hooks/lib/host.cjs,cli/assets/hooks-runtime/host-claude.cjs}"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping hook-rule-copies'
