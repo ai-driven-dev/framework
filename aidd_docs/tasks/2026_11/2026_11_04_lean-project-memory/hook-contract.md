@@ -79,7 +79,7 @@ The Stop state file stays with the plugin that has a Stop check until a second p
 | Payload in, answer out | one adapter per host in `cli/assets/hooks-runtime/`, same exports; the plugin tree ships Claude's as `hooks/lib/host.cjs`, and the build replaces it with the target's. The hook command never changes, no extra process runs, and nothing calls the `aidd` binary at run time |
 | Adding a tool | one descriptor and one captured payload fixture; the contract test fails when either is missing |
 
-A Codex or Copilot `apply_patch` becomes one event listing every file it touched. The event names its `host` and keeps the host's payload as `raw`, so a hook that needs a host field (aidd-telemetry tells Codex by `transcript_path`) still reads it.
+A Codex or Copilot `apply_patch` becomes one event listing every file it touched. The event names its `host` and keeps the host's payload as `raw`, so a hook that needs a host field still reads it. aidd-telemetry stays outside this interface and reads its payload itself.
 
 Where a host does not deliver a level 2 answer to the model, its adapter answers at level 1 there.
 
