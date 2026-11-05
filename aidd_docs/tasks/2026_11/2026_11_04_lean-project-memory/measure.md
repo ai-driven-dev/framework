@@ -315,7 +315,7 @@ Case 0 is flaky: it passed in 4 of 5 runs. The failing run missed "ecosystem.md 
 
 ## Spend, after
 
-About 4.5 USD for the rerun at `186feb5d7`: blind grading 3.1 (seven Haiku banks, 0.37 to 0.61 each), generation 1.4 (Haiku 0.4 with cases, Qwen 0.9, case 0 repeated four times 0.07). Phase 1's baseline, about 12 USD, was its own approval. Phase 15's budget of 15 USD covered 5.9 + 1.13 + 4.5 + 1.09, about 12.6 USD in total.
+About 4.5 USD for the rerun at `186feb5d7`: blind grading 3.1 (seven Haiku banks, 0.37 to 0.61 each), generation 1.4 (Haiku 0.4 with cases, Qwen 0.9, case 0 repeated four times 0.07). Phase 1's baseline, about 12 USD, was its own approval. Phase 15's budget of 15 USD covered the first after-measure (5.9), the refresh debug iterations (1.13, every iteration's Haiku and Qwen runs, not only the final table), this rerun (4.5) and the merge-fix iterations (1.09, likewise), about 12.6 USD in total; the iteration figures come from the harness's `spend.py` over every run folder.
 
 ## Host campaign
 
