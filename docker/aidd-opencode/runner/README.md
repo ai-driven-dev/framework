@@ -44,16 +44,27 @@ add `SETUID`, `SETGID`, `CHOWN`, `AUDIT_WRITE`, `DAC_OVERRIDE`, and `KILL`.
        'while [ ! -f .configured ]; do sleep 1; done; exec /opt/aidd/runner'
    ```
 
-3. Authenticate the existing Codex account as `reviewer`:
+3. For a remote Linux server, forward the OAuth callback from the browser's
+   machine to the server. Replace `your-server` with its SSH host and keep the
+   tunnel open during login:
 
    ```sh
-   docker exec -it --user reviewer -e HOME=/home/aidd aidd-review \
-     opencode --standalone auth login openai
+   ssh -N -o ExitOnForwardFailure=yes \
+     -L 127.0.0.1:1455:127.0.0.1:1455 your-server
    ```
 
-   Browser OAuth needs a private route from the browser to the container's
-   loopback callback. Setting up that route is a manual step and is not covered
-   by this guide.
+   On the server, authenticate in a temporary host-network container using the
+   same OAuth volume. Choose **Codex browser (legacy)**, open the displayed URL
+   on the browser's machine, and select the existing Codex account:
+
+   ```sh
+   docker run --rm -it --network host --user reviewer -e HOME=/home/aidd \
+     -v aidd-review-oauth:/home/aidd/.local/share/opencode \
+     --entrypoint opencode aidd-review-runner:local --standalone auth login openai
+   ```
+
+   The host network is used only for this login container; the runner itself
+   remains on its isolated Docker network.
 4. Set `AIDD_REVIEW_ENABLED_AT` to the intended UTC activation time in
    `YYYY-MM-DDTHH:MM:SSZ` format. Stop the old timer and wait for any active
    review before registering the runner. The cutoff determines which submissions
