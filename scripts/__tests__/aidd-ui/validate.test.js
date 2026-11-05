@@ -94,15 +94,10 @@ function hook(input, temp = null) {
   return { code: run.status, out: run.stdout, err: run.stderr };
 }
 
-// Claude Code and Codex carry tool_response, Copilot tool_result: that is how the hook tells them apart.
+// The plugin tree ships Claude Code's host adapter, so these payloads are Claude Code's. Every
+// other host reaches the hook through its own adapter, tested where the adapters live.
 const postToolUse = (filePath) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Write", tool_input: { file_path: filePath }, tool_response: {} });
-/** A patch as Codex's apply_patch and Copilot's Edit write it: one header line per file. */
-const patch = (...headers) => `*** Begin Patch\n${headers.map((header) => `*** ${header}\n@@\n+x\n`).join("")}*** End Patch`;
-const codexPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "apply_patch", tool_input: { command: patch(...headers) }, tool_response: {} });
-const copilotPatch = (...headers) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Edit", tool_input: patch(...headers), tool_result: {} });
-/** A shell command as Claude Code and Codex send it (`Bash`), and as Copilot does (`bash`, tool_result). */
-const shell = (command, name = "Bash") => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: name, tool_input: { command }, tool_response: {} });
-const copilotShell = (command) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "bash", tool_input: { command }, tool_result: {} });
+const shell = (command) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Bash", tool_input: { command }, tool_response: {} });
 const marked = () => fs.existsSync(markPath(sid));
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
 const stop = (active = false) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active });
@@ -111,11 +106,9 @@ const silent = { code: 0, out: "", err: "" };
 const text = (errors, warnings, lines) => [`aidd-ui: ${errors} errors, ${warnings} warnings`, ...lines].join("\n");
 /** The text of `lines` that are all errors. */
 const errorsText = (lines) => text(lines.length, 0, lines);
-// Claude Code and Codex read additionalContext under hookSpecificOutput; Codex fails the hook on any other key.
-const claudeFeedback = (report) => ({ code: 0, out: JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: report } }), err: "" });
-// Copilot reads only a top-level additionalContext.
-const copilotFeedback = (report) => ({ code: 0, out: JSON.stringify({ additionalContext: report }), err: "" });
-const finish = (report) => ({ code: 0, out: JSON.stringify({ decision: "block", reason: report }), err: "" });
+// Claude Code reads additionalContext under hookSpecificOutput, and a block's reason at Stop.
+const claudeFeedback = (report) => ({ code: 0, out: `${JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: report } })}\n`, err: "" });
+const finish = (report) => ({ code: 0, out: `${JSON.stringify({ decision: "block", reason: report })}\n`, err: "" });
 /** A render holding `errors` colour literals and `warnings` hairlines, one line each, from line 28. */
 const littering = (errors, warnings) => edit(tmp, RENDER, "</body>", `${'<p style="color: #000000">x</p>\n'.repeat(errors)}${'<p style="border-width: 1px">x</p>\n'.repeat(warnings)}</body>`);
 const literal = (line) => `${RENDER}:${line} V4 "#000000" => replace it with a token`;
@@ -345,27 +338,6 @@ describe("aidd-ui validator entries", () => {
       edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [./src/ui]");
       breakOnePerFamily();
       assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(errorsText([DIALOG_FAILURE])));
-    });
-
-    it("hands the problems back when a Codex patch updates a file under aidd_docs/ui/", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(codexPatch(`Update File: ${path.join(tmp, BRAND)}`)), claudeFeedback(errorsText([BRAND_FAILURE])));
-    });
-
-    it("hands the problems back when a Copilot patch adds a file under aidd_docs/ui/ after one elsewhere", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(copilotPatch(`Add File: ${path.join(tmp, "README.md")}`, `Add File: ${path.join(tmp, BRAND)}`)), copilotFeedback(errorsText([BRAND_FAILURE])));
-    });
-
-    it("hands the problems back when Copilot's Edit replaces a string in a file under aidd_docs/ui/", () => {
-      breakOnePerFamily();
-      const input = JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Edit", tool_input: { path: path.join(tmp, BRAND), old_str: "a", new_str: "b" }, tool_result: {} });
-      assert.deepEqual(hook(input), copilotFeedback(errorsText([BRAND_FAILURE])));
-    });
-
-    it("stays silent when a patch touches only files elsewhere", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(codexPatch(`Update File: ${path.join(tmp, "README.md")}`)), silent);
     });
 
     it("names the problem a write causes in a record citing the written one", () => {
@@ -606,82 +578,121 @@ describe("aidd-ui validator entries", () => {
     });
   });
 
-  describe("E12 Cursor", () => {
-    // Cursor sends camelCase events, workspace_roots instead of cwd, and cursor_version on every payload.
-    const CONVERSATION = `${sid}-conversation`;
-    const cursor = (event, extra = {}) => JSON.stringify({ hook_event_name: event, conversation_id: CONVERSATION, session_id: "other", cursor_version: "2026.10.22", workspace_roots: [tmp], ...extra });
-    const cursorWrite = (filePath = path.join(tmp, BRAND)) => cursor("postToolUse", { tool_name: "Write", tool_input: { file_path: filePath }, tool_output: "" });
-    const cursorMarked = () => fs.existsSync(markPath(CONVERSATION));
-    afterEach(() => fs.rmSync(markPath(CONVERSATION), { force: true }));
+  // Every host reaches the hook through hooks/lib/host.cjs, which the build swaps per tool. A stub
+  // stands in for it here: it hands the hook the neutral event it reads on stdin, and prints what
+  // the hook answers, so these cases hold whatever host the event came from.
+  describe("E12 the host's neutral event", () => {
+    const STUB = [
+      'const fs = require("node:fs");',
+      "const print = (output) => process.stdout.write(JSON.stringify(output));",
+      "module.exports = {",
+      "  readEvent() {",
+      "    try {",
+      '      return JSON.parse(fs.readFileSync(0, "utf8"));',
+      "    } catch {",
+      "      return undefined;",
+      "    }",
+      "  },",
+      "  answer: ({ level, text }) => print({ answer: level, text }),",
+      "  continueTurn: (text) => print({ continueTurn: text }),",
+      "};",
+      "",
+    ].join("\n");
+    let hooks;
+    beforeEach(() => {
+      hooks = makeTmp("aidd-ui-hooks-");
+      fs.cpSync(HOOKS, hooks, { recursive: true });
+      fs.writeFileSync(path.join(hooks, "lib", "host.cjs"), STUB);
+    });
+    afterEach(() => removeTmp(hooks));
 
-    it("hands the problems back after a write, as additional_context", () => {
+    const neutral = (event, fields = {}) => {
+      const input = JSON.stringify({ host: "stub", event, files: [], stopActive: false, sessionId: sid, cwd: tmp, raw: {}, ...fields });
+      const run = spawnSync(process.execPath, [path.join(hooks, "ui-hook.cjs")], { input, encoding: "utf8" });
+      return { code: run.status, out: run.stdout, err: run.stderr };
+    };
+    const write = (files, fields = {}) => neutral("PostToolUse", { files: files.map((file) => ({ path: path.join(tmp, file) })), ...fields });
+    const informs = (report) => ({ code: 0, out: JSON.stringify({ answer: 1, text: report }), err: "" });
+    const continues = (report) => ({ code: 0, out: JSON.stringify({ continueTurn: report }), err: "" });
+
+    it("informs the model of what a write broke", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(cursorWrite()), { code: 0, out: JSON.stringify({ additional_context: errorsText([BRAND_FAILURE]) }), err: "" });
+      assert.deepEqual(write([BRAND]), informs(errorsText([BRAND_FAILURE])));
     });
 
-    it("reads the project from the first workspace root when the payload has no cwd", () => {
+    it("reads every file the event lists, one elsewhere among them", () => {
       breakOnePerFamily();
-      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", workspace_roots: [tmp, os.tmpdir()], tool_name: "Write", tool_input: { file_path: BRAND } });
-      assert.deepEqual(hook(input), { code: 0, out: JSON.stringify({ additional_context: errorsText([BRAND_FAILURE]) }), err: "" });
+      assert.deepEqual(write(["README.md", BRAND]), informs(errorsText([BRAND_FAILURE])));
+      assert.deepEqual(write([BRAND, "README.md"]), informs(errorsText([BRAND_FAILURE])));
     });
 
-    it("prefers cwd over the workspace roots", () => {
+    it("stays silent and leaves no mark when every listed file is elsewhere", () => {
       breakOnePerFamily();
-      const input = JSON.stringify({ hook_event_name: "postToolUse", cursor_version: "2026.10.22", cwd: tmp, workspace_roots: [os.tmpdir()], tool_name: "Write", tool_input: { file_path: BRAND } });
-      assert.deepEqual(hook(input), { code: 0, out: JSON.stringify({ additional_context: errorsText([BRAND_FAILURE]) }), err: "" });
+      assert.deepEqual(write(["README.md"]), silent);
+      assert.equal(marked(), false);
+    });
+
+    // A patch that deletes a file lists it like one it writes; nothing on disk says what cited it.
+    it("names what a deleted record leaves broken in the records citing it, after the write and at Stop", () => {
+      fs.rmSync(path.join(tmp, BUTTON));
+      const citer = new RegExp(`R6 ×2 in ${UI}/components/\\* \\\\"button\\\\" => remove it from uses`);
+      assert.match(write([BUTTON]).out, citer);
+      assert.match(neutral("Stop").out, citer);
+    });
+
+    it("continues the turn once at Stop after a write, through continueTurn", () => {
+      breakOnePerFamily();
+      write([BRAND]);
+      assert.deepEqual(neutral("Stop"), continues(errorsText([BRAND_FAILURE])));
+      assert.deepEqual(neutral("Stop"), silent);
+    });
+
+    it("marks the turn for a command that runs the engine, which names no file", () => {
+      breakOnePerFamily();
+      assert.deepEqual(neutral("PostToolUse", { command: `node ${ENGINE} tokens` }), silent);
+      assert.deepEqual(neutral("Stop"), continues(errorsText(FAILURES)));
+    });
+
+    it("does not mark the turn for a command that only reads", () => {
+      breakOnePerFamily();
+      assert.deepEqual(neutral("PostToolUse", { command: `cat ${BRAND}` }), silent);
+      assert.equal(marked(), false);
+    });
+
+    it("lets the turn end at a Stop the host already continued, and consumes the mark", () => {
+      breakOnePerFamily();
+      write([BRAND]);
+      assert.deepEqual(neutral("Stop", { stopActive: true }), silent);
+      assert.equal(marked(), false);
+    });
+
+    it("informs without a session id, but leaves no mark for a Stop", () => {
+      breakOnePerFamily();
+      assert.deepEqual(write([BRAND], { sessionId: null }), informs(errorsText([BRAND_FAILURE])));
+      assert.deepEqual(neutral("Stop", { sessionId: null }), silent);
+    });
+
+    it("reads the project in the event's folder, not the one the hook runs in", () => {
+      breakOnePerFamily();
+      const elsewhere = makeTmp("aidd-ui-elsewhere-");
+      try {
+        const input = JSON.stringify({ host: "stub", event: "PostToolUse", files: [{ path: path.join(tmp, BRAND) }], stopActive: false, sessionId: sid, cwd: elsewhere, raw: {} });
+        const run = spawnSync(process.execPath, [path.join(hooks, "ui-hook.cjs")], { input, encoding: "utf8", cwd: tmp });
+        assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, silent);
+      } finally {
+        removeTmp(elsewhere);
+      }
     });
 
     it("prints nothing at session start", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(cursor("sessionStart", { is_background_agent: false })), silent);
+      assert.deepEqual(neutral("SessionStart"), silent);
     });
 
-    it("asks for one follow-up at stop after a write, as followup_message", () => {
+    it("prints nothing when the host reads no event", () => {
       breakOnePerFamily();
-      hook(cursorWrite());
-      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 0 })), { code: 0, out: JSON.stringify({ followup_message: errorsText([BRAND_FAILURE]) }), err: "" });
-    });
-
-    it("asks for no second follow-up", () => {
-      breakOnePerFamily();
-      hook(cursorWrite());
-      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 1 })), silent);
-    });
-
-    it("marks the turn by conversation, which every Cursor event carries", () => {
-      breakOnePerFamily();
-      hook(cursorWrite());
-      assert.equal(cursorMarked(), true);
-    });
-
-    it("stays silent at stop when no UI file was written", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(cursor("stop", { status: "completed", loop_count: 0 })), silent);
-    });
-
-    // Cursor sends every tool to the hook, and a Read carries file_path like a Write does.
-    it("does not take a Read of a watched file for a write: no feedback, no mark", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Read", tool_input: { file_path: path.join(tmp, BRAND) }, tool_output: "" })), silent);
-      assert.equal(cursorMarked(), false);
-    });
-
-    it("ignores any other tool, whatever its input names", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Grep", tool_input: { path: path.join(tmp, BRAND), command: `node ${ENGINE} tokens` } })), silent);
-      assert.equal(cursorMarked(), false);
-    });
-
-    it("sends its Shell tool through the shell rule: an engine command marks the turn", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Shell", tool_input: { command: `node ${ENGINE} tokens` } })), silent);
-      assert.equal(cursorMarked(), true);
-    });
-
-    it("does not mark the turn for a Shell command that only reads", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(cursor("postToolUse", { tool_name: "Shell", tool_input: { command: "cat aidd_docs/ui/brand.md" } })), silent);
-      assert.equal(cursorMarked(), false);
+      const run = spawnSync(process.execPath, [path.join(hooks, "ui-hook.cjs")], { input: "", encoding: "utf8" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, silent);
     });
   });
 
@@ -699,12 +710,6 @@ describe("aidd-ui validator entries", () => {
         assert.deepEqual(hook(stop()), finish(errorsText([BRAND_FAILURE, TOKENS_FAILURE, DIALOG_FAILURE])));
       });
     }
-
-    it("marks the turn on the Copilot payload too", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(copilotShell(`node ${ENGINE} tokens`)), silent);
-      assert.deepEqual(hook(stop()), finish(errorsText([BRAND_FAILURE, TOKENS_FAILURE, DIALOG_FAILURE])));
-    });
 
     const WRITES = [
       "echo x > aidd_docs/ui/brand.md",
