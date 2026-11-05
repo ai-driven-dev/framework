@@ -330,7 +330,7 @@ test("formatFindings: errors, grouped reached errors and warnings, in the contra
     ],
     reached: [
       { file: "aidd_docs/ui/a.md", rule: "U1", excerpt: "first", fix: "rename it" },
-      { file: "aidd_docs/ui/b.md", rule: "U1", excerpt: "second", fix: "rename it" },
+      { file: "aidd_docs/ui/b.md", rule: "U1", excerpt: "first", fix: "rename it" },
       { file: "aidd_docs/ui/c.md", line: 2, rule: "U2", fix: "add a token" },
     ],
     warnings: [{ file: "aidd_docs/memory/cli.md", line: 7, rule: "M5", message: "cell of 36 words", fix: "split it" }],
@@ -365,6 +365,30 @@ test("formatFindings: reached errors group by rule, fix and folder, never across
     ],
   });
   assert.equal(output, ["p: 5 errors, 0 warnings", "R ×2 in d/* => f", "e/a.md R => f", "d/b.md R => g", "d/c.md S => f"].join("\n"));
+});
+
+test("formatFindings: a group prints an excerpt only when every member shares it", () => {
+  const mixed = formatFindings("p", {
+    reached: [
+      { file: "ui/a.md", rule: "C1", excerpt: "apps/web/src/ui/Button.tsx", fix: "create it" },
+      { file: "ui/b.md", rule: "C1", excerpt: "apps/web/src/ui/Card.tsx", fix: "create it" },
+    ],
+  });
+  assert.equal(mixed, "p: 2 errors, 0 warnings\nC1 ×2 in ui/* => create it");
+  const partial = formatFindings("p", {
+    reached: [
+      { file: "ui/a.md", rule: "C4", excerpt: "#FF6B3514", fix: "use a token" },
+      { file: "ui/b.md", rule: "C4", fix: "use a token" },
+    ],
+  });
+  assert.equal(partial, "p: 2 errors, 0 warnings\nC4 ×2 in ui/* => use a token");
+  const uniform = formatFindings("p", {
+    reached: [
+      { file: "ui/a.md", rule: "C4", excerpt: "#FF6B3514", fix: "use a token" },
+      { file: "ui/b.md", rule: "C4", excerpt: "#FF6B3514", fix: "use a token" },
+    ],
+  });
+  assert.equal(uniform, 'p: 2 errors, 0 warnings\nC4 ×2 in ui/* "#FF6B3514" => use a token');
 });
 
 test("formatFindings: a group of root-level files prints in *", () => {
