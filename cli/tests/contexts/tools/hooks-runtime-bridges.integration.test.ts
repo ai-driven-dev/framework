@@ -149,14 +149,29 @@ async function start(ws: Workspace, input: Record<string, unknown>) {
   return { plugin, prompts };
 }
 
-/** An `edit`, which the host documents by name but no run captured: the captured write's call
- * on the same file. Its other arguments are documented nowhere, so none is invented. */
-function documentedEdit(write: { call: Record<string, unknown> }, project: string) {
-  return {
-    ...write.call,
-    tool: "edit",
-    args: { filePath: join(project, "notes.md") },
-  };
+/** The captured tool calls, by position in the fixture. */
+const EDIT = 3;
+const PATCH = 4;
+
+interface ToolCall {
+  readonly call: unknown;
+  readonly output: { output: string };
+}
+
+async function toolCall(host: "opencode" | "kilo", index: number, project: string) {
+  const calls = (await captured(`${host}-tool.execute.after.json`, project)) as ToolCall[];
+  const found = calls[index];
+  if (found === undefined) throw new Error(`no captured call ${index}`);
+  return found;
+}
+
+/** What the captured `apply_patch` did: an update, an added file, and a deletion. */
+function patched(project: string) {
+  return [
+    { path: join(project, "notes.md"), written: "hello world", replaced: "hello" },
+    { path: join(project, "added.md"), written: "new" },
+    { path: join(project, "old.md") },
+  ];
 }
 
 const CONTINUED = [{ path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } }];
@@ -221,20 +236,29 @@ describe("OpenCode, through its bridge", () => {
     expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({ files: [], command: "echo hi" });
   });
 
-  it("reads an edit as its file, with no content (documented, not captured)", async () => {
+  it("reads an edit as its file, with what it wrote and what it replaced", async () => {
     const ws = await workspace("opencode", opencodeBridge());
-    const [write] = (await captured("opencode-tool.execute.after.json", ws.project)) as {
-      call: Record<string, unknown>;
-      output: { output: string };
-    }[];
+    const edit = await toolCall("opencode", EDIT, ws.project);
     const { plugin } = await start(ws, { directory: ws.project });
-    if (write === undefined) throw new Error("no captured write");
-    await plugin["tool.execute.after"](documentedEdit(write, ws.project), write.output);
+    await plugin["tool.execute.after"](edit.call, edit.output);
+
+    expect(afterStart(await recorded(ws, 2))[0]?.files).toStrictEqual([
+      { path: join(ws.project, "notes.md"), written: "hello world", replaced: "hello" },
+    ]);
+  });
+
+  it("reads an apply_patch as one event listing every file it touched, through an Edit matcher", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const patch = await toolCall("opencode", PATCH, ws.project);
+    const { plugin } = await start(ws, { directory: ws.project });
+    await plugin["tool.execute.after"](patch.call, patch.output);
 
     expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({
-      files: [{ path: join(ws.project, "notes.md") }],
+      event: "PostToolUse",
+      files: patched(ws.project),
+      sessionId: SESSION,
     });
-    expect(afterStart(await recorded(ws, 2))[0]?.files[0]).not.toHaveProperty("written");
+    expect(patch.output.output.endsWith("\n\nfinding")).toBe(true);
   });
 
   it("continues the turn for any answer at Stop", async () => {
@@ -313,20 +337,29 @@ describe("Kilo, through its bridge", () => {
     expect(await recorded(ws, 1)).toMatchObject([{ files: [], command: "echo hi" }]);
   });
 
-  it("reads an edit as its file, with no content (documented, not captured)", async () => {
+  it("reads an edit as its file, with what it wrote and what it replaced", async () => {
     const ws = await workspace("kilo", kiloBridge());
-    const [write] = (await captured("kilo-tool.execute.after.json", ws.project)) as {
-      call: Record<string, unknown>;
-      output: { output: string };
-    }[];
+    const edit = await toolCall("kilo", EDIT, ws.project);
     const { plugin } = await start(ws, { directory: ws.project });
-    if (write === undefined) throw new Error("no captured write");
-    await plugin["tool.execute.after"](documentedEdit(write, ws.project), write.output);
+    await plugin["tool.execute.after"](edit.call, edit.output);
 
-    expect(await recorded(ws, 1)).toMatchObject([
-      { files: [{ path: join(ws.project, "notes.md") }] },
+    expect((await recorded(ws, 1))[0]?.files).toStrictEqual([
+      { path: join(ws.project, "notes.md"), written: "hello world", replaced: "hello" },
     ]);
-    expect((await recorded(ws, 1))[0]?.files[0]).not.toHaveProperty("written");
+  });
+
+  it("reads an apply_patch as one event listing every file it touched, through an Edit matcher", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const patch = await toolCall("kilo", PATCH, ws.project);
+    const { plugin } = await start(ws, { directory: ws.project });
+    await plugin["tool.execute.after"](patch.call, patch.output);
+
+    expect((await recorded(ws, 1))[0]).toMatchObject({
+      event: "PostToolUse",
+      files: patched(ws.project),
+      sessionId: SESSION,
+    });
+    expect(patch.output.output.endsWith("\n\nfinding")).toBe(true);
   });
 
   it("continues the turn for any answer at Stop", async () => {

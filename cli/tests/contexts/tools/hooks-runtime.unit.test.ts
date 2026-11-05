@@ -1,8 +1,8 @@
 /**
  * One host adapter per tool, behind the one interface every framework hook speaks:
  * `readEvent()`, `answer({ level, text })`, `continueTurn(text)`. Each payload here is one a
- * host was seen sending (the repository's hook-payload fixtures); where none was captured,
- * the test name says the shape is the host's documented one, or derived from a captured one.
+ * host was seen sending (the repository's hook-payload fixtures); where a case was never seen,
+ * the test name says it is derived from a captured payload.
  * OpenCode and Kilo receive what their bridge sends, so they are read through the bridge in
  * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all six here.
  */
@@ -128,23 +128,32 @@ describe("Claude Code", () => {
     expect([event?.files, event?.command]).toStrictEqual([[], "echo hi"]);
   });
 
-  it("reads an Edit as its file, with no content: the host gives a fragment (documented, not captured)", () => {
-    const { payload } = sample("claude-PostToolUse.json", 0);
-    const tool_input = { file_path: NOTES, old_string: "a", new_string: "b", replace_all: false };
-    const edit = { ...payload, tool_name: "Edit", tool_input };
+  it("reads an Edit as its file, with what it wrote and what it replaced", () => {
+    const { event } = read("claude", sample("claude-PostToolUse.json", 3).payload);
 
-    expect(read("claude", edit).event?.files).toStrictEqual([
-      { path: NOTES, written: "b", replaced: "a" },
+    expect([event?.event, event?.files, event?.command]).toStrictEqual([
+      "PostToolUse",
+      [{ path: NOTES, written: "hello world\n", replaced: "hello\n" }],
+      undefined,
     ]);
   });
 
-  it("reads what a multi-line Edit wrote as its whole new string (documented, not captured)", () => {
-    const { payload } = sample("claude-PostToolUse.json", 0);
-    const tool_input = { file_path: NOTES, old_string: "a", new_string: "one\ntwo\n" };
-    const edit = { ...payload, tool_name: "Edit", tool_input };
+  it("reads what a multi-line Edit wrote as its whole new string (derived from the captured Edit)", () => {
+    const { payload } = sample("claude-PostToolUse.json", 3);
+    const input = payload.tool_input as Record<string, unknown>;
+    const edit = { ...payload, tool_input: { ...input, new_string: "one\ntwo\n" } };
 
     expect(read("claude", edit).event?.files).toStrictEqual([
-      { path: NOTES, written: "one\ntwo\n", replaced: "a" },
+      { path: NOTES, written: "one\ntwo\n", replaced: "hello\n" },
+    ]);
+  });
+
+  it("reads a PowerShell call as its command, touching no file", () => {
+    const { event } = read("claude", sample("claude-PostToolUse.json", 4).payload);
+
+    expect([event?.files, event?.command]).toStrictEqual([
+      [],
+      "Add-Content -Path notes.md -Value 'from powershell'",
     ]);
   });
 
@@ -371,13 +380,12 @@ describe("Codex", () => {
     expect(printed).toStrictEqual([]);
   });
 
-  it("informs at SessionStart through the hook's additional context (documented, not captured)", () => {
-    const { adapter } = read("codex", sample("codex-SessionStart.json", 0).payload);
-    adapter.answer({ level: 1, text: "memory" });
+  it("informs at SessionStart in the key the model was seen reading", () => {
+    const { payload, hookAnswer } = sample("codex-SessionStart.json", 2);
+    const { adapter } = read("codex", payload);
+    adapter.answer({ level: 1, text: "The session token is SESSIONTOKEN-8H3V." });
 
-    expect(output()).toStrictEqual({
-      hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "memory" },
-    });
+    expect(output()).toStrictEqual(hookAnswer);
   });
 });
 
@@ -489,11 +497,12 @@ describe("Copilot", () => {
     expect(output()).toStrictEqual({ additionalContext: "fix it" });
   });
 
-  it("informs at SessionStart through a top-level additional context (documented, not captured)", () => {
-    const { adapter } = read("copilot", sample("copilot-SessionStart.json", 0).payload);
-    adapter.answer({ level: 1, text: "memory" });
+  it("informs at SessionStart in the top-level key the model was seen reading", () => {
+    const { payload, hookAnswer } = sample("copilot-SessionStart.json", 2);
+    const { adapter } = read("copilot", payload);
+    adapter.answer({ level: 1, text: "The session token is SESSIONTOKEN-8H3V." });
 
-    expect(output()).toStrictEqual({ additionalContext: "memory" });
+    expect(output()).toStrictEqual(hookAnswer);
   });
 
   it("requires a fix after a write as the block the host was seen delivering", () => {
@@ -528,11 +537,15 @@ describe("Copilot", () => {
   });
 });
 
-/** Cursor's `stop` did not fire in a headless run, so no payload was captured: this one is the
- * documented shape (`status`, `loop_count`) over the fields every captured Cursor call carries. */
-function cursorStop(loopCount: number): Record<string, unknown> {
-  const { payload } = sample("cursor-sessionStart.json", 0);
-  return { ...payload, hook_event_name: "stop", status: "completed", loop_count: loopCount };
+/** Cursor's `stop`, captured in an interactive run: a completed turn, its follow-up, then an
+ * aborted turn and the error that ended it. */
+const CURSOR_COMPLETED = 0;
+const CURSOR_FOLLOW_UP = 1;
+const CURSOR_ABORTED = 2;
+const CURSOR_ERROR = 3;
+
+function cursorStop(index: number): Record<string, unknown> {
+  return sample("cursor-stop.json", index).payload;
 }
 
 describe("Cursor", () => {
@@ -578,9 +591,22 @@ describe("Cursor", () => {
     );
   });
 
-  it("reads a stop, and one with a loop count as a continuation (documented shape, not captured)", () => {
-    const first = read("cursor", cursorStop(0)).event;
-    const second = read("cursor", cursorStop(1)).event;
+  it("reads an edit, which the host sends as a Write, as the whole file it left", () => {
+    const { event } = read("cursor", sample("cursor-postToolUse.json", 4).payload);
+    const text = "alpha line\nbeta line changed\ngamma line\n";
+
+    expect(event?.files).toStrictEqual([{ path: `${CWD}/three.md`, content: text, written: text }]);
+  });
+
+  it("reads a Delete as the file it removed, with no text", () => {
+    const { event } = read("cursor", sample("cursor-postToolUse.json", 5).payload);
+
+    expect([event?.files, event?.command]).toStrictEqual([[{ path: `${CWD}/old.md` }], undefined]);
+  });
+
+  it("reads a stop, and its follow-up's stop as a continuation", () => {
+    const first = read("cursor", cursorStop(CURSOR_COMPLETED)).event;
+    const second = read("cursor", cursorStop(CURSOR_FOLLOW_UP)).event;
 
     expect([first?.event, first?.stopActive, second?.stopActive]).toStrictEqual([
       "Stop",
@@ -589,10 +615,10 @@ describe("Cursor", () => {
     ]);
   });
 
-  it("reads a sessionEnd as no turn end: nothing is left to continue", () => {
-    expect(read("cursor", { ...cursorStop(0), hook_event_name: "sessionEnd" }).event).toBe(
-      undefined
-    );
+  it("reads a sessionEnd as no turn end: nothing is left to continue (derived from the captured stop)", () => {
+    expect(
+      read("cursor", { ...cursorStop(CURSOR_COMPLETED), hook_event_name: "sessionEnd" }).event
+    ).toBe(undefined);
   });
 
   it("informs after a write through its additional context", () => {
@@ -609,31 +635,44 @@ describe("Cursor", () => {
     expect(output()).toStrictEqual({ additional_context: "fix it" });
   });
 
-  it("continues the turn with a follow-up message (documented shape, not captured)", () => {
-    const { adapter } = read("cursor", cursorStop(0));
-    adapter.continueTurn("finish");
+  it("continues the turn with the follow-up message the host was seen delivering", () => {
+    const { payload, hookAnswer } = sample("cursor-stop.json", CURSOR_COMPLETED);
+    const { adapter } = read("cursor", payload);
+    adapter.continueTurn(String(hookAnswer?.followup_message));
 
-    expect(output()).toStrictEqual({ followup_message: "finish" });
+    expect(output()).toStrictEqual(hookAnswer);
   });
 
-  it("informs at sessionStart through its additional context (documented, not captured)", () => {
-    const { adapter } = read("cursor", sample("cursor-sessionStart.json", 0).payload);
-    adapter.answer({ level: 1, text: "memory" });
+  it("informs at sessionStart in the key the model was seen reading", () => {
+    const { payload, hookAnswer } = sample("cursor-sessionStart.json", 2);
+    const { adapter } = read("cursor", payload);
+    adapter.answer({ level: 1, text: "The session token is SESSIONTOKEN-8H3V." });
 
-    expect(output()).toStrictEqual({ additional_context: "memory" });
+    expect(output()).toStrictEqual(hookAnswer);
   });
 
   it("continues the turn for any answer at stop", () => {
-    const { adapter } = read("cursor", cursorStop(0));
+    const { adapter } = read("cursor", cursorStop(CURSOR_COMPLETED));
     adapter.answer({ level: 1, text: "finish" });
 
     expect(output()).toStrictEqual({ followup_message: "finish" });
   });
 
-  it("asks once: a stop with a loop count is never continued again (documented, not captured)", () => {
-    const { adapter } = read("cursor", cursorStop(1));
+  it("asks once: a follow-up's stop is never continued again", () => {
+    const { adapter } = read("cursor", cursorStop(CURSOR_FOLLOW_UP));
     adapter.continueTurn("again");
     adapter.answer({ level: 2, text: "again" });
+
+    expect(printed).toStrictEqual([]);
+  });
+
+  it.each([
+    ["aborted", CURSOR_ABORTED],
+    ["ended in error", CURSOR_ERROR],
+  ])("never continues a turn that %s", (_status, index) => {
+    const { adapter } = read("cursor", cursorStop(index));
+    adapter.continueTurn("again");
+    adapter.answer({ level: 1, text: "again" });
 
     expect(printed).toStrictEqual([]);
   });

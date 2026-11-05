@@ -87,11 +87,15 @@ Where a host does not deliver a level 2 answer to the model, its adapter answers
 
 | Event | Claude Code | Codex | Cursor | Copilot | OpenCode | Kilo |
 | --- | --- | --- | --- | --- | --- | --- |
-| SessionStart text reaches the model | yes | yes | yes | yes | no | no |
+| SessionStart text reaches the model | yes | yes, `hookSpecificOutput.additionalContext`: the model repeated a token it carried | yes, `additional_context`: same | yes, top-level `additionalContext`: same | no | no |
 | PostToolUse answer key | `hookSpecificOutput.additionalContext` | same | `additional_context` | top-level `additionalContext` | appended by the bridge | same |
 | PostToolUse `decision: block` reaches the model | yes, as a blocking error naming the reason | yes | no, the model saw nothing (`decision` and `reason` only, no other key tried) | yes | yes, the bridge appends the reason to the tool result | same |
-| Stop continues the turn | `decision: block`, yes; the second Stop carries `stop_hook_active: true` | same | `followup_message`, not run: `stop` did not fire in headless `cursor-agent -p` | `decision: block`, yes; same `stop_hook_active` | `promptAsync`: the prompt lands as a user message, the reply was not observed (headless `run` exits at idle) | `promptAsync`, yes: the model answered it |
+| Stop continues the turn | `decision: block`, yes; the second Stop carries `stop_hook_active: true` | same | `followup_message`, yes: it lands as a user message and the model answered it; the follow-up's own `stop` carries `loop_count: 1`. Seen only interactively: `stop` does not fire in headless `cursor-agent -p`. A turn the person aborted ends in a `stop` with `status: "aborted"`, and a follow-up to it ended in `status: "error"`, so only a `completed` turn is continued | `decision: block`, yes; same `stop_hook_active` | `promptAsync`: the prompt lands as a user message, the reply was not observed (headless `run` exits at idle) | `promptAsync`, yes: the model answered it |
+| File write tools | `Write` (whole file), `Edit` (`old_string`, `new_string`) | `apply_patch`, its patch in `tool_input.command` | `Write` for a new file and for an edit, carrying the whole file it left; `Delete` with `file_path` alone | `Edit`, its whole `tool_input` a patch | `write`, `edit` (`filePath`, `oldString`, `newString`), and `apply_patch` (`patchText`, paths relative to the session folder) for a model whose id holds `gpt-` | same |
+| Shell tools | `Bash`; `PowerShell` with `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`, its text in `command` | `Bash` | `Shell` | `Bash` | `bash` | same |
 | PreToolUse | native | native | native, mapped by the CLI | native | native, not bridged | native, not bridged |
+
+The OpenCode and Kilo bridges hand an `apply_patch` to every hook whose matcher names `Edit` or `Write`, as Codex documents for its own. A Claude Code `PowerShell` call reaches the memory hook through its matcher; `isShellWrite` reads its redirections and the `rm`, `mv`, `cp` and `mkdir` aliases, not a cmdlet such as `Set-Content`.
 
 Copilot accepts the nested hooks shape (`matcher` plus a `hooks` array), as the native tree ships it: a plugin installed from the native build fired SessionStart and PostToolUse, and expanded `${PLUGIN_ROOT}`. The flat shape in `.github/hooks/*.json` also fires, and needs `--trust-folder` in prompt mode.
 

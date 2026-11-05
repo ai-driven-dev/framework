@@ -28,6 +28,17 @@ function bridgedCall(command: string | undefined): BridgeHookCall | null {
   return { script, args: rest.length === 0 ? [] : rest.trim().split(/\s+/) };
 }
 
+// A host that offers `apply_patch` writes files through it instead of `edit` and `write`; a
+// matcher naming either names it too, as Codex documents for its own `apply_patch`.
+const FILE_WRITE_TOOLS = new Set(["edit", "write"]);
+const PATCH_TOOL = "apply_patch";
+
+function bridgedMatcher(matcher: string): string {
+  const names = matcher.split("|").map((name) => name.toLowerCase());
+  const writes = names.some((name) => FILE_WRITE_TOOLS.has(name));
+  return writes && !names.includes(PATCH_TOOL) ? `${matcher}|${PATCH_TOOL}` : matcher;
+}
+
 /** Every command of an event's groups a bridge can replay, in order. */
 export function bridgeHookCalls(
   groups: readonly PluginMatcherGroup[] | undefined
@@ -36,7 +47,7 @@ export function bridgeHookCalls(
     (group.hooks ?? []).flatMap((hook) => {
       const call = bridgedCall(hook.command);
       if (call === null) return [];
-      return [group.matcher ? { ...call, matcher: group.matcher } : call];
+      return [group.matcher ? { ...call, matcher: bridgedMatcher(group.matcher) } : call];
     })
   );
 }

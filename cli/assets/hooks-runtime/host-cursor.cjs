@@ -15,7 +15,9 @@ const EVENTS = new Map([
   ["postToolUse", "PostToolUse"],
   ["stop", "Stop"],
 ]);
+// An edit arrives as a Write carrying the whole file it left.
 const WRITES = new Set(["Write"]);
+const DELETES = new Set(["Delete"]);
 const SHELLS = new Set(["Shell"]);
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
@@ -37,7 +39,10 @@ function folderOf(raw) {
 }
 
 function writtenFiles(tool, input, cwd) {
-  if (!WRITES.has(tool) || typeof input?.file_path !== "string") return [];
+  if (typeof input?.file_path !== "string") return [];
+  // A deleted file is listed with no text: it is gone.
+  if (DELETES.has(tool)) return [{ path: path.resolve(cwd, input.file_path) }];
+  if (!WRITES.has(tool)) return [];
   const file = { path: path.resolve(cwd, input.file_path) };
   // A write carries the whole file; an edit carries fragments of it, never `content`.
   if (typeof input.content === "string") file.content = file.written = input.content;
@@ -70,10 +75,17 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
+/** Whether the turn ended on its own: an aborted turn was stopped by the person, and one that
+ * ended in error has nothing to go on with. */
+function completed(raw) {
+  return raw?.status === undefined || raw.status === "completed";
+}
+
 /** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
  * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
   if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
+  if (!completed(current?.raw)) return;
   print({ followup_message: text });
 }
 

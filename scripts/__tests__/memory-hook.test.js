@@ -167,8 +167,8 @@ function answerOf(stdout) {
 
 // Hosts where a block after a write reaches the model; elsewhere the adapter informs instead.
 const BLOCKS = new Set(["claude", "codex", "copilot"]);
-// Hosts whose edit says what it wrote: the others' edits fall back to the shell's rule.
-const EDITS_SAY_WHAT = ["claude", "codex", "copilot"];
+// Hosts whose edit says what it wrote and what it replaced; Cursor sends an edit as a whole-file Write.
+const EDITS_SAY_WHAT = ["claude", "codex", "copilot", "opencode", "kilo"];
 
 /** Writes `text` at `file` in a full bank, then runs the host's write event for it. */
 function afterWrite(host, file, text, options) {
@@ -291,6 +291,14 @@ test("a shell command writing a bank file reaches that file", () => {
   assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 "41 commits" => name the thing, not how many$/mu);
 });
 
+test("a Claude PowerShell redirect writing a bank file reaches that file", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nNow 41 commits.\n" });
+  const payload = captured("claude-PostToolUse.json", 4, root);
+  payload.tool_input.command = `"Now 41 commits." > ${MEMORY}/vcs.md`;
+  const { stdout } = run("claude", payload);
+  assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 "41 commits" => name the thing, not how many$/mu);
+});
+
 // A shell write carries no touched lines: its findings inform, grouped, and never block.
 test("a shell write of two bank files informs, its errors grouped by rule and folder", () => {
   const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n", [`${MEMORY}/testing.md`]: "# T\n\nTBD\n" });
@@ -329,7 +337,7 @@ for (const host of EDITS_SAY_WHAT) {
   test(`${host}: an edit reports its own new line only, at its level`, () => {
     const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "Owner {{x}} here.") });
     assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Owner {{x}} here.")).stdout), {
-      level: 2,
+      level: BLOCKS.has(host) ? 2 : 1,
       text: `aidd-context: 1 errors, 0 warnings\n${MEMORY}/vcs.md:7 M3 "{{x}}" => fill it or remove it`,
     });
   });
@@ -362,7 +370,7 @@ for (const host of EDITS_SAY_WHAT) {
   test(`${host}: an edit adding a second copy of a line it replaced reports it`, () => {
     const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\n- Owner {{x}} here.\n- Owner {{x}} here.\n" });
     const payload = editPayload(host, root, `${MEMORY}/vcs.md`, "- Owner {{x}} here.\n- Owner {{x}} here.", "- Owner {{x}} here.");
-    assert.equal(answerOf(run(host, payload).stdout).level, 2);
+    assert.equal(answerOf(run(host, payload).stdout).level, BLOCKS.has(host) ? 2 : 1);
   });
 
   test(`${host}: two lines joined into one long line report it`, () => {
@@ -391,25 +399,6 @@ test("a written line repeated elsewhere in the file reports each copy, with the 
     `${MEMORY}/vcs.md:7 M3 "TBD" => fill it or remove it`,
   ]);
 });
-
-// OpenCode and Kilo edits say nothing of what they wrote: the shell's rule, grouped and informing.
-for (const host of ["opencode", "kilo"]) {
-  test(`${host}: an edit that does not say what it wrote informs, grouped under the file, and never blocks`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n\nShort.\n\nOwner TBD\n" });
-    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Short.")).stdout), {
-      level: 1,
-      text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "TBD" => fill it or remove it',
-    });
-  });
-
-  test(`${host}: an edit that does not say what it wrote groups a file's long prose lines into one M1 line`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\n${words(40)}\n` });
-    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Short.")).stdout), {
-      level: 1,
-      text: "aidd-context: 2 errors, 0 warnings\nM1 ×2 in aidd_docs/memory/vcs.md => make it a table, a list or a heading",
-    });
-  });
-}
 
 test("a Write covers the whole file: every error of it counts, at its level", () => {
   const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\nTBD\n` });
@@ -514,6 +503,6 @@ test("hooks.json runs the one entry, within 5 s, at session start and after a wr
     assert.equal(hooks[event][0].hooks[0].command, command, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
   }
-  // Only the tools an adapter reads: MultiEdit is no Claude Code tool, and no adapter reads PowerShell.
-  assert.deepEqual(hooks.PostToolUse[0].matcher.split("|").sort(), ["Bash", "Edit", "Shell", "Write", "bash"]);
+  // Only the tools an adapter reads: MultiEdit is no Claude Code tool.
+  assert.deepEqual(hooks.PostToolUse[0].matcher.split("|").sort(), ["Bash", "Edit", "PowerShell", "Shell", "Write", "bash"]);
 });
