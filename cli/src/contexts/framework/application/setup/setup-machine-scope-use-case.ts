@@ -65,13 +65,16 @@ export class SetupMachineScopeUseCase {
     if (this.installMachinePluginsUseCase === undefined) return [];
     const manifest = await this.userManifestRepo.load();
     if (manifest === null) return [];
-    const { plugins } = await this.installMachinePluginsUseCase.execute(manifest, {
-      projectRoot: flow.projectRoot,
-      toolIds: flow.aiTools,
-      mode: flow.pluginMode,
-      pluginNames: flow.pluginNames,
-    });
-    await this.userManifestRepo.save(manifest);
+    const { plugins } = await this.installMachinePluginsUseCase.execute(
+      manifest,
+      {
+        projectRoot: flow.projectRoot,
+        toolIds: flow.aiTools,
+        mode: flow.pluginMode,
+        pluginNames: flow.pluginNames,
+      },
+      (updated) => this.userManifestRepo.save(updated)
+    );
     return plugins;
   }
 
