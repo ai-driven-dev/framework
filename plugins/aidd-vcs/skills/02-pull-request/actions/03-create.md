@@ -14,7 +14,9 @@ The draft request, its title, link, and main changes.
 
 1. **Open.** Create the request as a draft via the configured tool, passing the base, title, and body.
 2. **Label.** When the head prefix maps to a triage label that exists, apply it; skip silently otherwise.
-3. **Return.** Verify the created request is a draft with the resolved base and the intended title and body. Return a table with its title, link, and the same main-change bullets from the body; include the head and base when useful.
+3. **Return.** Verify the draft, base, title, and body.
+   Return a table with its title, link, and main-change bullets from the body.
+   Include the head and base when useful.
 
 ## Test
 

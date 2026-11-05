@@ -14,10 +14,13 @@ The title, body, and base ready to create.
 
 1. **Template.** Load the request template, the project's own when set, else the bundled [pull_request.md](../assets/pull_request.md).
 2. **Write.** Draft a concise title and a body following the template from the change summary. Link every changed `**/qa/*.webm` under the template's testing or verification section.
-   - Title the intended outcome; explain the problem and why it matters in the body without repeating the title. Reserve the approach for non-obvious details instead of repeating the main changes.
-   - List the main changes as concise bullets in the template’s corresponding section; if it has none, include them in the most relevant section. Keep the approach brief; use a numbered list for an ordered process and bold the opening words of each step.
+   - Title the outcome. Explain the problem and why it matters without repeating the title.
+   - Reserve the approach for non-obvious details, not a repeat of the main changes.
+   - List the main changes as concise bullets in the relevant section.
+   - Keep the approach brief. Number ordered steps and bold their opening words.
    - Give the fewest concrete verification steps needed for the changed behavior.
-     - Use one unchecked checkbox per acceptance criterion, phrased as an observable result; group related conditions or verification steps in nested bullets without extra checkboxes. Give independent outcomes separate criteria.
+     - Use one unchecked checkbox per observable outcome.
+     - Group related conditions or steps in nested bullets, without extra checkboxes.
      - Omit generic test commands and CI summaries. Record material verification gaps without implying they passed.
 3. **Proceed.** Apply any supplied overrides and pass the result to `03-create` without an approval round.
 
