@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -13,6 +13,20 @@ import {
 useReportSandbox();
 
 describe("aidd telemetry identity", () => {
+  it("shows the saved installation identifier separately from the measurement identity", async () => {
+    await rm(join(sandbox.userConfig, "installation", "id.json"), { force: true });
+    const before = await aidd(["identity"]);
+    expect(before.stdout).toContain("Installation ID: unavailable");
+    await aidd(["on", "--yes", "--as", "person-a"]);
+    const installationPath = join(sandbox.userConfig, "installation", "id.json");
+    const installation = JSON.parse(await readFile(installationPath, "utf8")) as {
+      installation_id: string;
+    };
+    const shown = await aidd(["identity"]);
+    expect(shown.exitCode).toBe(0);
+    expect(shown.stdout).toContain('"person-a"');
+    expect(shown.stdout).toContain(`Installation ID: ${installation.installation_id}`);
+  });
   it("shows the person axis as anonymous until an identity is chosen", async () => {
     const before = rowsOf(await json("person"));
     expect(Object.keys(before)).toEqual(["absent"]);

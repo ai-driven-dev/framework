@@ -549,7 +549,7 @@ describe("aidd telemetry off, kept as the end of an interval", () => {
     await s.on.execute("/w/repo", "keep");
     s.consents.values.set("/w/repo", "off");
     s.clock.now = new Date(T2);
-    expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: true });
+    expect(await s.off.execute("/w/repo")).toEqual({ status: "off", changed: true, closedAt: T2 });
     expect(s.history.written.at(-1)).toEqual({ kind: "close", token: "tok-1", at: T2 });
   });
 

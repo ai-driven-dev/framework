@@ -13,7 +13,7 @@ export type OffResult =
       readonly status: "refused";
       readonly reason: "outside-repository" | "unreadable-git-config" | "damaged-consent-log";
     }
-  | { readonly status: "off"; readonly changed: boolean };
+  | { readonly status: "off"; readonly changed: boolean; readonly closedAt?: string };
 
 /** Stops measuring this clone: its interval ends now, and the calls it made while on stay
  * stored, whenever the next ingest runs. What was already measured stays until `forget`. */
@@ -33,7 +33,7 @@ export class TelemetryOffUseCase {
     const { located } = clone;
     const token = tokenOfKey(clone.value);
     const granted = token !== null;
-    let closed = false;
+    let closedAt: string | undefined;
     let damaged = false;
     // The lock first: an ingest running now must see the key and the interval change together.
     await this.ledger.exclusively(async () => {
@@ -58,12 +58,16 @@ export class TelemetryOffUseCase {
           );
         for (const interval of ours) {
           await log.close(interval.token, at);
-          closed = true;
+          closedAt = at.toISOString();
         }
       }
       if (granted) await this.writer.set(located.root, CONSENT_WITHDRAWN);
     });
     if (damaged) return { status: "refused", reason: "damaged-consent-log" };
-    return { status: "off", changed: granted || closed };
+    return {
+      status: "off",
+      changed: granted || closedAt !== undefined,
+      ...(closedAt ? { closedAt } : {}),
+    };
   }
 }

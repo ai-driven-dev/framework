@@ -307,9 +307,12 @@ describe("aidd telemetry report, narrowed", () => {
 describe("aidd telemetry identity", () => {
   it("shows who is named when given nothing", async () => {
     identity.show.mockResolvedValue({ status: "unset" });
+    checkInstallationId.mockResolvedValueOnce("installation-id");
     expect(await run("identity")).toBeNull();
     expect(identity.show).toHaveBeenCalled();
+    expect(checkInstallationId).toHaveBeenCalledOnce();
     expect(stdout()).toContain("No identity is set");
+    expect(stdout()).toContain("Installation ID: installation-id");
   });
 
   it("names the person it is given", async () => {

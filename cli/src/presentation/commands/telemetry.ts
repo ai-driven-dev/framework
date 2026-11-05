@@ -629,6 +629,8 @@ export function registerTelemetryCommand(program: Command): void {
             ? await use.show()
             : await use.set(id);
         printIdentityResult(output, result);
+        if (id === undefined && !cmdOptions.off)
+          output.info(`Installation ID: ${(await deps.checkInstallationId()) ?? "unavailable"}.`);
         if (result.status === "refused") process.exit(1);
       });
     });

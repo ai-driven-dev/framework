@@ -183,9 +183,20 @@ describe("aidd telemetry off", () => {
     const run = await cli(["off"]);
     expect(run.exitCode).toBe(0);
     expect(run.stdout).toContain("Measurement is off");
+    const history = readFileSync(join(box.telemetry, "ledger", "consents.jsonl"), "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { close?: string });
+    const close = history.find((event) => event.close !== undefined);
+    expect(close?.close).toBeDefined();
+    expect(run.stdout).toContain(`Consent ended at ${close?.close}`);
+    expect(run.stdout).toContain("Native OTLP collection is not stopped");
     expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe(
       "off"
     );
+    const repeated = await cli(["off"]);
+    expect(repeated.stdout).not.toContain("Consent ended at");
+    expect(repeated.stdout).toContain("Native OTLP collection is not stopped");
   });
 });
 
