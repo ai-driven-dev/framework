@@ -74,7 +74,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🌐 Browser
 
-> Open the application and check its behavior in a browser. Test instructions: [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md).
+> Browse applications and services. Browser setup and conventions: [browsing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/browsing/browsing.md). Test instructions: [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -173,6 +173,8 @@ Require confirmation for writes; if your client cannot enforce it, disable write
 ### 3) ✅ Check the connection
 
 Record each connection in project memory: run `/aidd-context:02-project-memory refresh` and name the service when it asks what the repository cannot prove. A CLI is recorded as `cli`, an MCP server as `mcp`, an API as `http`; an SDK is your application's access, not the assistant's.
+
+For browser access, also name the chosen tool and any project-specific session conventions so they can be recorded in `browsing.md`.
 
 Then run the access check. It probes each access read-only and reports what to fix:
 
