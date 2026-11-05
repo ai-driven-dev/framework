@@ -140,7 +140,7 @@ export function buildCursorFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },
-      hooks: flatHooksArtifact(CURSOR_HOOKS),
+      hooks: flatHooksArtifact(CURSOR_HOOKS, { tool: "cursor" }),
       rules: { supported: false },
       commands: { supported: false },
     },

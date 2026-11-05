@@ -192,8 +192,11 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
       file.shared && (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
     if (existing !== null) this.assertParsableJson(existing, destPath);
     const raw = await this.fs.readFile(hooksSrc);
-    const { content, warnings } = file.merge(existing, raw, pluginName, (pluginPath) =>
-      this.resolveSuffixToFlatPath(pluginPath, pluginName)
+    const { content, warnings } = file.merge(
+      existing,
+      raw,
+      pluginName,
+      (pluginPath) => `./${this.resolveSuffixToFlatPath(pluginPath, pluginName)}`
     );
     for (const w of warnings) this.logger?.warn(w);
     await this.fs.writeFile(destPath, content);

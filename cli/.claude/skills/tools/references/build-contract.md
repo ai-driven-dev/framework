@@ -19,7 +19,7 @@ contract exposes ONE `ArtifactContract` per kind — never a kind-specific field
 `transformAgent`). Each kind is either:
 
 - `{ supported: false }` → warn-and-skip (no native concept in this tool), or
-- `{ supported: true, source, path, ext?, transform?, merge?, mergeDest?, mcpServersKey?, hooksMerge?, hooksMergeDest? }`.
+- `{ supported: true, source, path, ext?, transform?, merge?, mergeDest?, mcpServersKey?, hooksFile?, skipHooksJson?, hooksBridge? }`.
 
 The orchestrators contain **zero** `if (tool === …)` and **zero** `if (kind === "agents")`
 branches. Adding a tool means writing its contract; adding tool-specific behavior means adding a
@@ -34,7 +34,7 @@ field to the contract — never a branch in an orchestrator.
 | `ext?` | output extension override (e.g. `.agent.md`, `.toml`); absent means preserve source ext |
 | `transform?(content, plugin, basename)` | per-kind content transform; default is identity. Examples: strip `tools`/`color` frontmatter; markdown → TOML |
 | `merge?` / `mergeDest?` / `mcpServersKey?` | for config-file kinds (mcp) merging into one shared file rather than a per-plugin write; reuse an existing merge helper, never reimplement |
-| `hooksMerge?` / `hooksMergeDest?` | for tools whose hooks register into one shared file rather than a per-plugin write |
+| `hooksFile?` | the hooks file a plugin's hooks.json becomes: its `path`, whether every plugin `shared`s it, and the `merge` built from the tool's hooks descriptor by `flatHooksArtifact` (one engine, `formats/hooks-merge.ts`); never written by hand in a contract |
 
 Contract-level: `manifestFileRelative` / `synthesizeManifest` / `manifestSchemaName`
 (marketplace mode; each `null` when the tool has no native manifest), the optional

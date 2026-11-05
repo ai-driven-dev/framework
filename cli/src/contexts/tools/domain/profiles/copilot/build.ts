@@ -158,7 +158,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },
-      hooks: flatHooksArtifact(COPILOT_HOOKS),
+      hooks: flatHooksArtifact(COPILOT_HOOKS, { tool: "copilot" }),
       rules: { supported: false },
       commands: { supported: false },
     },

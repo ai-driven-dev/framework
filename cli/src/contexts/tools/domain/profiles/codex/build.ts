@@ -228,7 +228,7 @@ export function buildCodexFlatContract(): ToolBuildContract {
         transform: codexAgentMarkdownToToml,
       },
       mcp: { supported: false }, // handled by emitConfigArtifact (config.toml mcp_servers)
-      hooks: flatHooksArtifact(CODEX_HOOKS),
+      hooks: flatHooksArtifact(CODEX_HOOKS, { tool: "codex" }),
       rules: { supported: false },
       commands: { supported: false },
     },

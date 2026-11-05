@@ -131,7 +131,7 @@ export function buildClaudeFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.mcp.json`,
       },
-      hooks: flatHooksArtifact(CLAUDE_HOOKS),
+      hooks: flatHooksArtifact(CLAUDE_HOOKS, { tool: "claude" }),
       rules: { supported: false },
       commands: { supported: false },
     },

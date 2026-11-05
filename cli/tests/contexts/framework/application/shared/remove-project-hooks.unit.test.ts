@@ -206,6 +206,9 @@ describe("removeProjectHooks", () => {
     '{ "version": 1, "hooks": {} }',
     '{ "version": 1 }',
     JSON.stringify({ hooks: { preToolUse: [{ command: 42 }, entry(OTHER)] } }),
+    JSON.stringify({
+      hooks: { preToolUse: [{ command: `node ./x/.cursor/hooks/${PLUGIN}/mine.sh` }] },
+    }),
   ])("preserves a hooks file with no contribution byte-for-byte: %s", async (content) => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 

@@ -60,7 +60,7 @@ export function buildAntigravityFlatContract(): ToolBuildContract {
         transform: transformAntigravityAgent,
       },
       mcp: { supported: false },
-      hooks: flatHooksArtifact(ANTIGRAVITY_HOOKS, undefined, mergeAntigravityHooks),
+      hooks: flatHooksArtifact(ANTIGRAVITY_HOOKS, { tool: "antigravity" }, mergeAntigravityHooks),
       rules: { supported: false },
       commands: { supported: false },
     },

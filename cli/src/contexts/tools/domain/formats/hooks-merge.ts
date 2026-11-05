@@ -18,7 +18,12 @@ export interface HooksFileFormat {
   /** `matchers` keeps each item whole under its event and matcher group; `flat` lists one
    * entry per item under the event, with the fields named, in that order. */
   readonly entries:
-    | { readonly shape: "matchers" }
+    | {
+        readonly shape: "matchers";
+        /** `all` keeps every group and item as shipped; `commands` keeps only the items that
+         * run a command, each typed, under its group's matcher. */
+        readonly itemsKept: "all" | "commands";
+      }
     | { readonly shape: "flat"; readonly fieldsKept: readonly FlatHookField[] };
 }
 
@@ -47,7 +52,8 @@ export function pluginScriptPath(scriptsDir: string, plugin: string, pluginPath:
   return genericFlatHooksScriptPath(scriptsDir, plugin, rest);
 }
 
-/** Where a path the plugin ships outside `hooks/` lands; the caller knows its other artifacts. */
+/** How a command names a path the plugin ships outside `hooks/`; the caller knows its other
+ * artifacts. Left as written where the caller says nothing. */
 export type LocatePluginPath = (pluginPath: string) => string;
 
 /** Merges a plugin's hooks, as the plugin ships them, into the tool's file: its commands
@@ -90,11 +96,12 @@ export function pluginEntries(
   plugin: string,
   target: HooksMergeTarget
 ): readonly { event: string; entry: Entry & { command: string } }[] {
-  const dir = pluginScriptDir(target.scriptsDir, plugin);
   return Object.entries(parseFile(content).hooks ?? {}).flatMap(([event, entries]) =>
     entries
       .flatMap((entry) => (Array.isArray(entry.hooks) ? (entry.hooks as Entry[]) : [entry]))
-      .filter((item): item is Entry & { command: string } => namesDir(item, dir))
+      .filter((item): item is Entry & { command: string } =>
+        namesDir(item, target.scriptsDir, plugin)
+      )
       .map((entry) => ({ event, entry }))
   );
 }
@@ -124,23 +131,30 @@ function rewriteRoot(
   return rewritePluginRootInJson(JSON.parse(pluginHooks), (suffix) =>
     suffix.startsWith(SCRIPTS)
       ? `./${pluginScriptPath(scriptsDir, plugin, suffix)}`
-      : `./${locate(suffix)}`
+      : locate(suffix)
   ) as PluginHooksShape;
 }
 
-function namesDir(item: Entry, dir: string): boolean {
-  return typeof item.command === "string" && item.command.includes(dir);
+/** Whether a command runs one of the plugin's scripts: its folder starts a path, at the start
+ * of the command or after a space or a quote, bare, after `./` or after a root token. */
+function runsPluginScript(command: string, scriptsDir: string, plugin: string): boolean {
+  const dir = pluginScriptDir(scriptsDir, plugin).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?:^|[\\s"'])(?:\\./|\\$\\{\\w+\\}/)?${dir}`).test(command);
+}
+
+function namesDir(item: Entry, scriptsDir: string, plugin: string): boolean {
+  return runsPluginScript(String(item.command), scriptsDir, plugin);
 }
 
 /** The file without the plugin's entries: an event, or a matcher group, left with none of its
  * own is dropped, one that never had any is kept. */
 function stripPlugin(file: HooksFile, plugin: string, scriptsDir: string): HooksFile {
-  const dir = pluginScriptDir(scriptsDir, plugin);
+  const ours = (item: Entry) => namesDir(item, scriptsDir, plugin);
   const hooks: Record<string, Entry[]> = {};
   for (const [event, entries] of Object.entries(file.hooks ?? {})) {
     const kept = entries.flatMap((entry) => {
-      if (!Array.isArray(entry.hooks)) return namesDir(entry, dir) ? [] : [entry];
-      const items = (entry.hooks as Entry[]).filter((item) => !namesDir(item, dir));
+      if (!Array.isArray(entry.hooks)) return ours(entry) ? [] : [entry];
+      const items = (entry.hooks as Entry[]).filter((item) => !ours(item));
       if (items.length === entry.hooks.length) return [entry];
       return items.length === 0 ? [] : [{ ...entry, hooks: items }];
     });
@@ -149,21 +163,23 @@ function stripPlugin(file: HooksFile, plugin: string, scriptsDir: string): Hooks
   return { ...file, hooks };
 }
 
+/** A group without a hooks list runs nothing: kept as shipped where items are kept whole,
+ * skipped everywhere else. */
 function shapeEntries(groups: readonly PluginMatcherGroup[], format: HooksFileFormat): Entry[] {
   const { entries } = format;
-  if (entries.shape === "matchers") {
-    return groups.map((group) => ({
-      matcher: group.matcher,
-      hooks: group.hooks
-        .filter((item) => typeof item.command === "string")
-        .map((item) => ({ ...item, type: item.type ?? "command" })),
-    }));
+  const listed = groups.filter((group) => Array.isArray(group.hooks));
+  const commands = (group: PluginMatcherGroup) =>
+    group.hooks.filter((item) => typeof item.command === "string");
+  if (entries.shape === "flat") {
+    return listed.flatMap((group) =>
+      commands(group).map((item) => flatEntry(item, group.matcher, entries.fieldsKept))
+    );
   }
-  return groups.flatMap((group) =>
-    group.hooks
-      .filter((item) => typeof item.command === "string")
-      .map((item) => flatEntry(item, group.matcher, entries.fieldsKept))
-  );
+  if (entries.itemsKept === "all") return [...groups];
+  return listed.map((group) => ({
+    matcher: group.matcher,
+    hooks: commands(group).map((item) => ({ ...item, type: item.type ?? "command" })),
+  }));
 }
 
 function flatEntry(

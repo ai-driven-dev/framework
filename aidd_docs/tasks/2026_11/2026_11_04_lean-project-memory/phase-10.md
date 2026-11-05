@@ -10,15 +10,28 @@ status: done
 
 ```txt
 .
-└── cli/src/contexts/
-    ├── tools/domain/formats/hooks-merge.ts ✅
-    ├── tools/domain/profiles/{claude,codex,copilot,cursor}/hooks-format.ts ❌
-    ├── translate/domain/formats/cursor-hooks.ts ❌
-    ├── translate/application/strategies/flat-build-strategy.ts ✏️
-    ├── translate/application/strategies/marketplace-build-strategy.ts ✏️
-    ├── framework/application/framework/translator/project-hooks-materializer.ts ✏️
-    └── framework/application/shared/remove-project-hooks.ts ✏️
+└── cli/src/
+    ├── kernel/materialization/plugin-root-path-rewrite.ts ✏️ (renamed from claude-root-path-rewrite.ts)
+    └── contexts/
+        ├── tools/domain/
+        │   ├── formats/hooks-merge.ts ✅
+        │   ├── formats/hooks-descriptor.ts ✏️
+        │   ├── build-contract.ts ✏️
+        │   ├── capabilities/plugins-capability.ts ✏️
+        │   ├── hooks-format.ts ❌
+        │   └── profiles/
+        │       ├── {claude,codex,copilot,cursor}/hooks-format.ts ❌
+        │       ├── {claude,codex,copilot,cursor}/hooks.ts ✏️
+        │       ├── {claude,codex,copilot,cursor,kilo,opencode}/build.ts ✏️
+        │       └── cursor/profile.ts ✏️
+        ├── translate/domain/formats/cursor-hooks.ts ❌
+        ├── translate/domain/content-translator.ts ✏️
+        ├── translate/application/strategies/flat-build-strategy.ts ✏️
+        ├── framework/application/framework/translator/project-hooks-materializer.ts ✏️
+        └── framework/application/shared/remove-project-hooks.ts ✏️
 ```
+
+`marketplace-build-strategy.ts` is not touched: that route writes hooks as the plugin authored them.
 
 ## Test Scope
 

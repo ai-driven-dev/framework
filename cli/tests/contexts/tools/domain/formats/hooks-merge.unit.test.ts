@@ -12,9 +12,16 @@ const ROOT = "${CLAUDE_PLUGIN_ROOT}";
 const DIR = ".tool/hooks/";
 
 const NESTED: HooksMergeTarget = {
-  file: { wrapper: {}, entries: { shape: "matchers" } },
+  file: { wrapper: {}, entries: { shape: "matchers", itemsKept: "commands" } },
   scriptsDir: DIR,
 };
+const WHOLE: HooksMergeTarget = {
+  file: { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } },
+  scriptsDir: DIR,
+};
+const GROUPLESS = JSON.stringify({
+  hooks: { Stop: [{ matcher: "x" }, { hooks: [{ command: "a" }] }] },
+});
 
 function flat(
   fieldsKept: HooksMergeTarget["file"]["entries"] & { shape: "flat" }
@@ -47,14 +54,14 @@ describe("where a plugin's scripts land", () => {
 });
 
 describe("the plugin's commands", () => {
-  it("point at where its scripts land, and anything else under the plugin root beside it", () => {
+  it("point at where its scripts land, and leave anything else under the plugin root as written", () => {
     const hooks = shipped("Start", {
       hooks: [{ type: "command", command: `node ${ROOT}/hooks/a.cjs ${ROOT}/bin/x` }],
     });
 
     expect(merged(null, hooks, CURSOR_LIKE)).toStrictEqual({
       version: 1,
-      hooks: { Start: [{ command: "node ./.tool/hooks/p/a.cjs ./bin/x" }] },
+      hooks: { Start: [{ command: "node ./.tool/hooks/p/a.cjs bin/x" }] },
     });
   });
 });
@@ -66,7 +73,7 @@ describe("a path the plugin ships outside its hooks", () => {
 
     expect(JSON.parse(located)).toStrictEqual({
       version: 1,
-      hooks: { Start: [{ command: "cat ./.tool/skills/s/SKILL.md" }] },
+      hooks: { Start: [{ command: "cat .tool/skills/s/SKILL.md" }] },
     });
   });
 });
@@ -127,6 +134,49 @@ describe("a nested entry", () => {
       merged(null, shipped("Start", { hooks: [{ type: "http", command: "a" }] }), NESTED)
     ).toStrictEqual({
       hooks: { Start: [{ hooks: [{ type: "http", command: "a" }] }] },
+    });
+  });
+});
+
+describe("a nested entry kept whole", () => {
+  it("keeps every group and item as the plugin ships it, a prompt hook and extra keys too", () => {
+    const hooks = shipped("Post", {
+      matcher: "Write",
+      label: "mine",
+      hooks: [{ type: "prompt", prompt: "check" }, { command: `node ${ROOT}/hooks/a.cjs` }],
+    });
+
+    expect(merged(null, hooks, WHOLE)).toStrictEqual({
+      hooks: {
+        Post: [
+          {
+            matcher: "Write",
+            label: "mine",
+            hooks: [{ type: "prompt", prompt: "check" }, { command: "node ./.tool/hooks/p/a.cjs" }],
+          },
+        ],
+      },
+    });
+  });
+});
+
+describe("a matcher group that declares no hooks list", () => {
+  it("is kept as it is where items are kept whole", () => {
+    expect(merged(null, GROUPLESS, WHOLE)).toStrictEqual({
+      hooks: { Stop: [{ matcher: "x" }, { hooks: [{ command: "a" }] }] },
+    });
+  });
+
+  it("is skipped where only commands are kept", () => {
+    expect(merged(null, GROUPLESS, NESTED)).toStrictEqual({
+      hooks: { Stop: [{ hooks: [{ command: "a", type: "command" }] }] },
+    });
+  });
+
+  it("is skipped by a flat file", () => {
+    expect(merged(null, GROUPLESS, CURSOR_LIKE)).toStrictEqual({
+      version: 1,
+      hooks: { Stop: [{ command: "a" }] },
     });
   });
 });
@@ -256,6 +306,29 @@ describe("merging into a file the plugin already wrote to", () => {
     expect(merged(flatFile, "{}", CURSOR_LIKE)).toStrictEqual({
       version: 1,
       hooks: { Start: [{ command: `node ./${DIR}p-extra/a.cjs` }] },
+    });
+  });
+
+  it("finds the plugin's folder only where a path starts, never inside a person's own path", () => {
+    const file = JSON.stringify({
+      version: 1,
+      hooks: {
+        Start: [
+          { command: `node ./x/${DIR}p/mine.sh` },
+          { command: `node "./${DIR}p/a.cjs"` },
+          { command: `${DIR}p/b.cjs` },
+          { command: `node '${DIR}p/c.cjs'` },
+          { command: `node ${ROOT}/${DIR}p/d.cjs` },
+          { command: `node ./other${DIR}p/e.cjs` },
+        ],
+      },
+    });
+
+    expect(merged(file, "{}", CURSOR_LIKE)).toStrictEqual({
+      version: 1,
+      hooks: {
+        Start: [{ command: `node ./x/${DIR}p/mine.sh` }, { command: `node ./other${DIR}p/e.cjs` }],
+      },
     });
   });
 
