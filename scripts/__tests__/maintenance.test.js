@@ -106,8 +106,35 @@ test('does not claim global plugins are up to date when target versions cannot b
   writeManifest(path.join(options.env.AIDD_USER_CONFIG_DIR,'manifest.json'), {opencode:{plugins:[plugin('aidd-context','v5.13.0','2.10.0','user')]}});
   const text=format(await status({...options,fetcher:releases([],available)}));
   assert.match(text,/marketplace partagé.*v5\.12\.0.*v5\.13\.0/i);
-  assert.match(text,/plugins non vérifié/i);
+  assert.match(text,/plugins globaux non vérifié/i);
+  assert.doesNotMatch(text,/certains plugins non vérifié/i);
   assert.doesNotMatch(text,/à jour/i);
+});
+
+test('attributes malformed entries to their manifest scope', async t => {
+  const options=fixture(t,{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.13.0'},'5.13.0');
+  const project=path.join(options.cwd,'.aidd','manifest.json');
+  const user=path.join(options.env.AIDD_USER_CONFIG_DIR,'manifest.json');
+  fs.writeFileSync(path.join(options.env.AIDD_USER_CONFIG_DIR,'marketplaces.json'),JSON.stringify({version:1,marketplaces:[{name:'aidd-framework',version:'5.13.0',source:{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.13.0'}}]}));
+  const invalid=[
+    {'BAD!':{plugins:[]}},
+    {codex:null},
+    {codex:[]},
+    {codex:{plugins:{}}},
+    {codex:{plugins:[null]}},
+    {codex:{plugins:['invalid']}},
+    {codex:{plugins:[plugin('aidd-dev','v5.13.0','2.7.1','project',{marketplace:undefined})]}},
+    {codex:{plugins:[plugin('INVALID!','v5.13.0','2.7.1')]}},
+  ];
+  for (const scope of ['project','user']) {
+    for (const entries of invalid) {
+      writeManifest(project,scope==='project'?entries:{});
+      writeManifest(user,scope==='user'?entries:{});
+      const result=await status({...options,fetcher:releasesWithVersions([],available,{'.':'5.13.0'})});
+      assert.equal(Boolean(result.pluginsUnverified),scope==='project');
+      assert.equal(Boolean(result.globalPluginsUnverified),scope==='user');
+    }
+  }
 });
 
 test('does not report local, unrelated, malformed, or up-to-date plugins as updates', async t => {

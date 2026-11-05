@@ -96,12 +96,16 @@ import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/reci
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserReleaseJournalStoreAdapter } from "../../contexts/framework/infrastructure/user-release-journal-store.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import { claudeConfigDir } from "../../contexts/telemetry/domain/claude-projects-root.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
 import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
 import { frameworkBuildModeFor } from "../../contexts/tools/domain/registry.js";
-import { hostPluginRegistryReaders } from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
+import {
+  claudeLocalPluginRefreshable,
+  hostPluginRegistryReaders,
+} from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
 import {
   HostRegistryMarketplaceSourceReaderAdapter,
   NativeMarketplaceSourceReaderAdapter,
@@ -112,6 +116,7 @@ import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import type { VersionReader } from "../../kernel/ports/version-reader.js";
+import { resolveHomeDir } from "../../kernel/reading/home-dir.js";
 import type { AiToolId } from "../../kernel/tool.js";
 import { CLIOutput } from "../../presentation/output.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
@@ -288,6 +293,8 @@ export async function createDeps(
   }
   // Read once, reused wherever a use case needs the scope a plugin is actually registered
   // at: removal, clean, and doctor's own registration check.
+  const hostHome = resolveHomeDir();
+  const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, hostHome);
   const hostPluginRegistries = hostPluginRegistryReaders();
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
@@ -505,6 +512,34 @@ export async function createDeps(
       return distribution.manifest.version;
     },
     preflight: async (manifest, root, targets, marketplace, localPath) => {
+      const claudeTargets = targets.filter((target) => target.toolId === "claude");
+      if (claudeTargets.length) {
+        if (resolve(claudeDir) !== resolve(hostHome, ".claude"))
+          throw new Error(
+            "Cannot upgrade Claude with a custom CLAUDE_CONFIG_DIR: its marketplace paths are not supported."
+          );
+        const registration = manifest.getNativeRegistrations("claude");
+        const catalogues = registration?.marketplaces.filter(
+          (entry) => entry.alias === marketplace.name
+        );
+        const machine = await userManifestRepo.load();
+        const machineClaims = machine?.getNativeRegistrations("claude")?.pluginClaims ?? [];
+        const hostName = catalogues?.length === 1 ? catalogues[0]?.hostName : undefined;
+        const refs = claudeTargets.map((target) => `${target.pluginName}@${hostName}`);
+        for (const target of claudeTargets) {
+          const ref = hostName === undefined ? undefined : `${target.pluginName}@${hostName}`;
+          if (
+            ref === undefined ||
+            !registration?.pluginRefs.includes(ref) ||
+            machineClaims.some((claim) => claim.ref === ref) ||
+            !(await claudeLocalPluginRefreshable(claudeDir, root, ref, refs))
+          ) {
+            throw new Error(
+              `Cannot upgrade claude:${target.pluginName}: local scope or ownership is ambiguous, or another installation shares its marketplace.`
+            );
+          }
+        }
+      }
       for (const target of targets) {
         if (getToolSupportedScope(target.toolId) !== "project")
           throw new Error(

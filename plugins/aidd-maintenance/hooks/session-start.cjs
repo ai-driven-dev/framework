@@ -111,27 +111,28 @@ function plugins(cwd, env, home, current) {
   for (const {file, scope} of manifests) {
     if (!file || !fs.existsSync(file)) continue;
     hasManifest = true;
+    const markUnverified = () => { if (scope === 'user') globalUnverified = true; else unverified = true; };
     const data = json(file);
     if (data?.version !== 8 || !data.tools || typeof data.tools !== 'object' || Array.isArray(data.tools)) {
-      if (scope === 'user') globalUnverified = true; else unverified = true;
+      markUnverified();
       continue;
     }
     for (const [tool, entry] of Object.entries(data.tools)) {
-      if (!/^[a-z0-9-]+$/.test(tool) || !entry || typeof entry !== 'object') { unverified = true; continue; }
+      if (!/^[a-z0-9-]+$/.test(tool) || !entry || typeof entry !== 'object' || Array.isArray(entry)) { markUnverified(); continue; }
       if (entry.plugins === undefined) continue;
-      if (!Array.isArray(entry.plugins)) { unverified = true; continue; }
+      if (!Array.isArray(entry.plugins)) { markUnverified(); continue; }
       for (const plugin of entry.plugins) {
-        if (!plugin) continue;
+        if (!plugin || typeof plugin !== 'object' || Array.isArray(plugin)) { markUnverified(); continue; }
         if (plugin.marketplace !== 'aidd-framework') {
           const repo = scope === 'user' ? userEntry?.source?.repo : current?.source?.repo;
           if (plugin.marketplace === undefined && repo && plugin.source?.kind === 'git-subdir' &&
               plugin.source.url === `https://github.com/${repo}.git` &&
-              plugin.source.path === `plugins/${plugin.name}`) unverified = true;
+              plugin.source.path === `plugins/${plugin.name}`) markUnverified();
           continue;
         }
         if (scope === 'project' && plugin.scope === 'user') { userReferences.add(`${tool}:${plugin.name}`); continue; }
         if (plugin.scope !== scope || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(plugin.name || '')) {
-          unverified = true; continue;
+          markUnverified(); continue;
         }
         if (scope === 'user') { machinePlugins.add(`${tool}:${plugin.name}`); machineCount++; }
         if (scope === 'user' && !userComparable) { globalUnverified = true; continue; }
@@ -144,7 +145,7 @@ function plugins(cwd, env, home, current) {
         const version = semver(plugin.version);
         const ref = releaseTag(source?.ref);
         if (source?.kind !== 'git-subdir' || source.url !== `https://github.com/${repo}.git` || source.path !== `plugins/${plugin.name}` || !version || !ref) {
-          if (scope === 'user') globalUnverified = true; else unverified = true;
+          markUnverified();
           continue;
         }
         const channel = ref.prerelease[0] || '';
@@ -340,10 +341,12 @@ async function status({ cwd = process.cwd(), env = process.env, home = os.homedi
       state.save = true;
     }
     const versions = state.latest.pluginVersions;
-    if (!versions || typeof versions !== 'object') result.pluginsUnverified = true;
     const rawTargetVersion = versions?.[plugin.name];
     const targetVersion = semver(rawTargetVersion);
-    if (!targetVersion) result.pluginsUnverified = true;
+    if (!targetVersion) {
+      if (plugin.scope === 'user') result.globalPluginsUnverified = true;
+      else result.pluginsUnverified = true;
+    }
     if (targetVersion && compare(targetVersion, semver(plugin.version)) < 0) {
       result.pluginAhead.push({...plugin, targetRef:state.latest.tag, targetVersion:rawTargetVersion});
       return;

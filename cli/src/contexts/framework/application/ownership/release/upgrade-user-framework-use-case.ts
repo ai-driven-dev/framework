@@ -113,11 +113,6 @@ export class UpgradeUserFrameworkUseCase {
         );
       if (compareSemver(release, source.ref) < 0)
         throw new Error(`${toolId}:${plugin.name}: refusing a release downgrade.`);
-      const currentChannel =
-        source.ref.split("+", 1)[0]?.match(/-([0-9A-Za-z-]+)/)?.[1] ?? "stable";
-      const nextChannel = release.split("+", 1)[0]?.match(/-([0-9A-Za-z-]+)/)?.[1] ?? "stable";
-      if (currentChannel !== nextChannel)
-        throw new Error(`${toolId}:${plugin.name}: refusing a change of release channel.`);
       const prepared = await builder.build(release, toolId, plugin.name, sha);
       sha ??= prepared.sha;
       if (compareSemver(prepared.dist.manifest.version, plugin.version) < 0)

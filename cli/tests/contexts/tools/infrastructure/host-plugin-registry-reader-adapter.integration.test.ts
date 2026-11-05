@@ -2,7 +2,10 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { hostPluginRegistryReaders } from "../../../../src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
+import {
+  claudeLocalPluginRefreshable,
+  hostPluginRegistryReaders,
+} from "../../../../src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 
 /**
@@ -35,6 +38,26 @@ function readerFor(tool: AiToolId) {
 
 describe("Claude Code's own installed_plugins.json", () => {
   const PATH = ".claude/plugins/installed_plugins.json";
+
+  it("allows two targeted local plugins in the same project", async () => {
+    const refs = ["aidd-dev@aidd-framework", "aidd-context@aidd-framework"];
+    await write(
+      PATH,
+      JSON.stringify({
+        plugins: Object.fromEntries(
+          refs.map((ref) => [ref, [{ scope: "local", projectPath: PROJECT }]])
+        ),
+      })
+    );
+    expect(
+      await claudeLocalPluginRefreshable(
+        join(home, ".claude"),
+        PROJECT,
+        "aidd-dev@aidd-framework",
+        refs
+      )
+    ).toBe(true);
+  });
 
   it("counts a ref installed for this project, and one installed for the machine", async () => {
     await write(

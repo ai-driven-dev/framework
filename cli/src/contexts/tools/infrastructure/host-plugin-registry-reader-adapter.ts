@@ -60,9 +60,8 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
       return failedRead(this.path, error);
     }
     try {
-      const parsed = JSON.parse(content) as { plugins?: Record<string, ClaudeEntry[]> };
-      const plugins = parsed.plugins;
-      if (plugins === undefined || typeof plugins !== "object") {
+      const plugins = parseClaudePlugins(content);
+      if (plugins === undefined) {
         return { location: this.path, unreadable: "no `plugins` object" };
       }
       const refs = new Map<string, HostPluginRegistryEntry>();
@@ -76,6 +75,55 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
       return { location: this.path, unreadable: describeError(error) };
     }
   }
+}
+
+/** A release refresh must have a local entry and no other installation sharing its catalogue. */
+export async function claudeLocalPluginRefreshable(
+  configDir: string,
+  projectRoot: string,
+  ref: string,
+  targets: readonly string[]
+): Promise<boolean> {
+  try {
+    const content = await readFile(join(configDir, "plugins", "installed_plugins.json"), "utf8");
+    const plugins = parseClaudePlugins(content);
+    const entries = plugins?.[ref];
+    if (!Array.isArray(entries)) return false;
+    const separator = ref.lastIndexOf("@");
+    if (separator < 0) return false;
+    const catalogue = ref.slice(separator);
+    const here = await resolvedPath(projectRoot);
+    for (const [otherRef, otherEntries] of Object.entries(plugins ?? {})) {
+      if (!otherRef.endsWith(catalogue)) continue;
+      if (!targets.includes(otherRef) || !Array.isArray(otherEntries)) return false;
+      for (const entry of otherEntries) {
+        if (
+          entry?.scope !== "local" ||
+          typeof entry.projectPath !== "string" ||
+          (await resolvedPath(entry.projectPath)) !== here
+        )
+          return false;
+      }
+    }
+    for (const entry of entries) {
+      if (
+        entry?.scope === "local" &&
+        typeof entry.projectPath === "string" &&
+        (await resolvedPath(entry.projectPath)) === here
+      )
+        return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function parseClaudePlugins(content: string): Record<string, ClaudeEntry[]> | undefined {
+  const parsed = JSON.parse(content) as { plugins?: Record<string, ClaudeEntry[]> };
+  return parsed.plugins && typeof parsed.plugins === "object" && !Array.isArray(parsed.plugins)
+    ? parsed.plugins
+    : undefined;
 }
 
 /**

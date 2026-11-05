@@ -227,20 +227,46 @@ describe("machine-scoped framework release update", () => {
     expect(f.repo.saveCount).toBe(0);
   });
 
+  it("refuses a downgrade before changing files", async () => {
+    const f = await fixture();
+    await expect(
+      f.useCase.execute({ projectRoot: PROJECT, release: "v5.11.0", confirm: accept })
+    ).rejects.toThrow(/downgrade/);
+    expect(f.store.create).not.toHaveBeenCalled();
+    expect(f.writes).not.toHaveBeenCalled();
+    expect(f.repo.saveCount).toBe(0);
+  });
+
   it.each([
-    { currentRef: "v5.12.0", target: "v5.11.0", reason: /downgrade/ },
-    { currentRef: "v5.12.0", target: "v5.13.0-beta.1", reason: /channel/ },
-    { currentRef: "v5.12.0-alpha.1", target: "v5.13.0-beta.1", reason: /channel/ },
+    { currentRef: "v5.12.0", target: "v5.13.0-beta.1" },
+    { currentRef: "v5.12.0-alpha.1", target: "v5.13.0-beta.1" },
   ])(
-    "refuses downgrade or a change of release channel ($currentRef → $target)",
-    async ({ currentRef, target, reason }) => {
-      const f = await fixture({ currentRef });
-      await expect(
-        f.useCase.execute({ projectRoot: PROJECT, release: target, confirm: accept })
-      ).rejects.toThrow(reason);
-      expect(f.store.create).not.toHaveBeenCalled();
-      expect(f.writes).not.toHaveBeenCalled();
-      expect(f.repo.saveCount).toBe(0);
+    "updates to an explicitly selected channel after confirmation ($currentRef → $target)",
+    async ({ currentRef, target }) => {
+      const declined = await fixture({ currentRef });
+      const confirm = vi.fn(async () => false);
+      const cancelled = await declined.useCase.execute({
+        projectRoot: PROJECT,
+        release: target,
+        confirm,
+      });
+      expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ release: target }));
+      expect(cancelled.cancelled).toBe(true);
+      expect(declined.store.create).not.toHaveBeenCalled();
+      expect(declined.writes).not.toHaveBeenCalled();
+
+      const accepted = await fixture({ currentRef });
+      const result = await accepted.useCase.execute({
+        projectRoot: PROJECT,
+        release: target,
+        confirm: accept,
+      });
+      expect(result.updated).toHaveLength(2);
+      expect(accepted.repo.getCurrent()?.getPlugins("opencode")[0]?.source).toEqual({
+        ...SOURCE,
+        ref: target,
+        sha: SHA,
+      });
     }
   );
 
