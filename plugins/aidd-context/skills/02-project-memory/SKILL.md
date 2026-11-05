@@ -34,8 +34,8 @@ Run the flow above, reading only the next action file.
 | `node memory.cjs check . aidd_docs/memory/<file>.md` | per file | checks that file |
 | `node memory.cjs check .` | whole bank | checks the whole bank |
 | `node memory.cjs sync <tool>...` | picked tools known | fills each named tool's block |
-| `node memory.cjs lines . > <session scratch>/lines.txt` | refresh, before writing | records the bank's lines |
-| `node memory.cjs vanished <that file> .` | refresh, at the end | lists the lines gone, shown to the person, nothing restored |
+| `node memory.cjs lines . > <session scratch>/lines.txt` | write, first step | records the bank's lines |
+| `node memory.cjs vanished <that file> .` | write, last step | lists the lines gone |
 
 ## Transversal rules
 

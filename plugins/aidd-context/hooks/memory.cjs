@@ -25,7 +25,7 @@ const path = require("node:path");
 const { RULES, ERROR, WARNING } = require("./lib/memory-rules.cjs");
 const turnEnd = require("./lib/common-rules.cjs");
 
-const { formatFindings, isShellWrite, markdownLines, changedLines, touchedLines, reachesTouched } = turnEnd;
+const { formatFindings, isShellWrite, markdownLines, changedLines, touchedLines, reachesTouched, producedBy } = turnEnd;
 
 const PLUGIN = "aidd-context";
 const DOCS_DIR = "aidd_docs";
@@ -243,7 +243,7 @@ function findingsOf(root, said, unknown) {
     // A write that added or changed no line produced nothing to answer for.
     if (touched !== null && touched.size === 0) return;
     for (const finding of lintFile(root, file)) {
-      if (touched !== null && finding.line !== undefined && !reachesTouched(finding, touched)) continue;
+      if (touched !== null && finding.line !== undefined && !(reachesTouched(finding, touched) && producedBy(finding, changed))) continue;
       // Only an error can block: errors are never capped, so the line to fix is always printed.
       if (touched !== null && finding.severity === ERROR && LEVELS[finding.rule] === 2) level = 2;
       if (finding.severity !== ERROR) warnings.push(asWarning(finding));
@@ -311,9 +311,17 @@ function normalized(root, findings) {
   return findings.map((finding) => ({ ...finding, file: path.join(root, finding.file), error: finding.severity === ERROR }));
 }
 
-/** A normalized finding back in the printed form, relative to its project. */
-function printed(root, finding) {
-  return { ...finding, file: toPosix(path.relative(root, finding.file)) };
+/** A file named from the project the session started in when its bank holds the file, else from its own project. */
+function shownFile(root, cwd, file) {
+  const own = sessionProject(cwd);
+  if (own === null) return file;
+  const relative = path.relative(own, path.join(root, file));
+  return toPosix(relative.startsWith("..") || path.isAbsolute(relative) ? file : relative);
+}
+
+/** A normalized finding back in the printed form, as the person who started the session reads its path. */
+function printed(root, cwd, finding) {
+  return { ...finding, file: shownFile(root, cwd, toPosix(path.relative(root, finding.file))) };
 }
 
 /** The bank's own project for a session's folder, or null when it holds no bank. */
@@ -322,13 +330,16 @@ function sessionProject(cwd) {
   return fs.existsSync(path.join(root, MEMORY_DIR)) ? root : null;
 }
 
+// Another file may be a person's, so what is told of it is to be checked, never owed.
+const TOLD_FIX = "check it";
+
 /** The errors in the other files of the bank that are new against the baseline, told once per turn. */
-function toldElsewhere(projects, turn, baseline) {
+function toldElsewhere(projects, turn, baseline, cwd) {
   if (!baseline) return [];
   const told = [];
   for (const root of projects.keys()) {
     const files = [...turn.files];
-    told.push(...turnEnd.tellOnce(normalized(root, lintBank(root)), files, baseline, turn.told).map((finding) => printed(root, finding)));
+    told.push(...turnEnd.tellOnce(normalized(root, lintBank(root)), files, baseline, turn.told).map((finding) => ({ ...printed(root, cwd, finding), fix: TOLD_FIX })));
   }
   return told;
 }
@@ -360,11 +371,11 @@ function afterWrite(host, event) {
   for (const [root, { said, unsaid }] of projects) {
     const reached = root === cwd ? shellReached(root, event.command) : [];
     const { findings, level: own } = findingsOf(root, said, [...unsaid, ...reached]);
-    for (const list of Object.keys(all)) all[list].push(...findings[list]);
+    for (const list of Object.keys(all)) all[list].push(...findings[list].map((finding) => ({ ...finding, file: shownFile(root, event.cwd, finding.file) })));
     level = Math.max(level, own);
   }
   if (mark) {
-    all.reached.push(...toldElsewhere(projects, turn, baseline));
+    all.reached.push(...toldElsewhere(projects, turn, baseline, event.cwd));
     turnEnd.leaveTurn(mark, turn);
   }
   const text = formatFindings(PLUGIN, all);
@@ -399,7 +410,7 @@ function atStop(host, event) {
     readTextOrNull
   );
   turnEnd.leaveBaseline(mark, found);
-  const text = formatFindings(PLUGIN, { errors: required.map((finding) => printed(finding.root, finding)) });
+  const text = formatFindings(PLUGIN, { errors: required.map((finding) => printed(finding.root, event.cwd, finding)) });
   if (text !== "") host.continueTurn(text);
 }
 
@@ -507,16 +518,22 @@ function buildBlockLines({ rooted, onDemand, owned }, syntax, prefix = "") {
   return lines.length === 0 ? [] : ["", ...lines, ""];
 }
 
-// The lines the generator writes, by shape: a stale one, for a file since removed, is still its own
-// to rewrite; any other line in the block is a team's.
-const GENERATED_LINES = [
-  /^@aidd_docs\/memory\/.+$/u,
-  /^\[[^\]]+\]\((?:\.\.\/)*aidd_docs\/memory\/.+\)$/u,
-  /^- aidd_docs\/.+$/u,
+// A line the generator wrote once and no longer writes is its own to rewrite only when it is a bare
+// path to something gone. Any other line, even one shaped like a generated line, is a team's.
+const BARE_PATHS = [
+  /^@(aidd_docs\/memory\/\S+)$/u,
+  /^\[[^\]]+\]\((?:\.\.\/)*(aidd_docs\/memory\/[^\s)]+)\)$/u,
+  /^- (aidd_docs\/\S+)$/u,
 ];
 
-function isGeneratedLine(line) {
-  return line === "" || line === ON_DEMAND_NOTE || line === OWNED_NOTE || GENERATED_LINES.some((shape) => shape.test(line));
+/** Whether a block line is the generator's: blank, a note, a line it writes now, or a bare path to what is gone. */
+function isGeneratedLine(line, written, root) {
+  if (line === "" || line === ON_DEMAND_NOTE || line === OWNED_NOTE || written.has(line)) return true;
+  for (const shape of BARE_PATHS) {
+    const match = shape.exec(line);
+    if (match) return !fs.existsSync(path.join(root, match[1]));
+  }
+  return false;
 }
 
 /**
@@ -560,8 +577,9 @@ function blockProblem(content, found, legacy) {
 }
 
 /** The block's lines when something a generator never wrote stands in it, or null. */
-function foreignLine(lines, found) {
-  return lines.slice(found.openLine + 1, found.closeLine).map((line) => line.trim()).find((line) => !isGeneratedLine(line)) ?? null;
+function foreignLine(lines, found, inner, root) {
+  const written = new Set(inner);
+  return lines.slice(found.openLine + 1, found.closeLine).map((line) => line.trim()).find((line) => !isGeneratedLine(line, written, root)) ?? null;
 }
 
 /** The content with the lines between the markers replaced, in the file's own line ending. */
@@ -612,7 +630,7 @@ function existingTargets(root, targets) {
 }
 
 /** The new text of one context file, or the reason it is left as it is. */
-function filledBlock(original, inner) {
+function filledBlock(original, inner, root) {
   const current = findBlock(original, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
   const problem = blockProblem(original, current, legacy);
@@ -623,7 +641,7 @@ function filledBlock(original, inner) {
   const migrated = migrateLegacyMarkers(original, legacy);
   const found = findBlock(migrated, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   if (found.status !== "ok") return { problem: "has a duplicated project memory marker" };
-  const foreign = foreignLine(migrated.split("\n").map((line) => line.replace(/\r$/u, "")), found);
+  const foreign = foreignLine(migrated.split("\n").map((line) => line.replace(/\r$/u, "")), found, inner, root);
   if (foreign !== null) return { held: foreign };
   return { text: spliceBlock(migrated, found, inner) };
 }
@@ -658,7 +676,7 @@ function sync(root, tools = [], { quiet = false } = {}) {
   for (const target of existingTargets(absolute, resolveTargets(tools))) {
     const original = readTextOrNull(target.file);
     if (original === null) continue;
-    const { text, problem, held } = filledBlock(original, buildBlockLines(lists, target.syntax, target.prefix));
+    const { text, problem, held } = filledBlock(original, buildBlockLines(lists, target.syntax, target.prefix), absolute);
     if (problem !== undefined) {
       result.unpaired.push(target.path);
       report(`${target.path} ${problem}, not synced`);
@@ -694,7 +712,7 @@ function bankLines(root) {
   return lines;
 }
 
-/** The distinct lines of the record that the bank holds nowhere now. */
+/** The distinct lines of the record that the bank holds nowhere now. Limit: a removed copy of a line still held once reports nothing. */
 function vanishedLines(recordFile, root) {
   const now = new Set(bankLines(root));
   const before = fs.readFileSync(recordFile, "utf8").split("\n").map(collapse).filter((line) => line !== "");
@@ -721,6 +739,11 @@ function main(argv) {
   }
   if (command === "lines") {
     const [root = process.cwd()] = args;
+    // A record of no bank would let a later `vanished` pass against nothing.
+    if (!fs.existsSync(path.join(root, MEMORY_DIR))) {
+      process.stderr.write(`memory: no memory bank under ${root}\n`);
+      return EXIT_ERRORS;
+    }
     const lines = bankLines(root);
     if (lines.length > 0) process.stdout.write(`${lines.join("\n")}\n`);
     return EXIT_OK;

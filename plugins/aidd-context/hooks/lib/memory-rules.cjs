@@ -52,8 +52,9 @@ const LIST_OR_QUOTE_MARKER = /^\s*(?:[>*+-]\s+|\d+[.)]\s+)/u;
 const SENTENCE_END = /(?<=[.!?])\s+/u;
 const SENTENCE_LAST_WORD = /[.!?]["'”’)\]`*_]*$/u;
 
-function problem(file, line, rule, severity, message, fix, excerptText) {
-  return { file, line, rule, severity, message, fix, ...(excerptText === undefined ? {} : { excerpt: excerptText }) };
+/** `offending` is the whole text the finding stands on, where `excerpt` is only its cut form. */
+function problem(file, line, rule, severity, message, fix, excerptText, offending) {
+  return { file, line, rule, severity, message, fix, ...(excerptText === undefined ? {} : { excerpt: excerptText }), ...(offending === undefined ? {} : { offending }) };
 }
 
 /** A quoted excerpt of the offending text, cut so one line stays short. */
@@ -146,7 +147,7 @@ function volatileFacts({ file, text }) {
   for (const { number, text: line } of proseLines(text)) {
     const prose = line.replace(INLINE_CODE, "");
     const match = prose.match(COUNT_OF_THINGS) ?? prose.match(ISO_DATE) ?? prose.match(TIME_WORDS);
-    if (match) found.push(problem(file, number, "M2", WARNING, `"${excerpt(match[0])}" goes stale: ${STALE_FIX}`, STALE_FIX, excerpt(match[0])));
+    if (match) found.push(problem(file, number, "M2", WARNING, `"${excerpt(match[0])}" goes stale: ${STALE_FIX}`, STALE_FIX, excerpt(match[0]), match[0]));
   }
   return found;
 }
@@ -207,7 +208,7 @@ function unfilledSlots({ file, text, templates = templatesFolder() }) {
   const found = [];
   for (const [index, line] of text.split("\n").entries()) {
     const slot = slots.find((candidate) => line.includes(candidate));
-    if (slot !== undefined) found.push(problem(file, index + 1, "M3", ERROR, `"${excerpt(slot)}" unfinished: ${fix}`, fix, excerpt(slot)));
+    if (slot !== undefined) found.push(problem(file, index + 1, "M3", ERROR, `"${excerpt(slot)}" unfinished: ${fix}`, fix, excerpt(slot), slot));
   }
   return found;
 }
@@ -215,7 +216,7 @@ function unfilledSlots({ file, text, templates = templatesFolder() }) {
 /** The dead-path rule every plugin applies to its own files, from the shared hook library. */
 function deadReferences({ file, text, root }) {
   return deadPaths(text, root, path.dirname(path.join(root, file))).map(({ line, path }) =>
-    problem(file, line, "M4", ERROR, `\`${excerpt(path)}\` names nothing on disk: fix the path or remove it`, "fix the path or remove it", excerpt(path))
+    problem(file, line, "M4", ERROR, `\`${excerpt(path)}\` names nothing on disk: fix the path or remove it`, "fix the path or remove it", excerpt(path), path)
   );
 }
 

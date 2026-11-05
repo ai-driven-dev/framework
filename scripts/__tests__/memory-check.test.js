@@ -559,6 +559,18 @@ test("lines: prints every non-empty line of the bank, whitespace-normalised, one
   }
 });
 
+test("lines: a root with no bank is a failure, not an empty record a later vanished would pass against", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-lines-"));
+  try {
+    const run = engine("lines", root);
+    assert.equal(run.status, 1);
+    assert.match(run.stderr, /no memory bank/u);
+    assert.equal(run.stdout, "");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("vanished: prints a line gone from the bank, and nothing for a moved, reordered or reflowed one", () => {
   const root = project({ "a.md": "# A\n\n- kept line\n- moved line\n- lost line\n" });
   const before = path.join(root, "before.txt");

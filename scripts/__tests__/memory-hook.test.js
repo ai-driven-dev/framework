@@ -464,7 +464,7 @@ test("a bank nested in the project is the project of its own files", () => {
   const nested = `packages/a/${MEMORY}/vcs.md`;
   const root = project({ ...Object.fromEntries(ALWAYS.map((name) => [`packages/a/${MEMORY}/${name}`, "# T\n\nShort.\n"])), [nested]: `# VCS\n\n- ${SLOT}\n` });
   const payload = writePayload("claude", root, nested);
-  assert.equal(answerOf(run("claude", payload).stdout).text.split("\n")[1], `${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it or remove it`);
+  assert.equal(answerOf(run("claude", payload).stdout).text.split("\n")[1], `packages/a/${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it or remove it`);
 });
 
 test("a file written through a link is read under its real project", () => {
@@ -779,7 +779,7 @@ test("an error new against the baseline in another file informs after the write,
   fs.writeFileSync(path.join(root, MEMORY, "testing.md"), `# T\n\n${slotOf("testing.md")}\n`);
   fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), "# VCS\n\nFresh.\n");
   const first = answerOf(step(editPayload("claude", root, `${MEMORY}/vcs.md`, "Fresh.")).stdout);
-  assert.deepEqual(first.text.split("\n"), ["aidd-context: 1 error, 0 warnings", `${MEMORY}/testing.md:3 M3 "${shown(slotOf("testing.md"))}" => fill it or remove it`]);
+  assert.deepEqual(first.text.split("\n"), ["aidd-context: 1 error, 0 warnings", `${MEMORY}/testing.md:3 M3 "${shown(slotOf("testing.md"))}" => check it`]);
   fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), "# VCS\n\nAgain.\n");
   assert.equal(step(editPayload("claude", root, `${MEMORY}/vcs.md`, "Again.", "Fresh.")).stdout, "");
   // Told after the write, never required: the turn did not write it.
@@ -816,4 +816,74 @@ test("a session start sweeps the state older than a day and leaves the baseline 
   step(startPayload("claude", root));
   assert.equal(fs.existsSync(stale), false);
   assert.equal(fs.statSync(`${mark}.base`).mode & 0o777, 0o600);
+});
+
+// ---- a hold or an inform names only what the write produced: a fragment edit never reaches a
+// ---- standing slot that merely holds the same words
+
+const FRAGMENT = SLOT.slice(2, 14);
+const VCS = `${MEMORY}/vcs.md`;
+
+/** An Edit whose new text is a part of the slot, on a line that is no slot line. */
+const fragmentEdit = (root, file = VCS) => editPayload("claude", root, file, FRAGMENT, "x");
+
+test("a fragment edit never makes Stop require a slot a person wrote between two turns", () => {
+  const root = project(withLine("Kept."));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, VCS), "# VCS\n\nChanged.\n");
+  step(editPayload("claude", root, VCS, "Changed.", "Kept."));
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+  fs.writeFileSync(path.join(root, VCS), `# VCS\n\nChanged.\n\n${SLOT_LINE}\n`);
+  assert.equal(step(fragmentEdit(root)).stdout, "", "the after-write answer names a line the write did not produce");
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("a fragment edit never makes Stop require a standing slot when the session has no baseline", () => {
+  const root = project(withLine(SLOT_LINE));
+  const { run: step } = session("claude");
+  assert.equal(step(fragmentEdit(root)).stdout, "");
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("a fragment edit never makes Stop require a standing slot of a bank the session baseline does not cover", () => {
+  const sub = Object.fromEntries(ALWAYS.map((name) => [`cli/${MEMORY}/${name}`, "# T\n\nShort.\n"]));
+  const root = project({ ...sub, [`cli/${VCS}`]: `# VCS\n\n${SLOT_LINE}\n` });
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  step(fragmentEdit(root, `cli/${VCS}`));
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("a fragment edit never makes Stop require a standing slot when the session started in a subfolder", () => {
+  const root = project(withLine(SLOT_LINE));
+  fs.mkdirSync(path.join(root, "src"));
+  const { run: step } = session("claude");
+  const inSrc = (payload) => ({ ...payload, cwd: path.join(root, "src") });
+  step(inSrc(startPayload("claude", root)));
+  step(inSrc(fragmentEdit(root)));
+  assert.equal(step(inSrc(stopPayload("claude", root))).stdout, "");
+});
+
+test("an edit writing a whole slot inside a line still asks once at Stop", () => {
+  const root = project(withLine(`- Use ${SLOT} for branches.`));
+  const { run: step } = session("claude");
+  step(editPayload("claude", root, VCS, SLOT, "feat/"));
+  assert.equal(stopAnswerOf(step(stopPayload("claude", root)).stdout), ASKED);
+});
+
+test("a slot the turn wrote in a sub-project bank is named from the project root the session started in", () => {
+  const sub = Object.fromEntries(ALWAYS.map((name) => [`cli/${MEMORY}/${name}`, "# T\n\nShort.\n"]));
+  const root = project({ ...sub, [`cli/${VCS}`]: `# VCS\n\n${SLOT_LINE}\n` });
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  const informed = answerOf(step(editPayload("claude", root, `cli/${VCS}`, SLOT_LINE)).stdout);
+  assert.equal(informed.text, ASKED.replace(`${MEMORY}/vcs.md`, `cli/${MEMORY}/vcs.md`));
+  assert.equal(stopAnswerOf(step(stopPayload("claude", root)).stdout), ASKED.replace(`${MEMORY}/vcs.md`, `cli/${MEMORY}/vcs.md`));
+});
+
+test("a Claude Write that changes nothing reports nothing, though the file holds a standing slot", () => {
+  const text = `# VCS\n\n${SLOT}\n\nKept.\n`;
+  const root = project({ [VCS]: text });
+  assert.deepEqual(run("claude", overwritePayload(root, VCS, text)), { status: 0, stdout: "", stderr: "" });
 });

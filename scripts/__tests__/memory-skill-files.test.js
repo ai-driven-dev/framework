@@ -213,6 +213,13 @@ test("write ends on the engine, writes only the root, and holds back a capabilit
   assert.doesNotMatch(write, /each found capability|guidance comment|every selected row exists/u, "a stale instruction is left");
 });
 
+test("write, the action a refresh reads before changing the bank, records the lines first and lists the vanished ones last, restoring nothing", () => {
+  const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
+  assert.match(steps[0], /`lines`/u, "the first step does not record the bank's lines");
+  assert.match(steps.at(-1), /`vanished`/u, "the last step does not list the vanished lines");
+  assert.match(steps.at(-1), /restore nothing/u);
+});
+
 test("a merge applies only with the former file's own removal approved, and says so once, in write", () => {
   const merge = skillText("actions/02-write.md")
     .split(/\r?\n/u)

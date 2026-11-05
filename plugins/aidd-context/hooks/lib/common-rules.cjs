@@ -540,7 +540,8 @@ function linesOf(text) {
 /**
  * The lines a write added or changed: the whole lines of `written` left once those of `replaced`
  * are taken out, each as many times as it appears. A context line an edit repeats unchanged is
- * not one. Null when a write removed lines and added none: its effect is unknown.
+ * not one, so a write that changed nothing has none. Null when a write removed lines and added
+ * none: its effect is unknown.
  */
 function changedLines(written, replaced) {
   const left = new Map();
@@ -550,7 +551,18 @@ function changedLines(written, replaced) {
     if ((left.get(line) ?? 0) > 0) left.set(line, left.get(line) - 1);
     else changed.add(line);
   }
-  return changed.size === 0 && linesOf(replaced).length > 0 ? null : changed;
+  const removed = [...left.values()].some((count) => count > 0);
+  return changed.size === 0 && removed ? null : changed;
+}
+
+/**
+ * Whether a finding stands on text the write produced. A finding carrying the whole text it stands
+ * on (`offending`) is the write's only when one changed line holds all of it: an edit that wrote a
+ * part of a line, or a few words a standing slot also holds, never owns that slot. A finding
+ * carrying none is the write's by the line it sits on.
+ */
+function producedBy(finding, changed) {
+  return finding.offending === undefined || [...changed].some((line) => line.includes(finding.offending));
 }
 
 /**
@@ -764,7 +776,7 @@ function requiredAtStop(turn, findings, baseline, textOf) {
     if (text === null) continue;
     const touched = touchedLines(text, lines);
     // A finding with no line reaches no touched line.
-    candidates.push(...findings.filter((finding) => finding.error && finding.file === file && reachesTouched(finding, touched)));
+    candidates.push(...findings.filter((finding) => finding.error && finding.file === file && reachesTouched(finding, touched) && producedBy(finding, lines)));
   }
   return baseline ? newErrors(candidates, baseline) : candidates;
 }
@@ -778,6 +790,7 @@ module.exports = {
   changedLines,
   touchedLines,
   reachesTouched,
+  producedBy,
   turnMark,
   sweepTurns,
   readBaseline,

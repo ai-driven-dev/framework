@@ -319,7 +319,7 @@ About 4.5 USD for the rerun at `186feb5d7`: blind grading 3.1 (seven Haiku banks
 
 ## Host campaign
 
-Each host ran the branch's own distribution (`aidd translate --as flat` per tool, Claude Code from `aidd translate --to claude` loaded with `--plugin-dir`) in a throwaway project and home under `~/skill-tests/hookcamp/`, built by `setup.sh` from a three-file bank that `memory.cjs check` passes. One session per host made three edits with the file tool: a 31-word prose line in `notes.md` (M1, level 1), `- Branch prefix: {{x}}` in `vcs.md` (M3, level 2), a clean line in `codebase-map.md`, then repeated every hook message verbatim. `tap.cjs`, preloaded through `NODE_OPTIONS`, logged what each hook read and printed to `logs/<host>.jsonl`, the distribution untouched; the model's reply is in the host's own transcript beside it.
+Each host ran the branch's own distribution (`aidd translate --as flat` per tool, Claude Code from `aidd translate --to claude` loaded with `--plugin-dir`) in a throwaway project and home under `~/skill-tests/hookcamp/`, built by `setup.sh` from a three-file bank that `memory.cjs check` passes. One session per host made three edits with the file tool: a 31-word prose line in `notes.md` (M1, level 1), `- Branch prefix: {{x}}` in `vcs.md` (M3, which then blocked after the write), a clean line in `codebase-map.md`, then repeated every hook message verbatim. `tap.cjs`, preloaded through `NODE_OPTIONS`, logged what each hook read and printed to `logs/<host>.jsonl`, the distribution untouched; the model's reply is in the host's own transcript beside it.
 
 | Host | Model | Level 1 | Level 2 | Clean | Telemetry | Logs |
 | ---- | ----- | ------- | ------- | ----- | --------- | ---- |
@@ -329,6 +329,8 @@ Each host ran the branch's own distribution (`aidd translate --as flat` per tool
 | Cursor | auto | `additional_context`, quoted back | informs: `additional_context`, quoted back | nothing printed | not measured | `cursor.jsonl`, `cursor.out` |
 | OpenCode | deepseek-v4.1-flash-free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `opencode.jsonl`, `opencode.jsonl.out` |
 | Kilo | kilo-auto/free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `kilo.jsonl`, `kilo.out` |
+
+M3 has since moved: it informs after the write (level 1) and is asked once at the turn end, so the Level 2 column is the earlier blocking answer, kept as proof that a `decision: block` reaches the model on each host. Only the clean row and the level 1 column describe today's after-write answers.
 
 `apply_patch` on OpenCode and Kilo, offered only to a model whose id holds `gpt-`, was reached through a provider alias `camp/gpt-campaign` routed by `cap/proxy.js` to Qwen 3.8 Flash. OpenCode's run quoted both findings back from `apply_patch` results (`opencode-patch.jsonl`); Kilo's quoted level 2 (`kilo-patch.jsonl`) and answered nothing on edit 1, because the model wrote the line as a 31-word bullet, under the bullet limit of 35.
 
@@ -343,3 +345,14 @@ Changes made after the campaign, each with the evidence that exists:
 - The PowerShell cmdlets that write, then `rmdir`, joined `isShellWrite`: `186feb5d7`, `0c4a9bcd9`.
 
 This campaign replaces `pnpm smoke:real`.
+
+## M1 per sentence on the real banks
+
+The decision to keep M1 out of the turn-end check rests on its hits on real banks, counted per sentence over the limit. The figures are task 1.1's. Rerun by `memory.cjs check <root>` on this branch's tip, they differ: the lean text and later template edits changed the banks.
+
+| Bank | Task 1.1 count | Rerun on this tip |
+| --- | --- | --- |
+| this repository's root | 4 | 0 |
+| `cli/` | 3 | 0 |
+| gouvernail | 1 to 5 | 3 to 5, over its worktrees |
+| kairos-app | 427 | not rerun: the bank is absent from this machine |
