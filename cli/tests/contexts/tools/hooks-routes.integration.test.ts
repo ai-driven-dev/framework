@@ -14,6 +14,13 @@ import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
  * output of each tool and route is a file under tests/fixtures/hooks-routes/.
  */
 
+// A worker thread's `process.env` never reaches the native `os.homedir()` (a mutation run uses
+// threads), so every route would share one profile and see the previous test's user-scope files.
+vi.mock("node:os", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:os")>();
+  return { ...actual, homedir: () => process.env.HOME ?? actual.homedir() };
+});
+
 const PLUGINS = ["aidd-context", "aidd-telemetry"] as const;
 const FIXTURES = join(import.meta.dirname, "..", "..", "fixtures", "hooks-routes");
 

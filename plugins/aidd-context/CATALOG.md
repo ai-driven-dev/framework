@@ -46,6 +46,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
+| [common-rules.cjs](hooks/lib/common-rules.cjs) |
 | [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
 
 ### `skills`
@@ -85,7 +86,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
 | `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
 | `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [report.md](skills/02-project-memory/assets/report.md) | - |
 | `assets` | [scan-summary.md](skills/02-project-memory/assets/scan-summary.md) | - |
 | `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
