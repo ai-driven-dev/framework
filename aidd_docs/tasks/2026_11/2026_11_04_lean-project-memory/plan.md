@@ -1,6 +1,6 @@
 ---
 objective: "The project-memory skill reads in fewer words and small models write banks at least as correct as before; every framework hook follows one contract with three levels; the CLI writes every tool's hooks through one descriptor per tool, one engine and one host adapter per tool chosen at build time, behind guards that refuse what this change removes."
-status: pending
+status: implemented
 ---
 
 # Plan: Lean project memory, one hook contract, one hook path in the CLI

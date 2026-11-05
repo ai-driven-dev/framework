@@ -281,6 +281,10 @@ Root cause of the deletions: no line said what a merge does to the former file, 
 | qwen | Baseline lines dropped | 36, 29, 12 (77) | 30, 22, 22 (74) | 15, 7, 18 (40) |
 | qwen | Cost per run | 0.138 | 0.112 | 0.107 |
 
+The runs after the merge fix used the deterministic checker, not the Sonnet grader. Wrong facts on the final skill were graded at `186feb5d7` (9 of 68 on the Haiku refresh), not after the merge fix, so no fact count exists for the final skill.
+
+The words Haiku actually read went up: +564 per setup run and +327 per refresh run, while the skill shrank (4958 words at the final head against 7132). Inline content review now reads `review-protocol.md`, and that read is what restored the refresh numbers.
+
 The lines Qwen still drops are mostly counts and dates rewritten into names where the engine's M2 hint asks for it, plus corrections of claims the code contradicts. M2 says a count goes stale, so the rewrite is the rule working: a correction, not an unapproved removal.
 
 ## The 8 eval cases, after
@@ -304,11 +308,38 @@ Case 0 is flaky: it passed in 4 of 5 runs. The failing run missed "ecosystem.md 
 
 | Criterion | Verdict | Deciding number |
 | --------- | ------- | --------------- |
-| The pre-commit gates pass, with fewer words than today | met | 4938 words against 7132, and 28 files against 44; the gates are in the phase report |
+| The pre-commit gates pass, with fewer words than today | met | 4938 words against 7132, and 28 files against 44; the gates ran in the commits of this branch (`git log`) |
 | Haiku, Sonnet and Qwen write banks with as many correct facts as the original, no more wrong ones, at lower or equal cost | partly met | Haiku setup: 0 wrong of 114 against 5 of 160, 0.034 against 0.046 per run. Haiku refresh: 57 correct against 60 and 9 wrong of 68 against 5 of 70, though six of the nine predate the injection; cost 0.030 against 0.036. Qwen: cost flat on setup (0.097 against 0.094) and lower on refresh (0.112 against 0.138), facts not graded. Sonnet is left out by the plan |
-| A refresh flags every injected drift and writes nothing the user did not approve | met for deletions, with the accepted D1 miss | After the merge fix, no file deleted or created on either model. Haiku 8 of 12 drifts: three misses are D1, accepted as a content-review miss, one is D4; lines dropped 1, 1, 0. Qwen 12 of 12; its 15, 7, 18 dropped lines, against 36, 29, 12 originally, are mostly M2-driven corrections |
+| A refresh flags every injected drift and writes nothing the user did not approve | partly met: Haiku 8 of 12, Qwen 12 of 12 | After the merge fix, Haiku corrected 8 of 12 drifts: D1 (the spelled count) 0 of 3 is an accepted miss that the content review should catch, D4 was caught in 2 of 3 runs. Qwen corrected 12 of 12. No file deleted or created on either model; Haiku dropped 1, 1, 0 lines; Qwen dropped 15, 7, 18, against 36, 29, 12 originally, mostly M2-driven corrections |
 | A volatile fact has a rule, and `check` reports one gone stale | met, with an accepted limit | rule M2 exists and the engine reports 16 stale counts and dates on the injected bank, for example "Four workspace packages"; the spelled "Three workspace packages" is left out on purpose (62% false positives measured with "two" and "three") |
 
 ## Spend, after
 
-About 4.5 USD for this rerun: blind grading 3.1 (seven Haiku banks, 0.37 to 0.61 each), generation 1.4 (Haiku 0.4 with cases, Qwen 0.9, case 0 repeated four times 0.07). Together with the 7.0 USD already spent, about 11.5 USD of the 15 approved.
+About 4.5 USD for the rerun at `186feb5d7`: blind grading 3.1 (seven Haiku banks, 0.37 to 0.61 each), generation 1.4 (Haiku 0.4 with cases, Qwen 0.9, case 0 repeated four times 0.07). Phase 1's baseline, about 12 USD, was its own approval. Phase 15's budget of 15 USD covered 5.9 + 1.13 + 4.5 + 1.09, about 12.6 USD in total.
+
+## Host campaign
+
+Each host ran the branch's own distribution (`aidd translate --as flat` per tool, Claude Code from `aidd translate --to claude` loaded with `--plugin-dir`) in a throwaway project and home under `~/skill-tests/hookcamp/`, built by `setup.sh` from a three-file bank that `memory.cjs check` passes. One session per host made three edits with the file tool: a 31-word prose line in `notes.md` (M1, level 1), `- Branch prefix: {{x}}` in `vcs.md` (M3, level 2), a clean line in `codebase-map.md`, then repeated every hook message verbatim. `tap.cjs`, preloaded through `NODE_OPTIONS`, logged what each hook read and printed to `logs/<host>.jsonl`, the distribution untouched; the model's reply is in the host's own transcript beside it.
+
+| Host | Model | Level 1 | Level 2 | Clean | Telemetry | Logs |
+| ---- | ----- | ------- | ------- | ----- | --------- | ---- |
+| Claude Code | haiku | `additionalContext`, quoted back: `notes.md:4 M1 "31 words, over 25"` | `decision: block`, quoted back: `vcs.md:5 M3 "{{x}}"` | nothing printed, "EDIT3: none" | 8 calls of session `2f3e3012` under task `campaign` | `claude.jsonl`, `claude.stream` |
+| Codex | gpt-5.6-luna, low effort | through `apply_patch`, same line quoted back | `decision: block`, quoted back | nothing printed | 4 calls of session `01a1ab43` under task `campaign` | `codex.jsonl`, `codex.out` |
+| Copilot | auto | top-level `additionalContext`, quoted back | `decision: block`, quoted back | nothing printed | not measured by aidd-telemetry | `copilot.jsonl`, `copilot.out` |
+| Cursor | auto | `additional_context`, quoted back | informs: `additional_context`, quoted back | nothing printed | not measured | `cursor.jsonl`, `cursor.out` |
+| OpenCode | deepseek-v4.1-flash-free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `opencode.jsonl`, `opencode.jsonl.out` |
+| Kilo | kilo-auto/free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `kilo.jsonl`, `kilo.out` |
+
+`apply_patch` on OpenCode and Kilo, offered only to a model whose id holds `gpt-`, was reached through a provider alias `camp/gpt-campaign` routed by `cap/proxy.js` to Qwen 3.8 Flash. OpenCode's run quoted both findings back from `apply_patch` results (`opencode-patch.jsonl`); Kilo's quoted level 2 (`kilo-patch.jsonl`) and answered nothing on edit 1, because the model wrote the line as a 31-word bullet, under the bullet limit of 35.
+
+The captures behind the adapters' fixtures ran in `~/skill-tests/hookcamp/cap/` with a logging hook (`log.js`, `cap-plugin.js`), their raw payloads in `cap/out/`.
+
+Spend: about 0.03 USD of Haiku across every Claude Code run; Codex, Copilot, Cursor and the Qwen routing on subscriptions, OpenCode and Kilo edits on free models.
+
+Changes made after the campaign, each with the evidence that exists:
+
+- `host-cursor.cjs` continues only a completed Stop: `af999eabc`.
+- `Delete` joined the memory hook's matcher after two live Cursor runs: `e053e51df`, logs `~/skill-tests/hookcamp/logs/cursor-delete.jsonl` and `cursor-delete2.jsonl`.
+- The PowerShell cmdlets that write, then `rmdir`, joined `isShellWrite`: `186feb5d7`, `0c4a9bcd9`.
+
+This campaign replaces `pnpm smoke:real`.

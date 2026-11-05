@@ -43,7 +43,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | [declaration.cjs](hooks/lib/declaration.cjs) |
 | [git.cjs](hooks/lib/git.cjs) |
 | [hook-io.cjs](hooks/lib/hook-io.cjs) |
-| [host.cjs](hooks/lib/host.cjs) |
 | [jsonl.cjs](hooks/lib/jsonl.cjs) |
 | [lookup.cjs](hooks/lib/lookup.cjs) |
 | [presence.cjs](hooks/lib/presence.cjs) |
