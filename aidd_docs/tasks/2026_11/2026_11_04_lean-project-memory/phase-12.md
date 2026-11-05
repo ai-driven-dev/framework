@@ -53,7 +53,7 @@ status: pending
 
 > The next reader knows where hooks live.
 
-1. One line in `cli/aidd_docs/memory/architecture.md`: hooks are a descriptor per tool, one engine, one converter; adding a tool is a descriptor and a fixture.
+1. One line in `cli/aidd_docs/memory/architecture.md`: hooks are a descriptor per tool, one engine, one host adapter per tool placed at build time; adding a tool is a descriptor and a fixture.
 
 ## Test acceptance criteria
 

@@ -34,7 +34,7 @@ status: done
 
 ### `2)` Payloads captured
 
-> The converter of phase 11 is tested on what hosts really send.
+> The host adapters of phase 11 are tested on what hosts really send.
 
 1. Reuse the PostToolUse payloads #1146's campaign logged under `~/skill-tests/memhook/` for the six hosts.
 2. SessionStart, Stop and a shell-command PostToolUse are not established there: capture them in throwaway homes under `~/skill-tests/`, after the user approves the runs and their cost; the same runs record whether a PostToolUse `decision: block` reaches the model on each host, filling the contract's untested row.

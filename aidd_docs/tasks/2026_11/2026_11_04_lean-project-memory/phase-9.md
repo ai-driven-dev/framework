@@ -38,7 +38,7 @@ status: done
 
 > What differs per tool is data.
 
-1. `HooksDescriptor`: per route, destination and entry shape (nested or flat; Copilot's native tree keeps the nested form today); wrapper, event map (one event to several, unmapped reported), fields kept, root token, one file or one file per plugin, runtime (`command` or `bridge`). Each field arrives with its first reader, since an unread literal is a surviving mutant: this phase carries destination, event map, root token and one file or one per plugin (a route's `sharedFile`); wrapper, entry shape and fields kept arrive with `mergeHooks` in phase 10, runtime with the converter in phase 11.
+1. `HooksDescriptor`: per route, destination and entry shape (nested or flat; Copilot's native tree keeps the nested form today); wrapper, event map (one event to several, unmapped reported), fields kept, root token, one file or one file per plugin, runtime (`command` or `bridge`). Each field arrives with its first reader, since an unread literal is a surviving mutant: this phase carries destination, event map, root token and one file or one per plugin (a route's `sharedFile`); wrapper, entry shape and fields kept arrive with `mergeHooks` in phase 10, runtime with the host adapters in phase 11.
 2. One `hooks.ts` per tool; `build.ts` and `profile.ts` read it instead of declaring hooks facts.
 3. `HooksCapability` has readers (`contracts.ts`, `framework/domain/config-capability.ts`): delete only `merge` and the dead Codex `mergeFn`, and move what its readers need onto the descriptor; empty phase 7's baselines for them.
 
