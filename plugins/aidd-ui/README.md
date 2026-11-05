@@ -44,3 +44,6 @@ flowchart LR
 - Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
 - A palette constant in code (`Colors.blue`, `UIColor.systemBlue`) is a name, as a token is: no colour check finds it. A storyboard's `<color red=…>` is not read either.
 - A render shows a variant or state when its text holds the attribute; native behaviour (focus, validity) no render shows.
+- The colour debt only grows: the engine never lowers a count, so a literal fixed leaves room for a new one until the file is edited by hand. A moved or renamed code file loses its debt, a code root added later has none, and a deleted `code-debt.json` is never written again.
+- A validated element's fingerprint covers its record, render, asset file and the resolved value of each token it uses: adding or removing a theme, platform or breakpoint changes it for every element using a token, and so does a checkout that changes an asset's line ends.
+- A token change stops at `aidd_docs/ui/`: the token files the code consumes (`code-tokens`) keep their old values, and no check compares them. The skill names them to the user.
