@@ -22,7 +22,7 @@ flowchart LR
   Skill["skill 01-system"] -->|"judgement: brand, names, style"| Docs[("aidd_docs/ui/")]
   Skill -->|"calls"| Engine["hooks/aidd-ui.cjs"]
   Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
-  Host["host event"] --> Hook["hooks/ui-hook.cjs"]
+  Host["host event"] --> Hook["aidd-ui.cjs hook"]
   Hook -->|"checks what a write produced, then the lines the turn changed"| Engine
   Hook -->|"problems"| Host
 ```

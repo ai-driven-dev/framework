@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, lines, validate, writeProject, edit, editTokens, propose } = require("../fixtures/aidd-ui/project.js");
+const { UI, PATHS, HOOKS, LIB, ENGINE, makeTmp, removeTmp, lines, validate, writeProject, edit, editTokens, propose } = require("../fixtures/aidd-ui/project.js");
 
 // The entries are scripts a user's machine runs, so each is driven as a subprocess with its
 // argument or its hook payload on stdin, which is what ships.
@@ -91,7 +91,7 @@ function generate(root) {
 /** The hook run on `input`; `temp` points it at another temp dir, so a test can plant files there. */
 function hook(input, temp = null) {
   const env = temp ? { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp } : process.env;
-  const run = spawnSync(process.execPath, [HOOK], { input, encoding: "utf8", env });
+  const run = spawnSync(process.execPath, [ENGINE, "hook"], { input, encoding: "utf8", env });
   return { code: run.status, out: run.stdout, err: run.stderr };
 }
 
@@ -142,10 +142,10 @@ describe("aidd-ui hooks declaration", () => {
     assert.deepEqual([...new Set(timeouts)], [5]);
   });
 
-  it("runs the hook at every moment it handles: session start, after a write, turn end", () => {
+  it("runs the engine's hook command at every moment it handles: session start, after a write, turn end", () => {
     for (const event of ["SessionStart", "PostToolUse", "Stop"]) {
       const commands = declared[event].flatMap((group) => group.hooks.map((hook) => hook.command));
-      assert.deepEqual(commands, [`node \${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs`]);
+      assert.deepEqual(commands, [`node \${CLAUDE_PLUGIN_ROOT}/hooks/aidd-ui.cjs hook`]);
     }
   });
 });
@@ -200,7 +200,7 @@ describe("aidd-ui validator entries", () => {
   describe("E9 commands", () => {
     it("names the commands and exits 2 on one it does not know", () => {
       const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
-      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created | --removed) <token or id>… [--root <dir>]\n       node aidd-ui.cjs publish ([--breaking] | <id>…) [--root <dir>]\n" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs hook < <host event>\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created | --removed) <token or id>… [--root <dir>]\n       node aidd-ui.cjs publish ([--breaking] | <id>…) [--root <dir>]\n" });
     });
   });
 
@@ -571,7 +571,7 @@ describe("aidd-ui validator entries", () => {
 
     it("still hands the problems back when the turn mark cannot be written", () => {
       breakOnePerFamily();
-      const run = spawnSync(process.execPath, [HOOK], { input: postToolUse(path.join(tmp, BRAND)), encoding: "utf8", env: { ...process.env, TMPDIR: path.join(tmp, "no-such-dir"), TMP: path.join(tmp, "no-such-dir"), TEMP: path.join(tmp, "no-such-dir") } });
+      const run = spawnSync(process.execPath, [ENGINE, "hook"], { input: postToolUse(path.join(tmp, BRAND)), encoding: "utf8", env: { ...process.env, TMPDIR: path.join(tmp, "no-such-dir"), TMP: path.join(tmp, "no-such-dir"), TEMP: path.join(tmp, "no-such-dir") } });
       assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, claudeFeedback(errorsText([BRAND_FAILURE])));
     });
 
@@ -742,7 +742,7 @@ describe("aidd-ui validator entries", () => {
 
     const neutral = (event, fields = {}) => {
       const input = JSON.stringify({ host: "stub", event, files: [], stopActive: false, sessionId: sid, cwd: tmp, raw: {}, ...fields });
-      const run = spawnSync(process.execPath, [path.join(hooks, "ui-hook.cjs")], { input, encoding: "utf8" });
+      const run = spawnSync(process.execPath, [path.join(hooks, "aidd-ui.cjs"), "hook"], { input, encoding: "utf8" });
       return { code: run.status, out: run.stdout, err: run.stderr };
     };
     const write = (files, fields = {}) => neutral("PostToolUse", { files: files.map((file) => ({ path: path.join(tmp, file) })), ...fields });
@@ -814,7 +814,7 @@ describe("aidd-ui validator entries", () => {
       const elsewhere = makeTmp("aidd-ui-elsewhere-");
       try {
         const input = JSON.stringify({ host: "stub", event: "PostToolUse", files: [{ path: path.join(tmp, BRAND) }], stopActive: false, sessionId: sid, cwd: elsewhere, raw: {} });
-        const run = spawnSync(process.execPath, [path.join(hooks, "ui-hook.cjs")], { input, encoding: "utf8", cwd: tmp });
+        const run = spawnSync(process.execPath, [path.join(hooks, "aidd-ui.cjs"), "hook"], { input, encoding: "utf8", cwd: tmp });
         assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, silent);
       } finally {
         removeTmp(elsewhere);
@@ -828,7 +828,7 @@ describe("aidd-ui validator entries", () => {
 
     it("prints nothing when the host reads no event", () => {
       breakOnePerFamily();
-      const run = spawnSync(process.execPath, [path.join(hooks, "ui-hook.cjs")], { input: "", encoding: "utf8" });
+      const run = spawnSync(process.execPath, [path.join(hooks, "aidd-ui.cjs"), "hook"], { input: "", encoding: "utf8" });
       assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, silent);
     });
   });

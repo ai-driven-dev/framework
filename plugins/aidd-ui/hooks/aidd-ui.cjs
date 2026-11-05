@@ -195,14 +195,17 @@ function publishSystem(args) {
   });
 }
 
-const COMMANDS = { validate, tokens: generateTokens, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem };
+// The hook needs this file loaded first, for the checks: it is required when it runs.
+const runHook = () => require("./lib/hook.cjs").hook();
+
+const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem };
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}\n       ${PUBLISH_USAGE}`);
+  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs hook < <host event>\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}\n       ${PUBLISH_USAGE}`);
   return EXIT_USAGE;
 }
 
-if (require.main === module) process.exitCode = main(process.argv.slice(2));
-
 module.exports = { problemsOf, findingOf, isError };
+
+if (require.main === module) process.exitCode = main(process.argv.slice(2));

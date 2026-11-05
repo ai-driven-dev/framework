@@ -7,7 +7,6 @@ const path = require("node:path");
 const HOOKS = path.resolve(__dirname, "../../../../plugins/aidd-ui/hooks");
 const LIB = path.join(HOOKS, "lib");
 const ENGINE = path.join(HOOKS, "aidd-ui.cjs");
-const HOOK = path.join(HOOKS, "ui-hook.cjs");
 const { load } = require(path.join(LIB, "project.cjs"));
 const tokensCheck = require(path.join(LIB, "tokens.cjs"));
 const { fingerprint } = require(path.join(LIB, "history.cjs"));
@@ -413,4 +412,4 @@ function fixLedger() {
   };
 }
 
-module.exports = { fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };
+module.exports = { fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };

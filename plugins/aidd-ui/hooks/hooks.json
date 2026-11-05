@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/aidd-ui.cjs hook",
             "timeout": 5
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/aidd-ui.cjs hook",
             "timeout": 5
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/aidd-ui.cjs hook",
             "timeout": 5
           }
         ]

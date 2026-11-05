@@ -1,13 +1,14 @@
-// Runs the design system checks after a write and at Stop, handing the same short text to every host
-// through its adapter; at session start it sweeps old turn state and notes the errors the project holds.
+// The engine's `hook` command: runs the design system checks after a write and at Stop, handing the
+// same short text to every host through its adapter; at session start it sweeps old turn state and
+// notes the errors the project holds.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
-const { codeRoots } = require("./lib/code.cjs");
-const { problemsOf, findingOf, isError } = require("./aidd-ui.cjs");
-const { isShellWrite, formatFindings } = require("./lib/common-rules.cjs");
-const { readEvent, answer, continueTurn } = require("./lib/host.cjs");
+const { load, relative, isUnder, UI_DIR } = require("./project.cjs");
+const { codeRoots } = require("./code.cjs");
+const { problemsOf, findingOf, isError } = require("../aidd-ui.cjs");
+const { isShellWrite, formatFindings } = require("./common-rules.cjs");
+const { readEvent, answer, continueTurn } = require("./host.cjs");
 
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
@@ -282,6 +283,7 @@ function atStop(project, mark, turn) {
   return EXIT_SILENT;
 }
 
+/** Answers one host event; any failure answers nothing. */
 function run() {
   const event = readEvent();
   if (!event) return EXIT_SILENT;
@@ -303,8 +305,12 @@ function run() {
   return atStop(project, mark, turn);
 }
 
-try {
-  process.exitCode = run();
-} catch {
-  process.exitCode = EXIT_SILENT;
+function hook() {
+  try {
+    return run();
+  } catch {
+    return EXIT_SILENT;
+  }
 }
+
+module.exports = { hook };
