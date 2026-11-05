@@ -24,7 +24,7 @@ The written memory bank.
 | Case | Pass |
 | --- | --- |
 | Bank written | every selected row exists at its exact path |
-| Tree | `memory/` holds only table files at its root, plus `internal/` and `external/`, each with a `.gitkeep` |
+| Tree | `memory/` holds the table files and a team's own at its root, plus `internal/` and `external/`, each with a `.gitkeep` and no `decisions/` |
 | Memory file | passes the rules in `memory-rules.md` |
-| Team file | a root file of the project that no row produces is left unchanged |
+| Team file | a file at the root of `aidd_docs/memory/` that no row produces is left unchanged |
 | Rerun | only the approved findings changed, every other line survives |

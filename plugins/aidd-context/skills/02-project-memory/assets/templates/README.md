@@ -21,7 +21,7 @@ What the AI knows about this project, what it produces, and how to change either
 | `ui/` | the design system |
 | `recipes/` | how-to sheets |
 
-The install guide of a new project, INSTALL.md, sits at the project root.
+The install guide of a new project, INSTALL.md, sits in this folder.
 
 ## Change what the AI knows
 
