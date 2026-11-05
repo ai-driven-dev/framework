@@ -144,7 +144,7 @@ describe("framework release update wiring", () => {
         allowShared: false,
         confirm,
       })
-    ).rejects.toThrow(/modified or missing/);
+    ).rejects.toThrow(rel);
     expect(await readFile(file, "utf8")).toBe("person's edit");
     expect(await readFile(registry, "utf8")).toBe(before);
     expect(confirm).not.toHaveBeenCalled();
@@ -172,6 +172,46 @@ describe("framework release update wiring", () => {
     ).rejects.toThrow(/downgrade.*3\.0\.0.*2\.10\.0/i);
     expect(await readFile(registry, "utf8")).toBe(before);
     expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("refuses a target manifest whose plugin name does not match the installed plugin", async () => {
+    await writeFile(
+      join(root, "plugins/aidd-context/.claude-plugin/plugin.json"),
+      JSON.stringify({ name: "another-plugin", version: "2.10.0" })
+    );
+    const deps = await seed("opencode");
+    const registry = join(root, ".aidd/marketplaces.json");
+    const before = await readFile(registry, "utf8");
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm,
+      })
+    ).rejects.toThrow(/Cannot verify the target plugin 'aidd-context'/);
+    expect(await readFile(registry, "utf8")).toBe(before);
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it("refuses to reinstall a plugin removed from the manifest while awaiting confirmation", async () => {
+    await fixtureDistribution();
+    const deps = await seed("opencode");
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm: async () => {
+          const manifest = await deps.manifestRepo.load();
+          if (!manifest) throw new Error("missing manifest");
+          manifest.removePlugin("opencode", "aidd-context");
+          await deps.manifestRepo.save(manifest);
+          return true;
+        },
+      })
+    ).rejects.toThrow(/Plugin aidd-context disappeared before installation/);
+    expect((await deps.manifestRepo.load())?.getPlugins("opencode")).toHaveLength(0);
   });
 
   it("refuses an edited shared OpenCode MCP contribution before changing the source", async () => {
@@ -366,6 +406,40 @@ describe("framework release update wiring", () => {
     expect((await deps.manifestRepo.load())?.getPlugins("opencode")[0].source).toMatchObject({
       ref: "v5.12.0",
     });
+  });
+
+  it("preserves obsolete files if the manifest disappears during installation", async () => {
+    await fixtureDistribution();
+    const oldRel = ".opencode/skills/aidd-context/01-demo/obsolete.md";
+    const oldPath = join(root, oldRel);
+    await mkdir(dirname(oldPath), { recursive: true });
+    await writeFile(oldPath, "still-owned content");
+    const deps = await seed("opencode", { files: { [oldRel]: hash("still-owned content") } });
+    const [marketplace] = await new MarketplaceRegistryAdapter().list(root);
+    if (!marketplace) throw new Error("missing marketplace");
+    vi.spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute").mockImplementation(
+      async () => {
+        await deps.manifestRepo.delete();
+        return {
+          marketplace,
+          entry: {
+            name: "aidd-context",
+            source: { kind: "local", path: "plugins/aidd-context" },
+            recommended: false,
+            strict: true,
+          },
+        };
+      }
+    );
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm,
+      })
+    ).rejects.toThrow(/Unable to verify the installed source/i);
+    expect(await readFile(oldPath, "utf8")).toBe("still-owned content");
   });
 
   it.each([
