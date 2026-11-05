@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, blank, escapeRegex } = require("./markdown.cjs");
 const { placed, systemOf, fm, IMPLEMENTED_KINDS, INTEGER_VERSION } = require("./model.cjs");
-const { PATTERNS, findLiterals, styled, declaresRightToLeft } = require("./literals.cjs");
+const { PATTERNS, findLiterals, findNumericColours, styled, declaresRightToLeft } = require("./literals.cjs");
 const { walk, text, relative, isUnder, checkOf, CODE_DEBT_FILE, WARNING } = require("./project.cjs");
 
 const EXPORT_SEPARATOR = "#";
@@ -19,11 +19,11 @@ const TEST_FOLDER = /(?:^|\/)(?:__tests__|__mocks__)\//;
 const TEST_NAME = /\.(?:test|spec)\.[^/]+$/;
 const STYLESHEET_EXTENSIONS = [".css", ".scss"];
 const ASTRO_EXTENSION = ".astro"; // its style blocks are read too
-const RAW_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ".html"]; // read whole: styles and markup are not strings
+const RAW_EXTENSIONS = [...STYLESHEET_EXTENSIONS, ".html", ".xml"]; // read whole: styles, markup and resources are not strings
 // Under a code root these hold no UI code: documents, data, images and fonts, and any file with a NUL byte.
 const SKIPPED_EXTENSIONS = [
   ".md", ".mdx", ".txt", ".rst", ".adoc",
-  ".json", ".yaml", ".yml", ".csv", ".toml", ".xml",
+  ".json", ".yaml", ".yml", ".csv", ".toml",
   ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".bmp", ".svg",
   ".woff", ".woff2", ".ttf", ".otf", ".eot",
 ];
@@ -42,6 +42,9 @@ const SCRIPT_TOKEN = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|("(?:\\.|[^"\\\n])*"|'(?:\\.|[
 /** A script with all but its string and template literals blanked, lines kept: a colour in
  * code lives in a string, and a `#` in a comment is an issue number. */
 const stringsOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => literal ?? blank(found));
+/** A script with its comments and its string and template literals blanked, lines kept: a colour
+ * written as numbers lives in the code itself. */
+const codeOnly = (source) => source.replace(SCRIPT_TOKEN, (found, literal) => (literal !== undefined || /^\/[/*]/.test(found) ? blank(found) : found));
 
 /** An `ignore` list as normalised path prefixes, so `./src` reads as `src`. */
 const prefixes = (project, key) => list(systemOf(project)?.frontMatter[key]).map((prefix) => path.posix.normalize(prefix));
@@ -194,11 +197,20 @@ const literalsOf = (project, pattern, extensions = null) =>
 const literalProblems = (pattern, extensions = null, applies = () => true) => (project) =>
   applies(project) ? literalsOf(project, pattern, extensions).map(({ literal, ...found }) => found) : [];
 
+/** Each colour literal of the code outside its tests, written or as numbers, with its file. */
+const colourLiterals = (project) =>
+  scanned(project)
+    .filter((file) => !isTest(file))
+    .flatMap((file) => {
+      const numeric = RAW_EXTENSIONS.includes(path.extname(file)) ? [] : findNumericColours(codeOnly(text(project, file) ?? ""));
+      return [...findLiterals(searchable(project, file), PATTERNS.colour), ...numeric].map((found) => ({ file, ...found }));
+    });
+
 /** How many times each colour literal occurs in each code file, as code-debt.json holds it: files
  * and literals sorted. */
 function colourDebt(project) {
   const debt = {};
-  for (const { file, literal } of literalsOf(project, PATTERNS.colour)) {
+  for (const { file, literal } of colourLiterals(project)) {
     debt[file] ??= {};
     debt[file][literal] = (debt[file][literal] ?? 0) + 1;
   }
@@ -213,7 +225,7 @@ function colourProblems(project) {
   const found = colourDebt(project);
   if (!Object.keys(found).length) return [];
   const recorded = fs.existsSync(path.join(project.root, CODE_DEBT_FILE)) ? JSON.parse(text(project, CODE_DEBT_FILE)) : null;
-  return literalsOf(project, PATTERNS.colour).map(({ literal, ...each }) => {
+  return colourLiterals(project).map(({ literal, ...each }) => {
     if (recorded === null) return { ...each, message: `${each.message} (counted as new: ${CODE_DEBT_FILE} is missing)` };
     const [count, debt] = [found[each.file][literal], recorded[each.file]?.[literal] ?? 0];
     return count <= debt ? { ...each, severity: WARNING, message: `${each.message} (existing debt)` } : { ...each, message: `${each.message} (found ${count}, debt ${debt})` };

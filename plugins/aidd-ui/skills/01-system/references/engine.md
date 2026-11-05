@@ -32,7 +32,7 @@ A theme, platform or breakpoint added or removed changes the fingerprint of ever
 
 ## Code debt
 
-`aidd_docs/ui/code-debt.json` counts each colour literal of each code file as the system started, `{ "<file>": { "<literal>": <count> } }`. C4 warns on a literal its file holds no more times than counted, and fails on every occurrence beyond; without the file, on every literal.
+A colour literal is a hex or `rgb()`/`hsl()` colour in a string, a stylesheet, markup or an XML resource, or a colour written as numbers in the code: a colour type (`Color`, `UIColor`) or Swift's `#colorLiteral` called with a number first, as `Color(0xFF2563EB)` or `UIColor(red: 0.2, …)`, or a colour property set to a hex number. `aidd_docs/ui/code-debt.json` counts each colour literal of each code file as the system started, `{ "<file>": { "<literal>": <count> } }`. C4 warns on a literal its file holds no more times than counted, and fails on every occurrence beyond; without the file, on every literal.
 
 - The engine never lowers the debt: a literal fixed leaves its count, room for a new one, until the file is edited by hand.
 - A moved or renamed code file loses its debt.

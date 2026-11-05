@@ -224,6 +224,12 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(verdicts(), [`warning ${BUTTON_FILE}: (existing debt)`, `error ${HOME_FILE}: (found 1, debt 0)`]);
     });
 
+    it("counts a colour written as numbers in the debt as it counts a written one", () => {
+      append(BUTTON_FILE, "const c = Color(0xFF336699);");
+      owe(code.colourDebt(load(tmp)));
+      assert.deepEqual(verdicts(), [`warning ${BUTTON_FILE}: (existing debt)`]);
+    });
+
     it("errs on every literal, saying the debt file is missing, when there is none", () => {
       append(BUTTON_FILE, LITERAL);
       fs.rmSync(path.join(tmp, DEBT));
@@ -285,9 +291,56 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), []);
     });
 
-    it("does not find a colour written as a number, a stated limit", () => {
-      card("struct Card {}\nlet c = Color(0xFF336699)\n");
+    const COLOUR = (line, literal) => `${CARD}: line ${line}: colour literal "${literal}", use a token${NEW}`;
+
+    // One per form the native colour APIs document, each found once, as the call's head.
+    const NUMERIC = {
+      "an ARGB number, as Dart and Compose write it": ["Color(0xFF336699)", "Color(0xFF336699"],
+      "named channels": ["UIColor(red: 0.2, green: 0.4, blue: 0.6, alpha: 1)", "UIColor(red:0.2"],
+      "a colour space before the channels": ["Color(.sRGB, red: 0.98, green: 0.9, blue: 0.2)", "Color(.sRGB,red:0.98"],
+      "a grey level": ["UIColor(white: 0.5, alpha: 1)", "UIColor(white:0.5"],
+      "Kotlin named arguments": ["Color(red = 0.1f, green = 0.2f, blue = 0.3f)", "Color(red=0.1"],
+      "a factory with positional channels": ["Color.fromARGB(255, 66, 165, 245)", "Color.fromARGB(255"],
+      "a platform helper": ["android.graphics.Color.rgb(255, 0, 0)", "Color.rgb(255"],
+      "a prefixed class": ["NSColor(calibratedRed: 0.1, green: 0.2, blue: 0.3, alpha: 1)", "NSColor(calibratedRed:0.1"],
+      "a Swift colour literal": ["#colorLiteral(red: 0.2, green: 0.4, blue: 0.6, alpha: 1)", "#colorLiteral(red:0.2"],
+      "a colour property set to a number":["const material = { color: 0xff0000 }", "color:0xff0000"],
+    };
+    for (const [form, [written, literal]] of Object.entries(NUMERIC)) {
+      it(`finds a colour written as numbers: ${form}`, () => {
+        card(`struct Card {}\nlet c = ${written}\n`);
+        assert.deepEqual(problems(), [COLOUR(2, literal)]);
+      });
+    }
+
+    it("finds a call spread over lines once, on its first line, as its one-line form reads", () => {
+      card("struct Card {}\nlet c = Color(\n  red: 0.4,\n  green: 0.2,\n  blue: 0.9\n)\n");
+      assert.deepEqual(problems(), [COLOUR(2, "Color(red:0.4")]);
+    });
+
+    it("leaves a colour named by the asset catalog, a token or a variable alone", () => {
+      card('struct Card {}\nlet a = UIColor(named: "Brand")\nlet b = Color(theme.primary)\nlet c = Color(AppColors.brand)\n');
       assert.deepEqual(problems(), []);
+    });
+
+    it("leaves a number no colour type takes alone: a hash constant, a method on a colour string", () => {
+      card("struct Card {}\nlet h = imul(seed, 0x01000193)\nlet mask = 0xFFFFFFFF\nlet hex = color.slice(0, 7)\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("leaves a numeric colour in a comment alone", () => {
+      card("struct Card {}\n// Color(0xFF336699)\n/* UIColor(white: 0.5) */\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("does not find a palette constant, which only resolving the name tells from a token, a stated limit", () => {
+      card("struct Card {}\nlet c = Colors.blue\nlet d = UIColor.systemBlue\n");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("finds a colour in an Android resource, outside any string", () => {
+      put(tmp, "src/ui/res/values/colors.xml", '<resources>\n  <color name="primary">#FF6B35</color>\n</resources>\n');
+      assert.deepEqual(problems().filter((problem) => !problem.includes("no record links it")), [`src/ui/res/values/colors.xml: line 2: colour literal "#FF6B35", use a token${NEW}`]);
     });
 
     it("lists such a file when no record links it", () => {
@@ -297,7 +350,7 @@ describe("aidd-ui code link", () => {
 
     const SKIPPED = {
       documents: [".md", ".mdx", ".txt", ".rst", ".adoc"],
-      data: [".json", ".yaml", ".yml", ".csv", ".toml", ".xml"],
+      data: [".json", ".yaml", ".yml", ".csv", ".toml"],
       images: [".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".bmp", ".svg"],
       fonts: [".woff", ".woff2", ".ttf", ".otf", ".eot"],
     };

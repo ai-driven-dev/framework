@@ -30,6 +30,23 @@ const PATTERNS = {
   },
 };
 
+// A colour code writes as numbers, whatever its platform: a colour type (`Color`, `UIColor`) or
+// Swift's colour literal called with a number first, past a colour space (`.sRGB,`) and a label
+// (`red:`, `red =`), or a colour property set to a hex number. A type, not a variable: `color.slice(0`
+// is a string's method. A palette constant (`Colors.blue`) is a name, like a token.
+const NUMERIC_COLOUR = /(?:\b(?:[A-Z]\w*)?Colou?r\b(?:\.\w+)?|#colorLiteral)\s*\(\s*(?:\.\w+\s*,\s*)?(?:\w+\s*[:=]\s*)?(?:0[xX][0-9a-fA-F]+|\d+(?:\.\d+)?|\.\d+)|\b\w*[cC]olou?r\w*\s*[:=]\s*0[xX](?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b/g;
+const SPACES = /\s+/g;
+
+/** Each colour `code` writes as numbers, as `findLiterals` gives a literal. The literal is the
+ * call's head without its spaces, so a call spread over lines counts as its one-line form. */
+function findNumericColours(code) {
+  return [...code.matchAll(NUMERIC_COLOUR)].map((match) => {
+    const literal = match[0].replace(SPACES, "");
+    const line = code.slice(0, match.index).split(LINE_BREAK).length;
+    return { severity: ERROR, message: `line ${line}: ${PATTERNS.colour.message(literal)}`, literal };
+  });
+}
+
 /** `source` with what `regex` captures passed through `own` and the rest through `other`; lines are kept. */
 function split(source, regex, other, own = (kept) => kept) {
   let kept = "";
@@ -62,4 +79,4 @@ function findLiterals(text, pattern) {
 const declaresRightToLeft = (project) =>
   list(systemOf(project)?.frontMatter.locales).some((locale) => RIGHT_TO_LEFT_LANGUAGES.includes(locale.split(LOCALE_SEPARATOR)[0].toLowerCase()));
 
-module.exports = { PATTERNS, findLiterals, styled, painted, declaresRightToLeft };
+module.exports = { PATTERNS, findLiterals, findNumericColours, styled, painted, declaresRightToLeft };
