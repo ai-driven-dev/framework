@@ -4,7 +4,8 @@
  * only M4 reads the disk, through the shared hook library, under the project root it is given.
  *
  * Each rule takes `{ file, text, root, others }` and returns problems:
- * `{ file, line, rule, severity, message }`.
+ * `{ file, line, rule, severity, message, fix }`, plus the offending `excerpt` when there is one.
+ * `message` is the whole finding; `excerpt` and `fix` are its parts, as the findings formatter prints them.
  */
 
 const { deadPaths } = require("./common-rules.cjs");
@@ -40,6 +41,7 @@ const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
 const TIME_WORDS = /\b(?:currently|as of|right now|at the moment)\b/iu;
 
 const TEMPLATE_MARKER = "{{";
+const TEMPLATE_SLOT = /\{\{[^}]*\}\}/u;
 const PLACEHOLDER = /\b(?:TODO|TBD)\b(?!['\w])/u;
 
 const MARKDOWN_LINK = /!?\[([^\]]*)\]\([^)]*\)/gu;
@@ -48,8 +50,8 @@ const LIST_OR_QUOTE_MARKER = /^\s*(?:[>*+-]\s+|\d+[.)]\s+)/u;
 const SENTENCE_END = /(?<=[.!?])\s+/u;
 const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/u;
 
-function problem(file, line, rule, severity, message) {
-  return { file, line, rule, severity, message };
+function problem(file, line, rule, severity, message, fix, excerptText) {
+  return { file, line, rule, severity, message, fix, ...(excerptText === undefined ? {} : { excerpt: excerptText }) };
 }
 
 /** A quoted excerpt of the offending text, cut so one line stays short. */
@@ -106,9 +108,10 @@ function longProseLines({ file, text }) {
     .filter(({ line }) => line !== "" && !STRUCTURAL_LINE.test(line))
     .map(({ number, line }) => ({ number, count: wordsIn(line).length }))
     .filter(({ count }) => count > PROSE_WORD_LIMIT)
-    .map(({ number, count }) =>
-      problem(file, number, "M1", ERROR, `prose line of ${count} words, over ${PROSE_WORD_LIMIT}: make it a table, a list or a heading`)
-    );
+    .map(({ number, count }) => {
+      const message = `prose line of ${count} words, over ${PROSE_WORD_LIMIT}: make it a table, a list or a heading`;
+      return problem(file, number, "M1", ERROR, message, message);
+    });
 }
 
 function volatileFacts({ file, text }) {
@@ -118,24 +121,31 @@ function volatileFacts({ file, text }) {
     const count = prose.match(COUNT_OF_THINGS);
     const date = prose.match(ISO_DATE);
     const time = prose.match(TIME_WORDS);
-    if (count) found.push(problem(file, number, "M2", ERROR, `"${excerpt(count[0])}" goes stale: name the thing, not how many`));
-    else if (date) found.push(problem(file, number, "M2", ERROR, `"${excerpt(date[0])}" goes stale: state what is true, not when`));
-    else if (time) found.push(problem(file, number, "M2", ERROR, `"${excerpt(time[0])}" goes stale: state what is true, not when`));
+    const stale = (match, fix) => problem(file, number, "M2", ERROR, `"${excerpt(match)}" goes stale: ${fix}`, fix, excerpt(match));
+    if (count) found.push(stale(count[0], "name the thing, not how many"));
+    else if (date) found.push(stale(date[0], "state what is true, not when"));
+    else if (time) found.push(stale(time[0], "state what is true, not when"));
   }
   return found;
 }
 
 function unfinishedMarkers({ file, text }) {
   return readableLines(text)
-    .map(({ number, line }) => ({ number, marker: line.includes(TEMPLATE_MARKER) ? TEMPLATE_MARKER : line.match(PLACEHOLDER)?.[0] }))
+    .map(({ number, line }) => ({
+      number,
+      marker: line.includes(TEMPLATE_MARKER) ? TEMPLATE_MARKER : line.match(PLACEHOLDER)?.[0],
+      slot: line.match(TEMPLATE_SLOT)?.[0] ?? line.match(PLACEHOLDER)?.[0] ?? TEMPLATE_MARKER,
+    }))
     .filter(({ marker }) => marker !== undefined)
-    .map(({ number, marker }) => problem(file, number, "M3", ERROR, `"${marker}" unfinished: fill it or remove it`));
+    .map(({ number, marker, slot }) =>
+      problem(file, number, "M3", ERROR, `"${marker}" unfinished: fill it or remove it`, "fill it or remove it", excerpt(slot))
+    );
 }
 
 /** The dead-path rule every plugin applies to its own files, from the shared hook library. */
 function deadReferences({ file, text, root }) {
   return deadPaths(text, root).map(({ line, path }) =>
-    problem(file, line, "M4", ERROR, `\`${excerpt(path)}\` names nothing on disk: fix the path or remove it`)
+    problem(file, line, "M4", ERROR, `\`${excerpt(path)}\` names nothing on disk: fix the path or remove it`, "fix the path or remove it", excerpt(path))
   );
 }
 
@@ -152,7 +162,7 @@ function longItems({ file, text }) {
     else if (LIST_ITEM.test(line)) items = [line.replace(LIST_ITEM, "")];
 
     if (items.some((item) => wordsIn(item).length > ITEM_WORD_LIMIT)) {
-      found.push(problem(file, number, "M5", WARNING, `bullet or table cell over ${ITEM_WORD_LIMIT} words: split it`));
+      found.push(problem(file, number, "M5", WARNING, `bullet or table cell over ${ITEM_WORD_LIMIT} words: split it`, "split it"));
     }
   }
   return found;
@@ -161,7 +171,7 @@ function longItems({ file, text }) {
 function longFile({ file, text }) {
   const count = wordsIn(text).length;
   if (count <= FILE_WORD_LIMIT) return [];
-  return [problem(file, 1, "M6", WARNING, `file over ${FILE_WORD_LIMIT} words: split it or cut it`)];
+  return [problem(file, 1, "M6", WARNING, `file over ${FILE_WORD_LIMIT} words: split it or cut it`, "split it or cut it")];
 }
 
 function normalise(piece) {
@@ -216,7 +226,7 @@ function repeatedSentences({ file, text, others }) {
   const found = [];
   for (const [sentence, line] of sentencesOf(text)) {
     if (carriers.has(sentence)) {
-      found.push(problem(file, line, "M7", WARNING, `a sentence also written in ${carriers.get(sentence)}: keep it in one home`));
+      found.push(problem(file, line, "M7", WARNING, `a sentence also written in ${carriers.get(sentence)}: keep it in one home`, "keep it in one home"));
     }
   }
   return found;

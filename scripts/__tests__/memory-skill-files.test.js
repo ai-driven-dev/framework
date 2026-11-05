@@ -7,7 +7,7 @@ const test = require("node:test");
 
 const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-context");
 const SKILL = path.join(PLUGIN, "skills/02-project-memory");
-const { lintFile } = require(path.join(PLUGIN, "hooks/memory-lint.cjs"));
+const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
 
 const CAPABILITIES = ["core", "ecosystem", "backlog", "deployment", "contract", "auth", "data", "async", "ui", "native"];
 const HEADER = ["Capability", "Detected when", "File", "Always", "Former files"];
@@ -86,9 +86,9 @@ function skillText(file) {
 }
 
 const FIXTURES = path.resolve(__dirname, "../../cli/tests/fixtures/hooks-routes");
-const ENGINE_NAMES = /memory-lint|update_memory/u;
-const PLUGIN_HOOKS = /^(?:[^/]+\/)*plugins\/aidd-context\/hooks\/memory-lint\.cjs$/u;
-const TOOL_HOOKS = /^(?:[^/]+\/)*\.[a-z]+\/hooks\/aidd-context\/memory-lint\.cjs$/u;
+const ENGINE_NAMES = /memory\.cjs/u;
+const PLUGIN_HOOKS = /^(?:[^/]+\/)*plugins\/aidd-context\/hooks\/memory\.cjs$/u;
+const TOOL_HOOKS = /^(?:[^/]+\/)*\.[a-z]+\/hooks\/aidd-context\/memory\.cjs$/u;
 
 function section(text, heading) {
   const start = text.indexOf(`## ${heading}`);
@@ -111,7 +111,7 @@ test("check prints its findings: no report template ships and no file names one"
 
 test("the engine's file names and its fallback live in the router's Engine section only", () => {
   const engine = engineSection();
-  for (const name of ["memory-lint.cjs", "update_memory.js"]) {
+  for (const name of ["memory.cjs"]) {
     assert.ok(engine.includes(name), `the Engine section does not name ${name}`);
     assert.ok(fs.existsSync(path.join(PLUGIN, "hooks", name)), `${name} is not under the plugin's hooks/`);
   }
@@ -125,14 +125,14 @@ test("the engine's file names and its fallback live in the router's Engine secti
 });
 
 test("the lint command the skill gives takes the root first, and exits 1 on a planted unfinished marker", () => {
-  const given = engineSection().match(/`node memory-lint\.cjs (\.) (aidd_docs\/memory\/<file>\.md)`/u);
-  assert.ok(given, "the Engine section gives no `node memory-lint.cjs . aidd_docs/memory/<file>.md`");
+  const given = engineSection().match(/`node memory\.cjs check (\.) (aidd_docs\/memory\/<file>\.md)`/u);
+  assert.ok(given, "the Engine section gives no `node memory.cjs check . aidd_docs/memory/<file>.md`");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "lint-command-"));
   try {
     fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
     fs.writeFileSync(path.join(root, "aidd_docs/memory/vcs.md"), "# VCS\n\n- TODO decide the branch model\n");
     const run = (file) =>
-      spawnSync("node", [path.join(PLUGIN, "hooks/memory-lint.cjs"), given[1], file.replace("<file>", "vcs")], {
+      spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs"), "check", given[1], file.replace("<file>", "vcs")], {
         cwd: root,
         encoding: "utf8",
       });
@@ -140,7 +140,7 @@ test("the lint command the skill gives takes the root first, and exits 1 on a pl
     assert.equal(result.status, 1, `${result.stdout}${result.stderr}`);
     assert.match(result.stdout, /M3/u);
     // The mistake this guards: the file first reads as the root, finds nothing, and exits 0.
-    const swapped = spawnSync("node", [path.join(PLUGIN, "hooks/memory-lint.cjs"), "aidd_docs/memory/vcs.md"], { cwd: root, encoding: "utf8" });
+    const swapped = spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs"), "check", "aidd_docs/memory/vcs.md"], { cwd: root, encoding: "utf8" });
     assert.equal(swapped.status, 0, "the engine no longer passes silently on a file given as the root");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -154,7 +154,7 @@ test("the Engine section matches the install layouts the hook fixtures show", ()
     for (const scenario of fs.readdirSync(path.join(FIXTURES, tool))) {
       const lines = fs.readFileSync(path.join(FIXTURES, tool, scenario), "utf8").split(/\r?\n/u);
       for (const line of lines) {
-        if (!line.startsWith("## ") || !line.endsWith("memory-lint.cjs")) continue;
+        if (!line.startsWith("## ") || !line.endsWith("memory.cjs")) continue;
         const where = line.slice(3);
         assert.ok(PLUGIN_HOOKS.test(where) || TOOL_HOOKS.test(where), `${tool}/${scenario}: ${where} fits no layout the Engine section states`);
         delivered.push(`${tool}/${scenario}`);
@@ -164,7 +164,7 @@ test("the Engine section matches the install layouts the hook fixtures show", ()
   assert.ok(delivered.length > 20, "the fixtures hold too few engine deliveries to compare");
   for (const none of ["kilo", "opencode"]) {
     const built = fs.readFileSync(path.join(FIXTURES, none, "native-build.txt"), "utf8");
-    assert.doesNotMatch(built, /memory-lint/u, `${none} native build now ships the engine`);
+    assert.doesNotMatch(built, /memory\.cjs/u, `${none} native build now ships the engine`);
   }
   assert.match(engine, /hooks\/aidd-context\//u, "no tool-folder layout");
   assert.match(engine, /plugin's `hooks\/`/u, "no plugin layout");

@@ -38,9 +38,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [hooks.json](hooks/hooks.json) |
-| [memory-hook.cjs](hooks/memory-hook.cjs) |
-| [memory-lint.cjs](hooks/memory-lint.cjs) |
-| [update_memory.js](hooks/update_memory.js) |
+| [memory.cjs](hooks/memory.cjs) |
 
 #### `hooks/lib`
 

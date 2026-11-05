@@ -12,7 +12,7 @@ approval_policy = "on-request"
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/update_memory.js"
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook"
           }
         ]
       }
@@ -23,7 +23,7 @@ approval_policy = "on-request"
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/memory-hook.cjs",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
             "timeout": 5
           }
         ]
@@ -42,13 +42,7 @@ script, identical to the host adapter host-codex.cjs
 ## project/.codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## project/.codex/plugins/aidd-context/hooks/memory-hook.cjs
-script, identical to the plugin source
-
-## project/.codex/plugins/aidd-context/hooks/memory-lint.cjs
-script, identical to the plugin source
-
-## project/.codex/plugins/aidd-context/hooks/update_memory.js
+## project/.codex/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-telemetry/hooks/catch-up.cjs
@@ -145,14 +139,12 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project codex aidd-context scope=project: 7 hook files
+project codex aidd-context scope=project: 5 hook files
   .codex/plugins/aidd-context/hooks/hooks.json
   .codex/plugins/aidd-context/hooks/lib/common-rules.cjs
   .codex/plugins/aidd-context/hooks/lib/host.cjs
   .codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
-  .codex/plugins/aidd-context/hooks/memory-hook.cjs
-  .codex/plugins/aidd-context/hooks/memory-lint.cjs
-  .codex/plugins/aidd-context/hooks/update_memory.js
+  .codex/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []
 project codex aidd-telemetry scope=project: 19 hook files

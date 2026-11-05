@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/update_memory.js"
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook"
           }
         ]
       }
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory-hook.cjs",
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
             "timeout": 5
           }
         ]
@@ -41,13 +41,7 @@ script, identical to the host adapter host-cursor.cjs
 ## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-context/hooks/memory-hook.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/memory-lint.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/update_memory.js
+## out-marketplace/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-telemetry/.cursor-plugin/plugin.json

@@ -5,15 +5,17 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/hooks/memory-lint.cjs");
-const { lintFile, lintBank, RULES } = require(ENGINE);
+const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/hooks/memory.cjs");
+const { lintFile, lintBank, ALWAYS_WRITTEN } = require(ENGINE);
+const { RULES } = require("../../plugins/aidd-context/hooks/lib/memory-rules.cjs");
+const CAPABILITIES = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory/references/capabilities.md");
 
 const MEMORY = "aidd_docs/memory";
 const words = (count, word = "word") => Array(count).fill(word).join(" ");
 
 /** A throwaway project: `memory` maps a name under the bank to its text, `files` to anything else. */
 function project(memory, files = {}) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-lint-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-check-"));
   for (const [name, text] of Object.entries(memory)) write(root, `${MEMORY}/${name}`, text);
   for (const [name, text] of Object.entries(files)) write(root, name, text);
   return root;
@@ -96,6 +98,19 @@ test("each error message names its excerpt and its fix", () => {
   assert.equal(message("# T\n\nA {{slot}} here.\n"), '"{{" unfinished: fill it or remove it');
   assert.equal(message("# T\n\nDo TBD later.\n"), '"TBD" unfinished: fill it or remove it');
   assert.equal(message("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "`src/gone.cfg` names nothing on disk: fix the path or remove it");
+});
+
+test("each error carries its excerpt and its fix apart, as the findings formatter prints them", () => {
+  const parts = (text, files) => {
+    const [{ excerpt, fix }] = lint(text, files);
+    return { excerpt, fix };
+  };
+  assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: undefined, fix: "prose line of 26 words, over 25: make it a table, a list or a heading" });
+  assert.deepEqual(parts("# T\n\nWe have 41 commits.\n"), { excerpt: "41 commits", fix: "name the thing, not how many" });
+  assert.deepEqual(parts("# T\n\nA {{slot}} here.\n"), { excerpt: "{{slot}}", fix: "fill it or remove it" });
+  assert.deepEqual(parts("# T\n\nDo TBD later.\n"), { excerpt: "TBD", fix: "fill it or remove it" });
+  assert.deepEqual(parts("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), { excerpt: "src/gone.cfg", fix: "fix the path or remove it" });
+  assert.deepEqual(parts(`# T\n\n- ${words(36)}\n`), { excerpt: undefined, fix: "split it" });
 });
 
 test("an excerpt over 40 characters is cut with an ellipsis", () => {
@@ -243,10 +258,10 @@ test("lintFile gives nothing for a file under internal/ or external/", () => {
 });
 
 test("no memory folder gives no problem", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-lint-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-check-"));
   try {
     assert.deepEqual(lintBank(root), []);
-    const run = spawnSync("node", [ENGINE, root], { encoding: "utf8" });
+    const run = spawnSync("node", [ENGINE, "check", root], { encoding: "utf8" });
     assert.equal(run.status, 0);
     assert.equal(run.stdout, "");
   } finally {
@@ -254,30 +269,79 @@ test("no memory folder gives no problem", () => {
   }
 });
 
-test("script: prints one line per problem and exits 1 only with an error", () => {
-  const root = project({ "a.md": "# T\n\nTBD\n\n- " + words(36) + "\n" });
-  const warningOnly = project({ "a.md": `# T\n\n- ${words(36)}\n` });
-  try {
-    const failing = spawnSync("node", [ENGINE, root], { encoding: "utf8" });
-    assert.equal(failing.status, 1);
-    assert.match(failing.stdout, /^✗ .+:3: .+ \(M3\)\n⚠ .+:5: .+ \(M5\)\n$/);
+/** A bank holding every always-written file, clean, then `memory` over it. */
+function fullBank(memory, files = {}) {
+  return project({ ...Object.fromEntries(ALWAYS_WRITTEN.map((name) => [name, "# T\n\nShort.\n"])), ...memory }, files);
+}
 
-    const passing = spawnSync("node", [ENGINE, warningOnly], { encoding: "utf8" });
+function check(root, ...files) {
+  return spawnSync("node", [ENGINE, "check", root, ...files], { encoding: "utf8" });
+}
+
+test("check prints the findings in the contract's shape and exits 1 only with an error", () => {
+  const root = fullBank({ "a.md": "# T\n\nTBD\n\n- " + words(36) + "\n" });
+  const warningOnly = fullBank({ "a.md": `# T\n\n- ${words(36)}\n` });
+  try {
+    const failing = check(root);
+    assert.equal(failing.status, 1);
+    assert.equal(
+      failing.stdout,
+      'aidd-context: 1 errors, 1 warnings\naidd_docs/memory/a.md:3 M3 "TBD" => fill it or remove it\naidd_docs/memory/a.md:5 M5 warning bullet or table cell over 35 words => split it\n'
+    );
+
+    const passing = check(warningOnly);
     assert.equal(passing.status, 0);
-    assert.match(passing.stdout, /^⚠ .+ \(M5\)\n$/);
+    assert.match(passing.stdout, /^aidd-context: 0 errors, 1 warnings\n.+ M5 warning .+\n$/u);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(warningOnly, { recursive: true, force: true });
   }
 });
 
-test("script: named files narrow the run", () => {
+test("check names a misplaced file and the always-written files the bank lacks as errors", () => {
+  const root = project({ "vcs.md": "# V\n", "kpi/x.md": "# K\n", "kpi/y.md": "# K\n", "internal/y.md": "TBD\n", "external/z.md": "TBD\n" });
+  try {
+    const run = check(root);
+    assert.equal(run.status, 1);
+    assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
+      "aidd-context: 3 errors, 0 warnings",
+      'aidd_docs/memory missing "project-brief.md, architecture.md, coding-assertions.md, testing.md, ecosystem.md" => write each from its template',
+      "placement ×2 in aidd_docs/memory/kpi/* => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
+    ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check prints at most ten warnings, the count line keeping the total", () => {
+  const root = fullBank(Object.fromEntries(Array.from({ length: 12 }, (_, index) => [`f${index}.md`, `# T\n\n- ${words(36, `w${index}`)}\n`])));
+  try {
+    const lines = check(root).stdout.trim().split("\n");
+    assert.equal(lines[0], "aidd-context: 0 errors, 12 warnings");
+    assert.equal(lines.length, 11);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check: named files narrow the run, and leave the missing files out", () => {
   const root = project({ "a.md": "TBD\n", "b.md": "# ok\n" });
   try {
-    const run = spawnSync("node", [ENGINE, root, `${MEMORY}/b.md`], { encoding: "utf8" });
+    const run = check(root, `${MEMORY}/b.md`);
     assert.equal(run.status, 0);
     assert.equal(run.stdout, "");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("the always-written files are the Always rows of the capability table", () => {
+  const rows = fs
+    .readFileSync(CAPABILITIES, "utf8")
+    .split(/\r?\n/u)
+    .filter((line) => line.startsWith("|"))
+    .map((line) => line.split("|").map((cell) => cell.trim()))
+    .filter((cells) => cells[4] === "yes");
+  const named = rows.flatMap((cells) => [...cells[3].matchAll(/`([^`]+\.md)`/gu)].map((match) => match[1]));
+  assert.deepEqual([...ALWAYS_WRITTEN].sort(), named.sort());
 });

@@ -95,7 +95,7 @@ pre-commit:
       glob:
         - "{CLAUDE,AGENTS,copilot-instructions}.md"
         - "**/{CLAUDE,AGENTS,copilot-instructions}.md"
-        - "plugins/aidd-context/hooks/update_memory.js"
+        - "plugins/aidd-context/hooks/memory.cjs"
       run: |
         if ! command -v node >/dev/null 2>&1; then
           echo 'ℹ️  node not available; skipping context-reference-form'
