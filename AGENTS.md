@@ -41,7 +41,7 @@ When you own the overall flow, fan out genuinely independent subtasks to agents 
 | Confirm the outcome meets its acceptance criteria | `validator` |
 | Review quality, coherence, and needless complexity | `reviewer` |
 
-Without the agent, give the same brief to the host's default subagent.
+If no specialized agent fits or is available, give the same brief to the host's default subagent. When permitted, choose the simplest suitable model and reasoning effort for the task; otherwise use the defaults.
 
 ## Memory Management
 
