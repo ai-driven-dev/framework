@@ -109,14 +109,14 @@ test("check prints its findings: no report template ships and no file names one"
   }
 });
 
-test("the engine's file names and its fallback live in the router's Engine section only", () => {
+test("the engine's file names live in the router's Engine section only, with no fallback for a build that ships no engine", () => {
   const engine = engineSection();
   for (const name of ["memory.cjs"]) {
     assert.ok(engine.includes(name), `the Engine section does not name ${name}`);
     assert.ok(fs.existsSync(path.join(PLUGIN, "hooks", name)), `${name} is not under the plugin's hooks/`);
   }
-  assert.match(engine, /memory-rules\.md/u, "the fallback does not link the rules");
-  assert.match(engine, /Machine/u, "the fallback does not name the Machine table");
+  // Every build ships the engine, so a model is never sent to lint by hand.
+  assert.doesNotMatch(engine, /Found none|Machine/u, "the Engine section keeps a fallback for a build with no engine");
   for (const file of skillMarkdown().filter((candidate) => !candidate.endsWith("SKILL.md"))) {
     const text = fs.readFileSync(file, "utf8");
     assert.doesNotMatch(text, ENGINE_NAMES, `${path.relative(SKILL, file)} names an engine script`);
@@ -163,15 +163,20 @@ test("the Engine section matches the install layouts the hook fixtures show", ()
     }
   }
   assert.ok(delivered.length > 20, "the fixtures hold too few engine deliveries to compare");
-  for (const none of ["kilo", "opencode"]) {
-    const built = fs.readFileSync(path.join(FIXTURES, none, "native-build.txt"), "utf8");
-    assert.doesNotMatch(built, /memory\.cjs/u, `${none} native build now ships the engine`);
+  // Kilo and OpenCode have no native build: every route of theirs that installs the plugin ships
+  // the engine and its libraries in the tool's folder.
+  for (const tool of ["kilo", "opencode"]) {
+    assert.match(fs.readFileSync(path.join(FIXTURES, tool, "native-build.txt"), "utf8"), /^route not supported by this tool$/mu, `${tool} now has a native build`);
+    for (const route of ["flat-translate", "plugin-install", "plugin-install-twice", "setup-plugins-reinstall"]) {
+      const shipped = fs.readFileSync(path.join(FIXTURES, tool, `${route}.txt`), "utf8");
+      for (const file of ["memory.cjs", "lib/common-rules.cjs", "lib/memory-rules.cjs", "lib/host.cjs"]) {
+        assert.match(shipped, new RegExp(`^## \\S+/\\.${tool}/hooks/aidd-context/${file.replace(".", "\\.")}$`, "mu"), `${tool}/${route} does not ship ${file}`);
+      }
+    }
   }
   assert.match(engine, /hooks\/aidd-context\//u, "no tool-folder layout");
   assert.match(engine, /plugin's `hooks\/`/u, "no plugin layout");
   assert.match(engine, /inside this skill/u, "no skill-own layout");
-  assert.match(engine, /Kilo/u);
-  assert.match(engine, /OpenCode/u);
   const order = ["plugin's `hooks/`", "hooks/aidd-context/", "inside this skill"].map((needle) => engine.indexOf(needle));
   assert.deepEqual([...order].sort((a, b) => a - b), order, "the lookup order is not plugin, tool folder, skill");
 });

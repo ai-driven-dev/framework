@@ -159,13 +159,15 @@ function sessionStartPayload(host, root) {
   return captured(SESSION_START[host], 0, root);
 }
 
-function run(host, payload, { cwd = os.tmpdir(), preload } = {}) {
+/** A run's own system temp folder, where the turn-end state lives: every captured payload carries
+ * the same scrubbed session id, so a shared one would hand one test's state to another. */
+function run(host, payload, { cwd = os.tmpdir(), preload, tmp = tempDir("memory-hook-state-") } = {}) {
   const args = [...(preload ? ["--require", preload] : []), hookFor(host), "hook"];
   const result = spawnSync(process.execPath, args, {
     input: typeof payload === "string" ? payload : JSON.stringify(payload),
     encoding: "utf8",
     cwd,
-    env: ENV,
+    env: { ...ENV, TMPDIR: tmp },
   });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
@@ -286,7 +288,7 @@ function touched(host, payload, root) {
     input: JSON.stringify(payload),
     encoding: "utf8",
     cwd: os.tmpdir(),
-    env: { ...ENV, SPY_LOG: log, SPY_ROOT: root },
+    env: { ...ENV, SPY_LOG: log, SPY_ROOT: root, TMPDIR: dir },
   });
   return { status: result.status, stdout: result.stdout, paths: fs.readFileSync(log, "utf8").trim() };
 }
@@ -561,20 +563,22 @@ test("the hook reads its event only through lib/host.cjs and never a host's payl
   }
 });
 
-test("the entry and its libraries require only node:fs, node:path and their own modules", () => {
+test("the entry and its libraries require only the built-ins the contract allows, node:fs, node:os and node:path, and their own modules", () => {
   for (const file of [ENTRY, "lib/memory-rules.cjs", "lib/common-rules.cjs"]) {
     const required = [...fs.readFileSync(path.join(HOOKS, file), "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/gu)].map((m) => m[1]);
-    for (const name of required) assert.ok(["node:fs", "node:path"].includes(name) || name.startsWith("./"), `${file} requires ${name}`);
+    for (const name of required) assert.ok(["node:fs", "node:os", "node:path"].includes(name) || name.startsWith("./"), `${file} requires ${name}`);
   }
 });
 
-test("hooks.json runs the one entry, within 5 s, at session start and after a write, and its matcher names only the tools an adapter reads", () => {
+test("hooks.json runs the one entry, within 5 s, at session start, after a write and at the turn end, and its matcher names only the tools an adapter reads", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
   const command = "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook";
-  for (const event of ["SessionStart", "PostToolUse"]) {
+  assert.deepEqual(Object.keys(hooks).sort(), ["PostToolUse", "SessionStart", "Stop"]);
+  for (const event of ["SessionStart", "PostToolUse", "Stop"]) {
     assert.equal(hooks[event][0].hooks[0].command, command, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
   }
+  assert.equal(hooks.Stop[0].matcher, undefined, "a Stop takes no matcher");
   // Only the tools an adapter reads: MultiEdit is no Claude Code tool.
   assert.deepEqual(hooks.PostToolUse[0].matcher.split("|").sort(), ["Bash", "Delete", "Edit", "PowerShell", "Shell", "Write", "bash"]);
 });
@@ -585,4 +589,231 @@ test("a Cursor Delete of a bank file answers nothing: a missing file is check's,
   const payload = captured("cursor-postToolUse.json", 5, root);
   payload.tool_input.file_path = path.join(root, MEMORY, "old.md");
   assert.deepEqual(run("cursor", payload), { status: 0, stdout: "", stderr: "" });
+});
+
+// ---- the turn end: one Stop asks once to fix the required errors the turn is proven to have made
+
+const SESSION_ID = "00000000-0000-4000-8000-000000000000";
+const STOP = { claude: "claude-Stop.json", codex: "codex-Stop.json", copilot: "copilot-Stop.json", cursor: "cursor-stop.json" };
+
+/** What `host` sends at its turn's end, or at a turn end that is already a continuation. The
+ * bridged hosts mirror their bridge: `session.idle` becomes a Stop for the session's folder. */
+function stopPayload(host, root, { continued = false } = {}) {
+  if (BRIDGED.has(host)) {
+    const { properties } = captured(`${host}-session.idle.json`, 0, root);
+    return { hook_event_name: "Stop", session_id: properties.sessionID, cwd: root, stop_hook_active: continued };
+  }
+  if (host === "cursor") return captured(STOP.cursor, continued ? 1 : 0, root);
+  return { ...captured(STOP[host], 0, root), stop_hook_active: continued };
+}
+
+/** The session start that leaves a baseline: on the bridged hosts, the bridge's `session.created` call. */
+function startPayload(host, root) {
+  if (!BRIDGED.has(host)) return sessionStartPayload(host, root);
+  const { properties } = captured(`${host}-session.created.json`, 0, root);
+  return { hook_event_name: "SessionStart", session_id: properties.sessionID ?? null, cwd: properties.info?.directory ?? root };
+}
+
+/** The reason a Stop continues the turn with, or null when it lets the turn end. */
+function stopAnswerOf(stdout) {
+  if (stdout === "") return null;
+  const out = JSON.parse(stdout);
+  return out.decision === "block" ? out.reason : out.followup_message;
+}
+
+/** One session in its own state folder: each call runs one event of it. */
+function session(host) {
+  const tmp = tempDir("memory-hook-session-");
+  const mark = path.join(tmp, typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks", "aidd-context", SESSION_ID);
+  return { tmp, mark, run: (payload) => run(host, payload, { tmp }) };
+}
+
+const SLOT_LINE = `Branch ${SLOT} here.`;
+const ASKED = `aidd-context: 1 error, 0 warnings\n${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it or remove it`;
+
+/** A bank whose vcs.md reads `# VCS`, a blank line, then `line`. */
+const withLine = (line) => ({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${line}\n` });
+
+for (const host of EDITS_SAY_WHAT) {
+  test(`${host}: a write adding a slot, then a Stop, asks once to fix it, and the next Stop asks nothing`, () => {
+    const root = project(withLine("Kept."));
+    const { run: step } = session(host);
+    step(startPayload(host, root));
+    fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${SLOT_LINE}\n`);
+    step(editPayload(host, root, `${MEMORY}/vcs.md`, SLOT_LINE));
+    assert.equal(stopAnswerOf(step(stopPayload(host, root)).stdout), ASKED);
+    assert.deepEqual(step(stopPayload(host, root)), { status: 0, stdout: "", stderr: "" });
+  });
+
+  test(`${host}: a Stop that is already a continuation asks nothing`, () => {
+    const root = project(withLine(SLOT_LINE));
+    const { run: step } = session(host);
+    step(editPayload(host, root, `${MEMORY}/vcs.md`, SLOT_LINE));
+    assert.equal(step(stopPayload(host, root, { continued: true })).stdout, "");
+  });
+}
+
+test("a Claude Write creating a file with a slot asks at Stop: the host says nothing stood there before", () => {
+  const root = project({}, { always: ALWAYS.filter((name) => name !== "vcs.md") });
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${SLOT_LINE}\n`);
+  const payload = writePayload("claude", root, `${MEMORY}/vcs.md`);
+  assert.equal(payload.tool_response.type, "create");
+  step(payload);
+  assert.equal(stopAnswerOf(step(stopPayload("claude", root)).stdout), ASKED);
+});
+
+/** A Claude Write over an existing file: the captured create sample, its response the update of `before`. */
+function overwritePayload(root, file, before) {
+  const payload = writePayload("claude", root, file);
+  payload.tool_response = { ...payload.tool_response, type: "update", originalFile: before };
+  return payload;
+}
+
+test("a Claude Write over an existing file reports only the line it changed", () => {
+  const before = `# VCS\n\n${SLOT}\n\nKept.\n`;
+  const after = before.replace("Kept.", words(31));
+  const root = project({ [`${MEMORY}/vcs.md`]: after });
+  const answer = answerOf(run("claude", overwritePayload(root, `${MEMORY}/vcs.md`, before)).stdout);
+  assert.deepEqual(answer.text.split("\n").slice(1).map((line) => line.split(" ").slice(0, 2).join(" ")), [`${MEMORY}/vcs.md:5 M1`]);
+});
+
+test("a Claude Write over an existing file asks at Stop only for a slot on a line it changed", () => {
+  const root = project(withLine(`${SLOT_LINE}\n\nKept.`));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${SLOT_LINE}\n\nChanged.\n`);
+  step(overwritePayload(root, `${MEMORY}/vcs.md`, `# VCS\n\n${SLOT_LINE}\n\nKept.\n`));
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("a whole-file write that does not say what it replaced asks nothing at Stop: no proof, no hold", () => {
+  for (const host of ["cursor", "opencode", "kilo"]) {
+    const root = project(withLine("Kept."));
+    const { run: step } = session(host);
+    step(startPayload(host, root));
+    fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${SLOT_LINE}\n`);
+    step(writePayload(host, root, `${MEMORY}/vcs.md`));
+    assert.equal(step(stopPayload(host, root)).stdout, "", host);
+  }
+});
+
+test("a slot added by hand, with no write event, asks nothing at Stop", () => {
+  const root = project(withLine("Kept."));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${SLOT_LINE}\n`);
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("a standing slot asks nothing at Stop when the turn wrote another line", () => {
+  const root = project(withLine(`${SLOT_LINE}\n\nFresh.`));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  step(editPayload("claude", root, `${MEMORY}/vcs.md`, "Fresh."));
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("a standing slot rewritten unchanged by the turn asks nothing at Stop: the baseline counts it", () => {
+  const root = project(withLine(SLOT_LINE));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  step(editPayload("claude", root, `${MEMORY}/vcs.md`, SLOT_LINE, "Something else."));
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("a slot written then written back out in the same turn asks nothing at Stop: the turn is net", () => {
+  const root = project(withLine("Kept."));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  step(editPayload("claude", root, `${MEMORY}/vcs.md`, SLOT_LINE, "Kept."));
+  step(editPayload("claude", root, `${MEMORY}/vcs.md`, "Kept.", SLOT_LINE));
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("an M1 sentence written by the turn informs after the write and is never required at Stop", () => {
+  const root = project(withLine("Kept."));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${words(31)}\n`);
+  assert.match(answerOf(step(editPayload("claude", root, `${MEMORY}/vcs.md`, words(31))).stdout).text, / M1 /u);
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("without a session start, a slot the turn wrote still asks at Stop", () => {
+  const root = project(withLine(SLOT_LINE));
+  const { run: step } = session("claude");
+  step(editPayload("claude", root, `${MEMORY}/vcs.md`, SLOT_LINE));
+  assert.equal(stopAnswerOf(step(stopPayload("claude", root)).stdout), ASKED);
+});
+
+test("a read-only run of the engine marks nothing; a shell write naming the bank marks the turn", () => {
+  const root = project(withLine(SLOT_LINE));
+  const { run: step, mark } = session("claude");
+  step(shellPayload("claude", root, `node ${hookFor("claude")} check . ${MEMORY}/vcs.md`));
+  assert.equal(fs.existsSync(mark), false, "a read-only check marked the turn");
+  step(shellPayload("claude", root, `echo x >> ${MEMORY}/vcs.md`));
+  assert.equal(fs.existsSync(mark), true, "a shell write did not mark the turn");
+  // A shell write proves no line: its Stop requires nothing.
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+  assert.equal(fs.existsSync(mark), false, "the Stop did not consume the mark");
+});
+
+test("a write outside the bank marks nothing", () => {
+  const root = project({ "aidd_docs/ui/x.md": `# UI\n\n${SLOT}\n` });
+  const { run: step, mark } = session("claude");
+  step(writePayload("claude", root, "aidd_docs/ui/x.md"));
+  assert.equal(fs.existsSync(mark), false);
+});
+
+test("a Stop with no mark reads nothing of the project", () => {
+  const root = project(withLine(SLOT_LINE));
+  assert.deepEqual(touched("claude", stopPayload("claude", root), root), { status: 0, stdout: "", paths: "" });
+});
+
+test("an error new against the baseline in another file informs after the write, once per turn", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nKept.\n", [`${MEMORY}/testing.md`]: "# T\n\nShort.\n" });
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, MEMORY, "testing.md"), `# T\n\n${slotOf("testing.md")}\n`);
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), "# VCS\n\nFresh.\n");
+  const first = answerOf(step(editPayload("claude", root, `${MEMORY}/vcs.md`, "Fresh.")).stdout);
+  assert.deepEqual(first.text.split("\n"), ["aidd-context: 1 error, 0 warnings", `${MEMORY}/testing.md:3 M3 "${shown(slotOf("testing.md"))}" => fill it or remove it`]);
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), "# VCS\n\nAgain.\n");
+  assert.equal(step(editPayload("claude", root, `${MEMORY}/vcs.md`, "Again.", "Fresh.")).stdout, "");
+  // Told after the write, never required: the turn did not write it.
+  assert.equal(step(stopPayload("claude", root)).stdout, "");
+});
+
+test("an error a write of this turn already reported is not told again by a later write", () => {
+  const root = project(withLine("Kept."));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${SLOT_LINE}\n`);
+  assert.equal(answerOf(step(editPayload("claude", root, `${MEMORY}/vcs.md`, SLOT_LINE)).stdout).text, ASKED);
+  fs.writeFileSync(path.join(root, MEMORY, "testing.md"), "# T\n\nFresh.\n");
+  assert.equal(step(editPayload("claude", root, `${MEMORY}/testing.md`, "Fresh.", "Short.")).stdout, "");
+});
+
+test("a session id the state cannot hold keeps no state and asks nothing", () => {
+  const root = project(withLine(SLOT_LINE));
+  const { run: step, tmp } = session("claude");
+  const edit = { ...editPayload("claude", root, `${MEMORY}/vcs.md`, SLOT_LINE), session_id: "../escape" };
+  step(edit);
+  assert.equal(step({ ...stopPayload("claude", root), session_id: "../escape" }).stdout, "");
+  assert.deepEqual(fs.readdirSync(tmp).filter((name) => name.startsWith("aidd-hooks")).flatMap((name) => fs.readdirSync(path.join(tmp, name, "aidd-context"))), []);
+});
+
+test("a session start sweeps the state older than a day and leaves the baseline at 0600", { skip: typeof process.getuid !== "function" }, () => {
+  const root = project(withLine(SLOT_LINE));
+  const { run: step, mark } = session("claude");
+  step(startPayload("claude", root));
+  const stale = path.join(path.dirname(mark), "stale");
+  fs.writeFileSync(stale, "[]");
+  const past = new Date(Date.now() - 25 * 60 * 60 * 1000);
+  fs.utimesSync(stale, past, past);
+  step(startPayload("claude", root));
+  assert.equal(fs.existsSync(stale), false);
+  assert.equal(fs.statSync(`${mark}.base`).mode & 0o777, 0o600);
 });

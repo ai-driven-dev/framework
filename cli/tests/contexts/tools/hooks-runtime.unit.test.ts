@@ -111,15 +111,33 @@ describe("Claude Code", () => {
     });
   });
 
-  it("reads a Write as the file it wrote, with the content the host gave", () => {
+  it("reads a Write creating a file as the file it wrote, replacing nothing", () => {
     const { payload } = sample("claude-PostToolUse.json", 0);
     const { event } = read("claude", payload);
 
     expect([event?.event, event?.files, event?.command]).toStrictEqual([
       "PostToolUse",
-      [{ path: NOTES, content: "hello\n", written: "hello\n" }],
+      [{ path: NOTES, content: "hello\n", written: "hello\n", replaced: "" }],
       undefined,
     ]);
+  });
+
+  it("reads a Write over an existing file as replacing the file the host read before it (derived from the captured create)", () => {
+    const { payload } = sample("claude-PostToolUse.json", 0);
+    const created = payload.tool_response as Record<string, unknown>;
+    const response = { ...created, type: "update", originalFile: "before\n" };
+    const { event } = read("claude", { ...payload, tool_response: response });
+
+    expect(event?.files).toStrictEqual([
+      { path: NOTES, content: "hello\n", written: "hello\n", replaced: "before\n" },
+    ]);
+  });
+
+  it("reads a Write whose response says nothing of the former file as replacing nothing known (derived from the captured create)", () => {
+    const { payload } = sample("claude-PostToolUse.json", 0);
+    const { event } = read("claude", { ...payload, tool_response: undefined });
+
+    expect(event?.files).toStrictEqual([{ path: NOTES, content: "hello\n", written: "hello\n" }]);
   });
 
   it("reads a shell call as its command, touching no file", () => {

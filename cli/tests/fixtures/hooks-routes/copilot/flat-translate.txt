@@ -16,6 +16,13 @@
         "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
         "timeout": 5
       }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./.github/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
+      }
     ]
   }
 }
