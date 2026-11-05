@@ -36,6 +36,8 @@ function writtenFiles(tool, input, cwd) {
   // What this write put in the file: the whole of a Write, the replacement of an Edit.
   const written = input.content ?? input.new_string;
   if (typeof written === "string") file.written = written;
+  // What it replaced: an Edit's old string, context lines it repeats included.
+  if (typeof input.old_string === "string") file.replaced = input.old_string;
   return [file];
 }
 

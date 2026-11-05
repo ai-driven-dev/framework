@@ -133,7 +133,9 @@ describe("Claude Code", () => {
     const tool_input = { file_path: NOTES, old_string: "a", new_string: "b", replace_all: false };
     const edit = { ...payload, tool_name: "Edit", tool_input };
 
-    expect(read("claude", edit).event?.files).toStrictEqual([{ path: NOTES, written: "b" }]);
+    expect(read("claude", edit).event?.files).toStrictEqual([
+      { path: NOTES, written: "b", replaced: "a" },
+    ]);
   });
 
   it("reads what a multi-line Edit wrote as its whole new string (documented, not captured)", () => {
@@ -142,7 +144,7 @@ describe("Claude Code", () => {
     const edit = { ...payload, tool_name: "Edit", tool_input };
 
     expect(read("claude", edit).event?.files).toStrictEqual([
-      { path: NOTES, written: "one\ntwo\n" },
+      { path: NOTES, written: "one\ntwo\n", replaced: "a" },
     ]);
   });
 
@@ -260,7 +262,7 @@ describe("Codex", () => {
     expect(event?.files).toStrictEqual([
       { path: NOTES, written: "hello\nagain" },
       { path: `${CWD}/docs/a.md` },
-      { path: `${CWD}/docs/b.md`, written: "y" },
+      { path: `${CWD}/docs/b.md`, written: "y", replaced: "x" },
       { path: `${CWD}/old.md` },
     ]);
   });
@@ -287,8 +289,20 @@ describe("Codex", () => {
 
     expect(event?.files).toStrictEqual([
       { path: `${CWD}/a.md`, written: "a1\na2" },
-      { path: `${CWD}/b.md`, written: "b1" },
-      { path: `${CWD}/c.md`, written: "" },
+      { path: `${CWD}/b.md`, written: "b1", replaced: "gone" },
+      { path: `${CWD}/c.md`, written: "", replaced: "only removed" },
+    ]);
+  });
+
+  it("reads a patch sent with CRLF line ends as the same files and lines (derived from the captured patch)", () => {
+    const { payload } = sample("codex-PostToolUse.json", 0);
+    const command = String((payload.tool_input as { command: string }).command).replaceAll(
+      "\n",
+      "\r\n"
+    );
+
+    expect(read("codex", { ...payload, tool_input: { command } }).event?.files).toStrictEqual([
+      { path: NOTES, written: "hello" },
     ]);
   });
 
@@ -412,6 +426,25 @@ describe("Copilot", () => {
 
     expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
       { path: `${CWD}/a.md`, written: "one\ntwo\nthree" },
+    ]);
+  });
+
+  it("gives a patched file the lines it removed, as what the write replaced (derived from the captured patch)", () => {
+    const { payload } = sample("copilot-PostToolUse.json", 0);
+    const patch =
+      "*** Begin Patch\n*** Update File: a.md\n@@\n kept\n-old one\n-old two\n+new\n*** End Patch\n";
+
+    expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
+      { path: `${CWD}/a.md`, written: "new", replaced: "old one\nold two" },
+    ]);
+  });
+
+  it("reads a patch sent with CRLF line ends as the same files and lines (derived from the captured patch)", () => {
+    const { payload } = sample("copilot-PostToolUse.json", 0);
+    const patch = String(payload.tool_input).replaceAll("\n", "\r\n");
+
+    expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
+      { path: NOTES, written: "hello." },
     ]);
   });
 

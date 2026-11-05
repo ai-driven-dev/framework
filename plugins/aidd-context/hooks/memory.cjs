@@ -49,7 +49,6 @@ const LEVELS = Object.freeze({
   M6: 1,
   M7: 2,
   placement: 1,
-  missing: 1,
 });
 
 // A shell write carries no file list: a bank file changed this recently is the command's.
@@ -161,7 +160,7 @@ function placementFinding(file) {
 }
 
 /** The always-written files the bank lacks, as one finding; none when the bank is absent. */
-function missingFinding(root, severity) {
+function missingFinding(root) {
   if (!fs.existsSync(path.join(root, MEMORY_DIR))) return [];
   const present = new Set(rootFiles(root));
   const missing = ALWAYS_WRITTEN.filter((name) => !present.has(`${MEMORY_DIR}/${name}`));
@@ -170,7 +169,7 @@ function missingFinding(root, severity) {
     {
       file: MEMORY_DIR,
       rule: "missing",
-      severity,
+      severity: ERROR,
       message: `no ${missing.join(", ")}`,
       excerpt: missing.join(", "),
       fix: "write each from its template",
@@ -185,40 +184,54 @@ function asWarning(finding) {
   return { ...finding, message };
 }
 
+function linesOf(text) {
+  return (text ?? "").split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
+}
+
 /**
- * The 1-based lines of `text` that `written` stands on: each line holding one of its non-blank
- * lines. A line repeated elsewhere counts every copy: it raises the same findings there.
+ * The lines a write added or changed: the whole lines of `written` left once those of `replaced`
+ * are taken out, each as many times as it appears. A context line an edit repeats unchanged is
+ * not one. Null when a write removed lines and added none: its effect is unknown.
  */
-function touchedLines(text, written) {
-  const pieces = written.split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
-  const touched = new Set();
-  for (const [index, line] of text.split(/\r?\n/u).entries()) {
-    if (pieces.some((piece) => line.includes(piece))) touched.add(index + 1);
+function changedLines(written, replaced) {
+  const left = new Map();
+  for (const line of linesOf(replaced)) left.set(line, (left.get(line) ?? 0) + 1);
+  const changed = new Set();
+  for (const line of linesOf(written)) {
+    if ((left.get(line) ?? 0) > 0) left.set(line, left.get(line) - 1);
+    else changed.add(line);
   }
+  return changed.size === 0 && linesOf(replaced).length > 0 ? null : changed;
+}
+
+/** The 1-based lines of `text` equal, once trimmed, to a changed line. A line repeated elsewhere
+ * counts every copy: it raises the same findings there. */
+function touchedLines(text, changed) {
+  const touched = new Set();
+  for (const [index, line] of text.split(/\r?\n/u).entries()) if (changed.has(line.trim())) touched.add(index + 1);
   return touched;
 }
 
 /**
  * The findings of the files a write reached, sorted into the formatter's three lists, and its
- * level. A file whose event says what this write put in it reports the findings on the lines that
- * text stands on, one by one, at their level. A file whose touched lines are unknown, a shell
- * write or an edit that says nothing of its text, may hold standing errors: they print grouped
- * and only inform.
+ * level. A file whose event says what this write put in it reports the findings on the lines it
+ * added or changed, one by one, at their level. A file whose changed lines are unknown, a shell
+ * write, an edit that says nothing of its text or one that only removed lines, may hold standing
+ * errors: they print grouped and only inform. A missing file is the bank's, named by check only.
  */
 function findingsOf(root, said, unknown) {
   const errors = [];
   const grouped = [];
   const warnings = [];
   let level = 1;
-  let inBank = false;
-  const take = (file, written) => {
+  const take = (file, change) => {
     const place = placeOf(file);
     if (place === "outside") return;
-    const text = written === undefined ? null : readTextOrNull(path.join(root, file));
-    const touched = text === null ? null : touchedLines(text, written);
-    // An edit that only removed lines put nothing in the file: nothing to answer for it.
+    const changed = change === undefined ? null : changedLines(change.written, change.replaced);
+    const text = changed === null ? null : readTextOrNull(path.join(root, file));
+    const touched = text === null ? null : touchedLines(text, changed);
+    // A write that added or changed no line produced nothing to answer for.
     if (touched !== null && touched.size === 0) return;
-    inBank = true;
     let found = [];
     if (place === "misplaced") found = fs.existsSync(path.join(root, file)) ? [placementFinding(file)] : [];
     else if (place === "root") found = lintFile(root, file);
@@ -229,9 +242,8 @@ function findingsOf(root, said, unknown) {
       else (touched !== null ? errors : grouped).push(finding);
     }
   };
-  for (const { file, written } of said) take(file, written);
+  for (const entry of said) take(entry.file, entry);
   for (const file of unknown.filter((candidate) => !said.some((entry) => entry.file === candidate))) take(file, undefined);
-  if (inBank) warnings.push(...missingFinding(root, "warning").map(asWarning));
   return { findings: { errors, reached: grouped, warnings }, level };
 }
 
@@ -249,7 +261,9 @@ function shellReached(root, command) {
 
 function afterWrite(host, event) {
   const root = path.resolve(event.cwd);
-  const files = event.files.map((file) => ({ file: toPosix(path.relative(root, file.path)), written: file.written })).filter(({ file }) => underDocs(file));
+  const files = event.files
+    .map((file) => ({ file: toPosix(path.relative(root, file.path)), written: file.written, replaced: file.replaced }))
+    .filter(({ file }) => underDocs(file));
   // A file the event says what this write put in; any other, its touched lines unknown.
   const said = files.filter(({ written }) => typeof written === "string");
   const unsaid = files.filter(({ written }) => typeof written !== "string").map(({ file }) => file);
@@ -282,7 +296,7 @@ function check(root, files = []) {
     if (place === "misplaced" && fs.existsSync(path.join(absolute, file))) found.push(placementFinding(file));
     else if (place === "root") found.push(...lintFile(absolute, file, RULES, failures));
   }
-  if (named.length === 0) found.push(...missingFinding(absolute, ERROR));
+  if (named.length === 0) found.push(...missingFinding(absolute));
   // A misplaced folder is one move however many files it holds: its findings print grouped.
   const errors = found.filter((finding) => finding.severity === ERROR && finding.rule !== "placement");
   const reached = found.filter((finding) => finding.rule === "placement");

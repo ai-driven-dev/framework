@@ -29,26 +29,37 @@ function readPayload() {
 }
 
 /** Every file a patch names, once each, in the order it names them, with the lines the patch
- * added to it: an added or updated file, or a move's new path. A deleted file and a move's
- * source carry none. */
+ * added to it and, when it removed some, those as what it replaced: an added or updated file,
+ * or a move's new path. A deleted file and a move's source carry none. */
 function patchedFiles(patch, cwd) {
   const files = new Map();
   let target;
-  for (const line of patch.split("\n")) {
+  // CRLF patches too: a carriage return left on a line would hide a header and end every path.
+  for (const line of patch.split(/\r?\n/)) {
     const header = PATCH_FILE.exec(line);
     if (header !== null) {
       const [, kind, named] = header;
       const file = path.resolve(cwd, named.trim());
-      if (kind === "Move to" && files.get(target)?.length === 0) files.set(target, undefined);
-      files.set(file, kind === "Delete File" ? files.get(file) : (files.get(file) ?? []));
+      const source = files.get(target);
+      if (kind === "Move to" && source?.added.length === 0 && source.removed.length === 0) {
+        files.set(target, undefined);
+      }
+      const fresh = { added: [], removed: [] };
+      files.set(file, kind === "Delete File" ? files.get(file) : (files.get(file) ?? fresh));
       target = file;
     } else if (line.startsWith("+")) {
-      files.get(target)?.push(line.slice(1));
+      files.get(target)?.added.push(line.slice(1));
+    } else if (line.startsWith("-")) {
+      files.get(target)?.removed.push(line.slice(1));
     }
   }
-  return [...files].map(([file, added]) =>
-    added === undefined ? { path: file } : { path: file, written: added.join("\n") }
-  );
+  return [...files].map(([file, lines]) => {
+    if (lines === undefined) return { path: file };
+    const written = { path: file, written: lines.added.join("\n") };
+    return lines.removed.length === 0
+      ? written
+      : { ...written, replaced: lines.removed.join("\n") };
+  });
 }
 
 /** A file write arrives as an `apply_patch`, its patch in `tool_input.command`. */

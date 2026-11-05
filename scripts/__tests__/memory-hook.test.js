@@ -84,10 +84,11 @@ const BRIDGED = new Set(["opencode", "kilo"]);
 const POST_TOOL_USE = { claude: "claude-PostToolUse.json", codex: "codex-PostToolUse.json", copilot: "copilot-PostToolUse.json", cursor: "cursor-postToolUse.json" };
 const SESSION_START = { claude: "claude-SessionStart.json", codex: "codex-SessionStart.json", copilot: "copilot-SessionStart.json", cursor: "cursor-sessionStart.json" };
 
-/** A patch adding `text` to `file`, as Codex and Copilot send one. */
-function patchOf(file, text, kind = "Add") {
-  const added = text.replace(/\n$/u, "").split("\n").map((line) => `+${line}`);
-  return ["*** Begin Patch", `*** ${kind} File: ${file}`, ...added, "*** End Patch", ""].join("\n");
+/** A patch adding `text` to `file`, removing `replaced` first, as Codex and Copilot send one. */
+function patchOf(file, text, kind = "Add", replaced) {
+  const lines = (prefix, body) => (body === undefined || body === "" ? [] : body.replace(/\n$/u, "").split("\n").map((line) => `${prefix}${line}`));
+  const hunk = kind === "Update" ? ["@@"] : [];
+  return ["*** Begin Patch", `*** ${kind} File: ${file}`, ...hunk, ...lines("-", replaced), ...lines("+", text), "*** End Patch", ""].join("\n");
 }
 
 /**
@@ -109,10 +110,10 @@ function writePayload(host, root, file, text) {
   return payload;
 }
 
-/** What `host` sends after an edit replacing a fragment of `file` with `written`. */
-function editPayload(host, root, file, written) {
+/** What `host` sends after an edit replacing `replaced` in `file` with `written`. */
+function editPayload(host, root, file, written, replaced = "Kept.") {
   if (host === "codex" || host === "copilot") {
-    const patch = patchOf(file, written, "Update");
+    const patch = patchOf(file, written, "Update", replaced);
     const payload = captured(POST_TOOL_USE[host], 0, root, file);
     if (host === "codex") payload.tool_input.command = patch;
     else payload.tool_input = patch;
@@ -121,11 +122,11 @@ function editPayload(host, root, file, written) {
   if (BRIDGED.has(host)) {
     const { call } = captured(`${host}-tool.execute.after.json`, 0, root, file);
     call.tool = "edit";
-    call.args = { filePath: call.args.filePath, oldString: "Kept.", newString: written };
+    call.args = { filePath: call.args.filePath, oldString: replaced, newString: written };
     return bridgedToolCall(call, root);
   }
   const payload = { ...captured(POST_TOOL_USE.claude, 0, root, file), tool_name: "Edit" };
-  payload.tool_input = { file_path: path.join(root, file), old_string: "Kept.", new_string: written };
+  payload.tool_input = { file_path: path.join(root, file), old_string: replaced, new_string: written };
   return payload;
 }
 
@@ -198,15 +199,10 @@ for (const host of HOSTS) {
     assert.match(answer.text, new RegExp(`^${MEMORY}/kpi/x\\.md placement => move ${MEMORY}/kpi/ to ${MEMORY}/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it$`, "mu"));
   });
 
-  test(`${host}: a write in the bank while architecture.md is missing informs, naming the missing file`, () => {
+  // A missing always-written file belongs to the bank, not to a write: only check names it.
+  test(`${host}: a write in the bank while architecture.md is missing answers nothing`, () => {
     const always = ALWAYS.filter((name) => name !== "architecture.md");
-    const { stdout } = afterWrite(host, `${MEMORY}/vcs.md`, "# VCS\n\nShort.\n", { always });
-    const answer = answerOf(stdout);
-    assert.equal(answer.level, 1, stdout);
-    assert.deepEqual(answer.text.split("\n"), [
-      "aidd-context: 0 errors, 1 warnings",
-      `${MEMORY} missing warning no architecture.md => write each from its template`,
-    ]);
+    assert.deepEqual(afterWrite(host, `${MEMORY}/vcs.md`, "# VCS\n\nShort.\n", { always }).stdout, "");
   });
 
   test(`${host}: a session start lists the ui and pm folders in the block, stages nothing and prints nothing`, () => {
@@ -348,14 +344,41 @@ for (const host of EDITS_SAY_WHAT) {
   });
 }
 
-for (const host of ["codex", "copilot"]) {
-  test(`${host}: a patch that only removes lines touches none and answers nothing, not even for the bank`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: STANDING }, { always: ALWAYS.filter((name) => name !== "architecture.md") });
-    const patch = ["*** Begin Patch", `*** Update File: ${MEMORY}/vcs.md`, "@@", "-Gone.", "*** End Patch", ""].join("\n");
-    const payload = captured(POST_TOOL_USE[host], 0, root, `${MEMORY}/vcs.md`);
-    if (host === "codex") payload.tool_input.command = patch;
-    else payload.tool_input = patch;
+for (const host of EDITS_SAY_WHAT) {
+  // A context line the edit repeats unchanged is no line it wrote, nor a written line equal to a
+  // part of a standing one: only whole lines the write added or changed are its own.
+  test(`${host}: a clean line written next to a standing {{x}} line it only resembles answers nothing`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\n- Branch from {{x}} later.\n- Branch\n" });
+    assert.deepEqual(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "- Branch", "- Kept")), { status: 0, stdout: "", stderr: "" });
+  });
+
+  test(`${host}: an edit repeating an unchanged {{x}} line as context answers nothing`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\n- Owner {{x}} here.\n- Short and clean.\n" });
+    const payload = editPayload(host, root, `${MEMORY}/vcs.md`, "- Owner {{x}} here.\n- Short and clean.", "- Owner {{x}} here.\n- Kept.");
     assert.deepEqual(run(host, payload), { status: 0, stdout: "", stderr: "" });
+  });
+
+  // Counted as a multiset: a line written twice where it stood once is one more copy, a change.
+  test(`${host}: an edit adding a second copy of a line it replaced reports it`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\n- Owner {{x}} here.\n- Owner {{x}} here.\n" });
+    const payload = editPayload(host, root, `${MEMORY}/vcs.md`, "- Owner {{x}} here.\n- Owner {{x}} here.", "- Owner {{x}} here.");
+    assert.equal(answerOf(run(host, payload).stdout).level, 2);
+  });
+
+  test(`${host}: two lines joined into one long line report it`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(16)} ${words(15)}\n` });
+    const answer = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, `${words(16)} ${words(15)}`, `${words(16)}\n${words(15)}`)).stdout);
+    assert.deepEqual(answer, { level: 1, text: `aidd-context: 1 errors, 0 warnings\n${MEMORY}/vcs.md:3 M1 "31 words, over 25" => make it a table, a list or a heading` });
+  });
+
+  // A write that removes lines and adds none can still leave a standing error exposed, a fence
+  // deleted around a long line: its lines are unknown, so the file's errors inform, grouped.
+  test(`${host}: an edit that only removes lines informs on the file's errors, grouped, and never blocks`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n\nOwner TBD\n" });
+    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "", "```")).stdout), {
+      level: 1,
+      text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "TBD" => fill it or remove it',
+    });
   });
 }
 

@@ -36,7 +36,7 @@ status: done
 | Happy path | a write leaving `{{x}}` in `vcs.md` | `decision: block` with `vcs.md:<line> M3 "{{x}}" => <fix>` | system |
 | Edge case | a 31-word prose line | `additionalContext` warning, no block | system |
 | Edge case | `memory/kpi/x.md` written | level 1, the move named | system |
-| Edge case | a write in the bank while `architecture.md` is missing | level 1 line naming the missing files | system |
+| Edge case | a write in the bank while `architecture.md` is missing | nothing; `check` names it as an error | system |
 | Edge case | session start with `aidd_docs/ui/` and `aidd_docs/pm/` present | the memory block lists both folders; nothing staged in git; nothing printed | system |
 | Edge case | a write outside `aidd_docs/` | exit 0 before reading anything else | system |
 
@@ -57,7 +57,7 @@ status: done
 
 1. Level 2: M3, M4 through `lib/common-rules.cjs`. A file outside `memory/`'s root, `internal/` and `external/` is level 1: a team's own bank folder is a real layout.
 2. M7 at level 2 only if `memory-rules-banks.test.js` counts zero false hits on the four banks; else level 1.
-3. Level 1: M1, M2, M5, M6, a missing always-written file.
+3. Level 1: M1, M2, M5, M6. A missing always-written file is named by `check` only, as an error.
 4. Output per the contract's format, through `formatFindings`: every error, warnings capped at 10, as phase 1 measured.
 
 ### `3)` Block and layout
