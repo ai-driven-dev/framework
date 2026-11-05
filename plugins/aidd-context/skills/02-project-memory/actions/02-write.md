@@ -25,6 +25,6 @@ The written memory bank.
 | --- | --- |
 | Bank written | every selected row exists at its exact path |
 | Tree | no `.md` under `memory/` outside `internal/` and `external/`, each holding a `.gitkeep` |
-| Memory file | no `TODO` and no `<placeholder>` remains |
+| Memory file | passes the rules in `memory-rules.md` |
 | Scaffolded doc | its placeholders are untouched |
 | Rerun | only the approved findings changed, every other line survives |

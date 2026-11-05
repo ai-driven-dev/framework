@@ -24,13 +24,16 @@ const LIST_ITEM = /^(?:[-*+]\s|\d+[.)]\s)/u;
 const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
 
 // A count is a number, in digits or words, before a plural noun, whatever the noun, with at most
-// one word between ("4 pull requests"). A digit stuck to a name, a version, a time, a port or a
-// thousands separator is not one, and "one" alone is a pronoun too often to count. Limit: a name followed by a number and a verb ("Node 22 runs") reads as a count.
+// one word between ("4 pull requests"). A digit stuck to a name, a version, a time, a port, a
+// range or a thousands separator is not one, and "one" alone is a pronoun too often to count.
+// Limits: "two" and "three" are left out, they open design prose more often than a count ("three
+// files" and "Two gates" pass), and a label followed by a number and a verb ("Step 2 shows
+// errors") reads as a count.
 const NUMBER_WORDS =
-  "two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred";
-const NOT_NOUNS = "of|with|for|on|in|to|and|or|at|by|per|its|was|has|uses|follows|draws";
+  "four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred";
+const NOT_NOUNS = "of|with|for|on|in|to|and|or|at|by|per|its";
 const PLURAL_NOUN = `(?!(?:${NOT_NOUNS})\\b)(?:[a-z]+\\s+)?(?!(?:${NOT_NOUNS})\\b)(?![a-z]*(?:ss|us|is)\\b)[a-z]{2,}s\\b`;
-const COUNT_OF_THINGS = new RegExp(`(?<![\\w.:+#/,])(?:\\d{1,6}|${NUMBER_WORDS})\\s+${PLURAL_NOUN}`, "iu");
+const COUNT_OF_THINGS = new RegExp(`(?<![\\w.:+#/,-])(?:\\d{1,6}|${NUMBER_WORDS})\\s+${PLURAL_NOUN}`, "iu");
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
 const TIME_WORDS = /\b(?:currently|as of|right now|at the moment)\b/iu;
 
