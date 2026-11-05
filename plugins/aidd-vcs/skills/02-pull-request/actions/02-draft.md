@@ -16,7 +16,7 @@ The title, body, and base ready to create.
 2. **Write.** Draft a concise title and a body following the template from the change summary. Link every changed `**/qa/*.webm` under the template's testing or verification section.
    - Give the fewest concrete verification steps needed for the changed behavior.
      - State the expected result for each step.
-     - Omit generic CI summaries.
+     - Omit generic test commands and CI summaries; describe behavior a reviewer can verify instead.
      - Label scenarios that were not run.
 3. **Proceed.** Apply any supplied overrides and pass the result to `03-create` without an approval round.
 
