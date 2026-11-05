@@ -13,7 +13,8 @@ test("every skill is named after its folder, as the hosts that validate skills r
     for (const skill of readdirSync(skills)) {
       const file = join(skills, skill, "SKILL.md");
       if (!existsSync(file)) continue;
-      const name = readFileSync(file, "utf8").match(/^name:\s*["']?([^"'\r\n]+)/m)?.[1].trim();
+      const frontmatter = readFileSync(file, "utf8").match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? "";
+      const name = frontmatter.match(/^name:[ \t]*["']?([^"'\r\n]+)/m)?.[1].trim();
       if (name !== skill) mismatched.push(`${plugin}/${skill}: ${name}`);
     }
   }
