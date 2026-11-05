@@ -37,6 +37,26 @@
         "transcript_path": null
       },
       "hookAnswer": null
+    },
+    {
+      "run": "answer",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "is_background_agent": false,
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "sessionStart",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": {
+        "additional_context": "The session token is SESSIONTOKEN-8H3V."
+      }
     }
   ]
 }

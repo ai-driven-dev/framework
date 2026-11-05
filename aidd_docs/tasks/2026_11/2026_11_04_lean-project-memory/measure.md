@@ -239,3 +239,22 @@ The plan runs Qwen once Haiku passes. Haiku passes setup and fails refresh (drif
 ## Spend, after
 
 About 5.9 USD: grading 5.3 (nine banks, 0.53 to 0.72 each), generation 0.6 (9 runs 0.5, 8 cases 0.1). The nine Haiku banks were graded; no Qwen bank was generated.
+
+## Host campaign
+
+Each host ran the branch's own distribution (`aidd translate --as flat` per tool, Claude Code from `aidd translate --to claude` loaded with `--plugin-dir`) in a throwaway project and home under `~/skill-tests/hookcamp/`, built by `setup.sh` from a three-file bank that `memory.cjs check` passes. One session per host made three edits with the file tool: a 31-word prose line in `notes.md` (M1, level 1), `- Branch prefix: {{x}}` in `vcs.md` (M3, level 2), a clean line in `codebase-map.md`, then repeated every hook message verbatim. `tap.cjs`, preloaded through `NODE_OPTIONS`, logged what each hook read and printed to `logs/<host>.jsonl`, the distribution untouched; the model's reply is in the host's own transcript beside it.
+
+| Host | Model | Level 1 | Level 2 | Clean | Telemetry | Logs |
+| ---- | ----- | ------- | ------- | ----- | --------- | ---- |
+| Claude Code | haiku | `additionalContext`, quoted back: `notes.md:4 M1 "31 words, over 25"` | `decision: block`, quoted back: `vcs.md:5 M3 "{{x}}"` | nothing printed, "EDIT3: none" | 8 calls of session `2f3e3012` under task `campaign` | `claude.jsonl`, `claude.stream` |
+| Codex | gpt-5.6-luna, low effort | through `apply_patch`, same line quoted back | `decision: block`, quoted back | nothing printed | 4 calls of session `01a1ab43` under task `campaign` | `codex.jsonl`, `codex.out` |
+| Copilot | auto | top-level `additionalContext`, quoted back | `decision: block`, quoted back | nothing printed | not measured by aidd-telemetry | `copilot.jsonl`, `copilot.out` |
+| Cursor | auto | `additional_context`, quoted back | informs: `additional_context`, quoted back | nothing printed | not measured | `cursor.jsonl`, `cursor.out` |
+| OpenCode | deepseek-v4.1-flash-free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `opencode.jsonl`, `opencode.jsonl.out` |
+| Kilo | kilo-auto/free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `kilo.jsonl`, `kilo.out` |
+
+`apply_patch` on OpenCode and Kilo, offered only to a model whose id holds `gpt-`, was reached through a provider alias `camp/gpt-campaign` routed by `cap/proxy.js` to Qwen 3.8 Flash. OpenCode's run quoted both findings back from `apply_patch` results (`opencode-patch.jsonl`); Kilo's quoted level 2 (`kilo-patch.jsonl`) and answered nothing on edit 1, because the model wrote the line as a 31-word bullet, under the bullet limit of 35.
+
+The captures behind the adapters' fixtures ran in `~/skill-tests/hookcamp/cap/` with a logging hook (`log.js`, `cap-plugin.js`), their raw payloads in `cap/out/`.
+
+Spend: about 0.03 USD of Haiku across every Claude Code run; Codex, Copilot, Cursor and the Qwen routing on subscriptions, OpenCode and Kilo edits on free models.

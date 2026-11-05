@@ -19,7 +19,7 @@
     "postToolUse": [
       {
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-        "matcher": "Write|Edit|Bash|Shell|bash",
+        "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",
         "timeout": 5
       }
     ],

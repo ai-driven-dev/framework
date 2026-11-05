@@ -10,8 +10,10 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
 - `payload` is the full stdin JSON of one call, values as the host sent them, `tool_input` and
   `tool_response` in the type the host used (an object on most hosts, a string on Copilot's
   `Edit`).
-- `run` is `log` (the hook only logged) or `level2` (the hook answered `decision: "block"` once on
-  the first file write and once at the first Stop, to learn whether the host delivers them).
+- `run` says what the hook answered: `log`, nothing; `level2`, `decision: "block"` once on the
+  first file write and once at the first Stop, to learn whether the host delivers them; `answer`,
+  a session token at SessionStart in the key the host's adapter prints, to learn whether the model
+  reads it; `continue`, Cursor's `followup_message` once at the first `stop`.
 - `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing.
 
 ## OpenCode and Kilo
@@ -30,10 +32,16 @@ timestamps and dated session-file names are fixed to the epoch. Nothing else is 
 ## Established
 
 SessionStart, Stop, and PostToolUse for a file write and a shell command on Claude Code, Codex,
-Copilot, OpenCode and Kilo; Cursor's `sessionStart` and `postToolUse`. Codex's `transcript_path`
-carries a value. Copilot's file write arrives as `Edit` with a `*** Begin Patch` string.
+Copilot, OpenCode and Kilo; Cursor's `sessionStart`, `postToolUse` and `stop`. Codex's
+`transcript_path` carries a value. Copilot's file write arrives as `Edit` with a `*** Begin Patch`
+string. Claude Code's `Edit` and its `PowerShell` tool, enabled by
+`CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. Cursor's edit, sent as a `Write` carrying the whole file, and
+its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments.
 
-## Not captured
+## How the harder ones were reached
 
-Cursor's `stop`: it did not fire in a headless `cursor-agent -p` run, and no interactive run was
-made.
+- Cursor's `stop` fires only in an interactive `cursor-agent`, run under `script` with its input
+  held open; with its input closed, the turn ends `aborted`, then `error`.
+- OpenCode and Kilo offer `apply_patch` only to a model whose id holds `gpt-`: a provider alias of
+  that name was routed to another model by a local proxy. The arguments are the host's own tool
+  schema; the model only filled them.

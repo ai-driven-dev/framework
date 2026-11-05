@@ -21,7 +21,7 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
     "postToolUse": [
       {
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-        "matcher": "Write|Edit|Bash|Shell|bash",
+        "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",
         "timeout": 5
       }
     ],
@@ -121,7 +121,7 @@ project cursor aidd-context scope=user: 0 hook files
     {
       "event": "postToolUse",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "1f14bda3990fbddf799259e5ed14b037"
+      "digest": "b75536413840e20d107807546db05b43"
     }
   ],
   "scripts": {}
@@ -161,7 +161,7 @@ machine cursor aidd-context scope=user: 0 hook files
     {
       "event": "postToolUse",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "1f14bda3990fbddf799259e5ed14b037"
+      "digest": "b75536413840e20d107807546db05b43"
     }
   ],
   "scripts": {}

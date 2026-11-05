@@ -105,6 +105,55 @@
         "decision": "block",
         "reason": "Hook feedback: PTUTOKEN-7Q2X"
       }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "/Users/user/project/three.md",
+          "content": "alpha line\nbeta line changed\ngamma line\n"
+        },
+        "tool_output": "{\"file_path\":\"/Users/user/project/three.md\",\"success\":true}",
+        "duration": 43.007,
+        "tool_use_id": "call-067bd01a-f718-4919-a467-29ad73f891db-3\nfc_0cd8623a-79f6-965e-9d8b-500e57745cb9_0",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "postToolUse",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "tool_name": "Delete",
+        "tool_input": {
+          "file_path": "/Users/user/project/old.md"
+        },
+        "tool_output": "{\"file_path\":\"/Users/user/project/old.md\",\"deleted\":true}",
+        "duration": 1.637,
+        "tool_use_id": "call-d0d44f2c-5866-400c-ac52-6afb5368e2e5-3\nfc_d81d7a45-521c-9475-815a-ba3cdae3203e_1",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "postToolUse",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": null
     }
   ]
 }

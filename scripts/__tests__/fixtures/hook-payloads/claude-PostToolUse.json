@@ -93,6 +93,78 @@
         "decision": "block",
         "reason": "Hook feedback: PTUTOKEN-7Q2X"
       }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "e983a2b6-649d-4a75-baa0-aca8069fca07",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Edit",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "old_string": "hello\n",
+          "new_string": "hello world\n",
+          "replace_all": false
+        },
+        "tool_response": {
+          "filePath": "/Users/user/project/notes.md",
+          "oldString": "hello\n",
+          "newString": "hello world\n",
+          "originalFile": "hello\n",
+          "structuredPatch": [
+            {
+              "oldStart": 1,
+              "oldLines": 1,
+              "newStart": 1,
+              "newLines": 1,
+              "lines": [
+                "-hello",
+                "+hello world"
+              ]
+            }
+          ],
+          "userModified": false,
+          "replaceAll": false
+        },
+        "tool_use_id": "toolu_012BBj8LU94ogm2fv3MisEhN",
+        "duration_ms": 2
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "e983a2b6-649d-4a75-baa0-aca8069fca07",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PostToolUse",
+        "tool_name": "PowerShell",
+        "tool_input": {
+          "command": "Add-Content -Path notes.md -Value 'from powershell'",
+          "description": "Append line to notes.md using Add-Content"
+        },
+        "tool_response": {
+          "stdout": "",
+          "stderr": "",
+          "interrupted": false,
+          "isImage": false
+        },
+        "tool_use_id": "toolu_01Fzrb5yNWkCJ5oDk6Kyg6St",
+        "duration_ms": 583
+      },
+      "hookAnswer": null
     }
   ]
 }

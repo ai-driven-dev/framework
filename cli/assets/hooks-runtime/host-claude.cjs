@@ -15,7 +15,7 @@ const EVENTS = new Map([
   ["Stop", "Stop"],
 ]);
 const WRITES = new Set(["Write", "Edit"]);
-const SHELLS = new Set(["Bash"]);
+const SHELLS = new Set(["Bash", "PowerShell"]);
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
 let current;
