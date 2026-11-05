@@ -12,9 +12,9 @@ The written memory bank.
 
 ## Process
 
-1. **Scaffold.** Create the tree in [structure.md](../references/structure.md).
-2. **Select.** Take the rows to write from [memory-destinations.md](../references/memory-destinations.md).
-3. **Write.** Write each row to its destination against [memory-rules.md](../references/memory-rules.md).
+1. **Scaffold.** Create the bank tree of [capabilities.md](../references/capabilities.md).
+2. **Select.** Take the files to write from its table: the always rows, and each found capability.
+3. **Write.** Write each file to its path against [memory-rules.md](../references/memory-rules.md).
    - Absent file: fill the template, strip its guidance comment.
    - Existing file: apply the approved findings and nothing else.
    - A section the file lacks: report it when the project has something for it, never inject it.
@@ -24,7 +24,7 @@ The written memory bank.
 | Case | Pass |
 | --- | --- |
 | Bank written | every selected row exists at its exact path |
-| Tree | no `.md` under `memory/` outside `internal/` and `external/`, each holding a `.gitkeep` |
+| Tree | `memory/` holds only table files at its root, plus `internal/` and `external/`, each with a `.gitkeep` |
 | Memory file | passes the rules in `memory-rules.md` |
-| Scaffolded doc | its placeholders are untouched |
+| Team file | a root file of the project that no row produces is left unchanged |
 | Rerun | only the approved findings changed, every other line survives |

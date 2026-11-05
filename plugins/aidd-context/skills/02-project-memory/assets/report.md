@@ -25,8 +25,8 @@ What the tables prove. Same answer every run.
 | File        | Gap     | Why                                   |
 | ----------- | ------- | ------------------------------------- |
 | `<file>.md` | missing | the capability always holds           |
-| `<file>.md` | missing | `structure.md` scaffolds it           |
-| `<file>.md` | orphan  | no destination row produces it        |
+| `<file>.md` | missing | the bank tree holds it              |
+| `<file>.md` | orphan  | no table row produces it              |
 
 ### Findings
 

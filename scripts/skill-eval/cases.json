@@ -122,6 +122,9 @@
         "aidd_docs/memory/testing.md",
         "aidd_docs/memory/vcs.md",
         "aidd_docs/memory/ecosystem.md",
+        "aidd_docs/README.md"
+      ],
+      "filesAbsent": [
         "aidd_docs/memory/README.md",
         "aidd_docs/GUIDELINES.md",
         "aidd_docs/CONTRIBUTING.md"
@@ -142,16 +145,44 @@
           "flowchart",
           "·",
           "ependabot"
-        ],
-        "aidd_docs/GUIDELINES.md": [
-          "A rule the AI must follow here"
-        ],
-        "aidd_docs/CONTRIBUTING.md": [
-          "A naming or placement rule specific to this repo"
         ]
       },
       "fileMatches": {
         "aidd_docs/memory/ecosystem.md": "^# Ecosystem\\s*```mermaid\\n[\\s\\S]*\\n```\\s*$"
+      }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "setup keeps a team's own files",
+    "setup": {
+      "files": {
+        "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\", \"scripts\": { \"test\": \"vitest\" } }\n",
+        "src/index.js": "module.exports = 1;\n",
+        "aidd_docs/GUIDELINES.md": "# Guidelines\n\nOur team reviews every change in pairs.\n",
+        "aidd_docs/CONTRIBUTING.md": "# Contributing\n\nOpen a draft pull request early.\n",
+        "aidd_docs/memory/README.md": "# memory/\n\n<!-- files:start -->\n<!-- files:end -->\n",
+        "CLAUDE.md": "# Shop\n\n## Memory Management\n\n<aidd_project_memory>\n</aidd_project_memory>\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to set up the project memory. You are running headless with no human available, so answer every question yourself from the repo evidence, pick Claude as the tool, never wait for input, and complete the whole flow.",
+    "expect": {
+      "filesExist": [
+        "aidd_docs/memory/architecture.md",
+        "aidd_docs/memory/vcs.md",
+        "aidd_docs/memory/README.md"
+      ],
+      "filesUnchanged": [
+        "aidd_docs/GUIDELINES.md",
+        "aidd_docs/CONTRIBUTING.md"
+      ],
+      "fileContains": {
+        "CLAUDE.md": [
+          "@aidd_docs/memory/architecture.md",
+          "<!-- aidd_project_memory:start -->"
+        ]
       }
     }
   },
