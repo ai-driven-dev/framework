@@ -24,7 +24,7 @@ jobs:
         run: |
           docker build -t aidd-opencode:local docker/aidd-opencode
           docker build -f docker/aidd-opencode/runner/Dockerfile -t aidd-review-runner:ci .
-          docker run --rm --entrypoint sh aidd-review-runner:ci -c '
+          docker run --rm --user reviewer -e HOME=/home/aidd --entrypoint sh aidd-review-runner:ci -c '
             opencode --version && jq --version && test -x /opt/aidd/run-review
           '
 
