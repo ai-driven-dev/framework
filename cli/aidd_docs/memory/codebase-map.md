@@ -116,7 +116,7 @@ src/
 - `src/runtime/`: services that are not a context — http, git, auth, assets, filesystem, self-update — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
-- `scripts/`: bundle budget, mutation runner, smoke harness.
+- `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.
 
 ## Entry points
 

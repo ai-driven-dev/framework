@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: CLI harness: guards that refuse what the hook refactor removes

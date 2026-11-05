@@ -25,7 +25,8 @@ The checks that must pass for code here to count as done. The repository's own h
 | Order | Command | Checks |
 | ----- | ------- | ------ |
 | 1 | `pnpm knip` | dead code, unused exports |
-| 2 | `pnpm test` | every tier |
+| 2 | `pnpm jscpd:profiles` | a block copied between two tool profiles, against its baseline (`scripts/profile-copies.mjs`) |
+| 3 | `pnpm test` | every tier |
 
 ## In CI only
 

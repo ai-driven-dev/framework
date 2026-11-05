@@ -184,6 +184,9 @@ pre-push:
     cli-knip:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-knip -- pnpm --dir cli knip
+    cli-jscpd-profiles:
+      glob: "cli/**"
+      run: node scripts/gate-witness.js cli-jscpd-profiles -- pnpm --dir cli jscpd:profiles
     cli-test:
       glob: "cli/**"
       run: node scripts/gate-witness.js cli-test -- pnpm --dir cli test
