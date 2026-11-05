@@ -176,10 +176,10 @@ function withoutHeredocBodies(command) {
   return kept.join("\n");
 }
 
-// A file descriptor duplicated onto another (`2>&1`, `>&2`) and a redirection to /dev/null write
-// no file. Any other `>` is a redirection to a file: `>f`, `>>f`, `1>f`, `&>f`, `2>f`.
+// A file descriptor duplicated onto another (`2>&1`, `>&2`) and a redirection to /dev/null, or
+// to PowerShell's `$null`, write no file. Any other `>` is a redirection to a file: `>f`, `>>f`, `1>f`, `&>f`, `2>f`.
 const FD_DUPLICATION = /(?<!\d)\d*>&(?:\d+|-)(?![\w./-])/gu;
-const TO_DEV_NULL = /(?<!\d)(?:\d+|&)?>>?\|?\s*\/dev\/null(?![\w./-])/gu;
+const TO_DEV_NULL = /(?<!\d)(?:\d+|&)?>>?\|?\s*(?:\/dev\/null|\$null)(?![\w./-])/gu;
 const REDIRECTION = />/u;
 
 // A command starts a line, or follows `;`, `&`, `|`, `(`, `)`, a backtick or `-exec`. The text is
@@ -189,7 +189,41 @@ const SEPARATOR = /[;&|()`\n]|\s-exec\s/u;
 // `then`, `do`, `else` and `elif` open the command of a compound statement.
 const RUNNERS = new Set(["sudo", "exec", "xargs", "env", "time", "nohup", "command", "{", "!", "then", "do", "else", "elif"]);
 const ASSIGNMENT = /^\w+=/u;
-const WRITE_COMMANDS = new Set(["tee", "mv", "cp", "rm", "touch", "mkdir", "patch", "apply_patch"]);
+// PowerShell cmdlets that write, with their aliases documented by Microsoft (`rm`, `mv` and `cp`
+// are listed once). Names are compared lowercased: PowerShell ignores case.
+const WRITE_COMMANDS = new Set([
+  "tee",
+  "mv",
+  "cp",
+  "rm",
+  "touch",
+  "mkdir",
+  "patch",
+  "apply_patch",
+  "set-content",
+  "sc",
+  "add-content",
+  "ac",
+  "out-file",
+  "new-item",
+  "ni",
+  "remove-item",
+  "ri",
+  "del",
+  "erase",
+  "rd",
+  "move-item",
+  "mi",
+  "move",
+  "copy-item",
+  "cpi",
+  "copy",
+  "rename-item",
+  "rni",
+  "ren",
+  "clear-content",
+  "clc",
+]);
 const SED_IN_PLACE = /^(?:-[A-Za-z]*i|--in-place)/u;
 // `-i`, `-i.ext`, or a bundle of single-letter flags holding `i`; `-M` and `-m` load a module
 // whose name follows (`-Mstrict`), so a bundle starting with one is no in-place flag.
@@ -198,9 +232,9 @@ const STASH_WRITES = new Set(["push", "pop", "apply", "drop", "clear"]);
 const RESET_WRITES = new Set(["--hard", "--merge", "--keep"]);
 const KNOWN = new Set([...RUNNERS, ...WRITE_COMMANDS, "sed", "perl", "find", "git"]);
 
-/** A command word by its basename, so `/bin/rm` is `rm`. */
+/** A command word by its lowercased basename, so `/bin/rm` is `rm` and `Remove-Item` is `remove-item`. */
 function nameOf(word) {
-  return word.slice(word.lastIndexOf("/") + 1);
+  return word.slice(word.lastIndexOf("/") + 1).toLowerCase();
 }
 
 /** The index of the word a piece of command line runs, past its runners and assignments. */
