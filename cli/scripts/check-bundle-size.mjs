@@ -62,6 +62,10 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 0.1% measured headroom.
 // 807 KB: 806.6 KB with opt-in native Codex project metadata and shared metadata publishing;
 // +3.3 KB, less than 0.1% measured headroom.
+// 808 KB: 807.49 KB with bounded, event-scoped Codex reasoning-effort forwarding;
+// +0.53 KB over the preceding 806.96 KB build, less than 0.1% measured headroom.
+// 810 KB: 809.79 KB with separately opted-in, sanitized Codex repository metadata.
+// 813 KB: 812.66 KB with consent and session-admission checks on every delivery attempt.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

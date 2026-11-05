@@ -17,16 +17,20 @@ export class SessionConsent {
   async permits(
     admission: SessionAdmission,
     at: string,
-    start?: string
+    start?: string,
+    current?: string
   ): Promise<"allow" | "deny" | "unknown"> {
     const endTime = Date.parse(at);
     const startTime = start === undefined ? endTime : Date.parse(start);
+    const currentTime = current === undefined ? endTime : Date.parse(current);
     if (
       !admission.cwd ||
       !admission.repositoryId ||
       !Number.isFinite(endTime) ||
       !Number.isFinite(startTime) ||
-      startTime > endTime
+      !Number.isFinite(currentTime) ||
+      startTime > endTime ||
+      currentTime < endTime
     )
       return "unknown";
     return this.ledger.exclusively(async () => {
@@ -34,8 +38,12 @@ export class SessionConsent {
       try {
         const first = await run.resolve(admission.cwd ?? "", new Date(startTime).toISOString());
         const last = await run.resolve(admission.cwd ?? "", new Date(endTime).toISOString());
-        if ("skipped" in first || "skipped" in last) {
-          const reasons = [first, last].flatMap((value) =>
+        const now =
+          current === undefined
+            ? last
+            : await run.resolve(admission.cwd ?? "", new Date(currentTime).toISOString());
+        if ("skipped" in first || "skipped" in last || "skipped" in now) {
+          const reasons = [first, last, now].flatMap((value) =>
             "skipped" in value ? [value.skipped] : []
           );
           return reasons.some(
@@ -46,18 +54,17 @@ export class SessionConsent {
         }
         if (
           !sameClone(first.stored.clone, last.stored.clone) ||
+          !sameClone(first.stored.clone, now.stored.clone) ||
           first.stored.repository_id !== admission.repositoryId ||
-          last.stored.repository_id !== admission.repositoryId
+          last.stored.repository_id !== admission.repositoryId ||
+          now.stored.repository_id !== admission.repositoryId
         )
           return "deny";
         const history = await this.consents.read();
         if (history.damaged) return "unknown";
-        return coversConsentWindow(
-          foldConsent(history.events),
-          first.stored.clone,
-          startTime,
-          endTime
-        )
+        const intervals = foldConsent(history.events);
+        return coversConsentWindow(intervals, first.stored.clone, startTime, endTime) &&
+          coversConsentWindow(intervals, first.stored.clone, currentTime, currentTime)
           ? "allow"
           : "deny";
       } finally {

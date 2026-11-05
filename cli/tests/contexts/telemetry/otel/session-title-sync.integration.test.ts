@@ -27,6 +27,7 @@ it.skipIf(process.platform === "win32")(
     const marker = join(home, "called");
     const received: string[] = [];
     let onReceived = (_body: string) => {};
+    let responseFor = (_body: string) => 200;
     const server = createServer((request, response) => {
       let body = "";
       request.on("data", (chunk: Buffer) => {
@@ -35,7 +36,7 @@ it.skipIf(process.platform === "win32")(
       request.on("end", () => {
         received.push(body);
         onReceived(body);
-        response.writeHead(200).end("{}");
+        response.writeHead(responseFor(body)).end("{}");
       });
     });
     try {
@@ -57,7 +58,8 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
   if (message.method === 'initialize') fs.writeFileSync(process.env.AIDD_TEST_TITLE_MARKER, JSON.stringify(message.params));
   const result = message.method === 'initialize' ? {} : message.method === 'project/read' ? { project: { id: 'native-project', name: 'Native project' } } : {
     thread: { id: message.params.threadId, sessionId: message.params.threadId,
-      name: 'Synthetic title', projectId: 'native-project', turns: [] }
+      name: 'Synthetic title', projectId: 'native-project',
+      gitInfo: { originUrl: 'git@github.com:example/repository.git' }, turns: [] }
   };
   process.stdout.write(JSON.stringify({ id: message.id, result }) + '\n');
 });
@@ -177,6 +179,22 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(received.join()).not.toContain("aidd.project_name");
 
       received.length = 0;
+      await syncOtel({ ...options, includeSessionRepositories: true }, resolve, async () => true);
+      expect(received).toHaveLength(2);
+      expect(received[1]).toContain("aidd.session_repository");
+      expect(received[1]).toContain("https://github.com/example/repository");
+      expect(received[1]).not.toContain("git@github.com");
+      expect(received[1]).not.toContain("Synthetic title");
+      received.length = 0;
+      await syncOtel(
+        { ...options, includeSessionRepositories: true },
+        resolve,
+        async (transfer) => !JSON.stringify(transfer.payload).includes("aidd.session_repository")
+      );
+      expect(received).toHaveLength(1);
+      expect(received.join()).not.toContain("aidd.repository_url");
+
+      received.length = 0;
       const captureFile = join(captureDir, "codex.jsonl");
       await appendFile(captureFile, `${JSON.stringify(capture)}\n`.repeat(10));
       await appendFile(
@@ -232,7 +250,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(result.sent).toBe(2);
       expect(result.identified).toBe(2);
       expect(result.currentConsenting).toBe(2);
-      expect(allowedChecks).toBe(3);
+      expect(allowedChecks).toBe(4);
       expect(received).toHaveLength(2);
       expect(received.some((body) => body.includes("session-1"))).toBe(true);
       expect(received.some((body) => body.includes("session-4"))).toBe(true);
@@ -248,6 +266,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
           ...options,
           includeSessionTitles: true,
           includeSessionProjects: true,
+          includeSessionRepositories: true,
           stateDir: join(home, "state"),
         },
         async () => admissions,
@@ -257,8 +276,9 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
             ? "deny"
             : "allow"
       );
-      expect(metadata.sent).toBe(4);
+      expect(metadata.sent).toBe(6);
       expect(received.filter((body) => body.includes("aidd.session_project"))).toHaveLength(2);
+      expect(received.filter((body) => body.includes("aidd.session_repository"))).toHaveLength(2);
       expect(received.join()).not.toContain("input_token_count");
       expect(received.join()).not.toContain("aidd.feature");
       await expect(readdir(join(home, "state"))).rejects.toMatchObject({ code: "ENOENT" });
@@ -308,7 +328,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       const abort = new AbortController();
       const timeout = setTimeout(() => abort.abort(), 3000);
       onReceived = (body) => {
-        if (body.includes("aidd.session_title")) abort.abort();
+        if (body.includes("aidd.session_repository")) abort.abort();
       };
       const admission = {
         feature: { state: "unbound" as const },
@@ -320,6 +340,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
           ...options,
           stateDir: join(home, "state"),
           includeSessionTitles: true,
+          includeSessionRepositories: true,
           signal: abort.signal,
           intervalMs: 10,
         },
@@ -331,6 +352,46 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       await running;
       clearTimeout(timeout);
       expect(received.some((body) => body.includes("Synthetic title"))).toBe(true);
+      expect(received.some((body) => body.includes("https://github.com/example/repository"))).toBe(
+        true
+      );
+
+      received.length = 0;
+      let consenting = true;
+      await writeFile(join(captureDir, "codex.jsonl"), `${JSON.stringify(capture)}\n`, {
+        mode: 0o600,
+      });
+      onReceived = () => {};
+      responseFor = (body) => {
+        if (!body.includes("aidd.session_title")) return 200;
+        consenting = false;
+        return 503;
+      };
+      await expect(
+        syncOtel(
+          { ...options, follow: true, intervalMs: 10, includeSessionTitles: true },
+          resolve,
+          async () => consenting
+        )
+      ).rejects.toThrow(/Consent is no longer confirmed/);
+      expect(received.filter((body) => body.includes("aidd.session_title"))).toHaveLength(1);
+
+      received.length = 0;
+      consenting = true;
+      const retryAll = syncAllOtel(
+        {
+          ...options,
+          stateDir: join(home, "withdrawn-state"),
+          includeSessionTitles: true,
+          intervalMs: 10,
+        },
+        async () => new Map([["session-1", admission]]),
+        async () => (consenting ? "allow" : "deny")
+      );
+      await new Promise((done) => setTimeout(done, 100));
+      await appendFile(join(captureDir, "codex.jsonl"), `${JSON.stringify(capture)}\n`);
+      await expect(retryAll).rejects.toThrow(/Consent is no longer confirmed/);
+      expect(received.filter((body) => body.includes("aidd.session_title"))).toHaveLength(1);
     } finally {
       process.env.PATH = oldPath;
       if (oldMarker === undefined) delete process.env.AIDD_TEST_TITLE_MARKER;

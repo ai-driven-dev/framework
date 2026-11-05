@@ -1,9 +1,13 @@
 import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import { join } from "node:path";
-import type { SessionAdmission } from "../../../domain/report/session-feature.js";
+import {
+  type SessionAdmission,
+  sameSessionAdmission,
+} from "../../../domain/report/session-feature.js";
 import { CODEX_CONFIG_ID } from "../settings.js";
 import { createSessionProjectPublisher } from "./metadata/session-project.js";
+import { createSessionRepositoryPublisher } from "./metadata/session-repository.js";
 import { createSessionTitlePublisher } from "./metadata/session-title.js";
 import {
   destination,
@@ -28,7 +32,12 @@ function alreadyKnown(identity: Identity | undefined, observed: Identity): boole
 export async function syncAllSessionTitles(
   options: TitleOptions,
   snapshot: () => Promise<ReadonlyMap<string, SessionAdmission>>,
-  permits: (admission: SessionAdmission, at: string, start?: string) => Promise<Consent>
+  permits: (
+    admission: SessionAdmission,
+    at: string,
+    start?: string,
+    current?: string
+  ) => Promise<Consent>
 ) {
   if (options.config !== CODEX_CONFIG_ID || !options.includeSessionTitles)
     throw new Error("Title-only sync requires Codex and explicit title opt-in.");
@@ -40,6 +49,9 @@ export async function syncAllSessionTitles(
   const identities = new Map<string, Identity>();
   const projects = options.includeSessionProjects
     ? createSessionProjectPublisher(options.home, options.onProjectUnavailable)
+    : undefined;
+  const repositories = options.includeSessionRepositories
+    ? createSessionRepositoryPublisher(options.home, options.onRepositoryUnavailable)
     : undefined;
   const titles = createSessionTitlePublisher(options.home, {
     onUnavailable: options.onTitleUnavailable,
@@ -109,7 +121,7 @@ export async function syncAllSessionTitles(
       if ((await permits(admission, new Date().toISOString())) !== "allow") continue;
       currentConsenting++;
       let stillConsenting = true;
-      for (const publisher of [titles, projects])
+      for (const publisher of [titles, projects, repositories])
         if (
           publisher &&
           (await publisher.publish(session, identity, async (event) => {
@@ -118,7 +130,15 @@ export async function syncAllSessionTitles(
               stillConsenting = false;
               return false;
             }
-            await send({ ...base, session }, event);
+            await send({ ...base, session }, event, async () => {
+              const current = (await snapshot()).get(session);
+              return (
+                !!current &&
+                sameSessionAdmission(admission, current) &&
+                !!event.at &&
+                (await permits(current, event.at, undefined, new Date().toISOString())) === "allow"
+              );
+            });
             return true;
           }))
         )
@@ -128,6 +148,7 @@ export async function syncAllSessionTitles(
   } finally {
     titles.close();
     projects?.close();
+    repositories?.close();
     await file.close();
   }
 }

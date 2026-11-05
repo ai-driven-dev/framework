@@ -5,9 +5,10 @@ import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { isDeepStrictEqual } from "node:util";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
-import type { SessionFeature } from "../../../domain/report/session-feature.js";
+import { type SessionFeature, sameSessionFeature } from "../../../domain/report/session-feature.js";
 import { CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, type SyncConfig } from "../settings.js";
 import { createSessionProjectPublisher } from "./metadata/session-project.js";
+import { createSessionRepositoryPublisher } from "./metadata/session-repository.js";
 import { createSessionTitlePublisher } from "./metadata/session-title.js";
 import { readAttributeValue } from "./read-attribute-value.js";
 import { seriesFingerprint } from "./series-fingerprint.js";
@@ -27,7 +28,9 @@ export interface SyncOptions {
   readonly intervalMs?: number;
   readonly includeSessionTitles?: boolean;
   readonly includeSessionProjects?: boolean;
+  readonly includeSessionRepositories?: boolean;
   readonly onProjectUnavailable?: () => void;
+  readonly onRepositoryUnavailable?: () => void;
   readonly onTitleUnavailable?: () => void;
   readonly titlesOnly?: boolean;
 }
@@ -283,14 +286,16 @@ export interface Transfer {
   readonly payload: RecordObject;
   readonly at?: string;
   readonly start?: string;
+  /** When set, the same clone must also consent at this instant. Never sent. */
+  readonly consentAt?: string;
 }
 
 /** Each item was separately consent-checked. Only points at the same instant and from the
  * same session are combined, with a hard upper bound matching the receiver. */
 export function packTransfers(
   transfers: readonly Transfer[]
-): Array<{ transfer: Transfer; count: number }> {
-  const groups = new Map<string, Array<{ transfer: Transfer; count: number }>>();
+): Array<{ transfer: Transfer; count: number; items: Transfer[] }> {
+  const groups = new Map<string, Array<{ transfer: Transfer; count: number; items: Transfer[] }>>();
   for (const item of transfers) {
     const key = `${item.signal}\0${item.at ?? ""}`;
     const root = item.signal === "logs" ? "resourceLogs" : "resourceMetrics";
@@ -302,14 +307,15 @@ export function packTransfers(
     if (Buffer.byteLength(JSON.stringify(body)) > MAX_PAYLOAD) {
       if (Buffer.byteLength(JSON.stringify(item.payload)) > MAX_PAYLOAD)
         throw new Error("An OTLP observation exceeds the receiver's 2 MiB limit.");
-      batches.push({ transfer: item, count: 1 });
+      batches.push({ transfer: item, count: 1, items: [item] });
     } else if (last) {
       batches[batches.length - 1] = {
         transfer: { ...last.transfer, payload: body },
         count: last.count + 1,
+        items: [...last.items, item],
       };
     } else {
-      batches.push({ transfer: item, count: 1 });
+      batches.push({ transfer: item, count: 1, items: [item] });
     }
     groups.set(key, batches);
   }
@@ -435,15 +441,29 @@ export function selectTransfers(
             if (at) a.set("event.timestamp", at);
             else a.delete("event.timestamp");
           }
+          const safe = safeAttributes(a);
+          if (options.config === CODEX_CONFIG_ID && event !== "codex.tool_result") {
+            const key =
+              event === "codex.conversation_starts" ? "reasoning_effort" : "model_reasoning_effort";
+            const entries = array(record.attributes).map(object);
+            const source = entries.find((entry) => entry.key === key);
+            const model = object(entries.find((entry) => entry.key === "model")?.value).stringValue;
+            const value = object(source?.value).stringValue;
+            if (
+              typeof model === "string" &&
+              model.trim() &&
+              typeof value === "string" &&
+              /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/.test(value)
+            )
+              safe.push({ key, value: { stringValue: value } });
+          }
           out.push({
             signal: "logs",
             at,
             payload: {
               resourceLogs: [
                 {
-                  scopeLogs: [
-                    { logRecords: [{ ...timeOf(record), attributes: safeAttributes(a) }] },
-                  ],
+                  scopeLogs: [{ logRecords: [{ ...timeOf(record), attributes: safe }] }],
                 },
               ],
             },
@@ -533,6 +553,19 @@ export function selectTransfers(
   return out;
 }
 
+/** Only a consent-admitted transfer can contribute identity to later metadata. */
+export function admitTransferIdentity(
+  transfer: Transfer,
+  options: SyncOptions,
+  identity: Identity
+): void {
+  selectTransfers(
+    JSON.stringify({ signal: transfer.signal, payload: transfer.payload }),
+    options,
+    identity
+  );
+}
+
 export function destination(options: SyncOptions, signal: "logs" | "metrics"): URL {
   let endpoint: URL;
   try {
@@ -601,13 +634,19 @@ async function assertFullDelivery(response: Response, signal: Transfer["signal"]
     );
 }
 
-export async function send(options: SyncOptions, transfer: Transfer): Promise<void> {
+export async function send(
+  options: SyncOptions,
+  transfer: Transfer,
+  consent: () => Promise<boolean>
+): Promise<void> {
   const body = JSON.stringify(transfer.payload);
   if (Buffer.byteLength(body) > MAX_PAYLOAD)
     throw new Error("An OTLP observation exceeds the receiver's 2 MiB limit.");
   const url = destination(options, transfer.signal);
   let backoff = options.intervalMs ?? 1000;
   for (;;) {
+    if (!(await consent()))
+      throw new Error("Consent is no longer confirmed; sync stopped before sending.");
     try {
       let response: Response;
       try {
@@ -684,7 +723,9 @@ export async function readBindingDetails(
       mayHaveLinked: data.mayHaveLinked,
       details: {
         session: data.session,
-        identity: data.identity as Array<[string, string]>,
+        // Older versions collected identity before checking consent; never reuse it.
+        identity:
+          data.identityConsentChecked === true ? (data.identity as Array<[string, string]>) : [],
         binding: data.binding,
         conflict: data.conflict === true,
       },
@@ -706,10 +747,14 @@ export async function saveBindingState(
     throw new Error("Sync state directory must be private.");
   const temporary = `${path}.${randomUUID()}.tmp`;
   try {
-    await writeFile(temporary, `${JSON.stringify({ mayHaveLinked, ...details })}\n`, {
-      flag: "wx",
-      mode: 0o600,
-    });
+    await writeFile(
+      temporary,
+      `${JSON.stringify({ mayHaveLinked, ...details, identityConsentChecked: true })}\n`,
+      {
+        flag: "wx",
+        mode: 0o600,
+      }
+    );
     await rename(temporary, path);
   } finally {
     await rm(temporary, { force: true });
@@ -733,7 +778,8 @@ export function bindingTransfer(
     "event.name",
     state.state === "confirmed" ? "aidd.session_feature" : "aidd.session_feature_invalidated"
   );
-  a.set("event.timestamp", new Date().toISOString());
+  const at = new Date().toISOString();
+  a.set("event.timestamp", at);
   if (state.state === "confirmed") {
     a.set("aidd.feature", state.feature);
     a.set("aidd.branch", state.branch);
@@ -741,6 +787,7 @@ export function bindingTransfer(
   const bindingAttrs = [...a].map(([key, value]) => ({ key, value: { stringValue: value } }));
   return {
     signal: "logs",
+    at,
     payload: {
       resourceLogs: [
         {
@@ -776,6 +823,13 @@ export async function syncOtel(
   const path = join(options.home, ".local/share/aidd-otel-observation", `${options.config}.jsonl`);
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   const identity: Identity = { values: new Map(), conflict: false };
+  const stillPermitted = async (items: readonly Transfer[], expectedFeature?: SessionFeature) => {
+    const currentFeature = await resolve();
+    if (expectedFeature && !sameSessionFeature(expectedFeature, currentFeature)) return false;
+    const consentAt = new Date().toISOString();
+    for (const item of items) if (!(await permits({ ...item, consentAt }))) return false;
+    return true;
+  };
   let sent = 0;
   let skipped = 0;
   let offset = 0;
@@ -792,6 +846,10 @@ export async function syncOtel(
   const projects =
     options.config === CODEX_CONFIG_ID && options.includeSessionProjects
       ? createSessionProjectPublisher(options.home, options.onProjectUnavailable)
+      : undefined;
+  const repositories =
+    options.config === CODEX_CONFIG_ID && options.includeSessionRepositories
+      ? createSessionRepositoryPublisher(options.home, options.onRepositoryUnavailable)
       : undefined;
   const titles =
     options.config === CODEX_CONFIG_ID && options.includeSessionTitles
@@ -824,7 +882,8 @@ export async function syncOtel(
           if (line.trim()) {
             const admitted: Transfer[] = [];
             const verdicts = new Map<string, boolean>();
-            for (const transfer of selectTransfers(line, options, identity)) {
+            const scratch: Identity = { values: new Map(), conflict: false };
+            for (const transfer of selectTransfers(line, options, scratch)) {
               if (!transfer.at || (transfer.signal === "metrics" && !transfer.start)) {
                 skipped++;
                 continue;
@@ -840,10 +899,11 @@ export async function syncOtel(
                 continue;
               }
               admitted.push(transfer);
+              admitTransferIdentity(transfer, options, identity);
             }
             if (!options.titlesOnly)
               for (const batch of packTransfers(admitted)) {
-                await send(options, batch.transfer);
+                await send(options, batch.transfer, () => stillPermitted(batch.items));
                 sent += batch.count;
               }
           }
@@ -877,7 +937,7 @@ export async function syncOtel(
       if (!options.titlesOnly && bindingAllowed && shouldInvalidate && binding !== "invalidated") {
         const event = bindingTransfer(options, identity, { state: "ambiguous" });
         if (event) {
-          await send(options, event);
+          await send(options, event, () => stillPermitted([event], feature));
           sent++;
           binding = "invalidated";
           if (statePath !== null)
@@ -904,19 +964,19 @@ export async function syncOtel(
             });
           }
           mayHaveLinked = true;
-          await send(options, event);
+          await send(options, event, () => stillPermitted([event], feature));
           sent++;
           binding = nextBinding;
           needsReplay = false;
         }
       }
       if (bindingAllowed)
-        for (const publisher of [titles, projects]) {
+        for (const publisher of [titles, projects, repositories]) {
           if (
             publisher &&
             (await publisher.publish(options.session, identity, async (event) => {
               if (!(await permits(event))) return false;
-              await send(options, event);
+              await send(options, event, () => stillPermitted([event]));
               return true;
             }))
           )
@@ -935,6 +995,7 @@ export async function syncOtel(
   } finally {
     titles?.close();
     projects?.close();
+    repositories?.close();
     await handle.close();
   }
 }

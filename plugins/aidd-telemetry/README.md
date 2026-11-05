@@ -92,3 +92,5 @@ Configure an exporter with `aidd telemetry otel init --config=<claude|codex|open
 Start OpenCode v1 with `aidd telemetry otel run --config=opencode` to supply its endpoint and token; pass OpenCode arguments after `--`. For OpenCode v2, restart its service after initialization.
 
 Native Codex project metadata requires the separate `--include-session-projects` opt-in. It transmits the verified native project ID and name, session/provider identity and observation time; names may contain sensitive text. No path-based project inference is made. See [the observation contract](OBSERVABILITY.md) for consent, absence handling and the metadata-only command.
+
+Codex Git repository metadata requires its own `--include-session-repositories` opt-in. It sends a verified, sanitized GitHub or GitLab repository link, session/provider identity and observation time. Repository names can reveal private work. Local paths, credentials and unsupported hosts are not sent. Repositories and native Codex projects are distinct.

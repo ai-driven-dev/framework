@@ -542,7 +542,8 @@ test.each([
   await expect(
     send(
       { ...options, endpoint: `http://127.0.0.1:${address.port}`, follow: true },
-      { signal, payload: {} }
+      { signal, payload: {} },
+      async () => true
     )
   ).rejects.toThrow(/partial/i);
   expect(calls).toBe(1);
@@ -566,7 +567,8 @@ test.each([
   await expect(
     send(
       { ...options, endpoint: `http://127.0.0.1:${address.port}` },
-      { signal: "logs", payload: {} }
+      { signal: "logs", payload: {} },
+      async () => true
     )
   ).rejects.toThrow(/response/i);
 });
@@ -588,7 +590,8 @@ test("accepts a warning with zero rejected records", async () => {
   await expect(
     send(
       { ...options, endpoint: `http://127.0.0.1:${address.port}` },
-      { signal: "logs", payload: {} }
+      { signal: "logs", payload: {} },
+      async () => true
     )
   ).resolves.toBeUndefined();
 });

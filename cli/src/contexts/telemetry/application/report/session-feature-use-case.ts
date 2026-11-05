@@ -53,7 +53,7 @@ export class SessionFeatureUseCase {
     return found.feature;
   }
 
-  async permits(admission: SessionAdmission, at: string, start?: string) {
-    return this.consent.permits(admission, at, start);
+  async permits(admission: SessionAdmission, at: string, start?: string, current?: string) {
+    return this.consent.permits(admission, at, start, current);
   }
 }

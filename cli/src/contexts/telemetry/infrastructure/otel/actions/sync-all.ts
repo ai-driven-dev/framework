@@ -4,12 +4,19 @@ import { lstat, mkdir, open, readdir, rename, rm, writeFile } from "node:fs/prom
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
-import type { SessionAdmission, SessionFeature } from "../../../domain/report/session-feature.js";
+import {
+  type SessionAdmission,
+  type SessionFeature,
+  sameSessionAdmission,
+  sameSessionFeature,
+} from "../../../domain/report/session-feature.js";
 import { LedgerLock } from "../../ledger-lock.js";
 import { CODEX_CONFIG_ID } from "../settings.js";
 import { createSessionProjectPublisher } from "./metadata/session-project.js";
+import { createSessionRepositoryPublisher } from "./metadata/session-repository.js";
 import { createSessionTitlePublisher } from "./metadata/session-title.js";
 import {
+  admitTransferIdentity,
   bindingTransfer,
   destination,
   type Identity,
@@ -211,7 +218,12 @@ async function initialOffset(
 export async function syncAllOtel(
   options: AllOptions,
   snapshot: () => Promise<Snapshot>,
-  permits: (admission: SessionAdmission, at: string, start?: string) => Promise<Consent>
+  permits: (
+    admission: SessionAdmission,
+    at: string,
+    start?: string,
+    current?: string
+  ) => Promise<Consent>
 ) {
   const base = asOptions(options, "auto");
   destination(base, "logs");
@@ -232,6 +244,10 @@ export async function syncAllOtel(
   const projects =
     options.config === CODEX_CONFIG_ID && options.includeSessionProjects
       ? createSessionProjectPublisher(options.home, options.onProjectUnavailable)
+      : undefined;
+  const repositories =
+    options.config === CODEX_CONFIG_ID && options.includeSessionRepositories
+      ? createSessionRepositoryPublisher(options.home, options.onRepositoryUnavailable)
       : undefined;
   const titles =
     options.config === CODEX_CONFIG_ID && options.includeSessionTitles
@@ -307,10 +323,26 @@ export async function syncAllOtel(
         });
       }
     };
+    const stillPermitted = async (
+      id: string,
+      admission: SessionAdmission,
+      items: readonly Transfer[],
+      expectedFeature?: SessionFeature
+    ) => {
+      const current = (await snapshot()).get(id);
+      if (!sameSessionAdmission(admission, current) || !current) return false;
+      if (expectedFeature && !sameSessionFeature(expectedFeature, current.feature)) return false;
+      const consentAt = new Date().toISOString();
+      for (const item of items)
+        if (!item.at || (await permits(current, item.at, item.start, consentAt)) !== "allow")
+          return false;
+      return true;
+    };
     const process = async (
       id: string,
       items: readonly Transfer[],
-      admission: SessionAdmission
+      admission: SessionAdmission,
+      state: SessionState
     ): Promise<boolean> => {
       let wait = false;
       const allowed: Transfer[] = [];
@@ -328,10 +360,27 @@ export async function syncAllOtel(
         }
         if (verdict === "unknown") wait = true;
         else if (verdict === "deny") denied++;
-        else allowed.push(transfer);
+        else {
+          allowed.push(transfer);
+          admitTransferIdentity(transfer, asOptions(options, id), state.identity);
+        }
       }
+      if (state.identity.conflict)
+        await saveBindingState(
+          join(directory, `${key(options, id)}.json`),
+          directory,
+          {
+            session: id,
+            identity: [...state.identity.values],
+            binding: state.binding,
+            conflict: true,
+          },
+          state.mayHaveLinked
+        );
       for (const batch of packTransfers(allowed)) {
-        await send(asOptions(options, id), batch.transfer);
+        await send(asOptions(options, id), batch.transfer, () =>
+          stillPermitted(id, admission, batch.items)
+        );
         sent += batch.count;
       }
       return wait;
@@ -360,7 +409,9 @@ export async function syncAllOtel(
             state: "ambiguous",
           });
           if (event) {
-            await send(asOptions(options, id), event);
+            await send(asOptions(options, id), event, () =>
+              stillPermitted(id, admission, [event], feature)
+            );
             sent++;
             state.binding = "invalidated";
             await saveBindingState(join(directory, `${key(options, id)}.json`), directory, {
@@ -382,7 +433,9 @@ export async function syncAllOtel(
               binding: next,
             });
             state.mayHaveLinked = true;
-            await send(asOptions(options, id), event);
+            await send(asOptions(options, id), event, () =>
+              stillPermitted(id, admission, [event], feature)
+            );
             sent++;
             state.binding = next;
             state.needsReplay = false;
@@ -391,17 +444,19 @@ export async function syncAllOtel(
       }
     };
     const publishTitles = async () => {
-      if (!titles && !projects) return;
+      if (!titles && !projects && !repositories) return;
       for (const [id, state] of sessions) {
         const admission = held.get(id);
         if (!admission || state.identity.conflict) continue;
         if ((await permits(admission, new Date().toISOString())) !== "allow") continue;
-        for (const publisher of [titles, projects])
+        for (const publisher of [titles, projects, repositories])
           if (
             publisher &&
             (await publisher.publish(id, state.identity, async (event) => {
               if (!event.at || (await permits(admission, event.at)) !== "allow") return false;
-              await send(asOptions(options, id), event);
+              await send(asOptions(options, id), event, () =>
+                stillPermitted(id, admission, [event])
+              );
               return true;
             }))
           )
@@ -420,25 +475,11 @@ export async function syncAllOtel(
           const read = await file?.read(raw, 0, item.length, item.offset);
           if (!read || read.bytesRead !== item.length || raw.at(-1) !== 10)
             throw new Error("Pending capture range is unavailable; recover the capture.");
-          const transfers = selectTransfers(
-            raw.toString("utf8"),
-            asOptions(options, id),
-            state.identity
-          );
-          if (state.identity.conflict) {
-            await saveBindingState(
-              join(directory, `${key(options, id)}.json`),
-              directory,
-              {
-                session: id,
-                identity: [...state.identity.values],
-                binding: state.binding,
-                conflict: true,
-              },
-              state.mayHaveLinked
-            );
-          }
-          if (await process(id, transfers, admission)) waiting.push(item);
+          const transfers = selectTransfers(raw.toString("utf8"), asOptions(options, id), {
+            values: new Map(),
+            conflict: false,
+          });
+          if (await process(id, transfers, admission, state)) waiting.push(item);
         }
         await replacePending(path, waiting);
       }
@@ -463,23 +504,13 @@ export async function syncAllOtel(
           if (raw.trim())
             for (const id of sessionIdsInCapture(raw, options.config)) {
               const state = await sessionState(id);
-              const items = selectTransfers(raw, asOptions(options, id), state.identity);
-              if (state.identity.conflict) {
-                await saveBindingState(
-                  join(directory, `${key(options, id)}.json`),
-                  directory,
-                  {
-                    session: id,
-                    identity: [...state.identity.values],
-                    binding: state.binding,
-                    conflict: true,
-                  },
-                  state.mayHaveLinked
-                );
-              }
+              const items = selectTransfers(raw, asOptions(options, id), {
+                values: new Map(),
+                conflict: false,
+              });
               const admission = held.get(id);
               const waiting =
-                items.length > 0 && (!admission || (await process(id, items, admission)));
+                items.length > 0 && (!admission || (await process(id, items, admission, state)));
               if (waiting)
                 await appendPending(pendingPath(id), { offset: position, length: newline + 1 });
             }
@@ -532,6 +563,7 @@ export async function syncAllOtel(
   } finally {
     titles?.close();
     projects?.close();
+    repositories?.close();
     await file?.close();
     await release();
   }

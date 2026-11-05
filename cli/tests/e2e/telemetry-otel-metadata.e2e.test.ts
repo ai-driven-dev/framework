@@ -237,15 +237,15 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(revoked.exitCode, revoked.stderr).toBe(0);
       expect(received).toHaveLength(0);
 
-      // The historical event remains permitted; the event after opt-out is not sent.
+      // No historical or new event is sent while current consent is off.
       await appendFile(
         join(captureDir, "codex.jsonl"),
         `${JSON.stringify(capture(new Date().toISOString(), "999"))}\n`
       );
       const afterOff = await sync({}, false);
-      expect(afterOff.exitCode, afterOff.stderr + afterOff.stdout).toBe(0);
-      expect(received).toHaveLength(1);
-      expect(logAttributes(received[0].body).input_token_count).toBe("10");
+      expect(afterOff.exitCode).not.toBe(0);
+      expect(afterOff.stderr + afterOff.stdout).toContain("Consent is no longer confirmed");
+      expect(received).toHaveLength(0);
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       await cleanup();

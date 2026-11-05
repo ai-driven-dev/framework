@@ -80,6 +80,85 @@ function select(line: string) {
   return selectTransfers(line, options, { values: new Map(), conflict: false });
 }
 
+test("forwards each Codex effort only on the event that reported it", () => {
+  const start = capture([
+    text("model", "gpt-test"),
+    text("reasoning_effort", "high"),
+    text("model_reasoning_effort", "private-wrong-event"),
+  ]).replace("codex.sse_event", "codex.conversation_starts");
+  const response = capture([
+    text("model", "gpt-test"),
+    text("reasoning_effort", "private-wrong-event"),
+    text("model_reasoning_effort", "xhigh"),
+  ]);
+  const [first] = select(start);
+  const [second] = select(response);
+  const startPayload = JSON.stringify(first.payload);
+  const responsePayload = JSON.stringify(second.payload);
+  expect(startPayload).toContain('"key":"reasoning_effort","value":{"stringValue":"high"}');
+  expect(responsePayload).toContain(
+    '"key":"model_reasoning_effort","value":{"stringValue":"xhigh"}'
+  );
+  for (const payload of [startPayload, responsePayload]) {
+    expect(payload).toContain('"key":"model","value":{"stringValue":"gpt-test"}');
+    expect(payload).toContain('"key":"event.timestamp"');
+    expect(payload).not.toContain("private-wrong-event");
+  }
+});
+
+test("leaves the original usage transfer unchanged apart from the observed effort", () => {
+  const common = [text("model", "gpt-test"), text("input_token_count", "42")];
+  const [without] = select(capture(common));
+  const [withEffort] = select(capture([...common, text("model_reasoning_effort", "high")]));
+  const expected = JSON.stringify(without.payload);
+  const actual = JSON.stringify(withEffort.payload).replace(
+    ',{"key":"model_reasoning_effort","value":{"stringValue":"high"}}',
+    ""
+  );
+  expect(actual).toBe(expected);
+});
+
+test("does not infer effort from a resource, another event, or a missing value", () => {
+  const resource = [text("reasoning_effort", "high"), text("model_reasoning_effort", "high")];
+  const [transfer] = select(capture([text("model", "gpt-test")], resource));
+  expect(JSON.stringify(transfer.payload)).not.toContain("reasoning_effort");
+  const [tool] = select(
+    capture([text("model_reasoning_effort", "high")]).replace(
+      "codex.sse_event",
+      "codex.tool_result"
+    )
+  );
+  expect(JSON.stringify(tool.payload)).not.toContain("reasoning_effort");
+  for (const resourceModel of [[], [text("model", "gpt-test")]]) {
+    const [missing] = select(capture([text("model_reasoning_effort", "high")], resourceModel));
+    expect(JSON.stringify(missing.payload)).not.toContain("model_reasoning_effort");
+  }
+});
+
+test("preserves bounded custom effort identifiers and omits free text", () => {
+  const [custom] = select(
+    capture([text("model", "gpt-test"), text("model_reasoning_effort", "model_defined-2")])
+  );
+  expect(JSON.stringify(custom.payload)).toContain('"stringValue":"model_defined-2"');
+  for (const invalid of ["", "high with spaces", "x".repeat(33), "high\nsecret"]) {
+    const [transfer] = select(
+      capture([text("model", "gpt-test"), text("model_reasoning_effort", invalid)])
+    );
+    expect(JSON.stringify(transfer.payload)).not.toContain("model_reasoning_effort");
+    expect(JSON.stringify(transfer.payload)).not.toContain(invalid || '"stringValue":""');
+  }
+});
+
+test("rejects contradictory effort values and omits non-text values", () => {
+  expect(() =>
+    select(capture([text("model_reasoning_effort", "high"), text("model_reasoning_effort", "low")]))
+  ).toThrow("Conflicting duplicate OTLP attributes.");
+  const [nonText] = select(
+    capture([text("model", "gpt-test"), attribute("model_reasoning_effort", { intValue: "1" })])
+  );
+  expect(JSON.stringify(nonText.payload)).not.toContain("model_reasoning_effort");
+});
+
 function metricCapture(
   point: Attributes,
   resource: Attributes = [],
@@ -117,6 +196,15 @@ function metricCapture(
     },
   });
 }
+
+test("does not forward Codex effort fields on Claude metrics", () => {
+  const [transfer] = selectTransfers(
+    metricCapture([text("type", "input"), text("reasoning_effort", "high")]),
+    { ...options, config: "claude" },
+    { values: new Map(), conflict: false }
+  );
+  expect(JSON.stringify(transfer.payload)).not.toContain("reasoning_effort");
+});
 
 test.each(["point", "resource", "scope"])("rejects contradictory Claude %s attributes", (level) => {
   const conflict = [text("type", "input"), text("type", "output")];

@@ -193,6 +193,230 @@ it("retries a transient HTTP failure without losing its checkpoint", async () =>
   expect(result.sent).toBe(1);
 });
 
+it("retains an unsent capture across consent withdrawal and resumes only after consent returns", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-sync-withdrawn-all-"));
+  dirs.push(home);
+  const captureDir = join(home, ".local/share/aidd-otel-observation");
+  await mkdir(captureDir, { recursive: true, mode: 0o700 });
+  const capture = join(captureDir, "codex.jsonl");
+  await writeFile(capture, "", { mode: 0o600 });
+  let consenting = true;
+  let calls = 0;
+  const abort = new AbortController();
+  server = createServer((request, response) => {
+    request.resume();
+    request.on("end", () => {
+      calls++;
+      if (calls === 1) {
+        consenting = false;
+        response.writeHead(503).end("{}");
+      } else {
+        response.writeHead(200).end("{}");
+        abort.abort();
+      }
+    });
+  });
+  await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  const options = {
+    config: "codex" as const,
+    tenant: "tenant",
+    endpoint: `http://127.0.0.1:${address.port}`,
+    token: "test-token",
+    home,
+    stateDir: join(home, "state"),
+    intervalMs: 10,
+  };
+  const admission = {
+    feature: { state: "unbound" as const },
+    cwd: "/project",
+    repositoryId: "repo",
+  };
+  const snapshot = async () => new Map([["allowed", admission]]);
+  const historical = new Date(1_793_763_900_000).toISOString();
+  const permits = async (_admission: unknown, at: string, _start?: string, current?: string) =>
+    at === historical && (!current || consenting) ? ("allow" as const) : ("deny" as const);
+  const first = syncAllOtel(options, snapshot, permits);
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  await appendFile(capture, line("allowed"));
+  await expect(first).rejects.toThrow(/Consent is no longer confirmed/);
+  expect(calls).toBe(1);
+  consenting = true;
+  const result = await syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
+  expect(result.sent).toBe(1);
+  expect(calls).toBe(2);
+});
+
+it.each(["missing", "cwd", "repository", "unavailable"] as const)(
+  "does not retry if the session admission is %s after a failed post",
+  async (change) => {
+    const home = await mkdtemp(join(tmpdir(), "aidd-sync-admission-retry-"));
+    dirs.push(home);
+    const captureDir = join(home, ".local/share/aidd-otel-observation");
+    await mkdir(captureDir, { recursive: true, mode: 0o700 });
+    const capture = join(captureDir, "codex.jsonl");
+    await writeFile(capture, "", { mode: 0o600 });
+    let changed = false;
+    let calls = 0;
+    server = createServer((request, response) => {
+      calls++;
+      request.resume();
+      request.on("end", () => {
+        changed = true;
+        response.writeHead(503).end("{}");
+      });
+    });
+    await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("No test port");
+    const admission = {
+      feature: { state: "unbound" as const },
+      cwd: "/project",
+      repositoryId: "repo",
+    };
+    const running = syncAllOtel(
+      {
+        config: "codex",
+        tenant: "tenant",
+        endpoint: `http://127.0.0.1:${address.port}`,
+        token: "test-token",
+        home,
+        stateDir: join(home, "state"),
+        intervalMs: 10,
+      },
+      async () => {
+        if (changed && change === "unavailable") throw new Error("Admission unavailable");
+        if (changed && change === "missing") return new Map();
+        return new Map([
+          [
+            "allowed",
+            {
+              ...admission,
+              cwd: changed && change === "cwd" ? "/elsewhere" : admission.cwd,
+              repositoryId: changed && change === "repository" ? "other" : admission.repositoryId,
+            },
+          ],
+        ]);
+      },
+      async () => "allow"
+    );
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    await appendFile(capture, line("allowed"));
+    await expect(running).rejects.toThrow(/Consent is no longer confirmed|Admission unavailable/);
+    expect(calls).toBe(1);
+  }
+);
+
+it("does not use an outside-consent identity for a later feature binding", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-sync-unconsented-all-"));
+  dirs.push(home);
+  const captureDir = join(home, ".local/share/aidd-otel-observation");
+  await mkdir(captureDir, { recursive: true, mode: 0o700 });
+  const capture = join(captureDir, "codex.jsonl");
+  await writeFile(capture, "", { mode: 0o600 });
+  let calls = 0;
+  server = createServer((request, response) => {
+    calls++;
+    request.resume();
+    response.writeHead(200).end("{}");
+  });
+  await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  const abort = new AbortController();
+  const admission = {
+    feature: { state: "confirmed" as const, feature: "owner/repo#7", branch: "feature/work" },
+    cwd: "/project",
+    repositoryId: "repo",
+  };
+  const historical = new Date(1_793_763_900_000).toISOString();
+  const running = syncAllOtel(
+    {
+      config: "codex",
+      tenant: "tenant",
+      endpoint: `http://127.0.0.1:${address.port}`,
+      token: "test-token",
+      home,
+      stateDir: join(home, "state"),
+      intervalMs: 10,
+      signal: abort.signal,
+    },
+    async () => new Map([["allowed", admission]]),
+    async (_admission, at) => (at === historical ? "deny" : "allow")
+  );
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  await appendFile(capture, line("allowed"));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  abort.abort();
+  const result = await running;
+  expect(result).toMatchObject({ sent: 0, denied: 1 });
+  expect(calls).toBe(0);
+});
+
+it("does not reuse legacy checkpoint identity until a new admitted observation supplies it", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-sync-legacy-identity-"));
+  dirs.push(home);
+  const captureDir = join(home, ".local/share/aidd-otel-observation");
+  await mkdir(captureDir, { recursive: true, mode: 0o700 });
+  const capture = join(captureDir, "codex.jsonl");
+  await writeFile(capture, "", { mode: 0o600 });
+  const received: string[] = [];
+  let abort = new AbortController();
+  server = createServer((request, response) => {
+    let body = "";
+    request.on("data", (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    request.on("end", () => {
+      received.push(body);
+      response.writeHead(200).end("{}");
+      if (body.includes("aidd.session_feature")) abort.abort();
+    });
+  });
+  await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  const options = {
+    config: "codex" as const,
+    tenant: "tenant",
+    endpoint: `http://127.0.0.1:${address.port}`,
+    token: "test-token",
+    home,
+    stateDir: join(home, "state"),
+    intervalMs: 10,
+  };
+  const admission = {
+    feature: { state: "confirmed" as const, feature: "owner/repo#7", branch: "feature/work" },
+    cwd: "/project",
+    repositoryId: "repo",
+  };
+  const snapshot = async () => new Map([["allowed", admission]]);
+  const first = syncAllOtel({ ...options, signal: abort.signal }, snapshot, async () => "allow");
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  await appendFile(capture, line("allowed"));
+  await first;
+  expect(received.some((body) => body.includes("aidd.session_feature"))).toBe(true);
+  const directory = join(home, "state", "otel-sync");
+  const stateFile = (await readdir(directory)).find(
+    (name) => name.endsWith(".json") && !name.includes("checkpoint")
+  );
+  if (!stateFile) throw new Error("Missing binding state");
+  const path = join(directory, stateFile);
+  const legacy = JSON.parse(await readFile(path, "utf8"));
+  delete legacy.identityConsentChecked;
+  await writeFile(path, JSON.stringify(legacy), { mode: 0o600 });
+  received.length = 0;
+  abort = new AbortController();
+  const restart = syncAllOtel({ ...options, signal: abort.signal }, snapshot, async () => "allow");
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  expect(received).toHaveLength(0);
+  await appendFile(capture, line("allowed"));
+  await restart;
+  expect(received.filter((body) => body.includes("aidd.session_feature"))).toHaveLength(1);
+  expect(received.some((body) => body.includes("developer@example.test"))).toBe(true);
+});
+
 it("does not send an event outside the clone's consent interval", async () => {
   const home = await mkdtemp(join(tmpdir(), "aidd-sync-all-consent-"));
   dirs.push(home);

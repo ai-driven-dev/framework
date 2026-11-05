@@ -13,6 +13,29 @@ export interface SessionAdmission {
   readonly repositoryId: string | null;
 }
 
+/** A session cannot move to another clone or repository during a pending delivery. */
+export function sameSessionAdmission(
+  expected: SessionAdmission | undefined,
+  current: SessionAdmission | undefined
+): boolean {
+  return Boolean(
+    expected?.cwd &&
+      expected.repositoryId &&
+      current?.cwd === expected.cwd &&
+      current.repositoryId === expected.repositoryId
+  );
+}
+
+export function sameSessionFeature(left: SessionFeature, right: SessionFeature): boolean {
+  return (
+    left.state === right.state &&
+    (left.state !== "confirmed" ||
+      (right.state === "confirmed" &&
+        left.feature === right.feature &&
+        left.branch === right.branch))
+  );
+}
+
 // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters cannot name a branch
 const CONTROL = /[\u0000-\u001f\u007f]/u;
 

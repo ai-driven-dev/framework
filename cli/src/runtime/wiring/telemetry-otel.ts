@@ -3,6 +3,7 @@ import type {
   SessionAdmission,
   SessionFeature,
 } from "../../contexts/telemetry/domain/report/session-feature.js";
+
 import { startOtelCollector } from "../../contexts/telemetry/infrastructure/otel/actions/collect.js";
 import { initializeOtel } from "../../contexts/telemetry/infrastructure/otel/actions/init.js";
 import { runOtelOpenCode } from "../../contexts/telemetry/infrastructure/otel/actions/run.js";
@@ -54,7 +55,8 @@ export function followCapturedSessions(
   permits: (
     admission: SessionAdmission,
     at: string,
-    start?: string
+    start?: string,
+    current?: string
   ) => Promise<"allow" | "deny" | "unknown">
 ) {
   return syncAllOtel({ ...options, home: homedir(), stateDir: telemetryDir() }, snapshot, permits);
@@ -66,7 +68,8 @@ export function syncCapturedSessionTitles(
   permits: (
     admission: SessionAdmission,
     at: string,
-    start?: string
+    start?: string,
+    current?: string
   ) => Promise<"allow" | "deny" | "unknown">
 ) {
   return syncAllSessionTitles({ ...options, home: homedir() }, snapshot, permits);

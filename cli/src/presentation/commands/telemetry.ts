@@ -233,8 +233,13 @@ export function registerTelemetryCommand(program: Command): void {
       false
     )
     .option(
+      "--include-session-repositories",
+      "Send verified Codex GitHub/GitLab repository URLs (may identify private work)",
+      false
+    )
+    .option(
       "--titles-only",
-      "Send only Codex titles and opted-in projects for consented sessions",
+      "Send only Codex titles and opted-in metadata for consented sessions",
       false
     )
     .action(
@@ -246,6 +251,7 @@ export function registerTelemetryCommand(program: Command): void {
         follow: boolean;
         includeSessionTitles: boolean;
         includeSessionProjects: boolean;
+        includeSessionRepositories: boolean;
         titlesOnly: boolean;
       }) => {
         const { output, run } = commandOf(program);
@@ -260,10 +266,13 @@ export function registerTelemetryCommand(program: Command): void {
           return;
         }
         if (
-          (options.includeSessionTitles || options.includeSessionProjects || options.titlesOnly) &&
+          (options.includeSessionTitles ||
+            options.includeSessionProjects ||
+            options.includeSessionRepositories ||
+            options.titlesOnly) &&
           options.config !== otelOptions.titleConfig
         ) {
-          output.error("Session title and project sync is currently available only for Codex.");
+          output.error("Session metadata sync is currently available only for Codex.");
           process.exitCode = 1;
           return;
         }
@@ -272,6 +281,10 @@ export function registerTelemetryCommand(program: Command): void {
           const onProjectUnavailable = () =>
             output.warn(
               "A native Codex session project could not be verified; telemetry sync continues."
+            );
+          const onRepositoryUnavailable = () =>
+            output.warn(
+              "A native Codex Git repository could not be verified; telemetry sync continues."
             );
           const onTitleUnavailable = () =>
             output.warn("A Codex session title could not be read; telemetry sync continues.");
@@ -284,12 +297,14 @@ export function registerTelemetryCommand(program: Command): void {
                 token: process.env.AIDD_OTEL_TOKEN ?? "",
                 includeSessionTitles: true,
                 includeSessionProjects: options.includeSessionProjects,
+                includeSessionRepositories: options.includeSessionRepositories,
                 onProjectUnavailable,
+                onRepositoryUnavailable,
                 onTitleUnavailable,
               },
               () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
-              (admission, at, start) =>
-                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start)
+              (admission, at, start, current) =>
+                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start, current)
             );
             output.info(
               `Sent ${result.sent} session metadata updates; no metrics or feature bindings were sent.`
@@ -313,12 +328,14 @@ export function registerTelemetryCommand(program: Command): void {
                 token: process.env.AIDD_OTEL_TOKEN ?? "",
                 includeSessionTitles: options.includeSessionTitles,
                 includeSessionProjects: options.includeSessionProjects,
+                includeSessionRepositories: options.includeSessionRepositories,
                 onProjectUnavailable,
+                onRepositoryUnavailable,
                 onTitleUnavailable,
               },
               () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
-              (admission, at, start) =>
-                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start)
+              (admission, at, start, current) =>
+                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start, current)
             );
             output.info(
               `Sent ${result.sent} observations; ${result.denied} were outside consent; ${result.pending} await confirmation.`
@@ -327,10 +344,30 @@ export function registerTelemetryCommand(program: Command): void {
           }
           const session = options.session;
           let admission = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(session);
+          const initialAdmission = admission;
+          if (!initialAdmission)
+            throw new Error("No consented usage found for this session; no capture was sent.");
           const resolve = async () => {
-            admission = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(session);
-            if (!admission)
+            const current = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(
+              session
+            );
+            if (!current) {
+              admission = undefined;
               throw new Error("No consented usage found for this session; no capture was sent.");
+            }
+            if (
+              !initialAdmission.cwd ||
+              !initialAdmission.repositoryId ||
+              current.cwd !== initialAdmission.cwd ||
+              current.repositoryId !== initialAdmission.repositoryId
+            ) {
+              admission = undefined;
+              throw new Error(
+                "Session admission changed or is unavailable; sync stopped before sending."
+              );
+            }
+            admission = current;
+            if (!admission) throw new Error("Session admission is unavailable.");
             return admission.feature;
           };
           await resolve();
@@ -340,6 +377,7 @@ export function registerTelemetryCommand(program: Command): void {
               ...options,
               includeSessionTitles: options.includeSessionTitles || options.titlesOnly,
               onProjectUnavailable,
+              onRepositoryUnavailable,
               session,
               token: process.env.AIDD_OTEL_TOKEN ?? "",
               onTitleUnavailable,
@@ -352,7 +390,8 @@ export function registerTelemetryCommand(program: Command): void {
                   (await deps.telemetry.sessionFeatureUseCase.permits(
                     admission,
                     transfer.at,
-                    transfer.start
+                    transfer.start,
+                    transfer.consentAt
                   )) === "allow"
               )
           );

@@ -90,6 +90,8 @@ describe("OTLP capture sync", () => {
     dirs.push(home);
     const directory = join(home, ".local/share/aidd-otel-observation");
     await mkdir(directory, { recursive: true, mode: 0o700 });
+    const wanted = record("wanted", "codex.sse_event");
+    wanted.attributes.push(attr("model", "gpt-test"), attr("model_reasoning_effort", "high"));
     const line = {
       signal: "logs",
       payload: {
@@ -98,7 +100,7 @@ describe("OTLP capture sync", () => {
             scopeLogs: [
               {
                 logRecords: [
-                  record("wanted", "codex.sse_event"),
+                  wanted,
                   record("other", "codex.sse_event"),
                   record("wanted", "codex.user_prompt"),
                 ],
@@ -125,16 +127,17 @@ describe("OTLP capture sync", () => {
     const address = server.address();
     if (address === null || typeof address === "string") throw new Error("No test port");
     const before = await readFile(file, "utf8");
+    const syncOptions = {
+      config: "codex" as const,
+      session: "wanted",
+      tenant: "tenant",
+      endpoint: `http://127.0.0.1:${address.port}`,
+      token: "test-token",
+      home,
+      follow: false,
+    };
     const result = await syncOtel(
-      {
-        config: "codex",
-        session: "wanted",
-        tenant: "tenant",
-        endpoint: `http://127.0.0.1:${address.port}`,
-        token: "test-token",
-        home,
-        follow: false,
-      },
+      syncOptions,
       async () => ({ state: "unbound" }),
       async () => true
     );
@@ -144,8 +147,17 @@ describe("OTLP capture sync", () => {
     expect(received[0].auth).toBe("Bearer test-token");
     expect(received[0].body).not.toContain("sensitive output");
     expect(received[0].body).toContain("toolu_123");
+    expect(received[0].body).toContain('"key":"model_reasoning_effort"');
+    expect(received[0].body).toContain('"stringValue":"high"');
     expect(received[0].body).not.toContain('"other"');
     expect(await readFile(file, "utf8")).toBe(before);
+    const denied = await syncOtel(
+      syncOptions,
+      async () => ({ state: "unbound" }),
+      async () => false
+    );
+    expect(denied.skipped).toBe(1);
+    expect(received).toHaveLength(1);
   });
 
   test("refuses a non-loopback destination before reading capture or sending credentials", async () => {
@@ -260,5 +272,87 @@ describe("OTLP capture sync", () => {
     );
     expect(received).toBe(2);
     expect(result.sent).toBe(2);
+  });
+
+  it("never uses an identity from an observation outside consent to publish a binding", async () => {
+    const home = await mkdtemp(join(tmpdir(), "aidd-sync-unconsented-identity-"));
+    dirs.push(home);
+    const directory = join(home, ".local/share/aidd-otel-observation");
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    const source = {
+      signal: "logs",
+      payload: {
+        resourceLogs: [{ scopeLogs: [{ logRecords: [record("wanted", "codex.sse_event")] }] }],
+      },
+    };
+    await writeFile(join(directory, "codex.jsonl"), `${JSON.stringify(source)}\n`, { mode: 0o600 });
+    let calls = 0;
+    server = createServer((request, response) => {
+      calls++;
+      request.resume();
+      response.writeHead(200).end("{}");
+    });
+    await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("No test port");
+    const result = await syncOtel(
+      {
+        config: "codex",
+        session: "wanted",
+        tenant: "tenant",
+        endpoint: `http://127.0.0.1:${address.port}`,
+        token: "test-token",
+        home,
+        follow: false,
+      },
+      async () => ({ state: "confirmed", feature: "owner/repo#7", branch: "feature/work" }),
+      async (transfer) => Object.keys(transfer.payload).length === 0
+    );
+    expect(result).toMatchObject({ sent: 0, skipped: 1 });
+    expect(calls).toBe(0);
+  });
+
+  it("stops before retrying a failed post after consent is withdrawn", async () => {
+    const home = await mkdtemp(join(tmpdir(), "aidd-sync-withdrawn-retry-"));
+    dirs.push(home);
+    const directory = join(home, ".local/share/aidd-otel-observation");
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    const source = {
+      signal: "logs",
+      payload: {
+        resourceLogs: [{ scopeLogs: [{ logRecords: [record("wanted", "codex.sse_event")] }] }],
+      },
+    };
+    await writeFile(join(directory, "codex.jsonl"), `${JSON.stringify(source)}\n`, { mode: 0o600 });
+    let consenting = true;
+    let calls = 0;
+    server = createServer((request, response) => {
+      calls++;
+      request.resume();
+      request.on("end", () => {
+        consenting = false;
+        response.writeHead(503).end("{}");
+      });
+    });
+    await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("No test port");
+    await expect(
+      syncOtel(
+        {
+          config: "codex",
+          session: "wanted",
+          tenant: "tenant",
+          endpoint: `http://127.0.0.1:${address.port}`,
+          token: "test-token",
+          home,
+          follow: true,
+          intervalMs: 10,
+        },
+        async () => ({ state: "unbound" }),
+        async (transfer) => !transfer.consentAt || consenting
+      )
+    ).rejects.toThrow(/Consent is no longer confirmed/);
+    expect(calls).toBe(1);
   });
 });
