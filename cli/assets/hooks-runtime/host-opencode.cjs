@@ -62,9 +62,10 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Asks the model to go on before the turn ends, with `text` as what it must do. */
+/** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
+ * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
-  if (typeof text !== "string" || text === "") return;
+  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
   print({ decision: "block", reason: text });
 }
 

@@ -128,9 +128,10 @@ describe("Claude Code", () => {
     expect([event?.files, event?.command]).toStrictEqual([[], "echo hi"]);
   });
 
-  it("reads an Edit as its file, with no content: the host gave a fragment", () => {
+  it("reads an Edit as its file, with no content: the host gives a fragment (documented, not captured)", () => {
     const { payload } = sample("claude-PostToolUse.json", 0);
-    const edit = { ...payload, tool_name: "Edit", tool_input: { file_path: NOTES } };
+    const tool_input = { file_path: NOTES, old_string: "a", new_string: "b", replace_all: false };
+    const edit = { ...payload, tool_name: "Edit", tool_input };
 
     expect(read("claude", edit).event?.files).toStrictEqual([{ path: NOTES }]);
   });
@@ -185,6 +186,14 @@ describe("Claude Code", () => {
     adapter.answer({ level: 1, text: "finish" });
 
     expect(output()).toStrictEqual({ decision: "block", reason: "finish" });
+  });
+
+  it("asks once: a Stop that is already a continuation is never continued again", () => {
+    const { adapter } = read("claude", sample("claude-Stop.json", 2).payload);
+    adapter.continueTurn("again");
+    adapter.answer({ level: 2, text: "again" });
+
+    expect(printed).toStrictEqual([]);
   });
 });
 
@@ -295,6 +304,30 @@ describe("Codex", () => {
 
     expect(output()).toStrictEqual(hookAnswer);
   });
+
+  it("continues the turn for any answer at Stop", () => {
+    const { adapter } = read("codex", sample("codex-Stop.json", 1).payload);
+    adapter.answer({ level: 1, text: "finish" });
+
+    expect(output()).toStrictEqual({ decision: "block", reason: "finish" });
+  });
+
+  it("asks once: a Stop that is already a continuation is never continued again", () => {
+    const { adapter } = read("codex", sample("codex-Stop.json", 2).payload);
+    adapter.continueTurn("again");
+    adapter.answer({ level: 2, text: "again" });
+
+    expect(printed).toStrictEqual([]);
+  });
+
+  it("informs at SessionStart through the hook's additional context (documented, not captured)", () => {
+    const { adapter } = read("codex", sample("codex-SessionStart.json", 0).payload);
+    adapter.answer({ level: 1, text: "memory" });
+
+    expect(output()).toStrictEqual({
+      hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: "memory" },
+    });
+  });
 });
 
 describe("Copilot", () => {
@@ -335,6 +368,17 @@ describe("Copilot", () => {
     ]);
   });
 
+  it("reads a moved file as both its old and its new path (derived from the captured patch)", () => {
+    const { payload } = sample("copilot-PostToolUse.json", 0);
+    const patch =
+      "*** Begin Patch\n*** Update File: a.md\n*** Move to: docs/a.md\n@@\n+a\n*** End Patch\n";
+
+    expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
+      { path: `${CWD}/a.md` },
+      { path: `${CWD}/docs/a.md` },
+    ]);
+  });
+
   it("reads a Read as touching no file", () => {
     const { event } = read("copilot", sample("copilot-PostToolUse.json", 3).payload);
 
@@ -365,7 +409,7 @@ describe("Copilot", () => {
     expect(output()).toStrictEqual({ additionalContext: "fix it" });
   });
 
-  it("informs at SessionStart through the key it reads after a write (reused, not observed)", () => {
+  it("informs at SessionStart through a top-level additional context (documented, not captured)", () => {
     const { adapter } = read("copilot", sample("copilot-SessionStart.json", 0).payload);
     adapter.answer({ level: 1, text: "memory" });
 
@@ -386,6 +430,21 @@ describe("Copilot", () => {
     adapter.continueTurn(String(hookAnswer?.reason));
 
     expect(output()).toStrictEqual(hookAnswer);
+  });
+
+  it("continues the turn for any answer at Stop", () => {
+    const { adapter } = read("copilot", sample("copilot-Stop.json", 1).payload);
+    adapter.answer({ level: 1, text: "finish" });
+
+    expect(output()).toStrictEqual({ decision: "block", reason: "finish" });
+  });
+
+  it("asks once: a Stop that is already a continuation is never continued again", () => {
+    const { adapter } = read("copilot", sample("copilot-Stop.json", 2).payload);
+    adapter.continueTurn("again");
+    adapter.answer({ level: 2, text: "again" });
+
+    expect(printed).toStrictEqual([]);
   });
 });
 
@@ -421,10 +480,16 @@ describe("Cursor", () => {
     ]);
   });
 
-  it("reads a Shell call as its command, in the workspace root when its own folder is empty", () => {
+  it("reads a Shell call as its command, in the workspace root", () => {
     const { event } = read("cursor", sample("cursor-postToolUse.json", 1).payload);
 
     expect([event?.files, event?.command, event?.cwd]).toStrictEqual([[], "echo hi", CWD]);
+  });
+
+  it("keeps the session at the workspace root when a Shell call ran in a subfolder (derived from the captured call)", () => {
+    const { payload } = sample("cursor-postToolUse.json", 1);
+
+    expect(read("cursor", { ...payload, cwd: `${CWD}/docs` }).event?.cwd).toBe(CWD);
   });
 
   it("reads a Read as touching no file", () => {
@@ -471,7 +536,7 @@ describe("Cursor", () => {
     expect(output()).toStrictEqual({ followup_message: "finish" });
   });
 
-  it("informs at sessionStart through the key it reads after a write (reused, not observed)", () => {
+  it("informs at sessionStart through its additional context (documented, not captured)", () => {
     const { adapter } = read("cursor", sample("cursor-sessionStart.json", 0).payload);
     adapter.answer({ level: 1, text: "memory" });
 
@@ -483,6 +548,14 @@ describe("Cursor", () => {
     adapter.answer({ level: 1, text: "finish" });
 
     expect(output()).toStrictEqual({ followup_message: "finish" });
+  });
+
+  it("asks once: a stop with a loop count is never continued again (documented, not captured)", () => {
+    const { adapter } = read("cursor", cursorStop(1));
+    adapter.continueTurn("again");
+    adapter.answer({ level: 2, text: "again" });
+
+    expect(printed).toStrictEqual([]);
   });
 });
 

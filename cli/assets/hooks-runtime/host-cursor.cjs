@@ -15,7 +15,7 @@ const EVENTS = new Map([
   ["postToolUse", "PostToolUse"],
   ["stop", "Stop"],
 ]);
-const WRITES = new Set(["Write", "Edit", "MultiEdit"]);
+const WRITES = new Set(["Write"]);
 const SHELLS = new Set(["Shell"]);
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
@@ -29,9 +29,9 @@ function readPayload() {
   }
 }
 
-/** A shell call carries `cwd`, empty when it ran in the workspace; no other call does. */
+/** The session's folder is the first workspace root: a shell call's own `cwd` is where that
+ * one command ran, never the session's. */
 function folderOf(raw) {
-  if (typeof raw.cwd === "string" && raw.cwd !== "") return raw.cwd;
   const [root] = Array.isArray(raw.workspace_roots) ? raw.workspace_roots : [];
   return typeof root === "string" && root !== "" ? root : process.cwd();
 }
@@ -70,9 +70,10 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Asks the model to go on before the turn ends, with `text` as what it must do. */
+/** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
+ * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
-  if (typeof text !== "string" || text === "") return;
+  if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
   print({ followup_message: text });
 }
 

@@ -29,14 +29,15 @@ const HOOKS_JSON = JSON.stringify({
 });
 
 /** A hook that speaks only the neutral interface: it records each event, informs after a
- * write, and continues a turn that is not already a continuation. */
+ * write, and at a turn end continues it, or answers there when `AIDD_STOP` says so. */
 const RECORDER = `const fs = require("node:fs");
 const host = require("./lib/host.cjs");
 const event = host.readEvent();
 if (event !== undefined) {
   fs.appendFileSync(process.env.AIDD_RECORD, JSON.stringify(event) + "\\n");
   if (event.event === "PostToolUse") host.answer({ level: 2, text: "finding" });
-  if (event.event === "Stop" && !event.stopActive) host.continueTurn("go on");
+  if (event.event === "Stop" && process.env.AIDD_STOP === "answer") host.answer({ level: 1, text: "go on" });
+  else if (event.event === "Stop") host.continueTurn("go on");
 }
 `;
 
@@ -148,6 +149,18 @@ async function start(ws: Workspace, input: Record<string, unknown>) {
   return { plugin, prompts };
 }
 
+/** An `edit`, which the host documents by name but no run captured: the captured write's call,
+ * its arguments a replacement in the same file. */
+function documentedEdit(write: { call: Record<string, unknown> }, project: string) {
+  return {
+    ...write.call,
+    tool: "edit",
+    args: { filePath: join(project, "notes.md"), oldString: "hello", newString: "bye" },
+  };
+}
+
+const CONTINUED = [{ path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } }];
+
 function opencodeBridge(): string {
   const bridge = generateOpencodeHooksBridge(HOOKS_JSON, "aidd-sample");
   if (bridge === null) throw new Error("expected a bridge");
@@ -208,7 +221,33 @@ describe("OpenCode, through its bridge", () => {
     expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({ files: [], command: "echo hi" });
   });
 
-  it("reads an idle session as Stop, continues it, and reads the next one as a continuation", async () => {
+  it("reads an edit as its file, with no content (documented, not captured)", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    const [write] = (await captured("opencode-tool.execute.after.json", ws.project)) as {
+      call: Record<string, unknown>;
+      output: { output: string };
+    }[];
+    const { plugin } = await start(ws, { directory: ws.project });
+    if (write === undefined) throw new Error("no captured write");
+    await plugin["tool.execute.after"](documentedEdit(write, ws.project), write.output);
+
+    expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({
+      files: [{ path: join(ws.project, "notes.md") }],
+    });
+    expect(afterStart(await recorded(ws, 2))[0]?.files[0]).not.toHaveProperty("content");
+  });
+
+  it("continues the turn for any answer at Stop", async () => {
+    const ws = await workspace("opencode", opencodeBridge());
+    vi.stubEnv("AIDD_STOP", "answer");
+    const [, idle] = await captured("opencode-session.idle.json", ws.project);
+    const { plugin, prompts } = await start(ws, { directory: ws.project });
+    await plugin.event({ event: idle });
+
+    expect(prompts).toStrictEqual(CONTINUED);
+  });
+
+  it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
     const ws = await workspace("opencode", opencodeBridge());
     const [, first, second] = await captured("opencode-session.idle.json", ws.project);
     const { plugin, prompts } = await start(ws, { directory: ws.project });
@@ -219,9 +258,7 @@ describe("OpenCode, through its bridge", () => {
       { event: "Stop", stopActive: false, sessionId: SESSION },
       { event: "Stop", stopActive: true, sessionId: SESSION },
     ]);
-    expect(prompts).toStrictEqual([
-      { path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } },
-    ]);
+    expect(prompts).toStrictEqual(CONTINUED);
   });
 });
 
@@ -276,17 +313,50 @@ describe("Kilo, through its bridge", () => {
     expect(await recorded(ws, 1)).toMatchObject([{ files: [], command: "echo hi" }]);
   });
 
-  it("reads an idle session as Stop, and continues it", async () => {
+  it("reads an edit as its file, with no content (documented, not captured)", async () => {
     const ws = await workspace("kilo", kiloBridge());
+    const [write] = (await captured("kilo-tool.execute.after.json", ws.project)) as {
+      call: Record<string, unknown>;
+      output: { output: string };
+    }[];
+    const { plugin } = await start(ws, { directory: ws.project });
+    if (write === undefined) throw new Error("no captured write");
+    await plugin["tool.execute.after"](documentedEdit(write, ws.project), write.output);
+
+    expect(await recorded(ws, 1)).toMatchObject([
+      { files: [{ path: join(ws.project, "notes.md") }] },
+    ]);
+    expect((await recorded(ws, 1))[0]?.files[0]).not.toHaveProperty("content");
+  });
+
+  it("continues the turn for any answer at Stop", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    vi.stubEnv("AIDD_STOP", "answer");
     const [idle] = await captured("kilo-session.idle.json", ws.project);
     const { plugin, prompts } = await start(ws, { directory: ws.project });
     await plugin.event({ event: idle });
 
-    expect(await recorded(ws, 1)).toMatchObject([
+    expect(prompts).toStrictEqual(CONTINUED);
+  });
+
+  // The bridge ends a turn at the next idle only after the session went busy again: that
+  // status is the bridge's own turn boundary, not a captured event.
+  it("reads an idle session as Stop, continues it once, and reads the next one as a continuation", async () => {
+    const ws = await workspace("kilo", kiloBridge());
+    const [, first, second] = await captured("kilo-session.idle.json", ws.project);
+    const { plugin, prompts } = await start(ws, { directory: ws.project });
+    const busy = {
+      type: "session.status",
+      properties: { sessionID: SESSION, status: { type: "busy" } },
+    };
+    await plugin.event({ event: first });
+    await plugin.event({ event: busy });
+    await plugin.event({ event: second });
+
+    expect(await recorded(ws, 2)).toMatchObject([
       { host: "kilo", event: "Stop", stopActive: false, sessionId: SESSION, cwd: ws.project },
+      { host: "kilo", event: "Stop", stopActive: true, sessionId: SESSION, cwd: ws.project },
     ]);
-    expect(prompts).toStrictEqual([
-      { path: { id: SESSION }, body: { parts: [{ type: "text", text: "go on" }] } },
-    ]);
+    expect(prompts).toStrictEqual(CONTINUED);
   });
 });
