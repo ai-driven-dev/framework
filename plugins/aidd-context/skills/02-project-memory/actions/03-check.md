@@ -12,7 +12,7 @@ A report file under `aidd_docs/tasks/`, a short summary printed, and the finding
 
 ## Process
 
-1. **Match.** Compare the bank against [memory-destinations.md](../references/memory-destinations.md) and [structure.md](../references/structure.md).
+1. **Match.** Compare the bank against [capabilities.md](../references/capabilities.md).
    - A file no row produces: flag it, and name the row it should have come from.
    - A found capability, or a scaffolded path, with nothing on disk: flag it missing.
 2. **Review.** Have each memory file reviewed against [review-protocol.md](../references/review-protocol.md) in parallel.
