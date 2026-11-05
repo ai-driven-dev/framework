@@ -4,7 +4,7 @@
 
 | Question | Answer |
 | --- | --- |
-| Why AIDD instead of my own skills? | You skip what every team rebuilds: the plan, build and review loop, the packaging, and support for several tools. |
+| Why AIDD instead of my own skills? | Reuse the plan, build and review loop, packaged for your tools. |
 | Does it cost money? | No, it is free (MIT). Model calls use your own plan or API balance. |
 | Where do I start? | `/aidd-context:00-onboard`, or pick a goal in the [guides](GUIDES.md). |
 | Which plugins should I install? | The stable ones: see the [README](../README.md#plugins). |
