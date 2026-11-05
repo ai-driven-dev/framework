@@ -38,17 +38,17 @@ const ALWAYS_WRITTEN = Object.freeze([
 ]);
 
 // A finding's level: 1 informs the model, 2 requires the fix before it goes on. Level 2 only for
-// a rule with no false hit on the real banks measured (`memory-rules-banks.test.js`). M4 names
-// repository-root paths from a package's own bank, so it informs.
+// a rule with no false hit on the real banks measured (`memory-rules-banks.test.js`). A bank
+// folder of the team's own is a real layout, so a misplaced file informs and check offers the move.
 const LEVELS = Object.freeze({
   M1: 1,
   M2: 1,
   M3: 2,
-  M4: 1,
+  M4: 2,
   M5: 1,
   M6: 1,
   M7: 2,
-  placement: 2,
+  placement: 1,
   missing: 1,
 });
 
@@ -264,7 +264,9 @@ function check(root, files = []) {
   const errors = found.filter((finding) => finding.severity === ERROR && finding.rule !== "placement");
   const reached = found.filter((finding) => finding.rule === "placement");
   const warnings = found.filter((finding) => finding.severity !== ERROR).map(asWarning);
-  return { errors: [...errors, ...reached], warnings, text: formatFindings(PLUGIN, { errors, reached, warnings }) };
+  // The cap on warnings binds the hook's answer to a model; a check prints every one.
+  const text = formatFindings(PLUGIN, { errors, reached, warnings }, { warningsCap: Infinity });
+  return { errors: [...errors, ...reached], warnings, text };
 }
 
 // ---- sync ----------------------------------------------------------------------------------

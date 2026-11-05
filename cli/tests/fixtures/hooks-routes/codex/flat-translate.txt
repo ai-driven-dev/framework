@@ -13,7 +13,8 @@ hooks = true
         "hooks": [
           {
             "type": "command",
-            "command": "node ./.codex/hooks/aidd-context/memory.cjs hook"
+            "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
+            "timeout": 5
           }
         ]
       },

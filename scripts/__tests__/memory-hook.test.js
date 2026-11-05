@@ -150,10 +150,10 @@ for (const host of HOSTS) {
     assert.match(answer.text, new RegExp(`^${MEMORY}/vcs\\.md:3 M1 => prose line of 31 words, over 25: `, "mu"));
   });
 
-  test(`${host}: a file written under memory/kpi/ requires its move`, () => {
+  test(`${host}: a file written under memory/kpi/ informs, naming its move, and never blocks`, () => {
     const { stdout } = afterWrite(host, `${MEMORY}/kpi/x.md`, "# KPI\n\nShort.\n");
     const answer = answerOf(stdout);
-    assert.equal(answer.level, BLOCKS.has(host) ? 2 : 1, stdout);
+    assert.equal(answer.level, 1, stdout);
     assert.match(answer.text, new RegExp(`^${MEMORY}/kpi/x\\.md placement => move ${MEMORY}/kpi/ to ${MEMORY}/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it$`, "mu"));
   });
 
@@ -283,6 +283,12 @@ test("warnings are capped at ten, the count line keeping the total", () => {
   assert.ok(lines.slice(1).every((line) => / M[56] warning /u.test(line)), lines.join("\n"));
 });
 
+test("a dead path in a written bank file requires the fix", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nSee `src/gone.cfg`.\n", "src/here.cfg": "" });
+  const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
+  assert.deepEqual(answer, { level: 2, text: 'aidd-context: 1 errors, 0 warnings\naidd_docs/memory/vcs.md:3 M4 "src/gone.cfg" => fix the path or remove it' });
+});
+
 test("an M7 sentence written twice in the bank requires the fix", () => {
   const sentence = "the quick brown fox jumps over the lazy dog every single morning again";
   const root = project({ [`${MEMORY}/testing.md`]: `# T\n\n${sentence}.\n`, [`${MEMORY}/vcs.md`]: `# VCS\n\n- ${sentence}\n` });
@@ -338,11 +344,13 @@ test("the entry and its libraries require only node:fs, node:path and their own 
   }
 });
 
-test("hooks.json runs the one entry at session start and after a write, and its matcher covers every host's shell tool", () => {
+test("hooks.json runs the one entry, within 5 s, at session start and after a write, and its matcher covers every host's shell tool", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
   const command = "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook";
-  assert.equal(hooks.SessionStart[0].hooks[0].command, command);
-  assert.equal(hooks.PostToolUse[0].hooks[0].command, command);
+  for (const event of ["SessionStart", "PostToolUse"]) {
+    assert.equal(hooks[event][0].hooks[0].command, command, event);
+    assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
+  }
   const names = hooks.PostToolUse[0].matcher.split("|");
   for (const name of ["Write", "Edit", "Bash", "Shell", "bash"]) assert.ok(names.includes(name), name);
 });

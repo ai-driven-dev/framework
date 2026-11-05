@@ -11,7 +11,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook"
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5
           }
         ]
       }

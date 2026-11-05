@@ -96,6 +96,35 @@ test("deadPaths: a folder linked outside the root is never followed", () => {
   }
 });
 
+// A bank in a subproject names paths from its repository's root: such a path exists under the
+// nearest ancestor holding a `.git` entry, a folder or a worktree's file alike.
+test("deadPaths: a path missing under the root but present under the repository's root exists", () => {
+  for (const gitEntry of [".git/HEAD", ".git"]) {
+    inProject({ [gitEntry]: "", "tools/x.cfg": "", "pkg/tools/own.cfg": "" }, (repo) => {
+      assert.deepEqual(deadPaths("`tools/x.cfg` `tools/gone.cfg`\n", path.join(repo, "pkg")), [{ line: 1, path: "tools/gone.cfg" }], gitEntry);
+    });
+  }
+});
+
+test("deadPaths: only the nearest ancestor holding .git counts as the repository's root", () => {
+  inProject({ ".git/HEAD": "", "tools/x.cfg": "", "mid/.git": "", "mid/pkg/tools/own.cfg": "" }, (outer) => {
+    assert.deepEqual(deadPaths("`tools/x.cfg`\n", path.join(outer, "mid/pkg")), [{ line: 1, path: "tools/x.cfg" }]);
+  });
+});
+
+test("deadPaths: the repository's root keeps the containment rules: a link out of it is never followed", () => {
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "common-rules-outside-"));
+  try {
+    fs.writeFileSync(path.join(outside, "x.cjs"), "");
+    inProject({ ".git/HEAD": "", "pkg/tools/own.cfg": "" }, (repo) => {
+      fs.symlinkSync(outside, path.join(repo, "tools"));
+      assert.deepEqual(deadPaths("`tools/x.cfg`\n", path.join(repo, "pkg")), [{ line: 1, path: "tools/x.cfg" }]);
+    });
+  } finally {
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
 test("deadPaths: .git is never an anchor", () => {
   inProject({ ".git/HEAD": "" }, (root) => {
     assert.deepEqual(deadPaths("`.git/gone.txt`\n", root), []);

@@ -7,7 +7,8 @@ hook files unchanged by the second run: true
   "hooks": {
     "sessionStart": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook"
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
       },
       {
         "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
@@ -126,7 +127,7 @@ project cursor aidd-context scope=user: 0 hook files
     {
       "event": "sessionStart",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "6b9be53d4479f2c5631277fe77ff9878"
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
     },
     {
       "event": "postToolUse",
@@ -166,7 +167,7 @@ machine cursor aidd-context scope=user: 0 hook files
     {
       "event": "sessionStart",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "6b9be53d4479f2c5631277fe77ff9878"
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
     },
     {
       "event": "postToolUse",

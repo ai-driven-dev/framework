@@ -29,18 +29,13 @@ function hitsOn(root) {
 }
 
 const LEVEL_TWO = Object.keys(LEVELS).filter((rule) => LEVELS[rule] === 2);
-// A file outside the bank's root, internal/ and external/ is told by its path alone, so every
-// hit is a true one: counted in the diagnostic, never held to zero.
-const STRUCTURAL = new Set(["placement"]);
 
 for (const root of [...IN_REPO, ...EXTRA]) {
   test(`each level 2 rule has no hit on the bank of ${path.relative(REPO, root) || "this repository"}`, (t) => {
     assert.ok(fs.existsSync(path.join(root, "aidd_docs/memory")), `${root} holds no bank`);
     const hits = hitsOn(root);
     t.diagnostic(JSON.stringify(Object.fromEntries(Object.entries(hits).map(([rule, found]) => [rule, found.length]))));
-    for (const rule of LEVEL_TWO.filter((candidate) => !STRUCTURAL.has(candidate))) {
-      assert.deepEqual(hits[rule] ?? [], [], `${rule} hits a real bank, so it can only inform`);
-    }
+    for (const rule of LEVEL_TWO) assert.deepEqual(hits[rule] ?? [], [], `${rule} hits a real bank, so it can only inform`);
   });
 }
 

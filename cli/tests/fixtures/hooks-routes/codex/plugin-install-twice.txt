@@ -12,7 +12,8 @@ approval_policy = "on-request"
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook"
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5
           }
         ]
       }
