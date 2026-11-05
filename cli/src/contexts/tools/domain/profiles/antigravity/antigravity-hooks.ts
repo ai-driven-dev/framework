@@ -1,7 +1,7 @@
-import { rewriteClaudeRootInJson } from "../../../../../kernel/materialization/claude-root-path-rewrite.js";
 import { genericFlatHooksScriptPath } from "../../../../../kernel/materialization/flat-paths.js";
+import { rewritePluginRootInJson } from "../../../../../kernel/materialization/plugin-root-path-rewrite.js";
+import type { ProjectHookEntry } from "../../capabilities/plugins-capability.js";
 import { PLUGIN_HOOKS_SOURCE } from "../../formats/hooks-descriptor.js";
-import type { ProjectHookEntry } from "../../hooks-format.js";
 import { ANTIGRAVITY_HOOKS } from "./hooks.js";
 
 // agy runs from `<repo>/.agents` and requires JSON stdout even for a silent hook.
@@ -36,19 +36,20 @@ function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
 
 function convert(
   pluginHooksJson: string,
-  pluginName: string
+  pluginName: string,
+  locate: (pluginPath: string) => string
 ): { events: Record<string, ProjectHookEntry[]>; warnings: string[] } {
   const parsed = JSON.parse(pluginHooksJson) as unknown;
-  const rewritten = rewriteClaudeRootInJson(parsed, (suffix) =>
+  const rewritten = rewritePluginRootInJson(parsed, (suffix) =>
     suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
       ? `./${antigravityHooksScriptPath(pluginName, suffix)}`
-      : suffix
+      : `./${locate(suffix)}`
   ) as ClaudeHooks;
   const events: Record<string, ProjectHookEntry[]> = {};
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
     if (!Object.hasOwn(ANTIGRAVITY_HOOKS.eventMap, event)) {
-      warnings.push(`antigravity: unmapped event '${event}' skipped`);
+      warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
     events[event] = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
@@ -65,14 +66,16 @@ function serialize(hooks: NamedHooks): string {
   return `${JSON.stringify(hooks, null, 2)}\n`;
 }
 
+/** `locate` places a path the plugin ships outside `hooks/`; `plugin install` ships none. */
 export function mergeAntigravityHooks(
   existingJson: string | null,
   pluginHooksJson: string,
-  pluginName: string
+  pluginName: string,
+  locate: (pluginPath: string) => string = (pluginPath) => pluginPath
 ): { content: string; warnings: readonly string[] } {
   const { [pluginName]: previous, ...kept } =
     existingJson === null ? {} : (JSON.parse(existingJson) as NamedHooks);
-  const { events, warnings } = convert(pluginHooksJson, pluginName);
+  const { events, warnings } = convert(pluginHooksJson, pluginName, locate);
   const merged =
     Object.keys(events).length > 0
       ? {

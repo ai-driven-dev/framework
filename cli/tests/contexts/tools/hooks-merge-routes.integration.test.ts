@@ -113,7 +113,7 @@ function nestedSeed(dir: string, extra: Record<string, unknown> = {}): string {
 }
 
 describe("a flat build merging a plugin into a shared file it already wrote to", () => {
-  it("claude: .claude/settings.json duplicates the plugin's entries, keeping the rest", async () => {
+  it("claude: .claude/settings.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".claude/hooks/";
     const fs = await flatMerge(buildClaudeFlatContract(), {
       [`${OUT}/.claude/settings.json`]: nestedSeed(dir, { model: "opus" }),
@@ -122,7 +122,6 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
 
     expect(JSON.parse(file ?? "{}").model).toBe("opus");
     expect(commands(file, "SessionStart")).toStrictEqual([
-      `node ./${dir}${PLUGIN}/start.cjs`,
       `node ./${dir}other/start.cjs`,
       PERSON,
       `node ./${dir}${PLUGIN}/start.cjs`,
@@ -130,11 +129,10 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
     expect(commands(file, "PostToolUse")).toStrictEqual([
       PERSON_CHECK,
       `node ./${dir}${PLUGIN}/check.cjs`,
-      `node ./${dir}${PLUGIN}/check.cjs`,
     ]);
   });
 
-  it("codex: .codex/hooks.json duplicates the plugin's entries, keeping the rest", async () => {
+  it("codex: .codex/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".codex/hooks/";
     const fs = await flatMerge(buildCodexFlatContract(), {
       [`${OUT}/.codex/hooks.json`]: nestedSeed(dir),
@@ -142,7 +140,6 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
     const file = fs.getFile(`${OUT}/.codex/hooks.json`);
 
     expect(commands(file, "SessionStart")).toStrictEqual([
-      `node ./${dir}${PLUGIN}/start.cjs`,
       `node ./${dir}other/start.cjs`,
       PERSON,
       `node ./${dir}${PLUGIN}/start.cjs`,
@@ -150,11 +147,10 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
     expect(commands(file, "PostToolUse")).toStrictEqual([
       PERSON_CHECK,
       `node ./${dir}${PLUGIN}/check.cjs`,
-      `node ./${dir}${PLUGIN}/check.cjs`,
     ]);
   });
 
-  it("cursor: .cursor/hooks.json duplicates the plugin's entries, keeping the rest", async () => {
+  it("cursor: .cursor/hooks.json strips the plugin's own entries, keeping the rest", async () => {
     const dir = ".cursor/hooks/";
     const fs = await flatMerge(buildCursorFlatContract(), {
       [`${OUT}/.cursor/hooks.json`]: JSON.stringify({
@@ -175,14 +171,12 @@ describe("a flat build merging a plugin into a shared file it already wrote to",
     const file = fs.getFile(`${OUT}/.cursor/hooks.json`);
 
     expect(commands(file, "sessionStart")).toStrictEqual([
-      `node ./${dir}${PLUGIN}/start.cjs`,
       `node ./${dir}other/start.cjs`,
       PERSON,
       `node ./${dir}${PLUGIN}/start.cjs`,
     ]);
     expect(commands(file, "postToolUse")).toStrictEqual([
       PERSON_CHECK,
-      `node ./${dir}${PLUGIN}/check.cjs`,
       `node ./${dir}${PLUGIN}/check.cjs`,
     ]);
   });

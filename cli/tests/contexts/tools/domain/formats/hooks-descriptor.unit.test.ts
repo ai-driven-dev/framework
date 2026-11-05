@@ -19,11 +19,6 @@ function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supp
   return artifact;
 }
 
-const merge = (existing: string | null, incoming: string) => ({
-  content: `${existing ?? ""}+${incoming}`,
-  warnings: [],
-});
-const transform = (json: string) => `flat:${json}`;
 const bridge = (raw: string, plugin: string) => `${plugin}:${raw}`;
 
 describe("a plugin tree's hooks artifact", () => {
@@ -35,51 +30,100 @@ describe("a plugin tree's hooks artifact", () => {
   });
 });
 
+const FLAT_FILE = {
+  wrapper: { version: 1 },
+  entries: { shape: "flat", fieldsKept: ["command"] },
+} as const;
+// biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a plugin's hooks name
+const ROOT = "${CLAUDE_PLUGIN_ROOT}";
+const SHIPPED = JSON.stringify({
+  hooks: { Start: [{ hooks: [{ command: `node ${ROOT}/hooks/a.cjs ${ROOT}/skills/s` }] }] },
+});
+const locate = (path: string) => `flat/${path}`;
+
 describe("a flat build's hooks artifact", () => {
   it("puts each plugin's scripts in a folder of its own, and its hooks file beside them", () => {
-    const artifact = supported(flatHooksArtifact({ scriptsDir: ".tool/hooks/" }));
+    const artifact = supported(flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }));
 
     expect(artifact.source).toStrictEqual(SOURCE);
     expect(artifact.path("aidd-dev", "hooks/lib/journal.cjs")).toBe(
       ".tool/hooks/aidd-dev/lib/journal.cjs"
+    );
+    expect(artifact.path("aidd-dev", "hooks/lib/hooks/a.cjs")).toBe(
+      ".tool/hooks/aidd-dev/lib/hooks/a.cjs"
     );
     expect(artifact.path("aidd-dev", "hooks/aidd-dev.hooks.json")).toBe(
       ".tool/hooks/aidd-dev.hooks.json"
     );
   });
 
-  it("merges into the route's shared file, under the output root", () => {
+  it("merges into the route's shared file, through the engine, with the tool's own events", () => {
     const artifact = supported(
-      flatHooksArtifact({ scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" }, { merge })
+      flatHooksArtifact({
+        file: FLAT_FILE,
+        eventMap: { Start: ["start"] },
+        flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
+      })
     );
 
-    expect(artifact.hooksMerge?.("a", "b", "aidd-dev")).toStrictEqual({
-      content: "a+b",
+    expect([artifact.hooksFile?.path("aidd-dev"), artifact.hooksFile?.shared]).toStrictEqual([
+      ".tool/hooks.json",
+      true,
+    ]);
+    expect(
+      JSON.parse(artifact.hooksFile?.merge(null, SHIPPED, "p", locate).content ?? "")
+    ).toStrictEqual({
+      version: 1,
+      hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs ./flat/skills/s" }] },
+    });
+  });
+
+  it("writes a plugin's own file where the route shares none", () => {
+    const artifact = supported(
+      flatHooksArtifact({ file: FLAT_FILE, flat: { scriptsDir: ".tool/hooks/" } })
+    );
+
+    expect([artifact.hooksFile?.path("aidd-dev"), artifact.hooksFile?.shared]).toStrictEqual([
+      ".tool/hooks/aidd-dev.hooks.json",
+      false,
+    ]);
+    expect(
+      JSON.parse(artifact.hooksFile?.merge(null, SHIPPED, "p", locate).content ?? "")
+    ).toStrictEqual({
+      version: 1,
+      hooks: { Start: [{ command: "node ./.tool/hooks/p/a.cjs ./flat/skills/s" }] },
+    });
+  });
+
+  it("merges through a tool's own merge where no file format describes its hooks file", () => {
+    const ownMerge = (existing: string | null, pluginHooks: string, plugin: string) => ({
+      content: `${existing ?? ""}+${pluginHooks}@${plugin}`,
       warnings: [],
     });
-    expect(artifact.hooksMergeDest?.("/out")).toBe("/out/.tool/hooks.json");
-  });
-
-  it("merges nothing without a shared file, nor without a merge", () => {
-    const noFile = supported(flatHooksArtifact({ scriptsDir: ".tool/hooks/" }, { merge }));
-    const noMerge = supported(
-      flatHooksArtifact({ scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" })
+    const artifact = supported(
+      flatHooksArtifact(
+        { flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" } },
+        undefined,
+        ownMerge
+      )
     );
 
-    expect([noFile.hooksMerge, noFile.hooksMergeDest]).toStrictEqual([undefined, undefined]);
-    expect([noMerge.hooksMerge, noMerge.hooksMergeDest]).toStrictEqual([undefined, undefined]);
+    expect([artifact.hooksFile?.path("p"), artifact.hooksFile?.shared]).toStrictEqual([
+      ".tool/hooks.json",
+      true,
+    ]);
+    expect(artifact.hooksFile?.merge(null, "h", "p", locate).content).toBe("+h@p");
   });
 
-  it("reshapes a plugin's own hooks file only when told how", () => {
-    const route = { scriptsDir: ".tool/hooks/" };
-
-    expect(supported(flatHooksArtifact(route, { transform })).hooksTransform?.("x")).toBe("flat:x");
-    expect(supported(flatHooksArtifact(route)).hooksTransform).toBeUndefined();
+  it("writes no hooks file for a tool that reads none", () => {
+    expect(
+      supported(flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } })).hooksFile
+    ).toBeUndefined();
   });
 
   it("delivers a loader's own module beside the loader, and every other script per plugin", () => {
     const artifact = supported(
-      flatHooksArtifact({ scriptsDir: ".tool/hooks/", loaderEntry: LOADER })
+      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })
     );
 
     expect(artifact.path("aidd-dev", "hooks/tool-plugin.js")).toBe(".tool/plugin/aidd-dev.js");
@@ -88,7 +132,7 @@ describe("a flat build's hooks artifact", () => {
 
   it("replaces the hooks file with a generated bridge for a loader", () => {
     const artifact = supported(
-      flatHooksArtifact({ scriptsDir: ".tool/hooks/", loaderEntry: LOADER }, { bridge })
+      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }, bridge)
     );
 
     expect(artifact.skipHooksJson).toBe(true);
@@ -99,9 +143,9 @@ describe("a flat build's hooks artifact", () => {
 
   it("keeps the hooks file without a bridge, or without a loader to import one", () => {
     const noBridge = supported(
-      flatHooksArtifact({ scriptsDir: ".tool/hooks/", loaderEntry: LOADER })
+      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })
     );
-    const noLoader = supported(flatHooksArtifact({ scriptsDir: ".tool/hooks/" }, { bridge }));
+    const noLoader = supported(flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }, bridge));
 
     expect([noBridge.skipHooksJson, noBridge.hooksBridge]).toStrictEqual([undefined, undefined]);
     expect([noLoader.skipHooksJson, noLoader.hooksBridge]).toStrictEqual([undefined, undefined]);
@@ -162,37 +206,41 @@ describe("a tool's plugins capability, as far as hooks go", () => {
   });
 
   it("merges an installed plugin's hooks into the project file the route names", () => {
-    const format = {
-      merge,
-      unmerge: (existing: string) => existing,
-      contributedEntries: () => [],
-      isEmpty: () => true,
-      scriptPath: (plugin: string, rel: string) => `${plugin}/${rel}`,
-      scriptDir: (plugin: string) => `${plugin}/`,
-    };
-
-    expect(
-      projectHooksSupport(
-        {
-          pluginFile: "hooks.json",
-          entries: "flat",
-          sharedFile: ".tool/hooks.json",
-          scriptsDir: ".tool/hooks/",
-        },
-        format
-      )
-    ).toStrictEqual({
-      hooksRelativePath: "hooks.json",
-      hooksContentFormat: "flat",
-      hooksDestination: "project",
-      projectHooksRelativePath: ".tool/hooks.json",
-      projectHooksFormat: format,
+    const support = projectHooksSupport({
+      file: FLAT_FILE,
+      eventMap: { Start: ["start"] },
+      project: {
+        pluginFile: "hooks.json",
+        sharedFile: ".tool/hooks.json",
+        scriptsDir: ".tool/hooks/",
+      },
     });
+    const { merge, unmerge, contributedEntries, isEmpty, scriptPath, scriptDir } =
+      support.projectHooksFormat;
+    const merged = merge(null, SHIPPED, "p").content;
+
+    expect([
+      support.hooksRelativePath,
+      support.hooksDestination,
+      support.projectHooksRelativePath,
+    ]).toStrictEqual(["hooks.json", "project", ".tool/hooks.json"]);
+    expect(JSON.parse(merged)).toStrictEqual({
+      version: 1,
+      hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs ./skills/s" }] },
+    });
+    expect(JSON.parse(unmerge(merged, "p"))).toStrictEqual({ version: 1 });
+    expect(contributedEntries(merged, "p")).toStrictEqual([
+      { event: "start", entry: { command: "node ./.tool/hooks/p/a.cjs ./skills/s" } },
+    ]);
+    expect(contributedEntries(merged, "q")).toStrictEqual([]);
+    expect([isEmpty(merged), isEmpty(unmerge(merged, "p"))]).toStrictEqual([false, true]);
+    expect(scriptPath("p", "hooks/lib/a.cjs")).toBe(".tool/hooks/p/lib/a.cjs");
+    expect(scriptDir("p")).toBe(".tool/hooks/p/");
   });
 
   it("merges a flat tool's installed hooks into its route's shared file", () => {
     const format = {
-      merge,
+      merge: () => ({ content: "", warnings: [] }),
       unmerge: (existing: string) => existing,
       contributedEntries: () => [],
       isEmpty: () => true,

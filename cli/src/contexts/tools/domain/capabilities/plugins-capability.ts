@@ -1,6 +1,5 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
-import type { HooksContentFormat, ProjectHooksFormat } from "../hooks-format.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 
@@ -8,7 +7,34 @@ export type PluginsMode = "native" | "flat" | "unsupported";
 
 const DEFAULT_MCP_PATH = ".mcp.json";
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
-const DEFAULT_HOOKS_FORMAT: HooksContentFormat = "matchers";
+
+/** One entry a plugin contributed to a project hooks file, as that file holds it. */
+export type ProjectHookEntry = { command: string; [key: string]: unknown };
+
+/**
+ * How a tool's project-scope hooks file takes one plugin's hooks and gives them back: the
+ * merge rewrites the plugin's commands to where its scripts land and keeps the plugin's own
+ * earlier entries from doubling; the unmerge removes this plugin's entries alone.
+ */
+export interface ProjectHooksFormat {
+  merge(
+    existingJson: string | null,
+    pluginHooksJson: string,
+    pluginName: string
+  ): { content: string; warnings: readonly string[] };
+  unmerge(existingJson: string, pluginName: string): string;
+  /** The entries this plugin contributed, each under the event the file holds it in. */
+  contributedEntries(
+    content: string,
+    pluginName: string
+  ): readonly { event: string; entry: ProjectHookEntry }[];
+  /** Whether the file holds no entry at all, so removing it loses nothing. */
+  isEmpty(content: string): boolean;
+  /** Where a hook script lands in the project, given its path relative to the plugin root. */
+  scriptPath(pluginName: string, hooksRelativePath: string): string;
+  /** The directory holding one plugin's copied scripts, which nothing else writes to. */
+  scriptDir(pluginName: string): string;
+}
 
 /**
  * A tool that writes its own marketplace registration, through its own CLI: driving the
@@ -129,7 +155,6 @@ export interface NativePluginsParams extends ProjectHooksDelivery {
   pluginManifestRelativePath: string | null;
   mcpRelativePath?: string;
   hooksRelativePath?: string;
-  hooksContentFormat?: HooksContentFormat;
   acceptsMcp?: boolean;
   /** The variable this tool expands to the installed plugin's directory, as written in a
    * hook or MCP command. Absent means nothing is substituted. */
@@ -227,7 +252,6 @@ export class PluginsCapability {
   readonly acceptsMcp: boolean;
   readonly mcpRelativePath: string;
   readonly hooksRelativePath: string;
-  readonly hooksContentFormat: HooksContentFormat;
   readonly hooksDestination: "plugin" | "project";
   /** Relative to the project root, or `null` when `hooksDestination` is `"plugin"`. */
   readonly projectHooksRelativePath: string | null;
@@ -267,7 +291,6 @@ export class PluginsCapability {
       this.acceptsMcp = params.acceptsMcp ?? false;
       this.mcpRelativePath = params.mcpRelativePath ?? DEFAULT_MCP_PATH;
       this.hooksRelativePath = params.hooksRelativePath ?? DEFAULT_HOOKS_PATH;
-      this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = params.hooksDestination ?? "plugin";
       this.projectHooksRelativePath = params.projectHooksRelativePath ?? null;
       this.projectHooksFormat = params.projectHooksFormat ?? null;
@@ -295,7 +318,6 @@ export class PluginsCapability {
       this.acceptsMcp = false;
       this.mcpRelativePath = DEFAULT_MCP_PATH;
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
-      this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = params.acceptsHooks
         ? (params.hooksDestination ?? "plugin")
         : "plugin";
@@ -321,7 +343,6 @@ export class PluginsCapability {
       this.acceptsMcp = false;
       this.mcpRelativePath = DEFAULT_MCP_PATH;
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
-      this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = "plugin";
       this.projectHooksRelativePath = null;
       this.projectHooksFormat = null;

@@ -21,7 +21,6 @@ import {
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 import { COPILOT_HOOKS } from "./hooks.js";
-import { flattenCopilotHooksShape } from "./hooks-format.js";
 
 const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
@@ -159,7 +158,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },
-      hooks: flatHooksArtifact(COPILOT_HOOKS.flat, { transform: flattenCopilotHooksShape }),
+      hooks: flatHooksArtifact(COPILOT_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

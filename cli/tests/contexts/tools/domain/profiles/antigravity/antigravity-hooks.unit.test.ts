@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/hooks-format.js";
+import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
 const format = antigravity.capabilities.plugins.projectHooksFormat as ProjectHooksFormat;
@@ -114,7 +114,7 @@ describe("antigravity's project hooks format", () => {
       const { content, warnings } = format.merge(null, telemetry, "aidd-telemetry");
 
       expect(Object.keys(parse(content)["aidd-telemetry"])).toEqual(["SessionStart"]);
-      expect(warnings).toEqual(["antigravity: unmapped event 'PostToolUse' skipped"]);
+      expect(warnings).toEqual(["unmapped event 'PostToolUse' skipped"]);
     });
 
     it("adds no key for a plugin with no event it maps", () => {

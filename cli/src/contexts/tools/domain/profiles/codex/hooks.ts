@@ -12,6 +12,9 @@ export const CODEX_HOOKS = {
     "Codex will not run this plugin's hooks until each one is trusted — approve the prompt " +
     "once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec " +
     "for a headless run. Until then, none of its hooks run and nothing says why.",
+  // Each item kept whole: Codex trusts a hook by its whole entry, and an entry stripped of
+  // `async` runs in the way of the session it was written to stay out of.
+  file: { wrapper: {}, entries: { shape: "matchers" } },
   flat: { scriptsDir: ".codex/hooks/", sharedFile: ".codex/hooks.json" },
   config: {
     outputPath: ".codex/hooks.json",

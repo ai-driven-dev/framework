@@ -245,7 +245,11 @@ describe("buildCopilotFlatContract()", () => {
   it("flattens a plugin's hooks declaration into the one-entry-per-event shape Copilot reads", () => {
     const hooks = supported(buildCopilotFlatContract().artifacts.hooks);
 
-    expect(hooks.hooksTransform?.(HOOKS_JSON)).toBe(
+    expect([hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared]).toStrictEqual([
+      ".github/hooks/aidd-dev.hooks.json",
+      false,
+    ]);
+    expect(hooks.hooksFile?.merge(null, HOOKS_JSON, "aidd-dev", (path) => path).content).toBe(
       `${JSON.stringify(
         {
           version: 1,

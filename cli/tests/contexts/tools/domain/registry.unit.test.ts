@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import type { ProjectHooksFormat } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import {
   type NativePluginsParams,
   PluginsCapability,
 } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
-import type { ProjectHooksFormat } from "../../../../src/contexts/tools/domain/hooks-format.js";
 import {
   getToolConfig,
   hasToolSignals,

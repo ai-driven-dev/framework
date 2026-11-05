@@ -8,12 +8,21 @@ import {
   type FlatHooksLoaderEntry,
   flatHooksPathWithLoaderEntry,
   genericFlatHooksFile,
-  genericFlatHooksScriptPath,
 } from "../../../../kernel/materialization/flat-paths.js";
 import type { ArtifactContract } from "../build-contract.js";
 import { HooksCapability } from "../capabilities/hooks-capability.js";
-import type { FlatHooksBridge } from "../capabilities/plugins-capability.js";
-import type { HooksContentFormat, ProjectHooksFormat } from "../hooks-format.js";
+import type { FlatHooksBridge, ProjectHooksFormat } from "../capabilities/plugins-capability.js";
+import {
+  type HooksFileFormat,
+  type HooksMergeTarget,
+  isHooksFileEmpty,
+  type LocatePluginPath,
+  mergeHooks,
+  pluginEntries,
+  pluginScriptDir,
+  pluginScriptPath,
+  unmergeHooks,
+} from "./hooks-merge.js";
 
 /** The hooks a plugin ships, the same for every tool: one manifest and the scripts beside it. */
 export const PLUGIN_HOOKS_SOURCE = {
@@ -37,7 +46,6 @@ export interface FlatHooksRoute {
 export interface ProjectHooksRoute {
   /** The hooks file as the plugin tree would hold it, relative to the plugin's own root. */
   readonly pluginFile: string;
-  readonly entries: HooksContentFormat;
   /** The project file every plugin's entries merge into. */
   readonly sharedFile: string;
   readonly scriptsDir: string;
@@ -55,6 +63,8 @@ export interface HooksDescriptor {
   readonly trustNotice?: string;
   /** A source event to the tool's events it fires on; an event absent here is skipped. */
   readonly eventMap?: Readonly<Record<string, readonly string[]>>;
+  /** How the tool's hooks file holds a plugin's entries; absent where none is written. */
+  readonly file?: HooksFileFormat;
   readonly flat?: FlatHooksRoute;
   readonly project?: ProjectHooksRoute;
   readonly config?: HooksConfig;
@@ -62,41 +72,68 @@ export interface HooksDescriptor {
   readonly bridgeRuntime?: { readonly asset: string; readonly path: string };
 }
 
-type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
-
-/** What a flat build does with a plugin's hooks file beyond copying its scripts. */
-export interface FlatHooksBehaviour {
-  /** Merges one plugin's hooks into the route's shared file. */
-  readonly merge?: SupportedArtifact["hooksMerge"];
-  /** Reshapes a plugin's own hooks file. */
-  readonly transform?: SupportedArtifact["hooksTransform"];
-  /** Generates the bridge a loader imports. */
-  readonly bridge?: FlatHooksBridge["generate"];
-}
+/** A merge of a tool whose hooks file no `HooksFileFormat` describes: it takes the plugin's
+ * raw hooks.json and places what it ships outside `hooks/` with `locate`. */
+export type HooksFileMerge = NonNullable<
+  Extract<ArtifactContract, { supported: true }>["hooksFile"]
+>["merge"];
 
 /** A native plugin tree keeps the hooks where, and as, the plugin authored them. */
 export function pluginTreeHooksArtifact(): ArtifactContract {
   return { supported: true, source: PLUGIN_HOOKS_SOURCE, path: (_plugin, rel) => rel };
 }
 
+/** A flat build's hooks: each plugin's scripts in a folder of its own, its entries merged into
+ * the route's shared file or written to a file of the plugin's own, or, for a loader, handed to
+ * the bridge generated for it. */
 export function flatHooksArtifact(
-  route: FlatHooksRoute,
-  behaviour: FlatHooksBehaviour = {}
+  descriptor: HooksDescriptor & { readonly flat: FlatHooksRoute },
+  bridge?: FlatHooksBridge["generate"],
+  ownMerge?: HooksFileMerge
 ): ArtifactContract {
+  const route = descriptor.flat;
   const { sharedFile, loaderEntry } = route;
-  const { merge, transform, bridge } = behaviour;
+  const { file } = descriptor;
   return {
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
     path: (plugin, rel) => flatHooksPath(route, plugin, rel),
-    ...(sharedFile !== undefined && merge !== undefined
-      ? { hooksMerge: merge, hooksMergeDest: (outDir: string) => `${outDir}/${sharedFile}` }
+    ...(ownMerge !== undefined && sharedFile !== undefined
+      ? { hooksFile: { path: () => sharedFile, shared: true, merge: ownMerge } }
       : {}),
-    ...(transform === undefined ? {} : { hooksTransform: transform }),
+    ...(file === undefined || ownMerge !== undefined
+      ? {}
+      : {
+          hooksFile: {
+            path: (plugin: string) => sharedFile ?? genericFlatHooksFile(route.scriptsDir, plugin),
+            shared: sharedFile !== undefined,
+            merge: (
+              existing: string | null,
+              pluginHooks: string,
+              plugin: string,
+              locate: LocatePluginPath
+            ) =>
+              mergeHooks(
+                existing,
+                pluginHooks,
+                plugin,
+                mergeTarget(descriptor, file, route),
+                locate
+              ),
+          },
+        }),
     ...(loaderEntry !== undefined && bridge !== undefined
       ? { skipHooksJson: true, hooksBridge: hooksBridge(loaderEntry, bridge) }
       : {}),
   };
+}
+
+function mergeTarget(
+  descriptor: HooksDescriptor,
+  file: HooksFileFormat,
+  route: { readonly scriptsDir: string }
+): HooksMergeTarget {
+  return { file, scriptsDir: route.scriptsDir, eventMap: descriptor.eventMap };
 }
 
 /** Where the bridge generated for one plugin lands: beside the loader's own module, renamed
@@ -120,9 +157,10 @@ function flatHooksPath(route: FlatHooksRoute, plugin: string, rel: string): stri
   if (route.loaderEntry !== undefined) {
     return flatHooksPathWithLoaderEntry(route.scriptsDir, route.loaderEntry, plugin, rel);
   }
-  const rest = rel.replace(/^hooks\//, "");
-  if (rest === `${plugin}.hooks.json`) return genericFlatHooksFile(route.scriptsDir, plugin);
-  return genericFlatHooksScriptPath(route.scriptsDir, plugin, rest);
+  if (rel === `${PLUGIN_HOOKS_SOURCE.scriptDir}/${plugin}.hooks.json`) {
+    return genericFlatHooksFile(route.scriptsDir, plugin);
+  }
+  return pluginScriptPath(route.scriptsDir, plugin, rel);
 }
 
 /** The capability the framework install reads to write the tool's own hooks file. */
@@ -169,21 +207,30 @@ export function flatHooksSupport(
 
 /** The plugins capability of a tool whose hooks `plugin install` merges into the project. */
 export function projectHooksSupport(
-  route: ProjectHooksRoute,
-  format: ProjectHooksFormat
+  descriptor: HooksDescriptor & {
+    readonly project: ProjectHooksRoute;
+    readonly file: HooksFileFormat;
+  }
 ): {
   readonly hooksRelativePath: string;
-  readonly hooksContentFormat: HooksContentFormat;
   readonly hooksDestination: "project";
   readonly projectHooksRelativePath: string;
   readonly projectHooksFormat: ProjectHooksFormat;
 } {
+  const route = descriptor.project;
+  const target = mergeTarget(descriptor, descriptor.file, route);
   return {
     hooksRelativePath: route.pluginFile,
-    hooksContentFormat: route.entries,
     hooksDestination: "project",
     projectHooksRelativePath: route.sharedFile,
-    projectHooksFormat: format,
+    projectHooksFormat: {
+      merge: (existing, pluginHooks, plugin) => mergeHooks(existing, pluginHooks, plugin, target),
+      unmerge: (existing, plugin) => unmergeHooks(existing, plugin, target),
+      contributedEntries: (content, plugin) => pluginEntries(content, plugin, target),
+      isEmpty: isHooksFileEmpty,
+      scriptPath: (plugin, rel) => pluginScriptPath(route.scriptsDir, plugin, rel),
+      scriptDir: (plugin) => pluginScriptDir(route.scriptsDir, plugin),
+    },
   };
 }
 

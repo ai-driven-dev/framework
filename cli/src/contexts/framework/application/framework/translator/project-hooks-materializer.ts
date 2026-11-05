@@ -87,7 +87,7 @@ export class ProjectHooksMaterializer {
           pluginName: dist.manifest.name,
           component: "hooks",
           toolId,
-          reason,
+          reason: `${toolId}: ${reason}`,
         })
       ),
       projectHooks: { entries, scripts },

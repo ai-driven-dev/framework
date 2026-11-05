@@ -24,7 +24,6 @@ import {
   OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
 } from "./cursor-paths.js";
 import { CURSOR_HOOKS } from "./hooks.js";
-import { mergeCursorFlatHooks } from "./hooks-format.js";
 
 function transformCursorAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
@@ -141,7 +140,7 @@ export function buildCursorFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },
-      hooks: flatHooksArtifact(CURSOR_HOOKS.flat, { merge: mergeCursorFlatHooks }),
+      hooks: flatHooksArtifact(CURSOR_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

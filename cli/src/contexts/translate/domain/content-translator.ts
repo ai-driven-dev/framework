@@ -17,7 +17,6 @@ import type {
 } from "../../tools/domain/models/plugin-install-notice.js";
 import type { ToolConfig } from "../../tools/domain/registry.js";
 import { isAiTool } from "../../tools/domain/registry.js";
-import { convertHooksFormat } from "./formats/cursor-hooks.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
 import type { PluginComponentFile, PluginDistribution } from "./plugin-distribution.js";
 import type { PluginTranslationSkip, ReadonlySkipList } from "./plugin-translation-skip.js";
@@ -139,10 +138,11 @@ export class PluginContentTranslator {
     for (const file of dist.files) {
       const translated = this.translateFile(file, tool);
       if (translated === null) continue;
-      const hooked = this.maybeConvertHooks(file.relativePath, translated.content, tool);
       // Prose is rewritten, an artefact is carried byte for byte: a tool's own rewrite leaving
       // a script intact is luck rather than a guarantee.
-      const rewritten = isProse(file.relativePath) ? tool.rewriteContent(hooked) : hooked;
+      const rewritten = isProse(file.relativePath)
+        ? tool.rewriteContent(translated.content)
+        : translated.content;
       // The plugin-root variable is a path, not prose: a hook manifest and an mcp manifest both
       // name one, in JSON. Gating it on prose left every tool but Claude installing a hook that
       // points at a variable its own runtime never expands.
@@ -193,11 +193,6 @@ export class PluginContentTranslator {
     const { pluginRootToken } = tool.capabilities.plugins;
     if (pluginRootToken === null) return content;
     return rewritePluginRootToken(content, pluginRootToken);
-  }
-
-  private maybeConvertHooks(sourcePath: string, content: string, tool: AiTool<HasPlugins>): string {
-    if (sourcePath !== "hooks/hooks.json") return content;
-    return convertHooksFormat(content, tool.capabilities.plugins.hooksContentFormat);
   }
 
   private translateFile(

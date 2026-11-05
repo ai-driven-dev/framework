@@ -37,16 +37,6 @@ export const JSCPD_ARGS = [
  */
 export const BASELINE = [
   {
-    pair: "codex/hooks-format.ts <> cursor/hooks-format.ts",
-    clones: 1,
-    reason: "each profile merges a plugin's hooks into the tool's file with its own loop",
-  },
-  {
-    pair: "copilot/hooks-format.ts <> cursor/hooks-format.ts",
-    clones: 1,
-    reason: "each profile flattens a matcher group into entries with its own loop",
-  },
-  {
     pair: "kilo/kilo-hooks-bridge.ts <> opencode/opencode-hooks-bridge.ts",
     clones: 1,
     reason: "each bridge parses a hook command into its script and arguments on its own",

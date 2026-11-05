@@ -19,9 +19,9 @@ import type {
   GlobalFiles,
   NativeActivation,
   PluginsCapability,
+  ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
-import type { ProjectHooksFormat } from "./hooks-format.js";
 
 /** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by
  * translate, because it is read off a tool's own plugins capability — a tool's build mode is
