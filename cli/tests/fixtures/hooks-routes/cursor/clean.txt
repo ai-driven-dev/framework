@@ -13,7 +13,7 @@ machine cursor aidd-context scope=user: 0 hook files
     {
       "event": "postToolUse",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "1cec3b98fe3b9942a52a02ded54152ba"
+      "digest": "1f14bda3990fbddf799259e5ed14b037"
     }
   ],
   "scripts": {}

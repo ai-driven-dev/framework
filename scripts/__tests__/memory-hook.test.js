@@ -125,8 +125,10 @@ function answerOf(stdout) {
   return { level: 1, text };
 }
 
-// Hosts where a block after a write reaches the model; elsewhere the adapter informs instead.
-const BLOCKS = new Set(["claude", "codex", "copilot"]);
+// Hosts whose captured file write carries the whole file and where a block reaches the model.
+// Codex and Copilot write through a patch, whose touched lines the event does not carry, so
+// their findings inform; Cursor, OpenCode and Kilo inform whatever the level.
+const BLOCKS = new Set(["claude"]);
 
 /** Writes `text` at `file` in a full bank, then runs the host's write event for it. */
 function afterWrite(host, file, text, options) {
@@ -135,7 +137,7 @@ function afterWrite(host, file, text, options) {
 }
 
 for (const host of HOSTS) {
-  test(`${host}: a write leaving {{x}} in vcs.md requires the fix, naming line, rule, excerpt and fix`, () => {
+  test(`${host}: a write leaving {{x}} in vcs.md names line, rule, excerpt and fix, and blocks where the write carries the file`, () => {
     const { status, stdout } = afterWrite(host, `${MEMORY}/vcs.md`, "# VCS\n\nBranch {{x}} here.\n");
     assert.equal(status, 0);
     const answer = answerOf(stdout);
@@ -147,7 +149,7 @@ for (const host of HOSTS) {
     const { stdout } = afterWrite(host, `${MEMORY}/vcs.md`, `# VCS\n\n${words(31)}\n`);
     const answer = answerOf(stdout);
     assert.equal(answer.level, 1, stdout);
-    assert.match(answer.text, new RegExp(`^${MEMORY}/vcs\\.md:3 M1 => prose line of 31 words, over 25: `, "mu"));
+    assert.match(answer.text, new RegExp(`^${MEMORY}/vcs\\.md:3 M1 "31 words, over 25" => make it a table, a list or a heading$`, "mu"));
   });
 
   test(`${host}: a file written under memory/kpi/ informs, naming its move, and never blocks`, () => {
@@ -193,6 +195,14 @@ for (const host of HOSTS) {
     const root = project({ "src/x.md": `# X\n\n${words(31)}\n` });
     const read = touched(host, writePayload(host, root, "src/x.md"), root);
     assert.deepEqual(read, { status: 0, stdout: "", paths: "" });
+  });
+
+  test(`${host}: a rule that throws answers nothing`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nBranch {{x}} here.\n" });
+    const preload = path.join(tempDir("memory-hook-rule-throws-"), "throw.js");
+    const rules = path.join(path.dirname(hookFor(host)), "lib/memory-rules.cjs");
+    fs.writeFileSync(preload, `const { RULES } = require(${JSON.stringify(rules)});\nRULES.find((rule) => rule.id === "M3").check = () => { throw new Error("boom"); };\n`);
+    assert.deepEqual(run(host, writePayload(host, root, `${MEMORY}/vcs.md`), { preload }), { status: 0, stdout: "", stderr: "" });
   });
 
   test(`${host}: garbage, empty stdin and an unknown event answer nothing`, () => {
@@ -246,10 +256,17 @@ test("a shell command writing a bank file reaches that file", () => {
   assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 "41 commits" => name the thing, not how many$/mu);
 });
 
-test("a shell write of two bank files groups their errors by rule and folder", () => {
+// A shell write carries no touched lines: its findings inform, grouped, and never block.
+test("a shell write of two bank files informs, its errors grouped by rule and folder", () => {
   const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n", [`${MEMORY}/testing.md`]: "# T\n\nTBD\n" });
   const { stdout } = run("claude", shellPayload("claude", root, `sed -i 's/x/TBD/' ${MEMORY}/vcs.md ${MEMORY}/testing.md`));
-  assert.deepEqual(answerOf(stdout), { level: 2, text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/* "TBD" => fill it or remove it' });
+  assert.deepEqual(answerOf(stdout), { level: 1, text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/* "TBD" => fill it or remove it' });
+});
+
+test("a shell write of one bank file groups its errors under that file's name", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n\nTBD again\n" });
+  const { stdout } = run("claude", shellPayload("claude", root, `sed -i 's/x/TBD/' ${MEMORY}/vcs.md`));
+  assert.deepEqual(answerOf(stdout), { level: 1, text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "TBD" => fill it or remove it' });
 });
 
 test("a shell read of a bank file just modified reports nothing", () => {
@@ -264,14 +281,35 @@ test("a shell write naming the bank skips a file it did not just change", () => 
   assert.equal(run("claude", shellPayload("claude", root, `echo x > ${MEMORY}/other.txt.bak`)).stdout, "");
 });
 
-// Contract rule 3: every error of a written file, the ones it already held included. An Edit
-// arrives through the adapter as its file alone, with no fragment to scope lines by.
-test("an Edit reports every error of the file it wrote", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\nNow 41 commits.\n` });
-  const payload = { ...writePayload("claude", root, `${MEMORY}/vcs.md`), tool_name: "Edit" };
-  payload.tool_input = { file_path: path.join(root, MEMORY, "vcs.md"), old_string: "Kept.", new_string: "Now 41 commits." };
-  const lines = answerOf(run("claude", payload).stdout).text.split("\n");
-  assert.deepEqual(lines.slice(1).map((line) => line.split(" ")[0] + " " + line.split(" ")[1]), [`${MEMORY}/vcs.md:3 M1`, `${MEMORY}/vcs.md:5 M2`]);
+// Contract rule 3: only what this write produced. An Edit arrives through the adapter as its file
+// alone, with no text to find its lines by, so the file's errors inform, grouped, and never block.
+function claudeEdit(root, file) {
+  const payload = { ...writePayload("claude", root, file), tool_name: "Edit" };
+  payload.tool_input = { file_path: path.join(root, file), old_string: "Kept.", new_string: "Short." };
+  return payload;
+}
+
+test("an Edit to a file holding standing errors informs, grouped under the file, and never blocks", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n\nShort.\n\nOwner TBD\n" });
+  assert.deepEqual(answerOf(run("claude", claudeEdit(root, `${MEMORY}/vcs.md`)).stdout), {
+    level: 1,
+    text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "TBD" => fill it or remove it',
+  });
+});
+
+test("an Edit groups a file's long prose lines into one M1 line, whatever their lengths", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\n${words(40)}\n` });
+  assert.deepEqual(answerOf(run("claude", claudeEdit(root, `${MEMORY}/vcs.md`)).stdout), {
+    level: 1,
+    text: "aidd-context: 2 errors, 0 warnings\nM1 ×2 in aidd_docs/memory/vcs.md => make it a table, a list or a heading",
+  });
+});
+
+test("an Write covers the whole file: every error of it counts, at its level", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\nTBD\n` });
+  const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
+  assert.equal(answer.level, 2);
+  assert.deepEqual(answer.text.split("\n").slice(1).map((line) => line.split(" ").slice(0, 2).join(" ")), [`${MEMORY}/vcs.md:3 M1`, `${MEMORY}/vcs.md:5 M3`]);
 });
 
 test("warnings are capped at ten, the count line keeping the total", () => {
@@ -344,13 +382,13 @@ test("the entry and its libraries require only node:fs, node:path and their own 
   }
 });
 
-test("hooks.json runs the one entry, within 5 s, at session start and after a write, and its matcher covers every host's shell tool", () => {
+test("hooks.json runs the one entry, within 5 s, at session start and after a write, and its matcher names only the tools an adapter reads", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
   const command = "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook";
   for (const event of ["SessionStart", "PostToolUse"]) {
     assert.equal(hooks[event][0].hooks[0].command, command, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
   }
-  const names = hooks.PostToolUse[0].matcher.split("|");
-  for (const name of ["Write", "Edit", "Bash", "Shell", "bash"]) assert.ok(names.includes(name), name);
+  // Only the tools an adapter reads: MultiEdit is no Claude Code tool, and no adapter reads PowerShell.
+  assert.deepEqual(hooks.PostToolUse[0].matcher.split("|").sort(), ["Bash", "Edit", "Shell", "Write", "bash"]);
 });

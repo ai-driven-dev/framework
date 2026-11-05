@@ -125,6 +125,21 @@ test("deadPaths: the repository's root keeps the containment rules: a link out o
   }
 });
 
+// A worktree's `.git` is a regular file and counts; a `.git` that is a link, dangling or not, is no repository.
+test("deadPaths: a .git that is a link is not the repository's root", () => {
+  const elsewhere = fs.mkdtempSync(path.join(os.tmpdir(), "common-rules-git-"));
+  try {
+    for (const target of [elsewhere, path.join(elsewhere, "gone")]) {
+      inProject({ "tools/x.cfg": "", "pkg/tools/own.cfg": "" }, (repo) => {
+        fs.symlinkSync(target, path.join(repo, ".git"));
+        assert.deepEqual(deadPaths("`tools/x.cfg`\n", path.join(repo, "pkg")), [{ line: 1, path: "tools/x.cfg" }], target);
+      });
+    }
+  } finally {
+    fs.rmSync(elsewhere, { recursive: true, force: true });
+  }
+});
+
 test("deadPaths: .git is never an anchor", () => {
   inProject({ ".git/HEAD": "" }, (root) => {
     assert.deepEqual(deadPaths("`.git/gone.txt`\n", root), []);
@@ -418,6 +433,11 @@ test("formatFindings: a group prints an excerpt only when every member shares it
     ],
   });
   assert.equal(uniform, 'p: 2 errors, 0 warnings\nC4 ×2 in ui/* "#FF6B3514" => use a token');
+});
+
+test("formatFindings: a group within one file names that file", () => {
+  const output = formatFindings("p", { reached: [{ file: "d/a.md", line: 1, rule: "R", fix: "f" }, { file: "d/a.md", line: 4, rule: "R", fix: "f" }] });
+  assert.equal(output, "p: 2 errors, 0 warnings\nR ×2 in d/a.md => f");
 });
 
 test("formatFindings: a group of root-level files prints in *", () => {
