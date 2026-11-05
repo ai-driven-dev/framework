@@ -42,6 +42,7 @@ const TOOL_FILES = {
   codex: "AGENTS.md",
   cursor: "AGENTS.md",
   opencode: "AGENTS.md",
+  antigravity: "AGENTS.md",
   copilot: ".github/copilot-instructions.md",
 };
 

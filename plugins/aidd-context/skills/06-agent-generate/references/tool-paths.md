@@ -11,8 +11,9 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | OpenCode       | `.opencode/agents/<name>.md`     | markdown + frontmatter |
 | GitHub Copilot | `.github/agents/<name>.agent.md` | markdown + frontmatter |
 | Codex CLI      | `.codex/agents/<name>.toml`      | TOML (converted)       |
+| Antigravity CLI | `.agents/agents/<name>/agent.md` | markdown + frontmatter |
 
-Agents are supported on all five tools.
+Agents are supported on all six tools.
 
 User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
 
@@ -29,12 +30,13 @@ The canonical agent carries `name` and `description` and no tool list: every hos
 | OpenCode V2    | `description`, `mode: subagent`, optional `model` as `provider/model#variant`. No `name`: the file path is the ID |
 | GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `include-custom-instructions` |
 | Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
+| Antigravity CLI | `name`, `description`, `model: inherit` |
 
 Write OpenCode agents for V2 only: V2 still loads V1 definitions, and treats their `tools` and `permission` fields as legacy.
 
 Copilot subagents skip `AGENTS.md` and other repository instructions unless `include-custom-instructions: true`; set it by default.
 
-Sources: [Claude](https://code.claude.com/docs/en/sub-agents#frontmatter-reference), [Cursor](https://cursor.com/docs/subagents#file-format), [OpenCode V2](https://opencode.ai/v2/docs/agents#options), [V1 compatibility](https://opencode.ai/v2/docs/migrate-v1), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Codex](https://developers.openai.com/codex/subagents#custom-agent-file-schema).
+Sources: [Claude](https://code.claude.com/docs/en/sub-agents#frontmatter-reference), [Cursor](https://cursor.com/docs/subagents#file-format), [OpenCode V2](https://opencode.ai/v2/docs/agents#options), [V1 compatibility](https://opencode.ai/v2/docs/migrate-v1), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Codex](https://developers.openai.com/codex/subagents#custom-agent-file-schema), [Antigravity](https://antigravity.google/docs/subagents).
 
 ## Codex TOML conversion
 
@@ -45,6 +47,8 @@ Codex agents are TOML, not markdown. Convert:
 
 ## Detect (which tools are installed)
 
+Resolve shared paths from declared tools or the AIDD manifest; otherwise confirm the host.
+
 | Signal                            | Tool(s)                               |
 | --------------------------------- | ------------------------------------- |
 | `.claude/` or `CLAUDE.md`         | Claude Code                           |
@@ -52,7 +56,8 @@ Codex agents are TOML, not markdown. Convert:
 | `.opencode/`                      | OpenCode                              |
 | `.codex/`                         | Codex CLI                             |
 | `.github/copilot-instructions.md` | GitHub Copilot                        |
-| `AGENTS.md`                       | Cursor, OpenCode, or Codex (list all) |
+| `AGENTS.md`                       | Cursor, OpenCode, Codex or Antigravity (confirm host) |
+| `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
 
 ## Write targets
 
