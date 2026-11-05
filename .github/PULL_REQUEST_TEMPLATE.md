@@ -38,9 +38,3 @@ and bold the opening words of each step.
 <!-- "Closes #N" auto-closes the issue on merge; "Refs #N" links without closing. Delete this whole section if there is no issue. -->
 
 Closes #
-
-## ✅ I certify
-
-<!-- The author ticks these on GitHub before merge. Not for the AI to fill or delete - these are the checks no CI job can make. -->
-
-- [ ] **I DO CERTIFY I READ EACH LINE OF THE PULL REQUEST BECAUSE I AM A SOFTWARE ENGINEER, NOT A AI PUPPY.**
