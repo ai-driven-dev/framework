@@ -32,10 +32,10 @@ aidd-ui: <n> errors, <m> warnings
 
 - The first line counts the errors, those a hook reports as reached included, then the warnings.
 - An error line carries its rule, the offending text when there is one, and the `=> fix` that clears it; the fix names the engine command when the engine owns the write. `<engine>` in a fix is this engine's path.
-- Grouped errors are those of the files a turn reached without writing them, and those of a written file whose changed lines are unknown: the same rule, fix and folder make one `×<count>` line, which names the file when every member is in it. `validate` groups nothing.
+- Grouped errors are the new ones a write left in files it did not write, and those of a written file whose changed lines are unknown: the same rule, fix and folder make one `×<count>` line, which names the file when every member is in it. `validate` groups nothing.
 - A warning line also carries its message. `validate` prints every error and every warning; the hook, at most ten warnings.
 - Rules `U1` (a file that cannot be read), `U2` (a check that failed) and `U3` (a design system written for another format) belong to no family.
-- After a write the hook prints only what the write produced: the errors and warnings on the lines it added or changed in the written files, or, when those lines are unknown, the written file's errors grouped. Nothing of another file or of a deleted one. At Stop it prints the errors of the files the turn listed, then those of what they reach, or every other error once the turn deleted a file or a shell command marked it; no warning.
+- After a write the hook prints what the write produced: the errors and warnings on the lines it added or changed in the written files, or, when those lines are unknown, the written file's errors grouped; then, grouped and once per turn, the errors new in other files. New means absent from the errors the project held at the session's start or the last turn's end. At Stop it asks once for the errors on the lines the turn changed, net, past those; never an error with no line, and no warning.
 
 ## Fingerprint
 

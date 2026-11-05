@@ -72,6 +72,7 @@ beforeEach(() => {
 afterEach(() => {
   removeTmp(tmp);
   fs.rmSync(markPath(sid), { force: true });
+  fs.rmSync(`${markPath(sid)}.base`, { force: true });
 });
 
 function breakOnePerFamily() {
@@ -101,9 +102,16 @@ const postToolUse = (filePath) => {
   const content = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
   return JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Write", tool_input: { file_path: filePath, content }, tool_response: {} });
 };
+/** An Edit replacing `from` with `to` in `file`, made on disk as the tool makes it. */
+const editTool = (file, from, to) => {
+  edit(tmp, file, from, to);
+  return JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Edit", tool_input: { file_path: path.join(tmp, file), old_string: from, new_string: to }, tool_response: {} });
+};
 const shell = (command) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Bash", tool_input: { command }, tool_response: {} });
 const marked = () => fs.existsSync(markPath(sid));
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
+/** Starts the session: the hook notes the errors the project holds now, which no turn then answers for. */
+const begin = () => hook(JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, session_id: sid, source: "startup" }));
 const stop = (active = false) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active });
 const silent = { code: 0, out: "", err: "" };
 /** The one text every host gets: the count line, then the lines. */
@@ -353,32 +361,51 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(errorsText([COLOUR])));
     });
 
-    it("names nothing of the record citing the written one after the write, and names it at Stop", () => {
+    it("tells the error the write left in the record citing the written one, and holds no turn for it", () => {
+      begin();
       edit(tmp, RECORD, "kind: atom", "kind: composition");
-      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
-      assert.deepEqual(hook(stop()), finish(errorsText([`${UI}/components/search-field.md R6 "button" => use only elements of its own level or lower`])));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([`${UI}/components/search-field.md R6 "button" => use only elements of its own level or lower`])));
+      assert.deepEqual(hook(stop()), silent);
     });
 
-    it("names the written record's errors after the write, and its render's at Stop", () => {
+    it("tells the written record's errors and its render's after the write, the render's fix lying elsewhere", () => {
+      begin();
       edit(tmp, RECORD, "variants: [primary, secondary]", "variants: [primary, secondary, ghost]");
       edit(tmp, RECORD, "## Usage\n\nAny action a person starts; never for navigation.\n\n", "");
-      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([R17])));
-      assert.deepEqual(hook(stop()), finish(errorsText([R17, V2_GHOST])));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([R17, V2_GHOST])));
     });
 
-    it("names the code's colour errors at Stop after a write to code-debt.json, which every code file reads", () => {
+    it("tells an error elsewhere once per turn, however many writes leave it", () => {
+      begin();
+      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      hook(postToolUse(path.join(tmp, RECORD)));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
+    });
+
+    it("tells nothing elsewhere without a baseline, nothing then proving an error new", () => {
+      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
+    });
+
+    it("tells nothing elsewhere the session started with", () => {
+      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      begin();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
+    });
+
+    it("tells the code's colour errors after a write to code-debt.json, which every code file reads", () => {
+      begin();
       colourInCode();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "code-debt.json"))), silent);
-      assert.deepEqual(hook(stop()), finish(errorsText([COLOUR])));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "code-debt.json"))), claudeFeedback(errorsText([COLOUR])));
     });
 
-    it("names the written tokens' errors after the write, and every other at Stop, every record reading them", () => {
+    it("tells the written tokens' errors, then those of every record reading them", () => {
+      begin();
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(errorsText([TOKENS_FAILURE])));
-      assert.deepEqual(hook(stop()), finish(errorsText([TOKENS_FAILURE, BRAND_FAILURE, DIALOG_FAILURE])));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(errorsText([TOKENS_FAILURE, BRAND_FAILURE, DIALOG_FAILURE])));
     });
 
-    describe("the reached errors are grouped at Stop, the written ones are not", () => {
+    describe("the errors elsewhere are grouped, the written ones are not", () => {
       const GROUP = `R17 ×3 in ${UI}/components/* => add a "## Usage" section saying when to use it and when not`;
       const usageless = () => {
         propose(tmp, SEARCH, DIALOG);
@@ -388,29 +415,24 @@ describe("aidd-ui validator entries", () => {
       };
       const T4 = (name) => `${TOKENS} T4 "${name}" => set the unit to px or rem`;
 
-      it("groups by rule, fix and folder the errors of the files a shared file reaches", () => {
+      it("groups by rule, fix and folder the errors a write left in other files", () => {
+        begin();
         usageless();
-        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), silent);
-        assert.deepEqual(hook(stop()), finish(text(3, 0, [GROUP])));
+        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(text(3, 0, [GROUP])));
       });
 
       it("prints each error of the written files on its own line, beside the groups", () => {
+        begin();
         usageless();
         editTokens(tmp, (tree) => {
           tree.space.md.$value = { value: 1, unit: "em" };
           tree.border.thin.$value = { value: 1, unit: "em" };
         });
-        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(text(2, 0, [T4("space.md"), T4("border.thin")])));
-        assert.deepEqual(hook(stop()), finish(text(5, 0, [T4("space.md"), T4("border.thin"), GROUP])));
+        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(text(5, 0, [T4("space.md"), T4("border.thin"), GROUP])));
       });
     });
 
     describe("an edit answers for the lines it added or changed", () => {
-      const editTool = (file, from, to) => {
-        edit(tmp, file, from, to);
-        return JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Edit", tool_input: { file_path: path.join(tmp, file), old_string: from, new_string: to }, tool_response: {} });
-      };
-
       it("hands back the errors of its lines only, not those the file already held", () => {
         littering(2, 0);
         const input = editTool(RENDER, "</body>", '<p style="color: #111111">x</p>\n</body>');
@@ -463,51 +485,81 @@ describe("aidd-ui validator entries", () => {
   });
 
   describe("E7 Stop", () => {
-    it("blocks once after a write under aidd_docs/ui/, with the errors of what it reached as the reason", () => {
-      breakOnePerFamily();
-      hook(postToolUse(path.join(tmp, BRAND)));
-      assert.deepEqual(hook(stop()), finish(errorsText([BRAND_FAILURE])));
+    it("holds the turn once on the errors on the lines its writes changed", () => {
+      begin();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
+      assert.deepEqual(hook(stop()), finish(errorsText([literal(28)])));
     });
 
-    it("blocks on every error once a shell command also marked the turn, whatever the writes reached", () => {
-      breakOnePerFamily();
-      hook(postToolUse(path.join(tmp, BRAND)));
-      hook(shell(`node ${ENGINE} tokens ${tmp}`));
-      assert.deepEqual(hook(stop()), finish(errorsText([BRAND_FAILURE, TOKENS_FAILURE, DIALOG_FAILURE])));
-    });
-
-    it("blocks on every error when the mark names no file", () => {
-      breakOnePerFamily();
-      fs.mkdirSync(stateFolder(), { recursive: true, mode: 0o700 });
-      fs.writeFileSync(markPath(sid), "", { mode: 0o600 });
-      assert.deepEqual(hook(stop()), finish(errorsText(FAILURES)));
-    });
-
-    it("blocks with every error of the listed files, none cut, and no warning", () => {
+    it("holds with every error of the changed lines, none cut, and no warning", () => {
+      begin();
       littering(12, 3);
       hook(postToolUse(path.join(tmp, RENDER)));
       assert.deepEqual(hook(stop()), finish(errorsText(range(28, 12).map(literal))));
     });
 
-    it("groups the errors outside the listed files when a shell command left the turn unknown", () => {
-      propose(tmp, SEARCH, DIALOG);
-      for (const [file, when] of [[BUTTON, "Any action a person starts; never for navigation."], [SEARCH, "Searching a list; never for a form field."], [DIALOG, "A decision that blocks the page."]]) edit(tmp, file, `## Usage\n\n${when}\n\n`, "");
-      hook(shell(`node ${ENGINE} tokens ${tmp}`));
-      assert.deepEqual(hook(stop()), finish(text(3, 0, [`R17 ×3 in ${UI}/components/* => add a "## Usage" section saying when to use it and when not`])));
+    it("never holds on an error with no line, which no line proves the turn's: the check holds it", () => {
+      begin();
+      breakOnePerFamily();
+      hook(postToolUse(path.join(tmp, BRAND)));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("holds nothing for a shell command, which proves no line, and tells what it left once", () => {
+      begin();
+      breakOnePerFamily();
+      assert.deepEqual(hook(shell(`node ${ENGINE} tokens ${tmp}`)), claudeFeedback(errorsText(FAILURES)));
+      assert.deepEqual(hook(shell(`node ${ENGINE} tokens ${tmp}`)), silent);
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("holds a whole-file write only past the errors the baseline counts", () => {
+      littering(2, 0);
+      begin();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
+      assert.deepEqual(hook(stop()), finish(errorsText([literal(30)])));
+    });
+
+    it("holds nothing for a whole-file write without a baseline, nothing proving its lines new", () => {
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("holds nothing for a line the turn changed and changed back", () => {
+      littering(1, 0);
+      const line = '<p style="color: #000000">x</p>';
+      hook(editTool(RENDER, line, "<p>x</p>"));
+      hook(editTool(RENDER, "<p>x</p>", line));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("asks once: the turn end it held takes the errors it asked for into the baseline", () => {
+      begin();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
+      hook(stop());
+      hook(postToolUse(path.join(tmp, RENDER)));
+      assert.deepEqual(hook(stop()), silent);
     });
 
     it("lets the turn end on the repeated Stop, the one it asked for", () => {
-      breakOnePerFamily();
-      hook(postToolUse(path.join(tmp, BRAND)));
+      begin();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
       hook(stop());
       assert.deepEqual(hook(stop(true)), silent);
     });
 
-    it("ends the forced turn even when that turn writes a UI file again", () => {
-      breakOnePerFamily();
-      hook(postToolUse(path.join(tmp, BRAND)));
+    it("ends the forced turn even when that turn writes an error again", () => {
+      begin();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
       hook(stop());
-      hook(postToolUse(path.join(tmp, BRAND)));
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
       assert.deepEqual(hook(stop(true)), silent);
     });
 
@@ -532,11 +584,19 @@ describe("aidd-ui validator entries", () => {
       assert.equal(fs.readFileSync(target, "utf8"), "keep");
     });
 
-    it("keeps the mark in <tmpdir>/aidd-hooks-<uid>/aidd-ui/<session>, one watched path per line", () => {
+    it("keeps the mark in <tmpdir>/aidd-hooks-<uid>/aidd-ui/<session>, the turn's net changed lines in it", () => {
       const temp = path.join(tmp, "temp");
       fs.mkdirSync(temp);
-      hook(postToolUse(path.join(tmp, BRAND)), temp);
-      assert.equal(fs.readFileSync(markPath(sid, temp), "utf8"), `${BRAND}\n`);
+      hook(editTool(BRAND, "Analysts.", "Analysts and buyers."), temp);
+      assert.deepEqual(JSON.parse(fs.readFileSync(markPath(sid, temp), "utf8")), [[`+${JSON.stringify([BRAND, "Analysts and buyers."])}`, 1], [`+${JSON.stringify([BRAND, "Analysts."])}`, -1]]);
+    });
+
+    it("keeps the baseline beside the mark, the errors the session started with counted by file, rule and excerpt", () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      littering(2, 0);
+      hook(JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, session_id: sid, source: "startup" }), temp);
+      assert.deepEqual(JSON.parse(fs.readFileSync(`${markPath(sid, temp)}.base`, "utf8")), [[JSON.stringify([RENDER, "V4", "#000000"]), 2]]);
     });
 
     it("keeps its folders to their owner, the mark to its owner alone", { skip: process.platform === "win32" }, () => {
@@ -547,11 +607,18 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual([mode(path.dirname(stateFolder(temp))), mode(stateFolder(temp)), mode(markPath(sid, temp))], [0o700, 0o700, 0o600]);
     });
 
-    it("marks a shell command that may have written any file with the line unknown", () => {
+    it("marks a shell command that may have written any file, with no changed line", () => {
       const temp = path.join(tmp, "temp");
       fs.mkdirSync(temp);
       hook(shell(`node ${ENGINE} tokens ${tmp}`), temp);
-      assert.equal(fs.readFileSync(markPath(sid, temp), "utf8"), "unknown\n");
+      assert.equal(fs.readFileSync(markPath(sid, temp), "utf8"), "[]");
+    });
+
+    it("reads a mark it cannot parse as one with no changed line", () => {
+      begin();
+      littering(1, 0);
+      fs.writeFileSync(markPath(sid), "unknown\n", { mode: 0o600 });
+      assert.deepEqual(hook(stop()), silent);
     });
 
     for (const level of ["the hooks folder", "the plugin's folder"]) {
@@ -577,8 +644,8 @@ describe("aidd-ui validator entries", () => {
     });
 
     it("consumes the turn mark: a later Stop without a new write is silent", () => {
-      breakOnePerFamily();
-      hook(postToolUse(path.join(tmp, BRAND)));
+      littering(1, 0);
+      hook(editTool(RENDER, "</body>", '<p style="color: #111111">x</p>\n</body>'));
       hook(stop());
       assert.deepEqual(hook(stop()), silent);
     });
@@ -595,8 +662,9 @@ describe("aidd-ui validator entries", () => {
     });
 
     it("stays silent at Stop once the problems are fixed", () => {
-      breakOnePerFamily();
-      hook(postToolUse(path.join(tmp, BRAND)));
+      begin();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
       writeProject(tmp);
       assert.deepEqual(hook(stop()), silent);
     });
@@ -611,6 +679,36 @@ describe("aidd-ui validator entries", () => {
       breakOnePerFamily();
       hook(JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_name: "Write", tool_input: { file_path: path.join(tmp, BRAND) }, tool_response: {} }));
       assert.deepEqual(hook(JSON.stringify({ hook_event_name: "Stop", cwd: tmp })), silent);
+    });
+  });
+
+  // Stop is the one answer that keeps the person waiting: it names what the turn produced, never
+  // an error the project held before the turn began.
+  describe("E13 Stop never holds the turn on a standing error", () => {
+    for (const command of [`node ${ENGINE} validate ${tmp}`, `node ${ENGINE} impact button --root ${tmp}`, `node ${ENGINE} publish button --root ${tmp}`]) {
+      it(`does not mark the turn when the engine only reads: ${command.replace(tmp, "<root>").replace(ENGINE, "aidd-ui.cjs")}`, () => {
+        breakOnePerFamily();
+        assert.deepEqual(hook(shell(command)), silent);
+        assert.deepEqual(hook(stop()), silent);
+      });
+    }
+
+    it("ends the turn when an edit added a clean line to a file already holding errors", () => {
+      littering(2, 0);
+      hook(editTool(RENDER, "</body>", "<p>x</p>\n</body>"));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("ends the turn when a written record reaches a render already holding errors", () => {
+      littering(2, 0);
+      hook(editTool(BUTTON, "Any action a person starts; never for navigation.", "Any action a person starts, never for navigation."));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("still holds the turn on the error an edit added beside the standing ones", () => {
+      littering(2, 0);
+      hook(editTool(RENDER, "</body>", '<p style="color: #111111">x</p>\n</body>'));
+      assert.deepEqual(hook(stop()), finish(errorsText([`${RENDER}:30 V4 "#111111" => replace it with a token`])));
     });
   });
 
@@ -669,24 +767,27 @@ describe("aidd-ui validator entries", () => {
     });
 
     // A patch that deletes a file lists it like one it writes; nothing on disk says what cited it.
-    it("names nothing of a file the write deleted, and at Stop what the records citing it lost", () => {
+    it("tells, after a write that deleted a file, what the records citing it lost, and holds no turn for it", () => {
+      neutral("SessionStart");
       fs.rmSync(path.join(tmp, BUTTON));
       const citer = new RegExp(`R6 ×2 in ${UI}/components/\\* \\\\"button\\\\" => remove it from uses`);
-      assert.deepEqual(write([BUTTON]), silent);
-      assert.match(neutral("Stop").out, citer);
-    });
-
-    it("continues the turn once at Stop after a write, through continueTurn", () => {
-      breakOnePerFamily();
-      write([BRAND]);
-      assert.deepEqual(neutral("Stop"), continues(errorsText([BRAND_FAILURE])));
+      assert.match(write([BUTTON]).out, citer);
       assert.deepEqual(neutral("Stop"), silent);
     });
 
-    it("marks the turn for a command that runs the engine, which names no file", () => {
+    it("continues the turn once at Stop on the errors of the lines a write added, through continueTurn", () => {
+      littering(1, 0);
+      neutral("PostToolUse", { files: [{ path: path.join(tmp, RENDER), written: '<p style="color: #000000">x</p>', replaced: "" }] });
+      assert.deepEqual(neutral("Stop"), continues(errorsText([literal(28)])));
+      assert.deepEqual(neutral("Stop"), silent);
+    });
+
+    it("tells what a command that runs the engine left, which names no file, and holds no turn for it", () => {
+      neutral("SessionStart");
       breakOnePerFamily();
-      assert.deepEqual(neutral("PostToolUse", { command: `node ${ENGINE} tokens` }), silent);
-      assert.deepEqual(neutral("Stop"), continues(errorsText(FAILURES)));
+      assert.deepEqual(neutral("PostToolUse", { command: `node ${ENGINE} tokens` }), informs(errorsText(FAILURES)));
+      assert.equal(marked(), true);
+      assert.deepEqual(neutral("Stop"), silent);
     });
 
     it("does not mark the turn for a command that only reads", () => {
@@ -736,14 +837,18 @@ describe("aidd-ui validator entries", () => {
     const ENGINE_COMMANDS = [
       ["runs the engine", `node ${ENGINE} tokens ${tmp}`],
       ["runs the engine installed flat", "node .claude/hooks/aidd-ui/aidd-ui.cjs bump --task aidd_docs/tasks/x --change y color.brand.primary"],
+      ["extracts the tokens", `node ${ENGINE} extract --force --root ${tmp}`],
+      ["publishes the system", `node ${ENGINE} publish --breaking --root ${tmp}`],
+      ["writes after a read", `node ${ENGINE} validate ${tmp} && node ${ENGINE} tokens ${tmp}`],
       ["names aidd_docs/ui/ and writes", "sed -i s/a/b/ aidd_docs/ui/brand.md"],
     ];
     for (const [name, command] of ENGINE_COMMANDS) {
-      it(`marks the turn and prints nothing when a shell command ${name}, so Stop blocks once on what it left`, () => {
+      it(`marks the turn and tells what it left when a shell command ${name}, holding no turn for it`, () => {
+        begin();
         breakOnePerFamily();
-        assert.deepEqual(hook(shell(command)), silent);
+        assert.deepEqual(hook(shell(command)), claudeFeedback(errorsText(FAILURES)));
         assert.equal(marked(), true);
-        assert.deepEqual(hook(stop()), finish(errorsText([BRAND_FAILURE, TOKENS_FAILURE, DIALOG_FAILURE])));
+        assert.deepEqual(hook(stop()), silent);
       });
     }
 

@@ -1,11 +1,10 @@
 // Runs the design system checks after a write and at Stop, handing the same short text to every host
-// through its adapter; at session start it only sweeps old turn marks.
+// through its adapter; at session start it sweeps old turn state and notes the errors the project holds.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
 const { codeRoots } = require("./lib/code.cjs");
-const { reached } = require("./lib/graph.cjs");
 const { problemsOf, findingOf, isError } = require("./aidd-ui.cjs");
 const { isShellWrite, formatFindings } = require("./lib/common-rules.cjs");
 const { readEvent, answer, continueTurn } = require("./lib/host.cjs");
@@ -14,29 +13,40 @@ const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
 const STOP = "Stop";
 const EXIT_SILENT = 0;
-// A session id is a file-name part, so only these characters reach the mark's path.
+// A session id is a file-name part, so only these characters reach the state's paths.
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
-// A shell command marks the turn when it runs the engine (flat or plugin install alike), or when it names
-// the design system's folder and matches a write form the hooks share. Any other command only reads.
-const ENGINE_COMMAND = /aidd-ui\.cjs/;
+// A shell command marks the turn when it runs one of the engine's writing commands (flat or plugin install
+// alike), or when it names the design system's folder and matches a write form the hooks share. Any other
+// command only reads: `validate`, `impact`, and `publish` given ids, which validates them.
+const ENGINE_RUN = /aidd-ui\.cjs["']?\s+(\w+)([^;&|\n]*)/g;
+const ENGINE_WRITES = new Set(["tokens", "extract", "bump"]);
+const PUBLISH_OPTIONS = /\s--breaking\b|\s--root\s+\S+/g;
 const UI_FOLDER = /aidd_docs\/ui\//;
-// The mark's line for a shell command, which may have written any file: Stop then reads them all.
-const ANY_FILE = "unknown";
 // The hooks' state folder: one per user where the system has users, the temp dir being per user elsewhere.
 const HOOKS_FOLDER = typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
 const PLUGIN = "aidd-ui";
 const OTHERS_BITS = 0o077;
-const MARK_MAX_AGE_MS = 24 * 60 * 60 * 1000; // a mark no Stop consumed: its session ended without one
+const STATE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // state no Stop or session start renewed: its session ended
+// The errors the project held at the session's start or at the last turn's end, beside the turn's mark.
+const BASELINE_SUFFIX = ".base";
 // What the hook tells the model after a write: it informs, and Stop requires.
 const INFORM = 1;
 
 /** Whether a project-relative file belongs to the design system or to its code. */
 const isWatched = (project, file) => [UI_DIR, ...codeRoots(project)].some((prefix) => isUnder(file, prefix));
 
-/** Whether a shell command changes the design system or runs the engine, which may. */
+/** Whether a shell command runs an engine command that writes: `publish` writes only without ids. */
+function runsEngineWrite(command) {
+  for (const [, name, args] of command.matchAll(ENGINE_RUN)) {
+    if (ENGINE_WRITES.has(name) || (name === "publish" && args.replace(PUBLISH_OPTIONS, "").trim() === "")) return true;
+  }
+  return false;
+}
+
+/** Whether a shell command changes the design system or runs the engine where it writes. */
 function marksTurn(command) {
   if (typeof command !== "string") return false;
-  return ENGINE_COMMAND.test(command) || (UI_FOLDER.test(command) && isShellWrite(command));
+  return runsEngineWrite(command) || (UI_FOLDER.test(command) && isShellWrite(command));
 }
 
 /** Whether `folder` is a folder of this user's alone, created if missing: not a link, and where the
@@ -63,8 +73,8 @@ function stateFolder() {
   }
 }
 
-/** The mark a turn leaves for its Stop: one file per session in the state folder, a line per
- * watched file each write touched, `unknown` for a shell command. */
+/** The mark a turn leaves for its Stop, one file per session in the state folder; its baseline sits
+ * beside it. Null when the session cannot be told apart. */
 function markFile(event) {
   const { sessionId } = event;
   if (typeof sessionId !== "string" || !SAFE_SESSION_ID.test(sessionId)) return null;
@@ -72,49 +82,66 @@ function markFile(event) {
   return folder && path.join(folder, sessionId);
 }
 
-/** Removes the marks older than a day, each by its own entry: a link is removed, never followed. */
-function sweepMarks() {
+/** Removes the state older than a day, each by its own entry: a link is removed, never followed. */
+function sweepState() {
   const folder = stateFolder();
   if (!folder) return;
   for (const name of fs.readdirSync(folder)) {
     const entry = path.join(folder, name);
     try {
       const stat = fs.lstatSync(entry);
-      if (!stat.isDirectory() && Date.now() - stat.mtimeMs > MARK_MAX_AGE_MS) fs.unlinkSync(entry);
+      if (!stat.isDirectory() && Date.now() - stat.mtimeMs > STATE_MAX_AGE_MS) fs.unlinkSync(entry);
     } catch {
       // gone meanwhile, or not ours to remove
     }
   }
 }
 
-/** The mark's lines; none when it is missing. A link planted at its path can only change which
- * errors Stop reports, never what the hook writes, so it is read like the mark. */
-function markLines(mark) {
+/** A state file's `[key, count]` pairs; null when it is missing or unreadable as pairs. A link planted
+ * at its path can only change what the hook says, never what it writes, so it is read like the file. */
+function readPairs(file) {
   try {
-    return fs.readFileSync(mark, "utf8").split("\n").filter(Boolean);
+    return new Map(JSON.parse(fs.readFileSync(file, "utf8")));
   } catch {
-    return [];
+    return null;
   }
 }
 
-/** Adds `lines` to the mark by writing a new file beside it, created only where nothing exists,
- * then renaming it over the mark: a rename replaces a link planted at the mark's path instead of
- * writing through it, on every system. A mark that cannot be written never costs the write its
- * feedback. */
-function leaveMark(mark, lines) {
-  const next = `${mark}.${process.pid}`;
+/** Writes `pairs` by writing a new file beside `file`, created only where nothing exists, then renaming
+ * it over: a rename replaces a link planted at the path instead of writing through it, on every system.
+ * State that cannot be written never costs the write its feedback. */
+function writePairs(file, pairs) {
+  const next = `${file}.${process.pid}`;
   try {
-    fs.writeFileSync(next, [...markLines(mark), ...lines].map((line) => `${line}\n`).join(""), { flag: "wx", mode: 0o600 });
-    fs.renameSync(next, mark);
+    fs.writeFileSync(next, JSON.stringify([...pairs]), { flag: "wx", mode: 0o600 });
+    fs.renameSync(next, file);
   } catch {
     fs.rmSync(next, { force: true }); // no writable temp dir, or a file left at the new file's path
   }
 }
 
-/** Marks the turn for its Stop with `lines`. */
-function markTurn(event, lines) {
-  const mark = markFile(event);
-  if (mark) leaveMark(mark, lines);
+/** An error's identity across writes: its file, rule and excerpt, never its line, which moves. */
+const keyOf = ({ file, rule, excerpt }) => JSON.stringify([file, rule, excerpt ?? ""]);
+/** A changed line's identity: its file and its trimmed text. */
+const lineKey = (file, line) => JSON.stringify([file, line]);
+
+/** The errors past those the baseline counts, key by key: the ones nothing proves were there before. */
+function newErrors(errors, baseline) {
+  const left = new Map(baseline);
+  return errors.filter((problem) => {
+    const before = left.get(keyOf(problem)) ?? 0;
+    left.set(keyOf(problem), before - 1);
+    return before <= 0;
+  });
+}
+
+const countKeys = (problems) => problems.reduce((counts, problem) => counts.set(keyOf(problem), (counts.get(keyOf(problem)) ?? 0) + 1), new Map());
+
+/** The baseline: the errors the project held at the session's start or at the last turn's end. */
+const readBaseline = (mark) => (mark ? readPairs(`${mark}${BASELINE_SUFFIX}`) : null);
+
+function leaveBaseline(mark, problems) {
+  if (mark) writePairs(`${mark}${BASELINE_SUFFIX}`, countKeys(problems));
 }
 
 /** A text's lines, trimmed, the empty ones left out. */
@@ -135,6 +162,15 @@ function changedLines({ written, replaced }) {
   return changed.size === 0 && linesOf(replaced).length > 0 ? null : changed;
 }
 
+/** Adds a write to the turn's net changed lines: its written lines in, its replaced lines out, so a
+ * line changed and changed back nets to nothing. A write that says nothing of what it replaced proves
+ * a line new only against a baseline; without one it adds nothing, and nothing of it is required. */
+function addToNet(net, { file, written, replaced }, baseline) {
+  if (typeof written !== "string" || (typeof replaced !== "string" && !baseline)) return;
+  for (const line of linesOf(written)) net.set(lineKey(file, line), (net.get(lineKey(file, line)) ?? 0) + 1);
+  for (const line of linesOf(replaced)) net.set(lineKey(file, line), (net.get(lineKey(file, line)) ?? 0) - 1);
+}
+
 /** The 1-based lines of a file equal, once trimmed, to a changed line: every copy raises the same
  * errors. Null when the file cannot be read: its errors then say so, grouped. */
 function touchedLines(file, changed) {
@@ -149,29 +185,49 @@ function touchedLines(file, changed) {
   return touched;
 }
 
-/** Whether a path names an entry, a link to nothing included: that one is unreadable, not deleted. */
-function entryExists(file) {
-  try {
-    fs.lstatSync(file);
-    return true;
-  } catch {
-    return false;
+/** The turn's state for its Stop: the mark holds its net changed lines, and the errors elsewhere it
+ * was already told of, so they are told once. */
+function readTurn(mark) {
+  const pairs = (mark && readPairs(mark)) ?? new Map();
+  const net = new Map();
+  const told = new Map();
+  for (const [key, count] of pairs) {
+    const [kind, rest] = [key[0], key.slice(1)];
+    if (kind === "+") net.set(rest, count);
+    else if (kind === "!") told.set(rest, count);
   }
+  return { net, told };
 }
 
-/** Marks the turn, then hands the model what the write itself produced (rule 3 of the hooks'
- * contract): the errors on the lines it added or changed, one by one, then those lines' warnings.
- * A file whose changed lines are unknown has its errors grouped under its name. What the write
- * reached in other files, and a file it deleted, are Stop's to name. */
+function leaveTurn(mark, { net, told }) {
+  if (mark) writePairs(mark, [...[...net].map(([key, count]) => [`+${key}`, count]), ...[...told].map(([key, count]) => [`!${key}`, count])]);
+}
+
+/** The errors outside `files` that no baseline counts and the turn was not yet told of; they join
+ * what it was told. None without a baseline: nothing then proves an error new. */
+function tellOnce(problems, files, baseline, told) {
+  if (!baseline) return [];
+  const fresh = newErrors(problems.filter((problem) => isError(problem) && !files.includes(problem.file)), baseline);
+  const untold = newErrors(fresh, told);
+  for (const [key, count] of countKeys(untold)) told.set(key, (told.get(key) ?? 0) + count);
+  return untold;
+}
+
+/** Marks the turn, then hands the model what the write produced (rule 3 of the hooks' contract):
+ * the errors on the lines it added or changed, one by one, then those lines' warnings. A file whose
+ * changed lines are unknown has its errors grouped under its name. Errors the write left in another
+ * file, new against the baseline, follow grouped, told once per turn: their fix is elsewhere, so they
+ * only inform. */
 function afterWrite(project, event) {
   const written = event.files
     .map((file) => ({ ...file, file: relative(project.root, path.resolve(project.root, file.path)) }))
     .filter(({ file }) => isWatched(project, file));
-  if (!written.length) return EXIT_SILENT;
-  // A file the tool deleted leaves nothing to tell what cited it: Stop then reaches every other error.
-  const deleted = written.some(({ file }) => !entryExists(path.join(project.root, file)));
-  const lines = written.map(({ file }) => file);
-  markTurn(event, deleted ? [...lines, ANY_FILE] : lines);
+  const shell = !event.files.length;
+  if (!shell && !written.length) return EXIT_SILENT;
+  const mark = markFile(event);
+  const baseline = readBaseline(mark);
+  const turn = readTurn(mark);
+  for (const entry of written) addToNet(turn.net, entry, baseline);
   const problems = problemsOf(project);
   const findings = { errors: [], reached: [], warnings: [] };
   for (const entry of written) {
@@ -184,33 +240,44 @@ function afterWrite(project, event) {
       else (touched ? findings.errors : findings.reached).push(finding);
     }
   }
+  const files = written.map(({ file }) => file);
+  findings.reached.push(...tellOnce(problems, files, baseline, turn.told).map(findingOf));
+  leaveTurn(mark, turn);
   const text = formatFindings(PLUGIN, findings);
   if (text) answer({ level: INFORM, text });
   return EXIT_SILENT;
 }
 
-/** The mark's lines when this Stop ends a turn that wrote a watched file and was not itself
- * forced, else null: consumes the mark either way, so the next turn starts clean. */
-function consumeMark(event) {
-  const mark = markFile(event);
+/** The turn's mark, consumed so the next turn starts clean; null when the turn wrote nothing watched. */
+function consumeMark(mark) {
   if (!mark || !fs.existsSync(mark)) return null;
-  const lines = markLines(mark);
+  const turn = readTurn(mark);
   fs.rmSync(mark, { force: true });
-  return event.stopActive ? null : lines;
+  return turn;
 }
 
-/** Blocks the turn's end once while a marked turn still leaves errors: those of the files it
- * listed, then those of what they reach. A shell command, or a mark without lines, leaves nothing
- * to scope by: every other error is then reached. */
-function atStop(project, marked) {
-  const files = marked.filter((line) => line !== ANY_FILE);
-  const unknown = !files.length || marked.includes(ANY_FILE);
-  const scope = unknown ? null : reached(project, files);
-  const errors = problemsOf(project).filter(isError);
-  const reason = formatFindings(PLUGIN, {
-    errors: errors.filter((problem) => files.includes(problem.file)).map(findingOf),
-    reached: errors.filter((problem) => !files.includes(problem.file) && (!scope || scope.has(problem.file))).map(findingOf),
-  });
+/** Holds the turn's end once on the errors it produced: those on the lines its writes changed, net,
+ * and, when a baseline exists, past what it counts. Nothing else is ever required, no line being
+ * proof of nothing. The baseline then takes the project's errors as they stand, so what was asked
+ * once is never asked again. */
+function atStop(project, mark, turn) {
+  const problems = problemsOf(project);
+  const baseline = readBaseline(mark);
+  const changed = new Map();
+  for (const [key, count] of turn.net) {
+    if (count <= 0) continue;
+    const [file, line] = JSON.parse(key);
+    changed.set(file, (changed.get(file) ?? new Set()).add(line));
+  }
+  const candidates = [];
+  for (const [file, lines] of changed) {
+    const touched = touchedLines(path.join(project.root, file), lines);
+    if (!touched) continue;
+    candidates.push(...problems.filter((problem) => problem.file === file && isError(problem) && touched.has(findingOf(problem).line)));
+  }
+  const required = baseline ? newErrors(candidates, baseline) : candidates;
+  leaveBaseline(mark, problems);
+  const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) });
   if (reason) continueTurn(reason);
   return EXIT_SILENT;
 }
@@ -218,23 +285,22 @@ function atStop(project, marked) {
 function run() {
   const event = readEvent();
   if (!event) return EXIT_SILENT;
-  // Session start reports nothing, the project's standing errors being no finding of the session.
   if (event.event === SESSION_START) {
-    sweepMarks();
+    sweepState();
+    const project = load(event.cwd);
+    if (project !== null) leaveBaseline(markFile(event), problemsOf(project));
     return EXIT_SILENT;
   }
-  // A shell command marks the turn or does nothing, and an ignored tool does nothing: neither reads the project.
-  if (event.event === POST_TOOL_USE && !event.files.length) {
-    if (marksTurn(event.command)) markTurn(event, [ANY_FILE]);
-    return EXIT_SILENT;
-  }
+  // A shell command that only reads, and an ignored tool, do nothing: neither reads the project.
+  if (event.event === POST_TOOL_USE && !event.files.length && !marksTurn(event.command)) return EXIT_SILENT;
   // Stop fires on every turn: one that wrote no watched file costs no read of the project.
-  const marked = event.event === STOP ? consumeMark(event) : null;
-  if (event.event === STOP && marked === null) return EXIT_SILENT;
+  const mark = markFile(event);
+  const turn = event.event === STOP ? consumeMark(mark) : null;
+  if (event.event === STOP && turn === null) return EXIT_SILENT;
   const project = load(event.cwd);
   if (project === null) return EXIT_SILENT;
   if (event.event === POST_TOOL_USE) return afterWrite(project, event);
-  return atStop(project, marked);
+  return atStop(project, mark, turn);
 }
 
 try {

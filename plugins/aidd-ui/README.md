@@ -23,7 +23,7 @@ flowchart LR
   Skill -->|"calls"| Engine["hooks/aidd-ui.cjs"]
   Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
   Host["host event"] --> Hook["hooks/ui-hook.cjs"]
-  Hook -->|"checks what a write produced, then what the turn reached"| Engine
+  Hook -->|"checks what a write produced, then the lines the turn changed"| Engine
   Hook -->|"problems"| Host
 ```
 
@@ -37,7 +37,8 @@ flowchart LR
 
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
-- After a write the hook reports only the lines the write added or changed; what it broke in other files waits for Stop. Stop checks the files the turn wrote, then what their writes reached; once the turn deleted a file or a shell command marked it, it reports every other error, since the hook cannot tell what cited the file or which files the command wrote. It reports no warning.
+- The hook never holds the turn on an error the turn did not produce. After a write it reports the lines the write added or changed, then the errors new in other files, once per turn, to inform. Stop asks once for the errors on the lines the turn changed, never one with no line (a missing section, a token): `validate` holds those.
+- New means absent from the errors the project held at the session's start or the last turn's end. An error made by hand between two turns counts as new for the next one, to inform only. Without that baseline (a session started before the plugin), nothing of another file is reported, and a whole-file write proves no line.
 - Every problem prints as `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` under a line counting errors and warnings; the hook never cuts the errors, and caps the warnings at ten.
 - A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
 - Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
