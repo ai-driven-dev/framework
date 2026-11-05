@@ -1,0 +1,96 @@
+## out-flat/.cursor/hooks.json
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/update_memory.js"
+      },
+      {
+        "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
+        "timeout": 10
+      },
+      {
+        "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
+        "timeout": 120
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory-hook.cjs",
+        "matcher": "Write|Edit|MultiEdit|Bash|Shell|bash|powershell",
+        "timeout": 5
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
+        "timeout": 30
+      }
+    ]
+  }
+}
+
+
+## out-flat/.cursor/hooks/aidd-context/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-context/memory-hook.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-context/memory-lint.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-context/update_memory.js
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/catch-up.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/aidd.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/binding.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/claude-only.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/consent.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/context.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/declaration.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/git.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/hook-io.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/jsonl.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/lookup.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/presence.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/lib/tool.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/prompt-gate.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-telemetry/session-start.cjs
+script, identical to the plugin source

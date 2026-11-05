@@ -1,0 +1,62 @@
+{
+  "host": "claude",
+  "event": "PostToolUse",
+  "samples": [
+    {
+      "payloadKeys": [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "prompt_id",
+        "permission_mode",
+        "effort",
+        "hook_event_name",
+        "tool_name",
+        "tool_input",
+        "tool_response",
+        "tool_use_id",
+        "duration_ms"
+      ],
+      "recorded": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Edit",
+        "tool_input": "{\"file_path\":\"/Users/user/project/aidd_docs/memory/notes.md\",\"old_string\":\"- Memory bank for tests.\",\"new_string\":\"- Memory bank for tests.\\n- The repo has 41 commits and one TODO.\",\"replace_all\":false}"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PostToolUse",
+          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+        }
+      },
+      "hookStatus": 0
+    },
+    {
+      "payloadKeys": [
+        "session_id",
+        "transcript_path",
+        "cwd",
+        "prompt_id",
+        "permission_mode",
+        "effort",
+        "hook_event_name",
+        "tool_name",
+        "tool_input",
+        "tool_response",
+        "tool_use_id",
+        "duration_ms"
+      ],
+      "recorded": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Bash",
+        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md && tail -n 3 aidd_docs/memory/notes.md\",\"description\":\"Append note line to notes.md and show last lines\"}"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PostToolUse",
+          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+        }
+      },
+      "hookStatus": 0
+    }
+  ]
+}

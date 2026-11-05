@@ -1,0 +1,78 @@
+## out-marketplace/plugins/aidd-context/.plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
+## out-marketplace/plugins/aidd-context/hooks/hooks.json
+script, differs from the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/memory-hook.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/memory-lint.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/update_memory.js
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/.plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
+## out-marketplace/plugins/aidd-telemetry/hooks/catch-up.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/hooks.json
+script, differs from the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/binding.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/consent.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/context.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/git.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/presence.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/tool.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/session-start.cjs
+script, identical to the plugin source

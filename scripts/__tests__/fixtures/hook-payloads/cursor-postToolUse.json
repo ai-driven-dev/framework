@@ -1,0 +1,67 @@
+{
+  "host": "cursor",
+  "event": "postToolUse",
+  "samples": [
+    {
+      "payloadKeys": [
+        "conversation_id",
+        "generation_id",
+        "model",
+        "tool_name",
+        "tool_input",
+        "tool_output",
+        "duration",
+        "tool_use_id",
+        "session_id",
+        "hook_event_name",
+        "cursor_version",
+        "workspace_roots",
+        "user_email",
+        "transcript_path"
+      ],
+      "recorded": {
+        "hook_event_name": "postToolUse",
+        "tool_name": "Write",
+        "tool_input": "{\"file_path\":\"/Users/user/project/aidd_docs/memory/notes.md\",\"content\":\"# Notes\\n\\n- Memory bank for tests.\\n- The repo has 41 commits and one TODO.\\n\"}"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PostToolUse",
+          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+        }
+      },
+      "hookStatus": 0
+    },
+    {
+      "payloadKeys": [
+        "conversation_id",
+        "generation_id",
+        "model",
+        "tool_name",
+        "tool_input",
+        "tool_output",
+        "duration",
+        "tool_use_id",
+        "cwd",
+        "session_id",
+        "hook_event_name",
+        "cursor_version",
+        "workspace_roots",
+        "user_email",
+        "transcript_path"
+      ],
+      "recorded": {
+        "hook_event_name": "postToolUse",
+        "tool_name": "Shell",
+        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md\",\"cwd\":\"\",\"timeout\":30000}"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PostToolUse",
+          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+        }
+      },
+      "hookStatus": 0
+    }
+  ]
+}

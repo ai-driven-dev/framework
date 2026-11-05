@@ -1,0 +1,82 @@
+{
+  "host": "codex",
+  "event": "PostToolUse",
+  "samples": [
+    {
+      "payloadKeys": [
+        "session_id",
+        "turn_id",
+        "transcript_path",
+        "cwd",
+        "hook_event_name",
+        "model",
+        "permission_mode",
+        "tool_name",
+        "tool_input",
+        "tool_response",
+        "tool_use_id"
+      ],
+      "recorded": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Bash",
+        "tool_input": "{\"command\":\"cat aidd_docs/memory/notes.md\"}"
+      },
+      "hookAnswer": null,
+      "hookStatus": 0
+    },
+    {
+      "payloadKeys": [
+        "session_id",
+        "turn_id",
+        "transcript_path",
+        "cwd",
+        "hook_event_name",
+        "model",
+        "permission_mode",
+        "tool_name",
+        "tool_input",
+        "tool_response",
+        "tool_use_id"
+      ],
+      "recorded": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "apply_patch",
+        "tool_input": "{\"command\":\"*** Begin Patch\\n*** Update File: aidd_docs/memory/notes.md\\n@@\\n - Memory bank for tests.\\n+- The repo has 41 commits and one TODO.\\n*** End Patch\"}"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PostToolUse",
+          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+        }
+      },
+      "hookStatus": 0
+    },
+    {
+      "payloadKeys": [
+        "session_id",
+        "turn_id",
+        "transcript_path",
+        "cwd",
+        "hook_event_name",
+        "model",
+        "permission_mode",
+        "tool_name",
+        "tool_input",
+        "tool_response",
+        "tool_use_id"
+      ],
+      "recorded": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Bash",
+        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md\"}"
+      },
+      "hookAnswer": {
+        "hookSpecificOutput": {
+          "hookEventName": "PostToolUse",
+          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+        }
+      },
+      "hookStatus": 0
+    }
+  ]
+}

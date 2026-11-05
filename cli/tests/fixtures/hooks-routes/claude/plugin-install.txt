@@ -1,0 +1,109 @@
+## project/.claude/plugins/aidd-context/hooks/hooks.json
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/memory-hook.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/memory-lint.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/update_memory.js
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/catch-up.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/hooks.json
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/binding.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/consent.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/context.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/git.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/presence.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/tool.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/session-start.cjs
+script, identical to the plugin source
+
+## project/.claude/settings.json
+{
+  "respectGitignore": false,
+  "permissions": {
+    "deny": [
+      "Read(./node_modules/**)",
+      "Read(./.git/**)"
+    ]
+  }
+}
+
+# recorded
+project claude aidd-context scope=project: 5 hook files
+  .claude/plugins/aidd-context/hooks/hooks.json
+  .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
+  .claude/plugins/aidd-context/hooks/memory-hook.cjs
+  .claude/plugins/aidd-context/hooks/memory-lint.cjs
+  .claude/plugins/aidd-context/hooks/update_memory.js
+  projectHooks null
+project claude aidd-telemetry scope=project: 18 hook files
+  .claude/plugins/aidd-telemetry/hooks/catch-up.cjs
+  .claude/plugins/aidd-telemetry/hooks/hooks.json
+  .claude/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/binding.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/consent.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/context.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/git.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/presence.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/tool.cjs
+  .claude/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+  .claude/plugins/aidd-telemetry/hooks/session-start.cjs
+  projectHooks null
+machine: no manifest
