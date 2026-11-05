@@ -517,7 +517,8 @@ export function selectTransfers(
             for (const rawPoint of array(aggregation.dataPoints)) {
               const point = object(rawPoint);
               validateMetricPoint(point, kind);
-              const a = merge(resourceAttrs, attributes(point.attributes));
+              const pointAttrs = attributes(point.attributes);
+              const a = merge(resourceAttrs, pointAttrs);
               if (a.get(sessionKey) !== options.session) continue;
               captureIdentity(identity, a);
               a.set(
@@ -538,9 +539,21 @@ export function selectTransfers(
                   point.attributes
                 )
               );
+              const safe = safeAttributes(a);
+              const effort = array(point.attributes)
+                .map(object)
+                .find((entry) => entry.key === "effort");
+              const effortValue = object(effort?.value).stringValue;
+              if (
+                metric.name === "claude_code.token.usage" &&
+                a.get("model")?.trim() &&
+                typeof effortValue === "string" &&
+                /^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$/.test(effortValue)
+              )
+                safe.push({ key: "effort", value: { stringValue: effortValue } });
               const sanitized = {
                 ...numericFields(point, METRIC_POINT_FIELDS),
-                attributes: safeAttributes(a),
+                attributes: safe,
               };
               out.push({
                 signal: "metrics",

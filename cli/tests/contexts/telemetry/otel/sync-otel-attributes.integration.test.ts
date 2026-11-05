@@ -206,6 +206,31 @@ test("does not forward Codex effort fields on Claude metrics", () => {
   expect(JSON.stringify(transfer.payload)).not.toContain("reasoning_effort");
 });
 
+test("forwards Claude effort only when the token point explicitly reports it", () => {
+  const claude = { ...options, config: "claude" as const };
+  const point = [text("type", "input"), text("model", "claude-test")];
+  const [reported] = selectTransfers(metricCapture([...point, text("effort", "medium")]), claude, {
+    values: new Map(),
+    conflict: false,
+  });
+  expect(JSON.stringify(reported.payload)).toContain(
+    '"key":"effort","value":{"stringValue":"medium"}'
+  );
+  for (const invalid of [
+    metricCapture(point, [text("effort", "medium")]),
+    metricCapture([...point, text("effort", "private text")]),
+    metricCapture([...point, attribute("effort", { intValue: 3 })]),
+    metricCapture([text("type", "input"), text("effort", "medium")]),
+    metricCapture([...point, text("effort", "medium")]).replace(
+      "claude_code.token.usage",
+      "claude_code.cost.usage"
+    ),
+  ]) {
+    const [transfer] = selectTransfers(invalid, claude, { values: new Map(), conflict: false });
+    expect(JSON.stringify(transfer.payload)).not.toContain('"key":"effort"');
+  }
+});
+
 test.each(["point", "resource", "scope"])("rejects contradictory Claude %s attributes", (level) => {
   const conflict = [text("type", "input"), text("type", "output")];
   expect(() =>

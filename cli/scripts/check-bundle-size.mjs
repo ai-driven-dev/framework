@@ -74,7 +74,7 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 813 KB: 812.66 KB with consent and session-admission checks on every delivery attempt.
 // 819 KB: 818.39 KB with per-identifier provenance and isolated pending session ranges.
 // 829 KB: 828.93 KB with repository uncertainty and clone-proven resume after origin changes.
-// 839 KB: 838.61 KB after merging Antigravity support into the telemetry branch.
+// 839 KB: 838.97 KB with Claude token-point effort and merged Antigravity support.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
