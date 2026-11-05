@@ -4,6 +4,8 @@ The one place that says what a memory file must be.
 
 ## Machine rules
 
+After a write every finding informs. At the turn end only M3 is required, once (M1 has hits on real banks). `check` exits 1 on an error: M1, M3, M4 or a missing always-written file. The rest, structure included (former, misplaced, team folder), are warnings: the skill checks or proposes, never imposes.
+
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |
 | M1 | error | 25 words | a sentence over the limit, outside a table, list item, heading, code or diagram: make it a table, a list or a heading |

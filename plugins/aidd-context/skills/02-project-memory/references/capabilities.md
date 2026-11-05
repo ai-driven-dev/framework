@@ -23,7 +23,7 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 | `ui` | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir | `ui.md` | no | `design.md`, `forms.md`, `navigation.md` |
 | `native` | an `ios/` or `android/` dir, a `pubspec.yaml`, a `Podfile`, React Native, Flutter, Electron, Tauri, or a native desktop toolkit (Qt, GTK, WPF, AppKit) | `native.md` | no | `mobile.md`, `desktop.md` |
 
-`Former files` names the template files a capability replaced. Check offers to merge an old bank's file of that name into the row's file.
+`Former files`: the template files a capability replaced.
 
 A template line in `{{…}}` is a question the writer answers. A question with no answer is dropped. A conditional row with no answer at all writes no file; an always row is written whatever.
 

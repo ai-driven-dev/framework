@@ -19,13 +19,13 @@ The written bank, with no format error.
    - Existing file: apply the approved findings and nothing else. Only a content finding corrects a fact; any other change to a line removes what it replaces.
    - Approved merge: apply it only if the former file's removal was approved on its own; otherwise change neither file.
    - A section the file lacks: report it when the project has something for it, never inject it.
-4. **Lint.** Run the engine on the files written, and fix what it reports on the lines you wrote.
+4. **Lint.** Run the engine on the files written. Fix each error on the lines you wrote; check each warning against the code, and keep a true line.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
 | Bank | matches the bank tree in capabilities.md |
-| Memory file | the engine reports no error |
+| Memory file | no error written |
 | Team file | left unchanged |
 | Rerun | only the approved findings changed, every other line survives |

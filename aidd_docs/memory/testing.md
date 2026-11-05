@@ -40,7 +40,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | `cd kanban && pnpm test` | the board |
 | `pnpm exec lefthook run pre-push` | the local gate before pushing |
 
-CI runs more: `validate.yml` re-runs the whole pre-commit over the whole tree on every push and pull request, and `cli-ci.yml` adds jobs no local hook has. Both are in `deployment.md`.
+CI runs more. `validate.yml` re-runs the whole pre-commit over the whole tree on every push and pull request. `cli-ci.yml` adds jobs no local hook has. Both are in `deployment.md`.
 
 ## Browser QA
 

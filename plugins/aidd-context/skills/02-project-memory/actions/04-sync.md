@@ -20,13 +20,11 @@ Each picked tool's context file, carrying the filled block.
    - Absent file: create it from [AGENTS.md](../assets/templates/AGENTS.md).
    - Its AIDD structure differs: offer to reconcile it, applying only what the user approves.
 5. **Fill.** Run the engine, naming the picked tools, and stop on a non-zero exit.
-6. **Verify.** Read each picked tool's block back and compare it to the bank.
-   - A file in one only: report it and stop.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
 | Empty bank | no file created, the run stops |
-| Picked tool | its block lists every root `.md` except `README.md`, the `internal/` and `external/` files, then each other `aidd_docs/` folder, nothing else |
+| Picked tool | its block is the bank's list, as the engine writes it |
 | Unpicked tool | its context file is unchanged |

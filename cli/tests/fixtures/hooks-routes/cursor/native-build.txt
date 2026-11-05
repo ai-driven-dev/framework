@@ -12,8 +12,8 @@
           {
             "type": "command",
             "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
-            "statusMessage": "AIDD Context: sync project memory",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
           }
         ]
       }
@@ -25,7 +25,8 @@
           {
             "type": "command",
             "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory file"
           }
         ]
       }
@@ -36,7 +37,8 @@
           {
             "type": "command",
             "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory before finishing"
           }
         ]
       }

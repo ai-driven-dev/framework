@@ -30,7 +30,9 @@ Run the flow above, reading only the next action file.
 
 `memory.cjs` is found by file name, first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
 
-`node memory.cjs check . aidd_docs/memory/<file>.md` per file, `node memory.cjs sync <tool>...`.
+`node memory.cjs check . aidd_docs/memory/<file>.md` per file, `node memory.cjs check .` for the whole bank, `node memory.cjs sync <tool>...`.
+
+Refresh: `node memory.cjs lines . > <session scratch>/lines.txt` before writing; at the end `node memory.cjs vanished <that file> .`, shown to the person, nothing restored.
 
 ## Transversal rules
 

@@ -70,8 +70,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
-            "statusMessage": "AIDD Context: sync project memory",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
           }
         ]
       },
@@ -104,7 +104,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory file"
           }
         ]
       }
@@ -115,7 +116,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory before finishing"
           }
         ]
       }

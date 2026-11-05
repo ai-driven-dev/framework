@@ -14,8 +14,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "statusMessage": "AIDD Context: sync project memory",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
           }
         ]
       },
@@ -48,7 +48,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory file"
           }
         ]
       }
@@ -59,7 +60,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory before finishing"
           }
         ]
       }
