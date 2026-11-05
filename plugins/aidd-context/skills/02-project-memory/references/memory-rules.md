@@ -1,6 +1,6 @@
 # Memory rules
 
-The one place that says what a memory file must be. The engine decides the first table; a reader judges the second.
+The one place that says what a memory file must be.
 
 ## Machine rules
 
@@ -16,7 +16,7 @@ The one place that says what a memory file must be. The engine decides the first
 
 ## Reader rules
 
-These apply to what is written and reviewed. Keep and Drop also judge what the scan reads, never what a memory file already holds. A line the user wrote survives Keep and Drop; it is still bound by No version, One fact, one home and A diagram stands alone.
+These bind every memory file, written or reviewed. The scan also uses them to choose what to keep. A line the user wrote is exempt only from Non-derivable, Points to the code and Current state only.
 
 | Rule | Keep | Drop |
 | --- | --- | --- |
@@ -24,5 +24,5 @@ These apply to what is written and reviewed. Keep and Drop also judge what the s
 | Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list |
 | One fact, one home | - | the copy, the fact keeps its home |
 | No version | `React` | `React 19` |
-| Current state only | what ships | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id |
+| Current state only | - | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id |
 | A diagram stands alone | - | a note or a caption under it |
