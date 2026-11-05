@@ -1,6 +1,6 @@
 # Memory rules
 
-The one place that says what a memory file must be. The engine decides the first table; the second is judged by a reader.
+The one place that says what a memory file must be. The engine decides the first table; a reader judges the second.
 
 ## Machine rules
 
@@ -16,11 +16,14 @@ The one place that says what a memory file must be. The engine decides the first
 
 ## Reader rules
 
-| Rule | Meaning |
-| --- | --- |
-| Non-derivable | the macro and the why: decisions, conventions, gotchas, never what the code shows |
-| Points to the code | a path or a command over a copy of a schema or a file tree |
-| One fact, one home | a duplicate keeps its home and loses the copy |
-| No version | `React`, not `React 19` |
-| Current state only | no unused section, no placeholder |
-| A diagram stands alone | no note, no caption under it |
+The scan applies these to what it reads; a line the user wrote stays whatever they say.
+
+| Rule | Keep | Drop |
+| --- | --- | --- |
+| Non-derivable | a decision and its constraint, a convention the files repeat without stating, a gotcha that surprises a newcomer, the stack and how the main parts fit, the domain words a contributor must know | a fact one open file re-derives, anything true of every project built this way |
+| Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list |
+| One fact, one home | the home | a duplicate |
+| No version | `React` | `React 19` |
+| Current state only | what ships | an unused section, a placeholder, a plan, a wish, a thing not shipped |
+| Stable only | the lasting | a work item, a live value, a technical id |
+| A diagram stands alone | the diagram | a note or a caption under it |
