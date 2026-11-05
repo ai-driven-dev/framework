@@ -12,8 +12,8 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 
 | Capability | Detected when | File | Always | Former files |
 | --- | --- | --- | --- | --- |
-| `core` | the project exists | `project-brief.md`, `architecture.md`, `codebase-map.md`, `coding-assertions.md`, `testing.md`, `vcs.md` | yes | - |
-| `ecosystem` | the project works through external tools | `ecosystem.md` | yes | - |
+| `core` | always | `project-brief.md`, `architecture.md`, `codebase-map.md`, `coding-assertions.md`, `testing.md`, `vcs.md` | yes | - |
+| `ecosystem` | always | `ecosystem.md` | yes | - |
 | `backlog` | local backlog artifacts, issue templates, a ticketing tool in use, or a repo file naming backlog conventions | `backlog.md` | no | - |
 | `ui` | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir | `design.md`, `forms.md`, `navigation.md` | no | - |
 | `api` | a server framework, or a `routes/`, `controllers/`, or `api/` dir | `api.md`, `integration.md` | no | - |
@@ -25,8 +25,8 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 | `infra` | Terraform, Pulumi, Kubernetes, or Helm files | `infra.md` | no | - |
 | `mobile` | an `ios/` or `android/` dir, a `pubspec.yaml`, a `Podfile`, or React Native or Flutter | `mobile.md` | no | - |
 | `desktop` | Electron, Tauri, or a native desktop toolkit (Qt, GTK, WPF, AppKit) | `desktop.md` | no | - |
-| `package` | a publishable manifest declaring an importable entry that is not the CLI bin (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`) | `package.md` | no | - |
-| `cli` | a `bin` field, or a CLI parser (commander, yargs, oclif, clap, click) | `cli.md` | no | - |
+| `package` | a library others import: a publishable manifest declaring an importable entry that is not the CLI bin (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`) | `package.md` | no | - |
+| `cli` | a command-line tool: a `bin` field, or a CLI parser (commander, yargs, oclif, clap, click) | `cli.md` | no | - |
 | `data` | notebooks, a data-versioning or ML tool, or pipeline and model files | `data.md` | no | - |
 
 `Former files` names the template files a capability replaced. Check offers to merge an old bank's file of that name into the row's file.
@@ -39,11 +39,11 @@ aidd_docs/
 └── memory/
     ├── <file>.md
     ├── internal/
-    │   └── decisions/
     └── external/
 ```
 
-- `README.md` is copied as is.
-- `memory/` holds only the files of the table at its root.
-- `internal/` and `external/` exist even when empty, each with a `.gitkeep`. `internal/decisions/` holds decision records.
-- A team's own root file is loaded and kept, never rewritten or removed.
+- `assets/templates/README.md` is copied to `aidd_docs/README.md` as is.
+- `memory/` holds the files of the table at its root, plus a team's own, loaded and kept, never rewritten or removed.
+- `internal/` and `external/` exist even when empty, each with a `.gitkeep`. Both are read on demand.
+- `internal/decisions/` holds decision records; it is created when the first one is written, not by scaffold.
+- A hook refreshes the memory file list; nothing in the bank lists files by hand.

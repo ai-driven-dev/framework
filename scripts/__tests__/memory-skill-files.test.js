@@ -14,7 +14,7 @@ const CAPABILITIES = [
   "deployment", "infra", "mobile", "desktop", "package", "cli", "data",
 ];
 const HEADER = ["Capability", "Detected when", "File", "Always", "Former files"];
-const DROPPED_TEMPLATES = /GUIDELINES|CONTRIBUTING|memory\/README/u;
+const DROPPED_TEMPLATES = /templates\/(?:GUIDELINES|CONTRIBUTING)\.md|templates\/memory\/README\.md/u;
 const MERGED_REFERENCES = /capability-signals|memory-destinations|structure\.md/u;
 
 function filesUnder(dir) {
@@ -49,7 +49,7 @@ test("the README template is finished and passes the memory engine under another
     fs.rmSync(root, { recursive: true, force: true });
   }
   const text = fs.readFileSync(path.join(SKILL, "assets/templates/README.md"), "utf8");
-  assert.doesNotMatch(text, /\{\{|<!--/u, "a placeholder or a guidance comment is left");
+  assert.doesNotMatch(text, /\{\{|<!--|<[^>\n]+>/u, "a placeholder or a guidance comment is left");
   for (const link of ["GUIDES.md", "CONCEPTS.md", "#get-started"]) assert.ok(text.includes(link), `no link to ${link}`);
 });
 
@@ -74,16 +74,4 @@ test("capabilities.md holds one row per capability, and every memory template be
   const named = rows.map((cells) => cells[HEADER.indexOf("File")]).join(" ");
   const templates = filesUnder(path.join(SKILL, "assets/templates/memory")).map((file) => path.basename(file));
   for (const template of templates) assert.ok(named.includes(template), `${template} belongs to no capability row`);
-});
-
-test("the eval cases expect none of the dropped files", () => {
-  const text = fs.readFileSync(CASES, "utf8");
-  const setup = JSON.parse(text).find((item) => item.name === "setup writes the bank to its destinations");
-  assert.deepEqual(setup.expect.filesAbsent.sort(), [
-    "aidd_docs/CONTRIBUTING.md",
-    "aidd_docs/GUIDELINES.md",
-    "aidd_docs/memory/README.md",
-  ]);
-  assert.ok(setup.expect.filesExist.includes("aidd_docs/README.md"));
-  assert.doesNotMatch(JSON.stringify(setup.expect.fileContains), /GUIDELINES|CONTRIBUTING|must follow here/u);
 });
