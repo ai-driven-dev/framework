@@ -128,11 +128,36 @@ test('keeps each file in one session and includes context in the session limit',
   assert.ok(f.calls.every((call) => call.inputs.reduce((size, input) => size + Buffer.byteLength(input.text) + Buffer.byteLength(input.begin) + Buffer.byteLength(input.end) + 2, 0) <= 120000));
   assert.deepEqual(f.calls.map((call) => call.files), [['a.js'], ['b.js']]);
   f.server.pr.head.sha = 'f'.repeat(40);
-  f.server.files[0] = changed('a.js', 'a'.repeat(115000));
+  f.server.files[0] = changed('a.js', 'a'.repeat(117500));
   assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
   assert.match(f.server.comments.at(-1).body, /a\.js.*volumineux/);
   assert.equal(Object.hasOwn(f.store.load(42).state.files, 'a.js'), false);
   assert.equal(f.calls.length, 2);
+});
+
+test('truncates a large Unicode PR description and still reviews a small diff', () => {
+  const f = fixture();
+  f.server.pr.body = '💎'.repeat(70000);
+  f.server.files = [changed('a.js')]; f.server.pr.changed_files = 1;
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.deepEqual(f.calls[0].files, ['a.js']);
+  assert.match(f.server.comments[0].body, /titre et la description.*tronqués à 60 000 octets UTF-8/);
+  const context = f.calls[0].inputs.filter((input) => input.file.startsWith('context-')).map((input) => input.text).join('\n').replace(/ ⤶\n↳ /g, '');
+  const [text, marker] = context.split('\n\n[PR context truncated');
+  assert.ok(Buffer.byteLength(text) <= 60000);
+  assert.ok(Buffer.byteLength(text) > 59996);
+  assert.doesNotMatch(text, /\uFFFD/);
+  assert.ok(marker);
+});
+
+test('retains a 51 KB ASCII PR description in full', () => {
+  const f = fixture();
+  f.server.pr.body = 'x'.repeat(51215);
+  f.server.files = [changed('a.js')]; f.server.pr.changed_files = 1;
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  const context = f.calls[0].inputs.filter((input) => input.file.startsWith('context-')).map((input) => input.text).join('\n').replace(/ ⤶\n↳ /g, '');
+  assert.equal(context, `Title: Title\n\n${f.server.pr.body}`);
+  assert.doesNotMatch(f.server.comments[0].body, /tronqués/);
 });
 
 test('a later model failure preserves completed files and retries only the remaining batch', () => {

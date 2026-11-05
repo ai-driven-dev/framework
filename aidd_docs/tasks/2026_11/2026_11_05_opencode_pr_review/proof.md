@@ -9,8 +9,10 @@ Forks are read as data.
 The timer starts from an explicit activation time, runs serially, and retries
 transient errors with bounded backoff. Incomplete reviews checkpoint only files
 whose inputs were read and reported. Binary or unsupported files are named as
-not reviewed. Each file is reviewed in one session; a diff larger than
-120,000 bytes is named as not reviewed. Diffs and Git file modes come directly
+not reviewed. Each file is reviewed in one session; files whose diff and PR
+context exceed the 120,000-byte session budget are named as not reviewed. The
+PR title and description are capped at 60,000 bytes, with truncation reported.
+Diffs and Git file modes come directly
 from Git without checkout. Each batch has its own comment; a persistent draft
 allows publication retries without repeating the model call or comment. Losing
 the state volume loses the review history and may cause files to be reviewed again.

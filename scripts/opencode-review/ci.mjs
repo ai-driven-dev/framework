@@ -187,7 +187,17 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
   try {
     const { mergeBase } = listed.length ? fetchObjects({ repository, number, head, base, cache }) : {};
     const { files, skipped } = listed.length ? getDiffs({ files: listed, mergeBase, head, cache }) : { files: [], skipped: [] };
-    const context = splitInput(`Title: ${pr.title ?? ''}\n\n${pr.body ?? ''}`, 'context');
+    const fullContext = `Title: ${pr.title ?? ''}\n\n${pr.body ?? ''}`;
+    let contextBytesUsed = 0, contextEnd = 0;
+    for (const char of fullContext) {
+      const bytes = Buffer.byteLength(char);
+      if (contextBytesUsed + bytes > 60_000) break;
+      contextBytesUsed += bytes;
+      contextEnd += char.length;
+    }
+    const contextTruncated = contextEnd < fullContext.length;
+    const contextText = fullContext.slice(0, contextEnd);
+    const context = splitInput(`${contextText}${contextTruncated ? '\n\n[PR context truncated to 60,000 UTF-8 bytes.]' : ''}`, 'context');
     const contextBytes = context.reduce((sum, part) => sum + inputSize(part), 0);
     const current = Object.fromEntries(files.filter((file) => Object.hasOwn(previous?.files ?? {}, file.filename) && previous.files[file.filename] === file.fingerprint).map((file) => [file.filename, file.fingerprint]));
     const groups = [], omitted = [...skipped];
@@ -196,7 +206,7 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
       const parts = splitInput(file.patch, `diff-${String(index + 1).padStart(4, '0')}`, [file.filename]);
       for (const part of parts) part.text = `## ${JSON.stringify(file.filename)} (${file.status})\n\n\`\`\`diff\n${part.text}\n\`\`\``;
       const size = parts.reduce((sum, part) => sum + inputSize(part), 0);
-      if (contextBytes + size > MAX_BATCH) omitted.push({ filename: file.filename, reason: 'Diff trop volumineux pour une seule session' });
+      if (contextBytes + size > MAX_BATCH) omitted.push({ filename: file.filename, reason: 'Diff et contexte trop volumineux pour une seule session' });
       else groups.push({ file, parts, size });
     }
     const batches = []; let batch = [], size = contextBytes;
@@ -234,7 +244,7 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
     const known = previous?.head === head && previous?.base === base ? new Set(previous.unreviewed ?? []) : new Set();
     const notesList = [...omitted.filter(({ filename }) => !known.has(filename)), ...failed.map(({ file }) => ({ filename: file.filename, reason: 'OpenCode did not confirm complete review; retry planned' }))];
     const notes = notesList.length ? `\n\n### Fichiers non revus\n\n${notesList.map(({ filename, reason }) => `- ${JSON.stringify(filename)} : ${reason}`).join('\n')}` : '';
-    const body = `## Revue OpenCode\n\nCommit examiné : \`${head}\` ; la PR peut avoir évolué depuis.\n\n${pending ? 'La revue est partielle ; les fichiers restants seront réessayés.\n\n' : omitted.length ? 'La revue est partielle.\n\n' : ''}${reports.join('\n\n---\n\n') || 'Aucun fichier revu dans ce passage.'}${notes}`;
+    const body = `## Revue OpenCode\n\nCommit examiné : \`${head}\` ; la PR peut avoir évolué depuis.\n\n${contextTruncated ? '**Limite :** le titre et la description de la PR ont été tronqués à 60 000 octets UTF-8.\n\n' : ''}${pending ? 'La revue est partielle ; les fichiers restants seront réessayés.\n\n' : omitted.length ? 'La revue est partielle.\n\n' : ''}${reports.join('\n\n---\n\n') || 'Aucun fichier revu dans ce passage.'}${notes}`;
     if (Buffer.byteLength(body) > 60_000) throw new Error('Review report exceeds the GitHub comment limit; state preserved');
     const id = createHash('sha256').update(JSON.stringify([candidate.reviewId, head, base, nextState, body])).digest('hex');
     const draft = { head, base, reviewId: candidate.reviewId, nextState, body, id, ...(failed.length ? { error: error?.message ?? 'OpenCode did not confirm all files in the lot' } : {}) };
