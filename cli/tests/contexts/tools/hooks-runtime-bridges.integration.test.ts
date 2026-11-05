@@ -149,13 +149,13 @@ async function start(ws: Workspace, input: Record<string, unknown>) {
   return { plugin, prompts };
 }
 
-/** An `edit`, which the host documents by name but no run captured: the captured write's call,
- * its arguments a replacement in the same file. */
+/** An `edit`, which the host documents by name but no run captured: the captured write's call
+ * on the same file. Its other arguments are documented nowhere, so none is invented. */
 function documentedEdit(write: { call: Record<string, unknown> }, project: string) {
   return {
     ...write.call,
     tool: "edit",
-    args: { filePath: join(project, "notes.md"), oldString: "hello", newString: "bye" },
+    args: { filePath: join(project, "notes.md") },
   };
 }
 
@@ -203,7 +203,7 @@ describe("OpenCode, through its bridge", () => {
 
     expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({
       event: "PostToolUse",
-      files: [{ path: join(ws.project, "notes.md"), content: "hello\n" }],
+      files: [{ path: join(ws.project, "notes.md"), content: "hello\n", written: "hello\n" }],
       sessionId: SESSION,
     });
     expect(write.output.output).toBe("Wrote file successfully.\n\nfinding");
@@ -234,7 +234,7 @@ describe("OpenCode, through its bridge", () => {
     expect(afterStart(await recorded(ws, 2))[0]).toMatchObject({
       files: [{ path: join(ws.project, "notes.md") }],
     });
-    expect(afterStart(await recorded(ws, 2))[0]?.files[0]).not.toHaveProperty("content");
+    expect(afterStart(await recorded(ws, 2))[0]?.files[0]).not.toHaveProperty("written");
   });
 
   it("continues the turn for any answer at Stop", async () => {
@@ -294,7 +294,7 @@ describe("Kilo, through its bridge", () => {
     expect(await recorded(ws, 1)).toMatchObject([
       {
         event: "PostToolUse",
-        files: [{ path: join(ws.project, "notes.md"), content: "hello." }],
+        files: [{ path: join(ws.project, "notes.md"), content: "hello.", written: "hello." }],
         sessionId: SESSION,
       },
     ]);
@@ -326,7 +326,7 @@ describe("Kilo, through its bridge", () => {
     expect(await recorded(ws, 1)).toMatchObject([
       { files: [{ path: join(ws.project, "notes.md") }] },
     ]);
-    expect((await recorded(ws, 1))[0]?.files[0]).not.toHaveProperty("content");
+    expect((await recorded(ws, 1))[0]?.files[0]).not.toHaveProperty("written");
   });
 
   it("continues the turn for any answer at Stop", async () => {
