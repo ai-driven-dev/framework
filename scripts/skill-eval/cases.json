@@ -512,5 +512,43 @@
         ]
       }
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "setup states the recall facts the restored slots ask",
+    "setup": {
+      "files": {
+        "package.json": "{\n  \"name\": \"ledger\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"vite\",\n    \"test\": \"vitest run\",\n    \"test:changed\": \"vitest run --changed\",\n    \"export-invoices\": \"tsx scripts/export-invoices.ts\"\n  },\n  \"dependencies\": { \"react\": \"^18.3.0\", \"react-dom\": \"^18.3.0\", \"react-router-dom\": \"^6.26.0\" },\n  \"devDependencies\": { \"vite\": \"^5.4.0\", \"vitest\": \"^2.0.0\", \"tsx\": \"^4.19.0\" }\n}\n",
+        "README.md": "# Ledger\n\nA small invoicing app for freelancers. Create invoices in the browser, export them to CSV with `pnpm export-invoices`.\n",
+        ".env.example": "API_URL=\nSESSION_SECRET=\n",
+        "src/config/env.ts": "export const env = { apiUrl: process.env.API_URL ?? \"\", sessionSecret: process.env.SESSION_SECRET ?? \"\" };\n",
+        "src/main.tsx": "import { createRoot } from \"react-dom/client\";\nimport { RouterProvider } from \"react-router-dom\";\nimport { router } from \"./router\";\ncreateRoot(document.getElementById(\"root\")!).render(<RouterProvider router={router} />);\n",
+        "src/router.tsx": "import { createBrowserRouter } from \"react-router-dom\";\nexport const router = createBrowserRouter([\n  { path: \"/login\", element: <div>Login</div> },\n  { path: \"/invoices\", element: <div>Invoices</div>, loader: () => null },\n]);\n",
+        "src/format.test.ts": "import { expect, test } from \"vitest\";\ntest(\"adds\", () => expect(1 + 1).toBe(2));\n",
+        "src/store.int.test.ts": "import { expect, test } from \"vitest\";\ntest(\"stores\", () => expect(true).toBe(true));\n",
+        "vitest.config.ts": "import { defineConfig } from \"vitest/config\";\nexport default defineConfig({ test: { projects: [{ test: { name: \"unit\", include: [\"src/**/*.test.ts\"], exclude: [\"src/**/*.int.test.ts\"] } }, { test: { name: \"int\", include: [\"src/**/*.int.test.ts\"] } }] } });\n",
+        "scripts/export-invoices.ts": "console.log(\"id,total\");\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to set up the project memory. You are running headless with no human available, so answer every question yourself from the repo evidence, never wait for input, and complete the whole flow.",
+    "expect": {
+      "fileContains": {
+        "aidd_docs/memory/testing.md": [
+          ".int.test.ts",
+          "test:changed"
+        ],
+        "aidd_docs/memory/architecture.md": [
+          ".env.example"
+        ],
+        "aidd_docs/memory/ui.md": [
+          "src/router.tsx"
+        ],
+        "aidd_docs/memory/project-brief.md": [
+          "export-invoices"
+        ]
+      }
+    }
   }
 ]

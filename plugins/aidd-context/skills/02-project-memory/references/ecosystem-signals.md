@@ -1,6 +1,8 @@
 # Ecosystem signals
 
-What the scan learns about the services the project uses and does not build. The AI hosts the memory is wired into are `tools.md`.
+What the scan learns about the services the project uses and does not build.
+
+- Not here: the AI hosts the memory is wired into, which are `tools.md`.
 
 ## What earns an entry
 

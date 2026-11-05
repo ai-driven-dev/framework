@@ -12,22 +12,6 @@ const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
 
 const ALWAYS = ["project-brief.md", "architecture.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
 const CONDITIONAL = ["backlog.md", "deployment.md", "contract.md", "auth.md", "data.md", "async.md", "ui.md", "native.md"];
-const FORMER = {
-  "codebase-map.md": "core",
-  "integration.md": "contract",
-  "infra.md": "deployment",
-  "api.md": "contract",
-  "cli.md": "contract",
-  "package.md": "contract",
-  "database.md": "data",
-  "messaging.md": "async",
-  "realtime.md": "async",
-  "design.md": "ui",
-  "forms.md": "ui",
-  "navigation.md": "ui",
-  "mobile.md": "native",
-  "desktop.md": "native",
-};
 
 function templateFiles() {
   return fs.readdirSync(TEMPLATES, { withFileTypes: true }).flatMap((dir) =>
@@ -87,11 +71,76 @@ test("every file of capabilities.md has a template in the folder of its capabili
   }
 });
 
-test("every former file is named by the capability that replaced it", () => {
-  const rows = capabilityRows();
-  for (const [former, capability] of Object.entries(FORMER)) {
-    const row = rows.find(([name]) => name.replace(/`/gu, "") === capability);
-    assert.ok(row[4].includes(former), `${former} is not in the Former files of ${capability}`);
+const BANK = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/memory-question-bank.json"), "utf8"));
+const REPO = path.resolve(__dirname, "../..");
+
+/** Every `{{…}}` of every template, as the file, its nearest `##` heading, its text and its line. */
+function templateQuestions() {
+  return templateFiles().flatMap((template) => {
+    let heading = null;
+    return textOf(template)
+      .split(/\r?\n/u)
+      .flatMap((line, index) => {
+        if (line.startsWith("## ")) heading = line.slice(3).trim();
+        return [...line.matchAll(/\{\{([^{}\n]*)\}\}/gu)].map(([, text]) => ({ ...template, heading, text, line: index + 1 }));
+      });
+  });
+}
+
+const keyOf = ({ capability, name, file, heading, text, question }) => JSON.stringify([capability, name ?? file, heading, text ?? question]);
+const slotRows = () => BANK.filter((row) => row.status === "slot");
+
+test("the question bank holds each id once", () => {
+  const ids = BANK.map((row) => row.id);
+  assert.deepEqual(ids.filter((id, index) => ids.indexOf(id) !== index), []);
+});
+
+test("every template question is a slot row of the question bank, once", () => {
+  const rows = slotRows().map(keyOf);
+  assert.deepEqual(rows.filter((key, index) => rows.indexOf(key) !== index), [], "a question is banked twice");
+  const unbanked = templateQuestions()
+    .filter((question) => !rows.includes(keyOf(question)))
+    .map((question) => `unbanked question in ${question.capability}/${question.name}:${question.line}: ${question.text}`);
+  assert.deepEqual(unbanked, []);
+});
+
+test("every slot row of the question bank is still asked by its template", () => {
+  const asked = templateQuestions().map(keyOf);
+  const lost = slotRows()
+    .filter((row) => !asked.includes(keyOf(row)))
+    .map((row) => `${row.id} slot not in ${row.capability}/${row.file} under ${row.heading ?? "no heading"}: flip it to dropped with a reason, or to merged:<id>`);
+  assert.deepEqual(lost, []);
+});
+
+test("a merged row points to a slot row and a dropped row states its reason", () => {
+  const slots = new Set(slotRows().map((row) => row.id));
+  for (const row of BANK) {
+    if (row.status === "slot") continue;
+    if (row.status === "dropped") assert.ok(typeof row.reason === "string" && row.reason.trim() !== "", `${row.id} is dropped with no reason`);
+    else {
+      assert.match(row.status, /^merged:\S+$/u, `${row.id} has the unknown status ${row.status}`);
+      assert.ok(slots.has(row.status.slice("merged:".length)), `${row.id} is merged into ${row.status.slice("merged:".length)}, which is no slot row`);
+    }
+  }
+});
+
+test("every former file is named by the capability that replaced it, and has a row", () => {
+  for (const [capability, , , , former] of capabilityRows()) {
+    for (const file of former.split(" into ")[0].match(/[\w-]+\.md/gu) ?? []) {
+      assert.ok(
+        BANK.some((row) => row.capability === capability.replace(/`/gu, "") && path.basename(row.from) === file),
+        `${file} is a Former file of ${capability} and no row of the question bank comes from it`
+      );
+    }
+  }
+});
+
+test("a consumer of a template line still cites it, and the template still holds it", () => {
+  const anchored = BANK.filter((row) => row.consumer !== undefined);
+  assert.ok(anchored.length >= 2, "the question bank names no consumer");
+  for (const row of anchored) {
+    assert.ok(textOf({ capability: row.capability, name: row.file }).includes(row.anchor), `${row.id}: ${row.file} lost \`${row.anchor}\`, which ${row.consumer.path} reads`);
+    assert.ok(fs.readFileSync(path.join(REPO, row.consumer.path), "utf8").includes(row.consumer.cites), `${row.id}: ${row.consumer.path} no longer cites \`${row.consumer.cites}\``);
   }
 });
 
@@ -105,15 +154,21 @@ test("the ui template keeps one pointer line and drops the rest when a design sy
 
 test("a question with no answer is dropped, and a file with no answer is not written for a conditional row only", () => {
   const text = fs.readFileSync(path.join(SKILL, "references/capabilities.md"), "utf8");
-  const rule = text.split(/\r?\n/u).find((line) => line.includes("no answer"));
-  assert.ok(rule, "capabilities.md states no rule about a missing answer");
-  assert.match(rule, /question with no answer is dropped/u);
-  assert.match(rule, /conditional row with no answer at all writes no file/u);
-  assert.match(rule, /always row is written whatever/u);
+  const lines = text.split(/\r?\n/u);
+  assert.ok(lines.includes("- A question with no answer is dropped."), "capabilities.md does not drop a question with no answer");
+  assert.ok(lines.includes("- A conditional row with no answer at all writes no file."), "a conditional row with no answer still writes its file");
+  assert.ok(lines.includes("- An always row is written whatever."), "an always row is not written whatever");
 });
 
 test("the vcs template asks for the platform, the repository and the CLI, and the standard followed", () => {
   const text = textOf({ capability: "core", name: "vcs.md" });
   assert.match(text, /Platform: \{\{[^}]*repository[^}]*CLI/u);
   assert.match(text, /\{\{Which commit standard does the project follow, and where does it deviate\?\}\}/u);
+});
+
+test("the Current state only reader rule drops a secret or credential value", () => {
+  const rules = fs.readFileSync(path.join(SKILL, "references/memory-rules.md"), "utf8");
+  const row = rules.split(/\r?\n/u).find((line) => line.startsWith("| Current state only"));
+  assert.ok(row, "memory-rules.md has no Current state only row");
+  assert.match(row, /a secret or credential value/u);
 });
