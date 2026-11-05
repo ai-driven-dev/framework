@@ -50,6 +50,6 @@ Instructions:
 
 <!--
 Instructions:
-- Use one unchecked checkbox per action or scenario; put substeps and expected results in nested bullets.
+- Use one unchecked checkbox per acceptance criterion, phrased as an observable result; group related conditions or verification steps in nested bullets.
 - Do not include installation process, focus on functional testing.
 -->

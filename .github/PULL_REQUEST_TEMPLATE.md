@@ -25,7 +25,7 @@ and bold the opening words of each step.
 
 ## 🧪 How to verify
 
-<!-- One unchecked checkbox per action or scenario; put substeps and expected results in nested bullets. -->
+<!-- One unchecked checkbox per acceptance criterion, phrased as an observable result; group related conditions or verification steps in nested bullets. -->
 
 - [ ]
 
