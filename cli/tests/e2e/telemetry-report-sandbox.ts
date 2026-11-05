@@ -265,10 +265,23 @@ export function useReportSandbox(): void {
     // Opting in is `on`: a key set by hand opens no consent interval, and nothing is stored.
     expect((await aidd(["on", "--yes", "--anonymous"])).exitCode).toBe(0);
     await backdateConsent(telemetry);
+    // The synthetic calls also need a repository observation from before they ran.
+    await dateRootObservation("2026-09-01T00:00:00.000Z");
   });
   afterEach(async () => {
     await env.cleanup();
   });
+}
+
+/** Simulate when the sandbox's clone was first observed, alongside its backdated consent. */
+export async function dateRootObservation(at: string): Promise<void> {
+  const path = join(telemetry, "ledger", "roots.json");
+  const roots = JSON.parse(await readFile(path, "utf8")) as {
+    directories: Array<{ seen_at: string }>;
+  };
+  if (roots.directories.length !== 1) throw new Error("Expected one remembered clone");
+  roots.directories[0].seen_at = at;
+  await writeFile(path, `${JSON.stringify(roots, null, 2)}\n`);
 }
 
 /** Appends a call to the sandbox's main transcript, as Claude would write it later. */

@@ -5,6 +5,7 @@ import {
   CALLS,
   type Call,
   COUNTERS,
+  dateRootObservation,
   declareBranch,
   type Envelope,
   held,
@@ -19,6 +20,21 @@ import {
 useReportSandbox();
 
 describe("aidd telemetry report", () => {
+  it("keeps tokens without repository or task attribution before the first clone observation", async () => {
+    await dateRootObservation("2026-10-09T00:00:00.000Z");
+    const repository = await json("repository");
+    expect(repository.totals.records).toBe(CALLS.length);
+    expect(repository.rows).toHaveLength(1);
+    expect(repository.rows[0]).toMatchObject({ kind: "absent", records: CALLS.length });
+    const tasks = await json("task");
+    expect(tasks.rows).toHaveLength(1);
+    expect(tasks.rows[0]).toMatchObject({
+      kind: "unattributed",
+      reason: "no-binding",
+      records: CALLS.length,
+    });
+  });
+
   it("answers on every axis, and every axis adds up to the same totals", async () => {
     await declareBranch();
     const known = (pick: (call: Call) => number | null) =>
