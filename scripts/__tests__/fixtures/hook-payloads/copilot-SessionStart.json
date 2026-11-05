@@ -1,0 +1,30 @@
+{
+  "host": "copilot",
+  "event": "SessionStart",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "SessionStart",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "source": "new",
+        "initial_prompt": "Create notes.md containing the line: hello. Then run the shell command: echo hi. Then say done."
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "hook_event_name": "SessionStart",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "source": "new",
+        "initial_prompt": "Use apply_patch to create notes.md containing the line: hello. Then in your final reply, repeat verbatim any hook feedback you saw after the file write, or the word none."
+      },
+      "hookAnswer": null
+    }
+  ]
+}

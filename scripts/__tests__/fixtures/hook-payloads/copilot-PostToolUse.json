@@ -3,44 +3,76 @@
   "event": "PostToolUse",
   "samples": [
     {
-      "payloadKeys": [
-        "hook_event_name",
-        "session_id",
-        "timestamp",
-        "cwd",
-        "tool_name",
-        "tool_input",
-        "tool_result"
-      ],
-      "recorded": {
+      "run": "log",
+      "payload": {
         "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
         "tool_name": "Edit",
-        "tool_input": "*** Begin Patch\n*** Update File: /Users/user/project/aidd_docs/memory/notes.md\n@@\n - Memory bank for tests.\n+- The repo has 41 commits and one TODO.\n*** End Patch\n"
+        "tool_input": "*** Begin Patch\n*** Add File: notes.md\n+hello.\n*** End Patch\n",
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "Added 1 file(s): /Users/user/project/notes.md"
+        }
       },
-      "hookAnswer": {
-        "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
-      },
-      "hookStatus": 0
+      "hookAnswer": null
     },
     {
-      "payloadKeys": [
-        "hook_event_name",
-        "session_id",
-        "timestamp",
-        "cwd",
-        "tool_name",
-        "tool_input",
-        "tool_result"
-      ],
-      "recorded": {
+      "run": "log",
+      "payload": {
         "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
         "tool_name": "Bash",
-        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md\",\"description\":\"Append repository note\"}"
+        "tool_input": {
+          "command": "echo hi",
+          "description": "Run requested echo command"
+        },
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "hi\n<shellId: 0 completed with exit code 0>"
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_name": "Edit",
+        "tool_input": "*** Begin Patch\n*** Add File: notes.md\n+hello.\n*** End Patch\n",
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "Added 1 file(s): /Users/user/project/notes.md"
+        }
       },
       "hookAnswer": {
-        "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+        "decision": "block",
+        "reason": "Hook feedback: PTUTOKEN-7Q2X"
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_name": "Read",
+        "tool_input": {
+          "path": "/Users/user/project/notes.md"
+        },
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "hello.\n"
+        }
       },
-      "hookStatus": 0
+      "hookAnswer": null
     }
   ]
 }

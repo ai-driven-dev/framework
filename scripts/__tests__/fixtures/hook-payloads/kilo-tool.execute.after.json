@@ -1,0 +1,91 @@
+{
+  "host": "kilo",
+  "event": "tool.execute.after",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "write_7jr4p6yjy5gk",
+          "args": {
+            "content": "hello.",
+            "filePath": "/Users/user/project/notes.md"
+          }
+        },
+        "output": {
+          "title": "notes.md",
+          "metadata": {
+            "diagnostics": {},
+            "filepath": "/Users/user/project/notes.md",
+            "exists": false,
+            "diff": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -0,0 +1,1 @@\n+hello.\n\\ No newline at end of file\n",
+            "filediff": {
+              "file": "/Users/user/project/notes.md",
+              "patch": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -0,0 +1,1 @@\n+hello.\n\\ No newline at end of file\n",
+              "additions": 1,
+              "deletions": 0
+            },
+            "truncated": false
+          },
+          "output": "Wrote file successfully."
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "bash",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "bash_7xg1pc9zrxb4",
+          "args": {
+            "command": "echo hi"
+          }
+        },
+        "output": {
+          "title": "echo hi",
+          "metadata": {
+            "output": "hi\n",
+            "exit": 0,
+            "description": "echo hi",
+            "truncated": false
+          },
+          "output": "hi\n"
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "write_srwhsvwvkzkv",
+          "args": {
+            "content": "hello.",
+            "filePath": "/Users/user/project/notes.md"
+          }
+        },
+        "output": {
+          "title": "notes.md",
+          "metadata": {
+            "diagnostics": {},
+            "filepath": "/Users/user/project/notes.md",
+            "exists": false,
+            "diff": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -0,0 +1,1 @@\n+hello.\n\\ No newline at end of file\n",
+            "filediff": {
+              "file": "/Users/user/project/notes.md",
+              "patch": "Index: /Users/user/project/notes.md\n===================================================================\n--- /Users/user/project/notes.md\n+++ /Users/user/project/notes.md\n@@ -0,0 +1,1 @@\n+hello.\n\\ No newline at end of file\n",
+              "additions": 1,
+              "deletions": 0
+            },
+            "truncated": false
+          },
+          "output": "Wrote file successfully."
+        }
+      }
+    }
+  ]
+}

@@ -88,9 +88,11 @@ Where a host does not deliver a level 2 answer to the model, the converter answe
 | --- | --- | --- | --- | --- | --- | --- |
 | SessionStart text reaches the model | yes | yes | yes | yes | no | no |
 | PostToolUse answer key | `hookSpecificOutput.additionalContext` | same | `additional_context` | top-level `additionalContext` | appended by the bridge | same |
-| PostToolUse `decision: block` reaches the model | documented | documented | untested | untested | untested, the bridge appends the reason | untested |
-| Stop continues the turn | `decision: block` | same | `followup_message` | `decision: block` | `promptAsync` | same |
+| PostToolUse `decision: block` reaches the model | yes, as a blocking error naming the reason | yes | no, the model saw nothing (`decision` and `reason` only, no other key tried) | yes | yes, the bridge appends the reason to the tool result | same |
+| Stop continues the turn | `decision: block`, yes; the second Stop carries `stop_hook_active: true` | same | `followup_message`, not run: `stop` did not fire in headless `cursor-agent -p` | `decision: block`, yes; same `stop_hook_active` | `promptAsync`: the prompt lands as a user message, the reply was not observed (headless `run` exits at idle) | `promptAsync`, yes: the model answered it |
 | PreToolUse | native | native | native, mapped by the CLI | native | native, not bridged | native, not bridged |
+
+Copilot accepts the nested hooks shape (`matcher` plus a `hooks` array), as the native tree ships it: a plugin installed from the native build fired SessionStart and PostToolUse, and expanded `${PLUGIN_ROOT}`. The flat shape in `.github/hooks/*.json` also fires, and needs `--trust-folder` in prompt mode.
 
 Copilot's behaviour on a crashing PreToolUse hook is not stated by its official reference; untested.
 
