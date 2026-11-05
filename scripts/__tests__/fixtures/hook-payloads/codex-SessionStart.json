@@ -1,0 +1,32 @@
+{
+  "host": "codex",
+  "event": "SessionStart",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "SessionStart",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
+        "source": "startup"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "SessionStart",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
+        "source": "startup"
+      },
+      "hookAnswer": null
+    }
+  ]
+}

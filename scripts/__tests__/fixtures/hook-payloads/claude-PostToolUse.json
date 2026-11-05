@@ -3,60 +3,96 @@
   "event": "PostToolUse",
   "samples": [
     {
-      "payloadKeys": [
-        "session_id",
-        "transcript_path",
-        "cwd",
-        "prompt_id",
-        "permission_mode",
-        "effort",
-        "hook_event_name",
-        "tool_name",
-        "tool_input",
-        "tool_response",
-        "tool_use_id",
-        "duration_ms"
-      ],
-      "recorded": {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "a28b8f6d-931b-4057-970d-fc6801beb719",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
         "hook_event_name": "PostToolUse",
-        "tool_name": "Edit",
-        "tool_input": "{\"file_path\":\"/Users/user/project/aidd_docs/memory/notes.md\",\"old_string\":\"- Memory bank for tests.\",\"new_string\":\"- Memory bank for tests.\\n- The repo has 41 commits and one TODO.\",\"replace_all\":false}"
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "content": "hello\n"
+        },
+        "tool_response": {
+          "type": "create",
+          "filePath": "/Users/user/project/notes.md",
+          "content": "hello\n",
+          "structuredPatch": [],
+          "originalFile": null,
+          "userModified": false
+        },
+        "tool_use_id": "toolu_015e4afwbBduYyGSH7H3bgHP",
+        "duration_ms": 11
       },
-      "hookAnswer": {
-        "hookSpecificOutput": {
-          "hookEventName": "PostToolUse",
-          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
-        }
-      },
-      "hookStatus": 0
+      "hookAnswer": null
     },
     {
-      "payloadKeys": [
-        "session_id",
-        "transcript_path",
-        "cwd",
-        "prompt_id",
-        "permission_mode",
-        "effort",
-        "hook_event_name",
-        "tool_name",
-        "tool_input",
-        "tool_response",
-        "tool_use_id",
-        "duration_ms"
-      ],
-      "recorded": {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "a28b8f6d-931b-4057-970d-fc6801beb719",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
         "hook_event_name": "PostToolUse",
         "tool_name": "Bash",
-        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md && tail -n 3 aidd_docs/memory/notes.md\",\"description\":\"Append note line to notes.md and show last lines\"}"
+        "tool_input": {
+          "command": "echo hi",
+          "description": "Print hi"
+        },
+        "tool_response": {
+          "stdout": "hi",
+          "stderr": "",
+          "interrupted": false,
+          "isImage": false,
+          "noOutputExpected": false
+        },
+        "tool_use_id": "toolu_016LRHQ6cppSBNNWPfPaGsqH",
+        "duration_ms": 23
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "7f5226de-6234-4391-adb1-8d914add9f31",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "content": "hello\n"
+        },
+        "tool_response": {
+          "type": "create",
+          "filePath": "/Users/user/project/notes.md",
+          "content": "hello\n",
+          "structuredPatch": [],
+          "originalFile": null,
+          "userModified": false
+        },
+        "tool_use_id": "toolu_01Kz4YESBpuM8uB8orpjzetM",
+        "duration_ms": 2
       },
       "hookAnswer": {
-        "hookSpecificOutput": {
-          "hookEventName": "PostToolUse",
-          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
-        }
-      },
-      "hookStatus": 0
+        "decision": "block",
+        "reason": "Hook feedback: PTUTOKEN-7Q2X"
+      }
     }
   ]
 }

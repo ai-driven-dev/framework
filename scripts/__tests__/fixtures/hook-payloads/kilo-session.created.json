@@ -1,0 +1,116 @@
+{
+  "host": "kilo",
+  "event": "session.created",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "id": "evt_1a9d24c56001wkRRCc6xhMF5SU",
+        "type": "session.created",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "info": {
+            "id": "00000000-0000-4000-8000-000000000000",
+            "slug": "stellar-circuit",
+            "version": "7.7.5",
+            "projectID": "global",
+            "directory": "/Users/user/project",
+            "path": "",
+            "title": "New session - 1970-01-01T00:00:00.000Z",
+            "permission": [
+              {
+                "permission": "question",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "suggest",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "plan_enter",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "plan_exit",
+                "pattern": "*",
+                "action": "deny"
+              }
+            ],
+            "cost": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "reasoning": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "time": {
+              "created": 1793850494037,
+              "updated": 1793850494037
+            }
+          }
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "id": "evt_1a9d27ed70012QlFhkpOZBjha5",
+        "type": "session.created",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "info": {
+            "id": "00000000-0000-4000-8000-000000000000",
+            "slug": "tidy-star",
+            "version": "7.7.5",
+            "projectID": "global",
+            "directory": "/Users/user/project",
+            "path": "",
+            "title": "New session - 1970-01-01T00:00:00.000Z",
+            "permission": [
+              {
+                "permission": "question",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "suggest",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "plan_enter",
+                "pattern": "*",
+                "action": "deny"
+              },
+              {
+                "permission": "plan_exit",
+                "pattern": "*",
+                "action": "deny"
+              }
+            ],
+            "cost": 0,
+            "tokens": {
+              "input": 0,
+              "output": 0,
+              "reasoning": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            },
+            "time": {
+              "created": 1793850506966,
+              "updated": 1793850506966
+            }
+          }
+        }
+      }
+    }
+  ]
+}

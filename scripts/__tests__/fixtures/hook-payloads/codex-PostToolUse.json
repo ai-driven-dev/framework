@@ -3,80 +3,83 @@
   "event": "PostToolUse",
   "samples": [
     {
-      "payloadKeys": [
-        "session_id",
-        "turn_id",
-        "transcript_path",
-        "cwd",
-        "hook_event_name",
-        "model",
-        "permission_mode",
-        "tool_name",
-        "tool_input",
-        "tool_response",
-        "tool_use_id"
-      ],
-      "recorded": {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a1a9cb-9b85-7b20-95a9-7736bf3af82f",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
         "hook_event_name": "PostToolUse",
-        "tool_name": "Bash",
-        "tool_input": "{\"command\":\"cat aidd_docs/memory/notes.md\"}"
-      },
-      "hookAnswer": null,
-      "hookStatus": 0
-    },
-    {
-      "payloadKeys": [
-        "session_id",
-        "turn_id",
-        "transcript_path",
-        "cwd",
-        "hook_event_name",
-        "model",
-        "permission_mode",
-        "tool_name",
-        "tool_input",
-        "tool_response",
-        "tool_use_id"
-      ],
-      "recorded": {
-        "hook_event_name": "PostToolUse",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
         "tool_name": "apply_patch",
-        "tool_input": "{\"command\":\"*** Begin Patch\\n*** Update File: aidd_docs/memory/notes.md\\n@@\\n - Memory bank for tests.\\n+- The repo has 41 commits and one TODO.\\n*** End Patch\"}"
+        "tool_input": {
+          "command": "*** Begin Patch\n*** Add File: notes.md\n+hello\n*** End Patch"
+        },
+        "tool_response": "Exit code: 0\nWall time: 0 seconds\nOutput:\nSuccess. Updated the following files:\nA notes.md\n",
+        "tool_use_id": "exec-372bfd62-e851-458f-ae60-fe319e69cb18"
       },
-      "hookAnswer": {
-        "hookSpecificOutput": {
-          "hookEventName": "PostToolUse",
-          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
-        }
-      },
-      "hookStatus": 0
+      "hookAnswer": null
     },
     {
-      "payloadKeys": [
-        "session_id",
-        "turn_id",
-        "transcript_path",
-        "cwd",
-        "hook_event_name",
-        "model",
-        "permission_mode",
-        "tool_name",
-        "tool_input",
-        "tool_response",
-        "tool_use_id"
-      ],
-      "recorded": {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a1a9cb-9b85-7b20-95a9-7736bf3af82f",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
         "hook_event_name": "PostToolUse",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
         "tool_name": "Bash",
-        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md\"}"
+        "tool_input": {
+          "command": "echo hi"
+        },
+        "tool_response": "hi\n",
+        "tool_use_id": "exec-c1c1f8d7-cb59-4bf3-9707-eef4ccfa535b"
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a1a9cd-db23-7c60-84b9-6eb066120b7c",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "PostToolUse",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
+        "tool_name": "apply_patch",
+        "tool_input": {
+          "command": "*** Begin Patch\n*** Add File: /Users/user/project/notes.md\n+hello\n*** End Patch"
+        },
+        "tool_response": "Exit code: 0\nWall time: 0 seconds\nOutput:\nSuccess. Updated the following files:\nA /Users/user/project/notes.md\n",
+        "tool_use_id": "exec-37800639-1b30-4305-8125-0a43d6e97902"
       },
       "hookAnswer": {
-        "hookSpecificOutput": {
-          "hookEventName": "PostToolUse",
-          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
-        }
+        "decision": "block",
+        "reason": "Hook feedback: PTUTOKEN-7Q2X"
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "turn_id": "01a1a9cd-db23-7c60-84b9-6eb066120b7c",
+        "transcript_path": "/Users/user/.codex/sessions/1970/01/01/rollout-1970-01-01T00-00-00-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "hook_event_name": "PostToolUse",
+        "model": "gpt-5.6-luna",
+        "permission_mode": "bypassPermissions",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "ls -l notes.md && sed -n '1,3p' notes.md"
+        },
+        "tool_response": "-rw-r--r--@ 1 user  staff  6 Jan  1 00:00 notes.md\nhello\n",
+        "tool_use_id": "exec-0bb370a8-9f91-4792-b70e-4fdd872e6c5c"
       },
-      "hookStatus": 0
+      "hookAnswer": null
     }
   ]
 }

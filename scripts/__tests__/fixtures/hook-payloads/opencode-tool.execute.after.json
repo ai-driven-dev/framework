@@ -1,0 +1,76 @@
+{
+  "host": "opencode",
+  "event": "tool.execute.after",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call_d50bb13595a04b648512e912",
+          "args": {
+            "content": "hello\n",
+            "filePath": "/Users/user/project/notes.md"
+          }
+        },
+        "output": {
+          "title": "notes.md",
+          "metadata": {
+            "diagnostics": {},
+            "filepath": "/Users/user/project/notes.md",
+            "exists": false,
+            "truncated": false
+          },
+          "output": "Wrote file successfully."
+        }
+      }
+    },
+    {
+      "run": "log",
+      "payload": {
+        "call": {
+          "tool": "bash",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call_81c509161a8a4e358cc7d1a1",
+          "args": {
+            "command": "echo hi"
+          }
+        },
+        "output": {
+          "title": "echo hi",
+          "metadata": {
+            "output": "hi\n",
+            "exit": 0,
+            "truncated": false
+          },
+          "output": "hi\n"
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "call": {
+          "tool": "write",
+          "sessionID": "00000000-0000-4000-8000-000000000000",
+          "callID": "call_e8d4a3d20abc44fc93b9720d",
+          "args": {
+            "filePath": "/Users/user/project/notes.md",
+            "content": "hello\n"
+          }
+        },
+        "output": {
+          "title": "notes.md",
+          "metadata": {
+            "diagnostics": {},
+            "filepath": "/Users/user/project/notes.md",
+            "exists": false,
+            "truncated": false
+          },
+          "output": "Wrote file successfully."
+        }
+      }
+    }
+  ]
+}

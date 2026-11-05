@@ -3,65 +3,108 @@
   "event": "postToolUse",
   "samples": [
     {
-      "payloadKeys": [
-        "conversation_id",
-        "generation_id",
-        "model",
-        "tool_name",
-        "tool_input",
-        "tool_output",
-        "duration",
-        "tool_use_id",
-        "session_id",
-        "hook_event_name",
-        "cursor_version",
-        "workspace_roots",
-        "user_email",
-        "transcript_path"
-      ],
-      "recorded": {
-        "hook_event_name": "postToolUse",
+      "run": "log",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
         "tool_name": "Write",
-        "tool_input": "{\"file_path\":\"/Users/user/project/aidd_docs/memory/notes.md\",\"content\":\"# Notes\\n\\n- Memory bank for tests.\\n- The repo has 41 commits and one TODO.\\n\"}"
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "content": "hello\n"
+        },
+        "tool_output": "{\"file_path\":\"/Users/user/project/notes.md\",\"success\":true}",
+        "duration": 29.226,
+        "tool_use_id": "call-4f595e7c-3959-44fc-842f-664ad81d367e-0\nfc_7c3b6f2a-b923-90d0-be9f-e72aef0172c6_0",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "postToolUse",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
       },
-      "hookAnswer": {
-        "hookSpecificOutput": {
-          "hookEventName": "PostToolUse",
-          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
-        }
-      },
-      "hookStatus": 0
+      "hookAnswer": null
     },
     {
-      "payloadKeys": [
-        "conversation_id",
-        "generation_id",
-        "model",
-        "tool_name",
-        "tool_input",
-        "tool_output",
-        "duration",
-        "tool_use_id",
-        "cwd",
-        "session_id",
-        "hook_event_name",
-        "cursor_version",
-        "workspace_roots",
-        "user_email",
-        "transcript_path"
-      ],
-      "recorded": {
-        "hook_event_name": "postToolUse",
+      "run": "log",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
         "tool_name": "Shell",
-        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md\",\"cwd\":\"\",\"timeout\":30000}"
+        "tool_input": {
+          "command": "echo hi",
+          "cwd": "",
+          "timeout": 30000
+        },
+        "tool_output": "{\"output\":\"hi\\n\",\"exitCode\":0}",
+        "duration": 1600.789,
+        "tool_use_id": "dd36832d-0776-4160-a55b-ad4a900f809b",
+        "cwd": "",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "postToolUse",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "tool_name": "Read",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md"
+        },
+        "tool_output": "{\"file_path\":\"/Users/user/project/notes.md\",\"content_length\":6}",
+        "duration": 3.687,
+        "tool_use_id": "call-7d9769d7-3136-4ad8-b247-6ad8d9613fd9-0\nfc_9574294a-aac6-9c38-9b42-f61cc7b47281_0",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "postToolUse",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "conversation_id": "00000000-0000-4000-8000-000000000000",
+        "generation_id": "00000000-0000-4000-8000-000000000000",
+        "model": "default",
+        "tool_name": "Write",
+        "tool_input": {
+          "file_path": "/Users/user/project/notes.md",
+          "content": "hello\n"
+        },
+        "tool_output": "{\"file_path\":\"/Users/user/project/notes.md\",\"success\":true}",
+        "duration": 36.318,
+        "tool_use_id": "call-7d9769d7-3136-4ad8-b247-6ad8d9613fd9-0\nfc_9574294a-aac6-9c38-9b42-f61cc7b47281_0",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "hook_event_name": "postToolUse",
+        "cursor_version": "2026.10.22-27dcf5f",
+        "workspace_roots": [
+          "/Users/user/project"
+        ],
+        "user_email": "user@example.com",
+        "transcript_path": null
       },
       "hookAnswer": {
-        "hookSpecificOutput": {
-          "hookEventName": "PostToolUse",
-          "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
-        }
-      },
-      "hookStatus": 0
+        "decision": "block",
+        "reason": "Hook feedback: PTUTOKEN-7Q2X"
+      }
     }
   ]
 }
