@@ -14,8 +14,6 @@ name: OpenCode agent
 # itself. The agent step holds no GitHub credential.
 
 on:
-  push:
-    branches: [feat/opencode-review-after-submit]
   issue_comment:
     types: [created]
   pull_request_review_comment:
@@ -32,7 +30,7 @@ jobs:
   opencode:
     name: Run OpenCode
     # 8973343 is @alexsoyes (Alex), the repository owner.
-    if: github.ref == 'refs/heads/feat/opencode-review-after-submit'
+    if: github.event.comment.user.id == 8973343 && startsWith(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -40,8 +38,8 @@ jobs:
       pull-requests: read
     env:
       REPO: ${{ github.repository }}
-      NUMBER: '1150'
-      IS_PR: 'true'
+      NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+      IS_PR: ${{ github.event.issue.pull_request != null || github.event.pull_request != null }}
     steps:
       - name: Resolve the branch to work on
         id: target
@@ -74,7 +72,7 @@ jobs:
       # The image must come from the default branch, never the PR being edited.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.repository.default_branch }}
           path: .aidd-runtime
           sparse-checkout: |
             docker/aidd-opencode
@@ -99,17 +97,10 @@ jobs:
       # Keep Git from treating those plain-text links as type changes later.
       - run: git -C project config core.symlinks false
 
-      - name: Verify checkout does not materialize symlinks
-        run: |
-          test ! -L project/.agents/skills/release-video
-          test "$(git -C project ls-files -s .agents/skills/release-video | cut -d' ' -f1)" = 120000
-          git -C project diff --quiet -- .agents/skills/release-video
-
       - name: Write the prompt
         run: |
           set -euo pipefail
-          event="$RUNNER_TEMP/opencode-event.json"
-          jq -n '{issue:{number:1150,title:"OpenCode smoke test",body:"",pull_request:{}},comment:{body:"/opencode Do not change any files. Reply exactly: OpenCode smoke test passed."}}' > "$event"
+          event="$GITHUB_EVENT_PATH"
           {
             echo "You are running non-interactively in GitHub Actions on $REPO."
             echo "Make the requested change in the current checkout. Do not commit or push: the workflow does,"
@@ -209,8 +200,6 @@ jobs:
 
           footer="No file changed."
           if [ -n "$(git status --porcelain)" ]; then
-            echo '::error::The smoke test must not change files.'
-            exit 1
             bot_id="$(gh api "users/${APP_SLUG}%5Bbot%5D" --jq .id)"
             git config user.name "${APP_SLUG}[bot]"
             git config user.email "${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com"
