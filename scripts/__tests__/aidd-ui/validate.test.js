@@ -124,9 +124,9 @@ const range = (from, count) => Array.from({ length: count }, (_, index) => from 
 describe("aidd-ui hooks declaration", () => {
   const declared = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8")).hooks;
 
-  // The host adapter reads only these tools; a hook fired for another would read nothing.
+  // The tools the host adapters read, under each host's own name: a hook fired for another would read nothing.
   it("fires after the tools the host adapter reads, a shell command among them since the engine writes through one", () => {
-    assert.deepEqual(declared.PostToolUse.map((group) => group.matcher), ["Write|Edit|Bash"]);
+    assert.deepEqual(declared.PostToolUse.map((group) => group.matcher), ["Write|Edit|Bash|Shell|bash|PowerShell"]);
   });
 
   it("bounds every hook to the contract's 5 seconds", () => {
