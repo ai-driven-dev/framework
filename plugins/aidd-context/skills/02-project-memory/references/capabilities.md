@@ -12,24 +12,20 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 
 | Capability | Detected when | File | Always | Former files |
 | --- | --- | --- | --- | --- |
-| `core` | always | `project-brief.md`, `architecture.md`, `codebase-map.md`, `coding-assertions.md`, `testing.md`, `vcs.md` | yes | - |
-| `ecosystem` | always | `ecosystem.md` | yes | - |
+| `core` | always | `project-brief.md`, `architecture.md`, `coding-assertions.md`, `testing.md`, `vcs.md` | yes | `codebase-map.md` into `architecture.md` |
+| `ecosystem` | always | `ecosystem.md` | yes | `integration.md` |
 | `backlog` | local backlog artifacts, issue templates, a ticketing tool in use, or a repo file naming backlog conventions | `backlog.md` | no | - |
-| `ui` | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir | `design.md`, `forms.md`, `navigation.md` | no | - |
-| `api` | a server framework, or a `routes/`, `controllers/`, or `api/` dir | `api.md`, `integration.md` | no | - |
-| `database` | an ORM or driver, a `migrations/` dir, or a schema file | `database.md` | no | - |
+| `deployment` | a CI config, a `Dockerfile`, or Terraform, Pulumi, Kubernetes, or Helm files | `deployment.md` | no | `infra.md` |
+| `contract` | a server framework, a `routes/`, `controllers/`, or `api/` dir, a `bin` field or CLI parser (commander, yargs, oclif, clap, click), or a publishable manifest declaring an importable entry (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`) | `contract.md` | no | `api.md`, `cli.md`, `package.md` |
 | `auth` | an auth library (passport, next-auth, clerk, auth0, devise), auth middleware, or an auth module | `auth.md` | no | - |
-| `realtime` | a websocket or SSE library (socket.io, ws, pusher, ably, channels, actioncable), or a socket endpoint | `realtime.md` | no | - |
-| `messaging` | a queue or broker (kafka, rabbitmq, sqs, bullmq) with producers or consumers | `messaging.md` | no | - |
-| `deployment` | a CI config, or a `Dockerfile` | `deployment.md` | no | - |
-| `infra` | Terraform, Pulumi, Kubernetes, or Helm files | `infra.md` | no | - |
-| `mobile` | an `ios/` or `android/` dir, a `pubspec.yaml`, a `Podfile`, or React Native or Flutter | `mobile.md` | no | - |
-| `desktop` | Electron, Tauri, or a native desktop toolkit (Qt, GTK, WPF, AppKit) | `desktop.md` | no | - |
-| `package` | a library others import: a publishable manifest declaring an importable entry that is not the CLI bin (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`) | `package.md` | no | - |
-| `cli` | a command-line tool: a `bin` field, or a CLI parser (commander, yargs, oclif, clap, click) | `cli.md` | no | - |
-| `data` | notebooks, a data-versioning or ML tool, or pipeline and model files | `data.md` | no | - |
+| `data` | an ORM or driver, a `migrations/` dir, a schema file, notebooks, a data-versioning or ML tool, or pipeline and model files | `data.md` | no | `database.md` |
+| `async` | a queue or broker (kafka, rabbitmq, sqs, bullmq) with producers or consumers, or a websocket or SSE library (socket.io, ws, pusher, ably, channels, actioncable) | `async.md` | no | `messaging.md`, `realtime.md` |
+| `ui` | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir | `ui.md` | no | `design.md`, `forms.md`, `navigation.md` |
+| `native` | an `ios/` or `android/` dir, a `pubspec.yaml`, a `Podfile`, React Native, Flutter, Electron, Tauri, or a native desktop toolkit (Qt, GTK, WPF, AppKit) | `native.md` | no | `mobile.md`, `desktop.md` |
 
 `Former files` names the template files a capability replaced. Check offers to merge an old bank's file of that name into the row's file.
+
+A template line in `{{…}}` is a question the writer answers. A question with no answer is dropped, a file with no answer is not written.
 
 ## Bank tree
 

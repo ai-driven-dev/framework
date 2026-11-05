@@ -84,7 +84,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🎨 Design
 
-> Read designs and follow the project's design system. UI guidelines: [design.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ui/design.md).
+> Read designs and follow the project's design system. UI guidelines: [ui.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ui/ui.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -108,7 +108,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🗄️ Database
 
-> Explore the database and run migrations. Database conventions: [database.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/database/database.md).
+> Explore the database and run migrations. Database conventions: [data.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/data/data.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |

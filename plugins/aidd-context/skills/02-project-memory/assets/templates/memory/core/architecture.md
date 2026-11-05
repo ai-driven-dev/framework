@@ -1,32 +1,26 @@
 # Architecture
 
-The macro technical shape: the stack, how the pieces fit, and the decisions behind them. Point to the code, do not restate it.
-
 ## Stack
 
-- <Language and runtime, the main framework, the one-line why>
-- <Cross-cutting libraries only; a capability's own library (ORM, test runner) lives in its file>
+- {{Which language, runtime and main framework, and why this one? One line each.}}
 
-## How it fits together
+## Areas
 
-The macro flow between the main parts. One box per area, high level only.
+- {{Which top-level folders have a role their name does not show? One level, one line each.}}
+- Entry points: {{where does execution start, per deliverable?}}
 
-```mermaid
-flowchart LR
-    A[TODO: replace with the real macro flow]
-```
+## Decisions
 
-## Key decisions
+- {{Which decision is not obvious from the code, and what is its reason?}}
 
-- <A decision not obvious from the code, and its reason>
-- <A constraint or trade-off a contributor must respect>
+## Constraints
 
-## Gotchas
+- {{Which constraint or trade-off must a contributor respect?}}
 
-- <Something surprising that bites newcomers>
+## Placement
 
-<!--
-Capture: the stack, the macro structure, the non-obvious decisions and gotchas.
-Skip: the full file tree, exhaustive dependency lists, anything re-derivable by scanning the repo.
-Keep the diagram macro and follow the project's Mermaid conventions. Remove this comment when filled.
--->
+- {{Where does new code of each kind go when the folder names do not say?}}
+
+## Flow
+
+- {{Does work cross processes or repositories? Draw that flow as one mermaid flowchart, a box per process or repository; else drop this section.}}

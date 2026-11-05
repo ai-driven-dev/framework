@@ -1,31 +1,21 @@
 # Deployment
 
-Where the project runs and how it ships: CI/CD, environments, and release.
-
 ## Pipeline
 
-- <CI/CD tool, the macro stages (build, test, deploy)>
-- <What triggers a deploy>
-
-```mermaid
-flowchart LR
-    TODO[push] --> TODO2[build] --> TODO3[test] --> TODO4[deploy]
-```
+- {{Which CI or CD tool runs, which stages gate a merge, and what triggers a deploy?}}
 
 ## Environments
 
-- <The environments (dev, staging, prod) and their URLs>
+- {{Which environments exist, where do they run, and how is each reached?}}
 
 ## Release
 
-- <How a release is cut, the rollback procedure>
+- {{How is a release cut and rolled back?}}
+
+## Infrastructure
+
+- {{Which tool provisions the runtime, and where do its definitions live? Drop this section when none does.}}
 
 ## Monitoring
 
-- <Monitoring and logging tools, where alerts go>
-
-<!--
-Capture: the macro pipeline, the environments, release and monitoring.
-The diagram is the pipeline stages, only when it has real stages or gates. A one-step deploy needs none, drop it.
-Skip: the full CI config, every env var. Point to the workflow files. Remove this comment when filled.
--->
+- {{Where do logs and alerts go, and how does an agent read them?}}

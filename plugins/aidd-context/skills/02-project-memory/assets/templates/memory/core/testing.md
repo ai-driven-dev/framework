@@ -1,31 +1,17 @@
 # Testing
 
-How the project is tested: the layers, the tools, and the conventions. Where tests live and how to run them.
+## Layers
 
-## Strategy
-
-- <The test layers in use (unit, integration, e2e) and what each covers>
-
-## Tools
-
-- <Test runner, assertion library, mocking, coverage, one line each>
+| Change | Test |
+| --- | --- |
+| {{a kind of change}} | {{the test it gets, and the command that runs it}} |
 
 ## Conventions
 
-- <Where tests live, the naming, what must be tested versus not>
-
-## Run
-
-- <The command(s) to run each layer>
+- {{How are mocks, fixtures and test data handled, and what must not be mocked?}}
 
 ## Browser QA
 
-- Entry: <The local application URL and command that starts it>
-- Auth: <The test identity or auth bootstrap, without secrets>
-- State: <The deterministic fixture source and executable reset or teardown>
-
-<!--
-Capture: the macro strategy, tools, conventions, and run commands. Keep Browser QA only when the project has a browser journey.
-Skip: listing individual test files. Point to the test directory.
-Remove this comment when filled.
--->
+- Entry: {{which command starts the application, and at which URL? Drop this section when no browser journey exists.}}
+- Auth: {{which test identity or bootstrap logs in, without secrets?}}
+- State: {{which fixture source and which reset command give a known state?}}
