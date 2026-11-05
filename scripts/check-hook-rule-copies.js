@@ -34,20 +34,22 @@ function copiesUnder(root) {
     .sort();
 }
 
-function shortHash(root, copy) {
-  return crypto.createHash("sha256").update(fs.readFileSync(path.join(root, copy))).digest("hex").slice(0, HASH_LENGTH);
+function shortHash(content) {
+  return crypto.createHash("sha256").update(content).digest("hex").slice(0, HASH_LENGTH);
 }
 
 function differingCopies(root = ROOT) {
   const copies = copiesUnder(root);
-  const hashes = Object.fromEntries(copies.map((copy) => [copy, shortHash(root, copy)]));
+  // Copies are compared by their whole content; the short hash only names them in the report.
+  const contents = Object.fromEntries(copies.map((copy) => [copy, fs.readFileSync(path.join(root, copy)).toString("base64")]));
+  const hashes = Object.fromEntries(copies.map((copy) => [copy, shortHash(contents[copy])]));
   const counts = new Map();
-  for (const hash of Object.values(hashes)) counts.set(hash, (counts.get(hash) ?? 0) + 1);
+  for (const content of Object.values(contents)) counts.set(content, (counts.get(content) ?? 0) + 1);
   if (counts.size < 2) return { copies, hashes, differing: [] };
 
   const [first, second] = [...counts.values()].sort((a, b) => b - a);
   const majority = first > second ? [...counts].find(([, count]) => count === first)[0] : null;
-  const differing = copies.filter((copy) => hashes[copy] !== majority);
+  const differing = copies.filter((copy) => contents[copy] !== majority);
   return { copies, hashes, differing };
 }
 

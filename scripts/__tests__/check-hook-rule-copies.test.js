@@ -63,6 +63,13 @@ test("a tie names every copy, and every copy is listed with a short hash", () =>
   });
 });
 
+test("copies differing only in their last byte are told apart", () => {
+  const body = "x".repeat(1000);
+  inTree({ "aidd-a": `${body}a`, "aidd-b": `${body}a`, "aidd-c": `${body}b` }, (root) => {
+    assert.deepEqual(differingCopies(root).differing, [COPY("aidd-c")]);
+  });
+});
+
 test("a plugin without the library is not a copy", () => {
   inTree({ "aidd-context": "same\n" }, (root) => {
     fs.mkdirSync(path.join(root, "plugins", "aidd-pm", "hooks"), { recursive: true });
