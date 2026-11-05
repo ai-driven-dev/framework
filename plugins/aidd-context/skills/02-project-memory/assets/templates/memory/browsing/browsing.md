@@ -1,6 +1,7 @@
 # Browsing
 
 - Tool: <The browser tool or MCP used for project work and how to invoke it>
+- Mode: <native, cli, or mcp>
 - Entry: <The starting URL or how to find it, if applicable>
 - Authentication: <How to access an authenticated session, without secrets>
 
