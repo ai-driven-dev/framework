@@ -12,6 +12,10 @@
 
 - {{What counts as a breaking change, and how is the version policy applied?}}
 
+## Distribution
+
+- {{How does a consumer install and invoke or import it, and which files must the published artifact ship?}}
+
 ## Dependencies
 
 - {{Which external services does the project call, how does a call authenticate, retry and time out, and what happens when the service is down?}}

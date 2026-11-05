@@ -1,10 +1,11 @@
 # Capabilities
 
-The one place that says how a capability is detected, which file it writes, and where. Read from this table, never derived.
+The one place that says how a capability is detected, which file it writes, and where.
 
-A scan detects from a concrete fact in the repo, or an equivalent one, never inferred from the domain. In a monorepo, every workspace is scanned, never the root manifest alone.
-
-Read backwards, it names the capabilities a bank already holds: a file present means its row's capability held when the bank was written.
+- Read from this table, never derived.
+- A scan detects from a concrete fact in the repo, or an equivalent one, never inferred from the domain.
+- In a monorepo, every workspace is scanned, never the root manifest alone.
+- Read backwards, it names the capabilities a bank already holds: a file present means its row's capability held when the bank was written.
 
 ## Capability table
 
@@ -25,7 +26,11 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 
 `Former files`: the template files a capability replaced.
 
-A template line in `{{…}}` is a question the writer answers. A question with no answer is dropped. A conditional row with no answer at all writes no file; an always row is written whatever.
+A template line in `{{…}}` is a question the writer answers.
+
+- A question with no answer is dropped.
+- A conditional row with no answer at all writes no file.
+- An always row is written whatever.
 
 ## Bank tree
 

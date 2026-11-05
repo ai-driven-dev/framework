@@ -1,6 +1,8 @@
 # Reading sources
 
-What the scan reads to understand the project. What survives the reading is `memory-rules.md`'s reader rules.
+What the scan reads to understand the project.
+
+- What survives the reading is `memory-rules.md`'s reader rules.
 
 ## Read in this order
 

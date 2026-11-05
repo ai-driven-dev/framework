@@ -28,11 +28,14 @@ Run the flow above, reading only the next action file.
 
 ## Engine
 
-`memory.cjs` is found by file name, first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
-
-`node memory.cjs check . aidd_docs/memory/<file>.md` per file, `node memory.cjs check .` for the whole bank, `node memory.cjs sync <tool>...`.
-
-Refresh: `node memory.cjs lines . > <session scratch>/lines.txt` before writing; at the end `node memory.cjs vanished <that file> .`, shown to the person, nothing restored.
+| Command | When | Effect |
+| ------- | ---- | ------ |
+| `memory.cjs`, found by file name | before any call | first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill |
+| `node memory.cjs check . aidd_docs/memory/<file>.md` | per file | checks that file |
+| `node memory.cjs check .` | whole bank | checks the whole bank |
+| `node memory.cjs sync <tool>...` | picked tools known | fills each named tool's block |
+| `node memory.cjs lines . > <session scratch>/lines.txt` | refresh, before writing | records the bank's lines |
+| `node memory.cjs vanished <that file> .` | refresh, at the end | lists the lines gone, shown to the person, nothing restored |
 
 ## Transversal rules
 

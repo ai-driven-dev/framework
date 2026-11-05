@@ -9,6 +9,8 @@
 ## Conventions
 
 - {{How are mocks, fixtures and test data handled, and what must not be mocked?}}
+- {{Where does a new test file go, and which name or suffix selects its layer?}}
+- Narrowest run: {{Which command runs one test file, or only what a change can break?}}
 
 ## Browser QA
 

@@ -8,6 +8,7 @@ const test = require("node:test");
 const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-context");
 const SKILL = path.join(PLUGIN, "skills/02-project-memory");
 const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
+const { RULES } = require(path.join(PLUGIN, "hooks/lib/memory-rules.cjs"));
 
 const CAPABILITIES = ["core", "ecosystem", "backlog", "deployment", "contract", "auth", "data", "async", "ui", "native"];
 const HEADER = ["Capability", "Detected when", "File", "Always", "Former files"];
@@ -270,4 +271,77 @@ test("a check request has its own route: scan, then check, and no sync", () => {
   assert.doesNotMatch(route, /sync/u, "the check route syncs");
   assert.doesNotMatch(route, /-->\s*write/u, "the check route writes without approval");
   assert.match(router.split(/\r?\n/u).find((candidate) => /^argument-hint:/u.test(candidate)) ?? "", /check/u, "the argument hint omits check");
+});
+
+const TABLE_FIRST_FILES = () => skillMarkdown().filter((file) => !path.relative(SKILL, file).startsWith("assets"));
+
+/** The prose paragraphs of a markdown text that hold several sentences, as `line: start`. */
+function proseWithSeveralSentences(text) {
+  const found = [];
+  let fence = false;
+  let front = false;
+  let current = [];
+  const flush = () => {
+    const prose = current.map(({ line }) => line).join(" ").replace(/`[^`]*`/gu, "X").replace(/\[[^\]]*\]\([^)]*\)/gu, "L");
+    if ((prose.match(/[.!?](?:\s|$)/gu) ?? []).length > 1) found.push(`${current[0].number}: ${current[0].line.slice(0, 60)}`);
+    current = [];
+  };
+  for (const [index, line] of text.split(/\r?\n/u).entries()) {
+    if (index === 0 && line === "---") front = true;
+    else if (front && line === "---") {
+      front = false;
+      continue;
+    }
+    if (front) continue;
+    if (line.startsWith("```")) {
+      flush();
+      fence = !fence;
+      continue;
+    }
+    if (fence) continue;
+    if (line.trim() === "" || /^(?:\||#|>|[-*+]\s|\d+[.)]\s|\s)/u.test(line)) {
+      flush();
+      continue;
+    }
+    current.push({ number: index + 1, line });
+  }
+  flush();
+  return found;
+}
+
+test("the table-first guard sees a prose paragraph of several sentences and a sentence over the engine's limit", () => {
+  assert.equal(proseWithSeveralSentences("One sentence here.\nIt goes on.\n").length, 1);
+  assert.equal(proseWithSeveralSentences("One sentence only.\n\n- A list. With two.\n| a. | b. |\n").length, 0);
+  const m1 = RULES.find((rule) => rule.id === "M1");
+  assert.equal(m1.check({ file: "x.md", text: `${"word ".repeat(30)}end.\n` }).length, 1);
+});
+
+test("the skill's own markdown is table-first: no sentence the engine's M1 flags, no prose paragraph of several sentences", () => {
+  const m1 = RULES.find((rule) => rule.id === "M1");
+  for (const file of TABLE_FIRST_FILES()) {
+    const name = path.relative(SKILL, file);
+    const text = fs.readFileSync(file, "utf8");
+    assert.deepEqual(m1.check({ file: name, text }).map(({ line, message }) => `${name}:${line} ${message}`), []);
+    assert.deepEqual(proseWithSeveralSentences(text).map((where) => `${name}:${where}`), [], `${name} holds a prose paragraph of several sentences: make it a table or a list`);
+  }
+});
+
+test("a recall case seeds a repo and expects the facts the restored slots must produce", () => {
+  const cases = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../skill-eval/cases.json"), "utf8"));
+  const recall = cases.find((entry) => entry.skill === "02-project-memory" && /recall/u.test(entry.name));
+  assert.ok(recall, "no recall case for 02-project-memory");
+  const files = Object.keys(recall.setup.files);
+  assert.ok(files.some((name) => name.endsWith(".int.test.ts")), "the seeded repo has no test suffix convention");
+  assert.ok(files.includes(".env.example"), "the seeded repo declares no environment variables");
+  assert.ok(!files.some((name) => /CONTRIBUTING/u.test(name)), "the seeded repo carries a contributing file");
+  const expected = recall.expect.fileContains;
+  for (const [file, facts] of Object.entries({
+    "aidd_docs/memory/testing.md": [".int.test.ts", "test:changed"],
+    "aidd_docs/memory/architecture.md": [".env.example"],
+    "aidd_docs/memory/ui.md": ["src/router.tsx"],
+    "aidd_docs/memory/project-brief.md": ["export-invoices"],
+  })) {
+    for (const fact of facts) assert.ok(expected[file]?.includes(fact), `the recall case does not expect ${fact} in ${file}`);
+    for (const fact of facts) assert.ok(JSON.stringify(recall.setup.files).includes(fact), `${fact} is not in the seeded repo`);
+  }
 });

@@ -4,7 +4,12 @@ The one place that says what a memory file must be.
 
 ## Machine rules
 
-After a write every finding informs. At the turn end only M3 is required, once (M1 has hits on real banks). `check` exits 1 on an error: M1, M3, M4 or a missing always-written file. The rest, structure included (former, misplaced, team folder), are warnings: the skill checks or proposes, never imposes.
+| When | Effect |
+| --- | --- |
+| After a write | every finding informs |
+| At the turn end | only M3 is required, once (M1 has hits on real banks) |
+| `check` | exits 1 on an error: M1, M3, M4 or a missing always-written file |
+| Every other finding, structure included (former, misplaced, team folder) | a warning: the skill checks or proposes, never imposes |
 
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |
@@ -18,7 +23,9 @@ After a write every finding informs. At the turn end only M3 is required, once (
 
 ## Reader rules
 
-These bind every memory file, written or reviewed. The scan also uses them to choose what to keep. A line the user wrote is exempt only from Non-derivable, Points to the code and Current state only.
+- These bind every memory file, written or reviewed.
+- The scan also uses them to choose what to keep.
+- A line the user wrote is exempt only from Non-derivable, Points to the code and Current state only.
 
 | Rule | Keep | Drop |
 | --- | --- | --- |
@@ -26,5 +33,5 @@ These bind every memory file, written or reviewed. The scan also uses them to ch
 | Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list |
 | One fact, one home | - | the copy, the fact keeps its home |
 | No version | `React` | `React 19` |
-| Current state only | - | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id |
+| Current state only | - | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id, a secret or credential value |
 | A diagram stands alone | - | a note or a caption under it |
