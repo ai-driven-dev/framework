@@ -302,6 +302,7 @@ describe("buildCodexFlatContract()", () => {
 
   it("reads the project's own config.toml before writing it", () => {
     expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([".codex/config.toml"]);
+    expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([]);
     expect(configArtifactOf().assets).toStrictEqual({ tool: "codex", names: [] });
   });
 
@@ -312,6 +313,7 @@ describe("buildCodexFlatContract()", () => {
         ["aidd-dev", JSON.stringify({ mcpServers: { context: { command: "node" } } })],
       ]),
       existing: new Map(),
+      present: new Set(),
       assets: new Map(),
     });
 
@@ -329,6 +331,7 @@ describe("buildCodexFlatContract()", () => {
       builtPlugins: [],
       pluginMcp: new Map(),
       existing: new Map([[".codex/config.toml", 'model = "o3"\n']]),
+      present: new Set(),
       assets: new Map(),
     });
 
@@ -340,6 +343,7 @@ describe("buildCodexFlatContract()", () => {
       builtPlugins: ["aidd-dev"],
       pluginMcp: new Map(),
       existing: new Map(),
+      present: new Set(),
       assets: new Map(),
     });
 

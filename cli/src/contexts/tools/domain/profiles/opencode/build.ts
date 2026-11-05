@@ -131,6 +131,7 @@ function emitOpencodeConfig({
   builtPlugins,
   pluginMcp,
   existing,
+  present,
   assets,
 }: ConfigArtifactInput): readonly ConfigArtifactFile[] {
   const configPath = existing.has(OPENCODE_JSONC) ? OPENCODE_JSONC : OPENCODE_JSON;
@@ -142,7 +143,7 @@ function emitOpencodeConfig({
     content: buildOpencodeFlatConfig(base, existing.get(configPath) ?? null, incoming),
   };
   const runsHooks = builtPlugins.some((plugin) =>
-    pluginLoaders(plugin).some((loader) => existing.has(loader))
+    pluginLoaders(plugin).some((loader) => present.has(loader))
   );
   if (!runsHooks) return [config];
   const runtime = OPENCODE_HOOKS.bridgeRuntime;
@@ -177,11 +178,8 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
     configArtifact: {
-      reads: (builtPlugins) => [
-        OPENCODE_JSONC,
-        OPENCODE_JSON,
-        ...builtPlugins.flatMap(pluginLoaders),
-      ],
+      reads: () => [OPENCODE_JSONC, OPENCODE_JSON],
+      probes: (builtPlugins) => builtPlugins.flatMap(pluginLoaders),
       assets: { tool: "opencode", names: [OPENCODE_JSON, OPENCODE_HOOKS.bridgeRuntime.asset] },
       emit: emitOpencodeConfig,
     },

@@ -16,7 +16,6 @@ const PLUGIN_SRC = resolve("/src/plugins/plug");
 const PLUGIN = "plug";
 // Avoid biome noTemplateCurlyInString
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
-const AGENT_REFERENCE = `${ROOT}/agents/reviewer.md`;
 
 const ASSETS: AssetProvider = {
   loadConfigAsset: () => {
@@ -31,16 +30,20 @@ function flatTools(): ToolId[] {
     .sort();
 }
 
-function seeded(): InMemoryFileAdapter {
+/** Where the plugin keeps its agent: at the top of `agents/`, or in a folder under it. */
+const AGENT_FILES = ["reviewer.md", "review/reviewer.md"];
+
+function seeded(agentFile: string): InMemoryFileAdapter {
+  const reference = `${ROOT}/agents/${agentFile}`;
   const fs = new InMemoryFileAdapter({
-    [`${PLUGIN_SRC}/agents/reviewer.md`]: "---\nname: reviewer\ndescription: Reads\n---\nBody.\n",
+    [`${PLUGIN_SRC}/agents/${agentFile}`]: "---\nname: reviewer\ndescription: Reads\n---\nBody.\n",
     [`${PLUGIN_SRC}/hooks/hooks.json`]: JSON.stringify({
       hooks: {
-        SessionStart: [{ hooks: [{ type: "command", command: `node ${AGENT_REFERENCE}` }] }],
+        SessionStart: [{ hooks: [{ type: "command", command: `node ${reference}` }] }],
       },
     }),
     [`${PLUGIN_SRC}/.mcp.json`]: JSON.stringify({
-      mcpServers: { review: { command: "node", args: [AGENT_REFERENCE] } },
+      mcpServers: { review: { command: "node", args: [reference] } },
     }),
   });
   fs.setFile(`${OUT}/.keep`, "");
@@ -78,8 +81,8 @@ function rewrittenAgentReferences(fs: InMemoryFileAdapter, files: Iterable<strin
   return found;
 }
 
-async function build(tool: ToolId) {
-  const fs = seeded();
+async function build(tool: ToolId, agentFile: string) {
+  const fs = seeded(agentFile);
   const strategy = strategyFor(tool, fs);
   await strategy.preBuild(OUT, resolve("/src"));
   const before = outRelative(fs);
@@ -94,11 +97,21 @@ async function build(tool: ToolId) {
 
 describe("a hook or MCP command naming an agent lands on the file the agents build writes", () => {
   it("covers every flat tool the registry declares", () => {
-    expect(flatTools()).toEqual(["claude", "codex", "copilot", "cursor", "kilo", "opencode"]);
+    expect(flatTools()).toEqual([
+      "antigravity",
+      "claude",
+      "codex",
+      "copilot",
+      "cursor",
+      "kilo",
+      "opencode",
+    ]);
   });
 
-  it.each(flatTools())("on %s", async (tool) => {
-    const { agents, references } = await build(tool);
+  it.each(
+    flatTools().flatMap((tool) => AGENT_FILES.map((agentFile) => [tool, agentFile] as const))
+  )("on %s, for agents/%s", async (tool, agentFile) => {
+    const { agents, references } = await build(tool, agentFile);
 
     expect(agents, "the agents build writes one file").toHaveLength(1);
     const written = agents[0] as string;
@@ -106,8 +119,9 @@ describe("a hook or MCP command naming an agent lands on the file the agents bui
       expect(reference.endsWith(`/${written}`), `${reference} names ${written}`).toBe(true);
     }
     // Kilo and OpenCode read no rewritten hooks.json and take MCP through their own config
-    // step, so neither has a rewritten reference to check.
-    const rewrites = !["kilo", "opencode"].includes(tool);
+    // step, so neither has a rewritten reference to check. Antigravity takes no MCP and hands
+    // each hook command to its wrapper base64-encoded, so no reference reads as text there.
+    const rewrites = !["antigravity", "kilo", "opencode"].includes(tool);
     expect(references.length > 0, "a rewritten reference exists").toBe(rewrites);
   });
 });

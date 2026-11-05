@@ -1,5 +1,5 @@
 import { basename, resolve } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ArtifactContract,
   ConfigArtifactInput,
@@ -770,11 +770,13 @@ describe("what a flat layout writes once every plugin is built", () => {
     const memFs = new InMemoryFileAdapter({
       "/src/plugins/aidd-test/.mcp.json": '{"mcpServers":{}}',
       [`${STUB_OUT}/kept.json`]: "kept",
+      [`${STUB_OUT}/probed.js`]: "probed",
     });
     const seen: ConfigArtifactInput[] = [];
     const contract = stubContract({
       configArtifact: {
         reads: (names) => ["kept.json", ...names.map((name) => `${name}.absent`)],
+        probes: () => ["probed.js", "missing.js"],
         assets: { tool: "opencode", names: ["opencode-events.js"] },
         emit: (input) => {
           seen.push(input);
@@ -788,6 +790,7 @@ describe("what a flat layout writes once every plugin is built", () => {
     const strategy = stubStrategy(memFs, contract);
     await strategy.preBuild(STUB_OUT, "/src");
     const built = [{ name: "aidd-test" }, { name: "aidd-bare" }];
+    const reads = vi.spyOn(memFs, "readFile");
 
     expect(await strategy.postBuild({ name: "m", plugins: [] }, built, STUB_OUT)).toBe(2);
     expect(seen).toStrictEqual([
@@ -795,10 +798,12 @@ describe("what a flat layout writes once every plugin is built", () => {
         builtPlugins: ["aidd-test", "aidd-bare"],
         pluginMcp: new Map([["aidd-test", '{"mcpServers":{}}']]),
         existing: new Map([["kept.json", "kept"]]),
+        present: new Set(["probed.js"]),
         assets: new Map([["opencode-events.js", "export async function setupOpencodeEvents() {}"]]),
       },
     ]);
     expect(memFs.getFile(`${STUB_OUT}/one.json`)).toBe("1");
     expect(memFs.getFile(`${STUB_OUT}/nested/two.json`)).toBe("2");
+    expect(reads.mock.calls.map(([path]) => path)).not.toContain(`${STUB_OUT}/probed.js`);
   });
 });
