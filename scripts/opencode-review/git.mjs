@@ -75,6 +75,12 @@ function treeEntries(cache, tree) {
   return entries;
 }
 
+function isTransientGitError(error) {
+  if (['ETIMEDOUT', 'ENOENT', 'EIO', 'ENOSPC', 'ENOMEM', 'EAGAIN', 'EMFILE', 'ENFILE'].includes(error?.code) || error?.signal) return true;
+  const stderr = String(error?.stderr ?? '');
+  return /\b(?:EIO|ENOSPC|ENOMEM|EAGAIN|ETIMEDOUT|EMFILE|ENFILE)\b|input\/output error|no such file or directory|no space left on device|cannot allocate memory|out of memory|resource temporarily unavailable|too many open files|file table overflow|operation timed out|connection timed out|temporary failure in name resolution/i.test(stderr);
+}
+
 /** Read both trees once so mode-only changes are visible even when GitHub provides a patch. */
 export function fileModes({ files, mergeBase, head, cache }) {
   if (!Array.isArray(files) || !cache) throw new Error('Invalid review Git parameters');
@@ -144,6 +150,7 @@ export function recoverPatches({ files, mergeBase, head, cache }) {
       if (firstHunk < 0) throw new Error('File has no text changes');
       recovered.push({ ...file, patch: diff.slice(firstHunk).replace(/\n$/, ''), additions, deletions });
     } catch (error) {
+      if (isTransientGitError(error)) throw new Error('Temporary Git failure; retry planned', { cause: error });
       const reason = error instanceof TypeError ? 'File is not valid UTF-8' : error?.message?.startsWith('Command failed:') ? 'Git could not read or diff this file' : error?.message ?? 'Cannot recover file patch';
       skipped.push({ filename: typeof file?.filename === 'string' ? file.filename : null, reason });
     }

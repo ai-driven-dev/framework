@@ -122,4 +122,21 @@ test('recovers literal paths, renames and long lines without running repository 
   assert.equal(readFileSync(join(repo, unusual), 'utf8'), 'after\n');
   assert.throws(() => recoverPatches({ files, mergeBase: base, head: 'a'.repeat(40), cache }), /Command failed/);
   assert.throws(() => recoverPatches({ files, mergeBase: 'not-a-sha', head, cache }), /Invalid Git object ID/);
+
+  // A repository-wide Git read failure is retried, not recorded as a permanent file omission.
+  const realGit = execFileSync('sh', ['-c', 'command -v git'], { encoding: 'utf8' }).trim();
+  const bin = join(cache, 'fault-bin');
+  mkdirSync(bin);
+  const wrapper = join(bin, 'git');
+  const oldPath = process.env.PATH;
+  process.env.PATH = `${bin}:${oldPath}`;
+  try {
+    for (const failure of ["printf '%s\\n' 'fatal: Input/output error' >&2; exit 128", 'kill -s TERM $$']) {
+      writeFileSync(wrapper, `#!/bin/sh\nfor arg in "$@"; do\n  if [ "$arg" = 'mode.txt' ]; then ${failure}; fi\ndone\nexec '${realGit.replaceAll("'", "'\\''")}' "$@"\n`);
+      chmodSync(wrapper, 0o755);
+      assert.throws(() => recoverPatches({ files: [files.find((file) => file.filename === 'mode.txt')], mergeBase: base, head, cache }), /Temporary Git failure; retry planned/);
+    }
+  } finally {
+    process.env.PATH = oldPath;
+  }
 });
