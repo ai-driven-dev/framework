@@ -20,11 +20,19 @@ import {
   convertCommandFrontmatter,
   stripToolSuffix,
 } from "../../formats/command.js";
-import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
-import { cursorProjectHooksFormat } from "./hooks-format.js";
+import { CURSOR_HOOKS } from "./hooks.js";
+import {
+  cursorProjectHookEntries,
+  cursorProjectHooksScriptDir,
+  cursorProjectHooksScriptPath,
+  isCursorHooksFileEmpty,
+  mergeCursorProjectHooksJson,
+  unmergeCursorProjectHooksJson,
+} from "./hooks-format.js";
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
@@ -107,18 +115,15 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         // keys such as "aidd-context/commands/foo.md".
         pluginsDir: "",
         pluginManifestRelativePath: null,
-        // Cursor auto-discovers mcp.json at a plugin's root but never a plugin-scope
-        // hooks.json — three probes fired zero of seven events. Only a project-scope
-        // .cursor/hooks.json is ever observed firing, so `hooksDestination` routes hooks there;
-        // `hooksRelativePath` and `hooksContentFormat` stay declared for the shape they
-        // describe but are no longer read for Cursor's own install.
-        acceptsHooks: true,
-        pluginRootToken: CURSOR_PLUGIN_ROOT_TOKEN,
-        hooksRelativePath: "hooks.json",
-        hooksContentFormat: "flat",
-        hooksDestination: "project",
-        projectHooksRelativePath: ".cursor/hooks.json",
-        projectHooksFormat: cursorProjectHooksFormat,
+        ...nativeHooksSupport(CURSOR_HOOKS),
+        ...projectHooksSupport(CURSOR_HOOKS.project, {
+          merge: mergeCursorProjectHooksJson,
+          unmerge: unmergeCursorProjectHooksJson,
+          contributedEntries: cursorProjectHookEntries,
+          isEmpty: isCursorHooksFileEmpty,
+          scriptPath: cursorProjectHooksScriptPath,
+          scriptDir: cursorProjectHooksScriptDir,
+        }),
         acceptsMcp: true,
         mcpRelativePath: "mcp.json",
         installScope: "user",

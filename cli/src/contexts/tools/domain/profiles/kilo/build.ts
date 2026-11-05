@@ -4,7 +4,6 @@
 import { join } from "node:path";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
-  flatHooksPathWithLoaderEntry,
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
@@ -13,18 +12,13 @@ import { rewriteRelativeLinks } from "../../../../../kernel/materialization/rela
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ToolBuildContract } from "../../build-contract.js";
+import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
+import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import {
-  KILO_DIRECTORY,
-  KILO_HOOKS_DIR,
-  KILO_PLUGIN_DIR,
-  KILO_PLUGIN_ENTRY_BASENAME,
-  makeKiloHooksBridgePath,
-  resolveKiloConfigPath,
-} from "./kilo-paths.js";
+import { KILO_DIRECTORY, resolveKiloConfigPath } from "./kilo-paths.js";
 
 type FsType = FileReader & FileWriter;
 
@@ -45,15 +39,6 @@ function kiloFlatResolveTarget(plugin: string, rel: string): string {
   if (rel.startsWith("agents/")) return kiloFlatAgentPath(plugin, rel);
   if (rel.startsWith("skills/")) return kiloFlatSkillPath(plugin, rel);
   return rel;
-}
-
-function kiloFlatHooksPath(plugin: string, rel: string): string {
-  return flatHooksPathWithLoaderEntry(
-    KILO_HOOKS_DIR,
-    { dir: KILO_PLUGIN_DIR, baseName: KILO_PLUGIN_ENTRY_BASENAME },
-    plugin,
-    rel
-  );
 }
 
 function transformKiloFlatAgent(content: string, plugin: string, outName: string): string {
@@ -104,17 +89,7 @@ export function buildKiloFlatContract(): ToolBuildContract {
         transform: transformKiloFlatAgent,
       },
       mcp: { supported: false },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: kiloFlatHooksPath,
-        skipHooksJson: true,
-        hooksBridge: {
-          generate: generateKiloHooksBridge,
-          path: makeKiloHooksBridgePath,
-          skipIfSourceHas: KILO_PLUGIN_ENTRY_BASENAME,
-        },
-      },
+      hooks: flatHooksArtifact(KILO_HOOKS.flat, { bridge: generateKiloHooksBridge }),
       rules: { supported: false },
       commands: { supported: false },
     },

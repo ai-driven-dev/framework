@@ -1,14 +1,19 @@
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import type { AiTool, HasPlugins, HasSkills } from "../../contracts.js";
+import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
-import { antigravityProjectHooksFormat } from "./antigravity-hooks.js";
 import {
-  ANTIGRAVITY_DIRECTORY,
-  ANTIGRAVITY_HOOKS_DIR,
-  ANTIGRAVITY_HOOKS_FILE,
-} from "./antigravity-paths.js";
+  antigravityHookEntries,
+  antigravityHooksScriptDir,
+  antigravityHooksScriptPath,
+  isAntigravityHooksFileEmpty,
+  mergeAntigravityHooks,
+  unmergeAntigravityHooks,
+} from "./antigravity-hooks.js";
+import { ANTIGRAVITY_DIRECTORY } from "./antigravity-paths.js";
 import { buildAntigravityFlatContract } from "./build.js";
+import { ANTIGRAVITY_HOOKS } from "./hooks.js";
 
 const TOOL_SUFFIX = ".antigravity.md";
 const SKILLS_PREFIX = "aidd-";
@@ -43,11 +48,15 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       flatSkillLayout: "single-level",
-      acceptsHooks: true,
-      flatHooksDir: ANTIGRAVITY_HOOKS_DIR,
-      hooksDestination: "project",
-      projectHooksRelativePath: ANTIGRAVITY_HOOKS_FILE,
-      projectHooksFormat: antigravityProjectHooksFormat,
+      ...flatHooksSupport(ANTIGRAVITY_HOOKS.flat),
+      ...flatProjectHooksDelivery(ANTIGRAVITY_HOOKS.flat, {
+        merge: mergeAntigravityHooks,
+        unmerge: unmergeAntigravityHooks,
+        contributedEntries: antigravityHookEntries,
+        isEmpty: isAntigravityHooksFileEmpty,
+        scriptPath: antigravityHooksScriptPath,
+        scriptDir: antigravityHooksScriptDir,
+      }),
     }),
   },
 

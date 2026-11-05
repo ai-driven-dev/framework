@@ -7,7 +7,6 @@
 import { InvalidMcpServerConfigError, McpConfigError } from "../../../../../kernel/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
-  flatHooksPathWithLoaderEntry,
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
@@ -15,18 +14,12 @@ import {
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
-import type { ArtifactContract, ToolBuildContract } from "../../build-contract.js";
+import type { ToolBuildContract } from "../../build-contract.js";
+import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
+import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
-import {
-  makeOpencodeHooksBridgePath,
-  OPENCODE_EVENTS_ASSET,
-  OPENCODE_EVENTS_PATH,
-  OPENCODE_FLAT_HOOKS_DIR,
-  OPENCODE_HOOKS_DIR,
-  OPENCODE_PLUGIN_ENTRY_BASENAME,
-} from "./opencode-paths.js";
 
 type FsType = FileReader & FileWriter;
 
@@ -88,36 +81,6 @@ function opencodeFlatAgentPath(plugin: string, rel: string): string {
 
 function opencodeFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(".opencode/skills/", plugin, rel.replace(/^skills\//, ""));
-}
-
-/** OpenCode's loader scans one flat directory for its own plugin modules, never a "hooks"
- * family, so a plugin's hook scripts are namespaced under `OPENCODE_HOOKS_DIR` instead. The one
- * exception is a script named `OPENCODE_PLUGIN_ENTRY_BASENAME`: that loader's own module,
- * delivered flat and renamed to the plugin's own name. */
-function makeOpencodeFlatHooksPath(): (plugin: string, rel: string) => string {
-  return (plugin, rel) =>
-    flatHooksPathWithLoaderEntry(
-      OPENCODE_HOOKS_DIR,
-      { dir: OPENCODE_FLAT_HOOKS_DIR, baseName: OPENCODE_PLUGIN_ENTRY_BASENAME },
-      plugin,
-      rel
-    );
-}
-
-/** Supported exactly when the profile names a directory to deliver into — the same
- * declaration `acceptsHooks` is paired with, read once rather than restated here. */
-function buildOpencodeFlatHooksArtifact(): ArtifactContract {
-  return {
-    supported: true,
-    source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-    path: makeOpencodeFlatHooksPath(),
-    skipHooksJson: true,
-    hooksBridge: {
-      generate: generateOpencodeHooksBridge,
-      path: makeOpencodeHooksBridgePath,
-      skipIfSourceHas: OPENCODE_PLUGIN_ENTRY_BASENAME,
-    },
-  };
 }
 
 function opencodeFlatResolveTarget(plugin: string, rel: string): string {
@@ -182,7 +145,7 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
         transform: transformOpencodeFlatAgent,
       },
       mcp: { supported: false }, // handled by emitConfigArtifact (opencode.json mcp)
-      hooks: buildOpencodeFlatHooksArtifact(),
+      hooks: flatHooksArtifact(OPENCODE_HOOKS.flat, { bridge: generateOpencodeHooksBridge }),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -195,14 +158,16 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
       const baseAsset = assetProvider.loadConfigAsset("opencode", "opencode.json");
       const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
       await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming));
+      const { loaderEntry } = OPENCODE_HOOKS.flat;
+      const runtime = OPENCODE_HOOKS.bridgeRuntime;
       for (const plugin of builtPlugins) {
-        const native = `${outDir}/${OPENCODE_FLAT_HOOKS_DIR}${plugin}.js`;
-        const generated = `${outDir}/${makeOpencodeHooksBridgePath(plugin)}`;
+        const native = `${outDir}/${loaderEntry.dir}${plugin}.js`;
+        const generated = `${outDir}/${hooksBridgePath(loaderEntry, plugin)}`;
         if (!(await fs.fileExists(native)) && !(await fs.fileExists(generated))) continue;
-        const events = assetProvider.loadConfigAsset("opencode", OPENCODE_EVENTS_ASSET);
+        const events = assetProvider.loadConfigAsset("opencode", runtime.asset);
         if (typeof events !== "string")
           throw new TypeError("OpenCode event adapter must be source text");
-        await fs.writeFile(`${outDir}/${OPENCODE_EVENTS_PATH}`, events);
+        await fs.writeFile(`${outDir}/${runtime.path}`, events);
         return 2;
       }
       return 1;

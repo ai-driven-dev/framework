@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/update_memory.js"
+            "command": "node ${PLUGIN_ROOT}/hooks/update_memory.js",
+            "statusMessage": "AIDD Context: sync project memory"
           }
         ]
       }
@@ -51,6 +52,7 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ${PLUGIN_ROOT}/hooks/session-start.cjs",
+            "statusMessage": "AIDD Telemetry: carry Claude session task",
             "timeout": 10
           }
         ]
@@ -60,6 +62,7 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ${PLUGIN_ROOT}/hooks/catch-up.cjs",
+            "statusMessage": "AIDD Telemetry: update measurement ledger",
             "async": true,
             "timeout": 120
           }
@@ -72,6 +75,7 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ${PLUGIN_ROOT}/hooks/prompt-gate.cjs",
+            "statusMessage": "AIDD Telemetry: check task declaration",
             "timeout": 30
           }
         ]

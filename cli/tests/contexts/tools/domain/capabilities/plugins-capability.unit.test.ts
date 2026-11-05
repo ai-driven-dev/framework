@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { PluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
-import { cursorProjectHooksFormat } from "../../../../../src/contexts/tools/domain/profiles/cursor/hooks-format.js";
+import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/hooks-format.js";
+
+const projectHooksFormat: ProjectHooksFormat = {
+  merge: () => ({ content: "", warnings: [] }),
+  unmerge: () => "",
+  contributedEntries: () => [],
+  isEmpty: () => true,
+  scriptPath: () => "",
+  scriptDir: () => "",
+};
 
 const MARKETPLACE_SETTINGS = {
   settingsPath: ".claude/settings.json",
@@ -305,7 +314,7 @@ describe("PluginsCapability base directory resolution", () => {
 
   it("refuses a project hooks format without a project hooks destination", () => {
     expect(
-      () => new PluginsCapability({ ...native, projectHooksFormat: cursorProjectHooksFormat })
+      () => new PluginsCapability({ ...native, projectHooksFormat: projectHooksFormat })
     ).toThrow("projectHooksFormat requires hooksDestination 'project'.");
   });
 
@@ -317,12 +326,12 @@ describe("PluginsCapability base directory resolution", () => {
       flatNamespacePrefix: "aidd-",
       hooksDestination: "project",
       projectHooksRelativePath: ".x/hooks.json",
-      projectHooksFormat: cursorProjectHooksFormat,
+      projectHooksFormat: projectHooksFormat,
     });
 
     expect(cap.hooksDestination).toBe("project");
     expect(cap.projectHooksRelativePath).toBe(".x/hooks.json");
-    expect(cap.projectHooksFormat).toBe(cursorProjectHooksFormat);
+    expect(cap.projectHooksFormat).toBe(projectHooksFormat);
   });
 });
 
