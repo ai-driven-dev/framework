@@ -32,6 +32,18 @@ The agnostic moments a hook can target. Each tool names these differently and su
 
 Confirm the chosen moment exists for the target tool before wiring. If it does not, skip that tool with the reason.
 
+## Intent
+
+What the hook does when it fires. These are options to offer, the user chooses, and the hook stays the tool's native one:
+
+| Intent | Effect | Typical mechanism |
+| ------ | ------ | ----------------- |
+| inform | the model reads a message and decides | context text on stdout, or the tool's context field |
+| require a fix | the model must correct before going on | a blocking exit or decision after a tool runs, where the tool supports it |
+| stop the turn ending | the turn continues until the check passes | a blocking decision at turn stop, where the tool supports it |
+
+The exact mechanism per tool is in `references/tool-paths.md`.
+
 ## Handler contract
 
 The shared handler is a script the tool runs at the moment:
