@@ -112,14 +112,14 @@ function placeOf(file) {
   return ON_DEMAND_DIRS.includes(parts[0]) ? "on-demand" : "misplaced";
 }
 
-function runRules(rules, context) {
+/** Each rule's findings. A rule that throws is no finding: it drops out, noted in `failures`. */
+function runRules(rules, context, failures) {
   const found = [];
   for (const rule of rules) {
     try {
       found.push(...rule.check(context));
     } catch (error) {
-      const message = `rule ${rule.id} failed: ${error.message}`;
-      found.push({ file: context.file, line: 1, rule: rule.id, severity: rule.severity, message, fix: message });
+      failures.push(`rule ${rule.id} failed: ${error.message}`);
     }
   }
   return found;
@@ -130,7 +130,7 @@ function bySeverity(a, b) {
 }
 
 /** The rule findings of one bank root file; nothing for any other file, or one gone. */
-function lintFile(root, file, rules = RULES) {
+function lintFile(root, file, rules = RULES, failures = []) {
   const relative = toPosix(path.isAbsolute(file) ? path.relative(root, file) : file);
   const files = rootFiles(root);
   if (!files.includes(relative)) return [];
@@ -139,7 +139,7 @@ function lintFile(root, file, rules = RULES) {
   const others = Object.fromEntries(
     files.filter((other) => other !== relative).map((other) => [other, readTextOrNull(path.join(root, other)) ?? ""])
   );
-  return runRules(rules, { file: relative, text, root, others }).sort((a, b) => bySeverity(a, b) || a.line - b.line);
+  return runRules(rules, { file: relative, text, root, others }, failures).sort((a, b) => bySeverity(a, b) || a.line - b.line);
 }
 
 function lintBank(root) {
@@ -185,13 +185,19 @@ function asWarning(finding) {
   return { ...finding, message };
 }
 
-/** The findings of the files a write reached, sorted into the formatter's three lists. */
-function findingsOf(root, written, reached) {
+/**
+ * The findings of the files a write reached, sorted into the formatter's three lists, and its
+ * level. A file written whole is what this write produced: its errors print one by one, at their
+ * level. A file whose touched lines the event does not carry, an edit, a patch or a shell write,
+ * may hold standing errors: they print grouped and only inform.
+ */
+function findingsOf(root, whole, partial) {
   const errors = [];
   const grouped = [];
   const warnings = [];
+  let level = 1;
   let inBank = false;
-  const take = (files, errorList) => {
+  const take = (files, known) => {
     for (const file of files) {
       const place = placeOf(file);
       if (place === "outside") continue;
@@ -200,19 +206,16 @@ function findingsOf(root, written, reached) {
       if (place === "misplaced") found = fs.existsSync(path.join(root, file)) ? [placementFinding(file)] : [];
       else if (place === "root") found = lintFile(root, file);
       for (const finding of found) {
-        if (finding.severity === ERROR) errorList.push(finding);
-        else warnings.push(asWarning(finding));
+        if (known && LEVELS[finding.rule] === 2) level = 2;
+        if (finding.severity !== ERROR) warnings.push(asWarning(finding));
+        else (known ? errors : grouped).push(finding);
       }
     }
   };
-  take(written, errors);
-  take(reached.filter((file) => !written.includes(file)), grouped);
+  take(whole, true);
+  take(partial.filter((file) => !whole.includes(file)), false);
   if (inBank) warnings.push(...missingFinding(root, "warning").map(asWarning));
-  return { errors, reached: grouped, warnings };
-}
-
-function levelOf({ errors, reached, warnings }) {
-  return [...errors, ...reached, ...warnings].some((finding) => LEVELS[finding.rule] === 2) ? 2 : 1;
+  return { findings: { errors, reached: grouped, warnings }, level };
 }
 
 /** Whether a project-relative path is under the docs folder, the only one this hook owns. */
@@ -229,14 +232,16 @@ function shellReached(root, command) {
 
 function afterWrite(host, event) {
   const root = path.resolve(event.cwd);
-  const written = event.files.map((file) => toPosix(path.relative(root, file.path))).filter(underDocs);
+  const relative = (file) => toPosix(path.relative(root, file.path));
+  // A file the event carries whole is all this write produced; any other, its lines unknown.
+  const whole = event.files.filter((file) => typeof file.content === "string").map(relative).filter(underDocs);
+  const edited = event.files.filter((file) => typeof file.content !== "string").map(relative).filter(underDocs);
   const namesDocs = typeof event.command === "string" && /aidd_docs[/\\]/u.test(event.command);
   // Owner scope: a write that names no file under the docs folder reads nothing of the project.
-  if (written.length === 0 && !namesDocs) return;
-  const reached = shellReached(root, event.command);
-  const findings = findingsOf(root, written, reached);
+  if (whole.length === 0 && edited.length === 0 && !namesDocs) return;
+  const { findings, level } = findingsOf(root, whole, [...edited, ...shellReached(root, event.command)]);
   const text = formatFindings(PLUGIN, findings);
-  if (text !== "") host.answer({ level: levelOf(findings), text });
+  if (text !== "") host.answer({ level, text });
 }
 
 function hook() {
@@ -254,10 +259,11 @@ function check(root, files = []) {
   const named = files.map((file) => toPosix(path.isAbsolute(file) ? path.relative(absolute, file) : file));
   const targets = named.length > 0 ? named : bankFiles(absolute);
   const found = [];
+  const failures = [];
   for (const file of targets) {
     const place = placeOf(file);
     if (place === "misplaced" && fs.existsSync(path.join(absolute, file))) found.push(placementFinding(file));
-    else if (place === "root") found.push(...lintFile(absolute, file));
+    else if (place === "root") found.push(...lintFile(absolute, file, RULES, failures));
   }
   if (named.length === 0) found.push(...missingFinding(absolute, ERROR));
   // A misplaced folder is one move however many files it holds: its findings print grouped.
@@ -266,7 +272,7 @@ function check(root, files = []) {
   const warnings = found.filter((finding) => finding.severity !== ERROR).map(asWarning);
   // The cap on warnings binds the hook's answer to a model; a check prints every one.
   const text = formatFindings(PLUGIN, { errors, reached, warnings }, { warningsCap: Infinity });
-  return { errors: [...errors, ...reached], warnings, text };
+  return { errors: [...errors, ...reached], warnings, text, failures: [...new Set(failures)] };
 }
 
 // ---- sync ----------------------------------------------------------------------------------
@@ -477,9 +483,11 @@ function main(argv) {
   }
   if (command === "check") {
     const [root = process.cwd(), ...files] = args;
-    const { errors, text } = check(root, files);
+    const { errors, text, failures } = check(root, files);
     if (text !== "") process.stdout.write(`${text}\n`);
-    return errors.length > 0 ? EXIT_ERRORS : EXIT_OK;
+    // A rule that failed is no finding, and a check that could not run its rules never passes.
+    for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
+    return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
   if (command === "sync") {
     try {

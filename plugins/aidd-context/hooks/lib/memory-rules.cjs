@@ -109,8 +109,9 @@ function longProseLines({ file, text }) {
     .map(({ number, line }) => ({ number, count: wordsIn(line).length }))
     .filter(({ count }) => count > PROSE_WORD_LIMIT)
     .map(({ number, count }) => {
-      const message = `prose line of ${count} words, over ${PROSE_WORD_LIMIT}: make it a table, a list or a heading`;
-      return problem(file, number, "M1", ERROR, message, message);
+      // The count is the excerpt, the fix is one for every line: a file's long lines group as one.
+      const fix = "make it a table, a list or a heading";
+      return problem(file, number, "M1", ERROR, `prose line of ${count} words, over ${PROSE_WORD_LIMIT}: ${fix}`, fix, `${count} words, over ${PROSE_WORD_LIMIT}`);
     });
 }
 

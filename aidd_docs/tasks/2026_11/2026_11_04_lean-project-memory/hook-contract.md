@@ -45,16 +45,16 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. aidd-context also owns the layout of `aidd_docs/`: which plugin owns which folder, and a file out of its place. It never checks the content of another plugin's folder.
 2. **One neutral interface.** A hook reads its event and answers through `hooks/lib/host.cjs` (`readEvent`, `answer`, `continueTurn`), never a host's payload directly. The CLI puts each tool's adapter there at build time (section 6). A `files` entry may no longer exist, a deletion or a move's source, so a hook tolerates `ENOENT`; a shell `rm` reaches it only through `command`; `continueTurn` asks once, printing nothing when the Stop is already a continuation.
-3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error of a written file, one line each; errors of files the change reached, grouped by rule and fix; then the warnings, capped at 10: the highest count both Haiku and Qwen fixed with no finding missed and no content lost (`measure.md`):
+3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error on the lines this write touched, one line each, a whole-file write touching every line; errors of files the change reached whose touched lines are unknown, grouped by rule and fix, and only informing; then the warnings, capped at 10: the highest count both Haiku and Qwen fixed with no finding missed and no content lost (`measure.md`):
 
 ```
 <plugin>: <n> errors, <m> warnings
 <file>[:<line>] <rule> ["<excerpt>"] => <fix>
-<rule> ×<count> in <folder>/* ["<excerpt>"] => <fix>
+<rule> ×<count> in <file>|<folder>/* ["<excerpt>"] => <fix>
 <file>[:<line>] <rule> warning <message> => <fix>
 ```
 
-   Line and excerpt are optional: a missing section has neither. The group's folder is the file's dirname relative to the project root, with forward slashes on every OS. A group of one prints the plain error line, never `×1`. A group prints an excerpt only when every member has that same excerpt. Never "rerun this command": the line carries the fix. Silence when clean.
+   Line and excerpt are optional: a missing section has neither. A group within one file names that file; across files, the group's folder is the file's dirname relative to the project root, with forward slashes on every OS. A group of one prints the plain error line, never `×1`. A group prints an excerpt only when every member has that same excerpt. Never "rerun this command": the line carries the fix. Silence when clean.
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`; the same file runs by hand, from a skill and in CI with the same result. Everything it calls lives under `hooks/`.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, no child process, no git, no network.
 6. **Bounded.** A 5 s declared timeout; the work well under a second. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
@@ -64,7 +64,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 
 Three pieces every plugin uses live in one file, `hooks/lib/common-rules.cjs`, copied into each plugin and held identical by `scripts/check-hook-rule-copies.js`, until the CLI builds every distribution:
 
-- `deadPaths(text, root)`: a backticked path that does not exist, the one rule every plugin applies to its own files;
+- `deadPaths(text, root)`: a backticked path that does not exist, the one rule every plugin applies to its own files. A cited path is valid when it exists from the project root or from the repository root, the nearest folder above holding a `.git` that is not a link;
 - `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `perl -i`, `find … -delete`, `git apply`, `git mv`, and the git subcommands that touch the working tree: `git checkout` except `-b`/`-B` with no path, `git restore` except `--staged` without `--worktree`, `git rm` except `--cached`, `git reset` with `--hard`, `--merge` or `--keep`, `git stash` bare or with `push`, `pop`, `apply`, `drop` or `clear`;
 - `formatFindings(plugin, findings, options)`: the output of rule 3.
 

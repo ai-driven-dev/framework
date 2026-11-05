@@ -77,7 +77,7 @@ import { fileURLToPath } from "node:url";
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 const SESSION_START = [{"script":"memory.cjs","args":["hook"]}];
 const STOP = [];
-const POST_TOOL_USE = [{"script":"memory.cjs","args":["hook"],"matcher":"Write|Edit|MultiEdit|Bash|Shell|bash|powershell"}];
+const POST_TOOL_USE = [{"script":"memory.cjs","args":["hook"],"matcher":"Write|Edit|Bash|Shell|bash"}];
 
 function runHook(script, args, payload, directory) {
   const body = JSON.stringify(payload);

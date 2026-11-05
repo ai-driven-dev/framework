@@ -99,7 +99,7 @@ script, identical to the plugin source
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit|Bash|Shell|bash|powershell",
+        "matcher": "Write|Edit|Bash|Shell|bash",
         "hooks": [
           {
             "type": "command",

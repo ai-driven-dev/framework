@@ -13,7 +13,7 @@
       {
         "type": "command",
         "command": "node ./.github/hooks/aidd-context/memory.cjs hook",
-        "matcher": "Write|Edit|MultiEdit|Bash|Shell|bash|powershell",
+        "matcher": "Write|Edit|Bash|Shell|bash",
         "timeout": 5
       }
     ]

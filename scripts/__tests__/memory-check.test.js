@@ -105,7 +105,7 @@ test("each error carries its excerpt and its fix apart, as the findings formatte
     const [{ excerpt, fix }] = lint(text, files);
     return { excerpt, fix };
   };
-  assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: undefined, fix: "prose line of 26 words, over 25: make it a table, a list or a heading" });
+  assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: "26 words, over 25", fix: "make it a table, a list or a heading" });
   assert.deepEqual(parts("# T\n\nWe have 41 commits.\n"), { excerpt: "41 commits", fix: "name the thing, not how many" });
   assert.deepEqual(parts("# T\n\nA {{slot}} here.\n"), { excerpt: "{{slot}}", fix: "fill it or remove it" });
   assert.deepEqual(parts("# T\n\nDo TBD later.\n"), { excerpt: "TBD", fix: "fill it or remove it" });
@@ -224,13 +224,26 @@ test("errors come before warnings", () => {
   assert.deepEqual(ids(problems), ["M3", "M5"]);
 });
 
-test("a rule that throws is one problem naming it, the others still report", () => {
+test("a rule that throws drops out of the findings, the others still report", () => {
   const rules = [{ id: "M9", severity: "error", check: () => { throw new Error("boom"); } }, ...RULES];
   const root = project({ "a.md": "# T\n\nTBD\n" });
   try {
-    const problems = lintFile(root, `${MEMORY}/a.md`, rules);
-    assert.deepEqual(ids(problems), ["M9", "M3"]);
-    assert.match(problems[0].message, /M9.*boom/);
+    assert.deepEqual(ids(lintFile(root, `${MEMORY}/a.md`, rules)), ["M3"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check names a rule that throws once, as an internal error and never a finding, and fails", () => {
+  const root = fullBank({ "a.md": "# T\n\nTBD\n", "b.md": "# B\n\nTBD\n" });
+  const preload = path.join(root, "throw.js");
+  try {
+    const rules = path.resolve(__dirname, "../../plugins/aidd-context/hooks/lib/memory-rules.cjs");
+    fs.writeFileSync(preload, `const { RULES } = require(${JSON.stringify(rules)});\nRULES.find((rule) => rule.id === "M3").check = () => { throw new Error("boom"); };\n`);
+    const run = spawnSync("node", ["--require", preload, ENGINE, "check", root], { encoding: "utf8" });
+    assert.equal(run.status, 1);
+    assert.equal(run.stdout, "");
+    assert.equal(run.stderr, "aidd-context: internal error: rule M3 failed: boom\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

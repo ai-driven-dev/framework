@@ -82,10 +82,19 @@ function staysUnder(root, realRoot, segments) {
   return true;
 }
 
-/** The nearest folder above `root` holding a `.git` entry, a folder or a worktree's file, or null. */
+/** Whether a folder holds a `.git` that is a folder or a worktree's file; a link, dangling or not, is none. */
+function holdsRepository(dir) {
+  try {
+    return !fs.lstatSync(path.join(dir, IGNORED_ENTRY)).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+/** The nearest folder above `root` holding a repository's `.git`, or null. */
 function repositoryRootAbove(root) {
   for (let dir = path.dirname(root); dir !== path.dirname(dir); dir = path.dirname(dir)) {
-    if (fs.existsSync(path.join(dir, IGNORED_ENTRY))) return dir;
+    if (holdsRepository(dir)) return dir;
   }
   return null;
 }
@@ -106,7 +115,7 @@ function deadPaths(text, root) {
   const entries = new Set(fs.readdirSync(root).filter((entry) => entry !== IGNORED_ENTRY));
   const realRoot = fs.realpathSync(root);
   // A root inside a repository, a subproject's, also reads a path from the repository's root.
-  const repository = fs.existsSync(path.join(root, IGNORED_ENTRY)) ? null : repositoryRootAbove(path.resolve(root));
+  const repository = holdsRepository(root) ? null : repositoryRootAbove(path.resolve(root));
   const found = [];
 
   for (const { number, line } of readableLines(text)) {
@@ -300,7 +309,10 @@ function reachedLines(reached) {
     const folder = folderOf(first.file);
     // One excerpt stands for the group only when every member has it; any other would mislead.
     const shared = group.every((finding) => finding.excerpt === first.excerpt) ? first.excerpt : undefined;
-    return `${first.rule} ×${group.length} in ${folder === "." ? "" : `${folder}/`}*${quoted(shared)} => ${first.fix}`;
+    // A group within one file names it, as an excerpt is printed only when every member shares it.
+    const oneFile = group.every((finding) => finding.file === first.file);
+    const where = oneFile ? first.file.replace(/\\/gu, "/") : `${folder === "." ? "" : `${folder}/`}*`;
+    return `${first.rule} ×${group.length} in ${where}${quoted(shared)} => ${first.fix}`;
   });
 }
 
