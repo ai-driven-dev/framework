@@ -46,7 +46,7 @@ status: pending
 > Codex, Copilot and Cursor run every hook through the converter.
 
 1. `shim.cjs <script> [args]`: reads stdin, converts, runs the script, converts its answer.
-2. The engine wraps the command for descriptors whose runtime is `command` and host is not Claude Code; the build copies `assets/hooks-runtime/` into each distribution's hooks folder.
+2. The engine wraps the command for descriptors whose runtime is `command` and host is not Claude Code; the descriptor's runtime field arrives here, with this first reader; the build copies `assets/hooks-runtime/` into each distribution's hooks folder.
 
 ### `3)` Stated costs
 

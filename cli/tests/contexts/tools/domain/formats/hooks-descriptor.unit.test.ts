@@ -4,6 +4,7 @@ import {
   flatHooksArtifact,
   flatHooksSupport,
   hooksBridgePath,
+  hooksConfigCapability,
   nativeHooksSupport,
   pluginTreeHooksArtifact,
   projectHooksSupport,
@@ -100,6 +101,24 @@ describe("a flat build's hooks artifact", () => {
 
     expect([noBridge.skipHooksJson, noBridge.hooksBridge]).toStrictEqual([undefined, undefined]);
     expect([noLoader.skipHooksJson, noLoader.hooksBridge]).toStrictEqual([undefined, undefined]);
+  });
+});
+
+describe("the hooks file the framework install writes", () => {
+  it("is read from the descriptor's own parameters", () => {
+    const capability = hooksConfigCapability({
+      config: {
+        outputPath: ".tool/hooks.json",
+        mergeStrategy: "none",
+        entrySection: "Start",
+        consumes: ["tool-hooks"],
+      },
+    });
+
+    expect(capability.buildOutputPath()).toBe(".tool/hooks.json");
+    expect(capability.getMergeStrategy()).toBe("none");
+    expect(capability.getEntrySection()).toBe("Start");
+    expect(capability.consumes).toStrictEqual(["tool-hooks"]);
   });
 });
 

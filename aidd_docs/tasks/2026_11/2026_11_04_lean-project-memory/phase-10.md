@@ -37,7 +37,7 @@ status: pending
 
 > Pure functions over text and a descriptor; the caller reads and writes.
 
-1. `mergeHooks(existing, pluginHooks, plugin, descriptor)` and `unmergeHooks(existing, plugin, descriptor)`: rewrite the root token, map events, shape entries, strip the plugin's own entries by its script directory, add.
+1. `mergeHooks(existing, pluginHooks, plugin, descriptor)` and `unmergeHooks(existing, plugin, descriptor)`: rewrite the root token, map events, shape entries, strip the plugin's own entries by its script directory, add. The descriptor's wrapper, entry shape and fields kept arrive here, with this first reader.
 2. Tests first: before any per-tool merge is replaced, one test per tool route merges this plugin into a file holding this plugin's entries, another plugin's and a person's, and asserts only this plugin's were stripped. Then one per descriptor field, then the five routes moved onto it; delete the per-tool merge, flatten and token-rewrite copies and `cursor-hooks.ts`.
 3. `remove-project-hooks.ts` and `project-hooks-materializer.ts` read the descriptor instead of naming Cursor.
 
