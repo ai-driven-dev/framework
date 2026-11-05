@@ -14,4 +14,4 @@
 
 ## Dependencies
 
-- {{Which external services does the project call, how does a call authenticate and retry, and what happens when the service is down?}}
+- {{Which external services does the project call, how does a call authenticate, retry and time out, and what happens when the service is down?}}

@@ -37,6 +37,11 @@ What the scan learns about the services the project uses and does not build. The
 | tool nobody drives | keep for its hand-off alone: acting on its own is the fact |
 | hand-off without a trigger | keep, name the trigger the repo proves |
 
+## Writing the graph
+
+- A node's middle-dot part names the memory file holding its details.
+- Rebuild the graph from the scan; the template's example is never kept.
+
 ## Detected when
 
 | Fact | Read as |

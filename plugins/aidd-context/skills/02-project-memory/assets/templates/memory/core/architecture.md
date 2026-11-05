@@ -7,6 +7,7 @@
 ## Areas
 
 - {{Which top-level folders have a role their name does not show? One level, one line each.}}
+- Packages: {{Which workspace packages does the monorepo hold? One line per package and its role.}}
 - Entry points: {{where does execution start, per deliverable?}}
 
 ## Decisions
@@ -23,4 +24,4 @@
 
 ## Flow
 
-- {{Does work cross processes or repositories? Draw that flow as one mermaid flowchart, a box per process or repository; else drop this section.}}
+- {{Does work cross processes or repositories? Draw that flow as one mermaid flowchart, a box per process or repository.}}

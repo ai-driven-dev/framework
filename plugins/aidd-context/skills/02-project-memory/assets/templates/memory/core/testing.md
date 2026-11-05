@@ -12,6 +12,6 @@
 
 ## Browser QA
 
-- Entry: {{which command starts the application, and at which URL? Drop this section when no browser journey exists.}}
+- Entry: {{which command starts the application, and at which URL?}}
 - Auth: {{which test identity or bootstrap logs in, without secrets?}}
 - State: {{which fixture source and which reset command give a known state?}}

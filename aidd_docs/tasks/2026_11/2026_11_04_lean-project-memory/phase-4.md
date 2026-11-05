@@ -65,7 +65,7 @@ status: done
 3. `coding-assertions`: Gates (command, when, what it proves), Prerequisites.
 4. `testing`: Layers (which change gets which test), Conventions (mocking, fixtures), Browser QA when a journey exists.
 5. `vcs`: Branches, Commits (deviations only), Pull requests (base, merge, stacking), Agent may.
-6. `ecosystem`: Systems (who reaches it and how, what the agent must know), Hand-offs; it absorbs integration.
+6. `ecosystem`: stays one mermaid graph. Systems (who reaches a tool and how, what the agent must know) and Hand-offs (what moves between two tools) are its two edge kinds. Reason: `13-access-check` parses its edges and the `cases.json` regex relies on the graph. `integration` goes to `contract`, under Dependencies.
 
 ### `2)` Written only when the scan finds something
 
@@ -74,6 +74,8 @@ status: done
 1. `backlog`: the team's decisions only, five to eight lines (tool, authority, estimation scale, ordering, Definition of Done); items and their statuses stay in the tracker and in aidd-pm's own folder. `deployment` (absorbs infra), `contract` (api, cli, package), `auth`, `data` (database, data), `async` (messaging, realtime), `ui` (design, forms, navigation), `native` (mobile, desktop).
 2. Each section's `{{…}}` line is the question the writer answers; a file with no answer is not written.
 3. `ui`: with `aidd_docs/ui/system.md` present, one line pointing to `aidd_docs/ui/`; without it, Rules (tokens not literals, naming the project's token file; reuse before create; where validation lives), Accessibility bar, See a change (one command or URL).
+
+Deliberate cut, questions not carried over: `contract` resource groups, pagination, base path, command list, install, consumers, runtimes, peer dependencies and stable versus internal; `native` offline storage and screen flow; `async` presence and polling.
 
 ### `3)` Links and guard
 

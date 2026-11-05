@@ -7,13 +7,14 @@ const test = require("node:test");
 const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-context");
 const SKILL = path.join(PLUGIN, "skills/02-project-memory");
 const TEMPLATES = path.join(SKILL, "assets/templates/memory");
+const { PLACEHOLDER } = require("./fixtures/unfinished-marker.js");
 const { lintFile } = require(path.join(PLUGIN, "hooks/memory-lint.cjs"));
 
 const ALWAYS = ["project-brief.md", "architecture.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
 const CONDITIONAL = ["backlog.md", "deployment.md", "contract.md", "auth.md", "data.md", "async.md", "ui.md", "native.md"];
 const FORMER = {
   "codebase-map.md": "core",
-  "integration.md": "ecosystem",
+  "integration.md": "contract",
   "infra.md": "deployment",
   "api.md": "contract",
   "cli.md": "contract",
@@ -71,7 +72,7 @@ test("each template gives engine errors only on its question lines", () => {
 
 test("a template holds no angle placeholder, guidance comment or other marker", () => {
   for (const template of templateFiles()) {
-    assert.doesNotMatch(textOf(template), /<!--|<(?!https?:)[^>\n]+>|\bTODO\b|\bTBD\b/u, template.name);
+    assert.doesNotMatch(textOf(template), new RegExp(`${PLACEHOLDER.source}|\\bTODO\\b|\\bTBD\\b`, "u"), template.name);
   }
 });
 
@@ -94,13 +95,25 @@ test("every former file is named by the capability that replaced it", () => {
   }
 });
 
-test("the ui template points to aidd_docs/ui/ when a design system file exists there", () => {
+test("the ui template keeps one pointer line and drops the rest when a design system file exists", () => {
   const text = textOf({ capability: "ui", name: "ui.md" });
-  assert.match(text, /aidd_docs\/ui\/system\.md/u);
-  assert.match(text, /`aidd_docs\/ui\/`/u);
+  assert.match(
+    text,
+    /^\{\{Does aidd_docs\/ui\/system\.md exist\? Then keep one line: .*`aidd_docs\/ui\/`.*, and drop everything below\.\}\}$/mu
+  );
 });
 
-test("the conditional templates say a question with no answer is dropped", () => {
+test("a question with no answer is dropped, and a file with no answer is not written for a conditional row only", () => {
   const text = fs.readFileSync(path.join(SKILL, "references/capabilities.md"), "utf8");
-  assert.match(text, /no answer/u);
+  const rule = text.split(/\r?\n/u).find((line) => line.includes("no answer"));
+  assert.ok(rule, "capabilities.md states no rule about a missing answer");
+  assert.match(rule, /question with no answer is dropped/u);
+  assert.match(rule, /conditional row with no answer at all writes no file/u);
+  assert.match(rule, /always row is written whatever/u);
+});
+
+test("the vcs template asks for the platform, the repository and the CLI, and the standard followed", () => {
+  const text = textOf({ capability: "core", name: "vcs.md" });
+  assert.match(text, /Platform: \{\{[^}]*repository[^}]*CLI/u);
+  assert.match(text, /\{\{Which commit standard does the project follow, and where does it deviate\?\}\}/u);
 });

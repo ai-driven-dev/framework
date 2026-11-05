@@ -14,7 +14,9 @@
 
 ## Infrastructure
 
-- {{Which tool provisions the runtime, and where do its definitions live? Drop this section when none does.}}
+- {{Which tool provisions the runtime, and where do its definitions live?}}
+- {{What is the topology: the main resources and how they connect?}}
+- {{How are changes applied and state managed?}}
 
 ## Monitoring
 
