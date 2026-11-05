@@ -6,7 +6,43 @@ approval_policy = "on-request"
 script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-telemetry/hooks/hooks.json
-script, differs from the plugin source
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/session-start.cjs",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/catch-up.cjs",
+            "async": true,
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/prompt-gate.cjs",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
+
 
 ## project/.codex/plugins/aidd-telemetry/hooks/lib/aidd.cjs
 script, identical to the plugin source
@@ -77,4 +113,6 @@ project codex aidd-telemetry scope=project: 18 hook files
   .codex/plugins/aidd-telemetry/hooks/prompt-gate.cjs
   .codex/plugins/aidd-telemetry/hooks/session-start.cjs
   projectHooks null
+  dependents []
+project codex nativeRegistrations pluginRefs null
 machine: no manifest

@@ -420,6 +420,7 @@ project kilo aidd-context scope=project: 5 hook files
   .kilo/hooks/aidd-context/update_memory.js
   .kilo/plugin/aidd-context-hooks.js
   projectHooks null
+  dependents []
 project kilo aidd-telemetry scope=project: 18 hook files
   .kilo/hooks/aidd-telemetry/catch-up.cjs
   .kilo/hooks/aidd-telemetry/lib/aidd.cjs
@@ -440,4 +441,6 @@ project kilo aidd-telemetry scope=project: 18 hook files
   .kilo/hooks/aidd-telemetry/session-start.cjs
   .kilo/plugin/aidd-telemetry-hooks.js
   projectHooks null
+  dependents []
+project kilo nativeRegistrations pluginRefs null
 machine: no manifest

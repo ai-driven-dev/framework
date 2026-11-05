@@ -1,0 +1,16 @@
+setup over installed plugins resolved
+hook files unchanged by the second run: true
+
+## project/.codex/config.toml
+approval_policy = "on-request"
+
+
+# recorded
+project codex aidd-context scope=project: 0 hook files
+  projectHooks null
+  dependents []
+project codex aidd-telemetry scope=project: 0 hook files
+  projectHooks null
+  dependents []
+project codex nativeRegistrations pluginRefs null
+machine: no manifest

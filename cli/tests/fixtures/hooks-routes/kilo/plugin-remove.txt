@@ -248,4 +248,6 @@ project kilo aidd-telemetry scope=project: 18 hook files
   .kilo/hooks/aidd-telemetry/session-start.cjs
   .kilo/plugin/aidd-telemetry-hooks.js
   projectHooks null
+  dependents []
+project kilo nativeRegistrations pluginRefs null
 machine: no manifest

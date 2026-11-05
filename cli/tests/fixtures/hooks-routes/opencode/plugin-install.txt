@@ -526,6 +526,7 @@ project opencode aidd-context scope=project: 5 hook files
   .opencode/hooks/aidd-context/update_memory.js
   .opencode/plugin/aidd-context-hooks.js
   projectHooks null
+  dependents []
 project opencode aidd-telemetry scope=project: 18 hook files
   .opencode/hooks/aidd-telemetry/catch-up.cjs
   .opencode/hooks/aidd-telemetry/lib/aidd.cjs
@@ -546,4 +547,6 @@ project opencode aidd-telemetry scope=project: 18 hook files
   .opencode/hooks/aidd-telemetry/session-start.cjs
   .opencode/plugin/aidd-telemetry-hooks.js
   projectHooks null
+  dependents []
+project opencode nativeRegistrations pluginRefs null
 machine: no manifest

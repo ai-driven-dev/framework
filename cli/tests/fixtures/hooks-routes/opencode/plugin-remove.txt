@@ -342,4 +342,6 @@ project opencode aidd-telemetry scope=project: 18 hook files
   .opencode/hooks/aidd-telemetry/session-start.cjs
   .opencode/plugin/aidd-telemetry-hooks.js
   projectHooks null
+  dependents []
+project opencode nativeRegistrations pluginRefs null
 machine: no manifest

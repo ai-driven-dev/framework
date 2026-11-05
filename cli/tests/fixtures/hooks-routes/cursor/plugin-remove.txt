@@ -103,6 +103,8 @@ project cursor aidd-telemetry scope=user: 0 hook files
   ],
   "scripts": {}
 }
+  dependents []
+project cursor nativeRegistrations pluginRefs null
 machine cursor aidd-context scope=user: 0 hook files
   projectHooks {
   "entries": [
@@ -119,6 +121,7 @@ machine cursor aidd-context scope=user: 0 hook files
   ],
   "scripts": {}
 }
+  dependents []
 machine cursor aidd-telemetry scope=user: 0 hook files
   projectHooks {
   "entries": [
@@ -140,3 +143,5 @@ machine cursor aidd-telemetry scope=user: 0 hook files
   ],
   "scripts": {}
 }
+  dependents ["<root>/project"]
+machine cursor nativeRegistrations pluginRefs null

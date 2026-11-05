@@ -22,6 +22,7 @@ type Route =
   | "flat-translate"
   | "plugin-install"
   | "plugin-install-twice"
+  | "setup-plugins-reinstall"
   | "plugin-remove"
   | "clean";
 
@@ -30,6 +31,7 @@ const ROUTES: readonly Route[] = [
   "flat-translate",
   "plugin-install",
   "plugin-install-twice",
+  "setup-plugins-reinstall",
   "plugin-remove",
   "clean",
 ];
@@ -178,8 +180,7 @@ function normalize(text: string, ws: Workspace): string {
     .join("<root>")
     .split(REPOSITORY_ROOT)
     .join("<repo>")
-    .replace(/"version": "[^"]*"/g, '"version": "<version>"')
-    .replace(/"hash": "[^"]*"/g, '"hash": "<hash>"');
+    .replace(/"version": "[^"]*"/g, '"version": "<version>"');
 }
 
 /** A plugin descriptor carries much besides hooks; only its hooks reference is route output. */
@@ -205,7 +206,9 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
       const shown = `${label}/${rel}`;
       const origin = [...scripts].find(([key]) => {
         const [plugin, ...rest] = key.split("/");
-        return rel.includes(`${plugin}/`) && rel.endsWith(`/${rest.join("/")}`);
+        return (
+          /\.c?js$/.test(rel) && rel.includes(`${plugin}/`) && rel.endsWith(`/${rest.join("/")}`)
+        );
       });
       if (origin !== undefined) {
         const verdict = origin[1] === content ? "identical to" : "differs from";
@@ -235,7 +238,12 @@ async function recordedPlugins(path: string, scope: string): Promise<string[]> {
       lines.push(...hookFiles.map((f) => `  ${f}`));
       const projectHooks = JSON.stringify(plugin.projectHooks ?? null, null, 2);
       lines.push(`  projectHooks ${projectHooks}`);
+      lines.push(`  dependents ${JSON.stringify(plugin.dependents)}`);
     }
+    const registrations = manifest.getNativeRegistrations(toolId);
+    lines.push(
+      `${scope} ${toolId} nativeRegistrations pluginRefs ${JSON.stringify(registrations?.pluginRefs ?? null)}`
+    );
   }
   return lines.length === 0 ? [`${scope}: no plugin recorded`] : lines;
 }
@@ -248,6 +256,39 @@ async function pluginsRecorded(ws: Workspace): Promise<string> {
   return `${normalize(lines.join("\n"), ws)}\n`;
 }
 
+/**
+ * `aidd setup --plugins <names>` is the route that reinstalls: SetupPluginsPromptUseCase asks
+ * for `replace: true`, so an existing plugin's entries are dropped and added again. The plugins
+ * are installed from a marketplace first, as setup does, then setup runs over them.
+ */
+async function reinstallThroughSetup(ws: Workspace): Promise<string> {
+  await writeSource(ws.source);
+  const d = await deps(ws.project);
+  await d.marketplaceAddUseCase.execute({
+    source: { kind: "local", path: ws.source },
+    name: "hooks-routes",
+    scope: "project",
+    projectRoot: ws.project,
+    autoTrust: true,
+  });
+  const options = {
+    projectRoot: ws.project,
+    mode: "named",
+    pluginNames: [...PLUGINS],
+    interactive: false,
+  } as const;
+  await d.setupPluginsPromptUseCase.execute(options);
+  const before = await describeHookFiles(ws, [ws.project, ws.home]);
+  let outcome = "setup over installed plugins resolved";
+  try {
+    await d.setupPluginsPromptUseCase.execute(options);
+  } catch (error) {
+    outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize((error as Error).message, ws)}`;
+  }
+  const after = await describeHookFiles(ws, [ws.project, ws.home]);
+  return `${outcome}\nhook files unchanged by the second run: ${before === after}`;
+}
+
 async function run(route: Route, toolId: AiToolId): Promise<string> {
   const ws = await workspace();
   if (route === "native-build" || route === "flat-translate") {
@@ -256,6 +297,9 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
     return describeHookFiles(ws, [out]);
   }
   await installTool(ws.project, toolId);
+  if (route === "setup-plugins-reinstall") {
+    return `${await reinstallThroughSetup(ws)}\n\n${await describeHookFiles(ws, [ws.project, ws.home])}\n# recorded\n${await pluginsRecorded(ws)}`;
+  }
   await installPlugin(ws.project, toolId, "aidd-context");
   await installPlugin(ws.project, toolId, "aidd-telemetry");
   const bases = [ws.project, ws.home];

@@ -1,0 +1,555 @@
+setup over installed plugins resolved
+hook files unchanged by the second run: true
+
+## project/.opencode/hooks/aidd-context/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-context/memory-hook.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-context/memory-lint.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-context/update_memory.js
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/catch-up.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/aidd.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/binding.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/claude-only.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/consent.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/context.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/declaration.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/git.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/hook-io.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/jsonl.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/lookup.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/presence.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/tool.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/prompt-gate.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/session-start.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/opencode-events.js
+// V2 reports a turn through its execution events. The tool hook is where a finished call's
+// result can change, so a hook's answer lands in the result the model reads.
+function eventsForV2(event, directory) {
+  const data = event?.data;
+  if (typeof data?.sessionID !== "string") return [];
+  if (event.type === "session.created") {
+    return [
+      {
+        type: "session.created",
+        properties: {
+          info: { id: data.sessionID, directory: data.location?.directory ?? directory },
+        },
+      },
+    ];
+  }
+  if (
+    event.type === "session.execution.succeeded" ||
+    event.type === "session.execution.failed" ||
+    event.type === "session.execution.interrupted"
+  ) {
+    if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
+    return [
+      {
+        type: "session.idle",
+        properties: { sessionID: data.sessionID, directory: event.location?.directory },
+      },
+    ];
+  }
+  return [];
+}
+
+// A string result takes the answer after a blank line; a list of parts takes a text part.
+function withAnswer(content, answer) {
+  if (Array.isArray(content)) return [...content, { type: "text", text: answer }];
+  return content ? `${content}\n\n${answer}` : answer;
+}
+
+export async function setupOpencodeEvents(ctx, factory) {
+  const controller = new AbortController();
+  // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
+  const client = {
+    session: {
+      promptAsync: ({ path, body }) =>
+        ctx.session.prompt({
+          sessionID: path.id,
+          text: body.parts.map((part) => part.text).join("\n"),
+        }),
+    },
+  };
+  const hooks = await factory({ directory: ctx.location.directory, client });
+  const toolHook = await ctx.tool.hook("execute.after", async (call) => {
+    if (call.status !== "completed" || !call.result) return;
+    const output = { output: "" };
+    await hooks["tool.execute.after"]({ tool: call.tool, sessionID: call.sessionID, args: call.input }, output);
+    const answer = output.output.trim();
+    if (answer) call.result.content = withAnswer(call.result.content, answer);
+  });
+  // The subscription lives until cleanup. Awaiting it here would block plugin startup.
+  void (async () => {
+    try {
+      for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+        if (controller.signal.aborted) break;
+        for (const mapped of eventsForV2(event, ctx.location.directory)) {
+          await hooks.event({ event: mapped });
+        }
+      }
+    } catch {
+      // Stream failures and cancellation must not reject into the host.
+      controller.abort();
+    }
+  })();
+  return async () => {
+    controller.abort();
+    await toolHook.dispose();
+  };
+}
+
+
+## project/.opencode/plugin/aidd-context-hooks.js
+// Generated by aidd from plugins/aidd-context/hooks/hooks.json - do not edit by hand.
+// OpenCode's plugin loader scans no "hooks" family and this profile writes no hooks.json
+// (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
+// trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
+// the mapping this generator applies and the measurements behind it.
+import { setupOpencodeEvents } from "../hooks/opencode-events.js";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+// Never process.execPath: OpenCode ships as its own standalone binary - that path names `opencode`
+// itself, not a Node runtime able to run this plugin's own hook scripts.
+const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
+
+const SESSION_START = [{"script":"update_memory.js","args":[]}];
+const STOP = [];
+const POST_TOOL_USE = [{"script":"memory-hook.cjs","args":[],"matcher":"Write|Edit|MultiEdit|Bash|Shell|bash|powershell"}];
+
+// Asynchronous on purpose: this can spawn one script per matching hook across every mapped
+// event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
+// must not throw past this function - both listeners below, plus the caller's own
+// try/catch, exist because a spawn that never launches can still throw on the stdin write.
+function runHook(script, args, payload, directory) {
+  const child = spawn("node", [HOOKS_DIR + script, ...args], {
+    cwd: directory,
+    stdio: ["pipe", "ignore", "ignore"],
+    timeout: 5000,
+  });
+  child.on("error", () => {});
+  child.stdin.on("error", () => {});
+  child.stdin.end(JSON.stringify(payload));
+}
+
+/** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
+ * any other event. Exported as a property (never a second named export - F6) so this
+ * generated module's own mapping can be asserted without spawning anything. */
+function stopCallsFor(event, directory) {
+  if (event?.type !== "session.idle") return [];
+  const sessionId = event.properties?.sessionID;
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
+  }));
+}
+
+// Awaited, unlike runHook: the script has something the model must read.
+// Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/** Runs one hook script with its payload on stdin and collects what it wrote. */
+function runCapture(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    let stdout = "";
+    let stderr = "";
+    const child = spawn("node", [HOOKS_DIR + script, ...args], {
+      cwd: directory,
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    });
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
+    child.on("close", (code) => resolve({ code, stdout, stderr }));
+    child.stdin.on("error", () => {});
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+function answerOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
+    answerFrom(code, stdout, stderr)
+  );
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
+    if (code !== 0) return "";
+    try {
+      const output = JSON.parse(stdout);
+      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    } catch {
+      return "";
+    }
+  });
+}
+
+/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
+ * names the written file `filePath`; the scripts read Claude Code's `file_path`. */
+function postToolUseCallsFor(call, directory) {
+  const tool = String(call?.tool ?? "");
+  const args = call?.args;
+  const matches = (matcher) =>
+    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "PostToolUse",
+      session_id: call?.sessionID ?? null,
+      cwd: directory,
+      tool_name: tool,
+      tool_input: toolInput,
+    },
+  }));
+}
+
+export const AiddContextHooks = async (input) => {
+  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+  const continued = new Set();
+  // SessionStart's own approximation (module doc comment above): fired once here, never
+  // per session. Silent on purpose: a memory refresh
+  // that breaks OpenCode's own startup is worse than one that never ran.
+  try {
+    for (const hook of SESSION_START) {
+      runHook(
+        hook.script,
+        hook.args,
+        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
+        input.directory
+      );
+    }
+  } catch {
+    // Silent on purpose - see above.
+  }
+  return {
+    event: async ({ event }) => {
+      try {
+        const directory = event?.properties?.directory ?? input.directory;
+        for (const call of stopCallsFor(event, directory)) {
+          const sessionId = call.payload.session_id;
+          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
+          const reason = await stopReasonOf(call.script, call.args, payload, directory);
+          if (!reason) {
+            continued.delete(sessionId);
+            continue;
+          }
+          continued.add(sessionId);
+          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          input.client.session
+            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+            .catch(() => {});
+        }
+      } catch {
+        // Silent on purpose - see above.
+      }
+    },
+    "tool.execute.after": async (call, output) => {
+      try {
+        for (const hook of postToolUseCallsFor(call, input.directory)) {
+          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+          if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
+        }
+      } catch {
+        // Silent on purpose - see above.
+      }
+    },
+  };
+};
+
+AiddContextHooks.stopCallsFor = stopCallsFor;
+AiddContextHooks.postToolUseCallsFor = postToolUseCallsFor;
+
+export default {
+  id: "aidd-context-hooks",
+  server: AiddContextHooks,
+  setup: (ctx) => setupOpencodeEvents(ctx, AiddContextHooks),
+};
+
+
+## project/.opencode/plugin/aidd-telemetry-hooks.js
+// Generated by aidd from plugins/aidd-telemetry/hooks/hooks.json - do not edit by hand.
+// OpenCode's plugin loader scans no "hooks" family and this profile writes no hooks.json
+// (build.ts's skipHooksJson, translated here rather than skipped) - this file is the only
+// trigger this plugin's declared hooks have on OpenCode. See opencode-hooks-bridge.ts for
+// the mapping this generator applies and the measurements behind it.
+import { setupOpencodeEvents } from "../hooks/opencode-events.js";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+// Never process.execPath: OpenCode ships as its own standalone binary - that path names `opencode`
+// itself, not a Node runtime able to run this plugin's own hook scripts.
+const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-telemetry/", import.meta.url));
+
+const SESSION_START = [{"script":"session-start.cjs","args":[]},{"script":"catch-up.cjs","args":[]}];
+const STOP = [];
+const POST_TOOL_USE = [];
+
+// Asynchronous on purpose: this can spawn one script per matching hook across every mapped
+// event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
+// must not throw past this function - both listeners below, plus the caller's own
+// try/catch, exist because a spawn that never launches can still throw on the stdin write.
+function runHook(script, args, payload, directory) {
+  const child = spawn("node", [HOOKS_DIR + script, ...args], {
+    cwd: directory,
+    stdio: ["pipe", "ignore", "ignore"],
+    timeout: 5000,
+  });
+  child.on("error", () => {});
+  child.stdin.on("error", () => {});
+  child.stdin.end(JSON.stringify(payload));
+}
+
+/** Pure: `session.idle` -> every Stop hook's own {script, args, payload} - or `[]` for
+ * any other event. Exported as a property (never a second named export - F6) so this
+ * generated module's own mapping can be asserted without spawning anything. */
+function stopCallsFor(event, directory) {
+  if (event?.type !== "session.idle") return [];
+  const sessionId = event.properties?.sessionID;
+  return STOP.map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: { hook_event_name: "Stop", session_id: sessionId ?? null, cwd: directory },
+  }));
+}
+
+// Awaited, unlike runHook: the script has something the model must read.
+// Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/** Runs one hook script with its payload on stdin and collects what it wrote. */
+function runCapture(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    let stdout = "";
+    let stderr = "";
+    const child = spawn("node", [HOOKS_DIR + script, ...args], {
+      cwd: directory,
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    });
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
+    child.on("close", (code) => resolve({ code, stdout, stderr }));
+    child.stdin.on("error", () => {});
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+function answerOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
+    answerFrom(code, stdout, stderr)
+  );
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
+    if (code !== 0) return "";
+    try {
+      const output = JSON.parse(stdout);
+      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    } catch {
+      return "";
+    }
+  });
+}
+
+/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
+ * names the written file `filePath`; the scripts read Claude Code's `file_path`. */
+function postToolUseCallsFor(call, directory) {
+  const tool = String(call?.tool ?? "");
+  const args = call?.args;
+  const matches = (matcher) =>
+    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
+  return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
+    script: hook.script,
+    args: hook.args,
+    payload: {
+      hook_event_name: "PostToolUse",
+      session_id: call?.sessionID ?? null,
+      cwd: directory,
+      tool_name: tool,
+      tool_input: toolInput,
+    },
+  }));
+}
+
+export const AiddTelemetryHooks = async (input) => {
+  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+  const continued = new Set();
+  // SessionStart's own approximation (module doc comment above): fired once here, never
+  // per session. Silent on purpose: a memory refresh
+  // that breaks OpenCode's own startup is worse than one that never ran.
+  try {
+    for (const hook of SESSION_START) {
+      runHook(
+        hook.script,
+        hook.args,
+        { hook_event_name: "SessionStart", session_id: null, cwd: input.directory },
+        input.directory
+      );
+    }
+  } catch {
+    // Silent on purpose - see above.
+  }
+  return {
+    event: async ({ event }) => {
+      try {
+        const directory = event?.properties?.directory ?? input.directory;
+        for (const call of stopCallsFor(event, directory)) {
+          const sessionId = call.payload.session_id;
+          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
+          const reason = await stopReasonOf(call.script, call.args, payload, directory);
+          if (!reason) {
+            continued.delete(sessionId);
+            continue;
+          }
+          continued.add(sessionId);
+          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          input.client.session
+            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+            .catch(() => {});
+        }
+      } catch {
+        // Silent on purpose - see above.
+      }
+    },
+    "tool.execute.after": async (call, output) => {
+      try {
+        for (const hook of postToolUseCallsFor(call, input.directory)) {
+          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+          if (answer) output.output = `${output.output ?? ""}\n\n${answer}`;
+        }
+      } catch {
+        // Silent on purpose - see above.
+      }
+    },
+  };
+};
+
+AiddTelemetryHooks.stopCallsFor = stopCallsFor;
+AiddTelemetryHooks.postToolUseCallsFor = postToolUseCallsFor;
+
+export default {
+  id: "aidd-telemetry-hooks",
+  server: AiddTelemetryHooks,
+  setup: (ctx) => setupOpencodeEvents(ctx, AiddTelemetryHooks),
+};
+
+
+## project/opencode.json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    ".opencode/rules/**/*.md"
+  ]
+}
+
+# recorded
+project opencode aidd-context scope=project: 5 hook files
+  .opencode/hooks/aidd-context/lib/memory-rules.cjs
+  .opencode/hooks/aidd-context/memory-hook.cjs
+  .opencode/hooks/aidd-context/memory-lint.cjs
+  .opencode/hooks/aidd-context/update_memory.js
+  .opencode/plugin/aidd-context-hooks.js
+  projectHooks null
+  dependents []
+project opencode aidd-telemetry scope=project: 18 hook files
+  .opencode/hooks/aidd-telemetry/catch-up.cjs
+  .opencode/hooks/aidd-telemetry/lib/aidd.cjs
+  .opencode/hooks/aidd-telemetry/lib/binding.cjs
+  .opencode/hooks/aidd-telemetry/lib/claude-only.cjs
+  .opencode/hooks/aidd-telemetry/lib/codex-session-file.cjs
+  .opencode/hooks/aidd-telemetry/lib/consent.cjs
+  .opencode/hooks/aidd-telemetry/lib/context.cjs
+  .opencode/hooks/aidd-telemetry/lib/declaration.cjs
+  .opencode/hooks/aidd-telemetry/lib/git.cjs
+  .opencode/hooks/aidd-telemetry/lib/hook-io.cjs
+  .opencode/hooks/aidd-telemetry/lib/jsonl.cjs
+  .opencode/hooks/aidd-telemetry/lib/lookup.cjs
+  .opencode/hooks/aidd-telemetry/lib/presence.cjs
+  .opencode/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+  .opencode/hooks/aidd-telemetry/lib/tool.cjs
+  .opencode/hooks/aidd-telemetry/prompt-gate.cjs
+  .opencode/hooks/aidd-telemetry/session-start.cjs
+  .opencode/plugin/aidd-telemetry-hooks.js
+  projectHooks null
+  dependents []
+project opencode nativeRegistrations pluginRefs null
+machine: no manifest
