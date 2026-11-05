@@ -17,6 +17,7 @@ The written bank, with no format error.
 3. **Write.** Write each file at the bank root against [memory-rules.md](../references/memory-rules.md).
    - Absent file: fill the template per capabilities.md, unless a misplaced file or a pending Former files merge covers its capability: then write nothing until the user decides.
    - Existing file: apply the approved findings and nothing else. Only a content finding corrects a fact; any other change to a line removes what it replaces.
+   - Approved merge: apply it only if the former file's removal was approved on its own; otherwise change neither file.
    - A section the file lacks: report it when the project has something for it, never inject it.
 4. **Lint.** Run the engine on the files written, and fix what it reports on the lines you wrote.
 
