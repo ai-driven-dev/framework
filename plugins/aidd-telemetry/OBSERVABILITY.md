@@ -47,6 +47,8 @@ The collector keeps the provider's raw OTLP JSON locally. The separate dev sync 
 - **Claude Code:** `tool_result` logs and selected metrics: token usage, active time, edit decisions, lines changed, sessions, commits, pull requests and the provider's `cost.usage` metric when present. The dashboard does not calculate a cost.
 - **Codex:** `conversation_starts`, `tool_result` and `response.completed` events, including available token counts.
 - **Both:** available event time, session, model, application version, provider email/account/organization IDs, tool name, call ID, outcome and duration. Confirmed framework feature bindings additionally carry the declared branch and ticket; an invalidation can be sent when a binding becomes ambiguous.
+- **Codex titles:** only with `--include-session-titles`, the free-text chat title is sent as session metadata. It may contain part of a prompt.
+- **Claude series:** a SHA-256 fingerprint of the source resource attributes, instrumentation scope and all point attributes helps detect different metric series that share a legacy key. The attributes used to compute it are not sent as additional plaintext, but the fingerprint can reveal equality or allow guesses about low-entropy values. Existing points lack it and cannot be certified retroactively. [OTLP metric data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/) (read 2026-11-05).
 
 The sync excludes fields for prompt and response text, tool arguments and output, raw API bodies, metric exemplars and traces. It filters attribute keys, not secrets or free text inside allowed values. OpenCode is not forwarded by this sync. These are forwarding rules, not guarantees about what the raw collector receives.
 
@@ -118,5 +120,6 @@ Read on 2026-11-04:
 
 - [Claude Code monitoring](https://code.claude.com/docs/en/monitoring-usage)
 - [Codex observability and telemetry](https://learn.chatgpt.com/docs/config-file/config-advanced#observability-and-telemetry)
+- [Codex app-server thread metadata](https://learn.chatgpt.com/docs/app-server#read-a-stored-thread-without-resuming) and [OTLP delivery responses](https://opentelemetry.io/docs/specs/otlp/#partial-success-1) (read 2026-11-05)
 - [OpenCode 1.18.35 session schema](https://github.com/anomalyco/opencode/blob/v1.18.35/packages/schema/src/v1/session.ts) and [LLM instrumentation](https://github.com/anomalyco/opencode/blob/v1.18.35/packages/opencode/src/session/llm.ts)
 - [OpenCode 2.2.5 session events](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/schema/src/session-event.ts) and [token normalization](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/usage.ts)

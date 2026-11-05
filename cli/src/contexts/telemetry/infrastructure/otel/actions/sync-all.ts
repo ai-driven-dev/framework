@@ -6,6 +6,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import type { SessionAdmission, SessionFeature } from "../../../domain/report/session-feature.js";
 import { LedgerLock } from "../../ledger-lock.js";
+import { CODEX_CONFIG_ID } from "../settings.js";
+import { createSessionTitlePublisher } from "./session-title.js";
 import {
   bindingTransfer,
   destination,
@@ -20,7 +22,7 @@ import {
   type Transfer,
 } from "./sync.js";
 
-export type AllOptions = Omit<SyncOptions, "session" | "follow" | "stateDir"> & {
+export type AllOptions = Omit<SyncOptions, "session" | "follow" | "stateDir" | "titlesOnly"> & {
   readonly stateDir: string;
   readonly refreshMs?: number;
 };
@@ -226,6 +228,10 @@ export async function syncAllOtel(
     staleAfterMs: Number.MAX_SAFE_INTEGER,
   });
   const release = await lock.acquire();
+  const titles =
+    options.config === CODEX_CONFIG_ID && options.includeSessionTitles
+      ? createSessionTitlePublisher(options.home, { onUnavailable: options.onTitleUnavailable })
+      : undefined;
   let file: Awaited<ReturnType<typeof open>> | undefined;
   try {
     file = await open(capture, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
@@ -379,6 +385,22 @@ export async function syncAllOtel(
         }
       }
     };
+    const publishTitles = async () => {
+      if (!titles) return;
+      for (const [id, state] of sessions) {
+        const admission = held.get(id);
+        if (!admission || state.identity.conflict) continue;
+        if ((await permits(admission, new Date().toISOString())) !== "allow") continue;
+        if (
+          await titles.publish(id, state.identity, async (event) => {
+            if (!event.at || (await permits(admission, event.at)) !== "allow") return false;
+            await send(asOptions(options, id), event);
+            return true;
+          })
+        )
+          sent++;
+      }
+    };
     const flushPending = async () => {
       const files = new Set(await readdir(pendingDirectory));
       for (const [id, admission] of held) {
@@ -417,6 +439,7 @@ export async function syncAllOtel(
     await loadBindings();
     await flushPending();
     await bindings();
+    await publishTitles();
     const buffer = Buffer.alloc(65536);
     for (;;) {
       const { bytesRead } = await file.read(buffer, 0, buffer.length, offset + pendingBytes.length);
@@ -486,6 +509,7 @@ export async function syncAllOtel(
         dirty = false;
         await flushPending();
         await bindings();
+        await publishTitles();
         await save(offset);
       }
       if (options.signal?.aborted)
@@ -499,6 +523,7 @@ export async function syncAllOtel(
       }
     }
   } finally {
+    titles?.close();
     await file?.close();
     await release();
   }

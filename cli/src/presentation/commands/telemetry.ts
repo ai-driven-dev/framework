@@ -36,6 +36,7 @@ import {
   launchOtel,
   otelOptions,
   syncCapturedSession,
+  syncCapturedSessionTitles,
 } from "../../runtime/wiring/telemetry-otel.js";
 import {
   printForgetResult,
@@ -221,6 +222,12 @@ export function registerTelemetryCommand(program: Command): void {
     .requiredOption("--tenant <slug>", "Gouvernail tenant slug")
     .requiredOption("--endpoint <origin>", "Loopback HTTP origin")
     .option("--follow", "Follow new events for this session", false)
+    .option(
+      "--include-session-titles",
+      "Send Codex chat titles, which may contain prompt text",
+      false
+    )
+    .option("--titles-only", "Send only Codex titles for consented sessions", false)
     .action(
       async (options: {
         config: (typeof otelOptions.syncConfigs)[number];
@@ -228,15 +235,58 @@ export function registerTelemetryCommand(program: Command): void {
         tenant: string;
         endpoint: string;
         follow: boolean;
+        includeSessionTitles: boolean;
+        titlesOnly: boolean;
       }) => {
         const { output, run } = commandOf(program);
-        if (!options.session && !options.follow) {
+        if (!options.session && !options.follow && !options.titlesOnly) {
           output.error("Pass --session for a bounded sync, or --follow to discover new sessions.");
+          process.exitCode = 1;
+          return;
+        }
+        if (options.titlesOnly && options.follow) {
+          output.error("Title-only sync does not support --follow.");
+          process.exitCode = 1;
+          return;
+        }
+        if (
+          (options.includeSessionTitles || options.titlesOnly) &&
+          options.config !== otelOptions.titleConfig
+        ) {
+          output.error("Session title sync is currently available only for Codex.");
           process.exitCode = 1;
           return;
         }
         await run(async (deps) => {
           const tool = otelOptions.usageTool(options.config);
+          const onTitleUnavailable = () =>
+            output.warn("A Codex session title could not be read; telemetry sync continues.");
+          if (options.titlesOnly && !options.session) {
+            const result = await syncCapturedSessionTitles(
+              {
+                config: options.config,
+                tenant: options.tenant,
+                endpoint: options.endpoint,
+                token: process.env.AIDD_OTEL_TOKEN ?? "",
+                includeSessionTitles: true,
+                onTitleUnavailable,
+              },
+              () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
+              (admission, at, start) =>
+                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start)
+            );
+            output.info(
+              `Sent ${result.sent} session title updates; no metrics or feature bindings were sent.`
+            );
+            if (!result.sent && !result.identified)
+              output.warn(
+                "No unambiguous provider identity was found in consented capture events."
+              );
+            else if (!result.sent && !result.currentConsenting)
+              output.warn("No identified session has current clone consent.");
+            if (result.partialLine) output.info("The last incomplete capture line was not read.");
+            return;
+          }
           if (!options.session) {
             output.info("Following new consented sessions; press Ctrl-C to stop.");
             const result = await followCapturedSessions(
@@ -245,6 +295,8 @@ export function registerTelemetryCommand(program: Command): void {
                 tenant: options.tenant,
                 endpoint: options.endpoint,
                 token: process.env.AIDD_OTEL_TOKEN ?? "",
+                includeSessionTitles: options.includeSessionTitles,
+                onTitleUnavailable,
               },
               () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
               (admission, at, start) =>
@@ -266,7 +318,13 @@ export function registerTelemetryCommand(program: Command): void {
           await resolve();
           if (options.follow) output.info("Following the selected session; press Ctrl-C to stop.");
           const result = await syncCapturedSession(
-            { ...options, session, token: process.env.AIDD_OTEL_TOKEN ?? "" },
+            {
+              ...options,
+              includeSessionTitles: options.includeSessionTitles || options.titlesOnly,
+              session,
+              token: process.env.AIDD_OTEL_TOKEN ?? "",
+              onTitleUnavailable,
+            },
             resolve,
             async (transfer) =>
               Boolean(

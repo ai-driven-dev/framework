@@ -15,8 +15,13 @@ import {
   type AllOptions,
   syncAllOtel,
 } from "../../contexts/telemetry/infrastructure/otel/actions/sync-all.js";
+import {
+  syncAllSessionTitles,
+  type TitleOptions,
+} from "../../contexts/telemetry/infrastructure/otel/actions/sync-all-titles.js";
 import { verifyOtel } from "../../contexts/telemetry/infrastructure/otel/actions/verify.js";
 import {
+  CODEX_CONFIG_ID,
   OPENCODE_CONFIG_ID,
   OTEL_CONFIGS,
   OTEL_ENDPOINTS,
@@ -55,9 +60,22 @@ export function followCapturedSessions(
   return syncAllOtel({ ...options, home: homedir(), stateDir: telemetryDir() }, snapshot, permits);
 }
 
+export function syncCapturedSessionTitles(
+  options: Omit<TitleOptions, "home" | "stateDir">,
+  snapshot: () => Promise<ReadonlyMap<string, SessionAdmission>>,
+  permits: (
+    admission: SessionAdmission,
+    at: string,
+    start?: string
+  ) => Promise<"allow" | "deny" | "unknown">
+) {
+  return syncAllSessionTitles({ ...options, home: homedir() }, snapshot, permits);
+}
+
 export const otelOptions = {
   configs: OTEL_CONFIGS,
   syncConfigs: OTEL_SYNC_CONFIGS,
+  titleConfig: CODEX_CONFIG_ID,
   usageTool: usageToolForOtel,
   endpoints: OTEL_ENDPOINTS,
   launchConfigs: [OPENCODE_CONFIG_ID],

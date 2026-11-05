@@ -56,6 +56,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 784 KB: 783.7 KB, local OTLP collector and consent-aware resumable provider sync,
 // explicit metric sanitization, retry and durable feature invalidation (+38.8 KB over 744.9 KB);
 // 0.1% measured headroom.
+// 799 KB: 798.8 KB with opt-in Codex titles, one-pass title synchronization and
+// telemetry integrity guards (+15.1 KB over 783.7 KB); less than 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

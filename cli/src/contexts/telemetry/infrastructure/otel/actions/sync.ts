@@ -6,6 +6,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import type { SessionFeature } from "../../../domain/report/session-feature.js";
 import { CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, type SyncConfig } from "../settings.js";
+import { seriesFingerprint } from "./series-fingerprint.js";
+import { createSessionTitlePublisher } from "./session-title.js";
 
 type FeatureState = SessionFeature;
 
@@ -20,6 +22,9 @@ export interface SyncOptions {
   readonly stateDir?: string;
   readonly signal?: AbortSignal;
   readonly intervalMs?: number;
+  readonly includeSessionTitles?: boolean;
+  readonly onTitleUnavailable?: () => void;
+  readonly titlesOnly?: boolean;
 }
 
 type RecordObject = Record<string, unknown>;
@@ -49,6 +54,7 @@ const SAFE_ATTRIBUTES = new Set([
   "event.kind",
   "event.sequence",
   "event.timestamp",
+  "aidd.original_event_timestamp",
   "tool_use_id",
   "type",
   "model",
@@ -56,6 +62,7 @@ const SAFE_ATTRIBUTES = new Set([
   "tool",
   "decision",
   "query_source",
+  "aidd.series_fingerprint",
   "app.version",
   "originator",
   "success",
@@ -103,6 +110,8 @@ function numericFields(source: RecordObject, keys: readonly string[]): RecordObj
   const result: RecordObject = {};
   for (const key of keys) {
     const value = source[key];
+    if (value === undefined) continue;
+    validateIntegerField(key, value);
     if (
       (typeof value === "number" && Number.isFinite(value)) ||
       (typeof value === "string" && /^-?\d+(?:\.\d+)?$/.test(value)) ||
@@ -118,6 +127,31 @@ function numericFields(source: RecordObject, keys: readonly string[]): RecordObj
   return result;
 }
 
+function isExactInteger(value: unknown, minimum: bigint, maximum: bigint): boolean {
+  if (typeof value === "number" && !Number.isSafeInteger(value)) return false;
+  if (typeof value !== "number" && (typeof value !== "string" || !/^-?\d{1,20}$/.test(value)))
+    return false;
+  const integer = BigInt(value);
+  return integer >= minimum && integer <= maximum;
+}
+
+function validateIntegerField(key: string, value: unknown): void {
+  const unsigned64 = 18446744073709551615n;
+  let valid = true;
+  if (["startTimeUnixNano", "timeUnixNano", "observedTimeUnixNano", "count"].includes(key))
+    valid = isExactInteger(value, 0n, unsigned64);
+  else if (key === "asInt")
+    valid = isExactInteger(value, -9223372036854775808n, 9223372036854775807n);
+  else if (key === "flags") valid = isExactInteger(value, 0n, 4294967295n);
+  else if (key === "bucketCounts")
+    valid = Array.isArray(value) && value.every((item) => isExactInteger(item, 0n, unsigned64));
+  if (!valid) throw new Error(`Invalid OTLP integer field: ${key}.`);
+}
+
+function isExactNanoseconds(value: unknown): value is string | number {
+  return isExactInteger(value, 0n, 18446744073709551615n);
+}
+
 function captureIdentity(target: Identity, values: Map<string, string>) {
   for (const key of ["user.email", "user.account_id", "organization.id"]) {
     const value = values.get(key);
@@ -130,11 +164,14 @@ function captureIdentity(target: Identity, values: Map<string, string>) {
 }
 
 function timeOf(entry: RecordObject) {
+  for (const key of ["timeUnixNano", "observedTimeUnixNano"]) {
+    if (entry[key] !== undefined) validateIntegerField(key, entry[key]);
+  }
   return {
-    ...(entry.timeUnixNano === undefined ? {} : { timeUnixNano: entry.timeUnixNano }),
-    ...(entry.observedTimeUnixNano === undefined
-      ? {}
-      : { observedTimeUnixNano: entry.observedTimeUnixNano }),
+    ...(isExactNanoseconds(entry.timeUnixNano) ? { timeUnixNano: entry.timeUnixNano } : {}),
+    ...(isExactNanoseconds(entry.observedTimeUnixNano)
+      ? { observedTimeUnixNano: entry.observedTimeUnixNano }
+      : {}),
   };
 }
 
@@ -216,8 +253,9 @@ export function sessionIdsInCapture(line: string, config: SyncOptions["config"])
 }
 
 function timestamp(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (!isExactNanoseconds(value)) throw new Error("Invalid OTLP integer field: timeUnixNano.");
   try {
-    if (typeof value !== "string" && typeof value !== "number") return undefined;
     const nanos = BigInt(value);
     return nanos > 0n ? new Date(Number(nanos / 1_000_000n)).toISOString() : undefined;
   } catch {
@@ -226,7 +264,15 @@ function timestamp(value: unknown): string | undefined {
 }
 
 function eventTimestamp(value: string | undefined): string | undefined {
-  if (!value || !/(Z|[+-]\d\d:\d\d)$/i.test(value)) return undefined;
+  if (!value) return undefined;
+  const date =
+    /^(\d{4}-\d{2}-\d{2})T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/i.exec(
+      value
+    )?.[1];
+  if (!date) return undefined;
+  const calendar = new Date(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(calendar.getTime()) || !calendar.toISOString().startsWith(`${date}T`))
+    return undefined;
   const time = Date.parse(value);
   return Number.isFinite(time) ? new Date(time).toISOString() : undefined;
 }
@@ -267,10 +313,13 @@ export function selectTransfers(
           a.set("event.name", event);
           const at =
             options.config === CODEX_CONFIG_ID
-              ? (eventTimestamp(a.get("event.timestamp")) ??
-                timestamp(record.timeUnixNano ?? record.observedTimeUnixNano))
-              : timestamp(record.timeUnixNano ?? record.observedTimeUnixNano);
+              ? (eventTimestamp(a.get("event.timestamp")) ?? timestamp(record.timeUnixNano))
+              : timestamp(record.timeUnixNano);
           if (options.config === CODEX_CONFIG_ID) {
+            const originalTimestamp = a.get("event.timestamp");
+            a.delete("aidd.original_event_timestamp");
+            if (originalTimestamp && eventTimestamp(originalTimestamp))
+              a.set("aidd.original_event_timestamp", originalTimestamp);
             if (at) a.set("event.timestamp", at);
             else a.delete("event.timestamp");
           }
@@ -306,6 +355,24 @@ export function selectTransfers(
               const a = merge(resourceAttrs, attributes(point.attributes));
               if (a.get(sessionKey) !== options.session) continue;
               captureIdentity(identity, a);
+              a.set(
+                "aidd.series_fingerprint",
+                seriesFingerprint(
+                  resource,
+                  {
+                    scope: object(rawScope).scope,
+                    schemaUrl: object(rawScope).schemaUrl,
+                    metric: {
+                      name: metric.name,
+                      unit: metric.unit,
+                      kind,
+                      aggregationTemporality: aggregation.aggregationTemporality,
+                      isMonotonic: aggregation.isMonotonic,
+                    },
+                  },
+                  point.attributes
+                )
+              );
               const sanitized = {
                 ...numericFields(point, [
                   "startTimeUnixNano",
@@ -394,6 +461,44 @@ export function destination(options: SyncOptions, signal: "logs" | "metrics"): U
 
 class RetryableDeliveryError extends Error {}
 
+async function assertFullDelivery(response: Response, signal: Transfer["signal"]): Promise<void> {
+  let result: unknown;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error("Gouvernail returned an invalid OTLP response.");
+  }
+  const envelope = asPlainObject(result);
+  if (!envelope) throw new Error("Gouvernail returned an invalid OTLP response.");
+  if (Object.keys(envelope).some((key) => key !== "partialSuccess" && key !== "partial_success"))
+    throw new Error("Gouvernail returned an invalid OTLP response.");
+  if ("partialSuccess" in envelope && "partial_success" in envelope)
+    throw new Error("Gouvernail returned an invalid OTLP response.");
+  const raw = envelope.partialSuccess ?? envelope.partial_success;
+  if (raw === undefined || raw === null) return;
+  const partial = asPlainObject(raw);
+  if (!partial) throw new Error("Gouvernail returned an invalid OTLP response.");
+  const camel = signal === "logs" ? "rejectedLogRecords" : "rejectedDataPoints";
+  const snake = signal === "logs" ? "rejected_log_records" : "rejected_data_points";
+  if (
+    Object.keys(partial).some(
+      (key) => ![camel, snake, "errorMessage", "error_message"].includes(key)
+    )
+  )
+    throw new Error("Gouvernail returned an invalid OTLP response.");
+  if (camel in partial && snake in partial)
+    throw new Error("Gouvernail returned an invalid OTLP response.");
+  const count = partial[camel] ?? partial[snake] ?? 0;
+  const number =
+    typeof count === "string" && /^\d+(?:[eE]\+?\d+)?$/.test(count) ? Number(count) : count;
+  if (typeof number !== "number" || !Number.isSafeInteger(number) || number < 0)
+    throw new Error("Gouvernail returned an invalid OTLP response.");
+  if (number > 0)
+    throw new Error(
+      `Gouvernail reported partial ${signal} delivery; resolve the rejection before retrying.`
+    );
+}
+
 export async function send(options: SyncOptions, transfer: Transfer): Promise<void> {
   const body = JSON.stringify(transfer.payload);
   if (Buffer.byteLength(body) > MAX_PAYLOAD)
@@ -419,6 +524,7 @@ export async function send(options: SyncOptions, transfer: Transfer): Promise<vo
         if (response.status >= 500) throw new RetryableDeliveryError(message);
         throw new Error(message);
       }
+      await assertFullDelivery(response, transfer.signal);
       return;
     } catch (error) {
       if (!options.follow || !(error instanceof RetryableDeliveryError) || options.signal?.aborted)
@@ -559,6 +665,11 @@ export async function syncOtel(
   resolve: () => Promise<FeatureState>,
   permits: (transfer: Transfer) => Promise<boolean>
 ) {
+  if (
+    options.titlesOnly &&
+    (options.config !== CODEX_CONFIG_ID || options.follow || !options.includeSessionTitles)
+  )
+    throw new Error("Title-only sync requires one Codex session and title opt-in.");
   destination(options, "logs");
   const path = join(options.home, ".local/share/aidd-otel-observation", `${options.config}.jsonl`);
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
@@ -576,6 +687,10 @@ export async function syncOtel(
     ? join(options.stateDir, "otel-sync", `${stateName}.json`)
     : null;
   let mayHaveLinked = false;
+  const titles =
+    options.config === CODEX_CONFIG_ID && options.includeSessionTitles
+      ? createSessionTitlePublisher(options.home, { onUnavailable: options.onTitleUnavailable })
+      : undefined;
   try {
     const info = await handle.stat();
     if (!info.isFile() || (info.mode & 0o077) !== 0)
@@ -620,10 +735,11 @@ export async function syncOtel(
               }
               admitted.push(transfer);
             }
-            for (const batch of packTransfers(admitted)) {
-              await send(options, batch.transfer);
-              sent += batch.count;
-            }
+            if (!options.titlesOnly)
+              for (const batch of packTransfers(admitted)) {
+                await send(options, batch.transfer);
+                sent += batch.count;
+              }
           }
           offset += newline + 1;
           pending = pending.subarray(newline + 1);
@@ -652,7 +768,7 @@ export async function syncOtel(
         payload: {},
         at: new Date().toISOString(),
       });
-      if (bindingAllowed && shouldInvalidate && binding !== "invalidated") {
+      if (!options.titlesOnly && bindingAllowed && shouldInvalidate && binding !== "invalidated") {
         const event = bindingTransfer(options, identity, { state: "ambiguous" });
         if (event) {
           await send(options, event);
@@ -667,6 +783,7 @@ export async function syncOtel(
         }
       } else if (
         bindingAllowed &&
+        !options.titlesOnly &&
         !shouldInvalidate &&
         feature.state === "confirmed" &&
         (nextBinding !== binding || needsReplay)
@@ -687,6 +804,16 @@ export async function syncOtel(
           needsReplay = false;
         }
       }
+      if (
+        bindingAllowed &&
+        titles &&
+        (await titles.publish(options.session, identity, async (event) => {
+          if (!(await permits(event))) return false;
+          await send(options, event);
+          return true;
+        }))
+      )
+        sent++;
       if (!options.follow || options.signal?.aborted)
         return { sent, skipped, offset, partialLine: pending.length > 0 };
       try {
@@ -698,6 +825,7 @@ export async function syncOtel(
       }
     }
   } finally {
+    titles?.close();
     await handle.close();
   }
 }
