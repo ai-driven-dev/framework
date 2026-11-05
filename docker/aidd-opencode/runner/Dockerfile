@@ -48,4 +48,5 @@ RUN chmod 0555 /opt/aidd/model.sh /opt/aidd/run-review /opt/aidd/dispatch /opt/a
  && chmod 0440 /etc/sudoers.d/aidd-review
 USER runner
 WORKDIR /home/runner/actions-runner
+ENV RUNNER_MANUALLY_TRAP_SIG=1
 ENTRYPOINT ["/opt/aidd/runner"]
