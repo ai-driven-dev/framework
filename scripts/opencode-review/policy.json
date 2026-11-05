@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    {"action":"execute","resource":"*","effect":"deny"}
+  ],
+  "policies": [
+    {"action":"tool.use","resource":"shell:*","effect":"deny"},
+    {"action":"tool.use","resource":"edit:*","effect":"deny"},
+    {"action":"tool.use","resource":"external_directory:*","effect":"deny"},
+    {"action":"tool.use","resource":"webfetch:*","effect":"deny"},
+    {"action":"tool.use","resource":"websearch:*","effect":"deny"},
+    {"action":"tool.use","resource":"execute:*","effect":"deny"},
+    {"action":"tool.use","resource":"subagent:*","effect":"deny"},
+    {"action":"tool.use","resource":"question:*","effect":"deny"},
+    {"action":"tool.use","resource":"experimental_image_generate:*","effect":"deny"}
+  ]
+}

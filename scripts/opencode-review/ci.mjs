@@ -3,8 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { encodeReviewState, latestReviewState, planReview } from './opencode-review-state.mjs';
-import { hasReviewFailure } from './opencode-review-discover.mjs';
+import { encodeReviewState, latestReviewState, planReview } from './state.mjs';
+import { hasReviewFailure } from './discover.mjs';
 
 const REVIEWER_ID = 8973343; // Alex's immutable GitHub user ID.
 const MAX_DIFF_BYTES = 500_000;

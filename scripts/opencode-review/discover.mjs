@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { latestReviewState } from './opencode-review-state.mjs';
+import { latestReviewState } from './state.mjs';
 
 const REVIEWER_ID = 8973343;
 const ACTIONS_BOT_ID = 41898282;

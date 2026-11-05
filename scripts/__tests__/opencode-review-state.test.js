@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { encodeReviewState, latestReviewState, planReview } = require('../opencode-review-state.mjs');
+const { encodeReviewState, latestReviewState, planReview } = require('../opencode-review/state.mjs');
 
 const sha = 'a'.repeat(40);
 const head = 'b'.repeat(40);

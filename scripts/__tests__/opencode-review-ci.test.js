@@ -1,15 +1,34 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { execFileSync, spawnSync } = require('node:child_process');
-const { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
+const { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { join, resolve } = require('node:path');
 
-const script = resolve('scripts/opencode-review-ci.mjs');
+const script = resolve('scripts/opencode-review/ci.mjs');
 const head = 'a'.repeat(40), base = 'b'.repeat(40), sha = 'c'.repeat(40);
 const file = { filename: 'app.js', status: 'modified', sha, additions: 1, deletions: 1, patch: '@@ -1 +1 @@\n-old\n+new' };
 const pr = { state: 'open', head: { sha: head, repo: { full_name: 'owner/repo' } }, base: { sha: base }, number: 2, changed_files: 1, title: 'Title', body: 'Criteria' };
 const event = { action: 'submitted', review: { id: 10, user: { id: 8973343 }, commit_id: head }, pull_request: pr };
+
+test('runs OpenCode with the prompt from the trusted checkout', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'aidd-review-runner-'));
+  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
+  const trusted = join(dir, 'trusted/scripts/opencode-review');
+  mkdirSync(trusted, { recursive: true });
+  writeFileSync(join(trusted, 'prompt.txt'), 'Trusted prompt\nSecond line\n');
+  const executable = join(dir, 'opencode');
+  writeFileSync(executable, '#!/bin/sh\nprintf "%s\\n" "$@" > "$OUTPUT_ARGS"\nprintf "review events\\n"\n');
+  chmodSync(executable, 0o755);
+  const result = spawnSync('bash', [resolve('scripts/opencode-review/review.sh')], {
+    cwd: dir,
+    env: { ...process.env, GITHUB_WORKSPACE: dir, RUNNER_TEMP: dir, PATH: `${dir}:${process.env.PATH}`, OUTPUT_ARGS: join(dir, 'args') },
+    encoding: 'utf8',
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(readFileSync(join(dir, 'args'), 'utf8'), /openai\/gpt-6\.1-terra#medium\nTrusted prompt\nSecond line\n$/);
+  assert.equal(readFileSync(join(dir, 'opencode-review-events.jsonl'), 'utf8'), 'review events\n');
+});
 
 function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), 'aidd-review-ci-'));
@@ -176,7 +195,7 @@ test('rejects a report when the input was truncated even if the model claims ful
 });
 
 test('splits oversized diffs on complete lines and rejects unreadably long lines', async () => {
-  const { splitDiff } = await import('../opencode-review-ci.mjs');
+  const { splitDiff } = await import('../opencode-review/ci.mjs');
   const chunks = splitDiff(Array.from({ length: 4000 }, () => 'x'.repeat(60)).join('\n'));
   assert.ok(chunks.length > 1);
   assert.ok(chunks.every((part) => Buffer.byteLength(part.text) < 40000 && part.text.split('\n').length < 1500));

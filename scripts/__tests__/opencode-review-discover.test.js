@@ -4,8 +4,8 @@ const { execFileSync, spawnSync } = require('node:child_process');
 const { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { join, resolve } = require('node:path');
-const { selectReview, discover } = require('../opencode-review-discover.mjs');
-const { encodeReviewState } = require('../opencode-review-state.mjs');
+const { selectReview, discover } = require('../opencode-review/discover.mjs');
+const { encodeReviewState } = require('../opencode-review/state.mjs');
 
 const sha = 'a'.repeat(40), base = 'b'.repeat(40), older = 'c'.repeat(40);
 const repository = 'owner/repo';
@@ -68,7 +68,7 @@ test('writes an empty Actions matrix when there are no eligible PRs', (t) => {
   chmodSync(gh, 0o755);
   const output = join(dir, 'output'); writeFileSync(output, '');
   const env = { ...process.env, PATH: `${dir}:${process.env.PATH}`, GITHUB_REPOSITORY: repository, OPENCODE_REVIEW_ENABLED_AT: enabledAt, GITHUB_OUTPUT: output };
-  const result = spawnSync(process.execPath, [resolve('scripts/opencode-review-discover.mjs')], { encoding: 'utf8', env });
+  const result = spawnSync(process.execPath, [resolve('scripts/opencode-review/discover.mjs')], { encoding: 'utf8', env });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(readFileSync(output, 'utf8'), 'matrix={"include":[]}\nhas_candidates=false\n');
 });
