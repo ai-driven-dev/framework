@@ -139,10 +139,14 @@ test("M2: a count of any things, in digits or words, is an error", () => {
   for (const line of OBSERVED_COUNTS) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
 });
 
-// Stated limits: "two" and "three" are mostly design prose, and a label, a number and a verb
-// ("Step 2 shows errors") reads as a count.
-test("M2: two, three and a label followed by a number and a verb are limits", () => {
+// Stated limit: "two" and "three" are mostly design prose, so they are not counts.
+test("M2 limit: two and three are not counts", () => {
   for (const line of ["Two policies and three files.", "Two gates."]) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), [], line);
+});
+
+// Stated limit, a known false positive and not required behaviour: a label followed by a number
+// and a verb reads as a count. A future narrowing of the rule may flip these cases.
+test("M2 limit: a label, a number and a verb read as a count", () => {
   for (const line of ["Step 2 shows errors.", "Python 3 ships wheels.", "Vitest 5 uses canonical names."]) {
     assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
   }
