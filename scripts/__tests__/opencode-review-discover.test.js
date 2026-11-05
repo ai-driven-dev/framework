@@ -20,10 +20,18 @@ test('uses local checkpoints, retries pending drafts, and continues after one PR
     if (url.includes('/1/reviews?')) throw new Error('temporary error');
     return [review];
   };
-  const store = { load: (number) => number === 2 ? { state: { reviewId: '10' }, draft: null } : number === 3 ? { state: { reviewId: '10', pending: true }, draft: null } : { state: { reviewId: '10' }, draft: { id: 'pending' } } };
+  const store = { load: (number) => number === 2 ? { state: { reviewId: '10', atomicFiles: true }, draft: null } : number === 3 ? { state: { reviewId: '10', atomicFiles: true, pending: true }, draft: null } : { state: { reviewId: '10', atomicFiles: true }, draft: { id: 'pending' } } };
   const result = discover({ repository: 'owner/repo', enabledAt, authorId: 8973343, store, queryPages, onError: (e) => errors.push(e) });
   assert.deepEqual(result.map((r) => r.number), [3, 4]);
   assert.match(errors[0], /temporary error/);
+});
+
+test('waits for a new submission before revisiting a legacy checkpoint', () => {
+  const store = { load: () => ({ state: { reviewId: '10', pending: true }, draft: null }) };
+  const queryPages = (url) => url.includes('state=open') ? [pr] : [review];
+  assert.deepEqual(discover({ repository: 'owner/repo', enabledAt, authorId: 8973343, store, queryPages }), []);
+  const nextReview = (url) => url.includes('state=open') ? [pr] : [{ ...review, id: 11 }];
+  assert.deepEqual(discover({ repository: 'owner/repo', enabledAt, authorId: 8973343, store, queryPages: nextReview }).map((item) => item.number), [2]);
 });
 
 test('requires a valid activation time, author and persistent store', () => {

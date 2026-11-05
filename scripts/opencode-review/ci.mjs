@@ -173,6 +173,7 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
   assertSubmission(query, root, number, candidate.reviewId);
   let record = store.load(number);
   if (record.draft) {
+    if (!record.draft.nextState?.atomicFiles) throw new Error('Legacy review draft requires manual migration; draft preserved');
     const savedReview = query(`${root}/pulls/${number}/reviews/${record.draft.reviewId}`);
     if (savedReview.id === record.draft.reviewId && savedReview.user?.id === ALEX && ['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED'].includes(savedReview.state)) {
       return publishDraft({ record, store, number, root, authorId, query, queryPages, deadline: deadline + 15 * 60_000, now });
@@ -181,8 +182,8 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
     store.save(number, record);
   }
   const previous = record.state;
-  if (previous?.reviewId === String(candidate.reviewId) && !previous.pending) return { status: 'already-processed' };
-  if (previous?.modes && !previous.pending && !previous.unreviewed?.length && previous.head === head && previous.base === base) {
+  if (previous?.reviewId === String(candidate.reviewId) && (!previous.atomicFiles || !previous.pending)) return { status: 'already-processed' };
+  if (previous?.modes && previous.atomicFiles && !previous.pending && !previous.unreviewed?.length && previous.head === head && previous.base === base) {
     assertSubmission(query, root, number, candidate.reviewId);
     const latest = query(`${root}/pulls/${number}`);
     const stale = latest.state !== 'open' || latest.head?.sha !== head || latest.base?.sha !== base;
@@ -201,14 +202,15 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
       files = inspected.files;
       modeSkipped = inspected.skipped;
     }
-    let plan = planReview(files, previous?.files ?? {});
+    const priorFiles = previous?.atomicFiles ? previous.files : {};
+    let plan = planReview(files, priorFiles);
     if (plan.skipped.length) {
       try {
         const names = new Set(plan.skipped.map((item) => item.filename));
         const result = recover({ files: files.filter((file) => names.has(file.filename)), mergeBase, head, cache });
         const replacements = new Map(result.files.map((file) => [file.filename, file]));
         files = files.map((file) => replacements.get(file.filename) ?? file);
-        plan = planReview(files, previous?.files ?? {});
+        plan = planReview(files, priorFiles);
         const reasons = new Map(result.skipped.map((item) => [item.filename, item.reason]));
         plan.skipped = plan.skipped.map((item) => ({ ...item, reason: reasons.get(item.filename) ?? item.reason }));
       } catch (error) {
@@ -217,33 +219,35 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
       }
     }
     const context = splitInput(`Title: ${pr.title ?? ''}\n\n${pr.body ?? ''}`, 'context');
-    const chunks = [], progress = new Map();
-    for (const [index, file] of plan.selected.entries()) {
+    const selected = new Set(plan.selected.map((file) => file.filename));
+    const groups = [], oversized = [];
+    for (const [index, file] of files.entries()) {
+      if (!Object.hasOwn(plan.current, file.filename)) continue;
+      if (!selected.has(file.filename) && previous?.atomicFiles) continue;
+      const rawBytes = Buffer.byteLength(file.patch);
+      if (rawBytes > MAX_BATCH) {
+        oversized.push({ filename: file.filename, reason: `Diff trop volumineux pour une seule session (${rawBytes} octets ; limite ${MAX_BATCH})` });
+        continue;
+      }
       const parts = splitInput(file.patch, `diff-${String(index + 1).padStart(4, '0')}`, [file.filename]);
-      if (!Object.hasOwn(plan.current, file.filename)) throw new Error('Selected file fingerprint missing');
-      const layout = createHash('sha256').update(plan.current[file.filename]);
-      for (const part of parts) layout.update(`${Buffer.byteLength(part.text)}:`).update(part.text);
-      const fingerprint = layout.digest('hex');
-      const prior = previous?.parts && Object.hasOwn(previous.parts, file.filename) ? previous.parts[file.filename] : null;
-      const completed = new Set(prior?.fingerprint === fingerprint && prior.total === parts.length ? prior.completed : []);
-      progress.set(file.filename, { fingerprint, total: parts.length, completed, before: completed.size });
       for (const [partIndex, part] of parts.entries()) {
-        if (completed.has(partIndex)) continue;
         const header = [`## ${JSON.stringify(file.filename)} (${file.status}), part ${partIndex + 1}/${parts.length}`, file.previous_filename ? `Previous path: ${JSON.stringify(file.previous_filename)}` : '', `Git mode: ${file.oldMode ?? 'absent'} → ${file.newMode ?? 'absent'}`].filter(Boolean).join('\n');
         part.text = `${header}\n\n\`\`\`diff\n${part.text}\n\`\`\``;
-        part.partIndex = partIndex;
-        chunks.push(part);
       }
+      const bytes = parts.reduce((sum, part) => sum + Buffer.byteLength(part.text) + Buffer.byteLength(part.begin) + Buffer.byteLength(part.end) + 2, 0);
+      if (bytes > MAX_BATCH) oversized.push({ filename: file.filename, reason: `Diff trop volumineux pour une seule session (${bytes} octets ; limite ${MAX_BATCH})` });
+      else if (selected.has(file.filename)) groups.push({ filename: file.filename, parts, bytes });
     }
     const batches = []; let batch = [], size = 0;
-    for (const chunk of chunks) {
-      const bytes = Buffer.byteLength(chunk.text);
-      if (batch.length && size + bytes > MAX_BATCH) { batches.push(batch); batch = []; size = 0; }
-      batch.push(chunk); size += bytes;
+    const flush = () => { if (batch.length) batches.push(batch); batch = []; size = 0; };
+    for (const group of groups) {
+      if (batch.length && size + group.bytes > MAX_BATCH) flush();
+      batch.push(...group.parts); size += group.bytes;
     }
     if (batch.length) batches.push(batch);
+    const coverage = new Map(groups.map((group) => [group.filename, false]));
     const reports = []; let modelError = null;
-    let verdict = previous?.pending && previous.head === head && previous.base === base ? previous.verdict : undefined;
+    let verdict = previous?.atomicFiles && previous.pending && previous.head === head && previous.base === base ? previous.verdict : undefined;
     let currentVerdict;
     for (const group of batches) {
       const names = [...new Set(group.flatMap((chunk) => chunk.files))];
@@ -251,7 +255,7 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
         if (now() >= deadline) throw new Error('Review run time budget exhausted');
         const result = model({ inputs: [...context, ...group], files: names, repository, number, head, base, cache });
         if (!result || typeof result.report !== 'string' || !result.report.trim() || !VERDICTS.includes(result.verdict) || !Array.isArray(result.reviewed) || result.reviewed.some((name) => !names.includes(name)) || new Set(result.reviewed).size !== result.reviewed.length) throw new Error('Invalid model result');
-        for (const chunk of group) if (result.reviewed.includes(chunk.files[0])) progress.get(chunk.files[0]).completed.add(chunk.partIndex);
+        for (const name of result.reviewed) coverage.set(name, true);
         reports.push(result.report.trim());
         if (verdict === undefined || VERDICTS.indexOf(result.verdict) > VERDICTS.indexOf(verdict)) verdict = result.verdict;
         if (currentVerdict === undefined || VERDICTS.indexOf(result.verdict) > VERDICTS.indexOf(currentVerdict)) currentVerdict = result.verdict;
@@ -260,24 +264,19 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
         break;
       }
     }
-    const reviewed = [...progress].filter(([, item]) => item.completed.size === item.total).map(([name]) => name);
-    const unfinished = [...progress].filter(([, item]) => item.completed.size !== item.total);
-    const partialModeSkipped = Boolean(previous?.parts && modeSkipped.some(({ filename }) => typeof filename === 'string' && Object.hasOwn(previous.parts, filename)));
-    const pending = Boolean(recoveryError) || partialModeSkipped || unfinished.length > 0;
-    const madeProgress = [...progress.values()].some((item) => item.completed.size > item.before);
-    if (pending && !madeProgress) throw modelError ?? recoveryError ?? new Error(partialModeSkipped ? 'Git modes unavailable for a partially reviewed file' : 'OpenCode did not confirm any selected segment');
-    const notReviewed = [...modeSkipped, ...plan.skipped.map((item) => ({ filename: item.filename, reason: item.reason })), ...unfinished.map(([filename]) => ({ filename, reason: 'OpenCode did not confirm complete review' }))];
+    const reviewed = [...coverage].filter(([, covered]) => covered).map(([name]) => name);
+    const unfinished = [...coverage].filter(([, covered]) => !covered);
+    const pending = Boolean(recoveryError) || unfinished.length > 0;
+    if (pending && !reviewed.length) throw modelError ?? recoveryError ?? new Error('OpenCode did not confirm any selected file');
+    const notReviewed = [...modeSkipped, ...plan.skipped.map((item) => ({ filename: item.filename, reason: item.reason })), ...oversized, ...unfinished.map(([filename]) => ({ filename, reason: 'OpenCode did not confirm complete review' }))];
     const unreviewed = [...new Set(notReviewed.map(({ filename }) => filename))].sort((a, b) => String(a ?? '').localeCompare(String(b ?? '')));
-    const currentEntries = Object.entries(plan.current).filter(([name]) => !progress.has(name) || progress.get(name).completed.size === progress.get(name).total);
+    const tooLarge = new Set(oversized.map(({ filename }) => filename));
+    const currentEntries = Object.entries(plan.current).filter(([name]) => !tooLarge.has(name) && (!coverage.has(name) || coverage.get(name)));
     // A skipped mode cannot validate the current file. Keep the old hash only as history;
     // unreviewed prevents a fast path until the mode and fingerprint are checked again.
-    if (previous?.files) for (const { filename } of modeSkipped) if (typeof filename === 'string' && Object.hasOwn(previous.files, filename)) currentEntries.push([filename, previous.files[filename]]);
+    if (previous?.atomicFiles && previous.files) for (const { filename } of modeSkipped) if (typeof filename === 'string' && Object.hasOwn(previous.files, filename)) currentEntries.push([filename, previous.files[filename]]);
     const current = Object.fromEntries(currentEntries);
-    const partEntries = unfinished.filter(([, item]) => item.completed.size).map(([name, item]) => [name, { fingerprint: item.fingerprint, total: item.total, completed: [...item.completed].sort((a, b) => a - b) }]);
-    const uncertain = [...modeSkipped, ...(recoveryError ? plan.skipped : [])];
-    if (previous?.parts) for (const { filename } of uncertain) if (typeof filename === 'string' && Object.hasOwn(previous.parts, filename)) partEntries.push([filename, previous.parts[filename]]);
-    const parts = Object.fromEntries(partEntries);
-    const nextState = validateState({ version: 1, files: current, head, base, reviewId: String(candidate.reviewId), modes: true, pending, ...(unreviewed.length ? { unreviewed } : {}), ...(verdict ? { verdict } : {}), ...(partEntries.length ? { parts } : {}) });
+    const nextState = validateState({ version: 1, files: current, head, base, reviewId: String(candidate.reviewId), modes: true, atomicFiles: true, pending, ...(unreviewed.length ? { unreviewed } : {}), ...(verdict ? { verdict } : {}) });
     assertSubmission(query, root, number, candidate.reviewId);
     const sameOmissions = !pending && !previous?.pending && previous?.head === head && previous?.base === base && JSON.stringify(previous?.unreviewed ?? []) === JSON.stringify(unreviewed);
     if (!reports.length && previous && (!notReviewed.length || sameOmissions)) {
@@ -287,7 +286,7 @@ export function reviewPullRequest(candidate, { repository, authorId, store, quer
       return { status: stale ? 'partial' : 'unchanged' };
     }
     const notes = notReviewed.length ? `\n\n### Fichiers non revus\n\n${notReviewed.map(({ filename, reason }) => `- ${JSON.stringify(filename)} : ${reason}`).join('\n')}` : '';
-    const summary = `${pending ? 'La revue est partielle ; les segments restants seront réessayés.\n\n' : ''}${reports.map((report, index) => `### Lot ${index + 1}/${reports.length}\n\n${report}`).join('\n\n---\n\n') || 'Aucun fichier à revoir dans ce passage.'}${notes}${currentVerdict ? `\n\n**Verdict des segments de ce commentaire : ${currentVerdict}**` : ''}${previous?.pending && previous.head === head && previous.base === base && verdict ? `\n\n**Verdict cumulé des segments examinés sur ce commit : ${verdict}**` : ''}`;
+    const summary = `${pending ? 'La revue est partielle ; les fichiers restants seront réessayés.\n\n' : notReviewed.length ? 'La revue est partielle ; certains fichiers n’ont pas été revus.\n\n' : ''}${reports.map((report, index) => `### Lot ${index + 1}/${reports.length}\n\n${report}`).join('\n\n---\n\n') || 'Aucun fichier revu dans ce passage.'}${notes}${currentVerdict ? `\n\n**Verdict des fichiers de ce commentaire : ${currentVerdict}**` : ''}${previous?.pending && previous.head === head && previous.base === base && verdict ? `\n\n**Verdict cumulé des fichiers examinés sur ce commit : ${verdict}**` : ''}`;
     const draft = { head, base, reviewId: candidate.reviewId, nextState, chunks: splitReport(summary) };
     draft.id = draftId(draft);
     record = { state: previous, draft };

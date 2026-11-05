@@ -96,13 +96,9 @@ test('persists validated state and a pending draft atomically across reloads', (
   t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
   const store = stateStore(dir, 'owner/repo');
   assert.deepEqual(store.load(1), { state: null, draft: null });
-  const parts = Object.fromEntries([['constructor', { fingerprint: 'a'.repeat(64), total: 3, completed: [0, 2] }]]);
-  const state = validateState({ version: 1, files: {}, head, reviewId: '3', pending: true, parts, verdict: 'changes-requested' });
+  const state = validateState({ version: 1, files: {}, head, reviewId: '3', pending: true, atomicFiles: true, verdict: 'changes-requested' });
   store.save(1, { state, draft: { id: 'pending' } });
   assert.deepEqual(stateStore(dir, 'owner/repo').load(1), { state, draft: { id: 'pending' } });
-  assert.throws(() => validateState({ version: 1, files: {}, head, reviewId: '3', parts }), /invalid partial parts/);
-  assert.throws(() => validateState({ version: 1, files: {}, head, reviewId: '3', pending: true, parts: { x: { fingerprint: 'a'.repeat(64), total: 2, completed: [0, 1] } } }), /invalid partial file/);
-  assert.throws(() => validateState({ version: 1, files: { x: 'a'.repeat(64) }, head, reviewId: '3', pending: true, parts: { x: { fingerprint: 'a'.repeat(64), total: 2, completed: [0] } } }), /invalid partial file/);
   assert.deepEqual(validateState({ version: 1, files: {}, head, reviewId: '3', unreviewed: [null, '__proto__'] }).unreviewed, [null, '__proto__']);
   assert.deepEqual(validateState({ version: 1, files: { x: 'a'.repeat(64) }, head, reviewId: '3', unreviewed: ['x'] }).unreviewed, ['x']);
   writeFileSync(join(dir, 'owner/repo/1.json'), '{bad');

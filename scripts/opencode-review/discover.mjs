@@ -34,7 +34,8 @@ export function discover({ repository, enabledAt, authorId, store, queryPages = 
       const review = selectReview(pr, queryPages(`repos/${repository}/pulls/${pr.number}/reviews?per_page=100`), enabledAt);
       if (!review) continue;
       const record = store.load(pr.number);
-      if (record.draft || record.state?.reviewId !== String(review.reviewId) || record.state.pending) candidates.push(review);
+      const sameReview = record.state?.reviewId === String(review.reviewId);
+      if (record.draft || !sameReview || (record.state.atomicFiles && record.state.pending)) candidates.push(review);
     } catch (error) {
       onError(`PR #${pr.number}: ${error.message}`);
     }

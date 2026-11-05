@@ -9,7 +9,9 @@ Forks are read as data.
 The timer starts from an explicit activation time, runs serially, and retries
 transient errors with bounded backoff. Incomplete reviews checkpoint only files
 whose inputs were read and reported. Binary or unsupported files are named as
-not reviewed; missing text patches are reconstructed from Git without checkout.
+not reviewed. Each file is reviewed in one session; a diff larger than
+120,000 bytes is named as not reviewed. Missing text patches are reconstructed
+from Git without checkout.
 Git file modes are included in the review input and fingerprints.
 Reports too large for one comment are split; a persistent draft allows retries
 without publishing the same part twice. Losing the state volume loses the review
@@ -34,4 +36,5 @@ server. A server version change pauses reviews until it is revalidated.
 - The installed timer detected a submitted review on PR #1150 and published a
   report. A second submission on the same commit advanced its checkpoint without
   creating another OpenCode session or comment. The reported file-mode gap is
-  covered by the Git mode checks above.
+  covered by the Git mode checks above. A subsequent submission reviewed seven
+  changed files and skipped ten unchanged files.

@@ -150,8 +150,8 @@ test('aggregates the strictest verdict across partial runs on the same commit', 
   assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
   f.options.model = (args) => ({ report: 'No defect in this segment.', verdict: 'approve', reviewed: args.files });
   assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
-  assert.match(f.server.comments.at(-1).body, /Verdict des segments de ce commentaire : approve/);
-  assert.match(f.server.comments.at(-1).body, /Verdict cumulé des segments examinés sur ce commit : changes-requested/);
+  assert.match(f.server.comments.at(-1).body, /Verdict des fichiers de ce commentaire : approve/);
+  assert.match(f.server.comments.at(-1).body, /Verdict cumulé des fichiers examinés sur ce commit : changes-requested/);
 });
 
 test('resumes a long report after a lost POST response without repeating the model or a comment', () => {
@@ -169,6 +169,16 @@ test('resumes a long report after a lost POST response without repeating the mod
   assert.equal(f.server.comments.filter((comment) => comment.user.id === ALEX).length, draft.chunks.length);
   assert.ok(f.server.comments.filter((comment) => comment.user.id === ALEX).every((comment) => Buffer.byteLength(comment.body) < 60000));
   assert.equal(f.store.load(42).state.reviewId, '10');
+});
+
+test('preserves an unpublished legacy draft for manual migration', () => {
+  const f = fixture();
+  const legacy = { state: null, draft: { reviewId: 10, nextState: { version: 1, head, base, reviewId: '10', files: {} }, chunks: ['Unpublished findings'] } };
+  f.store.save(42, legacy);
+  assert.throws(() => reviewPullRequest(candidate, f.options), /Legacy review draft requires manual migration; draft preserved/);
+  assert.deepEqual(f.store.load(42), legacy);
+  assert.equal(f.server.comments.length, 0);
+  assert.equal(f.calls.length, 0);
 });
 
 test('reconstructs omitted text patches before deciding which files are reviewable', () => {
@@ -211,16 +221,88 @@ test('does not publish when Alex dismisses the review while the model runs', () 
   assert.equal(f.server.comments.length, 0);
 });
 
-test('identifies the source file in every batch of a large patch', () => {
+test('keeps each multi-chunk file together when it fits in one model session', () => {
   const f = fixture();
-  f.server.files = [{ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(180000)}` }];
-  f.server.pr.changed_files = 1;
+  const large = (name) => ({ ...changed(name), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(80000)}` });
+  f.server.files = [large('a.js'), large('b.js')];
   reviewPullRequest(candidate, f.options);
-  assert.ok(f.calls.length > 1);
+  assert.deepEqual(f.calls.map((call) => call.files), [['a.js'], ['b.js']]);
   for (const call of f.calls) {
-    assert.deepEqual(call.files, ['large.js']);
-    for (const input of call.inputs.filter((item) => item.file.startsWith('diff-'))) assert.match(input.text, /"large\.js".*part \d+\/\d+/);
+    const parts = call.inputs.filter((input) => input.file.startsWith('diff-'));
+    assert.ok(parts.length > 1);
+    const total = Number(parts[0].text.match(/part \d+\/(\d+)/)[1]);
+    assert.equal(parts.length, total);
   }
+});
+
+test('still groups multiple complete files together when they fit', () => {
+  const f = fixture();
+  f.server.files = [changed('a.js'), changed('b.js')];
+  reviewPullRequest(candidate, f.options);
+  assert.equal(f.calls.length, 1);
+  assert.deepEqual(f.calls[0].files, ['a.js', 'b.js']);
+});
+
+test('reports an oversized file without calling the model or checkpointing it', () => {
+  const f = fixture();
+  f.server.files = [{ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(130000)}` }];
+  f.server.pr.changed_files = 1;
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.equal(f.calls.length, 0);
+  assert.match(f.server.comments[0].body, /large\.js.*Diff trop volumineux/);
+  assert.match(f.server.comments[0].body, /La revue est partielle/);
+  assert.deepEqual(f.store.load(42).state.files, {});
+  assert.deepEqual(f.store.load(42).state.unreviewed, ['large.js']);
+});
+
+test('rejects a 10 MiB single-line diff before allocating wrapped segments', () => {
+  const f = fixture();
+  f.server.files = [{ ...changed('huge.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(10 * 1024 * 1024)}` }];
+  f.server.pr.changed_files = 1;
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.equal(f.calls.length, 0);
+  assert.match(f.server.comments[0].body, /huge\.js.*Diff trop volumineux/);
+  assert.deepEqual(f.store.load(42).state.files, {});
+});
+
+test('reviews small files alongside an oversized omission without redoing them on resubmission', () => {
+  const f = fixture();
+  f.server.files = [changed('small.js'), { ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(130000)}` }];
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.deepEqual(f.calls.map((call) => call.files), [['small.js']]);
+  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['small.js']);
+  assert.deepEqual(f.store.load(42).state.unreviewed, ['large.js']);
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.server.comments.length, 1);
+});
+
+test('invalidates a legacy credited oversized file without reviewing it', () => {
+  const f = fixture();
+  const large = { ...changed('large.js'), oldMode: '100644', newMode: '100644', patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(130000)}` };
+  const { planReview } = require('../opencode-review/state.mjs');
+  f.server.files = [large]; f.server.pr.changed_files = 1;
+  f.store.save(42, { state: { version: 1, head, base, reviewId: '9', modes: true, files: planReview([large]).current }, draft: null });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.equal(f.calls.length, 0);
+  assert.deepEqual(f.store.load(42).state.files, {});
+  assert.deepEqual(f.store.load(42).state.unreviewed, ['large.js']);
+});
+
+test('rechecks legacy credited small files once instead of silently trusting split sessions', () => {
+  const f = fixture();
+  const file = { ...changed('old.js'), oldMode: '100644', newMode: '100644' };
+  const { planReview } = require('../opencode-review/state.mjs');
+  f.server.files = [file]; f.server.pr.changed_files = 1;
+  f.store.save(42, { state: { version: 1, head, base, reviewId: '10', modes: true, pending: true, files: planReview([file]).current }, draft: null });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
+  assert.equal(f.calls.length, 0);
+  f.store.save(42, { state: { version: 1, head, base, reviewId: '9', modes: true, files: planReview([file]).current }, draft: null });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.deepEqual(f.calls[0].files, ['old.js']);
+  assert.equal(f.store.load(42).state.atomicFiles, true);
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
+  assert.equal(f.calls.length, 1);
 });
 
 test('checkpoints completed files when a later batch fails, then retries only unfinished files', () => {
@@ -250,92 +332,6 @@ test('checkpoints completed batches before the run time budget expires', () => {
   assert.deepEqual(result.reviewed, ['a.js']);
   assert.equal(calls, 1);
   assert.equal(f.store.load(42).state.pending, true);
-});
-
-test('resumes a file larger than the time budget without rereading segments', () => {
-  const f = fixture();
-  f.server.files = [{ ...changed('__proto__'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(600000)}` }];
-  f.server.pr.changed_files = 1;
-  const seen = new Set(); let clock = 0, total = 0;
-  f.options.now = () => clock;
-  f.options.deadline = 1;
-  f.options.model = (args) => {
-    for (const input of args.inputs.filter((item) => item.file.startsWith('diff-'))) {
-      const [, number, count] = input.text.match(/part (\d+)\/(\d+)/);
-      assert.equal(seen.has(number), false, `segment ${number} was reread`);
-      seen.add(number); total = Number(count);
-    }
-    clock = 1;
-    return { report: 'Segment examined.', verdict: 'approve', reviewed: args.files };
-  };
-  let result;
-  for (let attempt = 0; attempt < 20; attempt++) {
-    clock = 0;
-    result = reviewPullRequest(candidate, f.options);
-    const state = f.store.load(42).state;
-    if (result.status === 'published') {
-      assert.equal(Object.hasOwn(state.files, '__proto__'), true);
-      assert.equal(state.parts, undefined);
-      break;
-    }
-    assert.equal(result.status, 'partial');
-    assert.equal(Object.hasOwn(state.files, '__proto__'), false);
-    assert.equal(Object.hasOwn(state.parts, '__proto__'), true);
-  }
-  assert.equal(result.status, 'published');
-  assert.equal(seen.size, total);
-});
-
-test('preserves partial segments through a temporary mode omission', () => {
-  const f = fixture();
-  f.server.files = [{ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(600000)}` }];
-  f.server.pr.changed_files = 1;
-  const inspect = f.options.inspectModes, seen = new Set(); let clock = 0, total = 0;
-  f.options.now = () => clock; f.options.deadline = 1;
-  f.options.model = (args) => {
-    for (const input of args.inputs.filter((item) => item.file.startsWith('diff-'))) {
-      const [, number, count] = input.text.match(/part (\d+)\/(\d+)/);
-      assert.equal(seen.has(number), false, `segment ${number} was reread`);
-      seen.add(number); total = Number(count);
-    }
-    clock = 1;
-    return { report: 'Segment examined.', verdict: 'approve', reviewed: args.files };
-  };
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
-  const before = f.store.load(42), comments = f.server.comments.length;
-  assert.ok(before.state.parts['large.js'].completed.length);
-  f.options.inspectModes = () => ({ files: [], skipped: [{ filename: 'large.js', reason: 'mode unavailable' }] });
-  clock = 0;
-  assert.throws(() => reviewPullRequest(candidate, f.options), /Git modes unavailable for a partially reviewed file/);
-  assert.deepEqual(f.store.load(42), before);
-  assert.equal(f.server.comments.length, comments);
-  f.options.inspectModes = inspect;
-  let result;
-  for (let attempt = 0; attempt < 20; attempt++) {
-    clock = 0;
-    result = reviewPullRequest(candidate, f.options);
-    if (result.status === 'published') break;
-  }
-  assert.equal(result.status, 'published');
-  assert.equal(seen.size, total);
-});
-
-test('discards segment progress when the file fingerprint changes', () => {
-  const f = fixture();
-  const large = (char) => ({ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${char.repeat(500000)}` });
-  f.server.files = [large('x')]; f.server.pr.changed_files = 1;
-  let clock = 0;
-  f.options.now = () => clock; f.options.deadline = 1;
-  f.options.model = (args) => { clock = 1; return { report: 'Segment examined.', verdict: 'approve', reviewed: args.files }; };
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
-  const first = f.store.load(42).state.parts['large.js'];
-  f.server.files = [large('y')]; clock = 0;
-  const names = [];
-  f.options.model = (args) => { names.push(...args.inputs.filter((item) => item.file.startsWith('diff-')).map((item) => item.text)); clock = 1; return { report: 'New segment.', verdict: 'approve', reviewed: args.files }; };
-  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
-  const second = f.store.load(42).state.parts['large.js'];
-  assert.notEqual(first.fingerprint, second.fingerprint);
-  assert.match(names[0], /part 1\//);
 });
 
 test('passes the OpenCode cache path without passing GitHub tokens or unrelated secrets', (t) => {

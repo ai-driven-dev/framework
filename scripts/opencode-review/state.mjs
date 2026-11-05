@@ -90,19 +90,12 @@ export function validateState(state) {
   if (typeof state.reviewId !== 'string' || !/^[1-9][0-9]*$/.test(state.reviewId)) invalid('invalid review ID');
   if (state.pending !== undefined && typeof state.pending !== 'boolean') invalid('invalid pending flag');
   if (state.modes !== undefined && typeof state.modes !== 'boolean') invalid('invalid modes flag');
+  if (state.atomicFiles !== undefined && typeof state.atomicFiles !== 'boolean') invalid('invalid atomic-files flag');
   validateFiles(state.files);
   if (state.unreviewed !== undefined && (!Array.isArray(state.unreviewed) || new Set(state.unreviewed).size !== state.unreviewed.length ||
       state.unreviewed.some((name) => name !== null && (typeof name !== 'string' || !name || name.includes('\0'))))) invalid('invalid unreviewed files');
   if (state.verdict !== undefined && !['approve', 'changes-requested', 'blocked'].includes(state.verdict)) invalid('invalid verdict');
-  if (state.parts !== undefined) {
-    if (!state.parts || typeof state.parts !== 'object' || Array.isArray(state.parts) || !state.pending) invalid('invalid partial parts');
-    for (const [name, part] of Object.entries(state.parts)) {
-      if (!name || name.includes('\0') || Object.hasOwn(state.files, name) || !part || typeof part !== 'object' || !HASH.test(part.fingerprint ?? '') ||
-          !Number.isSafeInteger(part.total) || part.total < 2 || !Array.isArray(part.completed) || !part.completed.length || part.completed.length >= part.total ||
-          part.completed.some((index) => !Number.isSafeInteger(index) || index < 0 || index >= part.total) || new Set(part.completed).size !== part.completed.length) invalid('invalid partial file');
-    }
-  }
-  return { version: 1, head: state.head, ...(state.base ? { base: state.base } : {}), reviewId: state.reviewId, files: state.files, ...(state.modes ? { modes: true } : {}), ...(state.pending ? { pending: true } : {}), ...(state.unreviewed?.length ? { unreviewed: state.unreviewed } : {}), ...(state.verdict ? { verdict: state.verdict } : {}), ...(state.parts && Object.keys(state.parts).length ? { parts: state.parts } : {}) };
+  return { version: 1, head: state.head, ...(state.base ? { base: state.base } : {}), reviewId: state.reviewId, files: state.files, ...(state.modes ? { modes: true } : {}), ...(state.atomicFiles ? { atomicFiles: true } : {}), ...(state.pending ? { pending: true } : {}), ...(state.unreviewed?.length ? { unreviewed: state.unreviewed } : {}), ...(state.verdict ? { verdict: state.verdict } : {}) };
 }
 
 /** Private durable state and write-ahead draft, one atomic file per repository and PR. */
