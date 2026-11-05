@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { execFileSync } = require('node:child_process');
-const { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } = require('node:fs');
+const { execFileSync, spawnSync } = require('node:child_process');
+const { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { join, resolve } = require('node:path');
 const { reviewPullRequest, reportFromEvents, retryStore, runModel, splitInput } = require('../opencode-review/ci.mjs');
@@ -10,6 +10,16 @@ const { stateStore } = require('../opencode-review/state.mjs');
 const ALEX = 8973343, head = 'a'.repeat(40), base = 'b'.repeat(40), sha = 'c'.repeat(40);
 const changed = (name) => ({ filename: name, status: 'modified', sha, additions: 1, deletions: 1, patch: '@@ -1 +1 @@\n-old\n+new' });
 const candidate = { number: 42, reviewId: 10, head: 'd'.repeat(40), base };
+
+test('runs its entrypoint when installed through a symlink', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'aidd-review-entrypoint-'));
+  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
+  const entry = join(dir, 'ci.mjs');
+  symlinkSync(resolve('scripts/opencode-review/ci.mjs'), entry);
+  const result = spawnSync(process.execPath, [entry], { encoding: 'utf8', env: { ...process.env, OPENCODE_REVIEW_STATE_DIR: dir, OPENCODE_REVIEW_REPOSITORY: 'invalid', OPENCODE_REVIEW_ENABLED_AT: 'invalid' } });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Invalid review state|Invalid repository/);
+});
 
 function fixture() {
   const records = new Map();
