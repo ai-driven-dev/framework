@@ -37,7 +37,11 @@ function hookFor(host) {
   if (!installed.has(host)) {
     const dir = path.join(tempDir(`memory-hook-${host}-`), "hooks");
     fs.cpSync(HOOKS, dir, { recursive: true });
-    fs.copyFileSync(path.join(RUNTIME, `host-${host}.cjs`), path.join(dir, "lib/host.cjs"));
+    // OpenCode and Kilo share one adapter, stamped with the host's name as their descriptors do.
+    const adapter = BRIDGED.has(host)
+      ? fs.readFileSync(path.join(RUNTIME, "host-bridge.cjs"), "utf8").replace('const HOST = "unstamped";', `const HOST = "${host}";`)
+      : fs.readFileSync(path.join(RUNTIME, `host-${host}.cjs`), "utf8");
+    fs.writeFileSync(path.join(dir, "lib/host.cjs"), adapter);
     installed.set(host, path.join(dir, ENTRY));
   }
   return installed.get(host);

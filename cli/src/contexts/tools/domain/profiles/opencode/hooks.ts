@@ -1,5 +1,5 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
-import adapter from "../../../../../../assets/hooks-runtime/host-opencode.cjs";
+import adapter from "../../../../../../assets/hooks-runtime/host-bridge.cjs";
 import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
 import { OPENCODE_DIRECTORY, OPENCODE_PLUGIN_ENTRY_BASENAME } from "./opencode-paths.js";
 
@@ -16,5 +16,5 @@ export const OPENCODE_HOOKS = {
     asset: "opencode-events.js",
     path: `${OPENCODE_DIRECTORY}hooks/opencode-events.js`,
   },
-  runtime: { adapter },
+  runtime: { adapter: adapter.replace('const HOST = "unstamped";', 'const HOST = "opencode";') },
 } as const satisfies HooksDescriptor;

@@ -9,11 +9,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
 import { generateKiloHooksBridge } from "../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
+import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
 import { generateOpencodeHooksBridge } from "../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 
-const RUNTIME = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 const SCRUBBED_PROJECT = "/Users/user/project";
 const SESSION = "00000000-0000-4000-8000-000000000000";
@@ -59,6 +60,9 @@ interface Workspace {
 
 const created: string[] = [];
 
+/** The adapter each build puts at `hooks/lib/host.cjs`. */
+const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.runtime.adapter };
+
 afterEach(async () => {
   vi.unstubAllEnvs();
   await Promise.all(created.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
@@ -79,10 +83,7 @@ async function workspace(host: "opencode" | "kilo", bridge: string): Promise<Wor
   await mkdir(join(dir, "plugin"));
   await mkdir(project);
   await writeFile(join(scripts, "record.cjs"), RECORDER);
-  await writeFile(
-    join(scripts, "lib", "host.cjs"),
-    await readFile(join(RUNTIME, `host-${host}.cjs`), "utf8")
-  );
+  await writeFile(join(scripts, "lib", "host.cjs"), ADAPTERS[host]);
   await writeFile(
     join(dir, "hooks", "opencode-events.js"),
     await readFile(
@@ -391,5 +392,22 @@ describe("Kilo, through its bridge", () => {
       { host: "kilo", event: "Stop", stopActive: true, sessionId: SESSION, cwd: ws.project },
     ]);
     expect(prompts).toStrictEqual(CONTINUED);
+  });
+});
+
+describe("the adapter both bridged hosts share", () => {
+  it("is one source, read as opencode behind the OpenCode bridge and as kilo behind the Kilo bridge", async () => {
+    const opencode = await workspace("opencode", opencodeBridge());
+    const [init] = await captured("opencode-server-init.json", opencode.project);
+    await start(opencode, init as Record<string, unknown>);
+    const kilo = await workspace("kilo", kiloBridge());
+    const [session] = await captured("kilo-session.created.json", kilo.project);
+    const { plugin } = await start(kilo, { directory: kilo.dir });
+    await plugin.event({ event: session });
+
+    const unstamped = (adapter: string) => adapter.replace(/^const HOST = .*$/m, "");
+    expect(unstamped(ADAPTERS.opencode)).toBe(unstamped(ADAPTERS.kilo));
+    expect((await recorded(opencode, 1)).map((call) => call.host)).toStrictEqual(["opencode"]);
+    expect((await recorded(kilo, 1)).map((call) => call.host)).toStrictEqual(["kilo"]);
   });
 });

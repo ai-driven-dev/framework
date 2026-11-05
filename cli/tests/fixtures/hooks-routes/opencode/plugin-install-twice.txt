@@ -4,7 +4,7 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
 script, identical to the plugin source
 
 ## project/.opencode/hooks/aidd-context/lib/host.cjs
-script, identical to the host adapter host-opencode.cjs
+script, differs from the plugin source
 
 ## project/.opencode/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
