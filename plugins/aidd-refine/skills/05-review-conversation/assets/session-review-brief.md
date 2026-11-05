@@ -28,13 +28,17 @@ Duration, messages, interventions, compactions, delegations, tool errors.
 - Category: 1..8
 - Evidence: [sequence] and a quote of three lines at most
 - Instruction involved: file and passage, when identifiable
+- Cause: established, hypothesis, or unknown; distinguish the observed failure from its explanation
+- Impact: measured consequence and unit, or unavailable
 - Smallest fix: remove, clarify, or move; add text only when nothing else works
+- Validation: the observable check that would confirm the remedy; say whether it was run
 
 ## Interventions (sequence and one line each)
 
 ## Raw counts
 - Tokens and cost, when exposed
 - Tool calls and tool errors by name
+- Program exit codes, separately from the tool's reported status
 - Files read more than once
 - Commands replayed identically
 - Waits by polling

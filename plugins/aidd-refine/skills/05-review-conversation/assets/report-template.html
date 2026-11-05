@@ -16,15 +16,89 @@
     <main id="report" data-label-accepted-one="{count} recommendation accepted" data-label-accepted-other="{count} recommendations accepted" data-label-duration-unavailable="Unavailable">
       <section class="intro" aria-labelledby="report-title">
         <h1 id="report-title">Conversation review</h1>
-        <p>Fictional example, including all timings.</p>
+        <p class="example-notice">Fictional demonstration, including prompts, paths, timings and findings.</p>
+        <p class="report-decision">Shorten the output requirement and remove one duplicate. Resolve the missing path before proposing an environment change.</p>
       </section>
 
       <section class="recap" aria-label="Conversation recap" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T10:03:40Z">
         <div class="metrics">
-          <p><span>Elapsed</span><strong class="duration is-slow">1 h 3 min 40 s</strong></p>
-          <p><span>Tokens</span><strong>Unavailable</strong></p>
+          <p><span>Elapsed · root conversation</span><strong class="duration is-slow">1 h 3 min 40 s</strong></p>
+          <p><span>Tokens · provider usage</span><strong>Unavailable</strong></p>
           <p><span>Calls · includes 2 subcalls</span><strong>6</strong></p>
         </div>
+        <p class="measurement-note">Input, cached input and monetary cost were not recorded in this example. Calls and elapsed time are not estimates of billed tokens.</p>
+      </section>
+
+      <section class="section evidence-coverage" aria-labelledby="coverage-title">
+        <div class="section-heading"><h2 id="coverage-title">Evidence coverage</h2></div>
+        <p>This example shows 3 root prompts and 6 calls, including 2 linked tool subcalls. Source excerpts support the proposed edits; the missing-file event establishes a symptom, not who removed or renamed the file.</p>
+        <p class="coverage-limit"><strong>Limit:</strong> token usage, billing and the origin of the missing path are unavailable. No child-session history or financial saving is inferred.</p>
+      </section>
+
+      <section class="section findings-section" aria-labelledby="findings-title">
+        <div class="section-heading"><h2 id="findings-title">Recommended changes</h2></div>
+
+        <div class="findings" id="findings-list">
+          <article class="finding" data-id="concise-output">
+            <header class="finding-header">
+              <div class="finding-title"><h3>Replace the full-output requirement</h3><p class="finding-owner">Framework text · root, E007</p></div>
+              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
+            </header>
+            <div class="finding-collapse"><div class="finding-body">
+              <dl class="diagnosis">
+                <dt>Evidence</dt><dd>At root, E007, the loaded file requires every tool result to be printed in full; its exact text is shown below.</dd>
+                <dt>Cause</dt><dd><span class="evidence-state is-confirmed">Established</span> The maintained instruction explicitly requires unfiltered output.</dd>
+                <dt>Impact</dt><dd>The output requirement is verified. Additional characters, tokens and cost attributable to it are not measured.</dd>
+                <dt>Minimal change</dt><dd>Replace the full-output requirement with concise evidence. Keep complete sources available when the task needs them.</dd>
+                <dt>Validation</dt><dd>Replay a comparable request: the conclusion remains verifiable with short excerpts, and full evidence is still accessible. Measure output before claiming a saving.</dd>
+              </dl>
+              <div class="change">
+                <div class="change-header"><code>docs/example-review.md</code></div>
+                <div class="diff-columns">
+                  <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Before replying, print every tool result in full.</span></code></pre></div>
+                  <div class="diff-pane diff-add" aria-label="Added or kept"><pre class="diff"><code><span class="diff-line"><b>+</b>Report the result and the shortest evidence needed to verify it.</span></code></pre></div>
+                </div>
+              </div>
+            </div></div>
+          </article>
+          <article class="finding" data-id="duplicate-publishing-rule">
+            <header class="finding-header">
+              <div class="finding-title"><h3>Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · root, E008</p></div>
+              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
+            </header>
+            <div class="finding-collapse"><div class="finding-body">
+              <dl class="diagnosis">
+                <dt>Evidence</dt><dd>At root, E008, the loaded brief repeats the same publishing requirement twice.</dd>
+                <dt>Cause</dt><dd><span class="evidence-state is-confirmed">Established</span> Two copies carry the same obligation; no additional exception is present.</dd>
+                <dt>Impact</dt><dd>One redundant instruction is identified. Its effect on execution time and billed usage is unknown.</dd>
+                <dt>Minimal change</dt><dd>Delete only the second copy. Retain the original obligation without adding a replacement rule.</dd>
+                <dt>Validation</dt><dd>Read the revised brief: publishing still requires validation, once. Check that no unique condition was removed.</dd>
+              </dl>
+              <div class="change">
+                <div class="change-header"><code>docs/example-guidance.md</code></div>
+                <div class="diff-columns">
+                  <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Validate before publishing.</span></code></pre></div>
+                  <div class="diff-pane diff-add" aria-label="Added or kept"><p class="diff-empty" aria-label="No addition">—</p></div>
+                </div>
+              </div>
+            </div></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="unedited-title">
+        <div class="section-heading"><h2 id="unedited-title">Reported without edit</h2></div>
+        <article class="diagnostic-card">
+          <header><h3>Resolve the missing reference path</h3><p class="finding-owner">Host or environment · root, E012 and E014</p></header>
+          <dl class="diagnosis">
+            <dt>Evidence</dt><dd>The read at E012 returns <code>ENOENT</code>; E014 searches for the reference. No process exit code was recorded for the read.</dd>
+            <dt>Cause</dt><dd><span class="evidence-state is-unknown">Not established</span> The path is unavailable. A stale reference or removed file is a hypothesis, not a verified origin.</dd>
+            <dt>Impact</dt><dd>One failed read and one following search are observed. They do not establish a retry loop or a token cost.</dd>
+            <dt>Next action</dt><dd>Locate the canonical file and verify the intended reference before changing the environment. Do not invent a replacement path or a new instruction.</dd>
+            <dt>Validation</dt><dd>The verified reference is readable and supplies the required evidence. Until then, report the source as unavailable.</dd>
+          </dl>
+          <p class="diagnostic-boundary">Reported without an accepted edit. A separate implementation request is needed for any environment change.</p>
+        </article>
       </section>
 
       <section class="section conversation-section" aria-labelledby="conversation-title">
@@ -56,7 +130,7 @@
               <div class="tool-line"><span class="tool-name">read_file</span><span class="tool-target"><code>docs/example-review-notes.md</code> <span class="call-error">ENOENT</span></span><span class="event-delta duration" data-seconds="0.8" data-prefix="+" aria-label="0.8 seconds since previous displayed item">+0.8 s</span></div>
             </article>
             <article class="tool-call" data-call-id="E014" data-moment="2026-09-12T09:00:06Z">
-              <div class="tool-line"><span class="tool-name">shell</span><span class="tool-target"><code>rg --files docs -g '*review*'</code> <span class="call-status">retry</span></span><span class="event-delta duration" data-seconds="1" data-prefix="+" aria-label="1 second since previous displayed item">+1 s</span></div>
+              <div class="tool-line"><span class="tool-name">shell</span><span class="tool-target"><code>rg --files docs -g '*review*'</code> <span class="call-status">path lookup</span></span><span class="event-delta duration" data-seconds="1" data-prefix="+" aria-label="1 second since previous displayed item">+1 s</span></div>
             </article>
           </div>
         </details>
@@ -76,50 +150,6 @@
             <p class="user-prompt">Keep unknown durations unavailable rather than estimating them.</p>
           </blockquote>
         </details>
-      </section>
-
-      <section class="section findings-section" aria-labelledby="findings-title">
-        <div class="section-heading"><h2 id="findings-title">Recommended changes</h2></div>
-
-        <div class="findings" id="findings-list">
-          <article class="finding" data-id="concise-output">
-            <header class="finding-header">
-              <div class="finding-title"><h3>Replace the full-output requirement</h3><p class="finding-owner">Framework text · root, 12</p></div>
-              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
-            </header>
-            <div class="finding-collapse"><div class="finding-body">
-              <div class="change">
-                <div class="change-header"><code>docs/example-review.md</code></div>
-                <div class="diff-columns">
-                  <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Before replying, print every tool result in full.</span></code></pre></div>
-                  <div class="diff-pane diff-add" aria-label="Added or kept"><pre class="diff"><code><span class="diff-line"><b>+</b>Report the result and the shortest evidence needed to verify it.</span></code></pre></div>
-                </div>
-              </div>
-            </div></div>
-          </article>
-          <article class="finding" data-id="duplicate-publishing-rule">
-            <header class="finding-header">
-              <div class="finding-title"><h3>Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · reviewer, 4</p></div>
-              <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
-            </header>
-            <div class="finding-collapse"><div class="finding-body">
-              <div class="change">
-                <div class="change-header"><code>docs/example-guidance.md</code></div>
-                <div class="diff-columns">
-                  <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Validate before publishing.</span></code></pre></div>
-                  <div class="diff-pane diff-add" aria-label="Added or kept"><p class="diff-empty" aria-label="No addition">—</p></div>
-                </div>
-              </div>
-            </div></div>
-          </article>
-        </div>
-      </section>
-
-      <section class="section" aria-labelledby="unedited-title">
-        <div class="section-heading"><h2 id="unedited-title">Reported without edit</h2></div>
-        <ul class="unedited-findings">
-          <li><strong>Host or environment · root, 14:</strong> the shell search was retried after a missing file.</li>
-        </ul>
       </section>
 
       <footer class="prompt-builder" aria-labelledby="prompt-title">
