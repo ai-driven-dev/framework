@@ -18,14 +18,14 @@ function validateRecipe(file: string) {
   }).findings;
 }
 
-function run(args: string[], cwd = root) {
+function run(args: string[], cwd = root, bundledDirectory = bundled) {
   const all = args.includes("--all");
   const result = new ValidateRecipesUseCase(new RecipeFilesAdapter()).execute({
     files: args.filter((arg) => arg !== "--all").map((file) => path.resolve(cwd, file)),
     directories: all
       ? [
           { path: path.join(cwd, "aidd_docs", "recipes"), optional: true },
-          { path: bundled, optional: false },
+          { path: bundledDirectory, optional: false },
         ]
       : [],
   });
@@ -517,19 +517,26 @@ test("rejects duplicate verification", () => {
 test("--all includes project recipes and bundled recipes", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-recipe-all-"));
   const projectRecipes = path.join(directory, "aidd_docs", "recipes");
+  const bundledRecipes = path.join(directory, "bundled");
   fs.mkdirSync(projectRecipes, { recursive: true });
+  fs.mkdirSync(bundledRecipes);
   fs.writeFileSync(
     path.join(projectRecipes, "project.md"),
     `${validDirect("Project recipe").join("\n")}\n`,
     "utf8"
   );
+  fs.writeFileSync(
+    path.join(bundledRecipes, "bundled.md"),
+    `${validDirect("Bundled recipe").join("\n")}\n`,
+    "utf8"
+  );
 
   try {
-    const result = run(["--all"], directory);
+    const result = run(["--all"], directory, bundledRecipes);
     assert.equal(result.status, 0, result.stderr);
     const match = result.stdout.match(/PASS: (\d+) recipe\(s\) validated\./u);
     assert.ok(match, result.stdout);
-    assert.equal(Number.parseInt(match[1], 10), 3, result.stdout);
+    assert.equal(Number.parseInt(match[1], 10), 2, result.stdout);
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
