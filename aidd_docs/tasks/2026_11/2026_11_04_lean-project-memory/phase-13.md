@@ -18,7 +18,7 @@ status: pending
 │   ├── update_memory.js ❌
 │   └── lib/
 │       ├── memory-rules.cjs ✏️
-│       └── paths-exist.cjs ✅
+│       └── common-rules.cjs ✅
 ├── plugins/aidd-context/skills/02-project-memory/actions/04-sync.md ✏️
 ├── plugins/aidd-context/skills/10-learn/actions/05-sync.md ✏️
 ├── scripts/check-context-reference-form.js ✏️
@@ -54,7 +54,7 @@ status: pending
 
 > Each rule at the level phase 1 and the four banks justify.
 
-1. Level 2: M3, M4 through `lib/paths-exist.cjs`, a file outside `memory/`'s root, `internal/` and `external/`.
+1. Level 2: M3, M4 through `lib/common-rules.cjs`, a file outside `memory/`'s root, `internal/` and `external/`.
 2. M7 at level 2 only if `memory-rules-banks.test.js` counts zero false hits on the four banks; else level 1.
 3. Level 1: M1, M2, M5, M6, a missing always-written file.
 4. Output per the contract's format: every error, warnings capped at the number phase 1 measured.
@@ -64,7 +64,8 @@ status: pending
 > The block lists what other plugins own; context owns the layout.
 
 1. `sync` lists each folder of `aidd_docs/` that exists on disk and is not memory's (`ui/`, aidd-pm's, `tasks/`…), by convention: a folder present is listed, nothing reads which plugins are installed.
-2. `scripts/check-hook-rule-copies.js` holds every copy of `paths-exist.cjs` identical.
+2. `scripts/check-hook-rule-copies.js` holds every copy of `common-rules.cjs` identical.
+3. `common-rules.cjs` also holds the shell write forms of the contract's section 5; tests first pin `1>f`, `&>f`, `>>f`, `>f`, `tee`, `sed -i` matched and `2>&1`, `>/dev/null`, `2>/dev/null`, `cat`, `grep`, `sed -n` not matched. aidd-ui's current pattern (`ui-hook.cjs:28`) misses `1>f` and `&>f` on purpose and is not copied.
 
 ## Test acceptance criteria
 

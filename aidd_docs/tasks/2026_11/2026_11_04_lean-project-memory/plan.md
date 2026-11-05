@@ -72,7 +72,8 @@ Source: issue #1141, second slice, on top of #1146 (the memory engine and its wr
 | 24 templates become 14 files, 6 always written, 8 only when the scan finds something | each section answers a question an agent would otherwise get wrong |
 | A renamed template keeps its former file names in `capabilities.md` | an old file is offered a merge |
 | Refresh ends with sync, on the tools already wired | the memory block never lags |
-| Three hook levels: inform, require, lock the end; level 3 only when a run shows level 2 ignored | a clear contract, never a blocked write; full rules in `hook-contract.md` |
+| Two hook levels, inform and require, at two moments, after the write or at the turn end, chosen by when the artifact is final | a multi-write artifact is final only at the turn end; never a blocked write; full rules in `hook-contract.md` |
+| Only a plugin with a turn-end check keeps state: one file per session listing the paths the turn wrote | without it, Stop would walk the project every turn and meet standing errors |
 | A gap's level is set by measurement on four real banks | a level 2 rule must have no false positive |
 | A missing always-written file: level 1 at each write, level 2 at the skill's check | during setup the other files are not written yet |
 | `memory.cjs hook|check|sync` replaces three scripts; sync stages nothing in git | one entry per concern; a hook never runs git |
