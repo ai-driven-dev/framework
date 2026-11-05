@@ -3,7 +3,7 @@
 ## Requirements
 
 - [Node](https://nodejs.org) 22.12 or later (`node --version`).
-- A [supported AI coding tool](COMPATIBILITY.md).
+- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code or Antigravity CLI.
 
 ## Pick a method
 
@@ -111,6 +111,8 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 </details>
 
+*OpenCode and Kilo Code have no marketplace: use flat files. Antigravity CLI also uses flat files.*
+
 ## Flat files
 
 Generate the files with the CLI:
@@ -120,12 +122,22 @@ git clone https://github.com/ai-driven-dev/framework.git
 npx @ai-driven-dev/cli@latest translate ./framework --to <tool> --as flat --out .
 ```
 
-Replace `<tool>` with your [target tool](../cli/README.md#translate).
+Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo` or `antigravity`.
 
 <details>
 <summary>Without Node</summary>
 
-Download `aidd-framework-<tool>-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Extract it, then copy the extracted folder's contents, including hidden files, into your project. Merge existing configuration files.
+Download `aidd-framework-<tool>-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). In your project root, run:
+
+```sh
+unzip aidd-framework-<tool>-flat-<version>.zip
+```
+
+If a configuration file already exists, merge its contents into the extracted copy. Then copy the files, including hidden files:
+
+```sh
+cp -R aidd-framework-<tool>-flat-<version>/. .
+```
 
 </details>
 
@@ -148,7 +160,7 @@ For another tool's marketplace, use that tool's plugin manager.
 | Claude Code marketplace | `claude plugin uninstall <plugin>` |
 | Flat files | Delete the files you copied |
 
-Keep files shared with another tool.
+Codex and Antigravity share `.agents/skills/`. When removing either tool, keep skills still used by the other.
 
 ## Problems
 
