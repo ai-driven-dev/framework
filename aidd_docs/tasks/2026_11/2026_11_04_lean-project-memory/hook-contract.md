@@ -45,7 +45,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. aidd-context also owns the layout of `aidd_docs/`: which plugin owns which folder, and a file out of its place. It never checks the content of another plugin's folder.
 2. **Claude's protocol only.** A hook reads Claude Code's payload and answers in Claude Code's keys. The CLI converts every other host's payload in and its answer out (section 6).
-3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error of a written file, one line each; errors of files the change reached, grouped by rule and fix; then the warnings, capped at the number phase 1 measures:
+3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error of a written file, one line each; errors of files the change reached, grouped by rule and fix; then the warnings, capped at 10: the highest count both Haiku and Qwen fixed with no finding missed and no content lost (`measure.md`):
 
 ```
 <plugin>: <n> errors, <m> warnings
