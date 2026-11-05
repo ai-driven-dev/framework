@@ -155,7 +155,9 @@ export class UserPluginFileUpdater {
   ): Promise<void> {
     for (const file of files) {
       if (plugin.files.has(file.relativePath)) continue;
-      if (await this.fs.fileExists(join(baseDir, file.relativePath))) {
+      const target = join(baseDir, file.relativePath);
+      if (!(await this.fs.fileExists(target))) continue;
+      if ((await this.fs.readFileHash(target)).value !== file.hash.value) {
         throw new Error(
           `${toolId}: '${plugin.name}' has untracked existing file '${file.relativePath}'; update refused without overwriting user content or changing its machine claim.`
         );

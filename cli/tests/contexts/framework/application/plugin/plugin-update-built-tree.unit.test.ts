@@ -598,6 +598,26 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]).toEqual(machineBefore);
   });
 
+  it("takes over a new built file an interrupted run already wrote, byte for byte", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const registry = await makeRegistry();
+    await installStalePlugin(deps, registry);
+    const newRelativePath = "sample-plugin/skills/demo/new.md";
+    deps.fs.setFile(join("/built/cursor/plugins", newRelativePath), "# Built v2\n");
+    deps.fs.setFile(join(USER_PLUGINS_DIR, newRelativePath), "# Built v2\n");
+
+    await makeUpdateUseCase(deps, registry).execute({
+      toolIds: ["cursor"],
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+    });
+
+    expect(
+      deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.has(newRelativePath)
+    ).toBe(true);
+  });
+
   it("preflights a Cursor user-file collision before any selected native host update", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "cursor");

@@ -9,7 +9,10 @@ import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugins/plugin-source-resolver.js";
 import type { PluginInstallMode } from "../../domain/setup-flow.js";
-import type { UserPluginFileUpdater } from "../ownership/user-plugin-file-updater.js";
+import type {
+  PlannedUserPluginFileUpdate,
+  UserPluginFileUpdater,
+} from "../ownership/user-plugin-file-updater.js";
 
 export interface InstallMachinePluginsOptions {
   readonly projectRoot: string;
@@ -30,6 +33,9 @@ export interface InstallMachinePluginsResult {
  * `plugin update --scope user`, `sync --scope user` and `clean --scope user` own them. A first
  * install is a rebuild of a plugin that owns no file yet, so both go through one writer. A tool
  * that enables plugins through its own CLI is handed the chosen names by the caller instead.
+ *
+ * Every plan is checked before the first write, and `record` runs after each plugin, so a run that
+ * stops part way still owns what it wrote and a later update can replace it.
  */
 export class InstallMachinePluginsUseCase {
   constructor(
@@ -41,7 +47,8 @@ export class InstallMachinePluginsUseCase {
 
   async execute(
     manifest: Manifest,
-    options: InstallMachinePluginsOptions
+    options: InstallMachinePluginsOptions,
+    record: (manifest: Manifest) => Promise<void>
   ): Promise<InstallMachinePluginsResult> {
     if (options.mode === "none" || options.mode === "interactive") return { plugins: [] };
     const marketplace = (await this.registry.list(options.projectRoot)).find(
@@ -57,6 +64,7 @@ export class InstallMachinePluginsUseCase {
       projectRoot: options.projectRoot,
     });
     const entries = selectEntries(catalog?.plugins ?? [], options);
+    const plans: { readonly plan: PlannedUserPluginFileUpdate; readonly owned: boolean }[] = [];
     for (const toolId of options.toolIds) {
       if (!copiesPluginFilesForMachine(toolId)) continue;
       for (const entry of entries) {
@@ -71,30 +79,24 @@ export class InstallMachinePluginsUseCase {
             "user",
             marketplace.name
           );
-        await this.install(manifest, toolId as AiToolId, plugin, owned !== undefined, options);
+        const plan = await this.fileUpdater.planUpdate(
+          plugin,
+          toolId as AiToolId,
+          options.projectRoot,
+          this.logger,
+          true
+        );
+        if (plan === null || (plan.files.length === 0 && owned === undefined)) continue;
+        plans.push({ plan, owned: owned !== undefined });
       }
     }
+    for (const { plan, owned } of plans) {
+      const next = await this.fileUpdater.applyUpdate(plan, this.logger);
+      if (owned) manifest.updatePlugin(plan.toolId, next);
+      else manifest.addPlugin(plan.toolId, next);
+      await record(manifest);
+    }
     return { plugins: entries.map((entry) => entry.name) };
-  }
-
-  private async install(
-    manifest: Manifest,
-    toolId: AiToolId,
-    plugin: InstalledPlugin,
-    owned: boolean,
-    options: InstallMachinePluginsOptions
-  ): Promise<void> {
-    const plan = await this.fileUpdater.planUpdate(
-      plugin,
-      toolId,
-      options.projectRoot,
-      this.logger,
-      true
-    );
-    if (plan === null || (plan.files.length === 0 && !owned)) return;
-    const next = await this.fileUpdater.applyUpdate(plan, this.logger);
-    if (owned) manifest.updatePlugin(toolId, next);
-    else manifest.addPlugin(toolId, next);
   }
 }
 

@@ -55,6 +55,7 @@ function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
       };
     }
   );
+  const applyUpdate = vi.fn(async (plan: PlannedUserPluginFileUpdate) => plan.next);
   const useCase = new InstallMachinePluginsUseCase(
     { list: async () => marketplaces },
     {
@@ -64,10 +65,10 @@ function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
         localPath: "/fw",
       }),
     },
-    { planUpdate, applyUpdate: async (plan) => plan.next },
+    { planUpdate, applyUpdate },
     new CapturingLogger()
   );
-  return { manifest, useCase, planUpdate };
+  return { manifest, useCase, planUpdate, applyUpdate };
 }
 
 function run(
@@ -76,12 +77,16 @@ function run(
   mode: PluginInstallMode,
   pluginNames: string[] = []
 ) {
-  return useCase.execute(manifest, {
-    projectRoot: "/project",
-    toolIds: ["claude", "opencode"],
-    mode,
-    pluginNames,
-  });
+  return useCase.execute(
+    manifest,
+    {
+      projectRoot: "/project",
+      toolIds: ["claude", "opencode"],
+      mode,
+      pluginNames,
+    },
+    async () => {}
+  );
 }
 
 describe("InstallMachinePluginsUseCase", () => {
@@ -105,12 +110,16 @@ describe("InstallMachinePluginsUseCase", () => {
     const { manifest, useCase, planUpdate } = setup();
     manifest.addTool("cursor", "1.0.0", []);
 
-    await useCase.execute(manifest, {
-      projectRoot: "/project",
-      toolIds: ["cursor"],
-      mode: "recommended",
-      pluginNames: [],
-    });
+    await useCase.execute(
+      manifest,
+      {
+        projectRoot: "/project",
+        toolIds: ["cursor"],
+        mode: "recommended",
+        pluginNames: [],
+      },
+      async () => {}
+    );
 
     expect(manifest.getPlugins("cursor").map((p) => [p.name, p.scope])).toEqual([
       ["aidd-dev", "user"],
@@ -122,6 +131,35 @@ describe("InstallMachinePluginsUseCase", () => {
       expect.anything(),
       true
     );
+  });
+
+  it("writes nothing when a later plugin's plan is refused", async () => {
+    const { manifest, useCase, planUpdate, applyUpdate } = setup();
+    planUpdate.mockImplementationOnce(planUpdate.getMockImplementation()!);
+    planUpdate.mockRejectedValueOnce(new Error("already exists"));
+
+    await expect(run(useCase, manifest, "all")).rejects.toThrow("already exists");
+
+    expect(applyUpdate).not.toHaveBeenCalled();
+  });
+
+  it("has recorded the plugins already written when a later write fails", async () => {
+    const { manifest, useCase, applyUpdate } = setup();
+    applyUpdate.mockImplementationOnce(async (plan) => plan.next);
+    applyUpdate.mockRejectedValueOnce(new Error("disk full"));
+    const recorded: string[][] = [];
+
+    await expect(
+      useCase.execute(
+        manifest,
+        { projectRoot: "/project", toolIds: ["opencode"], mode: "all", pluginNames: [] },
+        async (saved) => {
+          recorded.push(saved.getPlugins("opencode").map((plugin) => plugin.name));
+        }
+      )
+    ).rejects.toThrow("disk full");
+
+    expect(recorded).toEqual([["aidd-dev"]]);
   });
 
   it("keeps the recommended plugins alone", async () => {
