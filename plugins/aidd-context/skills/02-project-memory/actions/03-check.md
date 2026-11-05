@@ -19,9 +19,9 @@ The findings the user approved.
    - A folder under `memory/` other than `internal/` and `external/`: offer to move it under `internal/`.
    - An always file, or a found capability's file, that is absent: missing.
    - Offer to remove a file at the root a row produces whose capability the scan did not find, and none when the scan asked nothing.
-2. **Format.** Run the engine on the files a row produces, never a team file.
-3. **Content.** Have each file a row produces reviewed against [review-protocol.md](../references/review-protocol.md) in parallel.
-4. **Print.** Print Structure findings, Format findings and Content findings in that order, each headed, no table, one finding per line. Then ask which to apply, and hand the approved ones to write.
+2. **Format.** Run the engine on the files a row produces or names as former, never a team file.
+3. **Content.** Review yourself the files a row produces or names as former, per [review-protocol.md](../references/review-protocol.md).
+4. **Print.** Print three blocks headed `Structure findings`, `Format findings`, `Content findings`, no table, one finding per line. Then ask which to apply, and hand the approved ones to write.
    - A file only on request.
    - Nothing drifted: say the bank is current.
 
