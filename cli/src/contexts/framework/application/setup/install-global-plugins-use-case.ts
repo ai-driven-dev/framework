@@ -4,7 +4,7 @@ import type { ResolveMarketplace } from "../../../distribution/application/resol
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import { copiesPluginFilesForMachine } from "../../../tools/domain/registry.js";
+import { copiesPluginFilesGlobally } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugins/plugin-source-resolver.js";
@@ -14,14 +14,14 @@ import type {
   UserPluginFileUpdater,
 } from "../ownership/user-plugin-file-updater.js";
 
-export interface InstallMachinePluginsOptions {
+export interface InstallGlobalPluginsOptions {
   readonly projectRoot: string;
   readonly toolIds: readonly ToolId[];
   readonly mode: PluginInstallMode;
   readonly pluginNames: readonly string[];
 }
 
-export interface InstallMachinePluginsResult {
+export interface InstallGlobalPluginsResult {
   /** The framework plugins this run chose, which a tool with native activation enables next. */
   readonly plugins: readonly string[];
 }
@@ -37,7 +37,7 @@ export interface InstallMachinePluginsResult {
  * Every plan is checked before the first write, and `record` runs after each plugin, so a run that
  * stops part way still owns what it wrote and a later update can replace it.
  */
-export class InstallMachinePluginsUseCase {
+export class InstallGlobalPluginsUseCase {
   constructor(
     private readonly registry: Pick<MarketplaceRegistry, "list">,
     private readonly resolveMarketplace: ResolveMarketplace,
@@ -47,9 +47,9 @@ export class InstallMachinePluginsUseCase {
 
   async execute(
     manifest: Manifest,
-    options: InstallMachinePluginsOptions,
+    options: InstallGlobalPluginsOptions,
     record: (manifest: Manifest) => Promise<void>
-  ): Promise<InstallMachinePluginsResult> {
+  ): Promise<InstallGlobalPluginsResult> {
     if (options.mode === "none" || options.mode === "interactive") return { plugins: [] };
     const marketplace = (await this.registry.list(options.projectRoot)).find(
       (entry) => entry.name === FRAMEWORK_MARKETPLACE_NAME && entry.scope === "user"
@@ -66,7 +66,7 @@ export class InstallMachinePluginsUseCase {
     const entries = selectEntries(catalog?.plugins ?? [], options);
     const plans: { readonly plan: PlannedUserPluginFileUpdate; readonly owned: boolean }[] = [];
     for (const toolId of options.toolIds) {
-      if (!copiesPluginFilesForMachine(toolId)) continue;
+      if (!copiesPluginFilesGlobally(toolId)) continue;
       for (const entry of entries) {
         const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === entry.name);
         const resolved = InstalledPlugin.fromMetadata(
@@ -104,7 +104,7 @@ export class InstallMachinePluginsUseCase {
 
 function selectEntries(
   catalog: readonly PluginCatalogEntry[],
-  options: InstallMachinePluginsOptions
+  options: InstallGlobalPluginsOptions
 ): readonly PluginCatalogEntry[] {
   if (options.mode === "all") return catalog;
   if (options.mode === "recommended") return catalog.filter((entry) => entry.recommended);

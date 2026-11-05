@@ -139,7 +139,7 @@ async function runUserScopeDoctor(
     manifest,
     projectRoot,
     allowedIds,
-    machine: true,
+    globalInstall: true,
   });
   printScopeIssues(output, "User scope", { issues });
   const healthy = issues.every((i) => i.severity !== "error");

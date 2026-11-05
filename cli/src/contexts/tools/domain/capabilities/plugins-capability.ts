@@ -77,29 +77,29 @@ export type EnvironmentReader = (name: string) => string | undefined;
  * the user's own configuration directory, for a host that loads those files from there rather
  * than from a plugin it enables itself: OpenCode's and Kilo's skills and agents, Codex's agents.
  */
-export interface MachineFiles {
+export interface GlobalFiles {
   /** The user configuration directory the files land in, given a homedir. */
   readonly dir: (homedir: string) => string;
   /** A built-tree path (relative to the tool's built dir) to its path under `dir` for one
    * plugin, or `null` when that file is not this plugin's or is not installed machine-wide. */
-  readonly map: (builtPath: string, plugin: MachinePlugin) => string | null;
+  readonly map: (builtPath: string, plugin: GlobalPlugin) => string | null;
 }
 
-/** The plugin a machine file is read for: its name, and the agents its source ships, by base
+/** The plugin a global file is read for: its name, and the agents its source ships, by base
  * name. A flat build prefixes an agent with its plugin, so a prefix alone cannot tell
  * `aidd-dev`'s agents from those of a plugin named `aidd-dev-tools`. */
-export interface MachinePlugin {
+export interface GlobalPlugin {
   readonly name: string;
   readonly agents: ReadonlySet<string>;
 }
 
 /**
- * The machine-file mapping of a flat tool whose user configuration directory takes the same
+ * The global-file mapping of a flat tool whose user configuration directory takes the same
  * `skills/` and `agents/` its project directory does (OpenCode, Kilo): a plugin's skills and
  * agents under `directory` keep their path below it. Hooks, commands and MCP entries stay
  * project-scoped.
  */
-export function flatMachineFilePath(directory: string): MachineFiles["map"] {
+export function flatGlobalFilePath(directory: string): GlobalFiles["map"] {
   return (builtPath, plugin) => {
     if (!builtPath.startsWith(directory)) return null;
     const relative = builtPath.slice(directory.length);
@@ -111,8 +111,8 @@ export function flatMachineFilePath(directory: string): MachineFiles["map"] {
 }
 
 /** Shared by every mode: where a tool's machine-scope files go, when it has any. */
-interface MachineFilesParams {
-  machineFiles?: MachineFiles;
+interface GlobalFilesParams {
+  globalFiles?: GlobalFiles;
 }
 
 export interface NativePluginsParams {
@@ -206,7 +206,7 @@ type PluginsParams = (
   | FlatPluginsParams
   | UnsupportedPluginsParams
 ) &
-  MachineFilesParams;
+  GlobalFilesParams;
 
 export class PluginsCapability {
   readonly mode: PluginsMode;
@@ -238,14 +238,14 @@ export class PluginsCapability {
   readonly nativeActivation: NativeActivation | null;
   readonly translationMode: PluginTranslationMode | null;
   readonly installScope: "project" | "user";
-  /** See {@link MachineFiles}, or `null` when a machine-scope install copies no file. */
-  readonly machineFiles: MachineFiles | null;
+  /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
+  readonly globalFiles: GlobalFiles | null;
 
   private readonly _userPluginsDir?: (homedir: string) => string;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
-    this.machineFiles = params.machineFiles ?? null;
+    this.globalFiles = params.globalFiles ?? null;
     this.translationMode = PluginsCapability.resolveTranslationMode(params);
     this.installScope = PluginsCapability.resolveInstallScope(params);
     PluginsCapability.validateUserScope(params);
@@ -325,7 +325,7 @@ export class PluginsCapability {
    * independently of this capability's own `installScope`: a caller resolving a *recorded*
    * scope still needs the directory that scope means. */
   userPluginsBaseDir(homedir: string): string | null {
-    return this._userPluginsDir?.(homedir) ?? this.machineFiles?.dir(homedir) ?? null;
+    return this._userPluginsDir?.(homedir) ?? this.globalFiles?.dir(homedir) ?? null;
   }
 
   pluginOutputDir(pluginName: string): string | null {

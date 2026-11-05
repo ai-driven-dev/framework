@@ -10,7 +10,7 @@ import type { AiToolId } from "../../../../kernel/tool.js";
 import {
   frameworkBuildModeFor,
   getToolConfig,
-  machineFilesOf,
+  globalFilesOf,
   resolvePluginsCapability,
 } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
@@ -30,7 +30,7 @@ import {
   userScopeFilesSafeToDelete,
   withoutMissingFiles,
 } from "../shared/user-scope-plugin-files.js";
-import { assertMachineFilesWritable, readMachinePluginFiles } from "./machine-plugin-files.js";
+import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugin-files.js";
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
@@ -128,7 +128,7 @@ export class UserPluginFileUpdater {
     return plan.next;
   }
 
-  /** A tool's machine files spread across its user directory; a user-scope plugin directory
+  /** A tool's global files spread across its user directory; a user-scope plugin directory
    * holds one plugin per subdirectory. Each layout has its own containment proof. */
   private async assertWritable(
     plugin: InstalledPlugin,
@@ -136,8 +136,8 @@ export class UserPluginFileUpdater {
     files: readonly InstallationFile[],
     home: string
   ): Promise<void> {
-    if (machineFilesOf(toolId) !== null) {
-      await assertMachineFilesWritable(this.fs, toolId, plugin, plugin.name, files, home);
+    if (globalFilesOf(toolId) !== null) {
+      await assertGlobalFilesWritable(this.fs, toolId, plugin, plugin.name, files, home);
       return;
     }
     const baseDir = resolveBaseDirFromRecord("user", toolId, "", () => home);
@@ -187,8 +187,8 @@ export class UserPluginFileUpdater {
         target: toolId,
         mode: frameworkBuildModeFor(toolId),
       });
-      if (machineFilesOf(toolId) !== null) {
-        const files = await readMachinePluginFiles(this.fs, this.hasher, builtDir, toolId, dist);
+      if (globalFilesOf(toolId) !== null) {
+        const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, toolId, dist);
         return { files, componentPaths: new Map() };
       }
       const built = await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, plugin.name);
@@ -199,7 +199,7 @@ export class UserPluginFileUpdater {
       return { files, componentPaths: new Map() };
     }
     // Without the built tree, translation would write a project's layout in the user directory.
-    if (machineFilesOf(toolId) !== null) {
+    if (globalFilesOf(toolId) !== null) {
       throw new Error(
         `${toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
       );

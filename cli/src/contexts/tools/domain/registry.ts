@@ -16,7 +16,7 @@ import {
 import type { ToolBuildContract } from "./build-contract.js";
 import type {
   EnvironmentReader,
-  MachineFiles,
+  GlobalFiles,
   NativeActivation,
   PluginsCapability,
 } from "./capabilities/plugins-capability.js";
@@ -119,7 +119,7 @@ export function pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {
 }
 
 /** Whether `--scope user` has anywhere to point this tool: it drives its own CLI machine-wide,
- * installs a plugin's files into a user-scope directory, or copies machine files into the
+ * installs a plugin's files into a user-scope directory, or copies global files into the
  * user's configuration directory. `false` for a tool declaring none. */
 export function supportsUserScopeActivation(toolId: ToolId): boolean {
   const capability = resolvePluginsCapability(toolId);
@@ -127,7 +127,7 @@ export function supportsUserScopeActivation(toolId: ToolId): boolean {
   return (
     capability.nativeActivation !== null ||
     capability.installScope === "user" ||
-    capability.machineFiles !== null
+    capability.globalFiles !== null
   );
 }
 
@@ -141,15 +141,15 @@ export function hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
 /** Whether `setup --global` writes a plugin's files itself for this tool, into its user plugins
  * directory or its user configuration directory, instead of only enabling the plugin through
  * the tool's own CLI. */
-export function copiesPluginFilesForMachine(toolId: ToolId): boolean {
+export function copiesPluginFilesGlobally(toolId: ToolId): boolean {
   const capability = resolvePluginsCapability(toolId);
   if (capability === null) return false;
-  return capability.installScope === "user" || capability.machineFiles !== null;
+  return capability.installScope === "user" || capability.globalFiles !== null;
 }
 
-/** See {@link MachineFiles}: `null` for a tool whose machine-scope install copies no file. */
-export function machineFilesOf(toolId: ToolId): MachineFiles | null {
-  return resolvePluginsCapability(toolId)?.machineFiles ?? null;
+/** See {@link GlobalFiles}: `null` for a tool whose machine-scope install copies no file. */
+export function globalFilesOf(toolId: ToolId): GlobalFiles | null {
+  return resolvePluginsCapability(toolId)?.globalFiles ?? null;
 }
 
 /** The tool's declared build contract for one framework-build mode, or undefined when the tool

@@ -95,7 +95,7 @@ describe("printSetupOutcome", () => {
 
     printSetupOutcome(
       output,
-      { kind: "initialized", install: { results: [] }, machinePlugins: ["aidd-dev", "aidd-pm"] },
+      { kind: "initialized", install: { results: [] }, globalPlugins: ["aidd-dev", "aidd-pm"] },
       false
     );
 
@@ -109,7 +109,7 @@ describe("printSetupOutcome", () => {
 
     printSetupOutcome(
       output,
-      { kind: "up-to-date", install: { results: [] }, machinePlugins: [] },
+      { kind: "up-to-date", install: { results: [] }, globalPlugins: [] },
       false
     );
 

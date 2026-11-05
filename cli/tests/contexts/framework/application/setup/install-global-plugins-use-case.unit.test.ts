@@ -5,7 +5,7 @@ import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
-import { InstallMachinePluginsUseCase } from "../../../../../src/contexts/framework/application/setup/install-machine-plugins-use-case.js";
+import { InstallGlobalPluginsUseCase } from "../../../../../src/contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginInstallMode } from "../../../../../src/contexts/framework/domain/setup-flow.js";
@@ -56,7 +56,7 @@ function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
     }
   );
   const applyUpdate = vi.fn(async (plan: PlannedUserPluginFileUpdate) => plan.next);
-  const useCase = new InstallMachinePluginsUseCase(
+  const useCase = new InstallGlobalPluginsUseCase(
     { list: async () => marketplaces },
     {
       execute: async () => ({
@@ -72,7 +72,7 @@ function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
 }
 
 function run(
-  useCase: InstallMachinePluginsUseCase,
+  useCase: InstallGlobalPluginsUseCase,
   manifest: Manifest,
   mode: PluginInstallMode,
   pluginNames: string[] = []
@@ -89,8 +89,8 @@ function run(
   );
 }
 
-describe("InstallMachinePluginsUseCase", () => {
-  it("records each chosen plugin's machine files for a tool that copies them, and names every one", async () => {
+describe("InstallGlobalPluginsUseCase", () => {
+  it("records each chosen plugin's global files for a tool that copies them, and names every one", async () => {
     const { manifest, useCase, planUpdate } = setup();
 
     const result = await run(useCase, manifest, "all");

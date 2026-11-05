@@ -31,7 +31,7 @@ function declaresUserScopeActivation(toolId) {
   return (
     /nativeActivation:\s*\{/u.test(text) ||
     /installScope:\s*"user"/u.test(text) ||
-    /machineFiles:\s*\{/u.test(text)
+    /globalFiles:\s*\{/u.test(text)
   );
 }
 

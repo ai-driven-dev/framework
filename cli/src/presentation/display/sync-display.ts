@@ -72,7 +72,7 @@ export function printUserScopeSyncOutcome(
   activated: readonly string[],
   refreshed: readonly string[] = []
 ): void {
-  if (refreshed.length > 0) output.success(`Refreshed machine files for: ${refreshed.join(", ")}`);
+  if (refreshed.length > 0) output.success(`Refreshed global files for: ${refreshed.join(", ")}`);
   if (activated.length > 0) {
     output.success(`Synced native activation for: ${activated.join(", ")}`);
   } else if (refreshed.length === 0) {
