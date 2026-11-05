@@ -1,5 +1,5 @@
 setup over installed plugins resolved
-hook files unchanged by the second run: true
+no hook file written without the host binary
 
 ## project/.claude/settings.json
 {
