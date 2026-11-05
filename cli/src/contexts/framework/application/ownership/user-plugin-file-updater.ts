@@ -28,6 +28,7 @@ import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
+  withoutMissingFiles,
 } from "../shared/user-scope-plugin-files.js";
 import { assertMachineFilesWritable, readMachinePluginFiles } from "./machine-plugin-files.js";
 
@@ -75,8 +76,9 @@ export class UserPluginFileUpdater {
       projectRoot
     );
     const home = (this.builtDeps?.homedir ?? nodeHomedir)();
-    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, plugin, toolId, home);
-    if (oldSafe.size !== plugin.files.size) {
+    const present = await withoutMissingFiles(this.fs, plugin, toolId, home);
+    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, present, toolId, home);
+    if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
       );
@@ -102,14 +104,15 @@ export class UserPluginFileUpdater {
   }
 
   async applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin> {
+    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.toolId, plan.home);
     const oldSafe = await userScopeFilesSafeToDelete(
       this.fs,
       logger,
-      plan.plugin,
+      present,
       plan.toolId,
       plan.home
     );
-    if (oldSafe.size !== plan.plugin.files.size || oldSafe.size !== plan.oldSafe.size) {
+    if (oldSafe.size !== present.files.size || oldSafe.size !== plan.oldSafe.size) {
       throw new Error(
         `${plan.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
       );
@@ -138,9 +141,9 @@ export class UserPluginFileUpdater {
       return;
     }
     const baseDir = resolveBaseDirFromRecord("user", toolId, "", () => home);
-    // A first machine-wide install owns no file yet: its directory is created so the
-    // containment proof has a real path to resolve. The name is one safe path segment.
-    if (plugin.files.size === 0 && PLUGIN_NAME_REGEX.test(plugin.name)) {
+    // A first install owns no file yet, and a restore may have lost the directory: it is created
+    // so the containment proof has a real path to resolve. The name is one safe path segment.
+    if (PLUGIN_NAME_REGEX.test(plugin.name)) {
       await this.fs.createDirectory(join(baseDir, plugin.name));
     }
     await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, [...files], home);
@@ -194,6 +197,12 @@ export class UserPluginFileUpdater {
           ? withoutHooksPrefix(built, plugin.name)
           : built;
       return { files, componentPaths: new Map() };
+    }
+    // Without the built tree, translation would write a project's layout in the user directory.
+    if (machineFilesOf(toolId) !== null) {
+      throw new Error(
+        `${toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
+      );
     }
     const toolConfig = getToolConfig(toolId);
     const forGlobalFiles =

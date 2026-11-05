@@ -12,7 +12,9 @@ import type { PluginDistributionReader } from "../../domain/ports/plugin-distrib
 export class PluginDistributionLoader {
   constructor(
     private readonly fetcher: PluginFetcher,
-    private readonly reader: PluginDistributionReader
+    private readonly reader: PluginDistributionReader,
+    /** A global install's fetches: it writes nothing in the project. */
+    private readonly globalCacheDir?: () => string
   ) {}
 
   async load(
@@ -25,6 +27,7 @@ export class PluginDistributionLoader {
   }
 
   loadLatest(plugin: InstalledPlugin, projectRoot: string): Promise<PluginDistribution> {
-    return this.load(plugin.source, join(projectRoot, PLUGIN_CACHE_SUBDIR), { forceRefresh: true });
+    const cacheDir = this.globalCacheDir?.() ?? join(projectRoot, PLUGIN_CACHE_SUBDIR);
+    return this.load(plugin.source, cacheDir, { forceRefresh: true });
   }
 }

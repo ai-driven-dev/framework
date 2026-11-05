@@ -69,16 +69,18 @@ export class InstallMachinePluginsUseCase {
       if (!copiesPluginFilesForMachine(toolId)) continue;
       for (const entry of entries) {
         const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === entry.name);
+        const resolved = InstalledPlugin.fromMetadata(
+          entry.name,
+          entry.version ?? "0.0.0",
+          resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
+          entry.strict,
+          "user",
+          marketplace.name
+        );
         const plugin =
-          owned ??
-          InstalledPlugin.fromMetadata(
-            entry.name,
-            entry.version ?? "0.0.0",
-            resolvePluginSourceFromMarketplace(entry.source, marketplace, localPath),
-            entry.strict,
-            "user",
-            marketplace.name
-          );
+          owned === undefined
+            ? resolved
+            : resolved.withFiles(owned.files).withDependents(owned.dependents);
         const plan = await this.fileUpdater.planUpdate(
           plugin,
           toolId as AiToolId,

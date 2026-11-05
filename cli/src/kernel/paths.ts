@@ -18,6 +18,18 @@ export function marketplaceCacheDir(projectRoot: string, marketplaceName: string
   return join(projectRoot, MARKETPLACE_CACHE_SUBDIR, marketplaceName);
 }
 
+/** Where a marketplace's fetched source lives: a user-scope one belongs to the whole machine, so a
+ * run from any directory writes nothing there. */
+export function fetchedMarketplaceDir(
+  marketplace: { readonly name: string; readonly scope: string },
+  projectRoot: string,
+  userConfigDir: string | undefined
+): string {
+  return marketplace.scope === "user" && userConfigDir !== undefined
+    ? join(userConfigDir, "cache", "marketplaces", marketplace.name)
+    : marketplaceCacheDir(projectRoot, marketplace.name);
+}
+
 export function builtMarketplaceDir(
   projectRoot: string,
   marketplaceName: string,

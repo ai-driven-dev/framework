@@ -69,7 +69,7 @@ async function issuesFor(
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds,
-    machine,
+    machine: machine,
   });
 }
 

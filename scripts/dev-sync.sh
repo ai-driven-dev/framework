@@ -116,6 +116,8 @@ output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --id
   echo "aidd setup --global failed for ${hosts[*]}; their plugins were released, so rerun make reload once fixed." >&2; exit 1
 }
 echo "ok ($(IFS=,; echo "${hosts[*]}"))"
+# A warning leaves setup at exit 0: what it skipped must stay visible.
+printf '%s\n' "$output" | sed 's/^/  /'
 
 instructions=()
 [ "$HAVE_CODEX" = 0 ] || instructions+=(codex "$CODEX_INSTRUCTIONS")

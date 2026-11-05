@@ -1,4 +1,5 @@
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -74,6 +75,25 @@ describe("UserPluginFileUpdater public update contract", () => {
     );
     expect(await f.fs.readFile(join(f.base, "../foreign.txt"))).toBe("foreign");
     expect(await f.fs.fileExists(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(false);
+  });
+
+  it("writes back a recorded file that was deleted", async () => {
+    const f = fixture();
+    const path = "sample-plugin/skills/demo/SKILL.md";
+    const owned = f.plugin.withFiles(new Map([[path, f.hasher.hash(f.content).value]]));
+
+    const result = await f.updater.update(owned, "cursor", "/A", f.logger);
+
+    expect(await f.fs.readFile(join(f.base, path))).toBe(f.content);
+    expect(result?.files.has(path)).toBe(true);
+    expect(f.logger.warnMessages.filter((m) => m.includes("left in place"))).toEqual([]);
+  });
+
+  it("refuses to rebuild machine files without the shared source, rather than write a project's layout", async () => {
+    const f = fixture();
+    await expect(f.updater.update(f.plugin, "opencode", "/A", f.logger)).rejects.toThrow(
+      "run `aidd setup --global`"
+    );
   });
 
   it("rechecks planned new-file containment when a parent becomes a symlink", async () => {

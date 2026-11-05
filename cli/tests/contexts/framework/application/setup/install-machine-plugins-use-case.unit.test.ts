@@ -7,7 +7,7 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { InstallMachinePluginsUseCase } from "../../../../../src/contexts/framework/application/setup/install-machine-plugins-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import type { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginInstallMode } from "../../../../../src/contexts/framework/domain/setup-flow.js";
 import { FileHash, InstallationFile } from "../../../../../src/kernel/file.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
@@ -133,9 +133,36 @@ describe("InstallMachinePluginsUseCase", () => {
     );
   });
 
+  it("takes the source this run resolved for a plugin it already owns, and keeps its files", async () => {
+    const { manifest, useCase, planUpdate } = setup();
+    manifest.addPlugin(
+      "opencode",
+      InstalledPlugin.fromMetadata(
+        "aidd-dev",
+        "1.0.0",
+        { kind: "local", path: "/moved-away" },
+        true,
+        "user",
+        "aidd-framework"
+      ).withFiles(new Map([["agents/old.md", HASH]]))
+    );
+
+    await useCase.execute(
+      manifest,
+      { projectRoot: "/project", toolIds: ["opencode"], mode: "recommended", pluginNames: [] },
+      async () => {}
+    );
+
+    const planned = planUpdate.mock.calls[0][0];
+    expect(planned.source).not.toEqual({ kind: "local", path: "/moved-away" });
+    expect([...planned.files.keys()]).toEqual(["agents/old.md"]);
+  });
+
   it("writes nothing when a later plugin's plan is refused", async () => {
     const { manifest, useCase, planUpdate, applyUpdate } = setup();
-    planUpdate.mockImplementationOnce(planUpdate.getMockImplementation()!);
+    const accepted = planUpdate.getMockImplementation();
+    if (accepted === undefined) throw new Error("fixture has no plan");
+    planUpdate.mockImplementationOnce(accepted);
     planUpdate.mockRejectedValueOnce(new Error("already exists"));
 
     await expect(run(useCase, manifest, "all")).rejects.toThrow("already exists");
