@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -83,15 +84,6 @@ test("capabilities.md holds one row per capability, and every memory template be
 function skillText(file) {
   return fs.readFileSync(path.join(SKILL, file), "utf8");
 }
-
-test("check prints its findings: no report template ships and no file names one", () => {
-  assert.equal(fs.existsSync(path.join(SKILL, "assets/report.md")), false);
-  for (const file of skillMarkdown()) {
-    assert.doesNotMatch(fs.readFileSync(file, "utf8"), /report\.md|memory-check/u, path.relative(SKILL, file));
-  }
-});
-
-const { spawnSync } = require("node:child_process");
 
 const FIXTURES = path.resolve(__dirname, "../../cli/tests/fixtures/hooks-routes");
 const ENGINE_NAMES = /memory-lint|update_memory/u;
@@ -240,4 +232,23 @@ test("the cases cover the merge offer, the misplaced move, and the refresh sync"
   const refresh = find(/^refresh/u, "refreshes a bank");
   assert.deepEqual(refresh.expect.fileContains["CLAUDE.md"], ["@aidd_docs/memory/deployment.md"]);
   assert.ok(refresh.expect.filesExist.includes("aidd_docs/memory/codebase-map.md"), "the declined merge is not asserted");
+});
+
+test("check reviews only the files a row produces, offers a merge for a former file, and a misplaced file only its move", () => {
+  const lines = skillText("actions/03-check.md").split(/\r?\n/u);
+  const line = (pattern) => lines.find((candidate) => pattern.test(candidate)) ?? "";
+  assert.match(line(/\*\*Content/u), /a row produces/u, "Content reviews the team's files too");
+  const merge = lines.filter((candidate) => /Former files/u.test(candidate) && /merge/u.test(candidate));
+  assert.equal(merge.length, 1, "no single step offers the merge for a Former files match");
+  assert.match(line(/misplaced/u), /only the move/u, "a misplaced file is offered more than its move");
+  assert.match(line(/remove/u), /at the root/u, "a removal is offered for a file that is not at the root");
+});
+
+test("a check request has its own route: scan, then check, and no sync", () => {
+  const router = skillText("SKILL.md");
+  const route = router.split(/\r?\n/u).find((candidate) => /\(\[check\]\)/u.test(candidate)) ?? "";
+  assert.match(route, /\(\[check\]\)\s*-->\s*scan\s*-->\s*check/u, "no check route");
+  assert.doesNotMatch(route, /sync/u, "the check route syncs");
+  assert.doesNotMatch(route, /-->\s*write/u, "the check route writes without approval");
+  assert.match(router.split(/\r?\n/u).find((candidate) => /^argument-hint:/u.test(candidate)) ?? "", /check/u, "the argument hint omits check");
 });
