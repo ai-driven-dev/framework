@@ -297,3 +297,168 @@ test("sync runs no child process, so it stages nothing in git", () => {
   const source = fs.readFileSync(HOOK, "utf8");
   assert.doesNotMatch(source, /child_process|execSync|spawn|git add/u);
 });
+
+// A throwaway project with a bank, `files` written as given and `links` as symlinks to a sibling.
+function sandbox(files, links = {}) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-box-"));
+  fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
+  fs.writeFileSync(path.join(root, "aidd_docs/memory/architecture.md"), "# x\n");
+  for (const [name, text] of Object.entries(files)) {
+    fs.mkdirSync(path.dirname(path.join(root, name)), { recursive: true });
+    fs.writeFileSync(path.join(root, name), text);
+  }
+  for (const [name, target] of Object.entries(links)) {
+    fs.mkdirSync(path.dirname(path.join(root, name)), { recursive: true });
+    fs.symlinkSync(target, path.join(root, name));
+  }
+  return root;
+}
+
+function sync(root, ...tools) {
+  const result = spawnSync(process.execPath, [HOOK, "sync", ...tools], { cwd: root, env: HOOK_ENV, encoding: "utf8" });
+  return { status: result.status, stderr: result.stderr };
+}
+
+const read = (root, name) => fs.readFileSync(path.join(root, name), "utf8");
+const EMPTY = `# P\n\n${OPEN}\n${CLOSE}\n`;
+const FILLED_AT = `${OPEN}\n\n@aidd_docs/memory/architecture.md\n\n${CLOSE}`;
+
+test("a target that cannot be written is named, and the others still sync", (t) => {
+  if (process.getuid?.() === 0) return t.skip("root writes through a read-only file");
+  const root = sandbox({ "CLAUDE.md": EMPTY, "AGENTS.md": EMPTY });
+  try {
+    fs.chmodSync(path.join(root, "CLAUDE.md"), 0o444);
+    const result = sync(root);
+    assert.match(result.stderr, /memory: CLAUDE\.md not written \(EACCES\), skipped/u);
+    assert.match(read(root, "AGENTS.md"), /\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)/u);
+    assert.equal(read(root, "CLAUDE.md"), EMPTY);
+    assert.equal(sync(root, "claude", "codex").status, 1, "naming the tools fails the run");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a line the generator would not write in the block leaves the file as it is, and is reported", () => {
+  const team = `${OPEN}\n\n@aidd_docs/memory/architecture.md\n@docs/team-glossary.md\n\n${CLOSE}\n`;
+  const root = sandbox({ "CLAUDE.md": team });
+  try {
+    const result = sync(root, "claude");
+    assert.equal(read(root, "CLAUDE.md"), team);
+    assert.match(result.stderr, /CLAUDE\.md holds a line the memory block would not write \("@docs\/team-glossary\.md"\), not synced/u);
+    assert.equal(result.status, 1);
+    assert.equal(sync(root).status, 0, "an unnamed run never fails over a file to repair");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a stale generated line is still the generator's own: it is rewritten, not held", () => {
+  const stale = `${OPEN}\n\n@aidd_docs/memory/deleted.md\n\n- aidd_docs/old/\n\n${CLOSE}\n`;
+  const root = sandbox({ "CLAUDE.md": stale });
+  try {
+    assert.equal(sync(root, "claude").status, 0);
+    assert.equal(read(root, "CLAUDE.md"), `${FILLED_AT}\n`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("CLAUDE.md linked to AGENTS.md is written once, in the @ form Claude Code loads", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY }, { "CLAUDE.md": "AGENTS.md" });
+  try {
+    assert.equal(sync(root).status, 0);
+    assert.equal(read(root, "CLAUDE.md"), `# P\n\n${FILLED_AT}\n`);
+    assert.equal(read(root, "AGENTS.md"), read(root, "CLAUDE.md"));
+    assert.ok(fs.lstatSync(path.join(root, "CLAUDE.md")).isSymbolicLink(), "the link stays a link");
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(read(root, "AGENTS.md"), `# P\n\n${FILLED_AT}\n`, "naming only the other name keeps the form");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a file linked from two other names takes the link form once, climbing from the real file", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY }, { ".github/copilot-instructions.md": "../AGENTS.md" });
+  try {
+    assert.equal(sync(root).status, 0);
+    assert.equal(read(root, "AGENTS.md"), `# P\n\n${OPEN}\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n${CLOSE}\n`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a link climbs from the real file, not from the name that reaches it", () => {
+  const root = sandbox({ "docs/agents.md": EMPTY }, { "AGENTS.md": "docs/agents.md" });
+  try {
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(read(root, "docs/agents.md"), `# P\n\n${OPEN}\n\n[aidd_docs/memory/architecture.md](../aidd_docs/memory/architecture.md)\n\n${CLOSE}\n`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("markers inside a fence, duplicated, malformed or out of order leave the file as it is, reported", () => {
+  const cases = {
+    fenced: ["```", OPEN, CLOSE, "```", ""].join("\n"),
+    duplicated: `${EMPTY}\n${OPEN}\n${CLOSE}\n`,
+    "two starts": `${OPEN}\n${OPEN}\n${CLOSE}\n`,
+    malformed: "<!--aidd_project_memory:start-->\n<!-- aidd_project_memory:end -->\n",
+    "out of order": `${CLOSE}\n${OPEN}\n`,
+  };
+  const reasons = { fenced: /inside a code fence/u, duplicated: /duplicated/u, "two starts": /duplicated/u, malformed: /malformed/u, "out of order": /out of order/u };
+  for (const [name, content] of Object.entries(cases)) {
+    const root = sandbox({ "CLAUDE.md": content });
+    try {
+      const result = sync(root, "claude");
+      assert.equal(read(root, "CLAUDE.md"), content, name);
+      assert.match(result.stderr, reasons[name], name);
+      assert.equal(result.status, 1, name);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("a quoted pair in a fence beside a real block does not stop the real one", () => {
+  const root = sandbox({ "CLAUDE.md": `\`\`\`\n${OPEN}\n${CLOSE}\n\`\`\`\n\n${EMPTY}` });
+  try {
+    assert.equal(sync(root, "claude").status, 0);
+    assert.match(read(root, "CLAUDE.md"), /@aidd_docs\/memory\/architecture\.md/u);
+    assert.match(read(root, "CLAUDE.md"), /^```\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n```\n/u);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a CRLF file keeps CRLF, and an unchanged block is not rewritten", () => {
+  const crlf = (text) => text.replace(/\n/gu, "\r\n");
+  const root = sandbox({ "CLAUDE.md": crlf(EMPTY) });
+  try {
+    sync(root, "claude");
+    const once = read(root, "CLAUDE.md");
+    assert.equal(once, crlf(`# P\n\n${FILLED_AT}\n`));
+    assert.ok(!/(?<!\r)\n/u.test(once), "every line break stays CRLF");
+    const before = fs.statSync(path.join(root, "CLAUDE.md")).mtimeMs;
+    sync(root, "claude");
+    assert.equal(fs.statSync(path.join(root, "CLAUDE.md")).mtimeMs, before);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("sync is silent about a read-only or missing target it has no block for", () => {
+  const root = sandbox({});
+  try {
+    assert.deepEqual(sync(root), { status: 0, stderr: "" });
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the setup copies aidd_docs/README.md only when the project has none", () => {
+  const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory");
+  const write = fs.readFileSync(path.join(skill, "actions/02-write.md"), "utf8");
+  const capabilities = fs.readFileSync(path.join(skill, "references/capabilities.md"), "utf8");
+  assert.match(write, /aidd_docs\/README\.md[^\n]*only when (?:it is )?absent/u);
+  assert.match(capabilities, /copied to `aidd_docs\/README\.md` only when (?:it is )?absent/u);
+});

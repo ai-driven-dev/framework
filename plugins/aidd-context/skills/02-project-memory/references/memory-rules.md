@@ -6,13 +6,13 @@ The one place that says what a memory file must be.
 
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |
-| M1 | error | 25 words | a prose line over the limit: make it a table, a list or a heading |
-| M2 | error | none | a fact that goes stale: a number before a plural noun, a date, a time word |
-| M3 | error | none | an unfinished marker: `{{`, TODO, TBD |
+| M1 | error | 25 words | a sentence over the limit, outside a table, list item, heading, code or diagram: make it a table, a list or a heading |
+| M2 | warning | none | a fact that goes stale: a number before a plural noun, a date, a time word. Check it against the code; keep it if true |
+| M3 | error | none | a slot copied from the template of the same name and left unfilled, fences included |
 | M4 | error | none | a backticked file path that names nothing on disk |
 | M5 | warning | 35 words | a bullet or a table cell over the limit |
 | M6 | warning | 400 words | a file over the limit |
-| M7 | error | 12 words | a sentence of that length also written in another memory file |
+| M7 | warning | 12 words | a sentence of that length also written in another memory file |
 
 ## Reader rules
 

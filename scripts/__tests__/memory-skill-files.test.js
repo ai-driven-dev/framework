@@ -130,7 +130,8 @@ test("the lint command the skill gives takes the root first, and exits 1 on a pl
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "lint-command-"));
   try {
     fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
-    fs.writeFileSync(path.join(root, "aidd_docs/memory/vcs.md"), "# VCS\n\n- TODO decide the branch model\n");
+    const template = fs.readFileSync(path.join(SKILL, "assets/templates/memory/core/vcs.md"), "utf8");
+    fs.writeFileSync(path.join(root, "aidd_docs/memory/vcs.md"), `# VCS\n\n- ${template.match(/\{\{[^{}\n]*\}\}/u)[0]}\n`);
     const run = (file) =>
       spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs"), "check", given[1], file.replace("<file>", "vcs")], {
         cwd: root,
@@ -141,7 +142,7 @@ test("the lint command the skill gives takes the root first, and exits 1 on a pl
     assert.match(result.stdout, /M3/u);
     // The mistake this guards: the file first reads as the root, finds nothing, and exits 0.
     const swapped = spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs"), "check", "aidd_docs/memory/vcs.md"], { cwd: root, encoding: "utf8" });
-    assert.equal(swapped.status, 0, "the engine no longer passes silently on a file given as the root");
+    assert.equal(swapped.status, 1, "the engine no longer passes silently on a file given as the root");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
