@@ -203,8 +203,8 @@ test("isShellWrite: reads, fd duplications and redirections to /dev/null do not 
   for (const command of READS) assert.equal(isShellWrite(command), false, command);
 });
 
-test("isShellWrite: rmdir does not match, because it is not a contract form and rm must not fire inside a word", () => {
-  assert.equal(isShellWrite("rmdir d"), false);
+test("isShellWrite: rmdir removes a folder of the watched tree, in bash and in PowerShell, so it is a write", () => {
+  for (const command of ["rmdir d", "/bin/rmdir d", "Rmdir d", "a; rmdir d"]) assert.equal(isShellWrite(command), true, command);
 });
 
 test("isShellWrite: a subshell, a background job and sudo with its flags are command positions", () => {
@@ -256,7 +256,7 @@ test("isShellWrite: a path before a command word resolves by its basename", () =
   for (const command of ["/bin/rm f", "./node_modules/.bin/tee f", "cd d && /usr/bin/mkdir x", "/usr/bin/git apply x.diff"]) {
     assert.equal(isShellWrite(command), true, command);
   }
-  assert.equal(isShellWrite("/bin/rmdir d"), false);
+  assert.equal(isShellWrite("/bin/rmx d"), false, "rm never fires inside a longer word");
 });
 
 test("isShellWrite: a redirection to a file beside /dev/null still matches", () => {
