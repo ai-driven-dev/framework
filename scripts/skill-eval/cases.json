@@ -192,35 +192,84 @@
     "plugin": "aidd-context",
     "skill": "02-project-memory",
     "evalName": "xeval-memory",
-    "name": "check flags an orphan file and deletes nothing",
+    "name": "check keeps a team file and flags a misplaced one",
     "setup": {
       "files": {
         "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\" }\n",
         "src/index.js": "module.exports = 1;\n",
         "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n",
         "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node, CommonJS\n\n## Gotchas\n\n- QUARTZLINE runs on Node.js 18 only\n",
-        "aidd_docs/memory/browsing.md": "# Browsing\n\n- Pages are server rendered.\n"
+        "aidd_docs/memory/principles.md": "# Principles\n\n- Pairs review every change.\n",
+        "aidd_docs/memory/internal/auth.md": "# Auth\n\n- Sessions live in a signed cookie.\n",
+        "aidd_docs/memory/kpi/metrics.md": "# Metrics\n\n- Weekly active shops.\n"
       }
     },
     "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted and delete nothing.",
     "expect": {
-      "filesExist": [
-        "aidd_docs/memory/browsing.md"
-      ],
       "stdoutContains": [
-        "Memory bank",
-        "aidd_docs/tasks/"
+        "Structure",
+        "Format",
+        "Content",
+        "internal/auth.md",
+        "kpi"
+      ],
+      "filesAbsent": [
+        "aidd_docs/memory/auth.md",
+        "aidd_docs/tasks"
       ],
       "filesUnchanged": [
         "aidd_docs/memory/architecture.md",
         "aidd_docs/memory/vcs.md",
-        "aidd_docs/memory/browsing.md"
+        "aidd_docs/memory/principles.md",
+        "aidd_docs/memory/internal/auth.md",
+        "aidd_docs/memory/kpi/metrics.md"
       ],
-      "judge": "The report describes only the memory bank: no cell or note names a step of the skill, nor explains how a finding was reached.",
+      "judge": "The output describes only the memory bank: no block or note names a step of the skill, nor explains how a finding was reached. The team file principles.md is neither flagged nor offered for removal, and each misplaced file is offered a move.",
       "stdoutNotContains": [
-        "Match step",
-        "Review step",
-        "Prune step",
+        "Structure step",
+        "Format step",
+        "Content step",
+        "02-write",
+        "03-check",
+        "01-scan"
+      ]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "check offers an old file a merge into its capability's file",
+    "setup": {
+      "files": {
+        "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\", \"dependencies\": { \"express\": \"^4.19.0\" } }\n",
+        "src/server.js": "const express = require(\"express\");\nmodule.exports = express();\n",
+        "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node, Express\n",
+        "aidd_docs/memory/api.md": "# API\n\n- GET /orders lists the orders.\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted, change nothing, and do not wait for input.",
+    "expect": {
+      "stdoutContains": [
+        "Structure",
+        "api.md",
+        "contract.md"
+      ],
+      "filesAbsent": [
+        "aidd_docs/memory/contract.md",
+        "aidd_docs/tasks"
+      ],
+      "filesUnchanged": [
+        "aidd_docs/memory/api.md",
+        "aidd_docs/memory/architecture.md",
+        "aidd_docs/memory/vcs.md"
+      ],
+      "judge": "The output describes only the memory bank: no block or note names a step of the skill, nor explains how a finding was reached. api.md is offered a merge into contract.md and is not called a stray file.",
+      "stdoutNotContains": [
+        "Structure step",
+        "Format step",
+        "Content step",
         "02-write",
         "03-check",
         "01-scan"
@@ -244,22 +293,24 @@
     "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted, change nothing, and do not wait for input.",
     "expect": {
       "stdoutContains": [
-        "Memory bank",
-        "aidd_docs/tasks/",
+        "Structure",
+        "Format",
+        "Content",
         "ecosystem"
       ],
       "filesAbsent": [
-        "aidd_docs/memory/ecosystem.md"
+        "aidd_docs/memory/ecosystem.md",
+        "aidd_docs/tasks"
       ],
       "filesUnchanged": [
         "aidd_docs/memory/vcs.md",
         "aidd_docs/memory/architecture.md"
       ],
-      "judge": "The report describes only the memory bank: no cell or note names a step of the skill, nor explains how a finding was reached.",
+      "judge": "The output describes only the memory bank: no block or note names a step of the skill, nor explains how a finding was reached.",
       "stdoutNotContains": [
-        "Match step",
-        "Review step",
-        "Prune step",
+        "Structure step",
+        "Format step",
+        "Content step",
         "02-write",
         "03-check",
         "01-scan"
@@ -325,7 +376,8 @@
         "aidd_docs/memory/codebase-map.md": "# Codebase Map\n\n## Areas\n\n- `src/`: the server\n",
         "aidd_docs/memory/coding-assertions.md": "# Coding Assertions\n\n## Before commit\n\n| Order | Command | Checks |\n| --- | --- | --- |\n| 1 | `npm test` | tests |\n",
         "aidd_docs/memory/testing.md": "# Testing\n\n## Run\n\n- `npm test`\n",
-        ".github/workflows/ci.yml": "name: CI\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n"
+        ".github/workflows/ci.yml": "name: CI\non: [push]\njobs:\n  build:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n",
+        "CLAUDE.md": "# Shop\n\n## Memory Management\n\n<aidd_project_memory>\n</aidd_project_memory>\n"
       }
     },
     "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
@@ -335,7 +387,8 @@
         "aidd_docs/memory/ecosystem.md",
         "aidd_docs/memory/architecture.md",
         "aidd_docs/memory/vcs.md",
-        "aidd_docs/memory/project-brief.md"
+        "aidd_docs/memory/project-brief.md",
+        "aidd_docs/memory/codebase-map.md"
       ],
       "fileContains": {
         "aidd_docs/memory/architecture.md": [
@@ -343,6 +396,10 @@
         ],
         "aidd_docs/memory/deployment.md": [
           "Docker"
+        ],
+        "CLAUDE.md": [
+          "@aidd_docs/memory/deployment.md",
+          "<!-- aidd_project_memory:start -->"
         ]
       },
       "fileNotContains": {

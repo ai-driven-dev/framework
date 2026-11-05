@@ -79,3 +79,68 @@ test("capabilities.md holds one row per capability, and every memory template be
   const templates = filesUnder(path.join(SKILL, "assets/templates/memory")).map((file) => path.basename(file));
   for (const template of templates) assert.ok(named.includes(template), `${template} belongs to no capability row`);
 });
+
+function skillText(file) {
+  return fs.readFileSync(path.join(SKILL, file), "utf8");
+}
+
+test("check prints its findings: no report template ships and no file names one", () => {
+  assert.equal(fs.existsSync(path.join(SKILL, "assets/report.md")), false);
+  for (const file of skillMarkdown()) {
+    assert.doesNotMatch(fs.readFileSync(file, "utf8"), /report\.md|memory-check/u, path.relative(SKILL, file));
+  }
+});
+
+test("the router says where the engine sits in each install, and the plugin ships it there", () => {
+  const router = skillText("SKILL.md");
+  for (const engine of ["memory-lint.cjs", "update_memory.js"]) {
+    assert.ok(router.includes(engine), `SKILL.md does not locate ${engine}`);
+    assert.ok(fs.existsSync(path.join(PLUGIN, "hooks", engine)), `${engine} is not under the plugin's hooks/`);
+  }
+  assert.match(router, /hooks\/aidd-context\//u, "no flat install location");
+  assert.match(router, /plugin install/u, "no plugin install location");
+});
+
+test("refresh runs scan, check, write, then sync", () => {
+  assert.match(skillText("SKILL.md"), /\(\[refresh\]\)\s*-->\s*scan\s*-->\s*check\s*-->\s*write\s*-->\s*sync/u);
+});
+
+test("check reads the bank at its root: a team file is kept, a misplaced one is offered a move, a former file a merge", () => {
+  const check = skillText("actions/03-check.md");
+  assert.match(check, /team/u, "a team's own root file is not named");
+  assert.match(check, /internal\//u, "a file under internal/ is not named");
+  assert.match(check, /misplaced/u);
+  assert.match(check, /Former files/u);
+  assert.doesNotMatch(check, /orphan/iu, "a root file no row produces is the team's, not an orphan");
+  for (const heading of ["Structure", "Format", "Content"]) assert.ok(check.includes(heading), `no ${heading} block`);
+  assert.ok(check.includes("memory-lint.cjs"), "check does not run the engine");
+});
+
+test("write ends on the engine, writes only the root, and never copies a misplaced file's capability", () => {
+  const write = skillText("actions/02-write.md");
+  assert.ok(write.includes("memory-lint.cjs"), "write does not run the engine");
+  assert.match(write, /misplaced/u);
+  assert.doesNotMatch(write, /each found capability|guidance comment/u, "a stale instruction is left");
+  assert.doesNotMatch(write, /every selected row exists/u, "a conditional file with no answer is not an absence");
+});
+
+test("sync fills the wired tools without asking when refresh calls it", () => {
+  assert.match(skillText("actions/04-sync.md"), /refresh/u);
+});
+
+test("the cases cover the merge offer, the misplaced move, and the refresh sync", () => {
+  const cases = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../skill-eval/cases.json"), "utf8"));
+  const memory = cases.filter((entry) => entry.skill === "02-project-memory");
+  const all = JSON.stringify(memory);
+  assert.doesNotMatch(all, /aidd_docs\/tasks\/|Match step|Prune step/u, "a case still expects a report file or an old step");
+  const merge = memory.find((entry) => /merge/u.test(entry.name));
+  assert.ok(merge, "no case offers a former file a merge");
+  assert.ok(merge.expect.stdoutContains.includes("api.md") && merge.expect.stdoutContains.includes("contract.md"));
+  assert.ok(merge.expect.filesUnchanged.includes("aidd_docs/memory/api.md"));
+  const misplaced = memory.find((entry) => /misplaced/u.test(entry.name));
+  assert.ok(misplaced, "no case flags a misplaced file");
+  assert.ok(misplaced.expect.filesAbsent.includes("aidd_docs/memory/auth.md"), "a root copy is not ruled out");
+  const refresh = memory.find((entry) => /^refresh/u.test(entry.name));
+  assert.ok(refresh.expect.fileContains["CLAUDE.md"].some((line) => line.includes("deployment.md")), "refresh does not sync the wired tool");
+  assert.ok(refresh.expect.filesExist.includes("aidd_docs/memory/codebase-map.md"), "the declined merge is not asserted");
+});
