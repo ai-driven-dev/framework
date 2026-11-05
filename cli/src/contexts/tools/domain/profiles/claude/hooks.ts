@@ -7,7 +7,8 @@ export const CLAUDE_HOOKS = {
   // when a manifest names it too — "Duplicate hooks file detected". The hooks fired anyway, so
   // the plugin read as failed while working.
   manifestNamesHooks: false,
-  // `.claude/settings.json` holds every other setting beside `hooks`.
-  file: { wrapper: {}, entries: { shape: "matchers" } },
+  // `.claude/settings.json` holds every other setting beside `hooks`; Claude runs prompt,
+  // agent and http hooks too, so every group and item is kept as shipped.
+  file: { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } },
   flat: { scriptsDir: ".claude/hooks/", sharedFile: ".claude/settings.json" },
 } as const satisfies HooksDescriptor;

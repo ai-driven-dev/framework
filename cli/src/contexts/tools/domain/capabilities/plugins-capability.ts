@@ -24,6 +24,8 @@ export interface ProjectHooksFormat {
   readonly scriptPath: (pluginName: string, hooksRelativePath: string) => string;
   /** The directory holding one plugin's copied scripts, which nothing else writes to. */
   readonly scriptDir: (pluginName: string) => string;
+  /** Whether an entry's command runs one of the plugin's copied scripts. */
+  readonly runsPluginScript: (command: string, pluginName: string) => boolean;
 }
 
 /**

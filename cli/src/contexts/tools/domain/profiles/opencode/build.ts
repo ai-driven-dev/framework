@@ -145,7 +145,7 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
         transform: transformOpencodeFlatAgent,
       },
       mcp: { supported: false }, // handled by emitConfigArtifact (opencode.json mcp)
-      hooks: flatHooksArtifact(OPENCODE_HOOKS, generateOpencodeHooksBridge),
+      hooks: flatHooksArtifact(OPENCODE_HOOKS, { bridge: generateOpencodeHooksBridge }),
       rules: { supported: false },
       commands: { supported: false },
     },

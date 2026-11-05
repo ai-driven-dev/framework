@@ -9,6 +9,7 @@ import {
   flatHooksPathWithLoaderEntry,
   genericFlatHooksFile,
 } from "../../../../kernel/materialization/flat-paths.js";
+import type { AiToolId } from "../../../../kernel/tool.js";
 import type { ArtifactContract } from "../build-contract.js";
 import { HooksCapability } from "../capabilities/hooks-capability.js";
 import type { FlatHooksBridge, ProjectHooksFormat } from "../capabilities/plugins-capability.js";
@@ -19,6 +20,7 @@ import {
   mergeHooks,
   pluginScriptDir,
   pluginScriptPath,
+  runsPluginScript,
   unmergeHooks,
 } from "./hooks-merge.js";
 
@@ -80,16 +82,19 @@ export function pluginTreeHooksArtifact(): ArtifactContract {
  * the bridge generated for it. */
 export function flatHooksArtifact(
   descriptor: HooksDescriptor & { readonly flat: FlatHooksRoute },
-  bridge?: FlatHooksBridge["generate"]
+  /** The tool a hooks file's warnings are reported under, or the bridge a loader imports. */
+  reader: { readonly tool: AiToolId } | { readonly bridge: FlatHooksBridge["generate"] }
 ): ArtifactContract {
   const route = descriptor.flat;
   const { sharedFile, loaderEntry } = route;
   const { file } = descriptor;
+  const tool = "tool" in reader ? reader.tool : undefined;
+  const bridge = "bridge" in reader ? reader.bridge : undefined;
   return {
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
     path: (plugin, rel) => flatHooksPath(route, plugin, rel),
-    ...(file === undefined
+    ...(file === undefined || tool === undefined
       ? {}
       : {
           hooksFile: {
@@ -100,14 +105,11 @@ export function flatHooksArtifact(
               pluginHooks: string,
               plugin: string,
               locate: LocatePluginPath
-            ) =>
-              mergeHooks(
-                existing,
-                pluginHooks,
-                plugin,
-                mergeTarget(descriptor, file, route),
-                locate
-              ),
+            ) => {
+              const target = mergeTarget(descriptor, file, route);
+              const merged = mergeHooks(existing, pluginHooks, plugin, target, locate);
+              return { ...merged, warnings: merged.warnings.map((w) => `${tool}: ${w}`) };
+            },
           },
         }),
     ...(loaderEntry !== undefined && bridge !== undefined
@@ -216,6 +218,7 @@ export function projectHooksSupport(
       unmerge: (existing, plugin) => unmergeHooks(existing, plugin, target),
       scriptPath: (plugin, rel) => pluginScriptPath(route.scriptsDir, plugin, rel),
       scriptDir: (plugin) => pluginScriptDir(route.scriptsDir, plugin),
+      runsPluginScript: (command, plugin) => runsPluginScript(command, route.scriptsDir, plugin),
     },
   };
 }

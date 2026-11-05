@@ -43,7 +43,7 @@ export type ArtifactContract =
         readonly path: (plugin: string) => string;
         readonly shared: boolean;
         /** The existing file, `null` for a plugin's own, and the plugin's raw hooks.json;
-         * `locate` places a path the plugin ships outside `hooks/`, an agent or a skill. */
+         * `locate` names, in a command, a path the plugin ships outside `hooks/`. */
         readonly merge: (
           existing: string | null,
           pluginHooks: string,

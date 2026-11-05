@@ -42,7 +42,9 @@ const locate = (path: string) => `flat/${path}`;
 
 describe("a flat build's hooks artifact", () => {
   it("puts each plugin's scripts in a folder of its own, and its hooks file beside them", () => {
-    const artifact = supported(flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }));
+    const artifact = supported(
+      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }, { tool: "cursor" })
+    );
 
     expect(artifact.source).toStrictEqual(SOURCE);
     expect(artifact.path("aidd-dev", "hooks/lib/journal.cjs")).toBe(
@@ -58,11 +60,14 @@ describe("a flat build's hooks artifact", () => {
 
   it("merges into the route's shared file, through the engine, with the tool's own events", () => {
     const artifact = supported(
-      flatHooksArtifact({
-        file: FLAT_FILE,
-        eventMap: { Start: ["start"] },
-        flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
-      })
+      flatHooksArtifact(
+        {
+          file: FLAT_FILE,
+          eventMap: { Start: ["start"] },
+          flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
+        },
+        { tool: "cursor" }
+      )
     );
 
     expect([artifact.hooksFile?.path("aidd-dev"), artifact.hooksFile?.shared]).toStrictEqual([
@@ -73,13 +78,16 @@ describe("a flat build's hooks artifact", () => {
       JSON.parse(artifact.hooksFile?.merge(null, SHIPPED, "p", locate).content ?? "")
     ).toStrictEqual({
       version: 1,
-      hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs ./flat/skills/s" }] },
+      hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs flat/skills/s" }] },
     });
   });
 
   it("writes a plugin's own file where the route shares none", () => {
     const artifact = supported(
-      flatHooksArtifact({ file: FLAT_FILE, flat: { scriptsDir: ".tool/hooks/" } })
+      flatHooksArtifact(
+        { file: FLAT_FILE, flat: { scriptsDir: ".tool/hooks/" } },
+        { tool: "cursor" }
+      )
     );
 
     expect([artifact.hooksFile?.path("aidd-dev"), artifact.hooksFile?.shared]).toStrictEqual([
@@ -90,19 +98,31 @@ describe("a flat build's hooks artifact", () => {
       JSON.parse(artifact.hooksFile?.merge(null, SHIPPED, "p", locate).content ?? "")
     ).toStrictEqual({
       version: 1,
-      hooks: { Start: [{ command: "node ./.tool/hooks/p/a.cjs ./flat/skills/s" }] },
+      hooks: { Start: [{ command: "node ./.tool/hooks/p/a.cjs flat/skills/s" }] },
     });
+  });
+
+  it("writes no hooks file for a loader, which a bridge feeds instead", () => {
+    expect(
+      supported(
+        flatHooksArtifact({ file: FLAT_FILE, flat: { scriptsDir: ".tool/hooks/" } }, { bridge })
+      ).hooksFile
+    ).toBeUndefined();
   });
 
   it("writes no hooks file for a tool that reads none", () => {
     expect(
-      supported(flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } })).hooksFile
+      supported(flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }, { tool: "cursor" }))
+        .hooksFile
     ).toBeUndefined();
   });
 
   it("delivers a loader's own module beside the loader, and every other script per plugin", () => {
     const artifact = supported(
-      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })
+      flatHooksArtifact(
+        { flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } },
+        { tool: "cursor" }
+      )
     );
 
     expect(artifact.path("aidd-dev", "hooks/tool-plugin.js")).toBe(".tool/plugin/aidd-dev.js");
@@ -111,7 +131,7 @@ describe("a flat build's hooks artifact", () => {
 
   it("replaces the hooks file with a generated bridge for a loader", () => {
     const artifact = supported(
-      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }, bridge)
+      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }, { bridge })
     );
 
     expect(artifact.skipHooksJson).toBe(true);
@@ -122,9 +142,14 @@ describe("a flat build's hooks artifact", () => {
 
   it("keeps the hooks file without a bridge, or without a loader to import one", () => {
     const noBridge = supported(
-      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })
+      flatHooksArtifact(
+        { flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } },
+        { tool: "cursor" }
+      )
     );
-    const noLoader = supported(flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }, bridge));
+    const noLoader = supported(
+      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }, { bridge })
+    );
 
     expect([noBridge.skipHooksJson, noBridge.hooksBridge]).toStrictEqual([undefined, undefined]);
     expect([noLoader.skipHooksJson, noLoader.hooksBridge]).toStrictEqual([undefined, undefined]);
@@ -204,10 +229,14 @@ describe("a tool's plugins capability, as far as hooks go", () => {
     ]).toStrictEqual(["hooks.json", "project", ".tool/hooks.json"]);
     expect(JSON.parse(merged)).toStrictEqual({
       version: 1,
-      hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs ./skills/s" }] },
+      hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs skills/s" }] },
     });
     expect(JSON.parse(unmerge(merged, "p"))).toStrictEqual({ version: 1 });
     expect(scriptPath("p", "hooks/lib/a.cjs")).toBe(".tool/hooks/p/lib/a.cjs");
     expect(scriptDir("p")).toBe(".tool/hooks/p/");
+    expect([
+      support.projectHooksFormat.runsPluginScript("node ./.tool/hooks/p/a.cjs", "p"),
+      support.projectHooksFormat.runsPluginScript("node ./x/.tool/hooks/p/a.cjs", "p"),
+    ]).toStrictEqual([true, false]);
   });
 });

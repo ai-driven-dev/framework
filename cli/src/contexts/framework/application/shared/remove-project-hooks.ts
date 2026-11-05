@@ -143,10 +143,9 @@ function contributedEntries(
   format: ProjectHooksFormat
 ): readonly { event: string; entry: HookEntry }[] {
   const parsed = JSON.parse(content) as { hooks?: Record<string, HookEntry[]> };
-  const marker = format.scriptDir(pluginName);
   return Object.entries(parsed.hooks ?? {}).flatMap(([event, entries]) =>
     entries
-      .filter((entry) => typeof entry.command === "string" && entry.command.includes(marker))
+      .filter((entry) => format.runsPluginScript(String(entry.command), pluginName))
       .map((entry) => ({ event, entry }))
   );
 }

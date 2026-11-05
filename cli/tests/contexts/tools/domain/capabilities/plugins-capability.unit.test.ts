@@ -297,6 +297,7 @@ describe("PluginsCapability base directory resolution", () => {
       unmerge: () => "",
       scriptPath: () => "",
       scriptDir: () => "",
+      runsPluginScript: () => false,
     };
     const message = "projectHooksFormat is required exactly when hooksDestination is 'project'.";
 
