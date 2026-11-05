@@ -12,5 +12,5 @@ not code that contradicts it.
    - A "why" the code and history do not support.
    - A decision, convention, or gotcha the code shows but the file omits.
    - A fact that belongs under another file's name, for check to dedup.
-   - Any remaining breach of `memory-rules.md`.
+   - Any breach of the reader rules in `memory-rules.md`. The machine rules are the engine's, never yours.
 3. **Return** the flags. Do not edit the file.
