@@ -74,7 +74,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🌐 Browser
 
-> Browse applications and services. Browser setup and conventions: [browsing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/browsing/browsing.md). Test instructions: [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md).
+> Browse applications and services. Browser setup and conventions: [browsing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/browsing.md). Test instructions: [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
