@@ -1,7 +1,7 @@
 ---
 name: 02-project-memory
 description: Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up or refresh project memory, or rewire it into a tool. Not for editing one existing memory file.
-argument-hint: setup | refresh | rewire
+argument-hint: setup | refresh | check | rewire
 ---
 
 # Project Memory
@@ -10,6 +10,7 @@ argument-hint: setup | refresh | rewire
 flowchart LR
   new([no argument, or setup]) --> scan --> write --> sync --> wired([memory wired])
   update([refresh]) --> scan --> check --> write --> sync
+  inspect([check]) --> scan --> check -.->|approved| write
   rewire([rewire]) --> sync
   scan -.-> empty([nothing to remember])
 ```
@@ -22,14 +23,14 @@ Run the flow above, reading only the next action file.
 | ------ | ------------------------------- |
 | scan   | read the project                |
 | write  | write the memory                |
-| check  | print what drifted, change nothing |
+| check  | print what drifted |
 | sync   | wire it into the tools          |
 
 ## Engine
 
 `memory-lint.cjs` and `update_memory.js` are found by file name, first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill. A Kilo or OpenCode plugin build ships none. Found none: lint by the Machine table of [memory-rules.md](references/memory-rules.md) and write each block from the bank.
 
-From the project root: `node memory-lint.cjs . aidd_docs/memory/<file>.md` per file, `node update_memory.js <tool>...`.
+`node memory-lint.cjs . aidd_docs/memory/<file>.md` per file, `node update_memory.js <tool>...`.
 
 ## Transversal rules
 
