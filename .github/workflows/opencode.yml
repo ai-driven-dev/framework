@@ -14,8 +14,6 @@ name: OpenCode agent
 # itself. The agent step holds no GitHub credential.
 
 on:
-  push:
-    branches: [feat/opencode-review-after-submit]
   issue_comment:
     types: [created]
   pull_request_review_comment:
@@ -32,7 +30,7 @@ jobs:
   opencode:
     name: Run OpenCode
     # 8973343 is @alexsoyes (Alex), the repository owner.
-    if: github.ref == 'refs/heads/feat/opencode-review-after-submit'
+    if: github.event.comment.user.id == 8973343 && startsWith(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -40,8 +38,8 @@ jobs:
       pull-requests: read
     env:
       REPO: ${{ github.repository }}
-      NUMBER: '1150'
-      IS_PR: 'true'
+      NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+      IS_PR: ${{ github.event.issue.pull_request != null || github.event.pull_request != null }}
     steps:
       - name: Resolve the branch to work on
         id: target
@@ -74,7 +72,7 @@ jobs:
       # The image must come from the default branch, never the PR being edited.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.repository.default_branch }}
           path: .aidd-runtime
           sparse-checkout: |
             docker/aidd-opencode
@@ -104,8 +102,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          event="$RUNNER_TEMP/conversation-test-event.json"
-          jq -n '{pull_request:{number:1150,title:"Conversation smoke test",body:""},comment:{id:4481119939,in_reply_to_id:4481118309,path:".github/workflows/opencode.yml",line:102,diff_hunk:"",body:"/opencode Do not change any files. What are the first seven characters of the commit in the earlier OpenCode review? Reply with just that hash."}}' > "$event"
+          event="$GITHUB_EVENT_PATH"
           # Fetch discussion with the read-only workflow token, never inside the agent.
           discussion="$RUNNER_TEMP/discussion.json"
           root_comment=0
@@ -113,7 +110,7 @@ jobs:
           if [ "$IS_PR" = "true" ]; then
             gh api --paginate "repos/$REPO/issues/$NUMBER/comments?per_page=100" |
               jq -sc 'add // []' > "$discussion"
-            if [ "pull_request_review_comment" = "pull_request_review_comment" ]; then
+            if [ "$GITHUB_EVENT_NAME" = "pull_request_review_comment" ]; then
               root_comment=$(jq -er '.comment.in_reply_to_id // .comment.id' "$event")
               [[ $root_comment =~ ^[1-9][0-9]*$ ]]
               gh api --paginate "repos/$REPO/pulls/$NUMBER/comments?per_page=100" |
@@ -242,8 +239,8 @@ jobs:
         run: |
           set -euo pipefail
           post_reply() {
-            if [ "pull_request_review_comment" = "pull_request_review_comment" ]; then
-              root_comment=$(jq -er '.comment.in_reply_to_id // .comment.id' "$RUNNER_TEMP/conversation-test-event.json")
+            if [ "$GITHUB_EVENT_NAME" = "pull_request_review_comment" ]; then
+              root_comment=$(jq -er '.comment.in_reply_to_id // .comment.id' "$GITHUB_EVENT_PATH")
               [[ $root_comment =~ ^[1-9][0-9]*$ ]]
               jq -Rs '{body: .}' | gh api --method POST \
                 "repos/$REPO/pulls/$NUMBER/comments/$root_comment/replies" --input - --silent
@@ -262,8 +259,6 @@ jobs:
 
           footer="No file changed."
           if [ -n "$(git status --porcelain)" ]; then
-            echo '::error::The smoke test must not change files.'
-            exit 1
             bot_id="$(gh api "users/${APP_SLUG}%5Bbot%5D" --jq .id)"
             git config user.name "${APP_SLUG}[bot]"
             git config user.email "${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com"
