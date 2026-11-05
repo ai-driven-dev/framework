@@ -45,7 +45,6 @@ Bundled how-to sheets:
 
 - [Connect your services](../plugins/aidd-context/skills/12-cook/assets/recipes/connect-services.md)
 - [Token optimization](../plugins/aidd-context/skills/12-cook/assets/recipes/token-optimization.md)
-- [The AIDDy mascot in the ChatGPT desktop app](../plugins/aidd-context/skills/12-cook/assets/recipes/install-aiddy-in-codex.md)
 
 ## 4. Flows
 
