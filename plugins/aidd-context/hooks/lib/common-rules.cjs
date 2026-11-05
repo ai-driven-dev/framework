@@ -81,15 +81,16 @@ const FD_DUPLICATION = /\d*>&(?:\d+|-)(?![\w./-])/gu;
 const TO_DEV_NULL = /(?:\d+|&)?>>?\|?\s*\/dev\/null(?![\w./-])/gu;
 const REDIRECTION = />/u;
 
-// A quoted string is an argument, never a command or a redirection: its content is blanked and
-// its quotes kept, so `echo x > "f"` still redirects.
+// A quoted word (`"rm"`) is read unquoted; any other quoted string is an argument, never a
+// command or a redirection, and is dropped.
 const QUOTED = /'[^']*'|"(?:[^"\\]|\\.)*"/gu;
+const QUOTED_WORD = /^.[\w./-]+.$/u;
 
-// A command word counts at command position only: the start of the text, or after `;`, `&&`,
-// `||`, `|`, `$(`, a backtick or `-exec`, past any `sudo`, `exec`, `xargs` or `env VAR=x`. A path
-// before it resolves by basename (`/bin/rm`).
-const POSITION = "(?:^|[;\\n|`]|&&|\\$\\(|(?<=\\s)-exec(?=\\s))";
-const PREFIXES = "(?:\\s*(?:sudo|exec|xargs)(?:\\s+-\\S+)*(?=\\s)|\\s*env(?:\\s+\\w+=\\S*)+(?=\\s))*";
+// A command word counts at command position only: the start of the text, or after `;`, `&`,
+// `&&`, `|`, `||`, `(`, `$(`, a backtick or `-exec`, past any `sudo`, `exec` or `xargs` with their
+// flags, or `env VAR=x`. A path before it resolves by basename (`/bin/rm`).
+const POSITION = "(?:^|[;\\n|`(&]|(?<=\\s)-exec(?=\\s))";
+const PREFIXES = "(?:\\s*(?:sudo|exec|xargs)(?:\\s+-\\S+(?:\\s+[^-\\s]\\S*)?)*(?=\\s)|\\s*env(?:\\s+\\w+=\\S*)+(?=\\s))*";
 const DIRECTORY = "(?:[^\\s;|&`()'\"]*\\/)?";
 const AT_COMMAND = `${POSITION}${PREFIXES}\\s*${DIRECTORY}`;
 // A word stands alone: never the start of a longer word, a file name or a path.
@@ -101,7 +102,7 @@ const GIT_WRITE = new RegExp(`${AT_COMMAND}git(?:\\s+-[cC]\\s+\\S+)*\\s+(?:apply
 /** Whether a shell command's text matches a write form, read outside quoted strings. */
 function isShellWrite(command) {
   if (typeof command !== "string") return false;
-  const unquoted = command.replace(QUOTED, (quoted) => quoted[0] + quoted[0]);
+  const unquoted = command.replace(QUOTED, (quoted) => (QUOTED_WORD.test(quoted) ? quoted.slice(1, -1) : ""));
   const redirections = unquoted.replace(FD_DUPLICATION, "").replace(TO_DEV_NULL, "");
   return REDIRECTION.test(redirections) || WRITE_COMMAND.test(unquoted) || SED_IN_PLACE.test(unquoted) || GIT_WRITE.test(unquoted);
 }

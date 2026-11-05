@@ -120,7 +120,18 @@ test("isShellWrite: rmdir does not match, because it is not a contract form and 
   assert.equal(isShellWrite("rmdir d"), false);
 });
 
-test("isShellWrite: quoted text is blanked, the quotes themselves are kept", () => {
+test("isShellWrite: a subshell, a background job and sudo with its flags are command positions", () => {
+  for (const command of ["( rm f )", "(rm f)", "a & rm f", "sudo -u x rm f", "sudo -E rm f", "ls | xargs -n 1 rm"]) {
+    assert.equal(isShellWrite(command), true, command);
+  }
+});
+
+test("isShellWrite: a quoted command word is read unquoted", () => {
+  for (const command of ['"rm" f', "'mv' a b", 'a; "/bin/rm" f']) assert.equal(isShellWrite(command), true, command);
+  assert.equal(isShellWrite('echo "rm"'), false);
+});
+
+test("isShellWrite: quoted text is never a command or a redirection", () => {
   for (const command of ['git commit -m "rm it"', 'grep ">" f', 'echo "a; rm b"', "cat 'a > b'", 'git log --grep "restore"', "echo 'sed -i x'"]) {
     assert.equal(isShellWrite(command), false, command);
   }
