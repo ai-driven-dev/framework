@@ -311,7 +311,10 @@ describe("PluginContentTranslator.translate()", () => {
 
   describe("antigravity target (flat mode, one-level skills)", () => {
     it("emits a skill as .agents/skills/<plugin>-<skill>/, never nested under the plugin", () => {
-      expect(pathsFor(antigravity)).toEqual([".agents/skills/sample-plugin-hello/SKILL.md"]);
+      expect(pathsFor(antigravity)).toEqual([
+        ".agents/agents/sample-plugin-reviewer/agent.md",
+        ".agents/skills/sample-plugin-hello/SKILL.md",
+      ]);
     });
   });
 
