@@ -146,115 +146,140 @@ Same harness, repositories, injected drifts, prompts and blind Sonnet grader as 
 
 | Item | Value |
 | ---- | ----- |
-| Skill measured | `plugins/aidd-context/skills/02-project-memory` and `plugins/aidd-context/hooks` taken from `git archive` of head `1b996fb6a`, the last commit before this measurement, into a second snapshot beside the first |
-| Skill size | 28 files, 4894 words in total, against 44 files and 7132 words (baseline counting: the skill folder only, hooks excluded). A delta of -2238 words, -31%. The engine and its rules are in `hooks/`, outside both counts |
+| Skill measured | `plugins/aidd-context/skills/02-project-memory` and `plugins/aidd-context/hooks` taken from `git archive` of head `186feb5d7`, which includes the refresh fix (`98d232e60`: review and approval steps kept in reach of a small model), into a second snapshot beside the first |
+| Skill size | 28 files, 4938 words in total, against 44 files and 7132 words (baseline counting: the skill folder only, hooks excluded). A delta of -2194 words, -31%. The engine and its rules are in `hooks/`, outside both counts |
 | Engine | `memory.cjs check <root>` replaces `memory-lint.cjs`. Errors and warnings are read from its header line `<plugin>: <n> errors, <m> warnings`. Its rules are not the old ones: the untouched injected bank scores 18 errors and 61 warnings, against 3 and 61 for the old engine. Errors per bank are therefore not comparable across the two engines |
-| Models | Haiku only. Qwen was not run: see "Why Qwen did not run" |
-| Run folders | `~/skill-tests/lean-memory/runs-after/<kind>/haiku/<n>/` |
+| Models | Haiku, graded blind as before. Qwen 3.8 Flash, **not graded**: deterministic numbers only, to spare the grader's cost |
+| Drift check | `drift.py` on the final bank: a drift is fixed when the baseline line carrying it no longer holds verbatim and the injected text is gone |
+| Run folders | `~/skill-tests/lean-memory/runs-after/<kind>/<model>/<n>/` |
 
-## Setup, after
+A first measurement of this change, before the refresh fix, corrected 4 of 12 drifts on Haiku with one run at 0.25 USD; it is replaced by the rows below.
 
-Haiku, three runs per repository. Facts: correct / wrong / unverifiable of claims checked.
+## Setup, after (Haiku)
+
+Three runs per repository. Runs 1 and 2 of each repository were graded blind; run 3 of each was not, for budget. Facts: correct / wrong / unverifiable of claims checked.
 
 | Case | Run | Facts | Lint | Skill words read | Cost USD | Seconds |
 | ---- | --- | ----- | ---- | ---------------- | -------- | ------- |
-| setup-ops | 1 | 33/0/1 of 34 | 0/0 | 13 files, 3685 | 0.035 | 113 |
-| setup-ops | 2 | 33/0/1 of 34 | 0/0 | 12 files, 3392 | 0.034 | 146 |
-| setup-ops | 3 | 30/0/0 of 30 | 0/0 | 12 files, 3469 | 0.036 | 119 |
-| setup-tooling | 1 | 24/1/1 of 26 | 0/0 | 17 files, 4072 | 0.031 | 94 |
-| setup-tooling | 2 | 20/1/1 of 22 | 0/0 | 13 files, 3685 | 0.036 | 163 |
-| setup-tooling | 3 | 18/1/1 of 20 | 0/0 | 19 files, 3988 | 0.046 | 159 |
+| setup-ops | 1 | 30/0/0 of 30 | 0/0 | 12 files, 3413 | 0.036 | 118 |
+| setup-ops | 2 | 27/0/3 of 30 | 0/0 | 21 files, 4375 | 0.031 | 107 |
+| setup-ops | 3 | not graded | 0/0 | 12 files, 3413 | 0.028 | 98 |
+| setup-tooling | 1 | 22/0/2 of 24 | 0/0 | 12 files, 3591 | 0.034 | 130 |
+| setup-tooling | 2 | 26/0/4 of 30 | 0/0 | 12 files, 3155 | 0.041 | 138 |
+| setup-tooling | 3 | not graded | 0/0 | 13 files, 3589 | 0.036 | 110 |
 
 | Model | Measure | Before | After | Delta |
 | ----- | ------- | ------ | ----- | ----- |
-| haiku | Correct facts | 153 | 158 | +5 |
-| haiku | Wrong facts | 5 of 160 checked (3.1%) | 3 of 166 checked (1.8%) | -2 |
+| haiku | Correct facts | 153 of 160 checked, six banks | 105 of 114 checked, four banks | rate 95.6% to 92.1%, because the grader marked more claims unverifiable |
+| haiku | Wrong facts | 5 of 160 (3.1%) | 0 of 114 (0%) | -3.1 points |
 | haiku | Lint errors per bank | 0.33 | 0 | not comparable, other engine; 0 warnings in all six banks |
-| haiku | Skill words read per run | 3025 | 3715 | +690 (worse), though the skill is smaller: 76% of it read, against 42% |
-| haiku | Cost per run | 0.046 | 0.036 | -0.010 |
-| haiku | Seconds per run | 164 | 132 | -32 |
-| haiku | Memory files written | 9 to 12 | 8 to 10 | fewer |
+| haiku | Skill words read per run | 3025 | 3589 | +564 (worse), though the skill is smaller: 73% of it read, against 42% |
+| haiku | Cost per run | 0.046 | 0.034 | -0.012 |
+| haiku | Seconds per run | 164 | 117 | -47 |
+| haiku | Memory files written | 9 to 12 | 6 to 9 | fewer |
 
-The three wrong facts in setup-tooling are one invented specific each (a script named where the hook calls a file, `gh` said to be required by `AGENTS.md`).
+## Setup, after (Qwen 3.8 Flash, ungraded)
 
-## Refresh, after
+Facts were not graded. Lint is from `memory.cjs check` on the final bank.
+
+| Case | Run | Memory files | Lint | Skill words read | Cost USD | Seconds |
+| ---- | --- | ------------ | ---- | ---------------- | -------- | ------- |
+| setup-ops | 1 | 11 | 0/0 | 23 files, 4285 | 0.104 | 687 |
+| setup-ops | 2 | 11 | 0/0 | 12 files, 3413 | 0.127 | 710 |
+| setup-ops | 3 | 11 | 0/0 | 23 files, 4285 | 0.150 | 781 |
+| setup-tooling | 1 | 8 | 0/0 | 12 files, 3413 | 0.065 | 528 |
+| setup-tooling | 2 | 8 | 0/0 | 11 files, 2979 | 0.044 | 416 |
+| setup-tooling | 3 | 8 | 0/0 | 14 files, 3885 | 0.089 | 432 |
+
+| Model | Measure | Before | After (ungraded) | Delta |
+| ----- | ------- | ------ | ---------------- | ----- |
+| qwen | Lint errors per bank | 1.33 | 0, 0 warnings | not comparable, other engine |
+| qwen | Skill words read per run | 4552 | 3710 | -842 |
+| qwen | Cost per run | 0.094 | 0.097 | +0.003 (flat) |
+| qwen | Seconds per run | 576 | 593 | +17 (flat) |
+| qwen | Memory files written | 10 to 15 | 8 to 11 | fewer |
+| qwen | Correct and wrong facts | 166 / 9 | not graded | none |
+
+## Refresh, after (Haiku)
 
 Same four drifts, same prompt (approve additions and corrections, decline removals).
 
-| Run | Flagged | Corrected | Files changed | Lines removed | Lint | Facts | Skill words read | Cost USD | Seconds |
-| --- | ------- | --------- | ------------- | ------------- | ---- | ----- | ---------------- | -------- | ------- |
-| 1 | D2, D4 | D2 | 1, plus `CLAUDE.md` | 0 | 17/61 | 32/4/0 of 36 | 10 files, 2596 | 0.027 | 63 |
-| 2 | D2, D3, D4 | D3, D4 | 9, plus `CLAUDE.md` | 25 | 8/60 | 25/2/3 of 30 | 12 files, 3123 | 0.250 | 252 |
-| 3 | D2, D4 | D2 | 1 | 0 | 17/61 | 18/4/0 of 22 | 12 files, 3384 | 0.022 | 50 |
+| Run | Corrected | Memory files changed | Lines dropped | Lint | Facts | Skill words read | Cost USD | Seconds |
+| --- | --------- | -------------------- | ------------- | ---- | ----- | ---------------- | -------- | ------- |
+| 1 | D2, D4 | 3, plus `CLAUDE.md` | 2 | 17/61 | 21/3/0 of 24 | 14 files, 3730 | 0.031 | 79 |
+| 2 | D2, D3, D4 | 3 | 1 | 17/61 | 10/3/1 of 14 | 9 files, 2492 | 0.032 | 87 |
+| 3 | D2, D4 | 2, plus `CLAUDE.md` | 0 | 17/61 | 26/3/1 of 30 | 12 files, 3167 | 0.027 | 62 |
+
+A drift counts as flagged when its wrong text appears in the output or the bank change; here flagged and corrected coincide.
 
 | Model | Measure | Before | After | Delta |
 | ----- | ------- | ------ | ----- | ----- |
-| haiku | Drifts flagged | 8 of 12 (D1 1/3, D2 3/3, D3 1/3, D4 3/3) | 7 of 12 (D1 0/3, D2 3/3, D3 1/3, D4 3/3) | -1 |
-| haiku | Drifts corrected | 8 of 12 | 4 of 12 (D2 2/3, D3 1/3, D4 1/3, D1 0/3) | -4 |
-| haiku | Files changed in `aidd_docs/memory/` | 2, 6, 3 | 1, 9, 1 | run 2 worse |
-| haiku | Baseline lines removed | 1, 2, 1 | 0, 25, 0 | run 2 worse |
-| haiku | Wrong facts after | 1, 2, 2 of 30, 20, 20 | 4, 2, 4 of 36, 30, 22 (10 of 88, 11%, against 5 of 70, 7%) | worse |
-| haiku | Correct facts | 60 | 75 | +15 |
-| haiku | Cost per run | 0.036 | 0.100 (0.027, 0.250, 0.022) | worse; median 0.027 |
-| haiku | Seconds per run | 93 | 122 | worse |
+| haiku | Drifts flagged | 8 of 12 (D1 1/3, D2 3/3, D3 1/3, D4 3/3) | 7 of 12 (D1 0/3, D2 3/3, D3 1/3, D4 3/3) | -1, all of it D1 |
+| haiku | Drifts corrected | 8 of 12 | 7 of 12 | -1, all of it D1 |
+| haiku | Drifts other than D1 | 7 of 9 | 7 of 9 | equal |
+| haiku | Memory files changed | 2, 6, 3 | 3, 3, 2 | equal or fewer |
+| haiku | Baseline lines dropped | 1, 2, 1 | 2, 1, 0 | equal |
+| haiku | Correct facts | 60 | 57 | -3 |
+| haiku | Wrong facts | 1, 2, 2 of 30, 20, 20 (5 of 70, 7%) | 3, 3, 3 of 24, 14, 30 (9 of 68, 13%) | worse, see below |
+| haiku | Cost per run | 0.036 | 0.030 | -0.006 |
+| haiku | Seconds per run | 93 | 76 | -17 |
+| haiku | Skill words read per run | 2803 | 3130 | +327 (worse) |
 
 Reading of the refresh rows:
 
-- The unfixed drifts account for the wrong facts. The untouched bank scores 4 to 5 wrong; each after-run still carries the uncorrected drifts D1 to D4 it left, plus bank claims about an `aidd_docs/` folder the grader's clean repository does not hold (present in the original bank).
-- Runs 1 and 3 declined every engine finding that removes a line and reported "Check (content): not run". The content step, where reviewers read each file against the code, is where D3 and D4 are found; the engine finds D2 alone. Run 2 ran it (10 reviewer agents), found D3 and D4, and spent 0.25.
-- D1, "Three workspace packages in total.", is never caught by the engine: `memory-rules.cjs` leaves "two" and "three" out of its count words on purpose, so only the content step can find it, and no run did.
-- The refresh now ends with sync, which edited `CLAUDE.md` in two runs (added the list of other `aidd_docs/` folders). The prompt approves additions, so this counts as approved here.
-- Run 2 rewrote nine files and dropped 25 baseline lines, which its own summary calls counts, durations and versions (rewords count as removed). The prompt declined removals; the model judged a rewording of a flagged line a correction.
+- Six of the nine wrong claims predate the injection: they sit in the original bank and in the grader's clean repository (a cited `aidd_docs/` folder, a cited `INSTALL.md`, a cited rules folder, a `make check` hook line). The other three are uncorrected drifts: D1 in two runs, D3 in one.
+- No run printed the exact words "Structure findings" in this refresh, and none spawned a reviewer agent: the fix keeps the review in the run, not in a fan-out.
+- D1, "Three workspace packages in total.", is never caught by the engine: `memory-rules.cjs` leaves "two" and "three" out of its count words on purpose, because the rule measured 62% false positives with them. The miss is accepted; the content review is where it belongs. The baseline Haiku caught it in 1 of 3 runs, this one in 0 of 3.
+- The refresh ends with sync, which edited `CLAUDE.md` in two runs (a list of the other `aidd_docs/` folders). The prompt approves additions.
+
+## Refresh, after (Qwen 3.8 Flash, ungraded)
+
+Deterministic numbers only; the facts were not graded. Files include four new capability files in every run.
+
+| Run | Drifts corrected | Memory files changed or created | Files deleted | Lines dropped | Lint | Skill words read | Cost USD | Seconds |
+| --- | ---------------- | ------------------------------- | ------------- | ------------- | ---- | ---------------- | -------- | ------- |
+| 1 | D1, D2, D3, D4 | 17 | 0 | 30 | 0/61 | 12 files, 3167 | 0.125 | 1077 |
+| 2 | D1, D2, D3, D4 | 18 | 7 | 22 | 0/59 | 19 files, 4017 | 0.123 | 878 |
+| 3 | D1, D2, D3, D4 | 18 | 7 | 22 | 0/30 | 16 files, 3444 | 0.087 | 681 |
+
+| Model | Measure | Before | After (ungraded) | Delta |
+| ----- | ------- | ------ | ---------------- | ----- |
+| qwen | Drifts flagged and corrected | 11 and 12 of 12 | 12 and 12 of 12 | +1 flagged |
+| qwen | Memory files changed or created | 19, 19, 11 | 17, 18, 18 | equal |
+| qwen | Baseline lines dropped | 36, 29, 12 | 30, 22, 22 | fewer in total (74 against 77), not fewer in every run |
+| qwen | Files deleted | 0 | 0, 7, 7 | worse: runs 2 and 3 merged seven former files and removed them |
+| qwen | Cost per run | 0.138 | 0.112 | -0.026 |
+| qwen | Seconds per run | 1497 | 879 | -618 |
+| qwen | Skill words read per run | 3281 | 3543 | +262 |
+
+Qwen finds and fixes every drift, but it still rewrites most of the bank under a prompt that declines removals, and in two of three runs it deletes the former files after merging them, which the prompt did not approve.
 
 ## The 8 eval cases, after
 
-`scripts/skill-eval/cases.json` now holds 8 cases for `02-project-memory`, against 6. Deterministic checks only; `judge` criteria need a second Claude run and were not executed. Run folder: `~/skill-tests/lean-memory/runs-after/cases6/haiku/<index>/`.
+`scripts/skill-eval/cases.json` now holds 8 cases for `02-project-memory`, against 6. Deterministic checks only, Haiku; `judge` criteria need a second Claude run and were not executed. Run folder: `~/skill-tests/lean-memory/runs-after/cases6/haiku/<index>/`.
 
-| Index | Case | New | Checks passed | Failed | Cost USD |
-| ----- | ---- | --- | ------------- | ------ | -------- |
-| 0 | setup writes the bank to its destinations | no, checks changed | 16 of 17 | `ecosystem.md` matches the diagram-only pattern | 0.018 |
-| 1 | setup keeps a team's own files | yes | 8 of 8 | none | 0.018 |
-| 2 | check keeps a team file and flags a misplaced one | yes, replaces the orphan-file case | 18 of 21 | stdout contains `Structure findings`, `Format findings`, `Content findings` | 0.008 |
-| 3 | check offers an old file a merge into its capability's file | yes | 14 of 15 | stdout contains `Structure findings` | 0.008 |
-| 4 | check flags the always file the bank lacks | no, checks changed | 11 of 14 | the same three heading strings | 0.009 |
-| 5 | rewire fills the context block | no | 3 of 3 | none | 0.007 |
-| 6 | an empty repo produces no bank | no | 2 of 2 | none | 0.005 |
-| 7 | refresh applies what is approved and leaves the rest | no | 10 of 10 | none | 0.018 |
+| Index | Case | New | Checks passed | Cost USD |
+| ----- | ---- | --- | ------------- | -------- |
+| 0 | setup writes the bank to its destinations | no, checks changed | 17 of 17 | 0.017 |
+| 1 | setup keeps a team's own files | yes | 8 of 8 | 0.016 |
+| 2 | check keeps a team file and flags a misplaced one | yes, replaces the orphan-file case | 21 of 21 | 0.007 |
+| 3 | check offers an old file a merge into its capability's file | yes | 15 of 15 | 0.007 |
+| 4 | check flags the always file the bank lacks | no, checks changed | 14 of 14 | 0.006 |
+| 5 | rewire fills the context block | no | 3 of 3 | 0.003 |
+| 6 | an empty repo produces no bank | no | 2 of 2 | 0.003 |
+| 7 | refresh applies what is approved and leaves the rest | no | 10 of 10 | 0.014 |
 
-The failed checks are real behaviour, not harness errors: in cases 2 to 4 Haiku prints the three blocks under `**Structure**`, `**Format**`, `**Content**`, never the exact words "Structure findings" the case asks for; in case 0 it writes a sentence above the ecosystem diagram, which the case's pattern does not allow. The blocks and the findings (misplaced file with a move offered, former file with a merge offered, missing always files) are all there.
-
-## Why Qwen did not run
-
-The plan runs Qwen once Haiku passes. Haiku passes setup and fails refresh (drifts corrected 4 of 12 against 8, run 2 at seven times the baseline mean cost), so Qwen was held back, which also kept about 8 USD unspent. The phase stays open on the refresh cause above.
+Case 0 is flaky: it passed in 4 of 5 runs. The failing run missed "ecosystem.md contains Dependabot" and the diagram-only pattern (15 of 17). The flake is older than the refresh fix: it also failed at the head before it.
 
 ## Acceptance criteria of #1141
 
 | Criterion | Verdict | Deciding number |
 | --------- | ------- | --------------- |
-| The pre-commit gates pass, with fewer words than today | met | 4894 words against 7132, and 28 files against 44; the gates are in the phase report |
-| Haiku, Sonnet and Qwen write banks with as many correct facts as the original, no more wrong ones, at lower or equal cost | not met | Haiku setup meets it: 158 correct against 153, 3 wrong against 5, 0.036 against 0.046 per run. Sonnet is left out by the plan, and Qwen was not run. Haiku refresh does not: 10 wrong of 88 against 5 of 70, and 0.100 per run against 0.036 |
-| A refresh flags every injected drift and writes nothing the user did not approve | not met | 7 of 12 drifts flagged, 4 of 12 corrected, D1 in none; no file changed without approval, but run 2 dropped 25 baseline lines under a prompt that declined removals |
-| A volatile fact has a rule, and `check` reports one gone stale | partly met | rule M2 exists and the engine reports 16 stale counts and dates on the injected bank, for example "Four workspace packages"; it does not report the injected "Three workspace packages in total", because "two" and "three" are not count words for it |
+| The pre-commit gates pass, with fewer words than today | met | 4938 words against 7132, and 28 files against 44; the gates are in the phase report |
+| Haiku, Sonnet and Qwen write banks with as many correct facts as the original, no more wrong ones, at lower or equal cost | partly met | Haiku setup: 0 wrong of 114 against 5 of 160, 0.034 against 0.046 per run. Haiku refresh: 57 correct against 60 and 9 wrong of 68 against 5 of 70, though six of the nine predate the injection; cost 0.030 against 0.036. Qwen: cost flat on setup (0.097 against 0.094) and lower on refresh (0.112 against 0.138), facts not graded. Sonnet is left out by the plan |
+| A refresh flags every injected drift and writes nothing the user did not approve | not met | Haiku 7 of 12 drifts, 7 of 9 without the accepted D1 miss, equal to the original; lines dropped 2, 1, 0. Qwen 12 of 12, but it drops 22 to 30 lines per run and deletes seven files in two runs |
+| A volatile fact has a rule, and `check` reports one gone stale | met, with an accepted limit | rule M2 exists and the engine reports 16 stale counts and dates on the injected bank, for example "Four workspace packages"; the spelled "Three workspace packages" is left out on purpose (62% false positives measured with "two" and "three") |
 
 ## Spend, after
 
-About 5.9 USD: grading 5.3 (nine banks, 0.53 to 0.72 each), generation 0.6 (9 runs 0.5, 8 cases 0.1). The nine Haiku banks were graded; no Qwen bank was generated.
-
-## Host campaign
-
-Each host ran the branch's own distribution (`aidd translate --as flat` per tool, Claude Code from `aidd translate --to claude` loaded with `--plugin-dir`) in a throwaway project and home under `~/skill-tests/hookcamp/`, built by `setup.sh` from a three-file bank that `memory.cjs check` passes. One session per host made three edits with the file tool: a 31-word prose line in `notes.md` (M1, level 1), `- Branch prefix: {{x}}` in `vcs.md` (M3, level 2), a clean line in `codebase-map.md`, then repeated every hook message verbatim. `tap.cjs`, preloaded through `NODE_OPTIONS`, logged what each hook read and printed to `logs/<host>.jsonl`, the distribution untouched; the model's reply is in the host's own transcript beside it.
-
-| Host | Model | Level 1 | Level 2 | Clean | Telemetry | Logs |
-| ---- | ----- | ------- | ------- | ----- | --------- | ---- |
-| Claude Code | haiku | `additionalContext`, quoted back: `notes.md:4 M1 "31 words, over 25"` | `decision: block`, quoted back: `vcs.md:5 M3 "{{x}}"` | nothing printed, "EDIT3: none" | 8 calls of session `2f3e3012` under task `campaign` | `claude.jsonl`, `claude.stream` |
-| Codex | gpt-5.6-luna, low effort | through `apply_patch`, same line quoted back | `decision: block`, quoted back | nothing printed | 4 calls of session `01a1ab43` under task `campaign` | `codex.jsonl`, `codex.out` |
-| Copilot | auto | top-level `additionalContext`, quoted back | `decision: block`, quoted back | nothing printed | not measured by aidd-telemetry | `copilot.jsonl`, `copilot.out` |
-| Cursor | auto | `additional_context`, quoted back | informs: `additional_context`, quoted back | nothing printed | not measured | `cursor.jsonl`, `cursor.out` |
-| OpenCode | deepseek-v4.1-flash-free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `opencode.jsonl`, `opencode.jsonl.out` |
-| Kilo | kilo-auto/free | appended to the `edit` result, quoted back | informs, appended, quoted back | nothing appended | not measured | `kilo.jsonl`, `kilo.out` |
-
-`apply_patch` on OpenCode and Kilo, offered only to a model whose id holds `gpt-`, was reached through a provider alias `camp/gpt-campaign` routed by `cap/proxy.js` to Qwen 3.8 Flash. OpenCode's run quoted both findings back from `apply_patch` results (`opencode-patch.jsonl`); Kilo's quoted level 2 (`kilo-patch.jsonl`) and answered nothing on edit 1, because the model wrote the line as a 31-word bullet, under the bullet limit of 35.
-
-The captures behind the adapters' fixtures ran in `~/skill-tests/hookcamp/cap/` with a logging hook (`log.js`, `cap-plugin.js`), their raw payloads in `cap/out/`.
-
-Spend: about 0.03 USD of Haiku across every Claude Code run; Codex, Copilot, Cursor and the Qwen routing on subscriptions, OpenCode and Kilo edits on free models.
+About 4.5 USD for this rerun: blind grading 3.1 (seven Haiku banks, 0.37 to 0.61 each), generation 1.4 (Haiku 0.4 with cases, Qwen 0.9, case 0 repeated four times 0.07). Together with the 7.0 USD already spent, about 11.5 USD of the 15 approved.
