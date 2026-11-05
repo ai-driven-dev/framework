@@ -84,7 +84,7 @@ jobs:
           while IFS=$'\t' read -r submitted review pr; do
             [[ -n $submitted ]] || continue
             if ! scripts/pr-review/review.sh "$pr" "$review"; then
-              echo "::error::Review $review on PR #$pr failed; it will be retried."; failed=1
+              echo "::error::Review $review on PR #$pr failed; check the comment and logs."; failed=1
             fi
           done < "$queue"
           exit "$failed"

@@ -174,8 +174,9 @@ publish_checkpoint() {
   marker=$(printf %s "$state" | base64 | tr -d '\n')
   {
     printf "## OpenCode review\n\nReviewed commit: \`%s\`.\n\n" "$head_sha"
-    if [[ $context_truncated == true ]]; then printf '**Limitation:** PR context was truncated to fit review limits.\n\n'; fi
+    printf 'Findings reflect the PR context available when the model ran.\n\n'
     if [[ $pending == true ]]; then printf '**Review in progress:** some files are not yet confirmed.\n\n'; fi
+    if [[ $pending == false && $failed == 1 ]]; then printf '**Review incomplete:** submit a new review to retry unreviewed files.\n\n'; fi
     if [[ $(jq 'length' <<<"$reports") == 0 && $(jq 'length' <<<"$notes") == 0 ]]; then
       if [[ $pending == false ]]; then printf 'No changed files require another review.\n'; fi
     else
@@ -200,9 +201,18 @@ publish_checkpoint() {
 }
 
 run_batch() {
-  local output="$work/model-output.json" item path digest result reviewed_count=0 draft_key draft_file from_draft=0 runner_failed=0
+  local output="$work/model-output.json" item path digest result reason reviewed_count=0 draft_key draft_file from_draft=0
   [[ $(jq 'length' "$manifest") != 0 ]] || return 0
-  draft_key=$({ printf '%s\n' "$head_sha"; sha256sum "$work/context.json" | awk '{print $1}'; jq -cS '[.[] | {path,fingerprint}] | sort_by(.path)' "$manifest"; } | sha256sum | awk '{print $1}')
+  if [[ $failed == 1 ]]; then
+    while IFS= read -r item; do
+      path=$(jq -rj '.path, "\u0001"' <<<"$item"); path=${path%$'\001'}
+      add_note "$path" 'Not reviewed after an earlier reviewer failure.'
+    done < <(jq -c '.[]' "$manifest")
+    printf '[]\n' > "$manifest"
+    batch_bytes=0
+    return 0
+  fi
+  draft_key=$({ printf '%s\n' "$head_sha"; jq -cS '[.[] | {path,fingerprint}] | sort_by(.path)' "$manifest"; } | sha256sum | awk '{print $1}')
   draft_file="$review_drafts/$draft_key.json"
   : > "$output"
   if [[ -f $draft_file && ! -L $draft_file ]]; then
@@ -210,12 +220,14 @@ run_batch() {
     from_draft=1
   elif ! env -i PATH="$PATH" HOME="$HOME" TMPDIR="${TMPDIR:-/tmp}" LANG="${LANG:-C.UTF-8}" \
       "$REVIEW_MODEL_RUNNER" "$work/input" "$manifest" "$output"; then
-    runner_failed=1
+    jq -n '{error:"Reviewer failed; not reviewed."}' > "$output"
+    save_draft "$output" "$draft_file"
   fi
-  if [[ $runner_failed == 1 ]]; then
+  reason=$(jq -r 'if .error == "Reviewer failed; not reviewed." or .error == "Reviewer returned invalid coverage; not reviewed." then .error else empty end' "$output" 2>/dev/null || true)
+  if [[ -n $reason ]]; then
     while IFS= read -r item; do
       path=$(jq -rj '.path, "\u0001"' <<<"$item"); path=${path%$'\001'}
-      add_note "$path" 'Reviewer failed; not reviewed.'
+      add_note "$path" "$reason"
     done < <(jq -c '.[]' "$manifest")
     failed=1
   elif ! jq -e --slurpfile targets "$manifest" '
@@ -224,15 +236,22 @@ run_batch() {
       ((.reviewed | unique | length) == (.reviewed | length)) and
       all(.reviewed[]; . as $name | any($targets[0][]; .path == $name))
     ' "$output" >/dev/null; then
-    if [[ $from_draft == 1 ]]; then discard "$draft_file"; fi
+    jq -n '{error:"Reviewer returned invalid coverage; not reviewed."}' > "$output"
+    save_draft "$output" "$draft_file"
     while IFS= read -r item; do
       path=$(jq -rj '.path, "\u0001"' <<<"$item"); path=${path%$'\001'}
       add_note "$path" 'Reviewer returned invalid coverage; not reviewed.'
     done < <(jq -c '.[]' "$manifest")
     failed=1
   else
+    if [[ $from_draft == 0 ]]; then
+      if [[ $context_truncated == true ]]; then
+        jq '.report = "**Limitation:** PR context was truncated to fit review limits.\n\n" + .report' "$output" > "$work/draft.json"
+        mv "$work/draft.json" "$output"
+      fi
+      save_draft "$output" "$draft_file"
+    fi
     result=$(jq -r .report "$output")
-    if [[ $from_draft == 0 ]] && jq -e '.reviewed | length > 0' "$output" >/dev/null; then save_draft "$output" "$draft_file"; fi
     if (( $(printf %s "$result" | wc -c) + $(printf %s "$reports" | wc -c) > 50000 )); then publish_fallback; fi
     while IFS= read -r item; do
       path=$(jq -rj '.path, "\u0001"' <<<"$item"); path=${path%$'\001'}
@@ -247,8 +266,10 @@ run_batch() {
     done < <(jq -c '.[]' "$manifest")
     if (( reviewed_count > 0 )); then
       reports=$(jq -cn --argjson reports "$reports" --arg report "$result" '$reports + [$report]')
-      publish_checkpoint true
-      discard "$draft_file"
+      if [[ $failed == 0 ]]; then
+        publish_checkpoint true
+        discard "$draft_file"
+      fi
     fi
   fi
   printf '[]\n' > "$manifest"
@@ -322,5 +343,6 @@ while IFS= read -r -d '' status && IFS= read -r -d '' name; do
 done < "$work/paths"
 run_batch
 
-if [[ $failed == 1 ]]; then publish_checkpoint true; else publish_checkpoint false; discard "$review_drafts"; fi
+publish_checkpoint false
+discard "$review_drafts"
 [[ $failed == 0 ]] || exit 1
