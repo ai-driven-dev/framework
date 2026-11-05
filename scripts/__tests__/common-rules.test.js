@@ -5,7 +5,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-context/hooks/lib/common-rules.cjs");
-const { deadPaths, isShellWrite, formatFindings } = require(LIBRARY);
+const { deadPaths, isShellWrite, formatFindings, markdownLines, proseLines } = require(LIBRARY);
 
 /** A throwaway project holding `files`, removed after `body` runs. */
 function inProject(files, body) {
@@ -22,8 +22,8 @@ function inProject(files, body) {
   }
 }
 
-test("the library exports exactly its three functions", () => {
-  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["deadPaths", "formatFindings", "isShellWrite"]);
+test("the library exports exactly its five functions", () => {
+  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["deadPaths", "formatFindings", "isShellWrite", "markdownLines", "proseLines"]);
 });
 
 test("the library requires only the built-ins the hook contract allows: node:fs, node:os, node:path", () => {
@@ -413,7 +413,7 @@ test("formatFindings: errors, grouped reached errors and warnings, in the contra
   assert.equal(
     output,
     [
-      "aidd-context: 5 errors, 1 warnings",
+      "aidd-context: 5 errors, 1 warning",
       'aidd_docs/memory/vcs.md:4 M3 "{{x}}" => fill it or remove it',
       "aidd_docs/memory/kpi/x.md layout => move it under internal/",
       'U1 ×2 in aidd_docs/ui/* "first" => rename it',
@@ -425,7 +425,7 @@ test("formatFindings: errors, grouped reached errors and warnings, in the contra
 
 test("formatFindings: a group of one prints the plain line, never ×1", () => {
   const output = formatFindings("p", { reached: [{ file: "d/a.md", line: 3, rule: "R", excerpt: "e", fix: "f" }] });
-  assert.equal(output, 'p: 1 errors, 0 warnings\nd/a.md:3 R "e" => f');
+  assert.equal(output, 'p: 1 error, 0 warnings\nd/a.md:3 R "e" => f');
   assert.doesNotMatch(output, /×1/u);
 });
 
@@ -478,12 +478,12 @@ test("formatFindings: a group of root-level files prints in *", () => {
 
 test("formatFindings: an excerpt stays on one line, its quotes escaped", () => {
   const output = formatFindings("p", { errors: [{ file: "a.md", line: 1, rule: "R", excerpt: 'say "hi"\nthen\r\ngo', fix: "f" }] });
-  assert.equal(output, 'p: 1 errors, 0 warnings\na.md:1 R "say \\"hi\\" then go" => f');
+  assert.equal(output, 'p: 1 error, 0 warnings\na.md:1 R "say \\"hi\\" then go" => f');
 });
 
 test("formatFindings: a backslash in an excerpt is escaped before its quotes", () => {
   const output = formatFindings("p", { errors: [{ file: "a.md", rule: "R", excerpt: 'C:\\x "y"', fix: "f" }] });
-  assert.equal(output, 'p: 1 errors, 0 warnings\na.md R "C:\\\\x \\"y\\"" => f');
+  assert.equal(output, 'p: 1 error, 0 warnings\na.md R "C:\\\\x \\"y\\"" => f');
 });
 
 test("formatFindings: the group folder uses forward slashes whatever the separator given", () => {
@@ -510,4 +510,143 @@ test("formatFindings: the output never asks for a rerun", () => {
     warnings: Array.from({ length: 20 }, () => ({ file: "a.md", rule: "W", message: "m", fix: "f" })),
   });
   assert.doesNotMatch(output, /rerun/iu);
+});
+
+test("formatFindings: one error and one warning are singular, any other count plural", () => {
+  assert.equal(formatFindings("p", { errors: [{ file: "a.md", rule: "R", fix: "f" }], warnings: [{ file: "a.md", rule: "W", message: "m", fix: "f" }] }).split("\n")[0], "p: 1 error, 1 warning");
+  assert.equal(formatFindings("p", { warnings: [{ file: "a.md", rule: "W", message: "m", fix: "f" }] }).split("\n")[0], "p: 0 errors, 1 warning");
+  assert.equal(formatFindings("p", { errors: [{ file: "a.md", rule: "R", fix: "f" }, { file: "b.md", rule: "R", fix: "f" }] }).split("\n")[0], "p: 2 errors, 0 warnings");
+});
+
+// deadPaths: what is absent by design, and what is not a path
+
+test("deadPaths: each segment is compared by its exact name, whatever the disk's case rule", () => {
+  inProject({ "src/index.cfg": "", "pkg/.git/HEAD": "", "tools/Run.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("`src/Index.cfg` `src/index.cfg` `SRC/index.cfg`\n", root), [
+      { line: 1, path: "src/Index.cfg" },
+      { line: 1, path: "SRC/index.cfg" },
+    ]);
+    assert.deepEqual(deadPaths("`tools/run.cfg`\n", path.join(root, "pkg")), []);
+  });
+  inProject({ ".git/HEAD": "", "tools/Run.cfg": "", "pkg/tools/own.cfg": "" }, (repo) => {
+    assert.deepEqual(deadPaths("`tools/run.cfg` `tools/Run.cfg`\n", path.join(repo, "pkg")), [{ line: 1, path: "tools/run.cfg" }]);
+  });
+});
+
+test("deadPaths: a path under a folder a .gitignore ignores is absent by design, in the plain forms", () => {
+  const files = { "cli/keep.cfg": "", "cli/.gitignore": "dist/\n*.gen.cfg\n/out\nnode_modules\n", "cli/dist/other.cfg": "" };
+  inProject(files, (root) => {
+    const text = "`cli/dist/cli.cfg` `cli/lib/x.gen.cfg` `cli/out/a.cfg` `cli/node_modules/pkg/i.cfg` `cli/src/gone.cfg`\n";
+    assert.deepEqual(deadPaths(text, root), [{ line: 1, path: "cli/src/gone.cfg" }]);
+  });
+});
+
+test("deadPaths: a .gitignore of the root, or of a parent folder up to the repository, ignores too", () => {
+  inProject({ ".git/HEAD": "", ".gitignore": "gen/\n", "pkg/gen/other.cfg": "", "pkg/src/a.cfg": "" }, (repo) => {
+    assert.deepEqual(deadPaths("`gen/out.cfg` `src/gone.cfg`\n", path.join(repo, "pkg")), [{ line: 1, path: "src/gone.cfg" }]);
+  });
+  inProject({ ".gitignore": "build\n", "build/other.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("`build/out.cfg`\n", root), []);
+  });
+});
+
+test("deadPaths limit: an anchored pattern ignores only its own level, and a negation, ** or a slash inside are not read", () => {
+  const files = { "cli/.gitignore": "/dist\n!keep.cfg\nlib/**/gen\nsrc/gen\n", "cli/a/dist/other.cfg": "", "cli/lib/x/gen/o.cfg": "", "cli/src/gen/o.cfg": "" };
+  inProject(files, (root) => {
+    const text = "`cli/a/dist/x.cfg` `cli/lib/x/gen/y.cfg` `cli/src/gen/y.cfg` `cli/dist/z.cfg`\n";
+    assert.deepEqual(deadPaths(text, root).map(({ path: found }) => found), ["cli/a/dist/x.cfg", "cli/lib/x/gen/y.cfg", "cli/src/gen/y.cfg"]);
+  });
+});
+
+test("deadPaths: a folder-only pattern ignores what is inside the folder, never a file of that name", () => {
+  inProject({ "cli/.gitignore": "cache.json/\n", "cli/own.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("`cli/cache.json` `cli/cache.json/x.cfg`\n", root), [{ line: 1, path: "cli/cache.json" }]);
+  });
+});
+
+test("deadPaths: a path cited from the repository's root is ignored by the .gitignore of that root's folders", () => {
+  inProject({ ".git/HEAD": "", "cli/.gitignore": "dist/\n", "pkg/cli/own.cfg": "" }, (repo) => {
+    assert.deepEqual(deadPaths("`cli/dist/x.cfg` `cli/src/gone.cfg`\n", path.join(repo, "pkg")), [{ line: 1, path: "cli/src/gone.cfg" }]);
+  });
+});
+
+test("deadPaths: a path inside an uninitialised submodule is absent by design", () => {
+  const modules = '[submodule "lib"]\n\tpath = vendor/lib\n\turl = https://example.test/lib.git\n';
+  inProject({ ".gitmodules": modules, "vendor/lib/.keep": "" }, (root) => {
+    fs.rmSync(path.join(root, "vendor/lib/.keep"));
+    assert.deepEqual(deadPaths("`vendor/lib/thing.cfg` `vendor/own.cfg`\n", root), [{ line: 1, path: "vendor/own.cfg" }]);
+  });
+  inProject({ ".gitmodules": modules, "vendor/lib/other.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("`vendor/lib/thing.cfg`\n", root), [{ line: 1, path: "vendor/lib/thing.cfg" }], "a checked out submodule is read");
+  });
+});
+
+test("deadPaths: a placeholder, a leading colon, a query and a line suffix are not part of the file", () => {
+  inProject({ "src/index.cfg": "", "docs/guide.txt": "" }, (root) => {
+    const text = "`src/{name}/x.txt` `src/:id.cfg` `src/<slug>.ts` `docs/guide.txt?plain=1` `src/index.cfg:L3` `src/index.cfg:L3-L9` `docs/guide.txt#top`\n";
+    assert.deepEqual(deadPaths(text, root), []);
+    assert.deepEqual(deadPaths("`docs/gone.txt?plain=1` `src/gone.cfg:L3`\n", root), [
+      { line: 1, path: "docs/gone.txt?plain=1" },
+      { line: 1, path: "src/gone.cfg:L3" },
+    ]);
+  });
+});
+
+test("deadPaths: every fence form, front matter and a comment opened mid-line hide their paths", () => {
+  inProject({ "src/here.cfg": "" }, (root) => {
+    const dead = "`src/gone.cfg`";
+    const text = [
+      "---",
+      `files: ${dead}`,
+      "---",
+      "````md",
+      "```",
+      dead,
+      "```",
+      dead,
+      "````",
+      "~~~",
+      "```",
+      dead,
+      "~~~",
+      `> \`\`\``,
+      `> ${dead}`,
+      `> \`\`\``,
+      "Intro.",
+      "",
+      `    ${dead}`,
+      `Text <!-- start`,
+      dead,
+      "-->",
+      dead,
+    ].join("\n");
+    assert.deepEqual(deadPaths(text, root), [{ line: 23, path: "src/gone.cfg" }]);
+  });
+});
+
+// markdownLines: the one reader of structure
+
+test("markdownLines: tells front matter, fences, comments, code and text apart", () => {
+  const kinds = (text) => markdownLines(text).map(({ kind }) => kind);
+  assert.deepEqual(kinds("---\na: b\n---\ntext\n"), ["front", "front", "front", "text", "text"]);
+  assert.deepEqual(kinds("a\n````\n```\nb\n```\n````\nc\n"), ["text", "fence", "fence", "fence", "fence", "fence", "text", "text"]);
+  assert.deepEqual(kinds("~~~\n```\n~~~\nx\n"), ["fence", "fence", "fence", "text", "text"]);
+  assert.deepEqual(kinds("<!-- one -->\nx <!-- two --> y\n<!--\nz\n-->\n"), ["comment", "text", "comment", "comment", "comment", "text"]);
+  assert.deepEqual(kinds("- item\n\n    not code\n"), ["text", "text", "text", "text"]);
+  assert.deepEqual(kinds("text\n\n    code\n"), ["text", "text", "code", "text"]);
+});
+
+test("markdownLines: a comment opened inside a fence is fence text, and a fence inside a comment is comment text", () => {
+  const kinds = (text) => markdownLines(text).map(({ kind }) => kind);
+  assert.deepEqual(kinds("```\n<!--\n```\nx\n"), ["fence", "fence", "fence", "text", "text"]);
+  assert.deepEqual(kinds("<!--\n```\n-->\nx\n"), ["comment", "comment", "comment", "text", "text"]);
+});
+
+test("markdownLines: a hard break is two trailing spaces or a backslash, and CRLF is read as LF", () => {
+  const lines = markdownLines("a  \r\nb\\\r\nc\r\n");
+  assert.deepEqual(lines.map(({ hardBreak, source }) => [hardBreak, source]), [[true, "a  "], [true, "b\\"], [false, "c"], [false, ""]]);
+});
+
+test("proseLines: only the lines of text, trimmed, without their comments", () => {
+  assert.deepEqual(proseLines("# T\n\n```\nx\n```\n  y <!-- z --> w \n").map(({ number, text }) => [number, text]), [[1, "# T"], [6, "y  w"]]);
 });

@@ -1,14 +1,18 @@
 /**
  * The format rules of a memory file, as functions of its text and of what the project and the
  * rest of the bank hold. The engine reads the bank and passes the other files in the context;
- * only M4 reads the disk, through the shared hook library, under the project root it is given.
+ * M4 reads the disk through the shared hook library, under the project root it is given, and M3
+ * reads the skill's templates.
  *
  * Each rule takes `{ file, text, root, others }` and returns problems:
- * `{ file, line, rule, severity, message, fix }`, plus the offending `excerpt` when there is one.
+ * `{ file, line, rule, severity, message, fix }`, plus the offending `excerpt` when there is one
+ * and `endLine` when the problem spans several lines.
  * `message` is the whole finding; `excerpt` and `fix` are its parts, as the findings formatter prints them.
  */
 
-const { deadPaths } = require("./common-rules.cjs");
+const fs = require("node:fs");
+const path = require("node:path");
+const { deadPaths, markdownLines, proseLines } = require("./common-rules.cjs");
 
 const ERROR = "error";
 const WARNING = "warning";
@@ -19,9 +23,7 @@ const FILE_WORD_LIMIT = 400;
 const EXCERPT_LIMIT = 40;
 const SENTENCE_WORD_FLOOR = 12;
 
-const FENCE = /^(?:```|~~~)/u;
-const COMMENT_OPEN = "<!--";
-const COMMENT_CLOSE = "-->";
+const STALE_FIX = "check it against the code; keep it if true";
 const STRUCTURAL_LINE = /^(?:\||#|>|[-*+]\s|\d+[.)]\s)/u;
 const LIST_ITEM = /^(?:[-*+]\s|\d+[.)]\s)/u;
 const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
@@ -40,15 +42,15 @@ const COUNT_OF_THINGS = new RegExp(`(?<![\\w.:+#/,-])(?:\\d{1,6}|${NUMBER_WORDS}
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
 const TIME_WORDS = /\b(?:currently|as of|right now|at the moment)\b/iu;
 
-const TEMPLATE_MARKER = "{{";
-const TEMPLATE_SLOT = /\{\{[^}]*\}\}/u;
-const PLACEHOLDER = /\b(?:TODO|TBD)\b(?!['\w])/u;
+const TEMPLATE_SLOT = /\{\{[^{}\n]*\}\}/gu;
+const SKILL = "02-project-memory";
+const TEMPLATES = ["assets", "templates", "memory"];
 
 const MARKDOWN_LINK = /!?\[([^\]]*)\]\([^)]*\)/gu;
 const INLINE_CODE = /`([^`]*)`/gu;
 const LIST_OR_QUOTE_MARKER = /^\s*(?:[>*+-]\s+|\d+[.)]\s+)/u;
 const SENTENCE_END = /(?<=[.!?])\s+/u;
-const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/u;
+const SENTENCE_LAST_WORD = /[.!?]["'”’)\]`*_]*$/u;
 
 function problem(file, line, rule, severity, message, fix, excerptText) {
   return { file, line, rule, severity, message, fix, ...(excerptText === undefined ? {} : { excerpt: excerptText }) };
@@ -63,84 +65,151 @@ function wordsIn(text) {
   return text.split(/\s+/u).filter(Boolean);
 }
 
+function isListItem(line) {
+  return LIST_ITEM.test(line);
+}
+
 /**
- * Each line with its number and whether it stands in a code fence or an HTML comment, the
- * two places a rule about prose must not read. A fenced diagram is a fence like any other.
+ * The paragraphs of a file: the lines of prose that run together once rendered, each as
+ * `{ number, text }`. A table, a heading, a quote, a list item and the lines continuing it, a fence,
+ * a comment, indented code and front matter are not prose. A line ending in a hard break ends its
+ * paragraph, so a stack of labelled lines is one unit each.
  */
-function classifiedLines(text) {
-  const result = [];
-  let inFence = false;
-  let inComment = false;
+function paragraphs(text) {
+  const found = [];
+  let current = [];
+  let inItem = false;
+  let afterBlank = false;
+  const flush = () => {
+    if (current.length > 0) found.push(current);
+    current = [];
+  };
 
-  for (const [index, raw] of text.split(/\r?\n/u).entries()) {
-    const line = raw.trim();
-    const entry = { number: index + 1, line, skipped: true };
-    result.push(entry);
-
-    if (inFence) {
-      if (FENCE.test(line)) inFence = false;
+  for (const entry of markdownLines(text)) {
+    if (entry.kind !== "text") {
+      flush();
       continue;
     }
-    if (FENCE.test(line)) {
-      inFence = true;
+    if (entry.source.trim() === "") {
+      flush();
+      afterBlank = true;
       continue;
     }
-    if (inComment) {
-      if (line.includes(COMMENT_CLOSE)) inComment = false;
+    const wasBlank = afterBlank;
+    afterBlank = false;
+    if (STRUCTURAL_LINE.test(entry.text)) {
+      flush();
+      inItem = isListItem(entry.text);
       continue;
     }
-    if (line.startsWith(COMMENT_OPEN)) {
-      inComment = !line.includes(COMMENT_CLOSE);
-      continue;
-    }
-    entry.skipped = false;
+    if (inItem && (!wasBlank || /^\s/u.test(entry.source))) continue;
+    inItem = false;
+    current.push({ number: entry.number, text: entry.text });
+    if (entry.hardBreak) flush();
   }
-
-  return result;
+  flush();
+  return found;
 }
 
-function readableLines(text) {
-  return classifiedLines(text).filter(({ skipped }) => !skipped);
+/** The sentences of a paragraph, each as its words and the lines it starts and ends on. */
+function sentencesIn(paragraph) {
+  const found = [];
+  let current = [];
+  for (const { number, text } of paragraph) {
+    for (const word of wordsIn(text)) {
+      current.push({ word, number });
+      if (SENTENCE_LAST_WORD.test(word)) {
+        found.push(current);
+        current = [];
+      }
+    }
+  }
+  if (current.length > 0) found.push(current);
+  return found;
 }
 
-function longProseLines({ file, text }) {
-  return readableLines(text)
-    .filter(({ line }) => line !== "" && !STRUCTURAL_LINE.test(line))
-    .map(({ number, line }) => ({ number, count: wordsIn(line).length }))
-    .filter(({ count }) => count > PROSE_WORD_LIMIT)
-    .map(({ number, count }) => {
-      // The count is the excerpt, the fix is one for every line: a file's long lines group as one.
-      const fix = "make it a table, a list or a heading";
-      return problem(file, number, "M1", ERROR, `prose line of ${count} words, over ${PROSE_WORD_LIMIT}: ${fix}`, fix, `${count} words, over ${PROSE_WORD_LIMIT}`);
+function longProseSentences({ file, text }) {
+  const fix = "make it a table, a list or a heading";
+  return paragraphs(text)
+    .flatMap(sentencesIn)
+    .filter((sentence) => sentence.length > PROSE_WORD_LIMIT)
+    .map((sentence) => {
+      const [{ number }] = sentence;
+      const count = sentence.length;
+      const found = problem(file, number, "M1", ERROR, `sentence of ${count} words, over ${PROSE_WORD_LIMIT}: ${fix}`, fix, `${count} words, over ${PROSE_WORD_LIMIT}`);
+      return { ...found, endLine: sentence[count - 1].number };
     });
 }
 
 function volatileFacts({ file, text }) {
   const found = [];
-  for (const { number, line } of readableLines(text)) {
+  for (const { number, text: line } of proseLines(text)) {
     const prose = line.replace(INLINE_CODE, "");
-    const count = prose.match(COUNT_OF_THINGS);
-    const date = prose.match(ISO_DATE);
-    const time = prose.match(TIME_WORDS);
-    const stale = (match, fix) => problem(file, number, "M2", ERROR, `"${excerpt(match)}" goes stale: ${fix}`, fix, excerpt(match));
-    if (count) found.push(stale(count[0], "name the thing, not how many"));
-    else if (date) found.push(stale(date[0], "state what is true, not when"));
-    else if (time) found.push(stale(time[0], "state what is true, not when"));
+    const match = prose.match(COUNT_OF_THINGS) ?? prose.match(ISO_DATE) ?? prose.match(TIME_WORDS);
+    if (match) found.push(problem(file, number, "M2", WARNING, `"${excerpt(match[0])}" goes stale: ${STALE_FIX}`, STALE_FIX, excerpt(match[0])));
   }
   return found;
 }
 
-function unfinishedMarkers({ file, text }) {
-  return readableLines(text)
-    .map(({ number, line }) => ({
-      number,
-      marker: line.includes(TEMPLATE_MARKER) ? TEMPLATE_MARKER : line.match(PLACEHOLDER)?.[0],
-      slot: line.match(TEMPLATE_SLOT)?.[0] ?? line.match(PLACEHOLDER)?.[0] ?? TEMPLATE_MARKER,
-    }))
-    .filter(({ marker }) => marker !== undefined)
-    .map(({ number, marker, slot }) =>
-      problem(file, number, "M3", ERROR, `"${marker}" unfinished: fill it or remove it`, "fill it or remove it", excerpt(slot))
-    );
+/** The templates folder of the skill held by a `skills` folder: the skill's own name, a plugin
+ * prefix on it (`aidd-context-02-project-memory`), or a folder named for the plugin around it. */
+function templatesIn(skills) {
+  for (const entry of namesIn(skills)) {
+    for (const skill of [path.join(skills, entry), path.join(skills, entry, SKILL)]) {
+      const name = path.basename(skill);
+      const folder = path.join(skill, ...TEMPLATES);
+      if ((name === SKILL || name.endsWith(`-${SKILL}`)) && fs.existsSync(folder)) return folder;
+    }
+  }
+  return null;
+}
+
+function namesIn(folder) {
+  try {
+    return fs.readdirSync(folder);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * The skill's templates folder, found from the hooks folder this library sits in: beside it in the
+ * plugin tree, in the tool's own folder in a flat build, under the project's `.agents` for a flat
+ * Codex build, or in the skill that carries its own copy of the hooks.
+ */
+function templatesFolder() {
+  const hooks = path.resolve(__dirname, "..");
+  const above = (levels, ...rest) => path.join(hooks, ...Array(levels).fill(".."), ...rest);
+  const own = path.join(hooks, "..", ...TEMPLATES);
+  return templatesIn(above(1, "skills")) ?? templatesIn(above(2, "skills")) ?? templatesIn(above(3, ".agents", "skills")) ?? (fs.existsSync(own) ? own : null);
+}
+
+/** Every `{{…}}` slot of the template named `name`, wherever it sits under the templates folder. */
+function templateSlots(name, folder) {
+  if (folder === null) return [];
+  const slots = new Set();
+  for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
+    const full = path.join(folder, entry.name);
+    if (entry.isDirectory()) templateSlots(name, full).forEach((slot) => slots.add(slot));
+    else if (entry.name === name) for (const [slot] of fs.readFileSync(full, "utf8").matchAll(TEMPLATE_SLOT)) slots.add(slot);
+  }
+  return [...slots];
+}
+
+/**
+ * A slot copied from the template of the same name and left unfilled, fences included. Only an
+ * exact slot of that template counts, so a `{{` of GitHub Actions, Helm or Vue, TODO and TBD are
+ * never flagged. Limit: with no templates folder next to the library, nothing is found.
+ */
+function unfilledSlots({ file, text, templates = templatesFolder() }) {
+  const slots = templateSlots(path.posix.basename(file), templates);
+  const fix = "fill it or remove it";
+  const found = [];
+  for (const [index, line] of text.split("\n").entries()) {
+    const slot = slots.find((candidate) => line.includes(candidate));
+    if (slot !== undefined) found.push(problem(file, index + 1, "M3", ERROR, `"${excerpt(slot)}" unfinished: ${fix}`, fix, excerpt(slot)));
+  }
+  return found;
 }
 
 /** The dead-path rule every plugin applies to its own files, from the shared hook library. */
@@ -157,7 +226,7 @@ function tableCells(line) {
 
 function longItems({ file, text }) {
   const found = [];
-  for (const { number, line } of readableLines(text)) {
+  for (const { number, text: line } of proseLines(text)) {
     let items = [];
     if (line.startsWith("|")) items = tableCells(line);
     else if (LIST_ITEM.test(line)) items = [line.replace(LIST_ITEM, "")];
@@ -170,7 +239,7 @@ function longItems({ file, text }) {
 }
 
 function longFile({ file, text }) {
-  const count = wordsIn(text).length;
+  const count = proseLines(text).reduce((total, { text: line }) => total + wordsIn(line).length, 0);
   if (count <= FILE_WORD_LIMIT) return [];
   return [problem(file, 1, "M6", WARNING, `file over ${FILE_WORD_LIMIT} words: split it or cut it`, "split it or cut it")];
 }
@@ -191,28 +260,14 @@ function normalise(piece) {
  * period, and tables and headings are skipped. Returns each sentence with its first line.
  */
 function sentencesOf(text) {
-  const frontmatter = text.match(FRONTMATTER);
-  const skipped = frontmatter ? frontmatter[0].split("\n").length - 1 : 0;
   const found = new Map();
-  let inFence = false;
-
-  for (const [index, raw] of text.split(/\r?\n/u).entries()) {
-    if (index < skipped) continue;
-    if (FENCE.test(raw.trim())) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
-
-    const line = raw.trim();
+  for (const { number, text: line } of proseLines(text)) {
     if (line.startsWith("#") || line.startsWith("|")) continue;
-
     for (const piece of line.split(SENTENCE_END)) {
       const sentence = normalise(piece);
-      if (wordsIn(sentence).length >= SENTENCE_WORD_FLOOR && !found.has(sentence)) found.set(sentence, index + 1);
+      if (wordsIn(sentence).length >= SENTENCE_WORD_FLOOR && !found.has(sentence)) found.set(sentence, number);
     }
   }
-
   return found;
 }
 
@@ -228,20 +283,20 @@ function repeatedSentences({ file, text, others }) {
   for (const [sentence, line] of sentencesOf(text)) {
     if (carriers.has(sentence)) {
       const carrier = carriers.get(sentence);
-      found.push(problem(file, line, "M7", ERROR, `a sentence also written in ${carrier}: keep it in one home`, "keep it in one home", carrier));
+      found.push(problem(file, line, "M7", WARNING, `a sentence also written in ${carrier}: keep it in one home`, "keep it in one home", carrier));
     }
   }
   return found;
 }
 
 const RULES = Object.freeze([
-  { id: "M1", severity: ERROR, check: longProseLines },
-  { id: "M2", severity: ERROR, check: volatileFacts },
-  { id: "M3", severity: ERROR, check: unfinishedMarkers },
+  { id: "M1", severity: ERROR, check: longProseSentences },
+  { id: "M2", severity: WARNING, check: volatileFacts },
+  { id: "M3", severity: ERROR, check: unfilledSlots },
   { id: "M4", severity: ERROR, check: deadReferences },
   { id: "M5", severity: WARNING, check: longItems },
   { id: "M6", severity: WARNING, check: longFile },
-  { id: "M7", severity: ERROR, check: repeatedSentences },
+  { id: "M7", severity: WARNING, check: repeatedSentences },
 ]);
 
 // The limits the rules enforce, by rule id: the table in `memory-rules.md` states the same ones.

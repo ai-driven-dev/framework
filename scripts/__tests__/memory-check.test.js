@@ -6,7 +6,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/hooks/memory.cjs");
-const { lintFile, lintBank, ALWAYS_WRITTEN } = require(ENGINE);
+const { lintFile, lintBank, ALWAYS_WRITTEN, ROW_FILES, FORMER_FILES } = require(ENGINE);
 const { RULES } = require("../../plugins/aidd-context/hooks/lib/memory-rules.cjs");
 const CAPABILITIES = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory/references/capabilities.md");
 
@@ -27,10 +27,17 @@ function write(root, name, text) {
   fs.writeFileSync(full, text);
 }
 
-function lint(text, files = {}, others = {}) {
-  const root = project({ "a.md": text, ...others }, files);
+/** The first question of the template named `name`, as a project leaves it when it never answers it. */
+function slotOf(name, index = 0) {
+  const templates = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory/assets/templates/memory");
+  const file = fs.readdirSync(templates).map((dir) => path.join(templates, dir, name)).find((candidate) => fs.existsSync(candidate));
+  return [...fs.readFileSync(file, "utf8").matchAll(/\{\{[^{}\n]*\}\}/gu)][index][0];
+}
+
+function lint(text, files = {}, others = {}, name = "a.md") {
+  const root = project({ [name]: text, ...others }, files);
   try {
-    return lintFile(root, `${MEMORY}/a.md`);
+    return lintFile(root, `${MEMORY}/${name}`);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -65,7 +72,57 @@ test("M1: 25 words, tables, lists, headings, quotes, comments and fences stay qu
   assert.deepEqual(ids(lint(text)).filter((id) => id === "M1"), []);
 });
 
-test("M2: counts of things, dates and time words are errors", () => {
+// M1 counts words per sentence of the paragraph a reader sees, so a wrapped line is not an escape.
+const m1 = (text) => lint(text).filter(({ rule }) => rule === "M1").map(({ line, endLine }) => [line, endLine]);
+
+test("M1: a hard-wrapped sentence is counted whole and reported on every line it spans", () => {
+  assert.deepEqual(m1(`# T\n\n${words(15)}\n${words(15)}\n`), [[3, 4]]);
+  assert.deepEqual(m1(`# T\n\n${words(15)}\n${words(10)}\n`), []);
+});
+
+test("M1: sentences are counted apart: a long line of short sentences is quiet, a long sentence is not", () => {
+  assert.deepEqual(m1(`# T\n\n${words(20)}. ${words(20)}. ${words(20)}.\n`), []);
+  assert.deepEqual(m1(`# T\n\n${words(5)}. ${words(30)}.\n`), [[3, 3]]);
+});
+
+test("M1: a labelled line ending in a hard break is a unit of its own", () => {
+  const labels = Array.from({ length: 5 }, (_, index) => `Owner ${index}: ${words(8)}  `).join("\n");
+  assert.deepEqual(m1(`# T\n\n${labels}\n`), []);
+});
+
+test("M1: front matter, an HTML comment opened mid-line, list continuation lines and quotes are not prose", () => {
+  assert.deepEqual(m1(`---\nsummary: ${words(30)}\n---\n# T\n`), []);
+  assert.deepEqual(m1(`# T\n\nText <!-- start\n${words(30)}\n-->\n`), []);
+  assert.deepEqual(m1(`# T\n\n- item\n  ${words(30)}\n${words(30)}\n`), []);
+  assert.deepEqual(m1(`# T\n\n- item\n\n  ${words(30)}\n`), []);
+  assert.deepEqual(m1(`# T\n\n- item\n\n${words(30)}\n`), [[5, 5]], "a prose line after the list is prose again");
+});
+
+test("M1: every fence form is code: nested, tilde, quoted, indented and indented inside a list", () => {
+  const long = words(30);
+  const forms = {
+    nested: `\`\`\`\`md\n\`\`\`\n${long}\n\`\`\`\n${long}\n\`\`\`\`\n`,
+    tilde: `~~~\n\`\`\`\n${long}\n~~~\n`,
+    quoted: `> \`\`\`\n> ${long}\n> \`\`\`\n`,
+    indented: `Intro.\n\n    ${long}\n`,
+    inList: `- item\n\n  \`\`\`\n  ${long}\n  \`\`\`\n`,
+  };
+  for (const [form, body] of Object.entries(forms)) assert.deepEqual(m1(`# T\n\n${body}`), [], form);
+  assert.deepEqual(m1(`# T\n\n~~~\n\`\`\`\n~~~\n${long}\n`), [[6, 6]], "a tilde fence is closed by a tilde, and prose follows");
+});
+
+test("M2: front matter is not read", () => {
+  assert.deepEqual(ids(lint("---\nupdated: 2026-05-01\n---\n# T\n")), []);
+});
+
+test("M6: the 400 words are counted outside code and diagrams", () => {
+  const code = `\`\`\`mermaid\n${Array(120).fill(`A --> B and C`).join("\n")}\n\`\`\`\n`;
+  const body = Array(35).fill(`- ${words(10)}`).join("\n");
+  assert.deepEqual(ids(lint(`# T\n\n${body}\n\n${code}`)), []);
+  assert.deepEqual(ids(lint(`# T\n\n${Array(41).fill(`- ${words(10)}`).join("\n")}\n\n${code}`)), ["M6"]);
+});
+
+test("M2: counts of things, dates and time words are warnings, never errors", () => {
   for (const line of [
     "Holds 12 commits.",
     "Across 3 branches today.",
@@ -85,18 +142,17 @@ test("M2: counts of things, dates and time words are errors", () => {
     "Fine right now.",
     "Down at the moment.",
   ]) {
-    assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
+    assert.deepEqual(lint(`# T\n\n${line}\n`).map(({ rule, severity }) => [rule, severity]), [["M2", "warning"]], line);
   }
 });
 
 test("each error message names its excerpt and its fix", () => {
   const message = (text, files) => lint(text, files)[0].message;
-  assert.equal(message(`# T\n\n${words(26)}\n`), "prose line of 26 words, over 25: make it a table, a list or a heading");
-  assert.equal(message("# T\n\nWe have 41 commits.\n"), '"41 commits" goes stale: name the thing, not how many');
-  assert.equal(message("# T\n\nShipped 2026-01-02.\n"), '"2026-01-02" goes stale: state what is true, not when');
-  assert.equal(message("# T\n\nIt is Currently fine.\n"), '"Currently" goes stale: state what is true, not when');
-  assert.equal(message("# T\n\nA {{slot}} here.\n"), '"{{" unfinished: fill it or remove it');
-  assert.equal(message("# T\n\nDo TBD later.\n"), '"TBD" unfinished: fill it or remove it');
+  const keep = "check it against the code; keep it if true";
+  assert.equal(message(`# T\n\n${words(26)}\n`), "sentence of 26 words, over 25: make it a table, a list or a heading");
+  assert.equal(message("# T\n\nWe have 41 commits.\n"), `"41 commits" goes stale: ${keep}`);
+  assert.equal(message("# T\n\nShipped 2026-01-02.\n"), `"2026-01-02" goes stale: ${keep}`);
+  assert.equal(message("# T\n\nIt is Currently fine.\n"), `"Currently" goes stale: ${keep}`);
   assert.equal(message("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "`src/gone.cfg` names nothing on disk: fix the path or remove it");
 });
 
@@ -106,9 +162,7 @@ test("each error carries its excerpt and its fix apart, as the findings formatte
     return { excerpt, fix };
   };
   assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: "26 words, over 25", fix: "make it a table, a list or a heading" });
-  assert.deepEqual(parts("# T\n\nWe have 41 commits.\n"), { excerpt: "41 commits", fix: "name the thing, not how many" });
-  assert.deepEqual(parts("# T\n\nA {{slot}} here.\n"), { excerpt: "{{slot}}", fix: "fill it or remove it" });
-  assert.deepEqual(parts("# T\n\nDo TBD later.\n"), { excerpt: "TBD", fix: "fill it or remove it" });
+  assert.deepEqual(parts("# T\n\nWe have 41 commits.\n"), { excerpt: "41 commits", fix: "check it against the code; keep it if true" });
   assert.deepEqual(parts("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), { excerpt: "src/gone.cfg", fix: "fix the path or remove it" });
   assert.deepEqual(parts(`# T\n\n- ${words(36)}\n`), { excerpt: undefined, fix: "split it" });
 });
@@ -176,14 +230,73 @@ test("M2: today, so far, a version, and a fence stay quiet", () => {
   assert.deepEqual(ids(lint(text)), []);
 });
 
-test("M3: a template marker, TODO, TODO: and TBD are errors", () => {
-  for (const line of ["Name {{ name }}", "TODO", "TODO: later", "Owner TBD"]) {
-    assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M3"], line);
+const VCS_SLOT = slotOf("vcs.md", 2);
+
+test("M3: a slot copied from the template of the same name and left unfilled is an error, fences included", () => {
+  const found = lint(`# VCS\n\n- ${VCS_SLOT}\n\n\`\`\`\n${VCS_SLOT}\n\`\`\`\n`, {}, {}, "vcs.md");
+  assert.deepEqual(found.map(({ rule, severity, line }) => [rule, severity, line]), [["M3", "error", 3], ["M3", "error", 6]]);
+});
+
+test("M3: a slot of another template, a {{ of GitHub Actions, TODO and TBD are never flagged", () => {
+  const text = [
+    "# VCS",
+    "",
+    "- Publish reads `${{ secrets.NPM_TOKEN }}`.",
+    "- Handlebars: `{{user.name}}`",
+    "- No TODO left in code: open an issue instead.",
+    "- TBD",
+    "",
+    "```yaml",
+    "token: ${{ secrets.X }}",
+    "```",
+    `- ${slotOf("testing.md", 0)}`,
+  ].join("\n");
+  assert.deepEqual(ids(lint(text, {}, {}, "vcs.md")), []);
+  assert.deepEqual(ids(lint(`# T\n\n- ${VCS_SLOT}\n`)), [], "a file with no template of its name has no slot");
+});
+
+test("M3: every question of every template is found when its file keeps it", () => {
+  for (const name of ["architecture.md", "ecosystem.md", "ui.md"]) {
+    const text = `# T\n\n- ${slotOf(name, 0)}\n`;
+    assert.deepEqual(ids(lint(text, {}, {}, name)), ["M3"], name);
   }
 });
 
-test("M3: TODO'd and a word containing it stay quiet", () => {
-  assert.deepEqual(ids(lint("# T\n\nThe item was TODO'd and the TODOS list is fine.\n")), []);
+// Where a build puts the hooks and the skill's templates, as `aidd translate --as flat` lays them
+// out per tool, the plugin tree, and a skill carrying its own copy of the hooks.
+const LAYOUTS = {
+  "plugin tree": ["hooks", "skills/02-project-memory"],
+  claude: [".claude/hooks/aidd-context", ".claude/skills/aidd-context-02-project-memory"],
+  cursor: [".cursor/hooks/aidd-context", ".cursor/skills/aidd-context-02-project-memory"],
+  copilot: [".github/hooks/aidd-context", ".github/skills/aidd-context-02-project-memory"],
+  codex: [".codex/hooks/aidd-context", ".agents/skills/aidd-context-02-project-memory"],
+  opencode: [".opencode/hooks/aidd-context", ".opencode/skills/aidd-context/02-project-memory"],
+  kilo: [".kilo/hooks/aidd-context", ".kilo/skills/aidd-context/02-project-memory"],
+  "skill copy": ["skills/02-project-memory/hooks", "skills/02-project-memory"],
+};
+
+test("M3 finds the templates in every layout a build produces, and flags nothing without them", () => {
+  const plugin = path.resolve(__dirname, "../../plugins/aidd-context");
+  for (const [layout, [hooks, skill]] of Object.entries(LAYOUTS)) {
+    for (const withTemplates of [true, false]) {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-layout-"));
+      try {
+        fs.cpSync(path.join(plugin, "hooks"), path.join(root, hooks), { recursive: true });
+        if (withTemplates) fs.cpSync(path.join(plugin, "skills/02-project-memory/assets/templates"), path.join(root, skill, "assets/templates"), { recursive: true });
+        const script = `const { RULES } = require(${JSON.stringify(path.join(root, hooks, "lib/memory-rules.cjs"))});\nconsole.log(RULES.find((rule) => rule.id === "M3").check({ file: "aidd_docs/memory/vcs.md", text: process.argv[1] }).length);`;
+        const run = spawnSync(process.execPath, ["-e", script, `# V\n\n- ${slotOf("vcs.md", 2)}\n`], { encoding: "utf8" });
+        assert.equal(run.stdout.trim(), withTemplates ? "1" : "0", `${layout}${withTemplates ? "" : " without templates"}: ${run.stderr}`);
+      } finally {
+        fs.rmSync(root, { recursive: true, force: true });
+      }
+    }
+  }
+});
+
+test("M3: with no templates folder beside the library, nothing is flagged", () => {
+  const [rule] = RULES.filter(({ id }) => id === "M3");
+  const none = rule.check({ file: `${MEMORY}/vcs.md`, text: `# T\n\n- ${VCS_SLOT}\n`, templates: null });
+  assert.deepEqual(none, []);
 });
 
 test("M4: a backticked path under a real top-level entry that does not exist is an error", () => {
@@ -211,31 +324,31 @@ test("M6: a file over 400 words is a warning", () => {
   assert.deepEqual(ids(lint(`# T\n\n- ${words(30)}\n`)), []);
 });
 
-test("M7: a sentence of 12 words found in another memory file is an error naming that file", () => {
+test("M7: a sentence of 12 words found in another memory file is a warning naming that file", () => {
   const sentence = "the quick brown fox jumps over the lazy dog every single morning again";
   const problems = lint(`# T\n\n- ${sentence}\n`, {}, { "b.md": `# B\n\n${sentence}.\n` });
-  assert.deepEqual(problems.map(({ rule, severity, line, excerpt }) => [rule, severity, line, excerpt]), [["M7", "error", 3, "aidd_docs/memory/b.md"]]);
+  assert.deepEqual(problems.map(({ rule, severity, line, excerpt }) => [rule, severity, line, excerpt]), [["M7", "warning", 3, "aidd_docs/memory/b.md"]]);
   assert.deepEqual(ids(lint(`# T\n\n- ${sentence}\n`, {}, { "b.md": "# B\n\nsomething else entirely\n" })), []);
   assert.deepEqual(ids(lint(`# T\n\n- ${sentence}\n`, {}, { "b.md": "# B\n\nshort words only here\n" })), []);
 });
 
 test("errors come before warnings", () => {
-  const problems = lint(`# T\n\n- ${words(36)}\n\nTBD\n`);
-  assert.deepEqual(ids(problems), ["M3", "M5"]);
+  const problems = lint(`# T\n\n- ${words(36)}\n\n${words(26)}\n`);
+  assert.deepEqual(ids(problems), ["M1", "M5"]);
 });
 
 test("a rule that throws drops out of the findings, the others still report", () => {
   const rules = [{ id: "M9", severity: "error", check: () => { throw new Error("boom"); } }, ...RULES];
-  const root = project({ "a.md": "# T\n\nTBD\n" });
+  const root = project({ "a.md": `# T\n\n${words(26)}\n` });
   try {
-    assert.deepEqual(ids(lintFile(root, `${MEMORY}/a.md`, rules)), ["M3"]);
+    assert.deepEqual(ids(lintFile(root, `${MEMORY}/a.md`, rules)), ["M1"]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
 test("check names a rule that throws once, as an internal error and never a finding, and fails", () => {
-  const root = fullBank({ "a.md": "# T\n\nTBD\n", "b.md": "# B\n\nTBD\n" });
+  const root = fullBank({ "a.md": "# T\n\nShort.\n", "b.md": "# B\n\nShort.\n" });
   const preload = path.join(root, "throw.js");
   try {
     const rules = path.resolve(__dirname, "../../plugins/aidd-context/hooks/lib/memory-rules.cjs");
@@ -250,10 +363,11 @@ test("check names a rule that throws once, as an internal error and never a find
 });
 
 test("lintBank skips README.md and the read-on-demand folders", () => {
-  const root = project({ "README.md": "TBD\n", "a.md": "# T\n", "b.md": "TBD\n", "internal/c.md": "TBD\n", "external/d.md": "TBD\n" });
+  const long = `${words(26)}\n`;
+  const root = project({ "README.md": long, "a.md": "# T\n", "b.md": long, "internal/c.md": long, "external/d.md": long });
   try {
     const problems = lintBank(root);
-    assert.deepEqual(problems.map(({ file, rule }) => [file, rule]), [[`${MEMORY}/b.md`, "M3"]]);
+    assert.deepEqual(problems.map(({ file, rule }) => [file, rule]), [[`${MEMORY}/b.md`, "M1"]]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -270,13 +384,13 @@ test("lintFile gives nothing for a file under internal/ or external/", () => {
   }
 });
 
-test("no memory folder gives no problem", () => {
+test("no memory folder gives no lint problem, and check fails: a gate that checked nothing passes nothing", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-check-"));
   try {
     assert.deepEqual(lintBank(root), []);
     const run = spawnSync("node", [ENGINE, "check", root], { encoding: "utf8" });
-    assert.equal(run.status, 0);
-    assert.equal(run.stdout, "");
+    assert.equal(run.status, 1);
+    assert.equal(run.stdout, 'aidd-context: 1 error, 0 warnings\naidd_docs/memory missing "no memory bank under the root" => write it with the project memory skill\n');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -292,36 +406,84 @@ function check(root, ...files) {
 }
 
 test("check prints the findings in the contract's shape and exits 1 only with an error", () => {
-  const root = fullBank({ "a.md": "# T\n\nTBD\n\n- " + words(36) + "\n" });
+  const root = fullBank({ "a.md": `# T\n\n${words(26)}\n\n- ${words(36)}\n` });
   const warningOnly = fullBank({ "a.md": `# T\n\n- ${words(36)}\n` });
   try {
     const failing = check(root);
     assert.equal(failing.status, 1);
     assert.equal(
       failing.stdout,
-      'aidd-context: 1 errors, 1 warnings\naidd_docs/memory/a.md:3 M3 "TBD" => fill it or remove it\naidd_docs/memory/a.md:5 M5 warning bullet or table cell over 35 words => split it\n'
+      'aidd-context: 1 error, 1 warning\naidd_docs/memory/a.md:3 M1 "26 words, over 25" => make it a table, a list or a heading\naidd_docs/memory/a.md:5 M5 warning bullet or table cell over 35 words => split it\n'
     );
 
     const passing = check(warningOnly);
     assert.equal(passing.status, 0);
-    assert.match(passing.stdout, /^aidd-context: 0 errors, 1 warnings\n.+ M5 warning .+\n$/u);
+    assert.match(passing.stdout, /^aidd-context: 0 errors, 1 warning\n.+ M5 warning .+\n$/u);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(warningOnly, { recursive: true, force: true });
   }
 });
 
-test("check names a misplaced file and the always-written files the bank lacks as errors", () => {
+test("check names the always-written files the bank lacks as the one error, and the layout as warnings", () => {
   const root = project({ "vcs.md": "# V\n", "kpi/x.md": "# K\n", "kpi/y.md": "# K\n", "internal/y.md": "TBD\n", "external/z.md": "TBD\n" });
   try {
     const run = check(root);
     assert.equal(run.status, 1);
     assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
-      "aidd-context: 3 errors, 0 warnings",
+      "aidd-context: 1 error, 1 warning",
       'aidd_docs/memory missing "project-brief.md, architecture.md, coding-assertions.md, testing.md, ecosystem.md" => write each from its template',
-      "placement ×2 in aidd_docs/memory/kpi/* => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
+      "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
     ]);
   } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check: a former file, a row's file below the root and a team folder are warnings and exit 0", () => {
+  const root = fullBank({ "codebase-map.md": "# C\n", "internal/auth.md": "# A\n", "kpi/q.md": "# K\n", "assets/diagram.png": "x" });
+  try {
+    const run = check(root);
+    assert.equal(run.status, 0);
+    assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
+      "aidd-context: 0 errors, 4 warnings",
+      "aidd_docs/memory/codebase-map.md former warning a former file, replaced by architecture.md => merge it into aidd_docs/memory/architecture.md, then remove it",
+      "aidd_docs/memory/internal/auth.md placement warning auth.md belongs at the bank's root => move it to aidd_docs/memory/auth.md",
+      "aidd_docs/memory/assets/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/assets/ to aidd_docs/memory/internal/assets/, or to the aidd_docs/ folder of the plugin that owns it",
+      "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
+    ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check fails on a named file that does not exist, and on a root holding no bank", () => {
+  const root = fullBank({});
+  const bare = fs.mkdtempSync(path.join(os.tmpdir(), "memory-check-"));
+  try {
+    const missing = check(root, `${MEMORY}/nope.md`);
+    assert.equal(missing.status, 1);
+    assert.equal(missing.stdout, 'aidd-context: 1 error, 0 warnings\naidd_docs/memory/nope.md missing "no such file" => write it or fix the name\n');
+    assert.equal(check(bare, `${MEMORY}/vcs.md`).status, 1);
+    assert.equal(check(path.join(bare, "src")).status, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(bare, { recursive: true, force: true });
+  }
+});
+
+test("check resolves a root given through a link, and a file given by its real path", () => {
+  const root = fullBank({ "a.md": `# T\n\n${words(26)}\n` });
+  const link = `${root}-link`;
+  try {
+    fs.symlinkSync(root, link);
+    const real = fs.realpathSync(root);
+    const run = check(link, path.join(real, MEMORY, "a.md"));
+    assert.equal(run.status, 1);
+    assert.match(run.stdout, /aidd_docs\/memory\/a\.md:3 M1/u);
+    assert.equal(check(link).status, 1);
+  } finally {
+    fs.rmSync(link, { force: true });
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
@@ -339,7 +501,7 @@ test("check prints every warning, uncapped", () => {
 });
 
 test("check: named files narrow the run, and leave the missing files out", () => {
-  const root = project({ "a.md": "TBD\n", "b.md": "# ok\n" });
+  const root = project({ "a.md": `${words(26)}\n`, "b.md": "# ok\n" });
   try {
     const run = check(root, `${MEMORY}/b.md`);
     assert.equal(run.status, 0);
@@ -358,4 +520,18 @@ test("the always-written files are the Always rows of the capability table", () 
     .filter((cells) => cells[4] === "yes");
   const named = rows.flatMap((cells) => [...cells[3].matchAll(/`([^`]+\.md)`/gu)].map((match) => match[1]));
   assert.deepEqual([...ALWAYS_WRITTEN].sort(), named.sort());
+});
+
+// The engine's tables are the capability table's: a row's files and the files it replaced.
+test("the engine's row files and former files are the capability table's", () => {
+  const rows = fs
+    .readFileSync(CAPABILITIES, "utf8")
+    .split(/\r?\n/u)
+    .filter((line) => line.startsWith("| `"))
+    .map((line) => line.split("|").map((cell) => cell.trim()));
+  const names = (cell) => [...cell.matchAll(/`([^`]+\.md)`/gu)].map((match) => match[1]);
+  assert.deepEqual([...ROW_FILES].sort(), rows.flatMap((cells) => names(cells[3])).sort());
+  const former = rows.flatMap((cells) => names(cells[5]).filter((name) => !names(cells[3]).includes(name)).map((name) => [name, names(cells[3])]));
+  assert.deepEqual(Object.keys(FORMER_FILES).sort(), former.map(([name]) => name).sort());
+  for (const [old, row] of former) assert.ok(row.includes(FORMER_FILES[old]), `${old} is replaced by a file of its row, not ${FORMER_FILES[old]}`);
 });

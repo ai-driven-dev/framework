@@ -1,6 +1,6 @@
 ---
 objective: "The project-memory skill reads in fewer words and small models write banks at least as correct as before; every framework hook follows one contract with three levels; the CLI writes every tool's hooks through one descriptor per tool, one engine and one host adapter per tool chosen at build time, behind guards that refuse what this change removes."
-status: implemented
+status: in-progress
 ---
 
 # Plan: Lean project memory, one hook contract, one hook path in the CLI
@@ -26,6 +26,7 @@ Source: issue #1141, second slice, on top of #1146 (the memory engine and its wr
 | 13 | The memory hook on the contract | [`phase-13.md`](./phase-13.md) | 1, 2, 6, 11 |
 | 14 | The contract written where it lasts | [`phase-14.md`](./phase-14.md) | 13 |
 | 15 | Measure, document, ship | [`phase-15.md`](./phase-15.md) | 1, 4, 6, 12, 13, 14 |
+| 16 | Never block a legitimate write, never lose a team's line | [`phase-16.md`](./phase-16.md) | 15 |
 
 ## External sources
 
@@ -73,7 +74,9 @@ Source: issue #1141, second slice, on top of #1146 (the memory engine and its wr
 | Refresh ends with sync, on the tools already wired | the memory block never lags |
 | Two hook levels, inform and require, at two moments, after the write or at the turn end, chosen by when the artifact is final | a multi-write artifact is final only at the turn end; never a blocked write; full rules in `hook-contract.md` |
 | Only a plugin with a turn-end check keeps state: one file per session listing the paths the turn wrote | without it, Stop would walk the project every turn and meet standing errors |
-| A gap's level is set by measurement on four real banks | a level 2 rule must have no false positive |
+| A gap's level is set by measurement on four real banks, and by every repro an independent challenge finds | a level 2 rule must have no false positive; two banks from the same authors cannot show one (phase 16) |
+| Memory informs after each write and requires once at the turn end, M3 always, M1 only once measured clean, on the lines the turn is proven to have changed | both fixes touch the model's own line and lose nothing; no proof, no hold; one Stop rule shared with aidd-ui |
+| Counts, dates and time words warn and are checked against the code, never removed | "2 spaces" is a stable convention; the engine keeps detecting a stale count |
 | A file in a bank folder of the team's own (`memory/kpi/`) is level 1: the hook informs, the skill's check offers the move | a real team layout of 46 files is real-data hits, not a misplacement to block |
 | A missing always-written file: an error at the skill's check only, never named by the hook | it is the bank's, not a write's: during setup the other files are not written yet, and an edit never answers for it |
 | `memory.cjs hook|check|sync` replaces three scripts; sync stages nothing in git | one entry per concern; a hook never runs git |

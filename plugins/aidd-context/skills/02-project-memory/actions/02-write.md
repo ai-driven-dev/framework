@@ -12,7 +12,7 @@ The written bank, with no format error.
 
 ## Process
 
-1. **Scaffold.** Create the bank tree of [capabilities.md](../references/capabilities.md).
+1. **Scaffold.** Create the bank tree of [capabilities.md](../references/capabilities.md). Copy `aidd_docs/README.md` only when absent: a project's own is never overwritten.
 2. **Select.** Take the files to write from its table: the always rows, and the rows of the found capabilities.
 3. **Write.** Write each file at the bank root against [memory-rules.md](../references/memory-rules.md).
    - Absent file: fill the template per capabilities.md, unless a misplaced file or a pending Former files merge covers its capability: then write nothing until the user decides.

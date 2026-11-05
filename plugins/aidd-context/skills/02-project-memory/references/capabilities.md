@@ -38,7 +38,7 @@ aidd_docs/
     └── external/
 ```
 
-- `assets/templates/README.md` is copied to `aidd_docs/README.md` as is.
+- `assets/templates/README.md` is copied to `aidd_docs/README.md` only when absent, as is.
 - `memory/` holds the files of the table at its root, plus a team's own, loaded and kept, never rewritten or removed.
 - `internal/` and `external/` exist even when empty, each with a `.gitkeep`. Both are read on demand.
 - `internal/decisions/` holds decision records; it is created when the first one is written, not by scaffold.
