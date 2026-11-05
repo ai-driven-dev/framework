@@ -126,7 +126,7 @@ describe("aidd-ui hooks declaration", () => {
 
   // The tools the host adapters read, under each host's own name: a hook fired for another would read nothing.
   it("fires after the tools the host adapter reads, a shell command among them since the engine writes through one", () => {
-    assert.deepEqual(declared.PostToolUse.map((group) => group.matcher), ["Write|Edit|Bash|Shell|bash|PowerShell"]);
+    assert.deepEqual(declared.PostToolUse.map((group) => group.matcher), ["Write|Edit|Delete|Bash|Shell|bash|PowerShell"]);
   });
 
   it("bounds every hook to the contract's 5 seconds", () => {
