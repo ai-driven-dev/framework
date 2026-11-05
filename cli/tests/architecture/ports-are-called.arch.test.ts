@@ -6,8 +6,9 @@
  *
  * A capability class is held to the same rule, on a stricter reading of a call: its method
  * names (`merge`, `equals`, `accepts`) are shared by other types, so `.merge(` alone cleared
- * `HooksCapability.merge` while nothing called it. A call counts only when its receiver names
- * a capability: the class's own key (`hooks`, `mcpCap`) or `cap`, as every caller in src does.
+ * `HooksCapability.merge` while nothing called it. A call counts only when its receiver is an
+ * identifier naming the capability (`hooks`, `mcpCap`, `capability`), a `…Capability` resolver
+ * call, or `this` in the class's own file. Getters and statics count too.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -64,7 +65,7 @@ function uncalledMethods(bodies: ReadonlyMap<string, string>, ports: readonly st
 
 const CAPABILITY_FILE = /^src\/contexts\/[^/]+\/domain\/capabilities\/[^/]+\.ts$/;
 const CAPABILITY_CLASS = /^export class (\w+)Capability\b[^{]*\{([\s\S]*?)\n\}/gm;
-const CLASS_METHOD = /^ {2}(?:async )?(\w+)\s*(?:<[^>]*>)?\(/gm;
+const CLASS_METHOD = /^ {2}(?:(static) )?(?:async )?(?:(get) )?(\w+)\s*(?:<[^>]*>)?\(/gm;
 
 /**
  * Capability methods with no caller in src today, by class. Every one is called only by its
@@ -75,28 +76,24 @@ const CAPABILITY_BASELINE: readonly {
   readonly file: string;
   readonly className: string;
   readonly methods: readonly string[];
-  readonly count: number;
   readonly reason: string;
 }[] = [
   {
     file: "src/contexts/tools/domain/capabilities/agents-capability.ts",
     className: "AgentsCapability",
     methods: ["accepts", "deserialize", "equals"],
-    count: 3,
     reason: "called only by tests; the translate pipeline reads agents through the build contract",
   },
   {
     file: "src/contexts/tools/domain/capabilities/commands-capability.ts",
     className: "CommandsCapability",
     methods: ["accepts", "equals"],
-    count: 2,
     reason: "called only by tests",
   },
   {
     file: "src/contexts/tools/domain/capabilities/hooks-capability.ts",
     className: "HooksCapability",
     methods: ["accepts", "equals", "getEntrySection", "merge"],
-    count: 4,
     reason:
       "called only by tests; hooks merge through each profile's own merge function, never `merge`",
   },
@@ -104,35 +101,30 @@ const CAPABILITY_BASELINE: readonly {
     file: "src/contexts/tools/domain/capabilities/mcp-capability.ts",
     className: "McpCapability",
     methods: ["accepts", "equals", "merge"],
-    count: 3,
     reason: "called only by tests; MCP config merges through the file adapter's strategy",
   },
   {
     file: "src/contexts/tools/domain/capabilities/plugins-capability.ts",
     className: "PluginsCapability",
     methods: ["pluginOutputDir", "resolvePluginsBaseDir"],
-    count: 2,
     reason: "called only by profile tests",
   },
   {
     file: "src/contexts/tools/domain/capabilities/rules-capability.ts",
     className: "RulesCapability",
     methods: ["accepts", "equals"],
-    count: 2,
     reason: "called only by tests",
   },
   {
     file: "src/contexts/tools/domain/capabilities/settings-capability.ts",
     className: "SettingsCapability",
     methods: ["accepts", "equals"],
-    count: 2,
     reason: "called only by tests",
   },
   {
     file: "src/contexts/tools/domain/capabilities/skills-capability.ts",
     className: "SkillsCapability",
     methods: ["accepts", "equals"],
-    count: 2,
     reason: "called only by tests",
   },
 ];
@@ -141,9 +133,20 @@ function capabilityFiles(files: readonly string[]): string[] {
   return files.filter((file) => CAPABILITY_FILE.test(file)).sort();
 }
 
-/** `this.m(` in the class's own file, or `<receiver>.m(` elsewhere whose receiver names the
- * capability; a receiver that is a call (`resolvePluginsCapability(id)?.m(`) is read by its
- * callee name. */
+/** The receivers a capability is reached through in src: its key (`hooks`), the key with
+ * `Cap` or `Capability`, or the generic `cap` and `capability`. Matched as whole identifiers:
+ * `escaped` or `hooksList` is another value. */
+function namesCapability(receiver: string, key: string): boolean {
+  const name = receiver.toLowerCase();
+  return [key, `${key}cap`, `${key}capability`, "cap", "capability"].includes(name);
+}
+
+/**
+ * A method is called through `this.m(` in its class's own file, or `<receiver>.m(` elsewhere
+ * whose receiver names the capability, or whose receiver is a call to a `…Capability`
+ * resolver (`resolvePluginsCapability(id)?.m(`). A getter is read without the parentheses; a
+ * static is called on the class itself.
+ */
 function uncalledCapabilityMethods(
   bodies: ReadonlyMap<string, string>,
   capabilities: readonly string[]
@@ -151,19 +154,26 @@ function uncalledCapabilityMethods(
   const uncalled: string[] = [];
   for (const file of capabilities) {
     for (const block of (bodies.get(file) ?? "").matchAll(CAPABILITY_CLASS)) {
+      const className = `${block[1]}Capability`;
       const key = (block[1] as string).toLowerCase();
-      for (const method of (block[2] as string).matchAll(CLASS_METHOD)) {
-        const name = method[1] as string;
+      for (const member of (block[2] as string).matchAll(CLASS_METHOD)) {
+        const [, isStatic, isGetter, name] = member;
         if (name === "constructor") continue;
-        const call = new RegExp(`([\\w$]+)(?:\\([^()]*\\))?\\??\\.${name}\\s*\\(`, "g");
+        const use = new RegExp(
+          `([\\w$]+)(\\([^()]*\\))?\\??\\.${name}${isGetter ? "\\b(?!\\s*\\()" : "\\s*\\("}`,
+          "g"
+        );
         const called = [...bodies].some(([caller, body]) =>
-          [...body.matchAll(call)].some((match) => {
-            const receiver = (match[1] as string).toLowerCase();
-            if (caller === file) return receiver === "this";
-            return receiver.includes(key) || receiver.includes("cap");
+          [...body.matchAll(use)].some((match) => {
+            const receiver = match[1] as string;
+            if (caller === file && receiver === "this") return true;
+            if (caller === file) return false;
+            if (isStatic) return receiver === className;
+            if (match[2] !== undefined) return /Capability$/.test(receiver);
+            return namesCapability(receiver, key);
           })
         );
-        if (!called) uncalled.push(`${file} :: ${block[1]}Capability.${name}`);
+        if (!called) uncalled.push(`${file} :: ${className}.${name}`);
       }
     }
   }
@@ -210,12 +220,6 @@ describe("a capability declares nothing nobody calls", () => {
     );
     expect(added, "a capability declares a method nothing in src calls").toEqual([]);
     expect(fixed, "fixed — remove these from CAPABILITY_BASELINE").toEqual([]);
-  });
-
-  it("states each baseline entry's count as the number of its methods", () => {
-    for (const entry of CAPABILITY_BASELINE) {
-      expect(entry.methods.length, entry.className).toBe(entry.count);
-    }
   });
 
   it("finds the capability classes, so the rule cannot pass by selecting nothing", () => {
@@ -275,6 +279,50 @@ describe("the guard itself", () => {
     ]);
 
     expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([]);
+  });
+
+  it("reads a receiver as a whole identifier, never one that merely contains the key or cap", () => {
+    const bodies = new Map([
+      [capability, thing],
+      [
+        "src/contexts/framework/application/caller.ts",
+        "thing.used();\nescaped.merge(a, b);\ncapture.merge(a, b);\nthingConfig.merge(a, b);\nthingList.merge(a, b);",
+      ],
+    ]);
+
+    expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([
+      `${capability} :: ThingCapability.merge`,
+    ]);
+  });
+
+  it("names an unread getter and an uncalled static, and clears the ones read through the capability", () => {
+    const withMembers = thing.replace(
+      "\n}",
+      [
+        "",
+        "  get plantedGetter(): string {",
+        '    return "x";',
+        "  }",
+        "  static plantedStatic(): void {}",
+        "  get readGetter(): string {",
+        '    return "y";',
+        "  }",
+        "  static calledStatic(): void {}",
+        "}",
+      ].join("\n")
+    );
+    const bodies = new Map([
+      [capability, withMembers],
+      [
+        "src/contexts/framework/application/caller.ts",
+        "thing.used();\nthing.merge(a, b);\nconst v = thing.readGetter;\nThingCapability.calledStatic();\nother.plantedGetter;\nother.plantedStatic();",
+      ],
+    ]);
+
+    expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([
+      `${capability} :: ThingCapability.plantedGetter`,
+      `${capability} :: ThingCapability.plantedStatic`,
+    ]);
   });
 
   it("names the port method nothing spells as a call, and clears the one a caller spells", () => {
