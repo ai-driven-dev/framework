@@ -38,8 +38,6 @@ test("the table lists no rule the engine does not have", () => {
 // A rule stated outside the table: a limit in digits ("25 words") or in words ("under twenty-five
 // words"), or the unfinished markers M3 owns.
 const STATED_LIMIT = /\b(?:\d+|(?:under|over|max|maximum|than)\s+[a-z]+(?:-[a-z]+)?)\s+words\b|\b(?:TODO|TBD)\b/iu;
-// Left to the phase that rewrites the file.
-const EXEMPT = new Set(["references/reading-sources.md", "assets/templates/memory/README.md"]);
 
 function skillFiles() {
   const skill = path.join(PLUGIN, "skills/02-project-memory");
@@ -56,7 +54,7 @@ test("the guard sees a limit in digits, in words, and a restated marker rule", (
 test("no limit is stated outside the table, and the review protocol points to it", () => {
   const protocol = fs.readFileSync(path.join(REFERENCES, "review-protocol.md"), "utf8");
   assert.match(protocol, /memory-rules\.md/u);
-  for (const file of skillFiles().filter((name) => !EXEMPT.has(name))) {
+  for (const file of skillFiles()) {
     const text = fs.readFileSync(path.join(PLUGIN, "skills/02-project-memory", file), "utf8");
     const line = text.split(/\r?\n/u).find((candidate) => STATED_LIMIT.test(candidate));
     assert.equal(line, undefined, `${file} states a limit: ${line}`);

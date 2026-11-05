@@ -81,6 +81,7 @@ status: pending
 
 1. Update `capabilities.md` rows and `Former files`, and the template links of `connect-services.md`.
 2. Write `memory-templates.test.js` first: every template passes the engine except its `{{…}}` lines; every `capabilities.md` file has a template.
+3. `assets/templates/memory/README.md` drops its restated reader rules (non-derivable, points to the code, current state, kept small) and points to `references/memory-rules.md`.
 
 ## Test acceptance criteria
 
