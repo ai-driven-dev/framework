@@ -8,13 +8,12 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   flatMcpKeyPrefix,
-  genericFlatHooksScriptPath,
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { PluginPresence, ToolBuildContract } from "../../build-contract.js";
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildCodexMarketplace, buildCodexMarketplaceEntry } from "../../marketplace-catalog.js";
 import { codexAgentMarkdownToToml } from "./codex-agent-toml.js";
 import {
@@ -22,6 +21,7 @@ import {
   OUTPUT_CODEX_MANIFEST_RELATIVE,
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.js";
+import { CODEX_HOOKS } from "./hooks.js";
 import { mergeCodexFrameworkHooksJson } from "./hooks-format.js";
 import { parseToml, stringifyToml } from "./toml.js";
 
@@ -132,7 +132,7 @@ export function buildCodexContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CODEX_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CODEX_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: PLUGIN_ROOT_TOKEN,
+    pluginRootToken: CODEX_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: buildCodexManifest,
     manifestSchemaName: "codex-plugin-manifest",
@@ -155,11 +155,7 @@ export function buildCodexContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: (_p, rel) => rel,
-      },
+      hooks: pluginTreeHooksArtifact(),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -188,11 +184,6 @@ function codexFlatSkillPath(plugin: string, rel: string): string {
 function codexFlatAgentPath(plugin: string, rel: string): string {
   const base = rel.replace(/^agents\//, "").replace(/\.md$/, ".toml");
   return `.codex/agents/${plugin}-${base}`;
-}
-
-function codexFlatHooksPath(plugin: string, rel: string): string {
-  const rest = rel.replace(/^hooks\//, "");
-  return genericFlatHooksScriptPath(".codex/hooks/", plugin, rest);
 }
 
 async function collectPrefixedMcpServers(
@@ -238,13 +229,7 @@ export function buildCodexFlatContract(): ToolBuildContract {
         transform: codexAgentMarkdownToToml,
       },
       mcp: { supported: false }, // handled by emitConfigArtifact (config.toml mcp_servers)
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: codexFlatHooksPath,
-        hooksMerge: (existing, incoming) => mergeCodexFrameworkHooksJson(existing, incoming),
-        hooksMergeDest: (outDir) => `${outDir}/.codex/hooks.json`,
-      },
+      hooks: flatHooksArtifact(CODEX_HOOKS.flat, { merge: mergeCodexFrameworkHooksJson }),
       rules: { supported: false },
       commands: { supported: false },
     },

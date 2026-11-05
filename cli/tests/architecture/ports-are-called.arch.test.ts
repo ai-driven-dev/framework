@@ -93,9 +93,8 @@ const CAPABILITY_BASELINE: readonly {
   {
     file: "src/contexts/tools/domain/capabilities/hooks-capability.ts",
     className: "HooksCapability",
-    methods: ["accepts", "equals", "getEntrySection", "merge"],
-    reason:
-      "called only by tests; hooks merge through each profile's own merge function, never `merge`",
+    methods: ["accepts", "equals", "getEntrySection"],
+    reason: "called only by tests",
   },
   {
     file: "src/contexts/tools/domain/capabilities/mcp-capability.ts",

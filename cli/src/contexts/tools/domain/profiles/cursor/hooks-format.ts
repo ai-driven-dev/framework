@@ -7,24 +7,13 @@
 
 import { rewriteClaudeRootInJson } from "../../../../../kernel/materialization/claude-root-path-rewrite.js";
 import { genericFlatHooksScriptPath } from "../../../../../kernel/materialization/flat-paths.js";
+import { PLUGIN_HOOKS_SOURCE } from "../../formats/hooks-descriptor.js";
 import type { PluginHooksShape, PluginMatcherGroup } from "../../formats/plugin-hooks-shape.js";
+import { CURSOR_HOOKS } from "./hooks.js";
 
 // `timeout` is in seconds on both sides: Claude's hooks.json and Cursor's per-script option.
 type CursorHookEntry = { command: string; matcher?: string; timeout?: number };
 type CursorFlatShape = { version: 1; hooks: Record<string, CursorHookEntry[]> };
-
-// `Stop` fans out to two Cursor events, not one: interactive sessions fire `stop` and headless
-// ones `sessionEnd` instead — never both from the same run, but which one depends on how the
-// session ends, so both are subscribed. A run file already tolerates more than one `turn_end`
-// line, so a session firing both is not a problem.
-const CURSOR_EVENT_MAP: Record<string, readonly string[]> = {
-  SessionStart: ["sessionStart"],
-  UserPromptSubmit: ["beforeSubmitPrompt"],
-  PreToolUse: ["preToolUse"],
-  PostToolUse: ["postToolUse"],
-  Stop: ["stop", "sessionEnd"],
-  SubagentStop: ["subagentStop"],
-};
 
 /** Merges a plugin's hooks (Claude nested shape) into the accumulated `.cursor/hooks.json`:
  * version 1, event-mapped keys, flat `{command}` entries. An unmapped event is skipped and
@@ -37,9 +26,10 @@ export function mergeCursorFlatHooks(
   const plugin = JSON.parse(pluginHooksJson) as PluginHooksShape;
   const pluginHooks = plugin.hooks ?? {};
   const warnings: string[] = [];
+  const eventMap: Readonly<Record<string, readonly string[]>> = CURSOR_HOOKS.eventMap;
 
   for (const [claudeEvent, matchers] of Object.entries(pluginHooks)) {
-    const cursorEvents = CURSOR_EVENT_MAP[claudeEvent];
+    const cursorEvents = eventMap[claudeEvent];
     if (!cursorEvents) {
       warnings.push(`cursor: unmapped event '${claudeEvent}' skipped`);
       continue;
@@ -73,9 +63,6 @@ function extractCursorEntries(matchers: PluginMatcherGroup[]): CursorHookEntry[]
   }
   return entries;
 }
-
-const HOOKS_PREFIX = "hooks/";
-const CURSOR_HOOKS_DIR = ".cursor/hooks/";
 
 interface CursorHooksFile {
   version?: number;
@@ -114,16 +101,17 @@ export function cursorProjectHooksScriptPath(
   pluginName: string,
   hooksRelativePath: string
 ): string {
-  const rest = hooksRelativePath.startsWith(HOOKS_PREFIX)
-    ? hooksRelativePath.slice(HOOKS_PREFIX.length)
+  const prefix = `${PLUGIN_HOOKS_SOURCE.scriptDir}/`;
+  const rest = hooksRelativePath.startsWith(prefix)
+    ? hooksRelativePath.slice(prefix.length)
     : hooksRelativePath;
-  return genericFlatHooksScriptPath(CURSOR_HOOKS_DIR, pluginName, rest);
+  return genericFlatHooksScriptPath(CURSOR_HOOKS.project.scriptsDir, pluginName, rest);
 }
 
 /** The directory a plugin's copied hook scripts live under — nothing else writes here, so
  * `plugin remove` can delete it whole once the hooks.json entries are stripped. */
 export function cursorProjectHooksScriptDir(pluginName: string): string {
-  return `${CURSOR_HOOKS_DIR}${pluginName}/`;
+  return `${CURSOR_HOOKS.project.scriptsDir}${pluginName}/`;
 }
 
 function stripPluginEntries(existingJson: string, pluginName: string): CursorHooksFile {
@@ -150,6 +138,6 @@ function rewritePluginRootTokens(pluginHooksJson: string, pluginName: string): s
 // A hooks.json command only ever names a path under its own hooks/ — unlike the
 // framework-build route, this never needs an agents/ or skills/ branch too.
 function resolveSuffix(suffix: string, pluginName: string): string {
-  if (!suffix.startsWith(HOOKS_PREFIX)) return suffix;
+  if (!suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)) return suffix;
   return `./${cursorProjectHooksScriptPath(pluginName, suffix)}`;
 }

@@ -11,8 +11,7 @@ type CodexHookEntry = {
 type CodexHooksShape = { hooks?: Record<string, CodexHookEntry[]> };
 
 /** Merges a plugin's hooks (Claude nested shape) into `.codex/hooks.json`, Codex's nested shape
- * under a top-level `hooks` wrapper. Emits no install-mode memory hook — that one belongs to
- * `HooksCapability.mergeFn`. */
+ * under a top-level `hooks` wrapper. */
 export function mergeCodexFrameworkHooksJson(
   existingJson: string | null,
   pluginHooksJson: string
