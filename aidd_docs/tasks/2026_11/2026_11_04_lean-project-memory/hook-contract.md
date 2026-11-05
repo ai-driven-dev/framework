@@ -95,7 +95,7 @@ Where a host does not deliver a level 2 answer to the model, its adapter answers
 | Shell tools | `Bash`; `PowerShell` with `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`, its text in `command` | `Bash` | `Shell` | `Bash` | `bash` | same |
 | PreToolUse | native | native | native, mapped by the CLI | native | native, not bridged | native, not bridged |
 
-The OpenCode and Kilo bridges hand an `apply_patch` to every hook whose matcher names `Edit` or `Write`, as Codex documents for its own. A Claude Code `PowerShell` call reaches the memory hook through its matcher.
+Cursor filters `postToolUse` by its matcher: a `Delete` ran and the memory hook stayed silent until its matcher named `Delete`, which then fired it. The OpenCode and Kilo bridges hand an `apply_patch` to every hook whose matcher names `Edit` or `Write`, as Codex documents for its own. A Claude Code `PowerShell` call reaches the memory hook through its matcher.
 
 Copilot accepts the nested hooks shape (`matcher` plus a `hooks` array), as the native tree ships it: a plugin installed from the native build fired SessionStart and PostToolUse, and expanded `${PLUGIN_ROOT}`. The flat shape in `.github/hooks/*.json` also fires, and needs `--trust-folder` in prompt mode.
 

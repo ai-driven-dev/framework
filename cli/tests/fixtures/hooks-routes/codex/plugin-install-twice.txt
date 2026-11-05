@@ -21,7 +21,7 @@ approval_policy = "on-request"
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|Bash|Shell|bash|PowerShell",
+        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
         "hooks": [
           {
             "type": "command",
