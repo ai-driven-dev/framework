@@ -16,8 +16,7 @@ status: done
 │   │   ├── host-codex.cjs ✅
 │   │   ├── host-copilot.cjs ✅
 │   │   ├── host-cursor.cjs ✅
-│   │   ├── host-opencode.cjs ✅
-│   │   └── host-kilo.cjs ✅
+│   │   └── host-bridge.cjs ✅ (OpenCode and Kilo share it; each descriptor stamps its host)
 │   ├── src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts ✏️
 │   ├── src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts ✏️
 │   ├── src/contexts/tools/domain/formats/hooks-descriptor.ts ✏️
@@ -47,7 +46,7 @@ status: done
 1. One adapter per host, Node built-ins only, the same exports: `readEvent()` returns `{ host, event, files: [{ path, content?, written?, replaced? }], command?, stopActive, sessionId, cwd, raw }` or nothing on garbage, with one `files` entry per file a patch touches and `stopActive` true when the Stop is already a continuation (Claude's `stop_hook_active`, Cursor's `loop_count` above 0); `answer({ level, text })` writes the host's key, level 2 falling back to level 1 where the host drops it; `continueTurn(text)` for Stop, asking once. A `files` entry carries `written`, the text the write put in that file (a Write's content, an Edit's `new_string`, a patch's added lines), and `replaced`, the text it replaced (an Edit's `old_string`, a patch's removed lines), each absent where the host gives none. A `files` entry may no longer exist (a deletion, a move's source), so hooks tolerate `ENOENT`; a shell `rm` reaches the hook only through `command`. Tests first on every fixture.
 2. `host-claude.cjs` is copied into every plugin's `hooks/lib/host.cjs`, so the plugin tree runs as is on Claude Code; `check-hook-rule-copies.js` holds those copies identical to the asset.
 3. The build replaces `hooks/lib/host.cjs` with the target's adapter on every other route; the descriptor's runtime field arrives here, with this first reader.
-4. OpenCode and Kilo have no stdin hooks: each bridge builds the hook's payload from the plugin's arguments, which is its job, and their adapter reads what the bridge hands it; the bridges' command parsing shares one copy.
+4. OpenCode and Kilo have no stdin hooks: each bridge builds the hook's payload from the plugin's arguments, which is its job, and their one bridge adapter, stamped with its host by each descriptor, reads what the bridge hands it; the bridges' command parsing shares one copy.
 
 ## Test acceptance criteria
 

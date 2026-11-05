@@ -3,6 +3,13 @@ import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
+import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
+import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
+import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
+import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copilot/hooks.js";
+import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
+import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
+import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
@@ -183,11 +190,25 @@ async function sourceHookScripts(): Promise<Map<string, string>> {
 
 const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 
-/** Each tool's host adapter by content, so a delivered copy names the one it is. */
+const DESCRIPTORS: Readonly<Record<string, HooksDescriptor>> = {
+  claude: CLAUDE_HOOKS,
+  codex: CODEX_HOOKS,
+  copilot: COPILOT_HOOKS,
+  cursor: CURSOR_HOOKS,
+  opencode: OPENCODE_HOOKS,
+  kilo: KILO_HOOKS,
+};
+
+/** Each tool's host adapter by content, so a delivered copy names the one it is: an asset file
+ * shipped as is, or the text a descriptor stamps from one, named for its tool. */
 async function hostAdapters(): Promise<Map<string, string>> {
   const adapters = new Map<string, string>();
   for (const file of await readdir(ADAPTERS)) {
     adapters.set(await readFile(join(ADAPTERS, file), "utf8"), file);
+  }
+  for (const [tool, descriptor] of Object.entries(DESCRIPTORS)) {
+    const adapter = descriptor.runtime?.adapter;
+    if (adapter !== undefined && !adapters.has(adapter)) adapters.set(adapter, `for ${tool}`);
   }
   return adapters;
 }
