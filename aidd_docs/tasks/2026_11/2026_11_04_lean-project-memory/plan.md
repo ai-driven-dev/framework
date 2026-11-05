@@ -80,6 +80,7 @@ Source: issue #1141, second slice, on top of #1146 (the memory engine and its wr
 | Framework hooks speak one neutral interface; the build puts each tool's adapter behind it | no runtime wrapper: no extra process, no changed command, no host re-trust; Claude is one adapter like the others |
 | One hooks descriptor per tool; adding a tool is a descriptor and a payload fixture | what differs per tool is data |
 | The levels bind the framework, not users | `08-hook-generate` asks the user's intent instead |
+| `hooks/lib/host.cjs` serves the framework's own hooks only; `08-hook-generate` keeps writing each tool's native hook and never uses it | shipping framework hooks and generating a user's hooks are two concerns |
 | A rerun of `translate` into a non-empty folder is a stated limit | no real flow does it; the engine's strip-then-add covers it anyway |
 | aidd-pm's folder move and the aidd-dev plan hook are separate changes | each is its own concern and plugin |
 | Measured on Haiku first, then Qwen 3.8 Flash; Sonnet left out | a skill that holds on the smaller model holds on the larger one |
