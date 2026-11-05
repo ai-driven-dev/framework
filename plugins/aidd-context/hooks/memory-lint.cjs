@@ -13,7 +13,6 @@ const { ERROR, RULES } = require("./lib/memory-rules.cjs");
 
 const MEMORY_DIR = path.join("aidd_docs", "memory");
 const EXCLUDED_FILE = "README.md";
-const IGNORED_ENTRY = ".git";
 
 const ERROR_MARK = "✗";
 const WARNING_MARK = "⚠";
@@ -35,10 +34,6 @@ function memoryFilesUnder(root) {
     .filter((entry) => entry.isFile() && entry.name.endsWith(".md") && entry.name !== EXCLUDED_FILE)
     .map((entry) => toPosix(path.join(MEMORY_DIR, entry.name)))
     .sort();
-}
-
-function topLevelEntries(root) {
-  return new Set(fs.readdirSync(root).filter((entry) => entry !== IGNORED_ENTRY));
 }
 
 function textsOf(root, files) {
@@ -77,8 +72,7 @@ function lintFile(root, file, rules = RULES) {
   const context = {
     file: relative,
     text: fs.readFileSync(path.join(root, relative), "utf8"),
-    exists: (target) => fs.existsSync(path.resolve(root, target)),
-    entries: topLevelEntries(root),
+    root,
     others,
   };
 

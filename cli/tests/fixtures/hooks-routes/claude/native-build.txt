@@ -28,6 +28,9 @@
 }
 
 
+## out-marketplace/plugins/aidd-context/hooks/lib/common-rules.cjs
+script, identical to the plugin source
+
 ## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 

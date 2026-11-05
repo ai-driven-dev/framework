@@ -110,6 +110,14 @@ pre-commit:
           exit 0
         fi
         node scripts/check-referenced-paths.js
+    hook-rule-copies:
+      glob: "plugins/*/hooks/lib/common-rules.cjs"
+      run: |
+        if ! command -v node >/dev/null 2>&1; then
+          echo 'ℹ️  node not available; skipping hook-rule-copies'
+          exit 0
+        fi
+        node scripts/check-hook-rule-copies.js
 
     doc-duplication:
       glob: "**/*.md"

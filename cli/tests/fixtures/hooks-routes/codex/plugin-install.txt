@@ -32,6 +32,9 @@ approval_policy = "on-request"
 }
 
 
+## project/.codex/plugins/aidd-context/hooks/lib/common-rules.cjs
+script, identical to the plugin source
+
 ## project/.codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
@@ -138,8 +141,9 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project codex aidd-context scope=project: 5 hook files
+project codex aidd-context scope=project: 6 hook files
   .codex/plugins/aidd-context/hooks/hooks.json
+  .codex/plugins/aidd-context/hooks/lib/common-rules.cjs
   .codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
   .codex/plugins/aidd-context/hooks/memory-hook.cjs
   .codex/plugins/aidd-context/hooks/memory-lint.cjs
