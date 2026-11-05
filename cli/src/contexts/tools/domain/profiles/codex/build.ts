@@ -232,6 +232,7 @@ export function buildCodexFlatContract(): ToolBuildContract {
     buildMarketplaceEntry: null,
     configArtifact: {
       reads: () => [CODEX_FLAT_CONFIG],
+      probes: () => [],
       assets: { tool: "codex", names: [] },
       emit: ({ builtPlugins, pluginMcp, existing }) => {
         const mcpServers = collectPrefixedMcpServers(builtPlugins, pluginMcp);

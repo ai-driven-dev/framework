@@ -28,6 +28,7 @@ function emit(input: {
     builtPlugins: input.builtPlugins ?? [],
     pluginMcp: input.pluginMcp ?? new Map(),
     existing: new Map(Object.entries(input.existing ?? {})),
+    present: new Set(),
     assets: new Map([["kilo.json", input.asset ?? { $schema: "https://app.kilo.ai/config.json" }]]),
   });
 }
@@ -64,6 +65,7 @@ describe("buildKiloFlatContract", () => {
       "kilo.jsonc",
     ]);
     expect(configArtifactOf().assets).toStrictEqual({ tool: "kilo", names: ["kilo.json"] });
+    expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([]);
   });
 
   it("writes Kilo's project-local base config and Kilo-compatible MCP entries", () => {

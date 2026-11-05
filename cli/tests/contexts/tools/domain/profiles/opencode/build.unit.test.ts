@@ -43,6 +43,7 @@ function emit(input: {
   builtPlugins?: readonly string[];
   pluginMcp?: ReadonlyMap<string, string>;
   existing?: Readonly<Record<string, string>>;
+  present?: readonly string[];
   base?: string;
   events?: string | Record<string, unknown>;
 }): readonly ConfigArtifactFile[] {
@@ -50,6 +51,7 @@ function emit(input: {
     builtPlugins: input.builtPlugins ?? [],
     pluginMcp: input.pluginMcp ?? new Map(),
     existing: new Map(Object.entries(input.existing ?? {})),
+    present: new Set(input.present ?? []),
     assets: new Map([
       ["opencode.json", input.base ?? { $schema: "https://opencode.ai/config.json" }],
       ["opencode-events.js", input.events ?? "export async function setupOpencodeEvents() {}"],
@@ -105,10 +107,12 @@ describe("transformMcpToOpencode()", () => {
 });
 
 describe("buildOpencodeFlatContract()", () => {
-  it("reads both config spellings and each plugin's native and generated loader", () => {
+  it("reads both config spellings, and only checks each plugin's native and generated loader exists", () => {
     expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([
       "opencode.jsonc",
       "opencode.json",
+    ]);
+    expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([
       ".opencode/plugin/aidd-dev.js",
       ".opencode/plugin/aidd-dev-hooks.js",
     ]);
@@ -124,7 +128,7 @@ describe("buildOpencodeFlatContract()", () => {
       const adapter = "export async function setupOpencodeEvents() {}";
       const files = emit({
         builtPlugins: ["aidd-dev", "aidd-pm"],
-        existing: { [`.opencode/plugin/${entry}`]: "plugin" },
+        present: [`.opencode/plugin/${entry}`],
         events: adapter,
       });
 
@@ -145,7 +149,7 @@ describe("buildOpencodeFlatContract()", () => {
     expect(() =>
       emit({
         builtPlugins: ["aidd-dev"],
-        existing: { ".opencode/plugin/aidd-dev.js": "plugin" },
+        present: [".opencode/plugin/aidd-dev.js"],
         events: {},
       })
     ).toThrow(new TypeError("OpenCode event adapter must be source text"));

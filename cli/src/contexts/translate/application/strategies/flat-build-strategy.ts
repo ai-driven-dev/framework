@@ -1,5 +1,9 @@
 import { basename, dirname, join, relative } from "node:path";
-import { FlatTargetExistsError, OutDirNotDirectoryError } from "../../../../kernel/errors.js";
+import {
+  FlatTargetExistsError,
+  McpConfigError,
+  OutDirNotDirectoryError,
+} from "../../../../kernel/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
 import { flatMcpKeyPrefix } from "../../../../kernel/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../kernel/materialization/plugin-root-path-rewrite.js";
@@ -16,6 +20,16 @@ import {
 } from "../../domain/build-target.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import type { BuildOutputStrategy, SourceMarketplace } from "./build-output-strategy.js";
+
+function parsePluginMcp(pluginName: string, content: string): unknown {
+  try {
+    return JSON.parse(content);
+  } catch (err) {
+    throw new McpConfigError(
+      `Cannot parse plugin '${pluginName}' MCP config: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
 
 export class FlatBuildStrategy implements BuildOutputStrategy {
   private sourceDir = "";
@@ -105,10 +119,9 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const names = builtPlugins.map((p) => p.name);
     const files = step.emit({
       builtPlugins: names,
-      pluginMcp: await this.readEach(names, (name) =>
-        join(this.sourceDir, "plugins", name, PLUGIN_MCP_RELATIVE)
-      ),
+      pluginMcp: await this.readPluginMcp(names),
       existing: await this.readEach(step.reads(names), (relPath) => join(outDir, relPath)),
+      present: await this.presentOf(step.probes(names), outDir),
       assets: new Map(
         step.assets.names.map((name) => [
           name,
@@ -118,6 +131,30 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     });
     for (const file of files) await this.fs.writeFile(join(outDir, file.path), file.content);
     return files.length;
+  }
+
+  /** Each built plugin's `.mcp.json`, its plugin-root paths already resolved into the output, as
+   * the per-plugin MCP merge resolves them. */
+  private async readPluginMcp(names: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    const raw = await this.readEach(names, (name) =>
+      join(this.sourceDir, "plugins", name, PLUGIN_MCP_RELATIVE)
+    );
+    const resolved = new Map<string, string>();
+    for (const [name, content] of raw) {
+      const rewritten = rewritePluginRootInJson(parsePluginMcp(name, content), (suffix) =>
+        this.resolveClaudeRootAbsolute(suffix, name)
+      );
+      resolved.set(name, JSON.stringify(rewritten));
+    }
+    return resolved;
+  }
+
+  private async presentOf(relPaths: readonly string[], outDir: string): Promise<Set<string>> {
+    const present = new Set<string>();
+    for (const relPath of relPaths) {
+      if (await this.fs.fileExists(join(outDir, relPath))) present.add(relPath);
+    }
+    return present;
   }
 
   /** Each key's file content, for the keys whose file exists. */
@@ -153,13 +190,14 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     return 1;
   }
 
-  /** Where an agent lands: the one path both its writer and a reference to it resolve to. */
+  /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer,
+   * a command naming it and a link to it all resolve to. */
   private flatAgentPath(
     artifact: Extract<ArtifactContract, { supported: true }>,
     pluginName: string,
     agentFile: string
   ): string {
-    return artifact.path(pluginName, `agents/${agentFile}`);
+    return artifact.path(pluginName, `agents/${basename(agentFile)}`);
   }
 
   private rewriteAgentForFlat(content: string, flatRelPath: string, pluginName: string): string {
@@ -340,7 +378,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   private resolveTargetForMd(pluginName: string, pluginRelPath: string): string {
     const art = this.contract.artifacts;
     if (pluginRelPath.startsWith("agents/") && art.agents.supported) {
-      return art.agents.path(pluginName, pluginRelPath);
+      return this.flatAgentPath(art.agents, pluginName, pluginRelPath);
     }
     if (pluginRelPath.startsWith("skills/") && art.skills.supported) {
       return art.skills.path(pluginName, pluginRelPath);

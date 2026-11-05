@@ -91,6 +91,7 @@ export function buildKiloFlatContract(): ToolBuildContract {
     buildMarketplaceEntry: null,
     configArtifact: {
       reads: () => KILO_CONFIG_CANDIDATES,
+      probes: () => [],
       assets: { tool: "kilo", names: ["kilo.json"] },
       emit: ({ builtPlugins, pluginMcp, existing, assets }) => {
         const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));

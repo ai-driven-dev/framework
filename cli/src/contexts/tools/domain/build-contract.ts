@@ -127,6 +127,8 @@ export interface ToolBuildContract {
 export interface ConfigArtifact {
   /** Files under the output root `emit` needs, read when they exist. */
   readonly reads: (builtPlugins: readonly string[]) => readonly string[];
+  /** Files under the output root whose presence alone `emit` needs; never read. */
+  readonly probes: (builtPlugins: readonly string[]) => readonly string[];
   /** The tool's bundled config assets `emit` builds on. */
   readonly assets: { readonly tool: ToolId; readonly names: readonly string[] };
   readonly emit: (input: ConfigArtifactInput) => readonly ConfigArtifactFile[];
@@ -138,6 +140,8 @@ export interface ConfigArtifactInput {
   readonly pluginMcp: ReadonlyMap<string, string>;
   /** Each file `reads` named that exists, by its path under the output root. */
   readonly existing: ReadonlyMap<string, string>;
+  /** Each file `probes` named that exists, by its path under the output root. */
+  readonly present: ReadonlySet<string>;
   /** Each asset `assets` named, by file name. */
   readonly assets: ReadonlyMap<string, ConfigAsset>;
 }
