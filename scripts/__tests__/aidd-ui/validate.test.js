@@ -53,6 +53,14 @@ let tmp;
 let sid;
 let sessionCount = 0;
 
+// The contract's state folder: one per user where the system has users, the temp dir being per user elsewhere.
+const HOOKS_FOLDER = typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
+/** The folder aidd-ui keeps its turn marks in, under the temp dir `base`. */
+const stateFolder = (base = os.tmpdir()) => path.join(base, HOOKS_FOLDER, "aidd-ui");
+/** The turn mark of session `id`. */
+const markPath = (id, base) => path.join(stateFolder(base), id);
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 beforeEach(() => {
   tmp = fs.realpathSync(makeTmp("aidd-ui-validate-")); // the real path: the engine is found relative to it
   writeProject(tmp);
@@ -62,7 +70,7 @@ beforeEach(() => {
 
 afterEach(() => {
   removeTmp(tmp);
-  fs.rmSync(path.join(os.tmpdir(), `aidd-ui-turn-${sid}`), { force: true });
+  fs.rmSync(markPath(sid), { force: true });
 });
 
 function breakOnePerFamily() {
@@ -78,8 +86,10 @@ function generate(root) {
   return { code: run.status, out: lines(run.stdout), err: run.stderr, css: fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null };
 }
 
-function hook(input) {
-  const run = spawnSync(process.execPath, [HOOK], { input, encoding: "utf8" });
+/** The hook run on `input`; `temp` points it at another temp dir, so a test can plant files there. */
+function hook(input, temp = null) {
+  const env = temp ? { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp } : process.env;
+  const run = spawnSync(process.execPath, [HOOK], { input, encoding: "utf8", env });
   return { code: run.status, out: run.stdout, err: run.stderr };
 }
 
@@ -92,7 +102,7 @@ const copilotPatch = (...headers) => JSON.stringify({ hook_event_name: "PostTool
 /** A shell command as Claude Code and Codex send it (`Bash`), and as Copilot does (`bash`, tool_result). */
 const shell = (command, name = "Bash") => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: name, tool_input: { command }, tool_response: {} });
 const copilotShell = (command) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "bash", tool_input: { command }, tool_result: {} });
-const marked = () => fs.existsSync(path.join(os.tmpdir(), `aidd-ui-turn-${sid}`));
+const marked = () => fs.existsSync(markPath(sid));
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
 const stop = (active = false) => JSON.stringify({ hook_event_name: "Stop", cwd: tmp, session_id: sid, stop_hook_active: active });
 const silent = { code: 0, out: "", err: "" };
@@ -116,6 +126,11 @@ describe("aidd-ui hooks declaration", () => {
 
   it("fires after a shell command too, since the engine writes through one", () => {
     assert.deepEqual(declared.PostToolUse.map((group) => group.matcher), ["Write|Edit|MultiEdit|Bash"]);
+  });
+
+  it("bounds every hook to the contract's 5 seconds", () => {
+    const timeouts = Object.values(declared).flatMap((groups) => groups.flatMap((group) => group.hooks.map((hook) => hook.timeout)));
+    assert.deepEqual([...new Set(timeouts)], [5]);
   });
 
   it("runs the hook at every moment it handles: session start, after a write, turn end", () => {
@@ -433,7 +448,8 @@ describe("aidd-ui validator entries", () => {
 
     it("blocks on every error when the mark names no file", () => {
       breakOnePerFamily();
-      fs.writeFileSync(path.join(os.tmpdir(), `aidd-ui-turn-${sid}`), "", { mode: 0o600 });
+      fs.mkdirSync(stateFolder(), { recursive: true, mode: 0o700 });
+      fs.writeFileSync(markPath(sid), "", { mode: 0o600 });
       assert.deepEqual(hook(stop()), finish(FAILURES));
     });
 
@@ -473,9 +489,54 @@ describe("aidd-ui validator entries", () => {
     it("never writes through a link planted at the mark's path", () => {
       const target = path.join(tmp, "victim.txt");
       fs.writeFileSync(target, "keep");
-      fs.symlinkSync(target, path.join(os.tmpdir(), `aidd-ui-turn-${sid}`));
+      fs.mkdirSync(stateFolder(), { recursive: true, mode: 0o700 });
+      fs.symlinkSync(target, markPath(sid));
       hook(postToolUse(path.join(tmp, BRAND)));
       assert.equal(fs.readFileSync(target, "utf8"), "keep");
+    });
+
+    it("keeps the mark in <tmpdir>/aidd-hooks-<uid>/aidd-ui/<session>, one watched path per line", () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      hook(postToolUse(path.join(tmp, BRAND)), temp);
+      assert.equal(fs.readFileSync(markPath(sid, temp), "utf8"), `${BRAND}\n`);
+    });
+
+    it("keeps its folders to their owner, the mark to its owner alone", { skip: process.platform === "win32" }, () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      hook(postToolUse(path.join(tmp, BRAND)), temp);
+      const mode = (file) => fs.statSync(file).mode & 0o777;
+      assert.deepEqual([mode(path.dirname(stateFolder(temp))), mode(stateFolder(temp)), mode(markPath(sid, temp))], [0o700, 0o700, 0o600]);
+    });
+
+    it("marks a shell command that may have written any file with the line unknown", () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      hook(shell(`node ${ENGINE} tokens ${tmp}`), temp);
+      assert.equal(fs.readFileSync(markPath(sid, temp), "utf8"), "unknown\n");
+    });
+
+    for (const level of ["the hooks folder", "the plugin's folder"]) {
+      it(`leaves no mark through a link planted as ${level}, and still hands the problems back`, () => {
+        breakOnePerFamily();
+        const temp = path.join(tmp, "temp");
+        const elsewhere = path.join(tmp, "elsewhere");
+        fs.mkdirSync(elsewhere, { recursive: true });
+        const planted = level === "the hooks folder" ? path.dirname(stateFolder(temp)) : stateFolder(temp);
+        fs.mkdirSync(path.dirname(planted), { recursive: true, mode: 0o700 });
+        fs.symlinkSync(elsewhere, planted, "junction");
+        assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND)), temp), claudeFeedback([BRAND_FAILURE], 2));
+        assert.deepEqual(fs.readdirSync(elsewhere), []);
+      });
+    }
+
+    it("leaves no mark in a hooks folder others can write to", { skip: process.platform === "win32" }, () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(path.dirname(stateFolder(temp)), { recursive: true });
+      fs.chmodSync(path.dirname(stateFolder(temp)), 0o777);
+      hook(postToolUse(path.join(tmp, BRAND)), temp);
+      assert.equal(fs.existsSync(markPath(sid, temp)), false);
     });
 
     it("consumes the turn mark: a later Stop without a new write is silent", () => {
@@ -521,8 +582,8 @@ describe("aidd-ui validator entries", () => {
     const CONVERSATION = `${sid}-conversation`;
     const cursor = (event, extra = {}) => JSON.stringify({ hook_event_name: event, conversation_id: CONVERSATION, session_id: "other", cursor_version: "2026.10.22", workspace_roots: [tmp], ...extra });
     const cursorWrite = (filePath = path.join(tmp, BRAND)) => cursor("postToolUse", { tool_name: "Write", tool_input: { file_path: filePath }, tool_output: "" });
-    const cursorMarked = () => fs.existsSync(path.join(os.tmpdir(), `aidd-ui-turn-${CONVERSATION}`));
-    afterEach(() => fs.rmSync(path.join(os.tmpdir(), `aidd-ui-turn-${CONVERSATION}`), { force: true }));
+    const cursorMarked = () => fs.existsSync(markPath(CONVERSATION));
+    afterEach(() => fs.rmSync(markPath(CONVERSATION), { force: true }));
 
     it("hands the problems back after a write, as additional_context", () => {
       breakOnePerFamily();
@@ -541,9 +602,9 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(input), { code: 0, out: JSON.stringify({ additional_context: text([BRAND_FAILURE], 2) }), err: "" });
     });
 
-    it("prints the errors at session start as additional_context", () => {
+    it("prints nothing at session start", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(cursor("sessionStart", { is_background_agent: false })), { code: 0, out: JSON.stringify({ additional_context: `aidd-ui: 3 errors\n${FAILURES.join("\n")}` }), err: "" });
+      assert.deepEqual(hook(cursor("sessionStart", { is_background_agent: false })), silent);
     });
 
     it("asks for one follow-up at stop after a write, as followup_message", () => {
@@ -665,14 +726,33 @@ describe("aidd-ui validator entries", () => {
   });
 
   describe("E4 SessionStart", () => {
-    it("prints the count of errors then the errors, and exits 0", () => {
+    it("prints nothing, even over standing errors: they are no finding of this session", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 3 errors\n${FAILURES.join("\n")}\n`, err: "" });
+      assert.deepEqual(hook(sessionStart()), silent);
     });
 
-    it("prints at most 5 errors, the count of all in its first line", () => {
-      littering(7, 0);
-      assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 7 errors\n${range(28, 5).map(literal).join("\n")}\n`, err: "" });
+    it("sweeps the marks older than a day and keeps the fresh ones", () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(stateFolder(temp), { recursive: true, mode: 0o700 });
+      const [old, fresh] = [markPath("old", temp), markPath("fresh", temp)];
+      fs.writeFileSync(old, "unknown\n");
+      fs.writeFileSync(fresh, "unknown\n");
+      const past = new Date(Date.now() - DAY_MS - 60_000);
+      fs.utimesSync(old, past, past);
+      assert.deepEqual(hook(sessionStart(), temp), silent);
+      assert.deepEqual(fs.readdirSync(stateFolder(temp)), ["fresh"]);
+    });
+
+    it("sweeps an old link as a link, never what it points to", { skip: process.platform === "win32" }, () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(stateFolder(temp), { recursive: true, mode: 0o700 });
+      const target = path.join(tmp, "victim.txt");
+      fs.writeFileSync(target, "keep");
+      fs.symlinkSync(target, markPath("planted", temp));
+      const past = new Date(Date.now() - DAY_MS - 60_000);
+      fs.lutimesSync(markPath("planted", temp), past, past);
+      hook(sessionStart(), temp);
+      assert.deepEqual([fs.readdirSync(stateFolder(temp)), fs.readFileSync(target, "utf8")], [[], "keep"]);
     });
 
     it("stays silent without aidd_docs/ui/", () => {
@@ -701,7 +781,6 @@ describe("aidd-ui validator entries", () => {
     it("names an unreadable record and checks the rest, in every entry", () => {
       fs.symlinkSync(path.join(tmp, "nowhere.md"), path.join(tmp, DANGLING));
       assert.deepEqual(validate(tmp), { code: 1, out: [UNREADABLE], err: "" });
-      assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 1 errors\n${UNREADABLE}\n`, err: "" });
       assert.deepEqual(hook(postToolUse(path.join(tmp, DANGLING))), claudeFeedback([UNREADABLE]));
     });
 

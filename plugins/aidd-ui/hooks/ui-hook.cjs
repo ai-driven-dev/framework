@@ -1,4 +1,5 @@
-// Runs the design system checks after a write, at Stop and at session start, printing the same short text on every host.
+// Runs the design system checks after a write and at Stop, printing the same short text on every host;
+// at session start it only sweeps old turn marks.
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -14,7 +15,6 @@ const STOP = "Stop";
 const EVENTS = { PostToolUse: POST_TOOL_USE, postToolUse: POST_TOOL_USE, SessionStart: SESSION_START, sessionStart: SESSION_START, Stop: STOP, stop: STOP };
 const EXIT_SILENT = 0;
 const LIMIT = 10; // problem lines after a write and at Stop; the validator by hand prints them all
-const START_LIMIT = 5; // error lines at session start
 const ENGINE = path.join(__dirname, "aidd-ui.cjs");
 // A session id is a file-name part, so only these characters reach the mark's path.
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
@@ -34,8 +34,12 @@ const SHELL_WRITES = [
 // Cursor sends every tool to the hook, and a Read carries file_path like a Write: only these two count.
 const CURSOR_TOOLS = { Write: "write", Shell: "shell" };
 // The mark's line for a shell command, which may have written any file: Stop then reads them all.
-const ANY_FILE = "*";
-// A link planted at the mark's path is never followed, on a platform that can refuse one.
+const ANY_FILE = "unknown";
+// The hooks' state folder: one per user where the system has users, the temp dir being per user elsewhere.
+const HOOKS_FOLDER = typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
+const PLUGIN = "aidd-ui";
+const OTHERS_BITS = 0o077;
+const MARK_MAX_AGE_MS = 24 * 60 * 60 * 1000; // a mark no Stop consumed: its session ended without one
 
 /** The JSON on stdin, or null when it is none. */
 function readPayload() {
@@ -80,12 +84,52 @@ function toolKind(payload) {
 /** What identifies the turn's session: Cursor's conversation_id, which its documentation lists on every event, else session_id. */
 const sessionOf = (payload) => (isCursor(payload) ? payload.conversation_id : payload.session_id);
 
-/** The mark a turn leaves for its Stop: one file per session, in the OS temp dir, a line per
- * watched file each write touched, `*` for a shell command. */
+/** Whether `folder` is a folder of this user's alone, created if missing: not a link, and where the
+ * system has users, owned by this one and closed to others. */
+function ownFolder(folder) {
+  try {
+    fs.mkdirSync(folder, { mode: 0o700 });
+  } catch (error) {
+    if (error.code !== "EEXIST") return false;
+  }
+  const stat = fs.lstatSync(folder);
+  if (!stat.isDirectory()) return false;
+  return typeof process.getuid !== "function" || (stat.uid === process.getuid() && (stat.mode & OTHERS_BITS) === 0);
+}
+
+/** `<tmpdir>/aidd-hooks-<uid>/aidd-ui`, or null when either folder is not this user's alone. */
+function stateFolder() {
+  const hooks = path.join(os.tmpdir(), HOOKS_FOLDER);
+  const plugin = path.join(hooks, PLUGIN);
+  try {
+    return ownFolder(hooks) && ownFolder(plugin) ? plugin : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The mark a turn leaves for its Stop: one file per session in the state folder, a line per
+ * watched file each write touched, `unknown` for a shell command. */
 function markFile(payload) {
   const sessionId = sessionOf(payload);
   if (typeof sessionId !== "string" || !SAFE_SESSION_ID.test(sessionId)) return null;
-  return path.join(os.tmpdir(), `aidd-ui-turn-${sessionId}`);
+  const folder = stateFolder();
+  return folder && path.join(folder, sessionId);
+}
+
+/** Removes the marks older than a day, each by its own entry: a link is removed, never followed. */
+function sweepMarks() {
+  const folder = stateFolder();
+  if (!folder) return;
+  for (const name of fs.readdirSync(folder)) {
+    const entry = path.join(folder, name);
+    try {
+      const stat = fs.lstatSync(entry);
+      if (!stat.isDirectory() && Date.now() - stat.mtimeMs > MARK_MAX_AGE_MS) fs.unlinkSync(entry);
+    } catch {
+      // gone meanwhile, or not ours to remove
+    }
+  }
 }
 
 /** The mark's lines; none when it is missing. A link planted at its path can only change which
@@ -187,14 +231,6 @@ function atStop(project, payload, marked) {
   return EXIT_SILENT;
 }
 
-function atSessionStart(project, payload) {
-  const errors = errorsOf(problemsOf(project));
-  if (!errors.length) return EXIT_SILENT;
-  const text = [`aidd-ui: ${errors.length} errors`, ...format(errors.slice(0, START_LIMIT))].join("\n");
-  process.stdout.write(isCursor(payload) ? JSON.stringify({ additional_context: text }) : `${text}\n`);
-  return EXIT_SILENT;
-}
-
 /** The directory the host works in: Claude Code, Codex and Copilot send cwd, Cursor its first workspace root. */
 function rootOf(payload) {
   if (typeof payload.cwd === "string") return payload.cwd;
@@ -206,6 +242,11 @@ function run() {
   const payload = readPayload();
   const event = EVENTS[payload?.hook_event_name];
   if (!event) return EXIT_SILENT;
+  // Session start reports nothing, the project's standing errors being no finding of the session.
+  if (event === SESSION_START) {
+    sweepMarks();
+    return EXIT_SILENT;
+  }
   // A shell command marks the turn or does nothing, and an ignored tool does nothing: neither reads the project.
   if (event === POST_TOOL_USE) {
     const kind = toolKind(payload);
@@ -220,7 +261,6 @@ function run() {
   const project = load(rootOf(payload));
   if (project === null) return EXIT_SILENT;
   if (event === POST_TOOL_USE) return afterWrite(project, payload);
-  if (event === SESSION_START) return atSessionStart(project, payload);
   return atStop(project, payload, marked);
 }
 
