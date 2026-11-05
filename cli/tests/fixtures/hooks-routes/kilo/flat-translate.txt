@@ -40,9 +40,6 @@ script, identical to the plugin source
 ## out-flat/.kilo/hooks/aidd-telemetry/lib/hook-io.cjs
 script, identical to the plugin source
 
-## out-flat/.kilo/hooks/aidd-telemetry/lib/host.cjs
-script, identical to the host adapter host-kilo.cjs
-
 ## out-flat/.kilo/hooks/aidd-telemetry/lib/jsonl.cjs
 script, identical to the plugin source
 

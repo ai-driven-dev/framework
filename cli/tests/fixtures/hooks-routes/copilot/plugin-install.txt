@@ -113,9 +113,6 @@ script, identical to the plugin source
 ## project/.github/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
 script, identical to the plugin source
 
-## project/.github/plugins/aidd-telemetry/hooks/lib/host.cjs
-script, identical to the host adapter host-copilot.cjs
-
 ## project/.github/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
 script, identical to the plugin source
 
@@ -146,7 +143,7 @@ project copilot aidd-context scope=project: 5 hook files
   .github/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []
-project copilot aidd-telemetry scope=project: 19 hook files
+project copilot aidd-telemetry scope=project: 18 hook files
   .github/plugins/aidd-telemetry/hooks/catch-up.cjs
   .github/plugins/aidd-telemetry/hooks/hooks.json
   .github/plugins/aidd-telemetry/hooks/lib/aidd.cjs
@@ -158,7 +155,6 @@ project copilot aidd-telemetry scope=project: 19 hook files
   .github/plugins/aidd-telemetry/hooks/lib/declaration.cjs
   .github/plugins/aidd-telemetry/hooks/lib/git.cjs
   .github/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
-  .github/plugins/aidd-telemetry/hooks/lib/host.cjs
   .github/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
   .github/plugins/aidd-telemetry/hooks/lib/lookup.cjs
   .github/plugins/aidd-telemetry/hooks/lib/presence.cjs

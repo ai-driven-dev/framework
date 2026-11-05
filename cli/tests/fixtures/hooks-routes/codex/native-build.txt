@@ -123,9 +123,6 @@ script, identical to the plugin source
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-telemetry/hooks/lib/host.cjs
-script, identical to the host adapter host-codex.cjs
-
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
 script, identical to the plugin source
 

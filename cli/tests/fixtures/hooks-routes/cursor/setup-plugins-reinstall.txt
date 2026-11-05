@@ -78,9 +78,6 @@ script, identical to the plugin source
 ## project/.cursor/hooks/aidd-telemetry/lib/hook-io.cjs
 script, identical to the plugin source
 
-## project/.cursor/hooks/aidd-telemetry/lib/host.cjs
-script, identical to the host adapter host-cursor.cjs
-
 ## project/.cursor/hooks/aidd-telemetry/lib/jsonl.cjs
 script, identical to the plugin source
 
