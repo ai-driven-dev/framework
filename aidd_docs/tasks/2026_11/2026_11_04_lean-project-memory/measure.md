@@ -147,7 +147,7 @@ Same harness, repositories, injected drifts, prompts and blind Sonnet grader as 
 | Item | Value |
 | ---- | ----- |
 | Skill measured | `plugins/aidd-context/skills/02-project-memory` and `plugins/aidd-context/hooks` taken from `git archive` of head `186feb5d7`, which includes the refresh fix (`98d232e60`: review and approval steps kept in reach of a small model), into a second snapshot beside the first |
-| Skill size | 28 files, 4938 words in total, against 44 files and 7132 words (baseline counting: the skill folder only, hooks excluded). A delta of -2194 words, -31%. The engine and its rules are in `hooks/`, outside both counts |
+| Skill size | 28 files, 4958 words in total at the final head, against 44 files and 7132 words (baseline counting: the skill folder only, hooks excluded). A delta of -2174 words, -30%. The engine and its rules are in `hooks/`, outside both counts |
 | Engine | `memory.cjs check <root>` replaces `memory-lint.cjs`. Errors and warnings are read from its header line `<plugin>: <n> errors, <m> warnings`. Its rules are not the old ones: the untouched injected bank scores 18 errors and 61 warnings, against 3 and 61 for the old engine. Errors per bank are therefore not comparable across the two engines |
 | Models | Haiku, graded blind as before. Qwen 3.8 Flash, **not graded**: deterministic numbers only, to spare the grader's cost |
 | Drift check | `drift.py` on the final bank: a drift is fixed when the baseline line carrying it no longer holds verbatim and the injected text is gone |
@@ -308,7 +308,7 @@ Case 0 is flaky: it passed in 4 of 5 runs. The failing run missed "ecosystem.md 
 
 | Criterion | Verdict | Deciding number |
 | --------- | ------- | --------------- |
-| The pre-commit gates pass, with fewer words than today | met | 4938 words against 7132, and 28 files against 44; the gates ran in the commits of this branch (`git log`) |
+| The pre-commit gates pass, with fewer words than today | met | 4958 words against 7132, and 28 files against 44; the gates ran in the commits of this branch (`git log`) |
 | Haiku, Sonnet and Qwen write banks with as many correct facts as the original, no more wrong ones, at lower or equal cost | partly met | Haiku setup: 0 wrong of 114 against 5 of 160, 0.034 against 0.046 per run. Haiku refresh: 57 correct against 60 and 9 wrong of 68 against 5 of 70, though six of the nine predate the injection; cost 0.030 against 0.036. Qwen: cost flat on setup (0.097 against 0.094) and lower on refresh (0.112 against 0.138), facts not graded. Sonnet is left out by the plan |
 | A refresh flags every injected drift and writes nothing the user did not approve | partly met: Haiku 8 of 12, Qwen 12 of 12 | After the merge fix, Haiku corrected 8 of 12 drifts: D1 (the spelled count) 0 of 3 is an accepted miss that the content review should catch, D4 was caught in 2 of 3 runs. Qwen corrected 12 of 12. No file deleted or created on either model; Haiku dropped 1, 1, 0 lines; Qwen dropped 15, 7, 18, against 36, 29, 12 originally, mostly M2-driven corrections |
 | A volatile fact has a rule, and `check` reports one gone stale | met, with an accepted limit | rule M2 exists and the engine reports 16 stale counts and dates on the injected bank, for example "Four workspace packages"; the spelled "Three workspace packages" is left out on purpose (62% false positives measured with "two" and "three") |
