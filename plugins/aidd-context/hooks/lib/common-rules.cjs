@@ -49,20 +49,37 @@ function readableLines(text) {
   return result;
 }
 
-// A line number, a line range or an anchor after a path points inside the file (`a.md:42`,
-// `a.md:4-9`, `a.md#part`); the file is what must exist.
-const LOCATION_SUFFIX = /(?::\d+(?:-\d+)?|#.*)$/u;
+// A line, a line and column, a line range or an anchor after a path points inside the file
+// (`a.md:42`, `a.md:42:7`, `a.md:4-9`, `a.md#part`); the file is what must exist.
+const LOCATION_SUFFIX = /(?::\d+(?:[-:]\d+)?|#.*)$/u;
 
-/** Whether a path stays under the root once every link on its way is resolved. */
-function staysUnder(realRoot, target) {
-  let probe = target;
-  while (!fs.existsSync(probe)) {
-    const parent = path.dirname(probe);
-    if (parent === probe) return false;
-    probe = parent;
-  }
-  const real = fs.realpathSync(probe);
+function isUnder(realRoot, real) {
   return real === realRoot || real.startsWith(realRoot + path.sep);
+}
+
+/**
+ * Whether a path stays under the root. Its segments are walked from the root down without
+ * following a link, and the walk stops at the first link that resolves outside, before anything
+ * is read through it. A missing segment ends the walk: nothing past it can lead out.
+ */
+function staysUnder(root, realRoot, segments) {
+  let current = root;
+  for (const segment of segments) {
+    current = path.join(current, segment);
+    let stat;
+    try {
+      stat = fs.lstatSync(current);
+    } catch {
+      return true;
+    }
+    if (!stat.isSymbolicLink()) continue;
+    try {
+      if (!isUnder(realRoot, fs.realpathSync(current))) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -89,8 +106,8 @@ function deadPaths(text, root) {
       if (/\.local\./u.test(file)) continue;
       const segments = file.split("/");
       if (!entries.has(segments[0]) || segments.includes("..")) continue;
+      if (!staysUnder(root, realRoot, segments)) continue;
       const target = path.resolve(root, file);
-      if (!staysUnder(realRoot, target)) continue;
       if (!fs.existsSync(target)) found.push({ line: number, path: token });
     }
   }
@@ -98,29 +115,40 @@ function deadPaths(text, root) {
   return found;
 }
 
+// A quoted word (`"rm"`) is read unquoted; any other quoted string is an argument, never a
+// command or a redirection, and is dropped.
+const QUOTED = /'[^']*'|"(?:[^"\\]|\\.)*"/gu;
+const QUOTED_WORD = /^.[\w./-]+.$/u;
+const ARITHMETIC = /\$\(\([^()]*\)\)/gu;
+
 // A heredoc body is text fed to a command, never a command or a redirection. A here-string
-// (`<<<`) opens no body.
+// (`<<<`) opens no body, and neither does a `<<` inside quotes or arithmetic (`$((1<<2))`).
 const HEREDOC = /(?<!<)<<(?!<)(-?)\s*(['"]?)([\w.-]+)\2/gu;
 
+/** The text with every character but a line break blanked, so masked lines stay aligned. */
+function blanked(text) {
+  return text.replace(/[^\n]/gu, " ");
+}
+
 function withoutHeredocBodies(command) {
+  const masked = command
+    .replace(QUOTED, (quoted) => (QUOTED_WORD.test(quoted) ? quoted : blanked(quoted)))
+    .replace(ARITHMETIC, blanked)
+    .split("\n");
   const kept = [];
   const pending = [];
-  for (const line of command.split(/\r?\n/u)) {
+  for (const [index, raw] of command.split("\n").entries()) {
+    const line = raw.replace(/\r$/u, "");
     if (pending.length > 0) {
       const { stripTabs, word } = pending[0];
       if ((stripTabs ? line.replace(/^\t+/u, "") : line) === word) pending.shift();
       continue;
     }
     kept.push(line);
-    for (const match of line.matchAll(HEREDOC)) pending.push({ stripTabs: match[1] === "-", word: match[3] });
+    for (const match of masked[index].matchAll(HEREDOC)) pending.push({ stripTabs: match[1] === "-", word: match[3] });
   }
   return kept.join("\n");
 }
-
-// A quoted word (`"rm"`) is read unquoted; any other quoted string is an argument, never a
-// command or a redirection, and is dropped.
-const QUOTED = /'[^']*'|"(?:[^"\\]|\\.)*"/gu;
-const QUOTED_WORD = /^.[\w./-]+.$/u;
 
 // A file descriptor duplicated onto another (`2>&1`, `>&2`) and a redirection to /dev/null write
 // no file. Any other `>` is a redirection to a file: `>f`, `>>f`, `1>f`, `&>f`, `2>f`.
@@ -132,11 +160,16 @@ const REDIRECTION = />/u;
 // split there and each piece is read word by word, so no pattern can backtrack across pieces.
 const SEPARATOR = /[;&|()`\n]|\s-exec\s/u;
 // Words that run the command after them, and an assignment before a command (`A=1 rm f`).
-const RUNNERS = new Set(["sudo", "exec", "xargs", "env", "time", "nohup", "command", "{", "!"]);
+// `then`, `do`, `else` and `elif` open the command of a compound statement.
+const RUNNERS = new Set(["sudo", "exec", "xargs", "env", "time", "nohup", "command", "{", "!", "then", "do", "else", "elif"]);
 const ASSIGNMENT = /^\w+=/u;
 const WRITE_COMMANDS = new Set(["tee", "mv", "cp", "rm", "touch", "mkdir", "patch", "apply_patch"]);
-const GIT_WRITES = new Set(["apply", "checkout", "restore", "mv", "rm", "stash", "reset"]);
-const IN_PLACE = /^(?:-[A-Za-z]*i|--in-place)/u;
+const SED_IN_PLACE = /^(?:-[A-Za-z]*i|--in-place)/u;
+// `-i`, `-i.ext`, or a bundle of single-letter flags holding `i`; `-M` and `-m` load a module
+// whose name follows (`-Mstrict`), so a bundle starting with one is no in-place flag.
+const PERL_IN_PLACE = /^-[A-LN-Za-ln-z]*i/u;
+const STASH_WRITES = new Set(["push", "pop", "apply", "drop", "clear"]);
+const RESET_WRITES = new Set(["--hard", "--merge", "--keep"]);
 const KNOWN = new Set([...RUNNERS, ...WRITE_COMMANDS, "sed", "perl", "find", "git"]);
 
 /** A command word by its basename, so `/bin/rm` is `rm`. */
@@ -153,6 +186,8 @@ function commandIndex(words) {
       continue;
     }
     if (!RUNNERS.has(nameOf(words[index]))) return index;
+    // `command -v` and `-V` only look the command up.
+    if (words[index] === "command" && /^-[vV]$/u.test(words[index + 1] ?? "")) return words.length;
     index += 1;
     // A runner's flags are skipped. The word after a flag is that flag's argument (`sudo -u x`),
     // unless it is a command this reader knows (`sudo -E rm`): then it is the command.
@@ -164,11 +199,33 @@ function commandIndex(words) {
   return index;
 }
 
-/** The git subcommand, past `-C dir`, `-c key=value` and bare flags. */
-function gitSubcommand(args) {
+/**
+ * Whether a git command writes the working tree. Past `-C dir`, `-c key=value` and bare flags,
+ * the subcommand decides; those that can touch only the index, a branch or nothing are reads.
+ */
+function gitWrites(args) {
   let index = 0;
   while (index < args.length && args[index].startsWith("-")) index += /^-[cC]$/u.test(args[index]) ? 2 : 1;
-  return args[index];
+  const rest = args.slice(index + 1);
+  switch (args[index]) {
+    case "apply":
+    case "mv":
+      return true;
+    case "rm":
+      return !rest.includes("--cached");
+    case "reset":
+      return rest.some((arg) => RESET_WRITES.has(arg));
+    case "stash": {
+      const action = rest.find((arg) => !arg.startsWith("-"));
+      return action === undefined || STASH_WRITES.has(action);
+    }
+    case "restore":
+      return !rest.includes("--staged") || rest.includes("--worktree");
+    case "checkout":
+      return !(rest.includes("-b") || rest.includes("-B")) || rest.includes("--");
+    default:
+      return false;
+  }
 }
 
 function pieceWrites(piece) {
@@ -178,9 +235,10 @@ function pieceWrites(piece) {
   const name = nameOf(words[index]);
   const args = words.slice(index + 1);
   if (WRITE_COMMANDS.has(name)) return true;
-  if (name === "sed" || name === "perl") return args.some((arg) => IN_PLACE.test(arg));
+  if (name === "sed") return args.some((arg) => SED_IN_PLACE.test(arg));
+  if (name === "perl") return args.some((arg) => PERL_IN_PLACE.test(arg));
   if (name === "find") return args.includes("-delete");
-  if (name === "git") return GIT_WRITES.has(gitSubcommand(args));
+  if (name === "git") return gitWrites(args);
   return false;
 }
 
@@ -196,9 +254,9 @@ function located({ file, line }) {
   return line === undefined ? file : `${file}:${line}`;
 }
 
-/** An excerpt on one line, its quotes escaped so the quoted span stays whole. */
+/** An excerpt on one line, its backslashes then its quotes escaped so the quoted span stays whole. */
 function quoted(excerpt) {
-  return excerpt === undefined ? "" : ` "${String(excerpt).replace(/\r?\n/gu, " ").replace(/"/gu, '\\"')}"`;
+  return excerpt === undefined ? "" : ` "${String(excerpt).replace(/\r?\n/gu, " ").replace(/\\/gu, "\\\\").replace(/"/gu, '\\"')}"`;
 }
 
 function errorLine(finding) {

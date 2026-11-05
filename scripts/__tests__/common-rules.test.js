@@ -72,6 +72,12 @@ test("deadPaths: a line number, a line range or an anchor after the path is not 
   });
 });
 
+test("deadPaths: a line and a column after the path are not part of it", () => {
+  inProject({ "src/here.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("`src/here.cfg:42:7`\n", root), []);
+  });
+});
+
 test("deadPaths: a path climbing out with .. is never checked", () => {
   inProject({ "src/here.cfg": "" }, (root) => {
     assert.deepEqual(deadPaths("`src/../../gone.cfg` `src/../gone.cfg`\n", root), []);
@@ -246,6 +252,56 @@ test("isShellWrite: a heredoc body is text, never a redirection or a command", (
   }
 });
 
+test("isShellWrite: git and perl subcommands that touch only the index, a branch or nothing are reads", () => {
+  const reads = [
+    "git reset",
+    "git reset --soft HEAD~1",
+    "git reset HEAD f",
+    "git rm --cached f",
+    "git stash list",
+    "git stash show",
+    "git restore --staged f",
+    "git checkout -b x",
+    "git checkout -B x",
+    "perl -Mstrict -e 1",
+    "perl -MFile::Find -e 1",
+  ];
+  for (const command of reads) assert.equal(isShellWrite(command), false, command);
+  const writes = [
+    "git reset --merge",
+    "git reset --keep",
+    "git stash push",
+    "git stash pop",
+    "git stash apply",
+    "git stash drop",
+    "git stash clear",
+    "git restore --staged --worktree f",
+    "git checkout -b x -- f",
+    "perl -i.bak -pe 1 f",
+    "perl -pi.bak -e 1 f",
+  ];
+  for (const command of writes) assert.equal(isShellWrite(command), true, command);
+});
+
+test("isShellWrite: a heredoc marker inside quotes or arithmetic opens no body", () => {
+  assert.equal(isShellWrite('echo "a << b"\nrm f'), true);
+  assert.equal(isShellWrite("echo $((1<<2))\nrm f"), true);
+});
+
+test("isShellWrite: <<- ends its body on a tab-indented marker", () => {
+  assert.equal(isShellWrite("cat <<-EOF\n\tx\n\tEOF\nrm f"), true);
+});
+
+test("isShellWrite: then, do, else and elif open a command position", () => {
+  for (const command of ["for f; do rm $f; done", "if x; then rm f; fi", "if x; then :; else rm f; fi", "if x; then :; elif rm f; then :; fi"]) {
+    assert.equal(isShellWrite(command), true, command);
+  }
+});
+
+test("isShellWrite: command -v and -V only look a command up", () => {
+  for (const command of ["command -v rm", "command -V rm"]) assert.equal(isShellWrite(command), false, command);
+});
+
 test("isShellWrite: 100 KB of nested prefixes, quotes and parentheses returns in under 100 ms", () => {
   const command = `${"sudo -u sudo ".repeat(7700)}${"(\"'".repeat(1000)}${"((".repeat(500)} ls`;
   assert.ok(command.length > 100_000);
@@ -319,6 +375,11 @@ test("formatFindings: a group of root-level files prints in *", () => {
 test("formatFindings: an excerpt stays on one line, its quotes escaped", () => {
   const output = formatFindings("p", { errors: [{ file: "a.md", line: 1, rule: "R", excerpt: 'say "hi"\nthen\r\ngo', fix: "f" }] });
   assert.equal(output, 'p: 1 errors, 0 warnings\na.md:1 R "say \\"hi\\" then go" => f');
+});
+
+test("formatFindings: a backslash in an excerpt is escaped before its quotes", () => {
+  const output = formatFindings("p", { errors: [{ file: "a.md", rule: "R", excerpt: 'C:\\x "y"', fix: "f" }] });
+  assert.equal(output, 'p: 1 errors, 0 warnings\na.md R "C:\\\\x \\"y\\"" => f');
 });
 
 test("formatFindings: the group folder uses forward slashes whatever the separator given", () => {

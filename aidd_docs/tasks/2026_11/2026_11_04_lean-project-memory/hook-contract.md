@@ -65,7 +65,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 Three pieces every plugin uses live in one file, `hooks/lib/common-rules.cjs`, copied into each plugin and held identical by `scripts/check-hook-rule-copies.js`, until the CLI builds every distribution:
 
 - `deadPaths(text, root)`: a backticked path that does not exist, the one rule every plugin applies to its own files;
-- `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `git apply`, `git checkout`, `git restore`, `git mv`, `git rm`, `git stash`, `git reset`, `perl -i`, `find … -delete`;
+- `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `perl -i`, `find … -delete`, `git apply`, `git mv`, and the git subcommands that touch the working tree: `git checkout` except `-b`/`-B` with no path, `git restore` except `--staged` without `--worktree`, `git rm` except `--cached`, `git reset` with `--hard`, `--merge` or `--keep`, `git stash` bare or with `push`, `pop`, `apply`, `drop` or `clear`;
 - `formatFindings(plugin, findings, options)`: the output of rule 3.
 
 The Stop state file stays with the plugin that has a Stop check until a second plugin needs it.
