@@ -16,14 +16,13 @@ The one place that says what a memory file must be. The engine decides the first
 
 ## Reader rules
 
-The scan applies these to what it reads; a line the user wrote stays whatever they say.
+These apply to what is written and reviewed. Keep and Drop also judge what the scan reads, never what a memory file already holds. A line the user wrote survives Keep and Drop; it is still bound by No version, One fact, one home and A diagram stands alone.
 
 | Rule | Keep | Drop |
 | --- | --- | --- |
-| Non-derivable | a decision and its constraint, a convention the files repeat without stating, a gotcha that surprises a newcomer, the stack and how the main parts fit, the domain words a contributor must know | a fact one open file re-derives, anything true of every project built this way |
+| Non-derivable | the macro and the why: a decision and its constraint, a convention the files repeat without stating, a gotcha that surprises a newcomer, the stack and how the main parts fit, the domain words a contributor must know | a fact one open file re-derives, anything true of every project built this way |
 | Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list |
-| One fact, one home | the home | a duplicate |
+| One fact, one home | - | the copy, the fact keeps its home |
 | No version | `React` | `React 19` |
-| Current state only | what ships | an unused section, a placeholder, a plan, a wish, a thing not shipped |
-| Stable only | the lasting | a work item, a live value, a technical id |
-| A diagram stands alone | the diagram | a note or a caption under it |
+| Current state only | what ships | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id |
+| A diagram stands alone | - | a note or a caption under it |

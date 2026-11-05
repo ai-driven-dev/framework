@@ -11,8 +11,9 @@ Here is what I read. Correct me before I write.
 | Tool | Human | Agent | Owned by |
 | --- | --- | --- | --- |
 | `<vcs platform>` | `<mode>` | `<mode>` | `<file>.md` |
+| `<tool>` | `<mode>` | `<mode>` | `<file>.md` |
 | `<tool>` | `<mode>` | none | none |
 
 Then ask for what the repo cannot prove: a tool nobody committed, an access mode, a hand-off between two tools. Name what is missing rather than asking an open question.
 
-One row per capability and per tool; the evidence is a path or a dependency, never a claim. Drop the second table when the project reaches nothing outside itself.
+One row per capability and per tool; the evidence is a path or a dependency, never a claim. A capability that holds always says so, with no invented evidence. Drop the second table when the project reaches nothing outside itself.
