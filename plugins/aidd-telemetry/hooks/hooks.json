@@ -6,7 +6,7 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.cjs",
-            "statusMessage": "AIDD Telemetry: carry session task",
+            "statusMessage": "AIDD Telemetry: carry Claude session task",
             "timeout": 10
           }
         ]
