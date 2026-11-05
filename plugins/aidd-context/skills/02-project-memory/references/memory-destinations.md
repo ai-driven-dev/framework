@@ -18,6 +18,7 @@ Read backwards, it names the capabilities a bank already holds: a file present m
 | core       | `memory/core/vcs.md`               | `aidd_docs/memory/vcs.md`               |
 | ecosystem  | `memory/ecosystem/ecosystem.md`    | `aidd_docs/memory/ecosystem.md`         |
 | backlog    | `memory/backlog/backlog.md`        | `aidd_docs/memory/backlog.md`           |
+| browsing   | `memory/browsing/browsing.md`      | `aidd_docs/memory/browsing.md`          |
 | api        | `memory/api/api.md`                | `aidd_docs/memory/api.md`               |
 | api        | `memory/api/integration.md`        | `aidd_docs/memory/integration.md`       |
 | auth       | `memory/auth/auth.md`              | `aidd_docs/memory/auth.md`              |
