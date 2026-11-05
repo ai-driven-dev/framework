@@ -53,4 +53,4 @@ status: done
 
 | Task | Acceptance criteria |
 | ---- | ------------------- |
-| 1 | every fixture reads to the expected event and answers in the host's key; every distribution's `hooks/lib/host.cjs` equals its target's adapter (phase 8 fixtures show it); hook commands and goldens unchanged except the adapter file; the OpenCode and Kilo adapters read what their bridge sends, captured arguments run through the real bridge; `jscpd:profiles` baseline empty; `pnpm smoke` passes; `pnpm smoke:real` passes on Codex, Copilot and Cursor, deferred to phase 15's host campaign |
+| 1 | every fixture reads to the expected event and answers in the host's key; every distribution's `hooks/lib/host.cjs` equals its target's adapter (phase 8 fixtures show it); hook commands and goldens unchanged except the adapter file; the OpenCode and Kilo adapters read what their bridge sends, captured arguments run through the real bridge; `jscpd:profiles` baseline empty; `pnpm smoke` passes; real hosts proven by phase 15's host campaign through the built distributions on all six hosts, which replaces `pnpm smoke:real` (it reaches the real host registries, outside the campaign's isolation) |
