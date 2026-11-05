@@ -103,8 +103,48 @@ test("an excerpt over 40 characters is cut with an ellipsis", () => {
   assert.equal(lint(`# T\n\nSee \`src/${long}.cfg\`.\n`, { "src/here.cfg": "" })[0].message, `\`src/${"x".repeat(35)}…\` names nothing on disk: fix the path or remove it`);
 });
 
+// Counts as observed in the four real banks (framework root, cli, gouvernail, kairos-app).
+const OBSERVED_COUNTS = [
+  "9 plugins ship, 3 off the curated install path",
+  "Config: `release-please-config.json`, eleven packages.",
+  "vitest, four projects — see the CLI bank",
+  "One interface for five tools",
+  "`vitest.config.ts` composes two projects",
+  "Three apps and twelve packages share one lockfile",
+  "6 formats, 2 taps to start",
+  "The suite holds 2718 tests across 582 files",
+  "A mutation run kills 578 mutants",
+  "Vitest holds 129 suites",
+  "The browser lane boots eight containers",
+  "Six routes and seven screens",
+];
+
+// Names, versions, times, ports and numbered lists as observed: a number that is not a count.
+const OBSERVED_LOOK_ALIKES = [
+  "Node >=22.12 and Node 22 on port 3000.",
+  "Steps 1–2 run at scope user, see step 2.",
+  "Vitest 5 uses canonical names for filtered runs.",
+  "by luck (08:36 follows 07:24) and the gap",
+  "v7.1 draws no screen of its own",
+  "Tab map (4+1 tabs)",
+  "1. Write the failing test first",
+  "2) Rewrite the table",
+  "One fact in one home, one exists per rule.",
+  "It reports 12,065 unknown words.",
+  "The hash 35466894742 contradicts the log.",
+  "Six of its parts, 41 was the answer.",
+];
+
+test("M2: a count of any things, in digits or words, is an error", () => {
+  for (const line of OBSERVED_COUNTS) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
+});
+
+test("M2: a name, a version, a time, a port and a numbered list stay quiet", () => {
+  for (const line of OBSERVED_LOOK_ALIKES) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), [], line);
+});
+
 test("M2: today, so far, a version, and a fence stay quiet", () => {
-  const text = "# T\n\nToday it works.\n\nSo far so good.\n\nNode >=22.12 and 9 plugins.\n\nSteps 1–2 run at scope user.\n\n```\n3 files 2026-01-01\n```\n";
+  const text = "# T\n\nToday it works.\n\nSo far so good.\n\nNode >=22.12 and Node 22 on port 3000.\n\nSteps 1–2 run at scope user, see step 2.\n\n```\n3 files 2026-01-01\n```\n";
   assert.deepEqual(ids(lint(text)), []);
 });
 

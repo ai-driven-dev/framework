@@ -23,10 +23,14 @@ const STRUCTURAL_LINE = /^(?:\||#|>|[-*+]\s|\d+[.)]\s)/u;
 const LIST_ITEM = /^(?:[-*+]\s|\d+[.)]\s)/u;
 const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
 
-// "run" counts only in the plural: "Steps 1-2 run" is a verb, not a count of runs.
-const COUNTED_THINGS =
-  "commits?|branch(?:es)?|files?|tests?|lines?|issues?|pull requests?|PRs?|users?|records?|runs|sessions?";
-const COUNT_OF_THINGS = new RegExp(`\\b\\d+\\s+(?:${COUNTED_THINGS})\\b`, "iu");
+// A count is a number, in digits or words, before a plural noun, whatever the noun, with at most
+// one word between ("4 pull requests"). A digit stuck to a name, a version, a time, a port or a
+// thousands separator is not one, and "one" alone is a pronoun too often to count. Limit: a name followed by a number and a verb ("Node 22 runs") reads as a count.
+const NUMBER_WORDS =
+  "two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred";
+const NOT_NOUNS = "of|with|for|on|in|to|and|or|at|by|per|its|was|has|uses|follows|draws";
+const PLURAL_NOUN = `(?!(?:${NOT_NOUNS})\\b)(?:[a-z]+\\s+)?(?!(?:${NOT_NOUNS})\\b)(?![a-z]*(?:ss|us|is)\\b)[a-z]{2,}s\\b`;
+const COUNT_OF_THINGS = new RegExp(`(?<![\\w.:+#/,])(?:\\d{1,6}|${NUMBER_WORDS})\\s+${PLURAL_NOUN}`, "iu");
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
 const TIME_WORDS = /\b(?:currently|as of|right now|at the moment)\b/iu;
 
@@ -239,4 +243,7 @@ const RULES = Object.freeze([
   { id: "M7", severity: WARNING, check: repeatedSentences },
 ]);
 
-module.exports = { ERROR, WARNING, RULES };
+// The limits the rules enforce, by rule id: the table in `memory-rules.md` states the same ones.
+const LIMITS = Object.freeze({ M1: PROSE_WORD_LIMIT, M5: ITEM_WORD_LIMIT, M6: FILE_WORD_LIMIT, M7: SENTENCE_WORD_FLOOR });
+
+module.exports = { ERROR, WARNING, RULES, LIMITS };
