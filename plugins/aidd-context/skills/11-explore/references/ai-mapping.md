@@ -1,10 +1,11 @@
 # AI mapping (explore scan paths)
 
-Where to look for each artifact type per AI tool. Scan-only: the paths and formats the survey and drill actions read. This is explore's own minimal map, the single source of per-tool surfaces. Actions never hardcode a tool.
+Scan only.
 
 ## Presence signal
 
-Identify tools from project declarations or the AIDD manifest first. The surfaces below are scan hints, not host identity: shared `.agents/` paths may serve several tools. Report ambiguous ownership instead of assigning those files to a host.
+- Prefer declared tools or the AIDD manifest to scan hints.
+- Shared `AGENTS.md` and `.agents/` do not identify a host; report ambiguous ownership.
 
 ## AI quick map - content artifacts
 
@@ -40,8 +41,6 @@ Identify tools from project declarations or the AIDD manifest first. The surface
 
 ## Path layout per tool
 
-Rules and commands follow a two-layout scheme. Subdir-tools organize files under named category or phase subdirectories; flat-tools (GitHub Copilot) write all files directly into the surface root with a category or phase index as a filename prefix.
-
 | Layout          | Surface   | Tools                                    | Example                                                        |
 | --------------- | --------- | ---------------------------------------- | -------------------------------------------------------------- |
 | Subdir          | Rules     | Claude Code, Cursor; canonical Codex/OpenCode sources                      | `<rules root>/02-programming-languages/2-typescript-naming.md` |
@@ -50,8 +49,6 @@ Rules and commands follow a two-layout scheme. Subdir-tools organize files under
 
 ## Plugin install locations per tool
 
-Where to scan when enumerating installed plugins (not the plugin manifest path inside the plugin tree).
-
 | Tool | Install location(s) |
 | ---- | ------------------- |
 | Claude Code    | `~/.claude/plugins/cache/` (marketplace-installed); project-local `.claude-plugin/` for plugins committed to the repo |
@@ -59,4 +56,3 @@ Where to scan when enumerating installed plugins (not the plugin manifest path i
 | OpenCode       | `~/.config/opencode/plugins/` (global JS/TS modules); `~/.cache/opencode/node_modules/` (npm-installed); project `.opencode/plugins/` |
 | GitHub Copilot | macOS: `~/Library/Application Support/Code/agentPlugins/` ; Linux: `~/.config/Code/agentPlugins/` ; Windows: `%APPDATA%\Code\agentPlugins\` ; CLI-installed: `~/.copilot/installed-plugins/` |
 | Codex CLI      | `~/.codex/plugins/cache/$MARKETPLACE/$PLUGIN/$VERSION/` |
-| Antigravity CLI | Not mapped |

@@ -9,11 +9,11 @@
 | Copilot / `copilot` | `.github/instructions/<NN>-<name>.instructions.md` | comma-joined `applyTo`; all-files `**` |
 | Codex / `codex` | root `AGENTS.md` | shared signed `aidd_rules`, textual scope |
 | OpenCode / `opencode` | root `AGENTS.md` | same contribution |
-| Antigravity / `antigravity` | `.agents/rules/<slug>.md` | with paths: `trigger: glob`, `description`, comma-joined `globs`; all-files: `trigger: always_on`, `description`, no `globs` |
+| [Antigravity](https://antigravity.google/docs/rules) / `antigravity` | `.agents/rules/<slug>.md` (flat) | `description`; scoped: `trigger: glob`, comma-joined `globs` string; all-files: `trigger: always_on`, no `globs` |
 
 Copilot `<name>` drops the slug's numeric prefix: category `01-standards`, slug `1-local-names` → `01-local-names.instructions.md`.
 
-The writer refuses raw rendered Antigravity output over 24,000 bytes; the host applies its limit after expanding includes, so the writer's check does not guarantee their expanded size fits. Scoped activation remains unverified in the host.
+- Antigravity's 24,000-byte limit includes expanded imports; the writer checks raw output only.
 
 ## Operations
 

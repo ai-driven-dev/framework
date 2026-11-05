@@ -1,8 +1,6 @@
 # Tools
 
-The AI tools a project can use.
-
-| Tool     | Detected when                                                                        | Context file                      |
+| Tool     | Path hint                                                                        | Context file                      |
 | -------- | ------------------------------------------------------------------------------------ | --------------------------------- |
 | claude   | `.claude/` or `CLAUDE.md`                                                            | `CLAUDE.md`                       |
 | codex    | `.codex/`                                                                            | `AGENTS.md`                       |
@@ -11,8 +9,7 @@ The AI tools a project can use.
 | antigravity | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json`                       | `AGENTS.md`                       |
 | copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md` |
 
-- A shared `AGENTS.md` is a wiring target, never a detection signal.
-- Resolve shared `.agents/` paths from declared project tools or the AIDD manifest; otherwise ask which tool to wire.
+- Shared `AGENTS.md` and `.agents/` do not identify a host; use declared tools or the AIDD manifest, otherwise ask.
 - Tools sharing a context file wire it once; the block serves them all.
 - A context file carries the block under a `## Memory Management` section, shaped like `assets/templates/AGENTS.md`.
 - An existing context file keeps everything else: add only what is missing.

@@ -3,7 +3,7 @@
 ## Requirements
 
 - [Node](https://nodejs.org) 22.12 or later (`node --version`).
-- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code or Antigravity CLI.
+- A [supported AI coding tool](COMPATIBILITY.md).
 
 ## Pick a method
 
@@ -111,41 +111,23 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 </details>
 
-*OpenCode, Kilo Code and Antigravity CLI use flat files.*
-
 ## Flat files
 
 Generate the files with the CLI:
 
 ```sh
 git clone https://github.com/ai-driven-dev/framework.git
-npx @ai-driven-dev/cli@latest translate ./framework --to cursor --as flat --out .
+npx @ai-driven-dev/cli@latest translate ./framework --to <tool> --as flat --out .
 ```
 
-Replace `cursor` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo` or `antigravity`.
-
-For an Antigravity archive, follow the [Antigravity steps](#antigravity-cli) to preserve existing hooks.
+Replace `<tool>` with your [target tool](../cli/README.md#translate).
 
 <details>
 <summary>Without Node</summary>
 
-Download `aidd-framework-<tool>-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). In your project root, run:
-
-```sh
-unzip aidd-framework-<tool>-flat-<version>.zip
-cp -R aidd-framework-<tool>-flat-<version>/. .
-```
+Download `aidd-framework-<tool>-flat-<version>.zip` from the [latest release](https://github.com/ai-driven-dev/framework/releases/latest). Extract it, then copy the extracted folder's contents, including hidden files, into your project. Merge existing configuration files.
 
 </details>
-
-### Antigravity CLI
-
-1. Extract `antigravity-flat` into an empty directory. Find `.agents/` inside the extracted archive's enclosing folder.
-2. Copy its skills, agents and hook scripts into the matching `.agents/` paths in your project. Resolve any existing-file conflicts before replacing files.
-3. If your project has no `.agents/hooks.json`, copy the archive's file. Otherwise merge its named top-level entries into the existing JSON, preserving user entries. Resolve any same-name conflict explicitly; extraction does not merge JSON files.
-4. Start `agy` in the project.
-
-Codex flat also uses `.agents/skills/`. Removing either tool can delete skills the other still uses.
 
 ## Update
 
@@ -165,6 +147,8 @@ For another tool's marketplace, use that tool's plugin manager.
 | CLI, everything | `npx @ai-driven-dev/cli@latest clean` previews. Add `--force` to delete |
 | Claude Code marketplace | `claude plugin uninstall <plugin>` |
 | Flat files | Delete the files you copied |
+
+Keep files shared with another tool.
 
 ## Problems
 
