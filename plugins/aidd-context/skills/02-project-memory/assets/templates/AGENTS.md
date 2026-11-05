@@ -18,14 +18,15 @@
 - **Prefer short bullets.** Number ordered steps.
 - **Skip redundant preambles, recaps, and closers.**
 - **Quote the shortest decisive error line.**
-- **Report progress at milestones, not per tool call.** Use formatting only when it improves scanability.
+- **Don't narrate tool calls.** Use formatting only when it improves scanability.
 - **Use full prose when nuance or safety requires it.**
-- **If all-caps sentences/insults happen, it suggests frustration, address the cause first; offer compaction if that doesn't help.**
+- **If all-caps message/insults happen, it suggests frustration, address the cause first; offer compaction if that doesn't help.**
 
 ## Action
 
+- **Read only task-relevant context; complete required reads.**
 - **Support `works`, `tested`, and `fixed` with evidence.**
-- **Keep changes minimal** and scoped, no over-engineering.
+- **Make minimal, scoped changes**, without over-engineering.
 - **Stay on task.** Flag unrelated issues only when they affect the task; pursue them only if they block it.
 - **Solve your own issues before escalating.**
 - **Honor existing authorization:** once the user has authorized an action, do not ask for the same confirmation again; proceed within the authorized scope.
@@ -35,12 +36,13 @@
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
 - **Ask one sharp question when ambiguity materially changes the scope or outcome.**
 - **Batch independent operations when it saves time or context.**
+- **Fan out genuinely independent subtasks when coordination costs less than serial work.**
 - **Name by intention, scope by responsibility** ; not mechanism.
 - **Before finishing:** account for every part of the request, verify changes with checks proportionate to their impact, and report anything unresolved or unverified. Remove repeated explanations and unnecessary code; avoid over-engineering.
 
 ## Agents
 
-Fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
+When you own the overall flow, fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
 
 | Responsibility | Agent |
 | --- | --- |
@@ -55,10 +57,11 @@ If no specialized agent fits or is available, give the same brief to the host's 
 
 Project docs, memory, specs, and plans live in `aidd_docs/`.
 
-Read only task-relevant context and linked memory files; complete required reads.
+### Project memory
 
 <!-- aidd_project_memory:start -->
 <!-- aidd_project_memory:end -->
 
-- Load `aidd_docs/memory/external/*` only when asked.
-- Load `aidd_docs/memory/internal/*` when relevant.
+- If the block above is empty, run `ls -1tr aidd_docs/memory/` and read each file.
+- Load `aidd_docs/memory/external/*` when the user asks.
+- Load `aidd_docs/memory/internal/*` when the task needs it.
