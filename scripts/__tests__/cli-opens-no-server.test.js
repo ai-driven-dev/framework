@@ -38,7 +38,7 @@ function trackedCliSourceFiles() {
     .toString("utf8")
     .split("\0")
     .filter(Boolean)
-    .filter((rel) => rel.endsWith(".ts"));
+    .filter((rel) => rel.endsWith(".ts") && fs.existsSync(path.join(ROOT, rel)));
 }
 
 function listenersIn(files) {

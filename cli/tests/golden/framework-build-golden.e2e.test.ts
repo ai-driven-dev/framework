@@ -21,7 +21,15 @@ type TargetSnapshot = Record<string, string>; // rel-path → sha256
 type GoldenSnapshot = Record<string, TargetSnapshot>; // key → files
 
 const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
-const FLAT_TARGETS = ["claude", "cursor", "copilot", "codex", "opencode", "kilo"] as const;
+const FLAT_TARGETS = [
+  "claude",
+  "cursor",
+  "copilot",
+  "codex",
+  "opencode",
+  "kilo",
+  "antigravity",
+] as const;
 
 const FROZEN_CELLS = new Set<string>([
   ...MARKETPLACE_TARGETS,
@@ -112,7 +120,7 @@ const captures = twoCaptures("fb-golden-det", (env) =>
   captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
 );
 
-describe.concurrent("Framework build golden — 10-cell matrix", () => {
+describe.concurrent("Framework build golden — 11-cell matrix", () => {
   afterAll(captures.cleanup);
 
   // Two full 9-cell builds measured just past the 60s default on a Windows runner, not a
@@ -129,7 +137,7 @@ describe.concurrent("Framework build golden — 10-cell matrix", () => {
     }
   }, 120_000);
 
-  it("every one of the 10 cells is byte-identical to its stored baseline", async () => {
+  it("every one of the 11 cells is byte-identical to its stored baseline", async () => {
     const captured = await captures.first();
 
     if (process.env.UPDATE_FRAMEWORK_GOLDEN === "1") {

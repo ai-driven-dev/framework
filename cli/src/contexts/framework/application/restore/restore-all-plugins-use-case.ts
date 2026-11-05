@@ -27,6 +27,7 @@ interface RestoreAllPluginsOptions {
   pluginName?: string;
   /** Restrict which AI tools' plugins get touched. Undefined means every installed AI tool (unscoped). */
   toolIds?: readonly ToolId[];
+  force?: boolean;
 }
 
 export interface RestoreAllPluginsResult {
@@ -49,7 +50,7 @@ export class RestoreAllPluginsUseCase {
   ) {}
 
   async execute(options: RestoreAllPluginsOptions): Promise<RestoreAllPluginsResult> {
-    const { projectRoot, manifest, fileFilter, pluginName, toolIds } = options;
+    const { projectRoot, manifest, fileFilter, pluginName, toolIds, force = false } = options;
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     let totalFiles = 0;
     const restoredNames = new Set<string>();
@@ -70,7 +71,8 @@ export class RestoreAllPluginsUseCase {
         projectRoot,
         cacheDir,
         fileFilter,
-        pluginName
+        pluginName,
+        force
       );
       totalFiles += result.totalFiles;
       for (const name of result.pluginNames) restoredNames.add(name);
@@ -98,7 +100,8 @@ export class RestoreAllPluginsUseCase {
     projectRoot: string,
     cacheDir: string,
     fileFilter: ((p: string) => boolean) | null,
-    pluginName: string | undefined
+    pluginName: string | undefined,
+    force: boolean
   ): Promise<{ totalFiles: number; pluginNames: string[] }> {
     let totalFiles = 0;
     const pluginNames: string[] = [];
@@ -118,6 +121,7 @@ export class RestoreAllPluginsUseCase {
         cacheDir,
         manifest,
         fileFilter,
+        force,
       });
       totalFiles += filesWritten;
       if (filesWritten > 0) pluginNames.push(plugin.name);
