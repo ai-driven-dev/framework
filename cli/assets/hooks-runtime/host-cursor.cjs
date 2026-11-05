@@ -75,17 +75,12 @@ function print(output) {
   process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-/** Whether the turn ended on its own: an aborted turn was stopped by the person, and one that
- * ended in error has nothing to go on with. */
-function completed(raw) {
-  return raw?.status === undefined || raw.status === "completed";
-}
-
 /** Asks the model to go on before the turn ends, with `text` as what it must do. Asks once: a
  * turn end that is already a continuation is never continued again. */
 function continueTurn(text) {
   if (typeof text !== "string" || text === "" || current?.stopActive === true) return;
-  if (!completed(current?.raw)) return;
+  // An aborted turn was stopped by the person; one that ended in error has nothing to go on with.
+  if (current?.raw?.status !== "completed") return;
   print({ followup_message: text });
 }
 
