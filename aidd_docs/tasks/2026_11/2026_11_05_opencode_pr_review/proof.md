@@ -38,6 +38,12 @@ and read the supplied diffs before a file is checkpointed.
   call. Repeating the run reported the review as already published and did not
   add a second comment. This test used a temporary branch trigger and a direct
   submission ID; it did not test the production schedule.
+- The discovery script was also run read-only against GitHub: it selected a
+  pending submission and skipped the review already published on PR #1150.
+- GitHub Actions run 42003999646 exercised `/opencode` with its configured
+  provider and a synthetic comment. It verified that an existing Git symlink
+  was checked out as text and posted a reply without changing files. In a local
+  sentinel test, a symlink to `/proc/self/environ` no longer exposed its value.
 
 The new scheduled workflow is not active until it exists on the repository's
 default branch and its dedicated runner and activation timestamp are configured.

@@ -30,4 +30,6 @@ The repository's `/opencode` workflow uses the same image with a writable
 checkout. Project skills come from the trusted default branch and take precedence
 over those bundled in the image. The workflow disables project configuration and
 instructions from the branch being changed, so a pull request cannot redirect
-the provider or load executable plugins.
+the provider or load executable plugins. Project symlinks are checked out as
+plain text during the session to prevent access outside the workspace; their
+Git modes remain unchanged.
