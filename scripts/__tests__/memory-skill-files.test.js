@@ -206,6 +206,19 @@ test("write ends on the engine, writes only the root, and holds back a capabilit
   assert.doesNotMatch(write, /each found capability|guidance comment|every selected row exists/u, "a stale instruction is left");
 });
 
+test("a merge applies only with the former file's own removal approved, and says so once, in write", () => {
+  const merge = skillText("actions/02-write.md")
+    .split(/\r?\n/u)
+    .filter((candidate) => /merge/iu.test(candidate) && /removal/u.test(candidate));
+  assert.equal(merge.length, 1, "write does not state, in one line, what a merge needs before it touches the former file");
+  assert.match(merge[0], /former file's removal was approved/u);
+  assert.match(merge[0], /neither file/u, "a merge without its removal can still copy, leaving every fact in two files");
+  for (const file of skillMarkdown().filter((candidate) => !candidate.endsWith("02-write.md"))) {
+    const text = fs.readFileSync(file, "utf8");
+    assert.doesNotMatch(text, /merge[^.\n]*removal|removal[^.\n]*merge/iu, `${path.relative(SKILL, file)} restates the merge rule`);
+  }
+});
+
 test("sync fills the wired tools without asking when refresh calls it, the old tag form counting as wired", () => {
   const sync = skillText("actions/04-sync.md");
   assert.match(sync, /refresh/u);
