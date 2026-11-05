@@ -44,6 +44,8 @@ Each tool exposes more moments than these. For the full list, read the tool's do
 
 A Claude `settings.json` and a plugin or standalone `hooks/hooks.json` both wrap the event map under a top-level `hooks` key, so the file is `{ "hooks": { "<Event>": [ ... ] } }`. A Codex `config.toml` uses a `[hooks]` table instead.
 
+Set `statusMessage` on each Claude Code or Codex handler, including shared plugin hooks. It describes the action while the hook runs, and Codex uses it as the review-list title. Use a concise, specific message. This field is not documented for Cursor or Copilot hooks; omit it from their own formats unless confirmed. Sources read 2026-11-05: [Claude Code hooks](https://code.claude.com/docs/en/hooks), [Codex hooks](https://learn.chatgpt.com/docs/hooks), [Cursor hooks](https://cursor.com/docs/hooks), [Copilot hooks](https://docs.github.com/en/copilot/reference/hooks-reference).
+
 ## Scopes per tool
 
 Ask the user which scope, then write the matching file. A `-` means the tool has no such scope.

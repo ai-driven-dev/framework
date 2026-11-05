@@ -6,6 +6,7 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.cjs",
+            "statusMessage": "AIDD Telemetry: carry session task",
             "timeout": 10
           }
         ]
@@ -15,6 +16,7 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/catch-up.cjs",
+            "statusMessage": "AIDD Telemetry: update measurement ledger",
             "async": true,
             "timeout": 120
           }
@@ -27,6 +29,7 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-gate.cjs",
+            "statusMessage": "AIDD Telemetry: check task declaration",
             "timeout": 30
           }
         ]
