@@ -127,9 +127,13 @@ export type FlatHooksSupport =
     }
   | { acceptsHooks: false; hooksUnsupportedReason: string };
 
+/** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
+export type FlatSkillLayout = "nested" | "single-level";
+
 export type FlatPluginsParams = {
   mode: "flat";
   flatNamespacePrefix: string;
+  flatSkillLayout?: FlatSkillLayout;
 } & FlatHooksSupport;
 
 export interface UnsupportedPluginsParams {
@@ -180,6 +184,7 @@ export class PluginsCapability {
   readonly flatHooksLoaderEntry: FlatHooksLoaderEntry | null;
   /** See {@link FlatHooksBridge}, or `null` when this capability declares none. */
   readonly flatHooksBridge: FlatHooksBridge | null;
+  readonly flatSkillLayout: FlatSkillLayout;
   readonly marketplaceSettings: MarketplaceSettings | null;
   readonly nativeActivation: NativeActivation | null;
   readonly translationMode: PluginTranslationMode | null;
@@ -209,6 +214,7 @@ export class PluginsCapability {
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
+      this.flatSkillLayout = "nested";
       this.marketplaceSettings = params.marketplaceSettings ?? null;
       this.nativeActivation = params.nativeActivation ?? null;
       this._userPluginsDir = params.userPluginsDir;
@@ -223,6 +229,7 @@ export class PluginsCapability {
         ? (params.flatHooksLoaderEntry ?? null)
         : null;
       this.flatHooksBridge = params.acceptsHooks ? (params.flatHooksBridge ?? null) : null;
+      this.flatSkillLayout = params.flatSkillLayout ?? "nested";
       this.hooksTrustNotice = null;
       this.pluginRootToken = null;
       this.acceptsMcp = false;
@@ -243,6 +250,7 @@ export class PluginsCapability {
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
+      this.flatSkillLayout = "nested";
       this.hooksTrustNotice = null;
       this.pluginRootToken = null;
       this.acceptsMcp = false;
