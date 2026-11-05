@@ -16,9 +16,8 @@ The title, body, and base ready to create.
 2. **Write.** Draft a concise title and a body following the template from the change summary. Link every changed `**/qa/*.webm` under the template's testing or verification section.
    - List the main changes as concise bullets in the template’s corresponding section; if it has none, include them in the most relevant section. Keep the approach brief; use a numbered list for an ordered process and bold the opening words of each step.
    - Give the fewest concrete verification steps needed for the changed behavior.
-     - State the expected result for each step.
-     - Omit generic test commands and CI summaries; describe behavior a reviewer can verify instead.
-     - Use unchecked checkboxes for reviewer verification steps. Record material verification gaps without implying they passed.
+     - Use one unchecked checkbox per action or scenario, with any substeps and expected results as nested bullets, not extra checkboxes.
+     - Omit generic test commands and CI summaries. Record material verification gaps without implying they passed.
 3. **Proceed.** Apply any supplied overrides and pass the result to `03-create` without an approval round.
 
 ## Test

@@ -25,9 +25,9 @@ and bold the opening words of each step.
 
 ## 🧪 How to verify
 
-<!-- Concrete steps, commands, or screenshots a reviewer can run to see it work. -->
+<!-- One unchecked checkbox per action or scenario; put substeps and expected results in nested bullets. -->
 
--
+- [ ]
 
 ## ⚠️ Heads-up
 

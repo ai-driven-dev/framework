@@ -50,7 +50,6 @@ Instructions:
 
 <!--
 Instructions:
-- Give a list of steps to test the PR, using UI or not.
-- Use checkboxes.
+- Use one unchecked checkbox per action or scenario; put substeps and expected results in nested bullets.
 - Do not include installation process, focus on functional testing.
 -->
