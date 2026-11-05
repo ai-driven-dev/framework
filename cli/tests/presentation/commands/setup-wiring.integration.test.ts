@@ -20,6 +20,7 @@ const setupToolsPrompt = vi.fn();
 const detectContext = vi.fn();
 const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
+const setAgentModel = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
@@ -33,6 +34,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     setupToolsPromptUseCase: { execute: setupToolsPrompt },
     projectContextDetector: { execute: detectContext },
     setupMachineScopeUseCase: { execute: setupMachineScope },
+    setAgentModelUseCase: { execute: setAgentModel },
   })),
   createMenuDeps: vi.fn(),
 }));
@@ -69,6 +71,7 @@ beforeEach(() => {
     return true;
   });
   loadManifest.mockResolvedValue({});
+  setAgentModel.mockResolvedValue({ reinstalled: [], changed: [], skipped: [] });
   resolveSourceIfNeeded.mockResolvedValue(undefined);
   registerIfPresent.mockResolvedValue(undefined);
   activation.mockResolvedValue({ binaryMissing: [], errors: [] });
@@ -165,6 +168,109 @@ describe("aidd setup — the flow a scripted run builds", () => {
     expect(flow.scope).toBe("user");
     expect(setupTools).not.toHaveBeenCalled();
     expect(resolveSourceIfNeeded).not.toHaveBeenCalled();
+  });
+});
+
+const OTHER_PROJECTS = (ide: string, provider: string) =>
+  `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${ide} --provider ${provider}\` there.`;
+
+describe("aidd setup — the agents' provider", () => {
+  it("sets the provider and the main session's model only once the install has succeeded", async () => {
+    await run("--ide", "opencode,vscode", "--provider", "mistral");
+
+    expect(setAgentModel).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      hosts: ["opencode"],
+      provider: "mistral",
+      scope: "project",
+    });
+    expect(setAgentModel.mock.invocationCallOrder[0]).toBeGreaterThan(
+      resolveSourceIfNeeded.mock.invocationCallOrder[0]
+    );
+  });
+
+  it("changes nothing of the provider when the install fails", async () => {
+    resolveSourceIfNeeded.mockRejectedValueOnce(new Error("network down"));
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run("--ide", "opencode", "--provider", "mistral")).rejects.toThrow("exited");
+
+    expect(setAgentModel).not.toHaveBeenCalled();
+  });
+
+  it("reports, per host, what the main session and each agent now run on, and what it updated", async () => {
+    setAgentModel.mockResolvedValue({
+      reinstalled: ["aidd-orchestrator"],
+      changed: [{ host: "opencode", path: "/home/.config/opencode/opencode.json" }],
+      skipped: [],
+    });
+
+    const lines = await run("--ide", "opencode,kilo", "--provider", "mistral");
+    const start = lines.indexOf("Models on mistral, for every project on this machine:");
+
+    expect(lines.slice(start, start + 9)).toEqual([
+      "Models on mistral, for every project on this machine:",
+      "  opencode main session: mistral/mistral-large-4, written in /home/.config/opencode/opencode.json",
+      "  opencode reviewer: mistral/mistral-large-4 (high)",
+      "  opencode explorer, executor, validator: mistral/mistral-small-latest (high)",
+      "  kilo main session: not managed by aidd, still the IDE's choice",
+      "  kilo reviewer: mistral/mistral-large-4 (high)",
+      "  kilo explorer, executor, validator: mistral/mistral-small-latest (high)",
+      "Agents updated: aidd-orchestrator.",
+      OTHER_PROJECTS("opencode,kilo", "mistral"),
+    ]);
+  });
+
+  it("gives the main session and the agents back the IDE's model with none", async () => {
+    const lines = await run("--ide", "opencode", "--provider", "none");
+
+    expect(setAgentModel).toHaveBeenCalledWith(
+      expect.objectContaining({ hosts: ["opencode"], provider: undefined })
+    );
+    expect(lines).toContain("opencode: the agents run on the IDE's model again.");
+    expect(lines).toContain(OTHER_PROJECTS("opencode", "none"));
+  });
+
+  it("does not claim a main session it could not write, even after restoring its old file", async () => {
+    setAgentModel.mockResolvedValue({
+      reinstalled: [],
+      changed: [{ host: "claude", path: "/old/settings.json" }],
+      skipped: [{ host: "claude", path: "/new/settings.json", reason: "it holds comments" }],
+    });
+
+    const lines = await run("--ide", "claude", "--provider", "anthropic");
+
+    expect(lines.filter((line) => line.includes("main session"))).toEqual([]);
+    expect(errors.join("")).toContain(
+      "claude main session left as it is in /new/settings.json: it holds comments."
+    );
+  });
+
+  it("says agents installed later get the models when no plugin was updated", async () => {
+    setAgentModel.mockResolvedValue({ reinstalled: [], changed: [], skipped: [] });
+
+    const lines = await run("--ide", "opencode", "--provider", "mistral");
+
+    expect(lines).toContain("Agents installed later get these models too.");
+  });
+
+  it.each([
+    [["--ide", "claude,codex", "--provider", "openai"], 'not supported for "claude"'],
+    [["--global", "--ide", "claude,vscode", "--provider", "anthropic"], "vscode"],
+    [["--ide", "vscode", "--provider", "bogus"], 'Unknown provider "bogus"'],
+    [["--ide", "vscode", "--provider", "openai"], "--provider needs --ide with a tool"],
+  ])("refuses %j before building or writing anything", async (args, message) => {
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run(...args)).rejects.toThrow("exited");
+
+    expect(errors.join("")).toContain(message);
+    expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
+    expect(setAgentModel).not.toHaveBeenCalled();
   });
 });
 
@@ -398,6 +504,10 @@ describe("aidd setup — the help surface", () => {
         "--global",
         "install for every project on this machine instead of into this project; see the " +
           "requirements below",
+      ],
+      [
+        "--provider <provider>",
+        "Run each tool's main session and agents on this provider's model for their role (openai, anthropic, mistral), or none for the IDE's model",
       ],
     ]);
     expect(

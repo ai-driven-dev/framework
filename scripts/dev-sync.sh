@@ -5,6 +5,7 @@
 #
 # NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
 # whose CLI is absent is skipped, and the first run needs network.
+# The agents' provider is whatever `aidd setup --global --provider` last recorded.
 #
 # Global rules: sync only the Agents section in the managed block, preserving personal
 # rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled. Kilo

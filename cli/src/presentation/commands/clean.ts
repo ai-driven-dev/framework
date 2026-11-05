@@ -43,6 +43,20 @@ async function runUserScopeClean(
   });
 
   printUserScopeCleanOutcome(output, result, interactive);
+
+  // The agents' provider and the main sessions' models are machine-wide choices too, undone
+  // exactly when the clean itself ran: --force, or a confirmed prompt.
+  const models = await deps.setAgentModelUseCase.reset({ dryRun: result.dryRun });
+  const verb = result.dryRun ? "would be restored" : "restored";
+  for (const { host, path } of models.changed)
+    output.info(`${host} main session: ${verb} in ${path}`);
+  for (const { host, path, reason } of models.skipped) {
+    output.warn(`${host} main session left as it is in ${path}: ${reason}.`);
+  }
+  if (models.providers.length > 0) {
+    const forgotten = result.dryRun ? "would be forgotten" : "forgotten";
+    output.info(`Agents' provider for ${models.providers.join(", ")}: ${forgotten}.`);
+  }
 }
 
 export function registerCleanCommand(program: Command): void {

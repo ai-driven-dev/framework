@@ -3,11 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
+const resetModels = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
     cleanUseCase: { execute: cleanProject },
     cleanUserScopeUseCase: { execute: cleanUserScope },
+    setAgentModelUseCase: { reset: resetModels },
   })),
   createMenuDeps: vi.fn(),
 }));
@@ -54,6 +56,7 @@ beforeEach(() => {
     manifestFound: true,
     preview: { toolIds: [], builtVersions: [], referencingProjects: [] },
   });
+  resetModels.mockResolvedValue({ changed: [], skipped: [], providers: [] });
 });
 
 afterEach(() => {
@@ -127,6 +130,57 @@ describe("aidd clean --scope", () => {
       interactive: false,
     });
     expect(cleanProject).not.toHaveBeenCalled();
+  });
+
+  it("also gives back the main sessions' models and forgets the provider, once confirmed", async () => {
+    resetModels.mockResolvedValue({
+      changed: [{ host: "claude", path: "/home/.claude/settings.json" }],
+      skipped: [],
+      providers: ["claude"],
+    });
+
+    const lines = await run("clean", "--global", "--force");
+
+    expect(resetModels).toHaveBeenCalledWith({ dryRun: false });
+    expect(lines.slice(-2)).toEqual([
+      "claude main session: restored in /home/.claude/settings.json",
+      "Agents' provider for claude: forgotten.",
+    ]);
+  });
+
+  it("only says what it would give back while previewing", async () => {
+    cleanUserScope.mockResolvedValue({
+      dryRun: true,
+      manifestFound: true,
+      preview: { toolIds: [], builtVersions: [], referencingProjects: [] },
+    });
+    resetModels.mockResolvedValue({
+      changed: [{ host: "opencode", path: "/home/.config/opencode/opencode.json" }],
+      skipped: [],
+      providers: ["opencode"],
+    });
+
+    const lines = await run("clean", "--global");
+
+    expect(resetModels).toHaveBeenCalledWith({ dryRun: true });
+    expect(lines.slice(-2)).toEqual([
+      "opencode main session: would be restored in /home/.config/opencode/opencode.json",
+      "Agents' provider for opencode: would be forgotten.",
+    ]);
+  });
+
+  it("gives them back too when the person confirms the prompt instead of passing --force", async () => {
+    pretendTerminal(true);
+
+    await run("clean", "--global");
+
+    expect(resetModels).toHaveBeenCalledWith({ dryRun: false });
+  });
+
+  it("leaves the machine-wide models alone when cleaning one project", async () => {
+    await run("clean", "--force");
+
+    expect(resetModels).not.toHaveBeenCalled();
   });
 
   it("treats a spelled-out project scope as the default one", async () => {

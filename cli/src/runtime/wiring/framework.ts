@@ -11,6 +11,7 @@ import { MarketplaceAddUseCase } from "../../contexts/distribution/application/m
 import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFrameworkUseCase } from "../../contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { SetAgentModelUseCase } from "../../contexts/framework/application/agents/set-agent-model-use-case.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -59,6 +60,7 @@ import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/applicat
 import { SetupToolsUseCase } from "../../contexts/framework/application/setup/setup-tools-use-case.js";
 import { DetectPluginDriftUseCase } from "../../contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import {
+  type AgentProviderFor,
   EnsureBuiltMarketplaceUseCase,
   type FrameworkBuildFor,
 } from "../../contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
@@ -70,12 +72,14 @@ import { UninstallUseCase } from "../../contexts/framework/application/uninstall
 import type { Environment } from "../../contexts/framework/domain/ports/environment.js";
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
+import { AgentModelStoreAdapter } from "../../contexts/framework/infrastructure/agent-model-store-adapter.js";
 import { EnvironmentAdapter } from "../../contexts/framework/infrastructure/environment-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import { isAgentHost } from "../../contexts/tools/domain/formats/agent-models.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
@@ -145,6 +149,7 @@ interface Deps {
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
+  setAgentModelUseCase: SetAgentModelUseCase;
   userPluginUpdateUseCase: UserPluginUpdateUseCase;
   marketplaceAddUseCase: MarketplaceAddUseCase;
   marketplaceListUseCase: MarketplaceListUseCase;
@@ -330,17 +335,21 @@ export async function createDeps(
     info: (message) => logger.debug(message),
     warn: (message) => logger.debug(message),
   };
-  const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir) =>
+  const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir, provider) =>
     createFrameworkBuildUseCase(
       { fs, assetProvider, logger: cacheBuildLogger },
-      { target, mode, outDir, force: true }
+      { target, mode, outDir, force: true, ...(provider === undefined ? {} : { provider }) }
     );
+  const agentModelStore = new AgentModelStoreAdapter(fs, userConfigDir);
+  const agentProviderFor: AgentProviderFor = async (target) =>
+    isAgentHost(target) ? (await agentModelStore.loadProviders())[target] : undefined;
   const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplaceUseCase(
     fs,
     resolveMarketplaceUseCase,
     frameworkBuildFor,
     currentVersionProvider,
-    userConfigDir
+    userConfigDir,
+    agentProviderFor
   );
   const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
     fs,
@@ -530,6 +539,17 @@ export async function createDeps(
     logger,
     nativeHostRegistrationGate
   );
+  const setAgentModelUseCase = new SetAgentModelUseCase(
+    fs,
+    agentModelStore,
+    manifestRepo,
+    userManifestRepo,
+    pluginUpdateUseCase,
+    userPluginUpdateUseCase,
+    marketplaceSyncSettingsUseCase,
+    homedir,
+    (name) => environment.get(name)
+  );
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,
@@ -615,6 +635,7 @@ export async function createDeps(
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,
+    setAgentModelUseCase,
     userPluginUpdateUseCase,
     marketplaceAddUseCase,
     marketplaceListUseCase,

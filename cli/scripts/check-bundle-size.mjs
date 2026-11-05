@@ -51,6 +51,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 0.2% measured headroom.
 // 734 KB: 718.8 KB, the machine-wide install of `setup --global` (+8.0 KB over the 710.8 KB
 // above); 2.1% measured headroom.
+// 741 KB: 725.6 KB, the agents' models: a provider per IDE that every install build applies
+// (+6.8 KB over the 718.8 KB above); 2.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

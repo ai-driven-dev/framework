@@ -60,13 +60,33 @@ aidd sync --global   # after a framework update
 
 ## 🧠 Models
 
-No model is pinned. Each host applies its own default for subagents, usually the model of the session that called them. A model you declare in an agent reaches every host in its own format.
+The main session and the agents run on the IDE's model unless you pick a provider when installing:
+
+```bash
+aidd setup --ide opencode --provider mistral   # main session and agents on Mistral models
+aidd setup --ide opencode --provider none      # back to the IDE's model
+aidd setup --global --ide codex,opencode --plugins all --provider openai   # every project
+```
+
+| Tier | Runs | openai | anthropic | mistral |
+| --- | --- | --- | --- | --- |
+| smart | Reviewer | `gpt-6.1-sol` | `claude-opus-5-5` | `mistral-large-4` |
+| standard | Main session | `gpt-6.1-terra` | `claude-sonnet-5-5` | `mistral-large-4` |
+| light | Explorer, executor, validator | `gpt-6-luna` | `claude-haiku-5-5` | `mistral-small-latest` |
+
+Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused. The mapping lives in [`agent-models.json`](../cli/src/contexts/tools/domain/formats/agent-models.json).
+
+- The provider holds for the whole machine: other projects get it at their next install; to update the agents they already have, run `aidd setup --ide … --provider …` there, `none` included.
+- Nothing changes until the install has succeeded.
+- The main session's model is written in the IDE's own user settings, so it changes every project on the machine: Claude Code's `settings.json` (under `CLAUDE_CONFIG_DIR` when set) and OpenCode's `~/.config/opencode/opencode.json`, or `opencode.jsonc` when that is the one there. `--provider none` restores what it replaced. A settings file holding comments is left alone, and the report says so. A `model` in a project's own settings still wins. Codex, Copilot, Cursor and Kilo keep the model picked in the IDE.
+- Effort: smart runs at `high`, the others at `medium`. Mistral Small takes no effort between `none` and `high`, so the light tier runs at `high`.
+- The command ends with a report: per IDE, the model of the main session and of each agent, and the plugins it updated.
 
 ## 🚧 Limits
 
 - **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`, and Codex loads them only in a trusted project; `aidd setup --global` puts them in `~/.codex/agents/` instead.
-- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant.
+- **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant. Only an install through `aidd setup` pins them, not `/plugin install`. `aidd clean` cleans one project and keeps the machine-wide provider; `aidd clean --global --force` forgets it and restores the main session's model.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).

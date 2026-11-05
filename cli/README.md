@@ -33,11 +33,15 @@ Check: `aidd --version`.
 
 `setup` writes the manifest, the default marketplace, the tool configs and the plugins.
 `--global` installs for the machine instead, and writes nothing under the project.
+`--provider` runs the main session and the framework's agents on that provider's models, reports which model each runs on, and `--provider none` undoes it.
+
+The model ids are pinned in [`agent-models.json`](src/contexts/tools/domain/formats/agent-models.json), checked against each provider's model page on 2026-11-04. When a provider ships or retires a model, update that file, the table in [the agent guide](../docs/SUBAGENTS.md#-models), and the tests that name the ids.
 
 | Command | Lands in |
 | --- | --- |
 | `aidd setup --ide claude` | `.claude/` and `.aidd/` in this project |
 | `aidd setup --global --ide opencode --plugins all` | `~/.config/opencode/` and `~/.config/aidd/`, nothing in this project |
+| `aidd setup --ide opencode --provider mistral` | `.opencode/agents/` with Mistral models; the main session's in `~/.config/opencode/opencode.json`; the provider in `~/.config/aidd/agent-models.json`, for every project |
 
 ## Commands
 
@@ -135,8 +139,10 @@ Install it, then run `aidd sync --global`.
 ```sh
 aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes
 aidd sync --global    # rebuild the copied files and refresh the hosts from the framework source
-aidd clean --global --force   # remove what --global installed and purge the shared source; without --force it previews or asks
+aidd clean --global --force   # remove what --global installed, purge the shared source, forget the provider and restore the main session's model; without --force it previews or asks
 ```
+
+With `--provider`, the copied agents and enabled plugins carry that provider's models.
 
 ## Authentication
 

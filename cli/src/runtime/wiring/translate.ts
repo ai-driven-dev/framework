@@ -9,6 +9,7 @@ import "../../contexts/tools/domain/profiles/kilo/profile.js";
 import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolBuildContract } from "../../contexts/tools/domain/build-contract.js";
+import { withAgentModels } from "../../contexts/tools/domain/formats/agent-models.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import { buildContractFor } from "../../contexts/tools/domain/registry.js";
 import { FlatBuildStrategy } from "../../contexts/translate/application/strategies/flat-build-strategy.js";
@@ -32,6 +33,8 @@ export interface FrameworkBuildContext {
   readonly mode: string;
   readonly outDir: string;
   readonly force: boolean;
+  /** Gives each agent its role's model at this provider; absent, agents inherit the session's. */
+  readonly provider?: string;
 }
 
 type FrameworkBuildFactory = (
@@ -68,12 +71,16 @@ function frameworkBuildFactoryFor(
   buildContract: () => ToolBuildContract,
   mode: "marketplace" | "flat"
 ): FrameworkBuildFactory {
+  const contractFor = (ctx: FrameworkBuildContext): ToolBuildContract =>
+    ctx.provider === undefined
+      ? buildContract()
+      : withAgentModels(buildContract(), ctx.target, ctx.provider);
   if (mode === "marketplace") {
     return (deps, ctx) =>
       buildFrameworkUseCase(
         deps,
         (d, av) =>
-          new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildContract(), ctx.force)
+          new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, contractFor(ctx), ctx.force)
       );
   }
   return (deps, ctx) =>
@@ -84,7 +91,7 @@ function frameworkBuildFactoryFor(
           d.fs,
           av,
           d.assetProvider,
-          buildContract(),
+          contractFor(ctx),
           ctx.force,
           ctx.outDir,
           isDirectory,
