@@ -1,4 +1,5 @@
 import { homedir } from "node:os";
+import { join } from "node:path";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
@@ -496,7 +497,9 @@ export async function createDeps(
   // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
   const userPluginFileUpdater = new UserPluginFileUpdater(
     fs,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader, () =>
+      join(userConfigDir(), "cache", "plugin-cache")
+    ),
     hasher,
     builtMaterializationDeps
   );

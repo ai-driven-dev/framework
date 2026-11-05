@@ -423,7 +423,11 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const activator = binary === undefined ? undefined : this.activators.get(binary);
       if (binary === undefined || activator === undefined) continue;
       if (!activator.isAvailable()) {
-        this.logger.warn(`${binary} CLI not found on PATH — skipping native plugin activation.`);
+        this.logger.warn(
+          `${binary} CLI not found on PATH — skipping native plugin activation.${
+            enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : ""
+          }`
+        );
         binaryMissing.push({ toolId, binary });
         continue;
       }

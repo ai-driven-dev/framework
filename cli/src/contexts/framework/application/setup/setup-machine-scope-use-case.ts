@@ -52,6 +52,7 @@ export class SetupMachineScopeUseCase {
         projectRoot: flow.projectRoot,
         scope: "user",
         manifestRepo: this.userManifestRepo,
+        toolIds: flow.aiTools,
         enablePlugins: plugins,
       });
     const install: SetupToolsResult = { results: [] };
