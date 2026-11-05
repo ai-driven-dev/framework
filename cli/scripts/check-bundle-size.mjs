@@ -60,6 +60,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // telemetry integrity guards (+15.1 KB over 783.7 KB); less than 0.1% measured headroom.
 // 804 KB: 803.3 KB with strict OTLP attribute and metric validation (+4.5 KB);
 // 0.1% measured headroom.
+// 807 KB: 806.6 KB with opt-in native Codex project metadata and shared metadata publishing;
+// +3.3 KB, less than 0.1% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

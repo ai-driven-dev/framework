@@ -74,6 +74,7 @@ src/
 │   │   └── infrastructure/
 │   │       ├── otel/    # shared native OTLP settings; JSON templates in config/
 │   │       │   └── actions/    # initialize configuration, launch export, verify receipt
+│   │       │       └── metadata/    # consented native Codex session metadata
 │   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys

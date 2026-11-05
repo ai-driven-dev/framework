@@ -3,7 +3,7 @@ import {
   createSessionTitlePublisher,
   readSessionTitle,
   sessionTitleTransfer,
-} from "../../../../src/contexts/telemetry/infrastructure/otel/actions/session-title.js";
+} from "../../../../src/contexts/telemetry/infrastructure/otel/actions/metadata/session-title.js";
 
 describe("Codex session titles", () => {
   it("dates a title when it is observed, not before a delayed read", async () => {

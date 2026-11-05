@@ -3,7 +3,8 @@ import { lstat, open } from "node:fs/promises";
 import { join } from "node:path";
 import type { SessionAdmission } from "../../../domain/report/session-feature.js";
 import { CODEX_CONFIG_ID } from "../settings.js";
-import { createSessionTitlePublisher } from "./session-title.js";
+import { createSessionProjectPublisher } from "./metadata/session-project.js";
+import { createSessionTitlePublisher } from "./metadata/session-title.js";
 import {
   destination,
   type Identity,
@@ -37,6 +38,9 @@ export async function syncAllSessionTitles(
   const path = join(options.home, ".local/share/aidd-otel-observation", "codex.jsonl");
   const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   const identities = new Map<string, Identity>();
+  const projects = options.includeSessionProjects
+    ? createSessionProjectPublisher(options.home, options.onProjectUnavailable)
+    : undefined;
   const titles = createSessionTitlePublisher(options.home, {
     onUnavailable: options.onTitleUnavailable,
   });
@@ -104,21 +108,26 @@ export async function syncAllSessionTitles(
       identified++;
       if ((await permits(admission, new Date().toISOString())) !== "allow") continue;
       currentConsenting++;
-      if (
-        await titles.publish(session, identity, async (event) => {
-          if (!event.at || (await permits(admission, event.at)) !== "allow") {
-            currentConsenting--;
-            return false;
-          }
-          await send({ ...base, session }, event);
-          return true;
-        })
-      )
-        sent++;
+      let stillConsenting = true;
+      for (const publisher of [titles, projects])
+        if (
+          publisher &&
+          (await publisher.publish(session, identity, async (event) => {
+            if (!event.at || (await permits(admission, event.at)) !== "allow") {
+              if (stillConsenting) currentConsenting--;
+              stillConsenting = false;
+              return false;
+            }
+            await send({ ...base, session }, event);
+            return true;
+          }))
+        )
+          sent++;
     }
     return { sent, identified, currentConsenting, partialLine: pending.length > 0 };
   } finally {
     titles.close();
+    projects?.close();
     await file.close();
   }
 }

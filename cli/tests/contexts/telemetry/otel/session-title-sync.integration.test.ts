@@ -1,4 +1,13 @@
-import { access, appendFile, chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  appendFile,
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
@@ -45,9 +54,10 @@ fs.writeFileSync(process.env.AIDD_TEST_TITLE_MARKER, 'called');
 readline.createInterface({ input: process.stdin }).on('line', (line) => {
   const message = JSON.parse(line);
   if (!message.id) return;
-  const result = message.method === 'initialize' ? {} : {
+  if (message.method === 'initialize') fs.writeFileSync(process.env.AIDD_TEST_TITLE_MARKER, JSON.stringify(message.params));
+  const result = message.method === 'initialize' ? {} : message.method === 'project/read' ? { project: { id: 'native-project', name: 'Native project' } } : {
     thread: { id: message.params.threadId, sessionId: message.params.threadId,
-      name: 'Synthetic title', turns: [] }
+      name: 'Synthetic title', projectId: 'native-project', turns: [] }
   };
   process.stdout.write(JSON.stringify({ id: message.id, result }) + '\n');
 });
@@ -127,6 +137,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(received).toHaveLength(2);
       expect(received[1]).toContain("aidd.session_title");
       expect(received[1]).toContain("Synthetic title");
+      expect(await readFile(marker, "utf8")).not.toContain("experimentalApi");
       expect(received[1]).not.toContain("aidd.feature");
 
       received.length = 0;
@@ -147,6 +158,24 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
         async (transfer) => !JSON.stringify(transfer.payload).includes("aidd.session_title")
       );
       expect(received).toHaveLength(0);
+
+      received.length = 0;
+      await syncOtel({ ...options, includeSessionProjects: true }, resolve, async () => true);
+      expect(received).toHaveLength(2);
+      expect(received[1]).toContain("aidd.session_project");
+      expect(received[1]).toContain("aidd.project_id");
+      expect(received[1]).toContain("Native project");
+      expect(await readFile(marker, "utf8")).toContain('"experimentalApi":true');
+      expect(received[1]).not.toContain("Synthetic title");
+      expect(received[1]).not.toContain("input_token_count");
+      received.length = 0;
+      await syncOtel(
+        { ...options, includeSessionProjects: true },
+        resolve,
+        async (transfer) => !JSON.stringify(transfer.payload).includes("aidd.session_project")
+      );
+      expect(received).toHaveLength(1);
+      expect(received.join()).not.toContain("aidd.project_name");
 
       received.length = 0;
       const captureFile = join(captureDir, "codex.jsonl");
@@ -210,6 +239,27 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(received.some((body) => body.includes("session-4"))).toBe(true);
       expect(received.join()).not.toContain("session-2");
       expect(received.join()).not.toContain("session-3");
+      expect(received.join()).not.toContain("input_token_count");
+      expect(received.join()).not.toContain("aidd.feature");
+      await expect(access(join(home, "state"))).rejects.toThrow();
+
+      received.length = 0;
+      const metadata = await syncAllSessionTitles(
+        {
+          ...options,
+          includeSessionTitles: true,
+          includeSessionProjects: true,
+          stateDir: join(home, "state"),
+        },
+        async () => admissions,
+        async (admission, at) =>
+          admission.repositoryId === "deny" ||
+          (admission.repositoryId === "mixed" && at === deniedTime)
+            ? "deny"
+            : "allow"
+      );
+      expect(metadata.sent).toBe(4);
+      expect(received.filter((body) => body.includes("aidd.session_project"))).toHaveLength(2);
       expect(received.join()).not.toContain("input_token_count");
       expect(received.join()).not.toContain("aidd.feature");
       await expect(access(join(home, "state"))).rejects.toThrow();

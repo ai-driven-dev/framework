@@ -7,9 +7,10 @@ import { isDeepStrictEqual } from "node:util";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import type { SessionFeature } from "../../../domain/report/session-feature.js";
 import { CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, type SyncConfig } from "../settings.js";
+import { createSessionProjectPublisher } from "./metadata/session-project.js";
+import { createSessionTitlePublisher } from "./metadata/session-title.js";
 import { readAttributeValue } from "./read-attribute-value.js";
 import { seriesFingerprint } from "./series-fingerprint.js";
-import { createSessionTitlePublisher } from "./session-title.js";
 
 type FeatureState = SessionFeature;
 
@@ -25,6 +26,8 @@ export interface SyncOptions {
   readonly signal?: AbortSignal;
   readonly intervalMs?: number;
   readonly includeSessionTitles?: boolean;
+  readonly includeSessionProjects?: boolean;
+  readonly onProjectUnavailable?: () => void;
   readonly onTitleUnavailable?: () => void;
   readonly titlesOnly?: boolean;
 }
@@ -786,6 +789,10 @@ export async function syncOtel(
     ? join(options.stateDir, "otel-sync", `${stateName}.json`)
     : null;
   let mayHaveLinked = false;
+  const projects =
+    options.config === CODEX_CONFIG_ID && options.includeSessionProjects
+      ? createSessionProjectPublisher(options.home, options.onProjectUnavailable)
+      : undefined;
   const titles =
     options.config === CODEX_CONFIG_ID && options.includeSessionTitles
       ? createSessionTitlePublisher(options.home, { onUnavailable: options.onTitleUnavailable })
@@ -903,16 +910,18 @@ export async function syncOtel(
           needsReplay = false;
         }
       }
-      if (
-        bindingAllowed &&
-        titles &&
-        (await titles.publish(options.session, identity, async (event) => {
-          if (!(await permits(event))) return false;
-          await send(options, event);
-          return true;
-        }))
-      )
-        sent++;
+      if (bindingAllowed)
+        for (const publisher of [titles, projects]) {
+          if (
+            publisher &&
+            (await publisher.publish(options.session, identity, async (event) => {
+              if (!(await permits(event))) return false;
+              await send(options, event);
+              return true;
+            }))
+          )
+            sent++;
+        }
       if (!options.follow || options.signal?.aborted)
         return { sent, skipped, offset, partialLine: pending.length > 0 };
       try {
@@ -925,6 +934,7 @@ export async function syncOtel(
     }
   } finally {
     titles?.close();
+    projects?.close();
     await handle.close();
   }
 }

@@ -7,7 +7,8 @@ import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import type { SessionAdmission, SessionFeature } from "../../../domain/report/session-feature.js";
 import { LedgerLock } from "../../ledger-lock.js";
 import { CODEX_CONFIG_ID } from "../settings.js";
-import { createSessionTitlePublisher } from "./session-title.js";
+import { createSessionProjectPublisher } from "./metadata/session-project.js";
+import { createSessionTitlePublisher } from "./metadata/session-title.js";
 import {
   bindingTransfer,
   destination,
@@ -228,6 +229,10 @@ export async function syncAllOtel(
     staleAfterMs: Number.MAX_SAFE_INTEGER,
   });
   const release = await lock.acquire();
+  const projects =
+    options.config === CODEX_CONFIG_ID && options.includeSessionProjects
+      ? createSessionProjectPublisher(options.home, options.onProjectUnavailable)
+      : undefined;
   const titles =
     options.config === CODEX_CONFIG_ID && options.includeSessionTitles
       ? createSessionTitlePublisher(options.home, { onUnavailable: options.onTitleUnavailable })
@@ -386,19 +391,21 @@ export async function syncAllOtel(
       }
     };
     const publishTitles = async () => {
-      if (!titles) return;
+      if (!titles && !projects) return;
       for (const [id, state] of sessions) {
         const admission = held.get(id);
         if (!admission || state.identity.conflict) continue;
         if ((await permits(admission, new Date().toISOString())) !== "allow") continue;
-        if (
-          await titles.publish(id, state.identity, async (event) => {
-            if (!event.at || (await permits(admission, event.at)) !== "allow") return false;
-            await send(asOptions(options, id), event);
-            return true;
-          })
-        )
-          sent++;
+        for (const publisher of [titles, projects])
+          if (
+            publisher &&
+            (await publisher.publish(id, state.identity, async (event) => {
+              if (!event.at || (await permits(admission, event.at)) !== "allow") return false;
+              await send(asOptions(options, id), event);
+              return true;
+            }))
+          )
+            sent++;
       }
     };
     const flushPending = async () => {
@@ -524,6 +531,7 @@ export async function syncAllOtel(
     }
   } finally {
     titles?.close();
+    projects?.close();
     await file?.close();
     await release();
   }

@@ -227,7 +227,16 @@ export function registerTelemetryCommand(program: Command): void {
       "Send Codex chat titles, which may contain prompt text",
       false
     )
-    .option("--titles-only", "Send only Codex titles for consented sessions", false)
+    .option(
+      "--include-session-projects",
+      "Send native Codex project IDs and names (may contain sensitive text)",
+      false
+    )
+    .option(
+      "--titles-only",
+      "Send only Codex titles and opted-in projects for consented sessions",
+      false
+    )
     .action(
       async (options: {
         config: (typeof otelOptions.syncConfigs)[number];
@@ -236,6 +245,7 @@ export function registerTelemetryCommand(program: Command): void {
         endpoint: string;
         follow: boolean;
         includeSessionTitles: boolean;
+        includeSessionProjects: boolean;
         titlesOnly: boolean;
       }) => {
         const { output, run } = commandOf(program);
@@ -250,15 +260,19 @@ export function registerTelemetryCommand(program: Command): void {
           return;
         }
         if (
-          (options.includeSessionTitles || options.titlesOnly) &&
+          (options.includeSessionTitles || options.includeSessionProjects || options.titlesOnly) &&
           options.config !== otelOptions.titleConfig
         ) {
-          output.error("Session title sync is currently available only for Codex.");
+          output.error("Session title and project sync is currently available only for Codex.");
           process.exitCode = 1;
           return;
         }
         await run(async (deps) => {
           const tool = otelOptions.usageTool(options.config);
+          const onProjectUnavailable = () =>
+            output.warn(
+              "A native Codex session project could not be verified; telemetry sync continues."
+            );
           const onTitleUnavailable = () =>
             output.warn("A Codex session title could not be read; telemetry sync continues.");
           if (options.titlesOnly && !options.session) {
@@ -269,6 +283,8 @@ export function registerTelemetryCommand(program: Command): void {
                 endpoint: options.endpoint,
                 token: process.env.AIDD_OTEL_TOKEN ?? "",
                 includeSessionTitles: true,
+                includeSessionProjects: options.includeSessionProjects,
+                onProjectUnavailable,
                 onTitleUnavailable,
               },
               () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
@@ -276,7 +292,7 @@ export function registerTelemetryCommand(program: Command): void {
                 deps.telemetry.sessionFeatureUseCase.permits(admission, at, start)
             );
             output.info(
-              `Sent ${result.sent} session title updates; no metrics or feature bindings were sent.`
+              `Sent ${result.sent} session metadata updates; no metrics or feature bindings were sent.`
             );
             if (!result.sent && !result.identified)
               output.warn(
@@ -296,6 +312,8 @@ export function registerTelemetryCommand(program: Command): void {
                 endpoint: options.endpoint,
                 token: process.env.AIDD_OTEL_TOKEN ?? "",
                 includeSessionTitles: options.includeSessionTitles,
+                includeSessionProjects: options.includeSessionProjects,
+                onProjectUnavailable,
                 onTitleUnavailable,
               },
               () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
@@ -321,6 +339,7 @@ export function registerTelemetryCommand(program: Command): void {
             {
               ...options,
               includeSessionTitles: options.includeSessionTitles || options.titlesOnly,
+              onProjectUnavailable,
               session,
               token: process.env.AIDD_OTEL_TOKEN ?? "",
               onTitleUnavailable,
