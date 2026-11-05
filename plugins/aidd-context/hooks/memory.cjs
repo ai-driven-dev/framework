@@ -186,34 +186,51 @@ function asWarning(finding) {
 }
 
 /**
- * The findings of the files a write reached, sorted into the formatter's three lists, and its
- * level. A file written whole is what this write produced: its errors print one by one, at their
- * level. A file whose touched lines the event does not carry, an edit, a patch or a shell write,
- * may hold standing errors: they print grouped and only inform.
+ * The 1-based lines of `text` that `written` stands on: each line holding one of its non-blank
+ * lines. A line repeated elsewhere counts every copy: it raises the same findings there.
  */
-function findingsOf(root, whole, partial) {
+function touchedLines(text, written) {
+  const pieces = written.split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
+  const touched = new Set();
+  for (const [index, line] of text.split(/\r?\n/u).entries()) {
+    if (pieces.some((piece) => line.includes(piece))) touched.add(index + 1);
+  }
+  return touched;
+}
+
+/**
+ * The findings of the files a write reached, sorted into the formatter's three lists, and its
+ * level. A file whose event says what this write put in it reports the findings on the lines that
+ * text stands on, one by one, at their level. A file whose touched lines are unknown, a shell
+ * write or an edit that says nothing of its text, may hold standing errors: they print grouped
+ * and only inform.
+ */
+function findingsOf(root, said, unknown) {
   const errors = [];
   const grouped = [];
   const warnings = [];
   let level = 1;
   let inBank = false;
-  const take = (files, known) => {
-    for (const file of files) {
-      const place = placeOf(file);
-      if (place === "outside") continue;
-      inBank = true;
-      let found = [];
-      if (place === "misplaced") found = fs.existsSync(path.join(root, file)) ? [placementFinding(file)] : [];
-      else if (place === "root") found = lintFile(root, file);
-      for (const finding of found) {
-        if (known && LEVELS[finding.rule] === 2) level = 2;
-        if (finding.severity !== ERROR) warnings.push(asWarning(finding));
-        else (known ? errors : grouped).push(finding);
-      }
+  const take = (file, written) => {
+    const place = placeOf(file);
+    if (place === "outside") return;
+    const text = written === undefined ? null : readTextOrNull(path.join(root, file));
+    const touched = text === null ? null : touchedLines(text, written);
+    // An edit that only removed lines put nothing in the file: nothing to answer for it.
+    if (touched !== null && touched.size === 0) return;
+    inBank = true;
+    let found = [];
+    if (place === "misplaced") found = fs.existsSync(path.join(root, file)) ? [placementFinding(file)] : [];
+    else if (place === "root") found = lintFile(root, file);
+    for (const finding of found) {
+      if (touched !== null && finding.line !== undefined && !touched.has(finding.line)) continue;
+      if (touched !== null && LEVELS[finding.rule] === 2) level = 2;
+      if (finding.severity !== ERROR) warnings.push(asWarning(finding));
+      else (touched !== null ? errors : grouped).push(finding);
     }
   };
-  take(whole, true);
-  take(partial.filter((file) => !whole.includes(file)), false);
+  for (const { file, written } of said) take(file, written);
+  for (const file of unknown.filter((candidate) => !said.some((entry) => entry.file === candidate))) take(file, undefined);
   if (inBank) warnings.push(...missingFinding(root, "warning").map(asWarning));
   return { findings: { errors, reached: grouped, warnings }, level };
 }
@@ -232,14 +249,14 @@ function shellReached(root, command) {
 
 function afterWrite(host, event) {
   const root = path.resolve(event.cwd);
-  const relative = (file) => toPosix(path.relative(root, file.path));
-  // A file the event carries whole is all this write produced; any other, its lines unknown.
-  const whole = event.files.filter((file) => typeof file.content === "string").map(relative).filter(underDocs);
-  const edited = event.files.filter((file) => typeof file.content !== "string").map(relative).filter(underDocs);
+  const files = event.files.map((file) => ({ file: toPosix(path.relative(root, file.path)), written: file.written })).filter(({ file }) => underDocs(file));
+  // A file the event says what this write put in; any other, its touched lines unknown.
+  const said = files.filter(({ written }) => typeof written === "string");
+  const unsaid = files.filter(({ written }) => typeof written !== "string").map(({ file }) => file);
   const namesDocs = typeof event.command === "string" && /aidd_docs[/\\]/u.test(event.command);
   // Owner scope: a write that names no file under the docs folder reads nothing of the project.
-  if (whole.length === 0 && edited.length === 0 && !namesDocs) return;
-  const { findings, level } = findingsOf(root, whole, [...edited, ...shellReached(root, event.command)]);
+  if (files.length === 0 && !namesDocs) return;
+  const { findings, level } = findingsOf(root, said, [...unsaid, ...shellReached(root, event.command)]);
   const text = formatFindings(PLUGIN, findings);
   if (text !== "") host.answer({ level, text });
 }

@@ -84,10 +84,49 @@ const BRIDGED = new Set(["opencode", "kilo"]);
 const POST_TOOL_USE = { claude: "claude-PostToolUse.json", codex: "codex-PostToolUse.json", copilot: "copilot-PostToolUse.json", cursor: "cursor-postToolUse.json" };
 const SESSION_START = { claude: "claude-SessionStart.json", codex: "codex-SessionStart.json", copilot: "copilot-SessionStart.json", cursor: "cursor-sessionStart.json" };
 
-/** What `host` sends after a file write of `file` in `root`: its first captured write sample. */
-function writePayload(host, root, file) {
-  if (BRIDGED.has(host)) return bridgedToolCall(captured(`${host}-tool.execute.after.json`, 0, root, file).call, root);
-  return captured(POST_TOOL_USE[host], 0, root, file);
+/** A patch adding `text` to `file`, as Codex and Copilot send one. */
+function patchOf(file, text, kind = "Add") {
+  const added = text.replace(/\n$/u, "").split("\n").map((line) => `+${line}`);
+  return ["*** Begin Patch", `*** ${kind} File: ${file}`, ...added, "*** End Patch", ""].join("\n");
+}
+
+/**
+ * What `host` sends after writing `text` at `file` in `root`: its first captured write sample,
+ * carrying that text the way the host does. Codex and Copilot send a patch, the others the whole
+ * file. With no text, the file's content on disk, or nothing when it is gone.
+ */
+function writePayload(host, root, file, text) {
+  const body = text ?? (fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), "utf8") : "");
+  if (BRIDGED.has(host)) {
+    const { call } = captured(`${host}-tool.execute.after.json`, 0, root, file);
+    call.args.content = body;
+    return bridgedToolCall(call, root);
+  }
+  const payload = captured(POST_TOOL_USE[host], 0, root, file);
+  if (host === "codex") payload.tool_input.command = patchOf(file, body);
+  else if (host === "copilot") payload.tool_input = patchOf(file, body);
+  else payload.tool_input.content = body;
+  return payload;
+}
+
+/** What `host` sends after an edit replacing a fragment of `file` with `written`. */
+function editPayload(host, root, file, written) {
+  if (host === "codex" || host === "copilot") {
+    const patch = patchOf(file, written, "Update");
+    const payload = captured(POST_TOOL_USE[host], 0, root, file);
+    if (host === "codex") payload.tool_input.command = patch;
+    else payload.tool_input = patch;
+    return payload;
+  }
+  if (BRIDGED.has(host)) {
+    const { call } = captured(`${host}-tool.execute.after.json`, 0, root, file);
+    call.tool = "edit";
+    call.args = { filePath: call.args.filePath, oldString: "Kept.", newString: written };
+    return bridgedToolCall(call, root);
+  }
+  const payload = { ...captured(POST_TOOL_USE.claude, 0, root, file), tool_name: "Edit" };
+  payload.tool_input = { file_path: path.join(root, file), old_string: "Kept.", new_string: written };
+  return payload;
 }
 
 /** What `host` sends after a shell command: its captured shell sample, running `command`. */
@@ -125,15 +164,15 @@ function answerOf(stdout) {
   return { level: 1, text };
 }
 
-// Hosts whose captured file write carries the whole file and where a block reaches the model.
-// Codex and Copilot write through a patch, whose touched lines the event does not carry, so
-// their findings inform; Cursor, OpenCode and Kilo inform whatever the level.
-const BLOCKS = new Set(["claude"]);
+// Hosts where a block after a write reaches the model; elsewhere the adapter informs instead.
+const BLOCKS = new Set(["claude", "codex", "copilot"]);
+// Hosts whose edit says what it wrote: the others' edits fall back to the shell's rule.
+const EDITS_SAY_WHAT = ["claude", "codex", "copilot"];
 
 /** Writes `text` at `file` in a full bank, then runs the host's write event for it. */
 function afterWrite(host, file, text, options) {
   const root = project({ [file]: text }, options);
-  return { root, ...run(host, writePayload(host, root, file)) };
+  return { root, ...run(host, writePayload(host, root, file, text)) };
 }
 
 for (const host of HOSTS) {
@@ -281,31 +320,75 @@ test("a shell write naming the bank skips a file it did not just change", () => 
   assert.equal(run("claude", shellPayload("claude", root, `echo x > ${MEMORY}/other.txt.bak`)).stdout, "");
 });
 
-// Contract rule 3: only what this write produced. An Edit arrives through the adapter as its file
-// alone, with no text to find its lines by, so the file's errors inform, grouped, and never block.
-function claudeEdit(root, file) {
-  const payload = { ...writePayload("claude", root, file), tool_name: "Edit" };
-  payload.tool_input = { file_path: path.join(root, file), old_string: "Kept.", new_string: "Short." };
-  return payload;
+// Contract rule 3: only what this write produced. An edit or a patch says what it wrote, and
+// only errors on the lines that text now stands on are this write's.
+const STANDING = "# VCS\n\nTBD\n\nNow 12 commits.\n\nKept.\n";
+
+for (const host of EDITS_SAY_WHAT) {
+  test(`${host}: an edit adding a clean line to a file holding standing errors answers nothing`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "Short and clean.") });
+    assert.deepEqual(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Short and clean.")), { status: 0, stdout: "", stderr: "" });
+  });
+
+  test(`${host}: an edit reports its own new line only, at its level`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "Owner {{x}} here.") });
+    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Owner {{x}} here.")).stdout), {
+      level: 2,
+      text: `aidd-context: 1 errors, 0 warnings\n${MEMORY}/vcs.md:7 M3 "{{x}}" => fill it or remove it`,
+    });
+  });
+
+  test(`${host}: an edit of several lines reports each line it wrote, and none it did not`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "One 2 files.\n\nMiddle.\n\nTwo 5 runs.") });
+    const text = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "One 2 files.\n\nMiddle.\n\nTwo 5 runs.")).stdout).text;
+    assert.deepEqual(text.split("\n").slice(1), [
+      `${MEMORY}/vcs.md:7 M2 "2 files" => name the thing, not how many`,
+      `${MEMORY}/vcs.md:11 M2 "5 runs" => name the thing, not how many`,
+    ]);
+  });
 }
 
-test("an Edit to a file holding standing errors informs, grouped under the file, and never blocks", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n\nShort.\n\nOwner TBD\n" });
-  assert.deepEqual(answerOf(run("claude", claudeEdit(root, `${MEMORY}/vcs.md`)).stdout), {
-    level: 1,
-    text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "TBD" => fill it or remove it',
+for (const host of ["codex", "copilot"]) {
+  test(`${host}: a patch that only removes lines touches none and answers nothing, not even for the bank`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: STANDING }, { always: ALWAYS.filter((name) => name !== "architecture.md") });
+    const patch = ["*** Begin Patch", `*** Update File: ${MEMORY}/vcs.md`, "@@", "-Gone.", "*** End Patch", ""].join("\n");
+    const payload = captured(POST_TOOL_USE[host], 0, root, `${MEMORY}/vcs.md`);
+    if (host === "codex") payload.tool_input.command = patch;
+    else payload.tool_input = patch;
+    assert.deepEqual(run(host, payload), { status: 0, stdout: "", stderr: "" });
   });
+}
+
+// Every line the written text matches counts as touched: an identical line elsewhere raises the
+// same findings, so the answer holds nothing this write did not also produce.
+test("a written line repeated elsewhere in the file reports each copy, with the same finding", () => {
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nOwner TBD\n\nKept.\n\nOwner TBD\n" });
+  assert.deepEqual(answerOf(run("claude", editPayload("claude", root, `${MEMORY}/vcs.md`, "Owner TBD")).stdout).text.split("\n").slice(1), [
+    `${MEMORY}/vcs.md:3 M3 "TBD" => fill it or remove it`,
+    `${MEMORY}/vcs.md:7 M3 "TBD" => fill it or remove it`,
+  ]);
 });
 
-test("an Edit groups a file's long prose lines into one M1 line, whatever their lengths", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\n${words(40)}\n` });
-  assert.deepEqual(answerOf(run("claude", claudeEdit(root, `${MEMORY}/vcs.md`)).stdout), {
-    level: 1,
-    text: "aidd-context: 2 errors, 0 warnings\nM1 ×2 in aidd_docs/memory/vcs.md => make it a table, a list or a heading",
+// OpenCode and Kilo edits say nothing of what they wrote: the shell's rule, grouped and informing.
+for (const host of ["opencode", "kilo"]) {
+  test(`${host}: an edit that does not say what it wrote informs, grouped under the file, and never blocks`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nTBD\n\nShort.\n\nOwner TBD\n" });
+    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Short.")).stdout), {
+      level: 1,
+      text: 'aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "TBD" => fill it or remove it',
+    });
   });
-});
 
-test("an Write covers the whole file: every error of it counts, at its level", () => {
+  test(`${host}: an edit that does not say what it wrote groups a file's long prose lines into one M1 line`, () => {
+    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\n${words(40)}\n` });
+    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Short.")).stdout), {
+      level: 1,
+      text: "aidd-context: 2 errors, 0 warnings\nM1 ×2 in aidd_docs/memory/vcs.md => make it a table, a list or a heading",
+    });
+  });
+}
+
+test("a Write covers the whole file: every error of it counts, at its level", () => {
   const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\nTBD\n` });
   const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
   assert.equal(answer.level, 2);
