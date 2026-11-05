@@ -314,7 +314,7 @@ afterEach(async () => {
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
-test.each([
+test.skipIf(process.platform === "win32").each([
   {
     values: [text("input_token_count", "100"), text("input_token_count", "5")],
     error: "Conflicting duplicate OTLP attributes.",

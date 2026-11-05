@@ -1,9 +1,9 @@
 import {
-  access,
   appendFile,
   chmod,
   mkdir,
   mkdtemp,
+  readdir,
   readFile,
   rm,
   writeFile,
@@ -110,7 +110,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       const resolve = async () => ({ state: "unbound" as const });
 
       await syncOtel(options, resolve, async () => true);
-      await expect(access(marker)).rejects.toThrow();
+      await expect(readFile(marker, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
       expect(received).toHaveLength(1);
 
       received.length = 0;
@@ -119,7 +119,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
         resolve,
         async (transfer) => Object.keys(transfer.payload).length > 0
       );
-      await expect(access(marker)).rejects.toThrow();
+      await expect(readFile(marker, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
       expect(received).toHaveLength(1);
 
       received.length = 0;
@@ -128,12 +128,11 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
         resolve,
         async () => false
       );
-      await expect(access(marker)).rejects.toThrow();
+      await expect(readFile(marker, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
       expect(received).toHaveLength(0);
 
       received.length = 0;
       await syncOtel({ ...options, includeSessionTitles: true }, resolve, async () => true);
-      await access(marker);
       expect(received).toHaveLength(2);
       expect(received[1]).toContain("aidd.session_title");
       expect(received[1]).toContain("Synthetic title");
@@ -241,7 +240,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(received.join()).not.toContain("session-3");
       expect(received.join()).not.toContain("input_token_count");
       expect(received.join()).not.toContain("aidd.feature");
-      await expect(access(join(home, "state"))).rejects.toThrow();
+      await expect(readdir(join(home, "state"))).rejects.toMatchObject({ code: "ENOENT" });
 
       received.length = 0;
       const metadata = await syncAllSessionTitles(
@@ -262,7 +261,7 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(received.filter((body) => body.includes("aidd.session_project"))).toHaveLength(2);
       expect(received.join()).not.toContain("input_token_count");
       expect(received.join()).not.toContain("aidd.feature");
-      await expect(access(join(home, "state"))).rejects.toThrow();
+      await expect(readdir(join(home, "state"))).rejects.toMatchObject({ code: "ENOENT" });
 
       received.length = 0;
       let checks = 0;

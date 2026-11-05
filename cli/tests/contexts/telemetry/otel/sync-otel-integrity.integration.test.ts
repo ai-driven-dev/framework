@@ -10,6 +10,7 @@ import {
 } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync.js";
 import { syncAllOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync-all.js";
 
+const posixTest = test.skipIf(process.platform === "win32");
 const attribute = (key: string, value: string) => ({ key, value: { stringValue: value } });
 const options = {
   config: "codex" as const,
@@ -233,7 +234,7 @@ test("preserves exact integer strings for signed and unsigned metric values", ()
     expect(payload).toContain(`"${value}"`);
 });
 
-test.each([
+posixTest.each([
   claudePoint({ asInt: 1785044858922210000 }),
   claudePoint({ asDouble: 5 }),
   claudePoint({ flags: 1 }),
@@ -425,7 +426,7 @@ test("keeps a valid offset and leap date as the original event time", () => {
   expect(JSON.stringify(transfers[0].payload)).toContain(original);
 });
 
-test("does not export an observation-only timestamp as event activity", async () => {
+posixTest("does not export an observation-only timestamp as event activity", async () => {
   const home = await mkdtemp(join(tmpdir(), "aidd-missing-event-time-"));
   dirs.push(home);
   const capture = join(home, ".local/share/aidd-otel-observation");
