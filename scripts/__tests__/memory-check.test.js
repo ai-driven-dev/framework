@@ -211,10 +211,10 @@ test("M6: a file over 400 words is a warning", () => {
   assert.deepEqual(ids(lint(`# T\n\n- ${words(30)}\n`)), []);
 });
 
-test("M7: a sentence of 12 words found in another memory file is a warning", () => {
+test("M7: a sentence of 12 words found in another memory file is an error naming that file", () => {
   const sentence = "the quick brown fox jumps over the lazy dog every single morning again";
   const problems = lint(`# T\n\n- ${sentence}\n`, {}, { "b.md": `# B\n\n${sentence}.\n` });
-  assert.deepEqual(problems.map(({ rule, severity, line }) => [rule, severity, line]), [["M7", "warning", 3]]);
+  assert.deepEqual(problems.map(({ rule, severity, line, excerpt }) => [rule, severity, line, excerpt]), [["M7", "error", 3, "aidd_docs/memory/b.md"]]);
   assert.deepEqual(ids(lint(`# T\n\n- ${sentence}\n`, {}, { "b.md": "# B\n\nsomething else entirely\n" })), []);
   assert.deepEqual(ids(lint(`# T\n\n- ${sentence}\n`, {}, { "b.md": "# B\n\nshort words only here\n" })), []);
 });
