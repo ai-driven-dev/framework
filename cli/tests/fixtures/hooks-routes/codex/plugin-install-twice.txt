@@ -1,0 +1,104 @@
+second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
+
+## project/.codex/config.toml
+approval_policy = "on-request"
+
+
+## project/.codex/plugins/aidd-context/hooks/hooks.json
+script, differs from the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/memory-hook.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/memory-lint.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/update_memory.js
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/catch-up.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/hooks.json
+script, differs from the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/binding.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/consent.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/context.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/git.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/presence.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/lib/tool.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-telemetry/hooks/session-start.cjs
+script, identical to the plugin source
+
+# recorded
+project codex aidd-context scope=project: 5 hook files
+  .codex/plugins/aidd-context/hooks/hooks.json
+  .codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
+  .codex/plugins/aidd-context/hooks/memory-hook.cjs
+  .codex/plugins/aidd-context/hooks/memory-lint.cjs
+  .codex/plugins/aidd-context/hooks/update_memory.js
+  projectHooks null
+project codex aidd-telemetry scope=project: 18 hook files
+  .codex/plugins/aidd-telemetry/hooks/catch-up.cjs
+  .codex/plugins/aidd-telemetry/hooks/hooks.json
+  .codex/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/binding.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/consent.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/context.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/git.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/presence.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+  .codex/plugins/aidd-telemetry/hooks/lib/tool.cjs
+  .codex/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+  .codex/plugins/aidd-telemetry/hooks/session-start.cjs
+  projectHooks null
+machine: no manifest

@@ -1,0 +1,46 @@
+{
+  "host": "copilot",
+  "event": "PostToolUse",
+  "samples": [
+    {
+      "payloadKeys": [
+        "hook_event_name",
+        "session_id",
+        "timestamp",
+        "cwd",
+        "tool_name",
+        "tool_input",
+        "tool_result"
+      ],
+      "recorded": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Edit",
+        "tool_input": "*** Begin Patch\n*** Update File: /Users/user/project/aidd_docs/memory/notes.md\n@@\n - Memory bank for tests.\n+- The repo has 41 commits and one TODO.\n*** End Patch\n"
+      },
+      "hookAnswer": {
+        "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+      },
+      "hookStatus": 0
+    },
+    {
+      "payloadKeys": [
+        "hook_event_name",
+        "session_id",
+        "timestamp",
+        "cwd",
+        "tool_name",
+        "tool_input",
+        "tool_result"
+      ],
+      "recorded": {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Bash",
+        "tool_input": "{\"command\":\"printf '%s\\\\n' '- The repo has 41 commits and one TODO.' >> aidd_docs/memory/notes.md\",\"description\":\"Append repository note\"}"
+      },
+      "hookAnswer": {
+        "additionalContext": "aidd_docs/memory/notes.md:4 M2 \"41 commits\" goes stale: name the thing, not how many\naidd_docs/memory/notes.md:4 M3 \"TODO\" unfinished: fill it or remove it"
+      },
+      "hookStatus": 0
+    }
+  ]
+}
