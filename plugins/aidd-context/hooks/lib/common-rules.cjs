@@ -198,6 +198,7 @@ const WRITE_COMMANDS = new Set([
   "rm",
   "touch",
   "mkdir",
+  "rmdir",
   "patch",
   "apply_patch",
   "set-content",
