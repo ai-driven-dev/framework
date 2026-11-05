@@ -8,7 +8,7 @@ The collected base, commits, and changed files from `01-collect`, and optional t
 
 ## Output
 
-The proposed title, body, and base, approved by the user.
+The title, body, and base ready to create.
 
 ## Process
 
@@ -18,10 +18,10 @@ The proposed title, body, and base, approved by the user.
      - State the expected result for each step.
      - Omit generic CI summaries.
      - Label scenarios that were not run.
-3. **Confirm.** Show the title, body, and base, apply any overrides, and wait for approval.
+3. **Proceed.** Apply any supplied overrides and pass the result to `03-create` without an approval round.
 
 ## Test
 
 - The body follows the project's template sections when one exists.
 - Every changed `**/qa/*.webm` is linked in the body.
-- The user approved the title, body, and base before creation.
+- The title, body, and base are ready for creation without another approval.

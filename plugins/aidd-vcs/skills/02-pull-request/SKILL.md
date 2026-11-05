@@ -14,7 +14,7 @@ Collect the change, draft the request, create it as a draft. `01 → 02 → 03`.
 | --- | --------- | ----------------------------------------------------------- |
 | 01  | `collect` | Resolve the base and gather the commits since it             |
 | 02  | `draft`   | Write the title and body from the template                   |
-| 03  | `create`  | Open the draft request, label it, return the URL             |
+| 03  | `create`  | Open the draft request, label it, and summarize it           |
 
 Before running an action, read its file in `actions/`, not only the table or assets.
 
