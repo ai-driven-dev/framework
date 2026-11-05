@@ -51,9 +51,10 @@ const GIT_DIR_ON_PATH = gitDirectory();
 /** git as a test sets a repository up: never through a variable a commit hook exported. */
 function git(cwd, ...args) {
   const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith("GIT_")));
+  // A commit can detach maintenance and change object files while the copy tests read them.
   const run = spawnSync(
     "git",
-    ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", ...args],
+    ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", "-c", "maintenance.auto=false", ...args],
     { cwd, env, encoding: "utf8" }
   );
   assert.equal(run.status, 0, `git ${args.join(" ")}: ${run.stderr}`);
@@ -660,6 +661,13 @@ test("consent: a key with no interval open for the clone grants nothing, asks no
       assert.deepEqual(box.calls(), [], name);
     });
   }
+});
+
+test("sandbox: disables automatic Git maintenance before copying a repository", () => {
+  withBox({}, (box) => {
+    git(box.repo, "config", "--local", "maintenance.auto", "true");
+    assert.equal(git(box.repo, "config", "--get", "maintenance.auto").trim(), "false");
+  });
 });
 
 test("consent: a cp -R copy carries the key and not the clone, so it asks nothing and closes nothing", () => {
