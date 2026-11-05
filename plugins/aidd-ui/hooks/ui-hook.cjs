@@ -7,6 +7,7 @@ const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
 const { codeRoots } = require("./lib/code.cjs");
 const { reached } = require("./lib/graph.cjs");
 const { problemsOf, format, isError } = require("./aidd-ui.cjs");
+const { isShellWrite } = require("./lib/common-rules.cjs");
 
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
@@ -21,16 +22,9 @@ const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
 const PATCHED_FILE = /^\*\*\* (?:Add|Update) File: (.+)$/gm;
 // A shell command marks the turn when it runs the engine (flat or plugin install alike), or when it names
-// the design system's folder together with one of these writes. Any other command only reads.
+// the design system's folder and matches a write form the hooks share. Any other command only reads.
 const ENGINE_COMMAND = /aidd-ui\.cjs/;
 const UI_FOLDER = /aidd_docs\/ui\//;
-const SHELL_WRITES = [
-  /(?<![\d&])>(?!&)(?!\s*\/dev\/null)/, // a redirection, not 2>&1 or >/dev/null
-  /\btee\b/,
-  /\bsed\b[^|;&]*\s-(?:[a-zA-Z]*i|-in-place)/,
-  /(?<![\w./-])(?:mv|cp|rm|touch|mkdir|patch|apply_patch)(?![\w./-])/,
-  /\bgit\s+(?:apply|checkout|restore)\b/,
-];
 // Cursor sends every tool to the hook, and a Read carries file_path like a Write: only these two count.
 const CURSOR_TOOLS = { Write: "write", Shell: "shell" };
 // The mark's line for a shell command, which may have written any file: Stop then reads them all.
@@ -68,7 +62,7 @@ function writtenFiles(toolInput) {
 /** Whether a shell command changes the design system or runs the engine, which may. */
 function marksTurn(command) {
   if (typeof command !== "string") return false;
-  return ENGINE_COMMAND.test(command) || (UI_FOLDER.test(command) && SHELL_WRITES.some((write) => write.test(command)));
+  return ENGINE_COMMAND.test(command) || (UI_FOLDER.test(command) && isShellWrite(command));
 }
 
 /** Cursor sends cursor_version on every payload, as no other host does. */

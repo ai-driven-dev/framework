@@ -707,6 +707,9 @@ describe("aidd-ui validator entries", () => {
       "grep -rn color aidd_docs/ui/ 2>/dev/null",
       "ls aidd_docs/ui/components",
       "head -5 aidd_docs/ui/brand.md 2>&1",
+      'grep -n "=>" aidd_docs/ui/brand.md',
+      "git rm --cached aidd_docs/ui/brand.md",
+      "git reset aidd_docs/ui/brand.md",
     ];
     for (const command of READS) {
       it(`does not mark the turn when a command only reads aidd_docs/ui/: ${command}`, () => {
