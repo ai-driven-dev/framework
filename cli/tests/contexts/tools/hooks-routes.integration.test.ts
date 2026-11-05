@@ -199,8 +199,13 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
   const sections: string[] = [];
   for (const base of bases) {
     const label = relative(ws.root, base).split(sep).join("/");
-    for (const file of (await walk(base)).sort()) {
-      const rel = relative(base, file).split(sep).join("/");
+    const found = (await walk(base)).map((file) => ({
+      file,
+      rel: relative(base, file).split(sep).join("/"),
+    }));
+    for (const { file, rel } of found.sort((a, b) =>
+      a.rel < b.rel ? -1 : a.rel > b.rel ? 1 : 0
+    )) {
       if (!isHookFile(rel)) continue;
       const content = await readFile(file, "utf8");
       const shown = `${label}/${rel}`;
@@ -222,7 +227,7 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
   return sections.length === 0 ? "no hook file\n" : sections.join("\n");
 }
 
-async function recordedPlugins(path: string, scope: string): Promise<string[]> {
+async function recordedPlugins(ws: Workspace, path: string, scope: string): Promise<string[]> {
   const text = await readFile(path, "utf8").catch(() => null);
   if (text === null) return [`${scope}: no manifest`];
   const manifest = Manifest.fromJSON(JSON.parse(text));
@@ -238,7 +243,10 @@ async function recordedPlugins(path: string, scope: string): Promise<string[]> {
       lines.push(...hookFiles.map((f) => `  ${f}`));
       const projectHooks = JSON.stringify(plugin.projectHooks ?? null, null, 2);
       lines.push(`  projectHooks ${projectHooks}`);
-      lines.push(`  dependents ${JSON.stringify(plugin.dependents)}`);
+      const dependents = plugin.dependents.map(
+        (dependent) => `<root>/${relative(ws.root, dependent).split(sep).join("/")}`
+      );
+      lines.push(`  dependents ${JSON.stringify(dependents)}`);
     }
     const registrations = manifest.getNativeRegistrations(toolId);
     lines.push(
@@ -250,8 +258,8 @@ async function recordedPlugins(path: string, scope: string): Promise<string[]> {
 
 async function pluginsRecorded(ws: Workspace): Promise<string> {
   const lines = [
-    ...(await recordedPlugins(join(ws.project, ".aidd", "manifest.json"), "project")),
-    ...(await recordedPlugins(join(ws.home, ".config", "aidd", "manifest.json"), "machine")),
+    ...(await recordedPlugins(ws, join(ws.project, ".aidd", "manifest.json"), "project")),
+    ...(await recordedPlugins(ws, join(ws.home, ".config", "aidd", "manifest.json"), "machine")),
   ];
   return `${normalize(lines.join("\n"), ws)}\n`;
 }
@@ -286,6 +294,8 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
     outcome = `setup over installed plugins threw ${(error as Error).constructor.name}: ${normalize((error as Error).message, ws)}`;
   }
   const after = await describeHookFiles(ws, [ws.project, ws.home]);
+  if (!/^## .*hook/im.test(after))
+    return `${outcome}\nno hook file written without the host binary`;
   return `${outcome}\nhook files unchanged by the second run: ${before === after}`;
 }
 
