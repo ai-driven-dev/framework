@@ -91,41 +91,133 @@ test("check prints its findings: no report template ships and no file names one"
   }
 });
 
-test("the router says where the engine sits in each install, and the plugin ships it there", () => {
-  const router = skillText("SKILL.md");
-  for (const engine of ["memory-lint.cjs", "update_memory.js"]) {
-    assert.ok(router.includes(engine), `SKILL.md does not locate ${engine}`);
-    assert.ok(fs.existsSync(path.join(PLUGIN, "hooks", engine)), `${engine} is not under the plugin's hooks/`);
+const { spawnSync } = require("node:child_process");
+
+const FIXTURES = path.resolve(__dirname, "../../cli/tests/fixtures/hooks-routes");
+const ENGINE_NAMES = /memory-lint|update_memory/u;
+const PLUGIN_HOOKS = /^(?:[^/]+\/)*plugins\/aidd-context\/hooks\/memory-lint\.cjs$/u;
+const TOOL_HOOKS = /^(?:[^/]+\/)*\.[a-z]+\/hooks\/aidd-context\/memory-lint\.cjs$/u;
+
+function section(text, heading) {
+  const start = text.indexOf(`## ${heading}`);
+  assert.ok(start >= 0, `no ${heading} section`);
+  const rest = text.slice(start + 3);
+  const end = rest.search(/\n## /u);
+  return end < 0 ? rest : rest.slice(0, end);
+}
+
+function engineSection() {
+  return section(skillText("SKILL.md"), "Engine");
+}
+
+test("check prints its findings: no report template ships and no file names one", () => {
+  assert.equal(fs.existsSync(path.join(SKILL, "assets/report.md")), false);
+  for (const file of skillMarkdown()) {
+    assert.doesNotMatch(fs.readFileSync(file, "utf8"), /report\.md|memory-check/u, path.relative(SKILL, file));
   }
-  assert.match(router, /hooks\/aidd-context\//u, "no flat install location");
-  assert.match(router, /plugin install/u, "no plugin install location");
+});
+
+test("the engine's file names and its fallback live in the router's Engine section only", () => {
+  const engine = engineSection();
+  for (const name of ["memory-lint.cjs", "update_memory.js"]) {
+    assert.ok(engine.includes(name), `the Engine section does not name ${name}`);
+    assert.ok(fs.existsSync(path.join(PLUGIN, "hooks", name)), `${name} is not under the plugin's hooks/`);
+  }
+  assert.match(engine, /memory-rules\.md/u, "the fallback does not link the rules");
+  assert.match(engine, /Machine/u, "the fallback does not name the Machine table");
+  for (const file of skillMarkdown().filter((candidate) => !candidate.endsWith("SKILL.md"))) {
+    const text = fs.readFileSync(file, "utf8");
+    assert.doesNotMatch(text, ENGINE_NAMES, `${path.relative(SKILL, file)} names an engine script`);
+    assert.doesNotMatch(text, /rule table/iu, `${path.relative(SKILL, file)} names the fallback`);
+  }
+});
+
+test("the lint command the skill gives takes the root first, and exits 1 on a planted unfinished marker", () => {
+  const given = engineSection().match(/`node memory-lint\.cjs (\.) (aidd_docs\/memory\/<file>\.md)`/u);
+  assert.ok(given, "the Engine section gives no `node memory-lint.cjs . aidd_docs/memory/<file>.md`");
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "lint-command-"));
+  try {
+    fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
+    fs.writeFileSync(path.join(root, "aidd_docs/memory/vcs.md"), "# VCS\n\n- TODO decide the branch model\n");
+    const run = (file) =>
+      spawnSync("node", [path.join(PLUGIN, "hooks/memory-lint.cjs"), given[1], file.replace("<file>", "vcs")], {
+        cwd: root,
+        encoding: "utf8",
+      });
+    const result = run(given[2]);
+    assert.equal(result.status, 1, `${result.stdout}${result.stderr}`);
+    assert.match(result.stdout, /M3/u);
+    // The mistake this guards: the file first reads as the root, finds nothing, and exits 0.
+    const swapped = spawnSync("node", [path.join(PLUGIN, "hooks/memory-lint.cjs"), "aidd_docs/memory/vcs.md"], { cwd: root, encoding: "utf8" });
+    assert.equal(swapped.status, 0, "the engine no longer passes silently on a file given as the root");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("the Engine section matches the install layouts the hook fixtures show", () => {
+  const engine = engineSection();
+  const delivered = [];
+  for (const tool of fs.readdirSync(FIXTURES)) {
+    for (const scenario of fs.readdirSync(path.join(FIXTURES, tool))) {
+      const lines = fs.readFileSync(path.join(FIXTURES, tool, scenario), "utf8").split(/\r?\n/u);
+      for (const line of lines) {
+        if (!line.startsWith("## ") || !line.endsWith("memory-lint.cjs")) continue;
+        const where = line.slice(3);
+        assert.ok(PLUGIN_HOOKS.test(where) || TOOL_HOOKS.test(where), `${tool}/${scenario}: ${where} fits no layout the Engine section states`);
+        delivered.push(`${tool}/${scenario}`);
+      }
+    }
+  }
+  assert.ok(delivered.length > 20, "the fixtures hold too few engine deliveries to compare");
+  for (const none of ["kilo", "opencode"]) {
+    const built = fs.readFileSync(path.join(FIXTURES, none, "native-build.txt"), "utf8");
+    assert.doesNotMatch(built, /memory-lint/u, `${none} native build now ships the engine`);
+  }
+  assert.match(engine, /hooks\/aidd-context\//u, "no tool-folder layout");
+  assert.match(engine, /plugin's `hooks\/`/u, "no plugin layout");
+  assert.match(engine, /inside this skill/u, "no skill-own layout");
+  assert.match(engine, /Kilo/u);
+  assert.match(engine, /OpenCode/u);
+  const order = ["plugin's `hooks/`", "hooks/aidd-context/", "inside this skill"].map((needle) => engine.indexOf(needle));
+  assert.deepEqual([...order].sort((a, b) => a - b), order, "the lookup order is not plugin, tool folder, skill");
 });
 
 test("refresh runs scan, check, write, then sync", () => {
   assert.match(skillText("SKILL.md"), /\(\[refresh\]\)\s*-->\s*scan\s*-->\s*check\s*-->\s*write\s*-->\s*sync/u);
 });
 
-test("check reads the bank at its root: a team file is kept, a misplaced one is offered a move, a former file a merge", () => {
+test("check reads the bank at its root: a team file is kept and never linted or removed, a misplaced one moves, a former file merges", () => {
   const check = skillText("actions/03-check.md");
+  const lines = check.split(/\r?\n/u);
+  const line = (pattern) => lines.find((candidate) => pattern.test(candidate));
   assert.match(check, /team/u, "a team's own root file is not named");
-  assert.match(check, /internal\//u, "a file under internal/ is not named");
-  assert.match(check, /misplaced/u);
   assert.match(check, /Former files/u);
   assert.doesNotMatch(check, /orphan/iu, "a root file no row produces is the team's, not an orphan");
-  for (const heading of ["Structure", "Format", "Content"]) assert.ok(check.includes(heading), `no ${heading} block`);
-  assert.ok(check.includes("memory-lint.cjs"), "check does not run the engine");
+  assert.doesNotMatch(check, /got an answer/u, "check cannot know what write was answered");
+  assert.match(line(/remove/u) ?? "", /a row produces/u, "the removal offer is not bound to the files a row produces");
+  assert.match(line(/\*\*Format/u) ?? "", /a row produces/u, "Format is not bound to the files a row produces");
+  const moves = lines.filter((candidate) => /misplaced|folder/u.test(candidate) && /move/u.test(candidate));
+  assert.ok(moves.length >= 2, "the file move and the folder move are not two statements");
+  for (const move of moves) assert.ok(!(/to the root/u.test(move) && /under `internal\/`/u.test(move)), `two destinations in one clause: ${move}`);
+  for (const heading of ["Structure findings", "Format findings", "Content findings"]) assert.ok(check.includes(heading), `no ${heading} block`);
+  assert.match(check, /no table/u);
+  assert.match(check, /one finding per line/u);
+  assert.match(check, /the engine/u);
 });
 
-test("write ends on the engine, writes only the root, and never copies a misplaced file's capability", () => {
+test("write ends on the engine, writes only the root, and holds back a capability a misplaced or unmerged file covers", () => {
   const write = skillText("actions/02-write.md");
-  assert.ok(write.includes("memory-lint.cjs"), "write does not run the engine");
+  assert.match(write, /engine/u);
   assert.match(write, /misplaced/u);
-  assert.doesNotMatch(write, /each found capability|guidance comment/u, "a stale instruction is left");
-  assert.doesNotMatch(write, /every selected row exists/u, "a conditional file with no answer is not an absence");
+  assert.match(write, /Former files/u, "a pending former-file merge does not hold back the capability's file");
+  assert.doesNotMatch(write, /each found capability|guidance comment|every selected row exists/u, "a stale instruction is left");
 });
 
-test("sync fills the wired tools without asking when refresh calls it", () => {
-  assert.match(skillText("actions/04-sync.md"), /refresh/u);
+test("sync fills the wired tools without asking when refresh calls it, the old tag form counting as wired", () => {
+  const sync = skillText("actions/04-sync.md");
+  assert.match(sync, /refresh/u);
+  assert.match(sync, /<aidd_project_memory>/u);
 });
 
 test("the cases cover the merge offer, the misplaced move, and the refresh sync", () => {
@@ -133,14 +225,19 @@ test("the cases cover the merge offer, the misplaced move, and the refresh sync"
   const memory = cases.filter((entry) => entry.skill === "02-project-memory");
   const all = JSON.stringify(memory);
   assert.doesNotMatch(all, /aidd_docs\/tasks\/|Match step|Prune step/u, "a case still expects a report file or an old step");
-  const merge = memory.find((entry) => /merge/u.test(entry.name));
-  assert.ok(merge, "no case offers a former file a merge");
+  const find = (pattern, what) => {
+    const found = memory.find((entry) => pattern.test(entry.name));
+    assert.ok(found, `no case ${what}`);
+    return found;
+  };
+  const merge = find(/merge/u, "offers a former file a merge");
   assert.ok(merge.expect.stdoutContains.includes("api.md") && merge.expect.stdoutContains.includes("contract.md"));
   assert.ok(merge.expect.filesUnchanged.includes("aidd_docs/memory/api.md"));
-  const misplaced = memory.find((entry) => /misplaced/u.test(entry.name));
-  assert.ok(misplaced, "no case flags a misplaced file");
+  const misplaced = find(/misplaced/u, "flags a misplaced file");
   assert.ok(misplaced.expect.filesAbsent.includes("aidd_docs/memory/auth.md"), "a root copy is not ruled out");
-  const refresh = memory.find((entry) => /^refresh/u.test(entry.name));
-  assert.ok(refresh.expect.fileContains["CLAUDE.md"].some((line) => line.includes("deployment.md")), "refresh does not sync the wired tool");
+  assert.ok(misplaced.expect.filesUnchanged.includes("aidd_docs/memory/principles.md"), "the team file is checked by judge only");
+  for (const heading of ["Structure findings", "Format findings", "Content findings"]) assert.ok(misplaced.expect.stdoutContains.includes(heading), heading);
+  const refresh = find(/^refresh/u, "refreshes a bank");
+  assert.deepEqual(refresh.expect.fileContains["CLAUDE.md"], ["@aidd_docs/memory/deployment.md"]);
   assert.ok(refresh.expect.filesExist.includes("aidd_docs/memory/codebase-map.md"), "the declined merge is not asserted");
 });

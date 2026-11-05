@@ -47,7 +47,7 @@ status: pending
 > One file per concern, `hook`, `check` and `sync`.
 
 1. `memory.cjs hook|check|sync` replaces `memory-hook.cjs`, `memory-lint.cjs` and `update_memory.js`; `sync` drops `git add`.
-2. Rename every reference: `04-sync.md`, `10-learn/actions/05-sync.md`, `sync-arguments.md`, `scripts/check-context-reference-form.js`, `aidd_docs/memory/coding-assertions.md`, `codebase-map.md`, the catalogs, the CLI tests and fixtures.
+2. Rename every reference: the Engine section of the memory skill's `SKILL.md`, which alone names the scripts, `10-learn/actions/05-sync.md`, `sync-arguments.md`, `scripts/check-context-reference-form.js`, `aidd_docs/memory/coding-assertions.md`, `codebase-map.md`, the catalogs, the CLI tests and fixtures.
 3. Delete the hook's own Codex and Copilot payload reading: phase 11 hands it Claude's payload on every host.
 
 ### `2)` Levels

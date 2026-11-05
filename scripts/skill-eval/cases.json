@@ -207,9 +207,9 @@
     "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted and delete nothing.",
     "expect": {
       "stdoutContains": [
-        "Structure",
-        "Format",
-        "Content",
+        "Structure findings",
+        "Format findings",
+        "Content findings",
         "internal/auth.md",
         "kpi"
       ],
@@ -232,6 +232,11 @@
         "02-write",
         "03-check",
         "01-scan"
+      ],
+      "filesExist": [
+        "aidd_docs/memory/principles.md",
+        "aidd_docs/memory/internal/auth.md",
+        "aidd_docs/memory/kpi/metrics.md"
       ]
     }
   },
@@ -252,7 +257,7 @@
     "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted, change nothing, and do not wait for input.",
     "expect": {
       "stdoutContains": [
-        "Structure",
+        "Structure findings",
         "api.md",
         "contract.md"
       ],
@@ -273,6 +278,9 @@
         "02-write",
         "03-check",
         "01-scan"
+      ],
+      "filesExist": [
+        "aidd_docs/memory/api.md"
       ]
     }
   },
@@ -293,9 +301,9 @@
     "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted, change nothing, and do not wait for input.",
     "expect": {
       "stdoutContains": [
-        "Structure",
-        "Format",
-        "Content",
+        "Structure findings",
+        "Format findings",
+        "Content findings",
         "ecosystem"
       ],
       "filesAbsent": [
@@ -398,8 +406,7 @@
           "Docker"
         ],
         "CLAUDE.md": [
-          "@aidd_docs/memory/deployment.md",
-          "<!-- aidd_project_memory:start -->"
+          "@aidd_docs/memory/deployment.md"
         ]
       },
       "fileNotContains": {
