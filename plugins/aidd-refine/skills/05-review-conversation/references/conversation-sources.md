@@ -10,10 +10,7 @@ Where to load one complete conversation and find the sessions it spawned, per ho
 
 ## Redaction and completeness
 
-A sanitized export may preserve the full chronology while removing prompts,
-arguments or results needed to explain the run. Use the complete authorized
-source locally for the selected sessions; create a separate sanitized copy only
-when sharing requires it. Include only the evidence needed in the report, without
-credentials or unrelated personal content.
-If the required content remains unavailable, name what is missing and stop the
-causal review instead of filling the gaps from event counts or prior summaries.
+- **Redaction:** a sanitized export may retain events while removing prompts, arguments or results needed to explain the run.
+- **Local source:** use the complete authorized source for the selected sessions and retain it privately.
+- **Shared copy:** sanitize separately when sharing requires it.
+- **Report excerpts:** include necessary evidence without credentials or unrelated personal content.

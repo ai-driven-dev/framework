@@ -1,25 +1,26 @@
 ---
 name: 05-review-conversation
-description: Reviews a finished conversation and every session it spawned to find what cost time, tokens, or correctness, and attributes each finding to the framework, the orchestration, the host, or the project. Use when the user wants to review a conversation, understand a wasted run, or choose which instruction to fix. Not for delivery review or automatic edits.
+description: Reviews a finished conversation tree for wasted time, tokens or correctness and proposes remedies grounded in evidence. Use when the user wants to diagnose a run or choose an instruction to fix. Not for delivery review or automatic edits.
 argument-hint: conversation | export
 ---
 # Review conversation
 
-## Actions
-
 ```mermaid
 flowchart LR
-  start([conversation ID or export]) --> read["read conversation<br>actions/01-read-conversation.md"]
-  read -->|complete| recommend["recommend<br>actions/02-recommend.md"]
-  read -->|incomplete| unavailable((stop))
-  recommend --> render["target edits<br>actions/03-target-edits.md"]
-  render --> done((report))
+  start([conversation ID or export]) --> read["actions/01-read-conversation.md"]
+  read -->|"incomplete, source available"| read
+  read -->|"required evidence unavailable"| unavailable((incomplete))
+  read -->|"complete"| recommend["actions/02-recommend.md"]
+  recommend --> render["actions/03-target-edits.md"]
+  render -->|"check failed, fixable"| render
+  render -->|"checks passed"| done((report verified))
+  render -->|"checks unavailable"| unverified((report unverified))
+  render -->|"unresolved failure"| blocked((blocked))
 ```
-
-Each box is a file: read it, then do what it says, without confirmation.
 
 ## Transversal rules
 
-- Access only the selected conversation tree and its relevant sources.
-- Use recorded evidence only; every finding cites a message sequence. Mark unavailable measurements as such.
-- Keep project files read-only; write only inside one unique temporary run directory.
+- **Scope:** access only the selected conversation tree and its relevant sources.
+- **Evidence:** use recorded facts and cite the session and message sequence for every finding.
+- **Uncertainty:** mark unavailable measurements and unproven causes explicitly.
+- **Writes:** keep project files read-only and write only inside one unique temporary run directory.

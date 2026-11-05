@@ -1,19 +1,19 @@
 # Session review brief
 
-> Fill `<transcript path>` and `<report path>`, delete this title and this line, and pass the rest verbatim as the reader's prompt.
+> Fill the transcript and report paths, adapt the report fields to recorded evidence, remove this title and instruction, and pass the remaining brief as the reader's prompt. Replace placeholders and omit empty sections in the produced report.
 
 Read the whole transcript at `<transcript path>` in order, then write your report to `<report path>`. Report only what the instructions the model read, the brief it received, or the environment made it lose: time, tokens, or correctness. Application defects are out of scope.
 
 Use these areas to spot relevant issues, without forcing a numbered category:
 
-1. Instruction misread or ambiguous: quote the passage and the action it produced.
-2. Instruction ignored: quote the passage and what was done instead.
-3. Loops: files reread, commands replayed, retries of the same error, idle turns.
-4. Delegation: brief too long, too short, contradictory, duplicating a file; results unused; a child redoing the parent's reading.
-5. Tools and permissions: refusals, timeouts, truncated output, a tool chosen against the one the project names.
-6. Context: compactions, large reads, oversized outputs kept.
-7. Validation and stopping: done without evidence, never concluding, checks skipped or replayed.
-8. Interventions: every message after the first, from the user or the parent, and why it was needed.
+- **Misread or ambiguous instruction:** quote the passage and the action it produced.
+- **Ignored instruction:** quote the passage and what was done instead.
+- **Loops:** files reread, commands replayed, retries of the same error, idle turns.
+- **Delegation:** oversized, insufficient, contradictory or duplicated briefs; unused results; a child redoing the parent's reading.
+- **Tools and permissions:** refusals, timeouts, truncated output, a tool chosen against the project's instruction.
+- **Context:** compactions, large reads, oversized outputs kept.
+- **Validation and stopping:** completion without evidence, missing checks, repeated checks, failure to conclude.
+- **Corrective interventions:** corrections or necessary clarifications from the user or parent, and why they were needed.
 
 Report format:
 
@@ -43,4 +43,4 @@ Duration, messages, interventions, compactions, delegations, tool errors.
 - Waits by polling
 ```
 
-Invent nothing. Say which parts you did not read.
+Use recorded evidence and identify any unread parts.
