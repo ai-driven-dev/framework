@@ -1,11 +1,14 @@
 # Sync Arguments
 
-`hooks/update_memory.js` arguments; no tool detection.
+Arguments accepted by `hooks/update_memory.js`. The hook maps tool names to context files; it does not detect installed tools.
 
 | Argument | Refreshes |
 | -------- | --------- |
 | `claude` | `CLAUDE.md` |
-| `codex`, `cursor`, `opencode`, `antigravity` | `AGENTS.md` |
+| `codex` | `AGENTS.md` |
+| `cursor` | `AGENTS.md` |
+| `opencode` | `AGENTS.md` |
+| `antigravity` | `AGENTS.md` |
 | `copilot` | `.github/copilot-instructions.md` |
 
 Rules:

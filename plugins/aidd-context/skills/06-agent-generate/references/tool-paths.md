@@ -1,15 +1,19 @@
 # Tool paths (agents)
 
+The per-tool agent path and the gate every run executes before writing. Agent slice only, nothing about skills, rules, commands, hooks, plugins, or marketplaces.
+
 ## Agent path per tool
 
-| Tool | Path |
-| --- | --- |
-| Claude Code | `.claude/agents/<name>.md` |
-| Cursor | `.cursor/agents/<name>.md` |
-| OpenCode | `.opencode/agents/<name>.md` |
-| GitHub Copilot | `.github/agents/<name>.agent.md` |
-| Codex CLI | `.codex/agents/<name>.toml` |
-| Antigravity CLI | `.agents/agents/<name>/agent.md` |
+| Tool           | Path                             | Format                 |
+| -------------- | -------------------------------- | ---------------------- |
+| Claude Code    | `.claude/agents/<name>.md`       | markdown + frontmatter |
+| Cursor         | `.cursor/agents/<name>.md`       | markdown + frontmatter |
+| OpenCode       | `.opencode/agents/<name>.md`     | markdown + frontmatter |
+| GitHub Copilot | `.github/agents/<name>.agent.md` | markdown + frontmatter |
+| Codex CLI      | `.codex/agents/<name>.toml`      | TOML (converted)       |
+| Antigravity CLI | `.agents/agents/<name>/agent.md` | markdown + frontmatter |
+
+Agents are supported on all six tools.
 
 User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
 
@@ -17,7 +21,7 @@ Cursor keeps single quotes as part of a frontmatter value: quote Cursor values w
 
 ## Frontmatter per tool
 
-Canonical fields: `name`, `description`; no tool list. Emit supported fields below; model or effort overrides only on request.
+The canonical agent carries `name` and `description` and no tool list: every host gives an agent all tools by default. Emit those a row accepts, drop the rest. Add model or effort settings only when requested and supported.
 
 | Tool           | Accepts                                                      |
 | -------------- | ----------------------------------------------------------- |
@@ -43,8 +47,7 @@ Codex agents are TOML, not markdown. Convert:
 
 ## Detect (which tools are installed)
 
-- Prefer declared tools or the AIDD manifest to path hints.
-- Shared `AGENTS.md` and `.agents/` do not identify a host; ask if ambiguous.
+Resolve shared paths from declared tools or the AIDD manifest; otherwise confirm the host.
 
 | Signal                            | Tool(s)                               |
 | --------------------------------- | ------------------------------------- |
@@ -53,6 +56,7 @@ Codex agents are TOML, not markdown. Convert:
 | `.opencode/`                      | OpenCode                              |
 | `.codex/`                         | Codex CLI                             |
 | `.github/copilot-instructions.md` | GitHub Copilot                        |
+| `AGENTS.md`                       | Cursor, OpenCode, Codex or Antigravity (confirm host) |
 | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
 
 ## Write targets
