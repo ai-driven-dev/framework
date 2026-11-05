@@ -45,7 +45,7 @@ Every `cli` job is globbed on `cli/**`. A change under `kanban/` alone fires no 
 
 | Order | Command | Checks |
 | ----- | ------- | ------ |
-| 1 | `pnpm exec lefthook run pre-push` | `cli knip`, then the full `cli` suite, when `cli/` changed |
+| 1 | `pnpm exec lefthook run pre-push` | `cli knip`, the copies between tool profiles, then the full `cli` suite, when `cli/` changed |
 
 Each runs through `scripts/gate-witness.js`, which skips a gate this exact tree already passed: same index, same unstaged edits, same untracked files. A tree that changed while the gate ran is never stamped.
 
