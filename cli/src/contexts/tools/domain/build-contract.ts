@@ -40,7 +40,8 @@ export type ArtifactContract =
        * per plugin (codex flat, claude settings). Warnings are surfaced to the user. */
       readonly hooksMerge?: (
         existing: string | null,
-        incoming: string
+        incoming: string,
+        pluginName: string
       ) => { content: string; warnings: readonly string[] };
       /** Absolute path to the shared hooks merge target; only for hooksMerge contracts. */
       readonly hooksMergeDest?: (outDir: string) => string;

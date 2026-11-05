@@ -31,6 +31,7 @@ import {
   resolveScopeForInstall,
 } from "../../plugin/plugin-target-resolution.js";
 import type { EnsureBuiltMarketplace } from "../../shared/ensure-built-marketplace-use-case.js";
+import type { ProjectHooksGuard } from "../../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import { ModeBFlatMaterializationTranslator } from "./mode-b-flat-materialization-translator.js";
 import type { PluginTranslator } from "./plugin-translator.js";
@@ -58,7 +59,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     marketplace: string | undefined,
     previousMcpEntries: ReadonlyMap<string, string> = new Map(),
     userScopeDirTaken = false,
-    previousProjectHooks?: ProjectHooksProvenance
+    previousProjectHooks?: ProjectHooksProvenance,
+    hooksGuard: ProjectHooksGuard = {}
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const resolved =
       marketplace === undefined ? null : await this.findMarketplace(marketplace, projectRoot);
@@ -72,7 +74,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         marketplace,
         previousMcpEntries,
         userScopeDirTaken,
-        previousProjectHooks
+        previousProjectHooks,
+        hooksGuard
       );
     }
     const mode = frameworkBuildModeFor(toolId);
@@ -82,20 +85,21 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       target: toolId,
       mode,
     });
+    // The built tree still carries a plugin's hooks for a capability declaring `hooksDestination:
+    // "project"`: dropped from the plugin's files, recorded once, by the project-hooks side channel
+    // the local-source route uses, so both land where the tool's own declaration says.
+    const deliversHooksToProject = resolvePluginsCapability(toolId)?.hooksDestination === "project";
     const builtFiles =
       mode === "flat"
-        ? await this.readFlatFiles(builtDir, dist, toolId)
+        ? await this.readFlatFiles(builtDir, dist, toolId, deliversHooksToProject)
         : await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, dist.manifest.name);
-    // The built tree still carries a plugin-scoped `hooks/hooks.json` for a capability declaring
-    // `hooksDestination: "project"` — dropped here and materialized through the same project-hooks
-    // side channel the local-source route uses, so both land where the tool's own declaration says.
-    const deliversHooksToProject = resolvePluginsCapability(toolId)?.hooksDestination === "project";
     const hooks = deliversHooksToProject
       ? await this.projectHooks.materializeWithProvenance(
           dist,
           toolId,
           projectRoot,
-          previousProjectHooks
+          previousProjectHooks,
+          hooksGuard
         )
       : { skipped: [] as ReadonlySkipList };
     const files = deliversHooksToProject
@@ -158,10 +162,13 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   private async readFlatFiles(
     builtDir: string,
     dist: PluginDistribution,
-    toolId: AiToolId
+    toolId: AiToolId,
+    deliversHooksToProject: boolean
   ): Promise<InstallationFile[]> {
     const name = dist.manifest.name;
-    const hookPaths = this.flatHookOutputPaths(dist, toolId);
+    const hookPaths = deliversHooksToProject
+      ? new Set<string>()
+      : this.flatHookOutputPaths(dist, toolId);
     const absPaths = await this.fs.listFilesRecursive(builtDir);
     const files: InstallationFile[] = [];
     for (const abs of absPaths) {
