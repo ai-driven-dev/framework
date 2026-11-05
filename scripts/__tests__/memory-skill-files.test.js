@@ -7,14 +7,11 @@ const test = require("node:test");
 const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-context");
 const SKILL = path.join(PLUGIN, "skills/02-project-memory");
 const { lintFile } = require(path.join(PLUGIN, "hooks/memory-lint.cjs"));
-const CASES = path.resolve(__dirname, "../skill-eval/cases.json");
 
-const CAPABILITIES = [
-  "core", "ecosystem", "backlog", "ui", "api", "database", "auth", "realtime", "messaging",
-  "deployment", "infra", "mobile", "desktop", "package", "cli", "data",
-];
+const CAPABILITIES = ["core", "ecosystem", "backlog", "deployment", "contract", "auth", "data", "async", "ui", "native"];
 const HEADER = ["Capability", "Detected when", "File", "Always", "Former files"];
 const DROPPED_TEMPLATES = /templates\/(?:GUIDELINES|CONTRIBUTING)\.md|templates\/memory\/README\.md/u;
+const UNFINISHED = /\{\{|<!--|<(?!https?:)[^>\n]+>/u;
 const MERGED_REFERENCES = /capability-signals|memory-destinations|structure\.md/u;
 
 function filesUnder(dir) {
@@ -49,8 +46,15 @@ test("the README template is finished and passes the memory engine under another
     fs.rmSync(root, { recursive: true, force: true });
   }
   const text = fs.readFileSync(path.join(SKILL, "assets/templates/README.md"), "utf8");
-  assert.doesNotMatch(text, /\{\{|<!--|<[^>\n]+>/u, "a placeholder or a guidance comment is left");
+  assert.doesNotMatch(text, UNFINISHED, "a placeholder or a guidance comment is left");
   for (const link of ["GUIDES.md", "CONCEPTS.md", "#get-started"]) assert.ok(text.includes(link), `no link to ${link}`);
+});
+
+test("an autolink is not an unfinished marker, a placeholder is", () => {
+  assert.doesNotMatch("See <https://example.com/guide> for more.", UNFINISHED);
+  assert.match("<your team rule here>", UNFINISHED);
+  assert.match("{{a question}}", UNFINISHED);
+  assert.match("<!-- guidance -->", UNFINISHED);
 });
 
 test("the team templates are not shipped", () => {

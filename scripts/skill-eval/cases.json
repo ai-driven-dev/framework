@@ -117,7 +117,6 @@
       "filesExist": [
         "aidd_docs/memory/project-brief.md",
         "aidd_docs/memory/architecture.md",
-        "aidd_docs/memory/codebase-map.md",
         "aidd_docs/memory/coding-assertions.md",
         "aidd_docs/memory/testing.md",
         "aidd_docs/memory/vcs.md",
@@ -134,10 +133,7 @@
           "Ticketing"
         ],
         "aidd_docs/memory/ecosystem.md": [
-          "<vcs platform>",
-          "<tracker>",
-          "<hand-off>",
-          "Remove this comment"
+          "{{"
         ]
       },
       "fileContains": {

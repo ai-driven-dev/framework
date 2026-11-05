@@ -1,26 +1,13 @@
 # Auth
 
-How identity and access work: authentication and authorization.
-
 ## Authentication
 
-- <The auth method (sessions, JWT, OAuth), the provider, where it is wired>
-
-```mermaid
-flowchart LR
-    TODO[client] -->|credentials| TODO2[provider] -->|token| TODO3[session]
-```
+- {{Which method and provider identify a user or a caller, and where is it wired?}}
 
 ## Authorization
 
-- <The model (roles, scopes, RBAC) and where it is enforced>
+- {{Which model decides access, and where is it enforced?}}
 
 ## Sessions
 
-- <Token or session lifetime, refresh, storage>
-
-<!--
-Capture: the auth model and where it is enforced.
-The diagram is the login-to-session flow, only when non-trivial (OAuth handoff, token refresh). A single session cookie needs none, drop it.
-Skip: secret values, full middleware code. Remove this comment when filled.
--->
+- {{How long does a session or token live, how is it refreshed, and where is it stored?}}
