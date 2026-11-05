@@ -135,7 +135,7 @@ Install it, then run `aidd sync --global`.
 ```sh
 aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes
 aidd sync --global    # rebuild the copied files and refresh the hosts from the framework source
-aidd clean --global   # remove what --global installed and purge the shared source
+aidd clean --global --force   # remove what --global installed and purge the shared source; without --force it previews or asks
 ```
 
 ## Authentication
