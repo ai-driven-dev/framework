@@ -309,6 +309,12 @@ test("M4: an existing path, an unknown head, a directory, a glob and a version s
   assert.deepEqual(ids(lint(text, { "src/here.cfg": "" })), []);
 });
 
+test("M4: a path that exists beside the citing file is a sibling, not a dead path", () => {
+  const files = { "ARCHITECTURE.md": "" };
+  assert.deepEqual(ids(lint("# T\n\nSee `architecture.md`.\n", files, { "architecture.md": "# A\n" })), []);
+  assert.deepEqual(ids(lint("# T\n\nSee `architecture.md`.\n", files, { "other.md": "# O\n" })), ["M4"]);
+});
+
 test("M5: a bullet or a table cell over 35 words is a warning", () => {
   const bullet = lint(`# T\n\n- ${words(36)}\n`);
   assert.deepEqual(bullet.map(({ rule, severity }) => [rule, severity]), [["M5", "warning"]]);
@@ -534,4 +540,51 @@ test("the engine's row files and former files are the capability table's", () =>
   const former = rows.flatMap((cells) => names(cells[5]).filter((name) => !names(cells[3]).includes(name)).map((name) => [name, names(cells[3])]));
   assert.deepEqual(Object.keys(FORMER_FILES).sort(), former.map(([name]) => name).sort());
   for (const [old, row] of former) assert.ok(row.includes(FORMER_FILES[old]), `${old} is replaced by a file of its row, not ${FORMER_FILES[old]}`);
+});
+
+// lines and vanished: what a refresh must not lose
+
+function engine(...args) {
+  return spawnSync("node", [ENGINE, ...args], { encoding: "utf8" });
+}
+
+test("lines: prints every non-empty line of the bank, whitespace-normalised, one per line", () => {
+  const root = project({ "a.md": "# A\n\n-   Indent  with 2 spaces \n", "internal/b.md": "\tLines stay\tunder 100\r\n" }, { "src/x.md": "outside\n" });
+  try {
+    const run = engine("lines", root);
+    assert.equal(run.status, 0);
+    assert.deepEqual(run.stdout.split("\n").filter(Boolean), ["# A", "- Indent with 2 spaces", "Lines stay under 100"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("vanished: prints a line gone from the bank, and nothing for a moved, reordered or reflowed one", () => {
+  const root = project({ "a.md": "# A\n\n- kept line\n- moved line\n- lost line\n" });
+  const before = path.join(root, "before.txt");
+  try {
+    fs.writeFileSync(before, engine("lines", root).stdout);
+    write(root, `${MEMORY}/a.md`, "# A\n\n- kept   line\n");
+    write(root, `${MEMORY}/internal/b.md`, "- moved line\n");
+    const run = engine("vanished", before, root);
+    assert.equal(run.status, 0);
+    assert.deepEqual(run.stdout.split("\n").filter(Boolean), ["- lost line"]);
+    write(root, `${MEMORY}/internal/b.md`, "- moved line\n- lost line\n");
+    const none = engine("vanished", before, root);
+    assert.equal(none.status, 0);
+    assert.equal(none.stdout, "");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("vanished: an unreadable record is a usage error, not an empty result", () => {
+  const root = project({ "a.md": "# A\n" });
+  try {
+    const run = engine("vanished", path.join(root, "absent.txt"), root);
+    assert.notEqual(run.status, 0);
+    assert.match(run.stderr, /absent\.txt/u);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

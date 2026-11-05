@@ -12,6 +12,4 @@ The AI tools a project can use.
 
 Wiring:
 
-- A shared `AGENTS.md` is a wiring target, never a detection signal; tools sharing a file wire it once.
-- The block sits under `## Memory Management`, shaped like `assets/templates/AGENTS.md`.
-- An existing file keeps everything else, add only what is missing; a file no picked tool resolves to is untouched.
+- A shared `AGENTS.md` is a wiring target, never a detection signal.

@@ -5,7 +5,7 @@ The checks that must pass for code to count as done. Minimal, run after every ch
 ## Before the code
 
 **Write the test first, and watch it fail for the reason it names.** A test written after the
-code it covers confirms what was built; only one that failed first can tell you it is
+code it covers confirms what was built. Only one that failed first can tell you it is
 checking anything at all.
 
 Three consequences, all learned by paying for them:
@@ -55,7 +55,7 @@ Each runs through `scripts/gate-witness.js`, which skips a gate this exact tree 
 - Any pull request fires `ci.yml` and `cli-ci.yml`, whatever its base.
 - Only a pull request targeting `main` or `next` replays the pre-commit, and `validate.yml` drops `cli-biome`, `cli-architecture` and `cli-typecheck` from it.
 
-Deleting a remote branch is the one push to send with it. `git push --delete` carries no commit, and the gates still run: measured, lefthook forwards git's pre-push stdin to no command, the hook environment is byte-identical to a normal push, and a `glob` filter matches anyway. Nothing inside the hook can tell the two apart, so the full `cli` suite runs over a push that has nothing to validate.
+Deleting a remote branch is the one push to send with it. `git push --delete` carries no commit, and the gates still run. Measured: lefthook forwards git's pre-push stdin to no command, the hook environment is byte-identical to a normal push, and a `glob` filter matches anyway. Nothing inside the hook can tell the two apart, so the full `cli` suite runs over a push that has nothing to validate.
 
 ## Behavior
 

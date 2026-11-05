@@ -6,7 +6,8 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.cjs",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "AIDD Telemetry: carry Claude session task"
           }
         ]
       },
@@ -16,7 +17,8 @@
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/catch-up.cjs",
             "async": true,
-            "timeout": 120
+            "timeout": 120,
+            "statusMessage": "AIDD Telemetry: update measurement ledger"
           }
         ]
       }
@@ -27,7 +29,8 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-gate.cjs",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "AIDD Telemetry: check task declaration"
           }
         ]
       }

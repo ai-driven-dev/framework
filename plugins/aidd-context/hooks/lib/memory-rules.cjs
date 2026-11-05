@@ -214,7 +214,7 @@ function unfilledSlots({ file, text, templates = templatesFolder() }) {
 
 /** The dead-path rule every plugin applies to its own files, from the shared hook library. */
 function deadReferences({ file, text, root }) {
-  return deadPaths(text, root).map(({ line, path }) =>
+  return deadPaths(text, root, path.dirname(path.join(root, file))).map(({ line, path }) =>
     problem(file, line, "M4", ERROR, `\`${excerpt(path)}\` names nothing on disk: fix the path or remove it`, "fix the path or remove it", excerpt(path))
   );
 }

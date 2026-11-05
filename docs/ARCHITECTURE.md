@@ -76,13 +76,13 @@ flowchart LR
 
 ## Hooks
 
-The contract for the framework's own hooks, not for a hook a user generates with `aidd-context:08-hook-generate`. Today the `aidd-context` memory hook follows it; `aidd-ui` adopts it in its own change. `aidd-telemetry` stays outside: observing a session is its job, and it calls the `aidd` binary.
+The contract for the framework's own hooks, not for a hook a user generates with `aidd-context:08-hook-generate`. The `aidd-context` memory hook follows it; `aidd-ui` adopts it in its own change. `aidd-telemetry` stays outside, observing a session being its job.
 
-A hook adds determinism where a model drifts. It checks mechanical rules only; a rule that needs judgment belongs to the skill's check and to CI.
+A hook checks mechanical rules only; a rule that needs judgment belongs to the skill's check and to CI.
 
 ### Levels and moments
 
-A level is what the finding demands; a moment is when the artifact is final.
+A level is what a finding demands; a moment is when the artifact is final.
 
 | Level | Effect | Mechanism | Used when |
 | --- | --- | --- | --- |
@@ -92,21 +92,17 @@ A level is what the finding demands; a moment is when the artifact is final.
 | Moment | Event | For |
 | --- | --- | --- |
 | After the write | PostToolUse | an artifact final in one write: a memory file, a frontmatter |
-| At the turn end | Stop, once per turn, scoped to what the turn reached | an artifact final only after several writes |
+| At the turn end | Stop, once per turn | an artifact final only after several writes; asks once to fix the errors on the lines the turn changed |
 
 SessionStart keeps a generated state true, silently. No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, and would block drafts. A rule never fires where its artifact is still in progress.
 
-Placing a gap:
-
-1. Needs judgment? Then no hook.
-2. When is the artifact final? One write: after the write. Several: at the turn end.
-3. False positives on real data? Some: level 1. None: level 2 if the fix is local, else level 1.
+Placing a gap: judgment needed, no hook; one write, after the write, several, at the turn end; any false positive on real data, level 1, else level 2 if the fix is local.
 
 ### Rules
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. `aidd-context` also owns the layout of `aidd_docs/`.
-2. **One neutral interface.** A hook reads and answers through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` returns the event with its `files` (each with `written`, the text this write put in the file, and `replaced`, the text it replaced, either absent where the host gives none); `answer({ level, text })` informs at level 1 and requires a fix at level 2, and `continueTurn(text)` asks once. A `files` entry may name a file that no longer exists, so tolerate `ENOENT`. The rules shared by every plugin live in `hooks/lib/common-rules.cjs`, held identical by `scripts/check-hook-rule-copies.js`.
-3. **Findings only.** Report what this write or turn produced, never standing errors: every error on the whole lines of `written` not in `replaced`, counted as a multiset, one line each. When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines), a file's errors are grouped under its name, or under `<folder>/*` across several files, and only inform. Never report another file or a missing file. Warnings follow, capped at 10. Silent when clean. Format, owned by `common-rules.cjs`:
+2. **One neutral interface.** A hook reads and answers through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` returns the event with its `files` (each with `written`, the text put in the file, and `replaced`, the text it replaced, either absent where the host gives none); `answer({ level, text })` informs or requires, `continueTurn(text)` asks once. A `files` entry may name a file that no longer exists, so tolerate `ENOENT`. Shared rules live in `hooks/lib/common-rules.cjs`, held identical by `scripts/check-hook-rule-copies.js`.
+3. **Findings only.** Report what this write or turn produced, never standing errors: every error on the whole lines of `written` not in `replaced`, counted as a multiset, one line each. When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines, a whole-file write without `replaced`), a file's errors are grouped under its name, or under `<folder>/*` across several files, and only inform. Never report another file or a missing file. Warnings follow, capped at 10; silent when clean. Format:
 
    ```
    <plugin>: <n> errors, <m> warnings
@@ -115,7 +111,8 @@ Placing a gap:
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`: the same file runs by hand, from a skill and in CI.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, child process, git or network.
 6. **Bounded.** A 5 s declared timeout. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Stop state.** A plugin with a Stop check keeps one owner-only file per session listing the paths the turn wrote.
+7. **Turn-end check.** The turn state lives in `common-rules.cjs`, one owner-only file per session: the net changed lines, and a baseline of errors held at SessionStart and after each consumed Stop, keyed by file, rule and excerpt. Stop requires once, never informs, only errors on net changed lines the baseline lacks. An error with no line is never required, check holds it. No proof, no hold: a whole-file write without `replaced` proves nothing, as on Cursor and OpenCode's `write`. A new error in another file is informed after the write that made it, once per turn.
+8. **Status message.** Every handler carries a short `statusMessage` naming its plugin and action (`AIDD Context: check memory file`); Codex shows it when asking for trust.
 
 ### What the CLI carries
 

@@ -14,7 +14,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
           }
         ]
       },
@@ -23,7 +24,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-telemetry/session-start.cjs",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "AIDD Telemetry: carry Claude session task"
           }
         ]
       },
@@ -33,7 +35,8 @@ hooks = true
             "type": "command",
             "command": "node ./.codex/hooks/aidd-telemetry/catch-up.cjs",
             "async": true,
-            "timeout": 120
+            "timeout": 120,
+            "statusMessage": "AIDD Telemetry: update measurement ledger"
           }
         ]
       }
@@ -45,7 +48,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory file"
           }
         ]
       }
@@ -56,7 +60,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory before finishing"
           }
         ]
       }
@@ -67,7 +72,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-telemetry/prompt-gate.cjs",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "AIDD Telemetry: check task declaration"
           }
         ]
       }

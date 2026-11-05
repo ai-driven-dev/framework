@@ -10,6 +10,9 @@
  *   an error remains. With no file it checks the whole bank, and a missing always-written file
  *   is an error; so is a root with no bank, or a named file that does not exist. A former file, a
  *   misplaced file and a team folder are warnings.
+ * - `lines [root]` and `vanished <file> [root]`: a refresh's loss check. `lines` prints the bank's
+ *   lines, whitespace-normalised; `vanished` prints each line of a file `lines` printed before
+ *   that the bank no longer holds anywhere. Informs only: it restores nothing.
  * - `sync [tool...]`: fills the memory block of each context file present, or only those of
  *   the tools named, from the current folder.
  *
@@ -677,6 +680,27 @@ function sync(root, tools = [], { quiet = false } = {}) {
   return result;
 }
 
+const collapse = (line) => line.trim().replace(/\s+/gu, " ");
+
+/** Every non-empty line of the bank's markdown, whitespace-normalised, in file order. */
+function bankLines(root) {
+  const lines = [];
+  for (const file of bankFiles(root).filter((name) => name.endsWith(".md"))) {
+    for (const line of (readTextOrNull(path.join(root, file)) ?? "").split("\n")) {
+      const normal = collapse(line);
+      if (normal !== "") lines.push(normal);
+    }
+  }
+  return lines;
+}
+
+/** The distinct lines of the record that the bank holds nowhere now. */
+function vanishedLines(recordFile, root) {
+  const now = new Set(bankLines(root));
+  const before = fs.readFileSync(recordFile, "utf8").split("\n").map(collapse).filter((line) => line !== "");
+  return [...new Set(before)].filter((line) => !now.has(line));
+}
+
 function main(argv) {
   const [command, ...args] = argv;
   if (command === "hook") {
@@ -695,6 +719,28 @@ function main(argv) {
     for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
     return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
+  if (command === "lines") {
+    const [root = process.cwd()] = args;
+    const lines = bankLines(root);
+    if (lines.length > 0) process.stdout.write(`${lines.join("\n")}\n`);
+    return EXIT_OK;
+  }
+  if (command === "vanished") {
+    const [recordFile, root = process.cwd()] = args;
+    if (recordFile === undefined) {
+      process.stderr.write("usage: memory.cjs vanished <file> [root]\n");
+      return EXIT_ERRORS;
+    }
+    let gone;
+    try {
+      gone = vanishedLines(recordFile, root);
+    } catch (error) {
+      process.stderr.write(`memory: ${recordFile} not read (${error.code ?? error.message})\n`);
+      return EXIT_ERRORS;
+    }
+    if (gone.length > 0) process.stdout.write(`${gone.join("\n")}\n`);
+    return EXIT_OK;
+  }
   if (command === "sync") {
     try {
       const { unpaired, held, failed } = sync(process.cwd(), args.map((arg) => arg.toLowerCase()));
@@ -706,7 +752,7 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | sync [tool...]\n");
+  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | lines [root] | vanished <file> [root] | sync [tool...]\n");
   return EXIT_ERRORS;
 }
 

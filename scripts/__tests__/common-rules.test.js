@@ -97,6 +97,14 @@ test("deadPaths: a line and a column after the path are not part of it", () => {
   });
 });
 
+test("deadPaths: a path that exists beside the citing file passes, one that exists nowhere is reported", () => {
+  inProject({ "docs/other.md": "", "src/here.cfg": "", "Alpha.cfg": "", "docs/alpha.cfg": "" }, (root) => {
+    const folder = path.join(root, "docs");
+    assert.deepEqual(deadPaths("`alpha.cfg` `src/gone.cfg`\n", root, folder), [{ line: 1, path: "src/gone.cfg" }]);
+    assert.deepEqual(deadPaths("`alpha.cfg`\n", root), [{ line: 1, path: "alpha.cfg" }]);
+  });
+});
+
 test("deadPaths: a path climbing out with .. is never checked", () => {
   inProject({ "src/here.cfg": "" }, (root) => {
     assert.deepEqual(deadPaths("`src/../../gone.cfg` `src/../gone.cfg`\n", root), []);

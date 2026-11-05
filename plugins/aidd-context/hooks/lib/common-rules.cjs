@@ -261,11 +261,11 @@ function absentByDesign(base, top, segments) {
  * Anchored on a real top-level entry rather than on "looks like a path", as
  * `scripts/check-referenced-paths.js` is: anything wider reports MIME types and shell fragments.
  * Each segment is compared by its exact name. A file also exists when it does under the nearest
- * ancestor holding `.git`. A path never leaves the root it is read from: a `..` segment is not
+ * ancestor holding `.git`, or beside the citing file when its `folder` is given. A path never leaves the root it is read from: a `..` segment is not
  * checked, and neither is a link out. A path is not reported when it sits under a folder a
  * `.gitignore` ignores (plain forms only, see `ignoreRule`) or in an empty submodule.
  */
-function deadPaths(text, root) {
+function deadPaths(text, root, folder = root) {
   const heads = new Set(namesIn(root).filter((entry) => entry !== IGNORED_ENTRY).map((entry) => entry.toLowerCase()));
   const realRoot = fs.realpathSync(root);
   // A root inside a repository, a subproject's, also reads a path from the repository's root.
@@ -288,6 +288,7 @@ function deadPaths(text, root) {
       if (!heads.has(segments[0].toLowerCase()) || segments.includes("..")) continue;
       if (!staysUnder(root, realRoot, segments)) continue;
       if (existsExact(root, segments)) continue;
+      if (folder !== root && existsUnder(folder, segments)) continue;
       if (repository !== null && existsUnder(repository, segments)) continue;
       if (absentByDesign(root, repository ?? root, segments)) continue;
       if (repository !== null && absentByDesign(repository, repository, segments)) continue;

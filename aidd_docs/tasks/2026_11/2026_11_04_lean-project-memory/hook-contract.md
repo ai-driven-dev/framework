@@ -18,7 +18,7 @@ A level is what the finding demands; a moment is when the artifact is final.
 | Moment | Event | For |
 | --- | --- | --- |
 | After the write | PostToolUse | an artifact final in one write: a memory file, a frontmatter |
-| At the turn end | Stop, once per turn, scoped to what the turn reached | an artifact final only after several writes: a design-system change across record, render and tokens |
+| At the turn end | Stop, once per turn, scoped to the lines the turn changed | an artifact final only after several writes: a design-system change across record, render and tokens. Requires, never informs |
 
 No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, and would block drafts. A rule never fires at a moment where its artifact is still in progress.
 
@@ -37,7 +37,7 @@ No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, 
 | --- | --- |
 | SessionStart | keep a generated state true, silently: its text never reaches the model on OpenCode or Kilo |
 | PostToolUse | check what this write produced |
-| Stop | check what the turn reached, for multi-write artifacts; asks once, guarded by `stop_hook_active` |
+| Stop | require the errors on the lines the turn changed, for multi-write artifacts; asks once, guarded by `stop_hook_active` |
 
 PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not replay it, and nothing in this contract needs it. UserPromptSubmit and SessionEnd are out of the contract. aidd-telemetry is the stated exception: observing a session is its job.
 
@@ -45,7 +45,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. aidd-context also owns the layout of `aidd_docs/`: which plugin owns which folder, and a file out of its place. It never checks the content of another plugin's folder.
 2. **One neutral interface.** A hook reads its event and answers through `hooks/lib/host.cjs` (`readEvent`, `answer`, `continueTurn`), never a host's payload directly. The CLI puts each tool's adapter there at build time (section 6). A `files` entry carries `written`, the text this write put in the file (a Write's whole content, an Edit's replacement, a patch's added lines for that file), and `replaced`, the text it replaced (an Edit's old string, a patch's removed lines for that file), each absent where the host gives none. A `files` entry may no longer exist, a deletion or a move's source, so a hook tolerates `ENOENT`; a shell `rm` reaches it only through `command`; `continueTurn` asks once, printing nothing when the Stop is already a continuation.
-3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error on the lines this write added or changed, one line each: the whole lines of `written` not in `replaced`, counted as a multiset, a whole-file write changing every line. When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines), the written file's errors are grouped under its name and only inform. Never anything from another file, never a missing file; then the warnings, capped at 10: the highest count both Haiku and Qwen fixed with no finding missed and no content lost (`measure.md`):
+3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error on the lines this write added or changed, one line each: the whole lines of `written` not in `replaced`, counted as a multiset. A whole-file write counts only the lines its previous content lacks, and proves none when `replaced` is absent. When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines, a whole-file write without `replaced`), the written file's errors are grouped under its name and only inform. Never anything from another file, never a missing file; then the warnings, capped at 10: the highest count both Haiku and Qwen fixed with no finding missed and no content lost (`measure.md`):
 
 ```
 <plugin>: <n> errors, <m> warnings
@@ -58,17 +58,22 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`; the same file runs by hand, from a skill and in CI with the same result. Everything it calls lives under `hooks/`.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, no child process, no git, no network.
 6. **Bounded.** A 5 s declared timeout; the work well under a second. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Stateless, except a turn-end check.** A PostToolUse-only plugin keeps nothing. A plugin with a Stop check keeps one file per session listing the paths the turn wrote: `<os.tmpdir()>/aidd-hooks-<uid>/<plugin>/<session>`, folder `0700`, file `0600`, session id whitelisted `^[A-Za-z0-9_-]{1,128}$`, cleared at Stop, files older than 24 h swept at SessionStart without following a link. No mark, no Stop check: a turn that wrote nothing in scope costs nothing and never meets a standing error. A write appends each watched path it touched, one per line. A shell command appends the line `unknown`, its own line form, never an empty file, when it runs the plugin's engine, or when its text names a watched folder and matches a write form; any `unknown` line scopes the Stop check to the watched folders, known paths included. A read-only command marks nothing: agents read the watched folders in almost every turn, and marking reads blocked unrelated turns on standing errors (measured in aidd-ui, then reverted). Limit: a write the forms miss, such as `python -c`, is seen late, by the next write, the skill's check or CI, never lost.
+7. **Stateless, except a turn-end check.** A PostToolUse-only plugin keeps nothing. A plugin with a Stop check keeps its turn state in the shared library (section 5), in `<os.tmpdir()>/aidd-hooks-<uid>/<plugin>/<session>`: folder `0700`, files `0600`, session id whitelisted `^[A-Za-z0-9_-]{1,128}$`, the turn's file cleared at Stop, files older than 24 h swept at SessionStart without following a link.
+   - The turn file lists the files the turn wrote and its net changed lines: a write's `written` lines count in, its `replaced` lines out, so a line changed and changed back counts for nothing. No mark, no Stop check: a turn that wrote nothing in scope costs nothing.
+   - The baseline is the plugin's errors keyed by file, rule and excerpt, never by line. SessionStart leaves it, and each consumed Stop leaves the errors of that moment.
+   - Stop requires, once and never as information, the errors on the net changed lines that the baseline does not hold. An error with no line is never required: check holds it. No proof, no hold: a whole-file write without `replaced` adds no changed line.
+   - After a write, an error new against the baseline in another file than the turn's is informed once per turn: the turn file remembers what it already told. With no baseline nothing proves an error new, so nothing is told.
+   - A write appends each watched path it touched. A shell command appends the line `unknown`, its own line form, never an empty file, when it runs the plugin's engine, or when its text names a watched folder and matches a write form; any `unknown` line scopes the Stop check to the watched folders, known paths included. A read-only command marks nothing: agents read the watched folders in almost every turn, and marking reads blocked unrelated turns on standing errors (measured in aidd-ui, then reverted). Limit: a write the forms miss, such as `python -c`, is seen late, by the next write, the skill's check or CI, never lost.
+8. **Status message.** Every framework hook handler carries a short `statusMessage` naming its plugin and action, such as `AIDD Context: check memory file`: Codex shows it when asking for trust. `scripts/__tests__/hook-handlers-carry-a-status-message.test.js` fails on a handler without one.
 
 ## 5. Shared code
 
-Three pieces every plugin uses live in one file, `hooks/lib/common-rules.cjs`, copied into each plugin and held identical by `scripts/check-hook-rule-copies.js`, until the CLI builds every distribution:
+Every plugin's shared code lives in one file, `hooks/lib/common-rules.cjs`, copied into each plugin and held identical by `scripts/check-hook-rule-copies.js`, until the CLI builds every distribution:
 
-- `deadPaths(text, root)`: a backticked path that does not exist, the one rule every plugin applies to its own files. A cited path is valid when it exists from the project root or from the repository root, the nearest folder above holding a `.git` that is not a link;
+- `deadPaths(text, root, folder)`: a backticked path that does not exist, the one rule every plugin applies to its own files. A cited path is valid when it exists from the project root, from the repository root (the nearest folder above holding a `.git` that is not a link), or beside the citing file (`folder`);
 - `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `rmdir`, `patch`, `apply_patch`, `perl -i`, `find … -delete`, `git apply`, `git mv`, and the git subcommands that touch the working tree: `git checkout` except `-b`/`-B` with no path, `git restore` except `--staged` without `--worktree`, `git rm` except `--cached`, `git reset` with `--hard`, `--merge` or `--keep`, `git stash` bare or with `push`, `pop`, `apply`, `drop` or `clear`, and the PowerShell cmdlets `Set-Content`, `Add-Content`, `Out-File`, `New-Item`, `Remove-Item`, `Move-Item`, `Copy-Item`, `Rename-Item`, `Clear-Content` with their documented aliases, in any case, a redirection to `$null` writing nothing;
-- `formatFindings(plugin, findings, options)`: the output of rule 3.
-
-The Stop state file stays with the plugin that has a Stop check until a second plugin needs it.
+- `formatFindings(plugin, findings, options)`: the output of rule 3;
+- the turn-end state of rule 7 (`turnMark` to `requiredAtStop`), since memory is the second plugin with a Stop check: the turn state lives in the shared library, not in a plugin.
 
 ## 6. What the CLI carries
 
@@ -100,6 +105,15 @@ Cursor filters `postToolUse` by its matcher: a `Delete` ran and the memory hook 
 Copilot accepts the nested hooks shape (`matcher` plus a `hooks` array), as the native tree ships it: a plugin installed from the native build fired SessionStart and PostToolUse, and expanded `${PLUGIN_ROOT}`. The flat shape in `.github/hooks/*.json` also fires, and needs `--trust-folder` in prompt mode.
 
 Copilot's behaviour on a crashing PreToolUse hook is not stated by its official reference; untested.
+
+### What the proof rule means per host
+
+| Host | Lines proven | Why |
+| --- | --- | --- |
+| Claude Code | yes | the adapter fills `replaced` from `tool_response.originalFile`, `""` on a create |
+| Codex, Copilot | yes | a patch carries its removed lines |
+| OpenCode, Kilo | `edit` and `apply_patch` yes, `write` no | the bridge forwards only `tool_input`, which holds no previous content |
+| Cursor | no | every edit is a whole-file `Write` with no previous content, so the Stop check never requires and findings only inform after the write |
 
 ## 8. Tests
 

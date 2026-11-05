@@ -70,7 +70,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
           }
         ]
       },
@@ -79,7 +80,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-telemetry/session-start.cjs",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "AIDD Telemetry: carry Claude session task"
           }
         ]
       },
@@ -89,7 +91,8 @@ script, identical to the plugin source
             "type": "command",
             "command": "node ./.claude/hooks/aidd-telemetry/catch-up.cjs",
             "async": true,
-            "timeout": 120
+            "timeout": 120,
+            "statusMessage": "AIDD Telemetry: update measurement ledger"
           }
         ]
       }
@@ -101,7 +104,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory file"
           }
         ]
       }
@@ -112,7 +116,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory before finishing"
           }
         ]
       }
@@ -123,7 +128,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-telemetry/prompt-gate.cjs",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "AIDD Telemetry: check task declaration"
           }
         ]
       }

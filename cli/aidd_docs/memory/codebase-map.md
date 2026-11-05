@@ -1,6 +1,6 @@
 # Codebase Map
 
-Where things live. The architecture rules carry no paths on purpose, so this is the single place that says — and `tests/architecture/codebase-map.arch.test.ts` holds it to the tree in both directions.
+Where things live. The architecture rules carry no paths on purpose, so this is the single place that says. `tests/architecture/codebase-map.arch.test.ts` holds it to the tree in both directions.
 
 ```txt
 src/

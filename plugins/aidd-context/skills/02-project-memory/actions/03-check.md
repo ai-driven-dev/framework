@@ -12,12 +12,11 @@ The findings the user approved.
 
 ## Process
 
-1. **Structure.** Compare the bank against [capabilities.md](../references/capabilities.md).
+1. **Structure.** Read the structure findings of the engine's whole-bank check against [capabilities.md](../references/capabilities.md), never judge them.
    - A root file no row produces is the team's: keep it.
    - A root file in a row's Former files column: offer to merge it.
    - A file a row produces, found in `internal/` or a subfolder: misplaced, offer only the move to the root.
    - A folder under `memory/` other than `internal/` and `external/`: offer to move it under `internal/`.
-   - An always file, or a found capability's file, that is absent: missing.
    - Offer to remove a file at the root a row produces whose capability the scan did not find, and none when the scan asked nothing.
 2. **Format.** Run the engine on the files a row produces or names as former, never a team file.
 3. **Content.** Review yourself the files a row produces or names as former, per [review-protocol.md](../references/review-protocol.md).

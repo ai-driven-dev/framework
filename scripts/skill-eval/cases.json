@@ -415,5 +415,102 @@
         ]
       }
     }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "refresh keeps two short convention lines byte for byte",
+    "setup": {
+      "files": {
+        "package.json": "{\n  \"name\": \"shop\",\n  \"version\": \"1.0.0\",\n  \"dependencies\": { \"express\": \"^4.19.0\" }\n}\n",
+        "src/server.js": "const express = require(\"express\");\nmodule.exports = express();\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node and Express\n",
+        "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n",
+        "aidd_docs/memory/coding-assertions.md": "# Coding Assertions\n\n## Style\n\n- Indent with 2 spaces\n- Lines stay under 100 characters\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
+    "expect": {
+      "fileContains": {
+        "aidd_docs/memory/coding-assertions.md": [
+          "- Indent with 2 spaces\n",
+          "- Lines stay under 100 characters\n"
+        ]
+      }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "refresh corrects a count the repo contradicts",
+    "setup": {
+      "files": {
+        "package.json": "{\n  \"name\": \"shop\",\n  \"version\": \"1.0.0\",\n  \"private\": true,\n  \"workspaces\": [\"packages/*\"]\n}\n",
+        "packages/api/index.js": "module.exports = 1;\n",
+        "packages/web/index.js": "module.exports = 2;\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node, a monorepo of 5 packages under `packages/`\n",
+        "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. Run the engine's whole-bank check first and correct the facts it reports as stale. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
+    "expect": {
+      "fileNotContains": {
+        "aidd_docs/memory/architecture.md": [
+          "5 packages"
+        ]
+      },
+      "fileContains": {
+        "aidd_docs/memory/architecture.md": [
+          "2 packages"
+        ]
+      }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "setup leaves a project's own docs README byte for byte",
+    "setup": {
+      "files": {
+        "package.json": "{\n  \"name\": \"shop\",\n  \"version\": \"1.0.0\",\n  \"dependencies\": { \"express\": \"^4.19.0\" }\n}\n",
+        "src/server.js": "const express = require(\"express\");\nmodule.exports = express();\n",
+        "aidd_docs/README.md": "# Our docs\n\nThe team keeps its notes here. Start with the glossary.\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to set up the project memory. You are running headless with no human available, so answer every question yourself from the repo evidence, never wait for input, and complete the whole flow.",
+    "expect": {
+      "filesUnchanged": [
+        "aidd_docs/README.md"
+      ],
+      "filesExist": [
+        "aidd_docs/memory/architecture.md"
+      ]
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "refresh keeps a team line inside the context block",
+    "setup": {
+      "files": {
+        "package.json": "{\n  \"name\": \"shop\",\n  \"version\": \"1.0.0\",\n  \"dependencies\": { \"express\": \"^4.19.0\" }\n}\n",
+        "src/server.js": "const express = require(\"express\");\nmodule.exports = express();\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node and Express\n",
+        "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n",
+        "CLAUDE.md": "# Shop\n\n## Memory Management\n\n<!-- aidd_project_memory:start -->\n- Team rule: never deploy on Fridays\n<!-- aidd_project_memory:end -->\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
+    "expect": {
+      "fileContains": {
+        "CLAUDE.md": [
+          "- Team rule: never deploy on Fridays"
+        ]
+      }
+    }
   }
 ]
