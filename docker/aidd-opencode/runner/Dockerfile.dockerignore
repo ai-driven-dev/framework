@@ -1,0 +1,9 @@
+**
+!docker/
+!docker/aidd-opencode/
+!docker/aidd-opencode/Dockerfile
+!docker/aidd-opencode/runner/
+!docker/aidd-opencode/runner/**
+!scripts/
+!scripts/pr-review/
+!scripts/pr-review/model.sh

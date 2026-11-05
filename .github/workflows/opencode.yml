@@ -31,7 +31,7 @@ jobs:
     name: Run OpenCode
     # 8973343 is @alexsoyes (Alex), the repository owner.
     if: github.event.comment.user.id == 8973343 && startsWith(github.event.comment.body, '/opencode')
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
@@ -69,9 +69,22 @@ jobs:
           echo "branch=$branch" >> "$GITHUB_OUTPUT"
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
 
+      # The image must come from the default branch, never the PR being edited.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: .aidd-runtime
+          sparse-checkout: |
+            docker/aidd-opencode
+            .claude/skills
+            .agents/skills
+            .opencode/skills
+          persist-credentials: false
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.target.outputs.ref }}
+          path: project
           fetch-depth: 1
           persist-credentials: false
 
@@ -96,26 +109,34 @@ jobs:
             jq -r .comment.body "$event"
           } > "$RUNNER_TEMP/prompt.md"
 
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: lts/*
+      - name: Build the trusted AIDD image
+        run: docker build -t aidd-opencode:local .aidd-runtime/docker/aidd-opencode
 
-      - name: Install OpenCode
-        run: npm install --global @opencode/cli@2.2.2
-
-      # Policies, not permissions: they never prompt and apply after every agent rule, so a
-      # `.opencode/` config in the checked-out branch cannot loosen them. The system directory
-      # has the highest config precedence. No shell and nothing outside the checkout keeps
-      # OPENCODE_API_KEY out of the agent's reach; it cannot edit its own config mid-run.
+      # System policies outrank project permissions and are mounted read-only.
       - name: Restrict what the agent may do
         run: |
-          sudo mkdir -p /etc/opencode
-          sudo tee /etc/opencode/opencode.json > /dev/null <<'JSON'
+          cat > "$RUNNER_TEMP/opencode-policy.json" <<'JSON'
           {
             "$schema": "https://opencode.ai/config.json",
+            "skills": [
+              "/trusted/.claude/skills",
+              "/trusted/.agents/skills",
+              "/trusted/.opencode/skills"
+            ],
             "policies": [
+              { "action": "plugin.use", "resource": "*", "effect": "deny" },
+              { "action": "mcp.use", "resource": "*", "effect": "deny" },
               { "action": "tool.use", "resource": "shell:*", "effect": "deny" },
+              { "action": "tool.use", "resource": "execute:*", "effect": "deny" },
+              { "action": "tool.use", "resource": "webfetch:*", "effect": "deny" },
+              { "action": "tool.use", "resource": "websearch:*", "effect": "deny" },
               { "action": "tool.use", "resource": "external_directory:*", "effect": "deny" },
+              { "action": "tool.use", "resource": "external_directory:/root/.claude/skills/*", "effect": "allow" },
+              { "action": "tool.use", "resource": "external_directory:/trusted/.claude/skills/*", "effect": "allow" },
+              { "action": "tool.use", "resource": "external_directory:/trusted/.agents/skills/*", "effect": "allow" },
+              { "action": "tool.use", "resource": "external_directory:/trusted/.opencode/skills/*", "effect": "allow" },
+              { "action": "tool.use", "resource": "edit:/root/.claude/skills/*", "effect": "deny" },
+              { "action": "tool.use", "resource": "edit:.git/*", "effect": "deny" },
               { "action": "tool.use", "resource": "edit:.opencode/*", "effect": "deny" },
               { "action": "tool.use", "resource": "edit:opencode.json*", "effect": "deny" }
             ]
@@ -129,7 +150,16 @@ jobs:
           MODEL: opencode-go/beam-free
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
-          opencode run --standalone --auto --model "$MODEL" "$(cat "$RUNNER_TEMP/prompt.md")" \
+          # Project configuration can redefine provider endpoints or load plugins. Project
+          # skills come from the trusted default-branch checkout, never from this branch.
+          docker run --rm \
+            -e OPENCODE_API_KEY -e OPENCODE_DISABLE_PROJECT_CONFIG=1 \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/work \
+            -v "$GITHUB_WORKSPACE/project:/work" \
+            -v "$GITHUB_WORKSPACE/.aidd-runtime:/trusted:ro" \
+            -v "$RUNNER_TEMP/opencode-policy.json:/etc/opencode/opencode.json:ro" \
+            -w /work aidd-opencode:local \
+            run --standalone --auto --model "$MODEL" "$(cat "$RUNNER_TEMP/prompt.md")" \
             > "$RUNNER_TEMP/reply.md"
 
       - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
@@ -145,6 +175,7 @@ jobs:
       # Pushed with the bot's token rather than GITHUB_TOKEN so the pushed commits trigger CI.
       - name: Push the changes and reply
         if: ${{ !cancelled() && steps.app-token.outcome == 'success' }}
+        working-directory: project
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
