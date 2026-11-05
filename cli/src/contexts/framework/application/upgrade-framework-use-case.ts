@@ -274,7 +274,7 @@ export class UpgradeFrameworkUseCase {
       }
     } catch (error) {
       throw new Error(
-        `Upgrade incomplete after the shared marketplace changed to ${release}. Completed: ${updated.join(", ") || "none"}. ${error instanceof Error ? error.message : String(error)}`
+        `Upgrade incomplete after the shared marketplace changed to ${release}. Plugin sources updated: ${updated.join(", ") || "none"}. ${error instanceof Error ? error.message : String(error)}`
       );
     }
     return { updated, globalSkipped, cancelled: false };

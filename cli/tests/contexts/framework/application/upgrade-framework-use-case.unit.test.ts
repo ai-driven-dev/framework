@@ -87,7 +87,13 @@ function fixture() {
     }
   );
   const preflight = vi.fn(async () => {});
-  const sync = vi.fn(async () => ({ errors: [], binaryMissing: [], warnings: [] }));
+  const sync = vi.fn(
+    async (): Promise<{
+      errors: { scope: string; message: string }[];
+      binaryMissing: { toolId: string; binary: string }[];
+      warnings: string[];
+    }> => ({ errors: [], binaryMissing: [], warnings: [] })
+  );
   const uc = new UpgradeFrameworkUseCase({
     listMarketplaces: list,
     saveMarketplace,
@@ -117,6 +123,18 @@ function fixture() {
 const accept = async () => true;
 
 describe("upgrade framework", () => {
+  it("reports updated sources separately from a failed native activation", async () => {
+    const f = fixture();
+    f.sync.mockResolvedValue({ errors: [], binaryMissing: [], warnings: ["catalog unavailable"] });
+    await expect(
+      f.uc.execute({
+        projectRoot: "/project",
+        release: "v5.13.0",
+        allowShared: true,
+        confirm: accept,
+      })
+    ).rejects.toThrow(/Upgrade incomplete.*Plugin sources updated:.*catalog unavailable/);
+  });
   it("shows installed targets before asking, and leaves them unchanged when declined", async () => {
     const f = fixture();
     const confirm = vi.fn(async (_preview: FrameworkUpgradePreview) => false);

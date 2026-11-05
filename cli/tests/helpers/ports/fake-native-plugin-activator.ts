@@ -12,6 +12,7 @@ export class FakeNativePluginActivator implements NativePluginActivator {
   readonly enabledPlugins: string[] = [];
   readonly uninstalledPlugins: string[] = [];
   readonly updatedPlugins: string[] = [];
+  readonly releaseRefreshes: { ref: string; scope: MarketplaceScope }[] = [];
   /** The scope each call actually carried, in call order, never guessed from the ref. */
   readonly enabledPluginScopes: MarketplaceScope[] = [];
   readonly uninstalledPluginScopes: MarketplaceScope[] = [];
@@ -124,5 +125,10 @@ export class FakeNativePluginActivator implements NativePluginActivator {
     if (this.failOnUpdate.has(pluginRef))
       throw new NativePluginCliError(`plugin update '${pluginRef}' failed`);
     this.updatedPlugins.push(pluginRef);
+  }
+
+  refreshReleasePlugin(ref: string, scope: MarketplaceScope, _projectRoot: string): void {
+    if (this.failOnUpdate.has(ref)) throw new NativePluginCliError(`plugin update '${ref}' failed`);
+    this.releaseRefreshes.push({ ref, scope });
   }
 }

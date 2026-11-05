@@ -287,6 +287,23 @@ describe("aidd framework remove", () => {
 });
 
 describe("aidd framework update", () => {
+  it("prints a partial failure as an error without reporting a completed update", async () => {
+    upgradeFramework.mockRejectedValueOnce(
+      new Error(
+        "Upgrade incomplete. Plugin sources updated: claude:aidd-context. catalog unavailable"
+      )
+    );
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(
+      run("update", "--release", "v5.13.0", "--scope", "project", "--yes", "--allow-shared")
+    ).rejects.toThrow("exited");
+    expect(errors.join("")).toContain("Plugin sources updated: claude:aidd-context");
+    expect(errors.join("")).toContain("catalog unavailable");
+    expect(written.join("")).not.toContain("Updated project plugin sources");
+    expect(exit).toHaveBeenCalledWith(1);
+  });
   it.each([
     [["--scope", "user"], /--scope requires --release/],
     [["--release", "v5.13.0", "--scope", "other"], /--scope must be project or user/],

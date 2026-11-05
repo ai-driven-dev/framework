@@ -44,6 +44,8 @@ export interface NativeActivation {
   upgradeVerb?: string;
   /** Exact host command for updating one installed plugin ref. Copilot declares `update`; Codex does not. */
   updateVerb?: string;
+  /** Targeted refresh of an existing installation after a framework release update. */
+  releaseUpdateVerb?: string;
   /** Reinstall an already-owned plugin from the rebuilt local catalogue after an explicit release update. */
   refreshOwnedOnReleaseUpdate?: boolean;
   /** Verb this CLI uses to enable a plugin, after `plugin`. Omit when the tool loads plugins

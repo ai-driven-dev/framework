@@ -249,6 +249,12 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     if (scope === "project") {
       for (const [toolId, outcome] of activation.outcomes) {
         const settings = resolvePluginsCapability(toolId)?.marketplaceSettings;
+        // A targeted native update preserves Claude's own enabled/disabled settings.
+        if (
+          options.refreshOwnedPlugins !== undefined &&
+          nativeActivationOf(toolId)?.releaseUpdateVerb
+        )
+          continue;
         if (
           settings == null ||
           (options.refreshOwnedPlugins === undefined &&
@@ -499,7 +505,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const preservedRefs = (existing?.pluginRefs ?? []).filter(
         (ref) =>
           [...preservedHostNames].some((hostName) => ref.endsWith(`@${hostName}`)) ||
-          (selected.length > 0 && !this.isSelectedRef(manifest, toolId, ref, selected))
+          (selected.length > 0 &&
+            (nativeActivationOf(toolId)?.releaseUpdateVerb !== undefined ||
+              !this.isSelectedRef(manifest, toolId, ref, selected)))
       );
       const registrations: NativeRegistrations = {
         binary,
@@ -654,18 +662,30 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
     const requested =
       frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
+    const candidateRefs = [
+      ...new Set([
+        ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
+        ...requested,
+      ]),
+    ];
     const { refsToEnable, alreadyOwnedRefs } = await this.refsThisProjectEnables(
       toolId,
-      [
-        ...new Set([
-          ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
-          ...requested,
-        ]),
-      ],
+      candidateRefs,
       manifest,
       projectRoot
     );
-    const enabledRefs = [...alreadyOwnedRefs];
+    // A machine claim can have been copied into the project without a local install.
+    const machine = refreshOwnedPlugins.length ? await this.userManifestRepo?.load() : undefined;
+    const machineClaims = machine?.getNativeRegistrations(toolId)?.pluginClaims ?? [];
+    const verifiedOwnedRefs =
+      refreshOwnedPlugins.length && nativeActivationOf(toolId)?.releaseUpdateVerb
+        ? alreadyOwnedRefs.filter(
+            (ref) =>
+              manifest.getNativeRegistrations(toolId)?.pluginRefs.includes(ref) &&
+              !machineClaims.some((claim) => claim.ref === ref)
+          )
+        : alreadyOwnedRefs;
+    const enabledRefs = [...verifiedOwnedRefs];
     const sourceStillMatches = async (ref: string): Promise<boolean> => {
       const registration = stillProven.find((entry) => ref.endsWith(`@${entry.hostName}`));
       if (!registration) return false;
@@ -706,7 +726,36 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         );
       }
     }
+    if (refreshOwnedPlugins.length && nativeActivationOf(toolId)?.releaseUpdateVerb) {
+      for (const ref of candidateRefs) {
+        if (
+          !this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins) ||
+          verifiedOwnedRefs.includes(ref)
+        )
+          continue;
+        const message = `${toolId}: existing plugin '${ref}' is not proven as AIDD-owned; release refresh skipped.`;
+        this.logger.warn(message);
+        warnings.push(message);
+      }
+      for (const ref of verifiedOwnedRefs) {
+        if (
+          !this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins) ||
+          !(await sourceStillMatches(ref))
+        )
+          continue;
+        if (activator.refreshReleasePlugin === undefined)
+          throw new Error(`${toolId}: targeted release refresh is unavailable for '${ref}'.`);
+        this.bestEffort(
+          () => activator.refreshReleasePlugin?.(ref, scope, projectRoot),
+          `refresh plugin '${ref}'`,
+          warnings
+        );
+      }
+    }
     for (const ref of refsToEnable) {
+      if (refreshOwnedPlugins.length && nativeActivationOf(toolId)?.releaseUpdateVerb) {
+        continue;
+      }
       if (
         refreshOwnedPlugins.length &&
         (!this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins) ||
@@ -962,7 +1011,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     refreshable?: boolean;
     provenance?: NativeMarketplaceSource;
   }> {
-    const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
+    const builtDir = await this.buildForTool(toolId, marketplace, projectRoot, warnings);
     if (builtDir === null)
       return { hostName: marketplace.name, outcome: "build-failed", claimable: false };
     const requestedIdentity = await readMarketplaceCatalogIdentity(this.fs, toolId, builtDir);
@@ -1296,7 +1345,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   private async buildForTool(
     toolId: ToolId,
     marketplace: Marketplace,
-    projectRoot: string
+    projectRoot: string,
+    warnings?: string[]
   ): Promise<string | null> {
     try {
       const { builtDir } = await this.ensureBuilt.execute({
@@ -1307,9 +1357,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       });
       return builtDir;
     } catch (error) {
-      this.logger.warn(
-        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`
-      );
+      const message = `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`;
+      this.logger.warn(message);
+      warnings?.push(message);
       return null;
     }
   }

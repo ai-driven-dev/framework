@@ -234,7 +234,7 @@ async function sync(setup: SyncSetup = {}) {
 /** This flow writes into a file it does not own: whatever a person put there survives, and a
  * trailing comma they left behind must not take the whole sync down with it. */
 describe("the settings file a user also edits", () => {
-  it("does not add a global plugin to project settings during a project release update", async () => {
+  it("preserves project plugin settings during a Claude release update", async () => {
     const { written } = await sync({
       userPlugin: true,
       releaseUpdate: true,
@@ -243,7 +243,6 @@ describe("the settings file a user also edits", () => {
     });
     expect(written?.enabledPlugins).toEqual({
       "another@outside": false,
-      "aidd-context@aidd-framework": true,
     });
   });
   it("writes the enabled plugin into a file that did not exist", async () => {

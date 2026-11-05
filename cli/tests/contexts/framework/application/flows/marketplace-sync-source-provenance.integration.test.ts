@@ -29,6 +29,8 @@ describe("native catalogue source provenance", () => {
       catalogue?: HostMarketplaceRegistryReading;
       marketplaceScope?: "project" | "user";
       plugin?: boolean;
+      failUpdate?: boolean;
+      failBuild?: boolean;
     } = {}
   ) {
     const toolId = options.toolId ?? "codex";
@@ -67,7 +69,10 @@ describe("native catalogue source provenance", () => {
         }),
     });
     fs.setFile("/foreign/cache/marker.json", "foreign bytes");
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeNativePluginActivator({
+      available: true,
+      failOnUpdate: options.failUpdate ? ["test-plugin@same-name"] : [],
+    });
     const sync = new MarketplaceSyncSettingsUseCase(
       fs,
       projectRepo,
@@ -75,7 +80,13 @@ describe("native catalogue source provenance", () => {
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([[toolId, activator]]),
-      fakeEnsureBuiltMarketplace(),
+      options.failBuild
+        ? {
+            execute: async () => {
+              throw new Error("catalog unavailable");
+            },
+          }
+        : fakeEnsureBuiltMarketplace(),
       options.catalogue === undefined
         ? new Map()
         : new Map([[toolId, new FakeHostMarketplaceRegistryReader(options.catalogue)]]),
@@ -101,6 +112,115 @@ describe("native catalogue source provenance", () => {
     );
     return { sync, fs, activator, projectRepo, machineRepo };
   }
+
+  it("returns a failed catalogue build to the release upgrade caller", async () => {
+    const f = await hostPluginProofFixture(
+      { location: "host", refs: new Map() },
+      { toolId: "claude", failBuild: true }
+    );
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+    });
+    expect(result.warnings.join(" ")).toContain("catalog unavailable");
+    expect(f.activator.releaseRefreshes).toEqual([]);
+  });
+
+  it("refreshes an owned Claude plugin at project scope without changing its settings", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs }, { toolId: "claude" });
+    await f.sync.execute({ projectRoot: "/A" });
+    refs.set("test-plugin@same-name", { enabled: true });
+    const settings = resolve("/A", ".claude/settings.json");
+    f.fs.setFile(settings, JSON.stringify({ enabledPlugins: { "test-plugin@same-name": false } }));
+    const before = await f.fs.readFile(settings);
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+    });
+    expect(result.warnings).toEqual([]);
+    expect(f.activator.releaseRefreshes).toEqual([
+      { ref: "test-plugin@same-name", scope: "project" },
+    ]);
+    expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
+    expect(await f.fs.readFile(settings)).toEqual(before);
+  });
+
+  it("does not install a missing owned Claude plugin during a release refresh", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs }, { toolId: "claude" });
+    await f.sync.execute({ projectRoot: "/A" });
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+    });
+    expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
+    expect(f.activator.releaseRefreshes).toEqual([]);
+    expect(result.warnings.join(" ")).toContain("release refresh skipped");
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toContain(
+      "test-plugin@same-name"
+    );
+  });
+
+  it("does not refresh a local Claude installation when setup copied a machine claim", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs }, { toolId: "claude" });
+    await f.sync.execute({ projectRoot: "/A" });
+    const project = f.projectRepo.getCurrent();
+    const projectNative = project?.getNativeRegistrations("claude");
+    const machine = f.machineRepo.getCurrent();
+    if (!project || !projectNative || !machine) throw new Error("missing registrations");
+    project.setNativeRegistrations("claude", { ...projectNative, pluginRefs: [] });
+    machine.addTool("claude", "1.0.0", []);
+    machine.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: projectNative.marketplaces,
+      pluginRefs: [],
+      pluginClaims: [{ ref: "test-plugin@same-name", dependents: [] }],
+    });
+    refs.set("test-plugin@same-name", { enabled: true });
+    await f.sync.execute({ projectRoot: "/A" });
+    expect(project.getNativeRegistrations("claude")?.pluginRefs).toContain("test-plugin@same-name");
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+    });
+    expect(f.activator.releaseRefreshes).toEqual([]);
+    expect(result.warnings.join(" ")).toContain("not proven as AIDD-owned");
+    expect(project.getNativeRegistrations("claude")?.pluginRefs).toContain("test-plugin@same-name");
+  });
+
+  it("reports a Claude native update failure and retains its ownership claim", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture(
+      { location: "host", refs },
+      { toolId: "claude", failUpdate: true }
+    );
+    await f.sync.execute({ projectRoot: "/A" });
+    refs.set("test-plugin@same-name", { enabled: true });
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+    });
+    expect(result.warnings.join(" ")).toContain("plugin update 'test-plugin@same-name' failed");
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toContain(
+      "test-plugin@same-name"
+    );
+  });
+
+  it("does not refresh Claude when the catalogue has a foreign ref", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs }, { toolId: "claude" });
+    await f.sync.execute({ projectRoot: "/A" });
+    refs.set("test-plugin@same-name", { enabled: true });
+    refs.set("foreign@same-name", { enabled: true });
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+    });
+    expect(f.activator.releaseRefreshes).toEqual([]);
+    expect(result.warnings.length + result.errors.length).toBeGreaterThan(0);
+  });
 
   it("refreshes only an owned Codex plugin after an explicit framework release update", async () => {
     const refs = new Map<string, { enabled: boolean }>();
