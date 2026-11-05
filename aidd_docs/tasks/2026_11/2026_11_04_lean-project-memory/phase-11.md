@@ -44,7 +44,7 @@ status: pending
 
 > A hook speaks to one neutral interface; each tool's translation is a file the build puts in place.
 
-1. One adapter per host, Node built-ins only, the same exports: `readEvent()` returns `{ host, event, files: [{ path, content? }], command?, sessionId, cwd, raw }` or nothing on garbage; `answer({ level, text })` writes the host's key, level 2 falling back to level 1 where the host drops it; `continueTurn(text)` for Stop. Tests first on every fixture.
+1. One adapter per host, Node built-ins only, the same exports: `readEvent()` returns `{ host, event, files: [{ path, content? }], command?, stopActive, sessionId, cwd, raw }` or nothing on garbage, with one `files` entry per file a patch touches and `stopActive` true when the Stop is already a continuation (Claude's `stop_hook_active`, Cursor's `loop_count` above 0); `answer({ level, text })` writes the host's key, level 2 falling back to level 1 where the host drops it; `continueTurn(text)` for Stop. Tests first on every fixture.
 2. `host-claude.cjs` is copied into every plugin's `hooks/lib/host.cjs`, so the plugin tree runs as is on Claude Code; `check-hook-rule-copies.js` holds those copies identical to the asset.
 3. The build replaces `hooks/lib/host.cjs` with the target's adapter on every other route; the descriptor's runtime field arrives here, with this first reader.
 4. The OpenCode and Kilo bridges pass their own arguments to the script; their adapter reads them, and the bridges hold no conversion of their own; their command parsing shares one copy.
