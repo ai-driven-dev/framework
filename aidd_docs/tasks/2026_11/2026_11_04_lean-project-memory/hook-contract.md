@@ -6,22 +6,28 @@ The contract every hook the framework ships follows. Phase 14 moves its durable 
 
 A hook adds determinism where a model drifts. It checks mechanical rules only: a rule a script decides with no judgment, reading as many files as it needs. A rule that needs judgment belongs to the skill's check and to CI.
 
-## 2. Three levels
+## 2. Levels and moments
+
+A level is what the finding demands; a moment is when the artifact is final.
 
 | Level | Effect | Mechanism | Used when |
 | --- | --- | --- | --- |
-| 1. Inform | the model reads the finding and decides | PostToolUse `additionalContext` | the rule is certain but a deviation can be legitimate |
-| 2. Require | the model must fix before going on | PostToolUse `decision: "block"` with `reason` | the rule is certain, measured with no false positive on real banks, and the fix is local |
-| 3. Lock the end | the turn cannot end while the gap stands | Stop `decision: "block"`, once per turn | only when a measured run shows a model ignoring level 2 |
+| 1. Inform | the model reads the finding and decides | `additionalContext` | the rule is certain but a deviation can be legitimate |
+| 2. Require | the model must fix before going on | `decision: "block"` with `reason` | the rule is certain, measured with no false positive on real data, and the fix is local |
 
-No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, and would block drafts. Level 2 fires only on an artifact at its final state.
+| Moment | Event | For |
+| --- | --- | --- |
+| After the write | PostToolUse | an artifact final in one write: a memory file, a frontmatter |
+| At the turn end | Stop, once per turn, scoped to what the turn reached | an artifact final only after several writes: a design-system change across record, render and tokens |
+
+No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, and would block drafts. A rule never fires at a moment where its artifact is still in progress.
 
 ### Placing a gap
 
 ```
 1. Needs judgment?                       yes => no hook
-2. Is the artifact at its final state?   no  => nothing
-3. False positives on the real banks?    some => level 1
+2. When is the artifact final?           one write => after the write; several => at the turn end
+3. False positives on real data?         some => level 1
                                           none => level 2 if the fix is local, else level 1
 ```
 
@@ -30,8 +36,8 @@ No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, 
 | Event | Use |
 | --- | --- |
 | SessionStart | keep a generated state true, silently: its text never reaches the model on OpenCode or Kilo |
-| PostToolUse | check what this write produced, levels 1 and 2 |
-| Stop | level 3 only |
+| PostToolUse | check what this write produced |
+| Stop | check what the turn reached, for multi-write artifacts; asks once, guarded by `stop_hook_active` |
 
 PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not replay it, and nothing in this contract needs it. UserPromptSubmit and SessionEnd are out of the contract. aidd-telemetry is the stated exception: observing a session is its job.
 
@@ -39,23 +45,27 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. aidd-context also owns the layout of `aidd_docs/`: which plugin owns which folder, and a file out of its place. It never checks the content of another plugin's folder.
 2. **Claude's protocol only.** A hook reads Claude Code's payload and answers in Claude Code's keys. The CLI converts every other host's payload in and its answer out (section 6).
-3. **Findings only.** What this write produced, never the project's standing errors. Every error, one line each, then the warnings, capped high against a flood:
+3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error of a written file, one line each; errors of files the change reached, grouped by rule and fix; then the warnings, capped at the number phase 1 measures:
 
 ```
 <plugin>: <n> errors, <m> warnings
-<file>:<line> <rule> "<excerpt>" => <fix>
-<file>:<line> <rule> warning <message> => <fix>
+<file>[:<line>] <rule> ["<excerpt>"] => <fix>
+<rule> ×<count> in <folder>/* ["<excerpt>"] => <fix>
+<file>[:<line>] <rule> warning <message> => <fix>
 ```
 
-   Never "rerun this command": the line carries the fix. Silence when clean.
+   Line and excerpt are optional: a missing section has neither. Never "rerun this command": the line carries the fix. Silence when clean.
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`; the same file runs by hand, from a skill and in CI with the same result. Everything it calls lives under `hooks/`.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, no child process, no git, no network.
 6. **Bounded.** A 5 s declared timeout; the work well under a second. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Stateless.** No state, no snapshot, no temp file. A rule that needs the whole turn is level 3 and earns its state when a measured case asks for it.
+7. **Stateless, except a turn-end check.** A PostToolUse-only plugin keeps nothing. A plugin with a Stop check keeps one file per session listing the paths the turn wrote: `<os.tmpdir()>/aidd-hooks-<uid>/<plugin>/<session>`, folder `0700`, file `0600`, session id whitelisted `^[A-Za-z0-9_-]{1,128}$`, cleared at Stop, files older than 24 h swept at SessionStart without following a link. No mark, no Stop check: a turn that wrote nothing in scope costs nothing and never meets a standing error. A write appends each watched path it touched, one per line. A shell command appends the line `unknown`, its own line form, never an empty file, when it runs the plugin's engine, or when its text names a watched folder and matches a write form; any `unknown` line scopes the Stop check to the watched folders, known paths included. A read-only command marks nothing: agents read the watched folders in almost every turn, and marking reads blocked unrelated turns on standing errors (measured in aidd-ui, then reverted). Limit: a write the forms miss, such as `python -c`, is seen late, by the next write, the skill's check or CI, never lost.
 
-## 5. Shared rule
+## 5. Shared code
 
-A backticked path that does not exist is the one rule every plugin applies to its own files. It lives in one file, copied into each plugin's `hooks/lib/` and held identical by a check, until the CLI builds every distribution.
+Two pieces every plugin uses live in one file, copied into each plugin's `hooks/lib/` and held identical by a check, until the CLI builds every distribution:
+
+- a backticked path that does not exist, the one rule every plugin applies to its own files;
+- the shell write forms: a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `git apply`, `git checkout`, `git restore`.
 
 ## 6. What the CLI carries
 
@@ -63,7 +73,7 @@ A backticked path that does not exist is the one rule every plugin applies to it
 | --- | --- |
 | Hook config per tool: destination, wrapper, event map, fields kept, root token | one descriptor per tool, `profiles/<tool>/`, data only |
 | Merge and unmerge of one plugin's entries | one engine, used by every route that writes hooks |
-| Payload in, answer out | one converter, a real Node module shipped as a CLI asset, used by the OpenCode and Kilo bridges and by a command shim for Codex, Copilot and Cursor |
+| Payload in, answer out | one converter, a real Node module, copied by the CLI at build time into each distribution's hooks folder and run there by the OpenCode and Kilo bridges and by a command shim for Codex, Copilot and Cursor. Nothing calls the `aidd` binary at run time |
 | Adding a tool | one descriptor and one captured payload fixture; the contract test fails when either is missing |
 
 Codex and Copilot `apply_patch` payloads become one Claude `Edit` payload per file; the hook runs once per file and the answers are joined.
