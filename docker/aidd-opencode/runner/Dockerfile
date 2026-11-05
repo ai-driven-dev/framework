@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
       arm64) arch=arm64; checksum=670adb2f268fe21dcbb58b3db0e0aa9d5b3bddfe2c651481336e561ff86de945 ;; \
       *) exit 1 ;; \
     esac \
- && curl -fsSL -o /tmp/runner.tgz "https://github.com/actions/runner/releases/download/v2.338.2/actions-runner-linux-$arch-2.338.2.tar.gz" \
+ && curl -fsSL --retry 4 --retry-delay 2 -o /tmp/runner.tgz "https://github.com/actions/runner/releases/download/v2.338.2/actions-runner-linux-$arch-2.338.2.tar.gz" \
  && echo "$checksum  /tmp/runner.tgz" | sha256sum -c - \
  && tar -xzf /tmp/runner.tgz -C /home/runner/actions-runner \
  && unlink /tmp/runner.tgz \
