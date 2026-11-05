@@ -40,7 +40,7 @@ function writtenFiles(tool, input, cwd) {
   if (!WRITES.has(tool) || typeof input?.file_path !== "string") return [];
   const file = { path: path.resolve(cwd, input.file_path) };
   // A write carries the whole file; an edit carries fragments of it, never `content`.
-  if (typeof input.content === "string") file.content = input.content;
+  if (typeof input.content === "string") file.content = file.written = input.content;
   return [file];
 }
 

@@ -15,7 +15,7 @@ const EVENTS = new Map([
   ["Stop", "Stop"],
 ]);
 const SHELLS = new Set(["Bash"]);
-const PATCH_FILE = /^\*\*\* (?:(?:Add|Update|Delete) File|Move to): (.+)$/gm;
+const PATCH_FILE = /^\*\*\* (Add File|Update File|Delete File|Move to): (.+)$/;
 
 /** The event `readEvent` last returned: an answer is printed in its terms. */
 let current;
@@ -28,12 +28,27 @@ function readPayload() {
   }
 }
 
-/** Every file a patch names, once each, in the order it names them: added, updated, moved
- * to, or deleted. */
+/** Every file a patch names, once each, in the order it names them, with the lines the patch
+ * added to it: an added or updated file, or a move's new path. A deleted file and a move's
+ * source carry none. */
 function patchedFiles(patch, cwd) {
-  const paths = new Set();
-  for (const [, named] of patch.matchAll(PATCH_FILE)) paths.add(path.resolve(cwd, named.trim()));
-  return [...paths].map((file) => ({ path: file }));
+  const files = new Map();
+  let target;
+  for (const line of patch.split("\n")) {
+    const header = PATCH_FILE.exec(line);
+    if (header !== null) {
+      const [, kind, named] = header;
+      const file = path.resolve(cwd, named.trim());
+      if (kind === "Move to" && files.get(target)?.length === 0) files.set(target, undefined);
+      files.set(file, kind === "Delete File" ? files.get(file) : (files.get(file) ?? []));
+      target = file;
+    } else if (line.startsWith("+")) {
+      files.get(target)?.push(line.slice(1));
+    }
+  }
+  return [...files].map(([file, added]) =>
+    added === undefined ? { path: file } : { path: file, written: added.join("\n") }
+  );
 }
 
 /** A file write arrives as an `Edit` whose whole `tool_input` is the patch text; every other
