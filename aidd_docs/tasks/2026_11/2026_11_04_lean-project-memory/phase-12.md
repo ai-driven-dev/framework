@@ -43,7 +43,13 @@ status: pending
 
 > Note: `translate/domain/formats/cursor-hooks.ts`, which held `convertClaudeHooksToCursorPlugin`, is already deleted by phase 10; only the Codex entry remains here.
 
-### `3)` CLI bank
+### `3)` Agent path in rewritten references
+
+> A rewritten reference to an agent lands on the file the build writes.
+
+1. A hook or MCP command naming `${CLAUDE_PLUGIN_ROOT}/agents/<x>.md` is rewritten on Copilot's flat build to `.github/agents/<plugin>-<x>.agent.agent.md`, the extension doubled (found in phase 10, shared by the MCP rewrite). Test first: the rewritten path equals the path the agents build writes, on every flat tool; then fix the shared path logic once.
+
+### `4)` CLI bank
 
 > The next reader knows where hooks live.
 
@@ -54,4 +60,5 @@ status: pending
 | Task | Acceptance criteria |
 | ---- | ------------------- |
 | 1-2 | `pnpm lint`, `test:arch`, `knip`, `pnpm test` pass; baselines only shrank |
-| 3 | `docs-do-not-lie.arch.test.ts` passes |
+| 3 | the agent-path test fails before the fix and passes after, on every flat tool; goldens change only where they held the doubled extension |
+| 4 | `docs-do-not-lie.arch.test.ts` passes |
