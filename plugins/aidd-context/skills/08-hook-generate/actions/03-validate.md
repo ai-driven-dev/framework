@@ -16,7 +16,7 @@ A short pass or fail line per tool, plus the script.
 2. **Moment.** Confirm the event name is the right one for that tool's moment, and the matcher is well-formed ([tool-paths.md](../references/tool-paths.md)).
 3. **Blocking.** If the hook blocks, confirm the moment can block on that tool ([tool-paths.md](../references/tool-paths.md)).
 4. **Script.** For a script-backed handler, confirm the script exists, is executable, and reads stdin and signals per the contract.
-5. **Name.** Confirm each new Claude Code or Codex handler, including shared plugin hooks, has a nonempty `statusMessage` describing its action.
+5. **Name.** Confirm each new Claude Code or Codex handler has a nonempty `statusMessage` describing its action.
 
 ## Test
 
