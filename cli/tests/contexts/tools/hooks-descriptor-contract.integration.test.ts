@@ -11,7 +11,9 @@ import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
  * runs no hook has neither.
  */
 
-const PROFILES = join(REPOSITORY_ROOT, "cli", "src", "contexts", "tools", "domain", "profiles");
+// Resolved beside this file, never from the repository root: a profile loaded from another copy
+// of the package registers into that copy's registry, which this test does not read.
+const PROFILES = join(import.meta.dirname, "..", "..", "..", "src/contexts/tools/domain/profiles");
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 
 async function acceptsHooks(toolId: string): Promise<boolean> {
