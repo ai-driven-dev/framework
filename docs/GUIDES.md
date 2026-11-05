@@ -27,7 +27,19 @@
 | --- | --- |
 | Give the AI a memory of the project | `/aidd-context:02-project-memory setup` |
 
-What it creates: [Concepts](CONCEPTS.md#project-memory).
+What it writes:
+
+- `aidd_docs/memory/`: five files every project gets (brief, architecture, coding assertions, testing, version control) plus `ecosystem.md`, and one file per capability the scan finds in your project.
+- `aidd_docs/README.md`: what the AI knows and produces.
+- The memory block of the context file of each tool you pick.
+
+It writes nothing for the team to fill in. See [Concepts](CONCEPTS.md#project-memory).
+
+| Goal | Run |
+| --- | --- |
+| Print what drifted, without changing a file | `/aidd-context:02-project-memory check` |
+
+`check` prints three blocks of findings, Structure, Format and Content, and writes no report file. A file in the wrong place is offered a move to the bank root. A former file of a renamed capability is offered a merge into the file that replaced it. A file you added yourself is left alone.
 
 ## 3. Harness engineering
 
@@ -289,7 +301,7 @@ flowchart TD
 
 | Goal | Run |
 | --- | --- |
-| Refresh the project memory | `/aidd-context:02-project-memory refresh` |
+| Refresh the project memory: check, apply what you approve, then sync the tools already wired | `/aidd-context:02-project-memory refresh` |
 | Wire the memory into another tool | `/aidd-context:02-project-memory rewire` |
 | Update the plugins | [Install guide](INSTALL.md#update) |
 
