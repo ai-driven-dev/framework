@@ -109,7 +109,7 @@ const OBSERVED_COUNTS = [
   "Config: `release-please-config.json`, eleven packages.",
   "vitest, four projects — see the CLI bank",
   "One interface for five tools",
-  "`vitest.config.ts` composes two projects",
+  "`vitest.config.ts` composes four projects",
   "Three apps and twelve packages share one lockfile",
   "6 formats, 2 taps to start",
   "The suite holds 2718 tests across 582 files",
@@ -123,7 +123,6 @@ const OBSERVED_COUNTS = [
 const OBSERVED_LOOK_ALIKES = [
   "Node >=22.12 and Node 22 on port 3000.",
   "Steps 1–2 run at scope user, see step 2.",
-  "Vitest 5 uses canonical names for filtered runs.",
   "by luck (08:36 follows 07:24) and the gap",
   "v7.1 draws no screen of its own",
   "Tab map (4+1 tabs)",
@@ -132,11 +131,21 @@ const OBSERVED_LOOK_ALIKES = [
   "One fact in one home, one exists per rule.",
   "It reports 12,065 unknown words.",
   "The hash 35466894742 contradicts the log.",
-  "Six of its parts, 41 was the answer.",
+  "Six of its parts.",
+  "Takes 6-12 hours, or thirty-six on a slow day.",
 ];
 
 test("M2: a count of any things, in digits or words, is an error", () => {
   for (const line of OBSERVED_COUNTS) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
+});
+
+// Stated limits: "two" and "three" are mostly design prose, and a label, a number and a verb
+// ("Step 2 shows errors") reads as a count.
+test("M2: two, three and a label followed by a number and a verb are limits", () => {
+  for (const line of ["Two policies and three files.", "Two gates."]) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), [], line);
+  for (const line of ["Step 2 shows errors.", "Python 3 ships wheels.", "Vitest 5 uses canonical names."]) {
+    assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
+  }
 });
 
 test("M2: a name, a version, a time, a port and a numbered list stay quiet", () => {

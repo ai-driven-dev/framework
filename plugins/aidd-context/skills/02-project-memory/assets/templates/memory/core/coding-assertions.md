@@ -20,7 +20,7 @@ The heavier gate.
 
 ## Behavior
 
-I fix is needed, spawn 1 agent per assertion to fix (e.g typechecking / tests / rules violated on category UI = 3 agents).
+I fix is needed, spawn 1 agent per assertion to fix (e.g typechecking, tests, rules violated on category UI: one agent per assertion).
 
 <!--
 Capture: the real commands a contributor runs, in order, for each gate.
