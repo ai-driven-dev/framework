@@ -85,7 +85,7 @@ describe("aidd run", () => {
           env.fakeHome,
           { env: { PATH: `${bin}${delimiter}${dirname(process.execPath)}` } }
         );
-        expect(result.exitCode).toBe(0);
+        expect(result.exitCode, result.stderr).toBe(0);
         expect(result.stdout).toBe("");
         expect(result.stderr).toContain("MAINTENANCE NOTICE");
         expect(JSON.parse(await readFile(log, "utf8"))).toEqual([

@@ -165,6 +165,25 @@ async function runFrameworkUpdate(
   );
 }
 
+function printReleaseLinks(
+  output: CLIOutput,
+  release: string,
+  currentRefs: readonly string[]
+): void {
+  const repository = "https://github.com/ai-driven-dev/framework";
+  output.info(`Release notes: ${repository}/releases/tag/${encodeURIComponent(release)}`);
+  const distinctRefs = [...new Set(currentRefs)].filter((ref) => ref !== release);
+  if (distinctRefs.length === 0) return;
+  output.info(
+    "Repository changes between current tags (not limited to installed plugins; tags can move):"
+  );
+  for (const ref of distinctRefs) {
+    output.info(
+      `  ${ref} -> ${release}: ${repository}/compare/${encodeURIComponent(ref)}...${encodeURIComponent(release)}`
+    );
+  }
+}
+
 function printReleasePreview(
   output: CLIOutput,
   projectRoot: string,
@@ -181,6 +200,10 @@ function printReleasePreview(
       `  ${target.toolId}:${target.pluginName} (plugin ${version}; source ${target.currentRef} -> ${preview.release})`
     );
   }
+  printReleaseLinks(output, preview.release, [
+    preview.currentRef,
+    ...preview.targets.map((target) => target.currentRef),
+  ]);
   if (preview.globalSkipped)
     output.info(`${preview.globalSkipped} user-scope plugin entries will not be updated.`);
   if (preview.shared) output.warn("This marketplace is shared; other projects may be affected.");
@@ -242,6 +265,11 @@ async function runUserFrameworkReleaseUpdate(
         if (target.dependents.length)
           output.info(`    Dependent projects: ${target.dependents.join(", ")}`);
       }
+      printReleaseLinks(
+        output,
+        preview.release,
+        preview.targets.map((target) => target.currentRef)
+      );
       if (preview.nativeSkipped)
         output.warn(
           `${preview.nativeSkipped} native plugin claims are not updated by this command.`

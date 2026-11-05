@@ -1,8 +1,19 @@
 # Native marketplace commands
 
-Read on 2026-11-04. Commands and support can change; recheck installed help before use.
+Read on 2026-11-05. Commands and support can change; recheck installed help before use.
 
 - Claude Code: `claude plugin marketplace update aidd-framework`, then `claude plugin update <plugin>@aidd-framework` for each selected installed reference and its actual scope. Updating a plugin requires a new session. [Claude Code plugin reference](https://code.claude.com/docs/en/cli-reference)
 - Copilot CLI: `copilot plugin marketplace update aidd-framework`, then `copilot plugin update <plugin>@aidd-framework` for each selected installed reference. A directory-source marketplace loads its local files, not a remote release. [Copilot CLI plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference)
 - Codex: `codex plugin marketplace upgrade aidd-framework` refreshes a configured Git marketplace; it does not itself establish that every installed plugin changed. [Codex plugin documentation](https://developers.openai.com/plugins/build/plugins)
 - Cursor, OpenCode and Kilo: an equivalent direct native release upgrade is unverified. Use their installed tool's own documented flow or report the limitation.
+
+## GitHub marketplace pinned to an older release
+
+The update commands above refresh the configured ref; they do not move an old release tag. The following paths were exercised with Claude Code 2.1.318 and Copilot CLI 1.0.105, with an `ai-driven-dev/framework` GitHub marketplace pinned to `v5.12.0`, upgrading to `v5.13.0`. Do not generalize them to other source types.
+
+After the user selects a verified release and approves the affected marketplace scope, find its single effective, editable `extraKnownMarketplaces.aidd-framework.source` entry. Require `source: "github"`, `repo: "ai-driven-dev/framework"`, and an unambiguous existing release `ref`; refuse managed, conflicting or otherwise ambiguous configuration. Record the installed plugin identities, scopes and enabled states. Re-read the settings immediately before writing and stop if they changed. Preserve all other settings and JSON/JSONC comments; change only that entry's `ref` to the selected tag, or stop if it cannot be preserved. Do not remove the marketplace: Claude removal uninstalled its plugins and warned that their saved data could also be deleted, and Copilot requires force to remove one with installed plugins.
+
+- Claude Code: the verified marketplace scopes are `user` (`${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json`) and `project` (`.claude/settings.json`). After changing the ref in the owning file, run `claude plugin marketplace add 'ai-driven-dev/framework#<tag>' --scope <user|project>`, then `claude plugin update <plugin>@aidd-framework --scope <scope>` for each selected installed plugin. Plugin scopes `user`, `project` and `local` were exercised; use each plugin's existing scope. A new session is required. [Claude settings and scopes](https://code.claude.com/docs/en/settings), [CLI reference](https://code.claude.com/docs/en/cli-reference).
+- Copilot CLI: the verified marketplace scope is user (`${COPILOT_HOME:-~/.copilot}/settings.json`). After changing the ref there, run `copilot plugin marketplace update aidd-framework`, then `copilot plugin update <plugin>@aidd-framework` for each selected installed plugin. A disabled plugin stayed disabled in testing. [Copilot configuration](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [plugin reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference).
+
+Re-read the effective source and installed plugins after each operation. If a refresh or update fails, stop and report the changed ref and any plugins still on the old version; do not claim an atomic update. Other marketplace scopes and managed configurations are unverified.

@@ -329,6 +329,43 @@ describe("aidd framework update", () => {
     expect(lines.join("\n")).toContain("Update cancelled; no installation changes were made.");
   });
 
+  it("shows each distinct machine source comparison and release before confirmation", async () => {
+    pretendTerminal(true);
+    upgradeUserFramework.mockImplementation(async (options) => {
+      const target = {
+        toolId: "opencode",
+        name: "aidd-context",
+        currentVersion: "2.9.0",
+        targetVersion: "2.10.0",
+        dependents: [],
+      };
+      const confirmed = await options.confirm({
+        release: options.release,
+        nativeSkipped: 0,
+        targets: [
+          { ...target, currentRef: "v5.11.0" },
+          { ...target, currentRef: "v5.12.0" },
+          { ...target, currentRef: "v5.12.0" },
+          { ...target, currentRef: "v5.13.0" },
+        ],
+      });
+      return { updated: [], nativeSkipped: 0, cancelled: !confirmed };
+    });
+    confirmUpgrade.mockImplementation(async () => {
+      const preview = written.join("");
+      expect(preview).toContain("https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0");
+      expect(preview).toContain(
+        "https://github.com/ai-driven-dev/framework/compare/v5.11.0...v5.13.0"
+      );
+      expect(preview.match(/compare\/v5\.12\.0\.\.\.v5\.13\.0/g)).toHaveLength(1);
+      expect(preview).not.toContain("compare/v5.13.0...v5.13.0");
+      expect(preview).toContain("not limited to installed plugins");
+      return false;
+    });
+    await run("update", "--release", "v5.13.0", "--scope", "user");
+    expect(confirmUpgrade).toHaveBeenCalledOnce();
+  });
+
   it("requires confirmation for noninteractive machine updates", async () => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
@@ -416,6 +453,41 @@ describe("aidd framework update", () => {
     expect(errors.join("")).toMatch(/shared/i);
     expect(confirmUpgrade).toHaveBeenCalledOnce();
     expect(updateAiTools).not.toHaveBeenCalled();
+  });
+
+  it("shows marketplace and distinct project plugin comparisons before confirmation", async () => {
+    pretendTerminal(true);
+    upgradeFramework.mockImplementation(async (options) => {
+      const target = {
+        toolId: "opencode",
+        pluginName: "aidd-context",
+        currentVersion: "2.9.0",
+        targetVersion: "2.10.0",
+      };
+      const confirmed = await options.confirm({
+        currentRef: "v5.11.0",
+        release: options.release,
+        targets: [
+          { ...target, currentRef: "v5.12.0" },
+          { ...target, currentRef: "v5.12.0" },
+        ],
+        globalSkipped: 0,
+        shared: false,
+      });
+      return { updated: [], globalSkipped: 0, cancelled: !confirmed };
+    });
+    confirmUpgrade.mockImplementation(async () => {
+      const preview = written.join("");
+      expect(preview).toContain("https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0");
+      expect(preview).toContain(
+        "https://github.com/ai-driven-dev/framework/compare/v5.11.0...v5.13.0"
+      );
+      expect(preview.match(/compare\/v5\.12\.0\.\.\.v5\.13\.0/g)).toHaveLength(1);
+      expect(preview).toContain("not limited to installed plugins");
+      return false;
+    });
+    await run("update", "--release", "v5.13.0");
+    expect(confirmUpgrade).toHaveBeenCalledOnce();
   });
 
   it("requires explicit approval outside a terminal", async () => {
