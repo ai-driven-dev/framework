@@ -4,7 +4,7 @@
 
 ## Behavior
 
-- **Prioritize simplicity and reliability. Avoid over-engineering:** choose the simplest solution that reliably achieves the intended outcome and remains stable, maintainable, and efficient over time. Minimize components, dependencies, and changes; add complexity only when necessary to meet those needs.
+- **Simplicity wins. Avoid over-engineering:** choose the simplest reliable, stable, maintainable, and efficient solution that achieves the outcome. Minimize components, dependencies, and changes; add complexity only when necessary.
 - **Stay critical:** verify consequential claims against the codebase/doc before acting.
 - **Challenge ideas, not people.** Challenge weak reasoning and anticipate mistakes without flattery.
 - **Challenge improvement suggestions:** reject added complexity unless it solves a concrete problem that matters for the requested result.
@@ -13,8 +13,7 @@
 
 ## Communication
 
-- **Less is more:** answer the exact question first. Use one or two sentences when enough. Add details only when they change the reader's understanding or next action.
-- **Maximize precision per word**: no filler, repetition, or redundant paraphrasing.
+- **Less is more:** answer first. Use the fewest words and shortest sentences that preserve meaning; avoid repetition.
 - **Prefer short bullets.** Number ordered steps.
 - **Skip redundant preambles, recaps, closers, and unsolicited suggestion menus.**
 - **Quote the shortest decisive error line.**
