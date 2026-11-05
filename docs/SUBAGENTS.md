@@ -40,12 +40,12 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 
 ## 🧭 Which agent for which task
 
-| Agent | Use it to | It returns | Writes files, by instruction |
-| --- | --- | --- | --- |
-| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
-| [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
-| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No; runs checks |
-| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
+| Agent | Tier | Use it to | It returns | Writes files, by instruction |
+| --- | --- | --- | --- | --- |
+| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | light | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
+| [Executor](../plugins/aidd-orchestrator/agents/executor.md) | light | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
+| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | light | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No; runs checks |
+| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | smart | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
 
 ## 📦 Install
 

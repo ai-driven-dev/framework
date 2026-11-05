@@ -176,9 +176,9 @@ export class SetAgentModelUseCase {
     const home = this.homedir();
     const own = userMachineLocalFilesOf(host, home, this.env)[0];
     if (own !== undefined) return own;
-    const machineDir = globalFilesOf(host)?.dir(home);
-    if (machineDir === undefined) return undefined;
-    const path = join(machineDir, settings.file);
+    const globalDir = globalFilesOf(host)?.dir(home);
+    if (globalDir === undefined) return undefined;
+    const path = join(globalDir, settings.file);
     const twin = `${path}c`;
     return !(await this.fs.fileExists(path)) && (await this.fs.fileExists(twin)) ? twin : path;
   }
