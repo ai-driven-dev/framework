@@ -72,9 +72,16 @@ export function shardFiles(mutate, files, shard, of, weightOf = linesOf) {
   return partition(mutate, files, of, weightOf)[shard - 1];
 }
 
-/** The shards' reports as one: each file is in exactly one shard, so nothing overlaps. */
-export function mergeReports(reports) {
-  return { files: Object.assign({}, ...reports.map((report) => report.files ?? {})) };
+/** Score only the files assigned to each shard, never stale entries from an incremental cache. */
+export function mergeReports(shards) {
+  const files = {};
+  for (const shard of shards) {
+    for (const path of shard.manifest.files) {
+      const report = shard.report.files?.[path];
+      if (report !== undefined) files[path] = report;
+    }
+  }
+  return { files };
 }
 
 /** Why a sharded scope cannot be scored, or null. Every shard must be there, each must have
@@ -82,8 +89,10 @@ export function mergeReports(reports) {
  * mutated: a missing or drifted shard would lift the score by leaving mutants out. */
 export function aggregateVerdict({ mutate, files, of, shards, weightOf = linesOf }) {
   for (let shard = 1; shard <= of; shard += 1) {
-    const found = shards.find((candidate) => candidate.manifest.shard === shard);
-    if (found === undefined) return `shard ${shard} of ${of} is missing`;
+    const matches = shards.filter((candidate) => candidate.manifest.shard === shard);
+    if (matches.length === 0) return `shard ${shard} of ${of} is missing`;
+    if (matches.length > 1) return `shard ${shard} of ${of} was supplied more than once`;
+    const found = matches[0];
     if (found.manifest.of !== of)
       return `shard ${shard} was cut in ${found.manifest.of}, not ${of}`;
     const expected = shardFiles(mutate, files, shard, of, weightOf);
@@ -92,8 +101,7 @@ export function aggregateVerdict({ mutate, files, of, shards, weightOf = linesOf
       return `shard ${shard} of ${of} mutated other files than the partition gives it`;
     }
   }
-  const mutants = Object.values(mergeReports(shards.map((s) => s.report)).files).flatMap(
-    (file) => file.mutants
-  ).length;
+  if (shards.length !== of) return `unexpected shard outside 1 to ${of}`;
+  const mutants = Object.values(mergeReports(shards).files).flatMap((file) => file.mutants).length;
   return mutants === 0 ? "the shards hold no mutant" : null;
 }

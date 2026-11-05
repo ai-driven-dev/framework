@@ -276,7 +276,7 @@ function mainAggregate(scope, scopes, from) {
     console.error(`${scope}: ${problem}`);
     process.exit(1);
   }
-  const merged = mergeReports(shards.map((shard) => shard.report));
+  const merged = mergeReports(shards);
   const score = scoreOf(merged);
   console.log(
     `\nReport: ${scope} over ${shards.length} shards (score ${score.toFixed(1)}, floor ${declared.break})`

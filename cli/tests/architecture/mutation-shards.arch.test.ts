@@ -117,9 +117,55 @@ describe("scoring a sharded scope once, over every shard", () => {
   };
 
   it("merges the shards into the report one run would have written", () => {
-    const merged = mergeReports([shard(1).report, shard(2).report]);
+    const merged = mergeReports([shard(1), shard(2)]);
     expect(Object.keys(merged.files).sort()).toEqual([...files].sort());
     expect(scoreOf(merged)).toBe(50);
+  });
+
+  it("scores only each shard's own files even when another shard carries stale results", () => {
+    const first = shard(1);
+    const second = shard(2);
+    const otherFile = first.manifest.files[0];
+    const stale = {
+      ...second,
+      report: {
+        files: {
+          ...second.report.files,
+          [otherFile]: { mutants: [mutant("Killed"), mutant("Killed")] },
+          "src/other/stale.ts": { mutants: [mutant("Killed")] },
+        },
+      },
+    };
+    const merged = mergeReports([first, stale]);
+    expect(Object.keys(merged.files).sort()).toEqual([...files].sort());
+    expect(merged.files[otherFile]?.mutants.map((item) => item.status)).toEqual([
+      "Killed",
+      "Survived",
+    ]);
+    expect(scoreOf(merged)).toBe(50);
+    expect(mergeReports([stale, first])).toEqual(merged);
+  });
+
+  it("does not count stale files when determining whether shards hold mutants", () => {
+    const empty = [1, 2].map((i) => {
+      const current = shard(i);
+      const foreign = shard(i === 1 ? 2 : 1).manifest.files[0];
+      return { ...current, report: report({ [foreign]: ["Killed"] }) };
+    });
+    expect(aggregateVerdict({ mutate, files, of, weightOf, shards: empty })).toMatch(/no mutant/);
+  });
+
+  it("fails when the same shard is supplied more than once", () => {
+    expect(
+      aggregateVerdict({ mutate, files, of, weightOf, shards: [shard(1), shard(2), shard(2)] })
+    ).toMatch(/shard 2 of 2.*more than once/);
+  });
+
+  it("fails when an unexpected shard is supplied", () => {
+    const unexpected = { ...shard(1), manifest: { ...shard(1).manifest, shard: 3 } };
+    expect(
+      aggregateVerdict({ mutate, files, of, weightOf, shards: [shard(1), shard(2), unexpected] })
+    ).toMatch(/unexpected shard/);
   });
 
   it("passes when every shard is there and matches the partition", () => {
