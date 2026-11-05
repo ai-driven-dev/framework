@@ -387,6 +387,14 @@ test('reports a verified catalogue diff and editorial title', async t => {
   assert.equal(calls.length,2);
 });
 
+test('shows the release tag with its title even when the marketplace is current', async t => {
+  const options=fixture(t,{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.13.0'},'5.13.0');
+  const text=format(await status({...options,fetcher:releases([],available)}));
+  const releaseLine=text.split('\n').find(line=>line.includes('Dernière release'));
+  assert.match(releaseLine,/v5\.13\.0/);
+  assert.match(releaseLine,/Télémétrie et Plan/);
+});
+
 test('dates a release from the cache and refreshes it after 24 hours', async t => {
   const options = fixture(t); const calls=[]; const fetcher=releases(calls, available);
   const now=Date.parse('2026-11-04T23:30:00Z');

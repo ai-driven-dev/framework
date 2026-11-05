@@ -377,19 +377,17 @@ function format(result) {
   let message = result.version ? `AI-Driven Development ON · marketplace v${result.version}${result.local ? ' (version enregistrée)' : ''}` : 'AI-Driven Development ON · version du marketplace inconnue';
   if (result.latest) {
     const checkedAt = new Date(result.checkedAt);
-    const checked = Number.isFinite(checkedAt.getTime()) ? ` (vérifiée le ${checkedAt.toISOString().slice(0,16).replace('T',' ')} UTC)` : '';
+    const checked = Number.isFinite(checkedAt.getTime()) ? `\nVérifiée le ${checkedAt.toISOString().slice(0,16).replace('T',' ')} UTC` : '';
     const title = clean(result.latest.title);
     const detail = title && title !== result.latest.tag ? ` · ${title}` : result.latest.titlePending ? ' · titre indisponible' : '';
-    message += result.local
-      ? `\nDernière release officielle : ${result.latest.tag}${detail}${checked}`
-      : `\nDernière release : ${title || result.latest.tag}${result.latest.titlePending && title === result.latest.tag ? ' · titre indisponible' : ''}${checked}`;
+    message += `\n\nDernière release${result.local ? ' officielle' : ''} : ${result.latest.tag}${detail}${checked}`;
   }
   if (result.local && result.version && result.latest && compare(semver(result.latest.tag), semver(result.version)) > 0)
     message += `\nVersion enregistrée : v${result.version} → ${result.latest.tag} (comparaison indicative)`;
   if (result.local) message += '\nSource locale : le contenu peut différer de la release officielle';
   if (result.marketplaceUpdate) message += `\nMarketplace partagé : v${result.version} → ${result.marketplaceUpdate} (source inchangée)`;
   if (result.hasUpdate) {
-    message += `\nMise à jour disponible : ${result.latest.tag} · skill aidd-maintenance · 01-update`;
+    message += `\n\nMise à jour disponible : v${result.version} → ${result.latest.tag}\nPour mettre à jour : skill aidd-maintenance · 01-update`;
   }
   const updates = result.pluginUpdates || [];
   const entries = [...updates, ...(result.pluginAhead || []).map(plugin => ({...plugin, ahead:true}))];
@@ -397,17 +395,17 @@ function format(result) {
     const left = `${a.scope}:${a.tool}:${a.name}`; const right = `${b.scope}:${b.tool}:${b.name}`;
     return left < right ? -1 : left > right ? 1 : 0;
   });
-  if (entries.length) message += '\nPlugins enregistrés par le CLI AIDD :';
+  if (entries.length) message += '\n\nPlugins enregistrés par le CLI AIDD :';
   for (const plugin of entries.slice(0, 5)) {
     const identity = `${plugin.tool} · ${plugin.name} · ${plugin.scope === 'user' ? 'global' : 'projet'}`;
     if (plugin.ahead) {
       const conflict = plugin.targetVersion
         ? `version enregistrée ${plugin.version} supérieure à ${plugin.targetVersion}`
         : `source ${plugin.ref} supérieure à ${plugin.targetRef}`;
-      message += `\n${identity} · ${conflict} : mise à jour non proposée`;
+      message += `\n  • ${identity} · ${conflict} : mise à jour non proposée`;
     } else {
       const targetVersion = plugin.targetVersion ? ` → ${plugin.targetVersion}` : ' → version cible inconnue';
-      message += `\n${identity} · version enregistrée ${plugin.version}${targetVersion} · source ${plugin.ref} → ${plugin.targetRef}`;
+      message += `\n  • ${identity} · version enregistrée ${plugin.version}${targetVersion} · source ${plugin.ref} → ${plugin.targetRef}`;
     }
   }
   if (entries.length > 5) message += `\nEt ${entries.length - 5} autre${entries.length === 6 ? '' : 's'} installation${entries.length === 6 ? '' : 's'} à vérifier`;
