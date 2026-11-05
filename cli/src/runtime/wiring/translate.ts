@@ -79,10 +79,9 @@ function frameworkBuildFactoryFor(
   return (deps, ctx) =>
     buildFrameworkUseCase(
       deps,
-      (d, av) =>
+      (d) =>
         new FlatBuildStrategy(
           d.fs,
-          av,
           d.assetProvider,
           buildContract(),
           ctx.force,

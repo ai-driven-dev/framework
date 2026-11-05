@@ -2,6 +2,7 @@ import { basename, resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
+  ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/domain/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
@@ -9,7 +10,6 @@ import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/doma
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
-import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import {
   FlatTargetExistsError,
   FrameworkPlaceholderInPluginError,
@@ -101,10 +101,8 @@ function makeUseCase(
 ): FrameworkBuildUseCase {
   const v = validator ?? makeValidator();
   const ap = makeAssetProvider();
-  const av = new AjvSchemaValidatorAdapter();
   const strategy = new FlatBuildStrategy(
     memFs,
-    av,
     ap,
     buildCopilotFlatContract(),
     force,
@@ -239,7 +237,6 @@ describe("FlatOutputStrategy integration", () => {
       const ap = makeAssetProvider();
       const strategy = new FlatBuildStrategy(
         emptyFs,
-        new AjvSchemaValidatorAdapter(),
         ap,
         buildCopilotFlatContract(),
         false,
@@ -260,7 +257,6 @@ describe("FlatOutputStrategy integration", () => {
       const ap2 = makeAssetProvider();
       const strategy = new FlatBuildStrategy(
         fileFs,
-        new AjvSchemaValidatorAdapter(),
         ap2,
         buildCopilotFlatContract(),
         false,
@@ -316,7 +312,6 @@ describe("FlatOutputStrategy integration", () => {
       const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
       const strategy = new FlatBuildStrategy(
         memFs,
-        new AjvSchemaValidatorAdapter(),
         makeAssetProvider(),
         buildCopilotFlatContract(),
         false,
@@ -335,7 +330,6 @@ describe("FlatOutputStrategy integration", () => {
       const ap = makeAssetProvider();
       const strategy = new FlatBuildStrategy(
         fs,
-        new AjvSchemaValidatorAdapter(),
         ap,
         buildOpencodeFlatContract(),
         force,
@@ -385,7 +379,6 @@ describe("FlatOutputStrategy integration", () => {
       const base = buildOpencodeFlatContract();
       const strategy = new FlatBuildStrategy(
         memFs,
-        new AjvSchemaValidatorAdapter(),
         makeAssetProvider(),
         { ...base, artifacts: { ...base.artifacts, hooks: { supported: false } } },
         false,
@@ -449,7 +442,6 @@ function stubStrategy(
 ): FlatBuildStrategy {
   return new FlatBuildStrategy(
     memFs,
-    new AjvSchemaValidatorAdapter(),
     makeAssetProvider(),
     contract,
     false,
@@ -614,7 +606,6 @@ describe("the hooks a flat layout writes", () => {
     memFs.setFile(`${STUB_OUT}/.stub/hooks/aidd-test.hooks.json`, "stale");
     const strategy = new FlatBuildStrategy(
       memFs,
-      makeValidator(),
       makeAssetProvider(),
       withHooks(fileArtifact(false)),
       true,
@@ -775,21 +766,39 @@ describe("what a flat layout writes once every plugin is built", () => {
     ).toBe(0);
   });
 
-  it("hands every built plugin's name, the output and the source to the layout's own step", async () => {
-    const memFs = new InMemoryFileAdapter({});
-    const seen: { names: readonly string[]; outDir: string; sourceDir: string }[] = [];
+  it("hands the layout's own step what it names, then writes what it returns", async () => {
+    const memFs = new InMemoryFileAdapter({
+      "/src/plugins/aidd-test/.mcp.json": '{"mcpServers":{}}',
+      [`${STUB_OUT}/kept.json`]: "kept",
+    });
+    const seen: ConfigArtifactInput[] = [];
     const contract = stubContract({
-      emitConfigArtifact: (names, outDir, sourceDir) => {
-        seen.push({ names, outDir, sourceDir });
-        return Promise.resolve(1);
+      configArtifact: {
+        reads: (names) => ["kept.json", ...names.map((name) => `${name}.absent`)],
+        assets: { tool: "opencode", names: ["opencode-events.js"] },
+        emit: (input) => {
+          seen.push(input);
+          return [
+            { path: "one.json", content: "1" },
+            { path: "nested/two.json", content: "2" },
+          ];
+        },
       },
     });
     const strategy = stubStrategy(memFs, contract);
-    memFs.setFile(`${STUB_OUT}/.keep`, "");
     await strategy.preBuild(STUB_OUT, "/src");
-    expect(
-      await strategy.postBuild({ name: "m", plugins: [] }, [{ name: "aidd-test" }], STUB_OUT)
-    ).toBe(1);
-    expect(seen).toEqual([{ names: ["aidd-test"], outDir: STUB_OUT, sourceDir: "/src" }]);
+    const built = [{ name: "aidd-test" }, { name: "aidd-bare" }];
+
+    expect(await strategy.postBuild({ name: "m", plugins: [] }, built, STUB_OUT)).toBe(2);
+    expect(seen).toStrictEqual([
+      {
+        builtPlugins: ["aidd-test", "aidd-bare"],
+        pluginMcp: new Map([["aidd-test", '{"mcpServers":{}}']]),
+        existing: new Map([["kept.json", "kept"]]),
+        assets: new Map([["opencode-events.js", "export async function setupOpencodeEvents() {}"]]),
+      },
+    ]);
+    expect(memFs.getFile(`${STUB_OUT}/one.json`)).toBe("1");
+    expect(memFs.getFile(`${STUB_OUT}/nested/two.json`)).toBe("2");
   });
 });

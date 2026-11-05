@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
   ArtifactSource,
+  ConfigArtifact,
 } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   buildCodexContract,
@@ -28,6 +29,12 @@ function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supp
 
 function sourceOf(artifact: ArtifactContract): ArtifactSource | null {
   return artifact.supported ? artifact.source : null;
+}
+
+function configArtifactOf(): ConfigArtifact {
+  const step = buildCodexFlatContract().configArtifact;
+  if (step === undefined) throw new Error("codex flat declares no config artifact");
+  return step;
 }
 
 describe("buildCodexContract()", () => {
@@ -293,43 +300,54 @@ describe("buildCodexFlatContract()", () => {
     });
   });
 
-  it("writes one config.toml holding every built plugin's mcp servers, under its plugin prefix", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/src/plugins/aidd-dev/.mcp.json": JSON.stringify({
-        mcpServers: { context: { command: "node" } },
-      }),
-    });
-
-    const written = await buildCodexFlatContract().emitConfigArtifact?.(
-      ["aidd-dev", "aidd-pm"],
-      "/out",
-      "/src",
-      fs,
-      { validate: () => undefined },
-      { loadConfigAsset: () => ({}), loadSchema: () => ({}) }
-    );
-
-    expect({ written, config: fs.getFile("/out/.codex/config.toml") }).toStrictEqual({
-      written: 1,
-      config:
-        'project_doc_max_bytes = 262144\n\n[mcp_servers.aidd-dev-context]\ncommand = "node"\n\n[features]\nhooks = true\n',
-    });
+  it("reads the project's own config.toml before writing it", () => {
+    expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([".codex/config.toml"]);
+    expect(configArtifactOf().assets).toStrictEqual({ tool: "codex", names: [] });
   });
 
-  it("writes no mcp_servers table when no built plugin ships an mcp server", async () => {
-    const fs = new InMemoryFileAdapter();
+  it("writes one config.toml holding every built plugin's mcp servers, under its plugin prefix", () => {
+    const files = configArtifactOf().emit({
+      builtPlugins: ["aidd-dev", "aidd-pm"],
+      pluginMcp: new Map([
+        ["aidd-dev", JSON.stringify({ mcpServers: { context: { command: "node" } } })],
+      ]),
+      existing: new Map(),
+      assets: new Map(),
+    });
 
-    await buildCodexFlatContract().emitConfigArtifact?.(
-      ["aidd-dev"],
-      "/out",
-      "/src",
-      fs,
-      { validate: () => undefined },
-      { loadConfigAsset: () => ({}), loadSchema: () => ({}) }
-    );
+    expect(files).toStrictEqual([
+      {
+        path: ".codex/config.toml",
+        content:
+          'project_doc_max_bytes = 262144\n\n[mcp_servers.aidd-dev-context]\ncommand = "node"\n\n[features]\nhooks = true\n',
+      },
+    ]);
+  });
 
-    expect(fs.getFile("/out/.codex/config.toml")).toBe(
-      "project_doc_max_bytes = 262144\n\n[features]\nhooks = true\n"
-    );
+  it("keeps the project's own config.toml keys", () => {
+    const files = configArtifactOf().emit({
+      builtPlugins: [],
+      pluginMcp: new Map(),
+      existing: new Map([[".codex/config.toml", 'model = "o3"\n']]),
+      assets: new Map(),
+    });
+
+    expect(files[0]?.content).toContain('model = "o3"');
+  });
+
+  it("writes no mcp_servers table when no built plugin ships an mcp server", () => {
+    const files = configArtifactOf().emit({
+      builtPlugins: ["aidd-dev"],
+      pluginMcp: new Map(),
+      existing: new Map(),
+      assets: new Map(),
+    });
+
+    expect(files).toStrictEqual([
+      {
+        path: ".codex/config.toml",
+        content: "project_doc_max_bytes = 262144\n\n[features]\nhooks = true\n",
+      },
+    ]);
   });
 });

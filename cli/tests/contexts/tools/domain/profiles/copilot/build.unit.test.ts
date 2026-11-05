@@ -224,10 +224,9 @@ describe("buildCopilotFlatContract()", () => {
   it("gives a flat agent the plugin prefix and the .agent.md extension Copilot discovers", () => {
     const agents = supported(buildCopilotFlatContract().artifacts.agents);
 
-    expect({ ext: agents.ext, path: agents.path("aidd-dev", "agents/planner.md") }).toStrictEqual({
-      ext: ".agent.md",
-      path: ".github/agents/aidd-dev-planner.agent.md",
-    });
+    expect(agents.path("aidd-dev", "agents/planner.md")).toBe(
+      ".github/agents/aidd-dev-planner.agent.md"
+    );
   });
 
   it("lands a plugin's hooks declaration beside the other hooks and its scripts under the plugin's own folder", () => {

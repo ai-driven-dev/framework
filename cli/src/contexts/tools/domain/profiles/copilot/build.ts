@@ -146,7 +146,6 @@ export function buildCopilotFlatContract(): ToolBuildContract {
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        ext: FLAT_AGENT_OUTPUT_EXT,
         path: copilotFlatAgentPath,
         transform: transformCopilotFlatAgent,
       },

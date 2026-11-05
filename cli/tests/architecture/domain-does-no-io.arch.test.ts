@@ -30,8 +30,7 @@ const BASELINE: readonly { readonly file: string; readonly imports: number; reas
   {
     file: "src/contexts/tools/domain/build-contract.ts",
     imports: 2,
-    reason:
-      "the build contract hands each profile `fs` for its marketplace catalog and config emit",
+    reason: "the build contract hands each profile `fs` for its marketplace catalog and entry",
   },
   {
     file: "src/contexts/tools/domain/capabilities/mcp-capability.ts",
@@ -44,25 +43,9 @@ const BASELINE: readonly { readonly file: string; readonly imports: number; reas
     reason: "the Claude-style catalog reads each plugin manifest and writes the entry",
   },
   {
-    file: "src/contexts/tools/domain/profiles/codex/build.ts",
-    imports: 2,
-    reason: "the flat build reads the plugin's MCP file and merges `.codex/config.toml`",
-  },
-  {
-    file: "src/contexts/tools/domain/profiles/kilo/build.ts",
-    imports: 2,
-    reason: "the flat build reads the plugin's MCP file and merges the Kilo config",
-  },
-  {
     file: "src/contexts/tools/domain/profiles/kilo/kilo-paths.ts",
     imports: 1,
     reason: "`resolveKiloConfigPath` probes which config file the project already has",
-  },
-  {
-    file: "src/contexts/tools/domain/profiles/opencode/build.ts",
-    imports: 2,
-    reason:
-      "the flat build reads the plugin's MCP file, merges opencode.json, writes the bridge events",
   },
   {
     file: "src/contexts/tools/domain/registry.ts",
