@@ -22,8 +22,27 @@ function inProject(files, body) {
   }
 }
 
-test("the library exports exactly its five functions", () => {
-  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["deadPaths", "formatFindings", "isShellWrite", "markdownLines", "proseLines"]);
+test("the library exports exactly its functions: the rules, the output shape and the turn-end state", () => {
+  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), [
+    "changedLines",
+    "consumeTurn",
+    "deadPaths",
+    "formatFindings",
+    "isShellWrite",
+    "leaveBaseline",
+    "leaveTurn",
+    "markWrite",
+    "markdownLines",
+    "proseLines",
+    "reachesTouched",
+    "readBaseline",
+    "readTurn",
+    "requiredAtStop",
+    "sweepTurns",
+    "tellOnce",
+    "touchedLines",
+    "turnMark",
+  ]);
 });
 
 test("the library requires only the built-ins the hook contract allows: node:fs, node:os, node:path", () => {

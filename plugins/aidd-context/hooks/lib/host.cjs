@@ -28,7 +28,14 @@ function readPayload() {
   }
 }
 
-function writtenFiles(tool, input, cwd) {
+/** What a Write replaced, as the host says it: the whole file before it, or nothing when the Write
+ * created the file. Undefined when the host says neither. */
+function replacedByWrite(response) {
+  if (typeof response?.originalFile === "string") return response.originalFile;
+  return response?.type === "create" && response.originalFile === null ? "" : undefined;
+}
+
+function writtenFiles(tool, input, response, cwd) {
   if (!WRITES.has(tool) || typeof input?.file_path !== "string") return [];
   const file = { path: path.resolve(cwd, input.file_path) };
   // A write carries the whole file; an edit carries fragments of it, never `content`.
@@ -36,8 +43,9 @@ function writtenFiles(tool, input, cwd) {
   // What this write put in the file: the whole of a Write, the replacement of an Edit.
   const written = input.content ?? input.new_string;
   if (typeof written === "string") file.written = written;
-  // What it replaced: an Edit's old string, context lines it repeats included.
-  if (typeof input.old_string === "string") file.replaced = input.old_string;
+  // What it replaced: an Edit's old string, context lines it repeats included; a Write's former file.
+  const replaced = typeof input.content === "string" ? replacedByWrite(response) : input.old_string;
+  if (typeof replaced === "string") file.replaced = replaced;
   return [file];
 }
 
@@ -52,7 +60,7 @@ function readEvent() {
   current = {
     host: HOST,
     event,
-    files: writtenFiles(tool, input, cwd),
+    files: writtenFiles(tool, input, raw.tool_response, cwd),
     ...(SHELLS.has(tool) && typeof input?.command === "string" ? { command: input.command } : {}),
     stopActive: raw.stop_hook_active === true,
     sessionId: typeof raw.session_id === "string" ? raw.session_id : null,
