@@ -5,13 +5,12 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-// The hook is a script, not a module: the CLI copies it into the user's project,
-// where a "type": "module" package.json decides how it is parsed. Driving it as a
-// subprocess is the only way to test what actually ships.
-const HOOK = path.resolve(__dirname, "../../plugins/aidd-context/hooks/update_memory.js");
-// Run from inside a Claude Code session, an inherited CLAUDE_PROJECT_DIR would send the hook
-// into that real project and rewrite its CLAUDE.md and memory README.
-const HOOK_ENV = { ...process.env, CLAUDE_PROJECT_DIR: "" };
+// The entry is a script: the CLI copies the plugin's hooks into the user's project, where a
+// "type": "module" package.json decides how it is parsed. Driving it as a subprocess is the
+// only way to test what actually ships.
+const HOOKS = path.resolve(__dirname, "../../plugins/aidd-context/hooks");
+const HOOK = path.join(HOOKS, "memory.cjs");
+const HOOK_ENV = { ...process.env };
 
 const OPEN = "<!-- aidd_project_memory:start -->";
 const CLOSE = "<!-- aidd_project_memory:end -->";
@@ -27,7 +26,7 @@ function run({
   args,
   runs = 1,
 }) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "update-memory-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-"));
   try {
     fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
     for (const file of bank) fs.writeFileSync(path.join(root, "aidd_docs/memory", file), "# x\n");
@@ -47,12 +46,11 @@ function run({
     // package.json governs the module system exactly as it does for a user.
     let hook = HOOK;
     if (hookAt) {
-      hook = path.join(root, hookAt);
-      fs.mkdirSync(path.dirname(hook), { recursive: true });
-      fs.copyFileSync(HOOK, hook);
+      fs.cpSync(HOOKS, path.join(root, hookAt), { recursive: true });
+      hook = path.join(root, hookAt, "memory.cjs");
     }
 
-    const invoke = () => spawnSync(process.execPath, [hook, ...(args ?? ["claude"])], { cwd: root, env: HOOK_ENV });
+    const invoke = () => spawnSync(process.execPath, [hook, "sync", ...(args ?? ["claude"])], { cwd: root, env: HOOK_ENV });
     const read = () => fs.readFileSync(path.join(root, contextAt), "utf8");
 
     const first = invoke();
@@ -73,7 +71,7 @@ test("the hook runs in a project declaring itself an ES module", () => {
   const run1 = run({
     context: `# P\n\n${OPEN}\n${CLOSE}\n`,
     packageJson: '{ "type": "module" }\n',
-    hookAt: ".claude/hooks/aidd-context/update_memory.js",
+    hookAt: ".claude/hooks/aidd-context",
   });
 
   assert.equal(run1.stderr, "");
@@ -250,7 +248,7 @@ test("a nested context file prefixes its links with the climb back out", () => {
 // is joined with the platform separator but the file paths are normalised to "/", so a
 // replace on the joined form silently matches nothing on Windows.
 test("the memory README lists its files relative to itself, on every platform's separator", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "update-memory-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-"));
   try {
     const memory = path.join(root, "aidd_docs/memory");
     fs.mkdirSync(path.join(memory, "internal/decisions"), { recursive: true });
@@ -259,7 +257,7 @@ test("the memory README lists its files relative to itself, on every platform's 
     fs.writeFileSync(path.join(memory, "README.md"), "<!-- files:start -->\n<!-- files:end -->\n");
     fs.writeFileSync(path.join(root, "CLAUDE.md"), `${OPEN}\n${CLOSE}\n`);
 
-    const result = spawnSync(process.execPath, [HOOK, "claude"], { cwd: root, env: HOOK_ENV });
+    const result = spawnSync(process.execPath, [HOOK, "sync", "claude"], { cwd: root, env: HOOK_ENV });
     assert.equal(result.status, 0, result.stderr.toString());
 
     const readme = fs.readFileSync(path.join(memory, "README.md"), "utf8");
@@ -270,4 +268,43 @@ test("the memory README lists its files relative to itself, on every platform's 
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("the block lists every aidd_docs/ folder other than the bank, read on demand, after the bank's own files", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-"));
+  try {
+    for (const dir of ["memory/internal", "ui", "pm", "tasks"]) fs.mkdirSync(path.join(root, "aidd_docs", dir), { recursive: true });
+    fs.writeFileSync(path.join(root, "aidd_docs/memory/architecture.md"), "# x\n");
+    fs.writeFileSync(path.join(root, "aidd_docs/memory/internal/d.md"), "# x\n");
+    fs.writeFileSync(path.join(root, "aidd_docs/notes.md"), "# a file, not a folder\n");
+    fs.writeFileSync(path.join(root, "CLAUDE.md"), `${OPEN}\n${CLOSE}\n`);
+    const result = spawnSync(process.execPath, [HOOK, "sync"], { cwd: root, env: HOOK_ENV });
+    assert.equal(result.status, 0, result.stderr.toString());
+    assert.equal(
+      fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"),
+      [
+        OPEN,
+        "",
+        "@aidd_docs/memory/architecture.md",
+        "",
+        "<!-- read on demand, not auto-loaded -->",
+        "- aidd_docs/memory/internal/d.md",
+        "",
+        "<!-- folders other plugins own, read on demand -->",
+        "- aidd_docs/pm/",
+        "- aidd_docs/tasks/",
+        "- aidd_docs/ui/",
+        "",
+        CLOSE,
+        "",
+      ].join("\n")
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("sync runs no child process, so it stages nothing in git", () => {
+  const source = fs.readFileSync(HOOK, "utf8");
+  assert.doesNotMatch(source, /child_process|execSync|spawn|git add/u);
 });

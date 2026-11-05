@@ -8,7 +8,7 @@ const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-context");
 const SKILL = path.join(PLUGIN, "skills/02-project-memory");
 const TEMPLATES = path.join(SKILL, "assets/templates/memory");
 const { PLACEHOLDER } = require("./fixtures/unfinished-marker.js");
-const { lintFile } = require(path.join(PLUGIN, "hooks/memory-lint.cjs"));
+const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
 
 const ALWAYS = ["project-brief.md", "architecture.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
 const CONDITIONAL = ["backlog.md", "deployment.md", "contract.md", "auth.md", "data.md", "async.md", "ui.md", "native.md"];

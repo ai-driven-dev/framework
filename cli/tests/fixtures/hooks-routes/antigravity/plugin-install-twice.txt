@@ -6,7 +6,7 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L3VwZGF0ZV9tZW1vcnkuanM="
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgaG9vaw=="
       }
     ]
   },
@@ -36,13 +36,7 @@ script, identical to the host adapter host-claude.cjs
 ## project/.agents/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## project/.agents/hooks/aidd-context/memory-hook.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/memory-lint.cjs
-script, identical to the plugin source
-
-## project/.agents/hooks/aidd-context/update_memory.js
+## project/.agents/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
 ## project/.agents/hooks/aidd-telemetry/catch-up.cjs
@@ -105,8 +99,8 @@ project antigravity aidd-context scope=project: 0 hook files
   "entries": [
     {
       "event": "SessionStart",
-      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L3VwZGF0ZV9tZW1vcnkuanM=",
-      "digest": "c0bf4af9e7ad5135a5ff496df983b477"
+      "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgaG9vaw==",
+      "digest": "cc5c97c4fe2bee570f5a448c375c2c38"
     }
   ],
   "scripts": {}

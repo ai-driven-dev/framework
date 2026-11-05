@@ -37,9 +37,9 @@ Same hook regenerates each plugin's `CATALOG.md`, and the README counts, and sta
 
 Every `cli` job is globbed on `cli/**`. A change under `kanban/` alone fires no local job; run `cd kanban && pnpm test` by hand. CI does cover it — `cli-ci.yml`'s `kanban-checks`, see `deployment.md`.
 
-- `context-reference-form` reads only the three files `update_memory.js`'s `TARGET_FILES` names: root `CLAUDE.md`, root `AGENTS.md`, the `copilot-instructions.md` under `.github/` (absent here). It never walks the tree, so `cli/CLAUDE.md`'s memory block is outside it.
+- `context-reference-form` reads only the three files `memory.cjs`'s `TARGET_FILES` names: root `CLAUDE.md`, root `AGENTS.md`, the `copilot-instructions.md` under `.github/` (absent here). It never walks the tree, so `cli/CLAUDE.md`'s memory block is outside it.
 - `context-imports` walks the whole tree (`scripts/check-context-imports.js`'s `collectContextFiles`).
-- `context-reference-form` also globs `plugins/aidd-context/hooks/update_memory.js`, whose table is its source of truth.
+- `context-reference-form` also globs `plugins/aidd-context/hooks/memory.cjs`, whose table is its source of truth.
 
 ## Before push
 

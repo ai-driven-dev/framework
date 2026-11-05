@@ -5,13 +5,13 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "node ./.github/hooks/aidd-context/update_memory.js"
+        "command": "node ./.github/hooks/aidd-context/memory.cjs hook"
       }
     ],
     "PostToolUse": [
       {
         "type": "command",
-        "command": "node ./.github/hooks/aidd-context/memory-hook.cjs",
+        "command": "node ./.github/hooks/aidd-context/memory.cjs hook",
         "matcher": "Write|Edit|MultiEdit|Bash|Shell|bash|powershell",
         "timeout": 5
       }
@@ -29,13 +29,7 @@ script, identical to the host adapter host-copilot.cjs
 ## out-flat/.github/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## out-flat/.github/hooks/aidd-context/memory-hook.cjs
-script, identical to the plugin source
-
-## out-flat/.github/hooks/aidd-context/memory-lint.cjs
-script, identical to the plugin source
-
-## out-flat/.github/hooks/aidd-context/update_memory.js
+## out-flat/.github/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
 ## out-flat/.github/hooks/aidd-telemetry.hooks.json

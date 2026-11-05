@@ -1,6 +1,6 @@
 # Sync Arguments
 
-Arguments accepted by `hooks/update_memory.js`. The hook maps tool names to context files; it does not detect installed tools.
+Arguments accepted by `hooks/memory.cjs sync`. It maps tool names to context files; it does not detect installed tools.
 
 | Argument | Refreshes |
 | -------- | --------- |

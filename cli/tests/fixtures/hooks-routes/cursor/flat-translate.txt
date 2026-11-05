@@ -4,7 +4,7 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/update_memory.js"
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook"
       },
       {
         "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
@@ -17,7 +17,7 @@
     ],
     "postToolUse": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory-hook.cjs",
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
         "matcher": "Write|Edit|MultiEdit|Bash|Shell|bash|powershell",
         "timeout": 5
       }
@@ -41,13 +41,7 @@ script, identical to the host adapter host-cursor.cjs
 ## out-flat/.cursor/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## out-flat/.cursor/hooks/aidd-context/memory-hook.cjs
-script, identical to the plugin source
-
-## out-flat/.cursor/hooks/aidd-context/memory-lint.cjs
-script, identical to the plugin source
-
-## out-flat/.cursor/hooks/aidd-context/update_memory.js
+## out-flat/.cursor/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
 ## out-flat/.cursor/hooks/aidd-telemetry/catch-up.cjs

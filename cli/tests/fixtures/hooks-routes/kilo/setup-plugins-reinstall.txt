@@ -10,13 +10,7 @@ script, identical to the host adapter host-kilo.cjs
 ## project/.kilo/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## project/.kilo/hooks/aidd-context/memory-hook.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-context/memory-lint.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-context/update_memory.js
+## project/.kilo/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-telemetry/catch-up.cjs
@@ -84,9 +78,9 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
-const SESSION_START = [{"script":"update_memory.js","args":[]}];
+const SESSION_START = [{"script":"memory.cjs","args":["hook"]}];
 const STOP = [];
-const POST_TOOL_USE = [{"script":"memory-hook.cjs","args":[],"matcher":"Write|Edit|MultiEdit|Bash|Shell|bash|powershell"}];
+const POST_TOOL_USE = [{"script":"memory.cjs","args":["hook"],"matcher":"Write|Edit|MultiEdit|Bash|Shell|bash|powershell"}];
 
 function runHook(script, args, payload, directory) {
   const body = JSON.stringify(payload);
@@ -425,13 +419,11 @@ export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 
 
 # recorded
-project kilo aidd-context scope=project: 7 hook files
+project kilo aidd-context scope=project: 5 hook files
   .kilo/hooks/aidd-context/lib/common-rules.cjs
   .kilo/hooks/aidd-context/lib/host.cjs
   .kilo/hooks/aidd-context/lib/memory-rules.cjs
-  .kilo/hooks/aidd-context/memory-hook.cjs
-  .kilo/hooks/aidd-context/memory-lint.cjs
-  .kilo/hooks/aidd-context/update_memory.js
+  .kilo/hooks/aidd-context/memory.cjs
   .kilo/plugin/aidd-context-hooks.js
   projectHooks null
   dependents []

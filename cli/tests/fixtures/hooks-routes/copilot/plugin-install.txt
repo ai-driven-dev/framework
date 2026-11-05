@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/update_memory.js",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
             "statusMessage": "AIDD Context: sync project memory"
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/memory-hook.cjs",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
             "timeout": 5
           }
         ]
@@ -37,13 +37,7 @@ script, identical to the host adapter host-copilot.cjs
 ## project/.github/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## project/.github/plugins/aidd-context/hooks/memory-hook.cjs
-script, identical to the plugin source
-
-## project/.github/plugins/aidd-context/hooks/memory-lint.cjs
-script, identical to the plugin source
-
-## project/.github/plugins/aidd-context/hooks/update_memory.js
+## project/.github/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
 ## project/.github/plugins/aidd-telemetry/hooks/catch-up.cjs
@@ -143,14 +137,12 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project copilot aidd-context scope=project: 7 hook files
+project copilot aidd-context scope=project: 5 hook files
   .github/plugins/aidd-context/hooks/hooks.json
   .github/plugins/aidd-context/hooks/lib/common-rules.cjs
   .github/plugins/aidd-context/hooks/lib/host.cjs
   .github/plugins/aidd-context/hooks/lib/memory-rules.cjs
-  .github/plugins/aidd-context/hooks/memory-hook.cjs
-  .github/plugins/aidd-context/hooks/memory-lint.cjs
-  .github/plugins/aidd-context/hooks/update_memory.js
+  .github/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []
 project copilot aidd-telemetry scope=project: 19 hook files

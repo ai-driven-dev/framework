@@ -7,13 +7,13 @@ machine cursor aidd-context scope=user: 0 hook files
   "entries": [
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-context/update_memory.js",
-      "digest": "cb2571ad1f03e6c6eed1cad633f2b481"
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "6b9be53d4479f2c5631277fe77ff9878"
     },
     {
       "event": "postToolUse",
-      "command": "node ./.cursor/hooks/aidd-context/memory-hook.cjs",
-      "digest": "b95d7ff4f43233c9a9c6181377735473"
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "1cec3b98fe3b9942a52a02ded54152ba"
     }
   ],
   "scripts": {}

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/update_memory.js",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
             "statusMessage": "AIDD Context: sync project memory"
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory-hook.cjs",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
             "timeout": 5
           }
         ]
@@ -37,13 +37,7 @@ script, identical to the host adapter host-claude.cjs
 ## project/.claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## project/.claude/plugins/aidd-context/hooks/memory-hook.cjs
-script, identical to the plugin source
-
-## project/.claude/plugins/aidd-context/hooks/memory-lint.cjs
-script, identical to the plugin source
-
-## project/.claude/plugins/aidd-context/hooks/update_memory.js
+## project/.claude/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
 ## project/.claude/plugins/aidd-telemetry/hooks/catch-up.cjs
@@ -154,14 +148,12 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 7 hook files
+project claude aidd-context scope=project: 5 hook files
   .claude/plugins/aidd-context/hooks/hooks.json
   .claude/plugins/aidd-context/hooks/lib/common-rules.cjs
   .claude/plugins/aidd-context/hooks/lib/host.cjs
   .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
-  .claude/plugins/aidd-context/hooks/memory-hook.cjs
-  .claude/plugins/aidd-context/hooks/memory-lint.cjs
-  .claude/plugins/aidd-context/hooks/update_memory.js
+  .claude/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []
 project claude aidd-telemetry scope=project: 19 hook files

@@ -87,7 +87,7 @@ my-project/
 Each AI context file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`, etc.) contains a project memory block. It is:
 
 1. **Seeded** the first time by `aidd-context:02-project-memory` (the skill creates the block if absent).
-2. **Kept in sync** automatically by a session-start hook (`aidd-context/hooks/update_memory.js`) that scans `aidd_docs/memory/` and writes the current list of `.md` files into the block.
+2. **Kept in sync** automatically by a session-start hook (`aidd-context/hooks/memory.cjs`) that scans `aidd_docs/memory/` and writes the current list of `.md` files into the block.
 
 You never edit the block by hand. To change what the AI sees, add or remove files under `aidd_docs/memory/`; the hook picks them up at the next session.
 

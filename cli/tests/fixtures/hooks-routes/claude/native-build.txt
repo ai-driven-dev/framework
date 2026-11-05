@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/update_memory.js",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
             "statusMessage": "AIDD Context: sync project memory"
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory-hook.cjs",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
             "timeout": 5
           }
         ]
@@ -37,13 +37,7 @@ script, identical to the host adapter host-claude.cjs
 ## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## out-marketplace/plugins/aidd-context/hooks/memory-hook.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/memory-lint.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/update_memory.js
+## out-marketplace/plugins/aidd-context/hooks/memory.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-telemetry/hooks/catch-up.cjs

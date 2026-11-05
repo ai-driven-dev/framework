@@ -28,5 +28,5 @@ Each picked tool's context file, carrying the filled block.
 | Case | Pass |
 | --- | --- |
 | Empty bank | no file created, the run stops |
-| Picked tool | its block lists every root `.md` except `README.md`, nothing else |
+| Picked tool | its block lists every root `.md` except `README.md`, the `internal/` and `external/` files, then each other `aidd_docs/` folder, nothing else |
 | Unpicked tool | its context file is unchanged |

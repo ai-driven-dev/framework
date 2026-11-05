@@ -7,13 +7,7 @@ script, identical to the host adapter host-opencode.cjs
 ## out-flat/.opencode/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
-## out-flat/.opencode/hooks/aidd-context/memory-hook.cjs
-script, identical to the plugin source
-
-## out-flat/.opencode/hooks/aidd-context/memory-lint.cjs
-script, identical to the plugin source
-
-## out-flat/.opencode/hooks/aidd-context/update_memory.js
+## out-flat/.opencode/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
 ## out-flat/.opencode/hooks/aidd-telemetry/catch-up.cjs
@@ -163,9 +157,9 @@ import { fileURLToPath } from "node:url";
 // itself, not a Node runtime able to run this plugin's own hook scripts.
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 
-const SESSION_START = [{"script":"update_memory.js","args":[]}];
+const SESSION_START = [{"script":"memory.cjs","args":["hook"]}];
 const STOP = [];
-const POST_TOOL_USE = [{"script":"memory-hook.cjs","args":[],"matcher":"Write|Edit|MultiEdit|Bash|Shell|bash|powershell"}];
+const POST_TOOL_USE = [{"script":"memory.cjs","args":["hook"],"matcher":"Write|Edit|MultiEdit|Bash|Shell|bash|powershell"}];
 
 // Asynchronous on purpose: this can spawn one script per matching hook across every mapped
 // event, and blocking OpenCode's event loop once per hook would multiply the cost. A failed spawn (ENOENT, a killed timeout)
