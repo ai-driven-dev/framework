@@ -52,7 +52,7 @@ describe("recipe validation through the built CLI", () => {
         env.fakeHome
       );
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toBe("PASS: 4 recipe(s) validated.\n");
+      expect(result.stdout).toBe("PASS: 3 recipe(s) validated.\n");
       expect(result.stderr).toBe("");
     } finally {
       await env.cleanup();

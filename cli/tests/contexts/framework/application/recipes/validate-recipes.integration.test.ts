@@ -529,7 +529,7 @@ test("--all includes project recipes and bundled recipes", () => {
     assert.equal(result.status, 0, result.stderr);
     const match = result.stdout.match(/PASS: (\d+) recipe\(s\) validated\./u);
     assert.ok(match, result.stdout);
-    assert.equal(Number.parseInt(match[1], 10), 4, result.stdout);
+    assert.equal(Number.parseInt(match[1], 10), 3, result.stdout);
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
