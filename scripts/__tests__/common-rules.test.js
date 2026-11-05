@@ -120,6 +120,47 @@ test("isShellWrite: rmdir does not match, because it is not a contract form and 
   assert.equal(isShellWrite("rmdir d"), false);
 });
 
+test("isShellWrite: quoted text is blanked, the quotes themselves are kept", () => {
+  for (const command of ['git commit -m "rm it"', 'grep ">" f', 'echo "a; rm b"', "cat 'a > b'", 'git log --grep "restore"', "echo 'sed -i x'"]) {
+    assert.equal(isShellWrite(command), false, command);
+  }
+  for (const command of ['echo x > "f"', "echo x >'f'", 'echo "a" > f', `echo "it's" && rm f`]) {
+    assert.equal(isShellWrite(command), true, command);
+  }
+});
+
+test("isShellWrite: a command word counts only at command position", () => {
+  for (const command of ["npm version patch", "echo rm", "grep -n mkdir f", "man tee", "echo sed -i", "echo git restore"]) {
+    assert.equal(isShellWrite(command), false, command);
+  }
+  const atPosition = [
+    "a; rm f",
+    "a || rm f",
+    "a | tee f",
+    "$(rm f)",
+    "`rm f`",
+    "exec mv a b",
+    "ls | xargs rm",
+    "ls | xargs -0 rm",
+    "sudo rm f",
+    "env A=1 rm f",
+    "env A=1 B=2 touch f",
+    "find . -exec mv {} d ;",
+    "cd d && sed -i s/a/b/ f",
+    "sudo sed -i s/a/b/ f",
+    "cd d && git restore f",
+    "a; git -C d checkout f",
+  ];
+  for (const command of atPosition) assert.equal(isShellWrite(command), true, command);
+});
+
+test("isShellWrite: a path before a command word resolves by its basename", () => {
+  for (const command of ["/bin/rm f", "./node_modules/.bin/tee f", "cd d && /usr/bin/mkdir x", "/usr/bin/git apply x.diff"]) {
+    assert.equal(isShellWrite(command), true, command);
+  }
+  assert.equal(isShellWrite("/bin/rmdir d"), false);
+});
+
 test("isShellWrite: a redirection to a file beside /dev/null still matches", () => {
   assert.equal(isShellWrite("ls >/dev/null 2>err.txt"), true);
   assert.equal(isShellWrite("ls >/dev/nullx"), true);
