@@ -82,6 +82,27 @@ describe("a flat build's hooks artifact", () => {
     });
   });
 
+  it("finds the plugin's earlier entries after the root token the descriptor declares", () => {
+    const artifact = supported(
+      flatHooksArtifact(
+        {
+          rootToken: ROOT,
+          file: FLAT_FILE,
+          flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
+        },
+        { tool: "cursor" }
+      )
+    );
+    const existing = JSON.stringify({
+      version: 1,
+      hooks: { Start: [{ command: `node ${ROOT}/.tool/hooks/p/old.cjs` }] },
+    });
+
+    expect(
+      JSON.parse(artifact.hooksFile?.merge(existing, "{}", "p", locate).content ?? "")
+    ).toStrictEqual({ version: 1 });
+  });
+
   it("writes a plugin's own file where the route shares none", () => {
     const artifact = supported(
       flatHooksArtifact(
@@ -102,12 +123,14 @@ describe("a flat build's hooks artifact", () => {
     });
   });
 
-  it("writes no hooks file for a loader, which a bridge feeds instead", () => {
-    expect(
-      supported(
-        flatHooksArtifact({ file: FLAT_FILE, flat: { scriptsDir: ".tool/hooks/" } }, { bridge })
-      ).hooksFile
-    ).toBeUndefined();
+  it("refuses, by its type, a bridge for a descriptor that declares a hooks file", () => {
+    const declaresFile = {
+      file: FLAT_FILE,
+      flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER },
+    } as const;
+
+    // @ts-expect-error a hooks file is merged for a tool, never fed to a bridge
+    expect(() => flatHooksArtifact(declaresFile, { bridge })).not.toThrow();
   });
 
   it("writes no hooks file for a tool that reads none", () => {
@@ -140,19 +163,22 @@ describe("a flat build's hooks artifact", () => {
     expect(artifact.hooksBridge?.skipIfSourceHas).toBe("tool-plugin.js");
   });
 
-  it("keeps the hooks file without a bridge, or without a loader to import one", () => {
+  it("keeps the hooks file without a bridge", () => {
     const noBridge = supported(
       flatHooksArtifact(
         { flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } },
         { tool: "cursor" }
       )
     );
-    const noLoader = supported(
-      flatHooksArtifact({ flat: { scriptsDir: ".tool/hooks/" } }, { bridge })
-    );
 
     expect([noBridge.skipHooksJson, noBridge.hooksBridge]).toStrictEqual([undefined, undefined]);
-    expect([noLoader.skipHooksJson, noLoader.hooksBridge]).toStrictEqual([undefined, undefined]);
+  });
+
+  it("refuses, by its type, a bridge where no loader imports one", () => {
+    const noLoader = { flat: { scriptsDir: ".tool/hooks/" } } as const;
+
+    // @ts-expect-error a bridge is written beside a loader's module, and there is none
+    expect(() => flatHooksArtifact(noLoader, { bridge })).not.toThrow();
   });
 });
 
@@ -211,6 +237,7 @@ describe("a tool's plugins capability, as far as hooks go", () => {
 
   it("merges an installed plugin's hooks into the project file the route names", () => {
     const support = projectHooksSupport({
+      rootToken: ROOT,
       file: FLAT_FILE,
       eventMap: { Start: ["start"] },
       project: {
@@ -237,6 +264,9 @@ describe("a tool's plugins capability, as far as hooks go", () => {
     expect([
       support.projectHooksFormat.runsPluginScript("node ./.tool/hooks/p/a.cjs", "p"),
       support.projectHooksFormat.runsPluginScript("node ./x/.tool/hooks/p/a.cjs", "p"),
-    ]).toStrictEqual([true, false]);
+      support.projectHooksFormat.runsPluginScript(`node ${ROOT}/.tool/hooks/p/a.cjs`, "p"),
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: a person's own shell variable
+      support.projectHooksFormat.runsPluginScript("node ${HOME}/.tool/hooks/p/a.cjs", "p"),
+    ]).toStrictEqual([true, false, true, false]);
   });
 });
