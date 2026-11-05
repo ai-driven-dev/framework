@@ -218,11 +218,13 @@ describe("aidd-ui validator entries", () => {
       assert.equal(generate(tmp).css, first);
     });
 
-    it("regenerates a stylesheet the tokens left behind", () => {
+    it("regenerates a stylesheet the tokens left behind, then names the code's token file the change left behind", () => {
       propose(tmp, DIALOG, SEARCH, HOME);
       edit(tmp, TOKENS, '"value": 1,', '"value": 2,');
       assert.equal(validate(tmp).code, 1);
       generate(tmp);
+      assert.deepEqual(validate(tmp).out, ["aidd-ui: 1 errors, 0 warnings", `src/ui/tokens.css:3 C10 "--space-md" => set it to 2rem, the design system's value`]);
+      edit(tmp, "src/ui/tokens.css", "--space-md: 1rem", "--space-md: 2rem");
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 

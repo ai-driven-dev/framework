@@ -11,10 +11,10 @@ const { writeResolver } = require("./lib/resolver.cjs");
 const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
-const { extract } = require("./lib/extract.cjs");
+const extraction = require("./lib/extract.cjs");
 const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
 
-const CHECKS = { records, history, tokens, renders, code };
+const CHECKS = { records, history, tokens, renders, code, extraction };
 const VERDICT_VALID = "VALID";
 const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
@@ -157,7 +157,7 @@ function extractTokens(args) {
     return EXIT_USAGE;
   }
   return refusing(() => {
-    console.log(JSON.stringify(extract(values[ROOT_FLAG] ?? process.cwd(), { force: flags.has(FORCE_FLAG) }), null, 2));
+    console.log(JSON.stringify(extraction.extract(values[ROOT_FLAG] ?? process.cwd(), { force: flags.has(FORCE_FLAG) }), null, 2));
     return EXIT_VALID;
   });
 }

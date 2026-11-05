@@ -314,4 +314,4 @@ function render({ base, themes, platforms = [], breakpoints = [], order = MODIFI
   return { css: problems.length ? null : `${[HEADER, ...blocks.filter(Boolean).map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 
-module.exports = { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, HEADER, render, customProperty, citedBy, loopOf, rulesOf, declarationsIn, declarationsOf, layered, contextsOf, resolved };
+module.exports = { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, HEADER, render, valueOf, customProperty, citedBy, loopOf, rulesOf, declarationsIn, declarationsOf, layered, contextsOf, resolved };

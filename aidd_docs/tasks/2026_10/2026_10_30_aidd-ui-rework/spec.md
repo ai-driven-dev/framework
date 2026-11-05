@@ -123,6 +123,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
   - cycle de vie respecté ;
   - liens vers le code valides et cohérents avec leurs plateformes, couverture des dossiers UI ;
   - aucune valeur en dur dans les rendus, aucune couleur en dur dans le code au-delà de sa dette, quelle que soit sa techno (documents, données et images exclus) : `aidd_docs/ui/code-debt.json`, écrit à la création du système, compte chaque couleur de chaque fichier ; avertissement tant qu'un fichier n'en tient pas plus que ce compte, erreur au-delà, et erreur pour toute couleur sans ce fichier ;
+  - les fichiers de tokens du code (`code-tokens`) donnent à chaque token la valeur du design system, dans chaque thème, plateforme et point de rupture qu'ils portent : un changement de token signale ainsi chaque fichier du code resté sur l'ancienne valeur, et une valeur changée à la main dans le code est signalée de même ;
   - aucun token primitif dans un composant ;
   - versions en double dans un historique ;
   - propriétés physiques quand une langue déclarée s'écrit de droite à gauche.
