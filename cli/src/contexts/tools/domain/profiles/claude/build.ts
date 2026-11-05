@@ -54,7 +54,7 @@ export function buildClaudeContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(),
+      hooks: pluginTreeHooksArtifact(CLAUDE_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

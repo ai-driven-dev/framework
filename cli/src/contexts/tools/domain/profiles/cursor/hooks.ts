@@ -1,3 +1,5 @@
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-cursor.cjs";
 import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 
@@ -30,4 +32,5 @@ export const CURSOR_HOOKS = {
     sharedFile: ".cursor/hooks.json",
     scriptsDir: ".cursor/hooks/",
   },
+  runtime: { adapter },
 } as const satisfies HooksDescriptor;

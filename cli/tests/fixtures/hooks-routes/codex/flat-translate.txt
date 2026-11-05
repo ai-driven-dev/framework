@@ -67,6 +67,9 @@ hooks = true
 ## out-flat/.codex/hooks/aidd-context/lib/common-rules.cjs
 script, identical to the plugin source
 
+## out-flat/.codex/hooks/aidd-context/lib/host.cjs
+script, identical to the host adapter host-codex.cjs
+
 ## out-flat/.codex/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
@@ -108,6 +111,9 @@ script, identical to the plugin source
 
 ## out-flat/.codex/hooks/aidd-telemetry/lib/hook-io.cjs
 script, identical to the plugin source
+
+## out-flat/.codex/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-codex.cjs
 
 ## out-flat/.codex/hooks/aidd-telemetry/lib/jsonl.cjs
 script, identical to the plugin source

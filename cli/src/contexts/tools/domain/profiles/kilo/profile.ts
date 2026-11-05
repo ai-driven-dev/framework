@@ -84,7 +84,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
     plugins: new PluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
-      ...flatHooksSupport(KILO_HOOKS.flat, generateKiloHooksBridge),
+      ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
   },
 

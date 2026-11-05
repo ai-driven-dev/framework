@@ -67,7 +67,7 @@ export function buildCursorContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(),
+      hooks: pluginTreeHooksArtifact(CURSOR_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

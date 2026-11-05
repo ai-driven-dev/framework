@@ -235,9 +235,11 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     for (const absPath of files) {
       if (absPath.endsWith("hooks.json")) continue;
       const relPath = relative(hooksDir, absPath).replace(/\\/g, "/");
-      const destPath = join(this.absOut, artifact.path(pluginName, `hooks/${relPath}`));
+      const pluginPath = `hooks/${relPath}`;
+      const destPath = join(this.absOut, artifact.path(pluginName, pluginPath));
       await this.checkCollision(destPath, pluginName);
-      await this.fs.writeFile(destPath, await this.fs.readFile(absPath));
+      const content = await this.fs.readFile(absPath);
+      await this.fs.writeFile(destPath, artifact.script?.(pluginPath, content) ?? content);
       count++;
     }
     return count;

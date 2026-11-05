@@ -100,7 +100,7 @@ export const opencode: AiTool<
     plugins: new PluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
-      ...flatHooksSupport(OPENCODE_HOOKS.flat, generateOpencodeHooksBridge),
+      ...flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge),
     }),
   },
 

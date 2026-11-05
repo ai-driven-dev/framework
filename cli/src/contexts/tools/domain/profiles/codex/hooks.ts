@@ -1,3 +1,5 @@
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-codex.cjs";
 import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 
@@ -22,4 +24,5 @@ export const CODEX_HOOKS = {
     entrySection: "SessionStart",
     consumes: ["codex-hooks"],
   },
+  runtime: { adapter },
 } as const satisfies HooksDescriptor;

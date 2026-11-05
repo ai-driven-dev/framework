@@ -4,7 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { differingCopies, run } = require("../check-hook-rule-copies.js");
+const { differingCopies, hostAdapterCopies, run } = require("../check-hook-rule-copies.js");
 
 const COPY = (plugin) => ["plugins", plugin, "hooks", "lib", "common-rules.cjs"].join("/");
 
@@ -74,6 +74,69 @@ test("a plugin without the library is not a copy", () => {
   inTree({ "aidd-context": "same\n" }, (root) => {
     fs.mkdirSync(path.join(root, "plugins", "aidd-pm", "hooks"), { recursive: true });
     assert.equal(differingCopies(root).copies.length, 1);
+  });
+});
+
+const ADAPTER = ["cli", "assets", "hooks-runtime", "host-claude.cjs"].join("/");
+const HOST = (plugin) => ["plugins", plugin, "hooks", "lib", "host.cjs"].join("/");
+const MANIFEST = (plugin) => ["plugins", plugin, "hooks", "hooks.json"].join("/");
+
+/** A throwaway tree holding the given files, removed after `body` runs. */
+function withFiles(files, body) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "hook-rule-copies-"));
+  try {
+    for (const [file, text] of Object.entries(files)) {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), text);
+    }
+    return body(root);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+test("every plugin that ships hooks carries the Claude Code host adapter, byte for byte", () => {
+  const files = { [ADAPTER]: "adapter\n", [MANIFEST("aidd-a")]: "{}", [HOST("aidd-a")]: "adapter\n" };
+  withFiles(files, (root) => {
+    assert.deepEqual(hostAdapterCopies(root), { copies: [HOST("aidd-a")], differing: [], missing: [] });
+    assert.equal(run(root, quiet, quiet), 0);
+  });
+});
+
+test("a copy that differs from the asset is named, even when every copy agrees", () => {
+  const files = {
+    [ADAPTER]: "adapter\n",
+    [MANIFEST("aidd-a")]: "{}",
+    [HOST("aidd-a")]: "adapted\n",
+    [MANIFEST("aidd-b")]: "{}",
+    [HOST("aidd-b")]: "adapted\n",
+  };
+  withFiles(files, (root) => {
+    assert.deepEqual(hostAdapterCopies(root).differing, [HOST("aidd-a"), HOST("aidd-b")]);
+    const { status, text } = logged(root);
+    assert.equal(status, 1);
+    assert.match(text, /plugins\/aidd-a\/hooks\/lib\/host\.cjs differs from cli\/assets\/hooks-runtime\/host-claude\.cjs/u);
+  });
+});
+
+test("a plugin that ships hooks without the adapter is named", () => {
+  withFiles({ [ADAPTER]: "adapter\n", [MANIFEST("aidd-a")]: "{}" }, (root) => {
+    assert.deepEqual(hostAdapterCopies(root).missing, [HOST("aidd-a")]);
+    const { status, text } = logged(root);
+    assert.equal(status, 1);
+    assert.match(text, /plugins\/aidd-a\/hooks\/lib\/host\.cjs is missing/u);
+  });
+});
+
+test("a plugin that ships no hooks needs no adapter", () => {
+  withFiles({ [ADAPTER]: "adapter\n", "plugins/aidd-a/skills/x/SKILL.md": "x" }, (root) => {
+    assert.deepEqual(hostAdapterCopies(root), { copies: [], differing: [], missing: [] });
+  });
+});
+
+test("without the asset, every copy is named, so none is trusted", () => {
+  withFiles({ [MANIFEST("aidd-a")]: "{}", [HOST("aidd-a")]: "adapter\n" }, (root) => {
+    assert.deepEqual(hostAdapterCopies(root).differing, [HOST("aidd-a")]);
   });
 });
 

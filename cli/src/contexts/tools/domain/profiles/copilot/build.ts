@@ -65,7 +65,7 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(),
+      hooks: pluginTreeHooksArtifact(COPILOT_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

@@ -35,6 +35,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | [code.cjs](hooks/lib/code.cjs) |
 | [graph.cjs](hooks/lib/graph.cjs) |
 | [history.cjs](hooks/lib/history.cjs) |
+| [host.cjs](hooks/lib/host.cjs) |
 | [literals.cjs](hooks/lib/literals.cjs) |
 | [markdown.cjs](hooks/lib/markdown.cjs) |
 | [model.cjs](hooks/lib/model.cjs) |
