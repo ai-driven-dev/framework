@@ -234,7 +234,7 @@ test("the cases cover the merge offer, the misplaced move, and the refresh sync"
   assert.ok(refresh.expect.filesExist.includes("aidd_docs/memory/codebase-map.md"), "the declined merge is not asserted");
 });
 
-test("check reviews only the files a row produces, offers a merge for a former file, and a misplaced file only its move", () => {
+test("check reviews the files a row produces or names as former, never a team file, offers a merge for a former file, and a misplaced file only its move", () => {
   const lines = skillText("actions/03-check.md").split(/\r?\n/u);
   const line = (pattern) => lines.find((candidate) => pattern.test(candidate)) ?? "";
   assert.match(line(/\*\*Content/u), /a row produces/u, "Content reviews the team's files too");
