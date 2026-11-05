@@ -20,9 +20,7 @@ const MAX_LINE = 32 * 1024 * 1024;
 function alreadyKnown(identity: Identity | undefined, observed: Identity): boolean {
   if (identity?.conflict) return true;
   if (observed.conflict) return false;
-  return [...observed.values].every(
-    ([key, value]) => identity?.values.get(key)?.toLowerCase() === value.toLowerCase()
-  );
+  return [...observed.values].every(([key, value]) => identity?.values.get(key) === value);
 }
 
 /** Read a fixed snapshot once; unlike follow, this never writes a capture checkpoint. */

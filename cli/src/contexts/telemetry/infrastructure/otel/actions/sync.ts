@@ -3,9 +3,11 @@ import { constants } from "node:fs";
 import { lstat, mkdir, open, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { isDeepStrictEqual } from "node:util";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import type { SessionFeature } from "../../../domain/report/session-feature.js";
 import { CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, type SyncConfig } from "../settings.js";
+import { readAttributeValue } from "./read-attribute-value.js";
 import { seriesFingerprint } from "./series-fingerprint.js";
 import { createSessionTitlePublisher } from "./session-title.js";
 
@@ -44,6 +46,38 @@ const CLAUDE_METRICS = new Set([
   "claude_code.token.usage",
 ]);
 const CODEX_EVENTS = new Set(["codex.conversation_starts", "codex.sse_event", "codex.tool_result"]);
+const IDENTITY_ATTRIBUTES = new Set(["user.email", "user.account_id", "organization.id"]);
+const NON_TEXT_ATTRIBUTES = new Set([
+  "event.sequence",
+  "success",
+  "duration_ms",
+  "input_token_count",
+  "output_token_count",
+  "cached_token_count",
+  "cache_write_token_count",
+  "reasoning_token_count",
+]);
+const METRIC_DATA_FIELDS = [
+  "sum",
+  "gauge",
+  "histogram",
+  "exponentialHistogram",
+  "exponential_histogram",
+  "summary",
+];
+const METRIC_POINT_FIELDS = [
+  "startTimeUnixNano",
+  "timeUnixNano",
+  "asInt",
+  "asDouble",
+  "count",
+  "sum",
+  "bucketCounts",
+  "explicitBounds",
+  "min",
+  "max",
+  "flags",
+];
 const SAFE_ATTRIBUTES = new Set([
   "user.email",
   "user.account_id",
@@ -81,20 +115,47 @@ export interface Identity {
 }
 
 function attributes(value: unknown): Map<string, string> {
+  if (value !== undefined && !Array.isArray(value)) throw new Error("Invalid OTLP attributes.");
   const out = new Map<string, string>();
+  const seen = new Map<string, unknown>();
   for (const item of array(value)) {
     const entry = object(item);
-    const v = object(entry.value);
-    const raw = v.stringValue ?? v.intValue ?? v.doubleValue ?? v.boolValue;
-    if (typeof entry.key === "string" && raw !== undefined && raw !== null) {
-      out.set(entry.key, String(raw));
+    if (typeof entry.key === "string") {
+      if (seen.has(entry.key) && !isDeepStrictEqual(seen.get(entry.key), entry.value))
+        throw new Error("Conflicting duplicate OTLP attributes.");
+      seen.set(entry.key, entry.value);
+    }
+    if (typeof entry.key === "string") {
+      const critical = SAFE_ATTRIBUTES.has(entry.key);
+      if (
+        critical &&
+        !NON_TEXT_ATTRIBUTES.has(entry.key) &&
+        typeof object(entry.value).stringValue !== "string"
+      )
+        throw new Error("Invalid OTLP attribute value.");
+      const raw = readAttributeValue(entry.value, critical);
+      if (
+        raw === "" &&
+        ["event.name", "event.kind", "session.id", "conversation.id"].includes(entry.key)
+      )
+        throw new Error("Invalid OTLP attribute value.");
+      if (raw !== undefined) out.set(entry.key, raw);
     }
   }
   return out;
 }
 
 function merge(...maps: Map<string, string>[]): Map<string, string> {
-  return new Map(maps.flatMap((map) => [...map]));
+  const out = new Map<string, string>();
+  for (const map of maps) {
+    for (const [key, value] of map) {
+      const previous = out.get(key);
+      if (IDENTITY_ATTRIBUTES.has(key) && previous !== undefined && previous !== value)
+        throw new Error("Conflicting OTLP identity attributes.");
+      out.set(key, value);
+    }
+  }
+  return out;
 }
 
 function safeAttributes(values: Map<string, string>) {
@@ -106,12 +167,25 @@ function safeAttributes(values: Map<string, string>) {
     }));
 }
 
+function eventNameFromBody(body: unknown): string {
+  if (body === undefined) return "";
+  if (typeof object(body).stringValue !== "string")
+    throw new Error("Invalid OTLP attribute value.");
+  const value = readAttributeValue(body, true);
+  if (!value) throw new Error("Invalid OTLP attribute value.");
+  return value;
+}
+
 function numericFields(source: RecordObject, keys: readonly string[]): RecordObject {
   const result: RecordObject = {};
   for (const key of keys) {
     const value = source[key];
     if (value === undefined) continue;
     validateIntegerField(key, value);
+    if (["asDouble", "sum", "min", "max"].includes(key) && !isFiniteDouble(value))
+      throw new Error("Invalid OTLP numeric field.");
+    if (key === "explicitBounds" && (!Array.isArray(value) || !value.every(isFiniteDouble)))
+      throw new Error("Invalid OTLP numeric field.");
     if (
       (typeof value === "number" && Number.isFinite(value)) ||
       (typeof value === "string" && /^-?\d+(?:\.\d+)?$/.test(value)) ||
@@ -125,6 +199,33 @@ function numericFields(source: RecordObject, keys: readonly string[]): RecordObj
       result[key] = value;
   }
   return result;
+}
+
+function isFiniteDouble(value: unknown): boolean {
+  return (
+    (typeof value === "number" && Number.isFinite(value)) ||
+    (typeof value === "string" && /^-?\d+(?:\.\d+)?$/.test(value) && Number.isFinite(Number(value)))
+  );
+}
+
+function metricKind(metric: RecordObject): "sum" | "gauge" | "histogram" {
+  const fields = METRIC_DATA_FIELDS.filter((key) => metric[key] !== undefined);
+  const kind = fields.at(0);
+  if (fields.length !== 1 || (kind !== "sum" && kind !== "gauge" && kind !== "histogram"))
+    throw new Error("Invalid or unsupported OTLP metric data.");
+  const data = asPlainObject(metric[kind]);
+  if (!data || (data.dataPoints !== undefined && !Array.isArray(data.dataPoints)))
+    throw new Error("Invalid or unsupported OTLP metric data.");
+  return kind;
+}
+
+function validateMetricPoint(point: RecordObject, kind: string): void {
+  const values = Number(point.asInt !== undefined) + Number(point.asDouble !== undefined);
+  if ((kind === "histogram" && values !== 0) || (kind !== "histogram" && values !== 1))
+    throw new Error("Invalid OTLP metric point value.");
+  numericFields(point, METRIC_POINT_FIELDS);
+  if (point.flags !== undefined && (BigInt(String(point.flags)) & 1n) !== 0n)
+    throw new Error("OTLP metric point has no recorded value.");
 }
 
 function isExactInteger(value: unknown, minimum: bigint, maximum: bigint): boolean {
@@ -153,12 +254,11 @@ function isExactNanoseconds(value: unknown): value is string | number {
 }
 
 function captureIdentity(target: Identity, values: Map<string, string>) {
-  for (const key of ["user.email", "user.account_id", "organization.id"]) {
+  for (const key of IDENTITY_ATTRIBUTES) {
     const value = values.get(key);
     if (!value) continue;
     const existing = target.values.get(key);
-    if (existing !== undefined && existing.toLowerCase() !== value.toLowerCase())
-      target.conflict = true;
+    if (existing !== undefined && existing !== value) target.conflict = true;
     else target.values.set(key, value);
   }
 }
@@ -233,20 +333,28 @@ export function sessionIdsInCapture(line: string, config: SyncOptions["config"])
     for (const raw of array(payload.resourceLogs)) {
       const resource = object(raw);
       const attrs = attributes(object(resource.resource).attributes);
-      for (const scope of array(resource.scopeLogs))
+      for (const scope of array(resource.scopeLogs)) {
+        attributes(object(object(scope).scope).attributes);
         for (const record of array(object(scope).logRecords)) add(attrs, record);
+      }
     }
   }
   if (config === CLAUDE_CONFIG_ID && envelope.signal === "metrics") {
     for (const raw of array(payload.resourceMetrics)) {
       const resource = object(raw);
       const attrs = attributes(object(resource.resource).attributes);
-      for (const scope of array(resource.scopeMetrics))
+      for (const scope of array(resource.scopeMetrics)) {
+        attributes(object(object(scope).scope).attributes);
         for (const rawMetric of array(object(scope).metrics)) {
           const metric = object(rawMetric);
-          for (const kind of ["sum", "gauge", "histogram"])
-            for (const point of array(object(metric[kind]).dataPoints)) add(attrs, point);
+          if (typeof metric.name !== "string" || !CLAUDE_METRICS.has(metric.name)) continue;
+          for (const kind of [metricKind(metric)])
+            for (const point of array(object(metric[kind]).dataPoints)) {
+              validateMetricPoint(object(point), kind);
+              add(attrs, point);
+            }
         }
+      }
     }
   }
   return [...ids];
@@ -298,12 +406,13 @@ export function selectTransfers(
       const resource = object(rawResource);
       const resourceAttrs = attributes(object(resource.resource).attributes);
       for (const rawScope of array(resource.scopeLogs)) {
+        attributes(object(object(rawScope).scope).attributes);
         for (const rawRecord of array(object(rawScope).logRecords)) {
           const record = object(rawRecord);
           const a = merge(resourceAttrs, attributes(record.attributes));
           if (a.get(sessionKey) !== options.session) continue;
           captureIdentity(identity, a);
-          const event = a.get("event.name") ?? String(object(record.body).stringValue ?? "");
+          const event = a.get("event.name") ?? eventNameFromBody(record.body);
           const wanted =
             options.config === CLAUDE_CONFIG_ID
               ? event === "tool_result" || event === "claude_code.tool_result"
@@ -345,13 +454,15 @@ export function selectTransfers(
       const resource = object(rawResource);
       const resourceAttrs = attributes(object(resource.resource).attributes);
       for (const rawScope of array(resource.scopeMetrics)) {
+        attributes(object(object(rawScope).scope).attributes);
         for (const rawMetric of array(object(rawScope).metrics)) {
           const metric = object(rawMetric);
           if (typeof metric.name !== "string" || !CLAUDE_METRICS.has(metric.name)) continue;
-          for (const kind of ["sum", "gauge", "histogram"]) {
+          for (const kind of [metricKind(metric)]) {
             const aggregation = object(metric[kind]);
             for (const rawPoint of array(aggregation.dataPoints)) {
               const point = object(rawPoint);
+              validateMetricPoint(point, kind);
               const a = merge(resourceAttrs, attributes(point.attributes));
               if (a.get(sessionKey) !== options.session) continue;
               captureIdentity(identity, a);
@@ -374,19 +485,7 @@ export function selectTransfers(
                 )
               );
               const sanitized = {
-                ...numericFields(point, [
-                  "startTimeUnixNano",
-                  "timeUnixNano",
-                  "asInt",
-                  "asDouble",
-                  "count",
-                  "sum",
-                  "bucketCounts",
-                  "explicitBounds",
-                  "min",
-                  "max",
-                  "flags",
-                ]),
+                ...numericFields(point, METRIC_POINT_FIELDS),
                 attributes: safeAttributes(a),
               };
               out.push({

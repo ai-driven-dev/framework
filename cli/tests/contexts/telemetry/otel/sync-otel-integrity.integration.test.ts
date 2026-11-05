@@ -87,9 +87,7 @@ function claudeMetric(startTime: string | number, endTime: string | number): str
   });
 }
 
-function claudePoint(
-  extra: Record<string, string | number | Array<string | number> | null | undefined>
-): string {
+function claudePoint(extra: Record<string, unknown>): string {
   return JSON.stringify({
     signal: "metrics",
     payload: {
@@ -121,6 +119,78 @@ function claudePoint(
     },
   });
 }
+
+function metricData(data: Record<string, unknown>): string {
+  return JSON.stringify({
+    signal: "metrics",
+    payload: {
+      resourceMetrics: [
+        { scopeMetrics: [{ metrics: [{ name: "claude_code.token.usage", ...data }] }] },
+      ],
+    },
+  });
+}
+
+test.each([
+  { asDouble: 5 },
+  { asInt: undefined, asDouble: [5] },
+  { asInt: undefined, asDouble: {} },
+  { asInt: undefined, asDouble: true },
+  { asInt: undefined, asDouble: null },
+  { asInt: undefined, asDouble: "NaN" },
+  { asInt: undefined },
+  { flags: 1 },
+  { flags: "3" },
+  { sum: [] },
+  { explicitBounds: ["bad"] },
+])("rejects malformed or unrecorded NumberDataPoint values", (extra) => {
+  expect(() =>
+    selectTransfers(
+      claudePoint(extra),
+      { ...options, config: "claude" },
+      { values: new Map(), conflict: false }
+    )
+  ).toThrow(/OTLP/);
+});
+
+test.each([
+  {},
+  { summary: {} },
+  { exponentialHistogram: {} },
+  { sum: {}, gauge: {} },
+  { sum: {}, histogram: {} },
+  { sum: {}, summary: {} },
+  { sum: {}, exponentialHistogram: {} },
+  { sum: {}, exponential_histogram: {} },
+  { sum: { dataPoints: {} } },
+])("rejects missing, unsupported or competing data on a supported metric", (data) => {
+  expect(() =>
+    selectTransfers(
+      metricData(data),
+      { ...options, config: "claude" },
+      { values: new Map(), conflict: false }
+    )
+  ).toThrow(/OTLP metric data/);
+});
+
+test("keeps valid histograms separate from NumberDataPoint's scalar oneof", () => {
+  const point = {
+    startTimeUnixNano: "1785044858922210000",
+    timeUnixNano: "1785044858922210000",
+    count: "2",
+    sum: 5.5,
+    explicitBounds: [1.5],
+    bucketCounts: ["1", "1"],
+    attributes: [attribute("session.id", "session")],
+  };
+  const [transfer] = selectTransfers(
+    metricData({ histogram: { dataPoints: [point] } }),
+    { ...options, config: "claude" },
+    { values: new Map(), conflict: false }
+  );
+  expect(JSON.stringify(transfer.payload)).toContain('"count":"2"');
+  expect(JSON.stringify(transfer.payload)).toContain('"sum":5.5');
+});
 
 test.each([
   { asInt: 1785044858922210000 },
@@ -163,58 +233,67 @@ test("preserves exact integer strings for signed and unsigned metric values", ()
     expect(payload).toContain(`"${value}"`);
 });
 
-test("an inexact metric stops all-session sync before delivery or checkpoint advance", async () => {
-  const home = await mkdtemp(join(tmpdir(), "aidd-inexact-metric-"));
-  dirs.push(home);
-  const captureDir = join(home, ".local/share/aidd-otel-observation");
-  const stateDir = join(home, "state");
-  await mkdir(captureDir, { recursive: true, mode: 0o700 });
-  const file = join(captureDir, "claude.jsonl");
-  await writeFile(file, "", { mode: 0o600 });
-  let calls = 0;
-  const abort = new AbortController();
-  server = createServer((request, response) => {
-    request.resume();
-    request.on("end", () => {
-      calls++;
-      response.writeHead(200).end("{}");
-      abort.abort();
+test.each([
+  claudePoint({ asInt: 1785044858922210000 }),
+  claudePoint({ asDouble: 5 }),
+  claudePoint({ flags: 1 }),
+  metricData({ sum: {}, summary: {} }),
+  metricData({ summary: {} }),
+])(
+  "an invalid metric stops all-session sync before delivery or checkpoint advance",
+  async (line) => {
+    const home = await mkdtemp(join(tmpdir(), "aidd-inexact-metric-"));
+    dirs.push(home);
+    const captureDir = join(home, ".local/share/aidd-otel-observation");
+    const stateDir = join(home, "state");
+    await mkdir(captureDir, { recursive: true, mode: 0o700 });
+    const file = join(captureDir, "claude.jsonl");
+    await writeFile(file, "", { mode: 0o600 });
+    let calls = 0;
+    const abort = new AbortController();
+    server = createServer((request, response) => {
+      request.resume();
+      request.on("end", () => {
+        calls++;
+        response.writeHead(200).end("{}");
+        abort.abort();
+      });
     });
-  });
-  await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
-  const address = server.address();
-  if (address === null || typeof address === "string") throw new Error("No test port");
-  const running = syncAllOtel(
-    {
-      config: "claude",
-      tenant: "tenant",
-      endpoint: `http://127.0.0.1:${address.port}`,
-      token: "test",
-      home,
-      stateDir,
-      intervalMs: 10,
-      signal: abort.signal,
-    },
-    async () =>
-      new Map([
-        ["session", { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" }],
-      ]),
-    async () => "allow"
-  );
-  const directory = join(stateDir, "otel-sync");
-  let checkpoint: string | undefined;
-  for (let attempt = 0; attempt < 100 && !checkpoint; attempt++) {
-    const entries = await readdir(directory).catch(() => []);
-    checkpoint = entries.find((entry) => entry.endsWith(".checkpoint.json"));
-    if (!checkpoint) await new Promise((resolve) => setTimeout(resolve, 10));
+    await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+    const address = server.address();
+    if (address === null || typeof address === "string") throw new Error("No test port");
+    const running = syncAllOtel(
+      {
+        config: "claude",
+        tenant: "tenant",
+        endpoint: `http://127.0.0.1:${address.port}`,
+        token: "test",
+        home,
+        stateDir,
+        intervalMs: 10,
+        signal: abort.signal,
+      },
+      async () =>
+        new Map([
+          ["session", { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" }],
+        ]),
+      async () => "allow"
+    );
+    const directory = join(stateDir, "otel-sync");
+    let checkpoint: string | undefined;
+    for (let attempt = 0; attempt < 100 && !checkpoint; attempt++) {
+      const entries = await readdir(directory).catch(() => []);
+      checkpoint = entries.find((entry) => entry.endsWith(".checkpoint.json"));
+      if (!checkpoint) await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    if (!checkpoint) throw new Error("No initial checkpoint");
+    await appendFile(file, `${line}\n`);
+    await expect(running).rejects.toThrow(/OTLP/);
+    const saved = JSON.parse(await readFile(join(directory, checkpoint), "utf8"));
+    expect(saved.offset).toBe(0);
+    expect(calls).toBe(0);
   }
-  if (!checkpoint) throw new Error("No initial checkpoint");
-  await appendFile(file, `${claudePoint({ asInt: 1785044858922210000 })}\n`);
-  await expect(running).rejects.toThrow(/invalid OTLP integer/i);
-  const saved = JSON.parse(await readFile(join(directory, checkpoint), "utf8"));
-  expect(saved.offset).toBe(0);
-  expect(calls).toBe(0);
-});
+);
 
 function metricWithMetadata(unit: string, temporality: number, monotonic: boolean): string {
   return JSON.stringify({

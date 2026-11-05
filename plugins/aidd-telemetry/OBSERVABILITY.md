@@ -52,6 +52,8 @@ The collector keeps the provider's raw OTLP JSON locally. The separate dev sync 
 
 The sync excludes fields for prompt and response text, tool arguments and output, raw API bodies, metric exemplars and traces. It filters attribute keys, not secrets or free text inside allowed values. OpenCode is not forwarded by this sync. These are forwarding rules, not guarantees about what the raw collector receives.
 
+Codex can replace absent cache details with zeros before emitting OTLP. A zero cache count therefore does not prove that the provider reported zero; Gouvernail displays it, and any uncached-input total depending on it, as unavailable. Nonzero counts are still observations, not proof that every event was received. [Codex response parser](https://github.com/openai/codex/blob/c90354172c5c49535b122443e9a8ed52c2233b80/codex-rs/codex-api/src/sse/responses.rs), [OTLP emitter](https://github.com/openai/codex/blob/c90354172c5c49535b122443e9a8ed52c2233b80/codex-rs/otel/src/events/session_telemetry.rs) (read 2026-11-05).
+
 ### Example: a Claude metric sent locally
 
 The structure below was produced by `selectTransfers` from one real local Claude capture. The timestamps, metric value, session, organization, email, account, model and query source have been replaced with fictional values; attribute presence varies by event. It is the filtered request body, not the raw capture or its authorization header.

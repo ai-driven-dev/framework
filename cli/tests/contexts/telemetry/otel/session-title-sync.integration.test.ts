@@ -243,6 +243,19 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       expect(noCurrentConsent).toMatchObject({ sent: 0, identified: 1, currentConsenting: 0 });
 
       received.length = 0;
+      await appendFile(
+        captureFile,
+        `${JSON.stringify(capture).replaceAll("person@example.test", "PERSON@EXAMPLE.TEST")}\n`
+      );
+      const conflictingIdentity = await syncAllSessionTitles(
+        { ...options, includeSessionTitles: true },
+        async () => new Map([["session-1", admittedSession]]),
+        async () => "allow"
+      );
+      expect(conflictingIdentity).toMatchObject({ sent: 0, identified: 0 });
+      expect(received).toHaveLength(0);
+
+      received.length = 0;
       const abort = new AbortController();
       const timeout = setTimeout(() => abort.abort(), 3000);
       onReceived = (body) => {
