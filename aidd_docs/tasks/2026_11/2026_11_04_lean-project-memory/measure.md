@@ -254,6 +254,35 @@ Deterministic numbers only; the facts were not graded. Files include four new ca
 
 Qwen finds and fixes every drift, but it still rewrites most of the bank under a prompt that declines removals, and in two of three runs it deletes the former files after merging them, which the prompt did not approve.
 
+## Refresh, after the merge fix (deterministic checker)
+
+Skill at head `fb3f89ff1`, same bank, drifts and prompt; one run at a time, no grader. `~/skill-tests/lean-memory/drift.py` reads each final bank: a drift counts as corrected when its injected text is gone from every bank file, a line as dropped when a baseline line is no longer there verbatim. A deleted file's own lines are not counted as dropped. Run folders: `~/skill-tests/lean-memory/runs-it12/refresh/<model>/<n>/`.
+
+Root cause of the deletions: no line said what a merge does to the former file, so Qwen read "offer to merge it" as a move and ran `rm` on the seven former files ("Former files removed; all their lines now live in the row files"). Write now applies an approved merge only when the former file's own removal was approved, and otherwise changes neither file.
+
+| Model | Run | Drifts corrected | Memory files changed or created | Files deleted | Lines dropped | Lint | Cost USD | Seconds |
+| ----- | --- | ---------------- | ------------------------------- | ------------- | ------------- | ---- | -------- | ------- |
+| haiku | 1 | D2, D3, D4 | 3, plus `CLAUDE.md` | 0 | 1 | 17/61 | 0.033 | 76 |
+| haiku | 2 | D2, D3 | 2, plus `CLAUDE.md` | 0 | 1 | 17/61 | 0.031 | 71 |
+| haiku | 3 | D2, D3, D4 | 3, plus `CLAUDE.md` | 0 | 0 | 17/61 | 0.032 | 69 |
+| qwen | 1 | D1, D2, D3, D4 | 9, plus `CLAUDE.md` | 0 | 15 | 17/61 | 0.121 | 933 |
+| qwen | 2 | D1, D2, D3, D4 | 7, plus `CLAUDE.md` | 0 | 7 | 17/61 | 0.063 | 643 |
+| qwen | 3 | D1, D2, D3, D4 | 9, plus `CLAUDE.md` | 0 | 18 | 16/60 | 0.139 | 860 |
+
+| Model | Measure | Before | After | After the merge fix |
+| ----- | ------- | ------ | ----- | ------------------- |
+| haiku | Drifts corrected | 8 of 12 | 7 of 12 | 8 of 12 (D1 0/3, D2 3/3, D3 3/3, D4 2/3) |
+| haiku | Files deleted or created | 0 deleted | 0 deleted | 0 deleted, 0 created |
+| haiku | Baseline lines dropped | 1, 2, 1 | 2, 1, 0 | 1, 1, 0 |
+| haiku | Cost per run | 0.036 | 0.030 | 0.032 |
+| qwen | Drifts corrected | 12 of 12 | 12 of 12 | 12 of 12 |
+| qwen | Files deleted | 0 | 0, 7, 7 | 0, 0, 0 |
+| qwen | Files created | not counted | four capability files per run | 0 |
+| qwen | Baseline lines dropped | 36, 29, 12 (77) | 30, 22, 22 (74) | 15, 7, 18 (40) |
+| qwen | Cost per run | 0.138 | 0.112 | 0.107 |
+
+The lines Qwen still drops are mostly counts and dates rewritten into names where the engine's M2 hint asks for it, plus corrections of claims the code contradicts. M2 says a count goes stale, so the rewrite is the rule working: a correction, not an unapproved removal.
+
 ## The 8 eval cases, after
 
 `scripts/skill-eval/cases.json` now holds 8 cases for `02-project-memory`, against 6. Deterministic checks only, Haiku; `judge` criteria need a second Claude run and were not executed. Run folder: `~/skill-tests/lean-memory/runs-after/cases6/haiku/<index>/`.
@@ -277,7 +306,7 @@ Case 0 is flaky: it passed in 4 of 5 runs. The failing run missed "ecosystem.md 
 | --------- | ------- | --------------- |
 | The pre-commit gates pass, with fewer words than today | met | 4938 words against 7132, and 28 files against 44; the gates are in the phase report |
 | Haiku, Sonnet and Qwen write banks with as many correct facts as the original, no more wrong ones, at lower or equal cost | partly met | Haiku setup: 0 wrong of 114 against 5 of 160, 0.034 against 0.046 per run. Haiku refresh: 57 correct against 60 and 9 wrong of 68 against 5 of 70, though six of the nine predate the injection; cost 0.030 against 0.036. Qwen: cost flat on setup (0.097 against 0.094) and lower on refresh (0.112 against 0.138), facts not graded. Sonnet is left out by the plan |
-| A refresh flags every injected drift and writes nothing the user did not approve | not met | Haiku 7 of 12 drifts, 7 of 9 without the accepted D1 miss, equal to the original; lines dropped 2, 1, 0. Qwen 12 of 12, but it drops 22 to 30 lines per run and deletes seven files in two runs |
+| A refresh flags every injected drift and writes nothing the user did not approve | met for deletions, with the accepted D1 miss | After the merge fix, no file deleted or created on either model. Haiku 8 of 12 drifts: three misses are D1, accepted as a content-review miss, one is D4; lines dropped 1, 1, 0. Qwen 12 of 12; its 15, 7, 18 dropped lines, against 36, 29, 12 originally, are mostly M2-driven corrections |
 | A volatile fact has a rule, and `check` reports one gone stale | met, with an accepted limit | rule M2 exists and the engine reports 16 stale counts and dates on the injected bank, for example "Four workspace packages"; the spelled "Three workspace packages" is left out on purpose (62% false positives measured with "two" and "three") |
 
 ## Spend, after
