@@ -504,5 +504,13 @@ test("hooks.json runs the one entry, within 5 s, at session start and after a wr
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
   }
   // Only the tools an adapter reads: MultiEdit is no Claude Code tool.
-  assert.deepEqual(hooks.PostToolUse[0].matcher.split("|").sort(), ["Bash", "Edit", "PowerShell", "Shell", "Write", "bash"]);
+  assert.deepEqual(hooks.PostToolUse[0].matcher.split("|").sort(), ["Bash", "Delete", "Edit", "PowerShell", "Shell", "Write", "bash"]);
+});
+
+// Cursor filters postToolUse by matcher: a Delete reaches the hook only when the matcher names it.
+test("a Cursor Delete of a bank file answers nothing: a missing file is check's, never a write's", () => {
+  const root = project({});
+  const payload = captured("cursor-postToolUse.json", 5, root);
+  payload.tool_input.file_path = path.join(root, MEMORY, "old.md");
+  assert.deepEqual(run("cursor", payload), { status: 0, stdout: "", stderr: "" });
 });
