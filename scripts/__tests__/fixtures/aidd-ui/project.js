@@ -396,4 +396,21 @@ function validate(root) {
   return { code: run.status, out: lines(run.stdout), err: run.stderr };
 }
 
-module.exports = { UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };
+/** The fixes the rule cases of one spec file saw. `note` passes problems through, failing on one
+ * without a fix; `seen` lists each rule, message, excerpt and fix it saw, once, sorted, for the
+ * spec to pin against its table. */
+function fixLedger() {
+  const seen = new Set();
+  return {
+    note(problems) {
+      for (const found of problems) {
+        assert.ok(typeof found.fix === "string" && found.fix.length > 0, `${found.rule} has no fix: ${found.message}`);
+        seen.add([found.rule, found.message, found.excerpt === undefined ? "-" : JSON.stringify(found.excerpt), found.fix].join(" | "));
+      }
+      return problems;
+    },
+    seen: () => [...seen].sort(),
+  };
+}
+
+module.exports = { fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, HOOK, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };

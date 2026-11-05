@@ -8,7 +8,7 @@ Leave a design system that validates, and tell the user what follows.
 
 ## Process
 
-1. Run `node <engine> validate` and fix each line under `aidd_docs/ui/` that has no `warning`; repeat until none is left. An error in the code (C4, C6) is left: this skill never writes the code.
+1. Run `node <engine> validate` and fix each error line under `aidd_docs/ui/`, as its `=> fix` says; the `warning` lines are not errors; repeat until no error is left. An error in the code (C4, C6) is left: this skill never writes the code.
 2. Reply to the user with:
    - the elements created or raised, with their versions; for a change, also those `bump` left, from its `left` list;
    - what `validate` still prints, errors in the code included;

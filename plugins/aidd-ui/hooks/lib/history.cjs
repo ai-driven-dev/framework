@@ -19,7 +19,7 @@ const FINGERPRINT_LENGTH = 12;
 const REMOVED = "removed"; // the Change of the row that takes an id out of the design system
 
 const rowsOf = (project, id) => project.history.filter((row) => row.Id === id);
-const inHistory = (message) => problem({ file: HISTORY_FILE }, message);
+const inHistory = (message, fix, excerpt) => problem({ file: HISTORY_FILE }, message, fix, excerpt);
 /** A system row's Task cell: the tasks one publication lists, comma-separated. */
 const taskList = (cell) => list(cell?.split(",").map((task) => task.trim()).filter(Boolean));
 
@@ -50,7 +50,7 @@ const versioned = (project) => placed(project).filter((record) => fm(record).id 
 function presenceProblems(project) {
   return versioned(project)
     .filter((record) => rowsOf(project, fm(record).id).length === 0)
-    .map((record) => problem(record, "no row in history.md"));
+    .map((record) => problem(record, "no row in history.md", `run bump --task <folder> --created ${fm(record).id}`));
 }
 
 function duplicateProblems(project) {
@@ -58,10 +58,10 @@ function duplicateProblems(project) {
   const claimed = new Map();
   for (const { Id: id, Version: version } of project.history) {
     const key = `${id} ${version}`;
-    if (seen.has(key)) claimed.set(key, `two changes claim version ${version} of ${id}, renumber one`);
+    if (seen.has(key)) claimed.set(key, inHistory(`two changes claim version ${version} of ${id}, renumber one`, "renumber one of the rows", key));
     seen.add(key);
   }
-  return [...claimed.values()].map(inHistory);
+  return [...claimed.values()];
 }
 
 function currentProblems(project) {
@@ -73,17 +73,18 @@ function currentProblems(project) {
       const rows = byVersion(rowsOf(project, fm(record).id), false);
       if (!current || !rows.length) return [];
       const highest = rows.at(-1);
-      const problems = compare(current, highest.parts) === 0 ? [] : [`version ${fm(record).version} is not the highest history row, ${highest.row.Version}`];
+      const problems = compare(current, highest.parts) === 0 ? [] : [problem(record, `version ${fm(record).version} is not the highest history row, ${highest.row.Version}`, `set version to ${highest.row.Version}, the highest history row`, fm(record).version)];
       for (let index = 1; index < rows.length; index += 1) {
         const step = rows[index].parts[0] - rows[index - 1].parts[0];
-        if (step > 1) problems.push(`history jumps from ${rows[index - 1].row.Version} to ${rows[index].row.Version}`);
+        const [from, to] = [rows[index - 1].row.Version, rows[index].row.Version];
+        if (step > 1) problems.push(problem(record, `history jumps from ${from} to ${to}`, "renumber the rows so each version follows the last", `${from} to ${to}`));
       }
-      return problems.map((message) => problem(record, message));
+      return problems;
     });
 }
 
 function breakingProblems(project) {
-  return project.history.filter((row) => !BREAKING_VALUES.includes(row.Breaking)).map((row) => inHistory(`breaking "${row.Breaking}" in version ${row.Version} of ${row.Id} must be yes or no`));
+  return project.history.filter((row) => !BREAKING_VALUES.includes(row.Breaking)).map((row) => inHistory(`breaking "${row.Breaking}" in version ${row.Version} of ${row.Id} must be yes or no`, "set Breaking to yes or no", row.Breaking));
 }
 
 /** The task folders a task of which broke an element: the Task of every breaking row. */
@@ -99,9 +100,9 @@ function publicationProblems(project) {
   return ordered.slice(1).flatMap(({ row, parts: now }, index) => {
     const before = ordered[index].parts;
     const broke = taskList(row.Task).find((task) => breaking.has(task));
-    if (broke && row.Breaking !== BREAKING) return [inHistory(`${row.Version} publishes "${broke}", which breaks an element, so it is breaking`)];
-    if (row.Breaking === BREAKING && now[0] <= before[0]) return [inHistory(`${row.Version} is breaking, yet raises no major version`)];
-    if (compare(now.slice(0, 2), before.slice(0, 2)) <= 0) return [inHistory(`${row.Version} raises neither major nor minor`)];
+    if (broke && row.Breaking !== BREAKING) return [inHistory(`${row.Version} publishes "${broke}", which breaks an element, so it is breaking`, "set Breaking to yes and raise the major version", broke)];
+    if (row.Breaking === BREAKING && now[0] <= before[0]) return [inHistory(`${row.Version} is breaking, yet raises no major version`, "raise the major version, or set Breaking to no", row.Version)];
+    if (compare(now.slice(0, 2), before.slice(0, 2)) <= 0) return [inHistory(`${row.Version} raises neither major nor minor`, "raise the minor or the major version", row.Version)];
     return [];
   });
 }
@@ -110,7 +111,7 @@ function taskProblems(project) {
   return project.history.flatMap((row) =>
     (row.Id === SYSTEM_ID ? taskList(row.Task) : [row.Task])
       .filter((task) => !task?.startsWith(TASKS_DIR))
-      .map((task) => inHistory(`task "${task ?? ""}" in version ${row.Version} of ${row.Id} must be a task folder, ${TASKS_DIR}…`))
+      .map((task) => inHistory(`task "${task ?? ""}" in version ${row.Version} of ${row.Id} must be a task folder, ${TASKS_DIR}…`, `name a task folder, ${TASKS_DIR}…`, task ?? ""))
   );
 }
 
@@ -121,7 +122,7 @@ function deprecationProblems(project) {
       const last = byVersion(rowsOf(project, fm(record).id), false).at(-1);
       return last && last.row.Breaking !== BREAKING;
     })
-    .map((record) => problem(record, "deprecated, yet its last history row is not breaking"));
+    .map((record) => problem(record, "deprecated, yet its last history row is not breaking", `raise its version as a breaking change with bump --task <folder> --change <text> --breaking ${fm(record).id}`));
 }
 
 /** A record's text without what a version never covers: the status and the code links. */
@@ -178,8 +179,8 @@ function fingerprintProblems(project) {
       const row = currentRow(project, record);
       if (!row) return []; // H1 and H3 name it
       const written = row.Fingerprint ?? "";
-      if (written === "") return fm(record).status === VALIDATED ? [problem(record, `validated without a fingerprint, run publish ${fm(record).id}`)] : [];
-      return written === fingerprint(project, record) ? [] : [problem(record, `edited since version ${fm(record).version} was validated, raise its version with bump`)];
+      if (written === "") return fm(record).status === VALIDATED ? [problem(record, `validated without a fingerprint, run publish ${fm(record).id}`, `run publish ${fm(record).id}`)] : [];
+      return written === fingerprint(project, record) ? [] : [problem(record, `edited since version ${fm(record).version} was validated, raise its version with bump`, `raise its version with bump --task <folder> --change <text> ${fm(record).id}`)];
     });
 }
 
@@ -198,9 +199,9 @@ function removalProblems(project) {
   const blind = unreadable(project).length > 0; // a record in a folder it cannot list is not missing
   return lastRows(project).flatMap((row) => {
     const record = index.get(row.Id);
-    if (row.Change === REMOVED) return record ? [problem(record, "removed in history.md, delete its record and render")] : [];
+    if (row.Change === REMOVED) return record ? [problem(record, "removed in history.md, delete its record and render", "delete its record and render")] : [];
     const kept = record || blind || project.records.some((each) => each.name === row.Id); // a record R1 or R4 already names
-    return kept ? [] : [inHistory(`${row.Id} has history but no record: restore it or run bump --removed`)];
+    return kept ? [] : [inHistory(`${row.Id} has history but no record: restore it or run bump --removed`, `restore its record, or run bump --task <folder> --removed ${row.Id}`, row.Id)];
   });
 }
 

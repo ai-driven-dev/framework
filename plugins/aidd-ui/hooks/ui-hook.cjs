@@ -6,8 +6,8 @@ const path = require("node:path");
 const { load, relative, isUnder, UI_DIR } = require("./lib/project.cjs");
 const { codeRoots } = require("./lib/code.cjs");
 const { reached } = require("./lib/graph.cjs");
-const { problemsOf, format, isError } = require("./aidd-ui.cjs");
-const { isShellWrite } = require("./lib/common-rules.cjs");
+const { problemsOf, findingOf, isError } = require("./aidd-ui.cjs");
+const { isShellWrite, formatFindings } = require("./lib/common-rules.cjs");
 
 const POST_TOOL_USE = "PostToolUse";
 const SESSION_START = "SessionStart";
@@ -15,8 +15,6 @@ const STOP = "Stop";
 // Cursor names its events in camelCase.
 const EVENTS = { PostToolUse: POST_TOOL_USE, postToolUse: POST_TOOL_USE, SessionStart: SESSION_START, sessionStart: SESSION_START, Stop: STOP, stop: STOP };
 const EXIT_SILENT = 0;
-const LIMIT = 10; // problem lines after a write and at Stop; the validator by hand prints them all
-const ENGINE = path.join(__dirname, "aidd-ui.cjs");
 // A session id is a file-name part, so only these characters reach the mark's path.
 const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // Codex's apply_patch passes its patch as tool_input.command, Copilot's Edit as tool_input itself.
@@ -161,26 +159,8 @@ function isCopilot(payload) {
   return "tool_result" in payload && !("tool_response" in payload);
 }
 
-const errorsOf = (problems) => problems.filter(isError);
-
-/** The command that prints every problem: the engine relative to the project when it sits under
- * it, and the project root only when the hook did not run in it. */
-function validateCommand(project) {
-  const engine = relative(project.root, ENGINE);
-  const shown = engine.startsWith("../") || path.isAbsolute(engine) ? ENGINE : engine;
-  return `node ${shown} validate${path.resolve(project.root) === process.cwd() ? "" : ` ${project.root}`}`;
-}
-
-/** At most `limit` lines of problems, errors first so the cap never cuts an error for a warning,
- * then one line counting the `total` errors it leaves out and how to see them. */
-function lean(project, problems, limit, total) {
-  const shown = problems.slice(0, limit);
-  const left = total - errorsOf(shown).length;
-  return [...format(shown), ...(left > 0 ? [`+${left} more: ${validateCommand(project)}`] : [])];
-}
-
-/** Marks the turn, then hands the model what the write broke: the errors of the written files and
- * of what they reach, the warnings of the written files; nothing when there are none. */
+/** Marks the turn, then hands the model what the write broke: the errors of the written files, the
+ * errors of what they reach, the warnings of the written files; nothing when there are none. */
 function afterWrite(project, payload) {
   const written = writtenFiles(payload.tool_input)
     .map((file) => relative(project.root, path.resolve(project.root, file)))
@@ -189,10 +169,13 @@ function afterWrite(project, payload) {
   markTurn(payload, written);
   const problems = problemsOf(project);
   const scope = reached(project, written);
-  const errors = errorsOf(problems);
-  const shown = [...errors.filter((problem) => !scope || scope.has(problem.file)), ...problems.filter((problem) => !isError(problem) && written.includes(problem.file))];
-  if (!shown.length) return EXIT_SILENT;
-  const text = lean(project, shown, LIMIT, errors.length).join("\n");
+  const errors = problems.filter(isError);
+  const text = formatFindings(PLUGIN, {
+    errors: errors.filter((problem) => written.includes(problem.file)).map(findingOf),
+    reached: errors.filter((problem) => !written.includes(problem.file) && (!scope || scope.has(problem.file))).map(findingOf),
+    warnings: problems.filter((problem) => !isError(problem) && written.includes(problem.file)).map(findingOf),
+  });
+  if (!text) return EXIT_SILENT;
   // Each host reads one key: Cursor additional_context, Copilot additionalContext, Claude Code and Codex hookSpecificOutput.
   let output = { hookSpecificOutput: { hookEventName: POST_TOOL_USE, additionalContext: text } };
   if (isCursor(payload)) output = { additional_context: text };
@@ -212,15 +195,19 @@ function consumeMark(payload) {
   return (isCursor(payload) ? payload.loop_count === 0 : payload.stop_hook_active !== true) ? lines : null;
 }
 
-/** Blocks the turn's end once while a marked turn still leaves errors in what it reached: the
- * written files and what they reach, as after a write, or every file once a shell command, or a
- * mark without lines, leaves nothing to scope by. */
+/** Blocks the turn's end once while a marked turn still leaves errors: those of the files it
+ * listed, then those of what they reach. A shell command, or a mark without lines, leaves nothing
+ * to scope by: every other error is then reached. */
 function atStop(project, payload, marked) {
-  const files = marked.includes(ANY_FILE) ? [] : marked;
-  const scope = files.length ? reached(project, files) : null;
-  const errors = errorsOf(problemsOf(project)).filter((problem) => !scope || scope.has(problem.file));
-  if (!errors.length) return EXIT_SILENT;
-  const reason = lean(project, errors, LIMIT, errors.length).join("\n");
+  const files = marked.filter((line) => line !== ANY_FILE);
+  const unknown = !files.length || marked.includes(ANY_FILE);
+  const scope = unknown ? null : reached(project, files);
+  const errors = problemsOf(project).filter(isError);
+  const reason = formatFindings(PLUGIN, {
+    errors: errors.filter((problem) => files.includes(problem.file)).map(findingOf),
+    reached: errors.filter((problem) => !files.includes(problem.file) && (!scope || scope.has(problem.file))).map(findingOf),
+  });
+  if (!reason) return EXIT_SILENT;
   process.stdout.write(JSON.stringify(isCursor(payload) ? { followup_message: reason } : { decision: "block", reason }));
   return EXIT_SILENT;
 }

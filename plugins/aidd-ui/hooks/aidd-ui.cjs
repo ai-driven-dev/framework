@@ -2,7 +2,8 @@
 // The design system engine every skill and the hook call, one command per job; usage is in `main` and the *_USAGE constants.
 const fs = require("node:fs");
 const path = require("node:path");
-const { Refusal, load, unreadable, UI_DIR, WARNING } = require("./lib/project.cjs");
+const { Refusal, load, unreadable, UI_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
+const { formatFindings } = require("./lib/common-rules.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
 const tokens = require("./lib/tokens.cjs");
@@ -19,7 +20,8 @@ const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
 const EXIT_USAGE = 2;
 const EXIT_REFUSED = 2; // a request declined before anything is written
-const WARNING_WORD = "warning";
+const PLUGIN = "aidd-ui";
+const TOKENS_RULE = "T10";
 // A message that opens with the line it is about; the line moves to the file.
 const LINE_PREFIX = /^line (\d+): /;
 
@@ -34,7 +36,7 @@ function problemsOf(project, checks = CHECKS) {
       try {
         return check.check(project);
       } catch (error) {
-        return [{ file: UI_DIR, message: `check "${name}" failed: ${error.message}` }];
+        return [{ rule: "U2", severity: ERROR, file: UI_DIR, message: `check "${name}" failed: ${error.message}`, fix: `fix the input the error names, then run node ${ENGINE_REF} validate`, excerpt: name }];
       }
     }),
     ...unreadable(project),
@@ -44,22 +46,27 @@ function problemsOf(project, checks = CHECKS) {
 /** Whether a problem blocks: anything a rule does not call a warning. */
 const isError = (problem) => problem.severity !== WARNING;
 
-/** One `<file>[:<line>] <rule> [warning] <message>` line per problem, the file relative to the
- * project root. A problem without a rule leaves the rule out. */
-function format(problems) {
-  return problems.map((problem) => {
-    const [, line] = problem.message.match(LINE_PREFIX) ?? [];
-    const message = line ? problem.message.replace(LINE_PREFIX, "") : problem.message;
-    const head = [line ? `${problem.file}:${line}` : problem.file, problem.rule, isError(problem) ? null : WARNING_WORD, message];
-    return head.filter(Boolean).join(" ");
-  });
+/** A problem as the shared formatter reads it: the line a message opens with becomes its `line`
+ * field, and leaves the message. */
+function findingOf(problem) {
+  const [, line] = problem.message.match(LINE_PREFIX) ?? [];
+  const { file, rule, fix, excerpt, message } = problem;
+  return { file, ...(line ? { line: Number(line) } : {}), rule, ...(excerpt === undefined ? {} : { excerpt }), fix, message: line ? message.replace(LINE_PREFIX, "") : message };
 }
+
+/** The problems as the formatter's `errors` and `warnings`. */
+function findingsOf(problems) {
+  return { errors: problems.filter(isError).map(findingOf), warnings: problems.filter((problem) => !isError(problem)).map(findingOf) };
+}
+
+/** Every problem through the shared formatter, the file relative to the project root, uncapped. */
+const formatAll = (problems) => formatFindings(PLUGIN, findingsOf(problems), { warningsCap: Infinity });
 
 function validate([root = process.cwd()]) {
   const project = load(root);
   if (project === null) return EXIT_VALID;
   const problems = problemsOf(project);
-  console.log(problems.length ? format(problems).join("\n") : VERDICT_VALID);
+  console.log(problems.length ? formatAll(problems) : VERDICT_VALID);
   return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
 }
 
@@ -73,8 +80,9 @@ function generateTokens([root = process.cwd()]) {
   const project = load(root); // read again: the checks below read the Resolver just written
   const blocked = tokens.blockers(project);
   const { css, problems } = blocked.length ? { css: null, problems: blocked } : tokens.generate(project);
+  const ruled = problems.map((problem) => ({ rule: TOKENS_RULE, ...problem })); // a composite without raw CSS is T10's
   if (css === null) {
-    console.log(format(problems).join("\n"));
+    console.log(formatAll(ruled));
     return EXIT_INVALID;
   }
   const file = tokens.cssFileOf(project);
@@ -197,4 +205,4 @@ function main([command, ...args]) {
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
 
-module.exports = { problemsOf, format, isError };
+module.exports = { problemsOf, findingOf, isError };

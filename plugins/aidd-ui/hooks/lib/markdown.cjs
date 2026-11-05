@@ -12,6 +12,8 @@ const QUOTED = /^(["'])(.*)\1$/;
 const TABLE_SEPARATOR_ROW = /^\|[\s:|-]+\|$/;
 
 const NO_FRONT_MATTER = "no front matter, open and close it with a --- line";
+const FRONT_MATTER_FIX = "open and close the front matter with a --- line";
+const ENTRY_FIX = "write the line as key: value or key: [a, b]";
 
 /** A value without the one pair of quotes around it, if any. */
 const unquote = (value) => value.match(QUOTED)?.[2] ?? value;
@@ -40,11 +42,11 @@ const lineOf = (text, offset) => text.slice(0, offset).split(LINE_BREAK).length;
 /** `word` as a pattern source matching it literally. */
 const escapeRegex = (word) => word.replace(REGEX_SPECIALS, "\\$&");
 
-/** Front matter between the first two `---` lines, with one problem per line that is neither
+/** Front matter between the first two `---` lines, with one problem (`line`, `message`, `fix`, and the `excerpt` it quotes) per line that is neither
  * `key: value` nor `key: [a, b]`. Lines are numbered as in the file. */
 function parseFrontMatter(lines) {
   const close = frontMatterEnd(lines);
-  if (!isFence(lines[0]) || close < 0) return { found: false, values: {}, end: 0, problems: [{ line: 1, message: NO_FRONT_MATTER }] };
+  if (!isFence(lines[0]) || close < 0) return { found: false, values: {}, end: 0, problems: [{ line: 1, message: NO_FRONT_MATTER, fix: FRONT_MATTER_FIX }] };
   const values = {};
   const problems = [];
   for (let index = 1; index < close; index += 1) {
@@ -52,7 +54,7 @@ function parseFrontMatter(lines) {
     if (!line.trim()) continue;
     const entry = line.match(ENTRY);
     if (entry) values[entry[1]] = parseValue(entry[2]);
-    else problems.push({ line: index + 1, message: `expected "key: value" or "key: [a, b]", got "${line.trim()}"` });
+    else problems.push({ line: index + 1, message: `expected "key: value" or "key: [a, b]", got "${line.trim()}"`, fix: ENTRY_FIX, excerpt: line.trim() });
   }
   return { found: true, values, end: close + 1, problems };
 }

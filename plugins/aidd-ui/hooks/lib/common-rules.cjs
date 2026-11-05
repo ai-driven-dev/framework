@@ -281,7 +281,9 @@ function reachedLines(reached) {
     const [first] = group;
     if (group.length === 1) return errorLine(first);
     const folder = folderOf(first.file);
-    return `${first.rule} ×${group.length} in ${folder === "." ? "" : `${folder}/`}*${quoted(first.excerpt)} => ${first.fix}`;
+    // One excerpt stands for the group only when every member has it; any other would mislead.
+    const shared = group.every((finding) => finding.excerpt === first.excerpt) ? first.excerpt : undefined;
+    return `${first.rule} ×${group.length} in ${folder === "." ? "" : `${folder}/`}*${quoted(shared)} => ${first.fix}`;
   });
 }
 

@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, PATHS, LIB, makeTmp, removeTmp, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
+const { fixLedger, UI, PATHS, LIB, makeTmp, removeTmp, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green. Link
@@ -15,6 +15,7 @@ const SEARCH_CSS = "src/ui/SearchField.css";
 const DEBT = `${UI}/code-debt.json`;
 
 let tmp;
+const ledger = fixLedger();
 
 beforeEach(() => {
   tmp = makeTmp("aidd-ui-code-");
@@ -23,7 +24,7 @@ beforeEach(() => {
 
 afterEach(() => removeTmp(tmp));
 
-const problems = () => code.check(load(tmp)).map((problem) => `${problem.file}: ${problem.message}`);
+const problems = () => ledger.note(code.check(load(tmp))).map((problem) => `${problem.file}: ${problem.message}`);
 
 /** Gives search-field a code link. */
 const linkSearch = (link) => edit(tmp, SEARCH, "role: search", `role: search\ncode: ${link}`);
@@ -197,8 +198,8 @@ describe("aidd-ui code link", () => {
     const HOME_FILE = "src/ui/HomePage.tsx";
     /** Each C4 problem as `<severity> <file>:<what follows the literal>`. */
     const verdicts = () =>
-      code
-        .check(load(tmp))
+      ledger
+        .note(code.check(load(tmp)))
         .filter((found) => found.rule === "C4")
         .map((found) => `${found.severity} ${found.file}:${found.message.split("use a token")[1]}`);
     const owe = (debt) => put(tmp, DEBT, `${JSON.stringify(debt, null, 2)}\n`);
@@ -530,5 +531,64 @@ describe("aidd-ui code link", () => {
         `${SYSTEM}: code root "/abs" must name a folder inside the project`,
       ]);
     });
+  });
+});
+
+// Every rule case above notes the problems it saw; each carries a fix, and this table pins the rule, message, excerpt
+// and fix of all of them (`-` for no excerpt). It reads what the cases before it saw, so it runs with the whole file.
+const FIXES = [
+  "C1 | code \"package:@radix-ui/react-dialog\" lacks its version, @<version> | \"package:@radix-ui/react-dialog\" | add @<version> to the link",
+  "C1 | code \"package:@radix-ui/react-dialog#Root\" lacks its version, @<version> | \"package:@radix-ui/react-dialog#Root\" | add @<version> to the link",
+  "C1 | code \"src/ui/Button.tsx#@1\" must be path[#Export]@<version> or package:<name>[#Export]@<version> | \"src/ui/Button.tsx#@1\" | write the link as path[#Export]@<version> or package:<name>[#Export]@<version>",
+  "C1 | code \"src/ui/SearchField.css#SearchField\" lacks its version, @<version> | \"src/ui/SearchField.css#SearchField\" | add @<version> to the link",
+  "C1 | code \"src/ui/SearchField.css#SearchField@2\": version 2 is ahead of version 1 | \"2\" | set the link's version to 1 or lower",
+  "C1 | code \"src/ui/SearchField.css#SearchField@one\": version \"one\" must be an integer from 1 | \"one\" | write the version as an integer from 1",
+  "C1 | code file \"src/ui/Missing.tsx\" does not exist | \"src/ui/Missing.tsx\" | create the file or correct the code link",
+  "C1 | export \"Buttn\" is not in src/ui/Button.tsx | \"Buttn\" | export it from the file or correct the code link",
+  "C1 | export \"Butto\" is not in src/ui/Button.tsx | \"Butto\" | export it from the file or correct the code link",
+  "C1 | export \"Missing\" is not in src/ui/Hero.astro | \"Missing\" | export it from the file or correct the code link",
+  "C3 | no record links it and no ignore covers it | - | link it from a record's code, or list it in ignore",
+  "C4 | line 2: colour literal \"#FF6B35\", use a token (found 1, debt 0) | \"#FF6B35\" | replace it with a token",
+  "C4 | line 2: colour literal \"#colorLiteral(red:0.2\", use a token (found 1, debt 0) | \"#colorLiteral(red:0.2\" | replace it with a token",
+  "C4 | line 2: colour literal \"#ff0000\", use a token (found 1, debt 0) | \"#ff0000\" | replace it with a token",
+  "C4 | line 2: colour literal \"Color(.sRGB,red:0.98\", use a token (found 1, debt 0) | \"Color(.sRGB,red:0.98\" | replace it with a token",
+  "C4 | line 2: colour literal \"Color(0xFF336699\", use a token (found 1, debt 0) | \"Color(0xFF336699\" | replace it with a token",
+  "C4 | line 2: colour literal \"Color(red:0.4\", use a token (found 1, debt 0) | \"Color(red:0.4\" | replace it with a token",
+  "C4 | line 2: colour literal \"Color(red=0.1\", use a token (found 1, debt 0) | \"Color(red=0.1\" | replace it with a token",
+  "C4 | line 2: colour literal \"Color.fromARGB(255\", use a token (found 1, debt 0) | \"Color.fromARGB(255\" | replace it with a token",
+  "C4 | line 2: colour literal \"Color.rgb(255\", use a token (found 1, debt 0) | \"Color.rgb(255\" | replace it with a token",
+  "C4 | line 2: colour literal \"NSColor(calibratedRed:0.1\", use a token (found 1, debt 0) | \"NSColor(calibratedRed:0.1\" | replace it with a token",
+  "C4 | line 2: colour literal \"UIColor(red:0.2\", use a token (found 1, debt 0) | \"UIColor(red:0.2\" | replace it with a token",
+  "C4 | line 2: colour literal \"UIColor(white:0.5\", use a token (found 1, debt 0) | \"UIColor(white:0.5\" | replace it with a token",
+  "C4 | line 2: colour literal \"color:0xff0000\", use a token (found 1, debt 0) | \"color:0xff0000\" | replace it with a token",
+  "C4 | line 4: colour literal \"#ff0000\", use a token (counted as new: aidd_docs/ui/code-debt.json is missing) | \"#ff0000\" | replace it with a token (code-debt.json is missing: run bump --task <folder> --created system)",
+  "C4 | line 4: colour literal \"#ff0000\", use a token (existing debt) | \"#ff0000\" | replace it with a token",
+  "C4 | line 4: colour literal \"#ff0000\", use a token (found 1, debt 0) | \"#ff0000\" | replace it with a token",
+  "C4 | line 4: colour literal \"#ff0000\", use a token (found 2, debt 1) | \"#ff0000\" | replace it with a token",
+  "C4 | line 4: colour literal \"Color(0xFF336699\", use a token (existing debt) | \"Color(0xFF336699\" | replace it with a token",
+  "C4 | line 5: colour literal \"#ff0000\", use a token (existing debt) | \"#ff0000\" | replace it with a token",
+  "C4 | line 5: colour literal \"#ff0000\", use a token (found 2, debt 1) | \"#ff0000\" | replace it with a token",
+  "C4 | line 6: colour literal \"#ff0000\", use a token (found 1, debt 0) | \"#ff0000\" | replace it with a token",
+  "C5 | code \"src/ui/Button.tsx#Button@1\" is also aidd_docs/ui/components/button.md's | \"src/ui/Button.tsx#Button@1\" | link a file no other record links",
+  "C6 | line 1: physical property \"margin-left\", use its logical form | \"margin-left\" | replace it with its logical form",
+  "C7 | code root \".\" must name a folder inside the project | \".\" | name a folder inside the project",
+  "C7 | code root \"../shared\" must name a folder inside the project | \"../shared\" | name a folder inside the project",
+  "C7 | code root \"/abs\" must name a folder inside the project | \"/abs\" | name a folder inside the project",
+  "C7 | code root \"src/mobile\" must be written platform=path: system.md declares several platforms | \"src/mobile\" | write it as platform=path",
+  "C7 | code root \"tablet=src/mobile\": platform \"tablet\" is not in system.md | \"tablet\" | use a platform system.md declares",
+  "C8 | code-tokens \"src/ui/admin-tokens.css\" does not exist | \"src/ui/admin-tokens.css\" | create the file or correct code-tokens",
+  "C8 | code-tokens \"src/ui/tokens.css\" does not exist | \"src/ui/tokens.css\" | create the file or correct code-tokens",
+  "C8 | code-tokens \"tv=src/ui/tokens.css\": platform \"tv\" is not in system.md | \"tv\" | use a platform system.md declares",
+  "C9 | code \"lib/Field.ts#Field@1\" is under no code root, so its platform is unknown | \"lib/Field.ts#Field@1\" | put the file under a code root",
+  "C9 | code \"package:@radix-ui/react-dialog#Root@1\" needs a platform=: system.md declares several platforms | \"package:@radix-ui/react-dialog#Root@1\" | prefix the link with platform=",
+  "C9 | code \"src/mobile/Button.swift#Button@1\" is on platform \"mobile\", which button does not list | \"mobile\" | list the platform in its platforms, or link code on a platform it lists",
+  "C9 | code \"src/mobile/Button.swift#Button@1\" is on platform \"tablet\", which button does not list | \"tablet\" | list the platform in its platforms, or link code on a platform it lists",
+  "C9 | code \"src/ui/ButtonAlt.tsx#Button@1\" is a second link on platform \"web\" | \"web\" | keep one code link per platform",
+  "C9 | code \"tablet=package:@radix-ui/react-dialog#Root@1\": platform \"tablet\" is not in system.md | \"tablet\" | use a platform system.md declares",
+];
+
+describe("aidd-ui fixes of the code rules", () => {
+  it("pins the fix, and the excerpt where one applies, of every problem the cases above named", () => {
+    assert.deepEqual(ledger.seen(), [...FIXES].sort());
   });
 });

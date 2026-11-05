@@ -9,7 +9,7 @@ Where the engine is, and what it gives.
 
 | Command | Gives |
 | --- | --- |
-| `validate` | `VALID` when nothing is wrong, else one line per problem, `<file>[:<line>] <rule> [warning] <message>`; exit 1 only on an error |
+| `validate` | `VALID` when nothing is wrong, else the problems as in Output below; exit 1 only on an error |
 | `tokens` | writes `aidd_docs/ui/tokens.css`, and the resolver when one is needed; exit 1 names what blocks it |
 | `impact <token or id>…` | JSON: tokens, same-value, elements, screens, journeys, renders, code; a token as its path or its CSS name; exit 2 on an unknown one |
 | `extract [--force]` | writes `tokens.json` and the context files from the `code-tokens` files; JSON `written` and `left`; exit 2 with a message, nothing written, when it cannot, or when `tokens.json` exists without `--force` |
@@ -18,6 +18,24 @@ Where the engine is, and what it gives.
 | `bump --task <task folder> --removed <id>…` | writes a `removed` row one version above each id's last, breaking; an id without rows and `system` refused; JSON `changed`; exit 2 with a message, nothing written |
 | `publish [--breaking]` | appends the `system` row to `history.md`: its Task lists every task with an element row and no earlier publication, sorted; major when one of them broke an element or with `--breaking` for tokens alone, else minor; JSON `version` and `tasks`; exit 2 with a message, nothing written, when no task is unpublished |
 | `publish <id>…` | sets each element `validated` and writes its fingerprint in the `history.md` row of its version; JSON `validated`, each `id`, `version`, `fingerprint`; exit 2 with a message, nothing written, for an id that is no element, is deprecated, has no row at its version, or whose row already holds a fingerprint: a change of a validated element goes through `bump` |
+
+## Output
+
+`validate`, `tokens` when it blocks, and the hook print problems alike:
+
+```
+aidd-ui: <n> errors, <m> warnings
+<file>[:<line>] <rule> ["<excerpt>"] => <fix>
+<rule> ×<count> in <folder>/* ["<excerpt>"] => <fix>
+<file>[:<line>] <rule> warning <message> => <fix>
+```
+
+- The first line counts the errors, those a hook reports as reached included, then the warnings.
+- An error line carries its rule, the offending text when there is one, and the `=> fix` that clears it; the fix names the engine command when the engine owns the write. `<engine>` in a fix is this engine's path.
+- Reached errors are the ones in files a write reached without being written: the same rule, fix and folder make one `×<count>` line. `validate` has no reached errors.
+- A warning line also carries its message. `validate` prints every error and every warning; the hook, at most ten warnings.
+- Rules `U1` (a file that cannot be read), `U2` (a check that failed) and `U3` (a design system written for another format) belong to no family.
+- After a write the hook prints the errors of the written files, the errors of what they reach, and the warnings of the written files. At Stop it prints the errors of the files the turn listed, then those of what they reach, or every other error once a shell command marked the turn; no warning.
 
 ## Fingerprint
 

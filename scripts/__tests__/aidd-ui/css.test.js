@@ -211,7 +211,7 @@ describe("aidd-ui css", () => {
         const shadow = { name: "elevation.low", type: "shadow", value: { any: "shape" }, file: "ui/breakpoints/desktop.json" };
         assert.deepEqual(render({ base: [], themes: [], breakpoints: [{ media: MEDIA, tokens: [shadow] }] }), {
           css: null,
-          problems: [{ file: "ui/breakpoints/desktop.json", message: "elevation.low: a shadow has no CSS of its own, give it a dev.ai-driven.css value" }],
+          problems: [{ file: "ui/breakpoints/desktop.json", message: "elevation.low: a shadow has no CSS of its own, give it a dev.ai-driven.css value", fix: "give it a dev.ai-driven.css value", excerpt: "elevation.low" }],
         });
       });
     });
@@ -222,8 +222,8 @@ describe("aidd-ui css", () => {
       assert.deepEqual(render({ base: [brand, shadow], themes: [{ theme: "dark", tokens: [themed] }] }), {
         css: null,
         problems: [
-          { file: "ui/tokens.json", message: "elevation.low: a shadow has no CSS of its own, give it a dev.ai-driven.css value" },
-          { file: "ui/themes/dark.json", message: "elevation.high: a shadow has no CSS of its own, give it a dev.ai-driven.css value" },
+          { file: "ui/tokens.json", message: "elevation.low: a shadow has no CSS of its own, give it a dev.ai-driven.css value", fix: "give it a dev.ai-driven.css value", excerpt: "elevation.low" },
+          { file: "ui/themes/dark.json", message: "elevation.high: a shadow has no CSS of its own, give it a dev.ai-driven.css value", fix: "give it a dev.ai-driven.css value", excerpt: "elevation.high" },
         ],
       });
     });

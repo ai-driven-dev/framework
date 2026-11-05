@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, PATHS, LIB, makeTmp, removeTmp, writeProject, generateStylesheet, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
+const { fixLedger, UI, PATHS, LIB, makeTmp, removeTmp, writeProject, generateStylesheet, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -15,6 +15,7 @@ const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">\n';
 const INSERTED_LINE = 28; // the line before </body> in button.html
 
 let tmp;
+const ledger = fixLedger();
 
 beforeEach(() => {
   tmp = makeTmp("aidd-ui-tokens-renders-");
@@ -26,7 +27,7 @@ afterEach(() => removeTmp(tmp));
 /** Every problem both checks find, as `file: message`. */
 function problems() {
   const project = load(tmp);
-  return [...tokens.check(project), ...renders.check(project)].map((problem) => `${problem.file}: ${problem.message}`);
+  return ledger.note([...tokens.check(project), ...renders.check(project)]).map((problem) => `${problem.file}: ${problem.message}`);
 }
 
 /** Adds one token under a `misc` group. */
@@ -896,5 +897,115 @@ describe("aidd-ui tokens and renders", () => {
       addToRender('<p style="margin-left: 0">x</p>');
       assert.deepEqual(problems(), []);
     });
+  });
+});
+
+// Every rule case above notes the problems it saw; each carries a fix, and this table pins the rule, message, excerpt
+// and fix of all of them (`-` for no excerpt). It reads what the cases before it saw, so it runs with the whole file.
+const FIXES = [
+  "T1 | missing | - | write tokens.json by hand, or run node <engine> extract",
+  "T1 | not JSON | - | make tokens.json a JSON object",
+  "T10 | misc.shadow: a shadow has no CSS of its own, give it a dev.ai-driven.css value | \"misc.shadow\" | give it a dev.ai-driven.css value",
+  "T10 | missing, generate it with the engine's tokens command | - | run node <engine> tokens",
+  "T10 | out of date with the tokens, regenerate it with the engine's tokens command | - | run node <engine> tokens",
+  "T2 | color.$foo: \"$foo\" is not a reserved key | \"color.$foo\" | use a reserved key, or drop the $ from its name",
+  "T2 | misc.a.b: a name never holds \".\", \"{\" or \"}\" | \"misc.a.b\" | rename it without \".\", \"{\" or \"}\"",
+  "T2 | misc.x.$root: \"$root\" is not supported, name the token | \"misc.x.$root\" | give the token a name instead of $root",
+  "T2 | space.md: a token never contains tokens, name them beside it | \"space.md\" | move the inner tokens beside it",
+  "T3 | misc.c: no $type on it, its alias or a parent group | \"misc.c\" | add a $type to it, or to a parent group",
+  "T3 | misc.x: $type \"colour\" is not a DTCG type | \"misc.x\" | set $type to a DTCG type",
+  "T3 | misc.x: dev.ai-driven.css must be a CSS value | \"misc.x\" | give dev.ai-driven.css a CSS value",
+  "T3 | misc.x: no $type on it, its alias or a parent group | \"misc.x\" | add a $type to it, or to a parent group",
+  "T3 | misc.x: no $value | \"misc.x\" | add a $value",
+  "T4 | misc.x: colorSpace \"cmyk\" is not a DTCG colour space | \"misc.x\" | use a DTCG colour space, such as srgb",
+  "T4 | misc.x: components must be three numbers or \"none\" | \"misc.x\" | give three numbers, or \"none\"",
+  "T4 | misc.x: cubicBezier needs four numbers, x in 0..1 | \"misc.x\" | give four numbers, the two x ones from 0 to 1",
+  "T4 | misc.x: fontWeight \"semibold\" must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
+  "T4 | misc.x: fontWeight 1200 must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
+  "T4 | misc.x: fontWeight [\"bold\"] must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
+  "T4 | misc.x: hex \"#fff\" must be # and six hex digits | \"misc.x\" | write hex as # and six hex digits",
+  "T4 | misc.x: unit \"em\" must be px or rem | \"misc.x\" | set the unit to px or rem",
+  "T4 | misc.x: unit \"min\" must be ms or s | \"misc.x\" | set the unit to ms or s",
+  "T4 | space.md: unit \"em\" must be px or rem | \"space.md\" | set the unit to px or rem",
+  "T5 | misc.a: alias {misc.b} loops back to misc.a | \"misc.a\" | break the loop: point the alias at a token that does not lead back",
+  "T5 | misc.b: alias {misc.a} loops back to misc.b | \"misc.b\" | break the loop: point the alias at a token that does not lead back",
+  "T5 | misc.x: alias {color.brand.primary} is a color, not a dimension | \"misc.x\" | point the alias at a dimension token",
+  "T5 | misc.x: alias {color.brand} names a group, not a token | \"misc.x\" | point the alias at a token, not a group",
+  "T5 | misc.x: alias {color.missing} names no token | \"misc.x\" | point the alias at a token that exists",
+  "T6 | border.ghost: platform \"mobile\" redefines no token of tokens.json | \"border.ghost\" | remove it, or add the token to tokens.json",
+  "T6 | border.thin: platform \"mobile\": cites --misc-edge, which leads back to it | \"border.thin\" | break the loop: cite a token that does not lead back",
+  "T6 | border.thin: platform \"mobile\": unit \"em\" must be px or rem | \"border.thin\" | set the unit to px or rem",
+  "T6 | breakpoint contexts desktop, tablet must follow system.md, tablet, desktop: the order of the @media blocks decides which value wins | - | run node <engine> tokens",
+  "T6 | color.brand.primary: $type \"dimension\" differs from tokens.json's \"color\" | \"color.brand.primary\" | set $type to \"color\", or drop it",
+  "T6 | color.brand.primary: dev.ai-driven.css must be a CSS value | \"color.brand.primary\" | give dev.ai-driven.css a CSS value",
+  "T6 | color.brand.primary: theme \"dark\": alias {space.md} is a dimension, not a color | \"color.brand.primary\" | point the alias at a color token",
+  "T6 | color.brand.primary: theme \"dark\": cites --color-text-default, which leads back to it | \"color.brand.primary\" | break the loop: cite a token that does not lead back",
+  "T6 | color.brand.primary: theme \"dark\": cites itself, so the browser computes nothing: write a primitive value | \"color.brand.primary\" | write a primitive value that does not cite itself",
+  "T6 | color.brand.primary: theme \"dark\": components must be three numbers or \"none\" | \"color.brand.primary\" | give three numbers, or \"none\"",
+  "T6 | color.brand.primary: var(--nope) names no token | \"color.brand.primary\" | cite a token that exists, or add the token",
+  "T6 | color.ghost: theme \"dark\" redefines no token of tokens.json | \"color.ghost\" | remove it, or add the token to tokens.json",
+  "T6 | context \"dark\": each source is {\"$ref\": \"<file>\"} | \"dark\" | run node <engine> tokens",
+  "T6 | context \"desktop\" has no media string: give it a Query in system.md, then run the engine's tokens command | \"desktop\" | give it a Query in system.md, then run node <engine> tokens",
+  "T6 | context \"desktop\": each source is {\"$ref\": \"<file>\"} | \"desktop\" | run node <engine> tokens",
+  "T6 | context \"light\" is the base, held by tokens.json: it lists no source | \"light\" | run node <engine> tokens",
+  "T6 | context \"mobile\" is the default, held by tokens.json: it lists no source | \"mobile\" | run node <engine> tokens",
+  "T6 | context \"mobile\": each source is {\"$ref\": \"<file>\"} | \"mobile\" | run node <engine> tokens",
+  "T6 | context \"sepia\" is not a theme in system.md | \"sepia\" | run node <engine> tokens",
+  "T6 | context \"tablet\" is not a breakpoint in system.md | \"tablet\" | run node <engine> tokens",
+  "T6 | context \"tablet\" is not a platform in system.md | \"tablet\" | run node <engine> tokens",
+  "T6 | context \"web\" is the base, held by tokens.json: it lists no source | \"web\" | run node <engine> tokens",
+  "T6 | dev.ai-driven.media \"mobile\" names no context outside the default | \"mobile\" | run node <engine> tokens",
+  "T6 | dev.ai-driven.media \"tablet\" names no context outside the default | \"tablet\" | run node <engine> tokens",
+  "T6 | misc.ring: $type \"shadow\" has nothing to match, tokens.json's token has no $type | \"misc.ring\" | give tokens.json's token a $type, or drop this one",
+  "T6 | missing | - | run node <engine> tokens",
+  "T6 | missing, generate it with the engine's tokens command | - | run node <engine> tokens",
+  "T6 | no \"breakpoint\" modifier with contexts | - | run node <engine> tokens",
+  "T6 | no \"platform\" modifier with contexts | - | run node <engine> tokens",
+  "T6 | no \"theme\" modifier with contexts | - | run node <engine> tokens",
+  "T6 | no context for platform \"mobile\" | \"mobile\" | run node <engine> tokens",
+  "T6 | no context for theme \"dark\" | \"dark\" | run node <engine> tokens",
+  "T6 | no set holds tokens.json | - | run node <engine> tokens",
+  "T6 | resolutionOrder never applies #/modifiers/breakpoint | - | run node <engine> tokens",
+  "T6 | resolutionOrder never applies #/modifiers/platform | - | run node <engine> tokens",
+  "T6 | resolutionOrder never applies #/modifiers/theme | - | run node <engine> tokens",
+  "T6 | space.ghost: breakpoint \"desktop\" redefines no token of tokens.json | \"space.ghost\" | remove it, or add the token to tokens.json",
+  "T6 | space.md: $type \"color\" differs from tokens.json's \"dimension\" | \"space.md\" | set $type to \"dimension\", or drop it",
+  "T6 | space.md: breakpoint \"desktop\": cites --misc-gap, which leads back to it | \"space.md\" | break the loop: cite a token that does not lead back",
+  "T6 | space.md: breakpoint \"desktop\": unit \"em\" must be px or rem | \"space.md\" | set the unit to px or rem",
+  "T6 | the breakpoint modifier's default must name the context tokens.json holds | - | run node <engine> tokens",
+  "T6 | the platform modifier's default must be \"web\", the first platform in system.md | - | run node <engine> tokens",
+  "T6 | the theme modifier's default must be \"light\", the first theme in system.md | - | run node <engine> tokens",
+  "T6 | version must be \"2025.10\" | - | run node <engine> tokens",
+  "T7 | token \"space.huge\" is not in tokens.json | \"space.huge\" | remove it from tokens, or add it to tokens.json",
+  "T8 | token \"color.brand.primary\" is a primitive, use a semantic token | \"color.brand.primary\" | cite a semantic token instead",
+  "T9 | misc.a: cites --misc-b, which leads back to it | \"misc.a\" | break the loop: cite a token that does not lead back",
+  "T9 | misc.a: cites itself, so the browser computes nothing: write a primitive value | \"misc.a\" | write a primitive value that does not cite itself",
+  "T9 | misc.b: cites --misc-a, which leads back to it | \"misc.b\" | break the loop: cite a token that does not lead back",
+  "T9 | misc.x: var(--color-brand-gone) names no token | \"misc.x\" | cite a token that exists, or add the token",
+  "V1 | no render beside it, expected dialog.html | \"dialog.html\" | write the render beside it",
+  "V2 | no data-size=\"sm\" | \"data-size=\\\"sm\\\"\" | add an element carrying it to the render",
+  "V2 | no data-state=\"hover\" | \"data-state=\\\"hover\\\"\" | add an element carrying it to the render",
+  "V2 | no data-tone=\"danger\" | \"data-tone=\\\"danger\\\"\" | add an element carrying it to the render",
+  "V2 | no data-variant=\"secondary\" | \"data-variant=\\\"secondary\\\"\" | add an element carrying it to the render",
+  "V3 | line 28: var(--color-missing) names no token | \"var(--color-missing)\" | cite a token that exists, or add the token",
+  "V4 | line 28: colour literal \"#336699\", use a token | \"#336699\" | replace it with a token",
+  "V4 | line 28: colour literal \"hsl(\", use a token | \"hsl(\" | replace it with a token",
+  "V4 | line 28: colour literal \"rgb(\", use a token | \"rgb(\" | replace it with a token",
+  "V4 | line 29: colour literal \"#336699\", use a token | \"#336699\" | replace it with a token",
+  "V5 | line 28: physical property \"margin-left\", use its logical form | \"margin-left\" | replace it with its logical form",
+  "V6 | line 28: literal \"1.5rem\", only tokens carry values | \"1.5rem\" | replace it with a token",
+  "V6 | line 28: literal \"16px\", only tokens carry values | \"16px\" | replace it with a token",
+  "V6 | line 28: literal \"200ms\", only tokens carry values | \"200ms\" | replace it with a token",
+  "V7 | line 18: var(--color-brand-primary) is a token dialog does not declare | \"var(--color-brand-primary)\" | add the token to the record's tokens",
+  "V8 | does not load ../tokens.css, add <link rel=\"stylesheet\" href=\"../tokens.css\"> | \"../tokens.css\" | add <link rel=\"stylesheet\" href=\"../tokens.css\">",
+  "V9 | line 28: data-platform on <div>, set it on <html> alone | \"data-platform\" | set it on <html> alone",
+  "V9 | line 28: data-theme on <div>, set it on <html> alone | \"data-theme\" | set it on <html> alone",
+  "V9 | line 28: data-theme on <section>, set it on <html> alone | \"data-theme\" | set it on <html> alone",
+  "V9 | line 30: data-theme on <div>, set it on <html> alone | \"data-theme\" | set it on <html> alone",
+];
+
+describe("aidd-ui fixes of the token and render rules", () => {
+  it("pins the fix, and the excerpt where one applies, of every problem the cases above named", () => {
+    assert.deepEqual(ledger.seen(), [...FIXES].sort());
   });
 });

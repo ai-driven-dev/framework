@@ -265,7 +265,7 @@ const attribute = (kind, value) => `[data-${kind}="${value}"]`;
 function render({ base, themes, platforms = [], breakpoints = [], order = MODIFIERS }) {
   const problems = [];
   for (const entry of [base, ...themes, ...platforms, ...breakpoints].flatMap((each) => each.tokens ?? each)) {
-    if (declarationOf(entry) === null && !problems.some((each) => each.file === entry.file && each.message.startsWith(`${entry.name}:`))) problems.push({ file: entry.file, message: `${entry.name}: a ${entry.type} has no CSS of its own, give it a ${RAW_CSS_EXTENSION} value` });
+    if (declarationOf(entry) === null && !problems.some((each) => each.file === entry.file && each.message.startsWith(`${entry.name}:`))) problems.push({ file: entry.file, message: `${entry.name}: a ${entry.type} has no CSS of its own, give it a ${RAW_CSS_EXTENSION} value`, fix: `give it a ${RAW_CSS_EXTENSION} value`, excerpt: entry.name });
   }
   const overlays = {
     theme: new Map(themes.map(({ theme, tokens }) => [theme, keyed(tokens)])),
