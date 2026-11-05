@@ -346,6 +346,37 @@ test("isShellWrite: command -v and -V only look a command up", () => {
   for (const command of ["command -v rm", "command -V rm"]) assert.equal(isShellWrite(command), false, command);
 });
 
+test("isShellWrite: a PowerShell cmdlet or documented alias that writes matches, whatever its case", () => {
+  const cmdlets = ["Set-Content", "Add-Content", "Out-File", "New-Item", "Remove-Item", "Move-Item", "Copy-Item", "Rename-Item", "Clear-Content"];
+  const aliases = ["sc", "ac", "ni", "ri", "del", "erase", "rd", "mi", "move", "cpi", "copy", "rni", "ren", "clc"];
+  for (const name of [...cmdlets, ...aliases]) assert.equal(isShellWrite(`${name} -Path f`), true, name);
+  for (const command of ["remove-item f", "REMOVE-ITEM f", "Get-Item f; Remove-Item f", "& Remove-Item f"]) {
+    assert.equal(isShellWrite(command), true, command);
+  }
+});
+
+test("isShellWrite: a pipeline into Out-File, Set-Content or Add-Content matches", () => {
+  for (const sink of ["Out-File f", "Set-Content f", "Add-Content -Path f"]) {
+    assert.equal(isShellWrite(`Get-Content a | ${sink}`), true, sink);
+  }
+});
+
+test("isShellWrite: PowerShell reads, and a redirection to $null, do not match", () => {
+  const reads = [
+    "Get-Content f",
+    "Get-ChildItem aidd_docs",
+    "Test-Path f",
+    "Select-String -Pattern x -Path f",
+    "Write-Output x",
+    "Write-Host x",
+    "Get-ChildItem 2>$null",
+    "Get-ChildItem > $null",
+    "Write-Output x | Out-Null",
+  ];
+  for (const command of reads) assert.equal(isShellWrite(command), false, command);
+  assert.equal(isShellWrite("Get-ChildItem > $nullx"), true);
+});
+
 test("isShellWrite: 100 KB of nested prefixes, quotes and parentheses returns in under 100 ms", () => {
   const command = `${"sudo -u sudo ".repeat(7700)}${"(\"'".repeat(1000)}${"((".repeat(500)} ls`;
   assert.ok(command.length > 100_000);

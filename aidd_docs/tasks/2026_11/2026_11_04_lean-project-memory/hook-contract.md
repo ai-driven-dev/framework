@@ -65,7 +65,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 Three pieces every plugin uses live in one file, `hooks/lib/common-rules.cjs`, copied into each plugin and held identical by `scripts/check-hook-rule-copies.js`, until the CLI builds every distribution:
 
 - `deadPaths(text, root)`: a backticked path that does not exist, the one rule every plugin applies to its own files. A cited path is valid when it exists from the project root or from the repository root, the nearest folder above holding a `.git` that is not a link;
-- `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `perl -i`, `find … -delete`, `git apply`, `git mv`, and the git subcommands that touch the working tree: `git checkout` except `-b`/`-B` with no path, `git restore` except `--staged` without `--worktree`, `git rm` except `--cached`, `git reset` with `--hard`, `--merge` or `--keep`, `git stash` bare or with `push`, `pop`, `apply`, `drop` or `clear`;
+- `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `perl -i`, `find … -delete`, `git apply`, `git mv`, and the git subcommands that touch the working tree: `git checkout` except `-b`/`-B` with no path, `git restore` except `--staged` without `--worktree`, `git rm` except `--cached`, `git reset` with `--hard`, `--merge` or `--keep`, `git stash` bare or with `push`, `pop`, `apply`, `drop` or `clear`, and the PowerShell cmdlets `Set-Content`, `Add-Content`, `Out-File`, `New-Item`, `Remove-Item`, `Move-Item`, `Copy-Item`, `Rename-Item`, `Clear-Content` with their documented aliases, in any case, a redirection to `$null` writing nothing;
 - `formatFindings(plugin, findings, options)`: the output of rule 3.
 
 The Stop state file stays with the plugin that has a Stop check until a second plugin needs it.
@@ -95,7 +95,7 @@ Where a host does not deliver a level 2 answer to the model, its adapter answers
 | Shell tools | `Bash`; `PowerShell` with `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`, its text in `command` | `Bash` | `Shell` | `Bash` | `bash` | same |
 | PreToolUse | native | native | native, mapped by the CLI | native | native, not bridged | native, not bridged |
 
-The OpenCode and Kilo bridges hand an `apply_patch` to every hook whose matcher names `Edit` or `Write`, as Codex documents for its own. A Claude Code `PowerShell` call reaches the memory hook through its matcher; `isShellWrite` reads its redirections and the `rm`, `mv`, `cp` and `mkdir` aliases, not a cmdlet such as `Set-Content`.
+The OpenCode and Kilo bridges hand an `apply_patch` to every hook whose matcher names `Edit` or `Write`, as Codex documents for its own. A Claude Code `PowerShell` call reaches the memory hook through its matcher.
 
 Copilot accepts the nested hooks shape (`matcher` plus a `hooks` array), as the native tree ships it: a plugin installed from the native build fired SessionStart and PostToolUse, and expanded `${PLUGIN_ROOT}`. The flat shape in `.github/hooks/*.json` also fires, and needs `--trust-folder` in prompt mode.
 
