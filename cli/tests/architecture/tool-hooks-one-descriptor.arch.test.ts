@@ -1,415 +1,142 @@
 /**
- * A tool's hook behaviour is read from one place: `profiles/<tool>/hooks.ts`, its hooks
- * descriptor. Any other file under `profiles/<tool>/` that declares a hooks fact is a second
- * home for it.
- *
- * A hooks fact is one of four declarations, read from code with string, template and comment
- * text blanked, so the source a bridge generates is never read as declarations:
- * - a `new HooksCapability(` construction: destination, merge and section, written in place;
- * - a contract key whose name is a hook-named member of a contract a profile fills
- *   (`HOOK_CONTRACTS`), given a value written in place: anything but a reference (`X`,
- *   `X.y`) or a call, which is read from where it is declared;
- * - a module-level constant whose name says hook or event, given a literal: a string,
- *   template, boolean, number, object, array, `new Map(`, `new Set(` or `Object.freeze(`;
- *   or one of any name whose string literal names a hooks folder or file (`hooks/`,
- *   `hooks.json`), read on the raw text;
- * - an object literal member, inline ones included, named after a member of `HooksDescriptor`
- *   or of a route it holds (`DESCRIPTOR_TYPES`), given a value written in place; a route
- *   member counts only with an object literal, the one shape a route can have.
- * Logic is not a fact: a function, a local variable and a type declare none. An inline path
- * literal outside these four is not seen.
+ * A tool's hooks facts live in `profiles/<tool>/hooks.ts` alone. Read lexically, with strings and
+ * comments blanked, because `typescript` 7 ships no in-process parser.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, read, sourceFiles } from "./helpers.js";
+import { read, sourceFiles } from "./helpers.js";
 
-const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/([^/]+)\/([^/]+)\.ts$/;
-const DESCRIPTOR = "hooks";
-
-/** The contracts a profile fills; their hook-named members are the keys a fact is written in. */
-const HOOK_CONTRACTS = [
-  "src/contexts/tools/domain/build-contract.ts",
-  "src/contexts/tools/domain/capabilities/plugins-capability.ts",
-  "src/contexts/tools/domain/contracts.ts",
-  "src/contexts/tools/domain/marketplace-catalog.ts",
-];
-
-/**
- * Files that declare hooks facts outside their tool's descriptor today, with the count. The
- * list may only shrink, and a file declaring one more fact fails.
- */
-const BASELINE: readonly { readonly file: string; readonly facts: number; reason: string }[] = [];
-
-/** The source with string, template and comment content replaced by spaces, newlines kept,
- * and each literal's delimiters left in place so a value still reads as a literal. */
-function codeOnly(source: string): string {
-  let out = "";
-  let i = 0;
-  while (i < source.length) {
-    const char = source[i] as string;
-    const next = source[i + 1];
-    if (char === "/" && next === "/") {
-      while (i < source.length && source[i] !== "\n") {
-        out += " ";
-        i += 1;
-      }
-    } else if (char === "/" && next === "*") {
-      const end = source.indexOf("*/", i + 2);
-      const stop = end === -1 ? source.length : end + 2;
-      out += source.slice(i, stop).replace(/[^\n]/g, " ");
-      i = stop;
-    } else if (char === '"' || char === "'" || char === "`") {
-      out += char;
-      i += 1;
-      while (i < source.length && source[i] !== char) {
-        if (source[i] === "\\") {
-          out += "  ";
-          i += 2;
-          continue;
-        }
-        out += source[i] === "\n" ? "\n" : " ";
-        i += 1;
-      }
-      out += char;
-      i += 1;
-    } else {
-      out += char;
-      i += 1;
-    }
-  }
-  return out;
-}
-
-/** Hook-named members of the contracts, as interface members (`name?: T;`). */
-function hookContractKeys(bodies: ReadonlyMap<string, string>): Set<string> {
-  const keys = new Set<string>();
-  for (const file of HOOK_CONTRACTS) {
-    for (const match of (bodies.get(file) ?? "").matchAll(
-      /^\s+(?:readonly\s+)?(\w*[Hh]ook\w*)\??:[^\n]*;\s*$/gm
-    )) {
-      keys.add(match[1] as string);
-    }
-    for (const match of (bodies.get(file) ?? "").matchAll(
-      /^\s+(?:readonly\s+)?(\w*[Hh]ook\w*)\??:\s*(?:\(|\{)\s*$/gm
-    )) {
-      keys.add(match[1] as string);
-    }
-  }
-  return keys;
-}
-
-/** Where `HooksDescriptor` and its route types are declared. */
+const PROFILE_FILE = /^src\/contexts\/tools\/domain\/profiles\/[^/]+\/(?!hooks\.ts$)[^/]+\.ts$/;
 const DESCRIPTOR_TYPES = "src/contexts/tools/domain/formats/hooks-descriptor.ts";
 
-/** The member names of `HooksDescriptor` and of every interface of the same file it holds,
- * its routes: an object literal carrying one of them outside `hooks.ts` restates a route.
- * Each name maps to whether its value is itself a route, which only an object literal can be:
- * `project: ["--scope", "local"]` is another `project`. */
-function descriptorKeys(bodies: ReadonlyMap<string, string>): Map<string, boolean> {
-  const interfaces = new Map<string, string>();
-  for (const block of (bodies.get(DESCRIPTOR_TYPES) ?? "").matchAll(
-    /^export interface (\w+) \{([\s\S]*?)\n\}/gm
-  )) {
-    interfaces.set(block[1] as string, block[2] as string);
-  }
-  const keys = new Map<string, boolean>();
-  const pending = ["HooksDescriptor"];
-  const seen = new Set<string>();
-  while (pending.length > 0) {
-    const name = pending.pop() as string;
-    if (seen.has(name)) continue;
-    seen.add(name);
-    for (const member of (interfaces.get(name) ?? "").matchAll(
-      /^\s+(?:readonly\s+)?(\w+)\??:\s*(\w+)?/gm
-    )) {
-      const isRoute = member[2] !== undefined && interfaces.has(member[2]);
-      keys.set(member[1] as string, isRoute);
-      if (isRoute) pending.push(member[2] as string);
-    }
-  }
-  return keys;
-}
-
+const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g;
 const REFERENCE_OR_CALL =
   /^(?!(?:true|false|null)\b)(?:new\s+)?[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*\s*(?:\(|,|;|\}|$)/;
 const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b|new\s+(?:Map|Set)\(|Object\.freeze\()/;
-/** A hook or event name, or a string literal naming a hooks folder or file. */
-const HOOK_NAME = /hook|event/i;
 const HOOKS_PATH = /^["'`][^"'`]*(?:^|[/.{}"'`])hooks(?:\/|\.json)/;
 
-/** One `<line>: <name>` per hooks fact in one profile file. */
-function hooksFacts(
-  source: string,
-  keys: ReadonlySet<string>,
-  routeKeys: ReadonlyMap<string, boolean> = new Map()
-): string[] {
+/** Each member of an interface in the descriptor's type file, true when its type is another of
+ * them: a route, which only an object literal restates, so `scopeArgs.project` stays out. */
+function descriptorKeys(types: string): Map<string, boolean> {
+  const blocks = [...types.matchAll(/^export interface (\w+) \{([\s\S]*?)\n\}/gm)];
+  const names = new Set(blocks.map((block) => block[1]));
+  const keys = new Map<string, boolean>();
+  for (const [, , body = ""] of blocks) {
+    for (const [, name = "", type] of body.matchAll(/^\s+(?:readonly\s+)?(\w+)\??:\s*(\w+)?/gm)) {
+      keys.set(name, names.has(type));
+    }
+  }
+  return keys;
+}
+
+/** The name of each hooks fact a profile file declares, read outside type declarations. */
+function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[] {
   const facts: string[] = [];
-  let typeDepth = 0;
   const raw = source.split("\n");
-  codeOnly(source)
-    .split("\n")
-    .forEach((line, index, lines) => {
-      const trimmed = line.trim();
-      const opens = (line.match(/\{/g) ?? []).length;
-      const closes = (line.match(/\}/g) ?? []).length;
-      if (typeDepth > 0 || /^(?:export\s+)?(?:type|interface)\b/.test(trimmed)) {
-        typeDepth = Math.max(0, typeDepth + opens - closes);
-        return;
-      }
-      if (/\bnew HooksCapability\(/.test(line)) facts.push(`${index + 1}: new HooksCapability`);
-      const key = /^(?:readonly\s+)?(\w+)\??\s*:\s*(.*)$/.exec(trimmed);
-      if (key && keys.has(key[1] as string) && !REFERENCE_OR_CALL.test(key[2] as string)) {
-        facts.push(`${index + 1}: ${key[1]}`);
-      }
-      // A descriptor key anywhere in an object literal, inline ones included.
-      for (const member of line.matchAll(/(?<=^|[{,])\s*(\w+)\??\s*:\s*(?=([^,}]*))/g)) {
-        const name = member[1] as string;
-        if (!routeKeys.has(name) || keys.has(name)) continue;
-        const value = (member[2] as string).trim();
-        if (routeKeys.get(name) ? value.startsWith("{") : !REFERENCE_OR_CALL.test(value)) {
-          facts.push(`${index + 1}: ${name}`);
-        }
-      }
-      // Found on the blanked line, so a bridge's generated text declares nothing; the path
-      // is read on the raw one, where the literal still holds it.
-      const constant = /^(?:export\s+)?const\s+(\w+)\s*(?::[^=]+)?=\s*(.*)$/.exec(line);
-      if (!constant) return;
-      // A value may start on the next line: `const X =` then `"…" + "…";`.
-      const value = (constant[2] as string) || (lines[index + 1] ?? "").trim();
-      const rawValue = (/=\s*(.*)$/.exec(raw[index] ?? "")?.[1] ?? "").trim();
-      const named = HOOK_NAME.test(constant[1] as string) && LITERAL.test(value);
-      if (named || HOOKS_PATH.test(rawValue)) facts.push(`${index + 1}: ${constant[1]}`);
-    });
+  const lines = source
+    .replace(BLANKED, (text, quote?: string) =>
+      quote ? quote + text.slice(1, -1).replace(/[^\n]/g, " ") + quote : text.replace(/[^\n]/g, " ")
+    )
+    .split("\n");
+  let typeDepth = 0;
+  lines.forEach((line, index) => {
+    if (typeDepth > 0 || /^\s*(?:export\s+)?(?:type|interface)\b/.test(line)) {
+      typeDepth = Math.max(0, typeDepth + line.split("{").length - line.split("}").length);
+      return;
+    }
+    if (/\bnew HooksCapability\(/.test(line)) facts.push("HooksCapability");
+    for (const { 1: name = "", 2: rawValue = "", index } of line.matchAll(
+      /(?<=^|[{,])\s*(?:readonly\s+)?(\w+)\??\s*:\s*(?=([^,}]*))/g
+    )) {
+      const value = rawValue.trim();
+      const isRoute = keys.get(name);
+      // A hook-named key counts only leading its line: Codex's own `features: { hooks: true }`
+      // is a setting of the tool, not a hooks fact of ours.
+      const fact =
+        (/hook/i.test(name) && index === 0) || isRoute === false
+          ? !REFERENCE_OR_CALL.test(value)
+          : isRoute === true && value.startsWith("{");
+      if (fact) facts.push(name);
+    }
+    // Found on the blanked line, so the text a bridge generates declares nothing; the path is
+    // read on the raw line, where the literal still holds it. A value may start on the next line.
+    const [, name = "", rest = ""] =
+      /^(?:export\s+)?const\s+(\w+)\s*(?::[^=]+)?=\s*(.*)$/.exec(line) ?? [];
+    if (!name) return;
+    const value = rest || (lines[index + 1] ?? "").trim();
+    const rawValue = rest
+      ? (raw[index] ?? "").slice(line.length - rest.length)
+      : (raw[index + 1] ?? "").trim();
+    if ((/hook|event/i.test(name) && LITERAL.test(value)) || HOOKS_PATH.test(rawValue)) {
+      facts.push(name);
+    }
+  });
   return facts;
 }
 
-/** One `<file> (<facts>)` entry per profile file, its tool's descriptor excepted. */
+/** One `<file> (<facts>)` per profile file that is not its tool's descriptor. */
 function factsOutsideDescriptor(bodies: ReadonlyMap<string, string>): string[] {
-  const keys = hookContractKeys(bodies);
-  const routeKeys = descriptorKeys(bodies);
-  const found: string[] = [];
-  for (const [file, body] of bodies) {
-    const profile = PROFILE_FILE.exec(file);
-    if (!profile || profile[2] === DESCRIPTOR) continue;
-    const facts = hooksFacts(body, keys, routeKeys);
-    if (facts.length > 0) found.push(`${file} (${facts.length})`);
-  }
-  return found.sort();
+  const keys = descriptorKeys(bodies.get(DESCRIPTOR_TYPES) ?? "");
+  return [...bodies]
+    .filter(([file]) => PROFILE_FILE.test(file))
+    .map(([file, body]) => `${file} (${hooksFacts(body, keys).length})`)
+    .filter((entry) => !entry.endsWith(" (0)"))
+    .sort();
 }
 
-function treeBodies(): Map<string, string> {
-  return new Map(sourceFiles().map((file) => [file, read(file)]));
-}
+const BUILD = "src/contexts/tools/domain/profiles/claude/build.ts";
+
+/** A planted profile source, then ` → ` and the facts it declares, which none must be. */
+const PLANTED = [
+  "const p = new HooksCapability({ a: X }); → HooksCapability",
+  "const c = {\n  hooks: { supported: true },\n  hooksBridge: true,\n}; → hooks hooksBridge",
+  'const HOOK_TIMEOUT = 30;\nconst EVENT_ON = false;\nconst HOOK_FIELDS = ["a"]; → HOOK_TIMEOUT EVENT_ON HOOK_FIELDS',
+  'const HOOK_NAME =\n  "a" + "b"; → HOOK_NAME',
+  'const A_HOOKS = new Map([["a", "b"]]);\nexport const EVENTS = new Set(["Stop"]); → A_HOOKS EVENTS',
+  'const HOOK_F = Object.freeze(["c"]); → HOOK_F',
+  'const DEST = ".codex/hooks.json";\nconst DIR = `.cursor/hooks/`; → DEST DIR',
+  'const NEXT =\n  ".codex/hooks.json"; → NEXT',
+  'const i = { hooks: flatHooksArtifact({ scriptsDir: ".c/hooks/", sharedFile: ".c/s.json" }) }; → scriptsDir sharedFile',
+  'const b = { project: { sharedFile: ".cursor/hooks.json" } }; → project sharedFile',
+  'const d = { rootToken: "ROOT", eventMap: { Stop: ["stop"] } }; → rootToken eventMap',
+  'const s = {\n  hooksBridge: { ...C.hooksBridge },\n  x: f({ ...C.flat, scriptsDir: ".x/" }),\n}; → hooksBridge scriptsDir',
+  "const c = {\n  hooksBridge: C.hooksBridge,\n  hooks: build(),\n  flat: f(C.flat, {}),\n  hooksMerge,\n  x: { ...C.flat },\n}; →",
+  'function f(): void {\n  const localHooks = { a: "hooks/" };\n} →',
+  'const a = { scopeArgs: { project: ["--scope", "local"] }, features: { hooks: true } }; →',
+  'const U = ".codex/config.toml"; →',
+  'type Shape = {\n  hooks: Array<string>;\n};\n// hooks: { not: code },\nconst BRIDGE = `\nconst HOOKS_DIR = "../hooks/";\n  hooks: [1],\n`; →',
+];
 
 describe("a tool's hooks facts live in its descriptor", () => {
-  it("no profile file other than hooks.ts declares a hooks fact, beyond the baseline", () => {
-    const { added, fixed } = expectRatchet(
-      factsOutsideDescriptor(treeBodies()),
-      BASELINE.map((entry) => `${entry.file} (${entry.facts})`)
-    );
+  it("no profile file other than hooks.ts declares a hooks fact", () => {
+    const bodies = new Map(sourceFiles().map((file) => [file, read(file)]));
+    const keys = descriptorKeys(read(DESCRIPTOR_TYPES));
 
     expect(
-      added,
+      factsOutsideDescriptor(bodies),
       "a hooks fact declared outside profiles/<tool>/hooks.ts — declare it in the descriptor and read it from there"
     ).toEqual([]);
-    expect(fixed, "fixed or changed — update BASELINE").toEqual([]);
-  });
-
-  it("reads the hook keys of the contracts, so the rule cannot pass by knowing none", () => {
-    const keys = hookContractKeys(treeBodies());
-
-    for (const key of ["hooks", "hooksBridge", "flatHooksBridge", "hooksRelativePath"]) {
-      expect(keys.has(key), `${key} — HOOK_CONTRACTS is stale`).toBe(true);
-    }
-  });
-
-  it("reads the descriptor's keys and its routes' keys, so the rule cannot pass by knowing none", () => {
-    const keys = descriptorKeys(treeBodies());
-
-    for (const key of ["flat", "project", "eventMap", "scriptsDir", "sharedFile", "pluginFile"]) {
-      expect(keys.has(key), `${key} — DESCRIPTOR_TYPES is stale`).toBe(true);
-    }
-  });
-
-  it("finds the tool profiles, so the rule cannot pass by selecting nothing", () => {
+    expect(sourceFiles().filter((file) => PROFILE_FILE.test(file)).length).toBeGreaterThan(20);
     expect(
-      sourceFiles().filter((file) => PROFILE_FILE.test(file)).length,
-      "no profile file found — the scope of this rule is stale"
-    ).toBeGreaterThan(20);
+      ["scriptsDir", "pluginFile", "eventMap", "flat", "project"].map((key) => keys.get(key)),
+      "DESCRIPTOR_TYPES is stale"
+    ).toEqual([false, false, false, true, true]);
   });
-});
 
-describe("the guard itself", () => {
-  const keys = new Set(["hooks", "hooksBridge"]);
-  const descriptor = [
-    "export const CLAUDE_HOOKS = {",
-    '  destination: ".claude/settings.json",',
-    "  hooksBridge: { generate: generateBridge },",
-    "};",
-  ].join("\n");
-
-  it("names the tool whose build declares a second hooks fact outside its descriptor", () => {
+  it("names the file, and reads no fact in the tool's own hooks.ts", () => {
+    const fact = "export const p = new HooksCapability({});";
     const bodies = new Map([
-      ["src/contexts/tools/domain/profiles/claude/hooks.ts", descriptor],
-      [
-        "src/contexts/tools/domain/profiles/claude/build.ts",
-        [
-          "export const contract = {",
-          "  hooksBridge: CLAUDE_HOOKS.hooksBridge,",
-          "  hooks: { supported: true },",
-          "};",
-        ].join("\n"),
-      ],
-      [
-        "src/contexts/tools/domain/profiles/claude/profile.ts",
-        'const CLAUDE_HOOKS_DIR = ".claude/hooks/";\nexport const p = new HooksCapability({ outputPath: CLAUDE_HOOKS_DIR });',
-      ],
+      [BUILD, fact],
+      [BUILD.replace("build.ts", "hooks.ts"), fact],
     ]);
-    for (const file of HOOK_CONTRACTS) {
-      bodies.set(
-        file,
-        "export interface C {\n  readonly hooks: ArtifactContract;\n  readonly hooksBridge: Bridge;\n}"
-      );
-    }
 
-    expect(factsOutsideDescriptor(bodies)).toEqual([
-      "src/contexts/tools/domain/profiles/claude/build.ts (1)",
-      "src/contexts/tools/domain/profiles/claude/profile.ts (2)",
-    ]);
+    expect(factsOutsideDescriptor(bodies)).toEqual([`${BUILD} (1)`]);
   });
 
-  it("names a route restated inline as an object literal, and clears the descriptor's route passed by reference", () => {
-    const descriptorTypes = [
-      "export interface FlatHooksRoute {",
-      "  readonly scriptsDir: string;",
-      "  readonly sharedFile?: string;",
-      "}",
-      "export interface HooksDescriptor {",
-      "  readonly rootToken?: string;",
-      "  readonly flat?: FlatHooksRoute;",
-      "}",
-    ].join("\n");
-    const bodies = new Map([
-      ["src/contexts/tools/domain/formats/hooks-descriptor.ts", descriptorTypes],
-      [
-        "src/contexts/tools/domain/profiles/claude/build.ts",
-        [
-          "export const inline = {",
-          '  hooks: flatHooksArtifact({ scriptsDir: ".claude/hooks/", sharedFile: ".claude/settings.json" }, {}),',
-          "};",
-        ].join("\n"),
-      ],
-      [
-        "src/contexts/tools/domain/profiles/cursor/build.ts",
-        "export const byReference = { hooks: flatHooksArtifact(CURSOR_HOOKS.flat, {}) };",
-      ],
-    ]);
-    for (const file of HOOK_CONTRACTS) bodies.set(file, "");
+  it.each(PLANTED)("reads %s", (row) => {
+    const [source = "", facts = ""] = row.split(" →");
 
-    expect(factsOutsideDescriptor(bodies)).toEqual([
-      "src/contexts/tools/domain/profiles/claude/build.ts (2)",
-    ]);
-  });
-
-  it("reads a route key as a route only when its value has the route's shape", () => {
-    const bodies = new Map([
-      [
-        "src/contexts/tools/domain/formats/hooks-descriptor.ts",
-        [
-          "export interface ProjectHooksRoute {",
-          "  readonly sharedFile: string;",
-          "}",
-          "export interface HooksDescriptor {",
-          "  readonly project?: ProjectHooksRoute;",
-          "}",
-        ].join("\n"),
-      ],
-      [
-        "src/contexts/tools/domain/profiles/claude/profile.ts",
-        'export const a = { scopeArgs: { project: ["--scope", "local"] } };',
-      ],
-      [
-        "src/contexts/tools/domain/profiles/cursor/profile.ts",
-        'export const b = { project: { sharedFile: ".cursor/hooks.json" } };',
-      ],
-    ]);
-    for (const file of HOOK_CONTRACTS) bodies.set(file, "");
-
-    expect(factsOutsideDescriptor(bodies)).toEqual([
-      "src/contexts/tools/domain/profiles/cursor/profile.ts (2)",
-    ]);
-  });
-
-  it("reads a fact in the descriptor, a reference, a call and a local as no fact", () => {
-    const source = [
-      descriptor,
-      "export const c = {",
-      "  hooksBridge: CLAUDE_HOOKS.hooksBridge,",
-      "  hooks: buildHooksArtifact(),",
-      "};",
-      "function f(): void {",
-      '  const localHooks = { a: "hooks/" };',
-      "}",
-    ].join("\n");
-
-    expect(hooksFacts(source.replace(descriptor, ""), keys)).toEqual([]);
-  });
-
-  it("names an event map built as a Map, Set or frozen object, and a destination by its path", () => {
-    const source = [
-      'const PLANTED_HOOKS_MAP = new Map([["a", "b"]]);',
-      'const PLANTED_EVENT_MAP = new Map(Object.entries({ PostToolUse: "afterFileEdit" }));',
-      'export const PLANTED_EVENTS = new Set(["Stop"]);',
-      'const PLANTED_HOOK_FIELDS = Object.freeze(["command"]);',
-      'const PLANTED_DESTINATION = ".codex/hooks.json";',
-      "const PLANTED_DIR = `.cursor/hooks/`;",
-      'const UNRELATED = ".codex/config.toml";',
-    ].join("\n");
-
-    expect(hooksFacts(source, keys)).toEqual([
-      "1: PLANTED_HOOKS_MAP",
-      "2: PLANTED_EVENT_MAP",
-      "3: PLANTED_EVENTS",
-      "4: PLANTED_HOOK_FIELDS",
-      "5: PLANTED_DESTINATION",
-      "6: PLANTED_DIR",
-    ]);
-  });
-
-  it("ignores a type, a comment and the text a bridge generates", () => {
-    const source = [
-      "type Shape = {",
-      "  hooks: Array<string>;",
-      "};",
-      "// hooks: { not: code },",
-      "const BRIDGE = `",
-      'const HOOKS_DIR = "../hooks/";',
-      "  hooks: [1],",
-      "`;",
-    ].join("\n");
-
-    expect(hooksFacts(source, keys)).toEqual([]);
-  });
-
-  it("reads the hook keys a contract declares, members and nested blocks alike", () => {
-    const contract = [
-      "export interface C {",
-      "  readonly hooksMerge?: (",
-      "    existing: string",
-      "  ) => string;",
-      "  readonly skipHooksJson?: boolean;",
-      "  readonly hooksBridge?: {",
-      "    readonly generate: () => string;",
-      "  };",
-      "  readonly name: string;",
-      "}",
-    ].join("\n");
-
-    const bodies = new Map(HOOK_CONTRACTS.map((file) => [file, contract]));
-
-    expect([...hookContractKeys(bodies)].sort()).toEqual([
-      "hooksBridge",
-      "hooksMerge",
-      "skipHooksJson",
-    ]);
+    expect(hooksFacts(source, descriptorKeys(read(DESCRIPTOR_TYPES)))).toEqual(
+      facts.split(" ").filter(Boolean)
+    );
   });
 });
