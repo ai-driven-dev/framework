@@ -32,6 +32,12 @@ and read the supplied diffs before a file is checkpointed.
 - GitHub Actions run 41999398223 used the real workflow steps and app token on
   a temporary restricted runner. A future activation date prevented reviews
   and publication; the temporary branch trigger and runner were removed.
+- Run 42002162669 used a temporary runner on the server and the existing Codex
+  account to publish a real review of an earlier PR #1150 submission. After a
+  publication permission failure, it reused the saved draft without a new model
+  call. Repeating the run reported the review as already published and did not
+  add a second comment. This test used a temporary branch trigger and a direct
+  submission ID; it did not test the production schedule.
 
 The new scheduled workflow is not active until it exists on the repository's
 default branch and its dedicated runner and activation timestamp are configured.
