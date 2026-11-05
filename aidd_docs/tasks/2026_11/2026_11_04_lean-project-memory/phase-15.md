@@ -50,7 +50,7 @@ status: pending
 
 1. Run `pnpm exec lefthook run pre-commit --all-files` and `pnpm exec lefthook run pre-push`.
 2. Host campaign: a memory finding at level 1 and one at level 2 reach the model on Claude Code, Codex, Cursor, Copilot, OpenCode and Kilo, each through the built distribution; aidd-telemetry records as before on Claude Code and Codex.
-3. The same runs capture what phases 8 and 11 could not: Cursor's Stop and `Delete`, OpenCode and Kilo `apply_patch`, Claude `PowerShell`, and the SessionStart answer on Codex, Copilot and Cursor. Each becomes a fixture, and its adapter reads it, test first.
+3. The same runs capture what phases 8 and 11 could not: Cursor's Stop and `Delete`, OpenCode and Kilo `apply_patch` and `edit` arguments, Claude `PowerShell`, and the SessionStart answer on Codex, Copilot and Cursor. Each becomes a fixture, and its adapter reads it, test first.
 
 ## Test acceptance criteria
 
