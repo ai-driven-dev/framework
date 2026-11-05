@@ -85,8 +85,23 @@ export function pluginTreeHooksArtifact(): ArtifactContract {
 }
 
 /** A flat build's hooks: each plugin's scripts in a folder of its own, its entries merged into
- * the route's shared file or written to a file of the plugin's own, or, for a loader, handed to
- * the bridge generated for it. */
+ * the route's shared file or written to a file of the plugin's own, under the tool its warnings
+ * are reported for. */
+export function flatHooksArtifact(
+  descriptor: HooksDescriptor & { readonly flat: FlatHooksRoute },
+  reader: { readonly tool: AiToolId },
+  /** The tool's own merge, for a hooks file no `HooksFileFormat` describes. */
+  ownMerge?: HooksFileMerge
+): ArtifactContract;
+/** A loader's hooks: no hooks file, which a bridge it imports replaces; so a descriptor that
+ * declares one, or a route with no loader, cannot be handed a bridge. */
+export function flatHooksArtifact(
+  descriptor: HooksDescriptor & {
+    readonly file?: never;
+    readonly flat: FlatHooksRoute & { readonly loaderEntry: FlatHooksLoaderEntry };
+  },
+  reader: { readonly bridge: FlatHooksBridge["generate"] }
+): ArtifactContract;
 export function flatHooksArtifact(
   descriptor: HooksDescriptor & { readonly flat: FlatHooksRoute },
   /** The tool a hooks file's warnings are reported under, or the bridge a loader imports. */
@@ -137,7 +152,12 @@ function mergeTarget(
   file: HooksFileFormat,
   route: { readonly scriptsDir: string }
 ): HooksMergeTarget {
-  return { file, scriptsDir: route.scriptsDir, eventMap: descriptor.eventMap };
+  return {
+    file,
+    scriptsDir: route.scriptsDir,
+    eventMap: descriptor.eventMap,
+    rootToken: descriptor.rootToken,
+  };
 }
 
 /** Where the bridge generated for one plugin lands: beside the loader's own module, renamed

@@ -310,6 +310,7 @@ describe("merging into a file the plugin already wrote to", () => {
   });
 
   it("finds the plugin's folder only where a path starts, never inside a person's own path", () => {
+    const withRoot: HooksMergeTarget = { ...CURSOR_LIKE, rootToken: ROOT };
     const file = JSON.stringify({
       version: 1,
       hooks: {
@@ -324,12 +325,26 @@ describe("merging into a file the plugin already wrote to", () => {
       },
     });
 
-    expect(merged(file, "{}", CURSOR_LIKE)).toStrictEqual({
+    expect(merged(file, "{}", withRoot)).toStrictEqual({
       version: 1,
       hooks: {
         Start: [{ command: `node ./x/${DIR}p/mine.sh` }, { command: `node ./other${DIR}p/e.cjs` }],
       },
     });
+  });
+
+  it("reads a root token before the folder only where the tool declares that token", () => {
+    const home = `node \${HOME}/${DIR}p/a.cjs`;
+    const file = JSON.stringify({
+      version: 1,
+      hooks: { Start: [{ command: home }, { command: `node ${ROOT}/${DIR}p/b.cjs` }] },
+    });
+
+    expect(merged(file, "{}", { ...CURSOR_LIKE, rootToken: ROOT })).toStrictEqual({
+      version: 1,
+      hooks: { Start: [{ command: home }] },
+    });
+    expect(merged(file, "{}", CURSOR_LIKE)).toStrictEqual(JSON.parse(file));
   });
 
   it("keeps an entry that names no command", () => {

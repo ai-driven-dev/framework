@@ -33,6 +33,9 @@ export interface HooksMergeTarget {
   readonly eventMap?: Readonly<Record<string, readonly string[]>> | undefined;
   /** Each plugin's scripts land in a folder of its own under this one. */
   readonly scriptsDir: string;
+  /** The variable the tool expands to a plugin's directory: a command may name the plugin's
+   * folder after it. Any other variable is a person's own, never the plugin's. */
+  readonly rootToken?: string | undefined;
 }
 
 const SCRIPTS = "hooks/";
@@ -66,7 +69,7 @@ export function mergeHooks(
   target: HooksMergeTarget,
   locate: LocatePluginPath = (pluginPath) => pluginPath
 ): { content: string; warnings: readonly string[] } {
-  const file = stripPlugin(parseFile(existing), plugin, target.scriptsDir);
+  const file = stripPlugin(parseFile(existing), plugin, target);
   const hooks = file.hooks ?? {};
   const warnings: string[] = [];
   const shipped = rewriteRoot(pluginHooks, plugin, target.scriptsDir, locate).hooks ?? {};
@@ -85,7 +88,7 @@ export function mergeHooks(
 
 /** Takes one plugin's entries out of the tool's file, leaving every other entry as it was. */
 export function unmergeHooks(existing: string, plugin: string, target: HooksMergeTarget): string {
-  const file = stripPlugin(parseFile(existing), plugin, target.scriptsDir);
+  const file = stripPlugin(parseFile(existing), plugin, target);
   return serialize(file, file.hooks ?? {}, target.file);
 }
 
@@ -100,7 +103,7 @@ export function pluginEntries(
     entries
       .flatMap((entry) => (Array.isArray(entry.hooks) ? (entry.hooks as Entry[]) : [entry]))
       .filter((item): item is Entry & { command: string } =>
-        namesDir(item, target.scriptsDir, plugin)
+        runsPluginScript(String(item.command), target.scriptsDir, plugin, target.rootToken)
       )
       .map((entry) => ({ event, entry }))
   );
@@ -135,21 +138,28 @@ function rewriteRoot(
   ) as PluginHooksShape;
 }
 
-/** Whether a command runs one of the plugin's scripts: its folder starts a path, at the start
- * of the command or after a space or a quote, bare, after `./` or after a root token. */
-function runsPluginScript(command: string, scriptsDir: string, plugin: string): boolean {
-  const dir = pluginScriptDir(scriptsDir, plugin).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?:^|[\\s"'])(?:\\./|\\$\\{\\w+\\}/)?${dir}`).test(command);
+function escaped(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function namesDir(item: Entry, scriptsDir: string, plugin: string): boolean {
-  return runsPluginScript(String(item.command), scriptsDir, plugin);
+/** Whether a command runs one of the plugin's scripts: its folder starts a path, at the start
+ * of the command or after a space or a quote, bare, after `./` or after the tool's root token. */
+function runsPluginScript(
+  command: string,
+  scriptsDir: string,
+  plugin: string,
+  rootToken?: string
+): boolean {
+  const dir = escaped(pluginScriptDir(scriptsDir, plugin));
+  const prefix = rootToken === undefined ? "\\./" : `\\./|${escaped(rootToken)}/`;
+  return new RegExp(`(?:^|[\\s"'])(?:${prefix})?${dir}`).test(command);
 }
 
 /** The file without the plugin's entries: an event, or a matcher group, left with none of its
  * own is dropped, one that never had any is kept. */
-function stripPlugin(file: HooksFile, plugin: string, scriptsDir: string): HooksFile {
-  const ours = (item: Entry) => namesDir(item, scriptsDir, plugin);
+function stripPlugin(file: HooksFile, plugin: string, target: HooksMergeTarget): HooksFile {
+  const ours = (item: Entry) =>
+    runsPluginScript(String(item.command), target.scriptsDir, plugin, target.rootToken);
   const hooks: Record<string, Entry[]> = {};
   for (const [event, entries] of Object.entries(file.hooks ?? {})) {
     const kept = entries.flatMap((entry) => {

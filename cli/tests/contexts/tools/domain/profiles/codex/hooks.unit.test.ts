@@ -50,3 +50,29 @@ describe("the telemetry plugin's hooks on both Codex routes", () => {
     );
   });
 });
+
+describe("the Codex flat hooks file", () => {
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a plugin's hooks name
+  const ROOT = "${CLAUDE_PLUGIN_ROOT}";
+
+  it("keeps only the items that run a command, and skips a group that lists none", () => {
+    const shipped = JSON.stringify({
+      hooks: {
+        Stop: [
+          { matcher: "x" },
+          {
+            hooks: [{ type: "prompt", prompt: "check" }, { command: `node ${ROOT}/hooks/a.cjs` }],
+          },
+        ],
+      },
+    });
+    const hooks = buildCodexFlatContract().artifacts.hooks;
+    if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
+
+    expect(
+      JSON.parse(hooks.hooksFile.merge(null, shipped, "p", (path) => path).content)
+    ).toStrictEqual({
+      hooks: { Stop: [{ hooks: [{ command: "node ./.codex/hooks/p/a.cjs", type: "command" }] }] },
+    });
+  });
+});
