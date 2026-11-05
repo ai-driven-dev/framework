@@ -8,7 +8,7 @@ The contract every generated hook must satisfy. A hook is a handler wired to a l
 - **R2.** One hook, one purpose. One entry carrying one handler intent.
 - **R3.** The script is the artifact, the entry is just wiring. Put the logic in a script, never inline in the config.
 - **R4.** Merge, never clobber. Append to the moment's existing list and preserve every sibling.
-- **R5.** Match the blocking behavior to the moment and the tool. Only block where the tool lets that moment block.
+- **R5.** Match the intent to the moment and the tool. Offer only what that moment and tool support (see Intent).
 - **R6.** Prefer a precise matcher over a broad one. Filter to the exact tool or path the hook cares about.
 - **R7.** English only, in every file.
 
@@ -34,15 +34,17 @@ Confirm the chosen moment exists for the target tool before wiring. If it does n
 
 ## Intent
 
-What the hook does when it fires. These are options to offer, the user chooses, and the hook stays the tool's native one:
+What the hook does when it fires. The user chooses, after the moment is known, because the mechanism depends on the moment and the tool:
 
-| Intent | Effect | Typical mechanism |
-| ------ | ------ | ----------------- |
-| inform | the model reads a message and decides | context text on stdout, or the tool's context field |
-| require a fix | the model must correct before going on | a blocking exit or decision after a tool runs, where the tool supports it |
-| stop the turn ending | the turn continues until the check passes | a blocking decision at turn stop, where the tool supports it |
+| Intent | Effect | Moment it fits |
+| ------ | ------ | -------------- |
+| inform the model | the model reads a message and decides | after a tool runs, session start, turn stop |
+| block before a tool runs | the tool call is denied | before a tool runs |
+| require a fix after a write | the model must correct before going on | after a tool runs |
+| keep the turn going at Stop | the turn continues until the check passes | turn stop |
+| side effect only | format, log; the model is told nothing | any |
 
-The exact mechanism per tool is in `references/tool-paths.md`.
+Block only where the tool lets that moment block. Per-tool mechanism, and where an intent is unsupported: `references/tool-paths.md`.
 
 ## Handler contract
 
