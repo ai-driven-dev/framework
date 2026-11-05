@@ -36,7 +36,7 @@
 - **Find what the user asks for:** pursue relevant sources and reasonable search paths before giving up. If you cannot find it, say so clearly and state any material search limitations.
 - **Don't assume your knowledge is current**: the doc could also be wrong.
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
-- **Ask one sharp question when ambiguity materially changes the scope or outcome.**
+- **Before asking for information, check the conversation and relevant accessible sources.** Ask one sharp question only when the remaining ambiguity materially changes the scope or outcome.
 - **Batch independent operations when it saves time or context.**
 - **Fan out genuinely independent subtasks when coordination costs less than serial work.**
 - **Name by intention, scope by responsibility** ; not mechanism.
