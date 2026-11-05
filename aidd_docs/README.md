@@ -75,9 +75,7 @@ my-project/
 │   ├── tasks/                   # Specs, plans, run summaries
 │   ├── recipes/                 # Project-specific cook recipes
 │   ├── ADR.md                   # Architecture decision log (aidd-context:10-learn)
-│   ├── README.md                # This file
-│   ├── GUIDELINES.md            # Developer operating guidelines
-│   └── CONTRIBUTING.md          # How to add or modify skills, agents, rules
+│   └── README.md                # What the AI knows and produces here
 ├── src/                         # Your application code
 └── tests/
 ```
@@ -89,7 +87,7 @@ Each AI context file (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md
 1. **Seeded** the first time by `aidd-context:02-project-memory` (the skill creates the block if absent).
 2. **Kept in sync** automatically by a session-start hook (`aidd-context/hooks/memory.cjs`) that scans `aidd_docs/memory/` and writes the current list of `.md` files into the block.
 
-You never edit the block by hand. To change what the AI sees, add or remove files under `aidd_docs/memory/`; the hook picks them up at the next session.
+You never edit the block by hand. To change what the AI sees, add or remove files under `aidd_docs/memory/`; the hook picks them up at the next session. A file you write there is also checked for format at each write; see [Concepts](../docs/CONCEPTS.md#project-memory).
 
 ---
 
@@ -117,7 +115,7 @@ Each plugin is independently installable; install incrementally. Smaller surface
 A typical change cycles through skills from several plugins. The order below is indicative; skip what you do not need and loop back as the work demands.
 
 1. **Bootstrap** (only for a brand-new project): `aidd-context:01-bootstrap` imagines the stack and architecture, comparing candidate stacks and writing an `INSTALL.md`. Skip this step on an existing project.
-2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02-project-memory` scaffolds `aidd_docs/`, the memory bank, and the AI context files for the tools you use. Re-running later refreshes the scaffold without overwriting your customizations.
+2. **Project init** (once per project, re-runnable to refresh): `aidd-context:02-project-memory` writes the memory bank under `aidd_docs/memory/`, one `aidd_docs/README.md`, and the memory block of the AI context files for the tools you use. Re-running it refreshes the bank: only the findings you approve change a file.
 3. **Frame the request**: use `aidd-refine:01-brainstorm` to clarify, then `aidd-orchestrator:02-backlog` to route product artifacts, refinement, and lifecycle changes.
 4. **Plan**: `aidd-dev:01-plan` produces the technical plan, component behavior model, or design-image extraction.
 5. **Implement and assert**: `aidd-dev:02-implement` writes code against the plan; `aidd-dev:03-assert` verifies the result.
@@ -147,7 +145,7 @@ Beyond the synchronous path above, `aidd-orchestrator:00-async-dev` runs the SDL
 
 ## References
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for adding or modifying skills, agents, and rules.
+To add or modify skills, agents, and rules, see [Guides, harness engineering](../docs/GUIDES.md#3-harness-engineering).
 
 External:
 
