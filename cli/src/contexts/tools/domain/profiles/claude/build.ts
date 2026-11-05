@@ -24,7 +24,6 @@ import {
   OUTPUT_CLAUDE_MARKETPLACE_RELATIVE,
 } from "./claude-build-paths.js";
 import { CLAUDE_HOOKS } from "./hooks.js";
-import { mergeClaudeSettingsHooks } from "./hooks-format.js";
 
 export function buildClaudeContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CLAUDE_MANIFEST_RELATIVE;
@@ -132,7 +131,7 @@ export function buildClaudeFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.mcp.json`,
       },
-      hooks: flatHooksArtifact(CLAUDE_HOOKS.flat, { merge: mergeClaudeSettingsHooks }),
+      hooks: flatHooksArtifact(CLAUDE_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

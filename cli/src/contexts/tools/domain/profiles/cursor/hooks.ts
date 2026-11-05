@@ -16,14 +16,17 @@ export const CURSOR_HOOKS = {
     Stop: ["stop", "sessionEnd"],
     SubagentStop: ["subagentStop"],
   },
+  // `timeout` is in seconds on both sides: Claude's hooks.json and Cursor's per-script option.
+  file: {
+    wrapper: { version: 1 },
+    entries: { shape: "flat", fieldsKept: ["command", "matcher", "timeout"] },
+  },
   flat: { scriptsDir: ".cursor/hooks/", sharedFile: ".cursor/hooks.json" },
   // Cursor auto-discovers mcp.json at a plugin's root but never a plugin-scope hooks.json —
   // three probes fired zero of seven events. Only a project-scope .cursor/hooks.json is ever
-  // observed firing, so `plugin install` merges there; `pluginFile` and `entries` stay declared
-  // for the shape they describe but are no longer read for Cursor's own install.
+  // observed firing, so `plugin install` merges there.
   project: {
     pluginFile: "hooks.json",
-    entries: "flat",
     sharedFile: ".cursor/hooks.json",
     scriptsDir: ".cursor/hooks/",
   },

@@ -41,6 +41,8 @@ status: pending
 
 1. Delete the hardcoded `node .aidd/scripts/update_memory.cjs` entry and its constants in `codex/profile.ts`, and `convertClaudeHooksToCursorPlugin`.
 
+> Note: `translate/domain/formats/cursor-hooks.ts`, which held `convertClaudeHooksToCursorPlugin`, is already deleted by phase 10; only the Codex entry remains here.
+
 ### `3)` CLI bank
 
 > The next reader knows where hooks live.

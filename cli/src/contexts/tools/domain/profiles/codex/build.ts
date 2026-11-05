@@ -22,7 +22,6 @@ import {
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.js";
 import { CODEX_HOOKS } from "./hooks.js";
-import { mergeCodexFrameworkHooksJson } from "./hooks-format.js";
 import { parseToml, stringifyToml } from "./toml.js";
 
 type FsType = FileReader & FileWriter;
@@ -229,7 +228,7 @@ export function buildCodexFlatContract(): ToolBuildContract {
         transform: codexAgentMarkdownToToml,
       },
       mcp: { supported: false }, // handled by emitConfigArtifact (config.toml mcp_servers)
-      hooks: flatHooksArtifact(CODEX_HOOKS.flat, { merge: mergeCodexFrameworkHooksJson }),
+      hooks: flatHooksArtifact(CODEX_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

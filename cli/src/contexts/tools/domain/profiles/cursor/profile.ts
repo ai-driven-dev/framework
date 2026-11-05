@@ -25,12 +25,6 @@ import { registerTool } from "../../registry.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import { CURSOR_HOOKS } from "./hooks.js";
-import {
-  cursorProjectHooksScriptDir,
-  cursorProjectHooksScriptPath,
-  mergeCursorProjectHooksJson,
-  unmergeCursorProjectHooksJson,
-} from "./hooks-format.js";
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
@@ -114,12 +108,7 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         pluginsDir: "",
         pluginManifestRelativePath: null,
         ...nativeHooksSupport(CURSOR_HOOKS),
-        ...projectHooksSupport(CURSOR_HOOKS.project, {
-          merge: mergeCursorProjectHooksJson,
-          unmerge: unmergeCursorProjectHooksJson,
-          scriptPath: cursorProjectHooksScriptPath,
-          scriptDir: cursorProjectHooksScriptDir,
-        }),
+        ...projectHooksSupport(CURSOR_HOOKS),
         acceptsMcp: true,
         mcpRelativePath: "mcp.json",
         installScope: "user",

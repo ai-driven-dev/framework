@@ -36,17 +36,21 @@ export type ArtifactContract =
       readonly mcpServersKey?: string;
       /** Absolute path to the shared merge target; only for merge contracts. */
       readonly mergeDest?: (outDir: string) => string;
-      /** Merge for hooks, where hooks.json joins an existing file rather than being written
-       * per plugin (codex flat, claude settings). Warnings are surfaced to the user. */
-      readonly hooksMerge?: (
-        existing: string | null,
-        incoming: string
-      ) => { content: string; warnings: readonly string[] };
-      /** Absolute path to the shared hooks merge target; only for hooksMerge contracts. */
-      readonly hooksMergeDest?: (outDir: string) => string;
-      /** Shape transform for a per-plugin hooks file, applied after `${CLAUDE_PLUGIN_ROOT}`
-       * rewriting and before the write. */
-      readonly hooksTransform?: (rewrittenJson: string) => string;
+      /** The hooks file a plugin's hooks.json becomes: one every plugin shares, merged into,
+       * or one of the plugin's own, written whole. Warnings are surfaced to the user. */
+      readonly hooksFile?: {
+        /** Relative to the output root. */
+        readonly path: (plugin: string) => string;
+        readonly shared: boolean;
+        /** The existing file, `null` for a plugin's own, and the plugin's raw hooks.json;
+         * `locate` places a path the plugin ships outside `hooks/`, an agent or a skill. */
+        readonly merge: (
+          existing: string | null,
+          pluginHooks: string,
+          plugin: string,
+          locate: (pluginPath: string) => string
+        ) => { content: string; warnings: readonly string[] };
+      };
       /** Delivers everything under hooks/ except hooks.json, for a tool whose own side reads
        * none — OpenCode today, whose scripts are still delivered and whose trigger is
        * `hooksBridge`. */

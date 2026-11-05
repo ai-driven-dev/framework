@@ -79,7 +79,7 @@ export class ProjectHooksMaterializer {
           pluginName: dist.manifest.name,
           component: "hooks",
           toolId,
-          reason,
+          reason: `${toolId}: ${reason}`,
         })
       ),
       projectHooks: { entries, scripts },
@@ -143,7 +143,7 @@ export class ProjectHooksMaterializer {
       if (!(await this.fs.fileExists(path))) continue;
       if ((await this.fs.readFileHash(path)).value !== digest) {
         throw new Error(
-          `Cursor hook script '${relativePath}' was edited during reinstall; removal refused.`
+          `Hook script '${relativePath}' was edited during reinstall; removal refused.`
         );
       }
       await this.fs.deleteFile(path);

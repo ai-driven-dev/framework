@@ -1,8 +1,8 @@
 import { basename, dirname, join, relative } from "node:path";
 import { FlatTargetExistsError, OutDirNotDirectoryError } from "../../../../kernel/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
-import { rewriteClaudeRootInJson } from "../../../../kernel/materialization/claude-root-path-rewrite.js";
 import { flatMcpKeyPrefix } from "../../../../kernel/materialization/flat-paths.js";
+import { rewritePluginRootInJson } from "../../../../kernel/materialization/plugin-root-path-rewrite.js";
 import { rewriteRelativeLinks } from "../../../../kernel/materialization/relative-link-rewrite.js";
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
@@ -184,11 +184,19 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     pluginName: string,
     hooksSrc: string
   ): Promise<number> {
+    const file = artifact.hooksFile;
+    if (file === undefined) return 0;
+    const destPath = join(this.absOut, file.path(pluginName));
+    if (!file.shared) await this.checkCollision(destPath, pluginName);
+    const existing =
+      file.shared && (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
     const raw = await this.fs.readFile(hooksSrc);
-    if (artifact.hooksMerge && artifact.hooksMergeDest) {
-      return this.writeMergedHooksJson(artifact, pluginName, raw);
-    }
-    return this.writeRewrittenHooksJson(artifact, pluginName, raw);
+    const { content, warnings } = file.merge(existing, raw, pluginName, (pluginPath) =>
+      this.resolveSuffixToFlatPath(pluginPath, pluginName)
+    );
+    for (const w of warnings) this.logger?.warn(w);
+    await this.fs.writeFile(destPath, content);
+    return 1;
   }
 
   // OpenCode reads no hooks.json, so a plugin's declared hooks have no trigger there unless a
@@ -210,48 +218,6 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const destPath = join(this.absOut, bridge.path(pluginName));
     await this.checkCollision(destPath, pluginName);
     await this.fs.writeFile(destPath, generated);
-    return 1;
-  }
-
-  private async writeMergedHooksJson(
-    artifact: Extract<ArtifactContract, { supported: true }>,
-    pluginName: string,
-    raw: string
-  ): Promise<number> {
-    if (!artifact.hooksMerge || !artifact.hooksMergeDest) return 0;
-    const rewritten = this.rewriteHooksRawPaths(raw, pluginName);
-    const destPath = artifact.hooksMergeDest(this.absOut);
-    const existing = (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
-    const { content, warnings } = artifact.hooksMerge(existing, rewritten);
-    for (const w of warnings) this.logger?.warn(w);
-    await this.fs.writeFile(destPath, content);
-    return 1;
-  }
-
-  private rewriteHooksRawPaths(raw: string, pluginName: string): string {
-    const parsed = JSON.parse(raw) as unknown;
-    const rewritten = rewriteClaudeRootInJson(parsed, (suffix) =>
-      this.resolveClaudeRootRelative(suffix, pluginName)
-    );
-    return JSON.stringify(rewritten);
-  }
-
-  private async writeRewrittenHooksJson(
-    artifact: Extract<ArtifactContract, { supported: true }>,
-    pluginName: string,
-    raw: string
-  ): Promise<number> {
-    const parsed = JSON.parse(raw) as unknown;
-    const rewritten = rewriteClaudeRootInJson(parsed, (suffix) =>
-      this.resolveClaudeRootRelative(suffix, pluginName)
-    );
-    const rewrittenJson = `${JSON.stringify(rewritten, null, 2)}\n`;
-    const finalContent = artifact.hooksTransform
-      ? artifact.hooksTransform(rewrittenJson)
-      : rewrittenJson;
-    const destPath = join(this.absOut, artifact.path(pluginName, `hooks/${pluginName}.hooks.json`));
-    await this.checkCollision(destPath, pluginName);
-    await this.fs.writeFile(destPath, finalContent);
     return 1;
   }
 
@@ -302,16 +268,12 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   ): Record<string, unknown> {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(rawServers)) {
-      const rewritten = rewriteClaudeRootInJson(value, (suffix) =>
+      const rewritten = rewritePluginRootInJson(value, (suffix) =>
         this.resolveClaudeRootAbsolute(suffix, pluginName)
       );
       result[`${prefix}${key}`] = rewritten;
     }
     return result;
-  }
-
-  private resolveClaudeRootRelative(suffix: string, pluginName: string): string {
-    return `./${this.resolveSuffixToFlatPath(suffix, pluginName)}`;
   }
 
   // "/"-joined and separator-normalized: this value is embedded into written JSON content, and

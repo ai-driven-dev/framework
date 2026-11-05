@@ -89,7 +89,7 @@ export function buildKiloFlatContract(): ToolBuildContract {
         transform: transformKiloFlatAgent,
       },
       mcp: { supported: false },
-      hooks: flatHooksArtifact(KILO_HOOKS.flat, { bridge: generateKiloHooksBridge }),
+      hooks: flatHooksArtifact(KILO_HOOKS, generateKiloHooksBridge),
       rules: { supported: false },
       commands: { supported: false },
     },
