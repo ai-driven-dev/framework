@@ -433,12 +433,31 @@ test("a dead path in a written bank file requires the fix", () => {
   assert.deepEqual(answer, { level: 2, text: 'aidd-context: 1 errors, 0 warnings\naidd_docs/memory/vcs.md:3 M4 "src/gone.cfg" => fix the path or remove it' });
 });
 
+// A rule that blocks is an error: errors are never capped, so the line the model must fix is printed.
+test("an M7 sentence after more than ten warnings blocks, and its line is printed", () => {
+  const sentence = "the quick brown fox jumps over the lazy dog every single morning again";
+  const bullets = Array.from({ length: 12 }, (_, index) => `- ${words(36, `w${index}`)}`).join("\n");
+  const root = project({ [`${MEMORY}/testing.md`]: `# T\n\n${sentence}.\n`, [`${MEMORY}/vcs.md`]: `# VCS\n\n${bullets}\n\n- ${sentence}\n` });
+  const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
+  assert.equal(answer.level, 2);
+  assert.match(answer.text, /^aidd_docs\/memory\/vcs\.md:16 M7 "aidd_docs\/memory\/testing\.md" => keep it in one home$/mu);
+});
+
+test("every rule that blocks is an error, so no capped warning can block", () => {
+  const { LEVELS } = require(path.join(HOOKS, ENTRY));
+  const { RULES, ERROR } = require(path.join(HOOKS, "lib/memory-rules.cjs"));
+  for (const [rule, level] of Object.entries(LEVELS)) {
+    if (level !== 2 || rule === "placement") continue;
+    assert.equal(RULES.find((candidate) => candidate.id === rule)?.severity, ERROR, `${rule} blocks as a warning`);
+  }
+});
+
 test("an M7 sentence written twice in the bank requires the fix", () => {
   const sentence = "the quick brown fox jumps over the lazy dog every single morning again";
   const root = project({ [`${MEMORY}/testing.md`]: `# T\n\n${sentence}.\n`, [`${MEMORY}/vcs.md`]: `# VCS\n\n- ${sentence}\n` });
   const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
   assert.equal(answer.level, 2);
-  assert.match(answer.text, /^aidd_docs\/memory\/vcs\.md:3 M7 warning a sentence also written in aidd_docs\/memory\/testing\.md => keep it in one home$/mu);
+  assert.match(answer.text, /^aidd_docs\/memory\/vcs\.md:3 M7 "aidd_docs\/memory\/testing\.md" => keep it in one home$/mu);
 });
 
 test("a clean memory file, a deleted one, README.md and internal/ files answer nothing", () => {

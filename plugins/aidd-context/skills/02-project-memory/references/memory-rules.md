@@ -12,7 +12,7 @@ The one place that says what a memory file must be.
 | M4 | error | none | a backticked file path that names nothing on disk |
 | M5 | warning | 35 words | a bullet or a table cell over the limit |
 | M6 | warning | 400 words | a file over the limit |
-| M7 | warning | 12 words | a sentence of that length also written in another memory file |
+| M7 | error | 12 words | a sentence of that length also written in another memory file |
 
 ## Reader rules
 

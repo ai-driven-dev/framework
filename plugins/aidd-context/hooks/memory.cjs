@@ -116,7 +116,8 @@ function runRules(rules, context, failures) {
   const found = [];
   for (const rule of rules) {
     try {
-      found.push(...rule.check(context));
+      // The rule table states each rule's severity, whatever the check wrote.
+      found.push(...rule.check(context).map((finding) => ({ ...finding, severity: rule.severity })));
     } catch (error) {
       failures.push(`rule ${rule.id} failed: ${error.message}`);
     }
@@ -237,7 +238,8 @@ function findingsOf(root, said, unknown) {
     else if (place === "root") found = lintFile(root, file);
     for (const finding of found) {
       if (touched !== null && finding.line !== undefined && !touched.has(finding.line)) continue;
-      if (touched !== null && LEVELS[finding.rule] === 2) level = 2;
+      // Only an error can block: errors are never capped, so the line to fix is always printed.
+      if (touched !== null && finding.severity === ERROR && LEVELS[finding.rule] === 2) level = 2;
       if (finding.severity !== ERROR) warnings.push(asWarning(finding));
       else (touched !== null ? errors : grouped).push(finding);
     }

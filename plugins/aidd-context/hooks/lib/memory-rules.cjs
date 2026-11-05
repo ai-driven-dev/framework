@@ -227,7 +227,8 @@ function repeatedSentences({ file, text, others }) {
   const found = [];
   for (const [sentence, line] of sentencesOf(text)) {
     if (carriers.has(sentence)) {
-      found.push(problem(file, line, "M7", WARNING, `a sentence also written in ${carriers.get(sentence)}: keep it in one home`, "keep it in one home"));
+      const carrier = carriers.get(sentence);
+      found.push(problem(file, line, "M7", ERROR, `a sentence also written in ${carrier}: keep it in one home`, "keep it in one home", carrier));
     }
   }
   return found;
@@ -240,7 +241,7 @@ const RULES = Object.freeze([
   { id: "M4", severity: ERROR, check: deadReferences },
   { id: "M5", severity: WARNING, check: longItems },
   { id: "M6", severity: WARNING, check: longFile },
-  { id: "M7", severity: WARNING, check: repeatedSentences },
+  { id: "M7", severity: ERROR, check: repeatedSentences },
 ]);
 
 // The limits the rules enforce, by rule id: the table in `memory-rules.md` states the same ones.
