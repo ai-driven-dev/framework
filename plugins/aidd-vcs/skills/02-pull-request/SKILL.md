@@ -6,7 +6,7 @@ argument-hint: base | title
 
 # Pull Request
 
-For a new request, collect the change, draft it, and create it as a draft: `01 → 02 → 03`. For an existing request, read its current title, body, and full diff against its base; update the title and body to reflect the final change, with concise main-change bullets, preserving author-owned checkboxes and any relevant existing context. Return the title, link, and those bullets in a table.
+For a new request, collect the change, draft it, and create it as a draft: `01 → 02 → 03`. For an existing request, respect the requested scope: make a targeted edit when asked; for a change in scope, read the full diff against its base and update the title and body. Preserve author-owned checkboxes and relevant context. Return the title, link, and main-change bullets in a table.
 
 ## Actions
 

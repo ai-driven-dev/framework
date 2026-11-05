@@ -19,9 +19,8 @@
 <!--
 Walk a reviewer through the technical resolution: the approach you took, why
 this way over the alternatives, and anything non-obvious (trade-offs, edge
-cases, follow-ups). Use a numbered list when the approach has an order. This
-narrative is the point of the PR. The conventional title and pre-commit hooks are already enforced by CI, so don't
-re-assert them here. Spend your words on the *how*.
+cases, follow-ups). Keep it brief. Use numbered steps for an ordered process
+and bold the opening words of each step.
 -->
 
 ## 🧪 How to verify

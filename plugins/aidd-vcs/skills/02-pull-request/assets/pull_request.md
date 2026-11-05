@@ -44,7 +44,7 @@ Instructions:
 
 ## 🛠️ How it works
 
-<!-- Explain the approach and non-obvious trade-offs; use a numbered list for an ordered process. -->
+<!-- Keep the approach brief; use numbered steps for an ordered process and bold the opening words of each step. -->
 
 ## 🧪 Steps to test
 
