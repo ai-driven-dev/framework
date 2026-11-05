@@ -1,11 +1,13 @@
 /**
- * The format rules of a memory file, as pure functions of its text and of what the project
- * and the rest of the bank hold. Nothing here reads the disk: existence and the other files
- * come in through the context, so the engine owns every read.
+ * The format rules of a memory file, as functions of its text and of what the project and the
+ * rest of the bank hold. The engine reads the bank and passes the other files in the context;
+ * only M4 reads the disk, through the shared hook library, under the project root it is given.
  *
- * Each rule takes `{ file, text, exists, entries, others }` and returns problems:
+ * Each rule takes `{ file, text, root, others }` and returns problems:
  * `{ file, line, rule, severity, message }`.
  */
+
+const { deadPaths } = require("./common-rules.cjs");
 
 const ERROR = "error";
 const WARNING = "warning";
@@ -40,7 +42,6 @@ const TIME_WORDS = /\b(?:currently|as of|right now|at the moment)\b/iu;
 const TEMPLATE_MARKER = "{{";
 const PLACEHOLDER = /\b(?:TODO|TBD)\b(?!['\w])/u;
 
-const BACKTICKED = /`([^`\n]+)`/gu;
 const MARKDOWN_LINK = /!?\[([^\]]*)\]\([^)]*\)/gu;
 const INLINE_CODE = /`([^`]*)`/gu;
 const LIST_OR_QUOTE_MARKER = /^\s*(?:[>*+-]\s+|\d+[.)]\s+)/u;
@@ -131,26 +132,11 @@ function unfinishedMarkers({ file, text }) {
     .map(({ number, marker }) => problem(file, number, "M3", ERROR, `"${marker}" unfinished: fill it or remove it`));
 }
 
-/** Copied from `scripts/check-referenced-paths.js`: a plugin never links outside itself. */
-function deadReferences({ file, text, exists, entries }) {
-  const found = [];
-
-  for (const { number, line } of readableLines(text)) {
-    for (const match of line.matchAll(BACKTICKED)) {
-      const token = match[1].trim();
-      // A command, a placeholder, a version range or a glob is not a path to resolve.
-      if (/[\s<>*$|…]/u.test(token)) continue;
-      if (token.startsWith(">") || token.startsWith("=")) continue;
-      // Files only: a bare directory is usually a shape rather than a location.
-      if (!/\.[^./]+$/u.test(token)) continue;
-      // A `*.local.*` file is the reader's own and ignored by git: its absence is its normal state.
-      if (/\.local\./u.test(token)) continue;
-      if (!entries.has(token.split("/")[0])) continue;
-      if (!exists(token)) found.push(problem(file, number, "M4", ERROR, `\`${excerpt(token)}\` names nothing on disk: fix the path or remove it`));
-    }
-  }
-
-  return found;
+/** The dead-path rule every plugin applies to its own files, from the shared hook library. */
+function deadReferences({ file, text, root }) {
+  return deadPaths(text, root).map(({ line, path }) =>
+    problem(file, line, "M4", ERROR, `\`${excerpt(path)}\` names nothing on disk: fix the path or remove it`)
+  );
 }
 
 function tableCells(line) {

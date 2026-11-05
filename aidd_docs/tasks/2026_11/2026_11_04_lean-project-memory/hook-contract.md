@@ -54,7 +54,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 <file>[:<line>] <rule> warning <message> => <fix>
 ```
 
-   Line and excerpt are optional: a missing section has neither. Never "rerun this command": the line carries the fix. Silence when clean.
+   Line and excerpt are optional: a missing section has neither. The group's folder is the file's dirname relative to the project root, with forward slashes on every OS. A group of one prints the plain error line, never `×1`. Never "rerun this command": the line carries the fix. Silence when clean.
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`; the same file runs by hand, from a skill and in CI with the same result. Everything it calls lives under `hooks/`.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, no child process, no git, no network.
 6. **Bounded.** A 5 s declared timeout; the work well under a second. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
@@ -62,10 +62,13 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 
 ## 5. Shared code
 
-Two pieces every plugin uses live in one file, copied into each plugin's `hooks/lib/` and held identical by a check, until the CLI builds every distribution:
+Three pieces every plugin uses live in one file, `hooks/lib/common-rules.cjs`, copied into each plugin and held identical by `scripts/check-hook-rule-copies.js`, until the CLI builds every distribution:
 
-- a backticked path that does not exist, the one rule every plugin applies to its own files;
-- the shell write forms: a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `git apply`, `git checkout`, `git restore`.
+- `deadPaths(text, root)`: a backticked path that does not exist, the one rule every plugin applies to its own files;
+- `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `apply_patch`, `git apply`, `git checkout`, `git restore`;
+- `formatFindings(plugin, findings, options)`: the output of rule 3.
+
+The Stop state file stays with the plugin that has a Stop check until a second plugin needs it.
 
 ## 6. What the CLI carries
 

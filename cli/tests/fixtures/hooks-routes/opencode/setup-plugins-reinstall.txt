@@ -1,6 +1,9 @@
 setup over installed plugins resolved
 hook files unchanged by the second run: true
 
+## project/.opencode/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
 ## project/.opencode/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
@@ -522,7 +525,8 @@ export default {
 }
 
 # recorded
-project opencode aidd-context scope=project: 5 hook files
+project opencode aidd-context scope=project: 6 hook files
+  .opencode/hooks/aidd-context/lib/common-rules.cjs
   .opencode/hooks/aidd-context/lib/memory-rules.cjs
   .opencode/hooks/aidd-context/memory-hook.cjs
   .opencode/hooks/aidd-context/memory-lint.cjs

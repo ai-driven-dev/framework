@@ -1,3 +1,6 @@
+## out-flat/.claude/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
 ## out-flat/.claude/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 

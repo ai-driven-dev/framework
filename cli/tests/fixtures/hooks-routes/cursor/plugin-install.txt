@@ -32,6 +32,9 @@
 }
 
 
+## project/.cursor/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
 ## project/.cursor/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
