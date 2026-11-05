@@ -76,9 +76,9 @@ flowchart LR
 
 ## Hooks
 
-The contract every hook the framework ships follows. It binds the framework's own hooks only: a hook a user generates with `aidd-context:08-hook-generate` stays free of it.
+The contract for the framework's own hooks, not for a hook a user generates with `aidd-context:08-hook-generate`. Today the `aidd-context` memory hook follows it; `aidd-ui` adopts it in its own change. `aidd-telemetry` stays outside: observing a session is its job, and it calls the `aidd` binary.
 
-A hook adds determinism where a model drifts. It checks mechanical rules: a rule a script decides with no judgment, reading as many files as it needs. A rule that needs judgment belongs to the skill's check and to CI.
+A hook adds determinism where a model drifts. It checks mechanical rules only; a rule that needs judgment belongs to the skill's check and to CI.
 
 ### Levels and moments
 
@@ -94,7 +94,7 @@ A level is what the finding demands; a moment is when the artifact is final.
 | After the write | PostToolUse | an artifact final in one write: a memory file, a frontmatter |
 | At the turn end | Stop, once per turn, scoped to what the turn reached | an artifact final only after several writes |
 
-SessionStart keeps a generated state true, silently: its text never reaches the model on OpenCode or Kilo. No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, and would block drafts. A rule never fires where its artifact is still in progress. UserPromptSubmit and SessionEnd are out of the contract, except for `aidd-telemetry`, whose job is observing a session.
+SessionStart keeps a generated state true, silently. No level stops a write: PreToolUse sees an `Edit` fragment, not the final file, and would block drafts. A rule never fires where its artifact is still in progress.
 
 Placing a gap:
 
@@ -104,38 +104,21 @@ Placing a gap:
 
 ### Rules
 
-1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. `aidd-context` also owns the layout of `aidd_docs/`, never the content of another plugin's folder.
-2. **One neutral interface.** A hook reads its event and answers through `hooks/lib/host.cjs`, never a host's payload directly. A `files` entry carries `written`, the text this write put in the file, and `replaced`, the text it replaced, each absent where the host gives none. An entry may name a file that no longer exists, so a hook tolerates `ENOENT`. `continueTurn` asks once, and prints nothing when the Stop is already a continuation.
-3. **Findings only.** Report what this write or this turn produced, never the project's standing errors: every error on the lines this write added or changed, one line each, counted as a multiset (a whole-file write changes every line). When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines), the file's errors are grouped under its name and only inform. Never report another file or a missing file. Warnings follow, capped at 10. Silence when clean.
-4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`: the same file runs by hand, from a skill and in CI, with the same result. Everything it calls lives under `hooks/`.
+1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. `aidd-context` also owns the layout of `aidd_docs/`.
+2. **One neutral interface.** A hook reads and answers through `hooks/lib/host.cjs`, never a host's payload. `readEvent()` returns the event with its `files` (each with `written`, the text this write put in the file, and `replaced`, the text it replaced, either absent where the host gives none); `answer(text)` and `continueTurn(text)` take the message, and `continueTurn` asks once. A `files` entry may name a file that no longer exists, so tolerate `ENOENT`. The rules shared by every plugin live in `hooks/lib/common-rules.cjs`, held identical by `scripts/check-hook-rule-copies.js`.
+3. **Findings only.** Report what this write or turn produced, never standing errors: every error on the whole lines of `written` not in `replaced`, counted as a multiset, one line each. When those lines are unknown (a shell write, an edit without `written`, a write that only removed lines), a file's errors are grouped under its name, or under `<folder>/*` across several files, and only inform. Never report another file or a missing file. Warnings follow, capped at 10. Silent when clean. Format, owned by `common-rules.cjs`:
+
+   ```
+   <plugin>: <n> errors, <m> warnings
+   <file>[:<line>] <rule> ["<excerpt>"] => <fix>
+   ```
+4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`: the same file runs by hand, from a skill and in CI.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, child process, git or network.
-6. **Bounded.** A 5 s declared timeout, the work well under a second. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Stateless, except a turn-end check.** A plugin with a Stop check keeps one file per session listing the paths the turn wrote, under `<os.tmpdir()>/aidd-hooks-<uid>/<plugin>/<session>`, owner-only, cleared at Stop, swept after 24 h. No mark, no Stop check. A shell command that may have written marks the line `unknown`, which scopes the check to the watched folders. A read-only command marks nothing. A write the forms miss is seen late, by the next write, the skill's check or CI, never lost.
-
-The finding format:
-
-```
-<plugin>: <n> errors, <m> warnings
-<file>[:<line>] <rule> ["<excerpt>"] => <fix>
-<rule> ×<count> in <file>|<folder>/* ["<excerpt>"] => <fix>
-<file>[:<line>] <rule> warning <message> => <fix>
-```
-
-Line and excerpt are optional. A group of one prints the plain error line. A group prints an excerpt only when every member has the same one. The line carries the fix, never "rerun this command".
-
-### Shared code
-
-`hooks/lib/common-rules.cjs` is copied into each plugin and held identical by `scripts/check-hook-rule-copies.js`: `deadPaths` (a backticked path that does not exist), `isShellWrite` (the shell forms that write or move files) and `formatFindings` (the format above).
+6. **Bounded.** A 5 s declared timeout. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
+7. **Stop state.** A plugin with a Stop check keeps one owner-only file per session listing the paths the turn wrote.
 
 ### What the CLI carries
 
-| Concern | Where |
-| --- | --- |
-| Hook config per tool: destination, wrapper, event map, fields kept, root token | one descriptor per tool, `profiles/<tool>/`, data only |
-| Merge and unmerge of one plugin's entries | one engine, used by every route that writes hooks |
-| Payload in, answer out | one adapter per host in `cli/assets/hooks-runtime/`, same exports. The plugin tree ships Claude's as `hooks/lib/host.cjs`; the build replaces it with the target's. The hook command never changes, no extra process runs, and nothing calls the `aidd` binary at run time |
-| Adding a tool | one descriptor and one captured payload fixture; the contract test fails when either is missing |
-
-A Codex or Copilot `apply_patch` becomes one event listing every file it touched. The event names its `host` and keeps the host's payload as `raw`, so a hook that needs a host field still reads it. Where a host does not deliver a level 2 answer to the model, its adapter answers at level 1.
+One descriptor per tool, one merge engine and one host adapter per tool, placed at build time: [CLI architecture bank](../cli/aidd_docs/memory/architecture.md).
 
 More: [Maintainers guide](MAINTAINERS.md), [CLI architecture](../cli/ARCHITECTURE.md).

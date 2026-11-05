@@ -73,6 +73,20 @@ The shared `command` handler: a script the tool runs at the moment. It reads the
 
 Per-tool stdout schemas and which moments can block live in each tool's docs (linked above). Codex also has a `notify` mechanism (user scope only, single turn-complete event, JSON on argv not stdin) for a simple turn-complete notification.
 
+## Intent mechanism per tool
+
+| Intent | Claude Code | Codex CLI | Cursor | GitHub Copilot |
+| ------ | ----------- | --------- | ------ | -------------- |
+| inform the model | stdout `{ "hookSpecificOutput": { "hookEventName": "<Event>", "additionalContext": "..." } }` | same | stdout `{ "additional_context": "..." }` | stdout `{ "additionalContext": "..." }` |
+| block before a tool runs | exit `2` | exit `2` | `{ "permission": "deny" }` or exit `2` | exit `2` |
+| require a fix after a write | stdout `{ "decision": "block", "reason": "..." }` | same | not supported on Cursor; it informs instead | same as Claude |
+| keep the turn going at Stop | stdout `{ "decision": "block", "reason": "..." }` | same | stdout `{ "followup_message": "..." }`, unverified in headless mode | same as Claude |
+| side effect only | exit `0`, no stdout | same | same | same |
+
+OpenCode: this skill generates no hook for it (see the skip reason above), so no intent is offered there.
+
+A Stop hook that continues the turn checks the host's continuation flag first, so it asks only once: `stop_hook_active` on Claude, Codex and Copilot, `loop_count` on Cursor.
+
 ## Path placeholders in handlers
 
 Written as `${VAR}` inside a command: `CLAUDE_PROJECT_DIR` (project root), `CLAUDE_PLUGIN_DATA` (plugin data dir), and the plugin install-directory variable (`CLAUDE_PLUGIN` + `_ROOT`). These are Claude tokens. For another tool, use an absolute path or the path the user names.
