@@ -6,7 +6,7 @@ argument-hint: base | title
 
 # Pull Request
 
-For a new request, collect the change, draft it, and create it as a draft: `01 → 02 → 03`. For an existing request, respect the requested scope: make a targeted edit when asked; for a change in scope, read the full diff against its base and update the title and body using the writing guidance in [02-draft](actions/02-draft.md). Preserve author-owned checkboxes and relevant context. Return the title, link, and main-change bullets in a table.
+For a new request, run `01 → 02 → 03`. For an existing request, run `04`.
 
 ## Actions
 
@@ -15,6 +15,7 @@ For a new request, collect the change, draft it, and create it as a draft: `01 �
 | 01  | `collect` | Resolve the base and gather the commits since it             |
 | 02  | `draft`   | Write the title and body from the template                   |
 | 03  | `create`  | Open the draft request, label it, and summarize it           |
+| 04  | `update`  | Update an existing request within the requested scope       |
 
 Before running an action, read its file in `actions/`, not only the table or assets.
 
