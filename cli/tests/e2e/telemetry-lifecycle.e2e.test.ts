@@ -189,14 +189,14 @@ describe("aidd telemetry off", () => {
       .map((line) => JSON.parse(line) as { close?: string });
     const close = history.find((event) => event.close !== undefined);
     expect(close?.close).toBeDefined();
-    expect(run.stdout).toContain(`Consent ended at ${close?.close}`);
-    expect(run.stdout).toContain("Native OTLP collection is not stopped");
+    expect(run.stdout).toContain(`Consent close recorded at ${close?.close}`);
+    expect(run.stdout).toContain("Native OTLP configuration and collector are unchanged");
     expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toBe(
       "off"
     );
     const repeated = await cli(["off"]);
-    expect(repeated.stdout).not.toContain("Consent ended at");
-    expect(repeated.stdout).toContain("Native OTLP collection is not stopped");
+    expect(repeated.stdout).not.toContain("Consent close recorded at");
+    expect(repeated.stdout).toContain("Native OTLP configuration and collector are unchanged");
   });
 });
 
