@@ -48,4 +48,4 @@ status: done
 | 1 | the test passes on the base head and fails when any route's output changes by one byte |
 | 2 | one fixture per host and event, none holding a local path or a real session id (`scripts/check-no-local-paths.js`); the level 2 row and the Copilot answer written in `hook-contract.md` |
 
-Limit: Cursor's Stop never fires in headless `cursor-agent -p`, so it has no fixture and its `followup_message` delivery is untested; phase 11 converts it from Cursor's documented shape, and phase 15's host campaign runs it interactively.
+Cursor's Stop never fires in headless `cursor-agent -p`; phase 15's host campaign captured it interactively (`cursor-stop.json`) and observed its `followup_message` answered.
