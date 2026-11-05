@@ -64,8 +64,8 @@ export interface NativeActivation {
    * shell. `clean` reads this declaration alone and invents no path for a tool that omits
    * it, and never removes without `realpath` containment against this root. */
   pluginCacheDir?: (homedir: string) => string;
-  /** This tool's own user-scope settings file, never written by aidd and read by a
-   * diagnostic alone. Declared only for a tool that also declares `NativeActivation`. */
+  /** This tool's own user-scope settings file, read by a diagnostic; aidd writes only the main
+   * session's model there. Declared only for a tool that also declares `NativeActivation`. */
   userSettingsPath?: (homedir: string, env: EnvironmentReader) => string;
 }
 

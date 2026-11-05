@@ -4,6 +4,17 @@ import { MarketplaceSourceMode } from "../../contexts/distribution/domain/market
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import {
+  AGENT_MODELS,
+  type AgentHost,
+  type AgentProvider,
+  agentHostIds,
+  agentProviders,
+  isAgentHost,
+  roleModels,
+  supportedProvider,
+  tierModel,
+} from "../../contexts/tools/domain/formats/agent-models.js";
+import {
   assertToolIdsMatchCategory,
   copiesPluginFilesGlobally,
   getAllRegisteredTools,
@@ -25,6 +36,59 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
 
+/** Says, per host, what the main session and each agent now run on, where the main session's
+ * model was written, which plugins were updated, and what other projects still need. */
+function reportAgentModels(
+  output: CLIOutput,
+  provider: AgentProvider | undefined,
+  hosts: readonly AgentHost[],
+  main: {
+    readonly reinstalled: readonly string[];
+    readonly changed: readonly { readonly host: AgentHost; readonly path: string }[];
+    readonly skipped: readonly {
+      readonly host: AgentHost;
+      readonly path: string;
+      readonly reason: string;
+    }[];
+  }
+): void {
+  if (provider === undefined) {
+    output.success(`${hosts.join(", ")}: the agents run on the IDE's model again.`);
+    for (const { host, path } of main.changed)
+      output.info(`  ${host} main session: restored in ${path}`);
+  } else {
+    output.success(`Models on ${provider}, for every project on this machine:`);
+    for (const host of hosts) {
+      const skipped = main.skipped.some((entry) => entry.host === host);
+      const written = main.changed.findLast((entry) => entry.host === host);
+      const { model, effort } = tierModel(host, provider, AGENT_MODELS.main);
+      const effortShown =
+        AGENT_MODELS.hosts[host].main?.effortKey === undefined ? "" : ` (${effort})`;
+      if (!skipped) {
+        output.info(
+          written === undefined
+            ? `  ${host} main session: not managed by aidd, still the IDE's choice`
+            : `  ${host} main session: ${model}${effortShown}, written in ${written.path}`
+        );
+      }
+      for (const group of roleModels(host, provider)) {
+        output.info(`  ${host} ${group.roles.join(", ")}: ${group.model} (${group.effort})`);
+      }
+    }
+  }
+  for (const { host, path, reason } of main.skipped) {
+    output.warn(`${host} main session left as it is in ${path}: ${reason}.`);
+  }
+  output.info(
+    main.reinstalled.length > 0
+      ? `Agents updated: ${main.reinstalled.join(", ")}.`
+      : "Agents installed later get these models too."
+  );
+  output.info(
+    `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${hosts.join(",")} --provider ${provider ?? "none"}\` there.`
+  );
+}
+
 interface SetupCmdOptions {
   source?: "remote" | "local";
   path?: string;
@@ -36,6 +100,7 @@ interface SetupCmdOptions {
   defaultMarketplace?: boolean;
   scope?: string;
   global?: boolean;
+  provider?: string;
 }
 
 export function parseSourceFlag(
@@ -143,6 +208,10 @@ export function registerSetupCommand(program: Command): void {
         "requirements below"
     )
     .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
+    .option(
+      "--provider <provider>",
+      `Run each tool's main session and agents on this provider's model for their role (${agentProviders().join(", ")}), or none for the IDE's model`
+    )
     .addHelpText("after", globalSetupHelp)
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -160,7 +229,8 @@ export function registerSetupCommand(program: Command): void {
         cmdOptions.ide ||
         cmdOptions.plugins ||
         cmdOptions.yes ||
-        cmdOptions.global
+        cmdOptions.global ||
+        cmdOptions.provider
       );
       const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
@@ -184,6 +254,25 @@ export function registerSetupCommand(program: Command): void {
           scope,
         });
 
+        // One provider per run: claude and codex each run one only, so pairing them is refused
+        // here, naming the host, before anything is built or written.
+        const agentHosts = toolIds.aiTools.filter(isAgentHost);
+        const provider = cmdOptions.provider === "none" ? undefined : cmdOptions.provider;
+        const chosen = agentProviders().find((known) => known === provider);
+        if (provider !== undefined && chosen === undefined) {
+          throw new Error(
+            `Unknown provider "${provider}". Use: ${agentProviders().join(", ")}, or none.`
+          );
+        }
+        if (cmdOptions.provider !== undefined && agentHosts.length === 0) {
+          throw new Error(
+            `--provider needs --ide with a tool that runs the framework's agents: ${agentHostIds().join(", ")}.`
+          );
+        }
+        if (provider !== undefined) {
+          for (const host of agentHosts) supportedProvider(host, provider);
+        }
+
         if (interactive) printWelcomeBanner(output);
 
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -205,6 +294,17 @@ export function registerSetupCommand(program: Command): void {
           printDetectedContext(output, result.context.describe());
         }
         printSetupOutcome(output, result, verbose);
+        // Once the install has succeeded: the provider and the main session's model hold for
+        // every project on the machine, so a failed install leaves both as they were.
+        if (cmdOptions.provider !== undefined) {
+          const models = await deps.setAgentModelUseCase.execute({
+            projectRoot,
+            hosts: agentHosts,
+            provider,
+            scope: scope ?? "project",
+          });
+          reportAgentModels(output, chosen, agentHosts, models);
+        }
         if (interactive) printNextSteps(output, result.install.results.length > 0);
         reportSyncActivation(output, result.activation);
       } catch (error) {
