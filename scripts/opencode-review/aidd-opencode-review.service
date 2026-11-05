@@ -1,0 +1,14 @@
+[Unit]
+Description=Review Alex's GitHub submissions with OpenCode
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/aidd-opencode-review.env
+TimeoutStartSec=3600
+SuccessExitStatus=75
+# Both OpenCode processes must use compatible OAuth database and refresh locks.
+ExecStartPre=/usr/bin/docker exec --user 10001:10001 aidd-opencode-opencode-1 /bin/sh -c 'test "$$(/usr/local/bin/opencode --version)" = "opencode v2.2.5" || { echo "OpenCode version needs revalidation" >&2; exit 1; }'
+# docker exec can outlive its client; keep the lock inside the container.
+ExecStart=/usr/bin/docker exec --user 10001:10001 --env OPENCODE_REVIEW_REPOSITORY --env OPENCODE_REVIEW_ENABLED_AT --env OPENCODE_REVIEW_STATE_DIR=/var/lib/aidd-dev/aidd-opencode-review aidd-opencode-opencode-1 /usr/bin/flock -n -E 75 /var/lib/aidd-dev/aidd-opencode-review/run.lock /bin/sh -c 'base="$$HOME/.agents/aidd-opencode-review/current"; export PATH="$$base/bin:$$PATH"; cd "$$base"; exec /usr/local/bin/node "$$base/scripts/opencode-review/ci.mjs"'

@@ -1,9 +1,7 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { isAbsolute, join } from 'node:path';
 
-const BOT_ID = 41898282;
-const MARKER_FAMILY = '<!-- aidd-opencode-review-state:';
-const MARKER_PREFIX = `${MARKER_FAMILY}v1 `;
-const MARKER = /^<!-- aidd-opencode-review-state:v1 ([A-Za-z0-9_-]+) -->$/;
 const HASH = /^[a-f0-9]{64}$/;
 const OBJECT_ID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 const STATUSES = new Set(['added', 'removed', 'modified', 'renamed', 'copied', 'changed', 'unchanged']);
@@ -55,58 +53,76 @@ function validatePatch(file) {
 export function planReview(files, previous = {}) {
   if (!Array.isArray(files)) invalid('PR files must be an array');
   validateFiles(previous);
-  const currentEntries = [], selected = [], names = new Set();
+  const currentEntries = [], selected = [], skipped = [], names = new Set(), counts = new Map();
   for (const file of files) {
-    if (!file || typeof file !== 'object' || typeof file.filename !== 'string' || !file.filename || file.filename.includes('\0') || names.has(file.filename)) invalid('missing or duplicate filename');
-    if (!STATUSES.has(file.status) || typeof file.sha !== 'string' || !OBJECT_ID.test(file.sha)) invalid(`invalid file metadata for ${file.filename}`);
-    if (file.previous_filename !== undefined && file.previous_filename !== null && (typeof file.previous_filename !== 'string' || !file.previous_filename || file.previous_filename.includes('\0'))) invalid(`invalid previous filename for ${file.filename}`);
-    if ((file.status === 'renamed' || file.status === 'copied') && !file.previous_filename) invalid(`missing previous filename for ${file.filename}`);
-    validatePatch(file);
-    names.add(file.filename);
+    if (typeof file?.filename === 'string' && file.filename) counts.set(file.filename, (counts.get(file.filename) ?? 0) + 1);
+  }
+  for (const file of files) {
+    const filename = typeof file?.filename === 'string' && file.filename ? file.filename : null;
+    if (filename) names.add(filename);
+    try {
+      if (!filename || filename.includes('\0') || counts.get(filename) !== 1) invalid('missing or duplicate filename');
+      if (!STATUSES.has(file.status) || typeof file.sha !== 'string' || !OBJECT_ID.test(file.sha)) invalid(`invalid file metadata for ${filename}`);
+      if (file.previous_filename !== undefined && file.previous_filename !== null && (typeof file.previous_filename !== 'string' || !file.previous_filename || file.previous_filename.includes('\0'))) invalid(`invalid previous filename for ${filename}`);
+      if ((file.status === 'renamed' || file.status === 'copied') && !file.previous_filename) invalid(`missing previous filename for ${filename}`);
+      validatePatch(file);
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.startsWith('Invalid review state: ')) throw error;
+      skipped.push({ filename, reason: error.message.slice('Invalid review state: '.length) });
+      continue;
+    }
     const fingerprint = createHash('sha256').update(JSON.stringify([file.filename, file.status, file.sha, file.previous_filename ?? null, file.patch])).digest('hex');
     currentEntries.push([file.filename, fingerprint]);
     if (!Object.hasOwn(previous, file.filename) || previous[file.filename] !== fingerprint) selected.push(file);
   }
   const current = Object.fromEntries(currentEntries);
   const removed = Object.keys(previous).filter((name) => !names.has(name));
-  return { selected, current, removed };
+  return { selected, current, removed, skipped };
 }
 
-function validateState(state) {
+export function validateState(state) {
   if (!state || typeof state !== 'object' || Array.isArray(state) || state.version !== 1) invalid('unknown marker version');
   if (typeof state.head !== 'string' || !OBJECT_ID.test(state.head)) invalid('invalid head');
+  if (state.base !== undefined && (typeof state.base !== 'string' || !OBJECT_ID.test(state.base))) invalid('invalid base');
   if (typeof state.reviewId !== 'string' || !/^[1-9][0-9]*$/.test(state.reviewId)) invalid('invalid review ID');
+  if (state.pending !== undefined && typeof state.pending !== 'boolean') invalid('invalid pending flag');
   validateFiles(state.files);
-  return { version: 1, head: state.head, reviewId: state.reviewId, files: state.files };
+  if (state.verdict !== undefined && !['approve', 'changes-requested', 'blocked'].includes(state.verdict)) invalid('invalid verdict');
+  if (state.parts !== undefined) {
+    if (!state.parts || typeof state.parts !== 'object' || Array.isArray(state.parts) || !state.pending) invalid('invalid partial parts');
+    for (const [name, part] of Object.entries(state.parts)) {
+      if (!name || name.includes('\0') || Object.hasOwn(state.files, name) || !part || typeof part !== 'object' || !HASH.test(part.fingerprint ?? '') ||
+          !Number.isSafeInteger(part.total) || part.total < 2 || !Array.isArray(part.completed) || !part.completed.length || part.completed.length >= part.total ||
+          part.completed.some((index) => !Number.isSafeInteger(index) || index < 0 || index >= part.total) || new Set(part.completed).size !== part.completed.length) invalid('invalid partial file');
+    }
+  }
+  return { version: 1, head: state.head, ...(state.base ? { base: state.base } : {}), reviewId: state.reviewId, files: state.files, ...(state.pending ? { pending: true } : {}), ...(state.verdict ? { verdict: state.verdict } : {}), ...(state.parts && Object.keys(state.parts).length ? { parts: state.parts } : {}) };
 }
 
-/** Append this marker only after a successful, complete review, in the bot's own comment. */
-export function encodeReviewState({ files, head, reviewId }) {
-  const state = validateState({ version: 1, files, head, reviewId: String(reviewId) });
-  return `${MARKER_PREFIX}${Buffer.from(JSON.stringify(state)).toString('base64url')} -->`;
-}
-
-/** Read only the latest complete marker from the GitHub Actions bot, independent of API order. */
-export function latestReviewState(comments) {
-  if (!Array.isArray(comments)) invalid('comments must be an array');
-  const candidates = comments.filter((comment) => comment?.user?.id === BOT_ID && typeof comment.body === 'string' && comment.body.trimEnd().split(/\r?\n/).at(-1).startsWith(MARKER_FAMILY));
-  for (const comment of candidates) {
-    if (!Number.isSafeInteger(comment.id) || comment.id < 1 || typeof comment.created_at !== 'string' || !Number.isFinite(Date.parse(comment.created_at))) invalid('invalid marker comment');
-  }
-  candidates.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id);
-  if (!candidates.length) return null;
-  // Only the orchestrator's final line is metadata; the report may quote older markers.
-  const trailer = candidates[0].body.trimEnd().split(/\r?\n/).at(-1);
-  const match = MARKER.exec(trailer);
-  if (!match) invalid('malformed marker');
-  const encoded = match[1];
-  let state;
-  try {
-    const bytes = Buffer.from(encoded, 'base64url');
-    if (bytes.toString('base64url') !== encoded) invalid('invalid marker encoding');
-    state = JSON.parse(bytes.toString('utf8'));
-  } catch {
-    invalid('malformed marker payload');
-  }
-  return validateState(state);
+/** Private durable state and write-ahead draft, one atomic file per repository and PR. */
+export function stateStore(directory, repository) {
+  if (typeof directory !== 'string' || !isAbsolute(directory) || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository ?? '')) invalid('invalid state directory or repository');
+  const root = join(directory, ...repository.split('/'));
+  const path = (number) => {
+    if (!Number.isSafeInteger(number) || number < 1) invalid('invalid PR number');
+    return join(root, `${number}.json`);
+  };
+  return {
+    load(number) {
+      let record;
+      try { record = JSON.parse(readFileSync(path(number), 'utf8')); }
+      catch (error) { if (error.code === 'ENOENT') return { state: null, draft: null }; throw error; }
+      if (!record || typeof record !== 'object' || Array.isArray(record) || !Object.hasOwn(record, 'state') || !Object.hasOwn(record, 'draft')) invalid('invalid stored record');
+      return { state: record.state === null ? null : validateState(record.state), draft: record.draft };
+    },
+    save(number, record) {
+      if (!record || typeof record !== 'object' || !Object.hasOwn(record, 'state') || !Object.hasOwn(record, 'draft')) invalid('invalid stored record');
+      if (record.state !== null) validateState(record.state);
+      const target = path(number);
+      mkdirSync(root, { recursive: true, mode: 0o700 });
+      const temporary = `${target}.${randomUUID()}.tmp`;
+      writeFileSync(temporary, JSON.stringify(record), { mode: 0o600, flag: 'wx' });
+      renameSync(temporary, target);
+    },
+  };
 }

@@ -1,245 +1,324 @@
-const { test } = require('node:test');
+const test = require('node:test');
 const assert = require('node:assert/strict');
-const { execFileSync, spawnSync } = require('node:child_process');
-const { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { join, resolve } = require('node:path');
+const { reviewPullRequest, reportFromEvents, retryStore, runModel, splitInput } = require('../opencode-review/ci.mjs');
+const { stateStore } = require('../opencode-review/state.mjs');
 
-const script = resolve('scripts/opencode-review/ci.mjs');
-const head = 'a'.repeat(40), base = 'b'.repeat(40), sha = 'c'.repeat(40);
-const file = { filename: 'app.js', status: 'modified', sha, additions: 1, deletions: 1, patch: '@@ -1 +1 @@\n-old\n+new' };
-const pr = { state: 'open', head: { sha: head, repo: { full_name: 'owner/repo' } }, base: { sha: base }, number: 2, changed_files: 1, title: 'Title', body: 'Criteria' };
-const event = { action: 'submitted', review: { id: 10, user: { id: 8973343 }, commit_id: head }, pull_request: pr };
+const ALEX = 8973343, head = 'a'.repeat(40), base = 'b'.repeat(40), sha = 'c'.repeat(40);
+const changed = (name) => ({ filename: name, status: 'modified', sha, additions: 1, deletions: 1, patch: '@@ -1 +1 @@\n-old\n+new' });
+const candidate = { number: 42, reviewId: 10, head: 'd'.repeat(40), base };
 
-test('runs OpenCode with the prompt from the trusted checkout', (t) => {
-  const dir = mkdtempSync(join(tmpdir(), 'aidd-review-runner-'));
-  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
-  const trusted = join(dir, 'trusted/scripts/opencode-review');
-  mkdirSync(trusted, { recursive: true });
-  writeFileSync(join(trusted, 'prompt.txt'), 'Trusted prompt\nSecond line\n');
-  const executable = join(dir, 'opencode');
-  writeFileSync(executable, '#!/bin/sh\nprintf "%s\\n" "$@" > "$OUTPUT_ARGS"\nprintf "review events\\n"\n');
-  chmodSync(executable, 0o755);
-  const result = spawnSync('bash', [resolve('scripts/opencode-review/review.sh')], {
-    cwd: dir,
-    env: { ...process.env, GITHUB_WORKSPACE: dir, RUNNER_TEMP: dir, PATH: `${dir}:${process.env.PATH}`, OUTPUT_ARGS: join(dir, 'args') },
-    encoding: 'utf8',
-  });
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(readFileSync(join(dir, 'args'), 'utf8'), /openai\/gpt-6\.1-terra#medium\nTrusted prompt\nSecond line\n$/);
-  assert.equal(readFileSync(join(dir, 'opencode-review-events.jsonl'), 'utf8'), 'review events\n');
-});
-
-function fixture(t) {
-  const dir = mkdtempSync(join(tmpdir(), 'aidd-review-ci-'));
-  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
-  for (const [name, value] of Object.entries({ event, pr, files: [file], comments: [] })) writeFileSync(join(dir, `${name}.json`), JSON.stringify(value));
-  writeFileSync(join(dir, 'output'), '');
-  const gh = join(dir, 'gh');
-  writeFileSync(gh, `#!/usr/bin/env node
-const fs = require('fs'); const path = require('path');
-const d = process.env.FAKE_GH_DIR; const args = process.argv.slice(2); const api = args[1];
-const read = (name) => JSON.parse(fs.readFileSync(path.join(d,name+'.json')));
-if (args.includes('POST') || args.includes('PATCH')) { fs.writeFileSync(path.join(d,'posted.json'), fs.readFileSync(0)); console.log('{}'); }
-else if (api.includes('/reviews/')) console.log(JSON.stringify(read('review')));
-else if (api.includes('/files?')) console.log(JSON.stringify([read('files')]));
-else if (api.includes('/comments?')) console.log(JSON.stringify([read('comments')]));
-else console.log(JSON.stringify(read('pr')));
-`);
-  chmodSync(gh, 0o755);
-  writeFileSync(join(dir, 'review.json'), JSON.stringify({ ...event.review, state: 'COMMENTED', submitted_at: '2026-11-05T00:01:00Z' }));
-  const env = { ...process.env, GITHUB_RUN_ID: '123', GITHUB_SERVER_URL: 'https://github.com', OPENCODE_REVIEW_ENABLED_AT: '2026-11-05T00:00:00Z', REVIEW_NUMBER: '2', REVIEW_ID: '10', REVIEW_EVENT_PATH: join(dir, 'event.json'), PATH: `${dir}:${process.env.PATH}`, FAKE_GH_DIR: dir, GITHUB_REPOSITORY: 'owner/repo', GITHUB_EVENT_PATH: join(dir, 'event.json'), RUNNER_TEMP: dir, GITHUB_OUTPUT: join(dir, 'output') };
-  const run = (command) => spawnSync(process.execPath, [script, command], { env, encoding: 'utf8' });
-  const put = (name, value) => writeFileSync(join(dir, `${name}.json`), JSON.stringify(value));
-  return { dir, run, put };
-}
-function events(dir, report) {
-  const used = (tool, input, output = '') => ({ type: 'tool_use', part: { tool, state: { status: 'completed', input, output, metadata: { metadata: { truncated: false } } } } });
-  const plan = JSON.parse(readFileSync(join(dir, 'opencode-review-input', 'plan.json')));
-  return [
-    used('skill', { id: '05-review' }),
-    ...plan.inputs.map((input) => used('read', { path: join(dir, 'opencode-review', '.review-input', input.file) }, `${input.begin}\n${input.end}`)),
-    ...['actions/01-prepare.md', 'actions/02-review.md', 'actions/03-conclude.md', 'references/rubric.md', 'references/axis-code.md', 'references/axis-functional.md', 'references/axis-relevancy.md', 'assets/review-template.md'].map((path) => used('read', { path: join(dir, 'opencode-review', '.opencode/skills/05-review', path) })),
-    { type: 'text', part: { text: `${report}\nAIDD_REVIEW_VERDICT_V1: ${report.startsWith('Verdict: blocked') ? 'blocked' : 'approve'}\nAIDD_REVIEW_COVERAGE_V1: ${JSON.stringify({ status: 'complete', verdict: report.startsWith('Verdict: blocked') ? 'blocked' : 'approve', files: report.includes('app.js') ? ['app.js'] : [], ...(report.includes('Critical defect') ? { critical_findings: [{ file: 'app.js', line: 1, proof: 'contract broken', fix: 'repair it' }] } : {}) })}` } },
-  ].map(JSON.stringify).join('\n');
+function fixture() {
+  const records = new Map();
+  const store = { load: (number) => structuredClone(records.get(number) ?? { state: null, draft: null }), save: (number, record) => records.set(number, structuredClone(record)) };
+  const server = { pr: { state: 'open', head: { sha: head, repo: { full_name: 'external/fork' } }, base: { sha: base }, changed_files: 2, title: 'Title', body: 'Context' }, files: [changed('a.js'), { ...changed('image.png'), patch: undefined }], comments: [], calls: [] };
+  const query = (path, method, body) => {
+    server.calls.push({ path, method, body });
+    if (path.endsWith('/pulls/42')) return server.pr;
+    if (path.includes('/reviews/')) return { id: Number(path.split('/').at(-1)), user: { id: ALEX }, state: server.reviewState ?? 'COMMENTED' };
+    if (method === 'POST') {
+      server.comments.push({ id: server.comments.length + 1, user: { id: ALEX }, created_at: `2026-11-05T00:00:${String(server.comments.length).padStart(2, '0')}Z`, body: body.body });
+      if (server.loseResponse) { server.loseResponse = false; throw new Error('response lost'); }
+      return {};
+    }
+    if (method === 'PATCH') {
+      const comment = server.comments.find((item) => path.endsWith(`/${item.id}`));
+      comment.body = body.body;
+      return {};
+    }
+    throw new Error(`Unexpected request: ${path}`);
+  };
+  const queryPages = (path) => path.includes('/comments?') ? server.comments : server.files;
+  const calls = [];
+  const model = (args) => { calls.push(args); return { report: 'No actionable defect found.', verdict: 'approve', reviewed: args.files }; };
+  const recover = ({ files }) => ({ files: [], skipped: files.map((file) => ({ filename: file.filename, reason: 'missing patch' })) });
+  const options = { repository: 'owner/repo', authorId: ALEX, store, query, queryPages, model, recover };
+  return { server, calls, options, store };
 }
 
-test('publishes only after the skill and coverage, then skips an unchanged next review', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  assert.match(readFileSync(join(f.dir, 'output'), 'utf8'), /review=true/);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), events(f.dir, 'Verdict: approve. Reviewed app.js.'));
-  assert.equal(f.run('publish').status, 0);
-  const posted = JSON.parse(readFileSync(join(f.dir, 'posted.json'), 'utf8'));
-  assert.match(posted.body, /aidd-opencode-review-state:v1/);
-  f.put('comments', [{ id: 12, created_at: '2026-11-05T00:00:00Z', user: { id: 41898282 }, body: posted.body }]);
-  f.put('event', { ...event, review: { ...event.review, id: 11 } });
-  assert.equal(f.run('prepare').status, 0);
-  assert.match(readFileSync(join(f.dir, 'output'), 'utf8'), /review=false/);
+test('reviews a fork current head, skips binaries, and does not rerun for unchanged files', () => {
+  const f = fixture();
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.equal(f.calls.length, 1);
+  assert.deepEqual(f.calls[0].files, ['a.js']);
+  assert.match(f.server.comments[0].body, /image\.png.*missing patch/);
+  assert.equal(f.store.load(42).state.head, head);
+  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
+  assert.equal(f.calls.length, 1);
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
+  assert.equal(f.calls.length, 1, 'unchanged files do not call the model');
+  f.server.files[1] = changed('image.png');
+  reviewPullRequest({ ...candidate, reviewId: 12 }, f.options);
+  assert.equal(f.calls.length, 2);
+  assert.deepEqual(f.calls[1].files, ['image.png']);
 });
 
-test('refuses an incomplete blocked report without a critical finding', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), events(f.dir, 'Verdict: blocked. Cannot review app.js.'));
-  const result = f.run('publish');
-  assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Blocked verdict has no substantiated critical finding/);
-  assert.throws(() => readFileSync(join(f.dir, 'posted.json')));
+test('only checkpoints confirmed files and retries the remaining files for the same submission', () => {
+  const f = fixture();
+  f.server.files[1] = changed('b.js');
+  f.options.model = () => ({ report: 'One file reviewed.', verdict: 'approve', reviewed: ['a.js'] });
+  const first = reviewPullRequest(candidate, f.options);
+  assert.equal(first.status, 'partial');
+  assert.deepEqual(first.reviewed, ['a.js']);
+  assert.match(f.server.comments[0].body, /b\.js.*did not confirm/);
+  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
+  assert.equal(f.store.load(42).state.pending, true);
+  f.options.model = (args) => { f.calls.push(args); return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
+  reviewPullRequest(candidate, f.options);
+  assert.deepEqual(f.calls[0].files, ['b.js']);
+  assert.equal(f.store.load(42).state.pending, undefined);
+  assert.deepEqual(Object.keys(f.store.load(42).state.files).sort(), ['a.js', 'b.js']);
 });
 
-test('rejects events by anyone else or for a stale head', (t) => {
-  const f = fixture(t);
-  f.put('event', { ...event, review: { ...event.review, user: { id: 123 } } });
-  assert.notEqual(f.run('prepare').status, 0);
-  f.put('event', { ...event, review: { ...event.review, commit_id: sha } });
-  assert.notEqual(f.run('prepare').status, 0);
+test('aggregates the strictest verdict across partial runs on the same commit', () => {
+  const f = fixture(); f.server.files[1] = changed('b.js');
+  f.options.model = () => ({ report: 'A defect.', verdict: 'changes-requested', reviewed: ['a.js'] });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  f.options.model = (args) => ({ report: 'No defect in this segment.', verdict: 'approve', reviewed: args.files });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.match(f.server.comments.at(-1).body, /Verdict des segments de ce commentaire : approve/);
+  assert.match(f.server.comments.at(-1).body, /Verdict cumulé des segments examinés sur ce commit : changes-requested/);
 });
 
-test('does not publish when the skill was not loaded or a selected file is missing', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), JSON.stringify({ type: 'text', part: { text: 'Verdict: approve app.js' } }));
-  assert.match(f.run('publish').stderr, /skill was not loaded/);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), events(f.dir, 'Verdict: approve.'));
-  assert.match(f.run('publish').stderr, /did not cover the exact selected files/);
-  assert.throws(() => readFileSync(join(f.dir, 'posted.json')));
+test('resumes a long report after a lost POST response without repeating the model or a comment', () => {
+  const f = fixture(); let calls = 0;
+  f.options.model = (args) => { calls++; return { report: 'é'.repeat(80000), verdict: 'approve', reviewed: args.files }; };
+  f.server.loseResponse = true;
+  assert.throws(() => reviewPullRequest(candidate, f.options), /response lost/);
+  const draft = f.store.load(42).draft;
+  assert.ok(draft.chunks.length > 1);
+  assert.equal(f.store.load(42).state, null);
+  f.server.comments[0].body += '\nEdited by Alex.';
+  f.server.comments.push({ id: 999, user: { id: 12345 }, created_at: '2026-11-05T00:00:10Z', body: `<!-- aidd-opencode-review-v2 ${draft.id} 2/${draft.chunks.length} -->` });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.equal(calls, 1);
+  assert.equal(f.server.comments.filter((comment) => comment.user.id === ALEX).length, draft.chunks.length);
+  assert.ok(f.server.comments.filter((comment) => comment.user.id === ALEX).every((comment) => Buffer.byteLength(comment.body) < 60000));
+  assert.equal(f.store.load(42).state.reviewId, '10');
 });
 
-test('does not publish when the PR changes while OpenCode is reviewing', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), events(f.dir, 'Verdict: approve. Reviewed app.js.'));
-  f.put('pr', { ...pr, head: { ...pr.head, sha } });
-  assert.match(f.run('publish').stderr, /PR head or base changed/);
-  assert.throws(() => readFileSync(join(f.dir, 'posted.json')));
+test('reconstructs omitted text patches before deciding which files are reviewable', () => {
+  const f = fixture(); let recovered = 0;
+  f.options.recover = ({ files }) => { recovered++; return { files: files.map((file) => changed(file.filename)), skipped: [] }; };
+  reviewPullRequest(candidate, f.options);
+  assert.equal(recovered, 1);
+  assert.deepEqual(f.calls[0].files, ['a.js', 'image.png']);
+  assert.deepEqual(Object.keys(f.store.load(42).state.files).sort(), ['a.js', 'image.png']);
 });
 
-test('records a removed PR file without running the model, so a later reintroduction is reviewed', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), events(f.dir, 'Verdict: approve. Reviewed app.js.'));
-  assert.equal(f.run('publish').status, 0);
-  const first = JSON.parse(readFileSync(join(f.dir, 'posted.json'), 'utf8'));
-  f.put('comments', [{ id: 12, created_at: '2026-11-05T00:00:00Z', user: { id: 41898282 }, body: first.body }]);
-  f.put('event', { ...event, review: { ...event.review, id: 11 } });
-  f.put('pr', { ...pr, changed_files: 0 });
-  f.put('files', []);
-  assert.equal(f.run('prepare').status, 0);
-  const removal = JSON.parse(readFileSync(join(f.dir, 'posted.json'), 'utf8'));
-  assert.match(removal.body, /Verdict: approve/);
-  assert.notEqual(removal.body, first.body);
-  f.put('comments', [{ id: 13, created_at: '2026-11-05T00:01:00Z', user: { id: 41898282 }, body: removal.body }]);
-  f.put('event', { ...event, review: { ...event.review, id: 12 } });
-  f.put('pr', pr);
-  f.put('files', [file]);
-  assert.equal(f.run('prepare').status, 0);
-  assert.equal(JSON.parse(readFileSync(join(f.dir, 'opencode-review-input', 'plan.json'))).selected[0], 'app.js');
+test('publishes readable files when Git recovery fails and retries only the rest', () => {
+  const f = fixture();
+  f.options.recover = () => { throw new Error('Git temporarily offline'); };
+  const first = reviewPullRequest(candidate, f.options);
+  assert.equal(first.status, 'partial');
+  assert.deepEqual(first.reviewed, ['a.js']);
+  assert.match(f.server.comments[0].body, /Git recovery temporarily unavailable/);
+  f.options.recover = ({ files }) => ({ files: files.map((file) => changed(file.filename)), skipped: [] });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.deepEqual(f.calls[1].files, ['image.png']);
 });
 
-
-test('loads the scheduled submission from GitHub and rejects stale or non-Alex reviews', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('event').status, 0);
-  const loaded = JSON.parse(readFileSync(join(f.dir, 'event.json'), 'utf8'));
-  assert.equal(loaded.review.user.id, 8973343);
-  f.put('review', { ...event.review, state: 'COMMENTED', submitted_at: '2026-11-05T00:01:00Z', user: { id: 123 } });
-  assert.notEqual(f.run('event').status, 0);
-  f.put('review', { ...event.review, state: 'COMMENTED', submitted_at: '2026-11-05T00:01:00Z', commit_id: sha });
-  assert.notEqual(f.run('event').status, 0);
+test('does not checkpoint a transient failure and schedules a new review if the head moves', () => {
+  const f = fixture();
+  f.options.model = () => { throw new Error('Temporary failure'); };
+  assert.throws(() => reviewPullRequest(candidate, f.options), /Temporary failure/);
+  assert.equal(f.server.comments.length, 0);
+  f.options.model = (args) => { f.server.pr.head.sha = 'f'.repeat(40); return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  assert.equal(f.server.comments.length, 1);
+  assert.match(f.server.comments[0].body, new RegExp(head));
+  assert.equal(f.store.load(42).state.pending, true);
 });
 
-
-test('records an unsuccessful run only once and only for Alex', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('failure').status, 0);
-  const posted = JSON.parse(readFileSync(join(f.dir, 'posted.json'), 'utf8'));
-  assert.match(posted.body, /aidd-opencode-review-failure:v1 10/);
-  f.put('comments', [{ id: 12, created_at: '2026-11-05T00:00:00Z', user: { id: 41898282 }, body: posted.body }]);
-  writeFileSync(join(f.dir, 'posted.json'), 'sentinel');
-  assert.equal(f.run('failure').status, 0);
-  assert.equal(readFileSync(join(f.dir, 'posted.json'), 'utf8'), 'sentinel');
-  f.put('review', { ...event.review, state: 'COMMENTED', user: { id: 123 } });
-  assert.notEqual(f.run('failure').status, 0);
+test('does not publish when Alex dismisses the review while the model runs', () => {
+  const f = fixture();
+  f.options.model = (args) => { f.server.reviewState = 'DISMISSED'; return { report: 'Done.', verdict: 'approve', reviewed: args.files }; };
+  assert.throws(() => reviewPullRequest(candidate, f.options), /no longer a submission by Alex/);
+  assert.equal(f.server.comments.length, 0);
 });
 
-test('does not repeat a queued review after an earlier run failed', (t) => {
-  const f = fixture(t);
-  f.put('comments', [{ id: 12, created_at: '2026-11-05T00:00:00Z', user: { id: 41898282 }, body: '<!-- aidd-opencode-review-failure:v1 10 -->' }]);
-  assert.equal(f.run('prepare').status, 0);
-  assert.match(readFileSync(join(f.dir, 'output'), 'utf8'), /review=false/);
-});
-
-
-test('publishes a complete blocked verdict with a critical finding', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), events(f.dir, 'Verdict: blocked. Critical defect in app.js.'));
-  assert.equal(f.run('publish').status, 0);
-  const body = JSON.parse(readFileSync(join(f.dir, 'posted.json'), 'utf8')).body;
-  assert.match(body, /Verdict: blocked/);
-  assert.match(body, /contract broken/);
-  assert.match(body, /repair it/);
-});
-
-
-test('rejects a report when the input was truncated even if the model claims full coverage', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  const input = events(f.dir, 'Verdict: approve. Reviewed app.js.').split('\n').map(JSON.parse);
-  const read = input.find((e) => e.part?.tool === 'read' && e.part?.state?.input?.path?.includes('diff-001.md'));
-  read.part.state.output = 'only the beginning';
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), input.map(JSON.stringify).join('\n'));
-  assert.match(f.run('publish').stderr, /did not read all of diff-001.md/);
-  assert.throws(() => readFileSync(join(f.dir, 'posted.json')));
-});
-
-test('splits oversized diffs on complete lines and rejects unreadably long lines', async () => {
-  const { splitDiff } = await import('../opencode-review/ci.mjs');
-  const chunks = splitDiff(Array.from({ length: 4000 }, () => 'x'.repeat(60)).join('\n'));
-  assert.ok(chunks.length > 1);
-  assert.ok(chunks.every((part) => Buffer.byteLength(part.text) < 40000 && part.text.split('\n').length < 1500));
-  assert.throws(() => splitDiff('a'.repeat(2000)), /too long/);
-});
-
-
-test('rejects a report whose visible verdict contradicts its manifest', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  const output = events(f.dir, 'Verdict: approve. Reviewed app.js.');
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), output.replace('Verdict: approve.', 'Verdict: blocked. Do not approve.'));
-  assert.match(f.run('publish').stderr, /Report does not match its verdict/);
-  assert.throws(() => readFileSync(join(f.dir, 'posted.json')));
-});
-
-test('accepts file reads expressed relative to the review snapshot', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  const output = events(f.dir, 'Verdict: approve. Reviewed app.js.').split('\n').map(JSON.parse);
-  for (const item of output) {
-    const input = item.part?.state?.input;
-    if (item.part?.tool === 'read' && input?.path) input.path = input.path.replace(join(f.dir, 'opencode-review') + '/', '');
+test('identifies the source file in every batch of a large patch', () => {
+  const f = fixture();
+  f.server.files = [{ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(180000)}` }];
+  f.server.pr.changed_files = 1;
+  reviewPullRequest(candidate, f.options);
+  assert.ok(f.calls.length > 1);
+  for (const call of f.calls) {
+    assert.deepEqual(call.files, ['large.js']);
+    for (const input of call.inputs.filter((item) => item.file.startsWith('diff-'))) assert.match(input.text, /"large\.js".*part \d+\/\d+/);
   }
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), output.map(JSON.stringify).join('\n'));
-  assert.equal(f.run('publish').status, 0);
 });
 
-
-test('does not mistake verdict words in file paths for the actual verdict', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), events(f.dir, 'Verdict: approve. Reviewed app.js and docs/blocked.md.'));
-  assert.equal(f.run('publish').status, 0);
+test('checkpoints completed files when a later batch fails, then retries only unfinished files', () => {
+  const f = fixture();
+  const large = (name) => ({ ...changed(name), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(80000)}` });
+  f.server.files = [large('a.js'), large('b.js')];
+  let attempt = 0;
+  f.options.model = (args) => { attempt++; if (attempt === 2) throw new Error('temporary outage'); return { report: 'Reviewed batch.', verdict: 'approve', reviewed: args.files }; };
+  const partial = reviewPullRequest(candidate, f.options);
+  assert.equal(partial.status, 'partial');
+  assert.deepEqual(partial.reviewed, ['a.js']);
+  assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
+  f.options.model = (args) => { f.calls.push(args); return { report: 'Finished.', verdict: 'approve', reviewed: args.files }; };
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.ok(f.calls.every((call) => call.files.length === 1 && call.files[0] === 'b.js'));
 });
 
+test('checkpoints completed batches before the run time budget expires', () => {
+  const f = fixture(); let now = 0, calls = 0;
+  const large = (name) => ({ ...changed(name), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(80000)}` });
+  f.server.files = [large('a.js'), large('b.js')];
+  f.options.now = () => now;
+  f.options.deadline = 1;
+  f.options.model = (args) => { calls++; now = 1; return { report: 'Reviewed batch.', verdict: 'approve', reviewed: args.files }; };
+  const result = reviewPullRequest(candidate, f.options);
+  assert.equal(result.status, 'partial');
+  assert.deepEqual(result.reviewed, ['a.js']);
+  assert.equal(calls, 1);
+  assert.equal(f.store.load(42).state.pending, true);
+});
 
-test('rejects a verdict heading that conflicts with the structured result', (t) => {
-  const f = fixture(t);
-  assert.equal(f.run('prepare').status, 0);
-  const output = events(f.dir, 'Verdict: approve. Reviewed app.js.').split('\n').map(JSON.parse);
-  const text = output.find((item) => item.type === 'text');
-  text.part.text = text.part.text.replace('Verdict: approve.', '## Verdict\n\nblocked');
-  writeFileSync(join(f.dir, 'opencode-review-events.jsonl'), output.map(JSON.stringify).join('\n'));
-  assert.match(f.run('publish').stderr, /Report does not match its verdict/);
-  assert.throws(() => readFileSync(join(f.dir, 'posted.json')));
+test('resumes a file larger than the time budget without rereading segments', () => {
+  const f = fixture();
+  f.server.files = [{ ...changed('__proto__'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(600000)}` }];
+  f.server.pr.changed_files = 1;
+  const seen = new Set(); let clock = 0, total = 0;
+  f.options.now = () => clock;
+  f.options.deadline = 1;
+  f.options.model = (args) => {
+    for (const input of args.inputs.filter((item) => item.file.startsWith('diff-'))) {
+      const [, number, count] = input.text.match(/part (\d+)\/(\d+)/);
+      assert.equal(seen.has(number), false, `segment ${number} was reread`);
+      seen.add(number); total = Number(count);
+    }
+    clock = 1;
+    return { report: 'Segment examined.', verdict: 'approve', reviewed: args.files };
+  };
+  let result;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    clock = 0;
+    result = reviewPullRequest(candidate, f.options);
+    const state = f.store.load(42).state;
+    if (result.status === 'published') {
+      assert.equal(Object.hasOwn(state.files, '__proto__'), true);
+      assert.equal(state.parts, undefined);
+      break;
+    }
+    assert.equal(result.status, 'partial');
+    assert.equal(Object.hasOwn(state.files, '__proto__'), false);
+    assert.equal(Object.hasOwn(state.parts, '__proto__'), true);
+  }
+  assert.equal(result.status, 'published');
+  assert.equal(seen.size, total);
+});
+
+test('discards segment progress when the file fingerprint changes', () => {
+  const f = fixture();
+  const large = (char) => ({ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${char.repeat(500000)}` });
+  f.server.files = [large('x')]; f.server.pr.changed_files = 1;
+  let clock = 0;
+  f.options.now = () => clock; f.options.deadline = 1;
+  f.options.model = (args) => { clock = 1; return { report: 'Segment examined.', verdict: 'approve', reviewed: args.files }; };
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  const first = f.store.load(42).state.parts['large.js'];
+  f.server.files = [large('y')]; clock = 0;
+  const names = [];
+  f.options.model = (args) => { names.push(...args.inputs.filter((item) => item.file.startsWith('diff-')).map((item) => item.text)); clock = 1; return { report: 'New segment.', verdict: 'approve', reviewed: args.files }; };
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  const second = f.store.load(42).state.parts['large.js'];
+  assert.notEqual(first.fingerprint, second.fingerprint);
+  assert.match(names[0], /part 1\//);
+});
+
+test('passes the OpenCode cache path without passing GitHub tokens or unrelated secrets', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'review-env-'));
+  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
+  const executable = join(dir, 'bash');
+  writeFileSync(executable, `#!/usr/bin/env node
+const fs = require('node:fs'); const path = require('node:path');
+if (!process.env.XDG_CACHE_HOME?.endsWith('/cache-sentinel') || process.env.GH_TOKEN || process.env.GITHUB_TOKEN || process.env.UNRELATED_SECRET) process.exit(19);
+const dir = process.argv.at(-1), inputs = fs.readdirSync(path.join(dir, '.review-input'));
+const use = (tool, input, output = '') => ({ type:'tool_use', part:{ tool, state:{ status:'completed', input, output } } });
+const actions = path.join(dir,'.opencode/skills/05-review/actions'); fs.mkdirSync(actions,{recursive:true});
+const events = [use('skill', {id:'05-review'}), ...['01-prepare.md','02-review.md','03-conclude.md'].map(name => { fs.writeFileSync(path.join(actions,name),'skill action\\n'); return use('read',{path:'.opencode/skills/05-review/actions/'+name},'skill action'); })];
+for (const name of inputs) events.push(use('read',{path:'.review-input/'+name},fs.readFileSync(path.join(dir,'.review-input',name),'utf8')));
+events.push({type:'text',part:{text:'OK\\nAIDD_REVIEW_COVERAGE_V1: {"verdict":"approve","reviewed":["a.js"]}'}});
+fs.writeFileSync(path.join(dir,'events.jsonl'),events.map(JSON.stringify).join('\\n'));
+`);
+  chmodSync(executable, 0o755);
+  const saved = Object.fromEntries(['PATH', 'XDG_CACHE_HOME', 'GH_TOKEN', 'GITHUB_TOKEN', 'UNRELATED_SECRET'].map((key) => [key, process.env[key]]));
+  Object.assign(process.env, { PATH: `${dir}:${saved.PATH}`, XDG_CACHE_HOME: `${dir}/cache-sentinel`, GH_TOKEN: 'test-only', GITHUB_TOKEN: 'test-only', UNRELATED_SECRET: 'test-only' });
+  try {
+    const inputs = splitInput('patch', 'diff', ['a.js']);
+    assert.deepEqual(runModel({ inputs, files: ['a.js'], repository: 'owner/repo', number: 42, head, base, cache: dir }), { report: 'OK', verdict: 'approve', reviewed: ['a.js'] });
+  } finally {
+    for (const [key, value] of Object.entries(saved)) if (value === undefined) delete process.env[key]; else process.env[key] = value;
+  }
+});
+
+test('checkpoints an empty selection once and updates it silently for the next submission', () => {
+  const f = fixture();
+  f.server.files = []; f.server.pr.changed_files = 0;
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.equal(f.calls.length, 0);
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
+  assert.equal(f.server.comments.length, 1);
+  assert.equal(f.store.load(42).state.reviewId, '11');
+});
+
+test('rejects incomplete API lists and identities other than Alex', () => {
+  const f = fixture(); f.server.pr.changed_files = 3;
+  assert.throws(() => reviewPullRequest(candidate, f.options), /Incomplete PR file list/);
+  assert.throws(() => reviewPullRequest(candidate, { ...f.options, authorId: 123 }), /Invalid review parameters/);
+});
+
+test('validates that the skill and every input were actually read before trusting coverage', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'review-events-')), inputs = [{ file: 'diff-001.md', begin: 'BEGIN', end: 'END' }];
+  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [workspace]) : rmSync(workspace, { recursive: true, force: true }));
+  const actionsDir = join(workspace, '.opencode/skills/05-review/actions');
+  mkdirSync(actionsDir, { recursive: true });
+  for (const name of ['01-prepare.md', '02-review.md', '03-conclude.md']) writeFileSync(join(actionsDir, name), 'start action\nend action\n');
+  const skill = { type: 'tool_use', part: { tool: 'skill', state: { status: 'completed', input: { id: '05-review' } } } };
+  const actions = ['01-prepare.md', '02-review.md', '03-conclude.md'].map((name) => ({ type: 'tool_use', part: { tool: 'read', state: { status: 'completed', input: { path: `.opencode/skills/05-review/actions/${name}` }, output: 'start action\nend action' } } }));
+  const read = { type: 'tool_use', part: { tool: 'read', state: { status: 'completed', input: { path: '.review-input/diff-001.md' }, output: 'BEGIN\npatch\nEND' } } };
+  const text = { type: 'text', part: { text: 'Review complete.\nAIDD_REVIEW_COVERAGE_V1: {"verdict":"approve","reviewed":["a.js"]}' } };
+  assert.deepEqual(reportFromEvents([skill, ...actions, read, text], ['a.js'], inputs, workspace), { report: 'Review complete.', verdict: 'approve', reviewed: ['a.js'] });
+  assert.throws(() => reportFromEvents([read, text], ['a.js'], inputs, workspace), /skill was not loaded/);
+  assert.throws(() => reportFromEvents([skill, ...actions.slice(0, 2), read, text], ['a.js'], inputs, workspace), /did not read all of skill action 03-conclude/);
+  const partial = structuredClone(actions); partial[1].part.state.output = 'start action';
+  assert.throws(() => reportFromEvents([skill, ...partial, read, text], ['a.js'], inputs, workspace), /did not read all of skill action 02-review/);
+  assert.throws(() => reportFromEvents([skill, ...actions, { ...read, part: { ...read.part, state: { ...read.part.state, output: 'BEGIN only' } } }, text], ['a.js'], inputs, workspace), /did not read all/);
+  assert.throws(() => reportFromEvents([skill, ...actions, read, { type: 'error' }, text], ['a.js'], inputs, workspace), /reported an error/);
+});
+
+test('splits large inputs and wraps long Unicode lines without dropping characters', () => {
+  const source = 'é'.repeat(30000);
+  const inputs = splitInput(source, 'diff', ['large']);
+  assert.ok(inputs.length > 1);
+  assert.ok(inputs.every((input) => Buffer.byteLength(input.text) <= 32000));
+  const restored = inputs.map((input) => input.text).join('\n').replace(/ ⤶\n↳ /g, '');
+  assert.equal(restored, source);
+});
+
+test('retries failures with persisted bounded backoff and resets after success', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'review-backoff-'));
+  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
+  const path = resolve(dir, 'state.json'); let now = 0;
+  let retry = retryStore(path, () => now);
+  retry.failure('42:10');
+  assert.equal(retry.ready('42:10'), false);
+  now += 5 * 60_000;
+  retry = retryStore(path, () => now);
+  assert.equal(retry.ready('42:10'), true);
+  retry.failure('42:10');
+  now += 9 * 60_000;
+  assert.equal(retry.ready('42:10'), false);
+  now += 60_000;
+  assert.equal(retry.ready('42:10'), true);
+  retry.success('42:10');
+  assert.equal(retry.ready('42:10'), true);
 });

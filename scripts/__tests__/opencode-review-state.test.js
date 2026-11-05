@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { encodeReviewState, latestReviewState, planReview } = require('../opencode-review/state.mjs');
+const { stateStore, validateState, planReview } = require('../opencode-review/state.mjs');
+const { mkdtempSync, rmSync, writeFileSync } = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const { tmpdir } = require('node:os');
+const { join } = require('node:path');
 
 const sha = 'a'.repeat(40);
 const head = 'b'.repeat(40);
@@ -42,8 +46,8 @@ test('handles multi-hunk patches, newline markers, additions, deletions and misl
   assert.equal(planReview([added, removed]).selected.length, 2);
 });
 
-test('fails closed on truncated or absent patches, metadata and API totals', () => {
-  for (const file of [
+test('skips incomplete files without stopping readable files or recording them as reviewed', () => {
+  const unreadable = [
     { ...modified(), patch: undefined },
     { ...modified(), patch: '@@ -1 +1 @@\n-old' },
     { ...modified(), patch: '@@ -1,2 +1,2 @@\n-old\n+new' },
@@ -53,34 +57,43 @@ test('fails closed on truncated or absent patches, metadata and API totals', () 
     { ...modified(), patch: '@@ -1 +1 @@\n-old\n+new\n@@ -3 +3 @@\n-old' },
     { ...modified(), sha: 'bad' },
     { ...modified(), status: 'renamed' },
-  ]) assert.throws(() => planReview([file]), /Invalid review state/);
-  assert.throws(() => planReview([modified(), modified()]), /duplicate filename/);
+  ];
+  const previous = planReview([modified()]).current;
+  for (const file of unreadable) {
+    const plan = planReview([file, modified('valid')], previous);
+    assert.deepEqual(plan.selected.map((entry) => entry.filename), ['valid']);
+    assert.equal(plan.skipped.length, 1);
+    assert.equal(plan.skipped[0].filename, file.filename);
+    assert.ok(plan.skipped[0].reason);
+    assert.equal(Object.hasOwn(plan.current, file.filename), false);
+  }
+  const duplicate = planReview([modified(), modified(), modified('valid')]);
+  assert.deepEqual(duplicate.selected.map((entry) => entry.filename), ['valid']);
+  assert.equal(duplicate.skipped.length, 2);
+  assert.equal(Object.hasOwn(duplicate.current, 'src/a.js'), false);
   assert.throws(() => planReview([modified()], { x: 'invalid hash' }), /invalid file fingerprint/);
 });
 
-test('round trips marker and uses only the latest trusted bot comment', () => {
-  const first = planReview([modified()]).current;
-  const second = planReview([modified('src/b.js')]).current;
-  const older = encodeReviewState({ files: first, head, reviewId: 101 });
-  const newer = encodeReviewState({ files: second, head, reviewId: '102' });
-  assert.deepEqual(latestReviewState([comment(2, `report\n${newer}`), comment(1, older), comment(3, older, 12345)]), { version: 1, files: second, head, reviewId: '102' });
-  assert.equal(latestReviewState([comment(1, 'regular comment'), comment(2, older, 12345)]), null);
+test('retains complete patches with long lines for the caller to segment', () => {
+  const text = 'é'.repeat(3000);
+  const file = modified('long.txt', `@@ -1 +1 @@\n-old\n+${text}`);
+  const plan = planReview([file]);
+  assert.deepEqual(plan.selected, [file]);
+  assert.deepEqual(plan.skipped, []);
 });
 
-test('latest malformed or duplicated bot marker fails closed', () => {
-  const state = encodeReviewState({ files: {}, head, reviewId: '1' });
-  for (const bad of [
-    '<!-- aidd-opencode-review-state:v1 invalid -->',
-    '<!-- aidd-opencode-review-state:v2 eyJ2ZXJzaW9uIjoyfQ -->',
-    '<!-- aidd-opencode-review-state:v1 not-base64-json -->',
-  ]) assert.throws(() => latestReviewState([comment(1, state), comment(2, bad)]), /Invalid review state/);
-  assert.throws(() => encodeReviewState({ files: {}, head: 'bad', reviewId: '1' }), /invalid head/);
-  assert.throws(() => encodeReviewState({ files: {}, head, reviewId: '0' }), /invalid review ID/);
-});
-
-
-test('accepts a report quoting an older marker before the final state', () => {
-  const first = encodeReviewState({ files: {}, head, reviewId: '1' });
-  const second = encodeReviewState({ files: {}, head, reviewId: '2' });
-  assert.equal(latestReviewState([comment(1, `Example: ${first}\n\n${second}`)]).reviewId, '2');
+test('persists validated state and a pending draft atomically across reloads', (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'review-state-'));
+  t.after(() => process.platform === 'darwin' ? execFileSync('trash', [dir]) : rmSync(dir, { recursive: true, force: true }));
+  const store = stateStore(dir, 'owner/repo');
+  assert.deepEqual(store.load(1), { state: null, draft: null });
+  const parts = Object.fromEntries([['constructor', { fingerprint: 'a'.repeat(64), total: 3, completed: [0, 2] }]]);
+  const state = validateState({ version: 1, files: {}, head, reviewId: '3', pending: true, parts, verdict: 'changes-requested' });
+  store.save(1, { state, draft: { id: 'pending' } });
+  assert.deepEqual(stateStore(dir, 'owner/repo').load(1), { state, draft: { id: 'pending' } });
+  assert.throws(() => validateState({ version: 1, files: {}, head, reviewId: '3', parts }), /invalid partial parts/);
+  assert.throws(() => validateState({ version: 1, files: {}, head, reviewId: '3', pending: true, parts: { x: { fingerprint: 'a'.repeat(64), total: 2, completed: [0, 1] } } }), /invalid partial file/);
+  assert.throws(() => validateState({ version: 1, files: { x: 'a'.repeat(64) }, head, reviewId: '3', pending: true, parts: { x: { fingerprint: 'a'.repeat(64), total: 2, completed: [0] } } }), /invalid partial file/);
+  writeFileSync(join(dir, 'owner/repo/1.json'), '{bad');
+  assert.throws(() => store.load(1), /JSON/);
 });

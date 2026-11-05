@@ -1,17 +1,36 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "permissions": [
-    {"action":"execute","resource":"*","effect":"deny"}
-  ],
+  "agents": {
+    "review": {
+      "description": "Read-only review of pull request data",
+      "mode": "primary",
+      "permissions": [
+        {"action":"execute","resource":"*","effect":"deny"},
+        {"action":"shell","resource":"*","effect":"deny"},
+        {"action":"edit","resource":"*","effect":"deny"},
+        {"action":"external_directory","resource":"*","effect":"deny"},
+        {"action":"webfetch","resource":"*","effect":"deny"},
+        {"action":"websearch","resource":"*","effect":"deny"},
+        {"action":"subagent","resource":"*","effect":"deny"},
+        {"action":"question","resource":"*","effect":"deny"},
+        {"action":"skill","resource":"*","effect":"deny"},
+        {"action":"skill","resource":"05-review","effect":"allow"}
+      ]
+    }
+  },
   "policies": [
+    {"action":"tool.use","resource":"execute:*","effect":"deny"},
     {"action":"tool.use","resource":"shell:*","effect":"deny"},
     {"action":"tool.use","resource":"edit:*","effect":"deny"},
     {"action":"tool.use","resource":"external_directory:*","effect":"deny"},
     {"action":"tool.use","resource":"webfetch:*","effect":"deny"},
     {"action":"tool.use","resource":"websearch:*","effect":"deny"},
-    {"action":"tool.use","resource":"execute:*","effect":"deny"},
     {"action":"tool.use","resource":"subagent:*","effect":"deny"},
     {"action":"tool.use","resource":"question:*","effect":"deny"},
-    {"action":"tool.use","resource":"experimental_image_generate:*","effect":"deny"}
+    {"action":"tool.use","resource":"experimental_image_generate:*","effect":"deny"},
+    {"action":"skill.use","resource":"*","effect":"deny"},
+    {"action":"skill.use","resource":"05-review","effect":"allow"},
+    {"action":"mcp.use","resource":"*","effect":"deny"},
+    {"action":"plugin.use","resource":"*","effect":"deny"}
   ]
 }

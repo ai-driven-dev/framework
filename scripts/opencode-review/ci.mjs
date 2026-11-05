@@ -1,237 +1,335 @@
 import { execFileSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { encodeReviewState, latestReviewState, planReview } from './state.mjs';
-import { hasReviewFailure } from './discover.mjs';
+import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { discover, pages } from './discover.mjs';
+import { planReview, stateStore, validateState } from './state.mjs';
+import { fetchReviewObjects, recoverPatches } from './git.mjs';
 
-const REVIEWER_ID = 8973343; // Alex's immutable GitHub user ID.
-const MAX_DIFF_BYTES = 500_000;
-const MAX_INPUT_BYTES = 40_000;
-const MAX_INPUT_LINES = 1_500;
-const MAX_LINE_BYTES = 1_900;
-const MAX_COMMENT_BYTES = 60_000;
+const ALEX = 8973343;
+const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const SHA = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
+const VERDICTS = ['approve', 'changes-requested', 'blocked'];
+const MAX_BATCH = 120_000;
+const MAX_INPUT = 32_000;
+const MAX_LINE = 1_400;
+const scriptDir = dirname(fileURLToPath(import.meta.url));
 
-function fail(message) { throw new Error(message); }
-function readJson(path) { return JSON.parse(readFileSync(path, 'utf8')); }
-function api(path, ...args) {
-  return JSON.parse(execFileSync('gh', ['api', path, ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
+function api(path, method, body) {
+  const args = ['api', path];
+  if (method) args.push('--method', method, '--input', '-');
+  return JSON.parse(execFileSync('gh', args, {
+    encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 60_000,
+    ...(method ? { input: JSON.stringify(body) } : {}),
+  }));
 }
-function pages(path) {
-  const result = api(path, '--paginate', '--slurp');
-  if (!Array.isArray(result) || result.some((page) => !Array.isArray(page))) fail('Unexpected GitHub pagination response');
-  return result.flat();
-}
-function input() {
-  const path = process.env.REVIEW_EVENT_PATH ?? (process.env.REVIEW_NUMBER ? join(process.env.RUNNER_TEMP, 'opencode-review-event.json') : process.env.GITHUB_EVENT_PATH);
-  const event = readJson(path);
-  const repository = process.env.GITHUB_REPOSITORY;
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository ?? '')) fail('Invalid repository');
-  if (event.action !== 'submitted' || event.review?.user?.id !== REVIEWER_ID || !Number.isSafeInteger(event.review.id)) fail('Unexpected review event');
-  if (event.pull_request?.head?.repo?.full_name !== repository) fail('Fork PRs are not supported');
-  const number = event.pull_request.number;
-  if (!Number.isSafeInteger(number) || number < 1) fail('Invalid PR number');
-  return { event, repository, number, root: `repos/${repository}` };
-}
-function assertCurrent(ctx) {
-  const pr = api(`${ctx.root}/pulls/${ctx.number}`);
-  if (pr.state !== 'open' || pr.head.sha !== ctx.event.review.commit_id || pr.head.sha !== ctx.event.pull_request.head.sha || pr.base.sha !== ctx.event.pull_request.base.sha) {
-    fail('PR head or base changed since the review was submitted; a new submission is required');
-  }
-  return pr;
-}
-function publishComment(ctx, body) {
-  if (Buffer.byteLength(body) > MAX_COMMENT_BYTES) fail('Review comment is too large to publish safely');
-  execFileSync('gh', ['api', `${ctx.root}/issues/${ctx.number}/comments`, '--method', 'POST', '--input', '-'], {
-    input: JSON.stringify({ body }), encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'],
-  });
-}
-function reviewOutput(enabled) {
-  appendFileSync(process.env.GITHUB_OUTPUT, `review=${enabled}\n`);
-}
-function wrappedInput(file, text) {
-  const token = randomUUID();
-  return { file, begin: `AIDD_INPUT_BEGIN_${token}`, end: `AIDD_INPUT_END_${token}`, text };
-}
-function inputBytes(input) { return `${input.begin}\n${input.text}\n${input.end}\n`; }
-function validateInput(text, label) {
-  const lines = text.split('\n');
-  if (lines.length > MAX_INPUT_LINES || Buffer.byteLength(text) > MAX_INPUT_BYTES ||
-      lines.some((line) => Buffer.byteLength(line) > MAX_LINE_BYTES)) fail(`${label} cannot be read completely`);
-}
-/** Split on complete lines so each read fits the native tool's limits. */
-export function splitDiff(text) {
-  if (Buffer.byteLength(text) > MAX_DIFF_BYTES) fail('Selected diff is too large for one complete review');
-  const groups = []; let lines = [], bytes = 0;
+
+// Long lines are shown as explicitly marked display continuations; their characters are retained.
+function wrapLines(text) {
+  const lines = [];
   for (const line of text.split('\n')) {
-    const size = Buffer.byteLength(line) + 1;
-    if (size > MAX_LINE_BYTES) fail('A diff line is too long to read completely');
-    if (lines.length >= MAX_INPUT_LINES - 4 || bytes + size > MAX_INPUT_BYTES - 256) {
-      groups.push(lines.join('\n')); lines = []; bytes = 0;
+    if (Buffer.byteLength(line) <= MAX_LINE) { lines.push(line); continue; }
+    let part = '', size = 0, first = true;
+    for (const char of line) {
+      const bytes = Buffer.byteLength(char);
+      if (size + bytes > MAX_LINE) {
+        lines.push(`${first ? '' : '↳ '}${part} ⤶`);
+        part = ''; size = 0; first = false;
+      }
+      part += char; size += bytes;
     }
+    lines.push(`${first ? '' : '↳ '}${part}`);
+  }
+  return lines;
+}
+
+/** Create inputs small enough for the OpenCode read tool, including long source lines. */
+export function splitInput(text, prefix, files = []) {
+  const chunks = []; let lines = [], bytes = 0;
+  const flush = () => {
+    if (!lines.length) return;
+    const token = randomUUID();
+    chunks.push({ file: `${prefix}-${String(chunks.length + 1).padStart(3, '0')}.md`, begin: `AIDD_INPUT_BEGIN_${token}`, end: `AIDD_INPUT_END_${token}`, text: lines.join('\n'), files });
+    lines = []; bytes = 0;
+  };
+  for (const line of wrapLines(text)) {
+    const size = Buffer.byteLength(line) + 1;
+    if (bytes + size > MAX_INPUT || lines.length >= 1_000) flush();
     lines.push(line); bytes += size;
   }
-  if (lines.length) groups.push(lines.join('\n'));
-  return groups.map((group, index) => wrappedInput(`diff-${String(index + 1).padStart(3, '0')}.md`, group));
+  flush();
+  return chunks;
 }
 
-function prepare() {
-  const ctx = input();
-  const pr = assertCurrent(ctx);
-  const files = pages(`${ctx.root}/pulls/${ctx.number}/files?per_page=100`);
-  if (files.length !== pr.changed_files) fail('GitHub did not return the complete PR file list');
-  const comments = pages(`${ctx.root}/issues/${ctx.number}/comments?per_page=100`);
-  const previous = latestReviewState(comments);
-  if (previous?.reviewId === String(ctx.event.review.id) || hasReviewFailure(comments, ctx.event.review.id)) { reviewOutput(false); return; }
-  const plan = planReview(files, previous?.files ?? {});
-  assertCurrent(ctx);
-  if (!plan.selected.length) {
-    if (previous) {
-      // Advance the hidden checkpoint without publishing another visible comment. This also
-      // records files removed from the PR, so reintroducing one is treated as a new diff.
-      const prefix = '<!-- aidd-opencode-review-state:v1 ';
-      const candidates = comments.filter((comment) => comment?.user?.id === 41898282 && typeof comment.body === 'string' && comment.body.trimEnd().split(/\r?\n/).at(-1).startsWith(prefix));
-      candidates.sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at) || b.id - a.id);
-      const target = candidates[0];
-      if (!target) fail('Previous review comment is missing');
-      const marker = encodeReviewState({ files: plan.current, head: pr.head.sha, reviewId: ctx.event.review.id });
-      const body = target.body.replace(/<!-- aidd-opencode-review-state:v1 [A-Za-z0-9_-]+ -->\s*$/, marker);
-      if (body === target.body || Buffer.byteLength(body) > MAX_COMMENT_BYTES) fail('Cannot update the review checkpoint safely');
-      assertCurrent(ctx);
-      execFileSync('gh', ['api', `${ctx.root}/issues/comments/${target.id}`, '--method', 'PATCH', '--input', '-'], {
-        input: JSON.stringify({ body }), encoding: 'utf8', stdio: ['pipe', 'pipe', 'inherit'],
-      });
-    }
-    reviewOutput(false);
-    return;
+/** Validate actual OpenCode tool events; model claims alone do not prove input was read. */
+export function reportFromEvents(events, files, inputs, workspace) {
+  if (!Array.isArray(events) || events.some((event) => event.type === 'error')) throw new Error('OpenCode reported an error');
+  const tools = events.filter((event) => event.type === 'tool_use').map((event) => event.part ?? {});
+  if (!tools.some((part) => part.tool === 'skill' && part.state?.status === 'completed' && part.state?.input?.id === '05-review')) throw new Error('Review skill was not loaded');
+  for (const action of ['01-prepare.md', '02-review.md', '03-conclude.md']) {
+    const path = resolve(workspace, '.opencode/skills/05-review/actions', action);
+    const lines = readFileSync(path, 'utf8').split(/\r?\n/).filter((line) => line.trim());
+    if (!lines.length) throw new Error(`Empty skill action ${action}`);
+    if (!tools.some((part) => part.tool === 'read' && part.state?.status === 'completed' &&
+      resolve(workspace, part.state?.input?.path ?? '') === path && typeof part.state?.output === 'string' &&
+      part.state.output.includes(lines[0]) && part.state.output.includes(lines.at(-1)) &&
+      part.state?.metadata?.metadata?.truncated !== true)) throw new Error(`Review did not read all of skill action ${action}`);
   }
-  const diff = plan.selected.map((file) => [
-    `## ${JSON.stringify(file.filename)} (${file.status})`,
-    file.previous_filename ? `Previous path: ${JSON.stringify(file.previous_filename)}` : '',
-    '```diff', file.patch, '```', '',
-  ].filter(Boolean).join('\n')).join('\n');
-  const chunks = splitDiff(diff);
-  const context = wrappedInput('context.md', `Title: ${pr.title}\n\n${pr.body ?? ''}`);
-  validateInput(inputBytes(context), 'PR description');
-  const dir = join(process.env.RUNNER_TEMP, 'opencode-review-input');
-  mkdirSync(dir, { recursive: true });
-  for (const input of [...chunks, context]) writeFileSync(join(dir, input.file), inputBytes(input));
-  const inputs = [...chunks, context].map(({ file, begin, end }) => ({ file, begin, end }));
-  writeFileSync(join(dir, 'plan.json'), JSON.stringify({ files: plan.current, selected: plan.selected.map((file) => file.filename), inputs, head: pr.head.sha, base: pr.base.sha, reviewId: String(ctx.event.review.id) }));
-  reviewOutput(true);
-}
-export function reportFromEvents(path, selected, inputs) {
-  const events = readFileSync(path, 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line));
-  if (events.some((event) => event.type === 'error')) fail('OpenCode reported an error');
-  const uses = events.filter((event) => event.type === 'tool_use').map((event) => event.part ?? {});
-  if (!uses.some((part) => part.tool === 'skill' && part.state?.status === 'completed' && part.state?.input?.id === '05-review')) fail('Review skill was not loaded');
-  const reads = uses.filter((part) => part.tool === 'read' && part.state?.status === 'completed');
-  const snapshot = resolve(process.env.RUNNER_TEMP, 'opencode-review');
-  const skill = join(snapshot, '.opencode', 'skills', '05-review');
-  for (const path of ['actions/01-prepare.md', 'actions/02-review.md', 'actions/03-conclude.md',
-    'references/rubric.md', 'references/axis-code.md', 'references/axis-functional.md', 'references/axis-relevancy.md',
-    'assets/review-template.md'].map((part) => join(skill, part))) {
-    if (!reads.some((read) => resolve(snapshot, read.state?.input?.path ?? '') === path)) fail(`Review did not read ${path}`);
-  }
-  if (!Array.isArray(inputs) || !inputs.some((input) => input.file === 'context.md') || !inputs.some((input) => /^diff-\d{3}\.md$/.test(input.file))) fail('Missing review inputs');
   for (const input of inputs) {
-    const path = join(snapshot, '.review-input', input.file);
-    if (!reads.some((read) => resolve(snapshot, read.state?.input?.path ?? '') === path &&
-        typeof read.state?.output === 'string' && read.state.output.includes(input.begin) && read.state.output.includes(input.end) &&
-        read.state?.metadata?.metadata?.truncated !== true)) fail(`Review did not read all of ${input.file}`);
+    const path = resolve(workspace, '.review-input', input.file);
+    const read = tools.find((part) => part.tool === 'read' && part.state?.status === 'completed' &&
+      resolve(workspace, part.state?.input?.path ?? '') === path && typeof part.state?.output === 'string' &&
+      part.state.output.includes(input.begin) && part.state.output.includes(input.end) && part.state?.metadata?.metadata?.truncated !== true);
+    if (!read) throw new Error(`OpenCode did not read all of ${input.file}`);
   }
-  const output = events.filter((event) => event.type === 'text').map((event) => event.part?.text).filter(Boolean).at(-1);
-  if (!output || !/\b(approve|changes-requested|blocked)\b/i.test(output)) fail('OpenCode did not complete an actionable review');
-  const verdictLines = [...output.matchAll(/^AIDD_REVIEW_VERDICT_V1: (approve|changes-requested|blocked)$/gm)];
-  if (verdictLines.length !== 1) fail('Missing or ambiguous verdict line');
-  const matches = [...output.matchAll(/^AIDD_REVIEW_COVERAGE_V1: (.+)$/gm)];
-  if (matches.length !== 1) fail('OpenCode did not provide the exact coverage manifest');
+  const output = events.filter((event) => event.type === 'text').map((event) => event.part?.text).filter(Boolean).at(-1) ?? '';
+  const matches = [...output.matchAll(/^AIDD_REVIEW_COVERAGE_V1:\s*(\{.*\})\s*$/gm)];
+  if (matches.length !== 1) throw new Error('Missing review coverage');
   let coverage;
-  try { coverage = JSON.parse(matches[0][1]); } catch { fail('Invalid coverage manifest'); }
-  if (!coverage || coverage.status !== 'complete' || !['approve', 'changes-requested', 'blocked'].includes(coverage.verdict) ||
-      !Array.isArray(coverage.files) || coverage.files.some((name) => typeof name !== 'string') ||
-      coverage.files.length !== selected.length || new Set(coverage.files).size !== selected.length ||
-      selected.some((name) => !coverage.files.includes(name))) fail('OpenCode did not cover the exact selected files');
-  if (coverage.verdict === 'blocked' && (!Array.isArray(coverage.critical_findings) || !coverage.critical_findings.length ||
-      coverage.critical_findings.some((finding) => !finding || !selected.includes(finding.file) ||
-        !Number.isSafeInteger(finding.line) || finding.line < 1 || typeof finding.proof !== 'string' || !finding.proof.trim() ||
-        typeof finding.fix !== 'string' || !finding.fix.trim()))) fail('Blocked verdict has no substantiated critical finding');
-  if (verdictLines[0][1] !== coverage.verdict) fail('Report does not match its verdict');
-  let report = output.replace(matches[0][0], '').replace(verdictLines[0][0], '').trim();
-  if (!report) fail('OpenCode returned an empty report');
-  const verdictHeadings = report.split('\n').filter((line) => /^\s*(?:[-*#>]\s*)*(?:\*\*)?verdict(?:\*\*)?\s*[:：]/i.test(line));
-  for (const heading of verdictHeadings) {
-    const label = heading.match(/verdict(?:\*\*)?\s*[:：]\s*[*`]*(approve|changes-requested|blocked)\b/i)?.[1]?.toLowerCase();
-    if (label !== coverage.verdict) fail('Report does not match its verdict');
-  }
-  const lines = report.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    if (!/^\s*#{1,6}\s*(?:\*\*)?verdict(?:\*\*)?\s*[:：]?\s*$/i.test(lines[i])) continue;
-    const following = lines.slice(i + 1).find((line) => line.trim());
-    const label = following?.match(/^\s*[*`]*(approve|changes-requested|blocked)\b/i)?.[1]?.toLowerCase();
-    if (label !== coverage.verdict) fail('Report does not match its verdict');
-  }
-  report += `\n\n**Verdict : ${coverage.verdict}**`;
-  if (coverage.verdict === 'blocked') {
-    const critical = coverage.critical_findings.map((finding) =>
-      `- ${JSON.stringify(finding.file)}:${finding.line} — Preuve : ${finding.proof.trim()} ; correction : ${finding.fix.trim()}`,
-    ).join('\n');
-    report += `\n\n### Constats critiques indiqués par OpenCode\n\n${critical}`;
-  }
-  return report;
-}
-function publish() {
-  const ctx = input();
-  const dir = join(process.env.RUNNER_TEMP, 'opencode-review-input');
-  const plan = readJson(join(dir, 'plan.json'));
-  const pr = assertCurrent(ctx);
-  if (plan.head !== pr.head.sha || plan.base !== pr.base.sha || plan.reviewId !== String(ctx.event.review.id)) fail('Prepared review no longer matches the event');
-  const comments = pages(`${ctx.root}/issues/${ctx.number}/comments?per_page=100`);
-  if (latestReviewState(comments)?.reviewId === plan.reviewId) return;
-  const report = reportFromEvents(join(process.env.RUNNER_TEMP, 'opencode-review-events.jsonl'), plan.selected, plan.inputs);
-  const marker = encodeReviewState(plan);
-  assertCurrent(ctx);
-  publishComment(ctx, `## Revue OpenCode\n\nCommit examiné : \`${plan.head}\`\n\n${report}\n\n${marker}`);
+  try { coverage = JSON.parse(matches[0][1]); } catch { throw new Error('Invalid review coverage'); }
+  if (!Array.isArray(coverage.reviewed) || coverage.reviewed.some((name) => typeof name !== 'string' || !files.includes(name)) || new Set(coverage.reviewed).size !== coverage.reviewed.length) throw new Error('Invalid reviewed file list');
+  if (!VERDICTS.includes(coverage.verdict)) throw new Error('Invalid review verdict');
+  const report = output.replace(matches[0][0], '').trim();
+  if (!report) throw new Error('Empty review report');
+  return { report, reviewed: coverage.reviewed, verdict: coverage.verdict };
 }
 
-function recordFailure() {
-  const repository = process.env.GITHUB_REPOSITORY;
-  const number = process.env.REVIEW_NUMBER;
-  const reviewId = process.env.REVIEW_ID;
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository ?? '') || !/^[1-9]\d*$/.test(number ?? '') || !/^[1-9]\d*$/.test(reviewId ?? '')) fail('Invalid failed review parameters');
-  const ctx = { root: `repos/${repository}`, number: Number(number) };
-  const review = api(`${ctx.root}/pulls/${number}/reviews/${reviewId}`);
-  if (String(review.id) !== reviewId || review.user?.id !== REVIEWER_ID || !['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED'].includes(review.state)) fail('Cannot verify the failed review');
-  const comments = pages(`${ctx.root}/issues/${number}/comments?per_page=100`);
-  if (latestReviewState(comments)?.reviewId === reviewId) return;
-  const marker = `<!-- aidd-opencode-review-failure:v1 ${reviewId} -->`;
-  if (hasReviewFailure(comments, reviewId)) return;
-  const server = process.env.GITHUB_SERVER_URL ?? 'https://github.com';
-  const run = process.env.GITHUB_RUN_ID ?? '';
-  if (server !== 'https://github.com' || !/^[1-9]\d*$/.test(run)) fail('Cannot construct a safe Actions link');
-  publishComment(ctx, `La revue OpenCode n’a pas abouti. Aucun fichier n’a été enregistré comme revu. [Voir le résultat](${server}/${repository}/actions/runs/${run}). Une nouvelle soumission de review permet de réessayer.\n\n${marker}`);
+/** Run a separate trusted shell. The child never receives the GitHub token or unrelated secrets. */
+function discard(path) {
+  if (process.platform === 'darwin') execFileSync('trash', [path]);
+  else rmSync(path, { recursive: true, force: true });
 }
-function loadEvent() {
-  const repository = process.env.GITHUB_REPOSITORY;
-  const number = process.env.REVIEW_NUMBER;
-  const reviewId = process.env.REVIEW_ID;
-  const cutoffText = process.env.OPENCODE_REVIEW_ENABLED_AT ?? '';
-  const cutoff = Date.parse(cutoffText);
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository ?? '') || !/^[1-9]\d*$/.test(number ?? '') || !/^[1-9]\d*$/.test(reviewId ?? '') || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(cutoffText) || !Number.isFinite(cutoff)) fail('Invalid scheduled review parameters');
-  const root = `repos/${repository}/pulls/${number}`;
-  const pr = api(root);
-  const review = api(`${root}/reviews/${reviewId}`);
-  if (review.user?.id !== REVIEWER_ID || !['COMMENTED', 'APPROVED', 'CHANGES_REQUESTED'].includes(review.state) || !Number.isFinite(Date.parse(review.submitted_at)) || Date.parse(review.submitted_at) < cutoff || review.commit_id !== pr.head.sha) fail('Scheduled review is not a current submission by Alex');
-  if (pr.head?.repo?.full_name !== repository || pr.state !== 'open') fail('Fork or closed PRs are not supported');
-  const path = process.env.REVIEW_EVENT_PATH ?? join(process.env.RUNNER_TEMP, 'opencode-review-event.json');
-  writeFileSync(path, JSON.stringify({ action: 'submitted', pull_request: pr, review }));
+
+export function runModel({ inputs, files, repository, number, head, base, cache }) {
+  const workspace = mkdtempSync(join(tmpdir(), 'aidd-opencode-review-'));
+  try {
+    const inputDir = join(workspace, '.review-input');
+    mkdirSync(inputDir, { recursive: true });
+    for (const input of inputs) writeFileSync(join(inputDir, input.file), `${input.begin}\n${input.text}\n${input.end}\n`);
+    const env = Object.fromEntries(['HOME', 'PATH', 'LANG', 'LC_ALL', 'TMPDIR', 'TZ', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_STATE_HOME', 'XDG_CACHE_HOME', 'SSL_CERT_FILE', 'SSL_CERT_DIR'].filter((key) => process.env[key]).map((key) => [key, process.env[key]]));
+    Object.assign(env, { OPENCODE_PURE: '1', REVIEW_REPOSITORY: repository, REVIEW_NUMBER: String(number), REVIEW_HEAD: head, REVIEW_BASE: base, REVIEW_CACHE: cache });
+    execFileSync('bash', [join(scriptDir, 'review.sh'), workspace], { cwd: workspace, env, stdio: ['ignore', 'ignore', 'inherit'], timeout: 15 * 60 * 1000 });
+    const events = readFileSync(join(workspace, 'events.jsonl'), 'utf8').split('\n').filter(Boolean).map((line) => JSON.parse(line));
+    const result = reportFromEvents(events, files, inputs, workspace);
+    if (existsSync(join(cache, 'snapshot', '.aidd-context-incomplete'))) {
+      result.report += '\n\n**Limite :** le contexte source était incomplet ; la revue repose sur les diffs fournis.';
+    }
+    return result;
+  } finally {
+    discard(workspace);
+  }
+}
+
+function assertSubmission(query, root, number, reviewId) {
+  const submission = query(`${root}/pulls/${number}/reviews/${reviewId}`);
+  if (submission.id !== reviewId || submission.user?.id !== ALEX || !['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED'].includes(submission.state)) throw new Error('Review is no longer a submission by Alex');
+}
+
+function splitReport(text) {
+  const result = []; let part = '', bytes = 0;
+  for (const char of text) {
+    const size = Buffer.byteLength(char);
+    if (bytes + size > 55_000) { result.push(part); part = ''; bytes = 0; }
+    part += char; bytes += size;
+  }
+  if (part) result.push(part);
+  return result;
+}
+
+function draftId(draft) {
+  return createHash('sha256').update(JSON.stringify([draft.head, draft.base, draft.reviewId, draft.nextState, draft.chunks])).digest('hex');
+}
+
+function publishDraft({ record, store, number, root, authorId, query, queryPages, deadline, now }) {
+  const draft = record.draft;
+  if (!draft || !SHA.test(draft.head ?? '') || !SHA.test(draft.base ?? '') || !Number.isSafeInteger(draft.reviewId) || draft.reviewId < 1 ||
+      !Array.isArray(draft.chunks) || !draft.chunks.length || draft.chunks.some((chunk) => typeof chunk !== 'string' || Buffer.byteLength(chunk) > 55_000) ||
+      !draft.nextState || validateState(draft.nextState).head !== draft.head || draft.nextState.base !== draft.base || draft.nextState.reviewId !== String(draft.reviewId) || draftId(draft) !== draft.id) throw new Error('Invalid saved review draft');
+  const comments = queryPages(`${root}/issues/${number}/comments?per_page=100`);
+  for (const [index, chunk] of draft.chunks.entries()) {
+    const marker = `<!-- aidd-opencode-review-v2 ${draft.id} ${index + 1}/${draft.chunks.length} -->`;
+    const body = `## Revue OpenCode — ${index + 1}/${draft.chunks.length}\n\nCommit examiné : \`${draft.head}\` ; la PR peut avoir évolué depuis.\n\n${chunk}\n\n${marker}`;
+    if (comments.some((comment) => comment?.user?.id === authorId && typeof comment.body === 'string' && comment.body.includes(marker))) continue;
+    if (now() >= deadline) return { status: 'publishing' };
+    assertSubmission(query, root, number, draft.reviewId);
+    query(`${root}/issues/${number}/comments`, 'POST', { body });
+  }
+  const current = query(`${root}/pulls/${number}`);
+  const stale = current.state !== 'open' || current.head?.sha !== draft.head || current.base?.sha !== draft.base;
+  const state = stale ? { ...draft.nextState, pending: true } : draft.nextState;
+  store.save(number, { state, draft: null });
+  return { status: state.pending ? 'partial' : 'published' };
+}
+
+/** Process one submitted review. Only successfully reviewed files enter the checkpoint. */
+function recoverFromGit({ files, repository, number, base, head, cache }) {
+  const { mergeBase } = fetchReviewObjects({ repository, number, base, head, cache });
+  return recoverPatches({ files, mergeBase, head, cache });
+}
+
+export function reviewPullRequest(candidate, { repository, authorId, store, query = api, queryPages = pages, model = runModel, recover = recoverFromGit, deadline = Infinity, now = Date.now }) {
+  if (!REPO.test(repository ?? '') || !Number.isSafeInteger(candidate?.number) || candidate.number < 1 || !Number.isSafeInteger(candidate.reviewId) || candidate.reviewId < 1 || authorId !== ALEX || !store) throw new Error('Invalid review parameters');
+  const root = `repos/${repository}`, number = candidate.number;
+  const pr = query(`${root}/pulls/${number}`);
+  const head = pr.head?.sha, base = pr.base?.sha;
+  if (pr.state !== 'open' || !SHA.test(head ?? '') || !SHA.test(base ?? '')) throw new Error('Invalid open PR');
+  assertSubmission(query, root, number, candidate.reviewId);
+  let record = store.load(number);
+  if (record.draft) {
+    const savedReview = query(`${root}/pulls/${number}/reviews/${record.draft.reviewId}`);
+    if (savedReview.id === record.draft.reviewId && savedReview.user?.id === ALEX && ['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED'].includes(savedReview.state)) {
+      return publishDraft({ record, store, number, root, authorId, query, queryPages, deadline: deadline + 15 * 60_000, now });
+    }
+    record = { state: record.state, draft: null };
+    store.save(number, record);
+  }
+  const previous = record.state;
+  if (previous?.reviewId === String(candidate.reviewId) && !previous.pending) return { status: 'already-processed' };
+  let files = queryPages(`${root}/pulls/${number}/files?per_page=100`);
+  if (files.length !== pr.changed_files) throw new Error('Incomplete PR file list');
+  let plan = planReview(files, previous?.files ?? {});
+  const cache = plan.selected.length || plan.skipped.length ? mkdtempSync(join(tmpdir(), 'aidd-opencode-review-cache-')) : null;
+  try {
+    let recoveryError = null;
+    if (plan.skipped.length) {
+      try {
+        const names = new Set(plan.skipped.map((item) => item.filename));
+        const result = recover({ files: files.filter((file) => names.has(file.filename)), repository, number, head, base, cache });
+        const replacements = new Map(result.files.map((file) => [file.filename, file]));
+        files = files.map((file) => replacements.get(file.filename) ?? file);
+        plan = planReview(files, previous?.files ?? {});
+        const reasons = new Map(result.skipped.map((item) => [item.filename, item.reason]));
+        plan.skipped = plan.skipped.map((item) => ({ ...item, reason: reasons.get(item.filename) ?? item.reason }));
+      } catch (error) {
+        recoveryError = error;
+        plan.skipped = plan.skipped.map((item) => ({ ...item, reason: 'Git recovery temporarily unavailable; retry planned' }));
+      }
+    }
+    const context = splitInput(`Title: ${pr.title ?? ''}\n\n${pr.body ?? ''}`, 'context');
+    const chunks = [], progress = new Map();
+    for (const [index, file] of plan.selected.entries()) {
+      const parts = splitInput(file.patch, `diff-${String(index + 1).padStart(4, '0')}`, [file.filename]);
+      if (!Object.hasOwn(plan.current, file.filename)) throw new Error('Selected file fingerprint missing');
+      const layout = createHash('sha256').update(plan.current[file.filename]);
+      for (const part of parts) layout.update(`${Buffer.byteLength(part.text)}:`).update(part.text);
+      const fingerprint = layout.digest('hex');
+      const prior = previous?.parts && Object.hasOwn(previous.parts, file.filename) ? previous.parts[file.filename] : null;
+      const completed = new Set(prior?.fingerprint === fingerprint && prior.total === parts.length ? prior.completed : []);
+      progress.set(file.filename, { fingerprint, total: parts.length, completed, before: completed.size });
+      for (const [partIndex, part] of parts.entries()) {
+        if (completed.has(partIndex)) continue;
+        const header = [`## ${JSON.stringify(file.filename)} (${file.status}), part ${partIndex + 1}/${parts.length}`, file.previous_filename ? `Previous path: ${JSON.stringify(file.previous_filename)}` : ''].filter(Boolean).join('\n');
+        part.text = `${header}\n\n\`\`\`diff\n${part.text}\n\`\`\``;
+        part.partIndex = partIndex;
+        chunks.push(part);
+      }
+    }
+    const batches = []; let batch = [], size = 0;
+    for (const chunk of chunks) {
+      const bytes = Buffer.byteLength(chunk.text);
+      if (batch.length && size + bytes > MAX_BATCH) { batches.push(batch); batch = []; size = 0; }
+      batch.push(chunk); size += bytes;
+    }
+    if (batch.length) batches.push(batch);
+    const reports = []; let modelError = null;
+    let verdict = previous?.pending && previous.head === head && previous.base === base ? previous.verdict : undefined;
+    let currentVerdict;
+    for (const group of batches) {
+      const names = [...new Set(group.flatMap((chunk) => chunk.files))];
+      try {
+        if (now() >= deadline) throw new Error('Review run time budget exhausted');
+        const result = model({ inputs: [...context, ...group], files: names, repository, number, head, base, cache });
+        if (!result || typeof result.report !== 'string' || !result.report.trim() || !VERDICTS.includes(result.verdict) || !Array.isArray(result.reviewed) || result.reviewed.some((name) => !names.includes(name)) || new Set(result.reviewed).size !== result.reviewed.length) throw new Error('Invalid model result');
+        for (const chunk of group) if (result.reviewed.includes(chunk.files[0])) progress.get(chunk.files[0]).completed.add(chunk.partIndex);
+        reports.push(result.report.trim());
+        if (verdict === undefined || VERDICTS.indexOf(result.verdict) > VERDICTS.indexOf(verdict)) verdict = result.verdict;
+        if (currentVerdict === undefined || VERDICTS.indexOf(result.verdict) > VERDICTS.indexOf(currentVerdict)) currentVerdict = result.verdict;
+      } catch (error) {
+        modelError = error;
+        break;
+      }
+    }
+    const reviewed = [...progress].filter(([, item]) => item.completed.size === item.total).map(([name]) => name);
+    const unfinished = [...progress].filter(([, item]) => item.completed.size !== item.total);
+    const pending = Boolean(recoveryError) || unfinished.length > 0;
+    const madeProgress = [...progress.values()].some((item) => item.completed.size > item.before);
+    if (pending && !madeProgress) throw modelError ?? recoveryError ?? new Error('OpenCode did not confirm any selected segment');
+    const notReviewed = [...plan.skipped.map((item) => ({ filename: item.filename, reason: item.reason })), ...unfinished.map(([filename]) => ({ filename, reason: 'OpenCode did not confirm complete review' }))];
+    const current = Object.fromEntries(Object.entries(plan.current).filter(([name]) => !progress.has(name) || progress.get(name).completed.size === progress.get(name).total));
+    const partEntries = unfinished.filter(([, item]) => item.completed.size).map(([name, item]) => [name, { fingerprint: item.fingerprint, total: item.total, completed: [...item.completed].sort((a, b) => a - b) }]);
+    if (recoveryError && previous?.parts) for (const { filename } of plan.skipped) if (typeof filename === 'string' && Object.hasOwn(previous.parts, filename)) partEntries.push([filename, previous.parts[filename]]);
+    const parts = Object.fromEntries(partEntries);
+    const nextState = validateState({ version: 1, files: current, head, base, reviewId: String(candidate.reviewId), pending, ...(verdict ? { verdict } : {}), ...(partEntries.length ? { parts } : {}) });
+    assertSubmission(query, root, number, candidate.reviewId);
+    if (!reports.length && !notReviewed.length && previous) {
+      const latest = query(`${root}/pulls/${number}`);
+      const stale = latest.state !== 'open' || latest.head?.sha !== head || latest.base?.sha !== base;
+      store.save(number, { state: stale ? { ...nextState, pending: true } : nextState, draft: null });
+      return { status: stale ? 'partial' : 'unchanged' };
+    }
+    const notes = notReviewed.length ? `\n\n### Fichiers non revus\n\n${notReviewed.map(({ filename, reason }) => `- ${JSON.stringify(filename)} : ${reason}`).join('\n')}` : '';
+    const summary = `${pending ? 'La revue est partielle ; les segments restants seront réessayés.\n\n' : ''}${reports.map((report, index) => `### Lot ${index + 1}/${reports.length}\n\n${report}`).join('\n\n---\n\n') || 'Aucun fichier lisible à revoir.'}${notes}${currentVerdict ? `\n\n**Verdict des segments de ce commentaire : ${currentVerdict}**` : ''}${previous?.pending && previous.head === head && previous.base === base && verdict ? `\n\n**Verdict cumulé des segments examinés sur ce commit : ${verdict}**` : ''}`;
+    const draft = { head, base, reviewId: candidate.reviewId, nextState, chunks: splitReport(summary) };
+    draft.id = draftId(draft);
+    record = { state: previous, draft };
+    store.save(number, record);
+    const publication = publishDraft({ record, store, number, root, authorId, query, queryPages, deadline: deadline + 15 * 60_000, now });
+    const error = modelError ?? recoveryError;
+    return { ...publication, reviewed, skipped: notReviewed, ...(error ? { error: error.message } : {}) };
+  } finally {
+    if (cache) discard(cache);
+  }
+}
+
+/** Exponential cooldown prevents paid retries every five minutes while allowing recovery. */
+export function retryStore(path, now = Date.now) {
+  let data = {};
+  try { data = JSON.parse(readFileSync(path, 'utf8')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  const save = () => {
+    mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+    const temporary = `${path}.${process.pid}`;
+    writeFileSync(temporary, JSON.stringify(data), { mode: 0o600 });
+    renameSync(temporary, path);
+  };
+  return {
+    ready: (key) => !data[key] || data[key].next <= now(),
+    success: (key) => { if (data[key]) { delete data[key]; save(); } },
+    failure: (key) => {
+      const count = Math.min((data[key]?.count ?? 0) + 1, 5);
+      data[key] = { count, next: now() + Math.min(60, 5 * 2 ** (count - 1)) * 60_000 };
+      save();
+    },
+  };
+}
+
+export function run({ repository, enabledAt, store, query = api, queryPages = pages, model = runModel, retry, log = console.error, now = Date.now }) {
+  if (!REPO.test(repository ?? '') || !Number.isFinite(Date.parse(enabledAt)) || !store) throw new Error('Invalid repository, activation time or state store');
+  const deadline = now() + 40 * 60_000;
+  const authorId = query('user').id;
+  if (authorId !== ALEX) throw new Error('GitHub must be authenticated as Alex');
+  const candidates = discover({ repository, enabledAt, authorId, store, queryPages, onError: log });
+  for (const candidate of candidates) {
+    if (now() >= deadline) { log('Review run time budget exhausted; remaining PRs will be retried'); break; }
+    const key = `${candidate.number}:${candidate.reviewId}:${candidate.head}:${candidate.base}`;
+    if (retry && !retry.ready(key)) continue;
+    try {
+      const result = reviewPullRequest(candidate, { repository, authorId, store, query, queryPages, model, deadline, now });
+      if (result.status === 'partial' || result.status === 'publishing') {
+        retry?.failure(key);
+        log(`PR #${candidate.number}: partial review; remaining files will be retried${result.error ? `: ${result.error}` : ''}`);
+      } else retry?.success(key);
+    } catch (error) {
+      retry?.failure(key);
+      log(`PR #${candidate.number}: ${error.message}`);
+    }
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  if (process.argv[2] === 'event') loadEvent();
-  else if (process.argv[2] === 'prepare') prepare();
-  else if (process.argv[2] === 'publish') publish();
-  else if (process.argv[2] === 'failure') recordFailure();
-  else fail('Expected event, prepare, publish or failure');
+  const repository = process.env.OPENCODE_REVIEW_REPOSITORY;
+  const directory = process.env.OPENCODE_REVIEW_STATE_DIR;
+  const store = stateStore(directory, repository);
+  run({ repository, enabledAt: process.env.OPENCODE_REVIEW_ENABLED_AT, store, retry: retryStore(join(directory, 'retries.json')) });
 }
