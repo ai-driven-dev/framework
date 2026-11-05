@@ -1,5 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { getToolConfig, isAiTool } from "../../../src/contexts/tools/domain/registry.js";
 import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
@@ -17,7 +18,7 @@ const PROFILES = join(import.meta.dirname, "..", "..", "..", "src/contexts/tools
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
 
 async function acceptsHooks(toolId: string): Promise<boolean> {
-  await import(join(PROFILES, toolId, "profile.ts"));
+  await import(pathToFileURL(join(PROFILES, toolId, "profile.ts")).href);
   const config = getToolConfig(toolId as Parameters<typeof getToolConfig>[0]);
   if (!isAiTool(config)) return false;
   const capabilities = config.capabilities as { plugins?: { acceptsHooks: boolean } };
@@ -36,7 +37,10 @@ describe("each tool's hooks descriptor", () => {
   it.each(VALID_TOOL_IDS)("%s's descriptor is exported under the tool's name", async (toolId) => {
     if (!(await acceptsHooks(toolId))) return;
     const name = `${toolId.toUpperCase()}_HOOKS`;
-    const module = (await import(join(PROFILES, toolId, "hooks.ts"))) as Record<string, unknown>;
+    const module = (await import(pathToFileURL(join(PROFILES, toolId, "hooks.ts")).href)) as Record<
+      string,
+      unknown
+    >;
 
     expect(module[name], `${toolId}: ${name} in profiles/${toolId}/hooks.ts`).toBeDefined();
   });

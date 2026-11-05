@@ -5,8 +5,8 @@
  * nothing spells the name as a call, never that a real path reaches it.
  *
  * A capability class is held to the same rule, on a stricter reading of a call: its method
- * names (`merge`, `equals`, `accepts`) are shared by other types, so `.merge(` alone cleared
- * `HooksCapability.merge` while nothing called it. A call counts only when its receiver is an
+ * names (`merge`, `equals`, `accepts`) are shared by other types, so `.merge(` alone would clear
+ * a capability's `merge` while nothing called it. A call counts only when its receiver is an
  * identifier naming the capability (`hooks`, `mcpCap`, `capability`), a `…Capability` resolver
  * call, or `this` in the class's own file. Getters and statics count too.
  */

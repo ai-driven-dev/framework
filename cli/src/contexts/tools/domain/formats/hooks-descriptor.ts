@@ -11,7 +11,7 @@ import {
   genericFlatHooksScriptPath,
 } from "../../../../kernel/materialization/flat-paths.js";
 import type { ArtifactContract } from "../build-contract.js";
-import type { HooksCapability } from "../capabilities/hooks-capability.js";
+import { HooksCapability } from "../capabilities/hooks-capability.js";
 import type { FlatHooksBridge } from "../capabilities/plugins-capability.js";
 import type { HooksContentFormat, ProjectHooksFormat } from "../hooks-format.js";
 
@@ -43,6 +43,9 @@ export interface ProjectHooksRoute {
   readonly scriptsDir: string;
 }
 
+/** The hooks file the framework install writes for a tool, outside any plugin. */
+export type HooksConfig = ConstructorParameters<typeof HooksCapability>[0];
+
 export interface HooksDescriptor {
   /** The variable the tool expands to an installed plugin's directory. */
   readonly rootToken?: string;
@@ -54,8 +57,7 @@ export interface HooksDescriptor {
   readonly eventMap?: Readonly<Record<string, readonly string[]>>;
   readonly flat?: FlatHooksRoute;
   readonly project?: ProjectHooksRoute;
-  /** The hooks file the framework install writes for the tool, outside any plugin. */
-  readonly config?: HooksCapability;
+  readonly config?: HooksConfig;
   /** A module the bridges share, shipped once per project: its asset name and destination. */
   readonly bridgeRuntime?: { readonly asset: string; readonly path: string };
 }
@@ -121,6 +123,13 @@ function flatHooksPath(route: FlatHooksRoute, plugin: string, rel: string): stri
   const rest = rel.replace(/^hooks\//, "");
   if (rest === `${plugin}.hooks.json`) return genericFlatHooksFile(route.scriptsDir, plugin);
   return genericFlatHooksScriptPath(route.scriptsDir, plugin, rest);
+}
+
+/** The capability the framework install reads to write the tool's own hooks file. */
+export function hooksConfigCapability(descriptor: {
+  readonly config: HooksConfig;
+}): HooksCapability {
+  return new HooksCapability(descriptor.config);
 }
 
 /** A native tool's plugins capability, as far as hooks go. */

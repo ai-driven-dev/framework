@@ -21,7 +21,7 @@ import {
   convertCommandFrontmatter,
   stripToolSuffix,
 } from "../../formats/command.js";
-import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import {
   buildCodexContract,
@@ -111,7 +111,7 @@ export const codex: AiTool<
       mergeFn: mergeCodexConfigToml,
       consumes: [CONFIG_MCP],
     }),
-    hooks: CODEX_HOOKS.config,
+    hooks: hooksConfigCapability(CODEX_HOOKS),
     plugins: new PluginsCapability({
       mode: "native",
       pluginsDir: ".codex/plugins/",

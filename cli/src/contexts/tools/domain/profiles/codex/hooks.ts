@@ -1,4 +1,3 @@
-import { HooksCapability } from "../../capabilities/hooks-capability.js";
 import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 
@@ -14,10 +13,10 @@ export const CODEX_HOOKS = {
     "once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec " +
     "for a headless run. Until then, none of its hooks run and nothing says why.",
   flat: { scriptsDir: ".codex/hooks/", sharedFile: ".codex/hooks.json" },
-  config: new HooksCapability({
+  config: {
     outputPath: ".codex/hooks.json",
     mergeStrategy: "user-prime",
     entrySection: "SessionStart",
     consumes: ["codex-hooks"],
-  }),
+  },
 } as const satisfies HooksDescriptor;
