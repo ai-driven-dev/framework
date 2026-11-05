@@ -62,7 +62,7 @@ my-project/
 │   │   ├── internal/            #   AIDD workflow traces (learn captures, audit notes)
 │   │   ├── external/            #   External documentation references
 │   │   ├── architecture.md
-│   │   ├── codebase-map.md
+│   │   ├── ecosystem.md
 │   │   ├── coding-assertions.md
 │   │   ├── deployment.md
 │   │   ├── project-brief.md
