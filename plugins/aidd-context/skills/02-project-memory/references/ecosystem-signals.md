@@ -4,23 +4,26 @@ What the scan learns about the services the project uses and does not build. The
 
 ## What earns an entry
 
-| Rule | Meaning |
-| --- | --- |
-| Outside the repo | holds state, or does work, past a single CI run; a build step does not |
-| One per role | a platform that is also the tracker gives two |
-| The VCS platform | always counts, so the graph is never empty |
+- It holds state, or does work, outside the repo past a single CI run; a build step does not.
+- One entry per role: a platform that is also the tracker gives two.
+- The VCS platform always counts, so the graph is never empty.
 
-## Vocabulary
+## Actors
 
-| Term | Means |
+| Actor | Is |
 | --- | --- |
-| `Human` actor | a person opening the tool |
-| `Agent` actor | an AI assistant driving it |
-| `App` actor | the running code calling it |
-| `mcp` mode | an MCP server the agent calls |
-| `cli` mode | a command run in a terminal |
-| `http` mode | a direct API call |
-| `web` mode | a browser interface, nothing programmatic |
+| `Human` | a person opening the tool |
+| `Agent` | an AI assistant driving it |
+| `App` | the running code calling it |
+
+## Access modes
+
+| Mode | Means |
+| --- | --- |
+| `mcp` | an MCP server the agent calls |
+| `cli` | a command run in a terminal |
+| `http` | a direct API call |
+| `web` | a browser interface, nothing programmatic |
 
 ## What earns an edge
 

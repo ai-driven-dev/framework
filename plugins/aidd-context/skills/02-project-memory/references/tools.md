@@ -16,4 +16,4 @@ Wiring:
 - A shared `AGENTS.md` is a wiring target, never a detection signal; tools sharing a file wire it once.
 - Resolve shared `.agents/` paths from declared tools or the AIDD manifest; otherwise ask which host to wire.
 - The block sits under `## Memory Management`, shaped like `assets/templates/AGENTS.md`.
-- An existing file keeps everything else; a file no picked tool resolves to is untouched.
+- An existing file keeps everything else, add only what is missing; a file no picked tool resolves to is untouched.

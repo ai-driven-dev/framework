@@ -12,15 +12,12 @@ What the scan reads to understand the project. What survives the reading is `mem
 | 4 | the entry points the manifest declares | where execution starts |
 | 5 | every file under the VCS platform's own directory | how it ships, and what runs on its own schedule |
 | 6 | the test configuration and one test file | the layers, the tools, the conventions |
-| 7 | the code, area by area | what the reading above got wrong |
+| 7 | the code, area by area | what the written docs above got wrong |
 
 ## Reading rules
 
-| Rule | Meaning |
-| --- | --- |
-| Read widely, keep little | most of what a repository shows is re-derivable by opening it again |
-| Stop early | at the first source that answers a question |
-| Code last | the most expensive and the least quotable, it corrects the others and is never summarised |
-| Every workspace | of a monorepo, never the root manifest alone |
-| Read once | a directory whose name repeats across areas |
-| Never read | a dependency directory, a build output, a path the VCS ignores |
+- Stop at the first source that answers a question.
+- Read the code last: the most expensive and the least quotable, it corrects the others and is never summarised.
+- Read every workspace of a monorepo, never the root manifest alone.
+- Read a directory whose name repeats across areas once.
+- Read nothing under a dependency directory, a build output, or a path the VCS ignores.
