@@ -44,7 +44,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 ## 4. Rules
 
 1. **Owner scope.** A hook checks the paths its plugin owns and exits before reading anything else. aidd-context also owns the layout of `aidd_docs/`: which plugin owns which folder, and a file out of its place. It never checks the content of another plugin's folder.
-2. **Claude's protocol only.** A hook reads Claude Code's payload and answers in Claude Code's keys. The CLI converts every other host's payload in and its answer out (section 6).
+2. **One neutral interface.** A hook reads its event and answers through `hooks/lib/host.cjs` (`readEvent`, `answer`, `continueTurn`), never a host's payload directly. The CLI puts each tool's adapter there at build time (section 6).
 3. **Findings only.** What this write or this turn produced, never the project's standing errors. Every error of a written file, one line each; errors of files the change reached, grouped by rule and fix; then the warnings, capped at 10: the highest count both Haiku and Qwen fixed with no finding missed and no content lost (`measure.md`):
 
 ```
@@ -54,7 +54,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 <file>[:<line>] <rule> warning <message> => <fix>
 ```
 
-   Line and excerpt are optional: a missing section has neither. The group's folder is the file's dirname relative to the project root, with forward slashes on every OS. A group of one prints the plain error line, never `×1`. Never "rerun this command": the line carries the fix. Silence when clean.
+   Line and excerpt are optional: a missing section has neither. The group's folder is the file's dirname relative to the project root, with forward slashes on every OS. A group of one prints the plain error line, never `×1`. A group prints an excerpt only when every member has that same excerpt. Never "rerun this command": the line carries the fix. Silence when clean.
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`; the same file runs by hand, from a skill and in CI with the same result. Everything it calls lives under `hooks/`.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, no child process, no git, no network.
 6. **Bounded.** A 5 s declared timeout; the work well under a second. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
@@ -76,14 +76,12 @@ The Stop state file stays with the plugin that has a Stop check until a second p
 | --- | --- |
 | Hook config per tool: destination, wrapper, event map, fields kept, root token | one descriptor per tool, `profiles/<tool>/`, data only |
 | Merge and unmerge of one plugin's entries | one engine, used by every route that writes hooks |
-| Payload in, answer out | one converter, a real Node module, copied by the CLI at build time into each distribution's hooks folder and run there by the OpenCode and Kilo bridges and by a command shim for Codex, Copilot and Cursor. Nothing calls the `aidd` binary at run time |
+| Payload in, answer out | one adapter per host in `cli/assets/hooks-runtime/`, same exports; the plugin tree ships Claude's as `hooks/lib/host.cjs`, and the build replaces it with the target's. The hook command never changes, no extra process runs, and nothing calls the `aidd` binary at run time |
 | Adding a tool | one descriptor and one captured payload fixture; the contract test fails when either is missing |
 
-Codex and Copilot `apply_patch` payloads become one Claude `Edit` payload per file; the hook runs once per file and the answers are joined.
+A Codex or Copilot `apply_patch` becomes one event listing every file it touched. The event names its `host` and keeps the host's payload as `raw`, so a hook that needs a host field (aidd-telemetry tells Codex by `transcript_path`) still reads it.
 
-The conversion is additive: it adds Claude's fields and drops none of the host's, so a hook that reads a host field (aidd-telemetry tells Codex by `transcript_path`) keeps working. The shim also sets `AIDD_HOOK_HOST` to the host it converted from.
-
-Where a host does not deliver a level 2 answer to the model, the converter answers at level 1 there.
+Where a host does not deliver a level 2 answer to the model, its adapter answers at level 1 there.
 
 ## 7. Host facts
 
@@ -103,8 +101,8 @@ Copilot's behaviour on a crashing PreToolUse hook is not stated by its official 
 
 | Test | Proves |
 | --- | --- |
-| Converter fixtures | one captured payload per host and event goes in, the Claude payload and the host's answer key come out |
-| Contract test | each plugin's hook entry runs through the converter on six hosts: right files, right answer key, exit 0 on garbage |
+| Adapter fixtures | one captured payload per host and event goes in, the neutral event and the host's answer key come out |
+| Contract test | each plugin's hook entry runs with each host's adapter on six hosts: right files, right answer key, exit 0 on garbage |
 | Rule tests | each rule fails on its fixture and passes on the fix; each level 2 rule has zero hits on the four real banks |
 | Copies check | every copy of the shared rule is identical |
 | Host campaign | before merge: a finding reaches the model on the six hosts |

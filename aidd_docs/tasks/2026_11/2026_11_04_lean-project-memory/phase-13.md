@@ -72,5 +72,5 @@ status: pending
 | Task | Acceptance criteria |
 | ---- | ------------------- |
 | 1 | no file names the three old scripts; the reference-form check passes; `git status` unchanged after a session start |
-| 2 | each level 2 rule has zero hits on the four banks; each scenario above answers as stated, through the converter on six hosts |
+| 2 | each level 2 rule has zero hits on the four banks; each scenario above answers as stated, through each host's adapter on six hosts |
 | 3 | the block lists ui and pm folders when present; the copies check fails on a one-byte change |
