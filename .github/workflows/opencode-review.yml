@@ -1,8 +1,6 @@
 name: AIDD review
 
 on:
-  push:
-    branches: [feat/opencode-review-after-submit]
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
@@ -15,7 +13,7 @@ concurrency:
 
 jobs:
   review:
-    if: github.ref == 'refs/heads/feat/opencode-review-after-submit'
+    if: github.ref == 'refs/heads/main'
     runs-on:
       group: aidd-opencode-review
     timeout-minutes: 60
@@ -90,7 +88,4 @@ jobs:
               echo "::error::Review $review on PR #$pr failed; it will be retried."; failed=1
             fi
           done < "$queue"
-          if ! scripts/pr-review/review.sh 1150 5779711914; then
-            echo '::error::The targeted review test failed.'; failed=1
-          fi
           exit "$failed"
