@@ -57,7 +57,7 @@ status: pending
 1. Level 2: M3, M4 through `lib/common-rules.cjs`, a file outside `memory/`'s root, `internal/` and `external/`.
 2. M7 at level 2 only if `memory-rules-banks.test.js` counts zero false hits on the four banks; else level 1.
 3. Level 1: M1, M2, M5, M6, a missing always-written file.
-4. Output per the contract's format: every error, warnings capped at the number phase 1 measured.
+4. Output per the contract's format: every error, warnings capped at 10, as phase 1 measured.
 
 ### `3)` Block and layout
 
