@@ -1,12 +1,12 @@
 ---
 name: 02-pull-request
-description: Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use when the user wants to open a pull or merge request. Not for committing, pushing, or merging a branch.
+description: Create a draft pull or merge request, or update an existing request to reflect its current changes. Use when the user wants to open or update a pull or merge request. Not for committing, pushing, or merging a branch.
 argument-hint: base | title
 ---
 
 # Pull Request
 
-Collect the change, draft the request, create it as a draft. `01 → 02 → 03`.
+For a new request, collect the change, draft it, and create it as a draft: `01 → 02 → 03`. For an existing request, read its current title, body, and full diff against its base; update the title and body to reflect the final change, preserving author-owned checkboxes and any relevant existing context.
 
 ## Actions
 
@@ -22,8 +22,7 @@ Before running an action, read its file in `actions/`, not only the table or ass
 
 - Follow the project's request practices in `aidd_docs/memory/vcs.md` and the repo's own request template when set, else the bundled `assets/pull_request.md`.
 - Resolve the base from the branch's prefix per the project's convention (`vcs.md`), else the repo's default branch. Never assume `main`.
-- When the request scope changes, update its title and body to describe the final change.
-- The request is always a draft; the user promotes it.
+- Create new requests as drafts; the user promotes them.
 - Apply only the triage label the branch prefix maps to, when it exists. Labels never change the base.
 - Read the VCS tool from project memory, else infer it from the remote URL.
 - Never commit, push, or branch here.
