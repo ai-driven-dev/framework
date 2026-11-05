@@ -13,6 +13,10 @@ const attr = (key: string, value: string) => ({ key, value: { stringValue: value
 describe.skipIf(process.platform === "win32")("OTLP collector on the built CLI", () => {
   it("captures isolated authenticated provider records and verifies their normalized fields", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("otel-collector");
+    const directory = join(fakeHome, ".local/share/aidd-otel-observation");
+    const token = "test-only-otel-collector-token";
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+    await writeFile(join(directory, "collector-token"), `${token}\n`, { mode: 0o600 });
     const bin = join(fakeHome, "bin");
     await mkdir(bin);
     await writeFile(join(bin, "opencode"), `#!${process.execPath}\nconsole.log('2.2.5');\n`, {
@@ -36,10 +40,9 @@ describe.skipIf(process.platform === "win32")("OTLP collector on the built CLI",
           throw new Error("Collector exited before listening.");
         }),
       ]);
-      const port = /127\.0\.0\.1:(\d+)/.exec(output)?.[1];
-      expect(port).toBeDefined();
-      const directory = join(fakeHome, ".local/share/aidd-otel-observation");
-      const token = (await readFile(join(directory, "collector-token"), "utf8")).trim();
+      const port = Number(/127\.0\.0\.1:(\d+)/.exec(output)?.[1]);
+      if (!Number.isInteger(port) || port < 1 || port > 65535)
+        throw new Error("Collector reported an invalid loopback port.");
       const configEnv = {
         PATH: path,
         OPENCODE_CONFIG_DIR: "",
@@ -78,12 +81,13 @@ describe.skipIf(process.platform === "win32")("OTLP collector on the built CLI",
         };
         const url = `http://127.0.0.1:${port}/${tool}/v1/logs`;
         const body = JSON.stringify(payload);
-        expect((await fetch(url, { method: "POST", body })).status).toBe(403);
+        expect((await fetch(url, { method: "POST", body, redirect: "manual" })).status).toBe(403);
         expect(
           (
             await fetch(url, {
               method: "POST",
               body,
+              redirect: "manual",
               headers: { authorization: `Bearer ${token}` },
             })
           ).status

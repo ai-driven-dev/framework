@@ -214,6 +214,7 @@ describe("OTLP capture sync", () => {
       home,
       follow: false,
       stateDir: join(home, "state"),
+      admission: { cwd: "/project", repositoryId: "repo" },
     };
     const confirmed = async () => ({
       state: "confirmed" as const,

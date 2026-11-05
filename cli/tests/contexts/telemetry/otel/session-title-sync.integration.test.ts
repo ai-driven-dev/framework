@@ -17,6 +17,16 @@ import { syncAllOtel } from "../../../../src/contexts/telemetry/infrastructure/o
 import { syncAllSessionTitles } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync-all-titles.js";
 
 const attr = (key: string, value: string) => ({ key, value: { stringValue: value } });
+function logAttributes(body: string): ReturnType<typeof attr>[] {
+  const envelope = JSON.parse(body) as {
+    resourceLogs: Array<{
+      scopeLogs: Array<{ logRecords: Array<{ attributes: ReturnType<typeof attr>[] }> }>;
+    }>;
+  };
+  return envelope.resourceLogs.flatMap((resource) =>
+    resource.scopeLogs.flatMap((scope) => scope.logRecords.flatMap((record) => record.attributes))
+  );
+}
 
 it.skipIf(process.platform === "win32")(
   "sends titles only when opted in and the session is consented",
@@ -182,7 +192,9 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       await syncOtel({ ...options, includeSessionRepositories: true }, resolve, async () => true);
       expect(received).toHaveLength(2);
       expect(received[1]).toContain("aidd.session_repository");
-      expect(received[1]).toContain("https://github.com/example/repository");
+      expect(
+        logAttributes(received[1]).filter((entry) => entry.key === "aidd.repository_url")
+      ).toEqual([attr("aidd.repository_url", "https://github.com/example/repository")]);
       expect(received[1]).not.toContain("git@github.com");
       expect(received[1]).not.toContain("Synthetic title");
       received.length = 0;
@@ -352,9 +364,10 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
       await running;
       clearTimeout(timeout);
       expect(received.some((body) => body.includes("Synthetic title"))).toBe(true);
-      expect(received.some((body) => body.includes("https://github.com/example/repository"))).toBe(
-        true
-      );
+      const receivedAttributes = received.flatMap(logAttributes);
+      expect(receivedAttributes.filter((entry) => entry.key === "aidd.repository_url")).toEqual([
+        attr("aidd.repository_url", "https://github.com/example/repository"),
+      ]);
 
       received.length = 0;
       let consenting = true;
@@ -378,19 +391,23 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
 
       received.length = 0;
       consenting = true;
+      const retryAbort = new AbortController();
       const retryAll = syncAllOtel(
         {
           ...options,
           stateDir: join(home, "withdrawn-state"),
           includeSessionTitles: true,
           intervalMs: 10,
+          signal: retryAbort.signal,
         },
         async () => new Map([["session-1", admission]]),
         async () => (consenting ? "allow" : "deny")
       );
       await new Promise((done) => setTimeout(done, 100));
       await appendFile(join(captureDir, "codex.jsonl"), `${JSON.stringify(capture)}\n`);
-      await expect(retryAll).rejects.toThrow(/Consent is no longer confirmed/);
+      await new Promise((done) => setTimeout(done, 100));
+      retryAbort.abort();
+      await retryAll;
       expect(received.filter((body) => body.includes("aidd.session_title"))).toHaveLength(1);
     } finally {
       process.env.PATH = oldPath;

@@ -33,6 +33,7 @@ export interface SyncOptions {
   readonly onRepositoryUnavailable?: () => void;
   readonly onTitleUnavailable?: () => void;
   readonly titlesOnly?: boolean;
+  readonly admission?: { readonly cwd: string; readonly repositoryId: string };
 }
 
 type RecordObject = Record<string, unknown>;
@@ -118,6 +119,30 @@ const SAFE_ATTRIBUTES = new Set([
 export interface Identity {
   readonly values: Map<string, string>;
   conflict: boolean;
+}
+
+export interface IdentityEvidence {
+  readonly keys: string[];
+  readonly at: string;
+  readonly start?: string;
+}
+
+export function admissionFingerprint(admission: {
+  cwd: string | null;
+  repositoryId: string | null;
+}): string {
+  return createHash("sha256")
+    .update(JSON.stringify([admission.cwd, admission.repositoryId]))
+    .digest("hex");
+}
+
+export function evidenceTransfers(evidence: readonly IdentityEvidence[]): Transfer[] {
+  return evidence.map(({ at, start }) => ({
+    signal: start ? "metrics" : "logs",
+    payload: {},
+    at,
+    start,
+  }));
 }
 
 function attributes(value: unknown): Map<string, string> {
@@ -566,6 +591,22 @@ export function admitTransferIdentity(
   );
 }
 
+export function observeIdentity(
+  transfer: Transfer,
+  options: SyncOptions,
+  identity: Identity,
+  evidence: IdentityEvidence[]
+): void {
+  const previous = new Map(identity.values);
+  const conflicted = identity.conflict;
+  admitTransferIdentity(transfer, options, identity);
+  const keys = [...identity.values]
+    .filter(([key, value]) => previous.get(key) !== value)
+    .map(([key]) => key);
+  if ((keys.length || conflicted !== identity.conflict) && transfer.at)
+    evidence.push({ keys, at: transfer.at, ...(transfer.start ? { start: transfer.start } : {}) });
+}
+
 export function destination(options: SyncOptions, signal: "logs" | "metrics"): URL {
   let endpoint: URL;
   try {
@@ -595,6 +636,12 @@ export function destination(options: SyncOptions, signal: "logs" | "metrics"): U
 }
 
 class RetryableDeliveryError extends Error {}
+
+export class ConsentNotConfirmedError extends Error {
+  constructor() {
+    super("Consent is no longer confirmed; sync stopped before sending.");
+  }
+}
 
 async function assertFullDelivery(response: Response, signal: Transfer["signal"]): Promise<void> {
   let result: unknown;
@@ -645,8 +692,7 @@ export async function send(
   const url = destination(options, transfer.signal);
   let backoff = options.intervalMs ?? 1000;
   for (;;) {
-    if (!(await consent()))
-      throw new Error("Consent is no longer confirmed; sync stopped before sending.");
+    if (!(await consent())) throw new ConsentNotConfirmedError();
     try {
       let response: Response;
       try {
@@ -682,6 +728,55 @@ export interface BindingDetails {
   readonly identity: Array<[string, string]>;
   readonly binding: string;
   readonly conflict?: boolean;
+  readonly identityProof?: {
+    readonly version: 1;
+    readonly admissionKey: string;
+    readonly sources: IdentityEvidence[];
+  };
+}
+
+function readIdentityProof(
+  value: unknown,
+  identity: Array<[string, string]>
+): BindingDetails["identityProof"] {
+  const proof = object(value);
+  if (
+    proof.version !== 1 ||
+    typeof proof.admissionKey !== "string" ||
+    !/^[a-f0-9]{64}$/.test(proof.admissionKey) ||
+    !Array.isArray(proof.sources) ||
+    proof.sources.length === 0 ||
+    proof.sources.length > 4
+  )
+    return undefined;
+  const keys = new Set(identity.map(([key]) => key));
+  const seen = new Set<string>();
+  const sources: IdentityEvidence[] = [];
+  for (const raw of proof.sources) {
+    const source = object(raw);
+    if (
+      !Array.isArray(source.keys) ||
+      new Set(source.keys).size !== source.keys.length ||
+      !source.keys.every(
+        (key: unknown) => typeof key === "string" && keys.has(key) && !seen.has(key)
+      ) ||
+      typeof source.at !== "string" ||
+      !Number.isFinite(Date.parse(source.at)) ||
+      (source.start !== undefined &&
+        (typeof source.start !== "string" ||
+          !Number.isFinite(Date.parse(source.start)) ||
+          Date.parse(source.start) > Date.parse(source.at)))
+    )
+      return undefined;
+    for (const key of source.keys) seen.add(key);
+    sources.push({
+      keys: source.keys as string[],
+      at: source.at,
+      ...(typeof source.start === "string" ? { start: source.start } : {}),
+    });
+  }
+  if (seen.size !== keys.size || keys.size === 0) return undefined;
+  return { version: 1, admissionKey: proof.admissionKey, sources };
 }
 
 export async function readBindingDetails(
@@ -717,15 +812,20 @@ export async function readBindingDetails(
       )
     )
       throw new Error("Sync binding state is invalid.");
+    if (
+      new Set(data.identity.map((item: [string, string]) => item[0])).size !== data.identity.length
+    )
+      throw new Error("Sync binding state is invalid.");
     if (data.conflict !== undefined && typeof data.conflict !== "boolean")
       throw new Error("Sync binding state is invalid.");
+    const identity = data.identity as Array<[string, string]>;
+    const identityProof = readIdentityProof(data.identityProof, identity);
     return {
       mayHaveLinked: data.mayHaveLinked,
       details: {
         session: data.session,
-        // Older versions collected identity before checking consent; never reuse it.
-        identity:
-          data.identityConsentChecked === true ? (data.identity as Array<[string, string]>) : [],
+        identity: identityProof ? identity : [],
+        identityProof,
         binding: data.binding,
         conflict: data.conflict === true,
       },
@@ -749,7 +849,7 @@ export async function saveBindingState(
   try {
     await writeFile(
       temporary,
-      `${JSON.stringify({ mayHaveLinked, ...details, identityConsentChecked: true })}\n`,
+      `${JSON.stringify({ mayHaveLinked, ...details, identity: details?.identityProof ? details.identity : [] })}\n`,
       {
         flag: "wx",
         mode: 0o600,
@@ -823,6 +923,7 @@ export async function syncOtel(
   const path = join(options.home, ".local/share/aidd-otel-observation", `${options.config}.jsonl`);
   const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
   const identity: Identity = { values: new Map(), conflict: false };
+  const identityEvidence: IdentityEvidence[] = [];
   const stillPermitted = async (items: readonly Transfer[], expectedFeature?: SessionFeature) => {
     const currentFeature = await resolve();
     if (expectedFeature && !sameSessionFeature(expectedFeature, currentFeature)) return false;
@@ -843,6 +944,7 @@ export async function syncOtel(
     ? join(options.stateDir, "otel-sync", `${stateName}.json`)
     : null;
   let mayHaveLinked = false;
+  let previousLinkUnverified = false;
   const projects =
     options.config === CODEX_CONFIG_ID && options.includeSessionProjects
       ? createSessionProjectPublisher(options.home, options.onProjectUnavailable)
@@ -862,10 +964,21 @@ export async function syncOtel(
     if (statePath !== null) {
       const saved = await readBindingDetails(statePath);
       mayHaveLinked = saved?.mayHaveLinked === true;
+      previousLinkUnverified = mayHaveLinked;
       if (saved?.details) {
         if (saved.details.session !== options.session)
           throw new Error("Sync binding state does not match its session.");
-        for (const [key, value] of saved.details.identity) identity.values.set(key, value);
+        const proof = saved.details.identityProof;
+        if (
+          proof &&
+          options.admission &&
+          proof.admissionKey === admissionFingerprint(options.admission) &&
+          (await stillPermitted(evidenceTransfers(proof.sources)))
+        ) {
+          for (const [key, value] of saved.details.identity) identity.values.set(key, value);
+          identityEvidence.push(...proof.sources);
+          previousLinkUnverified = false;
+        }
         identity.conflict = saved.details.conflict === true;
         binding = saved.details.binding;
         needsReplay = mayHaveLinked && binding !== "invalidated";
@@ -899,7 +1012,7 @@ export async function syncOtel(
                 continue;
               }
               admitted.push(transfer);
-              admitTransferIdentity(transfer, options, identity);
+              observeIdentity(transfer, options, identity, identityEvidence);
             }
             if (!options.titlesOnly)
               for (const batch of packTransfers(admitted)) {
@@ -934,10 +1047,18 @@ export async function syncOtel(
         payload: {},
         at: new Date().toISOString(),
       });
-      if (!options.titlesOnly && bindingAllowed && shouldInvalidate && binding !== "invalidated") {
+      if (
+        !previousLinkUnverified &&
+        !options.titlesOnly &&
+        bindingAllowed &&
+        shouldInvalidate &&
+        binding !== "invalidated"
+      ) {
         const event = bindingTransfer(options, identity, { state: "ambiguous" });
         if (event) {
-          await send(options, event, () => stillPermitted([event], feature));
+          await send(options, event, () =>
+            stillPermitted([event, ...evidenceTransfers(identityEvidence)], feature)
+          );
           sent++;
           binding = "invalidated";
           if (statePath !== null)
@@ -945,10 +1066,20 @@ export async function syncOtel(
               session: options.session,
               identity: [...identity.values],
               binding,
+              ...(options.admission && identityEvidence.length
+                ? {
+                    identityProof: {
+                      version: 1,
+                      admissionKey: admissionFingerprint(options.admission),
+                      sources: identityEvidence,
+                    },
+                  }
+                : {}),
             });
         }
       } else if (
         bindingAllowed &&
+        !previousLinkUnverified &&
         !options.titlesOnly &&
         !shouldInvalidate &&
         feature.state === "confirmed" &&
@@ -961,10 +1092,21 @@ export async function syncOtel(
               session: options.session,
               identity: [...identity.values],
               binding: nextBinding,
+              ...(options.admission && identityEvidence.length
+                ? {
+                    identityProof: {
+                      version: 1,
+                      admissionKey: admissionFingerprint(options.admission),
+                      sources: identityEvidence,
+                    },
+                  }
+                : {}),
             });
           }
           mayHaveLinked = true;
-          await send(options, event, () => stillPermitted([event], feature));
+          await send(options, event, () =>
+            stillPermitted([event, ...evidenceTransfers(identityEvidence)], feature)
+          );
           sent++;
           binding = nextBinding;
           needsReplay = false;
@@ -976,7 +1118,9 @@ export async function syncOtel(
             publisher &&
             (await publisher.publish(options.session, identity, async (event) => {
               if (!(await permits(event))) return false;
-              await send(options, event, () => stillPermitted([event]));
+              await send(options, event, () =>
+                stillPermitted([event, ...evidenceTransfers(identityEvidence)])
+              );
               return true;
             }))
           )

@@ -203,6 +203,7 @@ it("retains an unsent capture across consent withdrawal and resumes only after c
   let consenting = true;
   let calls = 0;
   const abort = new AbortController();
+  const firstAbort = new AbortController();
   server = createServer((request, response) => {
     request.resume();
     request.on("end", () => {
@@ -210,6 +211,7 @@ it("retains an unsent capture across consent withdrawal and resumes only after c
       if (calls === 1) {
         consenting = false;
         response.writeHead(503).end("{}");
+        setTimeout(() => firstAbort.abort(), 100);
       } else {
         response.writeHead(200).end("{}");
         abort.abort();
@@ -237,15 +239,168 @@ it("retains an unsent capture across consent withdrawal and resumes only after c
   const historical = new Date(1_793_763_900_000).toISOString();
   const permits = async (_admission: unknown, at: string, _start?: string, current?: string) =>
     at === historical && (!current || consenting) ? ("allow" as const) : ("deny" as const);
-  const first = syncAllOtel(options, snapshot, permits);
+  const first = syncAllOtel({ ...options, signal: firstAbort.signal }, snapshot, permits);
   await new Promise((resolve) => setTimeout(resolve, 80));
   await appendFile(capture, line("allowed"));
-  await expect(first).rejects.toThrow(/Consent is no longer confirmed/);
+  expect(await first).toMatchObject({ sent: 0, pending: 1 });
   expect(calls).toBe(1);
   consenting = true;
   const result = await syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
   expect(result.sent).toBe(1);
   expect(calls).toBe(2);
+});
+
+it("isolates a revoked session across restarts while another session continues", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-sync-two-sessions-"));
+  dirs.push(home);
+  const captureDir = join(home, ".local/share/aidd-otel-observation");
+  await mkdir(captureDir, { recursive: true, mode: 0o700 });
+  const capture = join(captureDir, "codex.jsonl");
+  await writeFile(capture, "", { mode: 0o600 });
+  let consenting = true;
+  let historicalAllowed = true;
+  let firstFailure = true;
+  let abort = new AbortController();
+  const accepted: string[] = [];
+  const attempts: string[] = [];
+  server = createServer((request, response) => {
+    let body = "";
+    request.on("data", (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    request.on("end", () => {
+      const id = body.includes('"stringValue":"one"') ? "one" : "two";
+      attempts.push(id);
+      if (id === "one" && firstFailure) {
+        firstFailure = false;
+        consenting = false;
+        response.writeHead(503).end("{}");
+      } else {
+        accepted.push(id);
+        response.writeHead(200).end("{}");
+        abort.abort();
+      }
+    });
+  });
+  await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  const options = {
+    config: "codex" as const,
+    tenant: "tenant",
+    endpoint: `http://127.0.0.1:${address.port}`,
+    token: "test-token",
+    home,
+    stateDir: join(home, "state"),
+    intervalMs: 10,
+    refreshMs: 20,
+  };
+  const one = { feature: { state: "unbound" as const }, cwd: "/one", repositoryId: "one-repo" };
+  const two = { feature: { state: "unbound" as const }, cwd: "/two", repositoryId: "two-repo" };
+  const snapshot = async () =>
+    new Map([
+      ["one", one],
+      ["two", two],
+    ]);
+  const permits = async (
+    admission: { repositoryId: string | null },
+    _at: string,
+    _start?: string,
+    current?: string
+  ) =>
+    admission.repositoryId === "one-repo" && (!historicalAllowed || (!!current && !consenting))
+      ? ("deny" as const)
+      : ("allow" as const);
+  const initial = JSON.parse(line("one"));
+  initial.payload.resourceLogs[0].scopeLogs[0].logRecords.push(
+    JSON.parse(line("two")).payload.resourceLogs[0].scopeLogs[0].logRecords[0]
+  );
+  const first = syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  await appendFile(capture, `${JSON.stringify(initial)}\n`);
+  expect(await first).toMatchObject({ sent: 1, pending: 1 });
+  expect(attempts).toEqual(["one", "two"]);
+  expect(accepted).toEqual(["two"]);
+
+  historicalAllowed = false;
+  abort = new AbortController();
+  const second = syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  await appendFile(capture, line("two"));
+  expect(await second).toMatchObject({ sent: 1, pending: 1 });
+  expect(attempts).toEqual(["one", "two", "two"]);
+
+  historicalAllowed = true;
+  consenting = true;
+  abort = new AbortController();
+  const third = await syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
+  expect(third).toMatchObject({ sent: 1, pending: 0 });
+  expect(accepted).toEqual(["two", "two", "one"]);
+});
+
+it("defers one revoked binding without blocking another and restores a proven identity after restart", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-sync-two-bindings-"));
+  dirs.push(home);
+  const captureDir = join(home, ".local/share/aidd-otel-observation");
+  await mkdir(captureDir, { recursive: true, mode: 0o700 });
+  const capture = join(captureDir, "codex.jsonl");
+  await writeFile(capture, "", { mode: 0o600 });
+  let consenting = true;
+  let failOne = true;
+  let abort = new AbortController();
+  const bindings: string[] = [];
+  server = createServer((request, response) => {
+    let body = "";
+    request.on("data", (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    request.on("end", () => {
+      if (!body.includes("aidd.session_feature")) return void response.writeHead(200).end("{}");
+      const id = body.includes('"stringValue":"one"') ? "one" : "two";
+      bindings.push(id);
+      if (id === "one" && failOne) {
+        failOne = false;
+        consenting = false;
+        response.writeHead(503).end("{}");
+      } else {
+        response.writeHead(200).end("{}");
+        abort.abort();
+      }
+    });
+  });
+  await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  const options = {
+    config: "codex" as const,
+    tenant: "tenant",
+    endpoint: `http://127.0.0.1:${address.port}`,
+    token: "test-token",
+    home,
+    stateDir: join(home, "state"),
+    intervalMs: 10,
+    refreshMs: 20,
+  };
+  const feature = { state: "confirmed" as const, feature: "owner/repo#7", branch: "feature/work" };
+  const one = { feature, cwd: "/one", repositoryId: "one-repo" };
+  const two = { feature, cwd: "/two", repositoryId: "two-repo" };
+  const snapshot = async () =>
+    new Map([
+      ["one", one],
+      ["two", two],
+    ]);
+  const permits = async (admission: { repositoryId: string | null }) =>
+    admission.repositoryId === "one-repo" && !consenting ? ("deny" as const) : ("allow" as const);
+  const first = syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  await appendFile(capture, line("one") + line("two"));
+  await first;
+  expect(bindings).toEqual(["one", "two"]);
+  consenting = true;
+  abort = new AbortController();
+  setTimeout(() => abort.abort(), 150);
+  await syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
+  expect(bindings).toEqual(["one", "two", "one", "two"]);
 });
 
 it.each(["missing", "cwd", "repository", "unavailable"] as const)(
@@ -259,12 +414,14 @@ it.each(["missing", "cwd", "repository", "unavailable"] as const)(
     await writeFile(capture, "", { mode: 0o600 });
     let changed = false;
     let calls = 0;
+    const abort = new AbortController();
     server = createServer((request, response) => {
       calls++;
       request.resume();
       request.on("end", () => {
         changed = true;
         response.writeHead(503).end("{}");
+        setTimeout(() => abort.abort(), 100);
       });
     });
     await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
@@ -284,6 +441,7 @@ it.each(["missing", "cwd", "repository", "unavailable"] as const)(
         home,
         stateDir: join(home, "state"),
         intervalMs: 10,
+        signal: abort.signal,
       },
       async () => {
         if (changed && change === "unavailable") throw new Error("Admission unavailable");
@@ -303,7 +461,8 @@ it.each(["missing", "cwd", "repository", "unavailable"] as const)(
     );
     await new Promise((resolve) => setTimeout(resolve, 80));
     await appendFile(capture, line("allowed"));
-    await expect(running).rejects.toThrow(/Consent is no longer confirmed|Admission unavailable/);
+    if (change === "unavailable") await expect(running).rejects.toThrow(/Admission unavailable/);
+    else expect(await running).toMatchObject({ sent: 0, pending: 1 });
     expect(calls).toBe(1);
   }
 );
@@ -405,6 +564,7 @@ it("does not reuse legacy checkpoint identity until a new admitted observation s
   const path = join(directory, stateFile);
   const legacy = JSON.parse(await readFile(path, "utf8"));
   delete legacy.identityConsentChecked;
+  delete legacy.identityProof;
   await writeFile(path, JSON.stringify(legacy), { mode: 0o600 });
   received.length = 0;
   abort = new AbortController();
@@ -412,9 +572,87 @@ it("does not reuse legacy checkpoint identity until a new admitted observation s
   await new Promise((resolve) => setTimeout(resolve, 100));
   expect(received).toHaveLength(0);
   await appendFile(capture, line("allowed"));
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  abort.abort();
   await restart;
-  expect(received.filter((body) => body.includes("aidd.session_feature"))).toHaveLength(1);
+  expect(received.filter((body) => body.includes("aidd.session_feature"))).toHaveLength(0);
   expect(received.some((body) => body.includes("developer@example.test"))).toBe(true);
+});
+
+it("does not reuse an identity when a clone at the same path and repository is replaced", async () => {
+  const home = await mkdtemp(join(tmpdir(), "aidd-sync-replaced-clone-"));
+  dirs.push(home);
+  const captureDir = join(home, ".local/share/aidd-otel-observation");
+  await mkdir(captureDir, { recursive: true, mode: 0o700 });
+  const capture = join(captureDir, "codex.jsonl");
+  await writeFile(capture, "", { mode: 0o600 });
+  const received: string[] = [];
+  server = createServer((request, response) => {
+    let body = "";
+    request.on("data", (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    request.on("end", () => {
+      received.push(body);
+      response.writeHead(200).end("{}");
+    });
+  });
+  await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("No test port");
+  const options = {
+    config: "codex" as const,
+    tenant: "tenant",
+    endpoint: `http://127.0.0.1:${address.port}`,
+    token: "test-token",
+    home,
+    stateDir: join(home, "state"),
+    intervalMs: 10,
+    refreshMs: 20,
+  };
+  let changed = false;
+  const oldAt = new Date(1_793_763_900_000).toISOString();
+  const snapshot = async () =>
+    new Map([
+      [
+        "allowed",
+        {
+          feature: changed
+            ? { state: "unbound" as const }
+            : { state: "confirmed" as const, feature: "owner/repo#7", branch: "feature/work" },
+          cwd: "/project",
+          repositoryId: "repo",
+        },
+      ],
+    ]);
+  const permits = async (_admission: unknown, at: string, _start?: string, current?: string) =>
+    changed && current && at === oldAt ? ("deny" as const) : ("allow" as const);
+  const abort = new AbortController();
+  const first = syncAllOtel({ ...options, signal: abort.signal }, snapshot, permits);
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  await appendFile(capture, line("allowed"));
+  for (let i = 0; i < 100 && !received.some((body) => body.includes('aidd.session_feature"')); i++)
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(received.some((body) => body.includes('aidd.session_feature"'))).toBe(true);
+  changed = true;
+  const replacement = JSON.parse(
+    line("allowed").replace("developer@example.test", "replacement@example.test")
+  );
+  replacement.payload.resourceLogs[0].scopeLogs[0].logRecords[0].timeUnixNano =
+    "1793763901000000000";
+  await appendFile(capture, `${JSON.stringify(replacement)}\n`);
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  abort.abort();
+  await first;
+  expect(received.some((body) => body.includes("replacement@example.test"))).toBe(true);
+  expect(received.some((body) => body.includes("aidd.session_feature_invalidated"))).toBe(false);
+  const beforeRestart = received.length;
+  const restartAbort = new AbortController();
+  const restart = syncAllOtel({ ...options, signal: restartAbort.signal }, snapshot, permits);
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  restartAbort.abort();
+  await restart;
+  expect(received).toHaveLength(beforeRestart);
 });
 
 it("does not send an event outside the clone's consent interval", async () => {
@@ -666,7 +904,7 @@ it("retries a feature link rejected after its intent was persisted", async () =>
   expect(links).toBe(2);
 });
 
-it("retains an identity conflict across a failed invalidation and restart", async () => {
+it("revalidates every identity source before resuming a conflicted binding", async () => {
   const home = await mkdtemp(join(tmpdir(), "aidd-sync-conflict-"));
   dirs.push(home);
   const captureDir = join(home, ".local/share/aidd-otel-observation");
@@ -708,7 +946,20 @@ it("retains an identity conflict across a failed invalidation and restart", asyn
   const snapshot = async () => new Map([["allowed", admission]]);
   const first = syncAllOtel(options, snapshot, async () => "allow");
   await new Promise((resolve) => setTimeout(resolve, 80));
-  await appendFile(capture, line("allowed"));
+  const initial = JSON.parse(line("allowed"));
+  const original = initial.payload.resourceLogs[0].scopeLogs[0].logRecords[0];
+  const second = structuredClone(original);
+  second.timeUnixNano = "1793763900001000000";
+  second.attributes = second.attributes.filter(
+    (item: { key: string }) => item.key !== "user.email"
+  );
+  second.attributes.push(attribute("user.account_id", "account-1"));
+  const third = structuredClone(original);
+  third.timeUnixNano = "1793763900002000000";
+  third.attributes = third.attributes.filter((item: { key: string }) => item.key !== "user.email");
+  third.attributes.push(attribute("organization.id", "org-1"));
+  initial.payload.resourceLogs[0].scopeLogs[0].logRecords.push(second, third);
+  await appendFile(capture, `${JSON.stringify(initial)}\n`);
   for (let i = 0; i < 100 && !linked; i++) await new Promise((resolve) => setTimeout(resolve, 20));
   expect(linked).toBe(true);
   await appendFile(
@@ -716,12 +967,39 @@ it("retains an identity conflict across a failed invalidation and restart", asyn
     line("allowed").replace("developer@example.test", "other@example.test")
   );
   await expect(first).rejects.toThrow("HTTP 403");
+  const directory = join(home, "state", "otel-sync");
+  const stateName = (await readdir(directory)).find(
+    (name) => name.endsWith(".json") && !name.includes("checkpoint")
+  );
+  if (!stateName) throw new Error("Missing binding state");
+  const saved = JSON.parse(await readFile(join(directory, stateName), "utf8"));
+  expect(saved.identityProof.sources.map((source: { keys: string[] }) => source.keys)).toEqual([
+    ["user.email"],
+    ["user.account_id"],
+    ["organization.id"],
+    [],
+  ]);
   rejectInvalidation = false;
   const abort = new AbortController();
-  const second = syncAllOtel({ ...options, signal: abort.signal }, snapshot, async () => "allow");
+  const accountAt = new Date(1_793_763_900_001).toISOString();
+  const blocked = syncAllOtel(
+    { ...options, signal: abort.signal },
+    snapshot,
+    async (_admission, at, _start, current) => (current && at === accountAt ? "deny" : "allow")
+  );
   await new Promise((resolve) => setTimeout(resolve, 120));
   abort.abort();
-  await second;
+  await blocked;
+  expect(invalidations).toBe(1);
+  const retryAbort = new AbortController();
+  const retry = syncAllOtel(
+    { ...options, signal: retryAbort.signal },
+    snapshot,
+    async () => "allow"
+  );
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  retryAbort.abort();
+  await retry;
   expect(invalidations).toBe(2);
 });
 

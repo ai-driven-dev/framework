@@ -367,7 +367,6 @@ export function registerTelemetryCommand(program: Command): void {
               );
             }
             admission = current;
-            if (!admission) throw new Error("Session admission is unavailable.");
             return admission.feature;
           };
           await resolve();
@@ -379,6 +378,14 @@ export function registerTelemetryCommand(program: Command): void {
               onProjectUnavailable,
               onRepositoryUnavailable,
               session,
+              ...(initialAdmission.cwd && initialAdmission.repositoryId
+                ? {
+                    admission: {
+                      cwd: initialAdmission.cwd,
+                      repositoryId: initialAdmission.repositoryId,
+                    },
+                  }
+                : {}),
               token: process.env.AIDD_OTEL_TOKEN ?? "",
               onTitleUnavailable,
             },

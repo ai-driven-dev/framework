@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test } from "vitest";
 import {
+  readBindingDetails,
   selectTransfers,
   send,
   syncOtel,
@@ -28,6 +29,33 @@ afterEach(async () => {
   server = undefined;
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
+
+posixTest(
+  "rejects duplicate identity keys in a persisted binding, even with a v1 proof",
+  async () => {
+    const home = await mkdtemp(join(tmpdir(), "aidd-sync-duplicate-identity-"));
+    dirs.push(home);
+    const state = join(home, "binding.json");
+    const payload = {
+      mayHaveLinked: true,
+      session: "session",
+      binding: "branch\u0000owner/repo#1",
+      identity: [["user.email", "first@example.invalid"]],
+      identityProof: {
+        version: 1,
+        admissionKey: "a".repeat(64),
+        sources: [{ keys: ["user.email"], at: "2026-11-05T00:00:00.000Z" }],
+      },
+    };
+    await writeFile(state, JSON.stringify(payload), { mode: 0o600 });
+    await expect(readBindingDetails(state)).resolves.toMatchObject({
+      details: { identity: [["user.email", "first@example.invalid"]] },
+    });
+    payload.identity.push(["user.email", "second@example.invalid"]);
+    await writeFile(state, JSON.stringify(payload), { mode: 0o600 });
+    await expect(readBindingDetails(state)).rejects.toThrow("Sync binding state is invalid");
+  }
+);
 
 function codexLog(time: Record<string, string | number>, timestamp?: string): string {
   return JSON.stringify({

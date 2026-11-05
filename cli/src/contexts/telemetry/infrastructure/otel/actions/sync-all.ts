@@ -16,10 +16,15 @@ import { createSessionProjectPublisher } from "./metadata/session-project.js";
 import { createSessionRepositoryPublisher } from "./metadata/session-repository.js";
 import { createSessionTitlePublisher } from "./metadata/session-title.js";
 import {
-  admitTransferIdentity,
+  admissionFingerprint,
+  type BindingDetails,
   bindingTransfer,
+  ConsentNotConfirmedError,
   destination,
+  evidenceTransfers,
   type Identity,
+  type IdentityEvidence,
+  observeIdentity,
   packTransfers,
   readBindingDetails,
   type SyncOptions,
@@ -39,9 +44,16 @@ type Snapshot = ReadonlyMap<string, SessionAdmission>;
 interface Pending {
   readonly offset: number;
   readonly length: number;
+  /** This range was admitted but could not be delivered; preserve it even if later denied. */
+  readonly hold?: boolean;
+  readonly admissionKey?: string;
 }
 interface SessionState {
   readonly identity: Identity;
+  readonly identityEvidence: IdentityEvidence[];
+  identityAdmissionKey: string | null;
+  previousLinkUnverified: boolean;
+  savedIdentity: BindingDetails | null;
   mayHaveLinked: boolean;
   binding: string;
   needsReplay: boolean;
@@ -63,6 +75,9 @@ function key(options: AllOptions, session: string) {
 }
 function asOptions(options: AllOptions, session: string): SyncOptions {
   return { ...options, session, follow: true };
+}
+function admissionKey(admission: SessionAdmission): string {
+  return admissionFingerprint(admission);
 }
 async function privateDirectory(path: string) {
   await mkdir(path, { recursive: true, mode: 0o700 });
@@ -118,6 +133,11 @@ async function saveCheckpoint(path: string, value: Checkpoint) {
   }
 }
 
+function pendingLine(item: Pending): string {
+  if (item.hold && !item.admissionKey) throw new Error("Sync pending admission is unavailable.");
+  return `${item.offset} ${item.length}${item.hold ? ` hold ${item.admissionKey}` : ""}\n`;
+}
+
 /** A pending journal contains only byte ranges, not source text or provider identities. */
 async function appendPending(path: string, item: Pending) {
   const file = await open(
@@ -130,7 +150,7 @@ async function appendPending(path: string, item: Pending) {
     if (!info.isFile() || (info.mode & 0o077) !== 0)
       throw new Error("Sync pending journal must be a private regular file.");
     if (info.size > 0) {
-      const length = Math.min(info.size, 64);
+      const length = Math.min(info.size, 256);
       const tail = Buffer.alloc(length);
       const { bytesRead } = await file.read(tail, 0, length, info.size - length);
       if (bytesRead !== length) throw new Error("Sync pending journal changed unexpectedly.");
@@ -141,7 +161,7 @@ async function appendPending(path: string, item: Pending) {
         await file.truncate(last < 0 ? 0 : info.size - length + last + 1);
       }
     }
-    await file.writeFile(`${item.offset} ${item.length}\n`);
+    await file.writeFile(pendingLine(item));
     await file.sync();
   } finally {
     await file.close();
@@ -159,7 +179,7 @@ async function pendingRanges(path: string): Promise<Pending[]> {
     const lines = contents.split("\n");
     lines.pop(); // A crash can leave an incomplete last append; its source line is replayed.
     for (const line of lines) {
-      const parts = /^(\d+) (\d+)$/.exec(line);
+      const parts = /^(\d+) (\d+)(?: hold ([a-f0-9]{64}))?$/.exec(line);
       if (!parts) throw new Error("Sync pending journal is invalid.");
       const offset = Number(parts[1]);
       const length = Number(parts[2]);
@@ -170,7 +190,16 @@ async function pendingRanges(path: string): Promise<Pending[]> {
         length > MAX_LINE
       )
         throw new Error("Sync pending journal is invalid.");
-      ranges.set(line, { offset, length });
+      const rangeKey = `${offset} ${length}`;
+      const previous = ranges.get(rangeKey);
+      if (previous?.admissionKey && parts[3] && previous.admissionKey !== parts[3])
+        throw new Error("Sync pending journal has conflicting admissions.");
+      ranges.set(rangeKey, {
+        offset,
+        length,
+        hold: !!parts[3] || previous?.hold,
+        admissionKey: parts[3] ?? previous?.admissionKey,
+      });
     }
     return [...ranges.values()];
   } finally {
@@ -187,7 +216,7 @@ async function replacePending(path: string, ranges: readonly Pending[]) {
   try {
     const file = await open(temporary, "wx", 0o600);
     try {
-      await file.writeFile(ranges.map((item) => `${item.offset} ${item.length}\n`).join(""));
+      await file.writeFile(ranges.map(pendingLine).join(""));
       await file.sync();
     } finally {
       await file.close();
@@ -290,9 +319,13 @@ export async function syncAllOtel(
         throw new Error("Sync binding state does not match its session.");
       const state = {
         identity: {
-          values: new Map<string, string>(saved?.details?.identity ?? []),
+          values: new Map<string, string>(),
           conflict: saved?.details?.conflict === true,
         },
+        identityEvidence: [] as IdentityEvidence[],
+        identityAdmissionKey: null,
+        previousLinkUnverified: saved?.mayHaveLinked === true,
+        savedIdentity: saved?.details ?? null,
         mayHaveLinked: saved?.mayHaveLinked === true,
         binding: saved?.details?.binding ?? "",
         needsReplay: Boolean(
@@ -314,9 +347,13 @@ export async function syncAllOtel(
           throw new Error("Sync binding state does not match its session.");
         sessions.set(id, {
           identity: {
-            values: new Map(saved.details.identity),
+            values: new Map(),
             conflict: saved.details.conflict === true,
           },
+          identityEvidence: [],
+          identityAdmissionKey: null,
+          previousLinkUnverified: saved.mayHaveLinked,
+          savedIdentity: saved.details,
           mayHaveLinked: saved.mayHaveLinked,
           binding: saved.details.binding,
           needsReplay: saved.mayHaveLinked && saved.details.binding !== "invalidated",
@@ -338,15 +375,63 @@ export async function syncAllOtel(
           return false;
       return true;
     };
+    const restoreIdentity = async (
+      id: string,
+      admission: SessionAdmission,
+      state: SessionState
+    ) => {
+      const saved = state.savedIdentity;
+      const proof = saved?.identityProof;
+      if (
+        !saved ||
+        !proof ||
+        proof.admissionKey !== admissionKey(admission) ||
+        !(await stillPermitted(id, admission, evidenceTransfers(proof.sources)))
+      )
+        return;
+      state.identity.values.clear();
+      for (const [name, value] of saved.identity) state.identity.values.set(name, value);
+      state.identity.conflict ||= saved.conflict === true;
+      state.identityEvidence.splice(0, state.identityEvidence.length, ...proof.sources);
+      state.identityAdmissionKey = proof.admissionKey;
+      state.previousLinkUnverified = false;
+      state.savedIdentity = null;
+    };
+    const stateProof = (state: SessionState): BindingDetails["identityProof"] =>
+      state.identityAdmissionKey && state.identityEvidence.length
+        ? { version: 1, admissionKey: state.identityAdmissionKey, sources: state.identityEvidence }
+        : undefined;
+    const deliver = async (id: string, transfer: Transfer, guard: () => Promise<boolean>) => {
+      try {
+        await send(asOptions(options, id), transfer, guard);
+        return true;
+      } catch (error) {
+        if (error instanceof ConsentNotConfirmedError) return false;
+        throw error;
+      }
+    };
     const process = async (
       id: string,
       items: readonly Transfer[],
       admission: SessionAdmission,
-      state: SessionState
-    ): Promise<boolean> => {
+      state: SessionState,
+      hold = false
+    ): Promise<"resolved" | "unknown" | "hold"> => {
       let wait = false;
       const allowed: Transfer[] = [];
       const verdicts = new Map<string, Consent>();
+      await restoreIdentity(id, admission, state);
+      const currentAdmissionKey = admissionKey(admission);
+      if (
+        state.identityEvidence.length > 0 &&
+        (state.identityAdmissionKey !== currentAdmissionKey ||
+          !(await stillPermitted(id, admission, evidenceTransfers(state.identityEvidence))))
+      ) {
+        if (state.mayHaveLinked) state.previousLinkUnverified = true;
+        state.identity.values.clear();
+        state.identityEvidence.length = 0;
+        state.identityAdmissionKey = null;
+      }
       for (const transfer of items) {
         if (!transfer.at || (transfer.signal === "metrics" && !transfer.start)) {
           denied++;
@@ -359,13 +444,16 @@ export async function syncAllOtel(
           verdicts.set(stamp, verdict);
         }
         if (verdict === "unknown") wait = true;
-        else if (verdict === "deny") denied++;
-        else {
+        else if (verdict === "deny") {
+          if (hold) wait = true;
+          else denied++;
+        } else {
           allowed.push(transfer);
-          admitTransferIdentity(transfer, asOptions(options, id), state.identity);
+          observeIdentity(transfer, asOptions(options, id), state.identity, state.identityEvidence);
+          if (state.identityEvidence.length) state.identityAdmissionKey = currentAdmissionKey;
         }
       }
-      if (state.identity.conflict)
+      if (state.identity.conflict && !state.previousLinkUnverified)
         await saveBindingState(
           join(directory, `${key(options, id)}.json`),
           directory,
@@ -374,21 +462,22 @@ export async function syncAllOtel(
             identity: [...state.identity.values],
             binding: state.binding,
             conflict: true,
+            identityProof: stateProof(state),
           },
           state.mayHaveLinked
         );
       for (const batch of packTransfers(allowed)) {
-        await send(asOptions(options, id), batch.transfer, () =>
-          stillPermitted(id, admission, batch.items)
-        );
+        if (!(await deliver(id, batch.transfer, () => stillPermitted(id, admission, batch.items))))
+          return "hold";
         sent += batch.count;
       }
-      return wait;
+      return wait ? (hold ? "hold" : "unknown") : "resolved";
     };
     const bindings = async () => {
       for (const [id, state] of sessions) {
         const admission = held.get(id);
-        if (!admission) continue;
+        if (admission) await restoreIdentity(id, admission, state);
+        if (!admission || state.previousLinkUnverified) continue;
         const feature: SessionFeature = admission.feature;
         const next =
           feature.state === "confirmed" ? `${feature.branch}\0${feature.feature}` : feature.state;
@@ -409,15 +498,24 @@ export async function syncAllOtel(
             state: "ambiguous",
           });
           if (event) {
-            await send(asOptions(options, id), event, () =>
-              stillPermitted(id, admission, [event], feature)
-            );
+            if (
+              !(await deliver(id, event, () =>
+                stillPermitted(
+                  id,
+                  admission,
+                  [event, ...evidenceTransfers(state.identityEvidence)],
+                  feature
+                )
+              ))
+            )
+              continue;
             sent++;
             state.binding = "invalidated";
             await saveBindingState(join(directory, `${key(options, id)}.json`), directory, {
               session: id,
               identity: [...state.identity.values],
               binding: state.binding,
+              identityProof: stateProof(state),
             });
           }
         } else if (
@@ -431,11 +529,20 @@ export async function syncAllOtel(
               session: id,
               identity: [...state.identity.values],
               binding: next,
+              identityProof: stateProof(state),
             });
             state.mayHaveLinked = true;
-            await send(asOptions(options, id), event, () =>
-              stillPermitted(id, admission, [event], feature)
-            );
+            if (
+              !(await deliver(id, event, () =>
+                stillPermitted(
+                  id,
+                  admission,
+                  [event, ...evidenceTransfers(state.identityEvidence)],
+                  feature
+                )
+              ))
+            )
+              continue;
             sent++;
             state.binding = next;
             state.needsReplay = false;
@@ -447,6 +554,7 @@ export async function syncAllOtel(
       if (!titles && !projects && !repositories) return;
       for (const [id, state] of sessions) {
         const admission = held.get(id);
+        if (admission) await restoreIdentity(id, admission, state);
         if (!admission || state.identity.conflict) continue;
         if ((await permits(admission, new Date().toISOString())) !== "allow") continue;
         for (const publisher of [titles, projects, repositories])
@@ -454,10 +562,9 @@ export async function syncAllOtel(
             publisher &&
             (await publisher.publish(id, state.identity, async (event) => {
               if (!event.at || (await permits(admission, event.at)) !== "allow") return false;
-              await send(asOptions(options, id), event, () =>
-                stillPermitted(id, admission, [event])
+              return deliver(id, event, () =>
+                stillPermitted(id, admission, [event, ...evidenceTransfers(state.identityEvidence)])
               );
-              return true;
             }))
           )
             sent++;
@@ -471,6 +578,10 @@ export async function syncAllOtel(
         const state = await sessionState(id);
         const waiting: Pending[] = [];
         for (const item of await pendingRanges(path)) {
+          if (item.hold && item.admissionKey !== admissionKey(admission)) {
+            waiting.push(item);
+            continue;
+          }
           const raw = Buffer.alloc(item.length);
           const read = await file?.read(raw, 0, item.length, item.offset);
           if (!read || read.bytesRead !== item.length || raw.at(-1) !== 10)
@@ -479,7 +590,14 @@ export async function syncAllOtel(
             values: new Map(),
             conflict: false,
           });
-          if (await process(id, transfers, admission, state)) waiting.push(item);
+          const status = await process(id, transfers, admission, state, item.hold);
+          if (status !== "resolved")
+            waiting.push({
+              ...item,
+              hold: status === "hold",
+              admissionKey:
+                status === "hold" ? (item.admissionKey ?? admissionKey(admission)) : undefined,
+            });
         }
         await replacePending(path, waiting);
       }
@@ -509,10 +627,20 @@ export async function syncAllOtel(
                 conflict: false,
               });
               const admission = held.get(id);
-              const waiting =
-                items.length > 0 && (!admission || (await process(id, items, admission, state)));
-              if (waiting)
-                await appendPending(pendingPath(id), { offset: position, length: newline + 1 });
+              const status =
+                items.length === 0
+                  ? "resolved"
+                  : admission
+                    ? await process(id, items, admission, state)
+                    : "unknown";
+              if (status !== "resolved")
+                await appendPending(pendingPath(id), {
+                  offset: position,
+                  length: newline + 1,
+                  hold: status === "hold",
+                  admissionKey:
+                    status === "hold" && admission ? admissionKey(admission) : undefined,
+                });
             }
           offset += newline + 1;
           pendingBytes = pendingBytes.subarray(newline + 1);
