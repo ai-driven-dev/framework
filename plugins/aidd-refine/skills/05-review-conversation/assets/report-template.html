@@ -39,7 +39,7 @@
         <div class="section-heading"><h2 id="findings-title">Recommended changes</h2></div>
 
         <div class="findings" id="findings-list">
-          <article class="finding" data-id="concise-output">
+          <article class="finding" id="concise-output" data-id="concise-output">
             <header class="finding-header">
               <div class="finding-title"><h3>Replace the full-output requirement</h3><p class="finding-owner">Framework text · root, E007</p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
@@ -61,7 +61,7 @@
               </div>
             </div></div>
           </article>
-          <article class="finding" data-id="duplicate-publishing-rule">
+          <article class="finding" id="duplicate-publishing-rule" data-id="duplicate-publishing-rule">
             <header class="finding-header">
               <div class="finding-title"><h3>Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · root, E008</p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
@@ -88,7 +88,7 @@
 
       <section class="section" aria-labelledby="unedited-title">
         <div class="section-heading"><h2 id="unedited-title">Reported without edit</h2></div>
-        <article class="diagnostic-card">
+        <article class="diagnostic-card" id="missing-reference-path">
           <header><h3>Resolve the missing reference path</h3><p class="finding-owner">Host or environment · root, E012 and E014</p></header>
           <dl class="diagnosis">
             <dt>Evidence</dt><dd>The read at E012 returns <code>ENOENT</code>; E014 searches for the reference. No process exit code was recorded for the read.</dd>
@@ -150,6 +150,18 @@
             <p class="user-prompt">Keep unknown durations unavailable rather than estimating them.</p>
           </blockquote>
         </details>
+      </section>
+
+      <section class="section" aria-labelledby="solutions-title">
+        <div class="section-heading"><h2 id="solutions-title">Problems and solutions</h2></div>
+        <table class="problem-solutions">
+          <thead><tr><th scope="col">Problem</th><th scope="col">Solution</th></tr></thead>
+          <tbody>
+            <tr><td><a href="#concise-output">Full-output instruction</a></td><td>Replace it with concise, verifiable evidence.</td></tr>
+            <tr><td><a href="#duplicate-publishing-rule">Duplicate publishing rule</a></td><td>Delete the second copy; keep the original requirement.</td></tr>
+            <tr><td><a href="#missing-reference-path">Missing reference; origin unverified</a></td><td>Verify the canonical path before changing anything.</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <footer class="prompt-builder" aria-labelledby="prompt-title">

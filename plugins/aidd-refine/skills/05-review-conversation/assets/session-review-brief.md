@@ -4,7 +4,7 @@
 
 Read the whole transcript at `<transcript path>` in order, then write your report to `<report path>`. Report only what the instructions the model read, the brief it received, or the environment made it lose: time, tokens, or correctness. Application defects are out of scope.
 
-Classify every finding in one category:
+Use these areas to spot relevant issues, without forcing a numbered category:
 
 1. Instruction misread or ambiguous: quote the passage and the action it produced.
 2. Instruction ignored: quote the passage and what was done instead.
@@ -21,11 +21,10 @@ Report format:
 # <session title> (<id>)
 Duration, messages, interventions, compactions, delegations, tool errors.
 
-## Timeline (10 to 20 lines)
+## Timeline (relevant events only)
 
-## Findings, by cost
+## Findings, by observed impact
 ### F1 - <title>
-- Category: 1..8
 - Evidence: [sequence] and a quote of three lines at most
 - Instruction involved: file and passage, when identifiable
 - Cause: established, hypothesis, or unknown; distinguish the observed failure from its explanation
@@ -33,9 +32,9 @@ Duration, messages, interventions, compactions, delegations, tool errors.
 - Smallest fix: remove, clarify, or move; add text only when nothing else works
 - Validation: the observable check that would confirm the remedy; say whether it was run
 
-## Interventions (sequence and one line each)
+## Interventions (when relevant, sequence and one line each)
 
-## Raw counts
+## Raw counts (when recorded)
 - Tokens and cost, when exposed
 - Tool calls and tool errors by name
 - Program exit codes, separately from the tool's reported status

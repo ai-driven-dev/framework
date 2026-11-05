@@ -13,7 +13,7 @@ flowchart LR
   read -->|complete| recommend["recommend<br>actions/02-recommend.md"]
   read -->|incomplete| unavailable((stop))
   recommend --> render["target edits<br>actions/03-target-edits.md"]
-  render --> question((ask next intent))
+  render --> done((report))
 ```
 
 Each box is a file: read it, then do what it says, without confirmation.
