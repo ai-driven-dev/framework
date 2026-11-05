@@ -44,8 +44,10 @@ function fixture() {
   const queryPages = (path) => path.includes('/comments?') ? server.comments : server.files;
   const calls = [];
   const model = (args) => { calls.push(args); return { report: 'No actionable defect found.', verdict: 'approve', reviewed: args.files }; };
+  const fetchObjects = () => { server.fetches = (server.fetches ?? 0) + 1; return { mergeBase: base }; };
+  const inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100644' })), skipped: [] });
   const recover = ({ files }) => ({ files: [], skipped: files.map((file) => ({ filename: file.filename, reason: 'missing patch' })) });
-  const options = { repository: 'owner/repo', authorId: ALEX, store, query, queryPages, model, recover };
+  const options = { repository: 'owner/repo', authorId: ALEX, store, query, queryPages, model, fetchObjects, inspectModes, recover };
   return { server, calls, options, store };
 }
 
@@ -59,12 +61,70 @@ test('reviews a fork current head, skips binaries, and does not rerun for unchan
   assert.deepEqual(Object.keys(f.store.load(42).state.files), ['a.js']);
   assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
   assert.equal(f.calls.length, 1);
-  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
   assert.equal(f.calls.length, 1, 'unchanged files do not call the model');
+  assert.equal(f.server.fetches, 2, 'an omitted file is retried on the next submission');
+  assert.equal(f.server.comments.length, 1, 'unchanged omissions do not create another comment');
   f.server.files[1] = changed('image.png');
+  f.server.pr.head.sha = 'f'.repeat(40);
   reviewPullRequest({ ...candidate, reviewId: 12 }, f.options);
   assert.equal(f.calls.length, 2);
   assert.deepEqual(f.calls[1].files, ['image.png']);
+});
+
+test('reviews a mode change even when the text patch and blob are unchanged', () => {
+  const f = fixture(); f.server.files = [changed('app.js')]; f.server.pr.changed_files = 1;
+  reviewPullRequest(candidate, f.options);
+  assert.equal(f.server.fetches, 1);
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
+  assert.equal(f.server.fetches, 1);
+  assert.equal(f.server.comments.length, 1);
+  f.server.pr.head.sha = 'f'.repeat(40);
+  f.options.inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100755' })), skipped: [] });
+  reviewPullRequest({ ...candidate, reviewId: 12 }, f.options);
+  assert.equal(f.calls.length, 2);
+  assert.match(f.calls[1].inputs.find((input) => input.file.startsWith('diff-')).text, /Git mode: 100644 → 100755/);
+});
+
+test('signals an unavailable mode and retries only that file on a later submission', () => {
+  const f = fixture(); f.server.files[1] = changed('b.js');
+  f.options.inspectModes = ({ files }) => ({ files: [{ ...files[0], oldMode: '100644', newMode: '100644' }], skipped: [{ filename: 'b.js', reason: 'mode unavailable' }] });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.match(f.server.comments[0].body, /b\.js.*mode unavailable/);
+  assert.deepEqual(f.store.load(42).state.unreviewed, ['b.js']);
+  assert.equal(f.store.load(42).state.pending, undefined);
+  f.options.inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100644' })), skipped: [] });
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
+  assert.deepEqual(f.calls[1].files, ['b.js']);
+  assert.equal(f.store.load(42).state.unreviewed, undefined);
+});
+
+test('a sole invalid mode is reported once without recording a hash or retry loop', () => {
+  const f = fixture(); f.server.files = [changed('bad.js')]; f.server.pr.changed_files = 1;
+  f.options.inspectModes = () => ({ files: [], skipped: [{ filename: 'bad.js', reason: 'mode unavailable' }] });
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
+  assert.match(f.server.comments[0].body, /bad\.js.*mode unavailable/);
+  assert.deepEqual(f.store.load(42).state.files, {});
+  assert.deepEqual(f.store.load(42).state.unreviewed, ['bad.js']);
+  assert.equal(f.store.load(42).state.pending, undefined);
+  assert.equal(f.calls.length, 0);
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'already-processed');
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'unchanged');
+  assert.equal(f.server.comments.length, 1);
+});
+
+test('only reuses a historical hash after a skipped mode is verified again', () => {
+  const f = fixture(); f.server.files = [changed('a.js'), changed('b.js')];
+  reviewPullRequest(candidate, f.options);
+  f.server.pr.head.sha = 'f'.repeat(40);
+  f.options.inspectModes = ({ files }) => ({ files: [files[0] && { ...files[0], oldMode: '100644', newMode: '100644' }], skipped: [{ filename: 'b.js', reason: 'mode unavailable' }] });
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 11 }, f.options).status, 'published');
+  assert.deepEqual(Object.keys(f.store.load(42).state.files).sort(), ['a.js', 'b.js']);
+  assert.deepEqual(f.store.load(42).state.unreviewed, ['b.js']);
+  f.options.inspectModes = ({ files }) => ({ files: files.map((file) => ({ ...file, oldMode: '100644', newMode: '100644' })), skipped: [] });
+  assert.equal(reviewPullRequest({ ...candidate, reviewId: 12 }, f.options).status, 'unchanged');
+  assert.equal(f.calls.length, 1, 'unchanged historical file is not reviewed again');
+  assert.equal(f.store.load(42).state.unreviewed, undefined);
 });
 
 test('only checkpoints confirmed files and retries the remaining files for the same submission', () => {
@@ -113,7 +173,7 @@ test('resumes a long report after a lost POST response without repeating the mod
 
 test('reconstructs omitted text patches before deciding which files are reviewable', () => {
   const f = fixture(); let recovered = 0;
-  f.options.recover = ({ files }) => { recovered++; return { files: files.map((file) => changed(file.filename)), skipped: [] }; };
+  f.options.recover = ({ files }) => { recovered++; return { files: files.map((file) => ({ ...file, ...changed(file.filename) })), skipped: [] }; };
   reviewPullRequest(candidate, f.options);
   assert.equal(recovered, 1);
   assert.deepEqual(f.calls[0].files, ['a.js', 'image.png']);
@@ -127,7 +187,7 @@ test('publishes readable files when Git recovery fails and retries only the rest
   assert.equal(first.status, 'partial');
   assert.deepEqual(first.reviewed, ['a.js']);
   assert.match(f.server.comments[0].body, /Git recovery temporarily unavailable/);
-  f.options.recover = ({ files }) => ({ files: files.map((file) => changed(file.filename)), skipped: [] });
+  f.options.recover = ({ files }) => ({ files: files.map((file) => ({ ...file, ...changed(file.filename) })), skipped: [] });
   assert.equal(reviewPullRequest(candidate, f.options).status, 'published');
   assert.deepEqual(f.calls[1].files, ['image.png']);
 });
@@ -221,6 +281,40 @@ test('resumes a file larger than the time budget without rereading segments', ()
     assert.equal(result.status, 'partial');
     assert.equal(Object.hasOwn(state.files, '__proto__'), false);
     assert.equal(Object.hasOwn(state.parts, '__proto__'), true);
+  }
+  assert.equal(result.status, 'published');
+  assert.equal(seen.size, total);
+});
+
+test('preserves partial segments through a temporary mode omission', () => {
+  const f = fixture();
+  f.server.files = [{ ...changed('large.js'), patch: `@@ -1 +1 @@\n-old\n+${'x'.repeat(600000)}` }];
+  f.server.pr.changed_files = 1;
+  const inspect = f.options.inspectModes, seen = new Set(); let clock = 0, total = 0;
+  f.options.now = () => clock; f.options.deadline = 1;
+  f.options.model = (args) => {
+    for (const input of args.inputs.filter((item) => item.file.startsWith('diff-'))) {
+      const [, number, count] = input.text.match(/part (\d+)\/(\d+)/);
+      assert.equal(seen.has(number), false, `segment ${number} was reread`);
+      seen.add(number); total = Number(count);
+    }
+    clock = 1;
+    return { report: 'Segment examined.', verdict: 'approve', reviewed: args.files };
+  };
+  assert.equal(reviewPullRequest(candidate, f.options).status, 'partial');
+  const before = f.store.load(42), comments = f.server.comments.length;
+  assert.ok(before.state.parts['large.js'].completed.length);
+  f.options.inspectModes = () => ({ files: [], skipped: [{ filename: 'large.js', reason: 'mode unavailable' }] });
+  clock = 0;
+  assert.throws(() => reviewPullRequest(candidate, f.options), /Git modes unavailable for a partially reviewed file/);
+  assert.deepEqual(f.store.load(42), before);
+  assert.equal(f.server.comments.length, comments);
+  f.options.inspectModes = inspect;
+  let result;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    clock = 0;
+    result = reviewPullRequest(candidate, f.options);
+    if (result.status === 'published') break;
   }
   assert.equal(result.status, 'published');
   assert.equal(seen.size, total);

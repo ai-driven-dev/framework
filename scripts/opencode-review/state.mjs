@@ -65,13 +65,16 @@ export function planReview(files, previous = {}) {
       if (!STATUSES.has(file.status) || typeof file.sha !== 'string' || !OBJECT_ID.test(file.sha)) invalid(`invalid file metadata for ${filename}`);
       if (file.previous_filename !== undefined && file.previous_filename !== null && (typeof file.previous_filename !== 'string' || !file.previous_filename || file.previous_filename.includes('\0'))) invalid(`invalid previous filename for ${filename}`);
       if ((file.status === 'renamed' || file.status === 'copied') && !file.previous_filename) invalid(`missing previous filename for ${filename}`);
+      if (Object.hasOwn(file, 'oldMode') || Object.hasOwn(file, 'newMode')) {
+        for (const mode of [file.oldMode, file.newMode]) if (mode !== null && (typeof mode !== 'string' || !/^[0-7]{6}$/.test(mode))) invalid(`invalid Git mode for ${filename}`);
+      }
       validatePatch(file);
     } catch (error) {
       if (!(error instanceof Error) || !error.message.startsWith('Invalid review state: ')) throw error;
       skipped.push({ filename, reason: error.message.slice('Invalid review state: '.length) });
       continue;
     }
-    const fingerprint = createHash('sha256').update(JSON.stringify([file.filename, file.status, file.sha, file.previous_filename ?? null, file.patch])).digest('hex');
+    const fingerprint = createHash('sha256').update(JSON.stringify([file.filename, file.status, file.sha, file.previous_filename ?? null, file.oldMode ?? null, file.newMode ?? null, file.patch])).digest('hex');
     currentEntries.push([file.filename, fingerprint]);
     if (!Object.hasOwn(previous, file.filename) || previous[file.filename] !== fingerprint) selected.push(file);
   }
@@ -86,7 +89,10 @@ export function validateState(state) {
   if (state.base !== undefined && (typeof state.base !== 'string' || !OBJECT_ID.test(state.base))) invalid('invalid base');
   if (typeof state.reviewId !== 'string' || !/^[1-9][0-9]*$/.test(state.reviewId)) invalid('invalid review ID');
   if (state.pending !== undefined && typeof state.pending !== 'boolean') invalid('invalid pending flag');
+  if (state.modes !== undefined && typeof state.modes !== 'boolean') invalid('invalid modes flag');
   validateFiles(state.files);
+  if (state.unreviewed !== undefined && (!Array.isArray(state.unreviewed) || new Set(state.unreviewed).size !== state.unreviewed.length ||
+      state.unreviewed.some((name) => name !== null && (typeof name !== 'string' || !name || name.includes('\0'))))) invalid('invalid unreviewed files');
   if (state.verdict !== undefined && !['approve', 'changes-requested', 'blocked'].includes(state.verdict)) invalid('invalid verdict');
   if (state.parts !== undefined) {
     if (!state.parts || typeof state.parts !== 'object' || Array.isArray(state.parts) || !state.pending) invalid('invalid partial parts');
@@ -96,7 +102,7 @@ export function validateState(state) {
           part.completed.some((index) => !Number.isSafeInteger(index) || index < 0 || index >= part.total) || new Set(part.completed).size !== part.completed.length) invalid('invalid partial file');
     }
   }
-  return { version: 1, head: state.head, ...(state.base ? { base: state.base } : {}), reviewId: state.reviewId, files: state.files, ...(state.pending ? { pending: true } : {}), ...(state.verdict ? { verdict: state.verdict } : {}), ...(state.parts && Object.keys(state.parts).length ? { parts: state.parts } : {}) };
+  return { version: 1, head: state.head, ...(state.base ? { base: state.base } : {}), reviewId: state.reviewId, files: state.files, ...(state.modes ? { modes: true } : {}), ...(state.pending ? { pending: true } : {}), ...(state.unreviewed?.length ? { unreviewed: state.unreviewed } : {}), ...(state.verdict ? { verdict: state.verdict } : {}), ...(state.parts && Object.keys(state.parts).length ? { parts: state.parts } : {}) };
 }
 
 /** Private durable state and write-ahead draft, one atomic file per repository and PR. */

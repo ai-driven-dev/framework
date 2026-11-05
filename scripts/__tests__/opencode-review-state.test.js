@@ -33,6 +33,15 @@ test('distinct paths and metadata never collide, including special object keys',
   assert.equal(planReview([rename], plan.current).selected.length, 1);
 });
 
+test('includes the old and new Git mode in the file fingerprint', () => {
+  const regular = { ...modified(), oldMode: '100644', newMode: '100644' };
+  const executable = { ...regular, newMode: '100755' };
+  const previous = planReview([regular]).current;
+  assert.equal(planReview([regular], previous).selected.length, 0);
+  assert.equal(planReview([executable], previous).selected.length, 1);
+  assert.equal(planReview([{ ...regular, newMode: undefined }]).skipped.length, 1);
+});
+
 test('handles multi-hunk patches, newline markers, additions, deletions and misleading content', () => {
   const file = { filename: 'file', status: 'modified', sha,
     additions: 3, deletions: 2,
@@ -94,6 +103,8 @@ test('persists validated state and a pending draft atomically across reloads', (
   assert.throws(() => validateState({ version: 1, files: {}, head, reviewId: '3', parts }), /invalid partial parts/);
   assert.throws(() => validateState({ version: 1, files: {}, head, reviewId: '3', pending: true, parts: { x: { fingerprint: 'a'.repeat(64), total: 2, completed: [0, 1] } } }), /invalid partial file/);
   assert.throws(() => validateState({ version: 1, files: { x: 'a'.repeat(64) }, head, reviewId: '3', pending: true, parts: { x: { fingerprint: 'a'.repeat(64), total: 2, completed: [0] } } }), /invalid partial file/);
+  assert.deepEqual(validateState({ version: 1, files: {}, head, reviewId: '3', unreviewed: [null, '__proto__'] }).unreviewed, [null, '__proto__']);
+  assert.deepEqual(validateState({ version: 1, files: { x: 'a'.repeat(64) }, head, reviewId: '3', unreviewed: ['x'] }).unreviewed, ['x']);
   writeFileSync(join(dir, 'owner/repo/1.json'), '{bad');
   assert.throws(() => store.load(1), /JSON/);
 });

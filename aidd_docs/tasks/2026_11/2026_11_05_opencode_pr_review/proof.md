@@ -10,6 +10,7 @@ The timer starts from an explicit activation time, runs serially, and retries
 transient errors with bounded backoff. Incomplete reviews checkpoint only files
 whose inputs were read and reported. Binary or unsupported files are named as
 not reviewed; missing text patches are reconstructed from Git without checkout.
+Git file modes are included in the review input and fingerprints.
 Reports too large for one comment are split; a persistent draft allows retries
 without publishing the same part twice. Losing the state volume loses the review
 history and may cause files to be reviewed again.
@@ -30,4 +31,7 @@ server. A server version change pauses reviews until it is revalidated.
   unavailable. OpenCode's existing OAuth login was used without copying tokens.
 - A real Git recovery on PR #1145 retained a 2,276-byte line omitted by the
   former size limit. No PR content was executed.
-- The complete timer-to-comment GitHub path remains to be tested after install.
+- The installed timer detected a submitted review on PR #1150 and published a
+  report. A second submission on the same commit advanced its checkpoint without
+  creating another OpenCode session or comment. The reported file-mode gap is
+  covered by the Git mode checks above.

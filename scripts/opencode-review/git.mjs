@@ -46,20 +46,59 @@ export function fetchReviewObjects({ repository, number, base, head, cache }) {
   return { mergeBase };
 }
 
-function blob(cache, tree, path) {
+function treeEntry(cache, tree, path) {
   validPath(path);
-  const id = text(git(cache, ['rev-parse', '--verify', '--end-of-options', `${tree}:${path}`])).trim();
-  validSha(id);
-  if (text(git(cache, ['cat-file', '-t', id])).trim() !== 'blob') throw new Error('Path is not a file blob');
-  return id;
-}
-
-function mode(cache, tree, path) {
   const rows = text(git(cache, ['--literal-pathspecs', 'ls-tree', '-z', tree, '--', path])).split('\0').filter(Boolean);
   const row = rows.find((entry) => entry.slice(entry.indexOf('\t') + 1) === path);
-  const found = /^(\d{6}) blob [0-9a-f]+\t/.exec(row ?? '');
-  if (!found) throw new Error('Cannot read file mode');
-  return found[1];
+  const found = /^(\d{6}) (blob|commit) ([0-9a-f]+)\t/.exec(row ?? '');
+  if (!found || !SHA.test(found[3])) throw new Error('Cannot read Git tree entry');
+  return { mode: found[1], type: found[2], sha: found[3] };
+}
+
+function treeEntries(cache, tree) {
+  const output = git(cache, ['ls-tree', '-r', '-z', '--full-tree', tree]);
+  const entries = new Map();
+  for (let start = 0; start < output.length;) {
+    const end = output.indexOf(0, start);
+    if (end < 0) throw new Error('Incomplete Git tree output');
+    try {
+      const row = text(output.subarray(start, end));
+      const match = /^(\d{6}) (blob|commit) ([0-9a-f]+)\t([\s\S]+)$/.exec(row);
+      if (!match || !SHA.test(match[3])) throw new Error('Invalid Git tree entry');
+      entries.set(match[4], { mode: match[1], type: match[2], sha: match[3] });
+    } catch (error) {
+      // A non-UTF-8 Git path cannot match a GitHub JSON filename; skip only that entry.
+      if (!(error instanceof TypeError)) throw error;
+    }
+    start = end + 1;
+  }
+  return entries;
+}
+
+/** Read both trees once so mode-only changes are visible even when GitHub provides a patch. */
+export function fileModes({ files, mergeBase, head, cache }) {
+  if (!Array.isArray(files) || !cache) throw new Error('Invalid review Git parameters');
+  commit(cache, mergeBase); commit(cache, head);
+  const before = treeEntries(cache, mergeBase), after = treeEntries(cache, head);
+  const enriched = [], skipped = [];
+  for (const file of files) {
+    try {
+      validPath(file?.filename);
+      if (!['added', 'removed', 'modified', 'renamed', 'copied', 'changed', 'unchanged'].includes(file.status)) throw new Error('Unsupported file status');
+      const oldPath = file.status === 'renamed' || file.status === 'copied' ? file.previous_filename : file.filename;
+      if (file.status !== 'added') validPath(oldPath);
+      const oldEntry = file.status === 'added' ? null : before.get(oldPath);
+      const newEntry = file.status === 'removed' ? null : after.get(file.filename);
+      if ((file.status !== 'added' && !oldEntry) || (file.status !== 'removed' && !newEntry)) throw new Error('File is absent from expected Git tree');
+      if (oldEntry && newEntry && (oldEntry.mode === '160000') !== (newEntry.mode === '160000')) throw new Error('Gitlink/file type conversion cannot be reviewed safely');
+      validSha(file.sha);
+      if (file.sha !== (newEntry ?? oldEntry).sha) throw new Error('File object does not match GitHub SHA');
+      enriched.push({ ...file, oldMode: oldEntry?.mode ?? null, newMode: newEntry?.mode ?? null, oldOid: oldEntry?.sha ?? null, newOid: newEntry?.sha ?? null });
+    } catch (error) {
+      skipped.push({ filename: typeof file?.filename === 'string' ? file.filename : null, reason: error?.message ?? 'Cannot read file modes' });
+    }
+  }
+  return { files: enriched, skipped };
 }
 
 /** Recover complete text diffs without checking out or executing any PR content. */
@@ -73,17 +112,26 @@ export function recoverPatches({ files, mergeBase, head, cache }) {
       validPath(file?.filename);
       if (!['added', 'removed', 'modified', 'renamed', 'copied', 'changed'].includes(file.status)) throw new Error('Unsupported file status');
       const oldPath = file.status === 'renamed' || file.status === 'copied' ? file.previous_filename : file.filename;
-      const oldId = file.status === 'added' ? empty : blob(cache, mergeBase, oldPath);
-      const newId = file.status === 'removed' ? empty : blob(cache, head, file.filename);
+      const oldEntry = file.status === 'added' ? null : treeEntry(cache, mergeBase, oldPath);
+      const newEntry = file.status === 'removed' ? null : treeEntry(cache, head, file.filename);
+      if (oldEntry && newEntry && (oldEntry.mode === '160000') !== (newEntry.mode === '160000')) throw new Error('Gitlink/file type conversion cannot be reviewed safely');
+      const oldId = oldEntry?.sha ?? empty;
+      const newId = newEntry?.sha ?? empty;
       const expected = file.status === 'removed' ? oldId : newId;
       validSha(file.sha);
       if (file.sha !== expected) throw new Error('File blob does not match GitHub SHA');
       if (oldId === newId) {
-        const oldMode = file.status === 'added' ? null : mode(cache, mergeBase, oldPath);
-        const newMode = file.status === 'removed' ? null : mode(cache, head, file.filename);
+        const oldMode = oldEntry?.mode ?? null;
+        const newMode = newEntry?.mode ?? null;
         if (oldPath === file.filename && oldMode === newMode) throw new Error('File has no text or metadata changes');
         const details = JSON.stringify({ status: file.status, oldPath: file.status === 'added' ? null : oldPath, newPath: file.status === 'removed' ? null : file.filename, oldMode, newMode });
         recovered.push({ ...file, patch: `@@ -0,0 +0,0 @@ metadata-only ${details}`, additions: 0, deletions: 0 });
+        continue;
+      }
+      if (oldEntry?.mode === '160000' || newEntry?.mode === '160000') {
+        const header = !oldEntry ? '@@ -0,0 +1 @@' : !newEntry ? '@@ -1 +0,0 @@' : '@@ -1 +1 @@';
+        const lines = [header, oldEntry && `-Subproject commit ${oldId}`, newEntry && `+Subproject commit ${newId}`].filter(Boolean);
+        recovered.push({ ...file, patch: lines.join('\n'), additions: newEntry ? 1 : 0, deletions: oldEntry ? 1 : 0 });
         continue;
       }
       const options = ['--no-ext-diff', '--no-textconv', '--no-color', '--no-renames'];
