@@ -81,22 +81,29 @@ const FD_DUPLICATION = /\d*>&(?:\d+|-)(?![\w./-])/gu;
 const TO_DEV_NULL = /(?:\d+|&)?>>?\|?\s*\/dev\/null(?![\w./-])/gu;
 const REDIRECTION = />/u;
 
-// A word stands alone: never inside another word, a flag, a file name or a path.
-const BEFORE = "(?<![\\w./-])";
-const AFTER = "(?![\\w./-])";
-const WRITE_COMMAND = new RegExp(`${BEFORE}(?:tee|mv|cp|rm|touch|mkdir|patch|apply_patch)${AFTER}`, "u");
-const SED_IN_PLACE = new RegExp(`${BEFORE}sed${AFTER}[^|;&\\n]*?\\s(?:-[A-Za-z]*i|--in-place)`, "u");
-const GIT_WRITE = new RegExp(`${BEFORE}git(?:\\s+-[cC]\\s+\\S+)*\\s+(?:apply|checkout|restore)${AFTER}`, "u");
+// A quoted string is an argument, never a command or a redirection: its content is blanked and
+// its quotes kept, so `echo x > "f"` still redirects.
+const QUOTED = /'[^']*'|"(?:[^"\\]|\\.)*"/gu;
 
-/**
- * Whether a shell command's text matches a write form. Text only: quotes are not parsed, so a `>`
- * or a command word inside a quoted argument (`grep ">" f`, `git commit -m "rm it"`) matches, and
- * a write run through another interpreter (`python -c`) does not.
- */
+// A command word counts at command position only: the start of the text, or after `;`, `&&`,
+// `||`, `|`, `$(`, a backtick or `-exec`, past any `sudo`, `exec`, `xargs` or `env VAR=x`. A path
+// before it resolves by basename (`/bin/rm`).
+const POSITION = "(?:^|[;\\n|`]|&&|\\$\\(|(?<=\\s)-exec(?=\\s))";
+const PREFIXES = "(?:\\s*(?:sudo|exec|xargs)(?:\\s+-\\S+)*(?=\\s)|\\s*env(?:\\s+\\w+=\\S*)+(?=\\s))*";
+const DIRECTORY = "(?:[^\\s;|&`()'\"]*\\/)?";
+const AT_COMMAND = `${POSITION}${PREFIXES}\\s*${DIRECTORY}`;
+// A word stands alone: never the start of a longer word, a file name or a path.
+const AFTER = "(?![\\w./-])";
+const WRITE_COMMAND = new RegExp(`${AT_COMMAND}(?:tee|mv|cp|rm|touch|mkdir|patch|apply_patch)${AFTER}`, "u");
+const SED_IN_PLACE = new RegExp(`${AT_COMMAND}sed${AFTER}[^|;&\\n]*?\\s(?:-[A-Za-z]*i|--in-place)`, "u");
+const GIT_WRITE = new RegExp(`${AT_COMMAND}git(?:\\s+-[cC]\\s+\\S+)*\\s+(?:apply|checkout|restore)${AFTER}`, "u");
+
+/** Whether a shell command's text matches a write form, read outside quoted strings. */
 function isShellWrite(command) {
   if (typeof command !== "string") return false;
-  const redirections = command.replace(FD_DUPLICATION, "").replace(TO_DEV_NULL, "");
-  return REDIRECTION.test(redirections) || WRITE_COMMAND.test(command) || SED_IN_PLACE.test(command) || GIT_WRITE.test(command);
+  const unquoted = command.replace(QUOTED, (quoted) => quoted[0] + quoted[0]);
+  const redirections = unquoted.replace(FD_DUPLICATION, "").replace(TO_DEV_NULL, "");
+  return REDIRECTION.test(redirections) || WRITE_COMMAND.test(unquoted) || SED_IN_PLACE.test(unquoted) || GIT_WRITE.test(unquoted);
 }
 
 function located({ file, line }) {
