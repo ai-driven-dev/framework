@@ -63,18 +63,38 @@ export abstract class AbstractNativePluginCliAdapter implements NativePluginActi
   removeMarketplace(name: string, scope: MarketplaceScope, options?: { force?: boolean }): void {
     const force = options?.force === true ? this.forceRemoveArgs() : [];
     const userArgs = scope === "user" ? this.userRemoveArgs() : undefined;
+    // Removing from every scope also uninstalls what a project installed from this marketplace,
+    // with its saved options: only a marketplace no project uses goes that far.
+    const everywhere = userArgs !== undefined && !this.usedAtAnotherScope(name);
     this.run(
       [
         "plugin",
         "marketplace",
         "remove",
         name,
-        ...(userArgs ?? this.scopeArgsFor(scope)),
+        ...(everywhere ? userArgs : this.scopeArgsFor(scope)),
         ...force,
       ],
       `marketplace remove ${name}`,
-      userArgs === undefined ? undefined : homedir()
+      everywhere ? homedir() : undefined
     );
+  }
+
+  /** Whether a plugin of this marketplace is installed at a scope other than the user's, in any
+   * project. A list it cannot read counts as yes, since that keeps the narrower removal. */
+  private usedAtAnotherScope(name: string): boolean {
+    const result = this.spawn(
+      ["plugin", "list", "--json"],
+      ["ignore", "pipe", "ignore"],
+      homedir()
+    );
+    if (result.error !== undefined || result.status !== 0) return true;
+    try {
+      const plugins = JSON.parse(result.stdout) as { id?: string; scope?: string }[];
+      return plugins.some((plugin) => plugin.id?.endsWith(`@${name}`) && plugin.scope !== "user");
+    } catch {
+      return true;
+    }
   }
 
   abstract enablesPlugins(): boolean;

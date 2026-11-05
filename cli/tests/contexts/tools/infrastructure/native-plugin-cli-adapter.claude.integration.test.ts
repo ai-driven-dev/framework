@@ -89,16 +89,58 @@ describe("ClaudeCliAdapter — removing a user-scope marketplace deletes its reg
       userRemoveArgs: [],
     });
 
-  it("names no scope at user scope, from the home directory, so the registration goes too", () => {
-    mockSpawnSync.mockReturnValue(makeResult({}));
+  function listing(stdout: string, status = 0) {
+    mockSpawnSync.mockReset();
+    mockSpawnSync.mockImplementation((_binary, args) =>
+      (args as string[])[1] === "list" ? makeResult({ stdout, status }) : makeResult({})
+    );
+  }
+
+  const removeArgs = () => mockSpawnSync.mock.calls.at(-1)?.[1];
+
+  it("names no scope when no project uses it, from the home directory, so the registration goes too", () => {
+    listing('[{"id":"aidd-dev@aidd-framework","scope":"user"},{"id":"x@other","scope":"local"}]');
 
     adapter().removeMarketplace("aidd-framework", "user");
 
-    expect(mockSpawnSync).toHaveBeenCalledWith(
+    expect(mockSpawnSync).toHaveBeenLastCalledWith(
       "claude",
       ["plugin", "marketplace", "remove", "aidd-framework"],
       expect.objectContaining({ cwd: homedir() })
     );
+  });
+
+  it("stays at user scope when a project installed from it, so that project keeps its plugins", () => {
+    listing('[{"id":"aidd-dev@aidd-framework","scope":"local","projectPath":"/p"}]');
+
+    adapter().removeMarketplace("aidd-framework", "user");
+
+    expect(removeArgs()).toEqual([
+      "plugin",
+      "marketplace",
+      "remove",
+      "aidd-framework",
+      "--scope",
+      "user",
+    ]);
+  });
+
+  it.each([
+    ["fails", "", 1],
+    ["answers no JSON", "not json", 0],
+  ])("stays at user scope when the list %s, never the wider removal", (_case, stdout, status) => {
+    listing(stdout, status);
+
+    adapter().removeMarketplace("aidd-framework", "user");
+
+    expect(removeArgs()).toEqual([
+      "plugin",
+      "marketplace",
+      "remove",
+      "aidd-framework",
+      "--scope",
+      "user",
+    ]);
   });
 
   it("keeps the project scope's own arguments, from the current directory", () => {

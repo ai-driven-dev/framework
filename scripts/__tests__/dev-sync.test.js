@@ -290,7 +290,7 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
     const source = fixture(home, ["aidd-dev", "aidd-pm"]);
     recordingCli(source);
     for (const host of ["claude", "codex", "copilot", "cursor-agent", "kilo", "opencode"]) {
-      executable(join(fakeBin, host), `printf '%s\\n' "${host} $*" >> "$HOME/host-calls"`);
+      executable(join(fakeBin, host), `printf '%s\\n' "${host} $*" >> "$HOME/host-calls"\n[ "$*" = "plugin list --json" ] && echo '[]'; exit 0`);
     }
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
@@ -309,6 +309,26 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
     assert.doesNotMatch(hostCalls, /^(copilot|cursor-agent|kilo|opencode) /m);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+for (const [name, listing] of [
+  ["a project installed from it", `echo '[{"id":"aidd-dev@aidd-framework","scope":"local","projectPath":"/p"}]'`],
+  ["its list cannot be read", "exit 1"],
+]) {
+  test(`Claude's marketplace stays at user scope when ${name}`, () => {
+    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-local-"));
+    try {
+      const fakeBin = join(root, "bin"), home = join(root, "home");
+      mkdirSync(fakeBin);
+      recordingCli(fixture(home));
+      executable(join(fakeBin, "claude"), `printf '%s\\n' "$*" >> "$HOME/claude-calls"\n[ "$*" = "plugin list --json" ] && { ${listing}; }\nexit 0`);
+      const result = runSync(fakeBin, home, []);
+      assert.equal(result.status, 0, result.stderr);
+      const calls = readFileSync(join(home, "claude-calls"), "utf8");
+      assert.match(calls, /^plugin marketplace remove aidd-framework --scope user$/m);
+      assert.doesNotMatch(calls, /^plugin marketplace remove aidd-framework$/m);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+}
 
 test("a failing global install stops the reload with its own cause", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-failed-"));

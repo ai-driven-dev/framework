@@ -63,15 +63,30 @@ aidd_cli() {
 # marketplace live, and its uninstall leaves each plugin disabled rather than gone, which the
 # CLI then reads as a ref it does not own, so it is left alone. Claude's `remove --scope user`
 # drops only the settings declaration and keeps the registration, which setup --global then
-# takes as still declared: the marketplace is removed from every scope, from HOME so no
-# project's settings are among them.
+# takes as still declared, so a marketplace no project uses is removed from every scope. That
+# removal also uninstalls what a project installed from it, so one in use stays at user scope.
+claude_marketplace_used_by_a_project() {
+  { (cd "$HOME" && claude plugin list --json 2>/dev/null) || true; } | node -e '
+    try {
+      const plugins = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+      process.exit(plugins.some((p) => p.id?.endsWith(`@${process.argv[1]}`) && p.scope !== "user") ? 0 : 1);
+    } catch { process.exit(0); }
+  ' "$MKT"
+}
+
 release_native_plugins() {
   local name
   for name in "${targets[@]}"; do
     [ "$HAVE_CLAUDE" = 0 ] || claude plugin uninstall "$name@$MKT" --scope user >/dev/null 2>&1 || true
     [ "$HAVE_CODEX" = 0 ] || codex plugin remove "$name@$MKT" >/dev/null 2>&1 || true
   done
-  [ "$HAVE_CLAUDE" = 0 ] || (cd "$HOME" && claude plugin marketplace remove "$MKT") >/dev/null 2>&1 || true
+  if [ "$HAVE_CLAUDE" = 1 ]; then
+    if claude_marketplace_used_by_a_project; then
+      claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
+    else
+      (cd "$HOME" && claude plugin marketplace remove "$MKT") >/dev/null 2>&1 || true
+    fi
+  fi
   [ "$HAVE_CODEX" = 0 ] || codex plugin marketplace remove "$MKT" >/dev/null 2>&1 || true
 }
 

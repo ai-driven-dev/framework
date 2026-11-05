@@ -23,9 +23,10 @@ export interface NativeActivation {
    * else in the shared project settings. Omit where the registry has no scopes. */
   scopeArgs?: Readonly<Record<"project" | "user", readonly string[]>>;
   /** Scope arguments `plugin marketplace remove` takes at user scope instead of
-   * `scopeArgs.user`, run from the home directory so no project's settings are in reach.
-   * Measured on Claude 2.1.312: `remove --scope user` drops the settings declaration and
-   * keeps the registration, which only a remove naming no scope deletes. */
+   * `scopeArgs.user` when no project uses the marketplace, run from the home directory.
+   * Measured on Claude 2.1.318: `remove --scope user` drops the settings declaration and keeps
+   * the registration and a project's install; a remove naming no scope deletes the registration
+   * and uninstalls that project's plugins too, with their saved options. */
   userRemoveArgs?: readonly string[];
   /** The host keeps an uninstalled plugin's ref, disabled, so a disabled ref cannot be told
    * from one the person disabled and is not taken for a plugin in use. */
