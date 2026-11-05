@@ -9,8 +9,10 @@
  * - a contract key whose name is a hook-named member of a contract a profile fills
  *   (`HOOK_CONTRACTS`), given a value written in place: anything but a reference (`X`,
  *   `X.y`) or a call, which is read from where it is declared;
- * - a module-level constant whose name says hook, given a literal: a string, template, boolean,
- *   number, object or array.
+ * - a module-level constant whose name says hook or event, given a literal: a string,
+ *   template, boolean, number, object, array, `new Map(`, `new Set(` or `Object.freeze(`;
+ *   or one of any name whose string literal names a hooks folder or file (`hooks/`,
+ *   `hooks.json`), read on the raw text.
  * Logic is not a fact: a function, a local variable and a type declare none. An inline path
  * literal outside these three is not seen.
  */
@@ -54,7 +56,7 @@ const BASELINE: readonly { readonly file: string; readonly facts: number; reason
     file: "src/contexts/tools/domain/profiles/codex/profile.ts",
     facts: 7,
     reason:
-      "the hooks config id, trust notice, memory hook command and entries, and the HooksCapability",
+      "the hooks config id, trust notice, memory hook command and entries, the HooksCapability and `acceptsHooks`",
   },
   {
     file: "src/contexts/tools/domain/profiles/copilot/build.ts",
@@ -69,8 +71,8 @@ const BASELINE: readonly { readonly file: string; readonly facts: number; reason
   },
   {
     file: "src/contexts/tools/domain/profiles/cursor/hooks-format.ts",
-    facts: 2,
-    reason: "the source hooks prefix and the project hooks script folder",
+    facts: 3,
+    reason: "the event map, the source hooks prefix and the project hooks script folder",
   },
   {
     file: "src/contexts/tools/domain/profiles/cursor/profile.ts",
@@ -101,8 +103,9 @@ const BASELINE: readonly { readonly file: string; readonly facts: number; reason
   },
   {
     file: "src/contexts/tools/domain/profiles/opencode/opencode-paths.ts",
-    facts: 2,
-    reason: "the hooks folder and the plugin folder the flat hooks land in",
+    facts: 4,
+    reason:
+      "the hooks folder, the plugin folder the flat hooks land in, and the bridge events asset and path",
   },
   {
     file: "src/contexts/tools/domain/profiles/opencode/profile.ts",
@@ -172,12 +175,16 @@ function hookContractKeys(bodies: ReadonlyMap<string, string>): Set<string> {
 
 const REFERENCE_OR_CALL =
   /^(?!(?:true|false|null)\b)(?:new\s+)?[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*\s*(?:\(|,|;|\}|$)/;
-const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b)/;
+const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b|new\s+(?:Map|Set)\(|Object\.freeze\()/;
+/** A hook or event name, or a string literal naming a hooks folder or file. */
+const HOOK_NAME = /hook|event/i;
+const HOOKS_PATH = /^["'`][^"'`]*(?:^|[/.{}"'`])hooks(?:\/|\.json)/;
 
 /** One `<line>: <name>` per hooks fact in one profile file. */
 function hooksFacts(source: string, keys: ReadonlySet<string>): string[] {
   const facts: string[] = [];
   let typeDepth = 0;
+  const raw = source.split("\n");
   codeOnly(source)
     .split("\n")
     .forEach((line, index, lines) => {
@@ -193,13 +200,15 @@ function hooksFacts(source: string, keys: ReadonlySet<string>): string[] {
       if (key && keys.has(key[1] as string) && !REFERENCE_OR_CALL.test(key[2] as string)) {
         facts.push(`${index + 1}: ${key[1]}`);
       }
-      const constant =
-        /^(?:export\s+)?const\s+(\w*[Hh][Oo][Oo][Kk]\w*)\s*(?::[^=]+)?=\s*(.*)$/.exec(line);
+      // Found on the blanked line, so a bridge's generated text declares nothing; the path
+      // is read on the raw one, where the literal still holds it.
+      const constant = /^(?:export\s+)?const\s+(\w+)\s*(?::[^=]+)?=\s*(.*)$/.exec(line);
+      if (!constant) return;
       // A value may start on the next line: `const X =` then `"…" + "…";`.
-      const value = (constant?.[2] as string | undefined) || (lines[index + 1] ?? "").trim();
-      if (constant && LITERAL.test(value)) {
-        facts.push(`${index + 1}: ${constant[1]}`);
-      }
+      const value = (constant[2] as string) || (lines[index + 1] ?? "").trim();
+      const rawValue = (/=\s*(.*)$/.exec(raw[index] ?? "")?.[1] ?? "").trim();
+      const named = HOOK_NAME.test(constant[1] as string) && LITERAL.test(value);
+      if (named || HOOKS_PATH.test(rawValue)) facts.push(`${index + 1}: ${constant[1]}`);
     });
   return facts;
 }
@@ -303,6 +312,27 @@ describe("the guard itself", () => {
     ].join("\n");
 
     expect(hooksFacts(source.replace(descriptor, ""), keys)).toEqual([]);
+  });
+
+  it("names an event map built as a Map, Set or frozen object, and a destination by its path", () => {
+    const source = [
+      'const PLANTED_HOOKS_MAP = new Map([["a", "b"]]);',
+      'const PLANTED_EVENT_MAP = new Map(Object.entries({ PostToolUse: "afterFileEdit" }));',
+      'export const PLANTED_EVENTS = new Set(["Stop"]);',
+      'const PLANTED_HOOK_FIELDS = Object.freeze(["command"]);',
+      'const PLANTED_DESTINATION = ".codex/hooks.json";',
+      "const PLANTED_DIR = `.cursor/hooks/`;",
+      'const UNRELATED = ".codex/config.toml";',
+    ].join("\n");
+
+    expect(hooksFacts(source, keys)).toEqual([
+      "1: PLANTED_HOOKS_MAP",
+      "2: PLANTED_EVENT_MAP",
+      "3: PLANTED_EVENTS",
+      "4: PLANTED_HOOK_FIELDS",
+      "5: PLANTED_DESTINATION",
+      "6: PLANTED_DIR",
+    ]);
   });
 
   it("ignores a type, a comment and the text a bridge generates", () => {
