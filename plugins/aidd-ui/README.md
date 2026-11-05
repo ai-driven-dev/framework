@@ -23,7 +23,7 @@ flowchart LR
   Skill -->|"calls"| Engine["hooks/aidd-ui.cjs"]
   Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
   Host["host event"] --> Hook["hooks/ui-hook.cjs"]
-  Hook -->|"checks what a write reached"| Engine
+  Hook -->|"checks what a write produced, then what the turn reached"| Engine
   Hook -->|"problems"| Host
 ```
 
@@ -37,7 +37,7 @@ flowchart LR
 
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
-- Stop checks the files the turn wrote, then what their writes reached, as after a write; once a shell command marked the turn, it also reports every other error, since the hook cannot tell which files the command wrote. It reports no warning.
+- After a write the hook reports only the lines the write added or changed; what it broke in other files waits for Stop. Stop checks the files the turn wrote, then what their writes reached; once the turn deleted a file or a shell command marked it, it reports every other error, since the hook cannot tell what cited the file or which files the command wrote. It reports no warning.
 - Every problem prints as `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` under a line counting errors and warnings; the hook never cuts the errors, and caps the warnings at ten.
 - A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
 - Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.

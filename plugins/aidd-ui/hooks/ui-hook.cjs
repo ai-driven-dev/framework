@@ -117,24 +117,74 @@ function markTurn(event, lines) {
   if (mark) leaveMark(mark, lines);
 }
 
-/** Marks the turn, then hands the model what the write broke: the errors of the written files, the
- * errors of what they reach, the warnings of the written files; nothing when there are none. */
+/** A text's lines, trimmed, the empty ones left out. */
+const linesOf = (text) => (text ?? "").split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
+
+/** The lines a write added or changed: the whole lines of `written` left once those of `replaced`
+ * are taken out, each as many times as it appears. Null when they are unknown: the host said
+ * nothing of the text, or the write only removed lines. */
+function changedLines({ written, replaced }) {
+  if (typeof written !== "string") return null;
+  const left = new Map();
+  for (const line of linesOf(replaced)) left.set(line, (left.get(line) ?? 0) + 1);
+  const changed = new Set();
+  for (const line of linesOf(written)) {
+    if ((left.get(line) ?? 0) > 0) left.set(line, left.get(line) - 1);
+    else changed.add(line);
+  }
+  return changed.size === 0 && linesOf(replaced).length > 0 ? null : changed;
+}
+
+/** The 1-based lines of a file equal, once trimmed, to a changed line: every copy raises the same
+ * errors. Null when the file cannot be read: its errors then say so, grouped. */
+function touchedLines(file, changed) {
+  let text;
+  try {
+    text = fs.readFileSync(file, "utf8");
+  } catch {
+    return null;
+  }
+  const touched = new Set();
+  for (const [index, line] of text.split(/\r?\n/u).entries()) if (changed.has(line.trim())) touched.add(index + 1);
+  return touched;
+}
+
+/** Whether a path names an entry, a link to nothing included: that one is unreadable, not deleted. */
+function entryExists(file) {
+  try {
+    fs.lstatSync(file);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Marks the turn, then hands the model what the write itself produced (rule 3 of the hooks'
+ * contract): the errors on the lines it added or changed, one by one, then those lines' warnings.
+ * A file whose changed lines are unknown has its errors grouped under its name. What the write
+ * reached in other files, and a file it deleted, are Stop's to name. */
 function afterWrite(project, event) {
   const written = event.files
-    .map((file) => relative(project.root, path.resolve(project.root, file.path)))
-    .filter((file) => isWatched(project, file));
+    .map((file) => ({ ...file, file: relative(project.root, path.resolve(project.root, file.path)) }))
+    .filter(({ file }) => isWatched(project, file));
   if (!written.length) return EXIT_SILENT;
-  // A file the tool deleted leaves nothing to tell what cited it: every other error is then reached.
-  const deleted = written.some((file) => !fs.existsSync(path.join(project.root, file)));
-  markTurn(event, deleted ? [...written, ANY_FILE] : written);
+  // A file the tool deleted leaves nothing to tell what cited it: Stop then reaches every other error.
+  const deleted = written.some(({ file }) => !entryExists(path.join(project.root, file)));
+  const lines = written.map(({ file }) => file);
+  markTurn(event, deleted ? [...lines, ANY_FILE] : lines);
   const problems = problemsOf(project);
-  const scope = deleted ? null : reached(project, written);
-  const errors = problems.filter(isError);
-  const text = formatFindings(PLUGIN, {
-    errors: errors.filter((problem) => written.includes(problem.file)).map(findingOf),
-    reached: errors.filter((problem) => !written.includes(problem.file) && (!scope || scope.has(problem.file))).map(findingOf),
-    warnings: problems.filter((problem) => !isError(problem) && written.includes(problem.file)).map(findingOf),
-  });
+  const findings = { errors: [], reached: [], warnings: [] };
+  for (const entry of written) {
+    const changed = changedLines(entry);
+    const touched = changed && touchedLines(path.join(project.root, entry.file), changed);
+    for (const problem of problems.filter(({ file }) => file === entry.file)) {
+      const finding = findingOf(problem);
+      if (touched && finding.line !== undefined && !touched.has(finding.line)) continue;
+      if (!isError(problem)) findings.warnings.push(finding);
+      else (touched ? findings.errors : findings.reached).push(finding);
+    }
+  }
+  const text = formatFindings(PLUGIN, findings);
   if (text) answer({ level: INFORM, text });
   return EXIT_SILENT;
 }

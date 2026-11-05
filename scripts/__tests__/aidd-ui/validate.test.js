@@ -96,7 +96,11 @@ function hook(input, temp = null) {
 
 // The plugin tree ships Claude Code's host adapter, so these payloads are Claude Code's. Every
 // other host reaches the hook through its own adapter, tested where the adapters live.
-const postToolUse = (filePath) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Write", tool_input: { file_path: filePath }, tool_response: {} });
+/** A Write of the file as it now stands, the whole of it being the write's. */
+const postToolUse = (filePath) => {
+  const content = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
+  return JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Write", tool_input: { file_path: filePath, content }, tool_response: {} });
+};
 const shell = (command) => JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Bash", tool_input: { command }, tool_response: {} });
 const marked = () => fs.existsSync(markPath(sid));
 const sessionStart = () => JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, source: "startup" });
@@ -324,53 +328,57 @@ describe("aidd-ui validator entries", () => {
     });
   });
 
+  // Rule 3 of the hooks' contract: after a write, only what the write itself produced. What it
+  // reached in other files is named once, at Stop, where the design system's change is final.
   describe("E3 PostToolUse", () => {
-    it("hands the problems back when a write lands under aidd_docs/ui/", () => {
+    const RECORD = `${UI}/components/button.md`;
+    const V2_GHOST = `${UI}/components/button.html V2 "data-variant=\\"ghost\\"" => add an element carrying it to the render`;
+    const R17 = `${RECORD} R17 => add a "## Usage" section saying when to use it and when not`;
+    const COLOUR = 'src/ui/Button.tsx:4 C4 "#ff0000" => replace it with a token';
+    const colourInCode = () => fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
+
+    it("hands back the errors of a file written whole, every line of it being the write's", () => {
       breakOnePerFamily();
       assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(errorsText([BRAND_FAILURE])));
     });
 
-    it("hands the problems back when a write lands under a code root", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(errorsText([DIALOG_FAILURE])));
+    it("hands back the errors of a code file written whole under a code root", () => {
+      colourInCode();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(errorsText([COLOUR])));
     });
 
-    it("hands the problems back when a write lands under a code root written with a leading ./", () => {
+    it("hands back the errors of a code file under a code root written with a leading ./", () => {
       edit(tmp, `${UI}/system.md`, "code-roots: [src/ui]", "code-roots: [./src/ui]");
+      colourInCode();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(errorsText([COLOUR])));
+    });
+
+    it("names nothing of the record citing the written one after the write, and names it at Stop", () => {
+      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
+      assert.deepEqual(hook(stop()), finish(errorsText([`${UI}/components/search-field.md R6 "button" => use only elements of its own level or lower`])));
+    });
+
+    it("names the written record's errors after the write, and its render's at Stop", () => {
+      edit(tmp, RECORD, "variants: [primary, secondary]", "variants: [primary, secondary, ghost]");
+      edit(tmp, RECORD, "## Usage\n\nAny action a person starts; never for navigation.\n\n", "");
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([R17])));
+      assert.deepEqual(hook(stop()), finish(errorsText([R17, V2_GHOST])));
+    });
+
+    it("names the code's colour errors at Stop after a write to code-debt.json, which every code file reads", () => {
+      colourInCode();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "code-debt.json"))), silent);
+      assert.deepEqual(hook(stop()), finish(errorsText([COLOUR])));
+    });
+
+    it("names the written tokens' errors after the write, and every other at Stop, every record reading them", () => {
       breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(errorsText([DIALOG_FAILURE])));
+      assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(errorsText([TOKENS_FAILURE])));
+      assert.deepEqual(hook(stop()), finish(errorsText([TOKENS_FAILURE, BRAND_FAILURE, DIALOG_FAILURE])));
     });
 
-    it("names the problem a write causes in a record citing the written one", () => {
-      edit(tmp, `${UI}/components/button.md`, "kind: atom", "kind: composition");
-      assert.deepEqual(hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))), claudeFeedback(errorsText([`${UI}/components/search-field.md R6 "button" => use only elements of its own level or lower`])));
-    });
-
-    it("names the problems of a written record's render", () => {
-      edit(tmp, `${UI}/components/button.md`, "variants: [primary, secondary]", "variants: [primary, secondary, ghost]");
-      assert.deepEqual(hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))), claudeFeedback(errorsText([`${UI}/components/button.html V2 "data-variant=\\"ghost\\"" => add an element carrying it to the render`])));
-    });
-
-    it("lists the errors of the written files first, then those of what they reach", () => {
-      edit(tmp, `${UI}/components/button.md`, "variants: [primary, secondary]", "variants: [primary, secondary, ghost]");
-      edit(tmp, `${UI}/components/button.md`, "## Usage\n\nAny action a person starts; never for navigation.\n\n", "");
-      assert.deepEqual(
-        hook(postToolUse(path.join(tmp, `${UI}/components/button.md`))),
-        claudeFeedback(errorsText([`${UI}/components/button.md R17 => add a "## Usage" section saying when to use it and when not`, `${UI}/components/button.html V2 "data-variant=\\"ghost\\"" => add an element carrying it to the render`]))
-      );
-    });
-
-    it("names the code's colour errors after a write to code-debt.json, which every code file reads", () => {
-      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
-      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "code-debt.json"))), claudeFeedback(errorsText(['src/ui/Button.tsx:4 C4 "#ff0000" => replace it with a token'])));
-    });
-
-    it("names every problem after a write to a file every record reads", () => {
-      breakOnePerFamily();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(errorsText([TOKENS_FAILURE, BRAND_FAILURE, DIALOG_FAILURE])));
-    });
-
-    describe("the reached errors are grouped, the written ones are not", () => {
+    describe("the reached errors are grouped at Stop, the written ones are not", () => {
       const GROUP = `R17 ×3 in ${UI}/components/* => add a "## Usage" section saying when to use it and when not`;
       const usageless = () => {
         propose(tmp, SEARCH, DIALOG);
@@ -382,7 +390,8 @@ describe("aidd-ui validator entries", () => {
 
       it("groups by rule, fix and folder the errors of the files a shared file reaches", () => {
         usageless();
-        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(text(3, 0, [GROUP])));
+        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), silent);
+        assert.deepEqual(hook(stop()), finish(text(3, 0, [GROUP])));
       });
 
       it("prints each error of the written files on its own line, beside the groups", () => {
@@ -391,7 +400,33 @@ describe("aidd-ui validator entries", () => {
           tree.space.md.$value = { value: 1, unit: "em" };
           tree.border.thin.$value = { value: 1, unit: "em" };
         });
-        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(text(5, 0, [T4("space.md"), T4("border.thin"), GROUP])));
+        assert.deepEqual(hook(postToolUse(path.join(tmp, TOKENS))), claudeFeedback(text(2, 0, [T4("space.md"), T4("border.thin")])));
+        assert.deepEqual(hook(stop()), finish(text(5, 0, [T4("space.md"), T4("border.thin"), GROUP])));
+      });
+    });
+
+    describe("an edit answers for the lines it added or changed", () => {
+      const editTool = (file, from, to) => {
+        edit(tmp, file, from, to);
+        return JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, session_id: sid, tool_name: "Edit", tool_input: { file_path: path.join(tmp, file), old_string: from, new_string: to }, tool_response: {} });
+      };
+
+      it("hands back the errors of its lines only, not those the file already held", () => {
+        littering(2, 0);
+        const input = editTool(RENDER, "</body>", '<p style="color: #111111">x</p>\n</body>');
+        assert.deepEqual(hook(input), claudeFeedback(errorsText([`${RENDER}:30 V4 "#111111" => replace it with a token`])));
+      });
+
+      it("stays silent when its lines hold no error, whatever the file already holds, a line it repeats unchanged included", () => {
+        littering(2, 0);
+        const kept = '<p style="color: #000000">x</p>\n</body>';
+        assert.deepEqual(hook(editTool(RENDER, kept, kept.replace("</body>", "<p>x</p>\n</body>"))), silent);
+      });
+
+      it("groups the file's errors under its name when it only removed lines, its effect being unknown", () => {
+        littering(3, 0);
+        const input = editTool(RENDER, '<p style="color: #000000">x</p>\n</body>', "</body>");
+        assert.deepEqual(hook(input), claudeFeedback(text(2, 0, [`V4 ×2 in ${RENDER} "#000000" => replace it with a token`])));
       });
     });
 
@@ -634,10 +669,10 @@ describe("aidd-ui validator entries", () => {
     });
 
     // A patch that deletes a file lists it like one it writes; nothing on disk says what cited it.
-    it("names what a deleted record leaves broken in the records citing it, after the write and at Stop", () => {
+    it("names nothing of a file the write deleted, and at Stop what the records citing it lost", () => {
       fs.rmSync(path.join(tmp, BUTTON));
       const citer = new RegExp(`R6 ×2 in ${UI}/components/\\* \\\\"button\\\\" => remove it from uses`);
-      assert.match(write([BUTTON]).out, citer);
+      assert.deepEqual(write([BUTTON]), silent);
       assert.match(neutral("Stop").out, citer);
     });
 

@@ -26,16 +26,16 @@ Where the engine is, and what it gives.
 ```
 aidd-ui: <n> errors, <m> warnings
 <file>[:<line>] <rule> ["<excerpt>"] => <fix>
-<rule> ×<count> in <folder>/* ["<excerpt>"] => <fix>
+<rule> ×<count> in <file>|<folder>/* ["<excerpt>"] => <fix>
 <file>[:<line>] <rule> warning <message> => <fix>
 ```
 
 - The first line counts the errors, those a hook reports as reached included, then the warnings.
 - An error line carries its rule, the offending text when there is one, and the `=> fix` that clears it; the fix names the engine command when the engine owns the write. `<engine>` in a fix is this engine's path.
-- Reached errors are the ones in files a write reached without being written: the same rule, fix and folder make one `×<count>` line. `validate` has no reached errors.
+- Grouped errors are those of the files a turn reached without writing them, and those of a written file whose changed lines are unknown: the same rule, fix and folder make one `×<count>` line, which names the file when every member is in it. `validate` groups nothing.
 - A warning line also carries its message. `validate` prints every error and every warning; the hook, at most ten warnings.
 - Rules `U1` (a file that cannot be read), `U2` (a check that failed) and `U3` (a design system written for another format) belong to no family.
-- After a write the hook prints the errors of the written files, the errors of what they reach, and the warnings of the written files. At Stop it prints the errors of the files the turn listed, then those of what they reach, or every other error once a shell command marked the turn; no warning.
+- After a write the hook prints only what the write produced: the errors and warnings on the lines it added or changed in the written files, or, when those lines are unknown, the written file's errors grouped. Nothing of another file or of a deleted one. At Stop it prints the errors of the files the turn listed, then those of what they reach, or every other error once the turn deleted a file or a shell command marked it; no warning.
 
 ## Fingerprint
 
