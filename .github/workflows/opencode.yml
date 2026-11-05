@@ -81,12 +81,21 @@ jobs:
             .opencode/skills
           persist-credentials: false
 
+      # A PR-controlled symlink could point outside /work, including to the
+      # model credential in /proc. Check out links as plain text instead.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        env:
+          GIT_CONFIG_COUNT: '1'
+          GIT_CONFIG_KEY_0: core.symlinks
+          GIT_CONFIG_VALUE_0: 'false'
         with:
           ref: ${{ steps.target.outputs.ref }}
           path: project
           fetch-depth: 1
           persist-credentials: false
+
+      # Keep Git from treating those plain-text links as type changes later.
+      - run: git -C project config core.symlinks false
 
       - name: Write the prompt
         run: |
