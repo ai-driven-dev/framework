@@ -1,36 +1,37 @@
 # 03 - Check
 
-Show what drifted in the bank, and let the user pick what to fix. Change nothing.
+Find what drifted in the bank.
 
 ## Input
 
-The bank in `aidd_docs/memory/`, and the capabilities the scan found.
+The bank and the scan's capabilities.
 
 ## Output
 
-Three blocks printed, Structure, Format and Content, then the question, and the findings the user approved. A file only on request.
+The findings the user approved.
 
 ## Process
 
 1. **Structure.** Compare the bank against [capabilities.md](../references/capabilities.md).
-   - A root file no row produces is the team's: keep it, unless a row's Former files names it, then offer to merge it into that row's file.
-   - A row's file under `internal/` or a subfolder, or a folder under `memory/` other than `internal/` and `external/`: misplaced, offer to move it to the root, a folder under `internal/`.
-   - A file of an always row, or of a found capability that got an answer, with nothing on disk: missing.
-   - Offer to remove each file whose capability the scan did not find, and none when the scan asked nothing.
-2. **Format.** Run `memory-lint.cjs` and keep its findings. No engine: apply the rule table of [memory-rules.md](../references/memory-rules.md).
+   - A root file no row produces is the team's: keep it, unless a row's Former files names it.
+   - A file a row produces, found in `internal/` or a subfolder: misplaced, offer to move it to the root.
+   - A folder under `memory/` other than `internal/` and `external/`: offer to move it under `internal/`.
+   - An always file, or a found capability's file, that is absent: missing.
+   - Offer to remove a file a row produces whose capability the scan did not find, and none when the scan asked nothing.
+2. **Format.** Run the engine on the files a row produces, never a team file.
 3. **Content.** Have each memory file reviewed against [review-protocol.md](../references/review-protocol.md) in parallel.
-4. **Print.** Print the three blocks in that order, then ask which findings to apply, and hand the approved ones to write.
-   - Nothing drifted: call the bank current, hand nothing on.
+4. **Print.** Print Structure findings, Format findings and Content findings in that order, each headed, no table, one finding per line. Then ask which to apply, and hand the approved ones to write.
+   - A file only on request.
+   - Nothing drifted: say the bank is current.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
-| Any run | no file changed or created; three blocks, then the question, no step named |
-| Nothing drifted | nothing offered, the bank called current |
-| Team file | a root file no row produces is not flagged, not offered for removal |
-| Misplaced | flagged with the move offered, no root copy made |
+| Any run | no file changed or created, no step named |
+| Team file | not flagged, not linted, not offered for removal |
+| Misplaced | flagged, move offered, no root copy |
 | Former file | offered a merge into its row's file |
-| Missing | an always file with nothing on disk is flagged; a conditional one with no answer is not |
-| Contradiction, duplicate | flagged, the lines left in place |
-| Removal declined | the file is still there |
+| Missing | an absent always file is flagged |
+| Contradiction, duplicate | flagged, lines left in place |
+| Removal declined | the file stays |

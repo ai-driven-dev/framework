@@ -22,9 +22,8 @@ The confirmed capabilities and external tools.
 
 | Case | Pass |
 | --- | --- |
-| Completion | no file under the project changed |
-| Evidence | the path or dependency named for a capability exists |
-| Summary | one row per capability and per tool, each carrying evidence |
-| Tool | one access mode per actor that reaches it |
-| Every run | the same capabilities for the same repo, bank or no bank |
-| Empty repo | the run stops at Ground and hands nothing on |
+| Completion | no file changed |
+| Summary | one row per capability and per tool, each with evidence that exists |
+| Tool | one access mode per actor |
+| Repeat | the same capabilities for the same repo, bank or not |
+| Empty repo | stops at Ground, hands nothing on |

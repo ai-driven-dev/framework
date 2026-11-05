@@ -27,7 +27,9 @@ Run the flow above, reading only the next action file.
 
 ## Engine
 
-`memory-lint.cjs` and `update_memory.js` sit in `hooks/`: beside `skills/` in a plugin install, in `hooks/aidd-context/` under the tool's folder in a flat install from `aidd translate`. Run them from the project root.
+`memory-lint.cjs` and `update_memory.js` are found by file name, first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill. A Kilo or OpenCode plugin build ships none. Found none: lint by the Machine table of [memory-rules.md](references/memory-rules.md) and write each block from the bank.
+
+From the project root: `node memory-lint.cjs . aidd_docs/memory/<file>.md` per file, `node update_memory.js <tool>...`.
 
 ## Transversal rules
 
