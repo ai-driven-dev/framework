@@ -4,8 +4,22 @@
 import { join } from "node:path";
 import { KiloDualConfigError } from "../../../../../kernel/errors.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
+import { flatGlobalFilePath } from "../../capabilities/plugins-capability.js";
 
 export const KILO_DIRECTORY = ".kilo/";
+const flatMachinePath = flatGlobalFilePath(KILO_DIRECTORY);
+const maintenanceStartup = new Set([
+  ".kilo/hooks/aidd-maintenance/session-start.cjs",
+  ".kilo/hooks/aidd-maintenance/kilo-tui.js",
+  ".kilo/plugin/aidd-maintenance-hooks.js",
+]);
+
+/** Only maintenance's startup files are installed globally; other hooks remain project-scoped. */
+export const kiloGlobalFilePath: ReturnType<typeof flatGlobalFilePath> = (path, plugin) => {
+  if (plugin.name === "aidd-maintenance" && maintenanceStartup.has(path))
+    return path.slice(KILO_DIRECTORY.length);
+  return flatMachinePath(path, plugin);
+};
 export const KILO_HOOKS_DIR = `${KILO_DIRECTORY}hooks/`;
 export const KILO_PLUGIN_DIR = `${KILO_DIRECTORY}plugin/`;
 export const KILO_PLUGIN_ENTRY_BASENAME = "kilo-plugin.js";

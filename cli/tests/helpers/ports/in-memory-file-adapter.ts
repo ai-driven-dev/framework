@@ -92,6 +92,10 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
     return false;
   }
 
+  async entryExists(path: string): Promise<boolean> {
+    return this.symlinks.has(norm(resolve(path))) || this.fileExists(path);
+  }
+
   async readFileHash(path: string): Promise<FileHash> {
     const content = await this.readFile(path);
     return this.hasher.hash(content);

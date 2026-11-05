@@ -11,6 +11,7 @@ The exhaustive list of AIDD plugins, skills, and actions. Skills are invoked thr
 - [aidd-ui](#-aidd-ui) - UI / UX (🚧 alpha, not ready)
 - [aidd-telemetry](#-aidd-telemetry) - token measurement for Claude Code and Codex (🧪 beta, off the curated path)
 - [aidd-qa](#-aidd-qa) - acceptance QA (🔭 preview, off the curated path)
+- [aidd-maintenance](#-aidd-maintenance) - framework version and updates
 
 ---
 
@@ -174,3 +175,21 @@ Locks a scenario scope from acceptance criteria, runs it against a reviewed cand
 | Skill               | Role                                                                 | Actions                                                              |
 | ------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `01-acceptance-qa`  | Lock scenarios from acceptance criteria, run them, and report a verdict per scenario | `01-load-scope`, `02-prerequisites`, `03-prepare-run`, `04-run-scenarios` |
+
+## 🔄 aidd-maintenance
+
+Reports the installed marketplace version and available updates.
+
+| Skill | Role | Actions |
+| --- | --- | --- |
+| `01-update` | Update the installed framework | `01-update` |
+
+<!--extras-aidd-maintenance:start-->
+
+**Hooks**
+
+| Event | Runs |
+| --- | --- |
+| `SessionStart` | `hooks/session-start.cjs` |
+
+<!--extras-aidd-maintenance:end-->

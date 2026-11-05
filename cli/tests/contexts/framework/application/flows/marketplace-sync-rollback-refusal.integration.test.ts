@@ -7,6 +7,8 @@ import {
 } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { resolvePluginsCapability } from "../../../../../src/contexts/tools/domain/registry.js";
 import { BUILT_CACHE_SUBDIR, userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -37,6 +39,8 @@ async function sync(options: {
   name?: string;
   recreateFrameworkIfMissing?: boolean;
   staleCacheFile?: string;
+  testPlugin?: boolean;
+  refreshOwnedPlugins?: boolean;
 }) {
   const name = options.name ?? MARKETPLACE_NAME;
   const fs = new InMemoryFileAdapter();
@@ -45,6 +49,30 @@ async function sync(options: {
   const logger = new CapturingLogger();
   const manifest = Manifest.create();
   manifest.addTool("claude", "test", []);
+  if (options.testPlugin)
+    manifest.addPlugin(
+      "claude",
+      InstalledPlugin.fromMetadata(
+        "test-plugin",
+        "1.0.0",
+        { kind: "local", path: "/source" },
+        true,
+        "project",
+        name
+      )
+    );
+  if (options.testPlugin && options.registeredPath)
+    manifest.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: name,
+          hostName: name,
+          provenance: { kind: "registry", source: options.registeredPath },
+        },
+      ],
+      pluginRefs: [`test-plugin@${name}`],
+    });
   const machine = Manifest.create();
   machine.addTool("claude", "test", []);
   machine.setNativeRegistrations("claude", {
@@ -59,7 +87,9 @@ async function sync(options: {
       },
     ],
     pluginRefs: [],
-    pluginClaims: [],
+    pluginClaims: options.testPlugin
+      ? [{ ref: `test-plugin@${name}`, dependents: [PROJECT_ROOT, "/other-project"] }]
+      : [],
   });
   await manifestRepo.save(manifest);
   await registry.save(
@@ -83,12 +113,17 @@ async function sync(options: {
     );
   }
   if (options.staleCacheFile !== undefined) await fs.writeFile(options.staleCacheFile, "stale");
-  const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+  const activator = new FakeNativePluginActivator({
+    available: true,
+    enablesPlugins: options.testPlugin === true,
+  });
   const hostReader = new FakeHostMarketplaceRegistryReader({
     location: REGISTRY_LOCATION,
     entries:
       options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
   });
+  const machineRepo = new InMemoryManifestRepository(machine);
+  const sourceReferences: string[] = [];
   const useCase = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,
@@ -100,18 +135,28 @@ async function sync(options: {
     new Map([["claude", hostReader]]),
     () => USER_CACHE_ROOT,
     undefined,
-    undefined,
-    undefined,
+    options.testPlugin
+      ? {
+          addReference: async (_version, root) => {
+            sourceReferences.push(root);
+          },
+          removeReference: async () => {},
+          listAllReferencingProjects: async () => [],
+        }
+      : undefined,
+    options.testPlugin ? { get: () => options.requestedVersion } : undefined,
     new Map([
       [
         "claude",
         new FakeHostPluginRegistryReader({
           location: "/home/.claude/plugins/installed_plugins.json",
-          refs: new Map(),
+          refs: options.testPlugin
+            ? new Map([[`test-plugin@${name}`, { enabled: true }]])
+            : new Map(),
         }),
       ],
     ]),
-    new InMemoryManifestRepository(machine),
+    machineRepo,
     new Map([
       [
         "claude",
@@ -129,11 +174,46 @@ async function sync(options: {
   const result = await useCase.execute({
     projectRoot: PROJECT_ROOT,
     recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
+    ...(options.refreshOwnedPlugins
+      ? { refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }] }
+      : {}),
   });
-  return { result, activator, logger, manifestRepo, fs };
+  return { result, activator, logger, manifestRepo, machineRepo, sourceReferences, fs };
 }
 
 describe("the sync write path refuses to roll a host back to an older aidd-framework build", () => {
+  it("does not touch a shared native plugin when another project uses a newer build", async () => {
+    const activation = resolvePluginsCapability("claude")?.nativeActivation;
+    if (!activation) throw new Error("missing native activation");
+    activation.refreshOwnedOnReleaseUpdate = true;
+    try {
+      const { result, activator, manifestRepo, machineRepo, sourceReferences } = await sync({
+        requestedVersion: "1.0.0",
+        registeredPath: sharedPath("2.0.0", FRAMEWORK_MARKETPLACE_NAME),
+        registeredVersion: "2.0.0",
+        name: FRAMEWORK_MARKETPLACE_NAME,
+        testPlugin: true,
+        refreshOwnedPlugins: true,
+      });
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(activator.addedMarketplaces).toEqual([]);
+      expect(activator.enabledPlugins).toEqual([]);
+      expect(activator.upgradeCount).toBe(0);
+      expect(manifestRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toEqual([
+        `test-plugin@${FRAMEWORK_MARKETPLACE_NAME}`,
+      ]);
+      expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+        {
+          ref: `test-plugin@${FRAMEWORK_MARKETPLACE_NAME}`,
+          dependents: [PROJECT_ROOT, "/other-project"],
+        },
+      ]);
+      expect(machineRepo.saveCount).toBe(0);
+      expect(sourceReferences).toEqual([]);
+    } finally {
+      delete activation.refreshOwnedOnReleaseUpdate;
+    }
+  });
   // The host already follows a newer build of the shared source than this run would request, so
   // writing anyway would silently repoint it backward.
   it("writes nothing and warns naming both versions and `aidd update`, when the host already follows a newer shared build", async () => {
@@ -201,7 +281,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
     expect(logger.warnMessages).toStrictEqual([refusal]);
   });
 
-  it("records the marketplace it left on the newer build as registered under the host's own name", async () => {
+  it("does not claim the newer host marketplace when the project did not own it", async () => {
     const { manifestRepo } = await sync({
       requestedVersion: "1.0.0",
       registeredPath: sharedPath("2.0.0"),
@@ -210,13 +290,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
 
     expect((await manifestRepo.load())?.getNativeRegistrations("claude")).toStrictEqual({
       binary: "claude",
-      marketplaces: [
-        {
-          alias: MARKETPLACE_NAME,
-          hostName: MARKETPLACE_NAME,
-          provenance: { kind: "registry", source: sharedPath("2.0.0") },
-        },
-      ],
+      marketplaces: [],
       pluginRefs: [],
     });
   });

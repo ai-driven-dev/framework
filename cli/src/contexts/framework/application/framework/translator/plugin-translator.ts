@@ -28,6 +28,7 @@ export interface PluginTranslator {
     previousMcpEntries?: ReadonlyMap<string, string>,
     userScopeDirTaken?: boolean,
     previousProjectHooks?: ProjectHooksProvenance,
-    hooksGuard?: ProjectHooksGuard
+    hooksGuard?: ProjectHooksGuard,
+    previousTui?: import("../../../domain/plugins/installed-plugin.js").KiloTuiProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }>;
 }

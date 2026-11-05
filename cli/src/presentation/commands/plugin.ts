@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
-import { assertValidAiToolId, parseToolOption } from "../../kernel/tool.js";
+import { type AiToolId, assertValidAiToolId, parseToolOption } from "../../kernel/tool.js";
+import { assertMachineConfigDirectorySupported } from "../../runtime/machine-config-directory.js";
 import { createDeps, createMenuDeps } from "../../runtime/wiring/framework.js";
 import {
   printInstalledPlugins,
@@ -158,6 +159,23 @@ export function registerPluginCommand(program: Command): void {
         assertValidAiToolId(cmdOptions.tool);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
+        if (scope === "user") {
+          if (cmdOptions.tool !== undefined) {
+            assertMachineConfigDirectorySupported([cmdOptions.tool]);
+          } else {
+            const machine = await deps.userManifestRepo.load();
+            assertMachineConfigDirectorySupported(
+              (machine?.getInstalledToolIds() ?? []).filter((tool) =>
+                machine
+                  ?.getPlugins(tool as AiToolId)
+                  .some(
+                    (plugin) =>
+                      plugin.scope === "user" && (name === undefined || plugin.name === name)
+                  )
+              )
+            );
+          }
+        }
         const updated = await (scope === "user"
           ? deps.userPluginUpdateUseCase
           : deps.pluginUpdateUseCase

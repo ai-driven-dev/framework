@@ -11,6 +11,12 @@ const userPluginUpdate = vi.fn();
 const activation = vi.fn();
 const menuSelect = vi.fn();
 const spawn = vi.fn();
+const loadMachine = vi.fn();
+const assertMachineConfig = vi.fn();
+
+vi.mock("../../../src/runtime/machine-config-directory.js", () => ({
+  assertMachineConfigDirectorySupported: assertMachineConfig,
+}));
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
@@ -20,6 +26,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     pluginSearchUseCase: { execute: pluginSearch },
     pluginUpdateUseCase: { execute: pluginUpdate },
     userPluginUpdateUseCase: { execute: userPluginUpdate },
+    userManifestRepo: { load: loadMachine },
     marketplaceSyncSettingsUseCase: { execute: activation },
   })),
   createMenuDeps: vi.fn(() => ({ prompter: { select: menuSelect } })),
@@ -60,6 +67,8 @@ beforeEach(() => {
   pluginSearch.mockResolvedValue({ hits: [] });
   pluginUpdate.mockResolvedValue(["aidd-dev"]);
   userPluginUpdate.mockResolvedValue(["aidd-vcs@aidd-framework"]);
+  loadMachine.mockReset().mockResolvedValue(null);
+  assertMachineConfig.mockReset();
   activation.mockResolvedValue({ binaryMissing: [], errors: [] });
   menuSelect.mockResolvedValue("list");
   spawn.mockResolvedValue(0);
@@ -282,6 +291,69 @@ describe("aidd plugin update", () => {
       scope: "user",
     });
     expect(pluginUpdate).not.toHaveBeenCalled();
+  });
+
+  it("checks the selected user-scoped tool before updating it", async () => {
+    await run("update", "aidd-context", "--tool", "opencode", "--scope", "user");
+    expect(assertMachineConfig).toHaveBeenCalledWith(["opencode"]);
+    expect(loadMachine).not.toHaveBeenCalled();
+    expect(userPluginUpdate).toHaveBeenCalledOnce();
+  });
+
+  it("rejects an unsupported user configuration before updating anything", async () => {
+    assertMachineConfig.mockImplementation(() => {
+      throw new Error("unsupported XDG config");
+    });
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("update", "--tool", "kilo", "--scope", "user")).rejects.toThrow("exited");
+    expect(errors.join("")).toContain("unsupported XDG config");
+    expect(userPluginUpdate).not.toHaveBeenCalled();
+  });
+
+  it("checks only tools owning the requested plugin when no tool is selected", async () => {
+    loadMachine.mockResolvedValue({
+      getInstalledToolIds: () => ["opencode", "kilo", "claude"],
+      getPlugins: (tool: string) =>
+        ({
+          opencode: [{ name: "aidd-context", scope: "user" }],
+          kilo: [{ name: "aidd-context", scope: "project" }],
+          claude: [{ name: "other", scope: "user" }],
+        })[tool] ?? [],
+    });
+    await run("update", "aidd-context", "--scope", "user");
+    expect(assertMachineConfig).toHaveBeenCalledWith(["opencode"]);
+    expect(userPluginUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pluginNames: ["aidd-context"],
+        toolIds: "all",
+        scope: "user",
+      })
+    );
+  });
+
+  it("checks every machine-owned tool when updating all user plugins", async () => {
+    loadMachine.mockResolvedValue({
+      getInstalledToolIds: () => ["opencode", "kilo", "claude"],
+      getPlugins: (tool: string) =>
+        ({
+          opencode: [{ name: "aidd-context", scope: "user" }],
+          kilo: [{ name: "aidd-context", scope: "project" }],
+          claude: [{ name: "other", scope: "user" }],
+        })[tool] ?? [],
+    });
+    await run("update", "--scope", "user");
+    expect(assertMachineConfig).toHaveBeenCalledWith(["opencode", "claude"]);
+    expect(userPluginUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ pluginNames: undefined })
+    );
+  });
+
+  it("checks no tools if the machine manifest does not exist", async () => {
+    await run("update", "--scope", "user");
+    expect(assertMachineConfig).toHaveBeenCalledWith([]);
+    expect(userPluginUpdate).toHaveBeenCalledOnce();
   });
 
   it("sweeps every plugin when none was named, and lists what moved", async () => {

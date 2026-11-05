@@ -5,6 +5,7 @@ import {
   UserScopeFilterUnsupportedError,
 } from "../../kernel/errors.js";
 import type { AiToolId, ToolId } from "../../kernel/tool.js";
+import { assertMachineConfigDirectorySupported } from "../../runtime/machine-config-directory.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printActivationOutcome,
@@ -48,6 +49,7 @@ async function runUserScopeSync(
   const withFiles = (toolIds ?? machine?.getInstalledToolIds() ?? []).filter((toolId) =>
     machine?.getPlugins(toolId as AiToolId).some((plugin) => plugin.scope === "user")
   ) as AiToolId[];
+  assertMachineConfigDirectorySupported(withFiles);
   const refreshed =
     withFiles.length === 0
       ? []

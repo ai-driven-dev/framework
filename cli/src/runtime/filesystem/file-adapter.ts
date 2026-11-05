@@ -1,5 +1,15 @@
 import { constants } from "node:fs";
-import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
+import {
+  access,
+  lstat,
+  mkdir,
+  readdir,
+  readFile,
+  realpath,
+  rm,
+  rmdir,
+  stat,
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import { JsonParseError } from "../../kernel/errors.js";
@@ -109,6 +119,16 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  async entryExists(path: string): Promise<boolean> {
+    try {
+      await lstat(path);
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+      throw error;
     }
   }
 

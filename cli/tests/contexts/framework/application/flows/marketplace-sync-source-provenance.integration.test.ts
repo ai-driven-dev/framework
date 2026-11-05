@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
@@ -24,7 +25,7 @@ describe("native catalogue source provenance", () => {
   async function hostPluginProofFixture(
     reading?: HostPluginRegistryReading,
     options: {
-      toolId?: "claude" | "codex";
+      toolId?: "claude" | "codex" | "copilot";
       catalogue?: HostMarketplaceRegistryReading;
       marketplaceScope?: "project" | "user";
       plugin?: boolean;
@@ -59,7 +60,7 @@ describe("native catalogue source provenance", () => {
       })
     );
     const fs = new InMemoryFileAdapter({
-      [`${builtDir}/${toolId === "codex" ? ".agents/plugins" : ".claude-plugin"}/marketplace.json`]:
+      [`${builtDir}/${toolId === "codex" ? ".agents/plugins" : toolId === "copilot" ? ".plugin" : ".claude-plugin"}/marketplace.json`]:
         JSON.stringify({
           name: "same-name",
           plugins: [{ name: "test-plugin" }],
@@ -91,7 +92,7 @@ describe("native catalogue source provenance", () => {
           toolId,
           new FakeNativeMarketplaceSourceReader(
             activator,
-            toolId === "codex" ? "effective-list" : "registry",
+            toolId === "claude" ? "registry" : "effective-list",
             (path) => (path === builtDir ? "same-name" : undefined),
             new Map()
           ),
@@ -100,6 +101,166 @@ describe("native catalogue source provenance", () => {
     );
     return { sync, fs, activator, projectRepo, machineRepo };
   }
+
+  it("refreshes only an owned Codex plugin after an explicit framework release update", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs });
+    await f.sync.execute({ projectRoot: "/A" });
+    refs.set("test-plugin@same-name", { enabled: true });
+    refs.set("foreign-plugin@another-catalogue", { enabled: true });
+    await f.sync.execute({ projectRoot: "/A" });
+    expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
+    await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "codex", pluginName: "test-plugin" }],
+    });
+    expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name", "test-plugin@same-name"]);
+  });
+
+  it("does not refresh an owned Codex plugin when its catalogue has a foreign ref", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs });
+    await f.sync.execute({ projectRoot: "/A" });
+    refs.set("test-plugin@same-name", { enabled: true });
+    refs.set("foreign-plugin@same-name", { enabled: true });
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "codex", pluginName: "test-plugin" }],
+    });
+    expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
+    expect(result.warnings.length + result.errors.length).toBeGreaterThan(0);
+  });
+
+  it("does not refresh a user-scoped plugin excluded from the project upgrade", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs });
+    await f.sync.execute({ projectRoot: "/A" });
+    const project = f.projectRepo.getCurrent();
+    project?.addPlugin(
+      "codex",
+      InstalledPlugin.fromMetadata(
+        "global-plugin",
+        "1.0.0",
+        { kind: "local", path: "/global" },
+        true,
+        "user",
+        "alias"
+      )
+    );
+    const machine = f.machineRepo.getCurrent();
+    const existing = machine?.getNativeRegistrations("codex");
+    if (!machine || !existing) throw new Error("missing native claim");
+    machine.setNativeRegistrations("codex", {
+      ...existing,
+      pluginClaims: [
+        ...(existing.pluginClaims ?? []),
+        { ref: "global-plugin@same-name", dependents: [] },
+      ],
+    });
+    refs.set("test-plugin@same-name", { enabled: true });
+    refs.set("global-plugin@same-name", { enabled: true });
+    await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "codex", pluginName: "test-plugin" }],
+    });
+    expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name", "test-plugin@same-name"]);
+    expect(
+      f.machineRepo
+        .getCurrent()
+        ?.getNativeRegistrations("codex")
+        ?.pluginClaims?.find((claim) => claim.ref === "global-plugin@same-name")?.dependents
+    ).toEqual([]);
+  });
+
+  it("does not activate a disabled user-scoped plugin excluded from the project upgrade", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs });
+    await f.sync.execute({ projectRoot: "/A" });
+    f.projectRepo
+      .getCurrent()
+      ?.addPlugin(
+        "codex",
+        InstalledPlugin.fromMetadata(
+          "global-plugin",
+          "1.0.0",
+          { kind: "local", path: "/global" },
+          true,
+          "user",
+          "alias"
+        )
+      );
+    const machine = f.machineRepo.getCurrent();
+    const existing = machine?.getNativeRegistrations("codex");
+    if (!machine || !existing) throw new Error("missing native claim");
+    machine.setNativeRegistrations("codex", {
+      ...existing,
+      pluginClaims: [
+        ...(existing.pluginClaims ?? []),
+        { ref: "global-plugin@same-name", dependents: [] },
+      ],
+    });
+    refs.set("test-plugin@same-name", { enabled: true });
+    refs.set("global-plugin@same-name", { enabled: false });
+    const project = f.projectRepo.getCurrent();
+    const native = project?.getNativeRegistrations("codex");
+    if (!project || !native) throw new Error("missing project registration");
+    project.setNativeRegistrations("codex", {
+      ...native,
+      pluginRefs: [...native.pluginRefs, "global-plugin@same-name"],
+    });
+    await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "codex", pluginName: "test-plugin" }],
+    });
+    expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name", "test-plugin@same-name"]);
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toContain(
+      "global-plugin@same-name"
+    );
+  });
+
+  it("does not add an already-enabled global Copilot plugin to project settings during an upgrade", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs }, { toolId: "copilot" });
+    await f.sync.execute({ projectRoot: "/A" });
+    const project = f.projectRepo.getCurrent();
+    project?.addPlugin(
+      "copilot",
+      InstalledPlugin.fromMetadata(
+        "global-plugin",
+        "1.0.0",
+        { kind: "local", path: "/global" },
+        true,
+        "user",
+        "alias"
+      )
+    );
+    const machine = f.machineRepo.getCurrent();
+    const existing = machine?.getNativeRegistrations("copilot");
+    if (!machine || !existing) throw new Error("missing native claim");
+    machine.setNativeRegistrations("copilot", {
+      ...existing,
+      pluginClaims: [
+        ...(existing.pluginClaims ?? []),
+        { ref: "global-plugin@same-name", dependents: [] },
+      ],
+    });
+    refs.set("test-plugin@same-name", { enabled: true });
+    refs.set("global-plugin@same-name", { enabled: true });
+    await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "copilot", pluginName: "test-plugin" }],
+    });
+    const settings = JSON.parse(
+      await f.fs.readFile(resolve("/A", ".github/copilot/settings.json"))
+    );
+    expect(settings.enabledPlugins).toEqual({ "test-plugin@same-name": true });
+    expect(
+      f.machineRepo
+        .getCurrent()
+        ?.getNativeRegistrations("copilot")
+        ?.pluginClaims?.find((claim) => claim.ref === "global-plugin@same-name")?.dependents
+    ).toEqual([]);
+  });
 
   it.each(["project", "user"] as const)(
     "refuses a %s-scope Claude catalogue if its registry becomes unreadable after the source check",
@@ -537,7 +698,7 @@ describe("native catalogue source provenance", () => {
           plugins: [{ name: "test-plugin" }],
         }),
       });
-      const settingsPath = `${projectRoot}/.github/copilot/settings.json`;
+      const settingsPath = resolve(projectRoot, ".github/copilot/settings.json");
       const foreignSettings = JSON.stringify({
         enabledPlugins: { "foreign@foreign-catalog": true },
         extraKnownMarketplaces: { "foreign-catalog": { source: "github" } },

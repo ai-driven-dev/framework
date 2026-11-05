@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -40,6 +41,58 @@ function manifest(): Manifest {
   result.addTool("claude", "1.0.0", []);
   return result;
 }
+
+describe("Kilo user plugin TUI removal", () => {
+  function fixture(config: string) {
+    const fs = new InMemoryFileAdapter();
+    const path = join(process.env.HOME || homedir(), ".config/kilo/tui.jsonc");
+    fs.setFile(path, config);
+    const machine = Manifest.create();
+    machine.addTool("kilo", "1.0.0", []);
+    machine.addPlugin(
+      "kilo",
+      plugin({ name: "aidd-maintenance" }).withTuiPlugin({
+        config: "tui.jsonc",
+        entry: "./hooks/aidd-maintenance/kilo-tui.js",
+      })
+    );
+    const repo = new InMemoryManifestRepository(machine);
+    const useCase = new PluginRemoveUseCase(
+      fs,
+      new InMemoryManifestRepository(Manifest.create()),
+      new CapturingLogger(),
+      new Map(),
+      new Map(),
+      undefined,
+      undefined,
+      repo
+    );
+    return { fs, path, repo, useCase };
+  }
+  const options = {
+    pluginName: "aidd-maintenance",
+    toolIds: ["kilo"] as const,
+    projectRoot: ROOT,
+    scope: "user" as const,
+  };
+
+  it("removes its TUI entry while retaining the other settings", async () => {
+    const f = fixture('{"plugin":["other", "./hooks/aidd-maintenance/kilo-tui.js"]}');
+    await f.useCase.execute({ ...options, toolIds: [...options.toolIds] });
+    expect(await f.fs.readFile(f.path)).toContain("other");
+    expect(await f.fs.readFile(f.path)).not.toContain("./hooks/aidd-maintenance/kilo-tui.js");
+    expect(f.repo.getCurrent()?.getPlugins("kilo")).toEqual([]);
+  });
+
+  it("retains the claim when the TUI entry no longer matches", async () => {
+    const f = fixture('{"plugin":["other"]}');
+    await expect(f.useCase.execute({ ...options, toolIds: [...options.toolIds] })).rejects.toThrow(
+      /tracked entry changed/
+    );
+    expect(f.repo.getCurrent()?.getPlugins("kilo")).toHaveLength(1);
+    expect(f.repo.saveCount).toBe(0);
+  });
+});
 
 describe("plugin removal selects the recorded owner, name and tool", () => {
   it("detaches only the selected user plugin's project claim while preserving global files", async () => {

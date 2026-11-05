@@ -108,7 +108,8 @@ export async function materializeViaTranslator(
     plugin.mcpEntries,
     false,
     plugin.projectHooks,
-    hooksGuard
+    hooksGuard,
+    plugin.tuiPlugin
   );
   return written ?? 0;
 }

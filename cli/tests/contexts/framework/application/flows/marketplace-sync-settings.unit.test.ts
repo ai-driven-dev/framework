@@ -8,6 +8,7 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
 import type { PluginSource } from "../../../../../src/kernel/source.js";
@@ -52,6 +53,8 @@ interface SyncSetup {
   /** Explicitly prove the catalogue is already AIDD-owned before testing exact host refresh. */
   readonly ownedCatalog?: true;
   readonly marketplaceSource?: (name: string) => PluginSource;
+  readonly userPlugin?: boolean;
+  readonly releaseUpdate?: boolean;
 }
 
 class ActivatorFailingAtUpgrade extends FakeNativePluginActivator {
@@ -125,6 +128,18 @@ async function sync(setup: SyncSetup = {}) {
     manifest,
     names[0]
   );
+  if (setup.userPlugin)
+    manifest.addPlugin(
+      "claude",
+      InstalledPlugin.fromMetadata(
+        "global-plugin",
+        "1.0.0",
+        { kind: "local", path: "/global" },
+        true,
+        "user",
+        names[0]
+      )
+    );
   await manifestRepo.save(manifest);
   for (const name of names) {
     await registry.save(
@@ -204,7 +219,12 @@ async function sync(setup: SyncSetup = {}) {
       ],
     ])
   );
-  const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+  const result = await useCase.execute({
+    projectRoot: PROJECT_ROOT,
+    ...(setup.releaseUpdate
+      ? { refreshOwnedPlugins: [{ toolId: "claude", pluginName: "aidd-context" }] }
+      : {}),
+  });
   const written = (await fs.fileExists(SHARED_SETTINGS))
     ? (JSON.parse(await fs.readFile(SHARED_SETTINGS)) as Record<string, unknown>)
     : undefined;
@@ -214,6 +234,18 @@ async function sync(setup: SyncSetup = {}) {
 /** This flow writes into a file it does not own: whatever a person put there survives, and a
  * trailing comma they left behind must not take the whole sync down with it. */
 describe("the settings file a user also edits", () => {
+  it("does not add a global plugin to project settings during a project release update", async () => {
+    const { written } = await sync({
+      userPlugin: true,
+      releaseUpdate: true,
+      enablesPlugins: true,
+      settings: JSON.stringify({ enabledPlugins: { "another@outside": false } }),
+    });
+    expect(written?.enabledPlugins).toEqual({
+      "another@outside": false,
+      "aidd-context@aidd-framework": true,
+    });
+  });
   it("writes the enabled plugin into a file that did not exist", async () => {
     const { written } = await sync();
 

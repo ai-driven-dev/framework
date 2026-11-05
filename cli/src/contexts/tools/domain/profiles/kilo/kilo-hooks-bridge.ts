@@ -26,13 +26,16 @@ interface ParsedHookCall {
   readonly matcher?: string;
 }
 
-const COMMAND_PATTERN = /^node\s+\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/(\S+)(.*)$/;
+// Read the canonical Claude-format manifest before translating it to Kilo.
+const COMMAND_PATTERN =
+  /^node\s+(?:"\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/([^"]+)"|\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/(\S+))(.*)$/;
 
 function parseCommand(command: string | undefined): ParsedHookCall | null {
   if (typeof command !== "string") return null;
   const match = COMMAND_PATTERN.exec(command.trim());
   if (match === null) return null;
-  const [, script, rest] = match;
+  const [, quotedScript, bareScript, rest] = match;
+  const script = quotedScript ?? bareScript;
   return { script, args: rest.trim().length === 0 ? [] : rest.trim().split(/\s+/) };
 }
 
@@ -132,7 +135,7 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-function answerOf(script, args, payload, directory) {
+function answerOf(script, args, payload, directory, systemMessage = false) {
   return new Promise((resolve) => {
     let stdout = "";
     let stderr = "";
@@ -153,7 +156,12 @@ function answerOf(script, args, payload, directory) {
         fail("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
         return;
       }
-      resolve(answerFrom(code, stdout, stderr));
+      if (systemMessage) {
+        try { resolve(String(JSON.parse(stdout)?.systemMessage ?? "").trim()); }
+        catch { resolve(""); }
+      } else {
+        resolve(answerFrom(code, stdout, stderr));
+      }
     });
     child.stdin.on("error", () => {});
     child.stdin.end(JSON.stringify(payload));
@@ -166,9 +174,10 @@ function reportHookFailure(script, error) {
 
 function sessionStartCallsFor(event, directory) {
   if (event?.type !== "session.created") return [];
-  return SESSION_START.map((hook) => ({
+  return SESSION_START${plugin === "aidd-maintenance" ? '.filter((hook) => hook.matcher !== "startup")' : ""}.map((hook) => ({
     script: hook.script,
     args: hook.args,
+    ...(hook.matcher === "startup" ? { notify: true } : {}),
     payload: { hook_event_name: "SessionStart", session_id: event.properties?.sessionID ?? null, cwd: event.properties?.info?.directory ?? directory },
   }));
 }
@@ -206,7 +215,16 @@ const ${identifier} = async ({ directory, client }) => {
         }
       }
       for (const call of calls) {
-        runHook(call.script, call.args, call.payload, call.payload.cwd);
+        if (call.notify) {
+          const message = await answerOf(call.script, call.args, { ...call.payload, tool: "kilo" }, call.payload.cwd, true);
+          if (message && typeof client?.tui?.showToast === "function") {
+            await client.tui.showToast({ body: { message, variant: "info" } });
+          } else if (message) {
+            console.warn("[aidd] Kilo cannot display the startup message: " + message);
+          }
+        } else {
+          runHook(call.script, call.args, call.payload, call.payload.cwd);
+        }
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

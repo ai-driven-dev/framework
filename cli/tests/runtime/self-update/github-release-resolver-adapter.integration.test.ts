@@ -125,6 +125,45 @@ describe("GitHubReleaseResolverAdapter", () => {
     });
   });
 
+  describe("isPublishedRelease", () => {
+    it("checks the selected release by tag without relying on a paginated list", async () => {
+      const http = makeHttp({ tag_name: "v5.13.0", draft: false });
+      const adapter = new GitHubReleaseResolverAdapter(http, { resolve: async () => "token" });
+
+      expect(await adapter.isPublishedRelease(REPO, "v5.13.0")).toBe(true);
+      expect(http.get).toHaveBeenCalledWith(
+        "https://api.github.com/repos/owner/repo/releases/tags/v5.13.0",
+        { token: "token" }
+      );
+    });
+
+    it.each([
+      { tag_name: "v5.13.0", draft: true },
+      { tag_name: "v5.12.0", draft: false },
+      { tag_name: "v5.13.0" },
+      null,
+    ])("refuses an unverified or draft release: %j", async (body) => {
+      const adapter = new GitHubReleaseResolverAdapter(makeHttp(body));
+      expect(await adapter.isPublishedRelease(REPO, "v5.13.0")).toBe(false);
+    });
+
+    it("reports a missing release without claiming it is published", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttpThrowing(new HttpNotFoundError("missing"))
+      );
+      expect(await adapter.isPublishedRelease(REPO, "v5.13.0")).toBe(false);
+    });
+
+    it("surfaces rate limits instead of treating them as a missing release", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttpThrowing(new AuthenticationError("HTTP 403"))
+      );
+      await expect(adapter.isPublishedRelease(REPO, "v5.13.0")).rejects.toThrow(
+        CatalogFetchAuthError
+      );
+    });
+  });
+
   describe("isRepoPublic", () => {
     it("returns true when the unauthenticated repo request succeeds (public)", async () => {
       const http = makeHttp({ full_name: REPO, private: false });

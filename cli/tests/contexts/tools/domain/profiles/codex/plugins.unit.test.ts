@@ -10,7 +10,7 @@ describe("codex plugins", () => {
       // escape. `pluginCacheDir` is `expect.any(Function)`, since a function matches no literal.
       expect(activation).toEqual({
         binary: "codex",
-        upgradeVerb: "upgrade",
+        refreshOwnedOnReleaseUpdate: true,
         enableVerb: "add",
         disableVerb: "remove",
         pluginCacheDir: expect.any(Function),

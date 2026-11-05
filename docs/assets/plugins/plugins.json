@@ -43,5 +43,10 @@
     "status": "preview",
     "description": "Acceptance QA with video evidence",
     "emoji": "🎬"
+  },
+  "aidd-maintenance": {
+    "status": "preview",
+    "description": "Framework version and updates",
+    "emoji": "🔄"
   }
 }

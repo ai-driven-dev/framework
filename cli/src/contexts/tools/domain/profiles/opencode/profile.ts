@@ -33,6 +33,7 @@ import {
   OPENCODE_FLAT_HOOKS_DIR,
   OPENCODE_HOOKS_DIR,
   OPENCODE_PLUGIN_ENTRY_BASENAME,
+  opencodeFlatHooksPath,
   opencodeGlobalFilePath,
 } from "./opencode-paths.js";
 
@@ -113,6 +114,7 @@ export const opencode: AiTool<
       },
       acceptsHooks: true,
       flatHooksDir: OPENCODE_HOOKS_DIR,
+      flatHooksPath: opencodeFlatHooksPath,
       flatHooksLoaderEntry: {
         dir: OPENCODE_FLAT_HOOKS_DIR,
         baseName: OPENCODE_PLUGIN_ENTRY_BASENAME,

@@ -7,9 +7,9 @@
  *
  * Only three hook events are replayed:
  *
- * - `SessionStart` runs once per server/directory at factory initialization and requires
- *   idempotent commands. V1 did not deliver `session.created` to this event hook;
- *   the V2 adapter delivers it.
+ * - Unmatched `SessionStart` runs once per server/directory at initialization and requires
+ *   idempotent commands. Hooks matching `startup` run for each delivered session.created.
+ *   V1 did not always deliver this event; V2 does.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
  * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
  *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
@@ -48,16 +48,16 @@ interface ClaudeHooksShape {
   readonly hooks?: Record<string, readonly ClaudeMatcherGroup[]>;
 }
 
-// Only a command this generator can actually replay: `node ${CLAUDE_PLUGIN_ROOT}/hooks/<rel>
-// [args...]`. Anything else is a shape only Claude's own settings.json target ever runs, and is
-// dropped here rather than guessed at.
-const COMMAND_PATTERN = /^node\s+\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/(\S+)(.*)$/;
+// Read replayable commands from the canonical Claude-format manifest.
+const COMMAND_PATTERN =
+  /^node\s+(?:"\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/([^"]+)"|\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/(\S+))(.*)$/;
 
 function parseCommand(command: string | undefined): ParsedHookCall | null {
   if (typeof command !== "string") return null;
   const match = COMMAND_PATTERN.exec(command.trim());
   if (!match) return null;
-  const [, script, rest] = match;
+  const [, quotedScript, bareScript, rest] = match;
+  const script = quotedScript ?? bareScript;
   const args = rest.trim().length > 0 ? rest.trim().split(/\s+/) : [];
   return { script, args };
 }
@@ -74,10 +74,7 @@ function parseGroups(groups: readonly ClaudeMatcherGroup[] | undefined): ParsedP
   return calls;
 }
 
-/** A plugin's raw hooks.json — still carrying `${CLAUDE_PLUGIN_ROOT}`, since the generated
- * bridge resolves its scripts from its own `import.meta.url` and the outDir-relative rewrite
- * every other flat target needs buys this one nothing — reduced to the three mapped events.
- * Exported for the generator's own unit test. */
+/** Read source hooks; the generated bridge resolves scripts beside itself. */
 export function parseHooksJsonForBridge(rawHooksJson: string): OpencodeHookTable {
   const parsed = JSON.parse(rawHooksJson) as ClaudeHooksShape;
   const hooks = parsed.hooks ?? {};
@@ -123,6 +120,7 @@ export function generateOpencodeHooksBridge(rawHooksJson: string, plugin: string
 // the mapping this generator applies and the measurements behind it.
 import { setupOpencodeEvents } from "../hooks/opencode-events.js";
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // Never process.execPath: OpenCode ships as its own standalone binary - that path names \`opencode\`
@@ -240,11 +238,10 @@ function postToolUseCallsFor(call, directory) {
 export const ${ident} = async (input) => {
   // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
   const continued = new Set();
-  // SessionStart's own approximation (module doc comment above): fired once here, never
-  // per session. Silent on purpose: a memory refresh
-  // that breaks OpenCode's own startup is worse than one that never ran.
+  const started = new Set();
+  // Existing unmatched hooks are intentionally still run at initialization.
   try {
-    for (const hook of SESSION_START) {
+    for (const hook of SESSION_START.filter((hook) => hook.matcher !== "startup")) {
       runHook(
         hook.script,
         hook.args,
@@ -258,7 +255,25 @@ export const ${ident} = async (input) => {
   return {
     event: async ({ event }) => {
       try {
-        const directory = event?.properties?.directory ?? input.directory;
+        const directory = event?.properties?.info?.directory ?? event?.properties?.directory ?? input.directory;
+        const id = event?.properties?.sessionID ?? event?.properties?.info?.id;
+        if (event?.type === "session.deleted") started.delete(id);
+        if (!input.skipStartup && event?.type === "session.created" && typeof id === "string" && !started.has(id)) {
+          started.add(id);
+          for (const hook of SESSION_START.filter((hook) => hook.matcher === "startup")) {
+            const { code, stdout } = await runCapture(hook.script, hook.args,
+              { hook_event_name: "SessionStart", session_id: id, cwd: directory, tool: "opencode" }, directory);
+            let message = "";
+            if (code === 0) {
+              try { message = String(JSON.parse(stdout)?.systemMessage ?? "").trim(); } catch { message = ""; }
+            }
+            if (message && typeof input.client?.tui?.showToast === "function") {
+              await input.client.tui.showToast({ body: { message, variant: "info" } });
+            } else if (message) {
+              console.warn("[aidd] OpenCode cannot display the startup message: " + message);
+            }
+          }
+        }
         for (const call of stopCallsFor(event, directory)) {
           const sessionId = call.payload.session_id;
           const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
@@ -296,7 +311,10 @@ ${ident}.postToolUseCallsFor = postToolUseCallsFor;
 export default {
   id: ${JSON.stringify(`${plugin}-hooks`)},
   server: ${ident},
-  setup: (ctx) => setupOpencodeEvents(ctx, ${ident}),
+  setup: (ctx) => setupOpencodeEvents(ctx, (input) => ${ident}({
+    ...input,
+    skipStartup: existsSync(fileURLToPath(new URL("../plugins/${plugin}-tui/tui.js", import.meta.url))),
+  })),
 };
 `;
 }

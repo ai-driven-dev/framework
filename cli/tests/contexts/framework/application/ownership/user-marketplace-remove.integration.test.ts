@@ -1,6 +1,7 @@
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -28,6 +29,69 @@ const ALIAS = "project-alias";
 const HOST = "real-catalog";
 const REF = `test-plugin@${HOST}`;
 const OPTIONS = { name: ALIAS, projectRoot: "/A", autoConfirm: true, scope: "user" as const };
+
+describe("Kilo TUI during user marketplace removal", () => {
+  async function fixture(config: string) {
+    const fs = new InMemoryFileAdapter();
+    const path = join(process.env.HOME || homedir(), ".config/kilo/tui.jsonc");
+    fs.setFile(path, config);
+    const machine = Manifest.create();
+    machine.addTool("kilo", "1.0.0", []);
+    machine.addPlugin(
+      "kilo",
+      InstalledPlugin.fromMetadata(
+        "aidd-maintenance",
+        "1.0.0",
+        { kind: "local", path: "/source" },
+        false,
+        "user",
+        ALIAS
+      ).withTuiPlugin({
+        config: "tui.jsonc",
+        entry: "./hooks/aidd-maintenance/kilo-tui.js",
+      })
+    );
+    const repo = new InMemoryManifestRepository(machine);
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      "/A",
+      Marketplace.create({
+        name: ALIAS,
+        source: { kind: "local", path: "/source" },
+        scope: "user",
+        addedAt: "2026-01-01",
+      })
+    );
+    return {
+      fs,
+      path,
+      repo,
+      registry,
+      useCase: new UserMarketplaceRemoveUseCase(
+        fs,
+        repo,
+        registry,
+        new NativeHostRegistrationGate(new Map(), new Map())
+      ),
+    };
+  }
+
+  it("removes only its registered entry", async () => {
+    const f = await fixture('{"plugin":["other", "./hooks/aidd-maintenance/kilo-tui.js"]}');
+    await f.useCase.execute(OPTIONS);
+    expect(await f.fs.readFile(f.path)).toContain("other");
+    expect(await f.fs.readFile(f.path)).not.toContain("./hooks/aidd-maintenance/kilo-tui.js");
+    expect(f.repo.getCurrent()?.getPlugins("kilo")).toEqual([]);
+  });
+
+  it("retains the source and claims when the registered entry is unprovable", async () => {
+    const f = await fixture('{"plugin":["other"]}');
+    await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/tracked entry changed/);
+    expect(f.repo.getCurrent()?.getPlugins("kilo")).toHaveLength(1);
+    expect((await f.registry.list("/A")).some((entry) => entry.name === ALIAS)).toBe(true);
+    expect(f.repo.saveCount).toBe(0);
+  });
+});
 
 function proofFor(): NativeMarketplaceSource {
   return {

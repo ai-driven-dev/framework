@@ -7,6 +7,8 @@ export interface FileReader {
    * platform, so Windows' native separator must never reach a caller. */
   listDirectory(path: string): Promise<string[]>;
   fileExists(path: string): Promise<boolean>;
+  /** Whether a directory entry exists, including a dangling symbolic link; required for restoration. */
+  entryExists?(path: string): Promise<boolean>;
   readFileHash(path: string): Promise<FileHash>;
   listFilesRecursive(dirPath: string): Promise<string[]>;
 

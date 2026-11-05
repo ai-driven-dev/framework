@@ -133,6 +133,85 @@ describe("PluginAddUseCase", () => {
   });
 
   describe("github marketplace plugin", () => {
+    it.each(["codex", "opencode"] as const)(
+      "refreshes the source before a verified %s installation",
+      async (toolId) => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, toolId);
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GITHUB_SOURCE, PLUGIN_FIXTURE);
+        const registry = new InMemoryMarketplaceRegistry();
+        await saveMarketplace(registry, "aidd-framework", {
+          kind: "github",
+          repo: "ai-driven-dev/framework",
+        });
+        const fetch = vi.spyOn(deps.pluginFetcher, "fetch");
+
+        await buildAddUseCase(deps, registry).execute({
+          source: GITHUB_SOURCE,
+          toolIds: [toolId],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          requiredVersion: "1.0.0",
+          pluginMetadata: { name: "sample-plugin", version: "1.0.0", strict: false },
+          freshSource: true,
+        });
+
+        expect(fetch).toHaveBeenCalledWith(GITHUB_SOURCE, expect.any(String), {
+          forceRefresh: true,
+        });
+        expect(pluginNames(deps, toolId)).toContain("sample-plugin");
+      }
+    );
+
+    it("refuses a native plugin whose version differs from the requested version", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initAndInstall(deps, PROJECT_ROOT, "codex");
+      const registry = new InMemoryMarketplaceRegistry();
+      await saveMarketplace(registry, "aidd-framework", {
+        kind: "github",
+        repo: "ai-driven-dev/framework",
+      });
+
+      await expect(
+        buildAddUseCase(deps, registry).execute({
+          source: GITHUB_SOURCE,
+          toolIds: ["codex"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          requiredVersion: "2.0.0",
+          pluginMetadata: { name: "sample-plugin", version: "1.0.0", strict: false },
+        })
+      ).rejects.toThrow(/version/i);
+      expect(pluginNames(deps, "codex")).toEqual([]);
+    });
+
+    it("checks the actual native distribution even when the catalogue claims the requested version", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initAndInstall(deps, PROJECT_ROOT, "codex");
+      await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+      deps.pluginFetcher.register(GITHUB_SOURCE, PLUGIN_FIXTURE);
+      const registry = new InMemoryMarketplaceRegistry();
+      await saveMarketplace(registry, "aidd-framework", {
+        kind: "github",
+        repo: "ai-driven-dev/framework",
+      });
+
+      await expect(
+        buildAddUseCase(deps, registry).execute({
+          source: GITHUB_SOURCE,
+          toolIds: ["codex"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          requiredVersion: "2.0.0",
+          pluginMetadata: { name: "sample-plugin", version: "2.0.0", strict: false },
+        })
+      ).rejects.toThrow(/version/i);
+      expect(pluginNames(deps, "codex")).toEqual([]);
+    });
     it("skips fetch and registers plugin reference without materializing files", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, "claude");
@@ -324,6 +403,46 @@ describe("PluginAddUseCase", () => {
     });
 
     describe("opencode", () => {
+      it("installs project files independently when the same plugin exists globally", async () => {
+        const deps = await buildUnitDeps(PROJECT_ROOT);
+        await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        const machine = Manifest.create();
+        machine.addTool("opencode", "1.0.0", []);
+        machine.addPlugin(
+          "opencode",
+          InstalledPlugin.fromMetadata(
+            "sample-plugin",
+            "1.0.0",
+            GIT_SUBDIR_SOURCE,
+            false,
+            "user",
+            "aidd-framework"
+          )
+        );
+        await deps.userManifestRepo.save(machine);
+        deps.fs.setFile(
+          "/built/opencode/.opencode/skills/sample-plugin/demo/SKILL.md",
+          "# project skill"
+        );
+        await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
+        deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
+        const useCase = buildAddUseCase(deps, await makeGithubRegistry(PROJECT_ROOT));
+        await useCase.execute({
+          source: GIT_SUBDIR_SOURCE,
+          toolIds: ["opencode"],
+          projectRoot: PROJECT_ROOT,
+          marketplace: "aidd-framework",
+          interactive: false,
+          pluginMetadata: PLUGIN_METADATA,
+        });
+        expect(
+          deps.fs.getFile(join(PROJECT_ROOT, ".opencode/skills/sample-plugin/demo/SKILL.md"))
+        ).toBe("# project skill");
+        expect(
+          deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0]?.files.size
+        ).toBeGreaterThan(0);
+      });
+
       it("fetches and materializes flat files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
         await initAndInstall(deps, PROJECT_ROOT, "opencode");

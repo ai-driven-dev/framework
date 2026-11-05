@@ -58,7 +58,7 @@ flowchart TD
 - The umbrella stays a draft until every asset is attached; its publication is the event n8n listens to.
 - A failed video build keeps the release a draft, so nothing is announced without its video. A failed YouTube upload does not stop Discord and Skool: they post without the video link. Their text is the video's programme, one section per theme, so the announcements say what the video shows.
 
-Config: `release-please-config.json`, eleven packages. Manifest: `.release-please-manifest.json`.
+Config: `release-please-config.json`, twelve packages. Manifest: `.release-please-manifest.json`.
 
 ## Gotchas
 

@@ -6,6 +6,7 @@ import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
@@ -31,6 +32,58 @@ const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const HOME = "/fake-home";
 const CLAUDE_CACHE = join(HOME, ".claude", "plugins", "cache");
 const CODEX_CACHE = join(HOME, ".codex", "plugins", "cache");
+
+describe("user clean of Kilo maintenance TUI registration", () => {
+  function fixture(config: string) {
+    const fs = new RecordingFileAdapter();
+    const path = join(HOME, ".config/kilo/tui.jsonc");
+    fs.setFile(path, config);
+    const manifest = Manifest.create();
+    manifest.addTool("kilo", "1.0.0", []);
+    manifest.addPlugin(
+      "kilo",
+      InstalledPlugin.fromMetadata(
+        "aidd-maintenance",
+        "1.0.0",
+        { kind: "local", path: "/source" },
+        false,
+        "user"
+      ).withTuiPlugin({ config: "tui.jsonc", entry: "./hooks/aidd-maintenance/kilo-tui.js" })
+    );
+    const repo = new InMemoryManifestRepository(manifest);
+    const useCase = new CleanUserScopeUseCase(
+      fs,
+      repo,
+      new CapturingLogger(),
+      new InMemoryMarketplaceRegistry(),
+      () => USER_CONFIG_DIR,
+      new Map(),
+      new Map(),
+      () => HOME
+    );
+    return { fs, path, repo, useCase };
+  }
+
+  it("removes only the owned entry and preserves other config", async () => {
+    const f = fixture(
+      '{\n // comment\n "plugin": ["other", "./hooks/aidd-maintenance/kilo-tui.js"]\n}\n'
+    );
+    await f.useCase.execute({ projectRoot: "/project", force: true });
+    const config = await f.fs.readFile(f.path);
+    expect(config).toContain("// comment");
+    expect(config).toContain("other");
+    expect(config).not.toContain("./hooks/aidd-maintenance/kilo-tui.js");
+  });
+
+  it("refuses an unprovable TUI entry before any purge", async () => {
+    const f = fixture('{"plugin":["other"]}');
+    await expect(f.useCase.execute({ projectRoot: "/project", force: true })).rejects.toThrow(
+      /tracked entry changed/
+    );
+    expect(f.fs.order).toEqual([]);
+    expect(f.repo.getCurrent()).not.toBeNull();
+  });
+});
 const WHITELIST_PURGE_MESSAGES = [
   `user scope: cache/built purged: ${join(USER_CONFIG_DIR, "cache", "built")}`,
   `user scope: cache/marketplaces/aidd-framework purged: ${join(USER_CONFIG_DIR, "cache", "marketplaces", FRAMEWORK_MARKETPLACE_NAME)}`,

@@ -1,0 +1,18 @@
+---
+name: 01-update
+description: Update an installed AI-Driven Development framework and its plugins. Use when asked to upgrade AIDD, review an available release, or bring an installed framework up to date. Not for updating unrelated project dependencies.
+argument-hint: release | project | global
+---
+
+# Update
+
+## Rules
+
+- Inspect `.aidd/manifest.json` and `.aidd/marketplaces.json` in the current project, then `manifest.json` and `marketplaces.json` in `AIDD_USER_CONFIG_DIR` or `${XDG_CONFIG_HOME:-~/.config}/aidd`. Inventory each AIDD plugin's tool, scope, source and version. Inspect native marketplaces separately when the CLI does not own them. Never print credentials.
+- Compare only with the configured source: stable stays stable, prereleases stay on their channel. A local directory, moving branch, unknown version or unavailable network cannot establish a release update; report it and leave it unchanged. For a local Git checkout, a diff against a local release tag describes that checkout only; verify the tag against the official repository before treating it as the official release, and include untracked files. Do not claim that checkout content proves which plugin files a host loaded.
+- Show installed and available versions, release title and link, affected tools and scope. Ask the user to select a release before changing anything. For shared marketplaces, show known affected projects, note that others may exist, and ask before changing the shared source. Offer global installations separately and show known dependent projects.
+- Preserve each plugin's tool, scope and installation method; do not overwrite modified files, force a source change or approve a host prompt for the user.
+- For CLI-managed project plugins, after selection use `aidd framework update --release <tag> --yes`, with `--allow-shared` only after approval. Never use `setup --plugins all` as an update. If the CLI is missing, explain how to restore it rather than treating its installation as native.
+- For CLI-managed global OpenCode and Kilo plugins pinned to an official release, after separate approval use `aidd framework update --release <tag> --scope user --yes`. The command leaves native registrations and the shared marketplace unchanged; handle skipped native installations separately. For other global plugins, including Cursor, use `aidd plugin update --scope user` only when the selected source already points to the chosen release; otherwise report the path as unsupported without changing the source manually.
+- For native installations, use only the owning tool's named marketplace and exact installed AIDD plugin references. Recheck the installed help and [native commands](references/native-commands.md). If the host cannot select the requested pinned release, report the limitation.
+- Re-read the installed source and version for every target. Report updated, unchanged, unavailable or failed per tool and scope, with required restart or project refresh. After a partial update, inspect the marketplace and plugin manifests, identify remaining targets, and ask before retrying the selected release; never force an overwrite. Distinguish catalogue, CLI and plugin versions. A source or catalogue refresh alone does not verify plugin updates, skipped components, session reload or removal of files absent from the new release; report any unverified result.

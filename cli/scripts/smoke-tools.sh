@@ -22,7 +22,7 @@ IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
 ALL_COMMANDS=(
-  "setup" "doctor" "sync" "translate" "update" "clean"
+  "setup" "doctor" "sync" "translate" "update" "clean" "run"
   "framework install" "framework update" "framework remove" "framework rules"
   "framework validate-recipes"
   "plugin remove" "plugin list" "plugin install" "plugin search" "plugin update"
@@ -232,6 +232,7 @@ if [[ "$rc" -eq 0 || "$rc" -eq 1 ]]; then mark_covered "update"; ok "update --ch
 # Compare exact file paths and contents before/after: `--dry-run` must write nothing.
 P_DRY=$(new_project)
 (cd "$P_DRY" && node "$CLI" setup --source local --path "$FRAMEWORK_FIXTURE" --ai claude --plugins none --yes >/dev/null 2>&1)
+run "run rejects unsupported tools" 1 "Supported tools" "$P_DRY" -- run unsupported
 before_dry=$(project_tree_hash "$P_DRY"); before_dry_rc=$?
 run "update --dry-run" "0|1" "" "$P_DRY" -- update --dry-run
 after_dry=$(project_tree_hash "$P_DRY"); after_dry_rc=$?

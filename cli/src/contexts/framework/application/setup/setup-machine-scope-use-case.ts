@@ -1,7 +1,8 @@
+import { dirname } from "node:path";
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import type { SetupFlow } from "../../domain/setup-flow.js";
+import { SetupFlow } from "../../domain/setup-flow.js";
 import type {
   MarketplaceSyncSettings,
   MarketplaceSyncSettingsResult,
@@ -43,6 +44,8 @@ export class SetupMachineScopeUseCase {
     flow: SetupFlow,
     source: Awaited<ReturnType<SetupMarketplaceRegistrationUseCase["resolveSourceIfNeeded"]>>
   ): Promise<SetupResult> {
+    // A machine installation has no project cache; resolve and build under its own config root.
+    flow = new SetupFlow({ ...flow, projectRoot: dirname(this.userManifestRepo.path) });
     const isNew = await this.initUserManifest();
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
     await this.registerUserScopeTools(flow);

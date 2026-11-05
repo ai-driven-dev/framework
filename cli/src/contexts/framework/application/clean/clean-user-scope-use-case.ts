@@ -22,6 +22,10 @@ import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
 } from "../ownership/native-marketplace-source-proof.js";
+import {
+  planUserKiloTuiRemoval,
+  removeUserKiloTui,
+} from "../ownership/tui/user-kilo-tui-removal.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { bestEffortNativeCall } from "../shared/best-effort-native-call.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
@@ -210,6 +214,7 @@ export class CleanUserScopeUseCase {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
+        await planUserKiloTuiRemoval(this.fs, toolId, plugin, this.homeDir());
         const safe = await userScopeFilesSafeToDelete(
           this.fs,
           this.logger,
@@ -404,6 +409,7 @@ export class CleanUserScopeUseCase {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
+        await removeUserKiloTui(this.fs, toolId, plugin, this.homeDir());
         const files = await userScopeFilesSafeToDelete(
           this.fs,
           this.logger,

@@ -5,6 +5,7 @@ import {
 } from "../../../../kernel/errors.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
+import type { PluginSourceGitSubdir } from "../../../../kernel/source.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { ResolveMarketplaceUseCase } from "../../../distribution/application/resolve-marketplace-use-case.js";
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
@@ -28,6 +29,8 @@ export interface PluginInstallFromMarketplaceOptions {
   /** When true, drop existing plugin entry before adding (idempotent setup re-runs). */
   replace?: boolean;
   requestedVersionPolicy?: RequestedVersionPolicy;
+  /** Refuse a catalogue source that changed after a release update was reviewed. */
+  expectedSource?: PluginSourceGitSubdir;
 }
 
 export interface PluginInstallFromMarketplaceResult {
@@ -81,6 +84,15 @@ export class PluginInstallFromMarketplaceUseCase implements PluginInstallFromMar
       chosen.marketplace,
       chosen.localPath
     );
+    const expected = options.expectedSource;
+    if (
+      expected &&
+      (resolvedSource.kind !== "git-subdir" ||
+        resolvedSource.url !== expected.url ||
+        resolvedSource.path !== expected.path ||
+        resolvedSource.ref !== expected.ref)
+    )
+      throw new Error(`The source of '${options.pluginName}' changed before installation.`);
     await this.pluginAddUseCase.execute({
       source: resolvedSource,
       toolIds: options.toolIds,
@@ -88,6 +100,7 @@ export class PluginInstallFromMarketplaceUseCase implements PluginInstallFromMar
       interactive: options.interactive,
       marketplace: chosen.marketplace.name,
       requiredVersion: effectiveVersion,
+      freshSource: options.expectedSource !== undefined,
       pluginMetadata: {
         name: chosen.entry.name,
         version: chosen.entry.version,

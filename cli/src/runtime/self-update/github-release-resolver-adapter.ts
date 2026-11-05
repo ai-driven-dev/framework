@@ -53,6 +53,20 @@ export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
     }
   }
 
+  /** Checks the exact published tag, even when component releases fill the first page. */
+  async isPublishedRelease(repo: string, tag: string): Promise<boolean> {
+    const url = `${GITHUB_API_BASE}/repos/${repo}/releases/tags/${encodeURIComponent(tag)}`;
+    const token = (await this.tokenProvider?.resolve()) ?? undefined;
+    try {
+      const { body } = await this.http.get(url, { token });
+      if (typeof body !== "object" || body === null || Array.isArray(body)) return false;
+      const release = body as { tag_name?: unknown; draft?: unknown };
+      return release.tag_name === tag && release.draft === false;
+    } catch (err) {
+      return this.handleError(err, url) ?? false;
+    }
+  }
+
   async isRepoPublic(repo: string): Promise<boolean> {
     // Deliberately tokenless: only a 404 unambiguously means "auth required", so any other
     // error resolves true and a rate-limited or offline public user is not sent to login.

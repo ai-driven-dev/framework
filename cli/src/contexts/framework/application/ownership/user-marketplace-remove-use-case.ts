@@ -20,6 +20,7 @@ import type {
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
 import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
+import { planUserKiloTuiRemoval, removeUserKiloTui } from "./tui/user-kilo-tui-removal.js";
 
 export class UserMarketplaceRemoveUseCase {
   constructor(
@@ -99,6 +100,7 @@ export class UserMarketplaceRemoveUseCase {
       );
     const safeFiles = await Promise.all(
       plugins.map(async ({ toolId, plugin }) => {
+        await planUserKiloTuiRemoval(this.fs, toolId, plugin, resolveHomeDir());
         const files = await userScopeFilesSafeToDelete(
           this.fs,
           { debug() {}, info() {}, warn() {} },
@@ -132,6 +134,7 @@ export class UserMarketplaceRemoveUseCase {
       activator.removeMarketplace(registration.hostName, "user");
     }
     for (const { toolId, plugin, files } of safeFiles) {
+      await removeUserKiloTui(this.fs, toolId, plugin, resolveHomeDir());
       await deletePluginFilesForTool(files, "user", toolId, options.projectRoot, this.fs, "user");
       manifest.removePlugin(toolId, plugin.name);
     }

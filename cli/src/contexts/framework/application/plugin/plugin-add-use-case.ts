@@ -23,13 +23,17 @@ import type { ReadonlySkipList } from "../../../translate/domain/plugin-translat
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
+  type KiloTuiProvenance,
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
-import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
+import {
+  assertProjectMcpEntriesRemovable,
+  assertProjectTuiUnchanged,
+} from "../ownership/project-plugin-cleanup.js";
 import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
@@ -47,6 +51,8 @@ export interface PluginAddOptions {
   interactive: boolean;
   marketplace?: string;
   requiredVersion?: string;
+  /** Re-fetch the distribution instead of trusting a previously cached copy. */
+  freshSource?: boolean;
   pluginMetadata?: { name: string; version?: string; strict: boolean };
   /** When true, drop any existing entry with the same name before adding (idempotent re-add for setup re-runs). */
   replace?: boolean;
@@ -176,17 +182,40 @@ export class PluginAddUseCase implements PluginAdd {
     options: PluginAddOptions,
     pluginMetadata: NonNullable<PluginAddOptions["pluginMetadata"]>
   ): Promise<string> {
-    if (pluginMetadata.version) return pluginMetadata.version;
-    const dist = await this.readDistribution(options.source, options.projectRoot);
-    return dist.manifest.version;
+    if (pluginMetadata.version) {
+      this.assertPluginVersionMatches(
+        pluginMetadata.name,
+        pluginMetadata.version,
+        options.requiredVersion
+      );
+      if (!options.requiredVersion) return pluginMetadata.version;
+    }
+    const distribution = await this.readDistribution(
+      options.source,
+      options.projectRoot,
+      options.freshSource
+    );
+    if (distribution.manifest.name !== pluginMetadata.name)
+      throw new Error(`Cannot verify the source of '${pluginMetadata.name}'.`);
+    this.assertPluginVersionMatches(
+      pluginMetadata.name,
+      distribution.manifest.version,
+      options.requiredVersion
+    );
+    return distribution.manifest.version;
   }
 
   private async readDistribution(
     source: PluginSource,
-    projectRoot: string
+    projectRoot: string,
+    freshSource?: boolean
   ): Promise<PluginDistribution> {
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
-    return this.distributionLoader.load(source, cacheDir);
+    return this.distributionLoader.load(
+      source,
+      cacheDir,
+      freshSource ? { forceRefresh: true } : undefined
+    );
   }
 
   private async addLocalPlugin(
@@ -198,7 +227,7 @@ export class PluginAddUseCase implements PluginAdd {
     machine: Manifest
   ): Promise<void> {
     const { marketplace, requiredVersion, replace, pluginMetadata } = options;
-    const read = await this.readDistribution(source, projectRoot);
+    const read = await this.readDistribution(source, projectRoot, options.freshSource);
     const dist = pluginMetadata === undefined ? read : read.withStrict(pluginMetadata.strict);
     const pluginName = dist.manifest.name;
     this.assertPluginVersionMatches(pluginName, dist.manifest.version, requiredVersion);
@@ -209,7 +238,7 @@ export class PluginAddUseCase implements PluginAdd {
         manifest,
         projectRoot
       );
-    const { prevMcpMap, prevHooksMap } = this.prepareForInstall(
+    const { prevMcpMap, prevHooksMap, prevTuiMap } = this.prepareForInstall(
       pluginName,
       resolvedToolIds,
       manifest,
@@ -224,6 +253,7 @@ export class PluginAddUseCase implements PluginAdd {
       marketplace,
       prevMcpMap,
       prevHooksMap,
+      prevTuiMap,
       machine
     );
   }
@@ -239,6 +269,7 @@ export class PluginAddUseCase implements PluginAdd {
       if (previous === undefined) continue;
       await assertProjectMcpEntriesRemovable(this.fs, previous, toolId, projectRoot);
       await assertProjectHooksRemovable(this.fs, previous, toolId, projectRoot);
+      await assertProjectTuiUnchanged(this.fs, previous, toolId, projectRoot);
     }
   }
 
@@ -250,21 +281,25 @@ export class PluginAddUseCase implements PluginAdd {
   ): {
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>;
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>;
+    prevTuiMap: Map<AiToolId, KiloTuiProvenance>;
   } {
     const prevMcpMap = this.collectPreviousMcpEntries(pluginName, toolIds, manifest);
     const prevHooksMap = new Map<AiToolId, ProjectHooksProvenance>();
+    const prevTuiMap = new Map<AiToolId, KiloTuiProvenance>();
     for (const toolId of toolIds) {
       const projectHooks = manifest
         .getPlugins(toolId)
         .find((p) => p.name === pluginName)?.projectHooks;
       if (projectHooks !== undefined) prevHooksMap.set(toolId, projectHooks);
+      const tui = manifest.getPlugins(toolId).find((p) => p.name === pluginName)?.tuiPlugin;
+      if (tui !== undefined) prevTuiMap.set(toolId, tui);
     }
     if (replace === true) {
       this.dropExistingPlugin(pluginName, toolIds, manifest);
     } else {
       this.validateNoDuplicates(pluginName, toolIds, manifest);
     }
-    return { prevMcpMap, prevHooksMap };
+    return { prevMcpMap, prevHooksMap, prevTuiMap };
   }
 
   private async installPluginForAllTools(
@@ -276,6 +311,7 @@ export class PluginAddUseCase implements PluginAdd {
     marketplace: string | undefined,
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>,
+    prevTuiMap: Map<AiToolId, KiloTuiProvenance>,
     machine: Manifest
   ): Promise<void> {
     const allSkipped: ReadonlySkipList[] = [];
@@ -303,8 +339,10 @@ export class PluginAddUseCase implements PluginAdd {
         marketplace,
         prev,
         foreignDir !== undefined ||
-          machine.getPlugins(toolId).some((p) => p.name === dist.manifest.name),
-        prevHooksMap.get(toolId)
+          (resolveScopeForInstall(toolId) === "user" &&
+            machine.getPlugins(toolId).some((p) => p.name === dist.manifest.name)),
+        prevHooksMap.get(toolId),
+        prevTuiMap.get(toolId)
       );
       allSkipped.push(skipped);
       allNotices.push(notices);
@@ -408,7 +446,8 @@ export class PluginAddUseCase implements PluginAdd {
     marketplace: string | undefined,
     previousMcpEntries: ReadonlyMap<string, string>,
     userScopeDirTaken: boolean,
-    previousProjectHooks?: ProjectHooksProvenance
+    previousProjectHooks?: ProjectHooksProvenance,
+    previousTui?: KiloTuiProvenance
   ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return { skipped: [], notices: [] };
@@ -423,7 +462,8 @@ export class PluginAddUseCase implements PluginAdd {
         marketplace,
         previousMcpEntries,
         userScopeDirTaken,
-        previousProjectHooks
+        previousProjectHooks,
+        previousTui
       );
       return { ...result, notices: [] };
     }
