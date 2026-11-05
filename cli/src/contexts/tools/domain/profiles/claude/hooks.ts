@@ -1,3 +1,5 @@
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-claude.cjs";
 import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
 import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 
@@ -11,4 +13,5 @@ export const CLAUDE_HOOKS = {
   // agent and http hooks too, so every group and item is kept as shipped.
   file: { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } },
   flat: { scriptsDir: ".claude/hooks/", sharedFile: ".claude/settings.json" },
+  runtime: { adapter },
 } as const satisfies HooksDescriptor;

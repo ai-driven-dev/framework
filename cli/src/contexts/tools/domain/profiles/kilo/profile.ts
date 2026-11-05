@@ -89,7 +89,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
         dir: (homedir) => join(homedir, ".config", "kilo"),
         map: flatGlobalFilePath(KILO_DIRECTORY),
       },
-      ...flatHooksSupport(KILO_HOOKS.flat, generateKiloHooksBridge),
+      ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
   },
 

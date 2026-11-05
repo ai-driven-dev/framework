@@ -33,6 +33,9 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
 ## project/.claude/plugins/aidd-context/hooks/lib/common-rules.cjs
 script, identical to the plugin source
 
+## project/.claude/plugins/aidd-context/hooks/lib/host.cjs
+script, identical to the host adapter host-claude.cjs
+
 ## project/.claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
@@ -117,6 +120,9 @@ script, identical to the plugin source
 ## project/.claude/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
 script, identical to the plugin source
 
+## project/.claude/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-claude.cjs
+
 ## project/.claude/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
 script, identical to the plugin source
 
@@ -150,16 +156,17 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 6 hook files
+project claude aidd-context scope=project: 7 hook files
   .claude/plugins/aidd-context/hooks/hooks.json
   .claude/plugins/aidd-context/hooks/lib/common-rules.cjs
+  .claude/plugins/aidd-context/hooks/lib/host.cjs
   .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
   .claude/plugins/aidd-context/hooks/memory-hook.cjs
   .claude/plugins/aidd-context/hooks/memory-lint.cjs
   .claude/plugins/aidd-context/hooks/update_memory.js
   projectHooks null
   dependents []
-project claude aidd-telemetry scope=project: 18 hook files
+project claude aidd-telemetry scope=project: 19 hook files
   .claude/plugins/aidd-telemetry/hooks/catch-up.cjs
   .claude/plugins/aidd-telemetry/hooks/hooks.json
   .claude/plugins/aidd-telemetry/hooks/lib/aidd.cjs
@@ -171,6 +178,7 @@ project claude aidd-telemetry scope=project: 18 hook files
   .claude/plugins/aidd-telemetry/hooks/lib/declaration.cjs
   .claude/plugins/aidd-telemetry/hooks/lib/git.cjs
   .claude/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/host.cjs
   .claude/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
   .claude/plugins/aidd-telemetry/hooks/lib/lookup.cjs
   .claude/plugins/aidd-telemetry/hooks/lib/presence.cjs

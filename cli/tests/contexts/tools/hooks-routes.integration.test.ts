@@ -181,6 +181,17 @@ async function sourceHookScripts(): Promise<Map<string, string>> {
   return scripts;
 }
 
+const ADAPTERS = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
+
+/** Each tool's host adapter by content, so a delivered copy names the one it is. */
+async function hostAdapters(): Promise<Map<string, string>> {
+  const adapters = new Map<string, string>();
+  for (const file of await readdir(ADAPTERS)) {
+    adapters.set(await readFile(join(ADAPTERS, file), "utf8"), file);
+  }
+  return adapters;
+}
+
 function normalize(text: string, ws: Workspace): string {
   return text
     .split(ws.root)
@@ -203,6 +214,7 @@ function hooksOfDescriptor(content: string): string | null {
  */
 async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promise<string> {
   const scripts = await sourceHookScripts();
+  const adapters = await hostAdapters();
   const sections: string[] = [];
   for (const base of bases) {
     const label = relative(ws.root, base).split(sep).join("/");
@@ -216,6 +228,11 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
       if (!isHookFile(rel)) continue;
       const content = await readFile(file, "utf8");
       const shown = `${label}/${rel}`;
+      const adapter = basename(rel) === "host.cjs" ? adapters.get(content) : undefined;
+      if (adapter !== undefined) {
+        sections.push(`## ${shown}\nscript, identical to the host adapter ${adapter}\n`);
+        continue;
+      }
       const origin = [...scripts].find(([key]) => {
         const [plugin, ...rest] = key.split("/");
         return (

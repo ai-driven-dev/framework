@@ -154,7 +154,7 @@ export function buildCodexContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: pluginTreeHooksArtifact(),
+      hooks: pluginTreeHooksArtifact(CODEX_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },

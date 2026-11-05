@@ -23,7 +23,7 @@ const bridge = (raw: string, plugin: string) => `${plugin}:${raw}`;
 
 describe("a plugin tree's hooks artifact", () => {
   it("reads the plugin's hooks and keeps every path as authored", () => {
-    const artifact = supported(pluginTreeHooksArtifact());
+    const artifact = supported(pluginTreeHooksArtifact({}));
 
     expect(artifact.source).toStrictEqual(SOURCE);
     expect(artifact.path("aidd-dev", "hooks/journal.cjs")).toBe("hooks/journal.cjs");
@@ -40,6 +40,50 @@ const SHIPPED = JSON.stringify({
   hooks: { Start: [{ hooks: [{ command: `node ${ROOT}/hooks/a.cjs ${ROOT}/skills/s` }] }] },
 });
 const locate = (path: string) => `flat/${path}`;
+
+const RUNTIME = { adapter: "the tool's adapter" };
+const HOST = "hooks/lib/host.cjs";
+
+describe("the host adapter a build puts behind a plugin's hooks", () => {
+  it("replaces the plugin's own adapter in the plugin tree, and nothing else", () => {
+    const artifact = supported(pluginTreeHooksArtifact({ runtime: RUNTIME }));
+
+    expect([
+      artifact.script?.(HOST, "claude's"),
+      artifact.script?.("hooks/host.cjs", "own"),
+      artifact.script?.("hooks/lib/host.cjs.bak", "own"),
+    ]).toStrictEqual(["the tool's adapter", "own", "own"]);
+  });
+
+  it("replaces it on a flat build", () => {
+    const artifact = supported(
+      flatHooksArtifact(
+        { runtime: RUNTIME, flat: { scriptsDir: ".tool/hooks/" } },
+        { tool: "cursor" }
+      )
+    );
+
+    expect(artifact.script?.(HOST, "claude's")).toBe("the tool's adapter");
+  });
+
+  it("replaces it on a native install, and on a flat one", () => {
+    const native = nativeHooksSupport({ runtime: RUNTIME });
+    const flat = flatHooksSupport({ runtime: RUNTIME, flat: { scriptsDir: ".tool/hooks/" } });
+
+    expect([
+      native.hookScript?.(HOST, "claude's"),
+      flat.hookScript?.(HOST, "claude's"),
+    ]).toStrictEqual(["the tool's adapter", "the tool's adapter"]);
+  });
+
+  it("leaves every script as shipped where the descriptor names no adapter", () => {
+    expect([
+      supported(pluginTreeHooksArtifact({})).script,
+      nativeHooksSupport({}).hookScript,
+      flatHooksSupport({ flat: { scriptsDir: ".tool/hooks/" } }).hookScript,
+    ]).toStrictEqual([undefined, undefined, undefined]);
+  });
+});
 
 describe("a flat build's hooks artifact", () => {
   it("puts each plugin's scripts in a folder of its own, and its hooks file beside them", () => {
@@ -238,21 +282,25 @@ describe("a tool's plugins capability, as far as hooks go", () => {
   });
 
   it("accepts hooks flat, into the route's scripts folder", () => {
-    expect(flatHooksSupport({ scriptsDir: ".tool/hooks/" }, bridge)).toStrictEqual({
+    expect(flatHooksSupport({ flat: { scriptsDir: ".tool/hooks/" } }, bridge)).toStrictEqual({
       acceptsHooks: true,
       flatHooksDir: ".tool/hooks/",
     });
   });
 
   it("names the loader's module and the bridge generated for it", () => {
-    const support = flatHooksSupport({ scriptsDir: ".tool/hooks/", loaderEntry: LOADER }, bridge);
+    const support = flatHooksSupport(
+      { flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } },
+      bridge
+    );
 
     expect(support.flatHooksLoaderEntry).toStrictEqual(LOADER);
     expect(support.flatHooksBridge?.generate("{}", "p")).toBe("p:{}");
     expect(support.flatHooksBridge?.path("p")).toBe(".tool/plugin/p-hooks.js");
     expect(support.flatHooksBridge?.skipIfSourceHas).toBe("tool-plugin.js");
     expect(
-      flatHooksSupport({ scriptsDir: ".tool/hooks/", loaderEntry: LOADER }).flatHooksBridge
+      flatHooksSupport({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })
+        .flatHooksBridge
     ).toBeUndefined();
   });
 

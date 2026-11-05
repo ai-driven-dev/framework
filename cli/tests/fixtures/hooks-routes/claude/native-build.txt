@@ -31,6 +31,9 @@
 ## out-marketplace/plugins/aidd-context/hooks/lib/common-rules.cjs
 script, identical to the plugin source
 
+## out-marketplace/plugins/aidd-context/hooks/lib/host.cjs
+script, identical to the host adapter host-claude.cjs
+
 ## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
@@ -114,6 +117,9 @@ script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
 script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/host.cjs
+script, identical to the host adapter host-claude.cjs
 
 ## out-marketplace/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
 script, identical to the plugin source

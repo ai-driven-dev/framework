@@ -12,7 +12,11 @@ import {
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { ArtifactContract } from "../build-contract.js";
 import { HooksCapability } from "../capabilities/hooks-capability.js";
-import type { FlatHooksBridge, ProjectHooksFormat } from "../capabilities/plugins-capability.js";
+import type {
+  FlatHooksBridge,
+  HookScript,
+  ProjectHooksFormat,
+} from "../capabilities/plugins-capability.js";
 import {
   type HooksFileFormat,
   type HooksMergeTarget,
@@ -31,6 +35,16 @@ export const PLUGIN_HOOKS_SOURCE = {
   jsonPath: "hooks/hooks.json",
   scriptDir: "hooks",
 } as const;
+
+/** Where a plugin keeps the adapter between its hooks and the host: Claude Code's, as shipped,
+ * which a build for another tool replaces with that tool's. */
+const HOST_ADAPTER_PATH = "hooks/lib/host.cjs";
+
+/** How a hook reaches the tool at run time. */
+export interface HooksRuntime {
+  /** The adapter put behind the interface every framework hook speaks, as source text. */
+  readonly adapter: string;
+}
 
 /** Where a flat build, which writes straight into a project, puts a plugin's hooks. */
 export interface FlatHooksRoute {
@@ -69,6 +83,7 @@ export interface HooksDescriptor {
   readonly flat?: FlatHooksRoute;
   readonly project?: ProjectHooksRoute;
   readonly config?: HooksConfig;
+  readonly runtime?: HooksRuntime;
   /** A module the bridges share, shipped once per project: its asset name and destination. */
   readonly bridgeRuntime?: { readonly asset: string; readonly path: string };
 }
@@ -79,9 +94,26 @@ export type HooksFileMerge = NonNullable<
   Extract<ArtifactContract, { supported: true }>["hooksFile"]
 >["merge"];
 
-/** A native plugin tree keeps the hooks where, and as, the plugin authored them. */
-export function pluginTreeHooksArtifact(): ArtifactContract {
-  return { supported: true, source: PLUGIN_HOOKS_SOURCE, path: (_plugin, rel) => rel };
+function hookScript(descriptor: HooksDescriptor): HookScript | undefined {
+  const adapter = descriptor.runtime?.adapter;
+  if (adapter === undefined) return undefined;
+  return (pluginPath, content) => (pluginPath === HOST_ADAPTER_PATH ? adapter : content);
+}
+
+function withHookScript(descriptor: HooksDescriptor): { readonly hookScript?: HookScript } {
+  const swap = hookScript(descriptor);
+  return swap === undefined ? {} : { hookScript: swap };
+}
+
+/** A native plugin tree keeps the hooks where, and as, the plugin authored them, the tool's
+ * adapter aside. */
+export function pluginTreeHooksArtifact(descriptor: HooksDescriptor): ArtifactContract {
+  return {
+    supported: true,
+    source: PLUGIN_HOOKS_SOURCE,
+    path: (_plugin, rel) => rel,
+    script: hookScript(descriptor),
+  };
 }
 
 /** A flat build's hooks: each plugin's scripts in a folder of its own, its entries merged into
@@ -124,6 +156,7 @@ export function flatHooksArtifact(
     supported: true,
     source: PLUGIN_HOOKS_SOURCE,
     path: (plugin, rel) => flatHooksPath(route, plugin, rel),
+    script: hookScript(descriptor),
     ...(merge === undefined || tool === undefined
       ? {}
       : {
@@ -199,10 +232,12 @@ export function nativeHooksSupport(descriptor: HooksDescriptor): {
   readonly acceptsHooks: true;
   readonly pluginRootToken?: string;
   readonly hooksTrustNotice?: string;
+  readonly hookScript?: HookScript;
 } {
   const { rootToken, trustNotice } = descriptor;
   return {
     acceptsHooks: true,
+    ...withHookScript(descriptor),
     ...(rootToken === undefined ? {} : { pluginRootToken: rootToken }),
     ...(trustNotice === undefined ? {} : { hooksTrustNotice: trustNotice }),
   };
@@ -210,18 +245,21 @@ export function nativeHooksSupport(descriptor: HooksDescriptor): {
 
 /** A flat tool's plugins capability, as far as hooks go. */
 export function flatHooksSupport(
-  route: FlatHooksRoute,
+  descriptor: HooksDescriptor & { readonly flat: FlatHooksRoute },
   bridge?: FlatHooksBridge["generate"]
 ): {
   readonly acceptsHooks: true;
   readonly flatHooksDir: string;
   readonly flatHooksLoaderEntry?: FlatHooksLoaderEntry;
   readonly flatHooksBridge?: FlatHooksBridge;
+  readonly hookScript?: HookScript;
 } {
+  const route = descriptor.flat;
   const { loaderEntry } = route;
   return {
     acceptsHooks: true,
     flatHooksDir: route.scriptsDir,
+    ...withHookScript(descriptor),
     ...(loaderEntry === undefined ? {} : { flatHooksLoaderEntry: loaderEntry }),
     ...(loaderEntry !== undefined && bridge !== undefined
       ? { flatHooksBridge: hooksBridge(loaderEntry, bridge) }

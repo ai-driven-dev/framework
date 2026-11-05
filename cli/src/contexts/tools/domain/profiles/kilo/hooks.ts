@@ -1,3 +1,5 @@
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-kilo.cjs";
 import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
 import { KILO_DIRECTORY, KILO_PLUGIN_DIR, KILO_PLUGIN_ENTRY_BASENAME } from "./kilo-paths.js";
 
@@ -6,4 +8,5 @@ export const KILO_HOOKS = {
     scriptsDir: `${KILO_DIRECTORY}hooks/`,
     loaderEntry: { dir: KILO_PLUGIN_DIR, baseName: KILO_PLUGIN_ENTRY_BASENAME },
   },
+  runtime: { adapter },
 } as const satisfies HooksDescriptor;

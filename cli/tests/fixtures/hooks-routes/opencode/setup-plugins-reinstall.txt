@@ -4,6 +4,9 @@ hook files unchanged by the second run: true
 ## project/.opencode/hooks/aidd-context/lib/common-rules.cjs
 script, identical to the plugin source
 
+## project/.opencode/hooks/aidd-context/lib/host.cjs
+script, identical to the host adapter host-opencode.cjs
+
 ## project/.opencode/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
@@ -45,6 +48,9 @@ script, identical to the plugin source
 
 ## project/.opencode/hooks/aidd-telemetry/lib/hook-io.cjs
 script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-telemetry/lib/host.cjs
+script, identical to the host adapter host-opencode.cjs
 
 ## project/.opencode/hooks/aidd-telemetry/lib/jsonl.cjs
 script, identical to the plugin source
@@ -525,8 +531,9 @@ export default {
 }
 
 # recorded
-project opencode aidd-context scope=project: 6 hook files
+project opencode aidd-context scope=project: 7 hook files
   .opencode/hooks/aidd-context/lib/common-rules.cjs
+  .opencode/hooks/aidd-context/lib/host.cjs
   .opencode/hooks/aidd-context/lib/memory-rules.cjs
   .opencode/hooks/aidd-context/memory-hook.cjs
   .opencode/hooks/aidd-context/memory-lint.cjs
@@ -534,7 +541,7 @@ project opencode aidd-context scope=project: 6 hook files
   .opencode/plugin/aidd-context-hooks.js
   projectHooks null
   dependents []
-project opencode aidd-telemetry scope=project: 18 hook files
+project opencode aidd-telemetry scope=project: 19 hook files
   .opencode/hooks/aidd-telemetry/catch-up.cjs
   .opencode/hooks/aidd-telemetry/lib/aidd.cjs
   .opencode/hooks/aidd-telemetry/lib/binding.cjs
@@ -545,6 +552,7 @@ project opencode aidd-telemetry scope=project: 18 hook files
   .opencode/hooks/aidd-telemetry/lib/declaration.cjs
   .opencode/hooks/aidd-telemetry/lib/git.cjs
   .opencode/hooks/aidd-telemetry/lib/hook-io.cjs
+  .opencode/hooks/aidd-telemetry/lib/host.cjs
   .opencode/hooks/aidd-telemetry/lib/jsonl.cjs
   .opencode/hooks/aidd-telemetry/lib/lookup.cjs
   .opencode/hooks/aidd-telemetry/lib/presence.cjs

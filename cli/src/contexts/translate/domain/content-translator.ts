@@ -215,7 +215,7 @@ export class PluginContentTranslator {
       const manifestDir = parentDirOf(cap.hooksRelativePath) || PLUGIN_HOOKS_DIR;
       return {
         relativePath: `${manifestDir}/${pathBelow(PLUGIN_HOOKS_DIR, file.relativePath)}`,
-        content: file.content,
+        content: cap.hookScript(file.relativePath, file.content),
         verbatim: true,
       };
     }
@@ -267,7 +267,8 @@ export class PluginContentTranslator {
   // it is never delivered here. Everything else under hooks/ is carried verbatim, namespaced per
   // plugin — unless it is that loader's own plugin module, delivered flat and renamed instead.
   private flatHooksFiles(dist: PluginDistribution, tool: AiTool<HasPlugins>): InstallationFile[] {
-    const { flatHooksDir, flatHooksLoaderEntry, flatHooksBridge } = tool.capabilities.plugins;
+    const { flatHooksDir, flatHooksLoaderEntry, flatHooksBridge, hookScript } =
+      tool.capabilities.plugins;
     if (flatHooksDir === null) return [];
     const scripts = dist.components.hooks
       .filter((file) => file.relativePath !== `${PLUGIN_HOOKS_DIR}/hooks.json`)
@@ -279,7 +280,7 @@ export class PluginContentTranslator {
             dist.manifest.name,
             file.relativePath
           ),
-          file.content
+          hookScript(file.relativePath, file.content)
         )
       );
     const bridge = this.flatHooksBridgeFile(dist, flatHooksBridge);

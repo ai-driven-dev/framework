@@ -51,6 +51,9 @@ export type ArtifactContract =
           locate: (pluginPath: string) => string
         ) => { content: string; warnings: readonly string[] };
       };
+      /** A hook script as the tool runs it, given its path in the plugin: the tool's own host
+       * adapter replaces the one the plugin ships. Absent, every script is written as shipped. */
+      readonly script?: (pluginPath: string, content: string) => string;
       /** Delivers everything under hooks/ except hooks.json, for a tool whose own side reads
        * none — OpenCode today, whose scripts are still delivered and whose trigger is
        * `hooksBridge`. */

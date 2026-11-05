@@ -17,6 +17,7 @@ import type { ToolBuildContract } from "./build-contract.js";
 import type {
   EnvironmentReader,
   GlobalFiles,
+  HookScript,
   NativeActivation,
   PluginsCapability,
   ProjectHooksFormat,
@@ -204,9 +205,12 @@ export function projectHooksFileOf(toolId: ToolId): string | undefined {
 }
 
 /** The project hooks file a tool merges plugin hooks into, or `null` when it has none. */
-export function projectHooksDeliveryOf(
-  toolId: ToolId
-): { relativePath: string; format: ProjectHooksFormat; toolName: string } | null {
+export function projectHooksDeliveryOf(toolId: ToolId): {
+  relativePath: string;
+  format: ProjectHooksFormat;
+  toolName: string;
+  hookScript: HookScript;
+} | null {
   const config = getToolConfig(toolId);
   if (!isAiTool(config)) return null;
   const cap = resolvePluginsCapability(toolId);
@@ -216,6 +220,7 @@ export function projectHooksDeliveryOf(
     relativePath: cap.projectHooksRelativePath,
     format: cap.projectHooksFormat,
     toolName: config.displayName,
+    hookScript: cap.hookScript,
   };
 }
 

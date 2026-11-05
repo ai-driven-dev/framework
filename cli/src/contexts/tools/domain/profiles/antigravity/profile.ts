@@ -48,7 +48,7 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       flatSkillLayout: "single-level",
-      ...flatHooksSupport(ANTIGRAVITY_HOOKS.flat),
+      ...flatHooksSupport(ANTIGRAVITY_HOOKS),
       ...flatProjectHooksDelivery(ANTIGRAVITY_HOOKS.flat, {
         merge: mergeAntigravityHooks,
         unmerge: unmergeAntigravityHooks,

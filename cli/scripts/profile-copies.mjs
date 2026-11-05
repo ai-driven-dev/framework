@@ -35,13 +35,7 @@ export const JSCPD_ARGS = [
  * Copies between two profiles today, by file pair, with the number of clones. The list may
  * only shrink: a new pair fails, and so does a pair whose count changed.
  */
-export const BASELINE = [
-  {
-    pair: "kilo/kilo-hooks-bridge.ts <> opencode/opencode-hooks-bridge.ts",
-    clones: 1,
-    reason: "each bridge parses a hook command into its script and arguments on its own",
-  },
-];
+export const BASELINE = [];
 
 /** `<a> <> <b> (<clones>)` per pair of files in two different tool folders, from a jscpd
  * JSON report whose names are relative to the folder it scanned. */

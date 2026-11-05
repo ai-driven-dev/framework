@@ -104,7 +104,7 @@ export const opencode: AiTool<
         dir: (homedir) => join(homedir, ".config", "opencode"),
         map: opencodeGlobalFilePath,
       },
-      ...flatHooksSupport(OPENCODE_HOOKS.flat, generateOpencodeHooksBridge),
+      ...flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge),
     }),
   },
 
