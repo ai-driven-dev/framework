@@ -82,15 +82,31 @@ function staysUnder(root, realRoot, segments) {
   return true;
 }
 
+/** The nearest folder above `root` holding a `.git` entry, a folder or a worktree's file, or null. */
+function repositoryRootAbove(root) {
+  for (let dir = path.dirname(root); dir !== path.dirname(dir); dir = path.dirname(dir)) {
+    if (fs.existsSync(path.join(dir, IGNORED_ENTRY))) return dir;
+  }
+  return null;
+}
+
+/** Whether a file exists under `base` along `segments`, never through a link out of `base`. */
+function existsUnder(base, segments) {
+  return staysUnder(base, fs.realpathSync(base), segments) && fs.existsSync(path.resolve(base, ...segments));
+}
+
 /**
  * Each backticked file path whose top-level folder exists under `root` but whose file does not.
  * Anchored on a real top-level entry rather than on "looks like a path", as
  * `scripts/check-referenced-paths.js` is: anything wider reports MIME types and shell fragments.
- * A path never leaves the root: a `..` segment is not checked, and neither is a link out.
+ * A file also exists when it does under the nearest ancestor holding `.git`. A path never leaves
+ * the root it is read from: a `..` segment is not checked, and neither is a link out.
  */
 function deadPaths(text, root) {
   const entries = new Set(fs.readdirSync(root).filter((entry) => entry !== IGNORED_ENTRY));
   const realRoot = fs.realpathSync(root);
+  // A root inside a repository, a subproject's, also reads a path from the repository's root.
+  const repository = fs.existsSync(path.join(root, IGNORED_ENTRY)) ? null : repositoryRootAbove(path.resolve(root));
   const found = [];
 
   for (const { number, line } of readableLines(text)) {
@@ -107,8 +123,9 @@ function deadPaths(text, root) {
       const segments = file.split("/");
       if (!entries.has(segments[0]) || segments.includes("..")) continue;
       if (!staysUnder(root, realRoot, segments)) continue;
-      const target = path.resolve(root, file);
-      if (!fs.existsSync(target)) found.push({ line: number, path: token });
+      if (fs.existsSync(path.resolve(root, file))) continue;
+      if (repository !== null && existsUnder(repository, segments)) continue;
+      found.push({ line: number, path: token });
     }
   }
 

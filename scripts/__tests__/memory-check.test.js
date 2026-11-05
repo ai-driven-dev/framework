@@ -313,12 +313,13 @@ test("check names a misplaced file and the always-written files the bank lacks a
   }
 });
 
-test("check prints at most ten warnings, the count line keeping the total", () => {
+// The cap of ten binds the hook's answer to the model only; a check by hand or in CI prints all.
+test("check prints every warning, uncapped", () => {
   const root = fullBank(Object.fromEntries(Array.from({ length: 12 }, (_, index) => [`f${index}.md`, `# T\n\n- ${words(36, `w${index}`)}\n`])));
   try {
     const lines = check(root).stdout.trim().split("\n");
     assert.equal(lines[0], "aidd-context: 0 errors, 12 warnings");
-    assert.equal(lines.length, 11);
+    assert.equal(lines.length, 13);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

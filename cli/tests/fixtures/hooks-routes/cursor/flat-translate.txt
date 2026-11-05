@@ -4,7 +4,8 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook"
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
       },
       {
         "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",

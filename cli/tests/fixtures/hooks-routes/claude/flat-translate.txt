@@ -73,7 +73,8 @@ script, identical to the plugin source
           {
             "type": "command",
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
-            "statusMessage": "AIDD Context: sync project memory"
+            "statusMessage": "AIDD Context: sync project memory",
+            "timeout": 5
           }
         ]
       },

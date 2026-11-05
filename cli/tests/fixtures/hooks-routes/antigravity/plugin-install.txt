@@ -4,7 +4,8 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgaG9vaw=="
+        "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgaG9vaw==",
+        "timeout": 5
       }
     ]
   },
@@ -98,7 +99,7 @@ project antigravity aidd-context scope=project: 0 hook files
     {
       "event": "SessionStart",
       "command": "node -e \"const p=require('node:child_process').spawn(Buffer.from(process.argv[1],'base64').toString(),{shell:true,cwd:'..',stdio:['inherit','pipe','inherit']});let empty=true;p.stdout.on('data',d=>{empty=false;process.stdout.write(d)});p.on('close',c=>{if(empty)process.stdout.write('{}');process.exitCode=c??1});\" bm9kZSAuLy5hZ2VudHMvaG9va3MvYWlkZC1jb250ZXh0L21lbW9yeS5janMgaG9vaw==",
-      "digest": "cc5c97c4fe2bee570f5a448c375c2c38"
+      "digest": "e92976a2f1c16ad12f5819c00bd21144"
     }
   ],
   "scripts": {}

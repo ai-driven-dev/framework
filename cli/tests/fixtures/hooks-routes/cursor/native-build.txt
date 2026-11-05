@@ -12,7 +12,8 @@
           {
             "type": "command",
             "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
-            "statusMessage": "AIDD Context: sync project memory"
+            "statusMessage": "AIDD Context: sync project memory",
+            "timeout": 5
           }
         ]
       }

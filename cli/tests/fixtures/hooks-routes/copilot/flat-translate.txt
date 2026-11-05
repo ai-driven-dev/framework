@@ -5,7 +5,8 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "node ./.github/hooks/aidd-context/memory.cjs hook"
+        "command": "node ./.github/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
       }
     ],
     "PostToolUse": [

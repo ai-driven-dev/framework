@@ -74,6 +74,7 @@ Source: issue #1141, second slice, on top of #1146 (the memory engine and its wr
 | Two hook levels, inform and require, at two moments, after the write or at the turn end, chosen by when the artifact is final | a multi-write artifact is final only at the turn end; never a blocked write; full rules in `hook-contract.md` |
 | Only a plugin with a turn-end check keeps state: one file per session listing the paths the turn wrote | without it, Stop would walk the project every turn and meet standing errors |
 | A gap's level is set by measurement on four real banks | a level 2 rule must have no false positive |
+| A file in a bank folder of the team's own (`memory/kpi/`) is level 1: the hook informs, the skill's check offers the move | a real team layout of 46 files is real-data hits, not a misplacement to block |
 | A missing always-written file: level 1 at each write, level 2 at the skill's check | during setup the other files are not written yet |
 | `memory.cjs hook|check|sync` replaces three scripts; sync stages nothing in git | one entry per concern; a hook never runs git |
 | The memory block lists the folders other plugins own | a plugin added later reaches every host, SessionStart text does not |

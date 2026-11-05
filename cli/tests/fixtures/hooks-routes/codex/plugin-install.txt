@@ -11,7 +11,8 @@ approval_policy = "on-request"
           {
             "type": "command",
             "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
-            "statusMessage": "AIDD Context: sync project memory"
+            "statusMessage": "AIDD Context: sync project memory",
+            "timeout": 5
           }
         ]
       }

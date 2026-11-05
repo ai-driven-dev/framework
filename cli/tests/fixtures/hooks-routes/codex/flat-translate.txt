@@ -14,7 +14,8 @@ hooks = true
           {
             "type": "command",
             "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "statusMessage": "AIDD Context: sync project memory"
+            "statusMessage": "AIDD Context: sync project memory",
+            "timeout": 5
           }
         ]
       },
