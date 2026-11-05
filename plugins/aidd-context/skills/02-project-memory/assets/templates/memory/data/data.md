@@ -14,4 +14,4 @@
 
 ## Pipelines and models
 
-- {{Which datasets, pipelines or models exist, and how is a run reproduced? Drop this section when none does.}}
+- {{Which datasets, pipelines or models exist, and how is a run reproduced?}}

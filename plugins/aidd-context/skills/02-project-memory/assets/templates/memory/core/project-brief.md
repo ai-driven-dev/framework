@@ -2,7 +2,7 @@
 
 ## Purpose
 
-- {{What does the project do, for whom, and why does it exist? Only what the code and the README do not say.}}
+- {{What does the project do, for whom, and why does it exist?}}
 
 ## Domain language
 

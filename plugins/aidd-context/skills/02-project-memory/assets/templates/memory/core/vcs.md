@@ -1,12 +1,16 @@
 # VCS
 
+## Platform
+
+- Platform: {{Which platform and repository hold the code, and which CLI does an agent use to reach it?}}
+
 ## Branches
 
 - {{Which branch holds production, which receives day-to-day work, and how are branches named?}}
 
 ## Commits
 
-- {{Where does the commit convention deviate from the standard it follows?}}
+- {{Which commit standard does the project follow, and where does it deviate?}}
 
 ## Pull requests
 

@@ -11,7 +11,7 @@ const { lintFile } = require(path.join(PLUGIN, "hooks/memory-lint.cjs"));
 const CAPABILITIES = ["core", "ecosystem", "backlog", "deployment", "contract", "auth", "data", "async", "ui", "native"];
 const HEADER = ["Capability", "Detected when", "File", "Always", "Former files"];
 const DROPPED_TEMPLATES = /templates\/(?:GUIDELINES|CONTRIBUTING)\.md|templates\/memory\/README\.md/u;
-const UNFINISHED = /\{\{|<!--|<(?!https?:)[^>\n]+>/u;
+const { UNFINISHED } = require("./fixtures/unfinished-marker.js");
 const MERGED_REFERENCES = /capability-signals|memory-destinations|structure\.md/u;
 
 function filesUnder(dir) {
