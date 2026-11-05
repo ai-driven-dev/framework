@@ -363,6 +363,42 @@ test("a line the generator would not write in the block leaves the file as it is
   }
 });
 
+// A line shaped like a generated one is a team's unless it is exactly one the generator writes now,
+// or a bare path to something that no longer exists.
+test("a team line shaped like a generated one is held and reported, never erased", () => {
+  const lines = [
+    "- aidd_docs/ui/ is owned by the design team, ask Ana before editing",
+    "@aidd_docs/memory/architecture.md is the entry point, read it first",
+    "@aidd_docs/memory/internal/decisions.md",
+    "[Decisions](aidd_docs/memory/internal/decisions.md) are read first",
+  ];
+  for (const line of lines) {
+    const team = `${OPEN}\n\n@aidd_docs/memory/architecture.md\n${line}\n\n${CLOSE}\n`;
+    const root = sandbox({ "CLAUDE.md": team, "aidd_docs/memory/internal/decisions.md": "# x\n" });
+    try {
+      const result = sync(root, "claude");
+      assert.equal(read(root, "CLAUDE.md"), team, line);
+      assert.match(result.stderr, /holds a line the memory block would not write/u, line);
+      assert.equal(result.status, 1, line);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("a session start leaves a team line shaped like a generated one in place", () => {
+  const team = `${OPEN}\n\n@aidd_docs/memory/architecture.md\n- aidd_docs/ui/ is owned by the design team, ask Ana before editing\n\n${CLOSE}\n`;
+  const root = sandbox({ "CLAUDE.md": team });
+  try {
+    const payload = JSON.stringify({ hook_event_name: "SessionStart", session_id: "sync-team-line", cwd: root, source: "startup" });
+    const result = spawnSync(process.execPath, [HOOK, "hook"], { cwd: root, env: HOOK_ENV, input: payload, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(read(root, "CLAUDE.md"), team);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("a stale generated line is still the generator's own: it is rewritten, not held", () => {
   const stale = `${OPEN}\n\n@aidd_docs/memory/deleted.md\n\n- aidd_docs/old/\n\n${CLOSE}\n`;
   const root = sandbox({ "CLAUDE.md": stale });

@@ -5,7 +5,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-context/hooks/lib/common-rules.cjs");
-const { deadPaths, isShellWrite, formatFindings, markdownLines, proseLines } = require(LIBRARY);
+const { deadPaths, isShellWrite, formatFindings, markdownLines, proseLines, changedLines, producedBy } = require(LIBRARY);
 
 /** A throwaway project holding `files`, removed after `body` runs. */
 function inProject(files, body) {
@@ -33,6 +33,7 @@ test("the library exports exactly its functions: the rules, the output shape and
     "leaveTurn",
     "markWrite",
     "markdownLines",
+    "producedBy",
     "proseLines",
     "reachesTouched",
     "readBaseline",
@@ -676,4 +677,17 @@ test("markdownLines: a hard break is two trailing spaces or a backslash, and CRL
 
 test("proseLines: only the lines of text, trimmed, without their comments", () => {
   assert.deepEqual(proseLines("# T\n\n```\nx\n```\n  y <!-- z --> w \n").map(({ number, text }) => [number, text]), [[1, "# T"], [6, "y  w"]]);
+});
+
+test("changedLines: a write that changed nothing has no line, one that only removed lines has an unknown effect", () => {
+  assert.deepEqual([...changedLines("a\nb\n", "b\na\n")], []);
+  assert.equal(changedLines("a\n", "a\nb\n"), null);
+  assert.deepEqual([...changedLines("a\nx\n", "a\nb\n")], ["x"]);
+});
+
+test("producedBy: a finding carrying its whole text is the write's only when one changed line holds all of it", () => {
+  const finding = { offending: "{{a whole slot}}" };
+  assert.equal(producedBy(finding, new Set(["- use {{a whole slot}} here"])), true);
+  assert.equal(producedBy(finding, new Set(["a whole"])), false);
+  assert.equal(producedBy({}, new Set(["anything"])), true);
 });
