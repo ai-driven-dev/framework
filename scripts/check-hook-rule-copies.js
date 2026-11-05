@@ -4,15 +4,18 @@
  * ships its own copy under its hooks folder, because a plugin never reaches outside itself;
  * this check is what keeps the copies one library.
  *
- * Every copy is compared byte for byte with the first, in sorted order, and each one that
- * differs is named. Zero or one copy has nothing to differ from.
+ * Every copy is listed with a short hash, and the copies outside the majority are named; on a
+ * tie no copy can be trusted as the reference, so every copy is named. Zero or one copy has
+ * nothing to differ from.
  */
 
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
 const LIBRARY = path.join("hooks", "lib", "common-rules.cjs");
+const HASH_LENGTH = 8;
 
 function toPosix(file) {
   return file.split(path.sep).join("/");
@@ -31,26 +34,34 @@ function copiesUnder(root) {
     .sort();
 }
 
+function shortHash(root, copy) {
+  return crypto.createHash("sha256").update(fs.readFileSync(path.join(root, copy))).digest("hex").slice(0, HASH_LENGTH);
+}
+
 function differingCopies(root = ROOT) {
   const copies = copiesUnder(root);
-  if (copies.length < 2) return { copies, reference: copies[0], differing: [] };
+  const hashes = Object.fromEntries(copies.map((copy) => [copy, shortHash(root, copy)]));
+  const counts = new Map();
+  for (const hash of Object.values(hashes)) counts.set(hash, (counts.get(hash) ?? 0) + 1);
+  if (counts.size < 2) return { copies, hashes, differing: [] };
 
-  const [reference, ...others] = copies;
-  const expected = fs.readFileSync(path.join(root, reference));
-  const differing = others.filter((copy) => !fs.readFileSync(path.join(root, copy)).equals(expected));
-  return { copies, reference, differing };
+  const [first, second] = [...counts.values()].sort((a, b) => b - a);
+  const majority = first > second ? [...counts].find(([, count]) => count === first)[0] : null;
+  const differing = copies.filter((copy) => hashes[copy] !== majority);
+  return { copies, hashes, differing };
 }
 
 function run(root = ROOT, logger = console.error, successLogger = console.log) {
-  const { copies, reference, differing } = differingCopies(root);
+  const { copies, hashes, differing } = differingCopies(root);
 
   if (differing.length === 0) {
     successLogger(`✅ Hook rule copies: ${copies.length} identical`);
     return 0;
   }
 
-  logger(`❌ ${differing.length} copy(ies) of the shared hook library differ from ${reference}`);
-  for (const copy of differing) logger(`  ${copy}: copy ${reference} over it`);
+  logger(`❌ the shared hook library differs between its ${copies.length} copies`);
+  for (const copy of copies) logger(`  ${copy} ${hashes[copy]}${differing.includes(copy) ? "  differs" : ""}`);
+  logger("  make every copy identical, then rerun");
   return 1;
 }
 

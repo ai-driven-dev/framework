@@ -26,9 +26,9 @@ test("the library exports exactly its three functions", () => {
   assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["deadPaths", "formatFindings", "isShellWrite"]);
 });
 
-test("the library requires only node:fs and node:path", () => {
+test("the library requires only the built-ins the hook contract allows: node:fs, node:os, node:path", () => {
   const required = [...fs.readFileSync(LIBRARY, "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/g)].map((m) => m[1]);
-  assert.deepEqual(required.sort(), ["node:fs", "node:path"]);
+  for (const name of required) assert.ok(["node:fs", "node:os", "node:path"].includes(name), `requires ${name}`);
 });
 
 // deadPaths
@@ -51,6 +51,43 @@ test("deadPaths: a path inside a code fence or an HTML comment is not read", () 
     const text = "```\n`src/gone.cfg`\n```\n<!--\n`src/gone.cfg`\n-->\n<!-- `src/gone.cfg` -->\n`src/gone.cfg`\n";
     assert.deepEqual(deadPaths(text, root), [{ line: 8, path: "src/gone.cfg" }]);
   });
+});
+
+test("deadPaths: a ~~~ fence is a fence", () => {
+  inProject({ "src/here.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("~~~\n`src/gone.cfg`\n~~~\n`src/gone.cfg`\n", root), [{ line: 4, path: "src/gone.cfg" }]);
+  });
+});
+
+test("deadPaths: CRLF text keeps its line numbers and its fences", () => {
+  inProject({ "src/here.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("# T\r\n```\r\n`src/gone.cfg`\r\n```\r\n`src/gone.cfg`\r\n", root), [{ line: 5, path: "src/gone.cfg" }]);
+  });
+});
+
+test("deadPaths: a line number, a line range or an anchor after the path is not part of it", () => {
+  inProject({ "src/here.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("`src/here.cfg:42` `src/here.cfg:4-9` `src/here.cfg#part`\n", root), []);
+    assert.deepEqual(deadPaths("`src/gone.cfg:42`\n", root), [{ line: 1, path: "src/gone.cfg:42" }]);
+  });
+});
+
+test("deadPaths: a path climbing out with .. is never checked", () => {
+  inProject({ "src/here.cfg": "" }, (root) => {
+    assert.deepEqual(deadPaths("`src/../../gone.cfg` `src/../gone.cfg`\n", root), []);
+  });
+});
+
+test("deadPaths: a folder linked outside the root is never followed", () => {
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "common-rules-outside-"));
+  try {
+    inProject({}, (root) => {
+      fs.symlinkSync(outside, path.join(root, "linked"));
+      assert.deepEqual(deadPaths("`linked/gone.cfg`\n", root), []);
+    });
+  } finally {
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
 });
 
 test("deadPaths: .git is never an anchor", () => {
@@ -177,6 +214,47 @@ test("isShellWrite: a redirection to a file beside /dev/null still matches", () 
   assert.equal(isShellWrite("ls >/dev/nullx"), true);
 });
 
+test("isShellWrite: sed --in-place and the git, perl and find write forms match", () => {
+  const writes = [
+    "sed --in-place s/a/b/ f",
+    "git mv a b",
+    "git rm f",
+    "git stash",
+    "git reset --hard",
+    "perl -i -pe s/a/b/ f",
+    "perl -pi -e s/a/b/ f",
+    "find . -name x -delete",
+  ];
+  for (const command of writes) assert.equal(isShellWrite(command), true, command);
+  for (const command of ["perl -ne print f", "find . -name x", "git show HEAD"]) assert.equal(isShellWrite(command), false, command);
+});
+
+test("isShellWrite: an assignment, a brace group, a negation, time, nohup and command open a command position", () => {
+  for (const command of ["A=1 rm f", "A=1 B=2 rm f", "{ rm f; }", "! rm f", "time rm f", "nohup rm f", "command rm f"]) {
+    assert.equal(isShellWrite(command), true, command);
+  }
+  assert.equal(isShellWrite('bash -c "rm f"'), false);
+});
+
+test("isShellWrite: a heredoc body is text, never a redirection or a command", () => {
+  const body = "gh pr create --body-file - <<'EOF'\n- aidd_docs/ui/x.md => moved\n- rm the old one\nEOF";
+  assert.equal(isShellWrite(body), false);
+  assert.equal(isShellWrite("cat <<-EOF\n\tx > y\n\tEOF\nls"), false);
+  assert.equal(isShellWrite("cat <<<EOF\nrm f\nEOF"), true, "a here-string opens no body");
+  for (const command of ["cat > f <<EOF\nx\nEOF", "cat <<EOF > f\nx\nEOF", "cat <<EOF\nx\nEOF\nrm f", "cat <<EOF\r\nx\r\nEOF\r\nrm f"]) {
+    assert.equal(isShellWrite(command), true, JSON.stringify(command));
+  }
+});
+
+test("isShellWrite: 100 KB of nested prefixes, quotes and parentheses returns in under 100 ms", () => {
+  const command = `${"sudo -u sudo ".repeat(7700)}${"(\"'".repeat(1000)}${"((".repeat(500)} ls`;
+  assert.ok(command.length > 100_000);
+  const start = performance.now();
+  isShellWrite(command);
+  const elapsed = performance.now() - start;
+  assert.ok(elapsed < 100, `took ${Math.round(elapsed)} ms`);
+});
+
 test("isShellWrite: anything that is not a string is not a write", () => {
   for (const value of [undefined, null, 1, {}, ""]) assert.equal(isShellWrite(value), false, String(value));
 });
@@ -231,6 +309,16 @@ test("formatFindings: reached errors group by rule, fix and folder, never across
     ],
   });
   assert.equal(output, ["p: 5 errors, 0 warnings", "R ×2 in d/* => f", "e/a.md R => f", "d/b.md R => g", "d/c.md S => f"].join("\n"));
+});
+
+test("formatFindings: a group of root-level files prints in *", () => {
+  const output = formatFindings("p", { reached: [{ file: "a.md", rule: "R", fix: "f" }, { file: "b.md", rule: "R", fix: "f" }] });
+  assert.equal(output, "p: 2 errors, 0 warnings\nR ×2 in * => f");
+});
+
+test("formatFindings: an excerpt stays on one line, its quotes escaped", () => {
+  const output = formatFindings("p", { errors: [{ file: "a.md", line: 1, rule: "R", excerpt: 'say "hi"\nthen\r\ngo', fix: "f" }] });
+  assert.equal(output, 'p: 1 errors, 0 warnings\na.md:1 R "say \\"hi\\" then go" => f');
 });
 
 test("formatFindings: the group folder uses forward slashes whatever the separator given", () => {
