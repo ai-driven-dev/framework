@@ -146,14 +146,13 @@ test("M2: counts of things, dates and time words are warnings, never errors", ()
   }
 });
 
-test("each error message names its excerpt and its fix", () => {
+test("each message names what is wrong, never its fix: the fix stands apart", () => {
   const message = (text, files) => lint(text, files)[0].message;
-  const keep = "check it against the code; keep it if true";
-  assert.equal(message(`# T\n\n${words(26)}\n`), "sentence of 26 words, over 25: make it a table, a list or a heading");
-  assert.equal(message("# T\n\nWe have 41 commits.\n"), `"41 commits" goes stale: ${keep}`);
-  assert.equal(message("# T\n\nShipped 2026-01-02.\n"), `"2026-01-02" goes stale: ${keep}`);
-  assert.equal(message("# T\n\nIt is Currently fine.\n"), `"Currently" goes stale: ${keep}`);
-  assert.equal(message("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "`src/gone.cfg` names nothing on disk: fix the path or remove it");
+  assert.equal(message(`# T\n\n${words(26)}\n`), "sentence of 26 words, over 25");
+  assert.equal(message("# T\n\nWe have 41 commits.\n"), '"41 commits" goes stale');
+  assert.equal(message("# T\n\nShipped 2026-01-02.\n"), '"2026-01-02" goes stale');
+  assert.equal(message("# T\n\nIt is Currently fine.\n"), '"Currently" goes stale');
+  assert.equal(message("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "`src/gone.cfg` names nothing on disk");
 });
 
 test("each error carries its excerpt and its fix apart, as the findings formatter prints them", () => {
@@ -169,7 +168,7 @@ test("each error carries its excerpt and its fix apart, as the findings formatte
 
 test("an excerpt over 40 characters is cut with an ellipsis", () => {
   const long = "x".repeat(60);
-  assert.equal(lint(`# T\n\nSee \`src/${long}.cfg\`.\n`, { "src/here.cfg": "" })[0].message, `\`src/${"x".repeat(35)}…\` names nothing on disk: fix the path or remove it`);
+  assert.equal(lint(`# T\n\nSee \`src/${long}.cfg\`.\n`, { "src/here.cfg": "" })[0].message, `\`src/${"x".repeat(35)}…\` names nothing on disk`);
 });
 
 // Counts as observed in the four real banks (framework root, cli, gouvernail, kairos-app).

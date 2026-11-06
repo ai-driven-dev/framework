@@ -58,7 +58,7 @@ PreToolUse is native on all six hosts, but the OpenCode and Kilo bridges do not 
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`; the same file runs by hand, from a skill and in CI with the same result. Everything it calls lives under `hooks/`.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, no child process, no git, no network.
 6. **Bounded.** A 5 s declared timeout; the work well under a second. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Stateless, except a turn-end check.** A PostToolUse-only plugin keeps nothing. A plugin with a Stop check keeps its turn state in the shared library (section 5), in `<os.tmpdir()>/aidd-hooks-<uid>/<plugin>/<session>`: folder `0700`, files `0600`, session id whitelisted `^[A-Za-z0-9_-]{1,128}$`, the turn's file cleared at Stop, files older than 24 h swept at SessionStart without following a link.
+7. **Stateless, except a turn-end check.** A PostToolUse-only plugin keeps nothing; aidd-context is one, its strict gate being `memory.cjs check`. A plugin with a Stop check keeps its own turn state, never in the shared library. Such a plugin keeps it in `<os.tmpdir()>/aidd-hooks-<uid>/<plugin>/<session>`: folder `0700`, files `0600`, session id whitelisted `^[A-Za-z0-9_-]{1,128}$`, the turn's file cleared at Stop, files older than 24 h swept at SessionStart without following a link.
    - The turn's mark lists the files the turn wrote and its net changed lines: a write's `written` lines count in, its `replaced` lines out, so a line changed and changed back counts for nothing. No mark, no Stop check: a turn that wrote nothing in scope costs nothing.
    - The baseline is a second file beside the mark: the plugin's errors keyed by file, rule and excerpt, never by line. SessionStart leaves it, and each consumed Stop leaves the errors of that moment.
    - Stop requires, once and never as information, the errors on the net changed lines that the baseline does not hold and whose whole offending text (for a template slot, the whole slot, not its printed excerpt) one net changed line holds: an edit that wrote a part of a line never owns what else that line holds. An error with no line is never required: check holds it. No proof, no hold: a whole-file write without `replaced` adds no changed line.
@@ -73,7 +73,7 @@ Shared code lives in one file, `hooks/lib/common-rules.cjs`. Only `aidd-context`
 - `deadPaths(text, root, folder)`: a backticked path that does not exist, the one rule every plugin applies to its own files. A cited path is valid when it exists from the project root, from the repository root (the nearest folder above holding a `.git` that is not a link), or beside the citing file (`folder`);
 - `isShellWrite(command)`: the shell write forms, a redirection other than `2>&1` or to `/dev/null`, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `rmdir`, `patch`, `apply_patch`, `perl -i`, `find … -delete`, `git apply`, `git mv`, and the git subcommands that touch the working tree: `git checkout` except `-b`/`-B` with no path, `git restore` except `--staged` without `--worktree`, `git rm` except `--cached`, `git reset` with `--hard`, `--merge` or `--keep`, `git stash` bare or with `push`, `pop`, `apply`, `drop` or `clear`, and the PowerShell cmdlets `Set-Content`, `Add-Content`, `Out-File`, `New-Item`, `Remove-Item`, `Move-Item`, `Copy-Item`, `Rename-Item`, `Clear-Content` with their documented aliases, in any case, a redirection to `$null` writing nothing;
 - `formatFindings(plugin, findings, options)`: the output of rule 3;
-- the turn-end state of rule 7 (`turnMark` to `requiredAtStop`), since memory is the second plugin with a Stop check: the turn state lives in the shared library, not in a plugin.
+- `markdownLines`, `proseLines`, `namesIn`, and the lines a write changed (`changedLines`, `touchedLines`, `reachesTouched`, `producedBy`): what memory's after-write answer reads. No turn state: a plugin with a Stop check keeps its own (rule 7).
 
 ## 6. What the CLI carries
 
@@ -113,7 +113,7 @@ Copilot's behaviour on a crashing PreToolUse hook is not stated by its official 
 | Claude Code | yes | the adapter fills `replaced` from `tool_response.originalFile`, `""` on a create |
 | Codex, Copilot | yes | a patch carries its removed lines |
 | OpenCode, Kilo | `edit` and `apply_patch` yes, `write` no | the bridge forwards only `tool_input`, which holds no previous content |
-| Cursor | no | every edit is a whole-file `Write` with no previous content, so the Stop check never requires and findings only inform after the write |
+| Cursor | no | every edit is a whole-file `Write` with no previous content, so a turn-end check never requires and findings only inform after the write |
 
 ## 8. Tests
 

@@ -5,7 +5,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-context/hooks/lib/common-rules.cjs");
-const { deadPaths, isShellWrite, formatFindings, markdownLines, proseLines, changedLines, producedBy } = require(LIBRARY);
+const { deadPaths, isShellWrite, formatFindings, markdownLines, proseLines, changedLines, producedBy, touchedLines, reachesTouched } = require(LIBRARY);
 
 /** A throwaway project holding `files`, removed after `body` runs. */
 function inProject(files, body) {
@@ -22,27 +22,18 @@ function inProject(files, body) {
   }
 }
 
-test("the library exports exactly its functions: the rules, the output shape and the turn-end state", () => {
+test("the library exports exactly its functions: the rules, the output shape and the lines a write changed", () => {
   assert.deepEqual(Object.keys(require(LIBRARY)).sort(), [
     "changedLines",
-    "consumeTurn",
     "deadPaths",
     "formatFindings",
     "isShellWrite",
-    "leaveBaseline",
-    "leaveTurn",
-    "markWrite",
     "markdownLines",
+    "namesIn",
     "producedBy",
     "proseLines",
     "reachesTouched",
-    "readBaseline",
-    "readTurn",
-    "requiredAtStop",
-    "sweepTurns",
-    "tellOnce",
     "touchedLines",
-    "turnMark",
   ]);
 });
 
@@ -690,4 +681,12 @@ test("producedBy: a finding carrying its whole text is the write's only when one
   assert.equal(producedBy(finding, new Set(["- use {{a whole slot}} here"])), true);
   assert.equal(producedBy(finding, new Set(["a whole"])), false);
   assert.equal(producedBy({}, new Set(["anything"])), true);
+});
+
+test("touchedLines: a write inside a line touches that whole line, and a span reaching a touched line is on it", () => {
+  const touched = touchedLines("# T\n\nsee {{x}} here\n", new Set(["{{x}}"]));
+  assert.deepEqual([...touched], [3]);
+  assert.equal(reachesTouched({ line: 3 }, touched), true);
+  assert.equal(reachesTouched({ line: 1, endLine: 3 }, touched), true);
+  assert.equal(reachesTouched({ line: 1, endLine: 2 }, touched), false);
 });
