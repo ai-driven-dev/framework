@@ -6,13 +6,13 @@
  *
  * Each rule takes `{ file, text, root, others }` and returns problems:
  * `{ file, line, rule, severity, message, fix }`, plus the offending `excerpt` when there is one
- * and `endLine` when the problem spans several lines.
- * `message` is the whole finding; `excerpt` and `fix` are its parts, as the findings formatter prints them.
+ * and `endLine` when the problem spans several lines. `message` says what is wrong and `fix` what
+ * to do, apart, as the findings formatter prints them.
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { deadPaths, markdownLines, proseLines } = require("./common-rules.cjs");
+const { deadPaths, markdownLines, proseLines, namesIn } = require("./common-rules.cjs");
 
 const ERROR = "error";
 const WARNING = "warning";
@@ -34,8 +34,10 @@ const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
 // Limits: "two" and "three" are left out, they open design prose more often than a count ("three
 // files" and "Two gates" pass), and a label followed by a number and a verb ("Step 2 shows
 // errors") reads as a count.
-const NUMBER_WORDS =
-  "four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred";
+const NUMBER_WORDS = [
+  "four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen",
+  "eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred",
+].join("|");
 const NOT_NOUNS = "of|with|for|on|in|to|and|or|at|by|per|its";
 const PLURAL_NOUN = `(?!(?:${NOT_NOUNS})\\b)(?:[a-z]+\\s+)?(?!(?:${NOT_NOUNS})\\b)(?![a-z]*(?:ss|us|is)\\b)[a-z]{2,}s\\b`;
 const COUNT_OF_THINGS = new RegExp(`(?<![\\w.:+#/,-])(?:\\d{1,6}|${NUMBER_WORDS})\\s+${PLURAL_NOUN}`, "iu");
@@ -52,9 +54,13 @@ const LIST_OR_QUOTE_MARKER = /^\s*(?:[>*+-]\s+|\d+[.)]\s+)/u;
 const SENTENCE_END = /(?<=[.!?])\s+/u;
 const SENTENCE_LAST_WORD = /[.!?]["'”’)\]`*_]*$/u;
 
-/** `offending` is the whole text the finding stands on, where `excerpt` is only its cut form. */
-function problem(file, line, rule, severity, message, fix, excerptText, offending) {
-  return { file, line, rule, severity, message, fix, ...(excerptText === undefined ? {} : { excerpt: excerptText }), ...(offending === undefined ? {} : { offending }) };
+/**
+ * One finding. `offending` is the whole text it stands on, and its cut form is the `excerpt`
+ * unless one is given.
+ */
+function problem({ offending, excerpt: shown, ...finding }) {
+  const cut = shown ?? (offending === undefined ? undefined : excerpt(offending));
+  return { ...finding, ...(cut === undefined ? {} : { excerpt: cut }), ...(offending === undefined ? {} : { offending }) };
 }
 
 /** A quoted excerpt of the offending text, cut so one line stays short. */
@@ -135,10 +141,9 @@ function longProseSentences({ file, text }) {
     .flatMap(sentencesIn)
     .filter((sentence) => sentence.length > PROSE_WORD_LIMIT)
     .map((sentence) => {
-      const [{ number }] = sentence;
-      const count = sentence.length;
-      const found = problem(file, number, "M1", ERROR, `sentence of ${count} words, over ${PROSE_WORD_LIMIT}: ${fix}`, fix, `${count} words, over ${PROSE_WORD_LIMIT}`);
-      return { ...found, endLine: sentence[count - 1].number };
+      const over = `${sentence.length} words, over ${PROSE_WORD_LIMIT}`;
+      const [line, endLine] = [sentence[0].number, sentence[sentence.length - 1].number];
+      return problem({ file, line, endLine, rule: "M1", severity: ERROR, message: `sentence of ${over}`, fix, excerpt: over });
     });
 }
 
@@ -147,7 +152,9 @@ function volatileFacts({ file, text }) {
   for (const { number, text: line } of proseLines(text)) {
     const prose = line.replace(INLINE_CODE, "");
     const match = prose.match(COUNT_OF_THINGS) ?? prose.match(ISO_DATE) ?? prose.match(TIME_WORDS);
-    if (match) found.push(problem(file, number, "M2", WARNING, `"${excerpt(match[0])}" goes stale: ${STALE_FIX}`, STALE_FIX, excerpt(match[0]), match[0]));
+    if (!match) continue;
+    const message = `"${excerpt(match[0])}" goes stale`;
+    found.push(problem({ file, line: number, rule: "M2", severity: WARNING, message, fix: STALE_FIX, offending: match[0] }));
   }
   return found;
 }
@@ -165,14 +172,6 @@ function templatesIn(skills) {
   return null;
 }
 
-function namesIn(folder) {
-  try {
-    return fs.readdirSync(folder);
-  } catch {
-    return [];
-  }
-}
-
 /**
  * The skill's templates folder, found from the hooks folder this library sits in: beside it in the
  * plugin tree, in the tool's own folder in a flat build, under the project's `.agents` for a flat
@@ -182,7 +181,12 @@ function templatesFolder() {
   const hooks = path.resolve(__dirname, "..");
   const above = (levels, ...rest) => path.join(hooks, ...Array(levels).fill(".."), ...rest);
   const own = path.join(hooks, "..", ...TEMPLATES);
-  return templatesIn(above(1, "skills")) ?? templatesIn(above(2, "skills")) ?? templatesIn(above(3, ".agents", "skills")) ?? (fs.existsSync(own) ? own : null);
+  return (
+    templatesIn(above(1, "skills")) ??
+    templatesIn(above(2, "skills")) ??
+    templatesIn(above(3, ".agents", "skills")) ??
+    (fs.existsSync(own) ? own : null)
+  );
 }
 
 /** Every `{{…}}` slot of the template named `name`, wherever it sits under the templates folder. */
@@ -208,15 +212,19 @@ function unfilledSlots({ file, text, templates = templatesFolder() }) {
   const found = [];
   for (const [index, line] of text.split("\n").entries()) {
     const slot = slots.find((candidate) => line.includes(candidate));
-    if (slot !== undefined) found.push(problem(file, index + 1, "M3", ERROR, `"${excerpt(slot)}" unfinished: ${fix}`, fix, excerpt(slot), slot));
+    if (slot !== undefined) {
+      const message = `"${excerpt(slot)}" unfinished`;
+      found.push(problem({ file, line: index + 1, rule: "M3", severity: ERROR, message, fix, offending: slot }));
+    }
   }
   return found;
 }
 
 /** The dead-path rule every plugin applies to its own files, from the shared hook library. */
 function deadReferences({ file, text, root }) {
-  return deadPaths(text, root, path.dirname(path.join(root, file))).map(({ line, path }) =>
-    problem(file, line, "M4", ERROR, `\`${excerpt(path)}\` names nothing on disk: fix the path or remove it`, "fix the path or remove it", excerpt(path), path)
+  const fix = "fix the path or remove it";
+  return deadPaths(text, root, path.dirname(path.join(root, file))).map(({ line, path: dead }) =>
+    problem({ file, line, rule: "M4", severity: ERROR, message: `\`${excerpt(dead)}\` names nothing on disk`, fix, offending: dead })
   );
 }
 
@@ -233,7 +241,8 @@ function longItems({ file, text }) {
     else if (LIST_ITEM.test(line)) items = [line.replace(LIST_ITEM, "")];
 
     if (items.some((item) => wordsIn(item).length > ITEM_WORD_LIMIT)) {
-      found.push(problem(file, number, "M5", WARNING, `bullet or table cell over ${ITEM_WORD_LIMIT} words: split it`, "split it"));
+      const message = `bullet or table cell over ${ITEM_WORD_LIMIT} words`;
+      found.push(problem({ file, line: number, rule: "M5", severity: WARNING, message, fix: "split it" }));
     }
   }
   return found;
@@ -242,7 +251,8 @@ function longItems({ file, text }) {
 function longFile({ file, text }) {
   const count = proseLines(text).reduce((total, { text: line }) => total + wordsIn(line).length, 0);
   if (count <= FILE_WORD_LIMIT) return [];
-  return [problem(file, 1, "M6", WARNING, `file over ${FILE_WORD_LIMIT} words: split it or cut it`, "split it or cut it")];
+  const message = `file over ${FILE_WORD_LIMIT} words`;
+  return [problem({ file, line: 1, rule: "M6", severity: WARNING, message, fix: "split it or cut it" })];
 }
 
 function normalise(piece) {
@@ -284,7 +294,8 @@ function repeatedSentences({ file, text, others }) {
   for (const [sentence, line] of sentencesOf(text)) {
     if (carriers.has(sentence)) {
       const carrier = carriers.get(sentence);
-      found.push(problem(file, line, "M7", WARNING, `a sentence also written in ${carrier}: keep it in one home`, "keep it in one home", carrier));
+      const message = `a sentence also written in ${carrier}`;
+      found.push(problem({ file, line, rule: "M7", severity: WARNING, message, fix: "keep it in one home", excerpt: carrier }));
     }
   }
   return found;

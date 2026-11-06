@@ -36,8 +36,8 @@ Source: two independent challenges of this change, which reproduced every case b
 
 | Rule | After the write (hook) | Check (engine, exit 1 on error) | Skill (model) |
 | --- | --- | --- | --- |
-| M1 a sentence over 25 words outside a table, list item, heading, code or diagram | level 1; required at the turn end only once measured with no false positive | error | reformats it, losing nothing |
-| M3 a slot copied from the template of the same name, left unfilled, fences included | level 1; required at the turn end | error | fills it or removes it |
+| M1 a sentence over 25 words outside a table, list item, heading, code or diagram | level 1 | error | reformats it, losing nothing |
+| M3 a slot copied from the template of the same name, left unfilled, fences included | level 1 | error | fills it or removes it |
 | M4 a backticked path that names nothing on disk | level 1 | error | fixes it or asks |
 | Missing always-written file | nothing | error | creates it |
 | M2 a count, a date, a time word | level 1 | warning | checks it against the code; keeps it when true |
@@ -45,7 +45,7 @@ Source: two independent challenges of this change, which reproduced every case b
 | Former file, misplaced file, team folder | nothing | warning | proposes, never imposes |
 | A fact true against the code, what to keep | nothing | nothing | its only judgement |
 
-After the write, every finding only informs. At the turn end, one Stop check asks once to fix the required errors on the lines the turn is proven to have changed: the whole lines of `written` not in `replaced`, net over the turn (a line changed and changed back counts for nothing), counted as a multiset, and not in the baseline when one exists. A whole-file write over an existing file without `replaced` proves nothing. An error with no line is never required; check holds it. No proof, no hold. This is the Stop rule agreed with aidd-ui, one wording for both plugins.
+After the write, every finding only informs, on the whole lines of `written` not in `replaced`, counted as a multiset. Nothing blocks: check is the strict gate. The turn-end check this phase first built is removed; the reason is in `plan.md`'s decisions.
 
 ## Tasks to do
 
@@ -61,7 +61,7 @@ After the write, every finding only informs. At the turn end, one Stop check ask
    - skips a segment holding `{`, `}`, `<`, `>` or a leading `:`, and strips `?query` and `:L<n>`.
 5. **M6** counts words outside code and diagrams.
 6. **M7** is a warning.
-7. Levels: every finding informs after the write. M3 is required at the turn end; M1 joins it only when task 1.1 measures it with no false positive on the four real banks (this repository's root and `cli/`, gouvernail, kairos-app).
+7. Levels: every finding informs after the write, measured on the four real banks (this repository's root and `cli/`, gouvernail, kairos-app).
 
 ### `2)` Hook and check robustness
 
@@ -72,11 +72,9 @@ After the write, every finding only informs. At the turn end, one Stop check ask
 5. Structure findings (former files, misplaced files, team folders) are computed by the engine from the capability table and printed by `check` as warnings; only a missing always-written file is an error. `03-check.md`'s structure step reads that output instead of judging it.
 6. `formatFindings` prints `1 error` and `1 warning` in the singular; every test expecting the plural, aidd-ui's included, follows.
 
-### `2b)` The turn-end check
+### `2b)` The turn-end check, removed
 
-1. The Stop state moves to the shared library (`hooks/lib/common-rules.cjs`, or a sibling held identical by `check-hook-rule-copies.js`), since memory is the second plugin with a Stop check: a per-session mark of net changed lines per file, a baseline keyed by file, rule and excerpt, written at SessionStart and at each consumed Stop, both under rule 7's folder and permissions.
-2. `hooks.json` adds the Stop entry; the descriptors already map it on every host.
-3. A read-only engine run (`memory.cjs check`) marks nothing.
+1. `hooks.json` carries no Stop entry, and the shared library keeps no turn state or baseline.
 
 ### `3)` Sync never loses a line and never fails silently
 
@@ -92,7 +90,7 @@ After the write, every finding only informs. At the turn end, one Stop check ask
 1. `references/memory-rules.md` states the table above; `02-write.md`'s Lint step fixes only errors, on the lines it wrote, and checks each warning against the code; `03-check.md`'s structure step reads the engine's output.
 2. Refresh records the bank's lines before writing (`memory.cjs lines`, printed to a file in the session's scratch) and ends with `memory.cjs vanished <that file>`: every line present before and absent after, whitespace ignored, wherever it moved; a reordered or moved line reports nothing. The person restores. Nothing is restored automatically.
 3. Kilo and OpenCode builds ship the engine under the skill's `hooks/`, so the "Found none" fallback is deleted.
-4. `docs/ARCHITECTURE.md` and `hook-contract.md`: the Stop row and rule 7 take the wording agreed with aidd-ui (require only the errors on the lines the turn changed, net of what it replaced, and not in the baseline when one exists; never inform at Stop; errors new against the baseline in another file informed after the write that produced them, once per turn; an error with no line is never required at Stop, check holds it; no proof, no hold; baseline left by session start and each consumed Stop, keyed by file, rule and excerpt). Rule 3 states the proof rule for a whole-file write.
+4. `docs/ARCHITECTURE.md` and `hook-contract.md`: rule 7 leaves a turn state to the plugin with a Stop check, and memory has none. Rule 3 states the proof rule for a whole-file write.
 5. This repository's two banks pass `memory.cjs check` with exit 0, each change a reformat that keeps the fact.
 
 ### `5)` Eval cases
@@ -106,8 +104,8 @@ After the write, every finding only informs. At the turn end, one Stop check ask
 
 | Task | Acceptance criteria |
 | ---- | ------------------- |
-| 1 | M1 per sentence measured on the four real banks: 0 hits keeps it required at the turn end, any hit keeps it at level 1, the count written in `measure.md`; each repro of the two challenge reports is a test that failed before the fix and passes after; a GitHub Actions `${{ secrets.X }}` line, `- No TODO left in code`, a path to a gitignored `dist/` file and a nested-fence block raise no error |
-| 2b | a Write adding a slot then a Stop asks once; a Stop after a hand edit, after a standing error, or after a Cursor whole-file Write asks nothing; the aidd-ui copies stay identical |
+| 1 | M1 per sentence measured on the four real banks, the count written in `measure.md`; each repro of the two challenge reports is a test that failed before the fix and passes after; a GitHub Actions `${{ secrets.X }}` line, `- No TODO left in code`, a path to a gitignored `dist/` file and a nested-fence block raise no error |
+| 2b | a Stop after an edit leaving a slot answers nothing; the shared library's copies stay identical |
 | 2 | a Claude Write changing one line reports only that line; a Cursor whole-file Write never answers at level 2; `check` on an empty folder exits non-zero |
 | 3 | read-only `CLAUDE.md` still syncs `AGENTS.md`; a symlinked `CLAUDE.md -> AGENTS.md` keeps a block Claude loads; a team line in the block survives SessionStart |
 | 4 | `node plugins/aidd-context/hooks/memory.cjs check .` and `check cli` exit 0; `docs-do-not-lie` and every gate pass |

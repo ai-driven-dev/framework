@@ -111,7 +111,7 @@ Placing a gap: judgment needed, no hook; one write, after the write, several, at
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`: the same file runs by hand, from a skill and in CI.
 5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, child process, git or network.
 6. **Bounded.** A 5 s declared timeout. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Turn-end check.** Two owner-only files per session live in `common-rules.cjs`: the turn's mark (its net changed lines) and a baseline of errors held at SessionStart and after each consumed Stop, keyed by file, rule and excerpt. Stop requires once, never informs, only errors on net changed lines the baseline lacks and whose whole offending text a changed line holds. An error with no line is never required, check holds it. No proof, no hold: a whole-file write without `replaced` proves nothing, as on Cursor and OpenCode's `write`. An error new against the baseline in another file is told once per turn, as "check it".
+7. **Turn state is the plugin's own.** A plugin with a Stop check keeps its own per-session state, and may tell an error new in another file once per turn; the shared library holds none. `aidd-context` has no Stop check: a memory finding informs after the write, and `memory.cjs check`, which the skill runs when it writes the bank, is its one strict gate.
 8. **Status message.** Every handler carries a short `statusMessage` naming its plugin and action (`AIDD Context: check memory file`); Codex shows it when asking for trust.
 
 ### What the CLI carries

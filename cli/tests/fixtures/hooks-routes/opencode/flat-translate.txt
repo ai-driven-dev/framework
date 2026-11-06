@@ -155,7 +155,7 @@ import { fileURLToPath } from "node:url";
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 
 const SESSION_START = [{"script":"memory.cjs","args":["hook"]}];
-const STOP = [{"script":"memory.cjs","args":["hook"]}];
+const STOP = [];
 const POST_TOOL_USE = [{"script":"memory.cjs","args":["hook"],"matcher":"Write|Edit|Delete|Bash|Shell|bash|PowerShell|apply_patch"}];
 
 // Asynchronous on purpose: this can spawn one script per matching hook across every mapped

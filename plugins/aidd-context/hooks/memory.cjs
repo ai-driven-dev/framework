@@ -3,9 +3,9 @@
 /**
  * The memory bank's one entry, one subcommand per moment:
  *
- * - `hook`: run by the host. At SessionStart it syncs the memory block in silence and leaves the
- *   bank's errors as the turn's baseline; after a write it answers with the findings of the memory
- *   files that write reached; at Stop it asks once to fix the required errors the turn made.
+ * - `hook`: run by the host. At SessionStart it syncs the memory block in silence; after a write
+ *   it informs on the findings that write produced in the memory files it reached. It never
+ *   blocks: `check` is the one strict gate, run by the skill when it writes the bank.
  * - `check [root] [file...]`: the bank's findings by hand, from a skill or in CI. Exits 1 when
  *   an error remains. With no file it checks the whole bank, and a missing always-written file
  *   is an error; so is a root with no bank, or a named file that does not exist. A former file, a
@@ -23,9 +23,15 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { RULES, ERROR, WARNING } = require("./lib/memory-rules.cjs");
-const turnEnd = require("./lib/common-rules.cjs");
-
-const { formatFindings, isShellWrite, markdownLines, changedLines, touchedLines, reachesTouched, producedBy } = turnEnd;
+const {
+  formatFindings,
+  isShellWrite,
+  markdownLines,
+  changedLines,
+  touchedLines,
+  reachesTouched,
+  producedBy,
+} = require("./lib/common-rules.cjs");
 
 const PLUGIN = "aidd-context";
 const DOCS_DIR = "aidd_docs";
@@ -46,7 +52,16 @@ const ALWAYS_WRITTEN = Object.freeze([
 
 // The files a capability row produces, and the former files each replaced: the table of the
 // skill's `references/capabilities.md`, held equal to it by a test.
-const CONDITIONAL_FILES = Object.freeze(["backlog.md", "deployment.md", "contract.md", "auth.md", "data.md", "async.md", "ui.md", "native.md"]);
+const CONDITIONAL_FILES = Object.freeze([
+  "backlog.md",
+  "deployment.md",
+  "contract.md",
+  "auth.md",
+  "data.md",
+  "async.md",
+  "ui.md",
+  "native.md",
+]);
 const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
 const FORMER_FILES = Object.freeze({
   "codebase-map.md": "architecture.md",
@@ -65,13 +80,6 @@ const FORMER_FILES = Object.freeze({
   "desktop.md": "native.md",
 });
 
-// A finding's level after a write: 1 informs the model, 2 requires the fix before it goes on.
-// Every memory finding informs after a write; the turn end is where a fix is required.
-const LEVELS = Object.freeze({ M1: 1, M2: 1, M3: 1, M4: 1, M5: 1, M6: 1, M7: 1 });
-// The errors a Stop requires once, on the lines the turn changed. M1 stays out: measured on real
-// banks, it has hits a model would be held on for nothing.
-const REQUIRED_AT_TURN_END = Object.freeze(["M3"]);
-
 // A shell write carries no file list: a bank file changed this recently is the command's.
 const SHELL_WINDOW_MS = 2000;
 
@@ -82,23 +90,22 @@ function toPosix(file) {
   return file.split(path.sep).join("/");
 }
 
-/** The entries of a folder, or none when it does not exist. A real error still throws. */
-function entriesOf(dir) {
+/** What `read` returns, or `fallback` when its path does not exist. A real error still throws. */
+function unlessMissing(read, fallback) {
   try {
-    return fs.readdirSync(dir, { withFileTypes: true });
+    return read();
   } catch (error) {
-    if (error.code === "ENOENT" || error.code === "ENOTDIR") return [];
+    if (error.code === "ENOENT" || error.code === "ENOTDIR") return fallback;
     throw error;
   }
 }
 
-function readTextOrNull(file) {
-  try {
-    return fs.readFileSync(file, "utf8");
-  } catch (error) {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  }
+const entriesOf = (dir) => unlessMissing(() => fs.readdirSync(dir, { withFileTypes: true }), []);
+const readTextOrNull = (file) => unlessMissing(() => fs.readFileSync(file, "utf8"), null);
+
+/** A bank file's path below the bank, segment by segment. */
+function partsOf(file) {
+  return file.slice(MEMORY_DIR.length + 1).split("/");
 }
 
 /** The always-loaded files directly under the bank, project-relative. */
@@ -127,7 +134,7 @@ function bankFiles(root) {
  * the bank, or outside it. */
 function placeOf(file) {
   if (!file.startsWith(`${MEMORY_DIR}/`)) return "outside";
-  const parts = file.slice(MEMORY_DIR.length + 1).split("/");
+  const parts = partsOf(file);
   if (parts.length === 1) return "root";
   return ON_DEMAND_DIRS.includes(parts[0]) ? "on-demand" : "misplaced";
 }
@@ -182,7 +189,7 @@ function structureFindings(root) {
   const found = [];
   const folders = new Set();
   for (const file of bankFiles(root)) {
-    const parts = file.slice(MEMORY_DIR.length + 1).split("/");
+    const parts = partsOf(file);
     const name = parts[parts.length - 1];
     const [top] = parts;
     if (parts.length > 1 && !ON_DEMAND_DIRS.includes(top)) folders.add(top);
@@ -195,7 +202,8 @@ function structureFindings(root) {
     }
   }
   for (const folder of [...folders].sort()) {
-    const fix = `move ${MEMORY_DIR}/${folder}/ to ${MEMORY_DIR}/internal/${folder}/, or to the ${DOCS_DIR}/ folder of the plugin that owns it`;
+    const owner = `the ${DOCS_DIR}/ folder of the plugin that owns it`;
+    const fix = `move ${MEMORY_DIR}/${folder}/ to ${MEMORY_DIR}/internal/${folder}/, or to ${owner}`;
     found.push(warning(`${MEMORY_DIR}/${folder}/`, "placement", "a folder outside the bank's root, internal/ and external/", fix));
   }
   return found;
@@ -215,44 +223,42 @@ function missingFindings(root) {
   return absent.length === 0 ? [] : [missing(MEMORY_DIR, absent.join(", "), "write each from its template")];
 }
 
-/** A warning prints its message then its fix: the message loses the fix it already ends on. */
-function asWarning(finding) {
-  const suffix = `: ${finding.fix}`;
-  const message = finding.message.endsWith(suffix) ? finding.message.slice(0, -suffix.length) : finding.message;
-  return { ...finding, message };
+/**
+ * The lines a write the event describes is proven to have changed, as the file now stands, and
+ * whether a finding stands on them. Null when they are unknown: a write that only removed lines,
+ * or a file gone.
+ */
+function provenLines(root, file, { written, replaced }) {
+  const changed = changedLines(written, replaced);
+  const text = changed === null ? null : readTextOrNull(path.join(root, file));
+  if (text === null) return null;
+  const touched = touchedLines(text, changed);
+  return { touched, holds: (finding) => reachesTouched(finding, touched) && producedBy(finding, changed) };
 }
 
 /**
- * The findings of the files a write reached, sorted into the formatter's three lists, and its
- * level. A file whose event says what this write put in it reports the findings on the lines it
- * added or changed, one by one. A file whose changed lines are unknown, a shell write, an edit
- * that says nothing of its text or one that only removed lines, may hold standing errors: they
- * print grouped and only inform. A missing file and the bank's layout are check's, never a
- * write's.
+ * The findings of the files a write reached, sorted into the formatter's three lists. A file whose
+ * event says what this write put in it reports the findings on the lines it added or changed, one
+ * by one. A file whose changed lines are unknown, a shell write, an edit that says nothing of its
+ * text or one that only removed lines, may hold standing errors: they print grouped and only
+ * inform. A missing file and the bank's layout are check's, never a write's.
  */
-function findingsOf(root, said, unknown) {
-  const errors = [];
-  const grouped = [];
-  const warnings = [];
-  let level = 1;
-  const take = (file, change) => {
+function findingsOf(root, described, undescribed) {
+  const found = { errors: [], reached: [], warnings: [] };
+  const report = (file, write) => {
     if (placeOf(file) !== "root") return;
-    const changed = change === undefined ? null : changedLines(change.written, change.replaced);
-    const text = changed === null ? null : readTextOrNull(path.join(root, file));
-    const touched = text === null ? null : touchedLines(text, changed);
+    const proven = write === undefined ? null : provenLines(root, file, write);
     // A write that added or changed no line produced nothing to answer for.
-    if (touched !== null && touched.size === 0) return;
+    if (proven !== null && proven.touched.size === 0) return;
     for (const finding of lintFile(root, file)) {
-      if (touched !== null && finding.line !== undefined && !(reachesTouched(finding, touched) && producedBy(finding, changed))) continue;
-      // Only an error can block: errors are never capped, so the line to fix is always printed.
-      if (touched !== null && finding.severity === ERROR && LEVELS[finding.rule] === 2) level = 2;
-      if (finding.severity !== ERROR) warnings.push(asWarning(finding));
-      else (touched !== null ? errors : grouped).push(finding);
+      if (proven !== null && finding.line !== undefined && !proven.holds(finding)) continue;
+      if (finding.severity !== ERROR) found.warnings.push(finding);
+      else (proven === null ? found.reached : found.errors).push(finding);
     }
   };
-  for (const entry of said) take(entry.file, entry);
-  for (const file of unknown.filter((candidate) => !said.some((entry) => entry.file === candidate))) take(file, undefined);
-  return { findings: { errors, reached: grouped, warnings }, level };
+  for (const write of described) report(write.file, write);
+  for (const file of undescribed.filter((name) => !described.some((write) => write.file === name))) report(file, undefined);
+  return found;
 }
 
 /** The path with every link resolved; a path that does not exist yet resolves through its nearest folder that does. */
@@ -286,42 +292,27 @@ function shellReached(root, command) {
   return bankFiles(root).filter((file) => now - fs.statSync(path.join(root, file)).mtimeMs <= SHELL_WINDOW_MS);
 }
 
-/** The written files grouped by the project holding them, each as the event says of it. */
-function writesByProject(event) {
+/**
+ * The projects a write reached: each written file under the project holding it, described when
+ * the event says what the write put in it. A shell command naming the docs folder reaches the
+ * working folder's project, with the bank files it just changed when it matches a write form.
+ */
+function reachedProjects(event) {
   const projects = new Map();
+  const of = (root) => projects.get(root) ?? projects.set(root, { described: [], undescribed: [] }).get(root);
   for (const file of event.files) {
     const root = projectOf(file.path);
     if (root === null) continue;
-    if (!projects.has(root)) projects.set(root, { said: [], unsaid: [] });
     const relative = toPosix(path.relative(root, realish(file.path)));
-    const whole = typeof file.content === "string";
-    if (typeof file.written === "string") projects.get(root).said.push({ file: relative, written: file.written, replaced: file.replaced, whole });
-    else projects.get(root).unsaid.push(relative);
+    if (typeof file.written === "string") of(root).described.push({ file: relative, written: file.written, replaced: file.replaced });
+    else of(root).undescribed.push(relative);
+  }
+  // Owner scope: a command naming no file under the docs folder reads nothing of the project.
+  if (typeof event.command === "string" && /aidd_docs[/\\]/u.test(event.command)) {
+    const cwd = realish(path.resolve(event.cwd));
+    of(cwd).undescribed.push(...shellReached(cwd, event.command));
   }
   return projects;
-}
-
-// ---- the turn end --------------------------------------------------------------------------
-//
-// The turn-end state names each file by its real absolute path, so one session can reach the banks
-// of several projects; a finding is printed relative to its project.
-
-/** A bank root file's errors and warnings, in the shared state's terms. */
-function normalized(root, findings) {
-  return findings.map((finding) => ({ ...finding, file: path.join(root, finding.file), error: finding.severity === ERROR }));
-}
-
-/** A file named from the project the session started in when its bank holds the file, else from its own project. */
-function shownFile(root, cwd, file) {
-  const own = sessionProject(cwd);
-  if (own === null) return file;
-  const relative = path.relative(own, path.join(root, file));
-  return toPosix(relative.startsWith("..") || path.isAbsolute(relative) ? file : relative);
-}
-
-/** A normalized finding back in the printed form, as the person who started the session reads its path. */
-function printed(root, cwd, finding) {
-  return { ...finding, file: shownFile(root, cwd, toPosix(path.relative(root, finding.file))) };
 }
 
 /** The bank's own project for a session's folder, or null when it holds no bank. */
@@ -330,100 +321,34 @@ function sessionProject(cwd) {
   return fs.existsSync(path.join(root, MEMORY_DIR)) ? root : null;
 }
 
-// Another file may be a person's, so what is told of it is to be checked, never owed.
-const TOLD_FIX = "check it";
-
-/** The errors in the other files of the bank that are new against the baseline, told once per turn. */
-function toldElsewhere(projects, turn, baseline, cwd) {
-  if (!baseline) return [];
-  const told = [];
-  for (const root of projects.keys()) {
-    const files = [...turn.files];
-    told.push(...turnEnd.tellOnce(normalized(root, lintBank(root)), files, baseline, turn.told).map((finding) => ({ ...printed(root, cwd, finding), fix: TOLD_FIX })));
-  }
-  return told;
+/** A project's file named from the session's project when that one holds it, else from its own. */
+function shownFile(own, root, file) {
+  if (own === null) return file;
+  const relative = path.relative(own, path.join(root, file));
+  return toPosix(relative.startsWith("..") || path.isAbsolute(relative) ? file : relative);
 }
 
-/**
- * Marks the turn, then answers with what the write produced. A write in the bank adds its proven
- * lines to the turn's net; a shell write naming the docs folder marks the turn with no line. A
- * read, such as a run of `memory.cjs check`, marks nothing.
- */
+/** Informs on the findings a write produced in the banks it reached. */
 function afterWrite(host, event) {
-  const projects = writesByProject(event);
-  const namesDocs = typeof event.command === "string" && /aidd_docs[/\\]/u.test(event.command);
-  // Owner scope: a write that names no file under the docs folder reads nothing of the project.
-  if (projects.size === 0 && !namesDocs) return;
-  const cwd = namesDocs ? realish(path.resolve(event.cwd)) : null;
-  if (namesDocs && !projects.has(cwd)) projects.set(cwd, { said: [], unsaid: [] });
-  const inBank = [...projects].flatMap(([root, { said, unsaid }]) => [
-    ...said.filter((entry) => placeOf(entry.file) === "root").map((entry) => ({ ...entry, file: path.join(root, entry.file) })),
-    ...unsaid.filter((file) => placeOf(file) === "root").map((file) => ({ file: path.join(root, file) })),
-  ]);
-  const shellWrite = namesDocs && isShellWrite(event.command);
-  const mark = inBank.length > 0 || shellWrite ? turnEnd.turnMark(PLUGIN, event.sessionId) : null;
-  const baseline = turnEnd.readBaseline(mark);
-  const turn = turnEnd.readTurn(mark);
-  const reached = shellWrite ? shellReached(cwd, event.command) : [];
-  // A file the shell write reached is reported as its own, never again as another file's.
-  for (const entry of [...inBank, ...reached.filter((file) => placeOf(file) === "root").map((file) => ({ file: path.join(cwd, file) }))]) turnEnd.markWrite(turn, entry);
-
+  const projects = reachedProjects(event);
+  if (projects.size === 0) return;
+  const own = sessionProject(event.cwd);
   const all = { errors: [], reached: [], warnings: [] };
-  let level = 1;
-  for (const [root, { said, unsaid }] of projects) {
-    const { findings, level: own } = findingsOf(root, said, [...unsaid, ...(root === cwd ? reached : [])]);
-    for (const list of Object.keys(all)) all[list].push(...findings[list].map((finding) => ({ ...finding, file: shownFile(root, event.cwd, finding.file) })));
-    level = Math.max(level, own);
-  }
-  if (mark) {
-    all.reached.push(...toldElsewhere(projects, turn, baseline, event.cwd));
-    turnEnd.leaveTurn(mark, turn);
+  for (const [root, { described, undescribed }] of projects) {
+    const found = findingsOf(root, described, undescribed);
+    const shown = (finding) => ({ ...finding, file: shownFile(own, root, finding.file) });
+    for (const list of Object.keys(all)) all[list].push(...found[list].map(shown));
   }
   const text = formatFindings(PLUGIN, all);
-  if (text !== "") host.answer({ level, text });
-}
-
-/** Leaves the bank's errors as the baseline: what the session found, never asked of a turn. */
-function atSessionStart(event) {
-  turnEnd.sweepTurns(PLUGIN);
-  const root = sessionProject(event.cwd);
-  if (root !== null) turnEnd.leaveBaseline(turnEnd.turnMark(PLUGIN, event.sessionId), normalized(root, lintBank(root)));
-}
-
-/**
- * Asks once, at the turn's end, to fix the required errors on the lines the turn is proven to have
- * changed, net, past the baseline when one exists. Never informs. The baseline then takes the
- * errors of the banks the turn reached as they stand, so what was asked once is never asked again.
- * A turn that left no mark reads nothing.
- */
-function atStop(host, event) {
-  const mark = turnEnd.turnMark(PLUGIN, event.sessionId);
-  const turn = turnEnd.consumeTurn(mark);
-  if (turn === null) return;
-  const roots = new Set([...turn.files].map(projectOf).filter((root) => root !== null));
-  const own = sessionProject(event.cwd);
-  if (own !== null) roots.add(own);
-  const found = [...roots].flatMap((root) => normalized(root, lintBank(root)).map((finding) => ({ ...finding, root })));
-  const required = turnEnd.requiredAtStop(
-    turn,
-    found.filter((finding) => REQUIRED_AT_TURN_END.includes(finding.rule)),
-    turnEnd.readBaseline(mark),
-    readTextOrNull
-  );
-  turnEnd.leaveBaseline(mark, found);
-  const text = formatFindings(PLUGIN, { errors: required.map((finding) => printed(finding.root, event.cwd, finding)) });
-  if (text !== "") host.continueTurn(text);
+  if (text !== "") host.answer({ level: 1, text });
 }
 
 function hook() {
   const host = require("./lib/host.cjs");
   const event = host.readEvent();
   if (event === undefined) return;
-  if (event.event === "SessionStart") {
-    sync(event.cwd, [], { quiet: true });
-    atSessionStart(event);
-  } else if (event.event === "PostToolUse") afterWrite(host, event);
-  else if (event.event === "Stop") atStop(host, event);
+  if (event.event === "SessionStart") sync(event.cwd, [], { quiet: true });
+  else if (event.event === "PostToolUse") afterWrite(host, event);
 }
 
 /**
@@ -443,7 +368,7 @@ function check(root, files = []) {
   }
   if (named.length === 0) found.push(...missingFindings(absolute), ...structureFindings(absolute));
   const errors = found.filter((finding) => finding.severity === ERROR);
-  const warnings = found.filter((finding) => finding.severity !== ERROR).map(asWarning);
+  const warnings = found.filter((finding) => finding.severity !== ERROR);
   // The cap on warnings binds the hook's answer to a model; a check prints every one.
   const text = formatFindings(PLUGIN, { errors, warnings }, { warningsCap: Infinity });
   return { errors, warnings, text, failures: [...new Set(failures)] };
@@ -490,7 +415,7 @@ class UnknownToolError extends Error {}
 
 function onDemandFiles(root) {
   return bankFiles(root).filter((file) => {
-    const parts = file.slice(MEMORY_DIR.length + 1).split("/");
+    const parts = partsOf(file);
     const name = parts[parts.length - 1];
     return ON_DEMAND_DIRS.includes(parts[0]) && name.endsWith(".md") && !EXCLUDED_FILES.has(name);
   });
@@ -580,7 +505,8 @@ function blockProblem(content, found, legacy) {
 /** The block's lines when something a generator never wrote stands in it, or null. */
 function foreignLine(lines, found, inner, root) {
   const written = new Set(inner);
-  return lines.slice(found.openLine + 1, found.closeLine).map((line) => line.trim()).find((line) => !isGeneratedLine(line, written, root)) ?? null;
+  const block = lines.slice(found.openLine + 1, found.closeLine).map((line) => line.trim());
+  return block.find((line) => !isGeneratedLine(line, written, root)) ?? null;
 }
 
 /** The content with the lines between the markers replaced, in the file's own line ending. */
@@ -780,6 +706,6 @@ function main(argv) {
   return EXIT_ERRORS;
 }
 
-module.exports = { ALWAYS_WRITTEN, ROW_FILES, FORMER_FILES, LEVELS, REQUIRED_AT_TURN_END, TARGET_FILES, lintFile, lintBank, check, sync };
+module.exports = { ALWAYS_WRITTEN, ROW_FILES, FORMER_FILES, TARGET_FILES, lintFile, lintBank, check, sync };
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));

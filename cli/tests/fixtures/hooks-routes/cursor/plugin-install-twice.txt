@@ -25,18 +25,6 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
         "timeout": 5
       }
     ],
-    "stop": [
-      {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-        "timeout": 5
-      }
-    ],
-    "sessionEnd": [
-      {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-        "timeout": 5
-      }
-    ],
     "beforeSubmitPrompt": [
       {
         "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
@@ -131,16 +119,6 @@ project cursor aidd-context scope=user: 0 hook files
       "event": "postToolUse",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
       "digest": "611f6b7425abbbd527553aa9f0326016"
-    },
-    {
-      "event": "stop",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "54f3c593a31decd059c8f9dcb3b20834"
-    },
-    {
-      "event": "sessionEnd",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "54f3c593a31decd059c8f9dcb3b20834"
     }
   ],
   "scripts": {}
@@ -181,16 +159,6 @@ machine cursor aidd-context scope=user: 0 hook files
       "event": "postToolUse",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
       "digest": "611f6b7425abbbd527553aa9f0326016"
-    },
-    {
-      "event": "stop",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "54f3c593a31decd059c8f9dcb3b20834"
-    },
-    {
-      "event": "sessionEnd",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "54f3c593a31decd059c8f9dcb3b20834"
     }
   ],
   "scripts": {}

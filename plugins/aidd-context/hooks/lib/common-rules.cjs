@@ -7,12 +7,11 @@
  * - `markdownLines`, `proseLines`: the one reader of fences, comments, front matter and code.
  * - `isShellWrite`: whether a shell command's text matches a write form.
  * - `formatFindings`: the one output shape every hook prints.
- * - `changedLines`, `touchedLines`, `reachesTouched`: the lines a write changed, in the file.
- * - `turnMark` to `requiredAtStop`: the turn-end state of a plugin with a Stop check.
+ * - `changedLines`, `touchedLines`, `reachesTouched`, `producedBy`: the lines a write changed, in the file.
+ * - `namesIn`: a folder's entry names, or none.
  */
 
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 
 const BACKTICKED = /`([^`\n]+)`/gu;
@@ -261,9 +260,10 @@ function absentByDesign(base, top, segments) {
  * Anchored on a real top-level entry rather than on "looks like a path", as
  * `scripts/check-referenced-paths.js` is: anything wider reports MIME types and shell fragments.
  * Each segment is compared by its exact name. A file also exists when it does under the nearest
- * ancestor holding `.git`, or beside the citing file when its `folder` is given. A path never leaves the root it is read from: a `..` segment is not
- * checked, and neither is a link out. A path is not reported when it sits under a folder a
- * `.gitignore` ignores (plain forms only, see `ignoreRule`) or in an empty submodule.
+ * ancestor holding `.git`, or beside the citing file when its `folder` is given. A path never
+ * leaves the root it is read from: a `..` segment is not checked, and neither is a link out. A
+ * path is not reported when it sits under a folder a `.gitignore` ignores (plain forms only, see
+ * `ignoreRule`) or in an empty submodule.
  */
 function deadPaths(text, root, folder = root) {
   const heads = new Set(namesIn(root).filter((entry) => entry !== IGNORED_ENTRY).map((entry) => entry.toLowerCase()));
@@ -588,199 +588,6 @@ function reachesTouched(finding, touched) {
   return false;
 }
 
-// ---- the turn-end state ---------------------------------------------------------------------
-//
-// A plugin with a Stop check keeps, per session, the lines its turn is proven to have changed and
-// the errors the project held before it. Findings reach this state normalized: `{ file, line?,
-// endLine?, rule, excerpt?, error }`, `file` being whatever one name the plugin gives each file.
-
-// A session id is a file-name part, so only these characters reach the state's paths.
-const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/u;
-// One folder per user where the system has users, the temp folder being per user elsewhere.
-const HOOKS_FOLDER = typeof process.getuid === "function" ? `aidd-hooks-${process.getuid()}` : "aidd-hooks";
-const OTHERS_BITS = 0o077;
-// State no Stop or session start renewed for a day: its session ended.
-const STATE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-// The errors held at the session's start or at the last turn's end, beside the turn's mark.
-const BASELINE_SUFFIX = ".base";
-
-/** Whether `folder` is this user's alone, created if missing: not a link and, where the system
- * has users, owned by this one and closed to others. */
-function ownFolder(folder) {
-  try {
-    fs.mkdirSync(folder, { mode: 0o700 });
-  } catch (error) {
-    if (error.code !== "EEXIST") return false;
-  }
-  const stat = fs.lstatSync(folder);
-  if (!stat.isDirectory()) return false;
-  return typeof process.getuid !== "function" || (stat.uid === process.getuid() && (stat.mode & OTHERS_BITS) === 0);
-}
-
-/** `<tmpdir>/aidd-hooks-<uid>/<plugin>`, or null when either folder is not this user's alone. */
-function stateFolder(plugin) {
-  const hooks = path.join(os.tmpdir(), HOOKS_FOLDER);
-  const own = path.join(hooks, plugin);
-  try {
-    return ownFolder(hooks) && ownFolder(own) ? own : null;
-  } catch {
-    return null;
-  }
-}
-
-/** The file a session's turn leaves for its Stop, its baseline beside it. Null when the session
- * cannot be told apart or the state folder is not this user's alone. */
-function turnMark(plugin, sessionId) {
-  if (typeof sessionId !== "string" || !SAFE_SESSION_ID.test(sessionId)) return null;
-  const folder = stateFolder(plugin);
-  return folder && path.join(folder, sessionId);
-}
-
-/** Removes the plugin's state older than a day, entry by entry: a link is removed, never followed. */
-function sweepTurns(plugin) {
-  const folder = stateFolder(plugin);
-  if (!folder) return;
-  for (const name of fs.readdirSync(folder)) {
-    const entry = path.join(folder, name);
-    try {
-      const stat = fs.lstatSync(entry);
-      if (!stat.isDirectory() && Date.now() - stat.mtimeMs > STATE_MAX_AGE_MS) fs.unlinkSync(entry);
-    } catch {
-      // gone meanwhile, or not ours to remove
-    }
-  }
-}
-
-/** A state file's `[key, count]` pairs; null when missing or unreadable as pairs. */
-function readPairs(file) {
-  try {
-    return new Map(JSON.parse(fs.readFileSync(file, "utf8")));
-  } catch {
-    return null;
-  }
-}
-
-/** Writes `pairs` to a new file beside `file`, created only where nothing exists, then renames it
- * over: a rename replaces a link planted at the path instead of writing through it. State that
- * cannot be written never costs the hook its answer. */
-function writePairs(file, pairs) {
-  const next = `${file}.${process.pid}`;
-  try {
-    fs.writeFileSync(next, JSON.stringify([...pairs]), { flag: "wx", mode: 0o600 });
-    fs.renameSync(next, file);
-  } catch {
-    fs.rmSync(next, { force: true });
-  }
-}
-
-/** An error's identity across writes: its file, rule and excerpt, never its line, which moves. */
-const keyOf = ({ file, rule, excerpt }) => JSON.stringify([file, rule, excerpt ?? ""]);
-/** A changed line's identity: its file and its trimmed text. */
-const lineKey = (file, line) => JSON.stringify([file, line]);
-
-function countKeys(findings) {
-  const counts = new Map();
-  for (const finding of findings) counts.set(keyOf(finding), (counts.get(keyOf(finding)) ?? 0) + 1);
-  return counts;
-}
-
-/** The errors past those `counted` holds, key by key: the ones nothing proves were there before. */
-function newErrors(errors, counted) {
-  const left = new Map(counted);
-  return errors.filter((finding) => {
-    const before = left.get(keyOf(finding)) ?? 0;
-    left.set(keyOf(finding), before - 1);
-    return before <= 0;
-  });
-}
-
-/** The baseline: the errors counted at the session's start or at the last consumed Stop, or null. */
-function readBaseline(mark) {
-  return mark ? readPairs(`${mark}${BASELINE_SUFFIX}`) : null;
-}
-
-/** Leaves the errors among `findings` as the baseline. */
-function leaveBaseline(mark, findings) {
-  if (mark) writePairs(`${mark}${BASELINE_SUFFIX}`, countKeys(findings.filter((finding) => finding.error)));
-}
-
-/** The turn so far: `net`, its changed lines counted in and out; `files`, every file it wrote;
- * `told`, the errors elsewhere it was already told of. Empty when no mark exists. */
-function readTurn(mark) {
-  const turn = { net: new Map(), files: new Set(), told: new Map() };
-  for (const [key, count] of (mark && readPairs(mark)) ?? []) {
-    const rest = key.slice(1);
-    if (key[0] === "+") turn.net.set(rest, count);
-    else if (key[0] === "@") turn.files.add(rest);
-    else if (key[0] === "!") turn.told.set(rest, count);
-  }
-  return turn;
-}
-
-/**
- * Adds one write to the turn: `{ file, written, replaced, whole }`, `whole` for a write carrying the
- * whole file. Its written lines count in, its replaced lines out, so a line changed and changed back
- * nets to nothing. A whole-file write that does not say what it replaced proves no line, baseline or
- * not; a fragment or a patch that replaced nothing proves the lines it wrote.
- */
-function markWrite(turn, { file, written, replaced, whole = false }) {
-  turn.files.add(file);
-  if (typeof written !== "string" || (whole && typeof replaced !== "string")) return;
-  for (const line of linesOf(written)) turn.net.set(lineKey(file, line), (turn.net.get(lineKey(file, line)) ?? 0) + 1);
-  for (const line of linesOf(replaced)) turn.net.set(lineKey(file, line), (turn.net.get(lineKey(file, line)) ?? 0) - 1);
-}
-
-/** Leaves the turn for the next write or its Stop. A turn with no proven line is still a mark. */
-function leaveTurn(mark, { net, files, told }) {
-  if (!mark) return;
-  writePairs(mark, [
-    ...[...net].map(([key, count]) => [`+${key}`, count]),
-    ...[...files].map((file) => [`@${file}`, 1]),
-    ...[...told].map(([key, count]) => [`!${key}`, count]),
-  ]);
-}
-
-/** The turn's state, consumed so the next turn starts clean; null when the turn left no mark. */
-function consumeTurn(mark) {
-  if (!mark || !fs.existsSync(mark)) return null;
-  const turn = readTurn(mark);
-  fs.rmSync(mark, { force: true });
-  return turn;
-}
-
-/** The errors outside `files` that the baseline does not count and the turn was not yet told of;
- * they join `told`. None without a baseline: nothing then proves an error new. */
-function tellOnce(findings, files, baseline, told) {
-  if (!baseline) return [];
-  const fresh = newErrors(findings.filter((finding) => finding.error && !files.includes(finding.file)), baseline);
-  const untold = newErrors(fresh, told);
-  for (const [key, count] of countKeys(untold)) told.set(key, (told.get(key) ?? 0) + count);
-  return untold;
-}
-
-/**
- * What a Stop requires once: the errors among `findings` on the lines the turn is proven to have
- * changed, net, and past what the baseline counts when one exists. An error with no line is never
- * required. `textOf(file)` reads a file as it stands, null when it cannot.
- */
-function requiredAtStop(turn, findings, baseline, textOf) {
-  const changed = new Map();
-  for (const [key, count] of turn.net) {
-    if (count <= 0) continue;
-    const [file, line] = JSON.parse(key);
-    changed.set(file, (changed.get(file) ?? new Set()).add(line));
-  }
-  const candidates = [];
-  for (const [file, lines] of changed) {
-    const text = textOf(file);
-    if (text === null) continue;
-    const touched = touchedLines(text, lines);
-    // A finding with no line reaches no touched line.
-    candidates.push(...findings.filter((finding) => finding.error && finding.file === file && reachesTouched(finding, touched) && producedBy(finding, lines)));
-  }
-  return baseline ? newErrors(candidates, baseline) : candidates;
-}
-
 module.exports = {
   deadPaths,
   isShellWrite,
@@ -791,14 +598,5 @@ module.exports = {
   touchedLines,
   reachesTouched,
   producedBy,
-  turnMark,
-  sweepTurns,
-  readBaseline,
-  leaveBaseline,
-  readTurn,
-  markWrite,
-  leaveTurn,
-  consumeTurn,
-  tellOnce,
-  requiredAtStop,
+  namesIn,
 };
