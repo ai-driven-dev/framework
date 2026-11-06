@@ -23,8 +23,6 @@ const input = vi.fn();
 const propose = vi.fn();
 const ensureInstallationId = vi.fn();
 const checkInstallationId = vi.fn();
-const sessionSnapshot = vi.fn();
-const sessionPermits = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
@@ -41,7 +39,6 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
       reportUsageUseCase: { execute: report },
       manageIdentityUseCase: identity,
       proposeIdentityUseCase: { execute: propose },
-      sessionFeatureUseCase: { snapshot: sessionSnapshot, permits: sessionPermits },
     },
   })),
   createMenuDeps: vi.fn(),
@@ -776,131 +773,33 @@ describe("native telemetry commands", () => {
     expect(check).toHaveBeenCalledWith("claude", "dev");
   });
 
-  it("forwards one consented session without printing its token", async () => {
-    vi.stubEnv("AIDD_OTEL_TOKEN", "private-test-token");
-    const admission = { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" };
-    sessionSnapshot.mockResolvedValue(new Map([["s1", admission]]));
-    sessionPermits.mockResolvedValueOnce("allow").mockResolvedValueOnce("deny");
-    const sync = vi.spyOn(otel, "syncCapturedSession").mockResolvedValue({
-      sent: 2,
-      skipped: 0,
-      offset: 12,
-      partialLine: true,
-    });
-    expect(
-      await run(
-        "otel",
-        "sync",
-        "--config=claude",
-        "--session=s1",
-        "--tenant=acme",
-        "--endpoint=http://127.0.0.1:3000"
-      )
-    ).toBeNull();
-    expect(sessionSnapshot).toHaveBeenCalledWith("claude-code");
-    const call = sync.mock.calls[0];
-    if (!call) throw new Error("the session was not passed to the exporter");
-    expect(call[0]).toMatchObject({
-      config: "claude",
-      session: "s1",
-      tenant: "acme",
-      endpoint: "http://127.0.0.1:3000",
-      token: "private-test-token",
-      follow: false,
-    });
-    await expect(call[1]()).resolves.toBeUndefined();
-    const transfer = { signal: "logs" as const, payload: {}, at: "2026-11-04T00:00:00Z" };
-    expect(await call[2](transfer)).toBe(true);
-    expect(await call[2](transfer)).toBe(false);
-    expect(await call[2]({ signal: "logs", payload: {} })).toBe(false);
-    expect(stdout()).toContain("Sent 2 observations");
-    expect(stdout()).toContain("last incomplete capture line");
-    expect(stdout()).not.toContain("private-test-token");
-  });
-
-  it("never sends a session that lacks consent", async () => {
-    sessionSnapshot.mockResolvedValue(new Map());
-    const sync = vi.spyOn(otel, "syncCapturedSession");
-    expect(
-      await run(
-        "otel",
-        "sync",
-        "--config=codex",
-        "--session=s2",
-        "--tenant=acme",
-        "--endpoint=http://127.0.0.1:3000"
-      )
-    ).toBe(1);
-    expect(sessionSnapshot).toHaveBeenCalledWith("codex");
-    expect(stderr()).toContain("No consented usage found");
-    expect(sync).not.toHaveBeenCalled();
-  });
-
-  it("stops admitting events when a followed session loses consent", async () => {
-    vi.stubEnv("AIDD_OTEL_TOKEN", "");
-    const admission = { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" };
-    sessionSnapshot
-      .mockResolvedValueOnce(new Map([["s1", admission]]))
-      .mockResolvedValueOnce(new Map([["s1", admission]]))
-      .mockResolvedValueOnce(new Map());
-    sessionPermits.mockResolvedValue("allow");
-    const sync = vi.spyOn(otel, "syncCapturedSession").mockResolvedValue({
-      sent: 1,
-      skipped: 0,
-      offset: 1,
-      partialLine: false,
-    });
-    expect(
-      await run(
-        "otel",
-        "sync",
-        "--config=codex",
-        "--session=s1",
-        "--tenant=acme",
-        "--endpoint=http://127.0.0.1:3000",
-        "--follow"
-      )
-    ).toBeNull();
-    expect(stdout()).toContain("Following the selected session");
-    expect(stdout()).not.toContain("last incomplete capture line");
-    const call = sync.mock.calls[0];
-    if (!call) throw new Error("the session was not passed to the exporter");
-    expect(call[0]).toMatchObject({ follow: true, token: "" });
-    await expect(call[1]()).rejects.toThrow("No consented usage found");
-    expect(await call[2]({ signal: "logs", payload: {}, at: "2026-11-04T00:00:00Z" })).toBe(false);
-  });
-
-  it("requires a session for one-shot sync and discovers sessions only with follow", async () => {
-    vi.stubEnv("AIDD_OTEL_TOKEN", "private-test-token");
-    const follow = vi
-      .spyOn(otel, "followCapturedSessions")
-      .mockResolvedValue({ sent: 3, denied: 1, pending: 2 });
+  it("requires explicit execution consent before launching a provider", async () => {
+    const runOtel = vi.spyOn(otel, "runOtelSession");
     const args = [
       "otel",
-      "sync",
-      "--config=codex",
+      "run",
+      "--config=claude",
       "--tenant=acme",
       "--endpoint=http://127.0.0.1:3000",
     ];
-    expect(await run(...args)).toBeNull();
-    expect(process.exitCode).toBe(1);
-    expect(stderr()).toContain("Pass --session");
-    expect(follow).not.toHaveBeenCalled();
-    process.exitCode = previousExitCode;
-    sessionSnapshot.mockResolvedValue(new Map());
-    sessionPermits.mockResolvedValue("unknown");
-    expect(await run(...args, "--follow")).toBeNull();
-    const call = follow.mock.calls[0];
-    if (!call) throw new Error("the session follower was not started");
-    expect(call[0]).toMatchObject({ config: "codex", tenant: "acme", token: "private-test-token" });
-    expect(await call[1]()).toEqual(new Map());
-    const admission = {
-      feature: { state: "unbound" as const },
-      cwd: "/project",
-      repositoryId: "repo",
-    };
-    expect(await call[2](admission, "2026-11-04T00:00:00Z")).toBe("unknown");
-    expect(stdout()).toContain("Sent 3 observations; 1 were outside consent; 2 await confirmation");
-    expect(stdout()).not.toContain("private-test-token");
+    expect(await run(...args, "--", "reply OK")).toBe(1);
+    expect(stderr()).toContain("Pass --yes to consent");
+    expect(runOtel).not.toHaveBeenCalled();
+    runOtel.mockImplementation(async ({ retainCapture }) => {
+      retainCapture?.("/private/claude.jsonl");
+      throw new Error("Provider exited early.");
+    });
+    expect(await run(...args, "--yes", "--keep-capture", "--model=haiku", "--", "reply OK")).toBe(
+      1
+    );
+    expect(runOtel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: "claude",
+        model: "haiku",
+        prompt: "reply OK",
+        retainCapture: expect.any(Function),
+      })
+    );
+    expect(stdout()).toContain("Private OTLP capture: /private/claude.jsonl");
   });
 });

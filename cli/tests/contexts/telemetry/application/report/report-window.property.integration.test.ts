@@ -12,7 +12,6 @@ import { storeCalls } from "../../../../../src/contexts/telemetry/application/le
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { ReportLedger } from "../../../../../src/contexts/telemetry/application/report/repository-uncertainty.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import { attribute } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
@@ -247,7 +246,7 @@ describe("a report on a bounded period", () => {
         await settled.leftOut.add(leftOut);
         const bounded = await new ReportUsageUseCase(
           ingestOf(settled),
-          new ReportLedger(settled),
+          settled,
           declared,
           identity,
           new FakeLocator(),
@@ -257,9 +256,7 @@ describe("a report on a bounded period", () => {
         const fullLedger = await ledgerWith(files);
         await fullLedger.leftOut.add(leftOut);
         const full = await fullLedger.load();
-        const kept = full.records
-          .filter((record) => inPeriod(record.at, period))
-          .map((record) => ({ ...record, repository_uncertain: true as const }));
+        const kept = full.records.filter((record) => inPeriod(record.at, period));
         // A session or repository typed by its start names a value among the period's calls.
         const resolved: { -readonly [K in keyof ReportFilters]: ReportFilters[K] } = { ...filters };
         for (const flag of ["session", "repository"] as const) {
@@ -267,7 +264,7 @@ describe("a report on a bounded period", () => {
           if (typed === null) continue;
           const found = resolveId(
             typed,
-            kept.flatMap((record) => (flag === "session" ? [record.session_id] : []))
+            kept.map((record) => (flag === "session" ? record.session_id : record.repository_id))
           );
           if (found.kind === "ambiguous") {
             expect(bounded).toEqual({ status: "ambiguous", flag, typed, ids: found.ids });

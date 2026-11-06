@@ -30,7 +30,7 @@ ALL_COMMANDS=(
   "auth login" "auth logout" "auth status"
   "telemetry on" "telemetry off" "telemetry forget" "telemetry ingest"
   "telemetry task" "telemetry status" "telemetry report" "telemetry identity"
-  "telemetry otel init" "telemetry otel verify" "telemetry otel sync" "telemetry otel collect"
+  "telemetry otel init" "telemetry otel verify" "telemetry otel run" "telemetry otel collect"
 )
 
 PASS=0; FAIL=0; SKIP=0
@@ -228,7 +228,7 @@ run "telemetry forget (preview)" 0 "Nothing was removed" "$P_TEL" -- telemetry f
 run "telemetry forget --yes" 0 "Removed" "$P_TEL" -- telemetry forget --yes
 run "telemetry off (after forget)" 0 "Measurement was not on" "$P_TEL" -- telemetry off
 
-section "native telemetry (sandboxed profile)"
+section "provider OTEL (sandboxed profile)"
 OTEL_CAPTURE="$HOME/.local/share/aidd-otel-observation"
 mkdir -p "$OTEL_CAPTURE" "$TMPROOT/otel-bin"
 chmod 700 "$OTEL_CAPTURE"
@@ -287,8 +287,8 @@ unset OTEL_EXPORTER_OTLP_ENDPOINT OTEL_EXPORTER_OTLP_HEADERS
 run "telemetry otel init (OpenCode 2)" 0 "Restart the OpenCode background service" "$P_TEL" -- \
   telemetry otel init --config=opencode --endpoint=dev
 unset AIDD_OTEL_TOKEN
-run "telemetry otel sync (no consented session)" 1 "No consented usage found" "$P_TEL" -- \
-  telemetry otel sync --config=codex --session=missing --tenant=smoke --endpoint=http://127.0.0.1:4318
+run "telemetry otel run (no execution consent)" 1 "Pass --yes to consent" "$P_TEL" -- \
+  telemetry otel run --config=codex --tenant=smoke --endpoint=http://127.0.0.1:4318 -- "reply OK"
 export PATH="$SMOKE_ORIGINAL_PATH"
 
 section "update --check"

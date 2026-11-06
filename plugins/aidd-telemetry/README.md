@@ -24,25 +24,23 @@ flowchart LR
   Tasks -->|"attribute"| Report
 ```
 
-The Gouvernail AI KPI view uses provider OpenTelemetry (OTel) signals only. The framework's local ledger powers `aidd telemetry report` and remains separate. The development sync currently relies on the ledger to associate a session with a clone before checking consent. Do not add their totals: both sources can cover the same calls. See the [field inventory](OBSERVABILITY.md).
+The Gouvernail AI KPI view uses provider OpenTelemetry (OTel) signals only. The framework's local ledger powers `aidd telemetry report` and remains separate. Do not add their totals: both sources can cover the same calls. See the [field inventory](OBSERVABILITY.md).
 
 ## Choose a mode
 
 | Mode | Opt-in and destination | Identity | What is kept or sent |
 | --- | --- | --- | --- |
 | Local usage | `aidd telemetry on` explicitly enables measurement for the current clone from that time. The ledger and report stay on this machine. | An optional name labels the local report; anonymous use is supported. | Per-call usage read from Claude Code and Codex session files: session, time, model, agent, token counts and local attribution context. The ledger does not store prompts or responses. |
-| OTLP development | Explicitly configure each provider with `otel init --endpoint=dev` and start the local collector. A separate `otel sync` sends supported data only to loopback Gouvernail for sessions covered by the clone's consent. | No local report name is required. Provider identifiers may still be sent when present; attribution in Gouvernail needs a matched active member. The connector token is not a person identity. | The collector stores raw provider events, which may include prompts, responses, commands and tool output. The sync excludes fields for those contents and traces, but does not inspect allowed attribute values for secrets. See the [field inventory](OBSERVABILITY.md). |
+| OTLP development | `otel run --yes` explicitly opts in one isolated execution and sends supported observations to loopback Gouvernail. | Provider identifiers may be sent when present; attribution requires a matched active member. The connector token is not a person identity. | With `--keep-capture`, the private capture can contain prompts, responses, commands and tool output. Forwarding filters fields but does not inspect allowed attribute values for secrets. See the [field inventory](OBSERVABILITY.md). |
 | OTLP production | **Not available:** `--endpoint=prod` is refused. `https://gouvernail.eu` is an intended future destination, not an active exporter. | **Required before production is enabled:** an authenticated user identity. This is a product requirement, not yet implemented or enforced. | No production payload is sent by this feature today. Consent, authentication, retention and deletion behavior must be implemented before enabling it. |
 
 ### Consent and scope
 
-- `on` is an explicit opt-in for one clone, not a team-wide setting. The local ledger and OTLP sync use its consent intervals; an earlier consent does not cover later work after `off`.
-- `otel init` is a separate, explicit action to configure a provider's user-level exporter. The CLI does not show a separate consent dialog or record separate OTLP consent; the init skill asks for authorization before running it. When that provider and the collector are running, raw OTLP may be captured from other projects too: **the collector does not check clone consent**. The sync checks consent before forwarding.
-- Claude metric sync also sends a deterministic fingerprint derived from the original series attributes; it can expose equality or allow guessing low-entropy values.
-- `aidd telemetry off` stops local measurement for the current clone; it does **not** disable provider exporters or stop the OTLP collector. A process started with `AIDD_TELEMETRY=0` refuses local measurement and sync, not raw collection; changing an environment variable does not change an already running process.
-- `aidd telemetry forget` previews or deletes local usage measurement. It does **not** delete OTLP capture files, sync state, or data already received by Gouvernail. Production deletion is not available; the requested production policy is to disallow it.
-- Raw captures are private local files, but have no automatic retention limit. They can contain sensitive content. The local collector and sync processes do not restart automatically.
-- Automatic sync sends each session's capture line as one request. A line over 2 MiB remains pending and is reported; later lines continue. A timeout after receiver acceptance cannot guarantee exactly-once delivery without receiver-side idempotence.
+- `on` opts in the separate local usage ledger for one clone. `otel run --yes` opts in the single provider execution independently; it does not attribute observations to a clone or feature.
+- `otel init` separately configures a user-level exporter. Its global collector can capture other projects and does not check clone consent. It is not required for `otel run`.
+- `aidd telemetry off` and `forget` affect local usage measurement; they do not disable provider exporters or delete retained OTLP captures or data already received by Gouvernail.
+- Retained captures are private local files without automatic deletion. They can contain sensitive content. Claude metric forwarding also sends a deterministic series fingerprint, which can expose equality or allow guesses of low-entropy values.
+- Delivery after a timeout cannot guarantee exactly-once behavior without receiver-side idempotence.
 
 ### Three different identifiers
 
@@ -50,7 +48,7 @@ The Gouvernail AI KPI view uses provider OpenTelemetry (OTel) signals only. The 
 | --- | --- | --- |
 | Local report name | Optional label in `~/.config/aidd/telemetry/identity.json`; the current label is applied when reporting, not recorded as proof per call. | No. |
 | Installation UUID | Stable ID in `~/.config/aidd/installation/id.json`; not a login or credential. | Not currently. |
-| Provider identity | Native email, account or organization ID when emitted. Gouvernail must match an approved active member to attribute a session. | The allowlisted identifiers may be sent by the dev sync. |
+| Provider identity | Email, account or organization ID when emitted. Gouvernail must match an approved active member to attribute a session. | Allowlisted identifiers may be sent by `otel run`. |
 
 The default paths can change with the configured user directory. A connector bearer token authorizes the destination connection; it does not identify the person.
 

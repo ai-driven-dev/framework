@@ -11,9 +11,7 @@ Gouvernail's AI KPI view uses provider OpenTelemetry (OTel) observations only. T
 
 Token fields are provider-specific. Claude's input excludes cache reads and writes; Codex's input includes cached input. A Codex cache zero can mean the provider omitted cache details. Never add a log, metric and trace describing the same usage, or treat an absent value as zero.
 
-OTLP collection, verification and development forwarding are separate steps. The collector keeps provider OTLP locally; the consent-aware sync forwards only supported signals and allowlisted attributes to a loopback Gouvernail endpoint. The local collector does not check per-clone consent, so its private files may contain other sessions and sensitive data. See [the local setup recipe](../../aidd_docs/recipes/observe-agent-telemetry.md).
-
-The current sync still reads the framework's local usage ledger to establish session-to-clone consent. It does not forward OpenCode traces. Consequently, it is not yet an OTel-only end-to-end pipeline for the three tools.
+`otel run --yes` captures one provider execution in isolation and forwards supported observations and allowlisted attributes to loopback Gouvernail. It neither reads the local usage ledger nor asserts a clone or feature association. With `--keep-capture`, raw private files can contain sensitive content. See [the local setup recipe](../../aidd_docs/recipes/observe-agent-telemetry.md).
 
 In a local OpenCode v2.2.5 capture, two prompt spans included a session ID in their HTTP path; no model or token counts were observed. This observation does not establish that every OpenCode signal includes a session ID. OpenCode session-event feeds and session exports are not provider OTLP and are not used in this view. Production export remains disabled until authenticated user identity and the destination are implemented.
 

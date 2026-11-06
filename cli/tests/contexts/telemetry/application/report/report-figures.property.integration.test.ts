@@ -15,7 +15,6 @@ import {
   type ReportRequest,
   ReportUsageUseCase,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { ReportLedger } from "../../../../../src/contexts/telemetry/application/report/repository-uncertainty.js";
 import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { LeftOutEntry } from "../../../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
@@ -275,7 +274,7 @@ async function report(
   return inZone(zone, async () => {
     const result = await new ReportUsageUseCase(
       ingest,
-      new ReportLedger(ledger),
+      ledger,
       new DeclaredBindings(sessions, new InMemorySnapshots()),
       identity,
       new FakeLocator(),

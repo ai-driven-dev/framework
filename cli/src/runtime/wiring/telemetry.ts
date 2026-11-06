@@ -13,9 +13,6 @@ import { StoredUsageMigration } from "../../contexts/telemetry/application/legac
 import { ReadUsageUseCase } from "../../contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsageUseCase } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
-import { ReportLedger } from "../../contexts/telemetry/application/report/repository-uncertainty.js";
-import { SessionConsent } from "../../contexts/telemetry/application/report/session-consent.js";
-import { SessionFeatureUseCase } from "../../contexts/telemetry/application/report/session-feature-use-case.js";
 import { SnapshotBindingsUseCase } from "../../contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { TelemetryOffUseCase } from "../../contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
@@ -62,7 +59,6 @@ export interface TelemetryDeps {
   ingestUsageUseCase: IngestUsageUseCase;
   snapshotBindingsUseCase: SnapshotBindingsUseCase;
   reportUsageUseCase: ReportUsageUseCase;
-  sessionFeatureUseCase: SessionFeatureUseCase;
   manageIdentityUseCase: ManageIdentityUseCase;
   proposeIdentityUseCase: ProposeIdentityUseCase;
   telemetryOnUseCase: TelemetryOnUseCase;
@@ -148,13 +144,6 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     declaration,
     identity
   );
-  const directoryResolver = new DirectoryResolver(
-    locator,
-    consents,
-    resolutionStore,
-    consentHistory,
-    environment
-  );
   const ingestUsageUseCase = new IngestUsageUseCase(
     [
       new ReadUsageUseCase(
@@ -169,7 +158,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       ),
     ],
     ledger,
-    directoryResolver,
+    new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
     snapshotBindingsUseCase,
     { refusedByEnvironment },
     new StoredUsageMigration(locator, resolutionStore, aliases, ledger)
@@ -182,17 +171,11 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     snapshotBindingsUseCase,
     reportUsageUseCase: new ReportUsageUseCase(
       ingestUsageUseCase,
-      new ReportLedger(ledger, directoryResolver),
+      ledger,
       new DeclaredBindings(sessions, snapshotStore),
       identity,
       locator,
       { refusedByEnvironment }
-    ),
-    sessionFeatureUseCase: new SessionFeatureUseCase(
-      ingestUsageUseCase,
-      new ReportLedger(ledger, directoryResolver),
-      new DeclaredBindings(sessions, snapshotStore),
-      new SessionConsent(ledger, directoryResolver, consentHistory)
     ),
     manageIdentityUseCase: new ManageIdentityUseCase(identity),
     proposeIdentityUseCase: new ProposeIdentityUseCase(

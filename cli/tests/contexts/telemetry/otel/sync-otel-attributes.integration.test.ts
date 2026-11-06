@@ -1,10 +1,5 @@
-import { appendFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { createServer, type Server } from "node:http";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import { selectTransfers } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync.js";
-import { syncAllOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync-all.js";
 
 const attribute = (key: string, value: unknown) => ({ key, value });
 const text = (key: string, value: string) => attribute(key, { stringValue: value });
@@ -401,15 +396,7 @@ test.each(["user.email", "user.account_id", "organization.id"])(
   }
 );
 
-const dirs: string[] = [];
-let server: Server | undefined;
-afterEach(async () => {
-  if (server) await new Promise<void>((resolve) => server?.close(() => resolve()));
-  server = undefined;
-  await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
-});
-
-test.skipIf(process.platform === "win32").each([
+test.each([
   {
     values: [text("input_token_count", "100"), text("input_token_count", "5")],
     error: "Conflicting duplicate OTLP attributes.",
@@ -435,56 +422,6 @@ test.skipIf(process.platform === "win32").each([
     error: "Invalid OTLP attribute value.",
     body: { stringValue: ["codex.sse_event"], intValue: "9" },
   },
-])(
-  "invalid attributes stop sync before sending or advancing its checkpoint",
-  async ({ values, error, body }) => {
-    const home = await mkdtemp(join(tmpdir(), "aidd-conflicting-attributes-"));
-    dirs.push(home);
-    const captureDir = join(home, ".local/share/aidd-otel-observation");
-    await mkdir(captureDir, { recursive: true, mode: 0o700 });
-    const file = join(captureDir, "codex.jsonl");
-    await writeFile(file, "", { mode: 0o600 });
-    let calls = 0;
-    const abort = new AbortController();
-    server = createServer((request, response) => {
-      request.resume();
-      request.on("end", () => {
-        calls++;
-        response.writeHead(200).end("{}");
-        abort.abort();
-      });
-    });
-    await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
-    const address = server.address();
-    if (address === null || typeof address === "string") throw new Error("No test port");
-    const stateDir = join(home, "state");
-    const running = syncAllOtel(
-      {
-        ...options,
-        home,
-        stateDir,
-        endpoint: `http://127.0.0.1:${address.port}`,
-        intervalMs: 10,
-        signal: abort.signal,
-      },
-      async () =>
-        new Map([
-          ["session", { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" }],
-        ]),
-      async () => "allow"
-    );
-    const directory = join(stateDir, "otel-sync");
-    let checkpoint: string | undefined;
-    for (let attempt = 0; attempt < 100 && !checkpoint; attempt++) {
-      checkpoint = (await readdir(directory).catch(() => [])).find((entry) =>
-        entry.endsWith(".checkpoint.json")
-      );
-      if (!checkpoint) await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-    if (!checkpoint) throw new Error("No initial checkpoint");
-    await appendFile(file, `${capture(values, [], [], body)}\n`);
-    await expect(running).rejects.toThrow(error);
-    expect(calls).toBe(0);
-    expect(JSON.parse(await readFile(join(directory, checkpoint), "utf8")).offset).toBe(0);
-  }
-);
+])("rejects malformed attributes before transfer selection", ({ values, error, body }) => {
+  expect(() => selectTransfers(capture(values, [], [], body), options)).toThrow(error);
+});

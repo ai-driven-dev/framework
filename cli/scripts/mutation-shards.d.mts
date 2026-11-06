@@ -21,19 +21,18 @@ export function shardFiles(
   of: number,
   weightOf?: WeightOf
 ): string[];
-interface MutationShard {
-  readonly manifest: {
-    readonly shard: number;
-    readonly of: number;
-    readonly files: readonly string[];
-  };
-  readonly report: MutationReport;
-}
-export function mergeReports(shards: readonly MutationShard[]): Required<MutationReport>;
+export function mergeReports(reports: readonly MutationReport[]): Required<MutationReport>;
 export function aggregateVerdict(input: {
   readonly mutate: Mutate;
   readonly files: readonly string[];
   readonly of: number;
-  readonly shards: readonly MutationShard[];
+  readonly shards: readonly {
+    readonly manifest: {
+      readonly shard: number;
+      readonly of: number;
+      readonly files: readonly string[];
+    };
+    readonly report: MutationReport;
+  }[];
   readonly weightOf?: WeightOf;
 }): string | null;

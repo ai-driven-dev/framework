@@ -1,4 +1,4 @@
-import { appendFile, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -8,7 +8,6 @@ import {
   send,
   syncOtel,
 } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync.js";
-import { syncAllOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/sync-all.js";
 
 const posixTest = test.skipIf(process.platform === "win32");
 const attribute = (key: string, value: string) => ({ key, value: { stringValue: value } });
@@ -217,67 +216,15 @@ test("preserves exact integer strings for signed and unsigned metric values", ()
     expect(payload).toContain(`"${value}"`);
 });
 
-posixTest.each([
+test.each([
   claudePoint({ asInt: 1785044858922210000 }),
   claudePoint({ asDouble: 5 }),
   claudePoint({ flags: 1 }),
   metricData({ sum: {}, summary: {} }),
   metricData({ summary: {} }),
-])(
-  "an invalid metric stops all-session sync before delivery or checkpoint advance",
-  async (line) => {
-    const home = await mkdtemp(join(tmpdir(), "aidd-inexact-metric-"));
-    dirs.push(home);
-    const captureDir = join(home, ".local/share/aidd-otel-observation");
-    const stateDir = join(home, "state");
-    await mkdir(captureDir, { recursive: true, mode: 0o700 });
-    const file = join(captureDir, "claude.jsonl");
-    await writeFile(file, "", { mode: 0o600 });
-    let calls = 0;
-    const abort = new AbortController();
-    server = createServer((request, response) => {
-      request.resume();
-      request.on("end", () => {
-        calls++;
-        response.writeHead(200).end("{}");
-        abort.abort();
-      });
-    });
-    await new Promise<void>((resolve) => server?.listen(0, "127.0.0.1", resolve));
-    const address = server.address();
-    if (address === null || typeof address === "string") throw new Error("No test port");
-    const running = syncAllOtel(
-      {
-        config: "claude",
-        tenant: "tenant",
-        endpoint: `http://127.0.0.1:${address.port}`,
-        token: "test",
-        home,
-        stateDir,
-        intervalMs: 10,
-        signal: abort.signal,
-      },
-      async () =>
-        new Map([
-          ["session", { feature: { state: "unbound" }, cwd: "/project", repositoryId: "repo" }],
-        ]),
-      async () => "allow"
-    );
-    const directory = join(stateDir, "otel-sync");
-    let checkpoint: string | undefined;
-    for (let attempt = 0; attempt < 100 && !checkpoint; attempt++) {
-      const entries = await readdir(directory).catch(() => []);
-      checkpoint = entries.find((entry) => entry.endsWith(".checkpoint.json"));
-      if (!checkpoint) await new Promise((resolve) => setTimeout(resolve, 10));
-    }
-    if (!checkpoint) throw new Error("No initial checkpoint");
-    await appendFile(file, `${line}\n`);
-    await expect(running).rejects.toThrow(/OTLP/);
-    const saved = JSON.parse(await readFile(join(directory, checkpoint), "utf8"));
-    expect(saved.offset).toBe(0);
-    expect(calls).toBe(0);
-  }
-);
+])("rejects malformed metrics before transfer selection", (line) => {
+  expect(() => selectTransfers(line, { ...options, config: "claude" })).toThrow(/OTLP/);
+});
 
 function metricWithMetadata(unit: string, temporality: number, monotonic: boolean): string {
   return JSON.stringify({

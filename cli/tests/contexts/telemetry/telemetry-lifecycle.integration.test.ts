@@ -257,11 +257,7 @@ describe("opting in to a repository the previous version measured", () => {
   it("turns off with the git config value off, and leaves .aidd/config.json alone", async () => {
     await configure('{"keep":1}');
     await deps.telemetryOnUseCase.execute(repo, "keep");
-    expect(await deps.telemetryOffUseCase.execute(repo)).toMatchObject({
-      status: "off",
-      changed: true,
-      closedAt: expect.any(String),
-    });
+    expect(await deps.telemetryOffUseCase.execute(repo)).toEqual({ status: "off", changed: true });
     expect(consentOf()).toBe("off");
     expect(read(join(repo, ".aidd", "config.json"))).toBe('{"keep":1}');
   });

@@ -1,54 +1,53 @@
 # Observe agent telemetry locally
 
-This procedure captures provider OpenTelemetry (OTel) for Claude Code, Codex and OpenCode v2. The framework's separate local usage ledger is not the source for the Gouvernail OTel view.
+Run Claude Code, Codex and OpenCode v2 with provider OpenTelemetry (OTel), then inspect the local Gouvernail dashboard. The framework's separate local usage ledger is not the source for this view.
 
 ## Steps to observe agent telemetry locally
 
-### 1) ⚙️ Configure
+### 1) ⚙️ Prepare the collector destination
 
-Obtain consent from people whose activity will be observed. Raw local captures can contain prompts, responses, commands, tool output and secrets; restrict access and decide when to delete them.
+Start local Gouvernail and configure each tool's connector. OpenCode's connector is generated in the Sources page for an explicit team. For each tool, set `AIDD_OTEL_TOKEN` to its connector token in your shell without publishing it. The examples use the local tenant `ai-driven-dev` and loopback port `55857`; adjust them for your setup.
 
-Start the private development collector first, then configure each tool:
+| Tool | Connector token |
+| --- | --- |
+| Claude Code | Claude Code OTLP connector |
+| Codex | Codex OTLP connector |
+| OpenCode v2 | OpenCode OTLP connector for the selected team |
 
-```sh
-aidd telemetry otel init --config=claude --endpoint=dev
-aidd telemetry otel init --config=codex --endpoint=dev
-aidd telemetry otel init --config=opencode --endpoint=dev
-```
-
-`dev` requires the existing loopback collector and its private token. `prod` is reserved and refuses configuration until a destination is defined. Restart the OpenCode v2 service after initialization so its process receives the exporter settings.
+`--yes` opts in to capturing and forwarding telemetry from that one execution. `--keep-capture` retains a private local file whose path is printed by the command, including when an execution fails after capture. Raw captures can contain prompts, responses, commands, tool output and secrets: restrict access and delete them when no longer needed. Without this option the temporary capture is removed.
 
 ### 2) 🧪 Run two sessions per tool
 
-Run these from the opted-in project. The examples are the commands used in the local observation, with the isolated test settings omitted. They create separate sessions rather than two turns in the same session.
+Set `AIDD_OTEL_TOKEN` to the corresponding connector token before each pair. Choose models available to your accounts.
 
 ```sh
+# Claude connector token must be set before this pair.
 for i in 1 2; do
-  claude --model haiku --tools "" --output-format json -p "Reply with only GOUVERNAIL-CLAUDE-PROBE-$i."
+  aidd telemetry otel run --config claude --model haiku --tenant ai-driven-dev \
+    --endpoint http://127.0.0.1:55857 --yes --keep-capture -- "Reply with only CLAUDE-$i."
 done
 
+# Codex connector token must be set before this pair.
 for i in 1 2; do
-  codex exec --ephemeral --sandbox read-only --model gpt-6.1-terra \
-    -c 'model_reasoning_effort="low"' --json "Reply with only GOUVERNAIL-CODEX-PROBE-$i."
+  aidd telemetry otel run --config codex --model gpt-5.6-luna --tenant ai-driven-dev \
+    --endpoint http://127.0.0.1:55857 --yes --keep-capture -- "Reply with only CODEX-$i."
 done
 
-# Start the configured OpenCode v2 service separately with authentication enabled.
+# OpenCode connector token must be set before this pair.
 for i in 1 2; do
-  opencode run --server http://127.0.0.1:51394 --format json \
-    --model openai/gpt-6-luna "Reply with only GOUVERNAIL-OPENCODE-PROBE-$i."
+  aidd telemetry otel run --config opencode --model claude-code/claude-haiku-4-5-20251001 \
+    --tenant ai-driven-dev --endpoint http://127.0.0.1:55857 --yes --keep-capture -- "Reply with only OPENCODE-$i."
 done
 ```
 
-The OpenCode example assumes the authenticated service is listening on port `51394` and the client has its credentials. Choose models available to the configured accounts. Claude and Codex emit token usage; in the observed OpenCode v2.2.5 capture, prompt spans contained session IDs but no model or token counts. See the [field inventory](../../plugins/aidd-telemetry/OBSERVABILITY.md).
+Each command launches a separate session with an isolated collector. It does not read the framework usage ledger or establish a project or feature association. `otel init` and the global development collector are a separate configuration path; they are not required for these commands.
 
 ### 3) ✅ Check receipt
 
+Open the local AI KPI page and check the session IDs and observed fields. Delivery does not prove that every provider event was emitted or received. In the OpenCode v2.2.5 capture, HTTP prompt spans included session IDs but no model or token counts. Missing or uncertain values remain unavailable. See the [field inventory](../../plugins/aidd-telemetry/OBSERVABILITY.md).
+
 ```sh
-aidd telemetry otel verify --config=claude --endpoint=dev
-aidd telemetry otel verify --config=codex --endpoint=dev
-aidd telemetry otel verify --config=opencode --endpoint=dev
+open 'http://localhost:55857/enterprise/ai-driven-dev/kpi/ai'
 ```
 
-Verification reports capture line counts and modification times. Old records do not prove delivery from the current sessions. Collection and consent-aware forwarding to Gouvernail are separate; capture alone does not create dashboard rows.
-
-Sources accessed 2026-11-06: [Claude monitoring](https://code.claude.com/docs/en/monitoring-usage), [Codex telemetry](https://learn.chatgpt.com/docs/config-file/config-advanced#what-gets-emitted), [OpenCode v2.2.5 OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts).
+Sources accessed 2026-11-06: [Claude monitoring](https://code.claude.com/docs/en/monitoring-usage), [Codex telemetry](https://learn.chatgpt.com/docs/config-file/config-advanced#what-gets-emitted), [OpenCode v2 CLI](https://dev.opencode.ai/v2/docs/cli) and [OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts).

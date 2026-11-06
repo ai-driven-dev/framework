@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import { join } from "node:path";
@@ -106,15 +105,6 @@ const SAFE_ATTRIBUTES = new Set([
   "cache_write_token_count",
   "reasoning_token_count",
 ]);
-
-export function admissionFingerprint(admission: {
-  cwd: string | null;
-  repositoryId: string | null;
-}): string {
-  return createHash("sha256")
-    .update(JSON.stringify([admission.cwd, admission.repositoryId]))
-    .digest("hex");
-}
 
 function attributes(value: unknown): Map<string, string> {
   if (value !== undefined && !Array.isArray(value)) throw new Error("Invalid OTLP attributes.");

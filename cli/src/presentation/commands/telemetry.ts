@@ -32,9 +32,8 @@ import {
   checkOtel,
   collectOtel,
   configureOtel,
-  followCapturedSessions,
   otelOptions,
-  syncCapturedSession,
+  runOtelSession,
 } from "../../runtime/wiring/telemetry-otel.js";
 import {
   printForgetResult,
@@ -209,112 +208,59 @@ export function registerTelemetryCommand(program: Command): void {
     });
 
   otel
-    .command("sync")
-    .description("Send one consented session's local telemetry to a loopback Gouvernail")
+    .command("run <prompt>")
+    .description("Run one fresh provider session and send its allowed OTLP observations")
     .addOption(
-      new Option("--config <tool>", "Tool to sync")
-        .choices(otelOptions.syncConfigs)
+      new Option("--config <tool>", "Tool to run")
+        .choices(otelOptions.configs)
         .makeOptionMandatory()
     )
-    .option("--session <id>", "Exact provider session ID; omit with --follow to discover sessions")
     .requiredOption("--tenant <slug>", "Gouvernail tenant slug")
     .requiredOption("--endpoint <origin>", "Loopback HTTP origin")
-    .option("--follow", "Follow new events for this session", false)
+    .option("--yes", "Consent to capture and send telemetry from this execution")
+    .option("--model <model>", "Provider model to use")
+    .option("--keep-capture", "Retain the private local OTLP capture")
     .action(
-      async (options: {
-        config: (typeof otelOptions.syncConfigs)[number];
-        session?: string;
-        tenant: string;
-        endpoint: string;
-        follow: boolean;
-      }) => {
-        const { output, run } = commandOf(program);
-        if (!options.session && !options.follow) {
-          output.error("Pass --session for a bounded sync, or --follow to discover new sessions.");
-          process.exitCode = 1;
-          return;
+      async (
+        prompt: string,
+        options: {
+          config: (typeof otelOptions.configs)[number];
+          tenant: string;
+          endpoint: string;
+          yes?: boolean;
+          model?: string;
+          keepCapture?: boolean;
         }
-        await run(async (deps) => {
-          const tool = otelOptions.usageTool(options.config);
-          if (!options.session) {
-            output.info("Following new consented sessions; press Ctrl-C to stop.");
-            const result = await followCapturedSessions(
-              {
-                config: options.config,
-                tenant: options.tenant,
-                endpoint: options.endpoint,
-                token: process.env.AIDD_OTEL_TOKEN ?? "",
-              },
-              () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
-              (admission, at, start, current) =>
-                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start, current),
-              (admission, at, start, current) =>
-                deps.telemetry.sessionFeatureUseCase.cloneProof(admission, at, start, current)
+      ) => {
+        const { output, projectRoot } = parseGlobalOptions(program);
+        const abort = new AbortController();
+        const cancel = () => abort.abort();
+        process.once("SIGINT", cancel);
+        process.once("SIGTERM", cancel);
+        try {
+          if (!options.yes)
+            throw new Error(
+              "Pass --yes to consent to OTLP capture and delivery for this execution."
             );
-            output.info(
-              `Sent ${result.sent} observations; ${result.denied} were outside consent; ${result.pending} await confirmation.`
-            );
-            return;
-          }
-          const session = options.session;
-          let admission = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(session);
-          const initialAdmission = admission;
-          if (!initialAdmission)
-            throw new Error("No consented usage found for this session; no capture was sent.");
-          const revalidate = async () => {
-            const current = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(
-              session
-            );
-            if (!current) {
-              admission = undefined;
-              throw new Error("No consented usage found for this session; no capture was sent.");
-            }
-            if (
-              !initialAdmission.cwd ||
-              (!initialAdmission.repositoryId &&
-                !(
-                  initialAdmission.repositoryId === null &&
-                  initialAdmission.feature.state !== "confirmed"
-                )) ||
-              current.cwd !== initialAdmission.cwd ||
-              (current.repositoryId !== initialAdmission.repositoryId &&
-                !(current.repositoryId === null && current.feature.state === "ambiguous")) ||
-              (current.repositoryId === null && current.feature.state === "confirmed")
-            ) {
-              admission = undefined;
-              throw new Error(
-                "Session admission changed or is unavailable; sync stopped before sending."
-              );
-            }
-            admission = current;
-          };
-          await revalidate();
-          if (options.follow) output.info("Following the selected session; press Ctrl-C to stop.");
-          const result = await syncCapturedSession(
-            {
-              ...options,
-              session,
-              token: process.env.AIDD_OTEL_TOKEN ?? "",
-            },
-            revalidate,
-            async (transfer) =>
-              Boolean(
-                admission &&
-                  transfer.at &&
-                  (await deps.telemetry.sessionFeatureUseCase.permits(
-                    admission,
-                    transfer.at,
-                    transfer.start,
-                    transfer.consentAt
-                  )) === "allow"
-              )
-          );
-          output.info(
-            `Sent ${result.sent} observations; ${result.skipped} were outside a known consent interval. Receiver acceptance does not prove member attribution.`
-          );
-          if (result.partialLine)
-            output.info("The last incomplete capture line was left for the next sync.");
-        });
+          const sent = await runOtelSession({
+            ...options,
+            cwd: projectRoot,
+            prompt,
+            signal: abort.signal,
+            token: process.env.AIDD_OTEL_TOKEN ?? "",
+            retainCapture: options.keepCapture
+              ? (path) => output.info(`Private OTLP capture: ${path}`)
+              : undefined,
+          });
+          if (!sent)
+            throw new Error("The execution produced no supported OTLP observations to send.");
+          output.info(`Sent ${sent} OTLP observations from this execution.`);
+        } catch (error) {
+          new ErrorHandler(output).handle(error);
+        } finally {
+          process.off("SIGINT", cancel);
+          process.off("SIGTERM", cancel);
+        }
       }
     );
 

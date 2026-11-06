@@ -26,20 +26,13 @@ vi.mock("../../../src/runtime/filesystem/installation-identity.js", () => ({
 vi.mock("../../../src/runtime/user-config-dir.js", () => ({
   userConfigDirOf: () => "/profile/aidd",
 }));
-vi.mock("../../../src/runtime/wiring/telemetry.js", () => ({
-  telemetryDir: () => "/profile/telemetry",
-}));
 
-const { collectOtel, configureOtel, checkOtel, syncCapturedSession, followCapturedSessions } =
-  await import("../../../src/runtime/wiring/telemetry-otel.js");
+const { collectOtel, configureOtel, checkOtel } = await import(
+  "../../../src/runtime/wiring/telemetry-otel.js"
+);
 const collector = await import(
   "../../../src/contexts/telemetry/infrastructure/otel/actions/collect.js"
 );
-const sync = await import("../../../src/contexts/telemetry/infrastructure/otel/actions/sync.js");
-const follow = await import(
-  "../../../src/contexts/telemetry/infrastructure/otel/actions/sync-all.js"
-);
-
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.checkId.mockReset().mockResolvedValue(null);
@@ -101,42 +94,5 @@ describe("OTLP runtime wiring", () => {
       home: "/profile",
       env: process.env,
     });
-  });
-
-  it("uses the private runtime profile for one session and automatic following", async () => {
-    const bounded = vi
-      .spyOn(sync, "syncOtel")
-      .mockResolvedValue({ sent: 1, skipped: 0, offset: 5, partialLine: false });
-    const automatic = vi
-      .spyOn(follow, "syncAllOtel")
-      .mockResolvedValue({ sent: 2, denied: 0, pending: 0 });
-    const options = {
-      config: "codex" as const,
-      tenant: "acme",
-      endpoint: "http://127.0.0.1:3000",
-      token: "test-token",
-    };
-    const resolve = async () => {};
-    const allow = async () => true;
-    const snapshot = async () => new Map();
-    const permits = async () => "allow" as const;
-    await syncCapturedSession({ ...options, session: "s1", follow: false }, resolve, allow);
-    await followCapturedSessions(options, snapshot, permits);
-    expect(bounded).toHaveBeenCalledWith(
-      {
-        ...options,
-        session: "s1",
-        follow: false,
-        home: "/profile",
-      },
-      resolve,
-      allow
-    );
-    expect(automatic).toHaveBeenCalledWith(
-      { ...options, home: "/profile", stateDir: "/profile/telemetry" },
-      snapshot,
-      permits,
-      undefined
-    );
   });
 });

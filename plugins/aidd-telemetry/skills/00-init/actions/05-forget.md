@@ -1,6 +1,6 @@
 # 05 - Forget
 
-Delete local usage measurement after a preview and explicit confirmation. This command does not delete provider OTLP captures, OTLP sync state, installation UUID or data already received by Gouvernail.
+Delete local usage measurement after a preview and explicit confirmation. This command does not delete provider OTLP captures, the installation UUID or data already received by Gouvernail.
 
 ## Process
 

@@ -112,8 +112,9 @@ export function printOffResult(output: CLIOutput, result: OffResult): void {
       ? "Measurement is off for this clone. What was measured stays until `aidd telemetry forget --yes`."
       : "Measurement was not on for this clone."
   );
-  if (result.closedAt) output.info(`Consent close recorded at ${result.closedAt}.`);
-  output.info("Native OTLP configuration and collector are unchanged and may still collect data.");
+  output.info(
+    "Provider OTLP configuration and collector are unchanged and may still collect data."
+  );
 }
 
 const WHAT: Readonly<Record<ErasureKind, string>> = {

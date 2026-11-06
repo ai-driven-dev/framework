@@ -10,7 +10,6 @@ import { ReadUsageUseCase } from "../../../../../src/contexts/telemetry/applicat
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { ReportLedger } from "../../../../../src/contexts/telemetry/application/report/repository-uncertainty.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import type { CloneIdentity } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
@@ -242,14 +241,13 @@ function machine(name: string, storage: PrivateStorage = new PrivateStorageAdapt
     history.consented(clone);
   }
   const snapshots = new BindingSnapshotStoreAdapter(bindings, storage, aliases);
-  const directories = new DirectoryResolver(locator, consents, resolutions, history, {
-    caseInsensitiveFileSystem: false,
-    now: () => NOW,
-  });
   const ingest = new IngestUsageUseCase(
     [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
     ledger,
-    directories,
+    new DirectoryResolver(locator, consents, resolutions, history, {
+      caseInsensitiveFileSystem: false,
+      now: () => NOW,
+    }),
     new SnapshotBindingsUseCase(
       new FakeBindings(),
       new InMemorySnapshots(),
@@ -261,7 +259,7 @@ function machine(name: string, storage: PrivateStorage = new PrivateStorageAdapt
   );
   const report = new ReportUsageUseCase(
     ingest,
-    new ReportLedger(ledger, directories),
+    ledger,
     new DeclaredBindings(new InMemorySessions(), snapshots),
     new InMemoryIdentity(),
     locator,
@@ -289,11 +287,7 @@ async function bytes(dir: string): Promise<Record<string, string>> {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     if (!entry.isFile() || ["offsets.json", ".lock", "repository-ids.json"].includes(entry.name))
       continue;
-    const text = await readFile(join(dir, entry.name), "utf8");
-    // Earlier versions did not persist an uncertainty marker; reports recompute it.
-    found[entry.name] = /^\d{4}-\d{2}-\d{2}\.jsonl$/.test(entry.name)
-      ? text.replace(/,"repository_uncertain":true(?=\})/gu, "")
-      : text;
+    found[entry.name] = await readFile(join(dir, entry.name), "utf8");
   }
   return Object.fromEntries(Object.entries(found).sort(([a], [b]) => (a < b ? -1 : 1)));
 }
