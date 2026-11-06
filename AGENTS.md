@@ -40,7 +40,7 @@
 
 ## Engineering
 
-- **Make minimal, scoped changes**, without over-engineering.
+- **Make minimal, scoped changes:** leave what you touch cleaner when practical, without over-engineering.
 - **Follow the project's architecture and conventions:** place changes where they belong; keep files focused on one responsibility and dependencies flowing one way across layers.
 - **Remove relevant duplication when it simplifies the change.**
 - **Handle errors explicitly; never fail silently.**
