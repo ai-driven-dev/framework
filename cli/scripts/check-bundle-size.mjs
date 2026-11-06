@@ -39,6 +39,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 0.1% measured headroom, with no added runtime dependency.
 // 689 KB: 675.2 KB, that recipe validation merged into the deterministic token measurement
 // (+21.9 KB over the 653.3 KB above); 2.0% measured headroom.
+// 716 KB: 712.9 KB, Antigravity's flat profile rebased on next's 710.8 KB (+2.1 KB);
+// 0.4% measured headroom.
 // 756 KB: 755.6 KB, patched esbuild 0.28.2 emits TypeScript parameter-property fields
 // correctly (+5,008 bytes over 0.27.3); unchanged application and minification settings.
 // 695 KB: 680.6 KB, that esbuild merged into the deterministic token measurement (+5.3 KB over
@@ -49,8 +51,12 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 712 KB: 710.8 KB, a Stop block continuing the turn on OpenCode V1 and Kilo, and V2's
 // tool answers reaching the model through its tool hook (+1.8 KB over the 709 KB ceiling);
 // 0.2% measured headroom.
-// 718 KB: 716.5 KB, Kilo flat Rules: emission, link relocation, `instructions` merge, install skip
-// (+5.7 KB over next's 710.8 KB); 0.2% measured headroom.
+// 720 KB: 718.1 KB, Antigravity project hooks and restored provenance after the rebase
+// (+5.2 KB over its 712.9 KB skills profile); 0.3% measured headroom.
+// 722 KB: 720.2 KB, Antigravity portable agents and direct-local installation
+// (+2.1 KB over its 718.1 KB hooks build); 0.3% measured headroom.
+// 728 KB: 726.3 KB, Kilo flat Rules: emission, link relocation, `instructions` merge, install skip
+// (+6.1 KB over next's 720.2 KB); 0.2% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

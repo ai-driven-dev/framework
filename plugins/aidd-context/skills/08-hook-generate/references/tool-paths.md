@@ -9,6 +9,7 @@ Per-tool hook support, event names, file formats, and scopes. Hook slice only: n
 | Claude Code    | yes       | JSON config + script. Richest event set.                        |
 | Codex CLI      | yes       | JSON/TOML config + script. Hooks are stable, on by default.      |
 | Cursor         | yes       | JSON config + script.                                           |
+| Antigravity CLI | yes      | JSON config + script.                                           |
 | GitHub Copilot | yes       | JSON config + script. Also reads Claude's `.claude/` config.    |
 | OpenCode       | no        | Hooks are JS/TS plugin modules, not config. Skip with the reason below. |
 
@@ -18,18 +19,18 @@ Per-tool hook support, event names, file formats, and scopes. Hook slice only: n
 
 Each tool names the same moment differently and supports a different subset. Core moments, with the canonical event name per tool. A `-` means the tool does not expose that moment.
 
-| Moment             | Claude Code        | Codex CLI       | Cursor               | GitHub Copilot     |
-| ------------------ | ------------------ | --------------- | -------------------- | ------------------ |
-| session start      | `SessionStart`     | `SessionStart`  | `sessionStart`       | `SessionStart`     |
-| prompt submitted   | `UserPromptSubmit` | `UserPromptSubmit` | `beforeSubmitPrompt` | `UserPromptSubmit` |
-| before a tool runs | `PreToolUse`       | `PreToolUse`    | `preToolUse`         | `PreToolUse`       |
-| after a tool runs  | `PostToolUse`      | `PostToolUse`   | `postToolUse`        | `PostToolUse`      |
-| before compaction  | `PreCompact`       | `PreCompact`    | `preCompact`         | `PreCompact`       |
-| subagent stop      | `SubagentStop`     | `SubagentStop`  | `subagentStop`       | `SubagentStop`     |
-| turn stop          | `Stop`             | `Stop`          | `stop`               | `Stop`             |
-| session end        | `SessionEnd`       | `SessionEnd`    | `sessionEnd`         | `SessionEnd`       |
+| Moment             | Claude Code        | Codex CLI       | Cursor               | GitHub Copilot     | Antigravity CLI |
+| ------------------ | ------------------ | --------------- | -------------------- | ------------------ | --- |
+| session start      | `SessionStart`     | `SessionStart`  | `sessionStart`       | `SessionStart`     | `SessionStart` |
+| prompt submitted   | `UserPromptSubmit` | `UserPromptSubmit` | `beforeSubmitPrompt` | `UserPromptSubmit` | - |
+| before a tool runs | `PreToolUse`       | `PreToolUse`    | `preToolUse`         | `PreToolUse`       | `PreToolUse` |
+| after a tool runs  | `PostToolUse`      | `PostToolUse`   | `postToolUse`        | `PostToolUse`      | `PostToolUse` |
+| before compaction  | `PreCompact`       | `PreCompact`    | `preCompact`         | `PreCompact`       | - |
+| subagent stop      | `SubagentStop`     | `SubagentStop`  | `subagentStop`       | `SubagentStop`     | - |
+| turn stop          | `Stop`             | `Stop`          | `stop`               | `Stop`             | `Stop` |
+| session end        | `SessionEnd`       | `SessionEnd`    | `sessionEnd`         | `SessionEnd`       | - |
 
-Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`).
+Each tool exposes more moments than these. For the full list, read the tool's docs: Claude `https://code.claude.com/docs/en/hooks`, Codex `https://developers.openai.com/codex/hooks`, Cursor `https://cursor.com/docs/hooks`, Copilot `https://docs.github.com/en/copilot/reference/hooks-configuration`, Antigravity `https://antigravity.google/docs/hooks`. Confirm a moment exists before wiring it. Copilot also accepts the camelCase names (`sessionStart`, `preToolUse`).
 
 ## File and format per tool
 
@@ -39,6 +40,7 @@ Each tool exposes more moments than these. For the full list, read the tool's do
 | Codex CLI      | `~/.codex/hooks.json` or `[hooks]` in `config.toml`              | same entry shape as Claude.                       |
 | Cursor         | `.cursor/hooks.json`                                              | `{ "version": 1, "hooks": { "<event>": [ { "command": "..." } ] } }` |
 | GitHub Copilot | `.github/hooks/*.json` or a `hooks` block in `.github/copilot/settings.json` | `{ "version": 1, "hooks": { "<Event>": [ { "type": "command", "command": "..." } ] } }` |
+| Antigravity CLI | `.agents/hooks.json`; cwd `<repo>/.agents` | `{ "<hook-name>": { "<Event>": [ { "command": "..." } ] } }`; `PreToolUse` / `PostToolUse` entries: `{ "matcher": "<regex>", "hooks": [ { "command": "..." } ] }`, matching native tool names |
 
 A Claude `settings.json` and a plugin or standalone `hooks/hooks.json` both wrap the event map under a top-level `hooks` key, so the file is `{ "hooks": { "<Event>": [ ... ] } }`. A Codex `config.toml` uses a `[hooks]` table instead.
 
@@ -46,14 +48,14 @@ A Claude `settings.json` and a plugin or standalone `hooks/hooks.json` both wrap
 
 Ask the user which scope, then write the matching file. A `-` means the tool has no such scope.
 
-| Scope            | Claude Code                    | Codex CLI                  | Cursor                       | GitHub Copilot           |
-| ---------------- | ------------------------------ | -------------------------- | ---------------------------- | ------------------------ |
-| user / global    | `~/.claude/settings.json`      | `~/.codex/` (`hooks.json` or `config.toml`) | `~/.cursor/hooks.json`       | `~/.copilot/hooks/`      |
-| project, shared  | `.claude/settings.json`        | `<repo>/.codex/` (trust-gated) | `.cursor/hooks.json`         | `.github/hooks/`         |
-| project, local   | `.claude/settings.local.json`  | -                          | -                            | -                        |
-| component / agent | skill or agent frontmatter     | -                          | -                            | `.agent.md` frontmatter  |
-| plugin           | plugin `hooks/hooks.json`      | plugin `hooks.json`        | -                            | -                        |
-| enterprise / team | managed policy settings        | managed policy             | team or enterprise path      | `policy.d/` or registry  |
+| Scope            | Claude Code                    | Codex CLI                  | Cursor                       | GitHub Copilot           | Antigravity CLI |
+| ---------------- | ------------------------------ | -------------------------- | ---------------------------- | ------------------------ | --- |
+| user / global    | `~/.claude/settings.json`      | `~/.codex/` (`hooks.json` or `config.toml`) | `~/.cursor/hooks.json`       | `~/.copilot/hooks/`      | - |
+| project, shared  | `.claude/settings.json`        | `<repo>/.codex/` (trust-gated) | `.cursor/hooks.json`         | `.github/hooks/`         | `.agents/hooks.json` |
+| project, local   | `.claude/settings.local.json`  | -                          | -                            | -                        | - |
+| component / agent | skill or agent frontmatter     | -                          | -                            | `.agent.md` frontmatter  | - |
+| plugin           | plugin `hooks/hooks.json`      | plugin `hooks.json`        | -                            | -                        | - |
+| enterprise / team | managed policy settings        | managed policy             | team or enterprise path      | `policy.d/` or registry  | - |
 
 Never pick a scope silently. State the resolved file and confirm it.
 
@@ -65,6 +67,7 @@ The shared `command` handler: a script the tool runs at the moment. It reads the
 
 - **Claude / Codex / Copilot.** Exit `0` is success (stdout may carry a JSON object or, on some moments, context). Exit `2` blocks on a moment that honors it (stderr surfaces to the model). Any other code is a non-blocking error. After a tool, the model reads context only from stdout, and each host reads a different key: Claude Code and Codex read `{ "hookSpecificOutput": { "hookEventName": "PostToolUse", "additionalContext": "..." } }`, Copilot CLI reads a top-level `{ "additionalContext": "..." }`. Codex fails the hook on any other key, so a hook meant for every tool writes the one each host reads, chosen by the payload (Copilot's carries `tool_result`).
 - **Cursor.** Exit `0` success, exit `2` blocks (same as `permission: "deny"`), any other code fails open. Set `failClosed: true` on the entry to make a crash block instead. Gating moments return `{ "permission": "allow" | "deny" | "ask" }` on stdout.
+- **Antigravity.** JSON stdin: `conversationId`, `workspacePaths`; tool events: `toolCall.{name,args}`. JSON stdout: `PreToolUse` returns `decision` (`allow`, `deny`, `ask`) with optional `reason`; `Stop` resumes with `decision: continue` and `reason`; `PostToolUse` returns `{}`; `SessionStart` returns `{}` with optional `injectSteps`. Adapt the scaffold's exit-2 comment.
 
 Per-tool stdout schemas and which moments can block live in each tool's docs (linked above). Codex also has a `notify` mechanism (user scope only, single turn-complete event, JSON on argv not stdin) for a simple turn-complete notification.
 

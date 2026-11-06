@@ -195,6 +195,13 @@ export class UnresolvableUserScopeError extends Error {
   }
 }
 
+export class InvalidAgentFrontmatterError extends Error {
+  constructor(agentName: string, detail: string) {
+    super(`Agent '${agentName}' has invalid frontmatter: ${detail}.`);
+    this.name = "InvalidAgentFrontmatterError";
+  }
+}
+
 export class InvalidPluginManifestError extends Error {
   constructor(detail?: string) {
     super(detail ? `Invalid plugin manifest: ${detail}` : "Invalid plugin manifest.");

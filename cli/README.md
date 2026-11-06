@@ -4,7 +4,7 @@
 
 | | |
 | --- | --- |
-| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code |
+| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI |
 | IDE | VS Code |
 | Requires | Node.js 22.12 or later |
 | Requires for marketplace plugins | `git` |
@@ -169,6 +169,7 @@ The token resolves from the first hit:
 | `codex` | yes | yes | `.codex/` |
 | `opencode` | no | yes | `.opencode/` |
 | `kilo` | no | yes | `.kilo/` |
+| `antigravity` | no | yes | `.agents/` |
 
 A Kilo flat build writes each plugin Rule to `.kilo/rules/` and appends it to the Kilo config's `instructions`.
 Kilo loads those for every file, so a Rule scoped by `paths` fails the build; a Kilo plugin install skips it with a warning.

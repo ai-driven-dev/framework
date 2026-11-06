@@ -4,6 +4,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
+import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
