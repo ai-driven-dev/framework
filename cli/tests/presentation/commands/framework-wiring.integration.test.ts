@@ -513,6 +513,36 @@ describe("aidd framework update", () => {
     expect(confirmUpgrade).toHaveBeenCalledOnce();
   });
 
+  it("shows Claude installations affected by a shared catalogue before confirmation", async () => {
+    pretendTerminal(true);
+    upgradeFramework.mockImplementation(async (options) => {
+      const confirmed = await options.confirm({
+        currentRef: "v5.12.0",
+        release: options.release,
+        title: "Release title",
+        targets: [],
+        globalSkipped: 0,
+        shared: true,
+        impact: [
+          { ref: "aidd-dev@aidd-framework", scope: "project", projectPath: "/other-project" },
+          { ref: "aidd-context@aidd-framework", scope: "user" },
+        ],
+      });
+      return { updated: [], globalSkipped: 0, cancelled: !confirmed };
+    });
+    confirmUpgrade.mockImplementation(async () => {
+      const preview = written.join("");
+      expect(preview).toContain("aidd-dev@aidd-framework (project, /other-project)");
+      expect(preview).toContain("aidd-context@aidd-framework (user)");
+      expect(preview).toContain("Other dependents may exist");
+      expect(preview).toContain("enabled states are unverified");
+      return false;
+    });
+    const lines = await run("update", "--release", "v5.13.0");
+    expect(confirmUpgrade).toHaveBeenCalledOnce();
+    expect(lines.join("\n")).toContain("Update cancelled");
+  });
+
   it("requires explicit approval outside a terminal", async () => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
