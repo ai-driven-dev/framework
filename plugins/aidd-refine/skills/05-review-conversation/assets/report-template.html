@@ -20,8 +20,8 @@
       <section class="intro" aria-labelledby="report-title">
         <h1 id="report-title">Conversation review</h1>
         <p class="example-notice">Fictional demonstration, including prompts, paths, timings and findings.</p>
-        <p class="source-path"><span>Analyzed transcript</span><code>/private/example/session.jsonl</code></p>
-        <p class="report-decision">Shorten the output requirement and remove one duplicate. Resolve the missing path before proposing an environment change.</p>
+        <p class="source-path"><span>Analyzed transcript</span><a href="/private/example/session.jsonl">/private/example/session.jsonl</a></p>
+        <p class="report-decision"><strong>Conversation outcome:</strong> the requested review found one verbose instruction, one duplicate and an unresolved reference path. The changes below are proposed, not applied.</p>
       </section>
 
       <section class="recap" aria-label="Conversation recap" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T10:03:40Z">
@@ -113,21 +113,13 @@
           </div>
         </details>
 
-        <details class="conversation-turn" data-start="2026-09-12T09:01:30Z" data-end="2026-09-12T09:01:42Z">
-          <summary><span class="turn-summary"><span class="prompt-preview">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</span><span class="turn-meta"><span class="duration" title="Recorded response duration">12 s</span><span>0 calls</span></span></span></summary>
-          <blockquote class="user-message" data-moment="2026-09-12T09:01:30Z" aria-labelledby="second-prompt-label">
-            <div class="message-meta"><span id="second-prompt-label">User prompt</span></div>
-            <p class="user-prompt">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</p>
-          </blockquote>
-        </details>
+        <article class="conversation-turn conversation-turn-static" data-start="2026-09-12T09:01:30Z" data-end="2026-09-12T09:01:42Z">
+          <div class="turn-summary"><p class="turn-message">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</p><span class="turn-meta"><span class="duration" title="Recorded response duration">12 s</span><span>0 calls</span></span></div>
+        </article>
 
-        <details class="conversation-turn" data-start="2026-09-12T09:02:00Z" data-end="2026-09-12T10:03:40Z">
-          <summary><span class="turn-summary"><span class="prompt-preview">Keep unknown durations unavailable rather than estimating them.</span><span class="turn-meta"><span class="duration is-slow" title="Recorded response duration">1 h 1 min 40 s</span><span>0 calls</span></span></span></summary>
-          <blockquote class="user-message" data-moment="2026-09-12T09:02:00Z" aria-labelledby="third-prompt-label">
-            <div class="message-meta"><span id="third-prompt-label">User prompt</span></div>
-            <p class="user-prompt">Keep unknown durations unavailable rather than estimating them.</p>
-          </blockquote>
-        </details>
+        <article class="conversation-turn conversation-turn-static" data-start="2026-09-12T09:02:00Z" data-end="2026-09-12T10:03:40Z">
+          <div class="turn-summary"><p class="turn-message">Keep unknown durations unavailable rather than estimating them.</p><span class="turn-meta"><span class="duration" title="Recorded response duration">1 h 1 min 40 s</span><span>0 calls</span></span></div>
+        </article>
       </section>
 
       <section class="section" aria-labelledby="solutions-title">
