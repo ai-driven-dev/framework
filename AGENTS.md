@@ -47,7 +47,7 @@
 
 ## Agents
 
-When you own the overall flow, fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
+When you own the overall flow, delegate by responsibility. Run distinct tasks with agents in parallel only when they have no dependencies or overlapping writes and coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
 
 | Responsibility | Agent |
 | --- | --- |
