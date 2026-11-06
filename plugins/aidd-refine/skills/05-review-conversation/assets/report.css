@@ -163,3 +163,7 @@ main { width: min(1040px, calc(100% - 48px)); margin: auto; min-width: 0; }
 .git-diff .diff-line { display:block; padding:2px 10px; }
 .git-diff b { display:inline-block; width:18px; }
 @media (max-width: 680px) { .review-columns { grid-template-columns:minmax(0,1fr); } .review-cell + .review-cell { border-left:0; border-top:1px solid var(--line); } }
+
+.conversation-turn > summary, .prompt-preview { font-weight: 400; }
+.turn-meta { display: flex; flex-wrap: wrap; justify-content: end; gap: 6px 12px; color: var(--soft-ink); font-variant-numeric: tabular-nums; }
+@media (max-width: 680px) { .turn-meta { flex-direction: column; align-items: end; gap: 0; } }
