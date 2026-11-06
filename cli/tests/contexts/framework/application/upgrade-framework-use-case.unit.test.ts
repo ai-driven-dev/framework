@@ -7,6 +7,7 @@ import {
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginSource } from "../../../../src/kernel/source.js";
+import type { AiToolId } from "../../../../src/kernel/tool.js";
 
 function fixture() {
   const source = { kind: "github" as const, repo: "ai-driven-dev/framework", ref: "v5.12.0" };
@@ -86,7 +87,10 @@ function fixture() {
       manifest.addPlugin(id, InstalledPlugin.fromJSON(data));
     }
   );
-  const preflight = vi.fn(async () => {});
+  const preflight = vi.fn(
+    async (): Promise<{ impact: []; shared: boolean; tool?: AiToolId } | undefined> => undefined
+  );
+  const verifyImpact = vi.fn(async () => {});
   const sync = vi.fn(
     async (): Promise<{
       errors: { scope: string; message: string }[];
@@ -102,6 +106,7 @@ function fixture() {
     resolveTarget: resolve,
     readTargetVersion,
     preflight,
+    verifyImpact,
     install,
     sync,
   });
@@ -116,6 +121,7 @@ function fixture() {
     readTargetVersion,
     install,
     preflight,
+    verifyImpact,
     sync,
   };
 }
@@ -123,6 +129,26 @@ function fixture() {
 const accept = async () => true;
 
 describe("upgrade framework", () => {
+  it("rechecks shared native impact before rebuilding Claude after other installations", async () => {
+    const f = fixture();
+    f.manifest.addTool("claude", "5.6.0", []);
+    f.manifest.addPlugin("claude", f.manifest.getPlugins("opencode")[0]);
+    f.preflight.mockResolvedValueOnce({ impact: [], shared: false, tool: "claude" });
+    f.verifyImpact
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("Claude installations changed"));
+    await expect(
+      f.uc.execute({
+        projectRoot: "/project",
+        release: "v5.13.0",
+        allowShared: true,
+        confirm: accept,
+      })
+    ).rejects.toThrow(/Upgrade incomplete.*Claude installations changed/);
+    expect(f.verifyImpact).toHaveBeenCalledTimes(2);
+    expect(f.install).toHaveBeenCalledTimes(2);
+    expect(f.sync).not.toHaveBeenCalled();
+  });
   it("reports updated sources separately from a failed native activation", async () => {
     const f = fixture();
     f.sync.mockResolvedValue({ errors: [], binaryMissing: [], warnings: ["catalog unavailable"] });
@@ -165,6 +191,7 @@ describe("upgrade framework", () => {
       ],
       globalSkipped: 0,
       shared: true,
+      impact: [],
     });
     expect(result.cancelled).toBe(true);
     expect(f.saveMarketplace).not.toHaveBeenCalled();

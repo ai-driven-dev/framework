@@ -104,6 +104,8 @@ export interface MarketplaceSyncSettingsOptions {
   enablePlugins?: readonly string[];
   /** Refresh already-owned native refs after an explicitly approved framework release update. */
   refreshOwnedPlugins?: readonly { toolId: AiToolId; pluginName: string }[];
+  /** Claude refs shown in the approved release preview; never ownership claims. */
+  approvedRefs?: readonly string[];
 }
 
 interface ActivationOutcome {
@@ -243,7 +245,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       toolIds,
       scope,
       options.enablePlugins ?? [],
-      options.refreshOwnedPlugins ?? []
+      options.refreshOwnedPlugins ?? [],
+      options.approvedRefs ?? []
     );
     let declarativeChanged = false;
     if (scope === "project") {
@@ -283,22 +286,30 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     if (declarativeChanged) await manifestRepo.save(manifest);
     // A refused or unproven host registration cannot establish a new shared-source claim.
     // User-scope runs have no project manifest for a later `clean` to decrement it.
+    // A release preview authorizes the update, not a new ownership claim.
+    const claimOutcomes = options.approvedRefs?.length
+      ? new Map(
+          [...activation.outcomes].filter(
+            ([toolId]) => !nativeActivationOf(toolId)?.releaseUpdateVerb
+          )
+        )
+      : activation.outcomes;
     if (scope !== "user") {
-      await this.recordSharedSourceReference(projectRoot, marketplaces, activation.outcomes);
+      await this.recordSharedSourceReference(projectRoot, marketplaces, claimOutcomes);
     }
     const wroteHashes = await this.recordWhatActivationWrote(projectRoot, manifest, [
       ...activation.outcomes.keys(),
     ]);
     const wroteRegistrations = this.recordNativeRegistrations(
       manifest,
-      activation.outcomes,
+      claimOutcomes,
       options.marketplaceNames !== undefined,
       options.refreshOwnedPlugins ?? []
     );
     if (wroteHashes || wroteRegistrations) await manifestRepo.save(manifest);
     await this.recordMachinePluginClaims(
       manifest,
-      activation.outcomes,
+      claimOutcomes,
       marketplaces,
       scope,
       scope === "project" ? projectRoot : undefined,
@@ -431,7 +442,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolIds: readonly ToolId[],
     scope: MarketplaceScope,
     enablePlugins: readonly string[],
-    refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[]
+    refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[],
+    approvedRefs: readonly string[]
   ): Promise<ActivationRun> {
     const outcomes = new Map<ToolId, ActivationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -460,7 +472,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
           warnings,
           scope,
           enablePlugins,
-          refreshOwnedPlugins
+          refreshOwnedPlugins,
+          nativeActivationOf(toolId)?.releaseUpdateVerb ? approvedRefs : []
         );
         outcomes.set(toolId, outcome);
       } catch (error) {
@@ -570,7 +583,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     warnings: string[],
     scope: MarketplaceScope,
     enablePlugins: readonly string[],
-    refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[]
+    refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[],
+    approvedRefs: readonly string[]
   ): Promise<ActivationOutcome> {
     // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
     // and installing a plugin from it are two acts. Measured against the real `claude` binary —
@@ -593,7 +607,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         marketplace,
         projectRoot,
         warnings,
-        catalogClaims
+        catalogClaims,
+        approvedRefs
       );
       if (registration.outcome === "build-failed") buildFailed = true;
       if (registration.addedThisRun === true) addedHostNames.add(registration.hostName);
@@ -614,7 +629,13 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       if (registration.claimable) {
         if (!registration.skipNativeWrites) catalogClaims.push(entry);
       } else if (earlier !== undefined) {
-        const proof = await this.nativeCatalogProof(toolId, earlier.hostName, projectRoot);
+        const proof = await this.nativeCatalogProof(
+          toolId,
+          earlier.hostName,
+          projectRoot,
+          undefined,
+          approvedRefs
+        );
         if (
           proof.canonical &&
           proof.hostReadable &&
@@ -641,7 +662,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         toolId,
         registration.hostName,
         projectRoot,
-        fresh
+        fresh,
+        approvedRefs
       );
       if (
         !proof.canonical ||
@@ -668,24 +690,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         ...requested,
       ]),
     ];
-    const { refsToEnable, alreadyOwnedRefs } = await this.refsThisProjectEnables(
-      toolId,
-      candidateRefs,
-      manifest,
-      projectRoot
-    );
-    // A machine claim can have been copied into the project without a local install.
-    const machine = refreshOwnedPlugins.length ? await this.userManifestRepo?.load() : undefined;
-    const machineClaims = machine?.getNativeRegistrations(toolId)?.pluginClaims ?? [];
-    const verifiedOwnedRefs =
-      refreshOwnedPlugins.length && nativeActivationOf(toolId)?.releaseUpdateVerb
-        ? alreadyOwnedRefs.filter(
-            (ref) =>
-              manifest.getNativeRegistrations(toolId)?.pluginRefs.includes(ref) &&
-              !machineClaims.some((claim) => claim.ref === ref)
-          )
-        : alreadyOwnedRefs;
-    const enabledRefs = [...verifiedOwnedRefs];
+    const { refsToEnable, alreadyOwnedRefs } = approvedRefs.length
+      ? { refsToEnable: [], alreadyOwnedRefs: [] }
+      : await this.refsThisProjectEnables(toolId, candidateRefs, manifest, projectRoot);
+    const enabledRefs = [...alreadyOwnedRefs];
     const sourceStillMatches = async (ref: string): Promise<boolean> => {
       const registration = stillProven.find((entry) => ref.endsWith(`@${entry.hostName}`));
       if (!registration) return false;
@@ -695,7 +703,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         toolId,
         registration.hostName,
         projectRoot,
-        registration
+        registration,
+        approvedRefs
       );
       if (
         !current.canonical ||
@@ -728,21 +737,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     }
     if (refreshOwnedPlugins.length && nativeActivationOf(toolId)?.releaseUpdateVerb) {
       for (const ref of candidateRefs) {
-        if (
-          !this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins) ||
-          verifiedOwnedRefs.includes(ref)
-        )
+        if (!this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins)) continue;
+        if (!approvedRefs.includes(ref)) {
+          const message = `${toolId}: '${ref}' was not in the approved preview; release refresh skipped.`;
+          this.logger.warn(message);
+          warnings.push(message);
           continue;
-        const message = `${toolId}: existing plugin '${ref}' is not proven as AIDD-owned; release refresh skipped.`;
-        this.logger.warn(message);
-        warnings.push(message);
-      }
-      for (const ref of verifiedOwnedRefs) {
-        if (
-          !this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins) ||
-          !(await sourceStillMatches(ref))
-        )
-          continue;
+        }
+        if (!(await sourceStillMatches(ref))) continue;
         if (activator.refreshReleasePlugin === undefined)
           throw new Error(`${toolId}: targeted release refresh is unavailable for '${ref}'.`);
         this.bestEffort(
@@ -941,7 +943,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     hostName: string,
     projectRoot: string,
-    fresh?: NativeMarketplaceRegistration
+    fresh?: NativeMarketplaceRegistration,
+    approvedRefs: readonly string[] = []
   ): Promise<NativeCatalogProof> {
     if (!isAiToolId(toolId))
       return { canonical: false, hostReadable: false, sourceStatus: "unproven" };
@@ -988,7 +991,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     ]);
     const foreignRef = [...reading.refs].find(
       ([ref, entry]) =>
-        hostRefInUse(toolId, entry.enabled) && ref.endsWith(`@${hostName}`) && !claimed.has(ref)
+        hostRefInUse(toolId, entry.enabled) &&
+        ref.endsWith(`@${hostName}`) &&
+        !claimed.has(ref) &&
+        !approvedRefs.includes(ref)
     )?.[0];
     return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
   }
@@ -1001,7 +1007,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     marketplace: Marketplace,
     projectRoot: string,
     warnings: string[],
-    freshClaims: readonly NativeMarketplaceRegistration[]
+    freshClaims: readonly NativeMarketplaceRegistration[],
+    approvedRefs: readonly string[]
   ): Promise<{
     hostName: string;
     outcome: "registered" | "refused" | "build-failed";
@@ -1021,11 +1028,20 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       );
     }
     const hostName = requestedIdentity.name;
+    const approvedSource =
+      nativeActivationOf(toolId)?.marketplaceRegistry && approvedRefs.length
+        ? {
+            alias: marketplace.name,
+            hostName,
+            provenance: { kind: "registry" as const, source: await this.fs.realpath(builtDir) },
+          }
+        : undefined;
     const proof = await this.nativeCatalogProof(
       toolId,
       hostName,
       projectRoot,
-      freshClaims.find((claim) => claim.hostName === hostName)
+      freshClaims.find((claim) => claim.hostName === hostName) ?? approvedSource,
+      approvedRefs
     );
     if (
       proof.sourceStatus === "unproven" ||

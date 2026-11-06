@@ -73,12 +73,13 @@ describe("native catalogue source provenance", () => {
       available: true,
       failOnUpdate: options.failUpdate ? ["test-plugin@same-name"] : [],
     });
+    const logger = new CapturingLogger();
     const sync = new MarketplaceSyncSettingsUseCase(
       fs,
       projectRepo,
       registry,
       new DeterministicHasher(),
-      new CapturingLogger(),
+      logger,
       new Map([[toolId, activator]]),
       options.failBuild
         ? {
@@ -110,7 +111,7 @@ describe("native catalogue source provenance", () => {
         ],
       ])
     );
-    return { sync, fs, activator, projectRepo, machineRepo };
+    return { sync, fs, activator, projectRepo, machineRepo, logger };
   }
 
   it("returns a failed catalogue build to the release upgrade caller", async () => {
@@ -121,6 +122,7 @@ describe("native catalogue source provenance", () => {
     const result = await f.sync.execute({
       projectRoot: "/A",
       refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+      approvedRefs: ["test-plugin@same-name"],
     });
     expect(result.warnings.join(" ")).toContain("catalog unavailable");
     expect(f.activator.releaseRefreshes).toEqual([]);
@@ -137,6 +139,7 @@ describe("native catalogue source provenance", () => {
     const result = await f.sync.execute({
       projectRoot: "/A",
       refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+      approvedRefs: ["test-plugin@same-name"],
     });
     expect(result.warnings).toEqual([]);
     expect(f.activator.releaseRefreshes).toEqual([
@@ -186,7 +189,7 @@ describe("native catalogue source provenance", () => {
       refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
     });
     expect(f.activator.releaseRefreshes).toEqual([]);
-    expect(result.warnings.join(" ")).toContain("not proven as AIDD-owned");
+    expect(result.warnings.join(" ")).toContain("not in the approved preview");
     expect(project.getNativeRegistrations("claude")?.pluginRefs).toContain("test-plugin@same-name");
   });
 
@@ -201,6 +204,7 @@ describe("native catalogue source provenance", () => {
     const result = await f.sync.execute({
       projectRoot: "/A",
       refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+      approvedRefs: ["test-plugin@same-name"],
     });
     expect(result.warnings.join(" ")).toContain("plugin update 'test-plugin@same-name' failed");
     expect(f.projectRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toContain(
@@ -220,6 +224,36 @@ describe("native catalogue source provenance", () => {
     });
     expect(f.activator.releaseRefreshes).toEqual([]);
     expect(result.warnings.length + result.errors.length).toBeGreaterThan(0);
+  });
+
+  it("refreshes an explicitly approved Claude ref without claiming it or another approved ref", async () => {
+    const refs = new Map<string, { enabled: boolean }>();
+    const f = await hostPluginProofFixture({ location: "host", refs }, { toolId: "claude" });
+    await f.sync.execute({ projectRoot: "/A" });
+    const project = f.projectRepo.getCurrent();
+    const registration = project?.getNativeRegistrations("claude");
+    if (!project || !registration) throw new Error("missing registration");
+    const legacy = {
+      ...registration,
+      marketplaces: registration.marketplaces.map(({ alias, hostName }) => ({ alias, hostName })),
+      pluginRefs: [],
+    };
+    project.setNativeRegistrations("claude", legacy);
+    f.logger.reset();
+    refs.set("test-plugin@same-name", { enabled: true });
+    refs.set("foreign@same-name", { enabled: true });
+    const result = await f.sync.execute({
+      projectRoot: "/A",
+      refreshOwnedPlugins: [{ toolId: "claude", pluginName: "test-plugin" }],
+      approvedRefs: ["test-plugin@same-name", "foreign@same-name"],
+    });
+    expect(result.warnings).toEqual([]);
+    expect(result.errors).toEqual([]);
+    expect(f.activator.releaseRefreshes).toEqual([
+      { ref: "test-plugin@same-name", scope: "project" },
+    ]);
+    expect(project.getNativeRegistrations("claude")).toEqual(legacy);
+    expect(f.logger.infoMessages.join(" ")).not.toContain("already enabled");
   });
 
   it("refreshes only an owned Codex plugin after an explicit framework release update", async () => {

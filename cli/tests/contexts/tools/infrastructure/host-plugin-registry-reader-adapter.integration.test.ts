@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  claudeLocalPluginRefreshable,
+  claudeInstallations,
   hostPluginRegistryReaders,
 } from "../../../../src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
@@ -49,14 +49,10 @@ describe("Claude Code's own installed_plugins.json", () => {
         ),
       })
     );
-    expect(
-      await claudeLocalPluginRefreshable(
-        join(home, ".claude"),
-        PROJECT,
-        "aidd-dev@aidd-framework",
-        refs
-      )
-    ).toBe(true);
+    expect(await claudeInstallations(join(home, ".claude"), "aidd-framework")).toEqual([
+      { ref: refs[1], scope: "local", projectPath: PROJECT },
+      { ref: refs[0], scope: "local", projectPath: PROJECT },
+    ]);
   });
 
   it("counts a ref installed for this project, and one installed for the machine", async () => {

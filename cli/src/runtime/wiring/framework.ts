@@ -42,6 +42,7 @@ import { InstallRuntimeConfigUseCase } from "../../contexts/framework/applicatio
 import { PostInstallPipelineUseCase } from "../../contexts/framework/application/install/post-install-pipeline-use-case.js";
 import { ListInstalledRulesUseCase } from "../../contexts/framework/application/list-installed-rules-use-case.js";
 import { NativeHostRegistrationGate } from "../../contexts/framework/application/ownership/native-host-registration-gate.js";
+import { inspectNativeMarketplaceSource } from "../../contexts/framework/application/ownership/native-marketplace-source-proof.js";
 import { assertNoSymlinksWithinRoot } from "../../contexts/framework/application/ownership/project-path-boundary.js";
 import {
   assertProjectMcpEntriesRemovable,
@@ -103,13 +104,14 @@ import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/
 import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
 import { frameworkBuildModeFor } from "../../contexts/tools/domain/registry.js";
 import {
-  claudeLocalPluginRefreshable,
+  claudeInstallations,
   hostPluginRegistryReaders,
 } from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
 import {
   HostRegistryMarketplaceSourceReaderAdapter,
   NativeMarketplaceSourceReaderAdapter,
 } from "../../contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
+import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../kernel/paths.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
@@ -513,6 +515,9 @@ export async function createDeps(
     },
     preflight: async (manifest, root, targets, marketplace, localPath) => {
       const claudeTargets = targets.filter((target) => target.toolId === "claude");
+      let impact: Awaited<ReturnType<typeof claudeInstallations>> = [];
+      let shared = false;
+      let sourceSnapshot: string | undefined;
       if (claudeTargets.length) {
         if (resolve(claudeDir) !== resolve(hostHome, ".claude"))
           throw new Error(
@@ -522,23 +527,51 @@ export async function createDeps(
         const catalogues = registration?.marketplaces.filter(
           (entry) => entry.alias === marketplace.name
         );
-        const machine = await userManifestRepo.load();
-        const machineClaims = machine?.getNativeRegistrations("claude")?.pluginClaims ?? [];
-        const hostName = catalogues?.length === 1 ? catalogues[0]?.hostName : undefined;
+        const catalogue =
+          catalogues?.length === 1
+            ? catalogues[0]
+            : catalogues?.length
+              ? undefined
+              : { alias: marketplace.name, hostName: marketplace.name };
+        if (!catalogue) throw new Error("Cannot verify Claude marketplace identity.");
+        const hostName = catalogue.hostName;
+        sourceSnapshot = await fs.realpath(
+          marketplace.scope === "user"
+            ? userBuiltMarketplaceDir(
+                userConfigDir(),
+                currentVersionProvider.get(),
+                marketplace.name,
+                "claude"
+              )
+            : builtMarketplaceDir(root, marketplace.name, "claude")
+        );
+        const source = await inspectNativeMarketplaceSource(nativeSources.get("claude"), root, {
+          ...catalogue,
+          provenance: { kind: "registry", source: sourceSnapshot },
+        });
+        if (source.status !== "owned")
+          throw new Error(
+            `Cannot verify Claude marketplace source: ${source.reason ?? source.status}`
+          );
         const refs = claudeTargets.map((target) => `${target.pluginName}@${hostName}`);
+        impact = await claudeInstallations(claudeDir, hostName);
+        const here = await fs.realpath(root).catch(() => root);
         for (const target of claudeTargets) {
-          const ref = hostName === undefined ? undefined : `${target.pluginName}@${hostName}`;
+          const ref = `${target.pluginName}@${hostName}`;
           if (
-            ref === undefined ||
-            !registration?.pluginRefs.includes(ref) ||
-            machineClaims.some((claim) => claim.ref === ref) ||
-            !(await claudeLocalPluginRefreshable(claudeDir, root, ref, refs))
+            !impact.some(
+              (entry) => entry.ref === ref && entry.scope === "local" && entry.projectPath === here
+            )
           ) {
             throw new Error(
-              `Cannot upgrade claude:${target.pluginName}: local scope or ownership is ambiguous, or another installation shares its marketplace.`
+              `Cannot upgrade claude:${target.pluginName}: its local installation was not found.`
             );
           }
         }
+        shared = impact.some(
+          (entry) =>
+            !refs.includes(entry.ref) || entry.scope !== "local" || entry.projectPath !== here
+        );
       }
       for (const target of targets) {
         if (getToolSupportedScope(target.toolId) !== "project")
@@ -659,6 +692,35 @@ export async function createDeps(
       } finally {
         await fs.deleteDirectory(temporary);
       }
+      return { impact, shared, source: sourceSnapshot, tool: claudeTargets[0]?.toolId };
+    },
+    verifyImpact: async (root, impact, source) => {
+      if (!impact.length) return;
+      const catalogue = impact[0]?.ref.split("@").at(-1);
+      if (
+        !catalogue ||
+        JSON.stringify(await claudeInstallations(claudeDir, catalogue)) !== JSON.stringify(impact)
+      )
+        throw new Error("Claude installations changed after the preview; review the update again.");
+      const registration = (await manifestRepo.load())
+        ?.getNativeRegistrations("claude")
+        ?.marketplaces.find((item) => item.hostName === catalogue) ?? {
+        alias: catalogue,
+        hostName: catalogue,
+      };
+      if (
+        !registration ||
+        !source ||
+        (
+          await inspectNativeMarketplaceSource(nativeSources.get("claude"), root, {
+            ...registration,
+            provenance: { kind: "registry", source },
+          })
+        ).status !== "owned"
+      )
+        throw new Error(
+          "Claude marketplace source changed after the preview; review the update again."
+        );
     },
     install: async (options) => {
       const manifest = await manifestRepo.load();
@@ -714,12 +776,13 @@ export async function createDeps(
           throw new Error(`Cannot remove obsolete file '${relativePath}'.`);
       }
     },
-    sync: (root, toolIds, targets) =>
+    sync: (root, toolIds, targets, approvedRefs) =>
       marketplaceSyncSettingsUseCase.execute({
         projectRoot: root,
         toolIds,
         marketplaceNames: ["aidd-framework"],
         refreshOwnedPlugins: targets,
+        approvedRefs,
       }),
   });
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(

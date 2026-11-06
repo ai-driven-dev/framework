@@ -77,46 +77,37 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
   }
 }
 
-/** A release refresh must have a local entry and no other installation sharing its catalogue. */
-export async function claudeLocalPluginRefreshable(
+/** Claude's recorded installations sharing a marketplace. Presence does not prove enablement. */
+export async function claudeInstallations(
   configDir: string,
-  projectRoot: string,
-  ref: string,
-  targets: readonly string[]
-): Promise<boolean> {
-  try {
-    const content = await readFile(join(configDir, "plugins", "installed_plugins.json"), "utf8");
-    const plugins = parseClaudePlugins(content);
-    const entries = plugins?.[ref];
-    if (!Array.isArray(entries)) return false;
-    const separator = ref.lastIndexOf("@");
-    if (separator < 0) return false;
-    const catalogue = ref.slice(separator);
-    const here = await resolvedPath(projectRoot);
-    for (const [otherRef, otherEntries] of Object.entries(plugins ?? {})) {
-      if (!otherRef.endsWith(catalogue)) continue;
-      if (!targets.includes(otherRef) || !Array.isArray(otherEntries)) return false;
-      for (const entry of otherEntries) {
-        if (
-          entry?.scope !== "local" ||
-          typeof entry.projectPath !== "string" ||
-          (await resolvedPath(entry.projectPath)) !== here
-        )
-          return false;
-      }
-    }
+  catalogue: string
+): Promise<{ ref: string; scope: "user" | "project" | "local"; projectPath?: string }[]> {
+  const content = await readFile(join(configDir, "plugins", "installed_plugins.json"), "utf8");
+  const plugins = parseClaudePlugins(content);
+  if (!plugins) throw new Error("Cannot inspect Claude's installed plugins.");
+  const installations: {
+    ref: string;
+    scope: "user" | "project" | "local";
+    projectPath?: string;
+  }[] = [];
+  for (const [ref, entries] of Object.entries(plugins).sort(([a], [b]) => a.localeCompare(b))) {
+    if (!ref.endsWith(`@${catalogue}`)) continue;
+    if (!Array.isArray(entries)) throw new Error(`Cannot inspect Claude installation '${ref}'.`);
     for (const entry of entries) {
-      if (
-        entry?.scope === "local" &&
-        typeof entry.projectPath === "string" &&
-        (await resolvedPath(entry.projectPath)) === here
+      if (entry?.scope === "user") installations.push({ ref, scope: "user" });
+      else if (
+        (entry?.scope === "local" || entry?.scope === "project") &&
+        typeof entry.projectPath === "string"
       )
-        return true;
+        installations.push({
+          ref,
+          scope: entry.scope,
+          projectPath: await resolvedPath(entry.projectPath),
+        });
+      else throw new Error(`Cannot inspect Claude installation '${ref}'.`);
     }
-  } catch {
-    return false;
   }
-  return false;
+  return installations;
 }
 
 function parseClaudePlugins(content: string): Record<string, ClaudeEntry[]> | undefined {

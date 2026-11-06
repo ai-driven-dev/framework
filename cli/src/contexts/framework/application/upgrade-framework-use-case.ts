@@ -22,6 +22,13 @@ export interface FrameworkUpgradePreview {
   readonly targets: readonly FrameworkUpgradePreviewTarget[];
   readonly globalSkipped: number;
   readonly shared: boolean;
+  readonly impact: readonly ClaudeInstallation[];
+}
+
+export interface ClaudeInstallation {
+  readonly ref: string;
+  readonly scope: "local" | "project" | "user";
+  readonly projectPath?: string;
 }
 
 interface UpgradeDeps {
@@ -46,6 +53,16 @@ interface UpgradeDeps {
     targets: readonly FrameworkUpgradeTarget[],
     marketplace: Marketplace,
     localPath: string
+  ): Promise<void | {
+    impact: readonly ClaudeInstallation[];
+    shared: boolean;
+    source?: string;
+    tool?: AiToolId;
+  }>;
+  verifyImpact?(
+    projectRoot: string,
+    impact: readonly ClaudeInstallation[],
+    source?: string
   ): Promise<void>;
   install(options: {
     pluginName: string;
@@ -61,7 +78,8 @@ interface UpgradeDeps {
   sync(
     projectRoot: string,
     toolIds: readonly AiToolId[],
-    targets: readonly FrameworkUpgradeTarget[]
+    targets: readonly FrameworkUpgradeTarget[],
+    approvedRefs: readonly string[]
   ): Promise<{
     warnings: readonly string[];
     errors: readonly { scope: string; message: string }[];
@@ -201,9 +219,19 @@ export class UpgradeFrameworkUseCase {
         );
       previewTargets.push({ ...target, targetVersion });
     }
-    await this.deps.preflight(manifest, projectRoot, targets, next, localPath);
-    const shared = marketplace.scope === "user";
-    if (!(await confirm({ currentRef, release, targets: previewTargets, globalSkipped, shared }))) {
+    const preflight = await this.deps.preflight(manifest, projectRoot, targets, next, localPath);
+    const impact = preflight?.impact ?? [];
+    const shared = marketplace.scope === "user" || preflight?.shared === true;
+    if (
+      !(await confirm({
+        currentRef,
+        release,
+        targets: previewTargets,
+        globalSkipped,
+        shared,
+        impact,
+      }))
+    ) {
       return { updated: [], globalSkipped, cancelled: true };
     }
     if (shared && !allowShared) {
@@ -211,11 +239,17 @@ export class UpgradeFrameworkUseCase {
         "The AIDD marketplace is shared with other projects; pass --allow-shared after reviewing the impact."
       );
     }
+    await this.deps.verifyImpact?.(projectRoot, impact, preflight?.source);
     nextData.version = catalog.version;
     await this.deps.saveMarketplace(projectRoot, Marketplace.fromJSON(nextData));
     const updated: string[] = [];
+    let nativeChecked = false;
     try {
       for (const target of previewTargets) {
+        if (target.toolId === preflight?.tool && !nativeChecked) {
+          await this.deps.verifyImpact?.(projectRoot, impact, preflight?.source);
+          nativeChecked = true;
+        }
         if (target.targetVersion === undefined)
           throw new Error(`Cannot verify ${target.pluginName} version.`);
         await this.deps.install({
@@ -256,7 +290,8 @@ export class UpgradeFrameworkUseCase {
       const activation = await this.deps.sync(
         projectRoot,
         [...new Set(targets.map((target) => target.toolId))],
-        targets
+        targets,
+        [...new Set(impact.map((entry) => entry.ref))]
       );
       if (
         activation.errors.length ||

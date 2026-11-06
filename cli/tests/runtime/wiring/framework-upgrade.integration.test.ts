@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -27,6 +27,14 @@ describe("framework release update wiring", () => {
     vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "home"));
     vi.stubEnv("HOME", join(root, "home"));
     vi.stubEnv("CLAUDE_CONFIG_DIR", "");
+    const cataloguePath = join(root, ".aidd/cache/built/aidd-framework/claude");
+    await mkdir(cataloguePath, { recursive: true });
+    const claudeRegistry = join(root, "home/.claude/plugins/known_marketplaces.json");
+    await mkdir(dirname(claudeRegistry), { recursive: true });
+    await writeFile(
+      claudeRegistry,
+      JSON.stringify({ "aidd-framework": { installLocation: cataloguePath } })
+    );
     confirm.mockClear();
     const pluginManifest = join(root, "plugins/aidd-context/.claude-plugin/plugin.json");
     await mkdir(dirname(pluginManifest), { recursive: true });
@@ -92,101 +100,62 @@ describe("framework release update wiring", () => {
     return deps;
   }
 
-  it.each([
-    "missing project claim",
-    "machine claim",
-    "user-only",
-    "local and independent user",
-    "another user plugin sharing the marketplace",
-    "project-only",
-    "other project's local scope",
-    "another project sharing the local plugin",
-    "another project sharing the marketplace",
-    "an unselected plugin in this project",
-    "the selected plugin at project scope too",
-  ] as const)("refuses Claude %s before modifying any installation", async (reason) => {
-    const deps = await seed("claude");
-    const manifest = await deps.manifestRepo.load();
-    if (!manifest) throw new Error("missing project manifest");
-    const ref = "aidd-context@aidd-framework";
-    manifest.setNativeRegistrations("claude", {
-      binary: "claude",
-      marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
-      pluginRefs: reason === "missing project claim" ? [] : [ref],
-    });
-    await deps.manifestRepo.save(manifest);
-    if (reason === "machine claim") {
-      const machine = Manifest.create();
-      machine.addTool("claude", "5.6.0", []);
-      machine.setNativeRegistrations("claude", {
+  it.each(["user-only", "project-only", "other project's local scope"] as const)(
+    "refuses Claude %s before modifying any installation",
+    async (reason) => {
+      const deps = await seed("claude");
+      const manifest = await deps.manifestRepo.load();
+      if (!manifest) throw new Error("missing project manifest");
+      const ref = "aidd-context@aidd-framework";
+      manifest.setNativeRegistrations("claude", {
         binary: "claude",
-        marketplaces: [],
-        pluginRefs: [],
-        pluginClaims: [{ ref, dependents: [root] }],
+        marketplaces: [
+          {
+            alias: "aidd-framework",
+            hostName: "aidd-framework",
+            provenance: { kind: "registry", source: join(root, "catalogue") },
+          },
+        ],
+        pluginRefs: [ref],
       });
-      await deps.userManifestRepo.save(machine);
-    }
-    const registryPath = join(root, "home/.claude/plugins/installed_plugins.json");
-    await mkdir(dirname(registryPath), { recursive: true });
-    const local = { scope: "local", projectPath: root };
-    const entries =
-      reason === "user-only"
-        ? [{ scope: "user" }]
-        : reason === "local and independent user"
-          ? [local, { scope: "user" }]
+      await deps.manifestRepo.save(manifest);
+      const registryPath = join(root, "home/.claude/plugins/installed_plugins.json");
+      await mkdir(dirname(registryPath), { recursive: true });
+      const entries =
+        reason === "user-only"
+          ? [{ scope: "user" }]
           : reason === "project-only"
             ? [{ scope: "project", projectPath: root }]
-            : reason === "other project's local scope"
-              ? [{ scope: "local", projectPath: join(root, "other") }]
-              : [local];
-    const plugins = {
-      [ref]:
-        reason === "another project sharing the local plugin"
-          ? [local, { scope: "local", projectPath: join(root, "other") }]
-          : reason === "the selected plugin at project scope too"
-            ? [local, { scope: "project", projectPath: root }]
-            : entries,
-      ...(reason === "another user plugin sharing the marketplace"
-        ? { "another-plugin@aidd-framework": [{ scope: "user" }] }
-        : {}),
-      ...(reason === "another project sharing the marketplace"
-        ? {
-            "another-plugin@aidd-framework": [
-              { scope: "project", projectPath: join(root, "other") },
-            ],
-          }
-        : {}),
-      ...(reason === "an unselected plugin in this project"
-        ? { "another-plugin@aidd-framework": [{ scope: "local", projectPath: root }] }
-        : {}),
-    };
-    await writeFile(registryPath, JSON.stringify({ plugins }));
-    const registry = join(root, ".aidd/marketplaces.json");
-    const beforeRegistry = await readFile(registry, "utf8");
-    const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
-    const beforeMachine = JSON.stringify((await deps.userManifestRepo.load())?.toJSON());
-    const untouched = join(root, ".claude/settings.local.json");
-    await mkdir(dirname(untouched), { recursive: true });
-    await writeFile(untouched, "user settings");
-    const install = vi
-      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
-      .mockRejectedValue(new Error("installation must not start"));
+            : [{ scope: "local", projectPath: join(root, "other") }];
+      const plugins = { [ref]: entries };
+      await writeFile(registryPath, JSON.stringify({ plugins }));
+      const registry = join(root, ".aidd/marketplaces.json");
+      const beforeRegistry = await readFile(registry, "utf8");
+      const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
+      const beforeMachine = JSON.stringify((await deps.userManifestRepo.load())?.toJSON());
+      const untouched = join(root, ".claude/settings.local.json");
+      await mkdir(dirname(untouched), { recursive: true });
+      await writeFile(untouched, "user settings");
+      const install = vi
+        .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+        .mockRejectedValue(new Error("installation must not start"));
 
-    await expect(
-      deps.upgradeFrameworkUseCase.execute({
-        projectRoot: root,
-        release: "v5.13.0",
-        allowShared: false,
-        confirm,
-      })
-    ).rejects.toThrow(/claude.*(?:claim|ownership)/i);
-    expect(confirm).not.toHaveBeenCalled();
-    expect(install).not.toHaveBeenCalled();
-    expect(await readFile(registry, "utf8")).toBe(beforeRegistry);
-    expect(JSON.stringify((await deps.manifestRepo.load())?.toJSON())).toBe(beforeManifest);
-    expect(JSON.stringify((await deps.userManifestRepo.load())?.toJSON())).toBe(beforeMachine);
-    expect(await readFile(untouched, "utf8")).toBe("user settings");
-  });
+      await expect(
+        deps.upgradeFrameworkUseCase.execute({
+          projectRoot: root,
+          release: "v5.13.0",
+          allowShared: false,
+          confirm,
+        })
+      ).rejects.toThrow(/claude.*local installation was not found/i);
+      expect(confirm).not.toHaveBeenCalled();
+      expect(install).not.toHaveBeenCalled();
+      expect(await readFile(registry, "utf8")).toBe(beforeRegistry);
+      expect(JSON.stringify((await deps.manifestRepo.load())?.toJSON())).toBe(beforeManifest);
+      expect(JSON.stringify((await deps.userManifestRepo.load())?.toJSON())).toBe(beforeMachine);
+      expect(await readFile(untouched, "utf8")).toBe("user settings");
+    }
+  );
 
   it("accepts Claude's registered local scope for this project before confirmation", async () => {
     const deps = await seed("claude");
@@ -195,7 +164,13 @@ describe("framework release update wiring", () => {
     const ref = "aidd-context@aidd-framework";
     manifest.setNativeRegistrations("claude", {
       binary: "claude",
-      marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+      marketplaces: [
+        {
+          alias: "aidd-framework",
+          hostName: "aidd-framework",
+          provenance: { kind: "registry", source: join(root, "catalogue") },
+        },
+      ],
       pluginRefs: [ref],
     });
     await deps.manifestRepo.save(manifest);
@@ -214,6 +189,218 @@ describe("framework release update wiring", () => {
     });
     expect(decline).toHaveBeenCalledOnce();
     expect(result.cancelled).toBe(true);
+  });
+
+  it("shows shared Claude installations before confirmation without requiring plugin ownership claims", async () => {
+    const deps = await seed("claude");
+    const manifest = await deps.manifestRepo.load();
+    if (!manifest) throw new Error("missing project manifest");
+    const ref = "aidd-context@aidd-framework";
+    manifest.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: "aidd-framework",
+          hostName: "aidd-framework",
+        },
+      ],
+      pluginRefs: [],
+    });
+    await deps.manifestRepo.save(manifest);
+    const registryPath = join(root, "home/.claude/plugins/installed_plugins.json");
+    await mkdir(dirname(registryPath), { recursive: true });
+    await writeFile(
+      registryPath,
+      JSON.stringify({
+        plugins: {
+          [ref]: [{ scope: "local", projectPath: root }, { scope: "user" }],
+          "other@aidd-framework": [{ scope: "project", projectPath: join(root, "other") }],
+        },
+      })
+    );
+    const decline = vi.fn(async () => false);
+    const registry = join(root, ".aidd/marketplaces.json");
+    const before = await readFile(registry, "utf8");
+    const result = await deps.upgradeFrameworkUseCase.execute({
+      projectRoot: root,
+      release: "v5.13.0",
+      allowShared: false,
+      confirm: decline,
+    });
+    expect(result.cancelled).toBe(true);
+    expect(decline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shared: true,
+        impact: [
+          { ref, scope: "local", projectPath: await realpath(root) },
+          { ref, scope: "user" },
+          { ref: "other@aidd-framework", scope: "project", projectPath: join(root, "other") },
+        ],
+      })
+    );
+    expect(await readFile(registry, "utf8")).toBe(before);
+  });
+
+  it("refuses a shared Claude update without shared approval or when the inventory changed", async () => {
+    const deps = await seed("claude");
+    const manifest = await deps.manifestRepo.load();
+    if (!manifest) throw new Error("missing project manifest");
+    const ref = "aidd-context@aidd-framework";
+    manifest.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: "aidd-framework",
+          hostName: "aidd-framework",
+          provenance: { kind: "registry", source: join(root, "catalogue") },
+        },
+      ],
+      pluginRefs: [],
+    });
+    await deps.manifestRepo.save(manifest);
+    const nativeRegistry = join(root, "home/.claude/plugins/installed_plugins.json");
+    await mkdir(dirname(nativeRegistry), { recursive: true });
+    const plugins = { [ref]: [{ scope: "local", projectPath: root }, { scope: "user" }] };
+    await writeFile(nativeRegistry, JSON.stringify({ plugins }));
+    const registry = join(root, ".aidd/marketplaces.json");
+    const before = await readFile(registry, "utf8");
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm,
+      })
+    ).rejects.toThrow(/allow-shared/);
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(await readFile(registry, "utf8")).toBe(before);
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: true,
+        confirm: async () => {
+          await writeFile(
+            nativeRegistry,
+            JSON.stringify({ plugins: { ...plugins, "new@aidd-framework": [{ scope: "user" }] } })
+          );
+          return true;
+        },
+      })
+    ).rejects.toThrow(/installations changed after the preview/);
+    expect(await readFile(registry, "utf8")).toBe(before);
+    await writeFile(nativeRegistry, JSON.stringify({ plugins }));
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: true,
+        confirm: async () => {
+          await writeFile(
+            join(root, "home/.claude/plugins/known_marketplaces.json"),
+            JSON.stringify({ "aidd-framework": { installLocation: "/another/source" } })
+          );
+          return true;
+        },
+      })
+    ).rejects.toThrow(/source changed after the preview/);
+    expect(await readFile(registry, "utf8")).toBe(before);
+  });
+
+  it("refuses a different Claude marketplace source before any write or confirmation", async () => {
+    const deps = await seed("claude");
+    await writeFile(
+      join(root, "home/.claude/plugins/known_marketplaces.json"),
+      JSON.stringify({ "aidd-framework": { installLocation: "/different/source" } })
+    );
+    const manifest = await deps.manifestRepo.load();
+    if (!manifest) throw new Error("missing project manifest");
+    manifest.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: "aidd-framework",
+          hostName: "aidd-framework",
+          provenance: { kind: "registry", source: "/different/source" },
+        },
+      ],
+      pluginRefs: [],
+    });
+    await deps.manifestRepo.save(manifest);
+    const registry = join(root, ".aidd/marketplaces.json");
+    const before = await readFile(registry, "utf8");
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: true,
+        confirm,
+      })
+    ).rejects.toThrow(/Cannot verify Claude marketplace source/);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(await readFile(registry, "utf8")).toBe(before);
+  });
+
+  it("refuses when both Claude's source and its recorded provenance change after preview", async () => {
+    const deps = await seed("claude");
+    const manifest = await deps.manifestRepo.load();
+    if (!manifest) throw new Error("missing project manifest");
+    const registration = {
+      binary: "claude",
+      marketplaces: [
+        {
+          alias: "aidd-framework",
+          hostName: "aidd-framework",
+          provenance: { kind: "registry" as const, source: join(root, "catalogue") },
+        },
+      ],
+      pluginRefs: [],
+    };
+    manifest.setNativeRegistrations("claude", registration);
+    await deps.manifestRepo.save(manifest);
+    const nativeRegistry = join(root, "home/.claude/plugins/installed_plugins.json");
+    await mkdir(dirname(nativeRegistry), { recursive: true });
+    await writeFile(
+      nativeRegistry,
+      JSON.stringify({
+        plugins: {
+          "aidd-context@aidd-framework": [{ scope: "local", projectPath: root }],
+        },
+      })
+    );
+    const marketplace = join(root, ".aidd/marketplaces.json");
+    const before = await readFile(marketplace, "utf8");
+    const install = vi
+      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .mockRejectedValue(new Error("installation must not start"));
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: true,
+        confirm: async () => {
+          const current = await deps.manifestRepo.load();
+          if (!current) throw new Error("missing manifest");
+          current.setNativeRegistrations("claude", {
+            ...registration,
+            marketplaces: [
+              {
+                ...registration.marketplaces[0],
+                provenance: { kind: "registry", source: "/another/source" },
+              },
+            ],
+          });
+          await deps.manifestRepo.save(current);
+          await writeFile(
+            join(root, "home/.claude/plugins/known_marketplaces.json"),
+            JSON.stringify({ "aidd-framework": { installLocation: "/another/source" } })
+          );
+          return true;
+        },
+      })
+    ).rejects.toThrow(/source changed after the preview/);
+    expect(await readFile(marketplace, "utf8")).toBe(before);
+    expect(install).not.toHaveBeenCalled();
   });
 
   it("refuses a custom Claude config before modifying the marketplace", async () => {

@@ -206,6 +206,16 @@ function printReleasePreview(
   ]);
   if (preview.globalSkipped)
     output.info(`${preview.globalSkipped} user-scope plugin entries will not be updated.`);
+  if (preview.impact?.length) {
+    output.info("Claude installations sharing this marketplace:");
+    for (const entry of preview.impact)
+      output.info(
+        `  ${entry.ref} (${entry.scope}${entry.projectPath ? `, ${entry.projectPath}` : ""})`
+      );
+    output.info(
+      "Their shared catalogue files may change. Other dependents may exist; enabled states are unverified."
+    );
+  }
   if (preview.shared) output.warn("This marketplace is shared; other projects may be affected.");
 }
 
