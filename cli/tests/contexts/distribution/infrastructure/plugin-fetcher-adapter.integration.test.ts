@@ -34,8 +34,9 @@ function gitEnv(): NodeJS.ProcessEnv {
 
 async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Promise<void> {
   const env = gitEnv();
+  const options = { env, timeout: 15000 };
   await mkdir(repoPath, { recursive: true });
-  await execFileAsync("git", ["init", "--bare", "-b", "main", repoPath], { env });
+  await execFileAsync("git", ["init", "--bare", "-b", "main", repoPath], options);
   await mkdir(join(workPath, ".claude-plugin"), { recursive: true });
   await writeFile(
     join(workPath, ".claude-plugin/plugin.json"),
@@ -46,10 +47,10 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
     join(workPath, "commands/hello.md"),
     "---\nname: hello\ndescription: Hi\n---\n\nHello.\n"
   );
-  await execFileAsync("git", ["init", "-b", "main"], { cwd: workPath, env });
-  await execFileAsync("git", ["add", "."], { cwd: workPath, env });
-  await execFileAsync("git", ["commit", "-m", "init"], { cwd: workPath, env });
-  await execFileAsync("git", ["push", repoPath, "main"], { cwd: workPath, env });
+  await execFileAsync("git", ["init", "-b", "main"], { ...options, cwd: workPath });
+  await execFileAsync("git", ["add", "."], { ...options, cwd: workPath });
+  await execFileAsync("git", ["commit", "-m", "init"], { ...options, cwd: workPath });
+  await execFileAsync("git", ["push", repoPath, "main"], { ...options, cwd: workPath });
 }
 
 function makeAdapter(): PluginFetcherAdapter {
@@ -91,6 +92,8 @@ describe("PluginFetcherAdapter", () => {
   });
   it("does not forward credentials to a different redirect origin", async () => {
     const sandbox = await mkdtemp(join(tmpdir(), "aidd-git-redirect-"));
+    const previousHome = process.env.HOME;
+    const previousUserProfile = process.env.USERPROFILE;
     let seen: string | undefined;
     let reached = false;
     const destination = createServer((req, res) => {
@@ -98,7 +101,8 @@ describe("PluginFetcherAdapter", () => {
       seen = req.headers.authorization;
       res.writeHead(401, { "WWW-Authenticate": 'Basic realm="test"' }).end();
     });
-    await new Promise<void>((resolve) => destination.listen(0, "127.0.0.1", resolve));
+    destination.setTimeout(20000, (socket) => socket.destroy());
+    await new Promise<void>((resolve) => destination.listen(0, resolve));
     const destAddress = destination.address();
     if (!destAddress || typeof destAddress === "string")
       throw new Error("missing destination address");
@@ -109,7 +113,13 @@ describe("PluginFetcherAdapter", () => {
         })
         .end();
     });
+    redirect.setTimeout(20000, (socket) => socket.destroy());
     try {
+      // Reset system helpers, including Git Credential Manager on Windows, so its GUI
+      // cannot intercept the deliberate 401 from the redirect destination.
+      await writeFile(join(sandbox, ".gitconfig"), "[credential]\n\thelper =\n");
+      process.env.HOME = sandbox;
+      process.env.USERPROFILE = sandbox;
       await new Promise<void>((resolve) => redirect.listen(0, "127.0.0.1", resolve));
       const address = redirect.address();
       if (!address || typeof address === "string") throw new Error("missing redirect address");
@@ -120,6 +130,12 @@ describe("PluginFetcherAdapter", () => {
       expect(reached).toBe(true);
       expect(seen).toBeUndefined();
     } finally {
+      if (previousHome === undefined) delete process.env.HOME;
+      else process.env.HOME = previousHome;
+      if (previousUserProfile === undefined) delete process.env.USERPROFILE;
+      else process.env.USERPROFILE = previousUserProfile;
+      redirect.closeAllConnections();
+      destination.closeAllConnections();
       await new Promise<void>((resolve) => redirect.close(() => resolve()));
       await new Promise<void>((resolve) => destination.close(() => resolve()));
       await rm(sandbox, { recursive: true, force: true });
@@ -143,6 +159,7 @@ describe("PluginFetcherAdapter", () => {
     ] as const;
     const previousGitConfig = gitConfigKeys.map((key) => process.env[key]);
     const previousHome = process.env.HOME;
+    const previousUserProfile = process.env.USERPROFILE;
     const server = createServer((req, res) => {
       injectedHeader ||= req.headers["x-injected"] !== undefined;
       if (req.headers.authorization !== expected) {
@@ -152,6 +169,7 @@ describe("PluginFetcherAdapter", () => {
       authenticatedRequests++;
       const url = new URL(req.url ?? "/", "http://localhost");
       const backend = spawn("git", ["http-backend"], {
+        timeout: 15000,
         env: {
           ...gitEnv(),
           GIT_PROJECT_ROOT: sandbox,
@@ -164,6 +182,8 @@ describe("PluginFetcherAdapter", () => {
           REMOTE_USER: "tester",
         },
       });
+      backend.stderr.resume();
+      backend.stdin.on("error", () => res.destroy());
       req.pipe(backend.stdin);
       let pending = Buffer.alloc(0);
       let started = false;
@@ -189,32 +209,43 @@ describe("PluginFetcherAdapter", () => {
         res.write(pending.subarray(boundary + 4));
         started = true;
       });
-      backend.stdout.on("end", () => res.end());
+      backend.stdout.on("end", () => {
+        if (!started) res.writeHead(502);
+        res.end(started ? undefined : "git http-backend did not produce CGI headers");
+      });
       backend.on("error", () => res.destroy());
     });
+    server.setTimeout(20000, (socket) => socket.destroy());
     try {
       await mkdir(workPath, { recursive: true });
       await setupBareRepoWithPlugin(repoPath, workPath);
       await execFileAsync(
         "git",
         ["--git-dir", repoPath, "config", "uploadpack.allowFilter", "true"],
-        { env: gitEnv() }
+        { env: gitEnv(), timeout: 15000 }
       );
       await execFileAsync(
         "git",
         ["--git-dir", repoPath, "config", "uploadpack.allowAnySHA1InWant", "true"],
-        { env: gitEnv() }
+        { env: gitEnv(), timeout: 15000 }
       );
       process.env.HOME = sandbox;
+      process.env.USERPROFILE = sandbox;
+      // An empty helper resets system-level helpers before installing our own.
+      await execFileAsync("git", ["config", "--global", "--add", "credential.helper", ""], {
+        env: gitEnv(),
+        timeout: 15000,
+      });
       await execFileAsync(
         "git",
         [
           "config",
           "--global",
+          "--add",
           "credential.helper",
           `!f() { echo username=tester; echo password=${password}; }; f`,
         ],
-        { env: gitEnv() }
+        { env: gitEnv(), timeout: 15000 }
       );
       await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
       const address = server.address();
@@ -274,11 +305,14 @@ describe("PluginFetcherAdapter", () => {
     } finally {
       if (previousHome === undefined) delete process.env.HOME;
       else process.env.HOME = previousHome;
+      if (previousUserProfile === undefined) delete process.env.USERPROFILE;
+      else process.env.USERPROFILE = previousUserProfile;
       for (const [index, key] of gitConfigKeys.entries()) {
         const previous = previousGitConfig[index];
         if (previous === undefined) delete process.env[key];
         else process.env[key] = previous;
       }
+      server.closeAllConnections();
       await new Promise<void>((resolve) => server.close(() => resolve()));
       await rm(sandbox, { recursive: true, force: true });
     }
