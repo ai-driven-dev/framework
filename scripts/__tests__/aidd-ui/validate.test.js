@@ -531,8 +531,15 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(stop()), finish(errorsText([literal(30)])));
     });
 
-    it("holds nothing for a whole-file write that does not say what it replaced, baseline or not", () => {
+    it("holds a whole-file write that does not say what it replaced only past the errors the baseline counts", () => {
+      littering(2, 0);
       begin();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER)));
+      assert.deepEqual(hook(stop()), finish(errorsText([literal(30)])));
+    });
+
+    it("holds nothing for such a write without a baseline, nothing proving its lines new", () => {
       littering(1, 0);
       hook(postToolUse(path.join(tmp, RENDER)));
       assert.deepEqual(hook(stop()), silent);
@@ -595,14 +602,13 @@ describe("aidd-ui validator entries", () => {
       assert.equal(fs.readFileSync(target, "utf8"), "keep");
     });
 
-    it("keeps the mark in <tmpdir>/aidd-hooks-<uid>/aidd-ui/<session>, the turn's net changed lines and the files it wrote in it", () => {
+    it("keeps the mark in <tmpdir>/aidd-hooks-<uid>/aidd-ui/<session>, the turn's net changed lines in it", () => {
       const temp = path.join(tmp, "temp");
       fs.mkdirSync(temp);
       hook(editTool(BRAND, "Analysts.", "Analysts and buyers."), temp);
       assert.deepEqual(JSON.parse(fs.readFileSync(markPath(sid, temp), "utf8")), [
         [`+${JSON.stringify([BRAND, "Analysts and buyers."])}`, 1],
         [`+${JSON.stringify([BRAND, "Analysts."])}`, -1],
-        [`@${BRAND}`, 1],
       ]);
     });
 
