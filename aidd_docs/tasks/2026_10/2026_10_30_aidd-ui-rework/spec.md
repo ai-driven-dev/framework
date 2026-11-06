@@ -167,7 +167,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 | 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
 | 3 | La vitrine bascule thème et plateforme sur son `<html>` par un sélecteur, et compare deux combinaisons dans deux cadres côte à côte ; son propre habillage est neutre, seuls les rendus portent les tokens du projet. |
 | 3 | La review couvre aussi les composants, pour qu'un composant puisse passer à validé. |
-| 3 | La review confronte le rendu à une capture de l'app réelle par état et par plateforme, posée à côté de la fiche avec la version qu'elle montre ; aidd-ui ne lance jamais l'app. Capture obligatoire ou non : à trancher. |
+| 3 | La review confronte le rendu à une capture de l'app réelle par état et par plateforme, posée à côté de la fiche avec la version qu'elle montre ; aidd-ui ne lance jamais l'app. La capture est exigée une fois l'écran codé. |
 | 4 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
 | 5 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
 | 5 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |
