@@ -632,6 +632,11 @@ describe("PluginAddUseCase", () => {
       it("project replace refuses legacy hooks without an install digest and preserves shared files", async () => {
         const deps = await cursorDeps();
         await addForCursor(deps, deps.logger);
+        const manifest = await deps.manifestRepo.load();
+        const plugin = manifest?.getPlugins("cursor")[0];
+        if (!manifest || !plugin) throw new Error("missing plugin");
+        manifest.updatePlugin("cursor", InstalledPlugin.withProjectHooks(plugin, undefined));
+        await deps.manifestRepo.save(manifest);
         const hooksBefore = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"));
         const savesBefore = deps.manifestRepo.saveCount;
         const machineSavesBefore = deps.userManifestRepo.saveCount;

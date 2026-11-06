@@ -10,8 +10,10 @@ import { MarketplaceRegistryAdapter } from "../../../src/contexts/distribution/i
 import { PluginFetcherAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { EnsureBuiltMarketplaceUseCase } from "../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
+import { recordedProjectHookEntries } from "../../../src/contexts/framework/application/shared/remove-project-hooks.js";
 import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { antigravityProjectHooksFormat } from "../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { FileHash, InstallationFile } from "../../../src/kernel/file.js";
 import { CurrentVersionAdapter } from "../../../src/runtime/self-update/current-version-adapter.js";
 import { GitHubReleaseResolverAdapter } from "../../../src/runtime/self-update/github-release-resolver-adapter.js";
@@ -79,7 +81,7 @@ describe("framework release update wiring", () => {
   });
 
   async function seed(
-    toolId: "claude" | "cursor" | "opencode",
+    toolId: "antigravity" | "claude" | "cursor" | "opencode",
     options: { files?: Record<string, string>; mcpEntries?: Record<string, string> } = {}
   ) {
     const deps = await createDeps(root, { verbose: false });
@@ -1093,6 +1095,93 @@ describe("framework release update wiring", () => {
     expect(manifest?.getPlugins("opencode")[0].source).toMatchObject({ ref: "v5.13.0" });
     expect(manifest?.getPlugins("opencode")[0].version).toBe("2.10.0");
     expect(manifest?.getPlugins("kilo")).toHaveLength(0);
+  });
+
+  it("refuses an incoming project hook script collision before changing the marketplace", async () => {
+    await fixtureDistribution();
+    const hooks = join(root, "plugins/aidd-context/hooks");
+    await mkdir(hooks, { recursive: true });
+    await writeFile(join(hooks, "hooks.json"), JSON.stringify({ hooks: {} }));
+    await writeFile(join(hooks, "new.cjs"), "release hook");
+    const file = join(root, ".agents/hooks/aidd-context/new.cjs");
+    await mkdir(dirname(file), { recursive: true });
+    await writeFile(file, "user hook");
+    const deps = await seed("antigravity");
+    const manifest = await deps.manifestRepo.load();
+    const plugin = manifest?.getPlugins("antigravity")[0];
+    if (!manifest || !plugin) throw new Error("missing plugin");
+    manifest.updatePlugin(
+      "antigravity",
+      InstalledPlugin.withProjectHooks(plugin, { entries: [], scripts: new Map() })
+    );
+    await deps.manifestRepo.save(manifest);
+    const registry = join(root, ".aidd/marketplaces.json");
+    const before = await readFile(registry, "utf8");
+
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm,
+      })
+    ).rejects.toThrow(/untracked/);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(await readFile(file, "utf8")).toBe("user hook");
+    expect(await readFile(registry, "utf8")).toBe(before);
+  });
+
+  it("updates project hooks while preserving an existing shared hooks file", async () => {
+    await fixtureDistribution();
+    const hooksJson = JSON.stringify({
+      hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node hook.cjs" }] }] },
+    });
+    for (const pluginRoot of ["plugins/aidd-context", "remote-plugin"]) {
+      const hooks = join(root, pluginRoot, "hooks");
+      await mkdir(hooks, { recursive: true });
+      await writeFile(join(hooks, "hooks.json"), hooksJson);
+      await writeFile(join(hooks, "new.cjs"), "release hook");
+    }
+    const sharedHooks = join(root, ".agents/hooks.json");
+    await mkdir(dirname(sharedHooks), { recursive: true });
+    const sharedContent = antigravityProjectHooksFormat.merge(
+      JSON.stringify({ user: { SessionStart: [{ command: "echo user" }] } }),
+      hooksJson,
+      "aidd-context"
+    ).content;
+    await writeFile(sharedHooks, sharedContent);
+    const existingHook = ".agents/hooks/aidd-context/new.cjs";
+    const hookPath = join(root, existingHook);
+    await mkdir(dirname(hookPath), { recursive: true });
+    await writeFile(hookPath, "old release hook");
+    const deps = await seed("antigravity");
+    const manifest = await deps.manifestRepo.load();
+    const plugin = manifest?.getPlugins("antigravity")[0];
+    if (!manifest || !plugin) throw new Error("missing plugin");
+    manifest.updatePlugin(
+      "antigravity",
+      InstalledPlugin.withProjectHooks(plugin, {
+        entries: recordedProjectHookEntries(
+          antigravityProjectHooksFormat,
+          sharedContent,
+          "aidd-context"
+        ),
+        scripts: new Map([[existingHook, hash("old release hook")]]),
+      })
+    );
+    await deps.manifestRepo.save(manifest);
+
+    const result = await deps.upgradeFrameworkUseCase.execute({
+      projectRoot: root,
+      release: "v5.13.0",
+      allowShared: false,
+      confirm,
+    });
+    expect(result.updated).toEqual(["antigravity:aidd-context"]);
+    expect(await readFile(hookPath, "utf8")).toBe("release hook");
+    expect(JSON.parse(await readFile(sharedHooks, "utf8")).user).toEqual({
+      SessionStart: [{ command: "echo user" }],
+    });
   });
 
   it("preserves an untracked file if the target release introduces the same path", async () => {

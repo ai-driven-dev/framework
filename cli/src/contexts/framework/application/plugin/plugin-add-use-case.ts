@@ -127,11 +127,12 @@ export class PluginAddUseCase implements PluginAdd {
         manifest,
         options.projectRoot
       );
-    if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
-    else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
     const adapterMap = this.buildAdapterMap(toolIds);
     const flatToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode === "flat");
     const nativeToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode !== "flat");
+    if (options.replace === true)
+      this.dropExistingPlugin(pluginMetadata.name, nativeToolIds, manifest);
+    else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
     if (flatToolIds.length > 0) {
       await this.addLocalPlugin(
         options,
@@ -463,6 +464,7 @@ export class PluginAddUseCase implements PluginAdd {
         previousMcpEntries,
         userScopeDirTaken,
         previousProjectHooks,
+        undefined,
         previousTui
       );
       return { ...result, notices: [] };

@@ -102,7 +102,10 @@ import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.j
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
 import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
-import { frameworkBuildModeFor } from "../../contexts/tools/domain/registry.js";
+import {
+  frameworkBuildModeFor,
+  projectHooksDeliveryOf,
+} from "../../contexts/tools/domain/registry.js";
 import {
   claudeInstallations,
   hostPluginRegistryReaders,
@@ -657,35 +660,45 @@ export async function createDeps(
           );
           for (const [path, hash] of plugin.projectHooks?.scripts ?? [])
             tracked.set(resolve(root, path), hash);
-          for (const file of await reader.readFlatFiles(builtDir, dist, target.toolId)) {
-            const path = resolve(root, file.relativePath);
+          const paths = (await reader.readFlatFiles(builtDir, dist, target.toolId)).map(
+            (file) => file.relativePath
+          );
+          const delivery = projectHooksDeliveryOf(target.toolId);
+          if (
+            delivery &&
+            dist.components.hooks.some((file) => file.relativePath === "hooks/hooks.json")
+          ) {
+            for (const file of dist.components.hooks) {
+              if (file.relativePath !== "hooks/hooks.json")
+                paths.push(delivery.format.scriptPath(dist.manifest.name, file.relativePath));
+            }
+          }
+          for (const relativePath of paths) {
+            const path = resolve(root, relativePath);
             const owner = `${target.toolId}:${target.pluginName}`;
             const shared = manifest
               .getInstalledToolIds()
               .some(
                 (id) =>
-                  manifest
-                    .getToolFiles(id)
-                    .some((entry) => entry.relativePath === file.relativePath) ||
-                  manifest
-                    .getMergeFiles(id)
-                    .some((entry) => entry.relativePath === file.relativePath) ||
+                  manifest.getToolFiles(id).some((entry) => entry.relativePath === relativePath) ||
+                  manifest.getMergeFiles(id).some((entry) => entry.relativePath === relativePath) ||
                   manifest
                     .getPlugins(id)
                     .some(
                       (entry) =>
                         (id !== target.toolId || entry.name !== target.pluginName) &&
                         entry.scope === "project" &&
-                        entry.files.has(file.relativePath)
+                        (entry.files.has(relativePath) ||
+                          entry.projectHooks?.scripts.has(relativePath) === true)
                     )
               );
             if (shared)
               throw new Error(
-                `Cannot upgrade ${owner}: target file '${file.relativePath}' is claimed by another installation.`
+                `Cannot upgrade ${owner}: target file '${relativePath}' is claimed by another installation.`
               );
             if (planned.has(path) && planned.get(path) !== owner)
               throw new Error(
-                `Cannot upgrade ${owner}: target file '${file.relativePath}' is claimed by another plugin.`
+                `Cannot upgrade ${owner}: target file '${relativePath}' is claimed by another plugin.`
               );
             planned.set(path, owner);
             await assertUpgradeWrite(fs, root, path, tracked);
@@ -732,6 +745,13 @@ export async function createDeps(
       if (!plugin) throw new Error(`Plugin ${options.pluginName} disappeared before installation.`);
       const tracked = new Map(plugin.files);
       for (const [path, hash] of plugin.projectHooks?.scripts ?? []) tracked.set(path, hash);
+      const delivery = projectHooksDeliveryOf(options.toolIds[0]);
+      if (delivery) {
+        const path = resolve(options.projectRoot, delivery.relativePath);
+        await assertNoSymlinksWithinRoot(fs, options.projectRoot, path);
+        if (await fs.fileExists(path))
+          tracked.set(delivery.relativePath, (await fs.readFileHash(path)).value);
+      }
       const guardedFs = protectUpgradeWrites(fs, options.projectRoot, tracked);
       const guardedAdd = new PluginAddUseCase(
         guardedFs,
