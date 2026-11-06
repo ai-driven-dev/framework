@@ -2,6 +2,7 @@
 // root is linked or ignored, UI code outside its tests holds no colour literal beyond the debt
 // code-debt.json records, the code's token file exists, and each link sits on a platform its
 // record lists. Other literals are a stated limit.
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, blank, escapeRegex } = require("./markdown.cjs");
@@ -100,11 +101,26 @@ const hasWord = (text, word) => new RegExp(`(?<![\\w$])${escapeRegex(word)}(?![\
 /** The code's token files system.md names, normalised. */
 const codeTokens = (project) => tokenEntries(project).map((entry) => entry.path);
 
-/** The code side, walked once per run: every file under a code root, and the ignored prefixes,
+// A listing past this size is no UI code: git's output is then left for the walk.
+const GIT_LISTING_BYTES = 64 * 1024 * 1024;
+
+/** The files under the code roots git does not ignore, tracked or not, relative to the project root:
+ * a root's dependencies and builds are no UI code. Null outside a repository or without git. A git
+ * variable the caller set never points the listing at another repository. */
+function listedByGit(project, roots) {
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  const run = spawnSync("git", ["-C", project.root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", ...roots], { env, encoding: "utf8", maxBuffer: GIT_LISTING_BYTES });
+  if (run.error || run.status !== 0) return null;
+  // A tracked file deleted from the disk, or a submodule's folder, is no file to read.
+  return run.stdout.split("\0").filter((file) => file && fs.lstatSync(path.join(project.root, file), { throwIfNoEntry: false })?.isFile());
+}
+
+/** The code side, listed once per run: every file under a code root, and the ignored prefixes,
  * the code's token files among them. */
 function codeTree(project) {
   if (!project.codeTree) {
-    const files = codeRoots(project).flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
+    const roots = codeRoots(project);
+    const files = (roots.length && listedByGit(project, roots)) || roots.flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
     project.codeTree = { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...codeTokens(project)] };
   }
   return project.codeTree;

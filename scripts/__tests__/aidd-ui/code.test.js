@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
@@ -126,6 +127,23 @@ describe("aidd-ui code link", () => {
   });
 
   describe("C3 coverage", () => {
+    it("reads, in a repository, only the files git does not ignore, untracked ones included", () => {
+      // A hook runs with no git variable of its own; one a caller sets must not point git elsewhere.
+      const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+      assert.equal(spawnSync("git", ["-C", tmp, "init", "-q"], { env }).status, 0);
+      put(tmp, ".gitignore", "node_modules/\n");
+      put(tmp, "src/ui/node_modules/kit/x.css", ".x { color: #ff0000; }\n");
+      put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
+      const caller = process.env.GIT_DIR;
+      process.env.GIT_DIR = path.join(tmp, "elsewhere");
+      try {
+        assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
+      } finally {
+        if (caller === undefined) delete process.env.GIT_DIR;
+        else process.env.GIT_DIR = caller;
+      }
+    });
+
     it("names a file under a code root no record links and no ignore covers", () => {
       put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
