@@ -2,11 +2,11 @@
 
 ## Target
 
-Depuis un persona du brief produit, une personne obtient ses parcours et le wireframe de chaque écran qu'ils traversent, sans aucun style, vérifiés sans IA.
+Depuis un persona, une personne obtient ses parcours et le wireframe de chaque écran qu'ils traversent, sans aucun style, vérifiés sans IA.
 
 ## Hard constraints
 
-- Un persona vient du brief produit et se cite par son identifiant ; aidd-ui ne l'écrit jamais.
+- Le persona est demandé à la personne ; un persona déjà décrit dans un brief est repris tel quel. Le parcours porte son nom et sa description.
 - Un parcours porte son persona et ses étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante.
 - Une étape dont l'écran n'a pas de wireframe en crée un vide, `proposed`, qui porte son nom et le but de l'étape.
 - Un wireframe vit dans `aidd_docs/ui/wireframes/<id>`, fiche et rendu ; son identifiant sera celui de l'écran qui l'habille.
@@ -15,28 +15,28 @@ Depuis un persona du brief produit, une personne obtient ses parcours et le wire
 - Un composant attendu qui n'existe pas est nommé, jamais créé, et signalé en avertissement.
 - Sur une app existante, les parcours et wireframes se déduisent de ses écrans réels, puis la personne les confirme.
 - Un wireframe a `status` et `version` comme tout élément : le modifier monte sa version et l'historique ; sans review, il reste `proposed`.
-- La vérification, à chaque écriture et à la main, signale un persona inconnu, un écran d'étape sans wireframe et une valeur visuelle dans un wireframe.
+- La vérification, à chaque écriture et à la main, signale un parcours sans persona, un écran d'étape sans wireframe et une valeur visuelle dans un wireframe.
 - Depuis rien, le design system propose de commencer par la marque et les tokens ; la personne reste libre d'en créer plus.
 - Le skill ne nomme aucun autre skill, et suit le format lean : chaque mot a une raison d'être.
 
 ## Non-goals
 
-- Écrire ou modifier un persona.
+- Écrire ou modifier un brief.
 - Écran habillé, review, vitrine, contraste et zones tactiles : la PR suivante.
 - `ui.md` de feature, audit, orchestrateur.
 - Un wireframe par plateforme.
 
 ## Done-when
 
-- Sur le pilote vierge, depuis un persona du brief, chaque parcours voulu existe, et chacune de ses étapes a un wireframe avec ses états et aucune valeur visuelle.
-- Un parcours qui cite un persona inconnu, ou une étape sans wireframe, est signalé.
+- Sur le pilote vierge, depuis un persona, chaque parcours voulu existe, et chacune de ses étapes a un wireframe avec ses états et aucune valeur visuelle.
+- Un parcours sans persona, ou une étape sans wireframe, est signalé.
 - Un wireframe modifié a une version de plus et sa ligne d'historique.
 - Sur Gouvernail et Kairos, les parcours et wireframes sont déduits des écrans existants.
 - Chaque nouvelle règle a un cas qui la fait échouer.
 
 ## Open Questions
 
-- TBD: sous quel identifiant le brief produit revu nomme-t-il un persona ?
+None
 
 ## Context
 

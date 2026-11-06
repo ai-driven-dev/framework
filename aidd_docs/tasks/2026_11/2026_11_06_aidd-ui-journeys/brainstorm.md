@@ -10,7 +10,7 @@ Une personne qui conçoit l'UI avec une IA est guidée des personas au code vér
 
 - Chemin proposé depuis rien : personas, parcours, wireframes, marque et tokens de base, écrans habillés, `ui.md`, code, vérification. La personne reste libre de l'ordre.
 - Le design system démarre petit : `01-system` propose marque et tokens d'abord, la personne crée plus si elle veut ; un composant naît surtout quand un écran le demande.
-- Les personas appartiennent au brief d'`aidd-pm`. `aidd-ui` les lit, ne les écrit jamais ; un parcours renvoie à un persona par un identifiant stable.
+- Le persona est demandé à la personne ; un persona déjà décrit dans un brief est repris. Le parcours porte son nom et sa description : aucun brief n'en donne un identifiant stable, et `aidd-ui` n'écrit jamais un brief.
 - Un parcours (`journeys/<id>.md`) nomme son persona et ses étapes, chaque étape un écran ; une étape sans écran crée un wireframe vide en `proposed`.
 - Un wireframe est un fichier à part (`wireframes/<id>.md` et `.html`) : zones nommées, composants attendus, états, aucun token ni couleur.
 - Un écran porte le même identifiant que son wireframe et le cite par `wireframe: <id>@<version>` : un wireframe qui monte de version met l'écran en retard, et le moteur vérifie que l'écran couvre chaque zone et chaque état.
@@ -30,5 +30,4 @@ Une personne qui conçoit l'UI avec une IA est guidée des personas au code vér
 
 ## Ouvert
 
-- Le format de l'identifiant d'un persona dans le brief revu d'`aidd-pm`.
 - La taille minimale d'une zone tactile : 24 px de WCAG 2.2 AA, ou 44 et 48 recommandés par iOS et Android, selon la plateforme.
