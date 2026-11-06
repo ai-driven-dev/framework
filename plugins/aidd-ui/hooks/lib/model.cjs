@@ -28,7 +28,8 @@ const AXIS_SEPARATOR = "=";
 const INTEGER_VERSION = /^[1-9]\d*$/;
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
-const problem = (record, message) => ({ file: record.file, message });
+/** A problem of a record: what is wrong (`message`), what clears it (`fix`), and the offending text when there is one (`excerpt`). */
+const problem = (record, message, fix, excerpt) => ({ file: record.file, message, fix, ...(excerpt === undefined ? {} : { excerpt }) });
 const fm = (record) => record.frontMatter;
 const isElement = (record) => Object.hasOwn(LEVELS, fm(record).kind);
 /** Whether `kind` belongs in `folder`: own keys only, so `constructor` names no folder. */

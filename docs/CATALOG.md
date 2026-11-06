@@ -141,9 +141,9 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/ui-hook.cjs` |
-| `PostToolUse` | `hooks/ui-hook.cjs` |
-| `Stop` | `hooks/ui-hook.cjs` |
+| `SessionStart` | `hooks/aidd-ui.cjs` |
+| `PostToolUse` | `hooks/aidd-ui.cjs` |
+| `Stop` | `hooks/aidd-ui.cjs` |
 
 <!--extras-aidd-ui:end-->
 

@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
 const { placed, systemOf, breakpointsOf, TOKENED_KINDS } = require("./model.cjs");
-const { text, checkOf, besideTokens, RESOLVER_FILE, CSS_FILE } = require("./project.cjs");
+const { text, checkOf, besideTokens, RESOLVER_FILE, CSS_FILE, ENGINE_REF } = require("./project.cjs");
 const { MODIFIERS, RESOLVER_VERSION, MEDIA_EXTENSION, MIN_THEMES_FOR_MODIFIER, orderRef, resolverOfProject } = require("./resolver.cjs");
 const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 
@@ -18,6 +18,7 @@ const [THEME_MODIFIER, PLATFORM_MODIFIER, BREAKPOINT_MODIFIER] = MODIFIERS;
 const MISSING = "missing";
 const QUERY = "Query";
 const NOT_JSON = "not JSON";
+const RUN_TOKENS = `run node ${ENGINE_REF} tokens`; // what rewrites the Resolver and the stylesheet
 
 const PRIMITIVE_TYPES = ["color", "dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "number"];
 const COMPOSITE_TYPES = ["strokeStyle", "border", "transition", "shadow", "gradient", "typography"];
@@ -47,12 +48,12 @@ function collect(node, path, groupType, found) {
     const child = node[key];
     const childPath = [...path, key];
     if (key.startsWith(PROPERTY_PREFIX)) {
-      if (key === ROOT_KEY) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${ROOT_KEY}" is not supported, name the token` });
-      else if (!RESERVED_KEYS.includes(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${key}" is not a reserved key` });
+      if (key === ROOT_KEY) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${ROOT_KEY}" is not supported, name the token`, fix: `give the token a name instead of ${ROOT_KEY}` });
+      else if (!RESERVED_KEYS.includes(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: `"${key}" is not a reserved key`, fix: "use a reserved key, or drop the $ from its name" });
       continue;
     }
-    if (isObject(child) && "$value" in child && childKeys(child).some((name) => isObject(child[name]))) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: "a token never contains tokens, name them beside it" });
-    if (FORBIDDEN_IN_NAME.test(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: 'a name never holds ".", "{" or "}"' });
+    if (isObject(child) && "$value" in child && childKeys(child).some((name) => isObject(child[name]))) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: "a token never contains tokens, name them beside it", fix: "move the inner tokens beside it" });
+    if (FORBIDDEN_IN_NAME.test(key)) found.badNames.push({ path: childPath.join(PATH_SEPARATOR), message: 'a name never holds ".", "{" or "}"', fix: 'rename it without ".", "{" or "}"' });
     if (!isObject(child)) continue;
     const name = childPath.join(PATH_SEPARATOR);
     if ("$value" in child || childKeys(child).length === 0) found.tokens.set(name, { path: childPath, node: child, groupType });
@@ -116,37 +117,40 @@ function loopsBack(tree, value, name) {
   return false;
 }
 
+/** A value's problem as `{message, fix}`. */
+const bad = (message, fix) => ({ message, fix });
+
 function colorProblem(value) {
-  if (!isObject(value)) return "a color is {colorSpace, components, alpha?, hex?}";
-  if (!COLOR_SPACES.includes(value.colorSpace)) return `colorSpace "${value.colorSpace}" is not a DTCG colour space`;
+  if (!isObject(value)) return bad("a color is {colorSpace, components, alpha?, hex?}", "write the colour as {colorSpace, components}");
+  if (!COLOR_SPACES.includes(value.colorSpace)) return bad(`colorSpace "${value.colorSpace}" is not a DTCG colour space`, "use a DTCG colour space, such as srgb");
   const components = value.components;
   if (!Array.isArray(components) || components.length !== COLOR_COMPONENTS || !components.every((part) => isNumber(part) || part === NO_COMPONENT)) {
-    return 'components must be three numbers or "none"';
+    return bad('components must be three numbers or "none"', 'give three numbers, or "none"');
   }
-  if (value.alpha !== undefined && !(isNumber(value.alpha) && value.alpha >= 0 && value.alpha <= 1)) return "alpha must be a number in 0..1";
-  if (value.hex !== undefined && !HEX.test(value.hex)) return `hex "${value.hex}" must be # and six hex digits`;
+  if (value.alpha !== undefined && !(isNumber(value.alpha) && value.alpha >= 0 && value.alpha <= 1)) return bad("alpha must be a number in 0..1", "set alpha to a number from 0 to 1");
+  if (value.hex !== undefined && !HEX.test(value.hex)) return bad(`hex "${value.hex}" must be # and six hex digits`, "write hex as # and six hex digits");
   return null;
 }
 
 function measureProblem(value, units) {
-  if (!isObject(value) || !isNumber(value.value)) return `a measure is {value: number, unit: ${units.join(" or ")}}`;
-  return units.includes(value.unit) ? null : `unit "${value.unit}" must be ${units.join(" or ")}`;
+  if (!isObject(value) || !isNumber(value.value)) return bad(`a measure is {value: number, unit: ${units.join(" or ")}}`, `write it as a number and a unit of ${units.join(" or ")}`);
+  return units.includes(value.unit) ? null : bad(`unit "${value.unit}" must be ${units.join(" or ")}`, `set the unit to ${units.join(" or ")}`);
 }
 
 function fontWeightProblem(value) {
   if (isNumber(value) && value >= FONT_WEIGHT_MIN && value <= FONT_WEIGHT_MAX) return null;
   if (typeof value === "string" && Object.hasOwn(FONT_WEIGHTS, value)) return null;
-  return `fontWeight ${JSON.stringify(value)} must be 1 to 1000 or a keyword`;
+  return bad(`fontWeight ${JSON.stringify(value)} must be 1 to 1000 or a keyword`, "use a number from 1 to 1000, or a weight keyword");
 }
 
 function cubicBezierProblem(value) {
   const valid = Array.isArray(value) && value.length === BEZIER_POINTS && value.every(isNumber) && BEZIER_X_INDEXES.every((index) => value[index] >= 0 && value[index] <= 1);
-  return valid ? null : "cubicBezier needs four numbers, x in 0..1";
+  return valid ? null : bad("cubicBezier needs four numbers, x in 0..1", "give four numbers, the two x ones from 0 to 1");
 }
 
 function fontFamilyProblem(value) {
   const valid = typeof value === "string" || (Array.isArray(value) && value.length > 0 && value.every((name) => typeof name === "string"));
-  return valid ? null : "fontFamily is a name or a list of names";
+  return valid ? null : bad("fontFamily is a name or a list of names", "write a name, or a list of names");
 }
 
 const SHAPES = {
@@ -156,62 +160,65 @@ const SHAPES = {
   fontWeight: fontWeightProblem,
   cubicBezier: cubicBezierProblem,
   fontFamily: fontFamilyProblem,
-  number: (value) => (isNumber(value) ? null : "a number token holds a number"),
+  number: (value) => (isNumber(value) ? null : bad("a number token holds a number", "give it a number")),
 };
 
-/** What is wrong with a value of `type`, or null. Aliases and composites are not shapes. */
+/** What is wrong with a value of `type` as `{message, fix}`, or null. Aliases and composites are not shapes. */
 const shapeProblem = (type, value) => (aliasOf(value) !== undefined || !SHAPES[type] ? null : SHAPES[type](value));
 
-/** A problem builder for a token file, tokens.json by default, naming the token path first. */
-const tokenProblem = (project, file = project.tokensFile) => (path, message) => ({ file, message: `${path}: ${message}` });
+/** A problem builder for a token file, tokens.json by default, naming the token path first; the
+ * token's path is the excerpt unless another is given. */
+const tokenProblem = (project, file = project.tokensFile) => (path, message, fix, excerpt = path) => ({ file, message: `${path}: ${message}`, fix, excerpt });
 /** Every token's CSS custom property. */
 const propertiesOf = (tree) => new Set([...tree.tokens.keys()].map(customProperty));
 
 function jsonProblems(tree, project) {
-  return tree.problem ? [{ file: project.tokensFile, message: tree.problem }] : [];
+  if (!tree.problem) return [];
+  const fix = tree.problem === MISSING ? `write tokens.json by hand, or run node ${ENGINE_REF} extract` : "make tokens.json a JSON object";
+  return [{ file: project.tokensFile, message: tree.problem, fix }];
 }
 
 function nameProblems(tree, project) {
   const at = tokenProblem(project);
-  return tree.badNames.map((bad) => at(bad.path, bad.message));
+  return tree.badNames.map((each) => at(each.path, each.message, each.fix));
 }
 
 function typeProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens].flatMap(([name, token]) => {
-    if (isRaw(token)) return typeof rawCssOf(token) === "string" && rawCssOf(token).trim() ? [] : [at(name, `${RAW_CSS_EXTENSION} must be a CSS value`)];
-    if (!("$value" in token.node)) return [at(name, "no $value")];
+    if (isRaw(token)) return typeof rawCssOf(token) === "string" && rawCssOf(token).trim() ? [] : [at(name, `${RAW_CSS_EXTENSION} must be a CSS value`, `give ${RAW_CSS_EXTENSION} a CSS value`)];
+    if (!("$value" in token.node)) return [at(name, "no $value", "add a $value")];
     if (aliasProblem(tree, token.node.$value, undefined, name)) return []; // T5 names the broken alias
     const type = typeOf(tree, token);
-    if (type === undefined) return [at(name, "no $type on it, its alias or a parent group")];
-    return TYPES.includes(type) ? [] : [at(name, `$type "${type}" is not a DTCG type`)];
+    if (type === undefined) return [at(name, "no $type on it, its alias or a parent group", "add a $type to it, or to a parent group")];
+    return TYPES.includes(type) ? [] : [at(name, `$type "${type}" is not a DTCG type`, "set $type to a DTCG type")];
   });
 }
 
 function shapeProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens].flatMap(([name, token]) => {
-    const message = "$value" in token.node && !isRaw(token) ? shapeProblem(typeOf(tree, token), token.node.$value) : null;
-    return message ? [at(name, message)] : [];
+    const found = "$value" in token.node && !isRaw(token) ? shapeProblem(typeOf(tree, token), token.node.$value) : null;
+    return found ? [at(name, found.message, found.fix)] : [];
   });
 }
 
-/** What is wrong with an alias, or null: its target must be a token, of `type` when given, that
+/** What is wrong with an alias as `{message, fix}`, or null: its target must be a token, of `type` when given, that
  * never leads back to the token `name` holding it. */
 function aliasProblem(tree, value, type, name) {
   const target = aliasOf(value);
   if (target === undefined) return null;
-  if (!tree.tokens.has(target)) return tree.groups.has(target) ? `alias {${target}} names a group, not a token` : `alias {${target}} names no token`;
-  if (name !== undefined && loopsBack(tree, value, name)) return `alias {${target}} loops back to ${name}`;
+  if (!tree.tokens.has(target)) return tree.groups.has(target) ? bad(`alias {${target}} names a group, not a token`, "point the alias at a token, not a group") : bad(`alias {${target}} names no token`, "point the alias at a token that exists");
+  if (name !== undefined && loopsBack(tree, value, name)) return bad(`alias {${target}} loops back to ${name}`, "break the loop: point the alias at a token that does not lead back");
   const targetType = typeOf(tree, tree.tokens.get(target));
-  return type === undefined || targetType === undefined || targetType === type ? null : `alias {${target}} is a ${targetType}, not a ${type}`;
+  return type === undefined || targetType === undefined || targetType === type ? null : bad(`alias {${target}} is a ${targetType}, not a ${type}`, `point the alias at a ${type} token`);
 }
 
 function aliasProblems(tree, project) {
   const at = tokenProblem(project);
   return [...tree.tokens].flatMap(([name, token]) => {
-    const message = aliasProblem(tree, token.node.$value, token.node.$type ?? token.groupType, name);
-    return message ? [at(name, message)] : [];
+    const found = aliasProblem(tree, token.node.$value, token.node.$type ?? token.groupType, name);
+    return found ? [at(name, found.message, found.fix)] : [];
   });
 }
 
@@ -225,14 +232,14 @@ const applies = (resolver, modifier) => (resolver.resolutionOrder ?? []).some((s
  * that is no file reference. */
 function contextFiles(name, sources, file, problems) {
   const refs = (Array.isArray(sources) ? sources : []).map((source) => source?.$ref);
-  if (refs.some((ref) => typeof ref !== "string")) problems.push({ file, message: `context "${name}": each source is {"$ref": "<file>"}` });
+  if (refs.some((ref) => typeof ref !== "string")) problems.push({ file, message: `context "${name}": each source is {"$ref": "<file>"}`, fix: RUN_TOKENS, excerpt: name });
   return refs.filter((ref) => typeof ref === "string").map((ref) => nodePath.posix.join(nodePath.posix.dirname(file), ref));
 }
 
 /** What keeps the Resolver from being the profile this plugin reads: its version, and a set holding
  * tokens.json. */
 function resolverBaseProblems(resolver, project, file) {
-  const at = (message) => ({ file, message });
+  const at = (message) => ({ file, message, fix: RUN_TOKENS });
   const holdsTokens = Object.values(isObject(resolver.sets) ? resolver.sets : {}).some((set) => (set?.sources ?? []).some((source) => source?.$ref === nodePath.posix.basename(project.tokensFile)));
   return [...(resolver.version !== RESOLVER_VERSION ? [at(`version must be "${RESOLVER_VERSION}"`)] : []), ...(holdsTokens ? [] : [at(`no set holds ${nodePath.posix.basename(project.tokensFile)}`)])];
 }
@@ -249,18 +256,18 @@ const platformKind = (project) => ({ modifier: PLATFORM_MODIFIER, names: list(sy
  * plugin reads one profile of the module: a modifier whose contexts are the names system.md
  * declares, each a list of `$ref` files, the base the `default`. */
 function namedContexts(resolver, { modifier: key, names, required }, file) {
-  const at = (message) => ({ file, message });
+  const at = (message, excerpt) => ({ file, message, fix: RUN_TOKENS, ...(excerpt === undefined ? {} : { excerpt }) });
   const problems = [];
   const modifier = resolver.modifiers?.[key];
   if (modifier === undefined && !required) return { problems, contexts: {} };
   if (!isObject(modifier) || !isObject(modifier.contexts)) return { problems: [at(`no "${key}" modifier with contexts`)], contexts: {} };
   if (!applies(resolver, key)) problems.push(at(`resolutionOrder never applies ${orderRef(key)}`));
   if (modifier.default !== names[0]) problems.push(at(`the ${key} modifier's default must be "${names[0]}", the first ${key} in system.md`));
-  for (const name of names) if (!Object.hasOwn(modifier.contexts, name)) problems.push(at(`no context for ${key} "${name}"`));
+  for (const name of names) if (!Object.hasOwn(modifier.contexts, name)) problems.push(at(`no context for ${key} "${name}"`, name));
   const contexts = {};
   for (const [name, sources] of Object.entries(modifier.contexts)) {
-    if (!names.includes(name)) problems.push(at(`context "${name}" is not a ${key} in system.md`));
-    if (name === names[0] && Array.isArray(sources) && sources.length) problems.push(at(`context "${name}" is the base, held by tokens.json: it lists no source`));
+    if (!names.includes(name)) problems.push(at(`context "${name}" is not a ${key} in system.md`, name));
+    if (name === names[0] && Array.isArray(sources) && sources.length) problems.push(at(`context "${name}" is the base, held by tokens.json: it lists no source`, name));
     contexts[name] = contextFiles(name, sources, file, problems);
   }
   return { problems, contexts };
@@ -273,7 +280,7 @@ function namedContexts(resolver, { modifier: key, names, required }, file) {
  * being an array that has no place for one. Contexts follow system.md's order, which the @media
  * blocks take. */
 function breakpointContexts(resolver, breakpoints, file) {
-  const at = (message) => ({ file, message });
+  const at = (message, excerpt, fix = RUN_TOKENS) => ({ file, message, fix, ...(excerpt === undefined ? {} : { excerpt }) });
   const modifier = resolver.modifiers?.[BREAKPOINT_MODIFIER];
   if (modifier === undefined) return { problems: [], contexts: [] };
   if (!isObject(modifier) || !isObject(modifier.contexts)) return { problems: [at(`no "${BREAKPOINT_MODIFIER}" modifier with contexts`)], contexts: [] };
@@ -282,47 +289,47 @@ function breakpointContexts(resolver, breakpoints, file) {
   if (!Object.hasOwn(modifier.contexts, modifier.default)) return { problems: [...problems, at("the breakpoint modifier's default must name the context tokens.json holds")], contexts: [] };
   const extension = modifier.$extensions?.[MEDIA_EXTENSION];
   const queries = isObject(extension) ? extension : {};
-  for (const name of Object.keys(queries)) if (name === modifier.default || !Object.hasOwn(modifier.contexts, name)) problems.push(at(`${MEDIA_EXTENSION} "${name}" names no context outside the default`));
+  for (const name of Object.keys(queries)) if (name === modifier.default || !Object.hasOwn(modifier.contexts, name)) problems.push(at(`${MEDIA_EXTENSION} "${name}" names no context outside the default`, name));
   const listed = Object.keys(modifier.contexts).filter((name) => name !== modifier.default && breakpoints.includes(name)); // the default writes no block, so it has no place in the order
   const expected = breakpoints.filter((name) => listed.includes(name));
   if (listed.join() !== expected.join()) problems.push(at(`breakpoint contexts ${listed.join(", ")} must follow system.md, ${expected.join(", ")}: the order of the @media blocks decides which value wins`));
   const contexts = [];
   for (const [breakpoint, sources] of Object.entries(modifier.contexts)) {
-    if (!breakpoints.includes(breakpoint)) problems.push(at(`context "${breakpoint}" is not a breakpoint in system.md`));
+    if (!breakpoints.includes(breakpoint)) problems.push(at(`context "${breakpoint}" is not a breakpoint in system.md`, breakpoint));
     if (breakpoint === modifier.default) {
-      if (Array.isArray(sources) && sources.length) problems.push(at(`context "${breakpoint}" is the default, held by tokens.json: it lists no source`));
+      if (Array.isArray(sources) && sources.length) problems.push(at(`context "${breakpoint}" is the default, held by tokens.json: it lists no source`, breakpoint));
       continue;
     }
     const media = queries[breakpoint];
-    if (typeof media !== "string" || !media.trim()) problems.push(at(`context "${breakpoint}" has no media string: give it a ${QUERY} in system.md, then run the engine's tokens command`));
+    if (typeof media !== "string" || !media.trim()) problems.push(at(`context "${breakpoint}" has no media string: give it a ${QUERY} in system.md, then run the engine's tokens command`, breakpoint, `give it a ${QUERY} in system.md, then ${RUN_TOKENS}`));
     contexts.push({ breakpoint, media, files: contextFiles(breakpoint, sources, file, problems) });
   }
   return { problems, contexts };
 }
 
-/** What keeps a raw CSS value from reaching the stylesheet: it is empty, or a `var()` in it names no token. */
+/** What keeps a raw CSS value from reaching the stylesheet, as `{message, fix}`: it is empty, or a `var()` in it names no token. */
 function rawValueProblems(token, names) {
   const raw = rawCssOf(token);
-  if (typeof raw !== "string" || !raw.trim()) return [`${RAW_CSS_EXTENSION} must be a CSS value`];
-  return [...raw.matchAll(VAR_REFERENCE)].filter((match) => !names.has(match[1])).map((match) => `var(${match[1]}) names no token`);
+  if (typeof raw !== "string" || !raw.trim()) return [bad(`${RAW_CSS_EXTENSION} must be a CSS value`, `give ${RAW_CSS_EXTENSION} a CSS value`)];
+  return [...raw.matchAll(VAR_REFERENCE)].filter((match) => !names.has(match[1])).map((match) => bad(`var(${match[1]}) names no token`, "cite a token that exists, or add the token"));
 }
 
 /** What a theme or breakpoint file earns: each token it redefines exists in tokens.json, keeps its
  * type, and holds a value of that type or raw CSS. `owner` names who redefines it. */
 function redefinitionProblems(tree, project, owner, file) {
   const themed = readTree(project, file);
-  if (themed.unusable) return themed.problem ? [{ file, message: themed.problem }] : [];
+  if (themed.unusable) return themed.problem ? [{ file, message: themed.problem, fix: themed.problem === MISSING ? RUN_TOKENS : "make it a JSON object" }] : [];
   const at = tokenProblem(project, file);
   const names = propertiesOf(tree);
   return [...themed.tokens].flatMap(([name, token]) => {
     const base = tree.tokens.get(name);
-    if (!base) return [at(name, `${owner} redefines no token of tokens.json`)];
+    if (!base) return [at(name, `${owner} redefines no token of tokens.json`, "remove it, or add the token to tokens.json")];
     const type = typeOf(tree, base);
-    if (token.node.$type !== undefined && type === undefined) return [at(name, `$type "${token.node.$type}" has nothing to match, tokens.json's token has no $type`)];
-    if (token.node.$type !== undefined && token.node.$type !== type) return [at(name, `$type "${token.node.$type}" differs from tokens.json's "${type}"`)];
-    if (isRaw(token)) return rawValueProblems(token, names).map((message) => at(name, message));
-    const message = shapeProblem(type, token.node.$value) ?? aliasProblem(tree, token.node.$value, type);
-    return message ? [at(name, `${owner}: ${message}`)] : [];
+    if (token.node.$type !== undefined && type === undefined) return [at(name, `$type "${token.node.$type}" has nothing to match, tokens.json's token has no $type`, "give tokens.json's token a $type, or drop this one")];
+    if (token.node.$type !== undefined && token.node.$type !== type) return [at(name, `$type "${token.node.$type}" differs from tokens.json's "${type}"`, `set $type to "${type}", or drop it`)];
+    if (isRaw(token)) return rawValueProblems(token, names).map((found) => at(name, found.message, found.fix));
+    const found = shapeProblem(type, token.node.$value) ?? aliasProblem(tree, token.node.$value, type);
+    return found ? [at(name, `${owner}: ${found.message}`, found.fix)] : [];
   });
 }
 
@@ -333,8 +340,8 @@ function redefinitionProblems(tree, project, owner, file) {
 function resolverProblems(tree, project) {
   const file = resolverFileOf(project);
   const resolver = readJson(project, file);
-  if (resolver.problem === MISSING) return resolverOfProject(project) === null ? [] : [{ file, message: `${MISSING}, generate it ${REGENERATE}` }];
-  if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem }] : [];
+  if (resolver.problem === MISSING) return resolverOfProject(project) === null ? [] : [{ file, message: `${MISSING}, generate it ${REGENERATE}`, fix: RUN_TOKENS }];
+  if (!resolver.value) return resolver.problem ? [{ file, message: resolver.problem, fix: RUN_TOKENS }] : [];
   const kinds = [themeKind(project), platformKind(project)].map((kind) => ({ ...kind, ...namedContexts(resolver.value, kind, file) }));
   const breakpoints = breakpointContexts(resolver.value, breakpointsOf(systemOf(project)), file);
   const found = [...resolverBaseProblems(resolver.value, project, file), ...kinds.flatMap((kind) => kind.problems), ...breakpoints.problems];
@@ -353,7 +360,7 @@ function rawCssProblems(tree, project) {
   const at = tokenProblem(project);
   const names = propertiesOf(tree);
   const base = baseEntries(tree, project);
-  return [...tree.tokens].filter(([, token]) => typeof rawCssOf(token) === "string" && rawCssOf(token).trim()).flatMap(([name, token]) => [...rawValueProblems(token, names), loopProblem(base, entryOf(name, token))].filter(Boolean).map((message) => at(name, message)));
+  return [...tree.tokens].filter(([, token]) => typeof rawCssOf(token) === "string" && rawCssOf(token).trim()).flatMap(([name, token]) => [...rawValueProblems(token, names), loopProblem(base, entryOf(name, token))].filter(Boolean).map((found) => at(name, found.message, found.fix)));
 }
 
 /** Components and screens, which cite tokens. */
@@ -364,7 +371,7 @@ function citedTokenProblems(tree, project) {
   return tokened(project).flatMap((record) =>
     list(record.frontMatter.tokens)
       .filter((name) => !tree.tokens.has(name))
-      .map((name) => ({ file: record.file, message: `token "${name}" is not in tokens.json` }))
+      .map((name) => ({ file: record.file, message: `token "${name}" is not in tokens.json`, fix: "remove it from tokens, or add it to tokens.json", excerpt: name }))
   );
 }
 
@@ -376,7 +383,7 @@ function primitiveProblems(tree, project) {
   return tokened(project).flatMap((record) =>
     list(record.frontMatter.tokens)
       .filter((name) => isPrimitive(name, groups))
-      .map((name) => ({ file: record.file, message: `token "${name}" is a primitive, use a semantic token` }))
+      .map((name) => ({ file: record.file, message: `token "${name}" is a primitive, use a semantic token`, fix: "cite a semantic token instead", excerpt: name }))
   );
 }
 
@@ -410,12 +417,14 @@ const contextEntries = (files, typeFor = () => undefined) => files.flatMap(({ fi
 /** The tokens of tokens.json as the stylesheet sees them. */
 const baseEntries = (tree, project) => contextEntries([{ file: project.tokensFile, tree }]);
 
-/** What a declaration earns when it depends on itself among `declarations`, or null: the browser
+/** What a declaration earns when it depends on itself among `declarations` as `{message, fix}`, or null: the browser
  * computes such a value as if the property were never set. */
 function loopProblem(declarations, entry) {
   const cited = loopOf(declarations, entry);
   if (cited === undefined) return null;
-  return cited === customProperty(entry.name) ? "cites itself, so the browser computes nothing: write a primitive value" : `cites ${cited}, which leads back to it`;
+  return cited === customProperty(entry.name)
+    ? bad("cites itself, so the browser computes nothing: write a primitive value", "write a primitive value that does not cite itself")
+    : bad(`cites ${cited}, which leads back to it`, "break the loop: cite a token that does not lead back");
 }
 
 /** A context's value depending on itself once the context is layered on the base, which neither
@@ -427,8 +436,8 @@ function contextLoopProblems(tree, project) {
     const own = contextEntries(files);
     const layered = [...base.filter((entry) => !own.some((each) => each.name === entry.name)), ...own];
     return own.flatMap((entry) => {
-      const message = loopProblem(layered, entry);
-      return message ? [{ file: entry.file, message: `${entry.name}: ${owner}: ${message}` }] : [];
+      const found = loopProblem(layered, entry);
+      return found ? [{ file: entry.file, message: `${entry.name}: ${owner}: ${found.message}`, fix: found.fix, excerpt: entry.name }] : [];
     });
   });
 }
@@ -481,9 +490,9 @@ function stylesheetProblems(tree, project) {
   const { css, problems } = generate(project);
   if (css === null) return problems;
   const file = cssFileOf(project);
-  if (!fs.existsSync(nodePath.join(project.root, file))) return [{ file, message: `missing, generate it ${REGENERATE}` }];
+  if (!fs.existsSync(nodePath.join(project.root, file))) return [{ file, message: `missing, generate it ${REGENERATE}`, fix: RUN_TOKENS }];
   const current = text(project, file);
-  return current === null || current === css ? [] : [{ file, message: `out of date with the tokens, regenerate it ${REGENERATE}` }];
+  return current === null || current === css ? [] : [{ file, message: `out of date with the tokens, regenerate it ${REGENERATE}`, fix: RUN_TOKENS }];
 }
 
 const RULES = { ...BASE_RULES, T10: stylesheetProblems };

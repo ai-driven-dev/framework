@@ -265,7 +265,7 @@ const attribute = (kind, value) => `[data-${kind}="${value}"]`;
 function render({ base, themes, platforms = [], breakpoints = [], order = MODIFIERS }) {
   const problems = [];
   for (const entry of [base, ...themes, ...platforms, ...breakpoints].flatMap((each) => each.tokens ?? each)) {
-    if (declarationOf(entry) === null && !problems.some((each) => each.file === entry.file && each.message.startsWith(`${entry.name}:`))) problems.push({ file: entry.file, message: `${entry.name}: a ${entry.type} has no CSS of its own, give it a ${RAW_CSS_EXTENSION} value` });
+    if (declarationOf(entry) === null && !problems.some((each) => each.file === entry.file && each.message.startsWith(`${entry.name}:`))) problems.push({ file: entry.file, message: `${entry.name}: a ${entry.type} has no CSS of its own, give it a ${RAW_CSS_EXTENSION} value`, fix: `give it a ${RAW_CSS_EXTENSION} value`, excerpt: entry.name });
   }
   const overlays = {
     theme: new Map(themes.map(({ theme, tokens }) => [theme, keyed(tokens)])),
@@ -314,4 +314,4 @@ function render({ base, themes, platforms = [], breakpoints = [], order = MODIFI
   return { css: problems.length ? null : `${[HEADER, ...blocks.filter(Boolean).map((lines) => lines.join(LINE_BREAK))].join(PARAGRAPH_BREAK)}${LINE_BREAK}`, problems };
 }
 
-module.exports = { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, HEADER, render, customProperty, citedBy, loopOf, rulesOf, declarationsIn, declarationsOf, layered, contextsOf, resolved };
+module.exports = { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, HEADER, render, valueOf, customProperty, citedBy, loopOf, rulesOf, declarationsIn, declarationsOf, layered, contextsOf, resolved };

@@ -15,6 +15,7 @@ const RECORD_EXTENSION = ".md";
 const RENDER_EXTENSION = ".html";
 const PATH_SEPARATOR = "/";
 const UNREADABLE = "unreadable";
+const ENGINE_REF = "<engine>"; // where a fix names the engine: the reader knows the path from the skill that points here
 const ERROR = "error"; // blocks the end of a turn
 const WARNING = "warning"; // informs, never blocks
 
@@ -85,7 +86,8 @@ const checkOf = (rules, run = (find, project) => find(project)) => (project) =>
   Object.entries(rules).flatMap(([rule, find]) => run(find, project).map((problem) => ({ rule, severity: ERROR, ...problem })));
 
 /** One problem per file a check could not read. */
-const unreadable = (project) => [...project.texts].filter(([, content]) => content === null).map(([file]) => ({ file, message: UNREADABLE }));
+const unreadable = (project) =>
+  [...project.texts].filter(([, content]) => content === null).map(([file]) => ({ rule: "U1", severity: ERROR, file, message: UNREADABLE, fix: "make it readable, or remove it" }));
 
 /** A record with its file, folder under `aidd_docs/ui/`, name, front matter and sections; none when unreadable. */
 function readRecord(project, file) {
@@ -115,4 +117,4 @@ function load(root) {
   return project;
 }
 
-module.exports = { Refusal, NO_DESIGN_SYSTEM, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, ERROR, WARNING };
+module.exports = { Refusal, NO_DESIGN_SYSTEM, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, ERROR, WARNING, ENGINE_REF };

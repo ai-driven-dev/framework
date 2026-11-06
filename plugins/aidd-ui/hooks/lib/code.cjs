@@ -2,6 +2,7 @@
 // root is linked or ignored, UI code outside its tests holds no colour literal beyond the debt
 // code-debt.json records, the code's token file exists, and each link sits on a platform its
 // record lists. Other literals are a stated limit.
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, blank, escapeRegex } = require("./markdown.cjs");
@@ -100,12 +101,30 @@ const hasWord = (text, word) => new RegExp(`(?<![\\w$])${escapeRegex(word)}(?![\
 /** The code's token files system.md names, normalised. */
 const codeTokens = (project) => tokenEntries(project).map((entry) => entry.path);
 
-/** The code side, walked once per run: every file under a code root, and the ignored prefixes,
+// A listing past this size is no UI code: git's output is then left for the walk.
+const GIT_LISTING_BYTES = 64 * 1024 * 1024;
+
+/** The files under the code roots git does not ignore, tracked or not, relative to the project root:
+ * a root's dependencies and builds are no UI code. Null outside a repository or without git. A git
+ * variable the caller set never points the listing at another repository. */
+function listedByGit(project, roots) {
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+  const run = spawnSync("git", ["-C", project.root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", ...roots], { env, encoding: "utf8", maxBuffer: GIT_LISTING_BYTES });
+  if (run.error || run.status !== 0) return null;
+  // A tracked file deleted from the disk, or a submodule's folder, is no file to read.
+  return run.stdout.split("\0").filter((file) => file && fs.lstatSync(path.join(project.root, file), { throwIfNoEntry: false })?.isFile());
+}
+
+/** Whether a path passes through a dot file or folder: configuration, a cache or a tool's state, not UI code. */
+const isDotted = (file) => file.split("/").some((segment) => segment.startsWith("."));
+
+/** The code side, listed once per run: every file under a code root, and the ignored prefixes,
  * the code's token files among them. */
 function codeTree(project) {
   if (!project.codeTree) {
-    const files = codeRoots(project).flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
-    project.codeTree = { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...codeTokens(project)] };
+    const roots = codeRoots(project);
+    const files = (roots.length && listedByGit(project, roots)) || roots.flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
+    project.codeTree = { files: [...new Set(files)].filter((file) => !isDotted(file)), ignore: [...prefixes(project, IGNORE_KEY), ...codeTokens(project)] };
   }
   return project.codeTree;
 }
@@ -128,10 +147,15 @@ function holdsNul(project, file) {
 /** Whether a file is code to read: not a document, data, image or font, and not binary. */
 const isRead = (project, file) => !SKIPPED_EXTENSIONS.includes(path.extname(file)) && !holdsNul(project, file);
 
-/** Every file to read under a code root that no `ignore` prefix covers, relative to the project root. */
+/** Every file to read under a code root that no `ignore` prefix covers, relative to the project root:
+ * of them, only those of `project.scope` when a caller narrows the check to the files a turn wrote,
+ * so no other file is opened. */
 function codeFiles(project) {
   const tree = codeTree(project);
-  tree.read ??= tree.files.filter((file) => !tree.ignore.some((prefix) => isUnder(file, prefix))).filter((file) => isRead(project, file));
+  tree.read ??= tree.files
+    .filter((file) => !tree.ignore.some((prefix) => isUnder(file, prefix)))
+    .filter((file) => !project.scope || project.scope.has(file))
+    .filter((file) => isRead(project, file));
   return tree.read;
 }
 
@@ -145,25 +169,27 @@ function searchable(project, file) {
   return RAW_EXTENSIONS.includes(path.extname(file)) ? source : stringsOnly(source);
 }
 
-/** What is wrong with a link's version, or null: written, an integer, and not above the record's. */
+/** What is wrong with a link's version as `{message, fix, excerpt}`, or null: written, an integer, and not above the record's. */
 function versionProblem(record, value, link) {
-  if (link.version === null) return `code "${value}" lacks its version, @<version>`;
-  if (!INTEGER_VERSION.test(link.version)) return `code "${value}": version "${link.version}" must be an integer from 1`;
+  if (link.version === null) return { message: `code "${value}" lacks its version, @<version>`, fix: "add @<version> to the link", excerpt: value };
+  if (!INTEGER_VERSION.test(link.version)) return { message: `code "${value}": version "${link.version}" must be an integer from 1`, fix: "write the version as an integer from 1", excerpt: link.version };
   const current = fm(record).version;
-  return INTEGER_VERSION.test(current) && Number(link.version) > Number(current) ? `code "${value}": version ${link.version} is ahead of version ${current}` : null;
+  return INTEGER_VERSION.test(current) && Number(link.version) > Number(current)
+    ? { message: `code "${value}": version ${link.version} is ahead of version ${current}`, fix: `set the link's version to ${current} or lower`, excerpt: link.version }
+    : null;
 }
 
 function linkProblems(project) {
   return linked(project).flatMap(({ record, value, link }) => {
-    const at = (message) => ({ file: record.file, message });
-    if (!link) return [at(`code "${value}" must be ${LINK_FORM}`)];
+    const at = (message, fix, excerpt) => ({ file: record.file, message, fix, excerpt });
+    if (!link) return [at(`code "${value}" must be ${LINK_FORM}`, `write the link as ${LINK_FORM}`, value)];
     const version = versionProblem(record, value, link);
-    const found = version ? [at(version)] : [];
+    const found = version ? [at(version.message, version.fix, version.excerpt)] : [];
     if (link.library !== null) return found;
     const full = path.join(project.root, link.target);
-    if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return [...found, at(`code file "${link.target}" does not exist`)];
+    if (!fs.existsSync(full) || !fs.statSync(full).isFile()) return [...found, at(`code file "${link.target}" does not exist`, "create the file or correct the code link", link.target)];
     const source = text(project, link.target);
-    return source === null || link.name === null || hasWord(source, link.name) ? found : [...found, at(`export "${link.name}" is not in ${link.target}`)];
+    return source === null || link.name === null || hasWord(source, link.name) ? found : [...found, at(`export "${link.name}" is not in ${link.target}`, "export it from the file or correct the code link", link.name)];
   });
 }
 
@@ -185,7 +211,7 @@ function coverageProblems(project) {
   const targets = linked(project).flatMap(({ link }) => (link && link.library === null ? [path.posix.normalize(link.target)] : []));
   return codeFiles(project)
     .filter((file) => !isTest(file) && !targets.some((target) => covers(target, file)))
-    .map((file) => ({ severity: WARNING, file, message: "no record links it and no ignore covers it" }));
+    .map((file) => ({ severity: WARNING, file, message: "no record links it and no ignore covers it", fix: "link it from a record's code, or list it in ignore" }));
 }
 
 /** Each literal of `pattern` in the code outside its tests, with its file and the literal itself. */
@@ -199,12 +225,12 @@ const literalProblems = (pattern, extensions = null, applies = () => true) => (p
 
 /** Each colour literal of the code outside its tests, written or as numbers, with its file. */
 const colourLiterals = (project) =>
-  scanned(project)
+  (project.colourLiterals ??= scanned(project)
     .filter((file) => !isTest(file))
     .flatMap((file) => {
       const numeric = RAW_EXTENSIONS.includes(path.extname(file)) ? [] : findNumericColours(codeOnly(text(project, file) ?? ""));
       return [...findLiterals(searchable(project, file), PATTERNS.colour), ...numeric].map((found) => ({ file, ...found }));
-    });
+    }));
 
 /** How many times each colour literal occurs in each code file, as code-debt.json holds it: files
  * and literals sorted. */
@@ -226,17 +252,20 @@ function colourProblems(project) {
   if (!Object.keys(found).length) return [];
   const recorded = fs.existsSync(path.join(project.root, CODE_DEBT_FILE)) ? JSON.parse(text(project, CODE_DEBT_FILE)) : null;
   return colourLiterals(project).map(({ literal, ...each }) => {
-    if (recorded === null) return { ...each, message: `${each.message} (counted as new: ${CODE_DEBT_FILE} is missing)` };
+    const fixed = (detail) => `${each.fix} (${detail})`;
+    if (recorded === null) return { ...each, message: `${each.message} (counted as new: ${CODE_DEBT_FILE} is missing)`, fix: fixed("code-debt.json is missing: run bump --task <folder> --created system") };
     const [count, debt] = [found[each.file][literal], recorded[each.file]?.[literal] ?? 0];
-    return count <= debt ? { ...each, severity: WARNING, message: `${each.message} (existing debt)` } : { ...each, message: `${each.message} (found ${count}, debt ${debt})` };
+    return count <= debt
+      ? { ...each, severity: WARNING, message: `${each.message} (existing debt)` }
+      : { ...each, message: `${each.message} (found ${count}, debt ${debt})` }; // the counts stay out of the fix, so one fix groups a folder's literals
   });
 }
 
 function codeTokensProblems(project) {
   const file = systemOf(project)?.file;
   return tokenEntries(project).flatMap(({ item, named, platform, path: tokens }) => [
-    ...(fs.existsSync(path.join(project.root, tokens)) ? [] : [{ file, message: `code-tokens "${tokens}" does not exist` }]),
-    ...(named && !platformsOf(project).includes(platform) ? [{ file, message: `code-tokens "${item}": platform "${platform}" is not in system.md` }] : []),
+    ...(fs.existsSync(path.join(project.root, tokens)) ? [] : [{ file, message: `code-tokens "${tokens}" does not exist`, fix: "create the file or correct code-tokens", excerpt: tokens }]),
+    ...(named && !platformsOf(project).includes(platform) ? [{ file, message: `code-tokens "${item}": platform "${platform}" is not in system.md`, fix: "use a platform system.md declares", excerpt: platform }] : []),
   ]);
 }
 
@@ -250,7 +279,7 @@ function sharedLinkProblems(project) {
       owners.set(key, record);
       return [];
     }
-    return [{ file: record.file, message: `code "${value}" is also ${owner.file}'s` }];
+    return [{ file: record.file, message: `code "${value}" is also ${owner.file}'s`, fix: "link a file no other record links", excerpt: value }];
   });
 }
 
@@ -258,9 +287,9 @@ function rootProblems(project) {
   const platforms = platformsOf(project);
   const file = systemOf(project)?.file;
   return rootEntries(project).flatMap(({ item, named, platform, path: root }) => [
-    ...(isInside(root) ? [] : [{ file, message: `code root "${root}" must name a folder inside the project` }]),
-    ...(!named && platforms.length > 1 ? [{ file, message: `code root "${item}" must be written platform=path: system.md declares several platforms` }] : []),
-    ...(named && !platforms.includes(platform) ? [{ file, message: `code root "${item}": platform "${platform}" is not in system.md` }] : []),
+    ...(isInside(root) ? [] : [{ file, message: `code root "${root}" must name a folder inside the project`, fix: "name a folder inside the project", excerpt: root }]),
+    ...(!named && platforms.length > 1 ? [{ file, message: `code root "${item}" must be written platform=path: system.md declares several platforms`, fix: "write it as platform=path", excerpt: item }] : []),
+    ...(named && !platforms.includes(platform) ? [{ file, message: `code root "${item}": platform "${platform}" is not in system.md`, fix: "use a platform system.md declares", excerpt: platform }] : []),
   ]);
 }
 
@@ -271,11 +300,11 @@ const rootOf = (project, file) =>
     .sort((a, b) => b.path.length - a.path.length)[0];
 
 /** A link's platform: a package link's prefix, else the platform of the root holding a file. When it
- * has none, `unknown` says why if the link is to blame; a bare root among several is C7's. */
+ * has none, `unknown` says why if the link is to blame, and `fix` what clears it; a bare root among several is C7's. */
 function platformOf(project, link) {
-  if (link.library !== null) return { platform: link.platform ?? soleOf(project), unknown: "needs a platform=: system.md declares several platforms" };
+  if (link.library !== null) return { platform: link.platform ?? soleOf(project), unknown: "needs a platform=: system.md declares several platforms", fix: "prefix the link with platform=" };
   const root = rootOf(project, path.posix.normalize(link.target));
-  return root ? { platform: root.platform } : { platform: soleOf(project), unknown: "is under no code root, so its platform is unknown" };
+  return root ? { platform: root.platform } : { platform: soleOf(project), unknown: "is under no code root, so its platform is unknown", fix: "put the file under a code root" };
 }
 
 /** The platform of a code file, project-relative, as C9 reads a path link's: `{platform, unknown}`. */
@@ -286,14 +315,14 @@ function platformProblems(project) {
   const seen = new Set();
   return linked(project).flatMap(({ record, value, link }) => {
     if (!link) return [];
-    const at = (message) => ({ file: record.file, message: `code "${value}" ${message}` });
-    if (link.platform !== null && !declared.includes(link.platform)) return [{ file: record.file, message: `code "${value}": platform "${link.platform}" is not in system.md` }];
-    const { platform, unknown } = platformOf(project, link);
-    if (platform === null) return unknown && declared.length > 1 ? [at(unknown)] : [];
+    const at = (message, fix, excerpt) => ({ file: record.file, message: `code "${value}" ${message}`, fix, excerpt });
+    if (link.platform !== null && !declared.includes(link.platform)) return [{ file: record.file, message: `code "${value}": platform "${link.platform}" is not in system.md`, fix: "use a platform system.md declares", excerpt: link.platform }];
+    const { platform, unknown, fix } = platformOf(project, link);
+    if (platform === null) return unknown && declared.length > 1 ? [at(unknown, fix, value)] : [];
     const listed = PLATFORMS_KEY in fm(record) ? list(fm(record)[PLATFORMS_KEY]) : declared;
-    if (!listed.includes(platform)) return [at(`is on platform "${platform}", which ${fm(record).id} does not list`)];
+    if (!listed.includes(platform)) return [at(`is on platform "${platform}", which ${fm(record).id} does not list`, "list the platform in its platforms, or link code on a platform it lists", platform)];
     const key = `${record.file} ${platform}`;
-    if (seen.has(key)) return [at(`is a second link on platform "${platform}"`)];
+    if (seen.has(key)) return [at(`is a second link on platform "${platform}"`, "keep one code link per platform", platform)];
     seen.add(key);
     return [];
   });

@@ -3,7 +3,7 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, HISTORY, PATHS, LIB, makeTmp, removeTmp, addHistory, writeProject, edit, editTokens, put, record, engine } = require("../fixtures/aidd-ui/project.js");
+const { fixLedger, UI, HISTORY, PATHS, LIB, makeTmp, removeTmp, addHistory, writeProject, edit, editTokens, put, record, engine } = require("../fixtures/aidd-ui/project.js");
 
 // Each rule has one mutation of the valid project, and the test asserts the whole problem
 // list: dropping the rule turns its own test red and leaves every other one green.
@@ -17,6 +17,7 @@ const BUTTON_USAGE = "Any action a person starts; never for navigation.";
 const WIDENED = "Any action a person starts on purpose; never for navigation.";
 
 let tmp;
+const ledger = fixLedger();
 
 beforeEach(() => {
   tmp = makeTmp("aidd-ui-records-");
@@ -29,7 +30,7 @@ afterEach(() => removeTmp(tmp));
  * breaks its fingerprint too, and H8's own cases read it alone. */
 function problems() {
   const project = load(tmp);
-  return [...records.check(project), ...historyRules.check(project)].filter((problem) => problem.rule !== "H8").map((problem) => `${problem.file}: ${problem.message}`);
+  return ledger.note([...records.check(project), ...historyRules.check(project)]).filter((problem) => problem.rule !== "H8").map((problem) => `${problem.file}: ${problem.message}`);
 }
 
 const change = (file, from, to) => edit(tmp, file, from, to);
@@ -461,9 +462,9 @@ describe("aidd-ui records and history", () => {
 
   describe("H8 validated as fingerprinted", () => {
     /** Only H8's own problems, as `file: message`. */
-    const held = () => historyRules.check(load(tmp)).filter((found) => found.rule === "H8").map((found) => `${found.file}: ${found.message}`);
+    const held = () => ledger.note(historyRules.check(load(tmp))).filter((found) => found.rule === "H8").map((found) => `${found.file}: ${found.message}`);
     /** Every problem of every check, as the engine reports them. */
-    const whole = () => problemsOf(load(tmp)).map((found) => `${found.file}: ${found.message}`);
+    const whole = () => ledger.note(problemsOf(load(tmp))).map((found) => `${found.file}: ${found.message}`);
     const EDITED = (file, version = 1) => `${file}: edited since version ${version} was validated, raise its version with bump`;
     const THROUGH = (...files) => files.map((file) => EDITED(file));
     /** Sets the Fingerprint cell of the history row of `id` at `version`. */
@@ -655,5 +656,96 @@ describe("aidd-ui records and history", () => {
       change(SYSTEM, "format: 1\n", "");
       assert.deepEqual(problems(), [`${SYSTEM}: missing key "format"`]);
     });
+  });
+});
+
+// Every rule case above notes the problems it saw; each carries a fix, and this table pins the rule, message, excerpt
+// and fix of all of them (`-` for no excerpt). It reads what the cases before it saw, so it runs with the whole file.
+const FIXES = [
+  "H1 | no row in history.md | - | run bump --task <folder> --created onboarding",
+  "H1 | no row in history.md | - | run bump --task <folder> --created system",
+  "H2 | two changes claim version 2 of old-button, renumber one | \"old-button 2\" | renumber one of the rows",
+  "H3 | history jumps from 1 to 3 | \"1 to 3\" | renumber the rows so each version follows the last",
+  "H3 | version 2 is not the highest history row, 1 | \"2\" | set version to 1, the highest history row",
+  "H4 | breaking \"maybe\" in version 1 of onboarding must be yes or no | \"maybe\" | set Breaking to yes or no",
+  "H5 | 1.1.0 is breaking, yet raises no major version | \"1.1.0\" | raise the major version, or set Breaking to no",
+  "H5 | 2.0.0 publishes \"aidd_docs/tasks/retire-old-button\", which breaks an element, so it is breaking | \"aidd_docs/tasks/retire-old-button\" | set Breaking to yes and raise the major version",
+  "H5 | 2.0.1 raises neither major nor minor | \"2.0.1\" | raise the minor or the major version",
+  "H6 | deprecated, yet its last history row is not breaking | - | raise its version as a breaking change with bump --task <folder> --change <text> --breaking button",
+  "H6 | deprecated, yet its last history row is not breaking | - | raise its version as a breaking change with bump --task <folder> --change <text> --breaking old-button",
+  "H7 | task \"PROJ-12\" in version 2.0.0 of system must be a task folder, aidd_docs/tasks/… | \"PROJ-12\" | name a task folder, aidd_docs/tasks/…",
+  "H7 | task \"ds-init\" in version 1 of onboarding must be a task folder, aidd_docs/tasks/… | \"ds-init\" | name a task folder, aidd_docs/tasks/…",
+  "H8 | edited since version 1 was validated, raise its version with bump | - | raise its version with bump --task <folder> --change <text> button",
+  "H8 | edited since version 1 was validated, raise its version with bump | - | raise its version with bump --task <folder> --change <text> dialog",
+  "H8 | edited since version 1 was validated, raise its version with bump | - | raise its version with bump --task <folder> --change <text> home",
+  "H8 | edited since version 1 was validated, raise its version with bump | - | raise its version with bump --task <folder> --change <text> icon-search",
+  "H8 | edited since version 1 was validated, raise its version with bump | - | raise its version with bump --task <folder> --change <text> search-field",
+  "H8 | edited since version 2 was validated, raise its version with bump | - | raise its version with bump --task <folder> --change <text> old-button",
+  "H8 | validated without a fingerprint, run publish button | - | run publish button",
+  "H8 | validated without a fingerprint, run publish dialog | - | run publish dialog",
+  "H8 | validated without a fingerprint, run publish home | - | run publish home",
+  "H8 | validated without a fingerprint, run publish icon-search | - | run publish icon-search",
+  "H8 | validated without a fingerprint, run publish search-field | - | run publish search-field",
+  "H9 | old-button has history but no record: restore it or run bump --removed | \"old-button\" | restore its record, or run bump --task <folder> --removed old-button",
+  "H9 | removed in history.md, delete its record and render | - | delete its record and render",
+  "R1 | line 1: no front matter, open and close it with a --- line | - | open and close the front matter with a --- line",
+  "R1 | line 7: expected \"key: value\" or \"key: [a, b]\", got \"- nested\" | \"- nested\" | write the line as key: value or key: [a, b]",
+  "R10 | uses \"icon-old\", which is deprecated | \"icon-old\" | use what replaces it instead",
+  "R10 | uses \"old-button\", which is deprecated | \"old-button\" | use what replaces it instead",
+  "R11 | breakpoint \"desktop\" is not in system.md | \"desktop\" | use a breakpoint of system.md, or add it there",
+  "R11 | breakpoint \"tablet\" is not in system.md | \"tablet\" | use a breakpoint of system.md, or add it there",
+  "R12 | step 2 names screen \"ghost\", which no screen has | \"ghost\" | name a screen that exists, or add it",
+  "R13 | no verdict row for home / loading at version 1 | - | add a row for home / loading at version 1 to \"## Verdicts\"",
+  "R13 | verdict \"maybe\" for home / default must be ok, ko or pending | \"maybe\" | set the verdict to ok, ko or pending",
+  "R14 | lacks \"## Users\" | - | add a \"## Users\" section",
+  "R15 | file \"missing.svg\" does not exist beside it | \"missing.svg\" | add the file beside the record, or correct file",
+  "R16 | status \"deprecated\" is for elements: reviews are proposed or validated | \"deprecated\" | set status to proposed or validated",
+  "R17 | lacks \"## Usage\", saying when to use it and when not | - | add a \"## Usage\" section saying when to use it and when not",
+  "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
+  "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",
+  "R2 | unknown kind \"toString\" | \"toString\" | set kind to system, brand, atom, molecule, composition, screen, journey, asset or review",
+  "R2 | unknown kind \"widget\" | \"widget\" | set kind to system, brand, atom, molecule, composition, screen, journey, asset or review",
+  "R3 | missing key \"alt\" | - | add the key \"alt\" to the front matter",
+  "R3 | missing key \"format\" | - | add the key \"format\" to the front matter",
+  "R3 | missing key \"locales\" | - | add the key \"locales\" to the front matter",
+  "R3 | missing key \"persona\" | - | add the key \"persona\" to the front matter",
+  "R3 | missing key \"role\" | - | add the key \"role\" to the front matter",
+  "R3 | missing key \"route\" | - | add the key \"route\" to the front matter",
+  "R3 | missing key \"scope\" | - | add the key \"scope\" to the front matter",
+  "R3 | missing key \"version\" | - | add the key \"version\" to the front matter",
+  "R3 | status \"done\" must be proposed, validated or deprecated | \"done\" | set status to proposed, validated or deprecated",
+  "R3 | type \"photo\" must be icon, image or illustration | \"photo\" | set type to icon, image or illustration",
+  "R3 | variant \"=sm\": axis \"\" must match [a-z][a-z-]* | \"=sm\" | name the axis in lowercase letters and hyphens",
+  "R3 | variant \"Size=sm\": axis \"Size\" must match [a-z][a-z-]* | \"Size=sm\" | name the axis in lowercase letters and hyphens",
+  "R3 | variant \"size=\": no value | \"size=\" | give the variant a value after =",
+  "R3 | variant \"state=hover\": axis \"state\" is taken, data-state shows the states | \"state=hover\" | rename the axis",
+  "R3 | variant \"theme=dark\": axis \"theme\" is taken, data-theme switches the token theme | \"theme=dark\" | rename the axis",
+  "R3 | variant \"variant=big\": axis \"variant\" is taken, data-variant shows the bare variants | \"variant=big\" | rename the axis",
+  "R4 | id \"brand\" already belongs to aidd_docs/ui/brand.md | \"brand\" | give it an id no other record has",
+  "R4 | id \"onboard\" differs from the file name \"onboarding\" | \"onboard\" | make the id the file name",
+  "R5 | version \"0\" must be an integer from 1 | \"0\" | set version to an integer from 1",
+  "R5 | version \"1.0\" of system must be semver, such as 2.0.0 | \"1.0\" | write the version as semver, such as 2.0.0",
+  "R5 | version \"v2\" must be an integer from 1 | \"v2\" | set version to an integer from 1",
+  "R6 | atom cannot use molecule \"search-field\" | \"search-field\" | use only elements of its own level or lower",
+  "R6 | molecule cannot use composition \"dialog\" | \"dialog\" | use only elements of its own level or lower",
+  "R6 | uses \"ghost\", which no record has | \"ghost\" | remove it from uses, or add the record",
+  "R6 | uses itself | - | remove its own id from uses",
+  "R7 | component lacks state \"default\" | - | add \"default\" to states",
+  "R7 | screen lacks state \"default\" | - | add \"default\" to states",
+  "R7 | state \"focus\" needs a \"## Keyboard\" section | - | add a \"## Keyboard\" section",
+  "R8 | code is for components and screens, never an asset | \"code\" | remove it from the front matter",
+  "R8 | platform \"android\" is not in system.md | \"android\" | list a platform system.md declares, or declare it there",
+  "R8 | platform \"ios\" is not in system.md | \"ios\" | list a platform system.md declares, or declare it there",
+  "R8 | platforms is for components and screens, never a journey | \"platforms\" | remove it from the front matter",
+  "R9 | replaced-by \"ghost\", which no record has | \"ghost\" | point replaced-by at an existing record, or none",
+  "R9 | replaced-by \"old-button\" is deprecated too | \"old-button\" | point replaced-by at a record that is not deprecated",
+  "R9 | replaced-by none needs a \"## Deprecation\" section saying why | - | add a \"## Deprecation\" section saying why",
+  "R9 | status deprecated needs \"replaced-by\" | - | add \"replaced-by\" naming its replacement, or none",
+  "V1 | no render beside it, expected button.html | \"button.html\" | write the render beside it",
+];
+
+describe("aidd-ui fixes of the history and record rules", () => {
+  it("pins the fix, and the excerpt where one applies, of every problem the cases above named", () => {
+    assert.deepEqual(ledger.seen(), [...FIXES].sort());
   });
 });

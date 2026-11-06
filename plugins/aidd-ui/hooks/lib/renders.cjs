@@ -29,7 +29,7 @@ const readRender = (project, file) => text(project, file) ?? "";
 function presenceProblems(project) {
   return rendered(project)
     .filter((record) => !project.renders.includes(renderOf(record)))
-    .map((record) => ({ file: record.file, message: `no render beside it, expected ${path.basename(renderOf(record))}` }));
+    .map((record) => ({ file: record.file, message: `no render beside it, expected ${path.basename(renderOf(record))}`, fix: "write the render beside it", excerpt: path.basename(renderOf(record)) }));
 }
 
 /** The attribute that shows a `variants` item on an element. */
@@ -45,7 +45,7 @@ function coverageProblems(project) {
       const html = text(project, renderOf(record))?.split(STYLE_BLOCK).join(""); // a selector in a style block shows nothing
       if (html === undefined) return [];
       const wanted = [...list(record.frontMatter.variants).map(variantAttribute), ...list(record.frontMatter.states).map((value) => `data-state="${value}"`)];
-      return wanted.filter((attribute) => !html.includes(attribute)).map((attribute) => ({ file: renderOf(record), message: `no ${attribute}` }));
+      return wanted.filter((attribute) => !html.includes(attribute)).map((attribute) => ({ file: renderOf(record), message: `no ${attribute}`, fix: "add an element carrying it to the render", excerpt: attribute }));
     });
 }
 
@@ -60,7 +60,7 @@ function referenceProblems(project) {
       .flatMap((line, index) =>
         [...line.matchAll(VAR_REFERENCE)]
           .filter((match) => !names.has(match[1]))
-          .map((match) => ({ file, message: `line ${index + 1}: var(${match[1]}) names no token` }))
+          .map((match) => ({ file, message: `line ${index + 1}: var(${match[1]}) names no token`, fix: "cite a token that exists, or add the token", excerpt: `var(${match[1]})` }))
       );
   });
 }
@@ -80,7 +80,7 @@ function declaredProblems(project) {
         .flatMap((line, index) =>
           [...line.matchAll(VAR_REFERENCE)]
             .filter((match) => tokens.has(match[1]) && !declared.has(match[1]))
-            .map((match) => ({ file: renderOf(record), message: `line ${index + 1}: var(${match[1]}) is a token ${record.frontMatter.id} does not declare` }))
+            .map((match) => ({ file: renderOf(record), message: `line ${index + 1}: var(${match[1]}) is a token ${record.frontMatter.id} does not declare`, fix: "add the token to the record's tokens", excerpt: `var(${match[1]})` }))
         );
     });
 }
@@ -95,6 +95,8 @@ function switchProblems(project) {
         [...attributes.replace(QUOTED_VALUE, "").matchAll(SWITCH_ATTRIBUTE)].map(([, kind]) => ({
           file,
           message: `line ${lineOf(markup, index)}: data-${kind.toLowerCase()} on <${tag.toLowerCase()}>, set it on <html> alone`,
+          fix: "set it on <html> alone",
+          excerpt: `data-${kind.toLowerCase()}`,
         }))
       );
   });
@@ -108,7 +110,7 @@ function stylesheetProblems(project) {
   return rendered(project)
     .map(renderOf)
     .filter((file) => project.renders.includes(file) && text(project, file) !== null && !loadsStylesheet(text(project, file)))
-    .map((file) => ({ file, message: `does not load ${STYLESHEET_HREF}, add ${STYLESHEET_LINK}` }));
+    .map((file) => ({ file, message: `does not load ${STYLESHEET_HREF}, add ${STYLESHEET_LINK}`, fix: `add ${STYLESHEET_LINK}`, excerpt: STYLESHEET_HREF }));
 }
 
 const literalProblems = (pattern, { applies = () => true, scanned = styled } = {}) => (project) =>

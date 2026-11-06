@@ -2,7 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
-const { checkOf, HISTORY_FILE } = require("./project.cjs");
+const { checkOf, ERROR, HISTORY_FILE } = require("./project.cjs");
 const { breakpointsOf, STEPS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
@@ -40,41 +40,41 @@ const isDeprecated = (record) => fm(record).status === STATUS_DEPRECATED;
 const folderLabel = (folder) => (folder ? `${folder}/` : "aidd_docs/ui/");
 
 function frontMatterProblems(project) {
-  return project.records.flatMap((record) => record.problems.map((parse) => problem(record, `line ${parse.line}: ${parse.message}`)));
+  return project.records.flatMap((record) => record.problems.map((parse) => problem(record, `line ${parse.line}: ${parse.message}`, parse.fix, parse.excerpt)));
 }
 
 function kindProblems(project) {
   return readable(project).flatMap((record) => {
     const kind = fm(record).kind;
     if (kind === undefined) return [];
-    if (!Object.hasOwn(KIND_KEYS, kind)) return [problem(record, `unknown kind "${kind}"`)];
+    if (!Object.hasOwn(KIND_KEYS, kind)) return [problem(record, `unknown kind "${kind}"`, `set kind to ${listWithOr(Object.keys(KIND_KEYS))}`, kind)];
     if (belongs(record.folder, kind)) return [];
-    return [problem(record, `kind "${kind}" does not belong in ${folderLabel(record.folder)}`)];
+    return [problem(record, `kind "${kind}" does not belong in ${folderLabel(record.folder)}`, "move it to the folder of its kind, or change its kind", kind)];
   });
 }
 
-/** What is wrong with an `axis=value` item of `variants`, or null: a bare item is any value. */
+/** What is wrong with an `axis=value` item of `variants` as `{message, fix, excerpt}`, or null: a bare item is any value. */
 function variantProblem(item) {
   const { axis, value } = variantOf(item);
-  if (Object.hasOwn(TAKEN_AXES, axis)) return `variant "${item}": axis "${axis}" is taken, ${TAKEN_AXES[axis]}`;
-  if (!AXIS_NAME.test(axis)) return `variant "${item}": axis "${axis}" must match ${AXIS_NAME.source.slice(1, -1)}`;
-  return value ? null : `variant "${item}": no value`;
+  if (Object.hasOwn(TAKEN_AXES, axis)) return { message: `variant "${item}": axis "${axis}" is taken, ${TAKEN_AXES[axis]}`, fix: "rename the axis", excerpt: item };
+  if (!AXIS_NAME.test(axis)) return { message: `variant "${item}": axis "${axis}" must match ${AXIS_NAME.source.slice(1, -1)}`, fix: "name the axis in lowercase letters and hyphens", excerpt: item };
+  return value ? null : { message: `variant "${item}": no value`, fix: "give the variant a value after =", excerpt: item };
 }
 
 function valueProblems(record) {
   const { status, type, kind } = fm(record);
   return [
-    ...(status !== undefined && !STATUSES.includes(status) ? [`status "${status}" must be ${listWithOr(STATUSES)}`] : []),
-    ...(kind === "asset" && type !== undefined && !ASSET_TYPES.includes(type) ? [`type "${type}" must be ${listWithOr(ASSET_TYPES)}`] : []),
+    ...(status !== undefined && !STATUSES.includes(status) ? [{ message: `status "${status}" must be ${listWithOr(STATUSES)}`, fix: `set status to ${listWithOr(STATUSES)}`, excerpt: status }] : []),
+    ...(kind === "asset" && type !== undefined && !ASSET_TYPES.includes(type) ? [{ message: `type "${type}" must be ${listWithOr(ASSET_TYPES)}`, fix: `set type to ${listWithOr(ASSET_TYPES)}`, excerpt: type }] : []),
     ...list(fm(record).variants).filter((item) => item.includes(AXIS_SEPARATOR)).map(variantProblem).filter(Boolean),
-  ].map((message) => problem(record, message));
+  ].map(({ message, fix, excerpt }) => problem(record, message, fix, excerpt));
 }
 
 function requiredKeyProblems(project) {
   const placedRecords = new Set(placed(project));
   return readable(project).flatMap((record) => {
     const keys = [...COMMON_KEYS, ...(placedRecords.has(record) ? KIND_KEYS[fm(record).kind] : [])];
-    const missing = keys.filter((key) => !(key in fm(record))).map((key) => problem(record, `missing key "${key}"`));
+    const missing = keys.filter((key) => !(key in fm(record))).map((key) => problem(record, `missing key "${key}"`, `add the key "${key}" to the front matter`));
     return [...missing, ...(placedRecords.has(record) ? valueProblems(record) : [])];
   });
 }
@@ -84,9 +84,9 @@ function identityProblems(project) {
   return readable(project).flatMap((record) => {
     const id = fm(record).id;
     if (id === undefined) return [];
-    if (id !== record.name) return [problem(record, `id "${id}" differs from the file name "${record.name}"`)];
+    if (id !== record.name) return [problem(record, `id "${id}" differs from the file name "${record.name}"`, "make the id the file name", id)];
     const owner = index.get(id);
-    return owner === record ? [] : [problem(record, `id "${id}" already belongs to ${owner.file}`)];
+    return owner === record ? [] : [problem(record, `id "${id}" already belongs to ${owner.file}`, "give it an id no other record has", id)];
   });
 }
 
@@ -95,9 +95,9 @@ function versionProblems(project) {
   return [
     ...placed(project).flatMap((record) => {
       const version = fm(record).version;
-      return version === undefined || INTEGER_VERSION.test(version) ? [] : [problem(record, `version "${version}" must be an integer from 1`)];
+      return version === undefined || INTEGER_VERSION.test(version) ? [] : [problem(record, `version "${version}" must be an integer from 1`, "set version to an integer from 1", version)];
     }),
-    ...published.map((row) => problem({ file: HISTORY_FILE }, `version "${row.Version}" of ${SYSTEM_ID} must be semver, such as 2.0.0`)),
+    ...published.map((row) => problem({ file: HISTORY_FILE }, `version "${row.Version}" of ${SYSTEM_ID} must be semver, such as 2.0.0`, "write the version as semver, such as 2.0.0", row.Version)),
   ];
 }
 
@@ -108,11 +108,11 @@ function usesProblems(project) {
     .flatMap((record) =>
       list(fm(record).uses).flatMap((id) => {
         const used = index.get(id);
-        if (!used) return [problem(record, `uses "${id}", which no record has`)];
-        if (used === record) return [problem(record, "uses itself")];
+        if (!used) return [problem(record, `uses "${id}", which no record has`, "remove it from uses, or add the record", id)];
+        if (used === record) return [problem(record, "uses itself", "remove its own id from uses")];
         const kind = fm(record).kind;
         const usedKind = fm(used).kind;
-        return LEVELS[usedKind] <= LEVELS[kind] ? [] : [problem(record, `${kind} cannot use ${usedKind} "${id}"`)];
+        return LEVELS[usedKind] <= LEVELS[kind] ? [] : [problem(record, `${kind} cannot use ${usedKind} "${id}"`, "use only elements of its own level or lower", id)];
       })
     );
 }
@@ -120,12 +120,12 @@ function usesProblems(project) {
 function stateProblems(project) {
   return placed(project).flatMap((record) => {
     const states = list(fm(record).states);
-    if (fm(record).kind === "screen") return states.includes(DEFAULT_STATE) ? [] : [problem(record, `screen lacks state "${DEFAULT_STATE}"`)];
+    if (fm(record).kind === "screen") return states.includes(DEFAULT_STATE) ? [] : [problem(record, `screen lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)];
     if (!isComponent(record)) return [];
     return [
-      ...(states.includes(DEFAULT_STATE) ? [] : [`component lacks state "${DEFAULT_STATE}"`]),
-      ...(states.includes(FOCUS_STATE) && !(KEYBOARD_SECTION in record.sections) ? [`state "${FOCUS_STATE}" needs a "## ${KEYBOARD_SECTION}" section`] : []),
-    ].map((message) => problem(record, message));
+      ...(states.includes(DEFAULT_STATE) ? [] : [problem(record, `component lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)]),
+      ...(states.includes(FOCUS_STATE) && !(KEYBOARD_SECTION in record.sections) ? [problem(record, `state "${FOCUS_STATE}" needs a "## ${KEYBOARD_SECTION}" section`, `add a "## ${KEYBOARD_SECTION}" section`)] : []),
+    ];
   });
 }
 
@@ -136,10 +136,10 @@ function implementationProblems(project) {
   return placed(project).flatMap((record) => {
     const { kind } = fm(record);
     const wrong = (isSystem(record) ? ["code"] : ["code", "platforms"]).filter((key) => key in fm(record) && !IMPLEMENTED_KINDS.includes(kind));
-    if (wrong.length) return wrong.map((key) => problem(record, `${key} is for components and screens, never ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}`));
+    if (wrong.length) return wrong.map((key) => problem(record, `${key} is for components and screens, never ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}`, "remove it from the front matter", key));
     return list(fm(record).platforms)
       .filter((platform) => !declared.includes(platform))
-      .map((platform) => problem(record, `platform "${platform}" is not in system.md`));
+      .map((platform) => problem(record, `platform "${platform}" is not in system.md`, "list a platform system.md declares, or declare it there", platform));
   });
 }
 
@@ -149,13 +149,13 @@ function deprecatedProblems(project) {
     .filter((record) => isElement(record) && isDeprecated(record))
     .flatMap((record) => {
       const replacement = fm(record)["replaced-by"];
-      if (replacement === undefined) return [problem(record, 'status deprecated needs "replaced-by"')];
+      if (replacement === undefined) return [problem(record, 'status deprecated needs "replaced-by"', `add "replaced-by" naming its replacement, or ${NO_REPLACEMENT}`)];
       if (replacement === NO_REPLACEMENT) {
-        return DEPRECATION_SECTION in record.sections ? [] : [problem(record, `replaced-by none needs a "## ${DEPRECATION_SECTION}" section saying why`)];
+        return DEPRECATION_SECTION in record.sections ? [] : [problem(record, `replaced-by none needs a "## ${DEPRECATION_SECTION}" section saying why`, `add a "## ${DEPRECATION_SECTION}" section saying why`)];
       }
       const target = index.get(replacement);
-      if (!target) return [problem(record, `replaced-by "${replacement}", which no record has`)];
-      return isDeprecated(target) ? [problem(record, `replaced-by "${replacement}" is deprecated too`)] : [];
+      if (!target) return [problem(record, `replaced-by "${replacement}", which no record has`, `point replaced-by at an existing record, or ${NO_REPLACEMENT}`, replacement)];
+      return isDeprecated(target) ? [problem(record, `replaced-by "${replacement}" is deprecated too`, "point replaced-by at a record that is not deprecated", replacement)] : [];
     });
 }
 
@@ -166,7 +166,7 @@ function deprecatedUseProblems(project) {
     .flatMap((record) =>
       list(fm(record).uses)
         .filter((id) => index.get(id) && isDeprecated(index.get(id)))
-        .map((id) => problem(record, `uses "${id}", which is deprecated`))
+        .map((id) => problem(record, `uses "${id}", which is deprecated`, "use what replaces it instead", id))
     );
 }
 
@@ -179,7 +179,7 @@ function breakpointProblems(project) {
     .flatMap((record) =>
       list(fm(record).breakpoints)
         .filter((breakpoint) => !declared.includes(breakpoint))
-        .map((breakpoint) => problem(record, `breakpoint "${breakpoint}" is not in system.md`))
+        .map((breakpoint) => problem(record, `breakpoint "${breakpoint}" is not in system.md`, "use a breakpoint of system.md, or add it there", breakpoint))
     );
 }
 
@@ -191,7 +191,7 @@ function journeyProblems(project) {
     .filter((record) => fm(record).kind === "journey")
     .flatMap((record) =>
       table(record.sections[STEPS_SECTION]).flatMap((row, index) =>
-        screens.has(row.Screen) ? [] : [problem(record, `step ${index + 1} names screen "${row.Screen}", which no screen has`)]
+        screens.has(row.Screen) ? [] : [problem(record, `step ${index + 1} names screen "${row.Screen}", which no screen has`, "name a screen that exists, or add it", row.Screen)]
       )
     );
 }
@@ -208,39 +208,39 @@ function reviewProblems(project) {
         const version = screen && fm(screen).version;
         return list(screen && fm(screen).states)
           .filter((state) => !rows.some((row) => row.Screen === id && row.State === state && row.Version === version))
-          .map((state) => `no verdict row for ${id} / ${state} at version ${version}`);
+          .map((state) => problem(record, `no verdict row for ${id} / ${state} at version ${version}`, `add a row for ${id} / ${state} at version ${version} to "## ${VERDICTS_SECTION}"`));
       });
       const verdicts = rows
         .filter((row) => !VERDICTS.includes(row.Verdict))
-        .map((row) => `verdict "${row.Verdict}" for ${row.Screen} / ${row.State} must be ${listWithOr(VERDICTS)}`);
-      return [...missing, ...verdicts].map((message) => problem(record, message));
+        .map((row) => problem(record, `verdict "${row.Verdict}" for ${row.Screen} / ${row.State} must be ${listWithOr(VERDICTS)}`, `set the verdict to ${listWithOr(VERDICTS)}`, row.Verdict));
+      return [...missing, ...verdicts];
     });
 }
 
 function brandProblems(project) {
   return placed(project)
     .filter((record) => fm(record).kind === "brand")
-    .flatMap((record) => BRAND_HEADINGS.filter((heading) => !(heading in record.sections)).map((heading) => problem(record, `lacks "## ${heading}"`)));
+    .flatMap((record) => BRAND_HEADINGS.filter((heading) => !(heading in record.sections)).map((heading) => problem(record, `lacks "## ${heading}"`, `add a "## ${heading}" section`)));
 }
 
 function assetProblems(project) {
   return placed(project)
     .filter((record) => fm(record).kind === "asset" && typeof fm(record).file === "string")
     .filter((record) => !fs.existsSync(path.join(project.root, path.dirname(record.file), fm(record).file)))
-    .map((record) => problem(record, `file "${fm(record).file}" does not exist beside it`));
+    .map((record) => problem(record, `file "${fm(record).file}" does not exist beside it`, "add the file beside the record, or correct file", fm(record).file));
 }
 
 function reviewStatusProblems(project) {
   return placed(project)
     .filter((record) => fm(record).kind === "review")
     .filter((record) => STATUSES.includes(fm(record).status) && !REVIEW_STATUSES.includes(fm(record).status))
-    .map((record) => problem(record, `status "${fm(record).status}" is for elements: reviews are ${listWithOr(REVIEW_STATUSES)}`));
+    .map((record) => problem(record, `status "${fm(record).status}" is for elements: reviews are ${listWithOr(REVIEW_STATUSES)}`, `set status to ${listWithOr(REVIEW_STATUSES)}`, fm(record).status));
 }
 
 function usageProblems(project) {
   return placed(project)
     .filter((record) => isComponent(record) && !(USAGE_SECTION in record.sections))
-    .map((record) => problem(record, `lacks "## ${USAGE_SECTION}", saying when to use it and when not`));
+    .map((record) => problem(record, `lacks "## ${USAGE_SECTION}", saying when to use it and when not`, `add a "## ${USAGE_SECTION}" section saying when to use it and when not`));
 }
 
 /** The one problem a system.md written for another format earns, since every rule would misread
@@ -248,7 +248,7 @@ function usageProblems(project) {
 function formatProblem(project) {
   const system = systemOf(project);
   const format = system && fm(system).format;
-  return format === undefined || format === FORMAT ? null : problem(system, `format "${format}" is not ${FORMAT}, the one this validator reads`);
+  return format === undefined || format === FORMAT ? null : { rule: "U3", severity: ERROR, ...problem(system, `format "${format}" is not ${FORMAT}, the one this validator reads`, `rewrite the design system for format ${FORMAT}`, format) };
 }
 
 const RULES = {
