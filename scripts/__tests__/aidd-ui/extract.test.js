@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, engine, validate, put, record } = require("../fixtures/aidd-ui/project.js");
+const { UI, LIB, makeTmp, removeTmp, engine, validate, put, record, editTokens } = require("../fixtures/aidd-ui/project.js");
 const { WEB_CSS, MOBILE_TS } = require("../fixtures/aidd-ui/token-sources.js");
 
 // The extract command is driven as a subprocess, as the skill calls it. Its output is judged by the
@@ -233,6 +233,44 @@ describe("aidd-ui extract", () => {
       const { report } = extract();
       assert.deepEqual(report.left.filter((each) => each.file === "styles/tokens.css"), [{ file: "styles/tokens.css", line: null, name: null, why: "is under no code root, so its platform is unknown" }]);
       assert.equal(read("tokens.json").color.extra, undefined);
+    });
+  });
+
+  // A token change stops at aidd_docs/ui/ while the code reads its own token files: C10 names each of
+  // their values that is no longer the design system's, so neither side drifts unseen.
+  describe("C10 the code's token files against the design system", () => {
+    beforeEach(() => setup({ platforms: ["web", "mobile"], roots: ["web=src/web", "mobile=src/mobile"], tokens: ["src/web/tokens.css", "src/mobile/tokens.ts"], files: { "src/web/tokens.css": WEB_CSS, "src/mobile/tokens.ts": MOBILE_TS } }));
+    const drift = () => validate(tmp).out.filter((line) => / C10 /.test(line));
+    const accent = (hex) => editTokens(tmp, (tree) => (tree.color.accent.$value = { colorSpace: "srgb", components: [0.4863, 0.2275, 0.9294], hex }));
+
+    it("finds none right after extract, every shape, theme, platform and breakpoint included", () => {
+      extract();
+      engine("tokens", tmp);
+      assert.deepEqual(drift(), []);
+    });
+
+    it("names the value each token file still holds once the design system changed it", () => {
+      extract();
+      accent("#7c3aed");
+      engine("tokens", tmp);
+      assert.deepEqual(drift(), ['src/web/tokens.css:5 C10 "--color-accent" => set it to #7c3aed, the design system\'s value', 'src/mobile/tokens.ts:5 C10 "--color-accent" => set it to #7c3aed, the design system\'s value']);
+    });
+
+    it("names a code value changed by hand, the design system untouched", () => {
+      extract();
+      engine("tokens", tmp);
+      put(tmp, "src/mobile/tokens.ts", MOBILE_TS.replace("spaceSm: 8,", "spaceSm: 10,"));
+      assert.deepEqual(drift(), ['src/mobile/tokens.ts:7 C10 "--space-sm" => set it to 8, the design system\'s value']);
+    });
+
+    it("reads a theme's value in its own context", () => {
+      extract();
+      const dark = path.join(tmp, UI, "themes/dark.json");
+      const tree = JSON.parse(fs.readFileSync(dark, "utf8"));
+      tree.color.ink.$value = { colorSpace: "srgb", components: [1, 1, 1], hex: "#ffffff" };
+      fs.writeFileSync(dark, JSON.stringify(tree, null, 2));
+      engine("tokens", tmp);
+      assert.deepEqual(drift(), ['src/web/tokens.css:24 C10 "--color-ink" => set it to #ffffff, the design system\'s value']);
     });
   });
 

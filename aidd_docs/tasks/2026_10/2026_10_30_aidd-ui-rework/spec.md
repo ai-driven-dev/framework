@@ -123,6 +123,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
   - cycle de vie respecté ;
   - liens vers le code valides et cohérents avec leurs plateformes, couverture des dossiers UI ;
   - aucune valeur en dur dans les rendus, aucune couleur en dur dans le code au-delà de sa dette, quelle que soit sa techno (documents, données et images exclus) : `aidd_docs/ui/code-debt.json`, écrit à la création du système, compte chaque couleur de chaque fichier ; avertissement tant qu'un fichier n'en tient pas plus que ce compte, erreur au-delà, et erreur pour toute couleur sans ce fichier ;
+  - les fichiers de tokens du code (`code-tokens`) donnent à chaque token la valeur du design system, dans chaque thème, plateforme et point de rupture qu'ils portent : un changement de token signale ainsi chaque fichier du code resté sur l'ancienne valeur, et une valeur changée à la main dans le code est signalée de même ;
   - aucun token primitif dans un composant ;
   - versions en double dans un historique ;
   - propriétés physiques quand une langue déclarée s'écrit de droite à gauche.
@@ -155,10 +156,6 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 - Chaque règle de vérification a un cas qui la fait échouer.
 - Sur Gouvernail et Kairos, le design system est extrait du code existant.
 
-## Open Questions
-
-- TBD: quel projet pilote pour le cas vierge, sachant que Gouvernail et Kairos, pilotes du cas existant, ont déjà une identité ? Gouvernail a déjà ses propres contrôles de tokens et aucune couleur en dur : il éprouve l'extraction facile, pas le cas d'une app qui dérive.
-
 ## Décisions pour les PR suivantes
 
 | PR | Décision |
@@ -166,6 +163,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 | 2 | Réalisé : la règle H8 compare un élément validé à l'empreinte que `publish <id>` écrit dans la ligne de sa version de `history.md` : sa fiche sans `status` ni `code`, son rendu, les octets du fichier d'un asset, et la valeur résolue de chaque token qu'il utilise dans chaque contexte de `tokens.css`. Un élément validé sans empreinte est une erreur ; un élément déprécié n'est tenu qu'à une empreinte écrite, un élément proposé à aucune. Aucune règle ne lit git. La sous-commande `impact` imprime le graphe d'usages en JSON (tokens, éléments, écrans, parcours, rendus, fichiers de code). |
 | 2 | Réalisé : le flux de changement vit dans `01-system`. Un rendu charge `../tokens.css` au lieu de porter les valeurs ; la sous-commande `tokens` régénère ce seul fichier, et le skill réécrit le balisage des rendus touchés, écrans compris, d'après le rapport d'impact. Il s'arrête en disant qu'une review est attendue, sans nommer le skill qui la conduit. |
 | 2 | Réalisé : `#Export` est facultatif pour toute techno, un composant Vue, Svelte ou Astro se lie par son chemin et sa version, sans cas particulier. Les couleurs d'un fichier sans lecteur propre sont cherchées dans ses chaînes, et une couleur écrite en nombres dans son code : un type de couleur (`Color`, `UIColor`) ou le `#colorLiteral` de Swift appelé avec un nombre en premier, nommé ou non, ou une propriété de couleur valant un nombre hexadécimal. Une ressource XML, comme le `colors.xml` d'Android, est lue en entier. Une constante de palette (`Colors.blue`) est un nom, comme un token : seule la résolution du nom l'en distinguerait, elle n'est pas trouvée. |
+| 3 | Le pilote du cas vierge est une app de respiration, web et mobile : elle éprouve les tokens de mouvement et de durée, la réduction des animations, des états riches et un thème sombre, qu'aucun pilote existant ne porte. Gouvernail a déjà ses propres contrôles de tokens et aucune couleur en dur : il éprouve l'extraction facile, pas le cas d'une app qui dérive. |
 | 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
 | 3 | La vitrine bascule thème et plateforme sur son `<html>` par un sélecteur, et compare deux combinaisons dans deux cadres côte à côte ; son propre habillage est neutre, seuls les rendus portent les tokens du projet. |
 | 3 | La review couvre aussi les composants, pour qu'un composant puisse passer à validé. |
