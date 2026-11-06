@@ -213,8 +213,9 @@ describe("rebuilding an owned machine plugin", () => {
       await symlink(sibling, newPath);
       await expect(
         f.updater.planUpdate(f.plugin, "opencode", "/project", f.logger, true)
-      ).rejects.toThrow(/symlink/);
+      ).rejects.toThrow(newPath);
       expect(await readlink(newPath)).toBe(sibling);
+      expect(await readFile(sibling, "utf8")).toBe(f.content);
     }
   );
 
@@ -228,13 +229,14 @@ describe("rebuilding an owned machine plugin", () => {
       f.files.push(
         new InstallationFile({ relativePath, content: f.content, hash: f.hasher.hash(f.content) })
       );
-      await writeFile(sibling, f.content);
+      await writeFile(sibling, "user content\n");
       await rm(f.target);
       const plan = await f.updater.planUpdate(f.plugin, "opencode", "/project", f.logger, true);
       if (!plan) throw new Error("expected rebuild plan");
       await symlink(sibling, newPath);
-      await expect(f.updater.applyUpdate(plan, f.logger)).rejects.toThrow(/symlink/);
+      await expect(f.updater.applyUpdate(plan, f.logger)).rejects.toThrow(newPath);
       expect(await readlink(newPath)).toBe(sibling);
+      expect(await readFile(sibling, "utf8")).toBe("user content\n");
     }
   );
 
