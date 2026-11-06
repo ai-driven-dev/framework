@@ -51,7 +51,7 @@ When you own the overall flow, fan out genuinely independent subtasks to agents 
 
 | Responsibility | Agent |
 | --- | --- |
-| Answer a scoped codebase question with sources | `explorer` |
+| Investigate a scoped question using relevant sources | `explorer` |
 | Implement assigned work and verify it | `executor` |
 | Confirm the outcome meets its acceptance criteria | `validator` |
 | Review quality, coherence, and needless complexity | `reviewer` |
