@@ -126,11 +126,15 @@ Counts the tokens of Claude Code and Codex sessions, locally. Details: [FAQ](../
 | `opencode`, `kilo` | Copies the plugins' skills and agents into `~/.config/opencode/` or `~/.config/kilo/` |
 | `cursor` | Copies the plugins into `~/.cursor/plugins/local/`; Cursor must allow local plugin imports |
 
+Files without recorded AIDD ownership are refused even when their content matches. This includes
+copies from an older `make reload`, or files left by an interrupted install before ownership was
+saved. Move the named files aside, then rerun the original setup or reload command.
+
 Copilot needs a CLI whose `plugin marketplace list` accepts `--json` (verified with 1.0.98; 1.0.83 refuses it).
 
 Native activation needs the tool's executable on `PATH`.
 Without it, registration succeeds with a warning and activation stays unrun.
-Install it, then run `aidd sync --global`.
+Install it, then rerun the original `aidd setup --global` command with its `--ide` and `--plugins` selections.
 
 ```sh
 aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes

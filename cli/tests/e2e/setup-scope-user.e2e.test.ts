@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
-import { readdir, readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { environmentWithoutGitVariables } from "../../src/runtime/git/git-environment.js";
@@ -69,6 +69,43 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
       expect(clean.exitCode).toBe(0);
       await expect(readFile(agent, "utf-8")).rejects.toThrow();
       expect(await gitStatusPorcelain(projectDir)).toBe("");
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("preserves a pre-existing identical agent through refused setup and global clean", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-unowned-agent");
+    try {
+      const args = [
+        "setup",
+        "--global",
+        "--source",
+        "local",
+        "--path",
+        FRAMEWORK_REAL_PATH,
+        "--ide",
+        "opencode",
+        "--plugins",
+        "aidd-dev",
+        "--yes",
+      ];
+      expect((await runCli(args, projectDir, fakeHome)).exitCode).toBe(0);
+      const agent = join(fakeHome, ".config", "opencode", "agents", "aidd-dev-reviewer.md");
+      const content = await readFile(agent, "utf-8");
+      expect((await runCli(["clean", "--global", "--force"], projectDir, fakeHome)).exitCode).toBe(
+        0
+      );
+      await mkdir(dirname(agent), { recursive: true });
+      await writeFile(agent, content);
+
+      const refused = await runCli(args, projectDir, fakeHome);
+      expect(refused.exitCode).toBe(1);
+      expect(refused.stderr).toContain("already exists and was not installed by aidd");
+      expect((await runCli(["clean", "--global", "--force"], projectDir, fakeHome)).exitCode).toBe(
+        0
+      );
+      expect(await readFile(agent, "utf-8")).toBe(content);
     } finally {
       await cleanup();
     }

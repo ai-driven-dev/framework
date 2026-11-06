@@ -598,7 +598,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]).toEqual(machineBefore);
   });
 
-  it("takes over a new built file an interrupted run already wrote, byte for byte", async () => {
+  it("refuses an untracked identical file without changing its bytes or claiming it", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "cursor");
     const registry = await makeRegistry();
@@ -607,15 +607,19 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     deps.fs.setFile(join("/built/cursor/plugins", newRelativePath), "# Built v2\n");
     deps.fs.setFile(join(USER_PLUGINS_DIR, newRelativePath), "# Built v2\n");
 
-    await makeUpdateUseCase(deps, registry).execute({
-      toolIds: ["cursor"],
-      projectRoot: PROJECT_ROOT,
-      scope: "user",
-    });
+    const before = deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0];
+    const savesBefore = deps.userManifestRepo.saveCount;
+    await expect(
+      makeUpdateUseCase(deps, registry).execute({
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).rejects.toThrow(/new.md.*untracked|untracked.*new.md/);
 
-    expect(
-      deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.has(newRelativePath)
-    ).toBe(true);
+    expect(deps.fs.getFile(join(USER_PLUGINS_DIR, newRelativePath))).toBe("# Built v2\n");
+    expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
+    expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]).toEqual(before);
   });
 
   it("preflights a Cursor user-file collision before any selected native host update", async () => {

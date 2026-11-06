@@ -282,6 +282,62 @@ if (args[0] !== "setup") process.exit(2);
 ${setupBody}`);
 }
 
+for (const localBinary of [false, true]) {
+  test(`managed OpenCode reload uses its helper ${localBinary ? "instead of the local binary" : "without a local binary or build"}`, () => {
+    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-managed-"));
+    try {
+      const fakeBin = join(root, "bin"), home = join(root, "home");
+      mkdirSync(fakeBin);
+      executable(join(fakeBin, "aidd-opencode-reload"), 'printf \'%s\\n\' "$*" > "$HOME/managed-call"; echo managed:ok');
+      if (localBinary) executable(join(fakeBin, "opencode"), "exit 99");
+      const result = runSync(fakeBin, home, []);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(readFileSync(join(home, "managed-call"), "utf8"), "\n");
+      assert.match(result.stdout, /reload opencode\s+managed:ok/);
+      assert.doesNotMatch(result.stdout, /global install|nothing to install/);
+      assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  });
+}
+
+test("managed OpenCode reload leaves other hosts on the global install path", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-managed-mixed-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    const source = fixture(home);
+    recordingCli(source);
+    executable(join(fakeBin, "codex"), "exit 0");
+    executable(join(fakeBin, "opencode"), "exit 99");
+    executable(join(fakeBin, "aidd-opencode-reload"), 'echo managed:ok');
+    const result = runSync(fakeBin, home, []);
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /global install\s+ok \(codex\)/);
+    assert.match(result.stdout, /reload opencode\s+managed:ok/);
+    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --yes\n$/);
+    assert.match(readFileSync(join(home, ".codex/AGENTS.md"), "utf8"), /Use available agents when useful/);
+    assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("a failed managed OpenCode reload stops before changing other hosts or instructions", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-managed-failed-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    recordingCli(fixture(home));
+    executable(join(fakeBin, "codex"), 'echo changed > "$HOME/host-calls"');
+    executable(join(fakeBin, "aidd-opencode-reload"), 'echo "managed source refused" >&2; exit 7');
+    const result = runSync(fakeBin, home, []);
+    assert.equal(result.status, 7, result.stderr);
+    assert.match(result.stderr, /managed source refused/);
+    assert.doesNotMatch(result.stdout, /Done\.|global instructions|nothing to install/);
+    assert.equal(existsSync(join(home, "host-calls")), false);
+    assert.equal(existsSync(join(home, "aidd-calls")), false);
+    assert.equal(existsSync(join(home, ".config/opencode/AGENTS.md")), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test("every host takes this checkout through aidd setup --global, afresh", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-"));
   try {

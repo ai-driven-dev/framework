@@ -630,7 +630,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       toolId,
       [
         ...new Set([
-          ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias),
+          ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
           ...requested,
         ]),
       ],
@@ -782,7 +782,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    hostNameByAlias: ReadonlyMap<string, string>
+    hostNameByAlias: ReadonlyMap<string, string>,
+    scope: MarketplaceScope
   ): string[] {
     const byName = new Map(marketplaces.map((m) => [m.name, m]));
     const refs: string[] = [];
@@ -792,6 +793,18 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const hostName = hostNameByAlias.get(marketplace.name);
       if (hostName === undefined) continue;
       refs.push(`${plugin.name}@${hostName}`);
+    }
+    // Native-only global installs record successful activations, not copied plugin files.
+    // Claims also recover a selection an older sync dropped from its projection.
+    if (scope === "user") {
+      const native = manifest.getNativeRegistrations(toolId);
+      const provenHosts = [...hostNameByAlias.values()];
+      for (const ref of [
+        ...(native?.pluginRefs ?? []),
+        ...(native?.pluginClaims ?? []).map((claim) => claim.ref),
+      ]) {
+        if (provenHosts.some((hostName) => ref.endsWith(`@${hostName}`))) refs.push(ref);
+      }
     }
     return refs;
   }

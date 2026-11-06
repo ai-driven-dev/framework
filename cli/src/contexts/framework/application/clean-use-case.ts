@@ -264,7 +264,8 @@ export class CleanUseCase {
           this.hostPluginRegistries.get(toolId),
           registration.hostName,
           new Set([...registrations.pluginRefs, ...machineRefs]),
-          projectRoot
+          projectRoot,
+          toolId
         );
       }
     }
@@ -596,7 +597,8 @@ export class CleanUseCase {
         reader,
         sourceRegistration.hostName,
         new Set([...registrations.pluginRefs, ...machineRefs]),
-        projectRoot
+        projectRoot,
+        toolId
       );
     } catch (error) {
       this.logger.warn(`${binary}: '${ref}' left enabled; ${String(error)}`);

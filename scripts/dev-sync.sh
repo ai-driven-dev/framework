@@ -2,6 +2,7 @@
 # (Re)install every plugin into Claude, Codex, OpenCode, Kilo, Copilot and Cursor from THIS
 # checkout, the way a user does: `aidd setup --global` with this checkout as the framework
 # source, so the reload exercises the shipped machine-wide install.
+# A managed OpenCode host delegates to its fixed-purpose reload helper instead.
 #
 # NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
 # whose CLI is absent is skipped, and the first run needs network.
@@ -41,6 +42,7 @@ CURSOR_INSTRUCTIONS="${CURSOR_INSTRUCTIONS:-$HOME/.cursor/rules/aidd-agents.mdc}
 HAVE_CODEX=0;  command -v codex  >/dev/null 2>&1 && HAVE_CODEX=1
 HAVE_CLAUDE=0; command -v claude >/dev/null 2>&1 && HAVE_CLAUDE=1
 HAVE_OPENCODE=0; command -v opencode >/dev/null 2>&1 && HAVE_OPENCODE=1
+HAVE_MANAGED_OPENCODE=0; command -v aidd-opencode-reload >/dev/null 2>&1 && HAVE_MANAGED_OPENCODE=1
 HAVE_KILO=0; command -v kilo >/dev/null 2>&1 && HAVE_KILO=1
 HAVE_COPILOT=0; command -v copilot >/dev/null 2>&1 && HAVE_COPILOT=1
 HAVE_CURSOR=0
@@ -96,8 +98,8 @@ hosts=()
 [ "$HAVE_COPILOT" = 0 ] || hosts+=(copilot)
 [ "$HAVE_CURSOR" = 0 ] || hosts+=(cursor)
 [ "$HAVE_KILO" = 0 ] || hosts+=(kilo)
-[ "$HAVE_OPENCODE" = 0 ] || hosts+=(opencode)
-if [ "${#hosts[@]}" -eq 0 ]; then
+[ "$HAVE_OPENCODE" = 0 ] || [ "$HAVE_MANAGED_OPENCODE" = 1 ] || hosts+=(opencode)
+if [ "${#hosts[@]}" -eq 0 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
   echo "No supported host installation found - nothing to install."; exit 0
 fi
 
@@ -106,23 +108,32 @@ for d in "$FW"/plugins/*/; do
   [ -f "$d.claude-plugin/plugin.json" ] && targets+=("$(basename "$d")")
 done
 
-printf '%-22s' "global install"
-release_native_plugins
-# From HOME, not this checkout: its own .claude/settings.json enables the plugins at project
-# scope, which the host CLIs report and setup --global would refuse as refs it does not own.
-output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
-  --plugins all --yes 2>&1)" || {
-  echo "FAIL"; printf '%s\n' "$output" >&2
-  echo "aidd setup --global failed for ${hosts[*]}; their plugins were released, so rerun make reload once fixed." >&2; exit 1
-}
-echo "ok ($(IFS=,; echo "${hosts[*]}"))"
-# A warning leaves setup at exit 0: what it skipped must stay visible.
-printf '%s\n' "$output" | sed 's/^/  /'
+if [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
+  printf '%-22s' "reload opencode"
+  aidd-opencode-reload
+fi
+
+if [ "${#hosts[@]}" -gt 0 ]; then
+  printf '%-22s' "global install"
+  release_native_plugins
+  # From HOME, not this checkout: its own .claude/settings.json enables the plugins at project
+  # scope, which the host CLIs report and setup --global would refuse as refs it does not own.
+  output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
+    --plugins all --yes 2>&1)" || {
+    echo "FAIL"; printf '%s\n' "$output" >&2
+    echo "aidd setup --global failed for ${hosts[*]}; their plugins were released, so rerun make reload once fixed." >&2; exit 1
+  }
+  echo "ok ($(IFS=,; echo "${hosts[*]}"))"
+  # A warning leaves setup at exit 0: what it skipped must stay visible.
+  printf '%s\n' "$output" | sed 's/^/  /'
+fi
 
 instructions=()
 [ "$HAVE_CODEX" = 0 ] || instructions+=(codex "$CODEX_INSTRUCTIONS")
 [ "$HAVE_CLAUDE" = 0 ] || instructions+=(claude "$CLAUDE_INSTRUCTIONS")
-[ "$HAVE_OPENCODE" = 0 ] || instructions+=(opencode "$OPENCODE_INSTRUCTIONS")
+if [ "$HAVE_OPENCODE" = 1 ] || [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
+  instructions+=(opencode "$OPENCODE_INSTRUCTIONS")
+fi
 [ "$HAVE_COPILOT" = 0 ] || instructions+=(copilot "$COPILOT_INSTRUCTIONS")
 [ "$HAVE_CURSOR" = 0 ] || instructions+=(cursor "$CURSOR_INSTRUCTIONS")
 if [ "${#instructions[@]}" -gt 0 ]; then

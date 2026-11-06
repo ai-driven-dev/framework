@@ -45,8 +45,8 @@ export async function readGlobalPluginFiles(
 /**
  * Refuses a machine-scope write before any byte lands: every path must stay a normalized relative
  * path, its nearest existing parent must resolve strictly inside the tool's user directory, and a
- * file already there that this plugin does not own is never overwritten unless it already holds
- * the same bytes. Creates the user directory itself when the host has not yet.
+ * file already there that this plugin does not own is never overwritten. Creates the user
+ * directory itself when the host has not yet.
  */
 export async function assertGlobalFilesWritable(
   fs: FileReader & FileWriter,
@@ -80,7 +80,6 @@ export async function assertGlobalFilesWritable(
     if (plugin?.files.has(rel) === true) continue;
     const target = join(boundary, rel);
     if (!(await fs.fileExists(target))) continue;
-    if ((await fs.readFileHash(target)).value === file.hash.value) continue;
     throw new Error(
       `${toolId}: '${target}' already exists and was not installed by aidd; move or delete it, then rerun.`
     );
