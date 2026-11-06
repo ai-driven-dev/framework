@@ -32,7 +32,7 @@ sequenceDiagram
   participant Main as 🤖 Main agent (orchestrator)
   User->>Main: 💬 "Fix the typo in README.md."
   Main->>Main: 📝 Update README.md and check the diff.
-  Main-->>User: 💬 "Fixed the typo in README.md."
+  Main-->>User: ↩️ "Fixed the typo in README.md."
 ```
 
 ### Measuring delegation
@@ -70,46 +70,48 @@ config:
 sequenceDiagram
   actor User as 👤 User
   participant Main as 🤖 Main agent
-  participant ExplorerA as 🤖 Explorer A · new
-  participant ExplorerB as 🤖 Explorer B · reused
-  participant Executor as 🤖 Executor C
-  participant Validator as 🤖 Validator D
-  participant Reviewer as 🤖 Reviewer E
+  participant ExplorerA as 🤖 explorer.md · A · new
+  participant ExplorerB as 🤖 explorer.md · B · reused
+  participant Executor as 🤖 executor.md · C
+  participant Validator as 🤖 validator.md · D
+  participant Reviewer as 🤖 reviewer.md · E
 
   Note over Main: 📖 AGENTS.md loaded
   User->>Main: 💬 "Allow + in signup emails."
   Main->>Main: ⚙️ Choose agents and models
   par Independent exploration
-    Main->>ExplorerA: 🧰 Spawn: check the code
-    ExplorerA-->>Main: 💬 "+ is rejected."
+    Main->>ExplorerA: 🧰 Spawn · 💬 "Check the code."
+    ExplorerA-->>Main: ↩️ "+ is rejected."
   and
-    Main->>ExplorerB: 🧰 Reuse: check the policy
-    ExplorerB-->>Main: 💬 "+ is allowed."
+    Main->>ExplorerB: 🧰 Reuse · 💬 "Check the policy."
+    ExplorerB-->>Main: ↩️ "+ is allowed."
   end
-  Main->>Executor: 🧰 Spawn: fix and test validation
-  Executor->>Executor: 📝 Fix, then 🧪 test
-  Executor-->>Main: 💬 "COMPLETE, test passed."
-  Main->>Validator: 🧰 Spawn: verify the result
+  Main->>Executor: 🧰 Spawn · 💬 "Fix and test validation."
+  Executor->>Executor: 📝 Fix validation
+  Executor->>Executor: 🧰 /aidd-dev:06-test
+  Executor->>Executor: ↩️ "Test passed."
+  Executor-->>Main: ↩️ "COMPLETE."
+  Main->>Validator: 🧰 Spawn · 💬 "Verify the result."
   alt Validation passes
-    Validator-->>Main: 💬 "PASS."
-    Main->>Reviewer: 🧰 Spawn: review the change
+    Validator-->>Main: ↩️ "PASS."
+    Main->>Reviewer: 🧰 Spawn · 💬 "Review the change."
     Reviewer->>Reviewer: 🧰 Run /aidd-dev:05-review
     alt Review is clear
-      Reviewer-->>Main: 💬 "No actionable findings."
-      Main-->>User: 💬 "Fixed. Test passed."
+      Reviewer-->>Main: ↩️ "No actionable findings."
+      Main-->>User: ↩️ "Fixed. Test passed."
     else Review finds an issue
-      Reviewer-->>Main: 💬 "Changes needed."
-      Main->>Executor: 🧰 Reuse: repair and test
-      Executor-->>Main: 💬 "Repair complete."
-      Main->>Validator: 🧰 Reuse: recheck
-      Validator-->>Main: 💬 "PASS."
-      Main->>Reviewer: 🧰 Reuse: review the repair
-      Reviewer-->>Main: 💬 "No actionable findings."
-      Main-->>User: 💬 "Fixed and rechecked."
+      Reviewer-->>Main: ↩️ "Changes needed."
+      Main->>Executor: 🧰 Reuse · 💬 "Repair and test."
+      Executor-->>Main: ↩️ "Repair complete."
+      Main->>Validator: 🧰 Reuse · 💬 "Recheck."
+      Validator-->>Main: ↩️ "PASS."
+      Main->>Reviewer: 🧰 Reuse · 💬 "Review the repair."
+      Reviewer-->>Main: ↩️ "No actionable findings."
+      Main-->>User: ↩️ "Fixed and rechecked."
     end
   else Validation fails or is blocked
-    Validator-->>Main: 💬 "FAIL or BLOCKED."
-    Main-->>User: 💬 "Verification incomplete."
+    Validator-->>Main: ↩️ "FAIL or BLOCKED."
+    Main-->>User: ↩️ "Verification incomplete."
   end
 ```
 
