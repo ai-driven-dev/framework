@@ -70,7 +70,11 @@ afterEach(async () => {
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
 async function captured(file: string, project: string): Promise<readonly unknown[]> {
-  const text = (await readFile(join(PAYLOADS, file), "utf8")).replaceAll(SCRUBBED_PROJECT, project);
+  // Replaced inside the JSON text, so the folder goes in JSON-escaped: a Windows path's backslashes.
+  const text = (await readFile(join(PAYLOADS, file), "utf8")).replaceAll(
+    SCRUBBED_PROJECT,
+    JSON.stringify(project).slice(1, -1)
+  );
   return (JSON.parse(text) as { samples: { payload: unknown }[] }).samples.map((s) => s.payload);
 }
 
