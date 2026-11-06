@@ -17,7 +17,6 @@ import type {
 } from "../../tools/domain/models/plugin-install-notice.js";
 import type { ToolConfig } from "../../tools/domain/registry.js";
 import { isAiTool } from "../../tools/domain/registry.js";
-import { convertHooksFormat } from "./formats/cursor-hooks.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
 import type { PluginComponentFile, PluginDistribution } from "./plugin-distribution.js";
 import type { PluginTranslationSkip, ReadonlySkipList } from "./plugin-translation-skip.js";
@@ -139,10 +138,11 @@ export class PluginContentTranslator {
     for (const file of dist.files) {
       const translated = this.translateFile(file, tool);
       if (translated === null) continue;
-      const hooked = this.maybeConvertHooks(file.relativePath, translated.content, tool);
       // Prose is rewritten, an artefact is carried byte for byte: a tool's own rewrite leaving
       // a script intact is luck rather than a guarantee.
-      const rewritten = isProse(file.relativePath) ? tool.rewriteContent(hooked) : hooked;
+      const rewritten = isProse(file.relativePath)
+        ? tool.rewriteContent(translated.content)
+        : translated.content;
       // The plugin-root variable is a path, not prose: a hook manifest and an mcp manifest both
       // name one, in JSON. Gating it on prose left every tool but Claude installing a hook that
       // points at a variable its own runtime never expands.
@@ -195,11 +195,6 @@ export class PluginContentTranslator {
     return rewritePluginRootToken(content, pluginRootToken);
   }
 
-  private maybeConvertHooks(sourcePath: string, content: string, tool: AiTool<HasPlugins>): string {
-    if (sourcePath !== "hooks/hooks.json") return content;
-    return convertHooksFormat(content, tool.capabilities.plugins.hooksContentFormat);
-  }
-
   private translateFile(
     file: PluginComponentFile,
     tool: AiTool<HasPlugins>
@@ -220,7 +215,7 @@ export class PluginContentTranslator {
       const manifestDir = parentDirOf(cap.hooksRelativePath) || PLUGIN_HOOKS_DIR;
       return {
         relativePath: `${manifestDir}/${pathBelow(PLUGIN_HOOKS_DIR, file.relativePath)}`,
-        content: file.content,
+        content: cap.hookScript(file.relativePath, file.content),
         verbatim: true,
       };
     }
@@ -272,7 +267,8 @@ export class PluginContentTranslator {
   // it is never delivered here. Everything else under hooks/ is carried verbatim, namespaced per
   // plugin — unless it is that loader's own plugin module, delivered flat and renamed instead.
   private flatHooksFiles(dist: PluginDistribution, tool: AiTool<HasPlugins>): InstallationFile[] {
-    const { flatHooksDir, flatHooksLoaderEntry, flatHooksBridge } = tool.capabilities.plugins;
+    const { flatHooksDir, flatHooksLoaderEntry, flatHooksBridge, hookScript } =
+      tool.capabilities.plugins;
     if (flatHooksDir === null) return [];
     const scripts = dist.components.hooks
       .filter((file) => file.relativePath !== `${PLUGIN_HOOKS_DIR}/hooks.json`)
@@ -284,7 +280,7 @@ export class PluginContentTranslator {
             dist.manifest.name,
             file.relativePath
           ),
-          file.content
+          hookScript(file.relativePath, file.content)
         )
       );
     const bridge = this.flatHooksBridgeFile(dist, flatHooksBridge);

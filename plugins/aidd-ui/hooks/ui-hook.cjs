@@ -121,7 +121,9 @@ function atSessionStart(project) {
   const problems = problemsOf(project);
   if (!problems.length) return EXIT_SILENT;
   const errors = errorsOf(problems);
-  process.stdout.write(`${[`aidd-ui: ${errors.length} errors, ${problems.length - errors.length} warnings`, ...capped(project, errors)].join("\n")}\n`);
+  const counted = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
+  const header = `aidd-ui: ${counted(errors.length, "error")}, ${counted(problems.length - errors.length, "warning")}`;
+  process.stdout.write(`${[header, ...capped(project, errors)].join("\n")}\n`);
   return EXIT_SILENT;
 }
 

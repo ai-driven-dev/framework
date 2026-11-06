@@ -1,0 +1,146 @@
+## out-marketplace/plugins/aidd-context/.cursor-plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
+## out-marketplace/plugins/aidd-context/hooks/hooks.json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory file"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+
+## out-marketplace/plugins/aidd-context/hooks/lib/common-rules.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/host.cjs
+script, identical to the host adapter host-cursor.cjs
+
+## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/memory.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/.cursor-plugin/plugin.json
+{
+  "hooks": "./hooks/hooks.json"
+}
+
+## out-marketplace/plugins/aidd-telemetry/hooks/catch-up.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/hooks.json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/session-start.cjs",
+            "timeout": 10,
+            "statusMessage": "AIDD Telemetry: carry Claude session task"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/catch-up.cjs",
+            "async": true,
+            "timeout": 120,
+            "statusMessage": "AIDD Telemetry: update measurement ledger"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CURSOR_PLUGIN_ROOT}/hooks/prompt-gate.cjs",
+            "timeout": 30,
+            "statusMessage": "AIDD Telemetry: check task declaration"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/binding.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/consent.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/context.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/git.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/presence.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/lib/tool.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-telemetry/hooks/session-start.cjs
+script, identical to the plugin source

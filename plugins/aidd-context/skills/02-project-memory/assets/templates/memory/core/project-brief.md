@@ -1,29 +1,21 @@
 # Project Brief
 
-What this project is, the problem it solves, and its domain language. The non-derivable "why", not the "how".
+## Purpose
 
-## What it is
-
-- <One or two lines: what the project does and for whom>
-
-## Why it exists
-
-- <The problem it solves, the goal it serves>
+- {{What does the project do, for whom, and why does it exist?}}
 
 ## Domain language
 
-The terms a contributor must know to read the code.
-
 | Term | Meaning |
-| ---- | ------- |
-| <term> | <one line> |
+| --- | --- |
+| {{a word a contributor must know}} | {{what it means here, in one line}} |
 
 ## Key features
 
-- <The main capabilities, one line each. The macro list, not a spec>
+| Feature | Entry |
+| --- | --- |
+| {{a capability the product offers, one line}} | {{where it starts: a command, a route or a skill}} |
 
-<!--
-Capture: the purpose, the domain vocabulary, the macro feature list.
-Skip: detailed specs and technical design. Personas and user journeys only if it is a user-facing product.
-Remove this comment when filled.
--->
+## Out of scope
+
+- {{What does the project deliberately not do, so an agent does not add it?}}

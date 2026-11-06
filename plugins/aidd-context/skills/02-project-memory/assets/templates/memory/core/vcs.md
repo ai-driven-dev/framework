@@ -1,31 +1,22 @@
 # VCS
 
-The version-control conventions this project follows: branches, commits, and the platform.
+## Platform
 
-## Setup
-
-- Main branch: `<main, master, trunk>`
-- Platform: `<github, gitlab, bitbucket>`
-- Tickets: `<tracker, and how to read one>`
-- Hooks: `<what runs on commit, what runs on push>`
+- Platform: {{Which platform and repository hold the code, and which CLI does an agent use to reach it?}}
 
 ## Branches
 
-- Format: `<type/ticket-short-description>`
-- Types in use: `<feat, fix, chore, ...>`
+- {{Which branch holds production, which receives day-to-day work, and how are branches named?}}
 
 ## Commits
 
-- Convention: `<conventional commits, or the project's own>`
-- Format: `<type(scope): description>`
-- Rules: `<imperative mood, lowercase, max length>`
+- {{Which commit standard does the project follow, and where does it deviate?}}
 
-## Commit Strategy
+## Pull requests
 
-AI should auto commit: `never|after phase|after feature|after task done|post-tests`
+- {{Which base does a pull request target, how is it merged, and how are stacked ones handled?}}
 
-<!--
-Capture: the project's actual VCS choices. If they follow a standard, name it and point to the doc.
-Skip: re-explaining a standard in full. Capture the specifics and deviations.
-Remove this comment when filled.
--->
+## Agent may
+
+- AI should auto commit: {{never, after phase, after feature, after task done, or post-tests?}}
+- {{What else may an agent do alone: push, open a pull request, merge?}}

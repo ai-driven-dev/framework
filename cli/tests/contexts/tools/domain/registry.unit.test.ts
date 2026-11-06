@@ -124,6 +124,7 @@ describe("what a tool's plugin capability declares about activation", () => {
               unmerge: () => "",
               scriptPath: () => "",
               scriptDir: () => "",
+              runsPluginScript: () => false,
             },
           }),
         },

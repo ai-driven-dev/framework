@@ -73,7 +73,7 @@ describe("removeProjectHooks", () => {
       const legacy = InstalledPlugin.fromJSON({ ...plugin().toJSON(), projectHooks: undefined });
 
       await expect(removeProjectHooks(fs, legacy, "cursor", PROJECT_ROOT)).rejects.toThrow(
-        `Cursor project hooks for '${PLUGIN}' have an unproven legacy install digest; detach refused.`
+        `Project hooks for '${PLUGIN}' have an unproven legacy install digest; detach refused.`
       );
 
       expect(fs.getFile(HOOKS_PATH)).toBe(present === "entries" ? content : undefined);
@@ -97,7 +97,7 @@ describe("removeProjectHooks", () => {
       });
 
       await expect(removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT)).rejects.toThrow(
-        `Cursor hook script '.cursor/hooks/${PLUGIN}/pre.js' has an unproven install digest; detach refused.`
+        `Hook script '.cursor/hooks/${PLUGIN}/pre.js' has an unproven install digest; detach refused.`
       );
 
       expect(fs.getFile(HOOKS_PATH)).toBe(content);
@@ -128,7 +128,7 @@ describe("removeProjectHooks", () => {
     });
 
     await expect(removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT)).rejects.toThrow(
-      `Cursor hook script path '${path}' has unproven provenance; detach refused.`
+      `Hook script path '${path}' has unproven provenance; detach refused.`
     );
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
@@ -139,6 +139,9 @@ describe("removeProjectHooks", () => {
     '{ "version": 1, "hooks": {} }',
     '{ "version": 1 }',
     JSON.stringify({ hooks: { preToolUse: [{ command: 42 }, entry(OTHER)] } }),
+    JSON.stringify({
+      hooks: { preToolUse: [{ command: `node ./x/.cursor/hooks/${PLUGIN}/mine.sh` }] },
+    }),
   ])("preserves a hooks file with no contribution byte-for-byte: %s", async (content) => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 

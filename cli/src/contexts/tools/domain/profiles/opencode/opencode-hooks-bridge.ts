@@ -19,47 +19,16 @@
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
  */
 
-import type { PluginHooksShape, PluginMatcherGroup } from "../../formats/plugin-hooks-shape.js";
-
-interface ParsedHookCall {
-  readonly script: string;
-  readonly args: readonly string[];
-}
-
-interface ParsedPostToolUseCall extends ParsedHookCall {
-  readonly matcher?: string;
-}
+import {
+  type BridgeHookCall,
+  bridgeHookCalls,
+  type PluginHooksShape,
+} from "../../formats/plugin-hooks-shape.js";
 
 interface OpencodeHookTable {
-  readonly sessionStart: readonly ParsedHookCall[];
-  readonly stop: readonly ParsedHookCall[];
-  readonly postToolUse: readonly ParsedPostToolUseCall[];
-}
-
-// Only a command this generator can actually replay: `node ${CLAUDE_PLUGIN_ROOT}/hooks/<rel>
-// [args...]`. Anything else is a shape only Claude's own settings.json target ever runs, and is
-// dropped here rather than guessed at.
-const COMMAND_PATTERN = /^node\s+\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/(\S+)(.*)$/;
-
-function parseCommand(command: string | undefined): ParsedHookCall | null {
-  if (typeof command !== "string") return null;
-  const match = COMMAND_PATTERN.exec(command.trim());
-  if (!match) return null;
-  const [, script, rest] = match;
-  const args = rest.trim().length > 0 ? rest.trim().split(/\s+/) : [];
-  return { script, args };
-}
-
-function parseGroups(groups: readonly PluginMatcherGroup[] | undefined): ParsedPostToolUseCall[] {
-  const calls: ParsedPostToolUseCall[] = [];
-  for (const group of groups ?? []) {
-    for (const item of group.hooks ?? []) {
-      const parsed = parseCommand(item.command);
-      if (parsed === null) continue;
-      calls.push(group.matcher ? { ...parsed, matcher: group.matcher } : parsed);
-    }
-  }
-  return calls;
+  readonly sessionStart: readonly BridgeHookCall[];
+  readonly stop: readonly BridgeHookCall[];
+  readonly postToolUse: readonly BridgeHookCall[];
 }
 
 /** A plugin's raw hooks.json — still carrying `${CLAUDE_PLUGIN_ROOT}`, since the generated
@@ -70,9 +39,9 @@ export function parseHooksJsonForBridge(rawHooksJson: string): OpencodeHookTable
   const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
   const hooks = parsed.hooks ?? {};
   return {
-    sessionStart: parseGroups(hooks.SessionStart),
-    stop: parseGroups(hooks.Stop),
-    postToolUse: parseGroups(hooks.PostToolUse),
+    sessionStart: bridgeHookCalls(hooks.SessionStart),
+    stop: bridgeHookCalls(hooks.Stop),
+    postToolUse: bridgeHookCalls(hooks.PostToolUse),
   };
 }
 
@@ -87,7 +56,7 @@ function toIdentifier(plugin: string): string {
   return `${pascal}Hooks`;
 }
 
-function callTableLiteral(calls: readonly ParsedHookCall[]): string {
+function callTableLiteral(calls: readonly BridgeHookCall[]): string {
   return JSON.stringify(calls);
 }
 

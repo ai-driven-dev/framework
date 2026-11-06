@@ -297,6 +297,7 @@ describe("PluginsCapability base directory resolution", () => {
       unmerge: () => "",
       scriptPath: () => "",
       scriptDir: () => "",
+      runsPluginScript: () => false,
     };
     const message = "projectHooksFormat is required exactly when hooksDestination is 'project'.";
 
@@ -322,7 +323,7 @@ describe("PluginsCapability base directory resolution", () => {
 });
 
 describe("PluginsCapability defaults each mode falls back to", () => {
-  it("delivers no mcp, lands hooks in the plugin, and reads matcher-shaped hooks unless a native tool says otherwise", () => {
+  it("delivers no mcp and lands hooks in the plugin unless a native tool says otherwise", () => {
     const cap = new PluginsCapability({
       mode: "native",
       acceptsHooks: true,
@@ -330,14 +331,10 @@ describe("PluginsCapability defaults each mode falls back to", () => {
       pluginManifestRelativePath: null,
     });
 
-    expect([cap.acceptsMcp, cap.hooksDestination, cap.hooksContentFormat]).toStrictEqual([
-      false,
-      "plugin",
-      "matchers",
-    ]);
+    expect([cap.acceptsMcp, cap.hooksDestination]).toStrictEqual([false, "plugin"]);
   });
 
-  it("fixes the same three answers for a flat tool", () => {
+  it("fixes the same two answers for a flat tool", () => {
     const cap = new PluginsCapability({
       mode: "flat",
       acceptsHooks: true,
@@ -345,21 +342,16 @@ describe("PluginsCapability defaults each mode falls back to", () => {
       flatNamespacePrefix: "aidd-",
     });
 
-    expect([cap.acceptsMcp, cap.hooksDestination, cap.hooksContentFormat]).toStrictEqual([
-      false,
-      "plugin",
-      "matchers",
-    ]);
+    expect([cap.acceptsMcp, cap.hooksDestination]).toStrictEqual([false, "plugin"]);
   });
 
   it("accepts neither hooks nor mcp for a tool hosting no plugin at all", () => {
     const cap = new PluginsCapability({ mode: "unsupported", hooksUnsupportedReason: "none" });
 
-    expect([
-      cap.acceptsHooks,
-      cap.acceptsMcp,
-      cap.hooksDestination,
-      cap.hooksContentFormat,
-    ]).toStrictEqual([false, false, "plugin", "matchers"]);
+    expect([cap.acceptsHooks, cap.acceptsMcp, cap.hooksDestination]).toStrictEqual([
+      false,
+      false,
+      "plugin",
+    ]);
   });
 });

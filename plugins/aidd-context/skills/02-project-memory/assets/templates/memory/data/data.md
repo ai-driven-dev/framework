@@ -1,29 +1,17 @@
 # Data
 
-The data and ML side: sources, pipelines, and models.
+## Store
 
-## Sources
+- {{Which database, ORM or driver holds the data, and where do the config and the schema live?}}
 
-- <The datasets and where they come from>
+## Model
 
-## Pipeline
+- {{Which entities group together in a way the schema does not show?}}
 
-The processing stages from raw to output.
+## Conventions
 
-```mermaid
-flowchart LR
-    Source --> Process[TODO] --> Output
-```
+- {{How do migrations, seeding and naming work?}}
 
-## Models
+## Pipelines and models
 
-- <The models or experiments, where they are tracked>
-
-## Reproducibility
-
-- <Data and experiment versioning (DVC, MLflow), how a run is reproduced>
-
-<!--
-Capture: the sources, the macro pipeline, the models and reproducibility.
-Skip: per-column schemas. Keep the diagram macro. Remove this comment when filled.
--->
+- {{Which datasets, pipelines or models exist, and how is a run reproduced?}}

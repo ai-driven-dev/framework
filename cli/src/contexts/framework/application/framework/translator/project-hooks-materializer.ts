@@ -2,7 +2,10 @@ import { dirname, join } from "node:path";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
-import type { ProjectHooksFormat } from "../../../../tools/domain/capabilities/plugins-capability.js";
+import type {
+  HookScript,
+  ProjectHooksFormat,
+} from "../../../../tools/domain/capabilities/plugins-capability.js";
 import { resolvePluginsCapability } from "../../../../tools/domain/registry.js";
 import {
   type PluginComponentFile,
@@ -71,7 +74,12 @@ export class ProjectHooksMaterializer {
       projectHooksRelativePath,
       format
     );
-    const scripts = await this.writeProjectHooksScripts(dist, projectRoot, format);
+    const scripts = await this.writeProjectHooksScripts(
+      dist,
+      projectRoot,
+      format,
+      pluginsCap.hookScript
+    );
     await this.removeObsoleteScripts(previous, scripts, projectRoot);
     return {
       skipped: warnings.map(
@@ -79,7 +87,7 @@ export class ProjectHooksMaterializer {
           pluginName: dist.manifest.name,
           component: "hooks",
           toolId,
-          reason,
+          reason: `${toolId}: ${reason}`,
         })
       ),
       projectHooks: { entries, scripts },
@@ -119,13 +127,14 @@ export class ProjectHooksMaterializer {
   private async writeProjectHooksScripts(
     dist: PluginDistribution,
     projectRoot: string,
-    format: ProjectHooksFormat
+    format: ProjectHooksFormat,
+    hookScript: HookScript
   ): Promise<ReadonlyMap<string, string>> {
     const scripts = new Map<string, string>();
     for (const file of dist.components.hooks) {
       if (file.relativePath === HOOKS_MANIFEST_PATH) continue;
       const dest = format.scriptPath(dist.manifest.name, file.relativePath);
-      await this.fs.writeFile(join(projectRoot, dest), file.content);
+      await this.fs.writeFile(join(projectRoot, dest), hookScript(file.relativePath, file.content));
       scripts.set(dest, (await this.fs.readFileHash(join(projectRoot, dest))).value);
     }
     return scripts;
@@ -143,7 +152,7 @@ export class ProjectHooksMaterializer {
       if (!(await this.fs.fileExists(path))) continue;
       if ((await this.fs.readFileHash(path)).value !== digest) {
         throw new Error(
-          `Cursor hook script '${relativePath}' was edited during reinstall; removal refused.`
+          `Hook script '${relativePath}' was edited during reinstall; removal refused.`
         );
       }
       await this.fs.deleteFile(path);

@@ -1,14 +1,17 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
-import type { HooksContentFormat } from "../hooks-format.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 
 export type PluginsMode = "native" | "flat" | "unsupported";
 
+/** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
+export type HookScript = (pluginPath: string, content: string) => string;
+
+const AS_SHIPPED: HookScript = (_pluginPath, content) => content;
+
 const DEFAULT_MCP_PATH = ".mcp.json";
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
-const DEFAULT_HOOKS_FORMAT: HooksContentFormat = "matchers";
 
 /**
  * How a tool's project-scope hooks file takes one plugin's hooks and gives them back: the
@@ -26,6 +29,8 @@ export interface ProjectHooksFormat {
   readonly scriptPath: (pluginName: string, hooksRelativePath: string) => string;
   /** The directory holding one plugin's copied scripts, which nothing else writes to. */
   readonly scriptDir: (pluginName: string) => string;
+  /** Whether an entry's command runs one of the plugin's copied scripts. */
+  readonly runsPluginScript: (command: string, pluginName: string) => boolean;
 }
 
 /**
@@ -88,7 +93,6 @@ export interface NativePluginsParams {
   pluginManifestRelativePath: string | null;
   mcpRelativePath?: string;
   hooksRelativePath?: string;
-  hooksContentFormat?: HooksContentFormat;
   /** Where a delivered hook actually lands: under this capability's own plugin directory
    * (default), or merged into the project's own hooks file — the destination measured to
    * actually fire. Declared per capability, never guessed per tool. */
@@ -103,6 +107,8 @@ export interface NativePluginsParams {
   /** The variable this tool expands to the installed plugin's directory, as written in a
    * hook or MCP command. Absent means nothing is substituted. */
   pluginRootToken?: string;
+  /** See {@link PluginsCapability.hookScript}. */
+  hookScript?: HookScript;
   marketplaceSettings?: MarketplaceSettings;
   /** Enables native CLI-driven plugin activation. See {@link NativeActivation}. */
   nativeActivation?: NativeActivation;
@@ -145,6 +151,8 @@ export type FlatHooksSupport =
       /** See {@link FlatHooksBridge}. Omit when this loader triggers a plugin's hooks some
        * other way. */
       flatHooksBridge?: FlatHooksBridge;
+      /** See {@link PluginsCapability.hookScript}. */
+      hookScript?: HookScript;
     }
   | { acceptsHooks: false; hooksUnsupportedReason: string };
 
@@ -190,7 +198,6 @@ export class PluginsCapability {
   readonly acceptsMcp: boolean;
   readonly mcpRelativePath: string;
   readonly hooksRelativePath: string;
-  readonly hooksContentFormat: HooksContentFormat;
   readonly hooksDestination: "plugin" | "project";
   /** Relative to the project root, or `null` when `hooksDestination` is `"plugin"`. */
   readonly projectHooksRelativePath: string | null;
@@ -204,6 +211,9 @@ export class PluginsCapability {
   readonly flatHooksLoaderEntry: FlatHooksLoaderEntry | null;
   /** See {@link FlatHooksBridge}, or `null` when this capability declares none. */
   readonly flatHooksBridge: FlatHooksBridge | null;
+  /** A delivered hook script as this tool runs it: the tool's host adapter in place of the one
+   * the plugin ships, every other script as shipped. */
+  readonly hookScript: HookScript;
   readonly marketplaceSettings: MarketplaceSettings | null;
   readonly nativeActivation: NativeActivation | null;
   readonly translationMode: PluginTranslationMode | null;
@@ -227,13 +237,13 @@ export class PluginsCapability {
       this.acceptsMcp = params.acceptsMcp ?? false;
       this.mcpRelativePath = params.mcpRelativePath ?? DEFAULT_MCP_PATH;
       this.hooksRelativePath = params.hooksRelativePath ?? DEFAULT_HOOKS_PATH;
-      this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = params.hooksDestination ?? "plugin";
       this.projectHooksRelativePath = params.projectHooksRelativePath ?? null;
       this.projectHooksFormat = params.projectHooksFormat ?? null;
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
+      this.hookScript = params.hookScript ?? AS_SHIPPED;
       this.marketplaceSettings = params.marketplaceSettings ?? null;
       this.nativeActivation = params.nativeActivation ?? null;
       this._userPluginsDir = params.userPluginsDir;
@@ -248,12 +258,12 @@ export class PluginsCapability {
         ? (params.flatHooksLoaderEntry ?? null)
         : null;
       this.flatHooksBridge = params.acceptsHooks ? (params.flatHooksBridge ?? null) : null;
+      this.hookScript = params.acceptsHooks ? (params.hookScript ?? AS_SHIPPED) : AS_SHIPPED;
       this.hooksTrustNotice = null;
       this.pluginRootToken = null;
       this.acceptsMcp = false;
       this.mcpRelativePath = DEFAULT_MCP_PATH;
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
-      this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = "plugin";
       this.projectHooksRelativePath = null;
       this.projectHooksFormat = null;
@@ -269,12 +279,12 @@ export class PluginsCapability {
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
+      this.hookScript = AS_SHIPPED;
       this.hooksTrustNotice = null;
       this.pluginRootToken = null;
       this.acceptsMcp = false;
       this.mcpRelativePath = DEFAULT_MCP_PATH;
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
-      this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = "plugin";
       this.projectHooksRelativePath = null;
       this.projectHooksFormat = null;

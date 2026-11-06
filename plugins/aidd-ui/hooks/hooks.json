@@ -6,7 +6,8 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "AIDD UI: check design system"
           }
         ]
       }
@@ -18,7 +19,8 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "AIDD UI: check changed files"
           }
         ]
       }
@@ -29,7 +31,8 @@
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
-            "timeout": 30
+            "timeout": 30,
+            "statusMessage": "AIDD UI: verify design system before finishing"
           }
         ]
       }

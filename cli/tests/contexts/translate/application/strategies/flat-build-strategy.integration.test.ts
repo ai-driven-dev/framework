@@ -1,7 +1,8 @@
 import { basename, resolve } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   ArtifactContract,
+  ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/domain/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
@@ -9,7 +10,6 @@ import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/doma
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
-import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import {
   FlatTargetExistsError,
   FrameworkPlaceholderInPluginError,
@@ -101,10 +101,8 @@ function makeUseCase(
 ): FrameworkBuildUseCase {
   const v = validator ?? makeValidator();
   const ap = makeAssetProvider();
-  const av = new AjvSchemaValidatorAdapter();
   const strategy = new FlatBuildStrategy(
     memFs,
-    av,
     ap,
     buildCopilotFlatContract(),
     force,
@@ -239,7 +237,6 @@ describe("FlatOutputStrategy integration", () => {
       const ap = makeAssetProvider();
       const strategy = new FlatBuildStrategy(
         emptyFs,
-        new AjvSchemaValidatorAdapter(),
         ap,
         buildCopilotFlatContract(),
         false,
@@ -260,7 +257,6 @@ describe("FlatOutputStrategy integration", () => {
       const ap2 = makeAssetProvider();
       const strategy = new FlatBuildStrategy(
         fileFs,
-        new AjvSchemaValidatorAdapter(),
         ap2,
         buildCopilotFlatContract(),
         false,
@@ -316,7 +312,6 @@ describe("FlatOutputStrategy integration", () => {
       const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
       const strategy = new FlatBuildStrategy(
         memFs,
-        new AjvSchemaValidatorAdapter(),
         makeAssetProvider(),
         buildCopilotFlatContract(),
         false,
@@ -335,7 +330,6 @@ describe("FlatOutputStrategy integration", () => {
       const ap = makeAssetProvider();
       const strategy = new FlatBuildStrategy(
         fs,
-        new AjvSchemaValidatorAdapter(),
         ap,
         buildOpencodeFlatContract(),
         force,
@@ -385,7 +379,6 @@ describe("FlatOutputStrategy integration", () => {
       const base = buildOpencodeFlatContract();
       const strategy = new FlatBuildStrategy(
         memFs,
-        new AjvSchemaValidatorAdapter(),
         makeAssetProvider(),
         { ...base, artifacts: { ...base.artifacts, hooks: { supported: false } } },
         false,
@@ -449,7 +442,6 @@ function stubStrategy(
 ): FlatBuildStrategy {
   return new FlatBuildStrategy(
     memFs,
-    new AjvSchemaValidatorAdapter(),
     makeAssetProvider(),
     contract,
     false,
@@ -592,54 +584,78 @@ describe("the hooks a flat layout writes", () => {
     });
   }
 
-  it("writes the manifest per plugin and every script beside it", async () => {
+  function fileArtifact(shared: boolean): ArtifactContract {
+    return supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`, {
+      hooksFile: {
+        path: (plugin) => (shared ? ".stub/settings.json" : `.stub/hooks/${plugin}.hooks.json`),
+        shared,
+        merge: (existing, pluginHooks, plugin) => ({
+          content: `${existing ?? "none"}+${plugin}:${pluginHooks}`,
+          warnings: ["one event has no equivalent"],
+        }),
+      },
+    });
+  }
+
+  function withHooks(hooks: ArtifactContract): ToolBuildContract {
+    return stubContract({ artifacts: { ...stubContract().artifacts, hooks } });
+  }
+
+  it("writes the plugin's own hooks file from nothing, and every script beside it", async () => {
     const memFs = hooksFs();
-    expect(await stubStrategy(memFs, stubContract()).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(
-      2
+    memFs.setFile(`${STUB_OUT}/.stub/hooks/aidd-test.hooks.json`, "stale");
+    const strategy = new FlatBuildStrategy(
+      memFs,
+      makeAssetProvider(),
+      withHooks(fileArtifact(false)),
+      true,
+      STUB_OUT,
+      makeIsDirectory(memFs)
     );
+    expect(await strategy.writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(2);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
-      [`${STUB_OUT}/.stub/hooks/aidd-test/aidd-test.hooks.json`]:
-        '{\n  "hooks": {\n    "PreToolUse": []\n  }\n}\n',
+      [`${STUB_OUT}/.stub/hooks/aidd-test.hooks.json`]: `none+aidd-test:${hooksJson}`,
       [`${STUB_OUT}/.stub/hooks/aidd-test/lib/check.sh`]: "#!/bin/sh\n",
     });
   });
 
-  it("hands the rewritten manifest to the layout's own hooks transform", async () => {
+  it("refuses to overwrite the plugin's own hooks file unless forced", async () => {
     const memFs = hooksFs();
-    const contract = stubContract({
-      artifacts: {
-        ...stubContract().artifacts,
-        hooks: supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`, {
-          hooksTransform: (json) => `transformed:${json}`,
-        }),
-      },
-    });
-    await stubStrategy(memFs, contract).writeHooks("aidd-test", STUB_PLUGIN_SRC);
-    expect(memFs.getFile(`${STUB_OUT}/.stub/hooks/aidd-test/aidd-test.hooks.json`)).toBe(
-      'transformed:{\n  "hooks": {\n    "PreToolUse": []\n  }\n}\n'
-    );
+    memFs.setFile(`${STUB_OUT}/.stub/hooks/aidd-test.hooks.json`, "stale");
+    await expect(
+      stubStrategy(memFs, withHooks(fileArtifact(false))).writeHooks("aidd-test", STUB_PLUGIN_SRC)
+    ).rejects.toThrow(FlatTargetExistsError);
   });
 
-  it("merges the manifest into the shared file the layout names, reporting what the merge said", async () => {
+  it("merges into the shared file the layout names, reporting what the merge said", async () => {
     const memFs = hooksFs();
+    memFs.setFile(`${STUB_OUT}/.stub/settings.json`, "kept");
     const logger = new CapturingLogger();
-    const contract = stubContract({
-      artifacts: {
-        ...stubContract().artifacts,
-        hooks: supportedArtifact((plugin, rel) => `.stub/hooks/${plugin}/${rel.slice(6)}`, {
-          hooksMerge: (existing, incoming) => ({
-            content: `${existing ?? "none"}+${incoming}`,
-            warnings: ["one event has no equivalent"],
-          }),
-          hooksMergeDest: (outDir) => `${outDir}/.stub/settings.json`,
-        }),
-      },
-    });
-    await stubStrategy(memFs, contract, logger).writeHooks("aidd-test", STUB_PLUGIN_SRC);
-    expect(memFs.getFile(`${STUB_OUT}/.stub/settings.json`)).toBe(
-      'none+{"hooks":{"PreToolUse":[]}}'
+    await stubStrategy(memFs, withHooks(fileArtifact(true)), logger).writeHooks(
+      "aidd-test",
+      STUB_PLUGIN_SRC
     );
+    expect(memFs.getFile(`${STUB_OUT}/.stub/settings.json`)).toBe(`kept+aidd-test:${hooksJson}`);
     expect(logger.warnMessages).toEqual(["one event has no equivalent"]);
+  });
+
+  it("merges into a shared file not written yet as into nothing", async () => {
+    const memFs = hooksFs();
+    await stubStrategy(memFs, withHooks(fileArtifact(true))).writeHooks(
+      "aidd-test",
+      STUB_PLUGIN_SRC
+    );
+    expect(memFs.getFile(`${STUB_OUT}/.stub/settings.json`)).toBe(`none+aidd-test:${hooksJson}`);
+  });
+
+  it("writes only the scripts for a layout whose tool reads no hooks file", async () => {
+    const memFs = hooksFs();
+    expect(await stubStrategy(memFs, stubContract()).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(
+      1
+    );
+    expect(writtenUnder(memFs, STUB_OUT)).toEqual({
+      [`${STUB_OUT}/.stub/hooks/aidd-test/lib/check.sh`]: "#!/bin/sh\n",
+    });
   });
 
   it("generates the bridge a layout with no manifest of its own declares", async () => {
@@ -750,21 +766,44 @@ describe("what a flat layout writes once every plugin is built", () => {
     ).toBe(0);
   });
 
-  it("hands every built plugin's name, the output and the source to the layout's own step", async () => {
-    const memFs = new InMemoryFileAdapter({});
-    const seen: { names: readonly string[]; outDir: string; sourceDir: string }[] = [];
+  it("hands the layout's own step what it names, then writes what it returns", async () => {
+    const memFs = new InMemoryFileAdapter({
+      "/src/plugins/aidd-test/.mcp.json": '{"mcpServers":{}}',
+      [`${STUB_OUT}/kept.json`]: "kept",
+      [`${STUB_OUT}/probed.js`]: "probed",
+    });
+    const seen: ConfigArtifactInput[] = [];
     const contract = stubContract({
-      emitConfigArtifact: (names, outDir, sourceDir) => {
-        seen.push({ names, outDir, sourceDir });
-        return Promise.resolve(1);
+      configArtifact: {
+        reads: (names) => ["kept.json", ...names.map((name) => `${name}.absent`)],
+        probes: () => ["probed.js", "missing.js"],
+        assets: { tool: "opencode", names: ["opencode-events.js"] },
+        emit: (input) => {
+          seen.push(input);
+          return [
+            { path: "one.json", content: "1" },
+            { path: "nested/two.json", content: "2" },
+          ];
+        },
       },
     });
     const strategy = stubStrategy(memFs, contract);
-    memFs.setFile(`${STUB_OUT}/.keep`, "");
     await strategy.preBuild(STUB_OUT, "/src");
-    expect(
-      await strategy.postBuild({ name: "m", plugins: [] }, [{ name: "aidd-test" }], STUB_OUT)
-    ).toBe(1);
-    expect(seen).toEqual([{ names: ["aidd-test"], outDir: STUB_OUT, sourceDir: "/src" }]);
+    const built = [{ name: "aidd-test" }, { name: "aidd-bare" }];
+    const reads = vi.spyOn(memFs, "readFile");
+
+    expect(await strategy.postBuild({ name: "m", plugins: [] }, built, STUB_OUT)).toBe(2);
+    expect(seen).toStrictEqual([
+      {
+        builtPlugins: ["aidd-test", "aidd-bare"],
+        pluginMcp: new Map([["aidd-test", '{"mcpServers":{}}']]),
+        existing: new Map([["kept.json", "kept"]]),
+        present: new Set(["probed.js"]),
+        assets: new Map([["opencode-events.js", "export async function setupOpencodeEvents() {}"]]),
+      },
+    ]);
+    expect(memFs.getFile(`${STUB_OUT}/one.json`)).toBe("1");
+    expect(memFs.getFile(`${STUB_OUT}/nested/two.json`)).toBe("2");
+    expect(reads.mock.calls.map(([path]) => path)).not.toContain(`${STUB_OUT}/probed.js`);
   });
 });

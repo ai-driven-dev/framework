@@ -7,13 +7,11 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   genericFlatAgentPath,
-  genericFlatHooksFile,
-  genericFlatHooksScriptPath,
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
   buildClaudeStyleEntry,
@@ -25,7 +23,7 @@ import {
   OUTPUT_CURSOR_MANIFEST_RELATIVE,
   OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
 } from "./cursor-paths.js";
-import { mergeCursorFlatHooks } from "./hooks-format.js";
+import { CURSOR_HOOKS } from "./hooks.js";
 
 function transformCursorAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
@@ -44,12 +42,12 @@ export function buildCursorContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CURSOR_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CURSOR_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: CURSOR_PLUGIN_ROOT_TOKEN,
+    pluginRootToken: CURSOR_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeClaudeStyleManifest(source, presence, {
         agentsField: true,
-        hooksField: true,
+        hooksField: CURSOR_HOOKS.manifestNamesHooks,
       }),
     manifestSchemaName: "plugin-manifest",
     artifacts: {
@@ -69,11 +67,7 @@ export function buildCursorContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: (_p, rel) => rel,
-      },
+      hooks: pluginTreeHooksArtifact(CURSOR_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -96,12 +90,6 @@ function cursorFlatAgentPath(plugin: string, rel: string): string {
 
 function cursorFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(".cursor/skills/", plugin, rel.replace(/^skills\//, ""));
-}
-
-function cursorFlatHooksPath(plugin: string, rel: string): string {
-  const rest = rel.replace(/^hooks\//, "");
-  if (rest === `${plugin}.hooks.json`) return genericFlatHooksFile(".cursor/hooks/", plugin);
-  return genericFlatHooksScriptPath(".cursor/hooks/", plugin, rest);
 }
 
 function cursorFlatResolveTarget(plugin: string, rel: string): string {
@@ -152,13 +140,7 @@ export function buildCursorFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: cursorFlatHooksPath,
-        hooksMerge: (existing, incoming) => mergeCursorFlatHooks(existing, incoming),
-        hooksMergeDest: (outDir) => `${outDir}/.cursor/hooks.json`,
-      },
+      hooks: flatHooksArtifact(CURSOR_HOOKS, { tool: "cursor" }),
       rules: { supported: false },
       commands: { supported: false },
     },

@@ -107,7 +107,7 @@ describe("aidd-ui validator entries", () => {
 
     it("counts warnings at session start without listing them", () => {
       orphan();
-      assert.deepEqual(hook(sessionStart()), { code: 0, out: "aidd-ui: 0 errors, 1 warnings\n", err: "" });
+      assert.deepEqual(hook(sessionStart()), { code: 0, out: "aidd-ui: 0 errors, 1 warning\n", err: "" });
     });
 
     it("never blocks the end of a turn on warnings", () => {
@@ -350,7 +350,7 @@ describe("aidd-ui validator entries", () => {
     it("names an unreadable record and checks the rest, in every entry", () => {
       fs.symlinkSync(path.join(tmp, "nowhere.md"), path.join(tmp, DANGLING));
       assert.deepEqual(validate(tmp), { code: 1, out: [UNREADABLE], err: "" });
-      assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 1 errors, 0 warnings\n${UNREADABLE}\n`, err: "" });
+      assert.deepEqual(hook(sessionStart()), { code: 0, out: `aidd-ui: 1 error, 0 warnings\n${UNREADABLE}\n`, err: "" });
       assert.deepEqual(hook(postToolUse(path.join(tmp, DANGLING))), claudeFeedback([UNREADABLE]));
     });
 

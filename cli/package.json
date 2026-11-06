@@ -36,7 +36,7 @@
     "node": ">=22.12"
   },
   "packageManager": "pnpm@12.16.1",
-  "bundleBudgetKB": 712,
+  "bundleBudgetKB": 743,
   "scripts": {
     "build": "tsup && node scripts/check-bundle-size.mjs",
     "build:check-size": "node scripts/check-bundle-size.mjs",
@@ -59,6 +59,7 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "jscpd": "jscpd src/ --threshold 3.3",
+    "jscpd:profiles": "node scripts/profile-copies.mjs",
     "pack:local": "pnpm build && pnpm pack --pack-destination ./dist",
     "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
     "test:mutation": "node scripts/run-mutation.mjs",

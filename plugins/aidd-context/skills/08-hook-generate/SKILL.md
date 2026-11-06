@@ -12,7 +12,7 @@ Builds one hook: an entry merged into the chosen scope for each supported tool, 
 
 | #   | Action         | Role                                              | Input             |
 | --- | -------------- | ------------------------------------------------- | ----------------- |
-| 01  | `capture-hook` | Clarify the moment, action, matcher, scope, tools | user request      |
+| 01  | `capture-hook` | Clarify the moment, intent, action, matcher, scope, tools | user request      |
 | 02  | `write-hook`   | Merge the entry per tool, write the script         | the captured spec |
 | 03  | `validate`     | Check the file, the merge, and the moment fit      | files written     |
 
@@ -21,7 +21,7 @@ Before running an action, read its file in `actions/`, not only the table or ass
 
 ## References
 
-- `references/hook-authoring.md`: the contract (R1-R7), the lifecycle moments, and the handler, matcher, and exit-code model.
+- `references/hook-authoring.md`: the contract (R1-R7), the lifecycle moments, the intent options, and the handler, matcher, and exit-code model.
 - `references/tool-paths.md`: per-tool support, moment-to-event names, file formats, scopes, and write targets.
 
 ## Assets

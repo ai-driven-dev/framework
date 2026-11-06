@@ -38,14 +38,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [hooks.json](hooks/hooks.json) |
-| [memory-hook.cjs](hooks/memory-hook.cjs) |
-| [memory-lint.cjs](hooks/memory-lint.cjs) |
-| [update_memory.js](hooks/update_memory.js) |
+| [memory.cjs](hooks/memory.cjs) |
 
 #### `hooks/lib`
 
 | File |
 |------|
+| [common-rules.cjs](hooks/lib/common-rules.cjs) |
+| [host.cjs](hooks/lib/host.cjs) |
 | [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
 
 ### `skills`
@@ -85,15 +85,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
 | `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
 | `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [report.md](skills/02-project-memory/assets/report.md) | - |
 | `assets` | [scan-summary.md](skills/02-project-memory/assets/scan-summary.md) | - |
-| `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
+| `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
-| `references` | [memory-destinations.md](skills/02-project-memory/references/memory-destinations.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
-| `references` | [structure.md](skills/02-project-memory/references/structure.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
 | `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up or refresh project memory, or rewire it into a tool. Not for editing one existing memory file.` |
 

@@ -1,38 +1,37 @@
 # 03 - Check
 
-Show what drifted in the bank, and let the user pick what to fix. Change nothing.
+Find what drifted in the bank.
 
 ## Input
 
-The bank in `aidd_docs/memory/`, and the capabilities the scan found.
+The bank and the scan's capabilities.
 
 ## Output
 
-A report file under `aidd_docs/tasks/`, a short summary printed, and the findings the user approved.
+The findings the user approved.
 
 ## Process
 
-1. **Match.** Compare the bank against [memory-destinations.md](../references/memory-destinations.md) and [structure.md](../references/structure.md).
-   - A file no row produces: flag it, and name the row it should have come from.
-   - A found capability, or a scaffolded path, with nothing on disk: flag it missing.
-2. **Review.** Have each memory file reviewed against [review-protocol.md](../references/review-protocol.md) in parallel.
-3. **Prune.** Offer to remove each file whose capability the scan did not find, and none when the scan asked nothing.
-4. **Report.** Fill [report.md](../assets/report.md), write it to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_memory-check/report.md`, and print the summary with that path.
-   - The folder already holds a report: ask before replacing it.
-5. **Offer.** Ask which findings to apply, and hand the approved ones to write.
-   - Nothing drifted: call the bank current, hand nothing on.
+1. **Structure.** Read the structure findings of the engine's whole-bank check against [capabilities.md](../references/capabilities.md), never judge them.
+   - A root file no row produces is the team's: keep it.
+   - A root file in a row's Former files column: offer to merge it.
+   - A file a row produces, found in `internal/` or a subfolder: misplaced, offer only the move to the root.
+   - A folder under `memory/` other than `internal/` and `external/`: offer to move it under `internal/`.
+   - Offer to remove a file at the root a row produces whose capability the scan did not find, and none when the scan asked nothing.
+2. **Format.** Run the engine on the files a row produces or names as former, never a team file.
+3. **Content.** Review yourself the files a row produces or names as former, per [review-protocol.md](../references/review-protocol.md).
+4. **Print.** Print three blocks headed `Structure findings`, `Format findings`, `Content findings`, no table, one finding per line. Then ask which to apply, and hand the approved ones to write.
+   - A file only on request.
+   - Nothing drifted: say the bank is current.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
-| Any run | no file under `aidd_docs/memory/` changed |
-| Any finding | the summary holds no table, names the report path, ends on the question |
-| Nothing drifted | nothing offered, the bank called current |
-| Report | structural gaps and reviewer findings under separate headings |
-| Report | no step of this skill named in it |
-| Orphan | flagged, with the row it should have come from |
-| Missing | a found capability with no file is flagged |
-| Contradiction | flagged, the line left in place |
-| Duplicate | flagged, both files left as they are |
-| Removal declined | the file is still there |
+| Any run | no file changed or created, no step named |
+| Team file | not flagged, not linted, not offered for removal |
+| Misplaced | flagged, move offered, no root copy |
+| Former file | offered a merge |
+| Missing | an absent always file flagged |
+| Contradiction, duplicate | flagged, lines left in place |
+| Removal declined | the file stays |

@@ -40,7 +40,7 @@ export async function assertProjectHooksUnchanged(
   if (provenance === undefined) {
     if (currentEntries.length > 0 || scriptsPresent.length > 0) {
       throw new Error(
-        `Cursor project hooks for '${pluginName}' have an unproven legacy install digest; detach refused.`
+        `Project hooks for '${pluginName}' have an unproven legacy install digest; detach refused.`
       );
     }
     return { existing };
@@ -55,9 +55,7 @@ export async function assertProjectHooksUnchanged(
     provenance.entries.some(({ digest }) => !/^[0-9a-f]{32}$/.test(digest)) ||
     recorded.sort().join("\n") !== current.sort().join("\n")
   ) {
-    throw new Error(
-      `Cursor project hooks for '${pluginName}' were edited after install; detach refused.`
-    );
+    throw new Error(`Project hooks for '${pluginName}' were edited after install; detach refused.`);
   }
   for (const [relativePath, digest] of provenance.scripts) {
     assertScriptPath(pluginName, relativePath, format);
@@ -66,13 +64,11 @@ export async function assertProjectHooksUnchanged(
     if (!(await fs.fileExists(path))) continue;
     if (!/^[0-9a-f]{32}$/.test(digest)) {
       throw new Error(
-        `Cursor hook script '${relativePath}' has an unproven install digest; detach refused.`
+        `Hook script '${relativePath}' has an unproven install digest; detach refused.`
       );
     }
     if ((await fs.readFileHash(path)).value !== digest) {
-      throw new Error(
-        `Cursor hook script '${relativePath}' was edited after install; detach refused.`
-      );
+      throw new Error(`Hook script '${relativePath}' was edited after install; detach refused.`);
     }
   }
   return { existing };
@@ -147,10 +143,9 @@ function contributedEntries(
   format: ProjectHooksFormat
 ): readonly { event: string; entry: HookEntry }[] {
   const parsed = JSON.parse(content) as { hooks?: Record<string, HookEntry[]> };
-  const marker = format.scriptDir(pluginName);
   return Object.entries(parsed.hooks ?? {}).flatMap(([event, entries]) =>
     entries
-      .filter((entry) => typeof entry.command === "string" && entry.command.includes(marker))
+      .filter((entry) => format.runsPluginScript(String(entry.command), pluginName))
       .map((entry) => ({ event, entry }))
   );
 }
@@ -184,9 +179,7 @@ function assertScriptPath(
     relativePath.includes("\\") ||
     posix.normalize(relativePath) !== relativePath
   ) {
-    throw new Error(
-      `Cursor hook script path '${relativePath}' has unproven provenance; detach refused.`
-    );
+    throw new Error(`Hook script path '${relativePath}' has unproven provenance; detach refused.`);
   }
 }
 

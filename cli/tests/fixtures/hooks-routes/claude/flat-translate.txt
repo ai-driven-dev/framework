@@ -1,0 +1,127 @@
+## out-flat/.claude/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-context/lib/host.cjs
+script, identical to the host adapter host-claude.cjs
+
+## out-flat/.claude/hooks/aidd-context/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-context/memory.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/catch-up.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/aidd.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/binding.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/claude-only.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/consent.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/context.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/declaration.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/git.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/hook-io.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/jsonl.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/lookup.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/presence.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/lib/tool.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/prompt-gate.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-telemetry/session-start.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/settings.json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./.claude/hooks/aidd-telemetry/session-start.cjs",
+            "timeout": 10,
+            "statusMessage": "AIDD Telemetry: carry Claude session task"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./.claude/hooks/aidd-telemetry/catch-up.cjs",
+            "async": true,
+            "timeout": 120,
+            "statusMessage": "AIDD Telemetry: update measurement ledger"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory file"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./.claude/hooks/aidd-telemetry/prompt-gate.cjs",
+            "timeout": 30,
+            "statusMessage": "AIDD Telemetry: check task declaration"
+          }
+        ]
+      }
+    ]
+  }
+}
+

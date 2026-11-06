@@ -1,15 +1,18 @@
 import { basename, dirname, join, relative } from "node:path";
-import { FlatTargetExistsError, OutDirNotDirectoryError } from "../../../../kernel/errors.js";
+import {
+  FlatTargetExistsError,
+  McpConfigError,
+  OutDirNotDirectoryError,
+} from "../../../../kernel/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
-import { rewriteClaudeRootInJson } from "../../../../kernel/materialization/claude-root-path-rewrite.js";
 import { flatMcpKeyPrefix } from "../../../../kernel/materialization/flat-paths.js";
+import { rewritePluginRootInJson } from "../../../../kernel/materialization/plugin-root-path-rewrite.js";
 import { rewriteRelativeLinks } from "../../../../kernel/materialization/relative-link-rewrite.js";
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { ArtifactContract, ToolBuildContract } from "../../../tools/domain/build-contract.js";
-import type { JsonSchemaValidator } from "../../../tools/domain/ports/schema-validator.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
@@ -18,12 +21,21 @@ import {
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import type { BuildOutputStrategy, SourceMarketplace } from "./build-output-strategy.js";
 
+function parsePluginMcp(pluginName: string, content: string): unknown {
+  try {
+    return JSON.parse(content);
+  } catch (err) {
+    throw new McpConfigError(
+      `Cannot parse plugin '${pluginName}' MCP config: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+}
+
 export class FlatBuildStrategy implements BuildOutputStrategy {
   private sourceDir = "";
 
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly jsonSchemaValidator: JsonSchemaValidator,
     private readonly assetProvider: AssetProvider,
     private readonly contract: ToolBuildContract,
     private readonly force: boolean,
@@ -102,16 +114,60 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     builtPlugins: readonly { name: string }[],
     outDir: string
   ): Promise<number> {
-    if (!this.contract.emitConfigArtifact) return 0;
+    const step = this.contract.configArtifact;
+    if (!step) return 0;
     const names = builtPlugins.map((p) => p.name);
-    return this.contract.emitConfigArtifact(
-      names,
-      outDir,
-      this.sourceDir,
-      this.fs,
-      this.jsonSchemaValidator,
-      this.assetProvider
+    const files = step.emit({
+      builtPlugins: names,
+      pluginMcp: await this.readPluginMcp(names),
+      existing: await this.readEach(step.reads(names), (relPath) => join(outDir, relPath)),
+      present: await this.presentOf(step.probes(names), outDir),
+      assets: new Map(
+        step.assets.names.map((name) => [
+          name,
+          this.assetProvider.loadConfigAsset(step.assets.tool, name),
+        ])
+      ),
+    });
+    for (const file of files) await this.fs.writeFile(join(outDir, file.path), file.content);
+    return files.length;
+  }
+
+  /** Each built plugin's `.mcp.json`, its plugin-root paths already resolved into the output, as
+   * the per-plugin MCP merge resolves them. */
+  private async readPluginMcp(names: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    const raw = await this.readEach(names, (name) =>
+      join(this.sourceDir, "plugins", name, PLUGIN_MCP_RELATIVE)
     );
+    const resolved = new Map<string, string>();
+    for (const [name, content] of raw) {
+      const rewritten = rewritePluginRootInJson(parsePluginMcp(name, content), (suffix) =>
+        this.resolveClaudeRootAbsolute(suffix, name)
+      );
+      resolved.set(name, JSON.stringify(rewritten));
+    }
+    return resolved;
+  }
+
+  private async presentOf(relPaths: readonly string[], outDir: string): Promise<Set<string>> {
+    const present = new Set<string>();
+    for (const relPath of relPaths) {
+      if (await this.fs.fileExists(join(outDir, relPath))) present.add(relPath);
+    }
+    return present;
+  }
+
+  /** Each key's file content, for the keys whose file exists. */
+  private async readEach(
+    keys: readonly string[],
+    pathOf: (key: string) => string
+  ): Promise<ReadonlyMap<string, string>> {
+    const found = new Map<string, string>();
+    for (const key of keys) {
+      const path = pathOf(key);
+      if (await this.fs.fileExists(path)) found.set(key, await this.fs.readFile(path));
+    }
+    return found;
   }
 
   private async writeFlatAgent(
@@ -124,7 +180,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     const srcRelPath = `agents/${relative(agentsSrc, absPath).replace(/\\/g, "/")}`;
     const content = await this.fs.readFile(absPath);
     assertNoToolsPlaceholder(content, pluginName, srcRelPath);
-    const flatRelPath = artifact.path(pluginName, `agents/${agentBaseName}`);
+    const flatRelPath = this.flatAgentPath(artifact, pluginName, agentBaseName);
     const destPath = join(this.absOut, flatRelPath);
     await this.checkCollision(destPath, pluginName);
     const outContent = artifact.transform
@@ -132,6 +188,16 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
       : this.rewriteAgentForFlat(content, flatRelPath, pluginName);
     await this.fs.writeFile(destPath, outContent);
     return 1;
+  }
+
+  /** Where an agent lands, whatever folder under `agents/` holds it: the one path its writer,
+   * a command naming it and a link to it all resolve to. */
+  private flatAgentPath(
+    artifact: Extract<ArtifactContract, { supported: true }>,
+    pluginName: string,
+    agentFile: string
+  ): string {
+    return artifact.path(pluginName, `agents/${basename(agentFile)}`);
   }
 
   private rewriteAgentForFlat(content: string, flatRelPath: string, pluginName: string): string {
@@ -184,11 +250,22 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     pluginName: string,
     hooksSrc: string
   ): Promise<number> {
+    const file = artifact.hooksFile;
+    if (file === undefined) return 0;
+    const destPath = join(this.absOut, file.path(pluginName));
+    if (!file.shared) await this.checkCollision(destPath, pluginName);
+    const existing =
+      file.shared && (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
     const raw = await this.fs.readFile(hooksSrc);
-    if (artifact.hooksMerge && artifact.hooksMergeDest) {
-      return this.writeMergedHooksJson(artifact, pluginName, raw);
-    }
-    return this.writeRewrittenHooksJson(artifact, pluginName, raw);
+    const { content, warnings } = file.merge(
+      existing,
+      raw,
+      pluginName,
+      (pluginPath) => `./${this.resolveSuffixToFlatPath(pluginPath, pluginName)}`
+    );
+    for (const w of warnings) this.logger?.warn(w);
+    await this.fs.writeFile(destPath, content);
+    return 1;
   }
 
   // OpenCode reads no hooks.json, so a plugin's declared hooks have no trigger there unless a
@@ -213,48 +290,6 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     return 1;
   }
 
-  private async writeMergedHooksJson(
-    artifact: Extract<ArtifactContract, { supported: true }>,
-    pluginName: string,
-    raw: string
-  ): Promise<number> {
-    if (!artifact.hooksMerge || !artifact.hooksMergeDest) return 0;
-    const rewritten = this.rewriteHooksRawPaths(raw, pluginName);
-    const destPath = artifact.hooksMergeDest(this.absOut);
-    const existing = (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
-    const { content, warnings } = artifact.hooksMerge(existing, rewritten);
-    for (const w of warnings) this.logger?.warn(w);
-    await this.fs.writeFile(destPath, content);
-    return 1;
-  }
-
-  private rewriteHooksRawPaths(raw: string, pluginName: string): string {
-    const parsed = JSON.parse(raw) as unknown;
-    const rewritten = rewriteClaudeRootInJson(parsed, (suffix) =>
-      this.resolveClaudeRootRelative(suffix, pluginName)
-    );
-    return JSON.stringify(rewritten);
-  }
-
-  private async writeRewrittenHooksJson(
-    artifact: Extract<ArtifactContract, { supported: true }>,
-    pluginName: string,
-    raw: string
-  ): Promise<number> {
-    const parsed = JSON.parse(raw) as unknown;
-    const rewritten = rewriteClaudeRootInJson(parsed, (suffix) =>
-      this.resolveClaudeRootRelative(suffix, pluginName)
-    );
-    const rewrittenJson = `${JSON.stringify(rewritten, null, 2)}\n`;
-    const finalContent = artifact.hooksTransform
-      ? artifact.hooksTransform(rewrittenJson)
-      : rewrittenJson;
-    const destPath = join(this.absOut, artifact.path(pluginName, `hooks/${pluginName}.hooks.json`));
-    await this.checkCollision(destPath, pluginName);
-    await this.fs.writeFile(destPath, finalContent);
-    return 1;
-  }
-
   private async writeFlatHooksScripts(
     artifact: Extract<ArtifactContract, { supported: true }>,
     pluginName: string,
@@ -266,9 +301,11 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
     for (const absPath of files) {
       if (absPath.endsWith("hooks.json")) continue;
       const relPath = relative(hooksDir, absPath).replace(/\\/g, "/");
-      const destPath = join(this.absOut, artifact.path(pluginName, `hooks/${relPath}`));
+      const pluginPath = `hooks/${relPath}`;
+      const destPath = join(this.absOut, artifact.path(pluginName, pluginPath));
       await this.checkCollision(destPath, pluginName);
-      await this.fs.writeFile(destPath, await this.fs.readFile(absPath));
+      const content = await this.fs.readFile(absPath);
+      await this.fs.writeFile(destPath, artifact.script?.(pluginPath, content) ?? content);
       count++;
     }
     return count;
@@ -302,16 +339,12 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   ): Record<string, unknown> {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(rawServers)) {
-      const rewritten = rewriteClaudeRootInJson(value, (suffix) =>
+      const rewritten = rewritePluginRootInJson(value, (suffix) =>
         this.resolveClaudeRootAbsolute(suffix, pluginName)
       );
       result[`${prefix}${key}`] = rewritten;
     }
     return result;
-  }
-
-  private resolveClaudeRootRelative(suffix: string, pluginName: string): string {
-    return `./${this.resolveSuffixToFlatPath(suffix, pluginName)}`;
   }
 
   // "/"-joined and separator-normalized: this value is embedded into written JSON content, and
@@ -325,10 +358,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   private resolveSuffixToFlatPath(suffix: string, pluginName: string): string {
     const art = this.contract.artifacts;
     if (suffix.startsWith("agents/") && art.agents.supported) {
-      const rest = suffix.slice("agents/".length);
-      const withoutMd = rest.endsWith(".md") ? rest.slice(0, -3) : rest;
-      const ext = art.agents.ext ?? ".agent.md";
-      return art.agents.path(pluginName, `agents/${withoutMd}${ext}`);
+      return this.flatAgentPath(art.agents, pluginName, suffix.slice("agents/".length));
     }
     if (suffix.startsWith("skills/") && art.skills.supported) {
       return art.skills.path(pluginName, `skills/${suffix.slice("skills/".length)}`);
@@ -348,7 +378,7 @@ export class FlatBuildStrategy implements BuildOutputStrategy {
   private resolveTargetForMd(pluginName: string, pluginRelPath: string): string {
     const art = this.contract.artifacts;
     if (pluginRelPath.startsWith("agents/") && art.agents.supported) {
-      return art.agents.path(pluginName, pluginRelPath);
+      return this.flatAgentPath(art.agents, pluginName, pluginRelPath);
     }
     if (pluginRelPath.startsWith("skills/") && art.skills.supported) {
       return art.skills.path(pluginName, pluginRelPath);
