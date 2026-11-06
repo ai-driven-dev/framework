@@ -2,8 +2,9 @@
 
 Prepare a **separate** rootless Docker daemon for this runner. Do not use the
 existing CI users, their Docker sockets or the production daemon: another CI
-job could access the reviewer's OAuth volume. Do not start the runner or stop
-the old timer until the workflow is on `main` and the cutover is ready.
+job could access the reviewer's OAuth volume. Before cutover, the listener
+may run only in a group with no allowed workflows and an empty OAuth volume.
+Do not stop the old timer or authorize a workflow before the cutover is ready.
 
 These units reuse the Central runner patterns from
 [aidd-ops at f59307f](https://github.com/ai-driven-dev/aidd-ops/tree/f59307f08bfd0a6764ab5579b1d7eabe2fde0e5c/runner/central).
@@ -118,19 +119,26 @@ command fails, keep the new path disabled. If OAuth has not been used on
 Central, verify the Agents authentication remains intact before restarting
 its timer. Otherwise OAuth rollback is not yet verified.
 
-After the workflow reaches `main`, authorize only
+Before `main`, the GitHub listener may be registered using the dedicated
+account and socket **only after** verifying that its group has `selected`
+visibility for only the `framework` repository, allows public repositories,
+has workflow restrictions enabled, and has an empty list of allowed workflows.
+Mount a verified empty OAuth volume. No workflow can be scheduled to the
+listener in this state. Keep the allowed workflow list empty,
+`AIDD_REVIEW_ENABLED_AT` unset, and the old timer running; test only with
+synthetic credentials, without publishing.
+
+At cutover, after the workflow reaches `main`, stop the old timer and wait for
+its service to finish. Record the UTC cutoff, transfer the isolated OAuth file
+as above, and run a model smoke without publishing. Then set
+`AIDD_REVIEW_ENABLED_AT` to the cutoff and authorize only
 `ai-driven-dev/framework/.github/workflows/opencode-review.yml@refs/heads/main`
-in the dedicated GitHub runner group. Register the runner using the dedicated
-account and socket. Keep `AIDD_REVIEW_ENABLED_AT` unset and the old timer
-running while testing with synthetic credentials only, without publishing.
-At cutover, stop the old timer and wait for its service to finish. Record the
-UTC cutoff, transfer the isolated OAuth file as above, and run a model smoke
-without publishing. Then set `AIDD_REVIEW_ENABLED_AT` to the cutoff and
-reconcile reviews submitted since the old service's last scan: the old and new
-checkpoints are different. Verify a new submitted review is published once.
-If cutover fails, disable the new path first. Do not blindly restart the old
-timer after Central has used OAuth: verify or restore its authentication first,
-as token refresh may have invalidated it. OAuth rollback is not yet verified.
+in the dedicated group. Reconcile reviews submitted since the old service's
+last scan: the old and new checkpoints are different. Verify a new submitted
+review is published once. If cutover fails, disable the new path first. Do not
+blindly restart the old timer after Central has used OAuth: verify or restore
+its authentication first, as token refresh may have invalidated it. OAuth
+rollback is not yet verified.
 
 ## Rollback
 
