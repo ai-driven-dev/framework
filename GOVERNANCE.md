@@ -38,7 +38,7 @@ flowchart LR
 | Maintainer | Breaks ties |
 
 - The board: [AIDD Roadmap](https://github.com/orgs/ai-driven-dev/projects/8).
-- A milestone is a theme. Items without one are the backlog, ordered by priority.
+- A milestone is a theme. Items without one are the backlog, ranked by MoSCoW.
 - The vote orders the roadmap.
 - It does not decide whether a validated issue becomes a pull request.
 

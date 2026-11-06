@@ -16,7 +16,7 @@ flowchart LR
 
 | Task | How |
 | --- | --- |
-| Triage | New issues join the board. Give each a milestone or a priority. |
+| Triage | New issues join the board. Give each a `MoSCoW` rank; a milestone only once it is picked for a week. |
 | Review | Approve as a code owner, then squash-merge. Rules: [Governance](../GOVERNANCE.md#code-decisions). |
 | Dependencies | Patch and minor bumps merge on their own. For a major bump, review it, then `gh pr merge <n> --squash`. |
 | Promote | Run the **Promote next to main** workflow. Steps: [Release](../RELEASE.md). |
@@ -41,10 +41,10 @@ The board and its fields live on the GitHub Project, not in the repository.
 | --- | --- | --- | --- |
 | Type | Issue | What kind | `Bug`, `Feature`, `Task` (set by the issue form) |
 | Milestone | Repository | When | A theme |
-| Priority | Project | In what order | `Urgent`, `High`, `Medium`, `Low` |
+| MoSCoW | Project | How important | `Must`, `Should`, `Could` |
 | Status | Project | Where it stands | Listed in [Contributing](../CONTRIBUTING.md#1-propose) |
 
-- A milestone or a priority, never both.
+- `MoSCoW` is set per issue, whatever its milestone.
 - The scope goes in the title: `feat(aidd-pm): ...`.
 
 ## If `main` turns red after a bad squash

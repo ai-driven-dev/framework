@@ -1,7 +1,7 @@
 # Canonical issue and PR label list for ai-driven-dev/framework.
 #
 # Labels do NOT categorize an issue. Issue types (Bug, Feature, Task) and the
-# org issue fields (Priority, Effort) do that, and the issue forms set the type.
+# project field MoSCoW do that, and the issue forms set the type.
 # A label here exists only when a bot or a human reads it, and nothing else can
 # carry the signal.
 #
