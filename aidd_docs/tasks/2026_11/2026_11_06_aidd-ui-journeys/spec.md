@@ -12,7 +12,8 @@ Depuis un persona du brief produit, une personne obtient ses parcours et le wire
 - Un wireframe vit dans `aidd_docs/ui/wireframes/<id>`, fiche et rendu ; son identifiant sera celui de l'écran qui l'habille.
 - Une fiche de wireframe porte ses zones nommées, les composants qu'elle attend par leur nom, et les états d'un écran.
 - Un rendu de wireframe ne porte ni token ni valeur visuelle, et ne dépend d'aucune plateforme.
-- Un composant attendu qui n'existe pas est nommé, jamais créé.
+- Un composant attendu qui n'existe pas est nommé, jamais créé, et signalé en avertissement.
+- Sur une app existante, les parcours et wireframes se déduisent de ses écrans réels, puis la personne les confirme.
 - Un wireframe a `status` et `version` comme tout élément : le modifier monte sa version et l'historique ; sans review, il reste `proposed`.
 - La vérification, à chaque écriture et à la main, signale un persona inconnu, un écran d'étape sans wireframe et une valeur visuelle dans un wireframe.
 - Depuis rien, le design system propose de commencer par la marque et les tokens ; la personne reste libre d'en créer plus.
@@ -30,13 +31,12 @@ Depuis un persona du brief produit, une personne obtient ses parcours et le wire
 - Sur le pilote vierge, depuis un persona du brief, chaque parcours voulu existe, et chacune de ses étapes a un wireframe avec ses états et aucune valeur visuelle.
 - Un parcours qui cite un persona inconnu, ou une étape sans wireframe, est signalé.
 - Un wireframe modifié a une version de plus et sa ligne d'historique.
+- Sur Gouvernail et Kairos, les parcours et wireframes sont déduits des écrans existants.
 - Chaque nouvelle règle a un cas qui la fait échouer.
 
 ## Open Questions
 
 - TBD: sous quel identifiant le brief produit revu nomme-t-il un persona ?
-- TBD: un composant attendu qui n'existe pas encore est-il une erreur, un avertissement ou rien tant que l'écran n'est pas habillé ?
-- TBD: sur une app existante, les parcours et wireframes se déduisent-ils des écrans réels, ou cette étape est-elle sautée ?
 
 ## Context
 

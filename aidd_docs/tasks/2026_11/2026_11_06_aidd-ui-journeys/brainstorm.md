@@ -14,6 +14,7 @@ Une personne qui conçoit l'UI avec une IA est guidée des personas au code vér
 - Un parcours (`journeys/<id>.md`) nomme son persona et ses étapes, chaque étape un écran ; une étape sans écran crée un wireframe vide en `proposed`.
 - Un wireframe est un fichier à part (`wireframes/<id>.md` et `.html`) : zones nommées, composants attendus, états, aucun token ni couleur.
 - Un écran porte le même identifiant que son wireframe et le cite par `wireframe: <id>@<version>` : un wireframe qui monte de version met l'écran en retard, et le moteur vérifie que l'écran couvre chaque zone et chaque état.
+- Sur une app existante, parcours et wireframes se déduisent de ses écrans réels, puis la personne les confirme.
 - Un écran se dessine sans parcours. La skill d'écran ne crée jamais de composant : il en manque un, elle s'arrête et renvoie au design system.
 - La review juge par écran, état et version, dans une page statique. Un écran déjà codé exige une capture de l'app réelle, fournie par les outils de test ; `aidd-ui` ne lance jamais l'app.
 - L'accessibilité n'a pas de skill. Le moteur vérifie sans IA, à l'écriture, le contraste des couples texte et fond que chaque fiche déclare, dans chaque thème, la taille des zones tactiles et la réduction des animations ; la review a une ligne accessibilité par état ; l'audit juge le reste, sur WCAG 2.2 AA.
@@ -31,4 +32,3 @@ Une personne qui conçoit l'UI avec une IA est guidée des personas au code vér
 
 - Le format de l'identifiant d'un persona dans le brief revu d'`aidd-pm`.
 - La taille minimale d'une zone tactile : 24 px de WCAG 2.2 AA, ou 44 et 48 recommandés par iOS et Android, selon la plateforme.
-- Le chemin d'une app existante, sans parcours ni wireframe : entre-t-elle par l'extraction puis les écrans ?
