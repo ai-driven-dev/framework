@@ -39,7 +39,7 @@ It writes nothing for the team to fill in. See [Concepts](CONCEPTS.md#project-me
 | --- | --- |
 | Print what drifted, without changing a file | `/aidd-context:02-project-memory check` |
 
-`check` prints three blocks of findings, Structure, Format and Content, and writes no report file. A file in the wrong place is offered a move to the bank root. A former file of a renamed capability is offered a merge into the file that replaced it. A file you added yourself is left alone.
+`check` prints three blocks of findings, Structure, Format and Content, and writes no report file. A file in the wrong place is offered a move to the bank root. A file named after an older layout, such as a separate design or infrastructure file, is kept and reviewed as its capability's file. A file you added yourself is left alone.
 
 ## 3. Harness engineering
 

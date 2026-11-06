@@ -8,8 +8,8 @@
  *   blocks: `check` is the one strict gate, run by the skill when it writes the bank.
  * - `check [root] [file...]`: the bank's findings by hand, from a skill or in CI. Exits 1 when
  *   an error remains. With no file it checks the whole bank, and a missing always-written file
- *   is an error; so is a root with no bank, or a named file that does not exist. A former file, a
- *   misplaced file and a team folder are warnings.
+ *   is an error; so is a root with no bank, or a named file that does not exist. A misplaced file
+ *   and a team folder are warnings.
  * - `lines [root]` and `vanished <file> [root]`: a refresh's loss check. `lines` prints the bank's
  *   lines, whitespace-normalised; `vanished` prints each line of a file `lines` printed before
  *   that the bank no longer holds anywhere. Informs only: it restores nothing.
@@ -44,41 +44,31 @@ const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
 const ALWAYS_WRITTEN = Object.freeze([
   "project-brief.md",
   "architecture.md",
+  "codebase-map.md",
   "coding-assertions.md",
   "testing.md",
   "vcs.md",
   "ecosystem.md",
 ]);
 
-// The files a capability row produces, and the former files each replaced: the table of the
-// skill's `references/capabilities.md`, held equal to it by a test.
+// The files a capability row produces: the table of the skill's `references/capabilities.md`,
+// held equal to it by a test.
 const CONDITIONAL_FILES = Object.freeze([
   "backlog.md",
   "deployment.md",
-  "contract.md",
+  "api.md",
+  "cli.md",
+  "package.md",
   "auth.md",
+  "database.md",
   "data.md",
-  "async.md",
+  "messaging.md",
+  "realtime.md",
   "ui.md",
-  "native.md",
+  "mobile.md",
+  "desktop.md",
 ]);
 const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
-const FORMER_FILES = Object.freeze({
-  "codebase-map.md": "architecture.md",
-  "infra.md": "deployment.md",
-  "api.md": "contract.md",
-  "cli.md": "contract.md",
-  "package.md": "contract.md",
-  "integration.md": "contract.md",
-  "database.md": "data.md",
-  "messaging.md": "async.md",
-  "realtime.md": "async.md",
-  "design.md": "ui.md",
-  "forms.md": "ui.md",
-  "navigation.md": "ui.md",
-  "mobile.md": "native.md",
-  "desktop.md": "native.md",
-});
 
 // A shell write carries no file list: a bank file changed this recently is the command's.
 const SHELL_WINDOW_MS = 2000;
@@ -181,9 +171,8 @@ function warning(file, rule, message, fix) {
 }
 
 /**
- * What the bank's layout proposes, as warnings: a former file to merge, a row's file below the
- * bank's root, a folder of the team's own. Only markdown is read, and a folder is one finding
- * however many files it holds.
+ * What the bank's layout proposes, as warnings: a row's file below the bank's root, a folder of
+ * the team's own. Only markdown is read, and a folder is one finding however many files it holds.
  */
 function structureFindings(root) {
   const found = [];
@@ -194,10 +183,7 @@ function structureFindings(root) {
     const [top] = parts;
     if (parts.length > 1 && !ON_DEMAND_DIRS.includes(top)) folders.add(top);
     if (!name.endsWith(".md") || EXCLUDED_FILES.has(name)) continue;
-    if (parts.length === 1 && Object.hasOwn(FORMER_FILES, name)) {
-      const into = FORMER_FILES[name];
-      found.push(warning(file, "former", `a former file, replaced by ${into}`, `merge it into ${MEMORY_DIR}/${into}, then remove it`));
-    } else if (parts.length > 1 && top !== "external" && ROW_FILES.includes(name)) {
+    if (parts.length > 1 && top !== "external" && ROW_FILES.includes(name)) {
       found.push(warning(file, "placement", `${name} belongs at the bank's root`, `move it to ${MEMORY_DIR}/${name}`));
     }
   }
@@ -707,6 +693,6 @@ function main(argv) {
   return EXIT_ERRORS;
 }
 
-module.exports = { ALWAYS_WRITTEN, ROW_FILES, FORMER_FILES, TARGET_FILES, lintFile, lintBank, check, sync };
+module.exports = { ALWAYS_WRITTEN, ROW_FILES, TARGET_FILES, lintFile, lintBank, check, sync };
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));

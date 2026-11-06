@@ -6,7 +6,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/hooks/memory.cjs");
-const { lintFile, lintBank, ALWAYS_WRITTEN, ROW_FILES, FORMER_FILES } = require(ENGINE);
+const { lintFile, lintBank, ALWAYS_WRITTEN, ROW_FILES } = require(ENGINE);
 const { RULES } = require("../../plugins/aidd-context/hooks/lib/memory-rules.cjs");
 const CAPABILITIES = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory/references/capabilities.md");
 
@@ -437,7 +437,7 @@ test("check names the always-written files the bank lacks as the one error, and 
     assert.equal(run.status, 1);
     assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
       "aidd-context: 1 error, 1 warning",
-      'aidd_docs/memory missing "project-brief.md, architecture.md, coding-assertions.md, testing.md, ecosystem.md" => write each from its template',
+      'aidd_docs/memory missing "project-brief.md, architecture.md, codebase-map.md, coding-assertions.md, testing.md, ecosystem.md" => write each from its template',
       "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
     ]);
   } finally {
@@ -445,18 +445,28 @@ test("check names the always-written files the bank lacks as the one error, and 
   }
 });
 
-test("check: a former file, a row's file below the root and a team folder are warnings and exit 0", () => {
-  const root = fullBank({ "codebase-map.md": "# C\n", "internal/auth.md": "# A\n", "kpi/q.md": "# K\n", "assets/diagram.png": "x" });
+test("check: a row's file below the root and a team folder are warnings and exit 0", () => {
+  const root = fullBank({ "internal/auth.md": "# A\n", "kpi/q.md": "# K\n", "assets/diagram.png": "x" });
   try {
     const run = check(root);
     assert.equal(run.status, 0);
     assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
-      "aidd-context: 0 errors, 4 warnings",
-      "aidd_docs/memory/codebase-map.md former warning a former file, replaced by architecture.md => merge it into aidd_docs/memory/architecture.md, then remove it",
+      "aidd-context: 0 errors, 3 warnings",
       "aidd_docs/memory/internal/auth.md placement warning auth.md belongs at the bank's root => move it to aidd_docs/memory/auth.md",
       "aidd_docs/memory/assets/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/assets/ to aidd_docs/memory/internal/assets/, or to the aidd_docs/ folder of the plugin that owns it",
       "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
     ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check: a bank holding a team's cli.md and the names of older layouts gets no merge offer and no missing file", () => {
+  const root = fullBank({ "cli.md": "# CLI\n", "design.md": "# D\n", "infra.md": "# I\n", "integration.md": "# G\n", "forms.md": "# F\n", "navigation.md": "# N\n" });
+  try {
+    const run = check(root);
+    assert.equal(run.status, 0);
+    assert.equal(run.stdout, "");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -522,23 +532,26 @@ test("the always-written files are the Always rows of the capability table", () 
     .split(/\r?\n/u)
     .filter((line) => line.startsWith("|"))
     .map((line) => line.split("|").map((cell) => cell.trim()))
-    .filter((cells) => cells[4] === "yes");
-  const named = rows.flatMap((cells) => [...cells[3].matchAll(/`([^`]+\.md)`/gu)].map((match) => match[1]));
+    .filter((cells) => cells[5] === "yes");
+  const named = rows.flatMap((cells) => [...cells[2].matchAll(/`([^`]+\.md)`/gu)].map((match) => match[1]));
   assert.deepEqual([...ALWAYS_WRITTEN].sort(), named.sort());
 });
 
-// The engine's tables are the capability table's: a row's files and the files it replaced.
-test("the engine's row files and former files are the capability table's", () => {
+// The engine's tables are the capability table's: one row per file, and the names a row accepts.
+test("the engine's row files are the capability table's, and it holds no table of former names", () => {
   const rows = fs
     .readFileSync(CAPABILITIES, "utf8")
     .split(/\r?\n/u)
     .filter((line) => line.startsWith("| `"))
     .map((line) => line.split("|").map((cell) => cell.trim()));
   const names = (cell) => [...cell.matchAll(/`([^`]+\.md)`/gu)].map((match) => match[1]);
-  assert.deepEqual([...ROW_FILES].sort(), rows.flatMap((cells) => names(cells[3])).sort());
-  const former = rows.flatMap((cells) => names(cells[5]).filter((name) => !names(cells[3]).includes(name)).map((name) => [name, names(cells[3])]));
-  assert.deepEqual(Object.keys(FORMER_FILES).sort(), former.map(([name]) => name).sort());
-  for (const [old, row] of former) assert.ok(row.includes(FORMER_FILES[old]), `${old} is replaced by a file of its row, not ${FORMER_FILES[old]}`);
+  assert.deepEqual([...ROW_FILES].sort(), rows.flatMap((cells) => names(cells[2])).sort());
+  assert.deepEqual(
+    [...ALWAYS_WRITTEN].sort(),
+    rows.filter((cells) => cells[5] === "yes").flatMap((cells) => names(cells[2])).sort()
+  );
+  for (const accepted of rows.flatMap((cells) => names(cells[6]))) assert.ok(!ROW_FILES.includes(accepted), `${accepted} is accepted and also a row file`);
+  assert.equal(require(ENGINE).FORMER_FILES, undefined);
 });
 
 // lines and vanished: what a refresh must not lose

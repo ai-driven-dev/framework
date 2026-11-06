@@ -1,6 +1,6 @@
 # UI
 
-{{Does aidd_docs/ui/system.md exist? Then keep one line: the design system lives in `aidd_docs/ui/`, and drop everything below.}}
+{{Does `aidd_docs/ui/` exist? Then the detail and the design system live there: point to it and copy none of it.}}
 
 ## Rules
 

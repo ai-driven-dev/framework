@@ -117,16 +117,19 @@
       "filesExist": [
         "aidd_docs/memory/project-brief.md",
         "aidd_docs/memory/architecture.md",
+        "aidd_docs/memory/codebase-map.md",
         "aidd_docs/memory/coding-assertions.md",
         "aidd_docs/memory/testing.md",
         "aidd_docs/memory/vcs.md",
         "aidd_docs/memory/ecosystem.md",
-        "aidd_docs/README.md"
+        "aidd_docs/README.md",
+        "aidd_docs/memory/api.md"
       ],
       "filesAbsent": [
         "aidd_docs/memory/README.md",
         "aidd_docs/GUIDELINES.md",
-        "aidd_docs/CONTRIBUTING.md"
+        "aidd_docs/CONTRIBUTING.md",
+        "aidd_docs/memory/contract.md"
       ],
       "fileNotContains": {
         "aidd_docs/memory/vcs.md": [
@@ -147,7 +150,7 @@
         ]
       },
       "fileMatches": {
-        "aidd_docs/memory/ecosystem.md": "^# Ecosystem\\s*```mermaid\\n[\\s\\S]*\\n```\\s*$"
+        "aidd_docs/memory/ecosystem.md": "^# Ecosystem\\s*```mermaid\\n[\\s\\S]*\\n```"
       }
     }
   },
@@ -244,7 +247,7 @@
     "plugin": "aidd-context",
     "skill": "02-project-memory",
     "evalName": "xeval-memory",
-    "name": "check offers an old file a merge into its capability's file",
+    "name": "check keeps a team's api.md and offers no merge",
     "setup": {
       "files": {
         "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\", \"dependencies\": { \"express\": \"^4.19.0\" } }\n",
@@ -257,9 +260,7 @@
     "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted, change nothing, and do not wait for input.",
     "expect": {
       "stdoutContains": [
-        "Structure findings",
-        "api.md",
-        "contract.md"
+        "Structure findings"
       ],
       "filesAbsent": [
         "aidd_docs/memory/contract.md",
@@ -270,8 +271,10 @@
         "aidd_docs/memory/architecture.md",
         "aidd_docs/memory/vcs.md"
       ],
-      "judge": "The output describes only the memory bank: no block or note names a step of the skill, nor explains how a finding was reached. api.md is offered a merge into contract.md and is not called a stray file.",
+      "judge": "The output describes only the memory bank: no block or note names a step of the skill, nor explains how a finding was reached. api.md is kept as the API file, neither flagged as stray nor offered a merge or a move.",
       "stdoutNotContains": [
+        "contract.md",
+        "merge",
         "Structure step",
         "Format step",
         "Content step",
@@ -530,7 +533,7 @@
         "src/store.int.test.ts": "import { expect, test } from \"vitest\";\ntest(\"stores\", () => expect(true).toBe(true));\n",
         "vitest.config.ts": "import { defineConfig } from \"vitest/config\";\nexport default defineConfig({ test: { projects: [{ test: { name: \"unit\", include: [\"src/**/*.test.ts\"], exclude: [\"src/**/*.int.test.ts\"] } }, { test: { name: \"int\", include: [\"src/**/*.int.test.ts\"] } }] } });\n",
         "scripts/export-invoices.ts": "import { writeFileSync } from \"node:fs\";\nimport { listInvoices } from \"../src/invoices\";\nconst rows = listInvoices().map((i) => `${i.id},${i.total}`);\nwriteFileSync(\"invoices.csv\", [\"id,total\", ...rows].join(\"\\n\"));\n",
-   "src/invoices.ts": "export type Invoice = { id: string; total: number };\nconst invoices: Invoice[] = [];\nexport const listInvoices = () => invoices;\nexport const addInvoice = (i: Invoice) => invoices.push(i);\n"
+        "src/invoices.ts": "export type Invoice = { id: string; total: number };\nconst invoices: Invoice[] = [];\nexport const listInvoices = () => invoices;\nexport const addInvoice = (i: Invoice) => invoices.push(i);\n"
       }
     },
     "prompt": "Use the {{SKILL}} skill to set up the project memory. You are running headless with no human available, so answer every question yourself from the repo evidence, never wait for input, and complete the whole flow.",
@@ -550,6 +553,66 @@
           "export-invoices"
         ]
       }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "refresh keeps a team's cli.md and writes no second contract file",
+    "setup": {
+      "files": {
+        "package.json": "{\n  \"name\": \"shopctl\",\n  \"version\": \"1.0.0\",\n  \"bin\": { \"shopctl\": \"src/cli.js\" },\n  \"dependencies\": { \"commander\": \"^12.0.0\" }\n}\n",
+        "src/cli.js": "#!/usr/bin/env node\nconst fs = require(\"node:fs\");\nconst { program } = require(\"commander\");\nprogram.requiredOption(\"--file <path>\");\nprogram.parse();\nconst { file } = program.opts();\nif (!fs.existsSync(file)) process.exit(1);\nfor (const order of JSON.parse(fs.readFileSync(file, \"utf8\"))) console.log(`${order.id} ${order.total}`);\n",
+        "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node and Commander\n",
+        "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n",
+        "aidd_docs/memory/cli.md": "# CLI\n\n## Interface\n\n- `shopctl` reads the order file given with `--file`, prints one line per order, and exits 1 when the file is missing.\n\n## Distribution\n\n- The `bin` field of `package.json` points to `src/cli.js`.\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
+    "expect": {
+      "filesExist": [
+        "aidd_docs/memory/cli.md",
+        "aidd_docs/memory/architecture.md"
+      ],
+      "filesAbsent": [
+        "aidd_docs/memory/contract.md",
+        "aidd_docs/memory/api.md",
+        "aidd_docs/memory/package.md"
+      ],
+      "fileContains": {
+        "aidd_docs/memory/cli.md": [
+          "- `shopctl` reads the order file given with `--file`, prints one line per order, and exits 1 when the file is missing.\n"
+        ]
+      }
+    }
+  },
+  {
+    "plugin": "aidd-context",
+    "skill": "02-project-memory",
+    "evalName": "xeval-memory",
+    "name": "setup of a CLI project writes cli.md",
+    "setup": {
+      "files": {
+        "package.json": "{\n  \"name\": \"shopctl\",\n  \"version\": \"1.0.0\",\n  \"bin\": { \"shopctl\": \"src/cli.js\" },\n  \"dependencies\": { \"commander\": \"^12.0.0\" }\n}\n",
+        "README.md": "# shopctl\n\nA command-line tool that lists orders from a file.\n",
+        "src/cli.js": "#!/usr/bin/env node\nconst { program } = require(\"commander\");\nprogram.requiredOption(\"--file <path>\");\nprogram.parse();\n"
+      }
+    },
+    "prompt": "Use the {{SKILL}} skill to set up the project memory. You are running headless with no human available, so answer every question yourself from the repo evidence, never wait for input, and complete the whole flow.",
+    "expect": {
+      "filesExist": [
+        "aidd_docs/memory/cli.md"
+      ],
+      "fileContains": {
+        "aidd_docs/memory/cli.md": [
+          "# CLI"
+        ]
+      },
+      "filesAbsent": [
+        "aidd_docs/memory/contract.md",
+        "aidd_docs/memory/api.md"
+      ]
     }
   }
 ]

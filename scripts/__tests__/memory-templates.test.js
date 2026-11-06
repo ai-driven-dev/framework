@@ -10,8 +10,12 @@ const TEMPLATES = path.join(SKILL, "assets/templates/memory");
 const { PLACEHOLDER } = require("./helpers/unfinished-marker.js");
 const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
 
-const ALWAYS = ["project-brief.md", "architecture.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
-const CONDITIONAL = ["backlog.md", "deployment.md", "contract.md", "auth.md", "data.md", "async.md", "ui.md", "native.md"];
+const ALWAYS = ["project-brief.md", "architecture.md", "codebase-map.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
+const CONDITIONAL = [
+  "backlog.md", "deployment.md", "api.md", "cli.md", "package.md", "auth.md", "database.md", "data.md",
+  "messaging.md", "realtime.md", "ui.md", "mobile.md", "desktop.md",
+];
+const MERGED_NAMES = /\b(?:contract|native|async)\.md\b/u;
 
 function templateFiles() {
   return fs.readdirSync(TEMPLATES, { withFileTypes: true }).flatMap((dir) =>
@@ -31,8 +35,23 @@ function capabilityRows() {
     .map((line) => line.replace(/^\||\|$/gu, "").split("|").map((cell) => cell.trim()));
 }
 
-test("the templates are the fourteen files, six always written and eight conditional", () => {
+test("the templates are the twenty files, seven always written and thirteen conditional", () => {
   assert.deepEqual(templateFiles().map(({ name }) => name).sort(), [...ALWAYS, ...CONDITIONAL].sort());
+});
+
+test("no template or table names a merged file, and the data store and the datasets are two templates", () => {
+  for (const template of templateFiles()) assert.doesNotMatch(textOf(template), MERGED_NAMES, template.name);
+  assert.doesNotMatch(fs.readFileSync(path.join(SKILL, "references/capabilities.md"), "utf8"), MERGED_NAMES);
+  assert.match(textOf({ capability: "database", name: "database.md" }), /^# Database$/mu);
+  assert.match(textOf({ capability: "data", name: "data.md" }), /^# Data$/mu);
+});
+
+test("ecosystem holds the outside-service questions, and codebase-map the areas, entry points and packages", () => {
+  const ecosystem = textOf({ capability: "ecosystem", name: "ecosystem.md" });
+  assert.match(ecosystem, /\{\{Which external services does the project call[^}]*\}\}/u);
+  const map = textOf({ capability: "core", name: "codebase-map.md" });
+  for (const heading of ["Areas", "Entry points", "Packages"]) assert.match(map, new RegExp(`^## ${heading}$`, "mu"));
+  assert.doesNotMatch(textOf({ capability: "core", name: "architecture.md" }), /Entry points|Packages:/u);
 });
 
 test("each template gives engine errors only on its question lines", () => {
@@ -61,7 +80,7 @@ test("a template holds no angle placeholder, guidance comment or other marker", 
 });
 
 test("every file of capabilities.md has a template in the folder of its capability", () => {
-  for (const [capability, , files] of capabilityRows()) {
+  for (const [capability, files] of capabilityRows()) {
     for (const file of files.match(/[\w-]+\.md/gu)) {
       assert.ok(
         fs.existsSync(path.join(TEMPLATES, capability.replace(/`/gu, ""), file)),
@@ -124,14 +143,16 @@ test("a merged row points to a slot row and a dropped row states its reason", ()
   }
 });
 
-test("every former file is named by the capability that replaced it, and has a row", () => {
-  for (const [capability, , , , former] of capabilityRows()) {
-    for (const file of former.split(" into ")[0].match(/[\w-]+\.md/gu) ?? []) {
-      assert.ok(
-        BANK.some((row) => row.capability === capability.replace(/`/gu, "") && path.basename(row.from) === file),
-        `${file} is a Former file of ${capability} and no row of the question bank comes from it`
-      );
-    }
+test("every accepted name of the table has a row in the question bank, under its capability", () => {
+  const accepted = capabilityRows().flatMap(([capability, , , , , names]) =>
+    (names.match(/[\w-]+\.md/gu) ?? []).map((file) => [capability.replace(/`/gu, ""), file])
+  );
+  assert.deepEqual(accepted.map(([, file]) => file).sort(), ["design.md", "forms.md", "infra.md", "integration.md", "navigation.md"]);
+  for (const [capability, file] of accepted) {
+    assert.ok(
+      BANK.some((row) => row.capability === capability && path.basename(row.from) === file),
+      `${file} is accepted by ${capability} and no row of the question bank comes from it`
+    );
   }
 });
 
@@ -144,12 +165,12 @@ test("a consumer of a template line still cites it, and the template still holds
   }
 });
 
-test("the ui template keeps one pointer line and drops the rest when a design system file exists", () => {
+test("the ui template opens on the aidd_docs/ui/ pointer and keeps its macro questions", () => {
   const text = textOf({ capability: "ui", name: "ui.md" });
-  assert.match(
-    text,
-    /^\{\{Does aidd_docs\/ui\/system\.md exist\? Then keep one line: .*`aidd_docs\/ui\/`.*, and drop everything below\.\}\}$/mu
-  );
+  const first = text.split(/\r?\n/u).find((line) => line.includes("{{"));
+  assert.match(first, /^\{\{Does `aidd_docs\/ui\/` exist\? .*design system.*copy none of it\.\}\}$/u);
+  assert.doesNotMatch(text, /drop everything below/u);
+  for (const heading of ["Rules", "Routing", "Accessibility", "See a change"]) assert.match(text, new RegExp(`^## ${heading}$`, "mu"));
 });
 
 test("a question with no answer is dropped, and a file with no answer is not written for a conditional row only", () => {

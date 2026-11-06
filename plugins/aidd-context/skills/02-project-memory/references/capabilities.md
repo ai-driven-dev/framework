@@ -11,20 +11,34 @@ The one place that says how a capability is detected, which file it writes, and 
 
 A file is written to `aidd_docs/memory/` from the template of the same name under `assets/templates/memory/<capability>/`.
 
-| Capability | Detected when | File | Always | Former files |
-| --- | --- | --- | --- | --- |
-| `core` | always | `project-brief.md`, `architecture.md`, `coding-assertions.md`, `testing.md`, `vcs.md` | yes | `codebase-map.md` into `architecture.md` |
-| `ecosystem` | always | `ecosystem.md` | yes | - |
-| `backlog` | local backlog artifacts, issue templates, a ticketing tool in use, or a repo file naming backlog conventions | `backlog.md` | no | - |
-| `deployment` | a CI config, a `Dockerfile`, or Terraform, Pulumi, Kubernetes, or Helm files | `deployment.md` | no | `infra.md` |
-| `contract` | a server framework, a `routes/`, `controllers/`, or `api/` dir, a `bin` field or CLI parser (commander, yargs, oclif, clap, click), or a publishable manifest declaring an importable entry (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`) | `contract.md` | no | `api.md`, `cli.md`, `package.md`, `integration.md` |
-| `auth` | an auth library (passport, next-auth, clerk, auth0, devise), auth middleware, or an auth module | `auth.md` | no | - |
-| `data` | an ORM or driver, a `migrations/` dir, a schema file, notebooks, a data-versioning or ML tool, or pipeline and model files | `data.md` | no | `database.md` |
-| `async` | a queue or broker (kafka, rabbitmq, sqs, bullmq) with producers or consumers, or a websocket or SSE library (socket.io, ws, pusher, ably, channels, actioncable), or a socket endpoint | `async.md` | no | `messaging.md`, `realtime.md` |
-| `ui` | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir | `ui.md` | no | `design.md`, `forms.md`, `navigation.md` |
-| `native` | an `ios/` or `android/` dir, a `pubspec.yaml`, a `Podfile`, React Native, Flutter, Electron, Tauri, or a native desktop toolkit (Qt, GTK, WPF, AppKit) | `native.md` | no | `mobile.md`, `desktop.md` |
+| Capability | File | Meaning | Detected when | Always | Accepted names |
+| --- | --- | --- | --- | --- | --- |
+| `core` | `project-brief.md` | what the project is, for whom, and its domain words | always | yes | - |
+| `core` | `architecture.md` | the stack, the decisions and how the parts fit | always | yes | - |
+| `core` | `codebase-map.md` | the top-level areas, entry points and packages | always | yes | - |
+| `core` | `coding-assertions.md` | the checks that must pass for code to count as done | always | yes | - |
+| `core` | `testing.md` | how the project is tested and run | always | yes | - |
+| `core` | `vcs.md` | the branches, commits and hosting platform | always | yes | - |
+| `ecosystem` | `ecosystem.md` | the tools and services outside the repo, and how each is reached | always | yes | `integration.md` |
+| `backlog` | `backlog.md` | where work items live and how they move | local backlog artifacts, issue templates, a ticketing tool in use, or a repo file naming backlog conventions | no | - |
+| `deployment` | `deployment.md` | where the project runs and how it ships | a CI config, a `Dockerfile`, or Terraform, Pulumi, Kubernetes, or Helm files | no | `infra.md` |
+| `api` | `api.md` | the server surface: style, conventions and compatibility | a server framework, or a `routes/`, `controllers/`, or `api/` dir | no | - |
+| `cli` | `cli.md` | the command line: its conventions and distribution | a `bin` field or a command-line parser (commander, yargs, oclif, clap, click) | no | - |
+| `package` | `package.md` | what the project publishes for others to import | a publishable manifest declaring an importable entry (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`) | no | - |
+| `auth` | `auth.md` | who a caller is, what they may do, and how sessions live | an auth library (passport, next-auth, clerk, auth0, devise), auth middleware, or an auth module | no | - |
+| `database` | `database.md` | the data store, its model and its conventions | an ORM or driver, a `migrations/` dir, or a schema file | no | - |
+| `data` | `data.md` | the datasets, pipelines and models, and how a run is reproduced | notebooks, a data-versioning or ML tool, or pipeline and model files | no | - |
+| `messaging` | `messaging.md` | the queues and topics that carry asynchronous work | a queue or broker (kafka, rabbitmq, sqs, bullmq) with producers or consumers | no | - |
+| `realtime` | `realtime.md` | the live channels pushed to clients | a websocket or SSE library (socket.io, ws, pusher, ably, channels, actioncable), or a socket endpoint | no | - |
+| `ui` | `ui.md` | the front-end rules, routing and accessibility bar | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir | no | `design.md`, `forms.md`, `navigation.md` |
+| `mobile` | `mobile.md` | the mobile app: platform, native access and release | an `ios/` or `android/` dir, a `pubspec.yaml`, a `Podfile`, React Native, or Flutter | no | - |
+| `desktop` | `desktop.md` | the desktop app: framework, native access and packaging | Electron, Tauri, or a native desktop toolkit (Qt, GTK, WPF, AppKit) | no | - |
 
-`Former files`: the template files a capability replaced.
+`Accepted names`: names a bank already holds from an older layout.
+
+- Such a file is kept, reviewed and written into as its row's file; it is offered nothing.
+- No second file is written for a conditional capability one of its names already covers.
+- A project exposing several surfaces gets one file per surface: `api`, `cli` and `package` are separate rows.
 
 A template line in `{{…}}` is a question the writer answers.
 

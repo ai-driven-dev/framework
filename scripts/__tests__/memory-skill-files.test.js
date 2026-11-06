@@ -10,8 +10,11 @@ const SKILL = path.join(PLUGIN, "skills/02-project-memory");
 const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
 const { RULES } = require(path.join(PLUGIN, "hooks/lib/memory-rules.cjs"));
 
-const CAPABILITIES = ["core", "ecosystem", "backlog", "deployment", "contract", "auth", "data", "async", "ui", "native"];
-const HEADER = ["Capability", "Detected when", "File", "Always", "Former files"];
+const CAPABILITIES = [
+  ...Array(6).fill("core"),
+  ...["ecosystem", "backlog", "deployment", "api", "cli", "package", "auth", "database", "data", "messaging", "realtime", "ui", "mobile", "desktop"],
+];
+const HEADER = ["Capability", "File", "Meaning", "Detected when", "Always", "Accepted names"];
 const DROPPED_TEMPLATES = /templates\/(?:GUIDELINES|CONTRIBUTING)\.md|templates\/memory\/README\.md/u;
 const { UNFINISHED } = require("./helpers/unfinished-marker.js");
 const MERGED_REFERENCES = /capability-signals|memory-destinations|structure\.md/u;
@@ -73,10 +76,11 @@ test("no file of the skill names a dropped template or a merged reference", () =
   }
 });
 
-test("capabilities.md holds one row per capability, and every memory template belongs to a row", () => {
+test("capabilities.md holds one row per file, and every memory template belongs to a row", () => {
   const { header, rows } = tableOf(path.join(SKILL, "references/capabilities.md"));
   assert.deepEqual(header, HEADER);
   assert.deepEqual(rows.map(([capability]) => capability.replace(/`/gu, "")), CAPABILITIES);
+  for (const cells of rows) assert.ok(cells[HEADER.indexOf("Meaning")] !== "" && cells[HEADER.indexOf("Detected when")] !== "", `${cells[0]} lacks its meaning or detection`);
   const named = rows.map((cells) => cells[HEADER.indexOf("File")]).join(" ");
   const templates = filesUnder(path.join(SKILL, "assets/templates/memory")).map((file) => path.basename(file));
   for (const template of templates) assert.ok(named.includes(template), `${template} belongs to no capability row`);
@@ -186,12 +190,12 @@ test("refresh runs scan, check, write, then sync", () => {
   assert.match(skillText("SKILL.md"), /\(\[refresh\]\)\s*-->\s*scan\s*-->\s*check\s*-->\s*write\s*-->\s*sync/u);
 });
 
-test("check reads the bank at its root: a team file is kept and never linted or removed, a misplaced one moves, a former file merges", () => {
+test("check reads the bank at its root: a team file is kept and never linted or removed, a misplaced one moves, an accepted older name is kept", () => {
   const check = skillText("actions/03-check.md");
   const lines = check.split(/\r?\n/u);
   const line = (pattern) => lines.find((candidate) => pattern.test(candidate));
   assert.match(check, /team/u, "a team's own root file is not named");
-  assert.match(check, /Former files/u);
+  assert.match(check, /Accepted names/u);
   assert.doesNotMatch(check, /orphan/iu, "a root file no row produces is the team's, not an orphan");
   assert.doesNotMatch(check, /got an answer/u, "check cannot know what write was answered");
   assert.match(line(/remove/u) ?? "", /a row produces/u, "the removal offer is not bound to the files a row produces");
@@ -205,11 +209,11 @@ test("check reads the bank at its root: a team file is kept and never linted or 
   assert.match(check, /the engine/u);
 });
 
-test("write ends on the engine, writes only the root, and holds back a capability a misplaced or unmerged file covers", () => {
+test("write ends on the engine, writes only the root, and holds back a capability a misplaced file or an accepted name covers", () => {
   const write = skillText("actions/02-write.md");
   assert.match(write, /engine/u);
   assert.match(write, /misplaced/u);
-  assert.match(write, /Former files/u, "a pending former-file merge does not hold back the capability's file");
+  assert.match(write, /Accepted names/u, "an accepted name does not hold back the capability's file");
   assert.doesNotMatch(write, /each found capability|guidance comment|every selected row exists/u, "a stale instruction is left");
 });
 
@@ -220,16 +224,9 @@ test("write, the action a refresh reads before changing the bank, records the li
   assert.match(steps.at(-1), /restore nothing/u);
 });
 
-test("a merge applies only with the former file's own removal approved, and says so once, in write", () => {
-  const merge = skillText("actions/02-write.md")
-    .split(/\r?\n/u)
-    .filter((candidate) => /merge/iu.test(candidate) && /removal/u.test(candidate));
-  assert.equal(merge.length, 1, "write does not state, in one line, what a merge needs before it touches the former file");
-  assert.match(merge[0], /former file's removal was approved/u);
-  assert.match(merge[0], /neither file/u, "a merge without its removal can still copy, leaving every fact in two files");
-  for (const file of skillMarkdown().filter((candidate) => !candidate.endsWith("02-write.md"))) {
-    const text = fs.readFileSync(file, "utf8");
-    assert.doesNotMatch(text, /merge[^.\n]*removal|removal[^.\n]*merge/iu, `${path.relative(SKILL, file)} restates the merge rule`);
+test("no file of the skill offers a merge or names a former file", () => {
+  for (const file of skillMarkdown().filter((candidate) => !path.relative(SKILL, candidate).startsWith("assets"))) {
+    assert.doesNotMatch(fs.readFileSync(file, "utf8"), /\bmerg(?:e|es|ed|ing)\b|Former files?/iu, `${path.relative(SKILL, file)} speaks of a merge`);
   }
 });
 
@@ -239,7 +236,7 @@ test("sync fills the wired tools without asking when refresh calls it, the old t
   assert.match(sync, /<aidd_project_memory>/u);
 });
 
-test("the cases cover the merge offer, the misplaced move, and the refresh sync", () => {
+test("the cases cover the kept older name, the misplaced move, the team cli.md, the CLI setup and the refresh sync", () => {
   const cases = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../skill-eval/cases.json"), "utf8"));
   const memory = cases.filter((entry) => entry.skill === "02-project-memory");
   const all = JSON.stringify(memory);
@@ -249,24 +246,30 @@ test("the cases cover the merge offer, the misplaced move, and the refresh sync"
     assert.ok(found, `no case ${what}`);
     return found;
   };
-  const merge = find(/merge/u, "offers a former file a merge");
-  assert.ok(merge.expect.stdoutContains.includes("api.md") && merge.expect.stdoutContains.includes("contract.md"));
-  assert.ok(merge.expect.filesUnchanged.includes("aidd_docs/memory/api.md"));
+  const kept = find(/offers no merge/u, "keeps an older name and offers no merge");
+  assert.ok(kept.expect.stdoutNotContains.includes("contract.md") && kept.expect.stdoutNotContains.includes("merge"));
+  assert.ok(kept.expect.filesUnchanged.includes("aidd_docs/memory/api.md"));
+  const team = find(/team's cli\.md/u, "refreshes a bank holding a team's cli.md");
+  // The team's line survives; a true fact the refresh adds next to it is allowed.
+  assert.ok(team.expect.fileContains["aidd_docs/memory/cli.md"].some((line) => line.startsWith("- `shopctl`")));
+  assert.ok(team.expect.filesAbsent.some((file) => /contract\.md/u.test(file)));
+  const cli = find(/CLI project/u, "sets up a CLI project");
+  assert.ok(cli.expect.fileContains["aidd_docs/memory/cli.md"].includes("# CLI"));
   const misplaced = find(/misplaced/u, "flags a misplaced file");
   assert.ok(misplaced.expect.filesAbsent.includes("aidd_docs/memory/auth.md"), "a root copy is not ruled out");
   assert.ok(misplaced.expect.filesUnchanged.includes("aidd_docs/memory/principles.md"), "the team file is checked by judge only");
   for (const heading of ["Structure findings", "Format findings", "Content findings"]) assert.ok(misplaced.expect.stdoutContains.includes(heading), heading);
   const refresh = find(/^refresh/u, "refreshes a bank");
   assert.deepEqual(refresh.expect.fileContains["CLAUDE.md"], ["@aidd_docs/memory/deployment.md"]);
-  assert.ok(refresh.expect.filesExist.includes("aidd_docs/memory/codebase-map.md"), "the declined merge is not asserted");
+  assert.ok(refresh.expect.filesExist.includes("aidd_docs/memory/codebase-map.md"), "the codebase map is not asserted");
 });
 
-test("check reviews the files a row produces or names as former, never a team file, offers a merge for a former file, and a misplaced file only its move", () => {
+test("check reviews the files a row produces or accepts under another name, never a team file, and a misplaced file only its move", () => {
   const lines = skillText("actions/03-check.md").split(/\r?\n/u);
   const line = (pattern) => lines.find((candidate) => pattern.test(candidate)) ?? "";
   assert.match(line(/\*\*Content/u), /a row produces/u, "Content reviews the team's files too");
-  const merge = lines.filter((candidate) => /Former files/u.test(candidate) && /merge/u.test(candidate));
-  assert.equal(merge.length, 1, "no single step offers the merge for a Former files match");
+  const accepted = lines.filter((candidate) => /Accepted names/u.test(candidate) && /offer nothing/u.test(candidate));
+  assert.equal(accepted.length, 1, "no single step keeps a file matching Accepted names without an offer");
   assert.match(line(/misplaced/u), /only the move/u, "a misplaced file is offered more than its move");
   assert.match(line(/remove/u), /at the root/u, "a removal is offered for a file that is not at the root");
 });
