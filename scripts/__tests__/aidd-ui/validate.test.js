@@ -994,8 +994,8 @@ describe("aidd-ui validator entries", () => {
       const temp = path.join(tmp, "temp");
       fs.mkdirSync(stateFolder(temp), { recursive: true, mode: 0o700 });
       const [old, fresh] = [markPath("old", temp), markPath("fresh", temp)];
-      fs.writeFileSync(old, "unknown\n");
-      fs.writeFileSync(fresh, "unknown\n");
+      fs.writeFileSync(old, "unknown\n", { mode: 0o600 });
+      fs.writeFileSync(fresh, "unknown\n", { mode: 0o600 });
       const past = new Date(Date.now() - DAY_MS - 60_000);
       fs.utimesSync(old, past, past);
       assert.deepEqual(hook(sessionStart(), temp), silent);
