@@ -1098,8 +1098,8 @@ describe("framework release update wiring", () => {
     expect(manifest?.getPlugins("kilo")).toHaveLength(0);
   });
 
-  it.each(["EPERM", "EACCES"])(
-    "refuses %s on the project hooks directory before updating anything",
+  it.each(["EPERM", "EACCES", "EIO"])(
+    "reports %s on the project hooks directory before updating anything",
     async (code) => {
       const { rel } = await fixtureDistribution();
       const hooks = join(root, "plugins/aidd-context/hooks");
@@ -1121,8 +1121,53 @@ describe("framework release update wiring", () => {
       const registry = join(root, ".aidd/marketplaces.json");
       const beforeRegistry = await readFile(registry, "utf8");
       const beforeManifest = await readFile(join(root, ".aidd/manifest.json"), "utf8");
-      vi.spyOn(FileAdapter.prototype, "assertWritableDirectory").mockRejectedValue(
-        Object.assign(new Error("denied"), { code })
+      const error = Object.assign(new Error("directory access failed"), { code });
+      vi.spyOn(FileAdapter.prototype, "assertWritableDirectory").mockRejectedValue(error);
+
+      const update = deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm,
+      });
+      if (code === "EIO") await expect(update).rejects.toBe(error);
+      else
+        await expect(update).rejects.toThrow(
+          `Cannot write project hooks directory '${dirname(hooksFile)}' (${code})`
+        );
+      expect(confirm).not.toHaveBeenCalled();
+      expect(await readFile(registry, "utf8")).toBe(beforeRegistry);
+      expect(await readFile(join(root, ".aidd/manifest.json"), "utf8")).toBe(beforeManifest);
+      expect(await readFile(pluginFile, "utf8")).toBe("old plugin");
+      expect(await readFile(hooksFile, "utf8")).toBe("{}");
+    }
+  );
+
+  it.each(["plugin directory", "project root"] as const)(
+    "checks the nearest existing parent of an incoming project hook script: %s",
+    async (parent) => {
+      await fixtureDistribution();
+      const hooks = join(root, "plugins/aidd-context/hooks/nested");
+      await mkdir(hooks, { recursive: true });
+      await writeFile(join(dirname(hooks), "hooks.json"), JSON.stringify({ hooks: {} }));
+      await writeFile(join(hooks, "new.cjs"), "release hook");
+      const directory = parent === "project root" ? root : join(root, ".agents/hooks/aidd-context");
+      await mkdir(directory, { recursive: true });
+      const deps = await seed("antigravity");
+      const manifest = await deps.manifestRepo.load();
+      const plugin = manifest?.getPlugins("antigravity")[0];
+      if (!manifest || !plugin) throw new Error("missing plugin");
+      manifest.updatePlugin(
+        "antigravity",
+        InstalledPlugin.withProjectHooks(plugin, { entries: [], scripts: new Map() })
+      );
+      await deps.manifestRepo.save(manifest);
+      const registry = join(root, ".aidd/marketplaces.json");
+      const beforeRegistry = await readFile(registry, "utf8");
+      vi.spyOn(FileAdapter.prototype, "assertWritableDirectory").mockImplementation(
+        async (path) => {
+          if (path === directory) throw Object.assign(new Error("denied"), { code: "EPERM" });
+        }
       );
 
       await expect(
@@ -1132,36 +1177,34 @@ describe("framework release update wiring", () => {
           allowShared: false,
           confirm,
         })
-      ).rejects.toThrow(`Cannot write project hooks directory '${dirname(hooksFile)}' (${code})`);
+      ).rejects.toThrow(`Cannot write project hooks directory '${directory}' (EPERM)`);
       expect(confirm).not.toHaveBeenCalled();
       expect(await readFile(registry, "utf8")).toBe(beforeRegistry);
-      expect(await readFile(join(root, ".aidd/manifest.json"), "utf8")).toBe(beforeManifest);
-      expect(await readFile(pluginFile, "utf8")).toBe("old plugin");
-      expect(await readFile(hooksFile, "utf8")).toBe("{}");
     }
   );
 
-  it("checks the nearest existing parent of an incoming project hook script", async () => {
+  it("checks the directory of an obsolete tracked hook before updating", async () => {
     await fixtureDistribution();
-    const hooks = join(root, "plugins/aidd-context/hooks/nested");
-    await mkdir(hooks, { recursive: true });
-    await writeFile(join(dirname(hooks), "hooks.json"), JSON.stringify({ hooks: {} }));
-    await writeFile(join(hooks, "new.cjs"), "release hook");
-    const directory = join(root, ".agents/hooks/aidd-context");
-    await mkdir(directory, { recursive: true });
+    const relative = ".agents/hooks/aidd-context/old.cjs";
+    const oldHook = join(root, relative);
+    await mkdir(dirname(oldHook), { recursive: true });
+    await writeFile(oldHook, "old hook");
     const deps = await seed("antigravity");
     const manifest = await deps.manifestRepo.load();
     const plugin = manifest?.getPlugins("antigravity")[0];
     if (!manifest || !plugin) throw new Error("missing plugin");
     manifest.updatePlugin(
       "antigravity",
-      InstalledPlugin.withProjectHooks(plugin, { entries: [], scripts: new Map() })
+      InstalledPlugin.withProjectHooks(plugin, {
+        entries: [],
+        scripts: new Map([[relative, hash("old hook")]]),
+      })
     );
     await deps.manifestRepo.save(manifest);
     const registry = join(root, ".aidd/marketplaces.json");
     const beforeRegistry = await readFile(registry, "utf8");
     vi.spyOn(FileAdapter.prototype, "assertWritableDirectory").mockImplementation(async (path) => {
-      if (path === directory) throw Object.assign(new Error("denied"), { code: "EPERM" });
+      if (path === dirname(oldHook)) throw Object.assign(new Error("denied"), { code: "EACCES" });
     });
 
     await expect(
@@ -1171,9 +1214,10 @@ describe("framework release update wiring", () => {
         allowShared: false,
         confirm,
       })
-    ).rejects.toThrow(`Cannot write project hooks directory '${directory}' (EPERM)`);
+    ).rejects.toThrow(`Cannot write project hooks directory '${dirname(oldHook)}' (EACCES)`);
     expect(confirm).not.toHaveBeenCalled();
     expect(await readFile(registry, "utf8")).toBe(beforeRegistry);
+    expect(await readFile(oldHook, "utf8")).toBe("old hook");
   });
 
   it("allows a new project hooks directory when its existing parent is writable", async () => {
