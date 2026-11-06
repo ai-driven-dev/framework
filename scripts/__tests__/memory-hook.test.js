@@ -35,6 +35,9 @@ test.after(() => {
   for (const dir of made) fs.rmSync(dir, { recursive: true, force: true });
 });
 
+/** The variables naming the system temp folder: `TMPDIR` on POSIX, `TEMP` and `TMP` on Windows. */
+const tempEnv = (dir) => ({ TMPDIR: dir, TEMP: dir, TMP: dir });
+
 function tempDir(prefix) {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
   made.push(dir);
@@ -169,7 +172,7 @@ function run(host, payload, { cwd = os.tmpdir(), preload, tmp = tempDir("memory-
     input: typeof payload === "string" ? payload : JSON.stringify(payload),
     encoding: "utf8",
     cwd,
-    env: { ...ENV, TMPDIR: tmp },
+    env: { ...ENV, ...tempEnv(tmp) },
   });
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
@@ -290,7 +293,7 @@ function touched(host, payload, root) {
     input: JSON.stringify(payload),
     encoding: "utf8",
     cwd: os.tmpdir(),
-    env: { ...ENV, SPY_LOG: log, SPY_ROOT: root, TMPDIR: dir },
+    env: { ...ENV, SPY_LOG: log, SPY_ROOT: root, ...tempEnv(dir) },
   });
   return { status: result.status, stdout: result.stdout, paths: fs.readFileSync(log, "utf8").trim() };
 }
@@ -760,6 +763,14 @@ test("a read-only run of the engine marks nothing; a shell write naming the bank
   // A shell write proves no line: its Stop requires nothing.
   assert.equal(step(stopPayload("claude", root)).stdout, "");
   assert.equal(fs.existsSync(mark), false, "the Stop did not consume the mark");
+});
+
+test("after a session start, a shell write reports an error it reached once, as its own", () => {
+  const root = project(withLine("Kept."));
+  const { run: step } = session("claude");
+  step(startPayload("claude", root));
+  fs.writeFileSync(path.join(root, MEMORY, "vcs.md"), `# VCS\n\n${SLOT_LINE}\n`);
+  assert.deepEqual(answerOf(step(shellPayload("claude", root, `echo x > ${MEMORY}/vcs.md`)).stdout), { level: 1, text: ASKED });
 });
 
 test("a write outside the bank marks nothing", () => {

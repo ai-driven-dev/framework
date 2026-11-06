@@ -25,13 +25,17 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Runs `body` with the system's temp folder pointed at a fresh one, so no state leaks between tests. */
 function withTmp(body) {
   const tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "turn-state-")));
-  const before = process.env.TMPDIR;
-  process.env.TMPDIR = tmp;
+  // `TMPDIR` names it on POSIX, `TEMP` and `TMP` on Windows.
+  const names = ["TMPDIR", "TEMP", "TMP"];
+  const before = names.map((name) => process.env[name]);
+  for (const name of names) process.env[name] = tmp;
   try {
     return body(tmp);
   } finally {
-    if (before === undefined) delete process.env.TMPDIR;
-    else process.env.TMPDIR = before;
+    names.forEach((name, index) => {
+      if (before[index] === undefined) delete process.env[name];
+      else process.env[name] = before[index];
+    });
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 }

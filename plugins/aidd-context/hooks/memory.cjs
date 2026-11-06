@@ -364,13 +364,14 @@ function afterWrite(host, event) {
   const mark = inBank.length > 0 || shellWrite ? turnEnd.turnMark(PLUGIN, event.sessionId) : null;
   const baseline = turnEnd.readBaseline(mark);
   const turn = turnEnd.readTurn(mark);
-  for (const entry of inBank) turnEnd.markWrite(turn, entry);
+  const reached = shellWrite ? shellReached(cwd, event.command) : [];
+  // A file the shell write reached is reported as its own, never again as another file's.
+  for (const entry of [...inBank, ...reached.filter((file) => placeOf(file) === "root").map((file) => ({ file: path.join(cwd, file) }))]) turnEnd.markWrite(turn, entry);
 
   const all = { errors: [], reached: [], warnings: [] };
   let level = 1;
   for (const [root, { said, unsaid }] of projects) {
-    const reached = root === cwd ? shellReached(root, event.command) : [];
-    const { findings, level: own } = findingsOf(root, said, [...unsaid, ...reached]);
+    const { findings, level: own } = findingsOf(root, said, [...unsaid, ...(root === cwd ? reached : [])]);
     for (const list of Object.keys(all)) all[list].push(...findings[list].map((finding) => ({ ...finding, file: shownFile(root, event.cwd, finding.file) })));
     level = Math.max(level, own);
   }

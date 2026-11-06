@@ -329,7 +329,9 @@ test("a target that cannot be written is named, and the others still sync", (t) 
   try {
     fs.chmodSync(path.join(root, "CLAUDE.md"), 0o444);
     const result = sync(root);
-    assert.match(result.stderr, /memory: CLAUDE\.md not written \(EACCES\), skipped/u);
+    // Windows refuses a write to a read-only file with EPERM, POSIX with EACCES.
+    const code = process.platform === "win32" ? "EPERM" : "EACCES";
+    assert.match(result.stderr, new RegExp(`memory: CLAUDE\\.md not written \\(${code}\\), skipped`, "u"));
     assert.match(read(root, "AGENTS.md"), /\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)/u);
     assert.equal(read(root, "CLAUDE.md"), EMPTY);
     assert.equal(sync(root, "claude", "codex").status, 1, "naming the tools fails the run");
