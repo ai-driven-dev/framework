@@ -59,7 +59,7 @@ main { width: min(1040px, calc(100% - 48px)); margin: auto; min-width: 0; }
 .user-message { margin: 0 0 16px; padding: 16px; border-left: 4px solid var(--ink); background: #f2f2f2; }
 .message-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--soft-ink); font-variant-numeric: tabular-nums; }
 .message-meta > span:first-child { color: var(--ink); font-weight: 700; }
-.user-prompt { margin: 8px 0 0; font-size: 18px; line-height: 1.45; letter-spacing: -0.02em; }
+.user-prompt { margin: 8px 0 0; font-size: 18px; line-height: 1.45; letter-spacing: -0.02em; overflow-wrap: anywhere; }
 .tool-calls { padding-left: 28px; font-size: 13px; }
 .tool-call { margin: 12px 0; }
 .tool-line { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; align-items: baseline; gap: 10px; padding: 4px 0; }
