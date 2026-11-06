@@ -135,3 +135,50 @@ main { width: min(1040px, calc(100% - 48px)); margin: auto; min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) { .finding-collapse { transition-duration: 0.001ms; } }
+
+/* Source, message previews and file diffs */
+.source-path { display: grid; gap: 4px; max-width: 100%; margin-top: 16px; padding: 10px 12px; background: var(--soft-surface); border: 1px solid var(--line); }
+.source-path span { color: var(--soft-ink); font-weight: 700; }
+.source-path code, .finding-file code { overflow-wrap: anywhere; }
+.finding-file { margin: 6px 0 0; color: var(--soft-ink); }
+.prompt-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; max-height: 3em; }
+.tool-line { grid-template-columns: 92px minmax(0, 1fr) auto auto; }
+.call-duration { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 680px) {
+  .diff-columns { grid-template-columns: minmax(0, 1fr); }
+  .diff-pane + .diff-pane { border-left: 0; border-top: 1px solid var(--line); }
+  .tool-line { grid-template-columns: 76px minmax(0, 1fr); }
+  .call-duration, .event-delta { grid-column: 2; }
+}
+
+.evidence-excerpt { margin: 0; padding: 10px 12px; background: var(--soft-surface); border: 1px solid var(--line); font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Evidence, problem and patch remain comparable at desktop widths. */
+.review-columns { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); }
+.review-cell { min-width:0; padding:16px; }
+.review-cell + .review-cell { border-left:1px solid var(--line); }
+.review-cell h4 { margin:0 0 12px; font-size:13px; }
+.review-cell p { margin:0; overflow-wrap:anywhere; }
+.git-diff { margin:0; padding:10px 0; background:var(--soft-surface); font:inherit; white-space:pre-wrap; overflow-wrap:anywhere; }
+.git-diff .diff-line { display:block; padding:2px 10px; }
+.git-diff b { display:inline-block; width:18px; }
+@media (max-width: 680px) { .review-columns { grid-template-columns:minmax(0,1fr); } .review-cell + .review-cell { border-left:0; border-top:1px solid var(--line); } }
+
+.conversation-turn > summary, .prompt-preview { font-weight: 400; }
+.turn-meta { display: flex; flex-wrap: wrap; justify-content: end; gap: 6px 12px; color: var(--soft-ink); font-variant-numeric: tabular-nums; }
+@media (max-width: 680px) { .turn-meta { flex-direction: column; align-items: end; gap: 0; } }
+
+.git-diff .diff-line[hidden] { display:none; }
+.diff-open, .diff-close { font:inherit; cursor:pointer; padding:8px 12px; border:1px solid var(--ink); background:var(--surface); color:var(--ink); }
+.diff-open { margin-top:10px; }
+.diff-dialog { width:min(1100px, calc(100% - 32px)); max-width:none; max-height:calc(100% - 32px); padding:24px; border:1px solid var(--ink); color:var(--ink); }
+.diff-dialog::backdrop { background:rgba(0,0,0,.55); }
+.diff-dialog h3 { margin:0 100px 18px 0; }
+.diff-close { position:absolute; top:16px; right:16px; }
+.dialog-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.dialog-columns section { min-width:0; }
+.dialog-columns h4 { margin:0 0 8px; }
+.dialog-code { margin:0; padding:10px 0; font:12px/1.6 var(--mono); white-space:pre-wrap; overflow-wrap:anywhere; background:var(--soft-surface); }
+.dialog-code .diff-line { display:block; padding:2px 10px; }
+.dialog-code b { display:inline-block; width:18px; }
+@media (max-width:680px) { .diff-dialog { padding:16px; } .dialog-columns { gap:6px; } .dialog-code { font-size:11px; } }
