@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { homedir, constants as osConstants } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import type { Command } from "commander";
 import spawn from "cross-spawn";
@@ -121,8 +121,20 @@ function printNotice(tool: Tool, cwd: string): void {
     encoding: "utf8",
     timeout: 10000,
   });
-  if (result.error || result.status !== 0)
-    throw new Error(`The aidd-maintenance hook failed for ${tool}.`);
+  const code = (result.error as NodeJS.ErrnoException | undefined)?.code;
+  const closedInput = code === "EPIPE";
+  if (result.status !== 0 || (result.error && !closedInput)) {
+    const details = [
+      code && Object.hasOwn(osConstants.errno, code) ? code : result.error ? "unknown error" : null,
+      Number.isInteger(result.status) ? `exit ${result.status}` : null,
+      result.signal && Object.hasOwn(osConstants.signals, result.signal)
+        ? `signal ${result.signal}`
+        : null,
+    ].filter(Boolean);
+    throw new Error(
+      `The aidd-maintenance hook failed for ${tool}${details.length ? ` (${details.join(", ")})` : ""}.`
+    );
+  }
   let message: unknown;
   try {
     message = (JSON.parse(result.stdout) as { systemMessage?: unknown }).systemMessage;

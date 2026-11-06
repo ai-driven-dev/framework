@@ -68,6 +68,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 801 KB: 799.4 KB, authenticated Git clones without credentials in remotes or logs; 0.2% headroom.
 // 826 KB: 810.3 KB, combined Antigravity support and maintenance; 1.9% measured headroom.
 // 826 KB: 811.3 KB, project hook directory permission preflight; 1.8% measured headroom.
+// 826 KB: 811.4 KB, handling a hook closing stdin after success; 1.8% measured headroom.
+// 826 KB: 811.7 KB, safe headless hook failure diagnostics; 1.7% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

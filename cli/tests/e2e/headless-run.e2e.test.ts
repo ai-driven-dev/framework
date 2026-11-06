@@ -178,7 +178,7 @@ describe("aidd run", () => {
       await mkdir(dirname(file), { recursive: true });
       await writeFile(file, hook);
       const loaded = run();
-      expect(loaded.status).toBe(0);
+      expect(loaded.status, loaded.stderr || loaded.error?.message).toBe(0);
       expect(loaded.stderr).toContain("MAINTENANCE NOTICE");
     } finally {
       await env.cleanup();

@@ -1,4 +1,4 @@
-import { ChildProcess } from "node:child_process";
+import { ChildProcess, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -8,6 +8,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const host = vi.hoisted(() => ({ spawn: vi.fn() }));
 vi.mock("cross-spawn", () => ({ default: host.spawn }));
+vi.mock("node:child_process", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:child_process")>();
+  return { ...actual, spawnSync: vi.fn(actual.spawnSync) };
+});
 
 const { registerRunCommand } = await import("../../../src/presentation/commands/run/command.js");
 
@@ -144,6 +148,46 @@ describe("headless launcher", () => {
     vi.stubEnv(key, join(root, "override"));
     await run(tool);
     expect(errors.join("")).toContain(key);
+    expect(host.spawn).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("reports a timeout and signal without exposing hook output or error details", async () => {
+    install("opencode", "project");
+    vi.mocked(spawnSync).mockReturnValueOnce({
+      error: Object.assign(new Error("secret path sensitive-location"), { code: "ETIMEDOUT" }),
+      status: null,
+      stdout: "secret stdout",
+      stderr: "secret stderr",
+      signal: "SIGTERM",
+      pid: 1,
+      output: [null, "secret stdout", "secret stderr"],
+    });
+    await run("opencode");
+    expect(errors.join("")).toContain("ETIMEDOUT");
+    expect(errors.join("")).toContain("SIGTERM");
+    expect(errors.join("")).not.toContain("secret");
+    expect(errors.join("")).not.toContain("sensitive-location");
+    expect(host.spawn).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("does not include unrecognized error codes or signals in diagnostics", async () => {
+    install("opencode", "project");
+    vi.mocked(spawnSync).mockReturnValueOnce({
+      error: Object.assign(new Error("private message"), { code: "SECRET_CODE" }),
+      status: 1,
+      stdout: "",
+      stderr: "private output",
+      signal: "SECRET_SIGNAL" as NodeJS.Signals,
+      pid: 1,
+      output: [null, "", "private output"],
+    });
+    await run("opencode");
+    expect(errors.join("")).toContain("exit 1");
+    expect(errors.join("")).toContain("unknown error");
+    expect(errors.join("")).not.toContain("SECRET");
+    expect(errors.join("")).not.toContain("private");
     expect(host.spawn).not.toHaveBeenCalled();
     expect(process.exitCode).toBe(1);
   });
@@ -371,6 +415,43 @@ describe("headless launcher", () => {
     );
     await run("opencode");
     expect(errors.join("")).toBe("NOTICE\n");
+  });
+
+  it("accepts an EPIPE when the hook exited successfully with a valid notice", async () => {
+    install("opencode", "project");
+    vi.mocked(spawnSync).mockReturnValueOnce({
+      error: Object.assign(new Error("pipe closed"), { code: "EPIPE" }),
+      status: 0,
+      stdout: JSON.stringify({ systemMessage: "NOTICE" }),
+      stderr: "",
+      signal: null,
+      pid: 1,
+      output: [null, JSON.stringify({ systemMessage: "NOTICE" }), ""],
+    });
+    await run("opencode");
+    expect(errors.join("")).toBe("NOTICE\n");
+    expect(host.spawn).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    [{ code: "EPIPE", status: 1 }, "hook failed"],
+    [{ code: "EACCES", status: 0 }, "hook failed"],
+    [{ code: "EPIPE", status: 0 }, "Invalid"],
+  ])("still rejects failed processes and malformed output", async ({ code, status }, expected) => {
+    install("opencode", "project");
+    vi.mocked(spawnSync).mockReturnValueOnce({
+      error: Object.assign(new Error("spawn failed"), { code }),
+      status,
+      stdout: "bad json",
+      stderr: "",
+      signal: null,
+      pid: 1,
+      output: [null, "bad json", ""],
+    });
+    await run("opencode");
+    expect(errors.join("")).toContain(expected);
+    expect(host.spawn).not.toHaveBeenCalled();
+    expect(process.exitCode).toBe(1);
   });
 
   it.each([
