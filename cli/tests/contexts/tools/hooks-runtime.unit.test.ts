@@ -9,7 +9,7 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 
@@ -93,8 +93,10 @@ function output(): unknown {
 }
 
 const CWD = "/Users/user/project";
+// The adapters resolve a path against the session folder, which gives a drive-rooted path on Windows.
+const at = (relative: string): string => resolve(CWD, relative);
 const SESSION = "00000000-0000-4000-8000-000000000000";
-const NOTES = `${CWD}/notes.md`;
+const NOTES = at("notes.md");
 
 describe("Claude Code", () => {
   it("reads SessionStart from its captured payload", () => {
@@ -288,9 +290,9 @@ describe("Codex", () => {
 
     expect(event?.files).toStrictEqual([
       { path: NOTES, written: "hello\nagain" },
-      { path: `${CWD}/docs/a.md` },
-      { path: `${CWD}/docs/b.md`, written: "y", replaced: "x" },
-      { path: `${CWD}/old.md` },
+      { path: at("docs/a.md") },
+      { path: at("docs/b.md"), written: "y", replaced: "x" },
+      { path: at("old.md") },
     ]);
   });
 
@@ -315,9 +317,9 @@ describe("Codex", () => {
     const { event } = read("codex", { ...payload, tool_input: { command: patch } });
 
     expect(event?.files).toStrictEqual([
-      { path: `${CWD}/a.md`, written: "a1\na2" },
-      { path: `${CWD}/b.md`, written: "b1", replaced: "gone" },
-      { path: `${CWD}/c.md`, written: "", replaced: "only removed" },
+      { path: at("a.md"), written: "a1\na2" },
+      { path: at("b.md"), written: "b1", replaced: "gone" },
+      { path: at("c.md"), written: "", replaced: "only removed" },
     ]);
   });
 
@@ -439,9 +441,9 @@ describe("Copilot", () => {
     const { event } = read("copilot", { ...payload, tool_input: patch });
 
     expect(event?.files).toStrictEqual([
-      { path: `${CWD}/a.md`, written: "a" },
-      { path: `${CWD}/b.md`, written: "b" },
-      { path: `${CWD}/c.md` },
+      { path: at("a.md"), written: "a" },
+      { path: at("b.md"), written: "b" },
+      { path: at("c.md") },
     ]);
   });
 
@@ -451,7 +453,7 @@ describe("Copilot", () => {
       "*** Begin Patch\n*** Update File: a.md\n@@\n+one\n+two\n*** Update File: a.md\n@@\n+three\n*** End Patch\n";
 
     expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
-      { path: `${CWD}/a.md`, written: "one\ntwo\nthree" },
+      { path: at("a.md"), written: "one\ntwo\nthree" },
     ]);
   });
 
@@ -461,7 +463,7 @@ describe("Copilot", () => {
       "*** Begin Patch\n*** Update File: a.md\n@@\n kept\n-old one\n-old two\n+new\n*** End Patch\n";
 
     expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
-      { path: `${CWD}/a.md`, written: "new", replaced: "old one\nold two" },
+      { path: at("a.md"), written: "new", replaced: "old one\nold two" },
     ]);
   });
 
@@ -480,8 +482,8 @@ describe("Copilot", () => {
       "*** Begin Patch\n*** Update File: a.md\n*** Move to: docs/a.md\n@@\n+a\n*** End Patch\n";
 
     expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
-      { path: `${CWD}/a.md` },
-      { path: `${CWD}/docs/a.md`, written: "a" },
+      { path: at("a.md") },
+      { path: at("docs/a.md"), written: "a" },
     ]);
   });
 
@@ -613,13 +615,13 @@ describe("Cursor", () => {
     const { event } = read("cursor", sample("cursor-postToolUse.json", 4).payload);
     const text = "alpha line\nbeta line changed\ngamma line\n";
 
-    expect(event?.files).toStrictEqual([{ path: `${CWD}/three.md`, content: text, written: text }]);
+    expect(event?.files).toStrictEqual([{ path: at("three.md"), content: text, written: text }]);
   });
 
   it("reads a Delete as the file it removed, with no text", () => {
     const { event } = read("cursor", sample("cursor-postToolUse.json", 5).payload);
 
-    expect([event?.files, event?.command]).toStrictEqual([[{ path: `${CWD}/old.md` }], undefined]);
+    expect([event?.files, event?.command]).toStrictEqual([[{ path: at("old.md") }], undefined]);
   });
 
   it("reads a stop, and its follow-up's stop as a continuation", () => {
