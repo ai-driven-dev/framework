@@ -13,7 +13,7 @@ Token fields are provider-specific. Claude's input excludes cache reads and writ
 
 `otel run --yes` captures one provider execution in isolation and forwards supported observations and allowlisted attributes to loopback Gouvernail. It neither reads the local usage ledger nor asserts a clone or feature association. With `--keep-capture`, raw private files can contain sensitive content. See [the local setup recipe](../../aidd_docs/recipes/observe-agent-telemetry.md).
 
-In a local OpenCode v2.2.5 capture, two prompt spans included a session ID in their HTTP path; no model or token counts were observed. This observation does not establish that every OpenCode signal includes a session ID. OpenCode session-event feeds and session exports are not provider OTLP and are not used in this view. Production export remains disabled until authenticated user identity and the destination are implemented.
+In two local OpenCode v2.2.5 executions, the raw OTLP contained 1,335 spans, 276 logs and no metric batches. A prompt span in each execution included a session ID in its HTTP path; no session-linked model, effort or token attributes were observed. A startup log included the requested model, but no session ID or proof of the model actually used. The framework forwards only the validated prompt span, not the other traces or logs. OpenCode computes usage on an internal event bus, which is not provider OTLP and is not used in this view. These observations do not prove what other versions or configurations emit. Production export remains disabled until authenticated user identity and the destination are implemented.
 
 ## Sources
 
@@ -22,6 +22,7 @@ Read 2026-11-06:
 - [Claude Code monitoring](https://code.claude.com/docs/en/monitoring-usage)
 - [Codex telemetry configuration](https://learn.chatgpt.com/docs/config-file/config-advanced#what-gets-emitted)
 - [OpenCode v2.2.5 OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts)
+- [OpenCode v2.2.5 usage projection](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/projector.ts#L81-L110)
 - [OpenCode v2 HTTP API audit](https://github.com/anomalyco/opencode/blob/dev/V2_HTTP_API_AUDIT.md) (current development branch; the v2.2.5 path was observed locally)
 - [OpenTelemetry metrics data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/)
 - [OTLP protocol](https://opentelemetry.io/docs/specs/otlp/)
