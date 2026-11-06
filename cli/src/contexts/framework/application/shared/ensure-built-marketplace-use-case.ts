@@ -163,22 +163,20 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     builtDir: string
   ): Promise<void> {
     const temp = join(tmpdir(), `aidd-built-${target}-${mode}`);
-    await this.fs.deleteDirectory(temp);
     await this.runBuild(target, mode, sourceDir, temp);
     await this.fs.deleteDirectory(builtDir);
     await this.copyDir(temp, builtDir);
     await this.fs.deleteDirectory(temp);
   }
 
-  // Every outDir reaching this method is either `builtMarketplaceDir()` or a temp dir this class
-  // just deleted — an aidd-owned cache, never a user directory — so a collision here is stale-cache
-  // reuse, not data loss.
+  // outDir is always an aidd-owned cache, so emptying it keeps a file the source dropped out of an install.
   private async runBuild(
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
     outDir: string
   ): Promise<void> {
+    await this.fs.deleteDirectory(outDir);
     await this.fs.createDirectory(outDir);
     const build = this.buildFor(target, mode, outDir);
     if (build === undefined) {
