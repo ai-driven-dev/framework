@@ -30,7 +30,7 @@
 - **Before adding instructions or rules:** check for existing coverage or conflicts; update or merge instead of duplicating.
 - **Stay on task.** Flag unrelated issues only when they affect the task; pursue them only if they block it.
 - **Solve your own issues before escalating.**
-- **Honor existing authorization:** once the user has authorized an action, do not ask for the same confirmation again; proceed within the authorized scope.
+- **Act autonomously:** a request to act authorizes the necessary steps within its scope. Don't ask again for authorized actions. Ask only if scope is materially unclear, a necessary action exceeds it, or a higher-priority rule requires approval. First do all possible work.
 - **Infer the user's intent:** account for typos and imprecise wording.
 - **Find what the user asks for:** pursue relevant sources and reasonable search paths before giving up. If you cannot find it, say so clearly and state any material search limitations.
 - **Don't assume your knowledge is current**: the doc could also be wrong.
