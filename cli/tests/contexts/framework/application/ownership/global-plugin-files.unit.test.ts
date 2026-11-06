@@ -122,8 +122,8 @@ describe("assertGlobalFilesWritable", () => {
     ).rejects.toThrow(`opencode: 'aidd-dev' parent '${under("agents")}' escapes ${DIR}.`);
   });
 
-  it("refuses to overwrite a file it does not own that holds other bytes", async () => {
-    const fs = new InMemoryFileAdapter({ [under("agents", "a.md")]: "mine" }, hasher);
+  it.each(["mine", "new"])("refuses an unowned file holding %s bytes", async (content) => {
+    const fs = new InMemoryFileAdapter({ [under("agents", "a.md")]: content }, hasher);
 
     await expect(
       assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
@@ -132,11 +132,8 @@ describe("assertGlobalFilesWritable", () => {
     );
   });
 
-  it("adopts a file already holding the same bytes, and rewrites a file the plugin owns", async () => {
-    const fs = new InMemoryFileAdapter(
-      { [under("agents", "same.md")]: "new", [under("agents", "owned.md")]: "old" },
-      hasher
-    );
+  it("allows rewriting a file the plugin owns", async () => {
+    const fs = new InMemoryFileAdapter({ [under("agents", "owned.md")]: "old" }, hasher);
     const owned = InstalledPlugin.fromMetadata(
       "aidd-dev",
       "1.0.0",
@@ -146,14 +143,7 @@ describe("assertGlobalFilesWritable", () => {
     ).withFiles(new Map([["agents/owned.md", "0".repeat(32)]]));
 
     await expect(
-      assertGlobalFilesWritable(
-        fs,
-        "opencode",
-        owned,
-        "aidd-dev",
-        [file("agents/same.md"), file("agents/owned.md")],
-        HOME
-      )
+      assertGlobalFilesWritable(fs, "opencode", owned, "aidd-dev", [file("agents/owned.md")], HOME)
     ).resolves.toBe(DIR);
   });
 });
