@@ -67,7 +67,14 @@ function main() {
     console.log(`✓ ${name}: skipped, this exact tree already passed it.`);
     return 0;
   }
-  const result = spawnSync(command.join(" "), { stdio: "inherit", shell: true });
+  // Git's repository-local hook variables would redirect the gate's temporary repositories.
+  const localGitVars = new Set(
+    git(root, ["rev-parse", "--local-env-vars"]).toString("utf8").trim().split(/\r?\n/)
+  );
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => !localGitVars.has(key.toUpperCase()))
+  );
+  const result = spawnSync(command.join(" "), { stdio: "inherit", shell: true, env });
   if (result.status !== 0) return result.status ?? 1;
   if (treeKey(root, command) !== before) {
     console.log(`${name}: passed, but the tree changed while it ran, so it is not stamped.`);

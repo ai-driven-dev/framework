@@ -100,3 +100,19 @@ test("runs what follows -- as one shell command line, on every platform", () => 
   assert.equal(witness(r, `${count} && ${count}`).status, 0);
   assert.equal(runsOf(r), 2);
 });
+
+test("does not pass a hook's Git environment to the gate", () => {
+  const r = repo();
+  const script = `const { execFileSync } = require('node:child_process');
+    const path = require('node:path');
+    const target = path.join(path.dirname(process.argv[2]), 'isolated.git');
+    execFileSync('git', ['init', '--bare', '--quiet', target]);
+    if (process.env.GIT_DIR || process.env.GIT_INDEX_FILE || process.env.GIT_SSH_COMMAND !== 'preserved') process.exit(3);`;
+  const result = spawnSync(process.execPath, [WITNESS, "suite", "--", commandLine(r, script)], {
+    cwd: r.dir,
+    env: { ...CLEAN_ENV, GIT_DIR: path.join(r.dir, ".git"), GIT_INDEX_FILE: path.join(r.dir, ".git", "index"), GIT_SSH_COMMAND: "preserved" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(r.git("config", "--bool", "core.bare").toString().trim(), "false");
+});
