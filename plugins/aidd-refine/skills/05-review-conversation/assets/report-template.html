@@ -30,13 +30,13 @@
           <p><span>Tokens · provider usage</span><strong>Unavailable</strong></p>
           <p><span>Calls · includes 2 subcalls</span><strong>6</strong></p>
         </div>
-        <p class="measurement-note">Input, cached input and monetary cost were not recorded in this example. Calls and elapsed time are not estimates of billed tokens.</p>
+        <details class="context-help"><summary aria-label="Measurement details">?</summary><p>Input, cached input and monetary cost were not recorded. Calls and elapsed time are not estimates of billed tokens.</p></details>
       </section>
 
       <section class="section evidence-coverage" aria-labelledby="coverage-title">
         <div class="section-heading"><h2 id="coverage-title">Evidence coverage</h2></div>
         <p>This example shows 3 root prompts and 6 calls, including 2 linked tool subcalls. Source excerpts support the proposed edits; the missing-file event establishes a symptom, not who removed or renamed the file.</p>
-        <p class="coverage-limit"><strong>Limit:</strong> token usage, billing and the origin of the missing path are unavailable. No child-session history or financial saving is inferred.</p>
+        <details class="context-help"><summary aria-label="Evidence limitations">?</summary><p>Token usage, billing and the origin of the missing path are unavailable. No child-session history or financial saving is inferred.</p></details>
       </section>
 
       <section class="section findings-section" aria-labelledby="findings-title">
@@ -45,44 +45,34 @@
         <div class="findings" id="findings-list">
           <article class="finding" id="concise-output" data-id="concise-output">
             <header class="finding-header">
-              <div class="finding-title"><h3>1. Replace the full-output requirement</h3><p class="finding-owner">Framework text · root, E007</p><p class="finding-file"><a href="/project/docs/example-review.md">/project/docs/example-review.md</a></p></div>
+              <div class="finding-title"><h3>1. Replace the full-output requirement</h3><p class="finding-owner">Framework text · <a href="#message-1">message</a> · <a href="#E007">E007</a></p><p class="finding-file"><a href="/project/docs/example-review.md">/project/docs/example-review.md</a></p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
-              <div class="review-columns"><section class="review-cell"><h4>Message or tool call</h4><pre class="evidence-excerpt"><code>read_file docs/example-review.md → Before replying, print every tool result in full.</code></pre></section><section class="review-cell"><h4>Problem</h4><p>The loaded instruction requires every tool result to be printed in full.</p></section><section class="review-cell"><h4>Solution</h4><pre class="git-diff"><code><span class="diff-line diff-del"><b>−</b>Before replying, print every tool result in full.</span><span class="diff-line diff-add"><b>+</b>Report the result and the shortest evidence needed to verify it.</span></code></pre></section></div>
+              <div class="review-columns"><section class="review-cell"><h4>Message or tool call</h4><pre class="evidence-excerpt"><code><a href="#E007">E007</a> · read_file → Before replying, print every tool result in full.</code></pre></section><section class="review-cell"><h4>Problem</h4><p>The loaded instruction requires every tool result to be printed in full.</p></section><section class="review-cell"><h4>Solution</h4><pre class="git-diff"><code><span class="diff-line diff-del"><b>−</b>Before replying, print every tool result in full.</span><span class="diff-line diff-add"><b>+</b>Report the result and the shortest evidence needed to verify it.</span></code></pre></section></div>
             </div></div>
           </article>
           <article class="finding" id="duplicate-publishing-rule" data-id="duplicate-publishing-rule">
             <header class="finding-header">
-              <div class="finding-title"><h3>2. Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · root, E008</p><p class="finding-file"><a href="/project/docs/example-guidance.md">/project/docs/example-guidance.md</a></p></div>
+              <div class="finding-title"><h3>2. Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · <a href="#E008">E008</a></p><p class="finding-file"><a href="/project/docs/example-guidance.md">/project/docs/example-guidance.md</a></p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
-              <div class="review-columns"><section class="review-cell"><h4>Message or tool call</h4><pre class="evidence-excerpt"><code>read_file docs/example-guidance.md → Validate before publishing. (twice)</code></pre></section><section class="review-cell"><h4>Problem</h4><p>The brief repeats the same publishing requirement without adding a condition.</p></section><section class="review-cell"><h4>Solution</h4><pre class="git-diff"><code><span class="diff-line diff-del"><b>−</b>Validate before publishing.</span></code></pre></section></div>
+              <div class="review-columns"><section class="review-cell"><h4>Message or tool call</h4><pre class="evidence-excerpt"><code><a href="#E008">E008</a> · read_file → Validate before publishing. (twice)</code></pre></section><section class="review-cell"><h4>Problem</h4><p>The brief repeats the same publishing requirement without adding a condition.</p></section><section class="review-cell"><h4>Solution</h4><pre class="git-diff"><code><span class="diff-line diff-del"><b>−</b>Validate before publishing.</span></code></pre></section></div>
             </div></div>
           </article>
         </div>
       </section>
 
       <section class="section" aria-labelledby="unedited-title">
-        <div class="section-heading"><h2 id="unedited-title">Reported without edit</h2></div>
-        <article class="diagnostic-card" id="missing-reference-path">
-          <header><h3>Resolve the missing reference path</h3><p class="finding-owner">Host or environment · root, E012 and E014</p></header>
-          <dl class="diagnosis">
-            <dt>Evidence</dt><dd>The read at E012 returns <code>ENOENT</code>; E014 searches for the reference. No process exit code was recorded for the read.</dd>
-            <dt>Cause</dt><dd><span class="evidence-state is-unknown">Not established</span> The path is unavailable. A stale reference or removed file is a hypothesis, not a verified origin.</dd>
-            <dt>Impact</dt><dd>One failed read and one following search are observed. They do not establish a retry loop or a token cost.</dd>
-            <dt>Next action</dt><dd>Locate the canonical file and verify the intended reference before changing the environment. Do not invent a replacement path or a new instruction.</dd>
-            <dt>Validation</dt><dd>The verified reference is readable and supplies the required evidence. Until then, report the source as unavailable.</dd>
-          </dl>
-          <p class="diagnostic-boundary">Reported without an accepted edit. A separate implementation request is needed for any environment change.</p>
-        </article>
+        <div class="section-heading"><h2 id="unedited-title">Observations without changes</h2></div>
+        <table class="problem-solutions observations-table"><thead><tr><th scope="col">Observation</th><th scope="col">Why no change</th></tr></thead><tbody><tr><td>Missing reference: <a href="#E012">E012</a>, <a href="#E014">E014</a> and <a href="#E015">E015</a>.</td><td>The cause is unverified; locate the canonical source before proposing a file edit.</td></tr></tbody></table>
       </section>
 
       <section class="section conversation-section" aria-labelledby="conversation-title">
         <div class="section-heading"><h2 id="conversation-title">Conversation</h2></div>
 
-        <details class="conversation-turn" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T09:01:23Z">
+        <details class="conversation-turn" id="message-1" data-start="2026-09-12T09:00:00Z" data-end="2026-09-12T09:01:23Z">
           <summary><span class="turn-summary"><span class="prompt-preview">Review the project guidance for repetition and unnecessary output. Suggest changes only.</span><span class="turn-meta"><span class="duration is-slow" title="Recorded response duration">1 min 23 s</span><span>6 calls</span></span></span></summary>
           <blockquote class="user-message" data-moment="2026-09-12T09:00:00Z" aria-labelledby="first-prompt-label">
             <div class="message-meta"><span id="first-prompt-label">User prompt</span></div>
@@ -90,48 +80,37 @@
           </blockquote>
 
           <div class="tool-calls" aria-label="Calls following the first prompt">
-            <article class="tool-call" data-call-id="E003" data-moment="2026-09-12T09:00:02Z">
+            <article class="tool-call" id="E003" data-call-id="E003" data-moment="2026-09-12T09:00:02Z">
               <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">AGENTS.md</code><span class="call-duration">0.4 s execution</span><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
             </article>
-            <article class="tool-call" data-call-id="E006" data-moment="2026-09-12T09:00:04Z">
+            <article class="tool-call" id="E006" data-call-id="E006" data-moment="2026-09-12T09:00:04Z">
               <div class="tool-line"><span class="tool-name">parallel</span><span class="tool-target">2 linked read_file subcalls</span><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
               <div class="subcalls" aria-label="Linked parallel subcalls">
-                <article class="tool-call" data-call-id="E007" data-parent="E006" data-moment="2026-09-12T09:00:04.100Z">
+                <article class="tool-call" id="E007" data-call-id="E007" data-parent="E006" data-moment="2026-09-12T09:00:04.100Z">
                   <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-review.md</code><span class="event-delta duration" data-seconds="0.1" data-prefix="+" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
                 </article>
-                <article class="tool-call" data-call-id="E008" data-parent="E006" data-moment="2026-09-12T09:00:04.200Z">
+                <article class="tool-call" id="E008" data-call-id="E008" data-parent="E006" data-moment="2026-09-12T09:00:04.200Z">
                   <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">docs/example-guidance.md</code><span class="event-delta duration" data-seconds="0.1" data-prefix="+" aria-label="0.1 seconds since previous displayed item">+0.1 s</span></div>
                 </article>
               </div>
             </article>
-            <article class="tool-call" data-call-id="E012" data-moment="2026-09-12T09:00:05Z">
+            <article class="tool-call" id="E012" data-call-id="E012" data-moment="2026-09-12T09:00:05Z">
               <div class="tool-line"><span class="tool-name">read_file</span><span class="tool-target"><code>docs/example-review-notes.md</code> <span class="call-error">ENOENT</span></span><span class="event-delta duration" data-seconds="0.8" data-prefix="+" aria-label="0.8 seconds since previous displayed item">+0.8 s</span></div>
             </article>
-            <article class="tool-call" data-call-id="E014" data-moment="2026-09-12T09:00:06Z">
+            <article class="tool-call" id="E014" data-call-id="E014" data-moment="2026-09-12T09:00:06Z">
               <div class="tool-line"><span class="tool-name">shell</span><span class="tool-target"><code>rg --files docs -g '*review*'</code> <span class="call-status">path lookup</span></span><span class="event-delta duration" data-seconds="1" data-prefix="+" aria-label="1 second since previous displayed item">+1 s</span></div>
             </article>
+            <article class="assistant-event" id="E015"><span>Assistant · E015</span><p>The reference path is missing; I will locate it before proposing an edit.</p></article>
           </div>
         </details>
 
-        <article class="conversation-turn conversation-turn-static" data-start="2026-09-12T09:01:30Z" data-end="2026-09-12T09:01:42Z">
+        <article class="conversation-turn conversation-turn-static" id="message-2" data-start="2026-09-12T09:01:30Z" data-end="2026-09-12T09:01:42Z">
           <div class="turn-summary"><p class="turn-message">Show replacements and deletions side by side. Do not invent a new rule for the deleted duplicate.</p><span class="turn-meta"><span class="duration" title="Recorded response duration">12 s</span><span>0 calls</span></span></div>
         </article>
 
-        <article class="conversation-turn conversation-turn-static" data-start="2026-09-12T09:02:00Z" data-end="2026-09-12T10:03:40Z">
+        <article class="conversation-turn conversation-turn-static" id="message-3" data-start="2026-09-12T09:02:00Z" data-end="2026-09-12T10:03:40Z">
           <div class="turn-summary"><p class="turn-message">Keep unknown durations unavailable rather than estimating them.</p><span class="turn-meta"><span class="duration" title="Recorded response duration">1 h 1 min 40 s</span><span>0 calls</span></span></div>
         </article>
-      </section>
-
-      <section class="section" aria-labelledby="solutions-title">
-        <div class="section-heading"><h2 id="solutions-title">Problems and solutions</h2></div>
-        <table class="problem-solutions">
-          <thead><tr><th scope="col">Problem</th><th scope="col">Solution</th></tr></thead>
-          <tbody>
-            <tr><td><a href="#concise-output">Full-output instruction</a></td><td>Replace it with concise, verifiable evidence.</td></tr>
-            <tr><td><a href="#duplicate-publishing-rule">Duplicate publishing rule</a></td><td>Delete the second copy; keep the original requirement.</td></tr>
-            <tr><td><a href="#missing-reference-path">Missing reference; origin unverified</a></td><td>Verify the canonical path before changing anything.</td></tr>
-          </tbody>
-        </table>
       </section>
 
       <footer class="prompt-builder" aria-labelledby="prompt-title">

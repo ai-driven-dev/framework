@@ -76,7 +76,7 @@
 
     const dialog = document.createElement("dialog");
     dialog.className = "diff-dialog";
-    const title = document.createElement("h3");
+    const title = document.createElement("h2");
     title.textContent = report.dataset.diffTitle || "Full changes";
     dialog.setAttribute("aria-label", title.textContent);
     const close = document.createElement("button");
@@ -88,7 +88,7 @@
     columns.className = "dialog-columns";
     for (const [kind, label] of [["diff-del", report.dataset.diffRemoved || "Removed"], ["diff-add", report.dataset.diffAdded || "Added"]]) {
       const section = document.createElement("section");
-      const heading = document.createElement("h4");
+      const heading = document.createElement("h3");
       heading.textContent = label;
       const content = document.createElement("pre");
       content.className = "dialog-code";
@@ -112,6 +112,27 @@
     diff.insertAdjacentElement("afterend", open);
     open.insertAdjacentElement("afterend", dialog);
   });
+
+  function revealEvidence() {
+    let id;
+    try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
+    const target = id && document.getElementById(id);
+    if (!target) return;
+    for (let node = target.parentElement; node; node = node.parentElement) {
+      if (node.tagName === "DETAILS") node.open = true;
+    }
+    if (target.tagName === "DETAILS") target.open = true;
+    target.scrollIntoView({ block: "center" });
+  }
+  if (typeof window.addEventListener === "function") {
+    window.addEventListener("hashchange", revealEvidence);
+    document.querySelectorAll('a[href^="#"]').forEach((link) => {
+      link.addEventListener("click", () => {
+        if (link.hash && link.hash === window.location.hash) window.setTimeout(revealEvidence, 0);
+      });
+    });
+    if (window.location?.hash) revealEvidence();
+  }
 
   function updatePrompt() {
     const accepted = findings.filter((finding) => finding.querySelector(".accept-input").checked);
