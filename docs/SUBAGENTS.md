@@ -37,25 +37,17 @@ sequenceDiagram
 
 ### Measuring delegation
 
-**Prompt:** `Correct the typo "Framwork" in the title of README.md. Verify the result and do not commit.`
-
-**Method:**
-
-1. Create two clean worktrees from the same commit. In each `README.md`, replace the title's `Framework` with `Framwork`.
-2. Start a fresh Codex session in each worktree with the same main model, reasoning effort, instructions and tools. Disable subagents for the first run. For the second, enable them, configure the executor's model and append: `Delegate the edit to the aidd-orchestrator-executor subagent and wait for its result; do not use a validator.` The executor must be installed and available to Codex.
-3. Measure elapsed time from process start to exit. Check that each title is restored and `git diff --exit-code -- README.md` passes. Confirm the delegated run actually used the requested agent and model.
-4. Read each thread's final cumulative `total_token_usage` in its Codex rollout under `~/.codex/sessions/`. Find the executor by its spawn metadata; in its rollout, count only events after its own model context. For delegation, add the main and executor totals once; do not sum cumulative events. Report cached input separately: it is already included in input tokens. Record monetary cost only if available.
-5. Repeat with fresh sessions, alternating run order, and report individual results and the median. Keep the starting state and configuration identical; record cache conditions and any differences.
-
-**Example:** On November 6, 2026, one sequential run per approach started at commit `de409ef5` and used `gpt-6.1-terra` at medium effort for the main agent and `gpt-6-luna` at medium effort for the executor. Both fixes passed verification.
-
-With `DIRECT` and `DELEGATED` set to the worktree paths, these commands reproduce the launch settings:
+Create two worktrees at commit `de409ef5`, change the title's `Framework` to `Framwork` in each `README.md`, and set `DIRECT` and `DELEGATED` to their paths. Install the executor and use the same Codex configuration for both runs:
 
 ```sh
 prompt='Correct the typo "Framwork" in the title of README.md. Verify the result and do not commit.'
 time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=false' -C "$DIRECT" "$prompt"
 time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=true' -c 'agents.default_subagent_model="gpt-6-luna"' -C "$DELEGATED" "$prompt Delegate the edit to the aidd-orchestrator-executor subagent and wait for its result; do not use a validator."
 ```
+
+Check that both titles are restored and the delegated run used the requested agent and model. Compare elapsed time and the final cumulative token usage in each rollout under `~/.codex/sessions/`: add parent and executor totals once, counting the executor only after its own model context. Cached input is already included in the total. Repeat with fresh sessions and alternating order; report cache conditions and the median.
+
+One run per approach on November 6, 2026 produced:
 
 | Approach | Time | Total tokens | Cached input tokens |
 | --- | ---: | ---: | ---: |
