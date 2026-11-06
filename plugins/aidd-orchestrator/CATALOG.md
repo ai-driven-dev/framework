@@ -26,7 +26,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File | Description |
 |------|---|
 | [executor.md](agents/executor.md) | `Implements assigned work within defined scope. Use to write or revise code and documentation, verify the result, and repair failures against the requested outcome.` |
-| [explorer.md](agents/explorer.md) | `Explores a codebase to answer scoped questions. Use to locate files and symbols, trace execution or dependencies, and return relevant code with an explanation before changes.` |
+| [explorer.md](agents/explorer.md) | `Explores sources to answer scoped questions. Use to investigate code, documentation, services, or the web and return evidence with an explanation.` |
 | [reviewer.md](agents/reviewer.md) | `Reviews the quality and coherence of finished work. Use to find concrete defects, contradictions, duplication, and unnecessary complexity against project conventions and the real need.` |
 | [validator.md](agents/validator.md) | `Validates that delivered work satisfies the request and acceptance criteria. Use to independently confirm completion and explain failures or missing verification.` |
 

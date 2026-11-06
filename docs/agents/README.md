@@ -1,0 +1,71 @@
+# How subagents work
+
+The main agent is the conversation window. It loads the host's project instructions, such as [`AGENTS.md` in Codex](https://developers.openai.com/codex/guides/agents-md), and owns the outcome. What subagents receive depends on the host and configuration.
+
+The main agent chooses whether delegation helps. These examples and responses are hypothetical.
+
+## A simple request
+
+When delegation would add overhead, the main agent can handle the request itself.
+
+```mermaid
+---
+title: Fix a typo
+---
+sequenceDiagram
+  actor User as 👤 User
+  participant Main as 🤖 Main agent (orchestrator)
+  User->>Main: 💬 "Fix the typo in README.md."
+  Main->>Main: 📝 Update README.md and check the diff.
+  Main-->>User: 💬 "Fixed the typo in README.md."
+```
+
+## A request with subagents
+
+This example shows the decisions, tool calls and possible outcomes for one request. Explorer A is new and Explorer B is reused; their independent tasks run in parallel. Every subagent returns to the main agent.
+
+```mermaid
+---
+title: Fix signup validation
+config:
+  flowchart:
+    nodeSpacing: 18
+    rankSpacing: 30
+---
+flowchart TD
+  User["👤 User<br/>💬 #quot;Allow + in signup emails.#quot;"]
+  Main["🤖 Main agent<br/>📖 Load AGENTS.md<br/>⚙️ Choose an approach<br/>⚡ Parallel if independent"]
+  Delegate{"Delegate?"}
+  ExplorerA["🤖 Explorer A · new<br/>🔎 Search code<br/>↩️ Rejects +"]
+  ExplorerB["🤖 Explorer B · reused<br/>🌐 Check policy<br/>↩️ Allows +"]
+  Findings["🤖 Main combines findings"]
+  Executor["🤖 Executor C<br/>📝 Fix validation<br/>🧪 Run test<br/>↩️ Test passes"]
+  Validator["🤖 Validator D<br/>🧪 Verify behavior<br/>↩️ PASS"]
+  Verdict{"PASS?"}
+  Reviewer["🤖 Reviewer E<br/>🧰 aidd-dev:05-review<br/>↩️ No issues"]
+  Review{"Issues?"}
+  Other["🤖 Main agent<br/>📝 Handle or repair<br/>🧪 Recheck if needed<br/>💬 Report outcome"]
+  Answer["🤖 Main agent<br/>💬 #quot;Fixed. Test passed.#quot;"]
+
+  User --> Main
+  Main --> Delegate
+  Delegate -- Yes --> ExplorerA
+  Delegate -- Yes --> ExplorerB
+  Delegate -- No --> Other
+  ExplorerA --> Findings
+  ExplorerB --> Findings
+  Findings --> Executor
+  Executor -- via main --> Validator
+  Validator -- via main --> Verdict
+  Verdict -- PASS --> Reviewer
+  Verdict -- FAIL or BLOCKED --> Other
+  Reviewer -- via main --> Review
+  Review -- No --> Answer
+  Review -- Yes --> Other
+```
+
+The main agent uses only the roles the task needs. If validation or review finds a gap, it routes the work back for repair. A workflow or user may require specific agents.
+
+When supported, the main agent can choose a lighter model for straightforward research or repetitive work. It still checks the result and chooses a capable model for harder tasks.
+
+See the [subagent guide](../SUBAGENTS.md) for each role and its limits.

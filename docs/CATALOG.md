@@ -121,7 +121,7 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | Agent | Role |
 | --- | --- |
 | `executor` | Implements assigned work within defined scope |
-| `explorer` | Explores a codebase to answer scoped questions |
+| `explorer` | Explores sources to answer scoped questions |
 | `reviewer` | Reviews the quality and coherence of finished work |
 | `validator` | Validates that delivered work satisfies the request and acceptance criteria |
 

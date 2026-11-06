@@ -12,29 +12,7 @@ Four generic agents your AI tool can hand work to, each in a fresh context. They
 
 ## 🔀 How it works
 
-Your main session keeps the conversation and decides what to delegate. Each agent gets a scoped brief, works in its own context, and returns its result to the main session, which owns the final answer.
-
-```mermaid
-sequenceDiagram
-  actor You
-  participant Main as Main session
-  participant Explorer
-  participant Executor
-  participant Validator
-  participant Reviewer
-  You->>Main: Request
-  Main->>Explorer: Where is it? How does it work?
-  Explorer-->>Main: Answer with sources
-  Main->>Executor: Build or fix this, with criteria
-  Executor-->>Main: Changes and checks
-  Main->>Validator: Does it meet the criteria?
-  Validator-->>Main: Validated yes or no
-  Main->>Reviewer: Is it clean and coherent?
-  Reviewer-->>Main: Findings
-  Main-->>You: Result
-```
-
-Each step is optional: the main session calls only the agents the task needs, and repeats execution when validation or review finds a gap.
+Your main session keeps the conversation and decides what to delegate. Each agent gets a scoped brief, works in its own context, and returns its result to the main session, which owns the final answer. See [how delegation works](agents/README.md).
 
 Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so a run delegates the same way every time; other workflows ask for a responsibility. The host resolves the role to its install, `aidd-orchestrator:validator` from the Claude Code marketplace or `aidd-orchestrator-validator` in a project distribution, or gives the brief to its default subagent when the agent is not installed.
 
@@ -42,9 +20,9 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 
 | Agent | Use it to | It returns | Writes files, by instruction |
 | --- | --- | --- | --- |
-| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
+| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Investigate scoped questions across code, documentation, services or the web | The answer, with sources and unknowns | No |
 | [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
-| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No; runs checks |
+| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `PASS`, `FAIL` or `BLOCKED`, with evidence | No; runs checks |
 | [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
 
 ## 📦 Install
