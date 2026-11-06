@@ -405,6 +405,18 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "code-debt.json"))), claudeFeedback(errorsText([COLOUR])));
     });
 
+    it("reads no other code file after a write that leaves the code's shared inputs alone", () => {
+      begin();
+      colourInCode();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
+    });
+
+    it("reads every code file again after a write to system.md, which every code file reads", () => {
+      begin();
+      colourInCode();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "system.md"))), claudeFeedback(errorsText([COLOUR])));
+    });
+
     it("tells the written tokens' errors, then those of every record reading them", () => {
       begin();
       breakOnePerFamily();
@@ -713,6 +725,23 @@ describe("aidd-ui validator entries", () => {
         assert.deepEqual(hook(stop()), silent);
       });
     }
+
+    it("keeps the standing errors of a code file a turn did not write, for the next turn that writes it", () => {
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
+      begin();
+      hook(editTool(BUTTON, "Any action a person starts; never for navigation.", "Any action a person starts, never for navigation."));
+      assert.deepEqual(hook(stop()), silent);
+      assert.deepEqual(hook(postToolUse(path.join(tmp, "src/ui/Button.tsx"))), claudeFeedback(errorsText(['src/ui/Button.tsx:4 C4 "#ff0000" => replace it with a token'])));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("notes every code file's standing errors at the first Stop of a session that started without a baseline", () => {
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
+      hook(editTool(BUTTON, "Any action a person starts; never for navigation.", "Any action a person starts, never for navigation."));
+      assert.deepEqual(hook(stop()), silent);
+      hook(postToolUse(path.join(tmp, "src/ui/Button.tsx")));
+      assert.deepEqual(hook(stop()), silent);
+    });
 
     it("ends the turn when an edit added a clean line to a file already holding errors", () => {
       littering(2, 0);

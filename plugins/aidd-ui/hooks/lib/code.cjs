@@ -154,7 +154,9 @@ function codeFiles(project) {
   return tree.read;
 }
 
-const scanned = (project, extensions) => codeFiles(project).filter((file) => !extensions || extensions.includes(path.extname(file)));
+/** The code files whose text the literal rules read: all of them, or those of `project.scope` when a
+ * caller narrows it to the files a turn wrote. */
+const scanned = (project, extensions) => codeFiles(project).filter((file) => (!project.scope || project.scope.has(file)) && (!extensions || extensions.includes(path.extname(file))));
 
 /** A code file's text as the literal patterns read it: styles and markup whole, an Astro file its
  * strings and style blocks, any other file its strings only, since a colour in code lives in one. */
@@ -220,12 +222,12 @@ const literalProblems = (pattern, extensions = null, applies = () => true) => (p
 
 /** Each colour literal of the code outside its tests, written or as numbers, with its file. */
 const colourLiterals = (project) =>
-  scanned(project)
+  (project.colourLiterals ??= scanned(project)
     .filter((file) => !isTest(file))
     .flatMap((file) => {
       const numeric = RAW_EXTENSIONS.includes(path.extname(file)) ? [] : findNumericColours(codeOnly(text(project, file) ?? ""));
       return [...findLiterals(searchable(project, file), PATTERNS.colour), ...numeric].map((found) => ({ file, ...found }));
-    });
+    }));
 
 /** How many times each colour literal occurs in each code file, as code-debt.json holds it: files
  * and literals sorted. */

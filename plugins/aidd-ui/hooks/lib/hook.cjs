@@ -4,7 +4,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { load, relative, isUnder, UI_DIR } = require("./project.cjs");
+const { load, relative, isUnder, UI_DIR, SYSTEM_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { codeRoots } = require("./code.cjs");
 const { problemsOf, findingOf, isError } = require("../aidd-ui.cjs");
 const { isShellWrite, formatFindings } = require("./common-rules.cjs");
@@ -30,6 +30,9 @@ const OTHERS_BITS = 0o077;
 const STATE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // state no Stop or session start renewed: its session ended
 // The errors the project held at the session's start or at the last turn's end, beside the turn's mark.
 const BASELINE_SUFFIX = ".base";
+// The rules that read the code's text, file by file, and the files each of those reads besides its own.
+const TEXT_RULES = ["C4", "C6"];
+const SHARED_INPUTS = [`${UI_DIR}/${SYSTEM_FILE}`, CODE_DEBT_FILE];
 // What the hook tells the model after a write: it informs, and Stop requires.
 const INFORM = 1;
 
@@ -141,9 +144,23 @@ const countKeys = (problems) => problems.reduce((counts, problem) => counts.set(
 /** The baseline: the errors the project held at the session's start or at the last turn's end. */
 const readBaseline = (mark) => (mark ? readPairs(`${mark}${BASELINE_SUFFIX}`) : null);
 
-function leaveBaseline(mark, problems) {
-  if (mark) writePairs(`${mark}${BASELINE_SUFFIX}`, countKeys(problems));
+/** Leaves the baseline. Narrowed to `scope`, the rules that read the code's text read only its files,
+ * so every other file keeps the counts the last baseline gave those rules. */
+function leaveBaseline(mark, problems, scope = null, baseline = null) {
+  if (!mark) return;
+  const counts = countKeys(problems);
+  if (scope && baseline) {
+    for (const [key, count] of baseline) {
+      const [file, rule] = JSON.parse(key);
+      if (TEXT_RULES.includes(rule) && !scope.has(file)) counts.set(key, count);
+    }
+  }
+  writePairs(`${mark}${BASELINE_SUFFIX}`, counts);
 }
+
+/** The code files whose text the checks read after `files` were written: those alone, unless one is an
+ * input every code file is read against, or a baseline is missing to keep the others' errors. Null: all. */
+const scopeOf = (files, baseline) => (baseline && !files.some((file) => SHARED_INPUTS.includes(file)) ? new Set(files) : null);
 
 /** A text's lines, trimmed, the empty ones left out. */
 const linesOf = (text) => (text ?? "").split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
@@ -229,6 +246,7 @@ function afterWrite(project, event) {
   const baseline = readBaseline(mark);
   const turn = readTurn(mark);
   for (const entry of written) addToNet(turn.net, entry, baseline);
+  if (!shell) project.scope = scopeOf(written.map(({ file }) => file), baseline);
   const problems = problemsOf(project);
   const findings = { errors: [], reached: [], warnings: [] };
   for (const entry of written) {
@@ -262,8 +280,9 @@ function consumeMark(mark) {
  * proof of nothing. The baseline then takes the project's errors as they stand, so what was asked
  * once is never asked again. */
 function atStop(project, mark, turn) {
-  const problems = problemsOf(project);
   const baseline = readBaseline(mark);
+  project.scope = scopeOf([...new Set([...turn.net.keys()].map((key) => JSON.parse(key)[0]))], baseline);
+  const problems = problemsOf(project);
   const changed = new Map();
   for (const [key, count] of turn.net) {
     if (count <= 0) continue;
@@ -277,7 +296,7 @@ function atStop(project, mark, turn) {
     candidates.push(...problems.filter((problem) => problem.file === file && isError(problem) && touched.has(findingOf(problem).line)));
   }
   const required = baseline ? newErrors(candidates, baseline) : candidates;
-  leaveBaseline(mark, problems);
+  leaveBaseline(mark, problems, project.scope, baseline);
   const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) });
   if (reason) continueTurn(reason);
   return EXIT_SILENT;
