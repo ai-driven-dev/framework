@@ -32,6 +32,17 @@ sequenceDiagram
   Main-->>User: 💬 "Fixed the typo in README.md."
 ```
 
+### Measuring delegation
+
+In a Codex test on November 6, 2026, two worktrees started from the same commit with the same typo injected. Both were asked to correct it and verify the result. The main agent used `gpt-6.1-terra` at medium effort; the delegated run was instructed to use an executor on `gpt-6-luna` at medium effort. Both fixes passed verification.
+
+| Approach | Time | Total tokens | Cached input tokens |
+| --- | ---: | ---: | ---: |
+| Main agent alone | 17.05 s | 104,556 | 84,864 |
+| Main agent + executor | 33.12 s | 351,634 | 287,872 |
+
+The delegated total includes both agents. This was one run per approach; results are indicative, not a general benchmark. Monetary cost was not available.
+
 ### A request with subagents
 
 This example shows the decisions, tool calls and possible outcomes for one request. Explorer A is new and Explorer B is reused; their independent tasks run in parallel. Every subagent returns to the main agent.
