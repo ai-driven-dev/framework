@@ -12,6 +12,7 @@ import type { UserReleaseJournal } from "./user-release-journal.js";
 
 export interface UserReleasePreview {
   readonly release: string;
+  readonly title: string | null;
   readonly targets: readonly {
     toolId: AiToolId;
     name: string;
@@ -32,7 +33,10 @@ export class UpgradeUserFrameworkUseCase {
       updater: UserPluginFileUpdater;
       journal: UserReleaseJournal;
       logger: Logger;
-      isPublishedRelease: (repo: string, release: string) => Promise<boolean>;
+      resolvePublishedRelease: (
+        repo: string,
+        release: string
+      ) => Promise<{ title: string | null } | null>;
     }
   ) {}
 
@@ -64,7 +68,11 @@ export class UpgradeUserFrameworkUseCase {
     const loaded = await this.deps.repo.load();
     if (!loaded) throw new Error("No machine installation manifest exists.");
     let manifest = Manifest.fromJSON(loaded.toJSON());
-    if (!(await this.deps.isPublishedRelease("ai-driven-dev/framework", release)))
+    const publishedRelease = await this.deps.resolvePublishedRelease(
+      "ai-driven-dev/framework",
+      release
+    );
+    if (!publishedRelease)
       throw new Error(`Release ${release} is not available from the official source.`);
     const nativeSkipped = manifest
       .getInstalledToolIds()
@@ -138,6 +146,7 @@ export class UpgradeUserFrameworkUseCase {
     }
     const preview: UserReleasePreview = {
       release,
+      title: publishedRelease.title,
       nativeSkipped,
       targets: plans.map(({ toolId, plugin, plan, currentRef }) => ({
         toolId,

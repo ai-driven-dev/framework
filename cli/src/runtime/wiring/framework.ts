@@ -502,7 +502,9 @@ export async function createDeps(
     listMarketplaces: (root) => marketplaceRegistry.list(root),
     saveMarketplace: (root, marketplace) => marketplaceRegistry.save(root, marketplace),
     loadManifest: () => manifestRepo.load(),
-    isPublishedRelease: (repo, release) => releaseResolver.isPublishedRelease(repo, release),
+    loadUserManifest: () => userManifestRepo.load(),
+    resolvePublishedRelease: (repo, release) =>
+      releaseResolver.resolvePublishedRelease(repo, release),
     resolveTarget: (marketplace, root) =>
       resolveMarketplaceUseCase.execute({ marketplace, projectRoot: root, forceRefresh: true }),
     readTargetVersion: async (localPath, pluginName) => {
@@ -873,7 +875,8 @@ export async function createDeps(
     updater: userPluginFileUpdater,
     journal: userReleaseJournal,
     logger,
-    isPublishedRelease: (repo, release) => releaseResolver.isPublishedRelease(repo, release),
+    resolvePublishedRelease: (repo, release) =>
+      releaseResolver.resolvePublishedRelease(repo, release),
   });
   const restoreUseCase = new RestoreUseCase(
     fs,

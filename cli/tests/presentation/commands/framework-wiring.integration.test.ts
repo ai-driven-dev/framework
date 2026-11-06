@@ -86,6 +86,7 @@ beforeEach(() => {
     const confirmed = await options.confirm({
       currentRef: "v5.12.0",
       release: options.release,
+      title: "Release title",
       targets: [
         {
           toolId: "opencode",
@@ -108,6 +109,7 @@ beforeEach(() => {
   upgradeUserFramework.mockImplementation(async (options) => {
     const confirmed = await options.confirm({
       release: options.release,
+      title: "Release title",
       nativeSkipped: 1,
       targets: [
         {
@@ -358,6 +360,7 @@ describe("aidd framework update", () => {
       };
       const confirmed = await options.confirm({
         release: options.release,
+        title: "Release title",
         nativeSkipped: 0,
         targets: [
           { ...target, currentRef: "v5.11.0" },
@@ -370,6 +373,7 @@ describe("aidd framework update", () => {
     });
     confirmUpgrade.mockImplementation(async () => {
       const preview = written.join("");
+      expect(preview).toContain("Release title: Release title");
       expect(preview).toContain("https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0");
       expect(preview).toContain(
         "https://github.com/ai-driven-dev/framework/compare/v5.11.0...v5.13.0"
@@ -484,6 +488,7 @@ describe("aidd framework update", () => {
       const confirmed = await options.confirm({
         currentRef: "v5.11.0",
         release: options.release,
+        title: "Release title",
         targets: [
           { ...target, currentRef: "v5.12.0" },
           { ...target, currentRef: "v5.12.0" },
@@ -495,6 +500,7 @@ describe("aidd framework update", () => {
     });
     confirmUpgrade.mockImplementation(async () => {
       const preview = written.join("");
+      expect(preview).toContain("Release title: Release title");
       expect(preview).toContain("https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0");
       expect(preview).toContain(
         "https://github.com/ai-driven-dev/framework/compare/v5.11.0...v5.13.0"
@@ -529,11 +535,12 @@ describe("aidd framework update", () => {
     expect(updateAiTools).not.toHaveBeenCalled();
   });
 
-  it("names skipped user installs and does not warn about an unshared marketplace", async () => {
+  it("lists recorded global copies separately and says native inventory is incomplete", async () => {
     upgradeFramework.mockImplementation(async (options) => {
       const confirmed = await options.confirm({
         currentRef: "v5.12.0",
         release: options.release,
+        title: null,
         targets: [
           {
             toolId: "opencode",
@@ -543,6 +550,20 @@ describe("aidd framework update", () => {
           },
         ],
         globalSkipped: 2,
+        unverifiedUserRefs: 1,
+        globalPlugins: [
+          {
+            toolId: "opencode",
+            pluginName: "aidd-context",
+            currentVersion: "2.9.0",
+            source: {
+              kind: "git-subdir",
+              url: "https://github.com/ai-driven-dev/framework.git",
+              path: "plugins/aidd-context",
+              ref: "v5.12.0",
+            },
+          },
+        ],
         shared: false,
       });
       return {
@@ -552,7 +573,15 @@ describe("aidd framework update", () => {
       };
     });
     const lines = await run("update", "--release", "v5.13.0", "--yes");
-    expect(lines.join("\n")).toMatch(/2 user-scope.*not be updated/i);
+    expect(lines.join("\n")).toContain("Release title unavailable.");
+    expect(lines.join("\n")).toContain(
+      "opencode:aidd-context (plugin 2.9.0; source ai-driven-dev/framework@v5.12.0)"
+    );
+    expect(lines.join("\n")).toContain("Native user installations are not fully inventoried");
+    expect(errors.join("")).toContain(
+      "Project references to user-scope plugins not verified in the machine manifest: 1"
+    );
+    expect(lines.join("\n")).not.toMatch(/2 user-scope.*not be updated/i);
     expect(lines.join("\n")).toContain("plugin 2.9.0;");
     expect(errors.join("")).not.toMatch(/shared/i);
     expect(confirmUpgrade).not.toHaveBeenCalled();

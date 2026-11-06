@@ -125,12 +125,12 @@ describe("GitHubReleaseResolverAdapter", () => {
     });
   });
 
-  describe("isPublishedRelease", () => {
+  describe("resolvePublishedRelease", () => {
     it("checks the selected release by tag without relying on a paginated list", async () => {
       const http = makeHttp({ tag_name: "v5.13.0", draft: false });
       const adapter = new GitHubReleaseResolverAdapter(http, { resolve: async () => "token" });
 
-      expect(await adapter.isPublishedRelease(REPO, "v5.13.0")).toBe(true);
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({ title: null });
       expect(http.get).toHaveBeenCalledWith(
         "https://api.github.com/repos/owner/repo/releases/tags/v5.13.0",
         { token: "token" }
@@ -144,23 +144,89 @@ describe("GitHubReleaseResolverAdapter", () => {
       null,
     ])("refuses an unverified or draft release: %j", async (body) => {
       const adapter = new GitHubReleaseResolverAdapter(makeHttp(body));
-      expect(await adapter.isPublishedRelease(REPO, "v5.13.0")).toBe(false);
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toBeNull();
     });
 
     it("reports a missing release without claiming it is published", async () => {
       const adapter = new GitHubReleaseResolverAdapter(
         makeHttpThrowing(new HttpNotFoundError("missing"))
       );
-      expect(await adapter.isPublishedRelease(REPO, "v5.13.0")).toBe(false);
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toBeNull();
     });
 
     it("surfaces rate limits instead of treating them as a missing release", async () => {
       const adapter = new GitHubReleaseResolverAdapter(
         makeHttpThrowing(new AuthenticationError("HTTP 403"))
       );
-      await expect(adapter.isPublishedRelease(REPO, "v5.13.0")).rejects.toThrow(
+      await expect(adapter.resolvePublishedRelease(REPO, "v5.13.0")).rejects.toThrow(
         CatalogFetchAuthError
       );
+    });
+
+    it("uses the release video asset title without forwarding credentials", async () => {
+      const http = makeHttp({
+        tag_name: "v5.13.0",
+        draft: false,
+        name: "v5.13.0",
+        assets: [{ name: "release-video.json" }],
+      });
+      const fetchAsset = vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(JSON.stringify({ title: "Framework - Release 5.13\nNouveautés" }), {
+          status: 200,
+        })
+      );
+      const adapter = new GitHubReleaseResolverAdapter(
+        http,
+        { resolve: async () => "token" },
+        fetchAsset
+      );
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Framework - Release 5.13 Nouveautés",
+      });
+      expect(http.get).toHaveBeenCalledTimes(1);
+      expect(fetchAsset).toHaveBeenCalledWith(
+        "https://github.com/owner/repo/releases/download/v5.13.0/release-video.json",
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
+      );
+      expect(fetchAsset.mock.calls[0][1]?.headers).toBeUndefined();
+    });
+
+    it("uses a descriptive release name when the optional asset is absent or fails", async () => {
+      const absentFetch = vi.fn<typeof fetch>();
+      const absent = new GitHubReleaseResolverAdapter(
+        makeHttp({ tag_name: "v5.13.0", draft: false, name: "Release 5.13" }),
+        undefined,
+        absentFetch
+      );
+      expect(await absent.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Release 5.13",
+      });
+      expect(absentFetch).not.toHaveBeenCalled();
+      const failed = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "v5.13.0",
+          assets: [{ name: "release-video.json" }],
+        }),
+        undefined,
+        vi.fn<typeof fetch>().mockRejectedValue(new Error("offline"))
+      );
+      expect(await failed.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({ title: null });
+
+      const failedWithName = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Release 5.13",
+          assets: [{ name: "release-video.json" }],
+        }),
+        undefined,
+        vi.fn<typeof fetch>().mockRejectedValue(new Error("offline"))
+      );
+      expect(await failedWithName.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Release 5.13",
+      });
     });
   });
 

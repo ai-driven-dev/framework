@@ -50,9 +50,10 @@ function fixture() {
     )
   );
   const list = vi.fn(async () => [original]);
+  const loadUserManifest = vi.fn(async (): Promise<Manifest | null> => null);
   const saveMarketplace = vi.fn(async (_root: string, _marketplace: Marketplace) => {});
-  const isPublishedRelease = vi.fn(async (_repo: string, release: string) =>
-    ["v5.13.0", "v5.12.0"].includes(release)
+  const resolvePublishedRelease = vi.fn(async (_repo: string, release: string) =>
+    ["v5.13.0", "v5.12.0"].includes(release) ? { title: "Release title" } : null
   );
   const resolve = vi.fn(
     async (): Promise<{
@@ -102,7 +103,8 @@ function fixture() {
     listMarketplaces: list,
     saveMarketplace,
     loadManifest: async () => manifest,
-    isPublishedRelease,
+    loadUserManifest,
+    resolvePublishedRelease,
     resolveTarget: resolve,
     readTargetVersion,
     preflight,
@@ -114,9 +116,10 @@ function fixture() {
     uc,
     original,
     manifest,
+    loadUserManifest,
     list,
     saveMarketplace,
-    isPublishedRelease,
+    resolvePublishedRelease,
     resolve,
     readTargetVersion,
     install,
@@ -129,6 +132,117 @@ function fixture() {
 const accept = async () => true;
 
 describe("upgrade framework", () => {
+  it("recognizes a global legacy plugin only from its exact official source", async () => {
+    const f = fixture();
+    const machine = Manifest.create();
+    machine.addTool("opencode", "5.6.0", []);
+    const source = {
+      kind: "git-subdir" as const,
+      url: "https://github.com/ai-driven-dev/framework.git",
+      path: "plugins/aidd-context",
+      ref: "v5.12.0",
+    };
+    machine.addPlugin(
+      "opencode",
+      InstalledPlugin.fromMetadata("aidd-context", "2.9.0", source, true, "user")
+    );
+    machine.addPlugin(
+      "opencode",
+      InstalledPlugin.fromMetadata(
+        "aidd-dev",
+        "2.7.0",
+        { ...source, path: "plugins/not-aidd-dev" },
+        true,
+        "user"
+      )
+    );
+    machine.addPlugin(
+      "opencode",
+      InstalledPlugin.fromMetadata(
+        "aidd-pm",
+        "1.0.0",
+        { ...source, url: "https://github.com/other/framework.git", path: "plugins/aidd-pm" },
+        true,
+        "user"
+      )
+    );
+    f.loadUserManifest.mockResolvedValue(machine);
+    const confirm = vi.fn(async (_preview: FrameworkUpgradePreview) => false);
+    await f.uc.execute({ projectRoot: "/project", release: "v5.13.0", allowShared: true, confirm });
+    const preview = confirm.mock.calls[0]?.[0];
+    expect(preview?.globalPlugins.map(({ pluginName }) => pluginName)).toEqual(["aidd-context"]);
+    expect(f.saveMarketplace).not.toHaveBeenCalled();
+  });
+  it("distinguishes project user references missing from the machine inventory", async () => {
+    const f = fixture();
+    const source = {
+      kind: "git-subdir" as const,
+      url: "https://github.com/ai-driven-dev/framework.git",
+      path: "plugins/aidd-extra",
+      ref: "v5.12.0",
+    };
+    f.manifest.addTool("codex", "5.6.0", []);
+    f.manifest.addPlugin(
+      "codex",
+      InstalledPlugin.fromMetadata("aidd-extra", "1.0.0", source, true, "user", "aidd-framework")
+    );
+    f.manifest.addPlugin(
+      "kilo",
+      InstalledPlugin.fromMetadata("aidd-extra", "1.0.0", source, true, "user", "aidd-framework")
+    );
+    const machine = Manifest.create();
+    machine.addTool("codex", "5.6.0", []);
+    machine.addPlugin(
+      "codex",
+      InstalledPlugin.fromMetadata("aidd-extra", "1.0.0", source, true, "user", "aidd-framework")
+    );
+    f.loadUserManifest.mockResolvedValue(machine);
+    const confirm = vi.fn(async () => false);
+    await f.uc.execute({ projectRoot: "/project", release: "v5.13.0", allowShared: true, confirm });
+    expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({ globalSkipped: 2, unverifiedUserRefs: 1 })
+    );
+    expect(f.saveMarketplace).not.toHaveBeenCalled();
+  });
+  it("previews machine installations from the user manifest without changing them", async () => {
+    const f = fixture();
+    const machine = Manifest.create();
+    machine.addTool("opencode", "5.6.0", []);
+    machine.addPlugin(
+      "opencode",
+      InstalledPlugin.fromMetadata(
+        "aidd-context",
+        "2.9.0",
+        {
+          kind: "git-subdir",
+          url: "https://github.com/ai-driven-dev/framework.git",
+          path: "plugins/aidd-context",
+          ref: "v5.12.0",
+        },
+        true,
+        "user",
+        "aidd-framework"
+      )
+    );
+    f.loadUserManifest.mockResolvedValue(machine);
+    const before = machine.toJSON();
+    const confirm = vi.fn(async () => false);
+    await f.uc.execute({ projectRoot: "/project", release: "v5.13.0", allowShared: true, confirm });
+    expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        globalPlugins: [
+          {
+            toolId: "opencode",
+            pluginName: "aidd-context",
+            currentVersion: "2.9.0",
+            source: expect.objectContaining({ ref: "v5.12.0" }),
+          },
+        ],
+      })
+    );
+    expect(machine.toJSON()).toEqual(before);
+    expect(f.saveMarketplace).not.toHaveBeenCalled();
+  });
   it("rechecks shared native impact before rebuilding Claude after other installations", async () => {
     const f = fixture();
     f.manifest.addTool("claude", "5.6.0", []);
@@ -173,6 +287,7 @@ describe("upgrade framework", () => {
     expect(confirm).toHaveBeenCalledWith({
       currentRef: "v5.12.0",
       release: "v5.13.0",
+      title: "Release title",
       targets: [
         {
           toolId: "opencode",
@@ -190,6 +305,8 @@ describe("upgrade framework", () => {
         },
       ],
       globalSkipped: 0,
+      unverifiedUserRefs: 0,
+      globalPlugins: [],
       shared: true,
       impact: [],
     });

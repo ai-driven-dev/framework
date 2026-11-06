@@ -140,7 +140,7 @@ describe("maintenance TUI project lifecycle", () => {
       listMarketplaces: async () => [marketplace],
       saveMarketplace,
       loadManifest: async () => manifest,
-      isPublishedRelease: async () => true,
+      resolvePublishedRelease: async () => ({ title: "Release title" }),
       resolveTarget: async () => ({
         catalog: {
           version: "1.0.1",

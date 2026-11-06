@@ -39,7 +39,9 @@ describe("framework release update wiring", () => {
     const pluginManifest = join(root, "plugins/aidd-context/.claude-plugin/plugin.json");
     await mkdir(dirname(pluginManifest), { recursive: true });
     await writeFile(pluginManifest, JSON.stringify({ name: "aidd-context", version: "2.10.0" }));
-    vi.spyOn(GitHubReleaseResolverAdapter.prototype, "isPublishedRelease").mockResolvedValue(true);
+    vi.spyOn(GitHubReleaseResolverAdapter.prototype, "resolvePublishedRelease").mockResolvedValue({
+      title: "Release title",
+    });
     vi.spyOn(ResolveMarketplaceUseCase.prototype, "execute").mockImplementation(
       async ({ marketplace }) => ({
         marketplace,

@@ -168,9 +168,11 @@ async function runFrameworkUpdate(
 function printReleaseLinks(
   output: CLIOutput,
   release: string,
-  currentRefs: readonly string[]
+  currentRefs: readonly string[],
+  title: string | null
 ): void {
   const repository = "https://github.com/ai-driven-dev/framework";
+  output.info(title ? `Release title: ${title}` : "Release title unavailable.");
   output.info(`Release notes: ${repository}/releases/tag/${encodeURIComponent(release)}`);
   const distinctRefs = [...new Set(currentRefs)].filter((ref) => ref !== release);
   if (distinctRefs.length === 0) return;
@@ -200,12 +202,32 @@ function printReleasePreview(
       `  ${target.toolId}:${target.pluginName} (plugin ${version}; source ${target.currentRef} -> ${preview.release})`
     );
   }
-  printReleaseLinks(output, preview.release, [
-    preview.currentRef,
-    ...preview.targets.map((target) => target.currentRef),
-  ]);
-  if (preview.globalSkipped)
-    output.info(`${preview.globalSkipped} user-scope plugin entries will not be updated.`);
+  printReleaseLinks(
+    output,
+    preview.release,
+    [preview.currentRef, ...preview.targets.map((target) => target.currentRef)],
+    preview.title
+  );
+  if (preview.globalPlugins?.length) {
+    output.info("Global AIDD CLI installations (not updated by this command):");
+    for (const plugin of preview.globalPlugins) {
+      const source = plugin.source;
+      const sourceName =
+        source.kind === "git-subdir" &&
+        source.url === "https://github.com/ai-driven-dev/framework.git"
+          ? `ai-driven-dev/framework@${source.ref ?? "unknown"}`
+          : `${source.kind} (source unverified)`;
+      output.info(
+        `  ${plugin.toolId}:${plugin.pluginName} (plugin ${plugin.currentVersion}; source ${sourceName})`
+      );
+    }
+  }
+  if (preview.unverifiedUserRefs) {
+    output.warn(
+      `Project references to user-scope plugins not verified in the machine manifest: ${preview.unverifiedUserRefs}.`
+    );
+  }
+  output.info("Native user installations are not fully inventoried by this command.");
   if (preview.impact?.length) {
     output.info("Claude installations sharing this marketplace:");
     for (const entry of preview.impact)
@@ -278,7 +300,8 @@ async function runUserFrameworkReleaseUpdate(
       printReleaseLinks(
         output,
         preview.release,
-        preview.targets.map((target) => target.currentRef)
+        preview.targets.map((target) => target.currentRef),
+        preview.title
       );
       if (preview.nativeSkipped)
         output.warn(

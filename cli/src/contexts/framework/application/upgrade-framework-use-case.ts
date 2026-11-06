@@ -19,8 +19,16 @@ interface FrameworkUpgradePreviewTarget extends FrameworkUpgradeTarget {
 export interface FrameworkUpgradePreview {
   readonly currentRef: string;
   readonly release: string;
+  readonly title: string | null;
   readonly targets: readonly FrameworkUpgradePreviewTarget[];
   readonly globalSkipped: number;
+  readonly unverifiedUserRefs: number;
+  readonly globalPlugins: readonly {
+    toolId: AiToolId;
+    pluginName: string;
+    currentVersion: string;
+    source: PluginSource;
+  }[];
   readonly shared: boolean;
   readonly impact: readonly ClaudeInstallation[];
 }
@@ -35,7 +43,8 @@ interface UpgradeDeps {
   listMarketplaces(projectRoot: string): Promise<readonly Marketplace[]>;
   saveMarketplace(projectRoot: string, marketplace: Marketplace): Promise<void>;
   loadManifest(): Promise<Manifest | null>;
-  isPublishedRelease(repo: string, release: string): Promise<boolean>;
+  loadUserManifest?(): Promise<Manifest | null>;
+  resolvePublishedRelease(repo: string, release: string): Promise<{ title: string | null } | null>;
   resolveTarget(
     marketplace: Marketplace,
     projectRoot: string
@@ -129,12 +138,14 @@ export class UpgradeFrameworkUseCase {
       throw new Error("No project installation manifest exists; there is nothing to upgrade.");
     const targets: FrameworkUpgradePreviewTarget[] = [];
     let globalSkipped = 0;
+    const userRefs: FrameworkUpgradeTarget[] = [];
     for (const id of manifest.getInstalledToolIds()) {
       if (!isAiToolId(id)) continue;
       for (const plugin of manifest.getPlugins(id)) {
         if (plugin.marketplace !== FRAMEWORK_MARKETPLACE_NAME) continue;
         if (plugin.scope === "user") {
           globalSkipped++;
+          userRefs.push({ toolId: id, pluginName: plugin.name });
           continue;
         }
         const source = plugin.source;
@@ -164,7 +175,11 @@ export class UpgradeFrameworkUseCase {
       throw new Error(
         "No project-scoped AIDD plugins found; global installations must be updated separately."
       );
-    if (!(await this.deps.isPublishedRelease(marketplace.source.repo, release)))
+    const publishedRelease = await this.deps.resolvePublishedRelease(
+      marketplace.source.repo,
+      release
+    );
+    if (!publishedRelease)
       throw new Error(`Release ${release} is not available from the configured source.`);
     const nextData = marketplace.toJSON();
     nextData.source = { ...marketplace.source, ref: release };
@@ -220,14 +235,44 @@ export class UpgradeFrameworkUseCase {
       previewTargets.push({ ...target, targetVersion });
     }
     const preflight = await this.deps.preflight(manifest, projectRoot, targets, next, localPath);
+    const userManifest = await this.deps.loadUserManifest?.();
+    const globalPlugins = (userManifest?.getInstalledToolIds() ?? []).flatMap((toolId) =>
+      !isAiToolId(toolId)
+        ? []
+        : (userManifest?.getPlugins(toolId) ?? [])
+            .filter(
+              (plugin) =>
+                plugin.scope === "user" &&
+                (plugin.marketplace === FRAMEWORK_MARKETPLACE_NAME ||
+                  (plugin.marketplace === undefined &&
+                    plugin.source.kind === "git-subdir" &&
+                    plugin.source.url === "https://github.com/ai-driven-dev/framework.git" &&
+                    plugin.source.path === `plugins/${plugin.name}`))
+            )
+            .map((plugin) => ({
+              toolId,
+              pluginName: plugin.name,
+              currentVersion: plugin.version,
+              source: plugin.source,
+            }))
+    );
+    const unverifiedUserRefs = userRefs.filter(
+      (ref) =>
+        !globalPlugins.some(
+          (entry) => entry.toolId === ref.toolId && entry.pluginName === ref.pluginName
+        )
+    ).length;
     const impact = preflight?.impact ?? [];
     const shared = marketplace.scope === "user" || preflight?.shared === true;
     if (
       !(await confirm({
         currentRef,
         release,
+        title: publishedRelease.title,
         targets: previewTargets,
         globalSkipped,
+        unverifiedUserRefs,
+        globalPlugins,
         shared,
         impact,
       }))

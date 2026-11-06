@@ -122,14 +122,18 @@ async function fixture(options: { currentRef?: string; targetVersion?: string } 
     }),
   };
   const journal = new UserReleaseJournal(fs, hasher, repo, { home: () => HOME, store });
-  const isPublishedRelease = vi.fn(async (_repo: string, _release: string) => true);
+  const resolvePublishedRelease = vi.fn(
+    async (_repo: string, _release: string): Promise<{ title: string | null } | null> => ({
+      title: "Release title",
+    })
+  );
   const useCase = new UpgradeUserFrameworkUseCase({
     repo,
     builder,
     updater,
     journal,
     logger,
-    isPublishedRelease,
+    resolvePublishedRelease,
   });
   const writes = vi.spyOn(fs, "writeFile");
   const deletes = vi.spyOn(fs, "deleteFile");
@@ -145,7 +149,7 @@ async function fixture(options: { currentRef?: string; targetVersion?: string } 
     build,
     sessionEvents,
     updater,
-    isPublishedRelease,
+    resolvePublishedRelease,
     writes,
     deletes,
   };
@@ -162,6 +166,7 @@ describe("machine-scoped framework release update", () => {
     expect(f.sessionEvents).toEqual(["opened", "closed"]);
     expect(confirm).toHaveBeenCalledWith({
       release: "v5.13.0",
+      title: "Release title",
       nativeSkipped: 1,
       targets: ["opencode", "kilo"].map((toolId) => ({
         toolId,
@@ -195,7 +200,7 @@ describe("machine-scoped framework release update", () => {
     });
     expect(f.build).toHaveBeenNthCalledWith(1, "v5.13.0", "opencode", "aidd-context", undefined);
     expect(f.build).toHaveBeenNthCalledWith(2, "v5.13.0", "kilo", "aidd-context", SHA);
-    expect(f.isPublishedRelease).toHaveBeenCalledWith("ai-driven-dev/framework", "v5.13.0");
+    expect(f.resolvePublishedRelease).toHaveBeenCalledWith("ai-driven-dev/framework", "v5.13.0");
     for (const tool of ["opencode", "kilo"] as const) {
       const plugin = f.repo.getCurrent()?.getPlugins(tool)[0];
       expect(plugin?.source).toEqual({ ...SOURCE, ref: "v5.13.0", sha: SHA });
@@ -302,7 +307,7 @@ describe("machine-scoped framework release update", () => {
     ).rejects.toThrow(/plugin downgrade/);
     expect(old.store.create).not.toHaveBeenCalled();
     const unpublished = await fixture();
-    unpublished.isPublishedRelease.mockResolvedValue(false);
+    unpublished.resolvePublishedRelease.mockResolvedValue(null);
     await expect(
       unpublished.useCase.execute({ projectRoot: PROJECT, release: "v5.13.0", confirm: accept })
     ).rejects.toThrow(/not available/);
@@ -318,7 +323,7 @@ describe("machine-scoped framework release update", () => {
       await expect(f.useCase.execute({ projectRoot: PROJECT, release, confirm })).rejects.toThrow(
         /root release tag/
       );
-      expect(f.isPublishedRelease).not.toHaveBeenCalled();
+      expect(f.resolvePublishedRelease).not.toHaveBeenCalled();
       expect(confirm).not.toHaveBeenCalled();
       expect(f.writes).not.toHaveBeenCalled();
       expect(f.repo.saveCount).toBe(0);
@@ -331,7 +336,7 @@ describe("machine-scoped framework release update", () => {
     await expect(
       f.useCase.execute({ projectRoot: PROJECT, release: "v5.13.0", confirm: accept })
     ).rejects.toThrow("No machine installation manifest");
-    expect(f.isPublishedRelease).not.toHaveBeenCalled();
+    expect(f.resolvePublishedRelease).not.toHaveBeenCalled();
     expect(f.writes).not.toHaveBeenCalled();
   });
 
