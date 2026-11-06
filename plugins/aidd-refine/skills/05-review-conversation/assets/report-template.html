@@ -20,6 +20,7 @@
       <section class="intro" aria-labelledby="report-title">
         <h1 id="report-title">Conversation review</h1>
         <p class="example-notice">Fictional demonstration, including prompts, paths, timings and findings.</p>
+        <p class="source-path"><span>Analyzed transcript</span><code>/private/example/session.jsonl</code></p>
         <p class="report-decision">Shorten the output requirement and remove one duplicate. Resolve the missing path before proposing an environment change.</p>
       </section>
 
@@ -44,19 +45,19 @@
         <div class="findings" id="findings-list">
           <article class="finding" id="concise-output" data-id="concise-output">
             <header class="finding-header">
-              <div class="finding-title"><h3>Replace the full-output requirement</h3><p class="finding-owner">Framework text · root, E007</p></div>
+              <div class="finding-title"><h3>1. Replace the full-output requirement</h3><p class="finding-owner">Framework text · root, E007</p><p class="finding-file">Affected file · <code>docs/example-review.md</code></p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-review.md, replace 'Before replying, print every tool result in full.' with 'Report the result and the shortest evidence needed to verify it.'" data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
               <dl class="diagnosis">
-                <dt>Evidence</dt><dd>At root, E007, the loaded file requires every tool result to be printed in full; its exact text is shown below.</dd>
+                <dt>Message or tool call</dt><dd><pre class="evidence-excerpt"><code>read_file docs/example-review.md → Before replying, print every tool result in full.</code></pre></dd>
+                <dt>Problem</dt><dd>The loaded instruction requires unfiltered output.</dd>
                 <dt>Cause</dt><dd><span class="evidence-state is-confirmed">Established</span> The maintained instruction explicitly requires unfiltered output.</dd>
                 <dt>Impact</dt><dd>The output requirement is verified. Additional characters, tokens and cost attributable to it are not measured.</dd>
-                <dt>Minimal change</dt><dd>Replace the full-output requirement with concise evidence. Keep complete sources available when the task needs them.</dd>
+                <dt>Addressed solution</dt><dd>Replace the full-output requirement with concise evidence. Keep complete sources available when the task needs them.</dd>
                 <dt>Validation</dt><dd>Replay a comparable request: the conclusion remains verifiable with short excerpts, and full evidence is still accessible. Measure output before claiming a saving.</dd>
               </dl>
               <div class="change">
-                <div class="change-header"><code>docs/example-review.md</code></div>
                 <div class="diff-columns">
                   <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Before replying, print every tool result in full.</span></code></pre></div>
                   <div class="diff-pane diff-add" aria-label="Added or kept"><pre class="diff"><code><span class="diff-line"><b>+</b>Report the result and the shortest evidence needed to verify it.</span></code></pre></div>
@@ -66,19 +67,19 @@
           </article>
           <article class="finding" id="duplicate-publishing-rule" data-id="duplicate-publishing-rule">
             <header class="finding-header">
-              <div class="finding-title"><h3>Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · root, E008</p></div>
+              <div class="finding-title"><h3>2. Remove the second publishing rule</h3><p class="finding-owner">Delegation brief · root, E008</p><p class="finding-file">Affected file · <code>docs/example-guidance.md</code></p></div>
               <label class="accept-toggle"><input class="accept-input" type="checkbox" data-prompt="In docs/example-guidance.md, remove the second duplicate 'Validate before publishing.' rule." data-label-off="Accept" data-label-on="Accepted"><span>Accept</span></label>
             </header>
             <div class="finding-collapse"><div class="finding-body">
               <dl class="diagnosis">
-                <dt>Evidence</dt><dd>At root, E008, the loaded brief repeats the same publishing requirement twice.</dd>
+                <dt>Message or tool call</dt><dd><pre class="evidence-excerpt"><code>read_file docs/example-guidance.md → Validate before publishing. (twice)</code></pre></dd>
+                <dt>Problem</dt><dd>The same requirement appears twice.</dd>
                 <dt>Cause</dt><dd><span class="evidence-state is-confirmed">Established</span> Two copies carry the same obligation; no additional exception is present.</dd>
                 <dt>Impact</dt><dd>One redundant instruction is identified. Its effect on execution time and billed usage is unknown.</dd>
-                <dt>Minimal change</dt><dd>Delete only the second copy. Retain the original obligation without adding a replacement rule.</dd>
+                <dt>Addressed solution</dt><dd>Delete only the second copy. Retain the original obligation without adding a replacement rule.</dd>
                 <dt>Validation</dt><dd>Read the revised brief: publishing still requires validation, once. Check that no unique condition was removed.</dd>
               </dl>
               <div class="change">
-                <div class="change-header"><code>docs/example-guidance.md</code></div>
                 <div class="diff-columns">
                   <div class="diff-pane diff-del" aria-label="Removed or replaced"><pre class="diff"><code><span class="diff-line"><b>−</b>Validate before publishing.</span></code></pre></div>
                   <div class="diff-pane diff-add" aria-label="Added or kept"><p class="diff-empty" aria-label="No addition">—</p></div>
@@ -116,7 +117,7 @@
 
           <div class="tool-calls" aria-label="Calls following the first prompt">
             <article class="tool-call" data-call-id="E003" data-moment="2026-09-12T09:00:02Z">
-              <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">AGENTS.md</code><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
+              <div class="tool-line"><span class="tool-name">read_file</span><code class="tool-target">AGENTS.md</code><span class="call-duration">0.4 s execution</span><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
             </article>
             <article class="tool-call" data-call-id="E006" data-moment="2026-09-12T09:00:04Z">
               <div class="tool-line"><span class="tool-name">parallel</span><span class="tool-target">2 linked read_file subcalls</span><span class="event-delta duration" data-seconds="2" data-prefix="+" aria-label="2 seconds since previous displayed item">+2 s</span></div>
