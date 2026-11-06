@@ -28,22 +28,28 @@ function seedToken() {
 }
 
 describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
-  it.each(["package.json", "server.ts", "server.tsx", "server.js", "index.ts", "index.tsx"])(
-    "refuses competing %s without changing it",
-    async (name) => {
-      await seedToken();
-      const host = { home, env: {}, opencodeVersion: async () => "2.2.5" };
-      const entry = join(home, ".config/opencode/plugins/aidd-otel", name);
-      await seed(entry, "user content");
-      await expect(initializeOtel("opencode", "dev", host)).rejects.toThrow(
-        /competing entry point/
-      );
-      expect(await readFile(entry, "utf8")).toBe("user content");
-      await expect(stat(join(dirname(entry), "index.js"))).rejects.toMatchObject({
-        code: "ENOENT",
-      });
-    }
-  );
+  it.each([
+    "package.json",
+    "server",
+    "server.ts",
+    "server.tsx",
+    "server.js",
+    "server.mjs",
+    "index",
+    "index.ts",
+    "index.tsx",
+    "index.mts",
+  ])("refuses competing %s without changing it", async (name) => {
+    await seedToken();
+    const host = { home, env: {}, opencodeVersion: async () => "2.2.5" };
+    const entry = join(home, ".config/opencode/plugins/aidd-otel", name);
+    await seed(entry, "user content");
+    await expect(initializeOtel("opencode", "dev", host)).rejects.toThrow(/competing entry point/);
+    expect(await readFile(entry, "utf8")).toBe("user content");
+    await expect(stat(join(dirname(entry), "index.js"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+  });
   it("rejects a competing symlink and FIFO without reading either", async () => {
     const directory = join(home, ".config/opencode/plugins/aidd-otel");
     await mkdir(directory, { recursive: true });
@@ -57,6 +63,9 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     await seedToken();
     const host = { home, env: {}, opencodeVersion: async () => "2.2.5" };
     await initializeOtel("opencode", "dev", host);
+    const notes = join(home, ".config/opencode/plugins/aidd-otel/notes.txt");
+    await writeFile(notes, "unrelated\n");
+    await expect(hasOpenCodePlugin(host)).resolves.toBe(true);
     const entry = join(home, ".config/opencode/plugins/aidd-otel/server.js");
     await writeFile(entry, "user plugin\n");
     await expect(hasOpenCodePlugin(host)).rejects.toThrow(/competing entry point/);

@@ -1,21 +1,11 @@
 import { constants } from "node:fs";
-import { lstat, mkdir, open, writeFile } from "node:fs/promises";
+import { lstat, mkdir, open, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import openCodePlugin from "../../../../../../assets/configs/otel-opencode-plugin.js.txt";
 import { type Host, openCodeConfigDir } from "../settings.js";
 
 export const openCodePluginDirectory = (host: Host) =>
   join(openCodeConfigDir(host), "plugins", "aidd-otel");
-
-// OpenCode v2 resolves package exports first, then server.*, then index.*.
-const competingEntries = [
-  "package.json",
-  "server.ts",
-  "server.tsx",
-  "server.js",
-  "index.ts",
-  "index.tsx",
-];
 
 export async function hasOpenCodePlugin(host: Host): Promise<boolean> {
   const directory = openCodePluginDirectory(host);
@@ -27,14 +17,14 @@ export async function hasOpenCodePlugin(host: Host): Promise<boolean> {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
     throw error;
   }
-  for (const name of competingEntries) {
-    try {
-      await lstat(join(directory, name));
-    } catch (error) {
-      if (error instanceof Error && "code" in error && error.code === "ENOENT") continue;
-      throw error;
-    }
-    throw new Error("OpenCode telemetry plugin has a competing entry point.");
+  for (const name of await readdir(directory)) {
+    if (
+      name === "package.json" ||
+      name === "server" ||
+      name.startsWith("server.") ||
+      (name !== "index.js" && (name === "index" || name.startsWith("index.")))
+    )
+      throw new Error("OpenCode telemetry plugin has a competing entry point.");
   }
   try {
     const file = await open(
