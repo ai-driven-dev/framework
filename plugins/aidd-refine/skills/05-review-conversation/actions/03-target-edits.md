@@ -13,7 +13,7 @@ Transcripts, measurements and findings with any verified edits.
    - Show the exact analyzed transcript path in the heading when available; otherwise show its source and identifier; retain all user messages in chronological order as collapsed two-line previews, with their recorded calls and durations inside. Keep full transcripts in private sidecars.
    - Lead with the decision, source coverage and useful measurements, then the findings.
 2. Add acceptance controls only to verified textual edits supplied by recommend.
-   - Number findings and show, in order, the exact message, tool call or other evidence involved, the problem, and the addressed solution. For a verified file edit, show its maintained path once at the top and exact removed and added text in code blocks; for pure deletions leave the addition empty.
+   - Number findings and show three columns: the exact message or tool call involved, the problem, and the addressed solution. At the top show only a direct link to the affected file, without a label or repeated path. In the solution column, render verified file edits as a Git-style diff with exact removed (−) and added (+) lines; omit additions for a pure deletion.
    - Never present operational or diagnostic remedies as file patches; name their actual target and omit acceptance controls when no exact file edit is supported.
    - Selecting an edit builds a prompt without applying changes.
 3. End with a two-column problem → solution table linked to the detailed evidence.
