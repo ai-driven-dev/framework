@@ -152,3 +152,14 @@ main { width: min(1040px, calc(100% - 48px)); margin: auto; min-width: 0; }
 }
 
 .evidence-excerpt { margin: 0; padding: 10px 12px; background: var(--soft-surface); border: 1px solid var(--line); font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Evidence, problem and patch remain comparable at desktop widths. */
+.review-columns { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); }
+.review-cell { min-width:0; padding:16px; }
+.review-cell + .review-cell { border-left:1px solid var(--line); }
+.review-cell h4 { margin:0 0 12px; font-size:13px; }
+.review-cell p { margin:0; overflow-wrap:anywhere; }
+.git-diff { margin:0; padding:10px 0; background:var(--soft-surface); font:inherit; white-space:pre-wrap; overflow-wrap:anywhere; }
+.git-diff .diff-line { display:block; padding:2px 10px; }
+.git-diff b { display:inline-block; width:18px; }
+@media (max-width: 680px) { .review-columns { grid-template-columns:minmax(0,1fr); } .review-cell + .review-cell { border-left:0; border-top:1px solid var(--line); } }
