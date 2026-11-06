@@ -1,8 +1,11 @@
+import { execFileSync } from "node:child_process";
+import { constants } from "node:fs";
 import { mkdir, mkdtemp, open, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { initializeOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/init.js";
+import { hasOpenCodePlugin } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/opencode-plugin-file.js";
 
 const TOKEN = "example-private-token";
 let home: string;
@@ -24,6 +27,30 @@ function seedToken() {
 }
 
 describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
+  it("rejects a FIFO plugin without blocking", async () => {
+    const path = join(home, ".config/opencode/plugins/aidd-otel/index.js");
+    await mkdir(dirname(path), { recursive: true });
+    execFileSync("mkfifo", [path]);
+    const check = hasOpenCodePlugin({ home, env: {} }).then(
+      () => "accepted",
+      (error: Error) => error.message
+    );
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const result = await Promise.race([
+      check,
+      new Promise<string>((resolve) => {
+        timer = setTimeout(() => resolve("blocked"), 1000);
+      }),
+    ]);
+    if (timer) clearTimeout(timer);
+    if (result === "blocked") {
+      // Release a regressed blocking read so this behavioral check can fail cleanly.
+      const writer = await open(path, constants.O_WRONLY | constants.O_NONBLOCK);
+      await check;
+      await writer.close();
+    }
+    expect(result).toBe("OpenCode telemetry plugin is unsafe or has different content.");
+  });
   it("refuses production before even needing the local token or executable", async () => {
     await expect(initializeOtel("opencode", "prod", { home, env: {} })).rejects.toThrow(
       /production.*Gouvernail/

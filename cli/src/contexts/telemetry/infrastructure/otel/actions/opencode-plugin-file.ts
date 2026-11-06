@@ -10,7 +10,7 @@ export const openCodePluginDirectory = (host: Host) =>
 export async function hasOpenCodePlugin(host: Host): Promise<boolean> {
   const path = join(openCodePluginDirectory(host), "index.js");
   try {
-    const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
     try {
       const info = await file.stat();
       if (
