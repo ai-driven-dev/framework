@@ -399,22 +399,35 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
 
-    it("tells the code's colour errors after a write to code-debt.json, which every code file reads", () => {
+    /** A turn writes Button.tsx, so the session has read it; colours then land by hand in it and in HomePage.tsx, which no turn wrote. */
+    const readThenColoured = () => {
       begin();
+      hook(postToolUse(path.join(tmp, "src/ui/Button.tsx")));
+      hook(stop());
       colourInCode();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "code-debt.json"))), claudeFeedback(errorsText([COLOUR])));
+      fs.appendFileSync(path.join(tmp, "src/ui/HomePage.tsx"), 'const style = "color: #00ff00";\n');
+    };
+
+    for (const written of ["code-debt.json", "system.md", "components/button.md"]) {
+      it(`tells after a write to ${written} the new colour errors of the code files the session has read, and reads no other`, () => {
+        readThenColoured();
+        assert.deepEqual(hook(postToolUse(path.join(tmp, UI, written))), claudeFeedback(errorsText([COLOUR])));
+      });
+    }
+
+    it("keeps reading a code file the session wrote in an earlier turn", () => {
+      begin();
+      hook(postToolUse(path.join(tmp, "src/ui/Button.tsx")));
+      hook(stop());
+      hook(postToolUse(path.join(tmp, "src/ui/HomePage.tsx")));
+      hook(stop());
+      colourInCode();
+      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([COLOUR])));
     });
 
-    it("reads no other code file after a write that leaves the code's shared inputs alone", () => {
-      begin();
-      colourInCode();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
-    });
-
-    it("reads every code file again after a write to system.md, which every code file reads", () => {
-      begin();
-      colourInCode();
-      assert.deepEqual(hook(postToolUse(path.join(tmp, UI, "system.md"))), claudeFeedback(errorsText([COLOUR])));
+    it("reads after a shell write only the code files the session has read", () => {
+      readThenColoured();
+      assert.deepEqual(hook(shell(`node ${ENGINE} tokens ${tmp}`)), claudeFeedback(errorsText([COLOUR])));
     });
 
     it("tells the written tokens' errors, then those of every record reading them", () => {
@@ -632,6 +645,17 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(JSON.parse(fs.readFileSync(`${markPath(sid, temp)}.base`, "utf8")), [[JSON.stringify([RENDER, "V4", "#000000"]), 2]]);
     });
 
+    it("reads no code file at the session's start: a code file joins the baseline at the end of the first turn that writes it", () => {
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
+      hook(JSON.stringify({ hook_event_name: "SessionStart", cwd: tmp, session_id: sid, source: "startup" }), temp);
+      assert.deepEqual(JSON.parse(fs.readFileSync(`${markPath(sid, temp)}.base`, "utf8")), []);
+      hook(postToolUse(path.join(tmp, "src/ui/Button.tsx")), temp);
+      hook(stop(), temp);
+      assert.deepEqual(JSON.parse(fs.readFileSync(`${markPath(sid, temp)}.base`, "utf8")), [[JSON.stringify(["src/ui/Button.tsx", "C4", "#ff0000"]), 1], [JSON.stringify(["src/ui/Button.tsx"]), 1]]);
+    });
+
     it("keeps its folders to their owner, the mark to its owner alone", { skip: process.platform === "win32" }, () => {
       const temp = path.join(tmp, "temp");
       fs.mkdirSync(temp);
@@ -739,6 +763,13 @@ describe("aidd-ui validator entries", () => {
       fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
       hook(editTool(BUTTON, "Any action a person starts; never for navigation.", "Any action a person starts, never for navigation."));
       assert.deepEqual(hook(stop()), silent);
+      hook(postToolUse(path.join(tmp, "src/ui/Button.tsx")));
+      assert.deepEqual(hook(stop()), silent);
+    });
+
+    it("holds no turn on a code file's standing errors when a whole-file write the session never read says nothing of what it replaced", () => {
+      fs.appendFileSync(path.join(tmp, "src/ui/Button.tsx"), 'const style = "color: #ff0000";\n');
+      begin();
       hook(postToolUse(path.join(tmp, "src/ui/Button.tsx")));
       assert.deepEqual(hook(stop()), silent);
     });

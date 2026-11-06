@@ -4,7 +4,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { load, relative, isUnder, UI_DIR, SYSTEM_FILE, CODE_DEBT_FILE } = require("./project.cjs");
+const { load, relative, isUnder, UI_DIR } = require("./project.cjs");
 const { codeRoots } = require("./code.cjs");
 const { problemsOf, findingOf, isError } = require("../aidd-ui.cjs");
 const { isShellWrite, formatFindings } = require("./common-rules.cjs");
@@ -30,14 +30,13 @@ const OTHERS_BITS = 0o077;
 const STATE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // state no Stop or session start renewed: its session ended
 // The errors the project held at the session's start or at the last turn's end, beside the turn's mark.
 const BASELINE_SUFFIX = ".base";
-// The rules that read the code's text, file by file, and the files each of those reads besides its own.
-const TEXT_RULES = ["C4", "C6"];
-const SHARED_INPUTS = [`${UI_DIR}/${SYSTEM_FILE}`, CODE_DEBT_FILE];
 // What the hook tells the model after a write: it informs, and Stop requires.
 const INFORM = 1;
 
 /** Whether a project-relative file belongs to the design system or to its code. */
 const isWatched = (project, file) => [UI_DIR, ...codeRoots(project)].some((prefix) => isUnder(file, prefix));
+/** Whether a project-relative file is code: the checks read its text only once the session wrote it. */
+const isCode = (project, file) => codeRoots(project).some((prefix) => isUnder(file, prefix));
 
 /** Whether a shell command runs an engine command that writes: `publish` writes only without ids. */
 function runsEngineWrite(command) {
@@ -144,23 +143,17 @@ const countKeys = (problems) => problems.reduce((counts, problem) => counts.set(
 /** The baseline: the errors the project held at the session's start or at the last turn's end. */
 const readBaseline = (mark) => (mark ? readPairs(`${mark}${BASELINE_SUFFIX}`) : null);
 
-/** Leaves the baseline. Narrowed to `scope`, the rules that read the code's text read only its files,
- * so every other file keeps the counts the last baseline gave those rules. */
-function leaveBaseline(mark, problems, scope = null, baseline = null) {
+/** The code files the baseline read, each under a key of its name alone: the checks read no other's
+ * text, so the cost of a hook run follows what the session wrote, not the size of the code. */
+const readCode = (baseline) => new Set([...(baseline ?? new Map()).keys()].map((key) => JSON.parse(key)).filter((key) => key.length === 1).map(([file]) => file));
+
+/** Leaves the baseline: the errors as they stand, and the code files `scope` names, whose text was read. */
+function leaveBaseline(mark, problems, scope) {
   if (!mark) return;
   const counts = countKeys(problems);
-  if (scope && baseline) {
-    for (const [key, count] of baseline) {
-      const [file, rule] = JSON.parse(key);
-      if (TEXT_RULES.includes(rule) && !scope.has(file)) counts.set(key, count);
-    }
-  }
+  for (const file of scope) counts.set(JSON.stringify([file]), 1);
   writePairs(`${mark}${BASELINE_SUFFIX}`, counts);
 }
-
-/** The code files whose text the checks read after `files` were written: those alone, unless one is an
- * input every code file is read against, or a baseline is missing to keep the others' errors. Null: all. */
-const scopeOf = (files, baseline) => (baseline && !files.some((file) => SHARED_INPUTS.includes(file)) ? new Set(files) : null);
 
 /** A text's lines, trimmed, the empty ones left out. */
 const linesOf = (text) => (text ?? "").split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
@@ -182,9 +175,10 @@ function changedLines({ written, replaced }) {
 
 /** Adds a write to the turn's net changed lines: its written lines in, its replaced lines out, so a
  * line changed and changed back nets to nothing. A write that says nothing of what it replaced proves
- * a line new only against a baseline; without one it adds nothing, and nothing of it is required. */
-function addToNet(net, { file, written, replaced }, baseline) {
-  if (typeof written !== "string" || (typeof replaced !== "string" && !baseline)) return;
+ * a line new only against a baseline that read the file; without one it adds nothing, and nothing of
+ * it is required. */
+function addToNet(net, { file, written, replaced }, known) {
+  if (typeof written !== "string" || (typeof replaced !== "string" && !known)) return;
   for (const line of linesOf(written)) net.set(lineKey(file, line), (net.get(lineKey(file, line)) ?? 0) + 1);
   for (const line of linesOf(replaced)) net.set(lineKey(file, line), (net.get(lineKey(file, line)) ?? 0) - 1);
 }
@@ -209,16 +203,18 @@ function readTurn(mark) {
   const pairs = (mark && readPairs(mark)) ?? new Map();
   const net = new Map();
   const told = new Map();
+  const code = new Set();
   for (const [key, count] of pairs) {
     const [kind, rest] = [key[0], key.slice(1)];
     if (kind === "+") net.set(rest, count);
     else if (kind === "!") told.set(rest, count);
+    else if (kind === "*") code.add(rest);
   }
-  return { net, told };
+  return { net, told, code };
 }
 
-function leaveTurn(mark, { net, told }) {
-  if (mark) writePairs(mark, [...[...net].map(([key, count]) => [`+${key}`, count]), ...[...told].map(([key, count]) => [`!${key}`, count])]);
+function leaveTurn(mark, { net, told, code }) {
+  if (mark) writePairs(mark, [...[...net].map(([key, count]) => [`+${key}`, count]), ...[...told].map(([key, count]) => [`!${key}`, count]), ...[...code].map((file) => [`*${file}`, 1])]);
 }
 
 /** The errors outside `files` that no baseline counts and the turn was not yet told of; they join
@@ -245,8 +241,10 @@ function afterWrite(project, event) {
   const mark = markFile(event);
   const baseline = readBaseline(mark);
   const turn = readTurn(mark);
-  for (const entry of written) addToNet(turn.net, entry, baseline);
-  if (!shell) project.scope = scopeOf(written.map(({ file }) => file), baseline);
+  const read = readCode(baseline);
+  for (const entry of written) addToNet(turn.net, entry, baseline && (!isCode(project, entry.file) || read.has(entry.file)));
+  for (const { file } of written) if (isCode(project, file)) turn.code.add(file);
+  project.scope = new Set([...read, ...turn.code]);
   const problems = problemsOf(project);
   const findings = { errors: [], reached: [], warnings: [] };
   for (const entry of written) {
@@ -281,7 +279,7 @@ function consumeMark(mark) {
  * once is never asked again. */
 function atStop(project, mark, turn) {
   const baseline = readBaseline(mark);
-  project.scope = scopeOf([...new Set([...turn.net.keys()].map((key) => JSON.parse(key)[0]))], baseline);
+  project.scope = new Set([...readCode(baseline), ...turn.code]);
   const problems = problemsOf(project);
   const changed = new Map();
   for (const [key, count] of turn.net) {
@@ -296,7 +294,7 @@ function atStop(project, mark, turn) {
     candidates.push(...problems.filter((problem) => problem.file === file && isError(problem) && touched.has(findingOf(problem).line)));
   }
   const required = baseline ? newErrors(candidates, baseline) : candidates;
-  leaveBaseline(mark, problems, project.scope, baseline);
+  leaveBaseline(mark, problems, project.scope);
   const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) });
   if (reason) continueTurn(reason);
   return EXIT_SILENT;
@@ -309,7 +307,7 @@ function run() {
   if (event.event === SESSION_START) {
     sweepState();
     const project = load(event.cwd);
-    if (project !== null) leaveBaseline(markFile(event), problemsOf(project));
+    if (project !== null) leaveBaseline(markFile(event), problemsOf(Object.assign(project, { scope: new Set() })), []);
     return EXIT_SILENT;
   }
   // A shell command that only reads, and an ignored tool, do nothing: neither reads the project.
