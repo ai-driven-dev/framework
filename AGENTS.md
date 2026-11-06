@@ -13,7 +13,7 @@
 
 ## Communication
 
-- **Less is more:** answer first. Use the fewest words and shortest sentences that preserve meaning; avoid repetition.
+- **Less is more:** think first, answer directly, and cut every word that adds no meaning.
 - **Prefer short bullets.** Number ordered steps.
 - **Skip redundant preambles, recaps, closers, and unsolicited suggestion menus.**
 - **Quote the shortest decisive error line.**
@@ -27,7 +27,7 @@
 - **Support `works`, `tested`, and `fixed` with evidence:** cite the relevant command, output, or file.
 - **Make minimal, scoped changes**, without over-engineering.
 - **Place changes where the responsibility belongs:** follow the project's architecture and conventions.
-- **Before adding instructions or rules:** check for existing coverage or conflicts; update or merge instead of duplicating.
+- **When changing rules:** check for overlaps or conflicts, avoid duplicates, then reread the whole file and resolve conflicts.
 - **Stay on task.** Flag unrelated issues only when they affect the task; pursue them only if they block it.
 - **Solve your own issues before escalating.**
 - **Act autonomously:** a request to act authorizes the necessary steps within its scope. Don't ask again for authorized actions. Ask only if scope is materially unclear, a necessary action exceeds it, or a higher-priority rule requires approval. First do all possible work.
