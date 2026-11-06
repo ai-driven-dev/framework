@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -148,7 +149,7 @@ test("M2: counts of things, dates and time words are warnings, never errors", ()
 
 test("each message names what is wrong, never its fix: the fix stands apart", () => {
   const message = (text, files) => lint(text, files)[0].message;
-  assert.equal(message(`# T\n\n${words(26)}\n`), "sentence of 26 words, over 25");
+  assert.equal(message(`# T\n\n${words(26)}\n`), "sentence of 26 words, over the recommended 25");
   assert.equal(message("# T\n\nWe have 41 commits.\n"), '"41 commits" goes stale');
   assert.equal(message("# T\n\nShipped 2026-01-02.\n"), '"2026-01-02" goes stale');
   assert.equal(message("# T\n\nIt is Currently fine.\n"), '"Currently" goes stale');
@@ -160,10 +161,10 @@ test("each error carries its excerpt and its fix apart, as the findings formatte
     const [{ excerpt, fix }] = lint(text, files);
     return { excerpt, fix };
   };
-  assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: "26 words, over 25", fix: "make it a table, a list or a heading" });
+  assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: "26 words, over the recommended 25", fix: "split it into a list or a table; keep every fact" });
   assert.deepEqual(parts("# T\n\nWe have 41 commits.\n"), { excerpt: "41 commits", fix: "check it against the code; keep it if true" });
-  assert.deepEqual(parts("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), { excerpt: "src/gone.cfg", fix: "fix the path or remove it" });
-  assert.deepEqual(parts(`# T\n\n- ${words(36)}\n`), { excerpt: undefined, fix: "split it" });
+  assert.deepEqual(parts("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), { excerpt: "src/gone.cfg", fix: "fix the path; keep the fact" });
+  assert.deepEqual(parts(`# T\n\n- ${words(36)}\n`), { excerpt: undefined, fix: "split it; keep every fact" });
 });
 
 test("an excerpt over 40 characters is cut with an ellipsis", () => {
@@ -322,6 +323,14 @@ test("M5: a bullet or a table cell over 35 words is a warning", () => {
   assert.deepEqual(ids(lint(`# T\n\n- ${words(35)}\n`)), []);
 });
 
+test("M5 and M6 name the count over the recommendation and a fix that keeps every fact", () => {
+  const [m5] = lint(`# T\n\n- ${words(36)}\n`);
+  assert.deepEqual([m5.message, m5.fix], ["bullet or cell of 36 words, over the recommended 35", "split it; keep every fact"]);
+  const m6 = lint(`# T\n\n${Array(41).fill(words(10) + ".").join("\n")}\n`).find((problem) => problem.rule === "M6");
+  assert.match(m6.message, /^file of \d+ words, over the recommended 400$/u);
+  assert.equal(m6.fix, "move a section to the capability file it belongs to; keep every fact");
+});
+
 test("M6: a file over 400 words is a warning", () => {
   const body = Array(41).fill(`- ${words(10)}`).join("\n");
   const problems = lint(`# T\n\n${body}\n`);
@@ -418,7 +427,7 @@ test("check prints the findings in the contract's shape and exits 1 only with an
     assert.equal(failing.status, 1);
     assert.equal(
       failing.stdout,
-      'aidd-context: 1 error, 1 warning\naidd_docs/memory/a.md:3 M1 "26 words, over 25" => make it a table, a list or a heading\naidd_docs/memory/a.md:5 M5 warning bullet or table cell over 35 words => split it\n'
+      'aidd-context: 1 error, 1 warning\naidd_docs/memory/a.md:3 M1 "26 words, over the recommended 25" => split it into a list or a table; keep every fact\naidd_docs/memory/a.md:5 M5 warning bullet or cell of 36 words, over the recommended 35 => split it; keep every fact\n'
     );
 
     const passing = check(warningOnly);
@@ -554,61 +563,274 @@ test("the engine's row files are the capability table's, and it holds no table o
   assert.equal(require(ENGINE).FORMER_FILES, undefined);
 });
 
-// lines and vanished: what a refresh must not lose
+// vanished: a read-only list of the lines a write lost without approval, against the bank at HEAD
 
 function engine(...args) {
   return spawnSync("node", [ENGINE, ...args], { encoding: "utf8" });
 }
 
-test("lines: prints every non-empty line of the bank, whitespace-normalised, one per line", () => {
-  const root = project({ "a.md": "# A\n\n-   Indent  with 2 spaces \n", "internal/b.md": "\tLines stay\tunder 100\r\n" }, { "src/x.md": "outside\n" });
+const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
+
+function git(root, ...args) {
+  const run = spawnSync("git", ["-C", root, "-c", "user.name=t", "-c", "user.email=t@t", ...args], { encoding: "utf8", env: cleanEnv() });
+  assert.equal(run.status, 0, run.stderr);
+  return run.stdout.trim();
+}
+
+/** Every file under `root`, `.git` included, as name and content hash: what a command must leave as it found it. */
+function treeState(root, relative = "") {
+  return fs.readdirSync(path.join(root, relative), { withFileTypes: true }).flatMap((entry) => {
+    const next = path.join(relative, entry.name);
+    if (entry.isDirectory()) return treeState(root, next);
+    return [`${next} ${crypto.createHash("sha1").update(fs.readFileSync(path.join(root, next))).digest("hex")}`];
+  });
+}
+
+const BEFORE = "# V\n\n## Setup\n\n- keep one\n- lose me\n- keep two\n\n## Run\n\n- run it\n";
+const dline = (id, target, fact, answer) => `- ${id} | ${target} | ${fact} | aidd_docs/memory/vcs.md | ${answer}`;
+const approve = (line) => dline("D1", "vcs.md > Setup", `remove "${line}": stale`, "yes");
+
+/** A temp repository whose HEAD commits `committed` (bank-relative names), then `working` written over it (null deletes). */
+function repo(committed, working = {}) {
+  const root = project(committed);
+  git(root, "init", "-q");
+  git(root, "add", "-A");
+  git(root, "commit", "-q", "-m", "bank");
+  for (const [name, text] of Object.entries(working)) {
+    if (text === null) fs.rmSync(path.join(root, MEMORY, name));
+    else write(root, `${MEMORY}/${name}`, text);
+  }
+  return root;
+}
+
+/** What `vanished` prints for a bank committed as `committed` and now `working`, against a sheet of `sheetLines`; the tree must be left untouched. */
+function vanished(committed, working, sheetLines = []) {
+  const root = repo(committed, working);
+  const sheetFile = path.join(root, "task/facts.md");
+  write(root, "task/facts.md", sheet(...sheetLines));
+  const before = treeState(root);
   try {
-    const run = engine("lines", root);
-    assert.equal(run.status, 0);
-    assert.deepEqual(run.stdout.split("\n").filter(Boolean), ["# A", "- Indent with 2 spaces", "Lines stay under 100"]);
+    const run = engine("vanished", root, "--sheet", sheetFile);
+    const facts = engine("facts", sheetFile, root);
+    assert.deepEqual(treeState(root), before, "vanished or facts wrote to the tree");
+    return { run, facts };
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+}
+
+const LOSS = { "vcs.md": BEFORE.replace("- lose me\n", "") };
+
+test("vanished: a line gone with no D line answered yes is listed with exit 1, and nothing in the tree changes", () => {
+  for (const answer of ["", "no"]) {
+    const { run } = vanished({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'remove "- lose me"', answer)]);
+    assert.equal(run.status, 1, `answer "${answer}"`);
+    assert.equal(run.stdout, "vcs.md: - lose me\n");
+  }
+  assert.equal(vanished({ "vcs.md": BEFORE }, LOSS).run.status, 1);
 });
 
-test("lines: a root with no bank is a failure, not an empty record a later vanished would pass against", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-lines-"));
-  try {
-    const run = engine("lines", root);
-    assert.equal(run.status, 1);
-    assert.match(run.stderr, /no memory bank/u);
+test("vanished: a line quoted by a remove or replace D line answered yes is not listed, exit 0", () => {
+  for (const verb of ['remove "- lose me"', 'replace "- lose me" with "- another"']) {
+    const { run, facts } = vanished({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", verb, "yes")]);
+    assert.equal(run.status, 0, verb);
     assert.equal(run.stdout, "");
+    assert.equal(facts.status, 0);
+  }
+});
+
+test("vanished: an approval covers the line it quotes and no other", () => {
+  const two = { "vcs.md": BEFORE.replace("- lose me\n", "").replace("- run it\n", "") };
+  const { run } = vanished({ "vcs.md": BEFORE }, two, [approve("- lose me")]);
+  assert.equal(run.stdout, "vcs.md: - run it\n");
+});
+
+test("vanished: the approval needs a D id, a remove or replace verb and an answer starting with yes", () => {
+  const listed = (line) => vanished({ "vcs.md": BEFORE }, LOSS, [line]).run.stdout;
+  assert.match(listed(dline("D1", "vcs.md > Setup", 'add "- lose me"', "yes")), /lose me/u, "not a removal");
+  assert.match(listed(dline("R1", "vcs.md > Setup", 'remove "- lose me"', "yes")), /lose me/u, "not a D line");
+  assert.match(listed(dline("D1", "vcs.md > Setup", "remove the lose me line", "yes")), /lose me/u, "the line is not quoted");
+  assert.equal(listed(dline("D1", "vcs.md > Setup", 'remove "- lose me"', "Yes, drop it")), "");
+});
+
+test("vanished: a line moved within its file or to another bank file is not listed, a duplicate copy gone is", () => {
+  const moved = BEFORE.replace("- lose me\n", "").replace("- run it\n", "- run it\n- lose me\n");
+  assert.equal(vanished({ "vcs.md": BEFORE }, { "vcs.md": moved }).run.stdout, "");
+  assert.equal(vanished({ "vcs.md": BEFORE }, { ...LOSS, "internal/other.md": "- lose me\n" }).run.stdout, "");
+  const twice = vanished({ "vcs.md": "- dup\n- dup\n" }, { "vcs.md": "- dup\n" });
+  assert.equal(twice.run.status, 1);
+  assert.equal(twice.run.stdout, "vcs.md: - dup\n");
+});
+
+test("vanished: a file with a non-ASCII name is guarded, and a file deleted from the working tree is listed whole", () => {
+  assert.equal(vanished({ "décisions.md": "- kept\n- lost\n" }, { "décisions.md": "- kept\n" }).run.stdout, "décisions.md: - lost\n");
+  const gone = vanished({ "internal/x.md": "- kept\n" }, { "internal/x.md": null });
+  assert.equal(gone.run.status, 1);
+  assert.equal(gone.run.stdout, "internal/x.md: - kept\n");
+});
+
+test("vanished: no repository, or a bank never committed, prints one line and exits 0", () => {
+  const plain = project({ "vcs.md": BEFORE });
+  const fresh = project({ "vcs.md": BEFORE });
+  git(fresh, "init", "-q");
+  try {
+    for (const root of [plain, fresh]) {
+      const run = engine("vanished", root);
+      assert.equal(run.status, 0);
+      assert.equal(run.stdout, "memory: no previous state of the bank to compare\n");
+    }
+  } finally {
+    fs.rmSync(plain, { recursive: true, force: true });
+    fs.rmSync(fresh, { recursive: true, force: true });
+  }
+});
+
+test("vanished: a git failure in a repository fails closed with its reason, and a missing sheet is a clean error", () => {
+  const root = repo({ "vcs.md": BEFORE }, LOSS);
+  try {
+    const missing = engine("vanished", root, "--sheet", path.join(root, "absent.md"));
+    assert.equal(missing.status, 1);
+    assert.match(missing.stderr, /absent\.md not read/u);
+    assert.doesNotMatch(missing.stderr, /\n\s+at /u);
+    const tree = git(root, "rev-parse", `HEAD:${MEMORY}`);
+    const object = path.join(root, ".git/objects", tree.slice(0, 2), tree.slice(2));
+    fs.chmodSync(object, 0o600);
+    fs.rmSync(object);
+    const broken = engine("vanished", root);
+    assert.equal(broken.status, 1);
+    assert.equal(broken.stdout, "");
+    assert.match(broken.stderr, /memory: git/u);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test("vanished: prints a line gone from the bank, and nothing for a moved, reordered or reflowed one", () => {
-  const root = project({ "a.md": "# A\n\n- kept line\n- moved line\n- lost line\n" });
-  const before = path.join(root, "before.txt");
+test("vanished: reads the repository of the root even when a hook exported GIT_DIR", () => {
+  const root = repo({ "vcs.md": BEFORE }, LOSS);
   try {
-    fs.writeFileSync(before, engine("lines", root).stdout);
-    write(root, `${MEMORY}/a.md`, "# A\n\n- kept   line\n");
-    write(root, `${MEMORY}/internal/b.md`, "- moved line\n");
-    const run = engine("vanished", before, root);
-    assert.equal(run.status, 0);
-    assert.deepEqual(run.stdout.split("\n").filter(Boolean), ["- lost line"]);
-    write(root, `${MEMORY}/internal/b.md`, "- moved line\n- lost line\n");
-    const none = engine("vanished", before, root);
-    assert.equal(none.status, 0);
-    assert.equal(none.stdout, "");
+    const run = spawnSync("node", [ENGINE, "vanished", root], { encoding: "utf8", env: { ...process.env, GIT_DIR: path.join(os.tmpdir(), "no-such-git-dir") } });
+    assert.equal(run.stdout, "vcs.md: - lose me\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test("vanished: an unreadable record is a usage error, not an empty result", () => {
-  const root = project({ "a.md": "# A\n" });
+// facts: a sheet that cites nothing real must not reach the write
+
+const SHEET_HEAD = "# Facts: setup\n\n- Scope: setup\n- Capabilities: C1 api\n\n";
+const sheet = (...lines) => `${SHEET_HEAD}## Read\n\n${lines.join("\n")}\n`;
+const GOOD = "- R1 | architecture.md > Stack | Node ESM | package.json | ok";
+
+function factsRun(text, files = { "package.json": "{}\n" }) {
+  const root = project({}, { ...files, "task/facts.md": text });
   try {
-    const run = engine("vanished", path.join(root, "absent.txt"), root);
-    assert.notEqual(run.status, 0);
-    assert.match(run.stderr, /absent\.txt/u);
+    return engine("facts", path.join(root, "task/facts.md"), root);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+}
+
+test("facts: a well-formed sheet whose sources exist exits 0 and a missing answer is allowed", () => {
+  assert.equal(factsRun(sheet(GOOD, "- Q1 | project-brief.md > Out of scope | what it will not do | README.md |"), { "package.json": "{}\n", "README.md": "#\n" }).status, 0);
+});
+
+test("facts: a source that does not exist exits 1 and names the line and the path", () => {
+  const run = factsRun(sheet(GOOD, "- D2 | testing.md > Run | pnpm test | scripts/absent.js | ok"));
+  assert.equal(run.status, 1);
+  assert.match(run.stdout, /facts\.md:9 D2.*scripts\/absent\.js/u);
+  assert.doesNotMatch(run.stdout, /R1/u);
+});
+
+test("facts: a line that breaks the grammar exits 1 and names it", () => {
+  for (const bad of ["- R2 | architecture.md > Stack | only three fields", "- X9 | architecture.md > Stack | fact | package.json | ok", "- R2 | architecture.md | fact | package.json | ok"]) {
+    const run = factsRun(sheet(GOOD, bad));
+    assert.equal(run.status, 1, bad);
+    assert.match(run.stdout, /facts\.md:9 .*shape/u, bad);
+  }
+});
+
+test("facts: a sheet with no fact line exits 1, a header bullet is no fact line", () => {
+  const run = factsRun(`${SHEET_HEAD}## Read\n\nNothing to add.\n`);
+  assert.equal(run.status, 1);
+  assert.match(run.stdout, /no fact line/u);
+  assert.equal(factsRun(sheet(GOOD)).stdout.includes("Scope"), false);
+});
+
+test("facts: an unreadable sheet is a usage error", () => {
+  const run = engine("facts", "/nonexistent/facts.md");
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /facts\.md/u);
+});
+
+test("facts: no sheet named is a usage error", () => {
+  const run = engine("facts");
+  assert.equal(run.status, 1);
+  assert.match(run.stderr, /usage: memory\.cjs facts/u);
+});
+
+test("facts: a Q line may cite no source, any other line may not", () => {
+  assert.equal(factsRun(sheet(GOOD, "- Q1 | project-brief.md > Out of scope | what it will not do | | ")).status, 0);
+  assert.equal(factsRun(sheet(GOOD, "- R2 | project-brief.md > Purpose | a fact | | ")).status, 1);
+});
+
+test("facts: a To rule line names a rule topic, not a memory file", () => {
+  assert.equal(factsRun(sheet(GOOD, "- T1 | error handling | wrap every adapter call | package.json |")).status, 0);
+  assert.equal(factsRun(sheet(GOOD, "- R2 | error handling | a fact | package.json |")).status, 1);
+});
+
+test("facts: a | in a fact is named, and a bullet of another shape inside a block is a shape problem", () => {
+  const split = factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json | ok"));
+  assert.equal(split.status, 1);
+  assert.match(split.stdout, /R2.*a `\|` in a fact/u);
+  for (const bad of ["* R2 | testing.md > Run | fact | package.json |", "  - R2 | testing.md > Run | fact | package.json |", "| R2 | testing.md > Run | fact | package.json |"]) {
+    const run = factsRun(sheet(GOOD, bad));
+    assert.equal(run.status, 1, bad);
+    assert.match(run.stdout, /facts\.md:9 .*shape/u, bad);
+  }
+});
+
+test("facts: an absolute source is outside the root even when it names a file inside it", () => {
+  const root = project({}, { "package.json": "{}\n" });
+  write(root, "task/facts.md", sheet(`- R1 | architecture.md > Stack | Node | ${path.join(root, "package.json")} |`));
+  try {
+    const run = engine("facts", path.join(root, "task/facts.md"), root);
+    assert.equal(run.status, 1);
+    assert.match(run.stdout, /outside the root/u);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("facts: a backticked source counts, a source outside the root does not", () => {
+  assert.equal(factsRun(sheet("- R1 | architecture.md > Stack | Node | `package.json` |")).status, 0);
+  for (const outside of ["../package.json", path.join(os.tmpdir(), "x")]) {
+    const run = factsRun(sheet(GOOD, `- R2 | architecture.md > Stack | Node | ${outside} |`));
+    assert.equal(run.status, 1, outside);
+    assert.match(run.stdout, /outside the root/u);
+  }
+});
+
+test("facts: a target carrying the bank's folder is rejected, bank-relative names only", () => {
+  const run = factsRun(sheet(GOOD, "- R2 | aidd_docs/memory/testing.md > Run | a fact | package.json |"));
+  assert.equal(run.status, 1);
+  assert.match(run.stdout, /bank-relative/u);
+});
+
+test("facts: any line holding a | inside a block is a fact candidate, whatever its bullet", () => {
+  for (const bad of ["+ R2 | testing.md > Run | fact | package.json |", "1. R2 | testing.md > Run | fact | package.json |", "R2 | testing.md > Run | fact | package.json |"]) {
+    const run = factsRun(sheet(GOOD, bad));
+    assert.equal(run.status, 1, bad);
+    assert.match(run.stdout, /facts\.md:9 .*shape/u, bad);
+  }
+});
+
+test("facts: an id is used once, and more than eight Q lines are listed", () => {
+  const twice = factsRun(sheet(GOOD, GOOD));
+  assert.equal(twice.status, 1);
+  assert.match(twice.stdout, /R1.*already used/u);
+  const nine = Array.from({ length: 9 }, (_, index) => `- Q${index + 1} | project-brief.md > Out of scope | question ${index} | |`);
+  const many = factsRun(sheet(GOOD, ...nine));
+  assert.equal(many.status, 1);
+  assert.match(many.stdout, /9 Q lines, at most eight/u);
+  assert.equal(factsRun(sheet(GOOD, ...nine.slice(0, 8))).status, 0);
 });

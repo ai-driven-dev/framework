@@ -4,7 +4,7 @@ Write the memory the project deserves.
 
 ## Input
 
-The confirmed scan, plus the approved findings when a bank exists.
+The sheet.
 
 ## Output
 
@@ -12,22 +12,19 @@ The written bank, with no format error.
 
 ## Process
 
-1. **Record.** When a bank exists, record its lines with the Engine's `lines` command before changing anything.
-2. **Scaffold.** Create the bank tree of [capabilities.md](../references/capabilities.md). Copy `aidd_docs/README.md` only when absent: a project's own is never overwritten.
-3. **Select.** Take the files to write from its table: the always rows, and the rows of the found capabilities.
-4. **Write.** Write each file at `aidd_docs/memory/<file>`, never under its capability's template folder, against [memory-rules.md](../references/memory-rules.md).
-   - Absent file: fill the template per capabilities.md, unless a misplaced file covers its capability: then write nothing until the user decides.
+1. **Show.** Show the sheet once, as its Presentation says, and write the answers into it: `ok` is `yes` on every `D` line, `no D3` is `no` on that line, `C2: no` appends `: no` to that `C` entry. Autonomous, go on.
+2. **Verify.** No fact line and no absent always file: report the bank current and stop. Run the Engine's `facts` command; on failure fix the sheet and run `facts` again.
+3. **Scaffold.** Create the bank tree of [capabilities.md](../references/capabilities.md). Copy `aidd_docs/README.md` only when absent: a project's own is never overwritten.
+4. **Write.** Write each file the sheet names plus every absent always file, minus a capability answered no, at `aidd_docs/memory/<file>`, never under its template folder, from the sheet only, against [memory-rules.md](../references/memory-rules.md).
+   - Absent file: fill its template with the sheet's lines, dropping an empty section, unless a misplaced file covers its capability.
    - A conditional capability whose Accepted names file exists: write into that file, create no second.
-   - Existing file: apply the approved findings and nothing else. Only a content finding corrects a fact; any other change to a line removes what it replaces.
-   - A section the file lacks: report it when the project has something for it, never inject it.
+   - Existing file: apply the sheet's lines and nothing else; skip a `remove` or `replace` line whose answer is not yes; for a `move <path> to <path>` line answered yes, move the file.
 5. **Lint.** Run the engine on the files written. Fix each error on the lines you wrote; check each warning against the code, and keep a true line.
-6. **Vanished.** When a bank existed, list the lines gone with the Engine's `vanished` command, show them to the person, restore nothing.
+6. **Guard.** Run the Engine's `vanished` command, report what it lists, change nothing, go on.
 
 ## Test
 
 | Case | Pass |
 | --- | --- |
-| Bank | matches the bank tree in capabilities.md |
-| Memory file | no error written |
 | Team file | left unchanged |
-| Rerun | only the approved findings changed, every other line survives |
+| Rerun | only the sheet's lines changed, every other line survives |

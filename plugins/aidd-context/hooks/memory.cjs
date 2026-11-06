@@ -10,14 +10,18 @@
  *   an error remains. With no file it checks the whole bank, and a missing always-written file
  *   is an error; so is a root with no bank, or a named file that does not exist. A misplaced file
  *   and a team folder are warnings.
- * - `lines [root]` and `vanished <file> [root]`: a refresh's loss check. `lines` prints the bank's
- *   lines, whitespace-normalised; `vanished` prints each line of a file `lines` printed before
- *   that the bank no longer holds anywhere. Informs only: it restores nothing.
+ * - `vanished [root] [--sheet <facts>]`: a write's loss list, read-only. Prints each line of the
+ *   bank as committed at HEAD that the working bank lost, unless a `remove` or `replace` `D` line
+ *   answered yes quotes it, and exits 1 when it prints any. Limit: HEAD only, so an uncommitted
+ *   edit made since is not seen. Without a repository or a committed bank it says so and exits 0;
+ *   any other git failure exits 1. The hook never runs it.
+ * - `facts <sheet> [root]`: the skill's fact sheet before a write. Exits 1 naming each line whose
+ *   shape breaks the grammar or whose source is absent from the root. The hook never runs it.
  * - `sync [tool...]`: fills the memory block of each context file present, or only those of
  *   the tools named, from the current folder.
  *
- * The hook reads its event and answers only through `lib/host.cjs`. Node built-ins only: no
- * child process, no git.
+ * The hook reads its event and answers only through `lib/host.cjs`. Node built-ins only: the hook
+ * starts no other program; `vanished` alone reads git, and only to read.
  */
 
 const fs = require("node:fs");
@@ -612,27 +616,6 @@ function sync(root, tools = [], { quiet = false } = {}) {
   return result;
 }
 
-const collapse = (line) => line.trim().replace(/\s+/gu, " ");
-
-/** Every non-empty line of the bank's markdown, whitespace-normalised, in file order. */
-function bankLines(root) {
-  const lines = [];
-  for (const file of bankFiles(root).filter((name) => name.endsWith(".md"))) {
-    for (const line of (readTextOrNull(path.join(root, file)) ?? "").split("\n")) {
-      const normal = collapse(line);
-      if (normal !== "") lines.push(normal);
-    }
-  }
-  return lines;
-}
-
-/** The distinct lines of the record that the bank holds nowhere now. Limit: a removed copy of a line still held once reports nothing. */
-function vanishedLines(recordFile, root) {
-  const now = new Set(bankLines(root));
-  const before = fs.readFileSync(recordFile, "utf8").split("\n").map(collapse).filter((line) => line !== "");
-  return [...new Set(before)].filter((line) => !now.has(line));
-}
-
 function main(argv) {
   const [command, ...args] = argv;
   if (command === "hook") {
@@ -651,32 +634,41 @@ function main(argv) {
     for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
     return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
-  if (command === "lines") {
-    const [root = process.cwd()] = args;
-    // A record of no bank would let a later `vanished` pass against nothing.
-    if (!fs.existsSync(path.join(root, MEMORY_DIR))) {
-      process.stderr.write(`memory: no memory bank under ${root}\n`);
-      return EXIT_ERRORS;
-    }
-    const lines = bankLines(root);
-    if (lines.length > 0) process.stdout.write(`${lines.join("\n")}\n`);
-    return EXIT_OK;
-  }
   if (command === "vanished") {
-    const [recordFile, root = process.cwd()] = args;
-    if (recordFile === undefined) {
-      process.stderr.write("usage: memory.cjs vanished <file> [root]\n");
-      return EXIT_ERRORS;
-    }
-    let gone;
+    const flag = args.indexOf("--sheet");
+    const sheetFile = flag < 0 ? undefined : args[flag + 1];
+    const [root = process.cwd()] = args.filter((_, at) => flag < 0 || (at !== flag && at !== flag + 1));
+    const guard = require("./lib/bank-guard.cjs");
     try {
-      gone = vanishedLines(recordFile, root);
+      const approvals = sheetFile === undefined ? [] : require("./lib/fact-sheet.cjs").approvedRemovals(sheetFile);
+      const previous = guard.previousBank(root, MEMORY_DIR);
+      if (previous === null) {
+        process.stdout.write("memory: no previous state of the bank to compare\n");
+        return EXIT_OK;
+      }
+      const gone = guard.goneLines(previous, path.join(root, MEMORY_DIR), approvals);
+      if (gone.length > 0) process.stdout.write(`${gone.join("\n")}\n`);
+      return gone.length > 0 ? EXIT_ERRORS : EXIT_OK;
     } catch (error) {
-      process.stderr.write(`memory: ${recordFile} not read (${error.code ?? error.message})\n`);
+      process.stderr.write(`memory: ${error.code === "ENOENT" ? `${sheetFile} not read (ENOENT)` : error.message}\n`);
       return EXIT_ERRORS;
     }
-    if (gone.length > 0) process.stdout.write(`${gone.join("\n")}\n`);
-    return EXIT_OK;
+  }
+  if (command === "facts") {
+    const [sheetFile, root = process.cwd()] = args;
+    if (sheetFile === undefined) {
+      process.stderr.write("usage: memory.cjs facts <sheet> [root]\n");
+      return EXIT_ERRORS;
+    }
+    let problems;
+    try {
+      problems = require("./lib/fact-sheet.cjs").checkSheet(sheetFile, root);
+    } catch (error) {
+      process.stderr.write(`memory: ${sheetFile} not read (${error.code ?? error.message})\n`);
+      return EXIT_ERRORS;
+    }
+    if (problems.length > 0) process.stdout.write(`${problems.join("\n")}\n`);
+    return problems.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
   if (command === "sync") {
     try {
@@ -689,7 +681,7 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | lines [root] | vanished <file> [root] | sync [tool...]\n");
+  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | facts <sheet> [root] | sync [tool...]\n");
   return EXIT_ERRORS;
 }
 

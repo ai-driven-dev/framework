@@ -30,7 +30,13 @@
 }
 
 
+## project/.claude/plugins/aidd-context/hooks/lib/bank-guard.cjs
+script, identical to the plugin source
+
 ## project/.claude/plugins/aidd-context/hooks/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.claude/plugins/aidd-context/hooks/lib/host.cjs
@@ -147,9 +153,11 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 5 hook files
+project claude aidd-context scope=project: 7 hook files
   .claude/plugins/aidd-context/hooks/hooks.json
+  .claude/plugins/aidd-context/hooks/lib/bank-guard.cjs
   .claude/plugins/aidd-context/hooks/lib/common-rules.cjs
+  .claude/plugins/aidd-context/hooks/lib/fact-sheet.cjs
   .claude/plugins/aidd-context/hooks/lib/host.cjs
   .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
   .claude/plugins/aidd-context/hooks/memory.cjs

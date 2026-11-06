@@ -1,6 +1,12 @@
 second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
 
+## project/.opencode/hooks/aidd-context/lib/bank-guard.cjs
+script, identical to the plugin source
+
 ## project/.opencode/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.opencode/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.opencode/hooks/aidd-context/lib/host.cjs
@@ -521,8 +527,10 @@ export default {
 }
 
 # recorded
-project opencode aidd-context scope=project: 5 hook files
+project opencode aidd-context scope=project: 7 hook files
+  .opencode/hooks/aidd-context/lib/bank-guard.cjs
   .opencode/hooks/aidd-context/lib/common-rules.cjs
+  .opencode/hooks/aidd-context/lib/fact-sheet.cjs
   .opencode/hooks/aidd-context/lib/host.cjs
   .opencode/hooks/aidd-context/lib/memory-rules.cjs
   .opencode/hooks/aidd-context/memory.cjs

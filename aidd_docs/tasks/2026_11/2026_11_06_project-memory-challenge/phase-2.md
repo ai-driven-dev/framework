@@ -1,5 +1,5 @@
 ---
-status: pending
+status: in-progress
 ---
 
 # Instruction: Facts go through one sheet before any write
@@ -98,4 +98,4 @@ status: pending
 | 2.6 | `memory-skill-files.test.js`: the write reads the sheet, and no action offers to remove a file; fails on the parent commit |
 | 2.4 | `memory-skill-files.test.js`: the consent rule names the removal exception; fails on the parent commit |
 | 2.3 | Eval, Haiku, three runs per create repository: every sheet passes `facts`; every memory line traces to a sheet line; `Q` lines at most eight |
-| 2.4 | Eval, Haiku and Qwen, three runs: the update case declining every removal drops 0 team lines |
+| 2.4 | `memory-check.test.js`: no team line gone without a `D` line answered yes, listed by the read-only `vanished --sheet` with exit 1; the bank is byte-identical after `vanished` and `facts`. Eval, Haiku and Qwen: the update case lists the lines gone without such a `D` line |

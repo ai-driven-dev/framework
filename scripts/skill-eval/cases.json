@@ -227,7 +227,7 @@
         "aidd_docs/memory/internal/auth.md",
         "aidd_docs/memory/kpi/metrics.md"
       ],
-      "judge": "The output describes only the memory bank: no block or note names a step of the skill, nor explains how a finding was reached. The team file principles.md is neither flagged nor offered for removal, and each misplaced file is offered a move.",
+      "judge": "The output describes only the memory bank: no block or note names a step of the skill, nor explains how a finding was reached. The team file principles.md is neither flagged nor offered for removal, and each misplaced file is reported, none moved.",
       "stdoutNotContains": [
         "Structure step",
         "Format step",

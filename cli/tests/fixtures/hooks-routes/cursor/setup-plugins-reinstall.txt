@@ -36,7 +36,13 @@ hook files unchanged by the second run: true
 }
 
 
+## project/.cursor/hooks/aidd-context/lib/bank-guard.cjs
+script, identical to the plugin source
+
 ## project/.cursor/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-context/lib/host.cjs

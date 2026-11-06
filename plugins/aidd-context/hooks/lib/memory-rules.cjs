@@ -136,12 +136,12 @@ function sentencesIn(paragraph) {
 }
 
 function longProseSentences({ file, text }) {
-  const fix = "make it a table, a list or a heading";
+  const fix = "split it into a list or a table; keep every fact";
   return paragraphs(text)
     .flatMap(sentencesIn)
     .filter((sentence) => sentence.length > PROSE_WORD_LIMIT)
     .map((sentence) => {
-      const over = `${sentence.length} words, over ${PROSE_WORD_LIMIT}`;
+      const over = `${sentence.length} words, over the recommended ${PROSE_WORD_LIMIT}`;
       const [line, endLine] = [sentence[0].number, sentence[sentence.length - 1].number];
       return problem({ file, line, endLine, rule: "M1", severity: ERROR, message: `sentence of ${over}`, fix, excerpt: over });
     });
@@ -208,7 +208,7 @@ function templateSlots(name, folder) {
  */
 function unfilledSlots({ file, text, templates = templatesFolder() }) {
   const slots = templateSlots(path.posix.basename(file), templates);
-  const fix = "fill it or remove it";
+  const fix = "fill it from the code";
   const found = [];
   for (const [index, line] of text.split("\n").entries()) {
     const slot = slots.find((candidate) => line.includes(candidate));
@@ -222,7 +222,7 @@ function unfilledSlots({ file, text, templates = templatesFolder() }) {
 
 /** The dead-path rule every plugin applies to its own files, from the shared hook library. */
 function deadReferences({ file, text, root }) {
-  const fix = "fix the path or remove it";
+  const fix = "fix the path; keep the fact";
   return deadPaths(text, root, path.dirname(path.join(root, file))).map(({ line, path: dead }) =>
     problem({ file, line, rule: "M4", severity: ERROR, message: `\`${excerpt(dead)}\` names nothing on disk`, fix, offending: dead })
   );
@@ -240,9 +240,10 @@ function longItems({ file, text }) {
     if (line.startsWith("|")) items = tableCells(line);
     else if (LIST_ITEM.test(line)) items = [line.replace(LIST_ITEM, "")];
 
-    if (items.some((item) => wordsIn(item).length > ITEM_WORD_LIMIT)) {
-      const message = `bullet or table cell over ${ITEM_WORD_LIMIT} words`;
-      found.push(problem({ file, line: number, rule: "M5", severity: WARNING, message, fix: "split it" }));
+    const longest = Math.max(0, ...items.map((item) => wordsIn(item).length));
+    if (longest > ITEM_WORD_LIMIT) {
+      const message = `bullet or cell of ${longest} words, over the recommended ${ITEM_WORD_LIMIT}`;
+      found.push(problem({ file, line: number, rule: "M5", severity: WARNING, message, fix: "split it; keep every fact" }));
     }
   }
   return found;
@@ -251,8 +252,8 @@ function longItems({ file, text }) {
 function longFile({ file, text }) {
   const count = proseLines(text).reduce((total, { text: line }) => total + wordsIn(line).length, 0);
   if (count <= FILE_WORD_LIMIT) return [];
-  const message = `file over ${FILE_WORD_LIMIT} words`;
-  return [problem({ file, line: 1, rule: "M6", severity: WARNING, message, fix: "split it or cut it" })];
+  const message = `file of ${count} words, over the recommended ${FILE_WORD_LIMIT}`;
+  return [problem({ file, line: 1, rule: "M6", severity: WARNING, message, fix: "move a section to the capability file it belongs to; keep every fact" })];
 }
 
 function normalise(piece) {

@@ -44,7 +44,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
+| [bank-guard.cjs](hooks/lib/bank-guard.cjs) |
 | [common-rules.cjs](hooks/lib/common-rules.cjs) |
+| [fact-sheet.cjs](hooks/lib/fact-sheet.cjs) |
 | [host.cjs](hooks/lib/host.cjs) |
 | [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
 
@@ -85,7 +87,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
 | `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
 | `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [scan-summary.md](skills/02-project-memory/assets/scan-summary.md) | - |
+| `assets` | [fact-sheet.md](skills/02-project-memory/assets/fact-sheet.md) | - |
 | `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |

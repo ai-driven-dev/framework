@@ -1,4 +1,10 @@
+## project/.kilo/hooks/aidd-context/lib/bank-guard.cjs
+script, identical to the plugin source
+
 ## project/.kilo/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.kilo/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-context/lib/host.cjs
@@ -413,8 +419,10 @@ export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 
 
 # recorded
-project kilo aidd-context scope=project: 5 hook files
+project kilo aidd-context scope=project: 7 hook files
+  .kilo/hooks/aidd-context/lib/bank-guard.cjs
   .kilo/hooks/aidd-context/lib/common-rules.cjs
+  .kilo/hooks/aidd-context/lib/fact-sheet.cjs
   .kilo/hooks/aidd-context/lib/host.cjs
   .kilo/hooks/aidd-context/lib/memory-rules.cjs
   .kilo/hooks/aidd-context/memory.cjs

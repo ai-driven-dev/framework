@@ -21,7 +21,13 @@
 }
 
 
+## out-flat/.github/hooks/aidd-context/lib/bank-guard.cjs
+script, identical to the plugin source
+
 ## out-flat/.github/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## out-flat/.github/hooks/aidd-context/lib/host.cjs
