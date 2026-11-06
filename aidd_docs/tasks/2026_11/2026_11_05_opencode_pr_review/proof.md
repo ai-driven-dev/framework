@@ -2,14 +2,14 @@
 
 On 2026-11-06:
 
-- `bash scripts/pr-review/test-review.sh` checked exact commits, review feedback,
+- `bash scripts/__tests__/pr-review/test-review.sh` checked exact commits, review feedback,
   unchanged files, incomplete files, retries and duplicate publication using
   a simulated GitHub API and model.
-- `bash scripts/pr-review/test-setup-project.sh` checked version selection,
+- `bash scripts/__tests__/pr-review/test-setup-project.sh` checked version selection,
   `latest`, plugin translation and credential redaction using a simulated CLI.
   A separate real `npx` run installed CLI 5.6.0 and translated `aidd-dev` and
   `aidd-vcs`: 16 skills, 2 agents, no links or token in the output.
-- Both images built in OrbStack. `bash scripts/pr-review/test-runner.sh` checked
+- Both images built in OrbStack. `bash scripts/__tests__/pr-review/test-runner.sh` checked
   Git and GitHub restrictions under the separate reviewer UID with a dummy
   token and simulated GitHub API.
 - A real `openai/gpt-6.1-terra#medium` run in OrbStack identified a seeded

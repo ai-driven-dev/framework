@@ -2,7 +2,7 @@
 # Exercise submitted commits, review checkpoints, and credential separation.
 set -euo pipefail
 
-root=$(cd "$(dirname "$0")/../.." && pwd -P)
+root=$(cd "$(dirname "$0")/../../.." && pwd -P)
 work=$(mktemp -d "${TMPDIR:-/tmp}/aidd-review-test.XXXXXXXX")
 cleanup() { if [[ $(uname -s) == Darwin ]]; then trash "$work"; else rm -rf -- "$work"; fi; }
 trap cleanup EXIT

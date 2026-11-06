@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Check isolated AIDD setup, version selection, and plugin reporting without a network call.
-root=$(cd "$(dirname "$0")/../.." && pwd -P)
+root=$(cd "$(dirname "$0")/../../.." && pwd -P)
 work=$(mktemp -d "${TMPDIR:-/tmp}/aidd-setup-test.XXXXXXXX")
 cleanup() { if [[ $(uname -s) == Darwin ]]; then trash "$work"; else rm -rf -- "$work"; fi; }
 trap cleanup EXIT
