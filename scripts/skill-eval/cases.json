@@ -529,7 +529,8 @@
         "src/format.test.ts": "import { expect, test } from \"vitest\";\ntest(\"adds\", () => expect(1 + 1).toBe(2));\n",
         "src/store.int.test.ts": "import { expect, test } from \"vitest\";\ntest(\"stores\", () => expect(true).toBe(true));\n",
         "vitest.config.ts": "import { defineConfig } from \"vitest/config\";\nexport default defineConfig({ test: { projects: [{ test: { name: \"unit\", include: [\"src/**/*.test.ts\"], exclude: [\"src/**/*.int.test.ts\"] } }, { test: { name: \"int\", include: [\"src/**/*.int.test.ts\"] } }] } });\n",
-        "scripts/export-invoices.ts": "console.log(\"id,total\");\n"
+        "scripts/export-invoices.ts": "import { writeFileSync } from \"node:fs\";\nimport { listInvoices } from \"../src/invoices\";\nconst rows = listInvoices().map((i) => `${i.id},${i.total}`);\nwriteFileSync(\"invoices.csv\", [\"id,total\", ...rows].join(\"\\n\"));\n",
+   "src/invoices.ts": "export type Invoice = { id: string; total: number };\nconst invoices: Invoice[] = [];\nexport const listInvoices = () => invoices;\nexport const addInvoice = (i: Invoice) => invoices.push(i);\n"
       }
     },
     "prompt": "Use the {{SKILL}} skill to set up the project memory. You are running headless with no human available, so answer every question yourself from the repo evidence, never wait for input, and complete the whole flow.",
@@ -537,7 +538,7 @@
       "fileContains": {
         "aidd_docs/memory/testing.md": [
           ".int.test.ts",
-          "test:changed"
+          "Narrowest run: `"
         ],
         "aidd_docs/memory/architecture.md": [
           ".env.example"

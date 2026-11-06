@@ -15,7 +15,7 @@ The written bank, with no format error.
 1. **Record.** When a bank exists, record its lines with the Engine's `lines` command before changing anything.
 2. **Scaffold.** Create the bank tree of [capabilities.md](../references/capabilities.md). Copy `aidd_docs/README.md` only when absent: a project's own is never overwritten.
 3. **Select.** Take the files to write from its table: the always rows, and the rows of the found capabilities.
-4. **Write.** Write each file at the bank root against [memory-rules.md](../references/memory-rules.md).
+4. **Write.** Write each file at `aidd_docs/memory/<file>`, never under its capability's template folder, against [memory-rules.md](../references/memory-rules.md).
    - Absent file: fill the template per capabilities.md, unless a misplaced file or a pending Former files merge covers its capability: then write nothing until the user decides.
    - Existing file: apply the approved findings and nothing else. Only a content finding corrects a fact; any other change to a line removes what it replaces.
    - Approved merge: apply it only if the former file's removal was approved on its own; otherwise change neither file.

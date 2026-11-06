@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: The memory never blocks a legitimate write and never loses a team's line
