@@ -15,6 +15,7 @@ import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { antigravityProjectHooksFormat } from "../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { FileHash, InstallationFile } from "../../../src/kernel/file.js";
+import { FileAdapter } from "../../../src/runtime/filesystem/file-adapter.js";
 import { CurrentVersionAdapter } from "../../../src/runtime/self-update/current-version-adapter.js";
 import { GitHubReleaseResolverAdapter } from "../../../src/runtime/self-update/github-release-resolver-adapter.js";
 import { createDeps } from "../../../src/runtime/wiring/framework.js";
@@ -1095,6 +1096,109 @@ describe("framework release update wiring", () => {
     expect(manifest?.getPlugins("opencode")[0].source).toMatchObject({ ref: "v5.13.0" });
     expect(manifest?.getPlugins("opencode")[0].version).toBe("2.10.0");
     expect(manifest?.getPlugins("kilo")).toHaveLength(0);
+  });
+
+  it.each(["EPERM", "EACCES"])(
+    "refuses %s on the project hooks directory before updating anything",
+    async (code) => {
+      const { rel } = await fixtureDistribution();
+      const hooks = join(root, "plugins/aidd-context/hooks");
+      await mkdir(hooks, { recursive: true });
+      await writeFile(join(hooks, "hooks.json"), JSON.stringify({ hooks: {} }));
+      const hooksFile = join(root, ".agents/hooks.json");
+      await mkdir(dirname(hooksFile), { recursive: true });
+      await writeFile(hooksFile, "{}");
+      const pluginFile = join(root, rel);
+      await mkdir(dirname(pluginFile), { recursive: true });
+      await writeFile(pluginFile, "old plugin");
+      const deps = await seed("antigravity");
+      const manifest = await deps.manifestRepo.load();
+      const plugin = manifest?.getPlugins("antigravity")[0];
+      if (!manifest || !plugin) throw new Error("missing plugin");
+      manifest.addTool("opencode", "5.6.0", []);
+      manifest.addPlugin("opencode", plugin.withFiles(new Map([[rel, hash("old plugin")]])));
+      await deps.manifestRepo.save(manifest);
+      const registry = join(root, ".aidd/marketplaces.json");
+      const beforeRegistry = await readFile(registry, "utf8");
+      const beforeManifest = await readFile(join(root, ".aidd/manifest.json"), "utf8");
+      vi.spyOn(FileAdapter.prototype, "assertWritableDirectory").mockRejectedValue(
+        Object.assign(new Error("denied"), { code })
+      );
+
+      await expect(
+        deps.upgradeFrameworkUseCase.execute({
+          projectRoot: root,
+          release: "v5.13.0",
+          allowShared: false,
+          confirm,
+        })
+      ).rejects.toThrow(`Cannot write project hooks directory '${dirname(hooksFile)}' (${code})`);
+      expect(confirm).not.toHaveBeenCalled();
+      expect(await readFile(registry, "utf8")).toBe(beforeRegistry);
+      expect(await readFile(join(root, ".aidd/manifest.json"), "utf8")).toBe(beforeManifest);
+      expect(await readFile(pluginFile, "utf8")).toBe("old plugin");
+      expect(await readFile(hooksFile, "utf8")).toBe("{}");
+    }
+  );
+
+  it("checks the nearest existing parent of an incoming project hook script", async () => {
+    await fixtureDistribution();
+    const hooks = join(root, "plugins/aidd-context/hooks/nested");
+    await mkdir(hooks, { recursive: true });
+    await writeFile(join(dirname(hooks), "hooks.json"), JSON.stringify({ hooks: {} }));
+    await writeFile(join(hooks, "new.cjs"), "release hook");
+    const directory = join(root, ".agents/hooks/aidd-context");
+    await mkdir(directory, { recursive: true });
+    const deps = await seed("antigravity");
+    const manifest = await deps.manifestRepo.load();
+    const plugin = manifest?.getPlugins("antigravity")[0];
+    if (!manifest || !plugin) throw new Error("missing plugin");
+    manifest.updatePlugin(
+      "antigravity",
+      InstalledPlugin.withProjectHooks(plugin, { entries: [], scripts: new Map() })
+    );
+    await deps.manifestRepo.save(manifest);
+    const registry = join(root, ".aidd/marketplaces.json");
+    const beforeRegistry = await readFile(registry, "utf8");
+    vi.spyOn(FileAdapter.prototype, "assertWritableDirectory").mockImplementation(async (path) => {
+      if (path === directory) throw Object.assign(new Error("denied"), { code: "EPERM" });
+    });
+
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm,
+      })
+    ).rejects.toThrow(`Cannot write project hooks directory '${directory}' (EPERM)`);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(await readFile(registry, "utf8")).toBe(beforeRegistry);
+  });
+
+  it("allows a new project hooks directory when its existing parent is writable", async () => {
+    await fixtureDistribution();
+    const hooksJson = JSON.stringify({
+      hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node hook.cjs" }] }] },
+    });
+    for (const pluginRoot of ["plugins/aidd-context", "remote-plugin"]) {
+      const hooks = join(root, pluginRoot, "hooks");
+      await mkdir(hooks, { recursive: true });
+      await writeFile(join(hooks, "hooks.json"), hooksJson);
+      await writeFile(join(hooks, "new.cjs"), "release hook");
+    }
+    const deps = await seed("antigravity");
+
+    const result = await deps.upgradeFrameworkUseCase.execute({
+      projectRoot: root,
+      release: "v5.13.0",
+      allowShared: false,
+      confirm,
+    });
+    expect(result.updated).toEqual(["antigravity:aidd-context"]);
+    expect(await readFile(join(root, ".agents/hooks/aidd-context/new.cjs"), "utf8")).toBe(
+      "release hook"
+    );
   });
 
   it("refuses an incoming project hook script collision before changing the marketplace", async () => {

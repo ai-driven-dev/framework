@@ -28,6 +28,10 @@ import { stripJsonComments } from "../../kernel/reading/jsonc.js";
 import { atomicWriteFile } from "./atomic-write.js";
 
 export class FileAdapter implements FileReader, FileWriter, FileMerger {
+  async assertWritableDirectory(path: string): Promise<void> {
+    await access(path, constants.W_OK);
+  }
+
   async isExecutable(path: string): Promise<boolean> {
     try {
       await access(path, constants.X_OK);

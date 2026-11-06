@@ -1,7 +1,7 @@
 import { mkdtemp } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import "../../contexts/tools/domain/profiles/antigravity/profile.js";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
@@ -664,10 +664,36 @@ export async function createDeps(
             (file) => file.relativePath
           );
           const delivery = projectHooksDeliveryOf(target.toolId);
-          if (
-            delivery &&
-            dist.components.hooks.some((file) => file.relativePath === "hooks/hooks.json")
-          ) {
+          const hasProjectHooks = dist.components.hooks.some(
+            (file) => file.relativePath === "hooks/hooks.json"
+          );
+          if (delivery && (hasProjectHooks || plugin.projectHooks !== undefined)) {
+            const directories = new Set([dirname(resolve(root, delivery.relativePath))]);
+            for (const file of dist.components.hooks) {
+              if (hasProjectHooks && file.relativePath !== "hooks/hooks.json")
+                directories.add(
+                  dirname(
+                    resolve(root, delivery.format.scriptPath(dist.manifest.name, file.relativePath))
+                  )
+                );
+            }
+            for (const path of plugin.projectHooks?.scripts.keys() ?? [])
+              directories.add(dirname(resolve(root, path)));
+            for (let directory of directories) {
+              while (!(await fs.entryExists(directory)) && directory !== root)
+                directory = dirname(directory);
+              try {
+                await fs.assertWritableDirectory(directory);
+              } catch (error) {
+                const code = (error as NodeJS.ErrnoException).code;
+                if (code !== "EACCES" && code !== "EPERM") throw error;
+                throw new Error(
+                  `Cannot write project hooks directory '${directory}' (${code}); grant write access and retry before updating. In Codex CLI, restart with --add-dir pointing to this directory.`
+                );
+              }
+            }
+          }
+          if (delivery && hasProjectHooks) {
             for (const file of dist.components.hooks) {
               if (file.relativePath !== "hooks/hooks.json")
                 paths.push(delivery.format.scriptPath(dist.manifest.name, file.relativePath));
