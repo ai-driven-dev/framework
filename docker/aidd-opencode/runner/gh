@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Delegate read-only PR requests without giving the reviewer the GitHub token.
+[[ ${AIDD_REVIEW_JOB:-} =~ ^/var/lib/aidd-review/jobs/job\.[[:alnum:]]{8}$ ]] || {
+  echo 'Review job unavailable' >&2; exit 2;
+}
+exec /usr/bin/sudo -n -u runner /opt/aidd/gh-read "$AIDD_REVIEW_JOB" "$@"

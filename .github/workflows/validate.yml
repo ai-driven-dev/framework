@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: bash scripts/pr-review/test-review.sh && bash scripts/pr-review/test-model.sh && bash scripts/pr-review/test-conversation.sh
+      - run: bash scripts/pr-review/test-review.sh && bash scripts/pr-review/test-setup-project.sh
       - name: Build and smoke-test both images
         run: |
           docker build -t aidd-opencode:local docker/aidd-opencode
           docker build -f docker/aidd-opencode/runner/Dockerfile -t aidd-review-runner:ci .
           docker run --rm --user reviewer -e HOME=/home/aidd --entrypoint sh aidd-review-runner:ci -c '
-            opencode --version && jq --version && test -x /opt/aidd/run-review
+            opencode --version && node --version && jq --version && test -x /opt/aidd/run-review
           '
           docker run --rm --entrypoint sh aidd-review-runner:ci -c '
             cd /home/runner/actions-runner
@@ -35,6 +35,7 @@ jobs:
               test "$(stat -c %a "$file")" = 600 || exit 1
             done
           '
+      - run: bash scripts/pr-review/test-runner.sh
 
   lefthook:
     name: lefthook (framework-local checks)

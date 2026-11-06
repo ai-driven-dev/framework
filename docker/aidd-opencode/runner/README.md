@@ -1,93 +1,48 @@
-# AIDD review runner
+# PR review runner
 
-This image runs GitHub's Linux runner as `runner` and the OpenCode reviewer as a
-separate `reviewer` user. Build the base image first, then build this image from
-the repository root:
+**TL;DR:** run this image on a dedicated server runner restricted to the
+trusted review workflow. It installs the project's AIDD version with `npx`,
+reads the submitted Git diff and PR discussion, then publishes through the
+workflow. Without a manifest it uses `latest` and reports the missing plugin
+inventory.
 
 ```sh
-docker build -t aidd-opencode:local docker/aidd-opencode
 docker build -f docker/aidd-opencode/runner/Dockerfile -t aidd-review-runner:local .
+docker volume create aidd-review-oauth
 ```
 
-The build embeds `scripts/pr-review/model.sh`. `/opt/aidd/run-review WORKSPACE
-MANIFEST OUTPUT` refuses to run if the embedded runtime differs from the trusted
-checkout. It stages the input as the runner, freezes a root-owned snapshot, and
-executes the model as the reviewer. GitHub credentials are not passed to the
-reviewer.
+On the server, authenticate the reviewer in a temporary container using this
+volume. For browser-based OAuth, forward the local callback port to the server
+before running the login:
 
-Use a dedicated volume owned by UID 1002 for
-`/home/aidd/.local/share/opencode`; authenticate that account separately.
-Use a separate persistent volume owned by UID 1001 for
-`/home/runner/.local/state/aidd-pr-review` so a publication retry can reuse its
-completed review without running the model again.
-Do not mount the Docker socket, the shared OpenCode database, or other host data.
-For the UID change, a local container can use `--cap-drop ALL` and explicitly
-add `SETUID`, `SETGID`, `CHOWN`, `AUDIT_WRITE`, `DAC_OVERRIDE`, and `KILL`.
-`no-new-privileges` prevents sudo from changing UID and is incompatible.
+```sh
+docker run --rm -it --network host --user reviewer -e HOME=/home/aidd \
+  -v aidd-review-oauth:/home/aidd/.local/share/opencode \
+  --entrypoint opencode aidd-review-runner:local --standalone auth login openai
+```
 
-## Installation
+After the workflow is on `main`, create an `aidd-opencode-review` runner
+group limited to this repository and its review workflow on `main`. Set
+`AIDD_REVIEW_ENABLED_AT` to a UTC timestamp, stop the old timer, then register
+the container in that group. Start it without a Docker socket or host data:
 
-1. Once the workflow is on `main`, create the `aidd-opencode-review` runner
-   group, allowing public repositories but limited to this repository and
-   `ai-driven-dev/framework/.github/workflows/opencode-review.yml@refs/heads/main`.
-2. Create empty volumes and start the container waiting for registration:
+```sh
+docker run -d --name aidd-review --restart unless-stopped \
+  --cap-drop ALL --cap-add SETUID --cap-add SETGID --cap-add CHOWN \
+  --cap-add AUDIT_WRITE --cap-add DAC_OVERRIDE --cap-add KILL \
+  -v aidd-review-oauth:/home/aidd/.local/share/opencode \
+  --entrypoint /bin/sh aidd-review-runner:local -c \
+    'while [ ! -f .configured ]; do sleep 1; done; exec /opt/aidd/runner'
+gh api --method POST orgs/ai-driven-dev/actions/runners/registration-token --jq .token |
+  docker exec -i aidd-review sh -c '
+    set -eu; read -r token; umask 077
+    ./config.sh --unattended --url https://github.com/ai-driven-dev \
+      --token "$token" --name aidd-review --runnergroup aidd-opencode-review
+    touch .configured
+  '
+```
 
-   ```sh
-   docker volume create aidd-review-oauth
-   docker volume create aidd-review-state
-   docker run -d --name aidd-review --restart unless-stopped \
-     --cap-drop ALL --cap-add SETUID --cap-add SETGID --cap-add CHOWN \
-     --cap-add AUDIT_WRITE --cap-add DAC_OVERRIDE --cap-add KILL \
-     -v aidd-review-oauth:/home/aidd/.local/share/opencode \
-     -v aidd-review-state:/home/runner/.local/state/aidd-pr-review \
-     --entrypoint /bin/sh aidd-review-runner:local -c \
-       'while [ ! -f .configured ]; do sleep 1; done; exec /opt/aidd/runner'
-   ```
-
-3. For a remote Linux server, forward the OAuth callback from the browser's
-   machine to the server. Replace `your-server` with its SSH host and keep the
-   tunnel open during login:
-
-   ```sh
-   ssh -N -o ExitOnForwardFailure=yes \
-     -L 127.0.0.1:1455:127.0.0.1:1455 your-server
-   ```
-
-   On the server, authenticate in a temporary host-network container using the
-   same OAuth volume. Choose **Codex browser (legacy)**, open the displayed URL
-   on the browser's machine, and select the existing Codex account:
-
-   ```sh
-   docker run --rm -it --network host --user reviewer -e HOME=/home/aidd \
-     -v aidd-review-oauth:/home/aidd/.local/share/opencode \
-     --entrypoint opencode aidd-review-runner:local --standalone auth login openai
-   ```
-
-   The host network is used only for this login container; the runner itself
-   remains on its isolated Docker network.
-4. Set `AIDD_REVIEW_ENABLED_AT` to the intended UTC activation time in
-   `YYYY-MM-DDTHH:MM:SSZ` format. Stop the old timer and wait for any active
-   review before registering the runner. The cutoff determines which submissions
-   are picked up; old local fingerprints are not imported.
-5. With `gh` authenticated as an organization administrator, register the same
-   container using a short-lived token. It is passed over stdin and is not stored
-   in the container's environment:
-
-   ```sh
-   gh api --method POST orgs/ai-driven-dev/actions/runners/registration-token --jq .token |
-     docker exec -i aidd-review sh -c '
-       set -eu; read -r token; umask 077
-       ./config.sh --unattended --url https://github.com/ai-driven-dev \
-         --token "$token" --name aidd-review --runnergroup aidd-opencode-review
-       touch .configured
-     '
-   ```
-
-   The container starts the runner once registration succeeds. Stop it
-   gracefully before restarting so GitHub can close its session. Registration
-   is in the container's writable layer: replacing it requires a new registration.
-   Rebuild and replace the image whenever an embedded runtime file changes.
-
-A separate UID and container reduce access; they do not prove that prompt
-injection cannot expose the model credential available to the reviewer. A
-persistent runner can also retain changes between jobs.
+Rebuild and replace the image when its trusted runtime files change. The
+reviewer has a repository-scoped read token; only the workflow receives the
+separate write token. The container and separate user reduce exposure but do
+not eliminate prompt-injection or container-escape risks.

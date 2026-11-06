@@ -1,5 +1,7 @@
 #!/bin/sh
 set -eu
+
+# Protect runner registration credentials before starting GitHub Actions.
 umask 077
 cd /home/runner/actions-runner
 if [ -f .credentials ]; then

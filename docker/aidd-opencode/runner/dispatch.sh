@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Freeze the review input and launch the model under a separate user.
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 umask 077
@@ -7,8 +9,16 @@ umask 077
 
 root=/var/lib/aidd-review
 # Read runner-controlled paths as the runner, never with root filesystem access.
-work=$(runuser -u runner -- env -i PATH=/usr/bin:/bin cat "$root/inbox/current")
+request=$(runuser -u runner -- env -i PATH=/usr/bin:/bin cat "$root/inbox/request.json")
+work=$(jq -r '.work // empty' <<<"$request")
+repo=$(jq -r '.repo // empty' <<<"$request")
+pr=$(jq -r '.pr // empty' <<<"$request")
+base=$(jq -r '.base // empty' <<<"$request")
+head=$(jq -r '.head // empty' <<<"$request")
 [[ $work =~ ^/tmp/aidd-review\.[[:alnum:]]{8}$ || $work =~ ^/home/runner/actions-runner/_work/_temp/aidd-review\.[[:alnum:]]{8}$ ]] || { echo 'Invalid review request' >&2; exit 1; }
+[[ $repo =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ && $pr =~ ^[1-9][0-9]*$ && $base =~ ^[0-9a-f]{40}$ && $head =~ ^[0-9a-f]{40}$ ]] || { echo 'Invalid review metadata' >&2; exit 1; }
+IFS= read -r read_token
+[[ -n $read_token ]] || { echo 'Missing read-only token' >&2; exit 1; }
 exec 9>"$root/jobs/lock"
 flock -n 9 || { echo 'Another review is running' >&2; exit 1; }
 job=$(mktemp -d "$root/jobs/job.XXXXXXXX")
@@ -29,13 +39,21 @@ chmod 0750 "$job"
 chmod -R a-w,g+rX "$job/incoming/workspace"
 chmod 0550 "$job/incoming"
 chmod 0440 "$job/incoming/manifest.json"
-# Every source and chunk must be immutable to the reviewer, not just the parent.
+# Every input must be immutable to the reviewer, not just its parent.
 if [[ -n $(find "$job/incoming/workspace" \( ! -user root -o -perm /022 \) -print -quit) ]]; then
   echo 'Review snapshot contains writable or non-root-owned files' >&2
   exit 1
 fi
 install -d -o reviewer -g reviewer -m 0700 "$job/out"
+jq -n --arg repo "$repo" --arg pr "$pr" '{repo:$repo,pr:$pr}' > "$job/metadata.json"
+chown root:aidd-review "$job/metadata.json"
+chmod 0440 "$job/metadata.json"
+printf '%s' "$read_token" > "$job/token"
+unset read_token
+chown runner:runner "$job/token"
+chmod 0400 "$job/token"
 timeout --kill-after=10s 15m runuser -u reviewer -- env -i HOME=/home/aidd PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 \
+  AIDD_REVIEW_JOB="$job" GH_REPO="$repo" REVIEW_PR="$pr" REVIEW_BASE="$base" REVIEW_HEAD="$head" \
   /opt/aidd/model.sh "$job/incoming/workspace" "$job/incoming/manifest.json" "$job/out/result.json" 9>&-
 runuser -u reviewer -- test -f "$job/out/result.json"
 runuser -u reviewer -- test ! -L "$job/out/result.json"
