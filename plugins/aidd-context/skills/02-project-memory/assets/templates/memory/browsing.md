@@ -9,6 +9,7 @@
 ## Working rules
 
 - Open links in the selected browser; if none is set, prefer the integrated browser when available.
+- Use background mode for browsing and computer use, including authentication, when supported; avoid interrupting the user.
 - Reuse information and authorizations already provided; do not ask for them again within their scope.
 - Reuse a suitable open tab. When supported, group AIDD work in an `AIDD` tab group.
 - Close tabs created for the task when no longer needed; preserve existing user tabs unless asked to close them.
