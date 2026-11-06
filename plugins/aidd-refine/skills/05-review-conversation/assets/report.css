@@ -135,3 +135,20 @@ main { width: min(1040px, calc(100% - 48px)); margin: auto; min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) { .finding-collapse { transition-duration: 0.001ms; } }
+
+/* Source, message previews and file diffs */
+.source-path { display: grid; gap: 4px; max-width: 100%; margin-top: 16px; padding: 10px 12px; background: var(--soft-surface); border: 1px solid var(--line); }
+.source-path span { color: var(--soft-ink); font-weight: 700; }
+.source-path code, .finding-file code { overflow-wrap: anywhere; }
+.finding-file { margin: 6px 0 0; color: var(--soft-ink); }
+.prompt-preview { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; max-height: 3em; }
+.tool-line { grid-template-columns: 92px minmax(0, 1fr) auto auto; }
+.call-duration { white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 680px) {
+  .diff-columns { grid-template-columns: minmax(0, 1fr); }
+  .diff-pane + .diff-pane { border-left: 0; border-top: 1px solid var(--line); }
+  .tool-line { grid-template-columns: 76px minmax(0, 1fr); }
+  .call-duration, .event-delta { grid-column: 2; }
+}
+
+.evidence-excerpt { margin: 0; padding: 10px 12px; background: var(--soft-surface); border: 1px solid var(--line); font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }

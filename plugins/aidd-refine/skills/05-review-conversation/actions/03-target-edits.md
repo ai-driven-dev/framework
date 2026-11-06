@@ -10,9 +10,11 @@ Transcripts, measurements and findings with any verified edits.
 
 1. Fill the [report template](../assets/report-template.html) and copy [report.css](../assets/report.css) and [report.js](../assets/report.js) alongside it.
    - Replace fictional content and remove authoring scaffolds.
+   - Show the exact analyzed transcript path in the heading when available; otherwise show its source and identifier; retain all user messages in chronological order as collapsed two-line previews, with their recorded calls and durations inside. Keep full transcripts in private sidecars.
    - Lead with the decision, source coverage and useful measurements, then the findings.
-   - Keep the prompt/call chronology concise and full transcripts in private sidecars.
 2. Add acceptance controls only to verified textual edits supplied by recommend.
+   - Number findings and show, in order, the exact message, tool call or other evidence involved, the problem, and the addressed solution. For a verified file edit, show its maintained path once at the top and exact removed and added text in code blocks; for pure deletions leave the addition empty.
+   - Never present operational or diagnostic remedies as file patches; name their actual target and omit acceptance controls when no exact file edit is supported.
    - Selecting an edit builds a prompt without applying changes.
 3. End with a two-column problem → solution table linked to the detailed evidence.
    - Use one short row per distinct supported problem.
