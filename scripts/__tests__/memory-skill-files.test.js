@@ -343,7 +343,7 @@ test("a recall case seeds a repo and expects the facts the restored slots must p
   assert.ok(!files.some((name) => /CONTRIBUTING/u.test(name)), "the seeded repo carries a contributing file");
   const expected = recall.expect.fileContains;
   for (const [file, facts] of Object.entries({
-    "aidd_docs/memory/testing.md": [".int.test.ts", "test:changed"],
+    "aidd_docs/memory/testing.md": [".int.test.ts"],
     "aidd_docs/memory/architecture.md": [".env.example"],
     "aidd_docs/memory/ui.md": ["src/router.tsx"],
     "aidd_docs/memory/project-brief.md": ["export-invoices"],
@@ -351,4 +351,6 @@ test("a recall case seeds a repo and expects the facts the restored slots must p
     for (const fact of facts) assert.ok(expected[file]?.includes(fact), `the recall case does not expect ${fact} in ${file}`);
     for (const fact of facts) assert.ok(JSON.stringify(recall.setup.files).includes(fact), `${fact} is not in the seeded repo`);
   }
+  // The narrowest-run slot accepts one test file or a changed-only run: expect the slot answered, not one answer.
+  assert.ok(expected["aidd_docs/memory/testing.md"]?.includes("Narrowest run: `"), "the recall case does not expect the narrowest run answered");
 });
