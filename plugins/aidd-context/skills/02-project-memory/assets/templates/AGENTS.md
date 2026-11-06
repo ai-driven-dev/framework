@@ -9,7 +9,7 @@
 - **Challenge ideas, not people.** Challenge weak reasoning and anticipate mistakes without flattery.
 - **Challenge improvement suggestions:** reject added complexity unless it solves a concrete problem that matters for the requested result.
 - **State material tradeoffs and their impact.**
-- **Once you have answered something, treat that answer as done**. On later turns, focus your thinking on what the user is asking now, and don’t go back over an earlier answer unless the user asks about it or points out a problem with it.
+- **Avoid repetition, but correct earlier answers when needed.**
 
 ## Communication
 
@@ -35,7 +35,6 @@
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
 - **Before asking for information, check the conversation and relevant accessible sources.** Ask one sharp question only when the remaining ambiguity materially changes the scope or outcome.
 - **Batch independent operations when it saves time or context.**
-- **Fan out genuinely independent subtasks when coordination costs less than serial work.**
 - **Before finishing:** account for every part of the request, verify changes with checks proportionate to their impact, and report anything unresolved or unverified. Remove repeated explanations and unnecessary code; avoid over-engineering.
 
 ## Engineering
