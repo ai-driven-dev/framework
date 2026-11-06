@@ -156,7 +156,7 @@
     });
   });
 
-  document.querySelector("#copy-prompt").addEventListener("click", async (event) => {
+  document.querySelector("#copy-prompt")?.addEventListener("click", async (event) => {
     const button = event.currentTarget;
     const original = button.textContent;
     try {
