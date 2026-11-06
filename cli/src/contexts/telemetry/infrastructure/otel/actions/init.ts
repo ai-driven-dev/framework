@@ -8,7 +8,9 @@ import {
   type Edit,
   type Endpoint,
   type Host,
+  OPENCODE_CONFIG_ID,
 } from "../settings.js";
+import { installOpenCodePlugin } from "./opencode-plugin-file.js";
 
 async function applyEdit(edit: Edit): Promise<boolean> {
   const before = await readSettings(edit.path, edit.initial);
@@ -43,5 +45,11 @@ async function applyEdit(edit: Edit): Promise<boolean> {
 
 export async function initializeOtel(config: Config, endpoint: Endpoint, host: Host) {
   const edit = await configurationEdit(config, endpoint, host);
-  return { path: edit.path, launch: edit.launch, changed: await applyEdit(edit) };
+  if (config === OPENCODE_CONFIG_ID) {
+    const before = await readSettings(edit.path, edit.initial);
+    edit.update(before.content);
+  }
+  const pluginChanged = config === OPENCODE_CONFIG_ID ? await installOpenCodePlugin(host) : false;
+  const settingsChanged = await applyEdit(edit);
+  return { path: edit.path, launch: edit.launch, changed: pluginChanged || settingsChanged };
 }

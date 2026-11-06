@@ -122,9 +122,13 @@ function openCodeGlobalDir(host: Host): string {
   return join(host.env.XDG_CONFIG_HOME || join(host.home, ".config"), OPENCODE_CONFIG_ID);
 }
 
+export function openCodeConfigDir(host: Host): string {
+  return host.env.OPENCODE_CONFIG_DIR || openCodeGlobalDir(host);
+}
+
 async function openCodeEdit(host: Host, token: string): Promise<Edit> {
   await requireOpenCodeV2(host);
-  const directory = host.env.OPENCODE_CONFIG_DIR || openCodeGlobalDir(host);
+  const directory = openCodeConfigDir(host);
   const additions = interpolate(opencodeTemplate.env, token);
   return {
     path: join(directory, "service.json"),

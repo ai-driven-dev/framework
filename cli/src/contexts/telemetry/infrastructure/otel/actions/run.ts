@@ -1,9 +1,10 @@
 import { spawn } from "node:child_process";
 import { createReadStream } from "node:fs";
-import { mkdtemp, rename, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
+import openCodePlugin from "../../../../../../assets/configs/otel-opencode-plugin.js.txt";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import claude from "../config/claude.json" with { type: "json" };
 import codex from "../config/codex.json" with { type: "json" };
@@ -15,6 +16,12 @@ import {
   readToken,
 } from "../settings.js";
 import { startOtelCollector } from "./collect.js";
+import { hasOpenCodePlugin } from "./opencode-plugin-file.js";
+import {
+  type OpenCodePluginLog,
+  openCodePluginLogs,
+  relatedOpenCodeLogs,
+} from "./opencode-plugin-logs.js";
 import { destination, sessionIdsInCapture, syncOtel } from "./sync.js";
 
 type RunOptions = {
@@ -83,11 +90,37 @@ async function provider(options: RunOptions, collector: string, token: string, d
       input: options.prompt,
     };
   }
+  const hasInstalledPlugin = await hasOpenCodePlugin({ home: homedir(), env: process.env });
+  if (!hasInstalledPlugin) {
+    const pluginDir = join(directory, "opencode-plugin");
+    await mkdir(pluginDir, { mode: 0o700 });
+    await writeFile(join(pluginDir, "index.js"), openCodePlugin, { mode: 0o600, flag: "wx" });
+    let inline: Record<string, unknown> = {};
+    if (env.OPENCODE_CONFIG_CONTENT) {
+      try {
+        const parsed = asPlainObject(JSON.parse(env.OPENCODE_CONFIG_CONTENT));
+        if (!parsed) throw new Error();
+        inline = parsed;
+      } catch {
+        throw new Error(
+          "OPENCODE_CONFIG_CONTENT must be a JSON object to enable OpenCode telemetry for this run."
+        );
+      }
+    }
+    if (inline.plugins !== undefined && !Array.isArray(inline.plugins))
+      throw new Error("OpenCode inline plugins must be an array.");
+    env.OPENCODE_CONFIG_CONTENT = JSON.stringify({
+      ...inline,
+      plugins: [...(inline.plugins ?? []), pluginDir],
+    });
+  }
   return {
     env: {
       ...env,
       OTEL_EXPORTER_OTLP_ENDPOINT: `${collector}/${OPENCODE_CONFIG_ID}`,
       OTEL_EXPORTER_OTLP_HEADERS: `Authorization=Bearer ${token}`,
+      AIDD_OPENCODE_OTEL_LOGS_ENDPOINT: `${collector}/${OPENCODE_CONFIG_ID}/v1/logs`,
+      AIDD_OPENCODE_OTEL_HEADERS: `Authorization=Bearer ${token}`,
     },
     args: ["run", "--standalone", ...model, "--", options.prompt],
   };
@@ -203,6 +236,7 @@ async function retainCapture(home: string, capture: string, config: Config): Pro
   try {
     await rename(capture, retained);
     await rm(join(home, ".local"), { recursive: true });
+    await rm(join(home, "opencode-plugin"), { recursive: true, force: true });
     await rm(join(home, "claude-settings.json"), { force: true });
     return retained;
   } catch (error) {
@@ -259,14 +293,43 @@ export async function runOtel(options: RunOptions): Promise<number> {
         origin
       );
       let selected: unknown;
+      const logs: OpenCodePluginLog[] = [];
+      let rootSession: string | undefined;
       for await (const line of lines) {
         if (!line.trim()) continue;
         for (const payload of openCodePromptSpans(line)) {
           if (selected)
             throw new Error("The isolated OpenCode run emitted more than one prompt span.");
           selected = payload;
+          const resource = asPlainObject(list(asPlainObject(payload)?.resourceSpans)[0]);
+          const scope = asPlainObject(list(resource?.scopeSpans)[0]);
+          const span = asPlainObject(list(scope?.spans)[0]);
+          const path = attributes(span?.attributes).get("url.path");
+          if (typeof path !== "string") throw new Error("OpenCode prompt session is missing.");
+          rootSession = path.split("/")[3];
+        }
+        for (const log of openCodePluginLogs(line)) {
+          logs.push(log);
         }
       }
+      if (!rootSession || !selected)
+        throw new Error(
+          "OpenCode prompt trace is missing; session attribution cannot be verified."
+        );
+      const related = relatedOpenCodeLogs(rootSession, logs);
+      if (related.length !== logs.length)
+        console.warn(
+          "OpenCode observations from sessions without a proven parent were not forwarded."
+        );
+      if (!related.some((log) => log.session === rootSession))
+        throw new Error("OpenCode telemetry plugin did not emit any session observations.");
+      const logsBody = JSON.stringify({
+        resourceLogs: related.flatMap((log) => list(asPlainObject(log.payload)?.resourceLogs)),
+      });
+      if (Buffer.byteLength(logsBody, "utf8") > 2 * 1024 * 1024)
+        throw new Error(
+          "OpenCode observations exceed the receiver's 2 MiB limit; nothing was sent."
+        );
       if (selected) {
         const response = await fetch(url, {
           method: "POST",
@@ -285,6 +348,28 @@ export async function runOtel(options: RunOptions): Promise<number> {
           throw new Error("Gouvernail did not retain the OpenCode span.");
         sent++;
       }
+      const logsUrl = new URL(
+        `/api/kpi/otel/${OPENCODE_CONFIG_ID}/${options.tenant}/v1/logs`,
+        origin
+      );
+      try {
+        const response = await fetch(logsUrl, {
+          method: "POST",
+          redirect: "manual",
+          signal: AbortSignal.any([options.signal, AbortSignal.timeout(15000)]),
+          headers: { authorization: `Bearer ${options.token}`, "content-type": "application/json" },
+          body: logsBody,
+        });
+        if (!response.ok)
+          throw new Error(`Gouvernail rejected OpenCode logs: HTTP ${response.status}.`);
+        const receipt = asPlainObject(await response.json());
+        if (receipt?.accepted !== related.length || Object.keys(receipt).length !== 1)
+          throw new Error("Gouvernail did not retain all OpenCode observations.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "OpenCode logs could not be sent.";
+        throw new Error(`${message} The prompt trace may already have been retained.`);
+      }
+      sent += related.length;
     } else {
       const sessions = new Set<string>();
       for await (const line of lines) {

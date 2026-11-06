@@ -138,9 +138,18 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     expect(await initializeOtel("opencode", "dev", v2)).toMatchObject({ changed: true });
     expect(JSON.parse(await readFile(path, "utf8"))).toMatchObject({
       port: 1234,
-      env: { EXISTING: "keep", OTEL_EXPORTER_OTLP_ENDPOINT: "http://127.0.0.1:14318/opencode" },
+      env: {
+        EXISTING: "keep",
+        OTEL_EXPORTER_OTLP_ENDPOINT: "http://127.0.0.1:14318/opencode",
+        AIDD_OPENCODE_OTEL_LOGS_ENDPOINT: "http://127.0.0.1:14318/opencode/v1/logs",
+      },
     });
+    const plugin = join(dir, "plugins/aidd-otel/index.js");
+    expect(await readFile(plugin, "utf8")).toContain('id: "aidd.otel"');
     expect(await initializeOtel("opencode", "dev", v2)).toMatchObject({ changed: false });
+    await writeFile(plugin, "user plugin\n");
+    await expect(initializeOtel("opencode", "dev", v2)).rejects.toThrow(/plugin.*different/);
+    expect(await readFile(plugin, "utf8")).toBe("user plugin\n");
   });
 
   it("rejects OpenCode 1 and versions before 2.2.5", async () => {

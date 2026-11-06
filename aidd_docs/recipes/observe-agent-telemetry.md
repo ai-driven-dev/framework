@@ -1,6 +1,6 @@
 # Observe agent telemetry locally
 
-Run Claude Code, Codex and OpenCode v2 with provider OpenTelemetry (OTel), then inspect the local Gouvernail dashboard. The framework's separate local usage ledger is not the source for this view.
+Run Claude Code, Codex and OpenCode v2 with OpenTelemetry (OTel), then inspect the local Gouvernail dashboard. For OpenCode, an opted-in AIDD plugin converts public session events to OTLP; the standard exporter does not supply the session-linked usage observed by this plugin. The framework's separate local usage ledger is not the source for this view.
 
 ## Steps to observe agent telemetry locally
 
@@ -40,14 +40,14 @@ for i in 1 2; do
 done
 ```
 
-Each command launches a separate session with an isolated collector. It does not read the framework usage ledger or establish a project or feature association. `otel init` and the global development collector are a separate configuration path; they are not required for these commands.
+Each command launches a separate session with an isolated collector. The OpenCode command loads the AIDD plugin for that run. It does not read the framework usage ledger or establish a repository or feature association. `otel init` and the global development collector are a separate configuration path; they are not required for these commands.
 
 ### 3) ✅ Check receipt
 
-Open the local AI KPI page and check the session IDs and observed fields. Delivery does not prove that every provider event was emitted or received. In the OpenCode v2.2.5 capture, HTTP prompt spans included session IDs but no model or token counts. Missing or uncertain values remain unavailable. See the [field inventory](../../plugins/aidd-telemetry/OBSERVABILITY.md).
+Open the local AI KPI page and check the session IDs and observed fields. Delivery does not prove that every event was emitted or received. For OpenCode, the plugin reports the selected model and positive normalized token counts in separate events; an ambiguous zero stays unavailable. Missing or uncertain values remain unavailable. See the [field inventory](../../plugins/aidd-telemetry/OBSERVABILITY.md).
 
 ```sh
-open 'http://localhost:55857/enterprise/ai-driven-dev/kpi/ai'
+open 'http://localhost:55857/enterprise/ai-driven-dev/kpi/sessions'
 ```
 
 Sources accessed 2026-11-06: [Claude monitoring](https://code.claude.com/docs/en/monitoring-usage), [Codex telemetry](https://learn.chatgpt.com/docs/config-file/config-advanced#what-gets-emitted), [OpenCode v2 CLI](https://dev.opencode.ai/v2/docs/cli) and [OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts).

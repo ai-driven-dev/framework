@@ -19,6 +19,18 @@ afterEach(async () => {
 });
 
 describe.skipIf(process.platform === "win32")("OTLP verification", () => {
+  it("requires the installed OpenCode plugin before reporting a capture", async () => {
+    const host = { home, env: {}, opencodeVersion: async () => "2.2.5" };
+    await initializeOtel("opencode", "dev", host);
+    const plugin = join(home, ".config/opencode/plugins/aidd-otel/index.js");
+    await writeFile(
+      join(home, ".local/share/aidd-otel-observation/opencode.jsonl"),
+      '{"signal":"logs"}\n'
+    );
+    expect(await verifyOtel("opencode", "dev", host)).toMatchObject({ lines: 1 });
+    await rm(plugin);
+    await expect(verifyOtel("opencode", "dev", host)).rejects.toThrow(/plugin is not installed/);
+  });
   it("requires initialization without creating settings", async () => {
     await expect(verifyOtel("claude", "dev", { home, env: {} })).rejects.toThrow(/not initialized/);
     await expect(readFile(join(home, ".claude/settings.json"))).rejects.toMatchObject({

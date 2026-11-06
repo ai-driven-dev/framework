@@ -1,4 +1,8 @@
 import { expect, it } from "vitest";
+import {
+  openCodePluginLogs,
+  relatedOpenCodeLogs,
+} from "../../../../src/contexts/telemetry/infrastructure/otel/actions/opencode-plugin-logs.js";
 import { openCodePromptSpans } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/run.js";
 
 const text = (key: string, stringValue: string) => ({ key, value: { stringValue } });
@@ -52,7 +56,82 @@ it("forwards only allowlisted OpenCode prompt span data", () => {
   expect(JSON.stringify(output)).not.toMatch(/url.full|host.name|secret/);
 });
 
+it("only keeps child sessions linked by an unambiguous explicit parent", () => {
+  const logs = [
+    { session: "ses_root", payload: "root" },
+    { session: "ses_child", parent: "ses_root", payload: "child" },
+    { session: "ses_grandchild", parent: "ses_child", payload: "grandchild" },
+    { session: "ses_unknown", payload: "unrelated" },
+    { session: "ses_conflict", parent: "ses_root", payload: "conflict one" },
+    { session: "ses_conflict", parent: "ses_unknown", payload: "conflict two" },
+  ];
+  expect(relatedOpenCodeLogs("ses_root", logs).map((item) => item.payload)).toEqual([
+    "root",
+    "child",
+    "grandchild",
+  ]);
+});
+
 it("rejects client spans and invalid timestamps", () => {
   expect(openCodePromptSpans(capture({ kind: 3 }))).toEqual([]);
   expect(openCodePromptSpans(capture({ startTimeUnixNano: "1700000000000000002" }))).toEqual([]);
+});
+
+it("forwards only allowlisted plugin observations and never turns an ambiguous zero into usage", () => {
+  const value = (key: string, intValue: string) => ({ key, value: { intValue } });
+  const attributes = [
+    text("event.name", "session.step.ended"),
+    text("event.id", "evt_probe"),
+    text("session.id", "ses_probe"),
+    text("assistant.message.id", "msg_probe"),
+    value("opencode.event.sequence", "12"),
+    value("opencode.event.version", "1"),
+    value("opencode.usage.input", "15"),
+    value("opencode.usage.cache_read", "0"),
+    text("prompt", "private-prompt"),
+  ];
+  const scope = {
+    scope: { name: "aidd.opencode.otel", version: "1" },
+    logRecords: [
+      {
+        timeUnixNano: "1700000000000000000",
+        body: { stringValue: "private-response" },
+        attributes,
+      },
+    ],
+  };
+  const capture = JSON.stringify({
+    signal: "logs",
+    payload: {
+      resourceLogs: [
+        {
+          resource: {
+            attributes: [text("service.name", "opencode"), text("host.name", "private-host")],
+          },
+          scopeLogs: [scope],
+        },
+      ],
+    },
+  });
+  const output = openCodePluginLogs(capture);
+  expect(output).toHaveLength(1);
+  expect(output[0].session).toBe("ses_probe");
+  expect(JSON.stringify(output)).toContain('"intValue":"15"');
+  expect(JSON.stringify(output)).not.toMatch(/private|prompt|cache_read/);
+  scope.scope.version = "2";
+  expect(
+    openCodePluginLogs(
+      JSON.stringify({
+        signal: "logs",
+        payload: {
+          resourceLogs: [
+            {
+              resource: { attributes: [text("service.name", "opencode")] },
+              scopeLogs: [scope],
+            },
+          ],
+        },
+      })
+    )
+  ).toEqual([]);
 });

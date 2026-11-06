@@ -3,7 +3,14 @@ import { open } from "node:fs/promises";
 import { join } from "node:path";
 import { readSettings } from "../files.js";
 import { transformCapturedLine } from "../observations.js";
-import { type Config, configurationEdit, type Endpoint, type Host } from "../settings.js";
+import {
+  type Config,
+  configurationEdit,
+  type Endpoint,
+  type Host,
+  OPENCODE_CONFIG_ID,
+} from "../settings.js";
+import { hasOpenCodePlugin } from "./opencode-plugin-file.js";
 
 export async function verifyOtel(config: Config, endpoint: Endpoint, host: Host) {
   const edit = await configurationEdit(config, endpoint, host);
@@ -13,6 +20,11 @@ export async function verifyOtel(config: Config, endpoint: Endpoint, host: Host)
   }
   if (!current.private) {
     throw new Error("OTLP configuration must be private (mode 0600).");
+  }
+  if (config === OPENCODE_CONFIG_ID && !(await hasOpenCodePlugin(host))) {
+    throw new Error(
+      "OpenCode telemetry plugin is not installed. Run aidd telemetry otel init first."
+    );
   }
   const capture = join(host.home, ".local/share/aidd-otel-observation", `${config}.jsonl`);
   const handle = await open(

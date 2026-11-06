@@ -1,19 +1,21 @@
 # Provider OpenTelemetry
 
-Gouvernail's AI KPI view uses provider OpenTelemetry (OTel) observations only. The framework's existing local usage ledger is separate and is not sent as OTel. A provider observation is not proof that every event was delivered; missing or ambiguous data remains unavailable.
+Gouvernail's AI KPI view uses OpenTelemetry (OTel) observations. For OpenCode v2, an opted-in AIDD plugin converts public OpenCode server events into OTLP; these are not emitted by OpenCode's standard OTLP exporter. The framework's existing local usage ledger is separate and is not sent as OTel. An observation is not proof that every event was delivered; missing or ambiguous data remains unavailable.
 
 | Field | Claude Code OTel | Codex OTel | OpenCode v2 OTel |
 | --- | --- | --- | --- |
-| Session | `session.id`, when present | `conversation.id`, when present | In the `url.path` of observed `/api/session/{id}/prompt` HTTP spans |
-| Model | `model`, when present | `model`, when present | Not yet established for all signals |
-| Usage | `claude_code.token.usage` and `api_request` | `codex.sse_event` and turn traces | Not established in the observed OTLP capture |
+| Session | `session.id`, when present | `conversation.id`, when present | In observed `/api/session/{id}/prompt` HTTP spans and plugin session events |
+| Model | `model`, when present | `model`, when present | Selected model and variant on plugin step-start events, when emitted; not proof of the served model or effective effort |
+| Usage | `claude_code.token.usage` and `api_request` | `codex.sse_event` and turn traces | OpenCode-normalized input, output, reasoning and cache counts from plugin step-end events; ambiguous zero stays unavailable |
 | Identity | Provider attributes, when emitted | Provider attributes, when emitted | Not yet established |
 
 Token fields are provider-specific. Claude's input excludes cache reads and writes; Codex's input includes cached input. A Codex cache zero can mean the provider omitted cache details. Never add a log, metric and trace describing the same usage, or treat an absent value as zero.
 
 `otel run --yes` captures one provider execution in isolation and forwards supported observations and allowlisted attributes to loopback Gouvernail. It neither reads the local usage ledger nor asserts a clone or feature association. With `--keep-capture`, raw private files can contain sensitive content. See [the local setup recipe](../../aidd_docs/recipes/observe-agent-telemetry.md).
 
-In two local OpenCode v2.2.5 executions, the raw OTLP contained 1,335 spans, 276 logs and no metric batches. A prompt span in each execution included a session ID in its HTTP path; no session-linked model, effort or token attributes were observed. Five other HTTP spans per execution contained that session ID but are not forwarded. The prompt spans had no trace-linked descendants in these captures; the model and usage spans belonged to a separate server trace without a session ID. A startup log included the requested model, but no session ID or proof of the model actually used. The framework forwards only the validated prompt span, not the other traces or logs. OpenCode computes usage on an internal event bus, which is not provider OTLP and is not used in this view. These observations do not prove what other versions or configurations emit. Production export remains disabled until authenticated user identity and the destination are implemented.
+In two local OpenCode v2.2.5 executions before the plugin was added, the raw OTLP contained 1,335 spans, 276 logs and no metric batches. A prompt span in each execution included a session ID in its HTTP path; no session-linked model, effort or token attributes were observed. Five other HTTP spans per execution contained that session ID but were not forwarded. The prompt spans had no trace-linked descendants in these captures; the model and usage spans belonged to a separate server trace without a session ID. A startup log included the requested model, but no session ID or proof of the model actually used. Those runs forwarded only the validated prompt span. These observations do not prove what other versions or configurations emit.
+
+The opt-in OpenCode v2 plugin subscribes to `session.created`, `session.step.started`, `session.step.ended` and `session.step.failed`, and exports each event separately as OTLP logs. It includes the original event and session IDs, message ID when present, selected model and variant at step start, and positive OpenCode-normalized counters at step end. A creation event can also carry an OpenCode project ID and parent session ID; neither is a repository name. It does not export prompts, responses, tool contents or cost. The plugin stream can miss events; event IDs allow deduplication of observations received, not proof of complete delivery. Do not match retries solely by assistant message ID. Production export remains disabled.
 
 ## Additional coverage investigated
 
@@ -21,7 +23,7 @@ In two local OpenCode v2.2.5 executions, the raw OTLP contained 1,335 spans, 276
 | --- | --- | --- |
 | Claude Code | The documented `api_request` event can carry request and prompt IDs, model, effort, latency and separate token and cache counters. These fields appeared in both local captures. | The framework does not forward these events today. An allowlist of technical fields could expose them; avoid counting the same request again through metrics. Repository attributes require a separate opt-in. |
 | Codex | Logs, metrics and traces are independently configurable. Completed response events can include model, effort and usage. | The observed turn-usage histogram had no session ID and the response events had no turn or request ID. Neither timestamps nor a previous session's effort establish a safe join. Forward additional documented, session-linked events only after validating their fields. |
-| OpenCode v2 | The v2.2.5 exporter emits logs and traces. In our captures, session HTTP spans and model/usage spans did not share a usable correlation. | Standard emitted OTLP did not establish session-linked model, effort or usage. Instrumenting the producer before its usage normalization could emit explicit session-linked OTLP, but is not implemented or validated. Its internal plugin event bus is a different source, and normalizes missing counters to zero; a model variant is not necessarily reasoning effort. |
+| OpenCode v2 | The v2.2.5 exporter emits logs and traces. In our captures, session HTTP spans and model/usage spans did not share a usable correlation. | The opted-in plugin sends session-linked OpenCode events as OTLP. Missing counters are normalized to zero upstream, so zeros cannot establish actual usage. A model variant is not necessarily reasoning effort. |
 
 An observed effort is evidence only for its own observation. Do not carry it into a later session or an unlinked event, and do not equate a requested model with a confirmed response model.
 
@@ -35,6 +37,7 @@ Read 2026-11-06:
 - [OpenCode v2.2.5 OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts)
 - [OpenCode v2.2.5 usage projection](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/projector.ts#L81-L110)
 - [OpenCode v2.2.5 session events](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/schema/src/session-event.ts#L333-L389) and [usage normalization](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/usage.ts#L8-L19)
+- [OpenCode v2 server plugins](https://dev.opencode.ai/v2/docs/build/plugins/server) and [retry handling](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/runner/llm.ts#L229-L334)
 - [OpenCode v2 HTTP API audit](https://github.com/anomalyco/opencode/blob/dev/V2_HTTP_API_AUDIT.md) (current development branch; the v2.2.5 path was observed locally)
 - [OpenTelemetry metrics data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/)
 - [OTLP protocol](https://opentelemetry.io/docs/specs/otlp/)
