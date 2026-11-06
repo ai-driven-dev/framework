@@ -48,6 +48,7 @@ describe("generateOpencodeHooksBridge", () => {
       // the mapping this generator applies and the measurements behind it.
       import { setupOpencodeEvents } from "../hooks/opencode-events.js";
       import { spawn } from "node:child_process";
+      import { existsSync } from "node:fs";
       import { fileURLToPath } from "node:url";
 
       // Never process.execPath: OpenCode ships as its own standalone binary - that path names \`opencode\`
@@ -165,11 +166,10 @@ describe("generateOpencodeHooksBridge", () => {
       export const AiddSampleHooks = async (input) => {
         // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
         const continued = new Set();
-        // SessionStart's own approximation (module doc comment above): fired once here, never
-        // per session. Silent on purpose: a memory refresh
-        // that breaks OpenCode's own startup is worse than one that never ran.
+        const started = new Set();
+        // Existing unmatched hooks are intentionally still run at initialization.
         try {
-          for (const hook of SESSION_START) {
+          for (const hook of SESSION_START.filter((hook) => hook.matcher !== "startup")) {
             runHook(
               hook.script,
               hook.args,
@@ -183,7 +183,25 @@ describe("generateOpencodeHooksBridge", () => {
         return {
           event: async ({ event }) => {
             try {
-              const directory = event?.properties?.directory ?? input.directory;
+              const directory = event?.properties?.info?.directory ?? event?.properties?.directory ?? input.directory;
+              const id = event?.properties?.sessionID ?? event?.properties?.info?.id;
+              if (event?.type === "session.deleted") started.delete(id);
+              if (!input.skipStartup && event?.type === "session.created" && typeof id === "string" && !started.has(id)) {
+                started.add(id);
+                for (const hook of SESSION_START.filter((hook) => hook.matcher === "startup")) {
+                  const { code, stdout } = await runCapture(hook.script, hook.args,
+                    { hook_event_name: "SessionStart", session_id: id, cwd: directory, tool: "opencode" }, directory);
+                  let message = "";
+                  if (code === 0) {
+                    try { message = String(JSON.parse(stdout)?.systemMessage ?? "").trim(); } catch { message = ""; }
+                  }
+                  if (message && typeof input.client?.tui?.showToast === "function") {
+                    await input.client.tui.showToast({ body: { message, variant: "info" } });
+                  } else if (message) {
+                    console.warn("[aidd] OpenCode cannot display the startup message: " + message);
+                  }
+                }
+              }
               for (const call of stopCallsFor(event, directory)) {
                 const sessionId = call.payload.session_id;
                 const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
@@ -221,7 +239,10 @@ describe("generateOpencodeHooksBridge", () => {
       export default {
         id: "aidd-sample-hooks",
         server: AiddSampleHooks,
-        setup: (ctx) => setupOpencodeEvents(ctx, AiddSampleHooks),
+        setup: (ctx) => setupOpencodeEvents(ctx, (input) => AiddSampleHooks({
+          ...input,
+          skipStartup: existsSync(fileURLToPath(new URL("../plugins/aidd-sample-tui/tui.js", import.meta.url))),
+        })),
       };
       "
     `);

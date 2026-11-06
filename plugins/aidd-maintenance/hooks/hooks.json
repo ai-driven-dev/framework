@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.cjs\"",
+            "statusMessage": "AIDD Maintenance: check for updates",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

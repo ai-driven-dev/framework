@@ -24,19 +24,44 @@ vi.mock("simple-git", () => ({
 }));
 
 const mockExecFile = vi.fn().mockResolvedValue({ stdout: "", stderr: "" });
+const mockAuthInput = vi.fn<(input: string) => void>();
+const mockAuthSpawn = vi.fn<(cmd: string, args: string[], options: object) => void>();
 
 vi.mock("node:child_process", () => ({
   execFile: (
     cmd: string,
     args: string[],
-    cb: (err: unknown, result?: { stdout: string; stderr: string }) => void
+    optionsOrCallback:
+      | object
+      | ((err: unknown, result?: { stdout: string; stderr: string }) => void),
+    callback?: (err: unknown) => void
   ) => {
+    if (typeof optionsOrCallback !== "function") {
+      mockAuthSpawn(cmd, args, optionsOrCallback);
+      const stdin = {
+        on: () => stdin,
+        end: (input: string) => {
+          mockAuthInput(input);
+          const separator = args.lastIndexOf("--");
+          const operation =
+            args[1] === "clone"
+              ? mockCloneFn(args[separator + 1], args[separator + 2], args.slice(2, separator))
+              : Promise.resolve();
+          operation.then(
+            () => callback?.(null),
+            (error: Error) => callback?.(error)
+          );
+        },
+      };
+      return { stdin };
+    }
     try {
       mockExecFile(cmd, args);
-      cb(null, { stdout: "", stderr: "" });
+      optionsOrCallback(null, { stdout: "", stderr: "" });
     } catch (err) {
-      cb(err);
+      optionsOrCallback(err);
     }
+    return undefined;
   },
 }));
 
@@ -50,11 +75,14 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 const CACHE = "/tmp/cache";
 
 function reset(): void {
+  mockEnvFn.mockClear();
   mockCloneFn.mockClear().mockResolvedValue(undefined);
   mockRawFn.mockClear().mockResolvedValue(undefined);
   mockCheckoutFn.mockClear().mockResolvedValue(undefined);
   mockSimpleGit.mockClear();
   mockExecFile.mockClear().mockReturnValue(undefined);
+  mockAuthInput.mockClear();
+  mockAuthSpawn.mockClear();
 }
 
 let lastFs: InMemoryFileAdapter;
@@ -71,9 +99,16 @@ function clonedInto(): string {
   return mockCloneFn.mock.calls[0]?.[1] as string;
 }
 
-/** The URL the clone was given — the one that may legitimately carry a token. */
+/** The URL the clone was given; credentials must never appear there. */
 function clonedFrom(): string {
   return mockCloneFn.mock.calls[0]?.[0] as string;
+}
+
+function authHeader(): string | undefined {
+  const input = mockAuthInput.mock.calls[0]?.[0];
+  return input
+    ? (JSON.parse(input) as { GIT_CONFIG_VALUE_0?: string }).GIT_CONFIG_VALUE_0
+    : undefined;
 }
 
 describe("where a fetched source lands in the cache", () => {
@@ -159,19 +194,56 @@ describe("where a fetched source lands in the cache", () => {
       expect(clonedInto()).toBe(join(CACHE, "https___example_com_private_git-HEAD"));
     });
 
-    it("still hands the credential to git, which is what it is for", async () => {
+    it("passes credentials separately and leaves the cloned URL clean", async () => {
       await adapter().fetch({ kind: "url", url }, CACHE);
 
-      expect(clonedFrom()).toBe(url);
+      expect(clonedFrom()).toBe("https://example.com/private.git");
+      expect(authHeader()).toBe(
+        `Authorization: Basic ${Buffer.from("user:ghp_SECRET").toString("base64")}`
+      );
+    });
+
+    it("removes userinfo containing multiple at-signs before cloning", async () => {
+      await adapter().fetch(
+        { kind: "url", url: "https://user:pw@part@example.com/private.git" },
+        CACHE
+      );
+      expect(clonedFrom()).toBe("https://example.com/private.git");
+      expect(authHeader()).toBe(
+        `Authorization: Basic ${Buffer.from("user:pw@part").toString("base64")}`
+      );
     });
   });
 });
 
 describe("the token the CLI adds for the user", () => {
-  it("injects a resolved token into an https url", async () => {
+  it("passes the resolved token without putting it in the clone URL", async () => {
     await adapter("tok").fetch({ kind: "github", repo: "acme/widgets" }, CACHE);
 
-    expect(clonedFrom()).toBe("https://x-access-token:tok@github.com/acme/widgets.git");
+    expect(clonedFrom()).toBe("https://github.com/acme/widgets.git");
+    expect(authHeader()).toBe(
+      `Authorization: Basic ${Buffer.from("x-access-token:tok").toString("base64")}`
+    );
+  });
+
+  it("keeps authentication out of the parent process arguments and environment", async () => {
+    const token = "synthetic-private-token";
+    const encoded = Buffer.from(`x-access-token:${token}`).toString("base64");
+    await adapter(token).fetch({ kind: "github", repo: "acme/widgets" }, CACHE);
+    const spawned = JSON.stringify(mockAuthSpawn.mock.calls);
+    expect(spawned).not.toContain(token);
+    expect(spawned).not.toContain(encoded);
+    expect(authHeader()).toContain(encoded);
+  });
+
+  it("does not treat an authenticated ref as a Git option", async () => {
+    await expect(
+      adapter("tok").fetch(
+        { kind: "github", repo: "acme/widgets", ref: "--upload-pack=evil" },
+        CACHE
+      )
+    ).rejects.toThrow(/Invalid Git reference/);
+    expect(mockAuthSpawn).not.toHaveBeenCalled();
   });
 
   it("leaves an ssh url alone, where a token means nothing", async () => {
@@ -180,19 +252,32 @@ describe("the token the CLI adds for the user", () => {
     expect(clonedFrom()).toBe("git@example.com:acme/repo.git");
   });
 
-  it("injects it into a bare https url too, not only a github shorthand", async () => {
+  it("does not send a resolved token to an unrelated https host", async () => {
     await adapter("tok").fetch({ kind: "url", url: "https://example.com/private.git" }, CACHE);
 
-    expect(clonedFrom()).toBe("https://tok@example.com/private.git");
+    expect(clonedFrom()).toBe("https://example.com/private.git");
+    expect(authHeader()).toBeUndefined();
   });
 
-  it("injects it when only a subdirectory of a private repo is wanted", async () => {
+  it.each([
+    "https://gitlab.com/group/private.git",
+    "https://bitbucket.org/group/private.git",
+    "https://github.com.attacker.example/private.git",
+    "http://github.com/group/private.git",
+  ])("never forwards an automatically resolved token to %s", async (url) => {
+    await adapter("sensitive-token").fetch({ kind: "url", url }, CACHE);
+    expect(authHeader()).toBeUndefined();
+    expect(clonedFrom()).not.toContain("sensitive-token");
+  });
+
+  it("does not send a resolved token to an unrelated sparse repo", async () => {
     await adapter("tok").fetch(
       { kind: "git-subdir", url: "https://example.com/mono.git", path: "packages/one" },
       CACHE
     );
 
-    expect(clonedFrom()).toBe("https://tok@example.com/mono.git");
+    expect(clonedFrom()).toBe("https://example.com/mono.git");
+    expect(authHeader()).toBeUndefined();
   });
 
   it("clones unauthenticated when no provider is wired", async () => {
@@ -295,6 +380,22 @@ describe("what the user is told when a clone fails", () => {
     );
   });
 
+  it("redacts an authentication header or token echoed by a failed Git process", async () => {
+    const token = "test-only-token";
+    const encoded = Buffer.from(`x-access-token:${token}`).toString("base64");
+    const fetcher = adapter(token);
+    mockCloneFn.mockRejectedValue(
+      new Error(`remote echoed ${token} and Authorization: Basic ${encoded}`)
+    );
+    const message = await fetcher.fetch({ kind: "github", repo: "acme/widgets" }, CACHE).then(
+      () => "unexpected success",
+      (error: Error) => error.message
+    );
+    expect(message).not.toBe("unexpected success");
+    expect(message).not.toContain(token);
+    expect(message).not.toContain(encoded);
+  });
+
   it("keeps the rest of git's message, so the failure is still diagnosable", async () => {
     const fetcher = adapter("injected-token");
     mockCloneFn.mockRejectedValue(
@@ -307,13 +408,21 @@ describe("what the user is told when a clone fails", () => {
   });
 
   describe("when the remote refused the credentials", () => {
-    it("tells an https user how to supply a token", async () => {
+    it("tells an unrelated host user to configure Git credentials", async () => {
       const fetcher = adapter();
       mockCloneFn.mockRejectedValue(new Error("remote: Repository not found"));
 
       await expect(
         fetcher.fetch({ kind: "url", url: "https://example.com/private.git" }, CACHE)
-      ).rejects.toThrow(/aidd auth login/);
+      ).rejects.toThrow(/Git credential helper/);
+    });
+
+    it("tells a GitHub user how to supply a token", async () => {
+      const fetcher = adapter();
+      mockCloneFn.mockRejectedValue(new Error("remote: Repository not found"));
+      await expect(fetcher.fetch({ kind: "github", repo: "acme/private" }, CACHE)).rejects.toThrow(
+        /aidd auth login/
+      );
     });
 
     it("tells an ssh user to check their key instead", async () => {

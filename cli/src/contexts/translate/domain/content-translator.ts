@@ -278,12 +278,13 @@ export class PluginContentTranslator {
       .filter((file) => file.relativePath !== `${PLUGIN_HOOKS_DIR}/hooks.json`)
       .map((file) =>
         this.makeFile(
-          flatHooksPathWithLoaderEntry(
-            flatHooksDir,
-            flatHooksLoaderEntry,
-            dist.manifest.name,
-            file.relativePath
-          ),
+          tool.capabilities.plugins.flatHooksPath?.(dist.manifest.name, file.relativePath) ??
+            flatHooksPathWithLoaderEntry(
+              flatHooksDir,
+              flatHooksLoaderEntry,
+              dist.manifest.name,
+              file.relativePath
+            ),
           file.content
         )
       );

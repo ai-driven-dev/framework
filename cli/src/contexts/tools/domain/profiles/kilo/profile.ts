@@ -3,7 +3,7 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { flatGlobalFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import type {
@@ -30,6 +30,7 @@ import {
   KILO_HOOKS_DIR,
   KILO_PLUGIN_DIR,
   KILO_PLUGIN_ENTRY_BASENAME,
+  kiloGlobalFilePath,
   makeKiloHooksBridgePath,
   resolveKiloConfigPath,
 } from "./kilo-paths.js";
@@ -92,7 +93,12 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       flatNamespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "kilo"),
-        map: flatGlobalFilePath(KILO_DIRECTORY),
+        map: kiloGlobalFilePath,
+      },
+      startupTui: {
+        plugin: "aidd-maintenance",
+        directory: KILO_DIRECTORY,
+        module: "hooks/aidd-maintenance/kilo-tui.js",
       },
       acceptsHooks: true,
       flatHooksDir: KILO_HOOKS_DIR,

@@ -4,6 +4,7 @@ import { Manifest } from "../../contexts/framework/domain/manifest.js";
 import { isIdeToolId } from "../../contexts/tools/domain/registry.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../kernel/tool.js";
 import { isAiToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
+import { assertMachineConfigDirectorySupported } from "../../runtime/machine-config-directory.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printToolAlreadyInstalled,
@@ -22,6 +23,8 @@ import { parseGlobalOptions } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
 
 type Deps = Awaited<ReturnType<typeof createDeps>>;
+type UpgradeOptions = Parameters<Deps["upgradeFrameworkUseCase"]["execute"]>[0];
+type FrameworkUpgradePreview = Parameters<UpgradeOptions["confirm"]>[0];
 
 export function assertKnownToolId(toolId: string): asserts toolId is ToolId {
   if (!isAiToolId(toolId) && !isIdeToolId(toolId)) {
@@ -162,6 +165,168 @@ async function runFrameworkUpdate(
   );
 }
 
+function printReleaseLinks(
+  output: CLIOutput,
+  release: string,
+  currentRefs: readonly string[],
+  title: string | null
+): void {
+  const repository = "https://github.com/ai-driven-dev/framework";
+  output.info(title ? `Release title: ${title}` : "Release title unavailable.");
+  output.info(`Release notes: ${repository}/releases/tag/${encodeURIComponent(release)}`);
+  const distinctRefs = [...new Set(currentRefs)].filter((ref) => ref !== release);
+  if (distinctRefs.length === 0) return;
+  output.info(
+    "Repository changes between current tags (not limited to installed plugins; tags can move):"
+  );
+  for (const ref of distinctRefs) {
+    output.info(
+      `  ${ref} -> ${release}: ${repository}/compare/${encodeURIComponent(ref)}...${encodeURIComponent(release)}`
+    );
+  }
+}
+
+function printReleasePreview(
+  output: CLIOutput,
+  projectRoot: string,
+  preview: FrameworkUpgradePreview
+): void {
+  output.info(`Project: ${projectRoot}`);
+  output.info(`Marketplace: ${preview.currentRef} -> ${preview.release}`);
+  output.info("Installed project plugins:");
+  for (const target of preview.targets) {
+    const version = target.targetVersion
+      ? `${target.currentVersion} -> ${target.targetVersion}`
+      : target.currentVersion;
+    output.info(
+      `  ${target.toolId}:${target.pluginName} (plugin ${version}; source ${target.currentRef} -> ${preview.release})`
+    );
+  }
+  printReleaseLinks(
+    output,
+    preview.release,
+    [preview.currentRef, ...preview.targets.map((target) => target.currentRef)],
+    preview.title
+  );
+  if (preview.globalPlugins?.length) {
+    output.info("Global AIDD CLI installations (not updated by this command):");
+    for (const plugin of preview.globalPlugins) {
+      const source = plugin.source;
+      const sourceName =
+        source.kind === "git-subdir" &&
+        source.url === "https://github.com/ai-driven-dev/framework.git"
+          ? `ai-driven-dev/framework@${source.ref ?? "unknown"}`
+          : `${source.kind} (source unverified)`;
+      output.info(
+        `  ${plugin.toolId}:${plugin.pluginName} (plugin ${plugin.currentVersion}; source ${sourceName})`
+      );
+    }
+  }
+  if (preview.unverifiedUserRefs) {
+    output.warn(
+      `Project references to user-scope plugins not verified in the machine manifest: ${preview.unverifiedUserRefs}.`
+    );
+  }
+  output.info("Native user installations are not fully inventoried by this command.");
+  if (preview.impact?.length) {
+    output.info("Claude installations sharing this marketplace:");
+    for (const entry of preview.impact)
+      output.info(
+        `  ${entry.ref} (${entry.scope}${entry.projectPath ? `, ${entry.projectPath}` : ""})`
+      );
+    output.info(
+      "Their shared catalogue files may change. Other dependents may exist; enabled states are unverified."
+    );
+  }
+  if (preview.shared) output.warn("This marketplace is shared; other projects may be affected.");
+}
+
+async function runFrameworkReleaseUpdate(
+  deps: Deps,
+  output: CLIOutput,
+  projectRoot: string,
+  options: { release: string; yes: boolean; allowShared: boolean }
+): Promise<void> {
+  const interactive = process.stdout.isTTY ?? false;
+  const result = await deps.upgradeFrameworkUseCase.execute({
+    projectRoot,
+    release: options.release,
+    allowShared: options.allowShared || (interactive && !options.yes),
+    confirm: async (preview) => {
+      printReleasePreview(output, projectRoot, preview);
+      if (options.yes) return true;
+      if (!interactive)
+        throw new Error(
+          "A release update requires confirmation; pass --yes after reviewing its impact."
+        );
+      return deps.prompter.confirm(
+        "Update these project plugins and the displayed marketplace?",
+        false
+      );
+    },
+  });
+  if (result.cancelled) {
+    output.info("Update cancelled; no installation changes were made.");
+    return;
+  }
+  output.success(
+    `Updated project plugin sources to ${options.release}: ${result.updated.join(", ")}.`
+  );
+  output.info(
+    "Restart the affected tools to load the updated plugins. Session reload and every component were not verified."
+  );
+}
+
+async function runUserFrameworkReleaseUpdate(
+  deps: Deps,
+  output: CLIOutput,
+  projectRoot: string,
+  options: { release: string; yes: boolean }
+): Promise<void> {
+  assertMachineConfigDirectorySupported();
+  const interactive = process.stdout.isTTY ?? false;
+  const result = await deps.upgradeUserFrameworkUseCase.execute({
+    projectRoot,
+    release: options.release,
+    confirm: async (preview) => {
+      output.info(`Machine release: ${preview.release}`);
+      for (const target of preview.targets) {
+        output.info(
+          `  ${target.toolId}:${target.name} (plugin ${target.currentVersion} -> ${target.targetVersion}; source ${target.currentRef} -> ${preview.release})`
+        );
+        if (target.dependents.length)
+          output.info(`    Dependent projects: ${target.dependents.join(", ")}`);
+      }
+      printReleaseLinks(
+        output,
+        preview.release,
+        preview.targets.map((target) => target.currentRef),
+        preview.title
+      );
+      if (preview.nativeSkipped)
+        output.warn(
+          `${preview.nativeSkipped} native plugin claims are not updated by this command.`
+        );
+      if (options.yes) return true;
+      if (!interactive)
+        throw new Error(
+          "A release update requires confirmation; pass --yes after reviewing its impact."
+        );
+      return deps.prompter.confirm("Update these machine plugin copies?", false);
+    },
+  });
+  if (result.cancelled) {
+    output.info("Update cancelled; no installation changes were made.");
+    return;
+  }
+  output.success(
+    `Updated machine plugin sources to ${options.release}: ${result.updated.join(", ")}.`
+  );
+  output.info(
+    "Restart the affected tools to load updated plugins; dependent projects may need a refresh."
+  );
+}
+
 export function registerFrameworkCommand(program: Command): void {
   const framework = program
     .command("framework")
@@ -205,27 +370,69 @@ export function registerFrameworkCommand(program: Command): void {
 
   framework
     .command("update")
-    .description(
-      "Re-install tool configs from bundled CLI assets, moving to a new version (all installed tools if --tool is omitted; see `marketplace refresh`, which re-fetches catalogs instead)"
-    )
+    .description("Update installed tool configs from the CLI, or plugins with --release")
     .option("--tool <tool>", "Limit update to a specific AI or IDE tool")
     .option("-f, --force", "Overwrite modified files without prompting", false)
-    .action(async (cmdOptions: { tool?: string; force: boolean }) => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkUpdate(
-          deps,
-          output,
-          projectRoot,
-          cmdOptions.tool as ToolId | undefined,
-          cmdOptions
-        );
-      } catch (error) {
-        errorHandler.handle(error);
+    .option("--release <tag>", "Update plugins to a root release, e.g. v5.13.0")
+    .option(
+      "--scope <project|user>",
+      "Choose project or machine plugin installations (with --release)"
+    )
+    .option("--yes", "Confirm the displayed release update without prompting", false)
+    .option("--allow-shared", "Confirm a marketplace change shared with other projects", false)
+    .action(
+      async (cmdOptions: {
+        tool?: string;
+        force: boolean;
+        release?: string;
+        scope?: string;
+        yes: boolean;
+        allowShared: boolean;
+      }) => {
+        const { verbose, output, projectRoot } = parseGlobalOptions(program);
+        const errorHandler = new ErrorHandler(output);
+        try {
+          if (!cmdOptions.release && (cmdOptions.yes || cmdOptions.allowShared))
+            throw new Error("--yes and --allow-shared require --release.");
+          if (
+            cmdOptions.scope !== undefined &&
+            cmdOptions.scope !== "project" &&
+            cmdOptions.scope !== "user"
+          )
+            throw new Error("--scope must be project or user.");
+          if (cmdOptions.scope && !cmdOptions.release)
+            throw new Error("--scope requires --release.");
+          if (cmdOptions.scope === "user" && cmdOptions.allowShared)
+            throw new Error("--allow-shared is not needed for machine plugin copies.");
+          if (cmdOptions.release && (cmdOptions.tool || cmdOptions.force))
+            throw new Error("--tool and --force cannot be combined with --release.");
+          const deps = await createDeps(projectRoot, { verbose }, output);
+          if (cmdOptions.release) {
+            if (cmdOptions.scope === "user")
+              await runUserFrameworkReleaseUpdate(deps, output, projectRoot, {
+                release: cmdOptions.release,
+                yes: cmdOptions.yes,
+              });
+            else
+              await runFrameworkReleaseUpdate(deps, output, projectRoot, {
+                release: cmdOptions.release,
+                yes: cmdOptions.yes,
+                allowShared: cmdOptions.allowShared,
+              });
+            return;
+          }
+          await runFrameworkUpdate(
+            deps,
+            output,
+            projectRoot,
+            cmdOptions.tool as ToolId | undefined,
+            cmdOptions
+          );
+        } catch (error) {
+          errorHandler.handle(error);
+        }
       }
-    });
+    );
 
   framework
     .command("rules")

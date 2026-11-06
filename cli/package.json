@@ -36,7 +36,7 @@
     "node": ">=22.12"
   },
   "packageManager": "pnpm@12.16.1",
-  "bundleBudgetKB": 747,
+  "bundleBudgetKB": 826,
   "scripts": {
     "build": "tsup && node scripts/check-bundle-size.mjs",
     "build:check-size": "node scripts/check-bundle-size.mjs",
@@ -86,6 +86,8 @@
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "commander": "^15.0.0",
+    "cross-spawn": "7.0.6",
+    "jsonc-parser": "^3.3.1",
     "simple-git": "^4.0.2",
     "smol-toml": "^1.6.1"
   },
@@ -95,6 +97,7 @@
     "@commitlint/config-conventional": "^21.2.0",
     "@stryker-mutator/core": "^10.0.0",
     "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@types/cross-spawn": "6.0.6",
     "@types/node": "^26.1.1",
     "@vitest/coverage-v8": "^5.0.0",
     "fast-check": "^4.7.0",

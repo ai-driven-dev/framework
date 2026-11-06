@@ -30,3 +30,16 @@ describe("opencode hooks", () => {
     });
   });
 });
+
+describe("OpenCode TUI plugin files", () => {
+  it("materializes separate V2 server and TUI entries", () => {
+    const hooks = opencode.buildContracts?.flat?.().artifacts.hooks;
+    if (!hooks?.supported) throw new Error("expected hooks artifact");
+    expect(hooks.path("aidd-maintenance", "hooks/opencode-server.js")).toBe(
+      ".opencode/plugins/aidd-maintenance-tui/server.js"
+    );
+    expect(hooks.path("aidd-maintenance", "hooks/opencode-tui.js")).toBe(
+      ".opencode/plugins/aidd-maintenance-tui/tui.js"
+    );
+  });
+});

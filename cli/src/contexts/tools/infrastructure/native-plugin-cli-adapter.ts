@@ -9,6 +9,7 @@ export interface NativePluginCliShape {
   readonly sourceCheckVerb?: string;
   readonly upgradeVerb?: string;
   readonly updateVerb?: string;
+  readonly releaseUpdateVerb?: string;
   readonly enableVerb?: string;
   /** How the tool spells removing a plugin it installed: `remove` for codex, `uninstall` for
    * claude and copilot. Absent where this CLI enables plugins through a file it writes. */
@@ -66,6 +67,16 @@ export class NativePluginCliAdapter extends AbstractNativePluginCliAdapter {
     if (verb === undefined)
       throw new Error(`${this.binary} does not support targeted native plugin update.`);
     this.run(["plugin", verb, pluginRef], `plugin ${verb} ${pluginRef}`);
+  }
+
+  refreshReleasePlugin(pluginRef: string, scope: MarketplaceScope, projectRoot: string): void {
+    const verb = this.shape.releaseUpdateVerb;
+    if (verb === undefined) throw new Error(`${this.binary} does not support release refresh.`);
+    this.run(
+      ["plugin", verb, pluginRef, ...this.scopeArgsFor(scope)],
+      `plugin ${verb} ${pluginRef}`,
+      projectRoot
+    );
   }
 
   /** Undoes what `enablePlugin` did. `scope` must match what `enablePlugin` was called with: a

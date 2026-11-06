@@ -51,3 +51,4 @@ flowchart LR
 - Configs are inlined at build time, schemas are not: five JSON files ship beside the binary. Drop them from `files` and the CLI breaks.
 - The build empties its output directory; `AIDD_BUILD_OUT_DIR` accepts two shapes only.
 - `git` exports `GIT_*` into everything it spawns. Strip them before reading a repository.
+- User-lock recovery requires the same boot and process namespace. References read 2026-11-05: [Linux kernel identity](https://kernel.org/doc/html/v6.6/admin-guide/sysctl/kernel.html), [Darwin boot session](https://github.com/apple/darwin-xnu/blob/main/iokit/IOKit/pwr_mgt/IOPM.h). Windows recovery is not verified and refuses to reap an owner.

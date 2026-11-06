@@ -16,10 +16,7 @@ export default defineConfig({
           include: ["tests/**/*.unit.test.ts"],
           globals: false,
           environment: "node",
-          globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
-          ],
+          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
         },
       },
       {
@@ -43,10 +40,7 @@ export default defineConfig({
           testTimeout: 60000,
           // A `beforeEach` that spawns git is slower than the 10s default on a loaded Windows runner.
           hookTimeout: 60000,
-          globalSetup: [
-            "./tests/helpers/sweep-stale-temp-dirs.ts",
-            "./tests/helpers/throwaway-profile.ts",
-          ],
+          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
         },
       },
       {
@@ -58,7 +52,7 @@ export default defineConfig({
           globals: false,
           environment: "node",
           testTimeout: 60000,
-          globalSetup: ["./tests/e2e/global-setup.ts", "./tests/helpers/sweep-stale-temp-dirs.ts"],
+          globalSetup: ["./tests/e2e/global-setup.ts"],
         },
       },
     ],

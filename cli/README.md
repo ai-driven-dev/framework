@@ -52,13 +52,14 @@ Every flag: `aidd --help`, then a group's own `--help`.
 | `aidd sync` | Rewrite owned files from the manifest, then re-drive native activation |
 | `aidd clean` | Remove every AIDD-managed file from the project |
 | `aidd update` | Update the CLI itself (alias `upgrade`) |
+| `aidd run opencode -- <args>` / `aidd run kilo -- <args>` | Run headless with the installed maintenance notice on stderr |
 
 ### Framework
 
 | Command | Does |
 | --- | --- |
 | `aidd framework install` | Write one tool's runtime configuration from the bundled assets |
-| `aidd framework update` | Move installed tools to this CLI's assets (all of them without `--tool`) |
+| `aidd framework update` | Update tool configs from this CLI; `--release <tag>` updates project plugins after confirmation, or global flat copies with `--scope user` |
 | `aidd framework remove` | Delete the generated configuration files of one tool |
 | `aidd framework rules` | List the rules installed across every AI tool (`--json` for a machine) |
 
@@ -151,6 +152,8 @@ Needed for a private marketplace only.
 | `stored` | The token itself | `--token <value>` |
 | `external` | The provider name. The token is asked from it at fetch time | `--gh` |
 
+For Git clones, AIDD sends these tokens only to `github.com`. Configure a [Git credential helper](https://git-scm.com/docs/gitcredentials) for GitLab, Bitbucket or other hosts (documentation read 2026-11-06).
+
 The token resolves from the first hit:
 
 1. `AIDD_TOKEN`
@@ -189,7 +192,7 @@ The token resolves from the first hit:
 
 | Variable | Effect |
 | --- | --- |
-| `AIDD_TOKEN` | Token for every fetch, ahead of any stored credential |
+| `AIDD_TOKEN` | GitHub token, ahead of any stored credential |
 | `AIDD_USER_CONFIG_DIR` | Relocates the user config directory, credentials included |
 | `XDG_CONFIG_HOME` | Names the config root when `AIDD_USER_CONFIG_DIR` is unset |
 | `AIDD_SKIP_UPDATE_CHECK` | `1` skips the self-update check before a command |

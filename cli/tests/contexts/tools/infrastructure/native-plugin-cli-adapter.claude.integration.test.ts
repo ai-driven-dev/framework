@@ -33,6 +33,19 @@ function claudeAdapter(): NativePluginCliAdapter {
 }
 
 describe("ClaudeCliAdapter — plugin enable/uninstall carry the requested scope", () => {
+  it("refreshes the local installation without accepting marketplace commands", () => {
+    mockSpawnSync.mockReturnValue(makeResult({}));
+    new NativePluginCliAdapter("claude", {
+      scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+      releaseUpdateVerb: "update",
+      pluginArgs: ["--yes"],
+    }).refreshReleasePlugin("aidd-context@aidd-framework", "project", "/project");
+    expect(mockSpawnSync).toHaveBeenLastCalledWith(
+      "claude",
+      ["plugin", "update", "aidd-context@aidd-framework", "--scope", "local"],
+      expect.objectContaining({ cwd: "/project" })
+    );
+  });
   it("enables a plugin at project scope by default — --scope local, never claude's own implicit default", () => {
     mockSpawnSync.mockReturnValue(makeResult({}));
 

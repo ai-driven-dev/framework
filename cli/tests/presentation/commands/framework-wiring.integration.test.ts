@@ -8,6 +8,9 @@ const uninstallAiTools = vi.fn();
 const uninstallIdeTool = vi.fn();
 const updateAiTools = vi.fn();
 const updateIdeTools = vi.fn();
+const upgradeFramework = vi.fn();
+const upgradeUserFramework = vi.fn();
+const confirmUpgrade = vi.fn();
 const listInstalledRules = vi.fn();
 const validateRecipes = vi.fn();
 const loadManifest = vi.fn();
@@ -21,12 +24,19 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     uninstallIdeUseCase: { execute: uninstallIdeTool },
     updateAiToolsUseCase: { execute: updateAiTools },
     updateIdeToolsUseCase: { execute: updateIdeTools },
+    upgradeFrameworkUseCase: { execute: upgradeFramework },
+    upgradeUserFrameworkUseCase: { execute: upgradeUserFramework },
+    prompter: { confirm: confirmUpgrade },
     listInstalledRulesUseCase: { execute: listInstalledRules },
     validateRecipesUseCase: { execute: validateRecipes },
     manifestRepo: { load: loadManifest },
     currentVersionProvider: { get: currentVersion },
   })),
   createMenuDeps: vi.fn(),
+}));
+
+vi.mock("../../../src/runtime/machine-config-directory.js", () => ({
+  assertMachineConfigDirectorySupported: vi.fn(),
 }));
 
 const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
@@ -72,6 +82,53 @@ beforeEach(() => {
   uninstallIdeTool.mockResolvedValue({ toolId: "vscode", fileCount: 1 });
   updateAiTools.mockResolvedValue({ updatedTools: [], errors: [] });
   updateIdeTools.mockResolvedValue({ updatedTools: [], errors: [] });
+  upgradeFramework.mockImplementation(async (options) => {
+    const confirmed = await options.confirm({
+      currentRef: "v5.12.0",
+      release: options.release,
+      title: "Release title",
+      targets: [
+        {
+          toolId: "opencode",
+          pluginName: "aidd-context",
+          currentRef: "v5.12.0",
+          currentVersion: "2.9.0",
+          targetVersion: "2.10.0",
+        },
+      ],
+      globalSkipped: 0,
+      shared: true,
+    });
+    if (confirmed && !options.allowShared) throw new Error("shared marketplace requires approval");
+    return {
+      updated: confirmed ? ["opencode:aidd-context"] : [],
+      globalSkipped: 0,
+      cancelled: !confirmed,
+    };
+  });
+  upgradeUserFramework.mockImplementation(async (options) => {
+    const confirmed = await options.confirm({
+      release: options.release,
+      title: "Release title",
+      nativeSkipped: 1,
+      targets: [
+        {
+          toolId: "opencode",
+          name: "aidd-context",
+          currentRef: "v5.12.0",
+          currentVersion: "2.9.0",
+          targetVersion: "2.10.0",
+          dependents: ["/project"],
+        },
+      ],
+    });
+    return {
+      updated: confirmed ? ["opencode:aidd-context"] : [],
+      nativeSkipped: 1,
+      cancelled: !confirmed,
+    };
+  });
+  confirmUpgrade.mockResolvedValue(false);
   listInstalledRules.mockResolvedValue({ rules: [] });
   validateRecipes.mockReturnValue({ findings: [], fileCount: 1 });
   loadManifest.mockResolvedValue(null);
@@ -232,6 +289,333 @@ describe("aidd framework remove", () => {
 });
 
 describe("aidd framework update", () => {
+  it("prints a partial failure as an error without reporting a completed update", async () => {
+    upgradeFramework.mockRejectedValueOnce(
+      new Error(
+        "Upgrade incomplete. Plugin sources updated: claude:aidd-context. catalog unavailable"
+      )
+    );
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(
+      run("update", "--release", "v5.13.0", "--scope", "project", "--yes", "--allow-shared")
+    ).rejects.toThrow("exited");
+    expect(errors.join("")).toContain("Plugin sources updated: claude:aidd-context");
+    expect(errors.join("")).toContain("catalog unavailable");
+    expect(written.join("")).not.toContain("Updated project plugin sources");
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+  it.each([
+    [["--scope", "user"], /--scope requires --release/],
+    [["--release", "v5.13.0", "--scope", "other"], /--scope must be project or user/],
+    [["--release", "v5.13.0", "--scope", "user", "--allow-shared"], /--allow-shared is not needed/],
+  ])("refuses invalid release scope options %j", async (args, message) => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("update", ...args)).rejects.toThrow("exited");
+    expect(errors.join("")).toMatch(message);
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(upgradeFramework).not.toHaveBeenCalled();
+    expect(upgradeUserFramework).not.toHaveBeenCalled();
+  });
+
+  it("routes an explicit project scope to the project updater", async () => {
+    const lines = await run(
+      "update",
+      "--release",
+      "v5.13.0",
+      "--scope",
+      "project",
+      "--yes",
+      "--allow-shared"
+    );
+    expect(upgradeFramework).toHaveBeenCalledOnce();
+    expect(upgradeUserFramework).not.toHaveBeenCalled();
+    expect(lines.join("\n")).toContain("Updated project plugin sources");
+  });
+
+  it("previews machine copies and native exclusions before asking", async () => {
+    pretendTerminal(true);
+    confirmUpgrade.mockResolvedValue(false);
+    const lines = await run("update", "--release", "v5.13.0", "--scope", "user");
+    expect(lines.join("\n")).toContain("opencode:aidd-context");
+    expect(lines.join("\n")).toContain("Dependent projects: /project");
+    expect(errors.join("")).toContain("native plugin claims are not updated");
+    expect(confirmUpgrade).toHaveBeenCalledWith(expect.any(String), false);
+    expect(upgradeFramework).not.toHaveBeenCalled();
+    expect(lines.join("\n")).toContain("Update cancelled; no installation changes were made.");
+  });
+
+  it("shows each distinct machine source comparison and release before confirmation", async () => {
+    pretendTerminal(true);
+    upgradeUserFramework.mockImplementation(async (options) => {
+      const target = {
+        toolId: "opencode",
+        name: "aidd-context",
+        currentVersion: "2.9.0",
+        targetVersion: "2.10.0",
+        dependents: [],
+      };
+      const confirmed = await options.confirm({
+        release: options.release,
+        title: "Release title",
+        nativeSkipped: 0,
+        targets: [
+          { ...target, currentRef: "v5.11.0" },
+          { ...target, currentRef: "v5.12.0" },
+          { ...target, currentRef: "v5.12.0" },
+          { ...target, currentRef: "v5.13.0" },
+        ],
+      });
+      return { updated: [], nativeSkipped: 0, cancelled: !confirmed };
+    });
+    confirmUpgrade.mockImplementation(async () => {
+      const preview = written.join("");
+      expect(preview).toContain("Release title: Release title");
+      expect(preview).toContain("https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0");
+      expect(preview).toContain(
+        "https://github.com/ai-driven-dev/framework/compare/v5.11.0...v5.13.0"
+      );
+      expect(preview.match(/compare\/v5\.12\.0\.\.\.v5\.13\.0/g)).toHaveLength(1);
+      expect(preview).not.toContain("compare/v5.13.0...v5.13.0");
+      expect(preview).toContain("not limited to installed plugins");
+      return false;
+    });
+    await run("update", "--release", "v5.13.0", "--scope", "user");
+    expect(confirmUpgrade).toHaveBeenCalledOnce();
+  });
+
+  it("requires confirmation for noninteractive machine updates", async () => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("update", "--release", "v5.13.0", "--scope", "user")).rejects.toThrow(
+      "exited"
+    );
+    expect(errors.join("")).toMatch(/--yes/);
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("passes explicit approval to the machine updater", async () => {
+    const lines = await run("update", "--release", "v5.13.0", "--scope", "user", "--yes");
+    expect(lines.join("\n")).toContain("Updated machine plugin sources to v5.13.0");
+    expect(lines.join("\n")).toContain("Restart the affected tools");
+    expect(errors.join("")).toContain("1 native plugin claims are not updated");
+    expect(upgradeFramework).not.toHaveBeenCalled();
+    expect(confirmUpgrade).not.toHaveBeenCalled();
+  });
+
+  it.each(["--yes", "--allow-shared"])("refuses %s without a release", async (flag) => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("update", flag)).rejects.toThrow("exited");
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(errors.join("")).toMatch(/--release/);
+    expect(updateAiTools).not.toHaveBeenCalled();
+    expect(upgradeFramework).not.toHaveBeenCalled();
+  });
+
+  it.each([["--tool", "opencode"], ["--force"]])(
+    "refuses tool config options on a release update: %s",
+    async (...flags) => {
+      const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+        throw new Error("exited");
+      });
+      await expect(run("update", "--release", "v5.13.0", ...flags)).rejects.toThrow("exited");
+      expect(exit).toHaveBeenCalledWith(1);
+      expect(errors.join("")).toMatch(/--tool.*--force/);
+      expect(upgradeFramework).not.toHaveBeenCalled();
+    }
+  );
+
+  it("does not treat --yes alone as consent to a shared marketplace change", async () => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("update", "--release", "v5.13.0", "--yes")).rejects.toThrow("exited");
+    expect(upgradeFramework.mock.calls[0][0].allowShared).toBe(false);
+    expect(confirmUpgrade).not.toHaveBeenCalled();
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("records interactive consent to the displayed shared impact", async () => {
+    pretendTerminal(true);
+    confirmUpgrade.mockResolvedValue(true);
+    await run("update", "--release", "v5.13.0");
+    expect(confirmUpgrade).toHaveBeenCalledWith(expect.any(String), false);
+    expect(upgradeFramework.mock.calls[0][0].allowShared).toBe(true);
+  });
+
+  it("still requires shared consent for --yes in an interactive terminal", async () => {
+    pretendTerminal(true);
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("update", "--release", "v5.13.0", "--yes")).rejects.toThrow("exited");
+    expect(upgradeFramework.mock.calls[0][0].allowShared).toBe(false);
+    expect(confirmUpgrade).not.toHaveBeenCalled();
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("lists release targets and does not write when the user declines", async () => {
+    pretendTerminal(true);
+    const lines = await run("update", "--release", "v5.13.0");
+    expect(lines.join("\n")).toContain("opencode:aidd-context");
+    expect(lines.join("\n")).toContain("source v5.12.0 -> v5.13.0");
+    expect(lines.join("\n")).toContain("plugin 2.9.0 -> 2.10.0");
+    expect(lines.join("\n")).toContain("v5.12.0");
+    expect(lines.join("\n")).toContain("v5.13.0");
+    expect(lines.join("\n")).toContain(PROJECT_ROOT);
+    expect(lines.join("\n")).toMatch(/cancel/i);
+    expect(lines.join("\n")).not.toMatch(/updated project plugin sources/i);
+    expect(errors.join("")).toMatch(/shared/i);
+    expect(confirmUpgrade).toHaveBeenCalledOnce();
+    expect(updateAiTools).not.toHaveBeenCalled();
+  });
+
+  it("shows marketplace and distinct project plugin comparisons before confirmation", async () => {
+    pretendTerminal(true);
+    upgradeFramework.mockImplementation(async (options) => {
+      const target = {
+        toolId: "opencode",
+        pluginName: "aidd-context",
+        currentVersion: "2.9.0",
+        targetVersion: "2.10.0",
+      };
+      const confirmed = await options.confirm({
+        currentRef: "v5.11.0",
+        release: options.release,
+        title: "Release title",
+        targets: [
+          { ...target, currentRef: "v5.12.0" },
+          { ...target, currentRef: "v5.12.0" },
+        ],
+        globalSkipped: 0,
+        shared: false,
+      });
+      return { updated: [], globalSkipped: 0, cancelled: !confirmed };
+    });
+    confirmUpgrade.mockImplementation(async () => {
+      const preview = written.join("");
+      expect(preview).toContain("Release title: Release title");
+      expect(preview).toContain("https://github.com/ai-driven-dev/framework/releases/tag/v5.13.0");
+      expect(preview).toContain(
+        "https://github.com/ai-driven-dev/framework/compare/v5.11.0...v5.13.0"
+      );
+      expect(preview.match(/compare\/v5\.12\.0\.\.\.v5\.13\.0/g)).toHaveLength(1);
+      expect(preview).toContain("not limited to installed plugins");
+      return false;
+    });
+    await run("update", "--release", "v5.13.0");
+    expect(confirmUpgrade).toHaveBeenCalledOnce();
+  });
+
+  it("shows Claude installations affected by a shared catalogue before confirmation", async () => {
+    pretendTerminal(true);
+    upgradeFramework.mockImplementation(async (options) => {
+      const confirmed = await options.confirm({
+        currentRef: "v5.12.0",
+        release: options.release,
+        title: "Release title",
+        targets: [],
+        globalSkipped: 0,
+        shared: true,
+        impact: [
+          { ref: "aidd-dev@aidd-framework", scope: "project", projectPath: "/other-project" },
+          { ref: "aidd-context@aidd-framework", scope: "user" },
+        ],
+      });
+      return { updated: [], globalSkipped: 0, cancelled: !confirmed };
+    });
+    confirmUpgrade.mockImplementation(async () => {
+      const preview = written.join("");
+      expect(preview).toContain("aidd-dev@aidd-framework (project, /other-project)");
+      expect(preview).toContain("aidd-context@aidd-framework (user)");
+      expect(preview).toContain("Other dependents may exist");
+      expect(preview).toContain("enabled states are unverified");
+      return false;
+    });
+    const lines = await run("update", "--release", "v5.13.0");
+    expect(confirmUpgrade).toHaveBeenCalledOnce();
+    expect(lines.join("\n")).toContain("Update cancelled");
+  });
+
+  it("requires explicit approval outside a terminal", async () => {
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("update", "--release", "v5.13.0")).rejects.toThrow("exited");
+    expect(errors.join("")).toMatch(/--yes/);
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("lets an explicit non-interactive approval pass to the release update", async () => {
+    const lines = await run("update", "--release", "v5.13.0", "--yes", "--allow-shared");
+    expect(lines.join("\n")).toContain("opencode:aidd-context");
+    expect(lines.join("\n")).toMatch(
+      /updated project plugin sources.*v5\.13\.0.*opencode:aidd-context/i
+    );
+    expect(lines.join("\n")).toMatch(/restart/i);
+    expect(lines.join("\n")).not.toMatch(/cancel/i);
+    expect(upgradeFramework.mock.calls[0][0].allowShared).toBe(true);
+    expect(confirmUpgrade).not.toHaveBeenCalled();
+    expect(updateAiTools).not.toHaveBeenCalled();
+  });
+
+  it("lists recorded global copies separately and says native inventory is incomplete", async () => {
+    upgradeFramework.mockImplementation(async (options) => {
+      const confirmed = await options.confirm({
+        currentRef: "v5.12.0",
+        release: options.release,
+        title: null,
+        targets: [
+          {
+            toolId: "opencode",
+            pluginName: "aidd-context",
+            currentRef: "v5.12.0",
+            currentVersion: "2.9.0",
+          },
+        ],
+        globalSkipped: 2,
+        unverifiedUserRefs: 1,
+        globalPlugins: [
+          {
+            toolId: "opencode",
+            pluginName: "aidd-context",
+            currentVersion: "2.9.0",
+            source: {
+              kind: "git-subdir",
+              url: "https://github.com/ai-driven-dev/framework.git",
+              path: "plugins/aidd-context",
+              ref: "v5.12.0",
+            },
+          },
+        ],
+        shared: false,
+      });
+      return {
+        updated: confirmed ? ["opencode:aidd-context"] : [],
+        globalSkipped: 2,
+        cancelled: !confirmed,
+      };
+    });
+    const lines = await run("update", "--release", "v5.13.0", "--yes");
+    expect(lines.join("\n")).toContain("Release title unavailable.");
+    expect(lines.join("\n")).toContain(
+      "opencode:aidd-context (plugin 2.9.0; source ai-driven-dev/framework@v5.12.0)"
+    );
+    expect(lines.join("\n")).toContain("Native user installations are not fully inventoried");
+    expect(errors.join("")).toContain(
+      "Project references to user-scope plugins not verified in the machine manifest: 1"
+    );
+    expect(lines.join("\n")).not.toMatch(/2 user-scope.*not be updated/i);
+    expect(lines.join("\n")).toContain("plugin 2.9.0;");
+    expect(errors.join("")).not.toMatch(/shared/i);
+    expect(confirmUpgrade).not.toHaveBeenCalled();
+  });
   it("fans out across both categories when no tool was named", async () => {
     updateAiTools.mockResolvedValue({
       updatedTools: [{ toolId: "claude", fileCount: 5 }],
@@ -416,10 +800,7 @@ describe("aidd framework — the help surface", () => {
         "remove",
         "Remove a tool's generated configuration files — removes the framework only (see `clean`, which removes all of AIDD)",
       ],
-      [
-        "update",
-        "Re-install tool configs from bundled CLI assets, moving to a new version (all installed tools if --tool is omitted; see `marketplace refresh`, which re-fetches catalogs instead)",
-      ],
+      ["update", "Update installed tool configs from the CLI, or plugins with --release"],
       ["rules", "List the rules installed in this project, across every AI tool"],
       [
         "validate-recipes",
@@ -438,6 +819,14 @@ describe("aidd framework — the help surface", () => {
     expect(optionsOf("update")).toEqual([
       ["--tool <tool>", "Limit update to a specific AI or IDE tool", false],
       ["-f, --force", "Overwrite modified files without prompting", false],
+      ["--release <tag>", "Update plugins to a root release, e.g. v5.13.0", false],
+      [
+        "--scope <project|user>",
+        "Choose project or machine plugin installations (with --release)",
+        false,
+      ],
+      ["--yes", "Confirm the displayed release update without prompting", false],
+      ["--allow-shared", "Confirm a marketplace change shared with other projects", false],
     ]);
     expect(optionsOf("rules")).toEqual([["--json", "Print the inventory as JSON", false]]);
   });

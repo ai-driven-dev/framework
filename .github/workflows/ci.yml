@@ -258,6 +258,7 @@ jobs:
             aidd-ui,
             aidd-telemetry,
             aidd-qa,
+            aidd-maintenance,
           ]
     steps:
       - name: Check if this plugin was released

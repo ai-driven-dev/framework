@@ -13,6 +13,7 @@ import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
+import type { PinnedUserFramework } from "../ownership/release/pinned-user-framework.js";
 import {
   deleteOldFiles,
   isPluginFileAtDesiredState,
@@ -38,6 +39,8 @@ export interface BuiltMaterializationDeps {
   ensureBuilt: EnsureBuiltMarketplace;
   marketplaceRegistry: MarketplaceRegistry;
   homedir: () => string;
+  pinnedFramework?: PinnedUserFramework;
+  userCacheRoot?: () => string;
 }
 
 export class ApplyPluginFilesUseCase {

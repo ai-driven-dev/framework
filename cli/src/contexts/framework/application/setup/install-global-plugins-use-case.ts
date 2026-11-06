@@ -9,6 +9,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugins/plugin-source-resolver.js";
 import type { PluginInstallMode } from "../../domain/setup-flow.js";
+import type { PinnedUserFramework } from "../ownership/release/pinned-user-framework.js";
 import type {
   PlannedUserPluginFileUpdate,
   UserPluginFileUpdater,
@@ -41,7 +42,8 @@ export class InstallGlobalPluginsUseCase {
   constructor(
     private readonly registry: Pick<MarketplaceRegistry, "list">,
     private readonly resolveMarketplace: ResolveMarketplace,
-    private readonly fileUpdater: Pick<UserPluginFileUpdater, "planUpdate" | "applyUpdate">,
+    private readonly fileUpdater: Pick<UserPluginFileUpdater, "planUpdate" | "applyUpdate"> &
+      Partial<Pick<UserPluginFileUpdater, "withPinnedSession">>,
     private readonly logger: Logger
   ) {}
 
@@ -51,6 +53,19 @@ export class InstallGlobalPluginsUseCase {
     record: (manifest: Manifest) => Promise<void>
   ): Promise<InstallGlobalPluginsResult> {
     if (options.mode === "none" || options.mode === "interactive") return { plugins: [] };
+    return this.fileUpdater.withPinnedSession
+      ? this.fileUpdater.withPinnedSession((session) =>
+          this.executeInSession(manifest, options, record, session)
+        )
+      : this.executeInSession(manifest, options, record);
+  }
+
+  private async executeInSession(
+    manifest: Manifest,
+    options: InstallGlobalPluginsOptions,
+    record: (manifest: Manifest) => Promise<void>,
+    session?: PinnedUserFramework
+  ): Promise<InstallGlobalPluginsResult> {
     const marketplace = (await this.registry.list(options.projectRoot)).find(
       (entry) => entry.name === FRAMEWORK_MARKETPLACE_NAME && entry.scope === "user"
     );
@@ -80,14 +95,19 @@ export class InstallGlobalPluginsUseCase {
         const plugin =
           owned === undefined
             ? resolved
-            : resolved.withFiles(owned.files).withDependents(owned.dependents);
-        const plan = await this.fileUpdater.planUpdate(
-          plugin,
-          toolId as AiToolId,
-          options.projectRoot,
-          this.logger,
-          true
-        );
+            : owned.source.kind === "git-subdir" &&
+                owned.source.url === "https://github.com/ai-driven-dev/framework.git" &&
+                owned.source.path === `plugins/${owned.name}` &&
+                owned.source.sha !== undefined
+              ? owned
+              : resolved
+                  .withFiles(owned.files)
+                  .withDependents(owned.dependents)
+                  .withTuiPlugin(owned.tuiPlugin);
+        const args = [plugin, toolId as AiToolId, options.projectRoot, this.logger, true] as const;
+        const plan = session
+          ? await this.fileUpdater.planUpdate(...args, undefined, session)
+          : await this.fileUpdater.planUpdate(...args);
         if (plan === null || (plan.files.length === 0 && owned === undefined)) continue;
         plans.push({ plan, owned: owned !== undefined });
       }

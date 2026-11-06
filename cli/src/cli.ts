@@ -7,6 +7,7 @@ import { registerFrameworkCommand } from "./presentation/commands/framework.js";
 import { registerMarketplaceCommand } from "./presentation/commands/marketplace.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerPluginCommand } from "./presentation/commands/plugin.js";
+import { registerRunCommand } from "./presentation/commands/run/command.js";
 import { registerSetupCommand } from "./presentation/commands/setup.js";
 import { registerSyncCommand } from "./presentation/commands/sync.js";
 import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
@@ -41,6 +42,7 @@ registerUpdateCommand(program);
 registerDoctorCommand(program);
 registerCleanCommand(program);
 registerTelemetryCommand(program);
+registerRunCommand(program);
 
 // Commands already paying for network I/O, so the update-check refresh rides one of them.
 // `marketplace remove` is offline and `update` already resolves the latest version itself.
@@ -54,6 +56,7 @@ const ONLINE_COMMAND_PATHS = new Set([
 
 program.hook("preAction", async (_thisCommand, actionCommand) => {
   if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
+  if (resolveCommandPath(actionCommand) === "run") return;
   // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
   if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
   const opts = program.opts<{ verbose?: boolean }>();

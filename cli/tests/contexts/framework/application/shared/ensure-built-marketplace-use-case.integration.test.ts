@@ -1,3 +1,4 @@
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -20,6 +21,8 @@ import {
 import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/kernel/paths.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import type { VersionReader } from "../../../../../src/kernel/ports/version-reader.js";
+import { FileAdapter } from "../../../../../src/runtime/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../../../../src/runtime/filesystem/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -106,6 +109,45 @@ describe("builtMarketplaceDir", () => {
       join("/p", ".aidd", "cache", "built", "aidd", "codex")
     );
   });
+});
+
+describe("build cache containment", () => {
+  it.skipIf(process.platform === "win32")(
+    "refuses a cache symlink without touching its target",
+    async () => {
+      const root = await mkdtemp(join(tmpdir(), "aidd-cache-boundary-"));
+      try {
+        const project = join(root, "project");
+        const outside = join(root, "outside");
+        await mkdir(join(project, ".aidd/cache"), { recursive: true });
+        await mkdir(join(outside, "aidd-framework/opencode"), { recursive: true });
+        const userFile = join(outside, "aidd-framework/opencode/user-file.txt");
+        await writeFile(userFile, "user data");
+        await symlink(outside, join(project, ".aidd/cache/built"));
+        const fs = new FileAdapter(new HasherAdapter());
+        const uc = new EnsureBuiltMarketplaceUseCase(
+          fs,
+          fakeResolve("/src/framework", "1.0.0"),
+          () => {
+            throw new Error("must not build");
+          },
+          fakeVersion("5.0.0"),
+          () => join(root, "home")
+        );
+        await expect(
+          uc.execute({
+            projectRoot: project,
+            marketplace: makeRemoteMarketplace(),
+            target: "opencode",
+            mode: "flat",
+          })
+        ).rejects.toThrow(/symlink/i);
+        expect(await readFile(userFile, "utf8")).toBe("user data");
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    }
+  );
 });
 
 describe("EnsureBuiltMarketplaceUseCase", () => {
@@ -385,6 +427,111 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
       })
     ).rejects.toThrow("No framework build for target 'codex' mode 'marketplace'.");
   });
+
+  it.skipIf(process.platform === "win32")(
+    "refuses a cache symlink to another directory inside the project",
+    async () => {
+      const root = await mkdtemp(join(tmpdir(), "aidd-cache-inside-"));
+      try {
+        const project = join(root, "project");
+        const userDir = join(project, "user-data");
+        const file = join(userDir, "aidd-framework/opencode/user-file.txt");
+        await mkdir(join(project, ".aidd/cache"), { recursive: true });
+        await mkdir(join(userDir, "aidd-framework/opencode"), { recursive: true });
+        await writeFile(file, "user data");
+        await symlink(userDir, join(project, ".aidd/cache/built"));
+        const fs = new FileAdapter(new HasherAdapter());
+        const uc = new EnsureBuiltMarketplaceUseCase(
+          fs,
+          fakeResolve("/src/framework", "1.0.0"),
+          () => {
+            throw new Error("must not build");
+          },
+          fakeVersion("5.0.0"),
+          () => join(root, "home")
+        );
+        await expect(
+          uc.execute({
+            projectRoot: project,
+            marketplace: makeRemoteMarketplace(),
+            target: "opencode",
+            mode: "flat",
+          })
+        ).rejects.toThrow(/symlink/i);
+        expect(await readFile(file, "utf8")).toBe("user data");
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    }
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "refuses a user cache symlink without touching its target",
+    async () => {
+      const root = await mkdtemp(join(tmpdir(), "aidd-user-cache-"));
+      try {
+        const project = join(root, "project");
+        const userRoot = join(root, "user");
+        const outside = join(root, "outside");
+        const file = join(outside, "5.0.0/shared-mkt/opencode/user-file.txt");
+        await mkdir(project, { recursive: true });
+        await mkdir(join(userRoot, "cache"), { recursive: true });
+        await mkdir(join(outside, "5.0.0/shared-mkt/opencode"), { recursive: true });
+        await writeFile(file, "user data");
+        await symlink(outside, join(userRoot, "cache/built"));
+        const fs = new FileAdapter(new HasherAdapter());
+        const uc = new EnsureBuiltMarketplaceUseCase(
+          fs,
+          fakeResolve("/src/framework", "1.0.0"),
+          () => {
+            throw new Error("must not build");
+          },
+          fakeVersion("5.0.0"),
+          () => userRoot
+        );
+        await expect(
+          uc.execute({
+            projectRoot: project,
+            marketplace: makeUserMarketplace(),
+            target: "opencode",
+            mode: "flat",
+          })
+        ).rejects.toThrow(/symlink/i);
+        expect(await readFile(file, "utf8")).toBe("user data");
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    }
+  );
+
+  it.skipIf(process.platform === "win32")("refuses a dangling cache symlink", async () => {
+    const root = await mkdtemp(join(tmpdir(), "aidd-cache-dangling-"));
+    try {
+      const project = join(root, "project");
+      await mkdir(join(project, ".aidd/cache"), { recursive: true });
+      await symlink(join(root, "missing"), join(project, ".aidd/cache/built"));
+      const fs = new FileAdapter(new HasherAdapter());
+      const uc = new EnsureBuiltMarketplaceUseCase(
+        fs,
+        fakeResolve("/src/framework", "1.0.0"),
+        () => {
+          throw new Error("must not build");
+        },
+        fakeVersion("5.0.0"),
+        () => join(root, "home")
+      );
+      await expect(
+        uc.execute({
+          projectRoot: project,
+          marketplace: makeRemoteMarketplace(),
+          target: "opencode",
+          mode: "flat",
+        })
+      ).rejects.toThrow(/symlink/i);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("EnsureBuiltMarketplaceUseCase — when a published source's sentinel can be believed", () => {
@@ -434,6 +581,14 @@ describe("EnsureBuiltMarketplaceUseCase — when a published source's sentinel c
     expect(builds).toBe(1);
   });
 
+  it("discards stale files when rebuilding a changed release", async () => {
+    fs.setFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");
+    fs.setFile(join(builtDir, "plugins/aidd-vcs/obsolete.md"), "old release");
+    expect(await ensure("2.0.0")).toBe(true);
+    expect(await fs.fileExists(join(builtDir, "plugins/aidd-vcs/obsolete.md"))).toBe(false);
+    expect(fs.getFile(join(builtDir, "plugins/aidd-vcs/SKILL.md"))).toBe("built content");
+  });
+
   it("rebuilds a catalog without a version even when the sentinel says unversioned too", async () => {
     fs.setFile(join(builtDir, ".build-version"), "5.0.0:unversioned");
     expect(await ensure(undefined)).toBe(true);
@@ -467,13 +622,20 @@ describe("force behavior at the cache-rebuild path", () => {
         makeIsDirectory(memFs),
         new CapturingLogger()
       );
-      return new FrameworkBuildUseCase(
+      const build = new FrameworkBuildUseCase(
         memFs,
         validator,
         assetProvider,
         new CapturingLogger(),
         strategy
       );
+      // The in-memory adapter represents directories by their children, unlike the real FS.
+      return {
+        execute: async (options) => {
+          await memFs.writeFile(join(outDir, ".directory"), "");
+          return build.execute(options);
+        },
+      };
     };
 
     const uc = new EnsureBuiltMarketplaceUseCase(

@@ -34,6 +34,7 @@ export interface NativePluginActivator {
    */
   enablePlugin(pluginRef: string, scope?: MarketplaceScope): void;
   updatePlugin?(pluginRef: string): void;
+  refreshReleasePlugin?(pluginRef: string, scope: MarketplaceScope, projectRoot: string): void;
   /**
    * Uninstalls a plugin referenced as `<plugin>@<marketplace>`, the counterpart of
    * {@link enablePlugin}. May throw when the plugin is already absent from the tool's own

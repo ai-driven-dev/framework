@@ -85,6 +85,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
   process.exitCode = undefined;
 });
 
@@ -165,6 +166,28 @@ describe("aidd setup — the flow a scripted run builds", () => {
     expect(flow.scope).toBe("user");
     expect(setupTools).not.toHaveBeenCalled();
     expect(resolveSourceIfNeeded).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unsupported OpenCode global config root before setup writes anything", async () => {
+    vi.stubEnv("HOME", "/isolated/home");
+    vi.stubEnv("XDG_CONFIG_HOME", "/other/config");
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(
+      run("--global", "--ide", "opencode", "--plugins", "none", "--yes")
+    ).rejects.toThrow("exited");
+    expect(errors.join("")).toContain("opencode global installation requires XDG_CONFIG_HOME");
+    expect(createDeps).not.toHaveBeenCalled();
+    expect(setupMachineScope).not.toHaveBeenCalled();
+  });
+
+  it("allows a project setup under a custom XDG root", async () => {
+    vi.stubEnv("HOME", "/isolated/home");
+    vi.stubEnv("XDG_CONFIG_HOME", "/other/config");
+    await run("--ai", "opencode", "--yes");
+    expect(builtFlow().aiTools).toEqual(["opencode"]);
+    expect(setupTools).toHaveBeenCalledOnce();
   });
 });
 

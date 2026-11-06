@@ -1,6 +1,7 @@
-import { homedir } from "node:os";
+import { mkdtemp } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import "../../contexts/tools/domain/profiles/antigravity/profile.js";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
@@ -12,6 +13,7 @@ import { MarketplaceAddUseCase } from "../../contexts/distribution/application/m
 import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFrameworkUseCase } from "../../contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -24,6 +26,7 @@ import { DoctorUseCase } from "../../contexts/framework/application/doctor/docto
 import { MarketplaceCheckUseCase } from "../../contexts/framework/application/flows/marketplace-check-use-case.js";
 import { MarketplaceRemoveUseCase } from "../../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { BuiltTreeMaterializationTranslator } from "../../contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
 import { GitignoreUseCase } from "../../contexts/framework/application/gitignore-use-case.js";
 import { DoctorAllUseCase } from "../../contexts/framework/application/global/doctor-all-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../contexts/framework/application/global/resolve-update-decision-use-case.js";
@@ -39,7 +42,15 @@ import { InstallRuntimeConfigUseCase } from "../../contexts/framework/applicatio
 import { PostInstallPipelineUseCase } from "../../contexts/framework/application/install/post-install-pipeline-use-case.js";
 import { ListInstalledRulesUseCase } from "../../contexts/framework/application/list-installed-rules-use-case.js";
 import { NativeHostRegistrationGate } from "../../contexts/framework/application/ownership/native-host-registration-gate.js";
-import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { inspectNativeMarketplaceSource } from "../../contexts/framework/application/ownership/native-marketplace-source-proof.js";
+import { assertNoSymlinksWithinRoot } from "../../contexts/framework/application/ownership/project-path-boundary.js";
+import {
+  assertProjectMcpEntriesRemovable,
+  assertProjectTuiUnchanged,
+  ProjectPluginCleanup,
+} from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { UpgradeUserFrameworkUseCase } from "../../contexts/framework/application/ownership/release/upgrade-user-framework-use-case.js";
+import { UserReleaseJournal } from "../../contexts/framework/application/ownership/release/user-release-journal.js";
 import { UserMarketplaceRemoveUseCase } from "../../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../../contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../contexts/framework/application/ownership/user-plugin-update-use-case.js";
@@ -63,35 +74,54 @@ import {
   EnsureBuiltMarketplaceUseCase,
   type FrameworkBuildFor,
 } from "../../contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
+import { assertProjectHooksRemovable } from "../../contexts/framework/application/shared/remove-project-hooks.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { StatusUseCase } from "../../contexts/framework/application/status-use-case.js";
 import { UninstallIdeUseCase } from "../../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../../contexts/framework/application/uninstall/uninstall-use-case.js";
+import {
+  assertUpgradeWrite,
+  protectUpgradeWrites,
+} from "../../contexts/framework/application/upgrade-file-guard.js";
+import { UpgradeFrameworkUseCase } from "../../contexts/framework/application/upgrade-framework-use-case.js";
+import { getToolSupportedScope } from "../../contexts/framework/domain/install-scope.js";
 import type { Environment } from "../../contexts/framework/domain/ports/environment.js";
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
 import { EnvironmentAdapter } from "../../contexts/framework/infrastructure/environment-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
+import { PinnedUserFrameworkAdapter } from "../../contexts/framework/infrastructure/pinned-user-framework-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
+import { UserReleaseJournalStoreAdapter } from "../../contexts/framework/infrastructure/user-release-journal-store.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import { claudeConfigDir } from "../../contexts/telemetry/domain/claude-projects-root.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
 import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
-import { hostPluginRegistryReaders } from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
+import {
+  frameworkBuildModeFor,
+  projectHooksDeliveryOf,
+} from "../../contexts/tools/domain/registry.js";
+import {
+  claudeInstallations,
+  hostPluginRegistryReaders,
+} from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
 import {
   HostRegistryMarketplaceSourceReaderAdapter,
   NativeMarketplaceSourceReaderAdapter,
 } from "../../contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
+import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../kernel/paths.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import type { VersionReader } from "../../kernel/ports/version-reader.js";
+import { resolveHomeDir } from "../../kernel/reading/home-dir.js";
 import type { AiToolId } from "../../kernel/tool.js";
 import { CLIOutput } from "../../presentation/output.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
@@ -146,6 +176,8 @@ interface Deps {
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
+  upgradeFrameworkUseCase: UpgradeFrameworkUseCase;
+  upgradeUserFrameworkUseCase: UpgradeUserFrameworkUseCase;
   userPluginUpdateUseCase: UserPluginUpdateUseCase;
   marketplaceAddUseCase: MarketplaceAddUseCase;
   marketplaceListUseCase: MarketplaceListUseCase;
@@ -215,7 +247,14 @@ export async function createDeps(
   const fs = new FileAdapter(hasher, logger);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
+  let userReleaseJournal: UserReleaseJournal;
+  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile, () =>
+    userReleaseJournal.recover()
+  );
+  userReleaseJournal = new UserReleaseJournal(fs, hasher, userManifestRepo, {
+    home: homedir,
+    store: new UserReleaseJournalStoreAdapter(() => userManifestRepo.path),
+  });
   const http = new HttpClient();
   const authStorage = new AuthStorage();
   const ghCliAdapter = new GhCliAdapter();
@@ -259,11 +298,14 @@ export async function createDeps(
   }
   // Read once, reused wherever a use case needs the scope a plugin is actually registered
   // at: removal, clean, and doctor's own registration check.
+  const hostHome = resolveHomeDir();
+  const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, hostHome);
   const hostPluginRegistries = hostPluginRegistryReaders();
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const userSourceReferences = new UserSourceReferencesAdapter(fs, userConfigDir);
   const {
+    pluginCatalogRepository,
     pluginFetcher,
     marketplaceRegistry,
     marketplaceTrustStore,
@@ -459,6 +501,338 @@ export async function createDeps(
     doctorRegistrationUseCase
   );
   const releaseResolver = new GitHubReleaseResolverAdapter(http, authReader);
+  const upgradeFrameworkUseCase = new UpgradeFrameworkUseCase({
+    listMarketplaces: (root) => marketplaceRegistry.list(root),
+    saveMarketplace: (root, marketplace) => marketplaceRegistry.save(root, marketplace),
+    loadManifest: () => manifestRepo.load(),
+    loadUserManifest: () => userManifestRepo.load(),
+    resolvePublishedRelease: (repo, release) =>
+      releaseResolver.resolvePublishedRelease(repo, release),
+    resolveTarget: (marketplace, root) =>
+      resolveMarketplaceUseCase.execute({ marketplace, projectRoot: root, forceRefresh: true }),
+    readTargetVersion: async (localPath, pluginName) => {
+      const distribution = await pluginDistributionReader.read(
+        join(localPath, "plugins", pluginName)
+      );
+      if (distribution.manifest.name !== pluginName)
+        throw new Error(`Cannot verify the target plugin '${pluginName}'.`);
+      return distribution.manifest.version;
+    },
+    preflight: async (manifest, root, targets, marketplace, localPath) => {
+      const claudeTargets = targets.filter((target) => target.toolId === "claude");
+      let impact: Awaited<ReturnType<typeof claudeInstallations>> = [];
+      let shared = false;
+      let sourceSnapshot: string | undefined;
+      if (claudeTargets.length) {
+        if (resolve(claudeDir) !== resolve(hostHome, ".claude"))
+          throw new Error(
+            "Cannot upgrade Claude with a custom CLAUDE_CONFIG_DIR: its marketplace paths are not supported."
+          );
+        const registration = manifest.getNativeRegistrations("claude");
+        const catalogues = registration?.marketplaces.filter(
+          (entry) => entry.alias === marketplace.name
+        );
+        const catalogue =
+          catalogues?.length === 1
+            ? catalogues[0]
+            : catalogues?.length
+              ? undefined
+              : { alias: marketplace.name, hostName: marketplace.name };
+        if (!catalogue) throw new Error("Cannot verify Claude marketplace identity.");
+        const hostName = catalogue.hostName;
+        sourceSnapshot = await fs.realpath(
+          marketplace.scope === "user"
+            ? userBuiltMarketplaceDir(
+                userConfigDir(),
+                currentVersionProvider.get(),
+                marketplace.name,
+                "claude"
+              )
+            : builtMarketplaceDir(root, marketplace.name, "claude")
+        );
+        const source = await inspectNativeMarketplaceSource(nativeSources.get("claude"), root, {
+          ...catalogue,
+          provenance: { kind: "registry", source: sourceSnapshot },
+        });
+        if (source.status !== "owned")
+          throw new Error(
+            `Cannot verify Claude marketplace source: ${source.reason ?? source.status}`
+          );
+        const refs = claudeTargets.map((target) => `${target.pluginName}@${hostName}`);
+        impact = await claudeInstallations(claudeDir, hostName);
+        const here = await fs.realpath(root).catch(() => root);
+        for (const target of claudeTargets) {
+          const ref = `${target.pluginName}@${hostName}`;
+          if (
+            !impact.some(
+              (entry) => entry.ref === ref && entry.scope === "local" && entry.projectPath === here
+            )
+          ) {
+            throw new Error(
+              `Cannot upgrade claude:${target.pluginName}: its local installation was not found.`
+            );
+          }
+        }
+        shared = impact.some(
+          (entry) =>
+            !refs.includes(entry.ref) || entry.scope !== "local" || entry.projectPath !== here
+        );
+      }
+      for (const target of targets) {
+        if (getToolSupportedScope(target.toolId) !== "project")
+          throw new Error(
+            `Cannot upgrade ${target.toolId}:${target.pluginName}: the tool's current install scope differs from the recorded project scope.`
+          );
+        const plugin = manifest
+          .getPlugins(target.toolId)
+          .find((entry) => entry.name === target.pluginName);
+        if (!plugin)
+          throw new Error(
+            `Plugin ${target.toolId}:${target.pluginName} is missing from the manifest.`
+          );
+        for (const path of plugin.files.keys())
+          await assertNoSymlinksWithinRoot(fs, root, resolve(root, path));
+        for (const path of plugin.projectHooks?.scripts.keys() ?? [])
+          await assertNoSymlinksWithinRoot(fs, root, resolve(root, path));
+        const drift = await detectPluginDriftUseCase.execute({
+          manifest,
+          projectRoot: root,
+          toolIds: [target.toolId],
+          pluginName: target.pluginName,
+        });
+        if (drift.length)
+          throw new Error(
+            `Cannot upgrade ${target.toolId}:${target.pluginName}: tracked files are modified or missing (${drift.flatMap((entry) => entry.files.map((file) => file.relativePath)).join(", ")}).`
+          );
+        await assertProjectMcpEntriesRemovable(fs, plugin, target.toolId, root);
+        await assertProjectHooksRemovable(fs, plugin, target.toolId, root);
+        await assertProjectTuiUnchanged(fs, plugin, target.toolId, root);
+      }
+      // Build the target in a disposable, project-scoped cache, without moving a shared
+      // marketplace. This is the same reader the real install uses for its output paths.
+      const temporary = await mkdtemp(join(tmpdir(), "aidd-upgrade-preview-"));
+      try {
+        const previewMarketplace = Marketplace.fromJSON({
+          ...marketplace.toJSON(),
+          scope: "project",
+        });
+        const previewBuilder = new EnsureBuiltMarketplaceUseCase(
+          fs,
+          {
+            execute: async ({ marketplace: selected }) => ({
+              marketplace: selected,
+              localPath,
+              catalog: null,
+            }),
+          },
+          frameworkBuildFor,
+          currentVersionProvider,
+          userConfigDir
+        );
+        const reader = new BuiltTreeMaterializationTranslator(
+          fs,
+          hasher,
+          homedir,
+          previewBuilder,
+          marketplaceRegistry
+        );
+        const planned = new Map<string, string>();
+        for (const target of targets) {
+          if (frameworkBuildModeFor(target.toolId) !== "flat") continue;
+          const plugin = manifest
+            .getPlugins(target.toolId)
+            .find((entry) => entry.name === target.pluginName);
+          if (!plugin)
+            throw new Error(
+              `Plugin ${target.toolId}:${target.pluginName} is missing from the manifest.`
+            );
+          const dist = await pluginDistributionReader.read(
+            join(localPath, "plugins", target.pluginName)
+          );
+          const { builtDir } = await previewBuilder.execute({
+            projectRoot: temporary,
+            marketplace: previewMarketplace,
+            target: target.toolId,
+            mode: "flat",
+          });
+          const tracked = new Map(
+            [...plugin.files].map(([path, hash]) => [resolve(root, path), hash])
+          );
+          for (const [path, hash] of plugin.projectHooks?.scripts ?? [])
+            tracked.set(resolve(root, path), hash);
+          const paths = (await reader.readFlatFiles(builtDir, dist, target.toolId)).map(
+            (file) => file.relativePath
+          );
+          const delivery = projectHooksDeliveryOf(target.toolId);
+          const hasProjectHooks = dist.components.hooks.some(
+            (file) => file.relativePath === "hooks/hooks.json"
+          );
+          if (delivery && (hasProjectHooks || plugin.projectHooks !== undefined)) {
+            const directories = new Set([dirname(resolve(root, delivery.relativePath))]);
+            for (const file of dist.components.hooks) {
+              if (hasProjectHooks && file.relativePath !== "hooks/hooks.json")
+                directories.add(
+                  dirname(
+                    resolve(root, delivery.format.scriptPath(dist.manifest.name, file.relativePath))
+                  )
+                );
+            }
+            for (const path of plugin.projectHooks?.scripts.keys() ?? [])
+              directories.add(dirname(resolve(root, path)));
+            for (let directory of directories) {
+              while (!(await fs.entryExists(directory)) && directory !== root)
+                directory = dirname(directory);
+              try {
+                await fs.assertWritableDirectory(directory);
+              } catch (error) {
+                const code = (error as NodeJS.ErrnoException).code;
+                if (code !== "EACCES" && code !== "EPERM") throw error;
+                throw new Error(
+                  `Cannot write project hooks directory '${directory}' (${code}); grant write access and retry before updating. In Codex CLI, restart with --add-dir pointing to this directory.`
+                );
+              }
+            }
+          }
+          if (delivery && hasProjectHooks) {
+            for (const file of dist.components.hooks) {
+              if (file.relativePath !== "hooks/hooks.json")
+                paths.push(delivery.format.scriptPath(dist.manifest.name, file.relativePath));
+            }
+          }
+          for (const relativePath of paths) {
+            const path = resolve(root, relativePath);
+            const owner = `${target.toolId}:${target.pluginName}`;
+            const shared = manifest
+              .getInstalledToolIds()
+              .some(
+                (id) =>
+                  manifest.getToolFiles(id).some((entry) => entry.relativePath === relativePath) ||
+                  manifest.getMergeFiles(id).some((entry) => entry.relativePath === relativePath) ||
+                  manifest
+                    .getPlugins(id)
+                    .some(
+                      (entry) =>
+                        (id !== target.toolId || entry.name !== target.pluginName) &&
+                        entry.scope === "project" &&
+                        (entry.files.has(relativePath) ||
+                          entry.projectHooks?.scripts.has(relativePath) === true)
+                    )
+              );
+            if (shared)
+              throw new Error(
+                `Cannot upgrade ${owner}: target file '${relativePath}' is claimed by another installation.`
+              );
+            if (planned.has(path) && planned.get(path) !== owner)
+              throw new Error(
+                `Cannot upgrade ${owner}: target file '${relativePath}' is claimed by another plugin.`
+              );
+            planned.set(path, owner);
+            await assertUpgradeWrite(fs, root, path, tracked);
+          }
+        }
+      } finally {
+        await fs.deleteDirectory(temporary);
+      }
+      return { impact, shared, source: sourceSnapshot, tool: claudeTargets[0]?.toolId };
+    },
+    verifyImpact: async (root, impact, source) => {
+      if (!impact.length) return;
+      const catalogue = impact[0]?.ref.split("@").at(-1);
+      if (
+        !catalogue ||
+        JSON.stringify(await claudeInstallations(claudeDir, catalogue)) !== JSON.stringify(impact)
+      )
+        throw new Error("Claude installations changed after the preview; review the update again.");
+      const registration = (await manifestRepo.load())
+        ?.getNativeRegistrations("claude")
+        ?.marketplaces.find((item) => item.hostName === catalogue) ?? {
+        alias: catalogue,
+        hostName: catalogue,
+      };
+      if (
+        !registration ||
+        !source ||
+        (
+          await inspectNativeMarketplaceSource(nativeSources.get("claude"), root, {
+            ...registration,
+            provenance: { kind: "registry", source },
+          })
+        ).status !== "owned"
+      )
+        throw new Error(
+          "Claude marketplace source changed after the preview; review the update again."
+        );
+    },
+    install: async (options) => {
+      const manifest = await manifestRepo.load();
+      const plugin = manifest
+        ?.getPlugins(options.toolIds[0])
+        .find((entry) => entry.name === options.pluginName);
+      if (!plugin) throw new Error(`Plugin ${options.pluginName} disappeared before installation.`);
+      const tracked = new Map(plugin.files);
+      for (const [path, hash] of plugin.projectHooks?.scripts ?? []) tracked.set(path, hash);
+      const delivery = projectHooksDeliveryOf(options.toolIds[0]);
+      if (delivery) {
+        const path = resolve(options.projectRoot, delivery.relativePath);
+        await assertNoSymlinksWithinRoot(fs, options.projectRoot, path);
+        if (await fs.fileExists(path))
+          tracked.set(delivery.relativePath, (await fs.readFileHash(path)).value);
+      }
+      const guardedFs = protectUpgradeWrites(fs, options.projectRoot, tracked);
+      const guardedAdd = new PluginAddUseCase(
+        guardedFs,
+        manifestRepo,
+        new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+        hasher,
+        logger,
+        marketplaceRegistry,
+        ensureBuiltMarketplaceUseCase,
+        userManifestRepo,
+        installRuntimeConfigUseCase
+      );
+      const installer = new PluginInstallFromMarketplaceUseCase(
+        resolveMarketplaceUseCase,
+        marketplaceRegistry,
+        guardedAdd,
+        prompter,
+        logger
+      );
+      await installer.execute(options);
+      const result = await manifestRepo.load();
+      const installed = result
+        ?.getPlugins(options.toolIds[0])
+        .find((entry) => entry.name === options.pluginName);
+      if (
+        !result ||
+        !installed ||
+        installed.version !== options.version ||
+        installed.source.kind !== "git-subdir" ||
+        installed.source.url !== options.expectedSource.url ||
+        installed.source.path !== options.expectedSource.path ||
+        installed.source.ref !== options.expectedSource.ref
+      )
+        throw new Error(`Unable to verify the installed source for ${options.pluginName}.`);
+      for (const [relativePath, expected] of plugin.files) {
+        // A path claimed by any other tool or plugin remains theirs to manage.
+        if (result.isFileTracked(relativePath)) continue;
+        const path = resolve(options.projectRoot, relativePath);
+        await assertNoSymlinksWithinRoot(fs, options.projectRoot, path);
+        if (!(await fs.fileExists(path)) || (await fs.readFileHash(path)).value !== expected)
+          throw new Error(`Cannot remove modified or missing file '${relativePath}'.`);
+        await fs.deleteFile(path);
+        if (await fs.fileExists(path))
+          throw new Error(`Cannot remove obsolete file '${relativePath}'.`);
+      }
+    },
+    sync: (root, toolIds, targets, approvedRefs) =>
+      marketplaceSyncSettingsUseCase.execute({
+        projectRoot: root,
+        toolIds,
+        marketplaceNames: ["aidd-framework"],
+        refreshOwnedPlugins: targets,
+        approvedRefs,
+      }),
+  });
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
     prompter,
     releaseResolver
@@ -490,10 +864,20 @@ export async function createDeps(
   );
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
+  const pinnedUserFramework = new PinnedUserFrameworkAdapter(
+    fs,
+    hasher,
+    pluginFetcher,
+    pluginCatalogRepository,
+    pluginDistributionReader,
+    frameworkBuildFor
+  );
   const builtMaterializationDeps = {
     ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
     homedir,
+    userCacheRoot: userConfigDir,
+    pinnedFramework: pinnedUserFramework,
   };
   // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
   const userPluginFileUpdater = new UserPluginFileUpdater(
@@ -531,6 +915,15 @@ export async function createDeps(
     logger,
     nativeHostRegistrationGate
   );
+  const upgradeUserFrameworkUseCase = new UpgradeUserFrameworkUseCase({
+    repo: userManifestRepo,
+    builder: pinnedUserFramework,
+    updater: userPluginFileUpdater,
+    journal: userReleaseJournal,
+    logger,
+    resolvePublishedRelease: (repo, release) =>
+      releaseResolver.resolvePublishedRelease(repo, release),
+  });
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,
@@ -616,7 +1009,9 @@ export async function createDeps(
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,
+    upgradeFrameworkUseCase,
     userPluginUpdateUseCase,
+    upgradeUserFrameworkUseCase,
     marketplaceAddUseCase,
     marketplaceListUseCase,
     marketplaceRemoveUseCase,

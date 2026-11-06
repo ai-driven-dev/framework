@@ -125,6 +125,186 @@ describe("GitHubReleaseResolverAdapter", () => {
     });
   });
 
+  describe("resolvePublishedRelease", () => {
+    it("checks the selected release by tag without relying on a paginated list", async () => {
+      const http = makeHttp({ tag_name: "v5.13.0", draft: false });
+      const adapter = new GitHubReleaseResolverAdapter(http, { resolve: async () => "token" });
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({ title: null });
+      expect(http.get).toHaveBeenCalledWith(
+        "https://api.github.com/repos/owner/repo/releases/tags/v5.13.0",
+        { token: "token" }
+      );
+    });
+
+    it.each([
+      { tag_name: "v5.13.0", draft: true },
+      { tag_name: "v5.12.0", draft: false },
+      { tag_name: "v5.13.0" },
+      null,
+    ])("refuses an unverified or draft release: %j", async (body) => {
+      const adapter = new GitHubReleaseResolverAdapter(makeHttp(body));
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toBeNull();
+    });
+
+    it("reports a missing release without claiming it is published", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttpThrowing(new HttpNotFoundError("missing"))
+      );
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toBeNull();
+    });
+
+    it("surfaces rate limits instead of treating them as a missing release", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttpThrowing(new AuthenticationError("HTTP 403"))
+      );
+      await expect(adapter.resolvePublishedRelease(REPO, "v5.13.0")).rejects.toThrow(
+        CatalogFetchAuthError
+      );
+    });
+
+    it("uses the release video asset title without forwarding credentials", async () => {
+      const http = makeHttp({
+        tag_name: "v5.13.0",
+        draft: false,
+        name: "v5.13.0",
+        assets: [{ name: "release-video.json" }],
+      });
+      const fetchAsset = vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(JSON.stringify({ title: "Framework - Release 5.13\nNouveautés" }), {
+          status: 200,
+        })
+      );
+      const adapter = new GitHubReleaseResolverAdapter(
+        http,
+        { resolve: async () => "token" },
+        fetchAsset
+      );
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Framework - Release 5.13 Nouveautés",
+      });
+      expect(http.get).toHaveBeenCalledTimes(1);
+      expect(fetchAsset).toHaveBeenCalledWith(
+        "https://github.com/owner/repo/releases/download/v5.13.0/release-video.json",
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
+      );
+      expect(fetchAsset.mock.calls[0][1]?.headers).toBeUndefined();
+    });
+
+    it("finds the video asset among other assets and ignores invalid entries", async () => {
+      const fetchAsset = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(JSON.stringify({ title: "Video title" }), { status: 200 }));
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Fallback",
+          assets: [null, { name: "notes.txt" }, { name: "release-video.json" }],
+        }),
+        undefined,
+        fetchAsset
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Video title",
+      });
+      expect(fetchAsset).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not fetch a video when the release has only unrelated assets", async () => {
+      const fetchAsset = vi.fn<typeof fetch>();
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Fallback",
+          assets: [null, { name: "notes.txt" }],
+        }),
+        undefined,
+        fetchAsset
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Fallback",
+      });
+      expect(fetchAsset).not.toHaveBeenCalled();
+    });
+
+    it("ignores an unsuccessful video response even when it has a title", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Fallback",
+          assets: [{ name: "release-video.json" }],
+        }),
+        undefined,
+        vi
+          .fn<typeof fetch>()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ title: "Error page title" }), { status: 404 })
+          )
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Fallback",
+      });
+    });
+
+    it("normalizes control characters and bounds the title shown in the terminal", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: `  First\n\u001bSecond ${"x".repeat(200)}  `,
+        })
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: `First Second ${"x".repeat(167)}`,
+      });
+    });
+
+    it("uses a descriptive release name when the optional asset is absent or fails", async () => {
+      const absentFetch = vi.fn<typeof fetch>();
+      const absent = new GitHubReleaseResolverAdapter(
+        makeHttp({ tag_name: "v5.13.0", draft: false, name: "Release 5.13" }),
+        undefined,
+        absentFetch
+      );
+      expect(await absent.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Release 5.13",
+      });
+      expect(absentFetch).not.toHaveBeenCalled();
+      const failed = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "v5.13.0",
+          assets: [{ name: "release-video.json" }],
+        }),
+        undefined,
+        vi.fn<typeof fetch>().mockRejectedValue(new Error("offline"))
+      );
+      expect(await failed.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({ title: null });
+
+      const failedWithName = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Release 5.13",
+          assets: [{ name: "release-video.json" }],
+        }),
+        undefined,
+        vi.fn<typeof fetch>().mockRejectedValue(new Error("offline"))
+      );
+      expect(await failedWithName.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Release 5.13",
+      });
+    });
+  });
+
   describe("isRepoPublic", () => {
     it("returns true when the unauthenticated repo request succeeds (public)", async () => {
       const http = makeHttp({ full_name: REPO, private: false });

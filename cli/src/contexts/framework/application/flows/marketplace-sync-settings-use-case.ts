@@ -102,6 +102,10 @@ export interface MarketplaceSyncSettingsOptions {
    * machine-scope install records no plugin a host loads by itself.
    */
   enablePlugins?: readonly string[];
+  /** Refresh already-owned native refs after an explicitly approved framework release update. */
+  refreshOwnedPlugins?: readonly { toolId: AiToolId; pluginName: string }[];
+  /** Claude refs shown in the approved release preview; never ownership claims. */
+  approvedRefs?: readonly string[];
 }
 
 interface ActivationOutcome {
@@ -224,6 +228,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
     if (scope === "project") {
       for (const toolId of toolIds) {
+        if (options.refreshOwnedPlugins !== undefined) continue;
         if (
           resolvePluginsCapability(toolId)?.marketplaceSettings
             ?.declarativePluginActivationRequiresNativeProof === true
@@ -239,13 +244,26 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       marketplaces,
       toolIds,
       scope,
-      options.enablePlugins ?? []
+      options.enablePlugins ?? [],
+      options.refreshOwnedPlugins ?? [],
+      options.approvedRefs ?? []
     );
     let declarativeChanged = false;
     if (scope === "project") {
       for (const [toolId, outcome] of activation.outcomes) {
         const settings = resolvePluginsCapability(toolId)?.marketplaceSettings;
-        if (settings?.declarativePluginActivationRequiresNativeProof !== true) continue;
+        // A targeted native update preserves Claude's own enabled/disabled settings.
+        if (
+          options.refreshOwnedPlugins !== undefined &&
+          nativeActivationOf(toolId)?.releaseUpdateVerb
+        )
+          continue;
+        if (
+          settings == null ||
+          (options.refreshOwnedPlugins === undefined &&
+            settings.declarativePluginActivationRequiresNativeProof !== true)
+        )
+          continue;
         const hostNames = new Set(outcome.marketplaces.map((entry) => entry.hostName));
         const provenRefs = outcome.pluginRefs.filter((ref) =>
           [...hostNames].some((hostName) => ref.endsWith(`@${hostName}`))
@@ -258,7 +276,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
             manifest,
             marketplaces,
             settings,
-            provenRefs
+            provenRefs,
+            options.refreshOwnedPlugins ?? []
           ))
         )
           declarativeChanged = true;
@@ -267,24 +286,34 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     if (declarativeChanged) await manifestRepo.save(manifest);
     // A refused or unproven host registration cannot establish a new shared-source claim.
     // User-scope runs have no project manifest for a later `clean` to decrement it.
+    // A release preview authorizes the update, not a new ownership claim.
+    const claimOutcomes = options.approvedRefs?.length
+      ? new Map(
+          [...activation.outcomes].filter(
+            ([toolId]) => !nativeActivationOf(toolId)?.releaseUpdateVerb
+          )
+        )
+      : activation.outcomes;
     if (scope !== "user") {
-      await this.recordSharedSourceReference(projectRoot, marketplaces, activation.outcomes);
+      await this.recordSharedSourceReference(projectRoot, marketplaces, claimOutcomes);
     }
     const wroteHashes = await this.recordWhatActivationWrote(projectRoot, manifest, [
       ...activation.outcomes.keys(),
     ]);
     const wroteRegistrations = this.recordNativeRegistrations(
       manifest,
-      activation.outcomes,
-      options.marketplaceNames !== undefined
+      claimOutcomes,
+      options.marketplaceNames !== undefined,
+      options.refreshOwnedPlugins ?? []
     );
     if (wroteHashes || wroteRegistrations) await manifestRepo.save(manifest);
     await this.recordMachinePluginClaims(
       manifest,
-      activation.outcomes,
+      claimOutcomes,
       marketplaces,
       scope,
-      scope === "project" ? projectRoot : undefined
+      scope === "project" ? projectRoot : undefined,
+      options.refreshOwnedPlugins ?? []
     );
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
       await this.purgeStaleProjectCache(projectRoot, marketplaces, activation);
@@ -412,7 +441,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     marketplaces: readonly Marketplace[],
     toolIds: readonly ToolId[],
     scope: MarketplaceScope,
-    enablePlugins: readonly string[]
+    enablePlugins: readonly string[],
+    refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[],
+    approvedRefs: readonly string[]
   ): Promise<ActivationRun> {
     const outcomes = new Map<ToolId, ActivationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -440,7 +471,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
           marketplaces,
           warnings,
           scope,
-          enablePlugins
+          enablePlugins,
+          refreshOwnedPlugins,
+          nativeActivationOf(toolId)?.releaseUpdateVerb ? approvedRefs : []
         );
         outcomes.set(toolId, outcome);
       } catch (error) {
@@ -458,7 +491,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   private recordNativeRegistrations(
     manifest: Manifest,
     activated: ReadonlyMap<ToolId, ActivationOutcome>,
-    narrowed: boolean
+    narrowed: boolean,
+    selected: readonly { toolId: AiToolId; pluginName: string }[]
   ): boolean {
     let changed = false;
     for (const [toolId, outcome] of activated) {
@@ -481,8 +515,12 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
           )
         : [];
       const preservedHostNames = new Set(outcome.preservedMarketplaces.map((m) => m.hostName));
-      const preservedRefs = (existing?.pluginRefs ?? []).filter((ref) =>
-        [...preservedHostNames].some((hostName) => ref.endsWith(`@${hostName}`))
+      const preservedRefs = (existing?.pluginRefs ?? []).filter(
+        (ref) =>
+          [...preservedHostNames].some((hostName) => ref.endsWith(`@${hostName}`)) ||
+          (selected.length > 0 &&
+            (nativeActivationOf(toolId)?.releaseUpdateVerb !== undefined ||
+              !this.isSelectedRef(manifest, toolId, ref, selected)))
       );
       const registrations: NativeRegistrations = {
         binary,
@@ -544,7 +582,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     marketplaces: readonly Marketplace[],
     warnings: string[],
     scope: MarketplaceScope,
-    enablePlugins: readonly string[]
+    enablePlugins: readonly string[],
+    refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[],
+    approvedRefs: readonly string[]
   ): Promise<ActivationOutcome> {
     // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
     // and installing a plugin from it are two acts. Measured against the real `claude` binary —
@@ -556,6 +596,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     const preservedMarketplaces: NativeMarketplaceRegistration[] = [];
     const catalogClaims: NativeMarketplaceRegistration[] = [];
     const addedHostNames = new Set<string>();
+    const skippedHostNames = new Set<string>();
+    const refreshSources = new Map<string, NativeMarketplaceSource>();
     const recorded = manifest.getNativeRegistrations(toolId)?.marketplaces;
     let buildFailed = false;
     for (const marketplace of marketplaces) {
@@ -565,21 +607,35 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         marketplace,
         projectRoot,
         warnings,
-        catalogClaims
+        catalogClaims,
+        approvedRefs
       );
       if (registration.outcome === "build-failed") buildFailed = true;
       if (registration.addedThisRun === true) addedHostNames.add(registration.hostName);
+      if (registration.skipNativeWrites) skippedHostNames.add(registration.hostName);
+      if (registration.refreshable && registration.provenance)
+        refreshSources.set(registration.hostName, registration.provenance);
       const entry = {
         alias: marketplace.name,
         hostName: registration.hostName,
         ...(registration.provenance === undefined ? {} : { provenance: registration.provenance }),
       };
       const earlier = recorded?.find((m) => m.alias === marketplace.name);
-      if (registration.outcome === "registered" && registration.claimable)
-        ownMarketplaces.push(entry);
-      if (registration.claimable) catalogClaims.push(entry);
-      else if (earlier !== undefined) {
-        const proof = await this.nativeCatalogProof(toolId, earlier.hostName, projectRoot);
+      if (registration.outcome === "registered" && registration.claimable) {
+        if (registration.skipNativeWrites) {
+          if (earlier !== undefined) preservedMarketplaces.push(earlier);
+        } else ownMarketplaces.push(entry);
+      }
+      if (registration.claimable) {
+        if (!registration.skipNativeWrites) catalogClaims.push(entry);
+      } else if (earlier !== undefined) {
+        const proof = await this.nativeCatalogProof(
+          toolId,
+          earlier.hostName,
+          projectRoot,
+          undefined,
+          approvedRefs
+        );
         if (
           proof.canonical &&
           proof.hostReadable &&
@@ -600,12 +656,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       };
     const stillProven: NativeMarketplaceRegistration[] = [];
     for (const registration of ownMarketplaces) {
+      if (skippedHostNames.has(registration.hostName)) continue;
       const fresh = catalogClaims.find((claim) => claim.hostName === registration.hostName);
       const proof = await this.nativeCatalogProof(
         toolId,
         registration.hostName,
         projectRoot,
-        fresh
+        fresh,
+        approvedRefs
       );
       if (
         !proof.canonical ||
@@ -626,19 +684,86 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
     const requested =
       frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
-    const { refsToEnable, alreadyOwnedRefs } = await this.refsThisProjectEnables(
-      toolId,
-      [
-        ...new Set([
-          ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
-          ...requested,
-        ]),
-      ],
-      manifest,
-      projectRoot
-    );
+    const candidateRefs = [
+      ...new Set([
+        ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
+        ...requested,
+      ]),
+    ];
+    const { refsToEnable, alreadyOwnedRefs } = approvedRefs.length
+      ? { refsToEnable: [], alreadyOwnedRefs: [] }
+      : await this.refsThisProjectEnables(toolId, candidateRefs, manifest, projectRoot);
     const enabledRefs = [...alreadyOwnedRefs];
+    const sourceStillMatches = async (ref: string): Promise<boolean> => {
+      const registration = stillProven.find((entry) => ref.endsWith(`@${entry.hostName}`));
+      if (!registration) return false;
+      const expected = refreshSources.get(registration.hostName);
+      if (!expected) return false;
+      const current = await this.nativeCatalogProof(
+        toolId,
+        registration.hostName,
+        projectRoot,
+        registration,
+        approvedRefs
+      );
+      if (
+        !current.canonical ||
+        !current.hostReadable ||
+        current.sourceStatus !== "owned" ||
+        current.foreignRef !== undefined ||
+        !current.source ||
+        !sameNativeMarketplaceSource(expected, current.source)
+      ) {
+        const message = `${toolId}: native source changed before refreshing '${ref}'; plugin left untouched.`;
+        this.logger.warn(message);
+        warnings.push(message);
+        return false;
+      }
+      return true;
+    };
+    if (refreshOwnedPlugins.length && nativeActivationOf(toolId)?.refreshOwnedOnReleaseUpdate) {
+      for (const ref of alreadyOwnedRefs) {
+        if (
+          !this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins) ||
+          !(await sourceStillMatches(ref))
+        )
+          continue;
+        this.bestEffort(
+          () => activator.enablePlugin(ref, scope),
+          `refresh plugin '${ref}'`,
+          warnings
+        );
+      }
+    }
+    if (refreshOwnedPlugins.length && nativeActivationOf(toolId)?.releaseUpdateVerb) {
+      for (const ref of candidateRefs) {
+        if (!this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins)) continue;
+        if (!approvedRefs.includes(ref)) {
+          const message = `${toolId}: '${ref}' was not in the approved preview; release refresh skipped.`;
+          this.logger.warn(message);
+          warnings.push(message);
+          continue;
+        }
+        if (!(await sourceStillMatches(ref))) continue;
+        if (activator.refreshReleasePlugin === undefined)
+          throw new Error(`${toolId}: targeted release refresh is unavailable for '${ref}'.`);
+        this.bestEffort(
+          () => activator.refreshReleasePlugin?.(ref, scope, projectRoot),
+          `refresh plugin '${ref}'`,
+          warnings
+        );
+      }
+    }
     for (const ref of refsToEnable) {
+      if (refreshOwnedPlugins.length && nativeActivationOf(toolId)?.releaseUpdateVerb) {
+        continue;
+      }
+      if (
+        refreshOwnedPlugins.length &&
+        (!this.isSelectedRef(manifest, toolId, ref, refreshOwnedPlugins) ||
+          !(await sourceStillMatches(ref)))
+      )
+        continue;
       if (
         this.bestEffort(
           () => activator.enablePlugin(ref, scope),
@@ -698,7 +823,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     outcomes: ReadonlyMap<ToolId, ActivationOutcome>,
     marketplaces: readonly Marketplace[],
     scope: MarketplaceScope,
-    projectRoot?: string
+    projectRoot?: string,
+    selected: readonly { toolId: AiToolId; pluginName: string }[] = []
   ): Promise<void> {
     if (this.userManifestRepo === undefined) return;
     const machine = (await this.userManifestRepo.load()) ?? Manifest.create();
@@ -706,7 +832,11 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     let changed = false;
     for (const [toolId, outcome] of outcomes) {
       const machineRefs =
-        scope === "user" || pluginEnablementIsMachineGlobal(toolId) ? outcome.pluginRefs : [];
+        scope === "user" || pluginEnablementIsMachineGlobal(toolId)
+          ? outcome.pluginRefs.filter(
+              (ref) => !selected.length || this.isSelectedRef(project, toolId, ref, selected)
+            )
+          : [];
       const machineMarketplaces = outcome.catalogClaims.filter((registration) =>
         marketplaces.some(
           (marketplace) =>
@@ -813,7 +943,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     hostName: string,
     projectRoot: string,
-    fresh?: NativeMarketplaceRegistration
+    fresh?: NativeMarketplaceRegistration,
+    approvedRefs: readonly string[] = []
   ): Promise<NativeCatalogProof> {
     if (!isAiToolId(toolId))
       return { canonical: false, hostReadable: false, sourceStatus: "unproven" };
@@ -860,7 +991,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     ]);
     const foreignRef = [...reading.refs].find(
       ([ref, entry]) =>
-        hostRefInUse(toolId, entry.enabled) && ref.endsWith(`@${hostName}`) && !claimed.has(ref)
+        hostRefInUse(toolId, entry.enabled) &&
+        ref.endsWith(`@${hostName}`) &&
+        !claimed.has(ref) &&
+        !approvedRefs.includes(ref)
     )?.[0];
     return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
   }
@@ -873,15 +1007,18 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     marketplace: Marketplace,
     projectRoot: string,
     warnings: string[],
-    freshClaims: readonly NativeMarketplaceRegistration[]
+    freshClaims: readonly NativeMarketplaceRegistration[],
+    approvedRefs: readonly string[]
   ): Promise<{
     hostName: string;
     outcome: "registered" | "refused" | "build-failed";
     claimable: boolean;
     addedThisRun?: boolean;
+    skipNativeWrites?: boolean;
+    refreshable?: boolean;
     provenance?: NativeMarketplaceSource;
   }> {
-    const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
+    const builtDir = await this.buildForTool(toolId, marketplace, projectRoot, warnings);
     if (builtDir === null)
       return { hostName: marketplace.name, outcome: "build-failed", claimable: false };
     const requestedIdentity = await readMarketplaceCatalogIdentity(this.fs, toolId, builtDir);
@@ -891,11 +1028,20 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       );
     }
     const hostName = requestedIdentity.name;
+    const approvedSource =
+      nativeActivationOf(toolId)?.marketplaceRegistry && approvedRefs.length
+        ? {
+            alias: marketplace.name,
+            hostName,
+            provenance: { kind: "registry" as const, source: await this.fs.realpath(builtDir) },
+          }
+        : undefined;
     const proof = await this.nativeCatalogProof(
       toolId,
       hostName,
       projectRoot,
-      freshClaims.find((claim) => claim.hostName === hostName)
+      freshClaims.find((claim) => claim.hostName === hostName) ?? approvedSource,
+      approvedRefs
     );
     if (
       proof.sourceStatus === "unproven" ||
@@ -965,7 +1111,13 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
           samePath(proof.source.root, requestedSource) &&
           proof.source.sourceType === "local"))
     )
-      return { hostName, outcome: "registered", claimable: true, provenance: proof.source };
+      return {
+        hostName,
+        outcome: "registered",
+        claimable: true,
+        provenance: proof.source,
+        refreshable: true,
+      };
     const decision = await this.guardAgainstConflict(
       toolId,
       builtDir,
@@ -982,6 +1134,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         outcome: "registered",
         claimable: proof.sourceStatus === "owned",
         provenance: proof.source,
+        skipNativeWrites: true,
       };
     try {
       activator.addMarketplace(builtDir, marketplace.scope);
@@ -1011,6 +1164,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         claimable: afterReclaim !== undefined,
         addedThisRun: afterReclaim !== undefined,
         provenance: afterReclaim,
+        refreshable: afterReclaim !== undefined,
       };
     }
     const afterAdd = await this.proveAddedSource(toolId, hostName, builtDir, projectRoot, warnings);
@@ -1020,6 +1174,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       claimable: afterAdd !== undefined,
       addedThisRun: afterAdd !== undefined,
       provenance: afterAdd,
+      refreshable: afterAdd !== undefined,
     };
   }
 
@@ -1206,7 +1361,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   private async buildForTool(
     toolId: ToolId,
     marketplace: Marketplace,
-    projectRoot: string
+    projectRoot: string,
+    warnings?: string[]
   ): Promise<string | null> {
     try {
       const { builtDir } = await this.ensureBuilt.execute({
@@ -1217,9 +1373,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       });
       return builtDir;
     } catch (error) {
-      this.logger.warn(
-        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`
-      );
+      const message = `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`;
+      this.logger.warn(message);
+      warnings?.push(message);
       return null;
     }
   }
@@ -1309,11 +1465,22 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
     settings: MarketplaceSettings,
-    provenRefs?: readonly string[]
+    provenRefs?: readonly string[],
+    selected: readonly { toolId: AiToolId; pluginName: string }[] = []
   ): Promise<boolean> {
     const pluginsPath = resolve(projectRoot, settings.settingsPath);
     const json = await this.loadSettings(pluginsPath);
-    if (!this.mergeEnabledPlugins(json, settings, toolId, manifest, marketplaces, provenRefs))
+    if (
+      !this.mergeEnabledPlugins(
+        json,
+        settings,
+        toolId,
+        manifest,
+        marketplaces,
+        provenRefs,
+        selected
+      )
+    )
       return false;
     const content = JSON.stringify(json, null, 2);
     await this.fs.writeFile(pluginsPath, content);
@@ -1327,14 +1494,20 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    provenRefs?: readonly string[]
+    provenRefs?: readonly string[],
+    selected: readonly { toolId: AiToolId; pluginName: string }[] = []
   ): boolean {
     const pluginsKey = settings.enabledPluginsKey;
     if (pluginsKey == null) return false;
     const existing = this.existingRecord(json, pluginsKey);
     const toAdd: Record<string, boolean> = {};
     if (provenRefs !== undefined) {
-      for (const ref of provenRefs) if (!(ref in existing)) toAdd[ref] = true;
+      for (const ref of provenRefs)
+        if (
+          !(ref in existing) &&
+          (!selected.length || this.isSelectedRef(manifest, toolId, ref, selected))
+        )
+          toAdd[ref] = true;
       if (Object.keys(toAdd).length === 0) return false;
       json[pluginsKey] = { ...existing, ...toAdd };
       return true;
@@ -1355,6 +1528,22 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     if (Object.keys(toAdd).length === 0) return false;
     json[pluginsKey] = { ...existing, ...toAdd };
     return true;
+  }
+
+  private isSelectedRef(
+    manifest: Manifest,
+    toolId: ToolId,
+    ref: string,
+    selected: readonly { toolId: AiToolId; pluginName: string }[]
+  ): boolean {
+    return manifest
+      .getPlugins(toolId)
+      .some(
+        (plugin) =>
+          plugin.scope === "project" &&
+          ref.startsWith(`${plugin.name}@`) &&
+          selected.some((target) => target.toolId === toolId && target.pluginName === plugin.name)
+      );
   }
 
   private existingRecord(

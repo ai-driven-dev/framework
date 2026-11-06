@@ -13,6 +13,7 @@ import {
 } from "../../contexts/tools/domain/registry.js";
 import type { ToolId } from "../../kernel/tool.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../kernel/tool.js";
+import { assertMachineConfigDirectorySupported } from "../../runtime/machine-config-directory.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printDetectedContext,
@@ -183,6 +184,10 @@ export function registerSetupCommand(program: Command): void {
           registerDefaultMarketplace,
           scope,
         });
+
+        if (scope === "user") {
+          assertMachineConfigDirectorySupported([...toolIds.aiTools, ...toolIds.ideTools]);
+        }
 
         if (interactive) printWelcomeBanner(output);
 
