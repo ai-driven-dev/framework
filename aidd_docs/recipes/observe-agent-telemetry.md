@@ -6,7 +6,7 @@ Run Claude Code, Codex and OpenCode v2 with OpenTelemetry (OTel), then inspect t
 
 ### 1) ⚙️ Prepare the collector destination
 
-Start local Gouvernail and configure each tool's connector. OpenCode's connector is generated in the Sources page for an explicit team. For each tool, set `AIDD_OTEL_TOKEN` to its connector token in your shell without publishing it. The examples use the local tenant `ai-driven-dev` and loopback port `55857`; adjust them for your setup.
+Start local Gouvernail and configure each tool's connector. Generate OpenCode's token in Sources for an explicit team and member; issuing a new token replaces the previous OpenCode token for that organization. The member is the token's declared assignee, not proof of the person using it. For each tool, set `AIDD_OTEL_TOKEN` to its connector token in your shell without publishing it. The examples use the local tenant `ai-driven-dev` and loopback port `55857`; adjust them for your setup.
 
 | Tool | Connector token |
 | --- | --- |
