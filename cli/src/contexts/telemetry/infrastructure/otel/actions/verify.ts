@@ -3,24 +3,15 @@ import { open } from "node:fs/promises";
 import { join } from "node:path";
 import { readSettings } from "../files.js";
 import { transformCapturedLine } from "../observations.js";
-import {
-  type Config,
-  configurationEdit,
-  type Endpoint,
-  type Host,
-  OPENCODE_CONFIG_ID,
-} from "../settings.js";
+import { type Config, configurationEdit, type Endpoint, type Host } from "../settings.js";
 
 export async function verifyOtel(config: Config, endpoint: Endpoint, host: Host) {
   const edit = await configurationEdit(config, endpoint, host);
   const current = await readSettings(edit.path, edit.initial);
-  if (
-    (!current.exists && edit.containsToken !== false) ||
-    edit.update(current.content) !== current.content
-  ) {
+  if (!current.exists || edit.update(current.content) !== current.content) {
     throw new Error("OTLP configuration is not initialized. Run aidd telemetry otel init first.");
   }
-  if (!current.private && edit.containsToken !== false) {
+  if (!current.private) {
     throw new Error("OTLP configuration must be private (mode 0600).");
   }
   const capture = join(host.home, ".local/share/aidd-otel-observation", `${config}.jsonl`);
@@ -46,42 +37,10 @@ export async function verifyOtel(config: Config, endpoint: Endpoint, host: Host)
       if (count === 0) unrecognisedLines++;
     }
     if (lines === 0) throw new Error("OTLP capture is empty. Run a tool session and retry.");
-    let eventLines = 0;
-    if (config === OPENCODE_CONFIG_ID) {
-      const eventsPath = join(
-        host.home,
-        ".local/share/aidd-otel-observation",
-        OPENCODE_CONFIG_ID,
-        "events.jsonl"
-      );
-      const events = await open(
-        eventsPath,
-        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK
-      ).catch((error) => {
-        if (error.code === "ENOENT") return null;
-        throw error;
-      });
-      if (events) {
-        try {
-          if (!(await events.stat()).isFile())
-            throw new Error("OpenCode event capture must be a regular file.");
-          for await (const line of events.readLines({ autoClose: false })) {
-            if (!line.trim()) continue;
-            eventLines++;
-            const count = transformCapturedLine(config, line).length;
-            observations += count;
-            if (count === 0) unrecognisedLines++;
-          }
-        } finally {
-          await events.close();
-        }
-      }
-    }
     return {
       path: edit.path,
       capture,
       lines,
-      eventLines,
       observations,
       unrecognisedLines,
       modifiedAt: info.mtime.toISOString(),

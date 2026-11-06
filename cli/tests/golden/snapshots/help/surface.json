@@ -167,7 +167,7 @@
   {
     "invocation": "aidd telemetry otel",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry otel [options] [command]\n\nConfigure native OpenTelemetry exporters\n\nOptions:\n  -h, --help               display help for command\n\nCommands:\n  init [options]           Enable detailed local OTLP export in one tool's user\n                           configuration\n  verify [options]         Check native OTLP configuration and existing local\n                           capture without changing files\n  collect [options]        Capture authenticated OTLP on a local loopback port\n  sync [options]           Send one consented session's local telemetry to a\n                           loopback Gouvernail\n  run [options] [args...]  Launch OpenCode 1 with local OTLP export. Pass tool\n                           arguments after --\n  help [command]           display help for command"
+    "help": "Usage: aidd telemetry otel [options] [command]\n\nConfigure native OpenTelemetry exporters\n\nOptions:\n  -h, --help         display help for command\n\nCommands:\n  init [options]     Enable detailed local OTLP export in one tool's user\n                     configuration\n  verify [options]   Check native OTLP configuration and existing local capture\n                     without changing files\n  collect [options]  Capture authenticated OTLP on a local loopback port\n  sync [options]     Send one consented session's local telemetry to a loopback\n                     Gouvernail\n  help [command]     display help for command"
   },
   {
     "invocation": "aidd telemetry otel collect",
@@ -180,14 +180,9 @@
     "help": "Usage: aidd telemetry otel init [options]\n\nEnable detailed local OTLP export in one tool's user configuration\n\nOptions:\n  --config <tool>           User configuration to merge (choices: \"claude\",\n                            \"codex\", \"opencode\")\n  --endpoint <environment>  Collector destination (choices: \"dev\", \"prod\")\n  -h, --help                display help for command"
   },
   {
-    "invocation": "aidd telemetry otel run",
-    "exitCode": 0,
-    "help": "Usage: aidd telemetry otel run [options] [args...]\n\nLaunch OpenCode 1 with local OTLP export. Pass tool arguments after --\n\nOptions:\n  --config <tool>  Tool to launch (choices: \"opencode\")\n  -h, --help       display help for command"
-  },
-  {
     "invocation": "aidd telemetry otel sync",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry otel sync [options]\n\nSend one consented session's local telemetry to a loopback Gouvernail\n\nOptions:\n  --config <tool>                 Tool to sync (choices: \"claude\", \"codex\")\n  --session <id>                  Exact provider session ID; omit with --follow\n                                  to discover sessions\n  --tenant <slug>                 Gouvernail tenant slug\n  --endpoint <origin>             Loopback HTTP origin\n  --follow                        Follow new events for this session (default:\n                                  false)\n  --include-session-titles        Send Codex chat titles, which may contain\n                                  prompt text (default: false)\n  --include-session-projects      Send native Codex project IDs and names (may\n                                  contain sensitive text) (default: false)\n  --include-session-repositories  Send verified Codex GitHub/GitLab repository\n                                  URLs (may identify private work) (default:\n                                  false)\n  --titles-only                   Send only Codex titles and opted-in metadata\n                                  for consented sessions (default: false)\n  -h, --help                      display help for command"
+    "help": "Usage: aidd telemetry otel sync [options]\n\nSend one consented session's local telemetry to a loopback Gouvernail\n\nOptions:\n  --config <tool>      Tool to sync (choices: \"claude\", \"codex\")\n  --session <id>       Exact provider session ID; omit with --follow to discover\n                       sessions\n  --tenant <slug>      Gouvernail tenant slug\n  --endpoint <origin>  Loopback HTTP origin\n  --follow             Follow new events for this session (default: false)\n  -h, --help           display help for command"
   },
   {
     "invocation": "aidd telemetry otel verify",

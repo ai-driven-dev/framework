@@ -13,7 +13,7 @@ import {
 async function applyEdit(edit: Edit): Promise<boolean> {
   const before = await readSettings(edit.path, edit.initial);
   const next = edit.update(before.content);
-  if (next === before.content && (before.private || edit.containsToken === false)) return false;
+  if (next === before.content && before.private) return false;
 
   await mkdir(dirname(edit.path), { recursive: true, mode: 0o700 });
   const lockPath = `${edit.path}.aidd-otel.lock`;

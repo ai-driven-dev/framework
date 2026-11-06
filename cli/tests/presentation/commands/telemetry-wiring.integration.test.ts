@@ -761,7 +761,6 @@ describe("native telemetry commands", () => {
         lines: 1,
         modifiedAt: "2026-11-04T00:00:00.000Z",
         observations: 1,
-        eventLines: 0,
         unrecognisedLines: 0,
       });
     expect(await run("otel", "verify", "--config=claude", "--endpoint=dev")).toBe(1);
@@ -770,23 +769,11 @@ describe("native telemetry commands", () => {
     expect(await run("otel", "verify", "--config=claude", "--endpoint=dev")).toBeNull();
     expect(stdout()).toContain("Configuration verified in /config/claude");
     expect(stdout()).toContain("1 captured lines");
-    expect(stdout()).toContain("1 normalized observations; 0 event lines; 0 unrecognised lines");
+    expect(stdout()).toContain("1 normalized observations; 0 unrecognised lines");
     expect(stdout()).toContain(
       "Existing capture does not prove delivery from the current session."
     );
     expect(check).toHaveBeenCalledWith("claude", "dev");
-  });
-
-  it("forwards the launched OpenCode exit code", async () => {
-    const launch = vi
-      .spyOn(otel, "launchOtel")
-      .mockResolvedValueOnce(7)
-      .mockRejectedValueOnce(new Error("Cannot launch OpenCode"));
-    expect(await run("otel", "run", "--config=opencode", "--", "check")).toBeNull();
-    expect(launch).toHaveBeenCalledWith(["check"]);
-    expect(process.exitCode).toBe(7);
-    expect(await run("otel", "run", "--config=opencode", "--", "check")).toBe(1);
-    expect(stderr()).toContain("Cannot launch OpenCode");
   });
 
   it("forwards one consented session without printing its token", async () => {
@@ -821,7 +808,7 @@ describe("native telemetry commands", () => {
       token: "private-test-token",
       follow: false,
     });
-    expect(await call[1]()).toEqual({ state: "unbound" });
+    await expect(call[1]()).resolves.toBeUndefined();
     const transfer = { signal: "logs" as const, payload: {}, at: "2026-11-04T00:00:00Z" };
     expect(await call[2](transfer)).toBe(true);
     expect(await call[2](transfer)).toBe(false);

@@ -20,15 +20,6 @@ export function rejectConflict(name: string, actual: unknown, expected: string):
   }
 }
 
-/** Keep offsets stable while hiding JSONC comments and trailing commas from JSON.parse. */
-function normalizeJsonc(content: string): string {
-  return content
-    .replace(/"(?:[^"\\]|\\.)*"|\/\/[^\r\n]*|\/\*[\s\S]*?\*\//g, (token) =>
-      token.startsWith("/") ? token.replace(/[^\r\n]/g, " ") : token
-    )
-    .replace(/"(?:[^"\\]|\\.)*"|,(?=\s*[}\]])/g, (token) => (token === "," ? " " : token));
-}
-
 function readJsonSettings(content: string): Settings {
   try {
     return requireObject(JSON.parse(content));
@@ -70,14 +61,12 @@ function sectionOffset(content: string, section: string): number {
 function mergeJsonSection(
   content: string,
   section: string,
-  entries: (existing: Settings) => Settings,
-  normalize: (source: string) => string = (source) => source
+  entries: (existing: Settings) => Settings
 ): string {
-  const normalized = normalize(content);
-  const settings = readJsonSettings(normalized);
+  const settings = readJsonSettings(content);
   const original = settings[section] === undefined ? settings : requireObject(settings[section]);
   const existing = settings[section] === undefined ? {} : original;
-  const offset = sectionOffset(normalized, section) + 1;
+  const offset = sectionOffset(content, section) + 1;
   const missing = entries(existing);
   if (Object.keys(missing).length === 0) return content;
   const patch = settings[section] === undefined ? { [section]: missing } : missing;
@@ -85,7 +74,7 @@ function mergeJsonSection(
   const entry = JSON.stringify(patch, null, 2).slice(1, -2).replaceAll("\n", `\n${indent}`);
   const separator = Object.keys(original).length === 0 ? "\n" : ",";
   const next = content.slice(0, offset) + entry + separator + content.slice(offset);
-  readJsonSettings(normalize(next));
+  readJsonSettings(next);
   return next;
 }
 
@@ -102,28 +91,6 @@ export function mergeJsonEnvironment(
       Object.entries({ ...defaults, ...additions }).filter(([key]) => env[key] === undefined)
     );
   });
-}
-
-export function openCodeInstrumentation(content: string): unknown {
-  const settings = readJsonSettings(normalizeJsonc(content));
-  return settings.experimental === undefined
-    ? undefined
-    : requireObject(settings.experimental).openTelemetry;
-}
-
-export function mergeOpenCodeInstrumentation(content: string, enabled: boolean): string {
-  return mergeJsonSection(
-    content,
-    "experimental",
-    (experimental) => {
-      if (experimental.openTelemetry === enabled) return {};
-      if (experimental.openTelemetry !== undefined) {
-        throw new Error("OpenCode experimental.openTelemetry is disabled or invalid.");
-      }
-      return { openTelemetry: enabled };
-    },
-    normalizeJsonc
-  );
 }
 
 function readToml(content: string): Settings {

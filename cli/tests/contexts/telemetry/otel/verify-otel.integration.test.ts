@@ -41,18 +41,6 @@ describe.skipIf(process.platform === "win32")("OTLP verification", () => {
     await chmod(path, 0o644);
     await expect(verifyOtel("claude", "dev", { home, env: {} })).rejects.toThrow(/private/);
   });
-  it("accepts OpenCode 1 instrumentation supplied only through its inline environment", async () => {
-    const host = {
-      home,
-      env: { OPENCODE_CONFIG_CONTENT: '{"experimental":{"openTelemetry":true}}' },
-      opencodeVersion: async () => "1.19.5",
-    };
-    await initializeOtel("opencode", "dev", host);
-    await writeFile(join(home, ".local/share/aidd-otel-observation/opencode.jsonl"), "{}\n", {
-      mode: 0o600,
-    });
-    expect(await verifyOtel("opencode", "dev", host)).toMatchObject({ lines: 1 });
-  });
 
   it("counts normalized observations without returning raw content", async () => {
     await initializeOtel("claude", "dev", { home, env: {} });
@@ -120,47 +108,7 @@ describe.skipIf(process.platform === "win32")("OTLP verification", () => {
       lines: 2,
       observations: 2,
       unrecognisedLines: 1,
-      eventLines: 0,
     });
-  });
-
-  it("also counts a local OpenCode SSE capture when present", async () => {
-    const host = {
-      home,
-      env: { OPENCODE_CONFIG_CONTENT: '{"experimental":{"openTelemetry":true}}' },
-      opencodeVersion: async () => "1.19.5",
-    };
-    await initializeOtel("opencode", "dev", host);
-    const directory = join(home, ".local/share/aidd-otel-observation");
-    await writeFile(join(directory, "opencode.jsonl"), "{}\n", { mode: 0o600 });
-    await mkdir(join(directory, "opencode"));
-    await writeFile(
-      join(directory, "opencode/events.jsonl"),
-      `${JSON.stringify({
-        type: "session.step.ended",
-        data: { tokens: { input: 4 } },
-      })}\n`,
-      { mode: 0o600 }
-    );
-    expect(await verifyOtel("opencode", "dev", host)).toMatchObject({
-      observations: 1,
-      eventLines: 1,
-    });
-  });
-
-  it("refuses an OpenCode event capture that is not a regular file", async () => {
-    const host = {
-      home,
-      env: { OPENCODE_CONFIG_CONTENT: '{"experimental":{"openTelemetry":true}}' },
-      opencodeVersion: async () => "1.19.5",
-    };
-    await initializeOtel("opencode", "dev", host);
-    const directory = join(home, ".local/share/aidd-otel-observation");
-    await writeFile(join(directory, "opencode.jsonl"), "{}\n", { mode: 0o600 });
-    await mkdir(join(directory, "opencode", "events.jsonl"), { recursive: true });
-    await expect(verifyOtel("opencode", "dev", host)).rejects.toThrow(
-      /event capture must be a regular file/
-    );
   });
 
   it("refuses production", async () => {

@@ -1,23 +1,14 @@
 # Observe agent telemetry locally
 
-Configure native telemetry for Claude Code, Codex and OpenCode against the private development collector, then verify receipt.
+This procedure captures provider OpenTelemetry (OTel) for Claude Code, Codex and OpenCode v2. The framework's separate local usage ledger is not the source for the Gouvernail OTel view.
 
 ## Steps to observe agent telemetry locally
 
-### 1) 🔒 Check the destination
+### 1) ⚙️ Configure
 
-Telemetry may contain prompts, replies, commands, tool results and secrets. Use it only with the consent of those being observed, protect access to the logs and decide when to delete them. The CLI changes the selected tool's user configuration; this is separate from the per-clone `aidd telemetry on` usage ledger.
+Obtain consent from people whose activity will be observed. Raw local captures can contain prompts, responses, commands, tool output and secrets; restrict access and decide when to delete them.
 
-| Destination | Availability | Behavior |
-| --- | --- | --- |
-| `dev` | Private test machine with the existing loopback collector | Configure the selected tool to export locally |
-| `prod` | Reserved for a future Gouvernail collector | Refuse without changing files until its destination is defined |
-
-The development collector and its private token must already exist. Initialization does not start a collector or set up a production endpoint.
-
-### 2) ⚙️ Initialize each tool
-
-Run the command for each tool you intend to observe. Existing settings must be preserved; repeat initialization without adding duplicate entries. Follow the CLI's output for version-specific limitations and restarts.
+Start the private development collector first, then configure each tool:
 
 ```sh
 aidd telemetry otel init --config=claude --endpoint=dev
@@ -25,13 +16,32 @@ aidd telemetry otel init --config=codex --endpoint=dev
 aidd telemetry otel init --config=opencode --endpoint=dev
 ```
 
-OpenCode v1 reads the OTLP destination and headers from the process environment. After initialization, launch it through `aidd telemetry otel run --config=opencode` and pass any OpenCode arguments after `--`. OpenCode v2 supports user service environment configuration and requires a service restart. The v1 `experimental.openTelemetry` option enables AI SDK instrumentation; v2.2.5 rejects that option. Native OTLP logs and traces are distinct from the v2 session SSE stream. See the [v1 instrumentation](https://github.com/anomalyco/opencode/blob/v1.19.5/packages/opencode/src/session/llm.ts#L343-L355), [v2 configuration](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/config/normalize.ts#L46) and [v2 OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts), accessed 2026-11-04.
+`dev` requires the existing loopback collector and its private token. `prod` is reserved and refuses configuration until a destination is defined. Restart the OpenCode v2 service after initialization so its process receives the exporter settings.
 
-Claude and Codex also support native OTLP logs, metrics and traces; Claude tracing is beta. See [Claude monitoring](https://code.claude.com/docs/en/monitoring-usage) and [Codex observability](https://learn.chatgpt.com/docs/config-file/config-advanced#observability-and-telemetry), accessed 2026-11-04.
+### 2) 🧪 Run two sessions per tool
 
-### 3) 🧪 Verify receipt
+Run these from the opted-in project. The examples are the commands used in the local observation, with the isolated test settings omitted. They create separate sessions rather than two turns in the same session.
 
-Run a short session with the selected tool, then ask the CLI to check its configuration and captured telemetry:
+```sh
+for i in 1 2; do
+  claude --model haiku --tools "" --output-format json -p "Reply with only GOUVERNAIL-CLAUDE-PROBE-$i."
+done
+
+for i in 1 2; do
+  codex exec --ephemeral --sandbox read-only --model gpt-6.1-terra \
+    -c 'model_reasoning_effort="low"' --json "Reply with only GOUVERNAIL-CODEX-PROBE-$i."
+done
+
+# Start the configured OpenCode v2 service separately with authentication enabled.
+for i in 1 2; do
+  opencode run --server http://127.0.0.1:51394 --format json \
+    --model openai/gpt-6-luna "Reply with only GOUVERNAIL-OPENCODE-PROBE-$i."
+done
+```
+
+The OpenCode example assumes the authenticated service is listening on port `51394` and the client has its credentials. Choose models available to the configured accounts. Claude and Codex emit token usage; in the observed OpenCode v2.2.5 capture, prompt spans contained session IDs but no model or token counts. See the [field inventory](../../plugins/aidd-telemetry/OBSERVABILITY.md).
+
+### 3) ✅ Check receipt
 
 ```sh
 aidd telemetry otel verify --config=claude --endpoint=dev
@@ -39,6 +49,6 @@ aidd telemetry otel verify --config=codex --endpoint=dev
 aidd telemetry otel verify --config=opencode --endpoint=dev
 ```
 
-Use only the command for the tool you configured. Verification reads the selected tool's local capture and reports its nonempty line count and modification time. Historical records prove previous receipt, not delivery from the current session; compare the reported time with your test session. Follow the CLI's failure message if configuration or captured lines are missing.
+Verification reports capture line counts and modification times. Old records do not prove delivery from the current sessions. Collection and consent-aware forwarding to Gouvernail are separate; capture alone does not create dashboard rows.
 
-Captured files need a retention policy; initialization and verification do not rotate or delete them.
+Sources accessed 2026-11-06: [Claude monitoring](https://code.claude.com/docs/en/monitoring-usage), [Codex telemetry](https://learn.chatgpt.com/docs/config-file/config-advanced#what-gets-emitted), [OpenCode v2.2.5 OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts).

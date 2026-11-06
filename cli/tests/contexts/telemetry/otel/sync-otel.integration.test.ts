@@ -65,19 +65,15 @@ describe("OTLP capture sync", () => {
         ],
       },
     });
-    const transfers = selectTransfers(
-      source,
-      {
-        config: "claude",
-        session: "wanted",
-        tenant: "tenant",
-        endpoint: "http://127.0.0.1:3011",
-        token: "test",
-        home: "/tmp",
-        follow: false,
-      },
-      { values: new Map(), conflict: false }
-    );
+    const transfers = selectTransfers(source, {
+      config: "claude",
+      session: "wanted",
+      tenant: "tenant",
+      endpoint: "http://127.0.0.1:3011",
+      token: "test",
+      home: "/tmp",
+      follow: false,
+    });
     expect(transfers).toHaveLength(1);
     const sent = JSON.stringify(transfers[0]);
     expect(sent).toContain('"asInt":"42"');
@@ -138,7 +134,7 @@ describe("OTLP capture sync", () => {
     };
     const result = await syncOtel(
       syncOptions,
-      async () => ({ state: "unbound" }),
+      async () => {},
       async () => true
     );
     expect(result.sent).toBe(1);
@@ -153,7 +149,7 @@ describe("OTLP capture sync", () => {
     expect(await readFile(file, "utf8")).toBe(before);
     const denied = await syncOtel(
       syncOptions,
-      async () => ({ state: "unbound" }),
+      async () => {},
       async () => false
     );
     expect(denied.skipped).toBe(1);
@@ -172,13 +168,13 @@ describe("OTLP capture sync", () => {
           home: "/missing",
           follow: false,
         },
-        async () => ({ state: "unbound" }),
+        async () => {},
         async () => true
       )
     ).rejects.toThrow(/loopback/);
   });
 
-  it("replays after a rejected delivery and invalidates a formerly confirmed session", async () => {
+  it("replays provider events after a rejected delivery", async () => {
     const home = await mkdtemp(join(tmpdir(), "aidd-sync-retry-"));
     dirs.push(home);
     const directory = join(home, ".local/share/aidd-otel-observation");
@@ -213,25 +209,22 @@ describe("OTLP capture sync", () => {
       token: "test-token",
       home,
       follow: false,
-      stateDir: join(home, "state"),
-      admission: { cwd: "/project", repositoryId: "repo" },
     };
-    const confirmed = async () => ({
-      state: "confirmed" as const,
-      feature: "owner/repo#7",
-      branch: "feature/work",
-    });
-    await expect(syncOtel(options, confirmed, async () => true)).rejects.toThrow("HTTP 503");
+    await expect(
+      syncOtel(
+        options,
+        async () => {},
+        async () => true
+      )
+    ).rejects.toThrow("HTTP 503");
     reject = false;
-    await syncOtel(options, confirmed, async () => true);
-    expect(received.filter((body) => body.includes("codex.sse_event"))).toHaveLength(2);
-    expect(received.some((body) => body.includes('aidd.session_feature"'))).toBe(true);
     await syncOtel(
       options,
-      async () => ({ state: "unbound" }),
+      async () => {},
       async () => true
     );
-    expect(received.some((body) => body.includes("aidd.session_feature_invalidated"))).toBe(true);
+    expect(received.filter((body) => body.includes("codex.sse_event"))).toHaveLength(2);
+    expect(received).toHaveLength(2);
   });
 
   it("follows only newly appended complete lines for the chosen session", async () => {
@@ -268,14 +261,14 @@ describe("OTLP capture sync", () => {
         signal: abort.signal,
         intervalMs: 10,
       },
-      async () => ({ state: "unbound" }),
+      async () => {},
       async () => true
     );
     expect(received).toBe(2);
     expect(result.sent).toBe(2);
   });
 
-  it("never uses an identity from an observation outside consent to publish a binding", async () => {
+  it("never sends an observation outside consent", async () => {
     const home = await mkdtemp(join(tmpdir(), "aidd-sync-unconsented-identity-"));
     dirs.push(home);
     const directory = join(home, ".local/share/aidd-otel-observation");
@@ -306,8 +299,8 @@ describe("OTLP capture sync", () => {
         home,
         follow: false,
       },
-      async () => ({ state: "confirmed", feature: "owner/repo#7", branch: "feature/work" }),
-      async (transfer) => Object.keys(transfer.payload).length === 0
+      async () => {},
+      async () => false
     );
     expect(result).toMatchObject({ sent: 0, skipped: 1 });
     expect(calls).toBe(0);
@@ -350,7 +343,7 @@ describe("OTLP capture sync", () => {
           follow: true,
           intervalMs: 10,
         },
-        async () => ({ state: "unbound" }),
+        async () => {},
         async (transfer) => !transfer.consentAt || consenting
       )
     ).rejects.toThrow(/Consent is no longer confirmed/);

@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   mergeCodexExporters,
   mergeJsonEnvironment,
-  mergeOpenCodeInstrumentation,
-  openCodeInstrumentation,
   rejectConflict,
 } from "../../../../src/contexts/telemetry/infrastructure/otel/config-edits.js";
 
@@ -45,44 +43,6 @@ describe("merging Claude and OpenCode settings", () => {
       expect(() => mergeJsonEnvironment(invalid, { OTEL_ENDPOINT: "local" }, () => {})).toThrow();
     }
     expect(() => rejectConflict("endpoint", "remote", "local")).toThrow(/endpoint/);
-  });
-
-  it("preserves JSONC comments, quoted punctuation and trailing commas in OpenCode settings", () => {
-    const original = `{
-      // keep punctuation in values
-      "model": "provider/model//name",
-      "experimental": {"note": "literal /* text */ and comma,}", /* keep */},
-    }`;
-    const merged = mergeOpenCodeInstrumentation(original, true);
-    expect(merged).toContain("// keep punctuation in values");
-    expect(merged).toContain('"provider/model//name"');
-    expect(merged).toContain('"literal /* text */ and comma,}"');
-    expect(merged).toContain("/* keep */");
-    expect(openCodeInstrumentation(merged)).toBe(true);
-    expect(mergeOpenCodeInstrumentation(merged, true)).toBe(merged);
-    expect(openCodeInstrumentation('{"other":true}')).toBeUndefined();
-  });
-
-  it("keeps escaped quotes and comment-like strings when inserting into JSONC", () => {
-    const original =
-      '{\n  "description": "line // not a comment",\n  "experimental": {\n    "labels": ["comma,}", "quoted \\"value\\"",], // real comment\n  },\n}';
-    const merged = mergeOpenCodeInstrumentation(original, true);
-    expect(merged).toContain('"line // not a comment"');
-    expect(merged).toContain('"quoted \\"value\\""');
-    expect(merged).toContain("// real comment");
-    expect(openCodeInstrumentation(merged)).toBe(true);
-  });
-
-  it("refuses disabled, duplicate, malformed or non-object OpenCode settings", () => {
-    for (const invalid of [
-      '{"experimental":{"openTelemetry":false}}',
-      '{"experimental":{},"experimental":{}}',
-      '{"experimental":{"x":1,"x":2}}',
-      '{"experimental":[]}',
-      '{"experimental":',
-    ]) {
-      expect(() => mergeOpenCodeInstrumentation(invalid, true)).toThrow();
-    }
   });
 });
 

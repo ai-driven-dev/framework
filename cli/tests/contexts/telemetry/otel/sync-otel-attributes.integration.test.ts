@@ -70,14 +70,13 @@ test("keeps a valid string log body as the event-name fallback", () => {
   expect(
     selectTransfers(
       capture([text("session.id", "session")], [], [], { stringValue: "tool_result" }),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
+      { ...options, config: "claude" }
     )
   ).toHaveLength(1);
 });
 
 function select(line: string) {
-  return selectTransfers(line, options, { values: new Map(), conflict: false });
+  return selectTransfers(line, options);
 }
 
 test("forwards each Codex effort only on the event that reported it", () => {
@@ -200,8 +199,7 @@ function metricCapture(
 test("does not forward Codex effort fields on Claude metrics", () => {
   const [transfer] = selectTransfers(
     metricCapture([text("type", "input"), text("reasoning_effort", "high")]),
-    { ...options, config: "claude" },
-    { values: new Map(), conflict: false }
+    { ...options, config: "claude" }
   );
   expect(JSON.stringify(transfer.payload)).not.toContain("reasoning_effort");
 });
@@ -209,10 +207,7 @@ test("does not forward Codex effort fields on Claude metrics", () => {
 test("forwards Claude effort only when the token point explicitly reports it", () => {
   const claude = { ...options, config: "claude" as const };
   const point = [text("type", "input"), text("model", "claude-test")];
-  const [reported] = selectTransfers(metricCapture([...point, text("effort", "medium")]), claude, {
-    values: new Map(),
-    conflict: false,
-  });
+  const [reported] = selectTransfers(metricCapture([...point, text("effort", "medium")]), claude);
   expect(JSON.stringify(reported.payload)).toContain(
     '"key":"effort","value":{"stringValue":"medium"}'
   );
@@ -226,7 +221,7 @@ test("forwards Claude effort only when the token point explicitly reports it", (
       "claude_code.cost.usage"
     ),
   ]) {
-    const [transfer] = selectTransfers(invalid, claude, { values: new Map(), conflict: false });
+    const [transfer] = selectTransfers(invalid, claude);
     expect(JSON.stringify(transfer.payload)).not.toContain('"key":"effort"');
   }
 });
@@ -240,8 +235,7 @@ test.each(["point", "resource", "scope"])("rejects contradictory Claude %s attri
         level === "resource" ? conflict : [],
         level === "scope" ? conflict : []
       ),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
+      { ...options, config: "claude" }
     )
   ).toThrow("Conflicting duplicate OTLP attributes.");
 });
@@ -250,8 +244,7 @@ test("rejects contradictory Claude resource and point identities", () => {
   expect(() =>
     selectTransfers(
       metricCapture([text("user.email", "private-b")], [text("user.email", "private-a")]),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
+      { ...options, config: "claude" }
     )
   ).toThrow("Conflicting OTLP identity attributes.");
 });
@@ -327,11 +320,7 @@ test.each(["event.name", "event.kind", "session.id", "conversation.id"])(
       JSON.stringify(text(key, ""))
     );
     expect(() =>
-      selectTransfers(
-        body,
-        { ...options, config: key === "session.id" ? "claude" : "codex" },
-        { values: new Map(), conflict: false }
-      )
+      selectTransfers(body, { ...options, config: key === "session.id" ? "claude" : "codex" })
     ).toThrow();
   }
 );
@@ -411,13 +400,6 @@ test.each(["user.email", "user.account_id", "organization.id"])(
     );
   }
 );
-
-test("marks case-distinct session identities as conflicting across observations", () => {
-  const identity = { values: new Map([["user.account_id", "abc"]]), conflict: false };
-  selectTransfers(capture([text("user.account_id", "ABC")]), options, identity);
-  expect(identity.conflict).toBe(true);
-  expect(identity.values.get("user.account_id")).toBe("abc");
-});
 
 const dirs: string[] = [];
 let server: Server | undefined;

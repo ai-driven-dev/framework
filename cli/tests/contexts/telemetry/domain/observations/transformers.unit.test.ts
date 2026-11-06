@@ -72,71 +72,6 @@ describe("telemetry observations", () => {
       success: true,
     });
   });
-
-  it("maps OpenCode v2 step and cumulative updates without treating them as separate calls", () => {
-    const data = {
-      sessionID: "s3",
-      tokens: { input: 10, output: 4, cache: { read: 5, write: 0 } },
-    };
-    const step = transformOpenCode({ type: "session.step.ended", created: 1700000000000, data });
-    const cumulative = transformOpenCode({
-      type: "session.usage.updated",
-      created: 1700000000000,
-      data,
-    });
-    expect(step[0]).toMatchObject({
-      tool: "opencode",
-      openCodeVersion: 2,
-      sessionId: "s3",
-      usageScope: "event",
-      tokens: { input: 10, output: 4, cacheRead: 5, cacheWrite: 0 },
-    });
-    expect(cumulative[0]?.usageScope).toBe("session-cumulative");
-  });
-
-  it("maps OpenCode v1 message and tool events from the installed CLI schema", () => {
-    const message = transformOpenCode({
-      type: "message.updated",
-      properties: {
-        sessionID: "s4",
-        info: {
-          id: "m4",
-          role: "assistant",
-          modelID: "model",
-          providerID: "provider",
-          tokens: { input: 2, output: 3, cache: { read: 1, write: 0 } },
-        },
-      },
-    });
-    expect(message[0]).toMatchObject({
-      openCodeVersion: 1,
-      sessionId: "s4",
-      messageId: "m4",
-      model: "model",
-      provider: "provider",
-      usageScope: "message-snapshot",
-      tokens: { input: 2, output: 3, cacheRead: 1, cacheWrite: 0 },
-    });
-    const tool = transformOpenCode({
-      type: "message.part.updated",
-      properties: {
-        sessionID: "s4",
-        part: {
-          type: "tool",
-          callID: "c4",
-          tool: "read",
-          state: { status: "completed", input: { path: "x" }, output: "done" },
-        },
-      },
-    });
-    expect(tool[0]).toMatchObject({
-      toolCallId: "c4",
-      toolName: "read",
-      toolInput: { path: "x" },
-      toolOutput: "done",
-      success: true,
-    });
-  });
 });
 
 describe("source fidelity", () => {
@@ -212,61 +147,9 @@ describe("source fidelity", () => {
     });
     expect(rows[1]?.tokens).toBeUndefined();
   });
-
-  it("does not label a v1 text part as an assistant response without its role", () => {
-    const result = transformOpenCode({
-      type: "message.part.updated",
-      properties: { sessionID: "s", part: { type: "text", text: "text" } },
-    });
-    expect(result[0]).toMatchObject({ text: "text" });
-    expect(result[0]?.response).toBeUndefined();
-  });
-
-  it("keeps v2 synthetic inbox messages out of the user prompt", () => {
-    const result = transformOpenCode({
-      type: "session.inbox.enqueued",
-      data: { item: { type: "synthetic", payload: { text: "text" } } },
-    });
-    expect(result[0]?.prompt).toBeUndefined();
-    expect(result[0]?.role).toBe("synthetic");
-  });
 });
 
-describe("OpenCode v1 step and user records", () => {
-  it("maps user-selected model without inventing message content", () => {
-    const [row] = transformOpenCode({
-      type: "message.updated",
-      properties: { info: { role: "user", model: { modelID: "m1", providerID: "p1" } } },
-    });
-    expect(row).toMatchObject({ role: "user", model: "m1", provider: "p1" });
-    expect(row?.prompt).toBeUndefined();
-  });
-  it("records step-finish tokens as a step snapshot, not a message total", () => {
-    const [row] = transformOpenCode({
-      type: "message.part.updated",
-      properties: {
-        part: {
-          type: "step-finish",
-          id: "part",
-          sessionID: "session",
-          messageID: "message",
-          cost: 0.25,
-          tokens: { input: 3, output: 4, reasoning: 2, cache: { read: 1, write: 0 } },
-        },
-      },
-    });
-    expect(row).toMatchObject({
-      sessionId: "session",
-      messageId: "message",
-      partId: "part",
-      usageScope: "step-snapshot",
-      reportedCostUsd: 0.25,
-      tokenInputIncludesCache: false,
-      tokenOutputIncludesReasoning: false,
-      zeroMayMeanMissing: true,
-      tokens: { input: 3, output: 4, reasoning: 2, cacheRead: 1, cacheWrite: 0 },
-    });
-  });
+describe("Token semantics", () => {
   it("keeps input token semantics explicit for Claude and Codex", () => {
     const claude = transformClaude(log([attr("input_tokens", integer(17))]));
     const codex = transformCodex(log([attr("input_token_count", integer(17))]));
@@ -276,7 +159,7 @@ describe("OpenCode v1 step and user records", () => {
 });
 
 describe("source-specific fields", () => {
-  it("maps OpenCode v1 native AI SDK trace without treating parent and child spans as calls", () => {
+  it("maps an OpenCode OTLP AI SDK trace without treating parent and child spans as calls", () => {
     const capture = {
       signal: "traces" as const,
       payload: {
@@ -344,19 +227,6 @@ describe("source-specific fields", () => {
       cwd: "/project",
       tokens: { inputNonCached: 9, total: 23, tool: 4 },
     });
-  });
-
-  it("keeps OpenCode inbox model when no step has been emitted yet", () => {
-    const [row] = transformOpenCode({
-      type: "session.inbox.enqueued",
-      data: {
-        item: {
-          type: "user",
-          payload: { metadata: { model: { modelID: "model", providerID: "provider" } } },
-        },
-      },
-    });
-    expect(row).toMatchObject({ model: "model", provider: "provider" });
   });
 });
 
@@ -536,100 +406,21 @@ describe("OTLP event and metric semantics", () => {
   });
 });
 
-describe("OpenCode v2 event fields", () => {
-  it("maps step start, assistant text and user input without mixing roles", () => {
-    const [start] = transformOpenCode({
-      type: "session.step.started",
-      created: 1700000000000,
-      location: { directory: "/project" },
-      data: {
-        sessionID: "s",
-        assistantMessageID: "m",
-        model: { id: "model", providerID: "provider" },
-      },
-    });
-    expect(start).toMatchObject({
-      timestamp: "2023-11-14T22:13:20.000Z",
-      sessionId: "s",
-      messageId: "m",
-      cwd: "/project",
-      model: "model",
-      provider: "provider",
-    });
-    const [prompt] = transformOpenCode({
-      type: "session.inbox.enqueued",
-      data: { item: { type: "user", payload: { text: "fix this" } } },
-    });
-    expect(prompt).toMatchObject({ role: "user", prompt: "fix this" });
-    const [reply] = transformOpenCode({ type: "session.text.ended", data: { text: "done" } });
-    expect(reply?.response).toBe("done");
-    const [delta] = transformOpenCode({ type: "session.text.delta", data: { delta: "part" } });
-    expect(delta?.text).toBe("part");
-    expect(delta?.response).toBeUndefined();
-  });
-
-  it("maps tool lifecycle, results and errors to the same call id", () => {
-    const [start] = transformOpenCode({
-      type: "session.tool.input.started",
-      data: { id: "call", name: "read" },
-    });
-    const [called] = transformOpenCode({
-      type: "session.tool.called",
-      data: { id: "call", input: { path: "x" } },
-    });
-    const [finished] = transformOpenCode({
-      type: "session.tool.success",
-      data: { id: "call", content: [{ type: "text", text: "done" }] },
-    });
-    const [failed] = transformOpenCode({
-      type: "session.tool.failed",
-      data: { id: "call", error: { type: "tool_error", message: "failed" } },
-    });
-    expect(start).toMatchObject({ toolCallId: "call", toolName: "read" });
-    expect(called).toMatchObject({ toolCallId: "call", toolInput: { path: "x" } });
-    expect(finished).toMatchObject({
-      toolCallId: "call",
-      success: true,
-      toolOutput: [{ type: "text", text: "done" }],
-    });
-    expect(failed).toMatchObject({
-      toolCallId: "call",
-      success: false,
-      error: { type: "tool_error", message: "failed" },
-    });
-  });
-
-  it("rejects malformed or unrelated capture lines rather than inventing observations", () => {
-    expect(transformCapturedLine("opencode", "not json")).toEqual([]);
-    expect(transformCapturedLine("claude", '{"type":"session.step.ended","data":{}}')).toEqual([]);
-    expect(transformCapturedLine("opencode", '{"type":"session.step.ended"}')).toEqual([]);
-    expect(
-      transformCapturedLine("opencode", '{"type":"session.step.ended","data":{"sessionID":"s"}}')[0]
-        ?.sessionId
-    ).toBe("s");
-  });
+it("normalizes only OTLP capture envelopes", () => {
+  for (const [tool, payload] of [
+    ["opencode", { type: "session.step.ended", data: { sessionID: "session" } }],
+    ["opencode", { type: "message.updated", properties: {} }],
+    ["opencode", { info: {}, messages: [] }],
+    ["claude", { type: "result", session_id: "session" }],
+    ["codex", { type: "turn.completed", usage: { input_tokens: 1 } }],
+  ] as const) {
+    expect(transformCapturedLine(tool, JSON.stringify(payload))).toEqual([]);
+  }
+  expect(transformCapturedLine("opencode", "not json")).toEqual([]);
+  expect(transformCapturedLine("opencode", JSON.stringify(log([])))).toHaveLength(1);
 });
 
 describe("session and trace details", () => {
-  it("retains the original event including nested values and explicit nulls", () => {
-    const source = {
-      type: "session.tool.called",
-      data: {
-        id: "call",
-        input: {
-          path: "x",
-          enabled: true,
-          count: 0,
-          missing: null,
-          parts: ["a", 1, false, null, { nested: "value" }],
-        },
-      },
-    };
-    const [row] = transformOpenCode(source);
-    expect(row?.source).toEqual(source);
-    expect(row?.toolInput).toEqual(source.data.input);
-  });
-
   it.each([
     ["false", false],
     ["true", true],
@@ -649,12 +440,33 @@ describe("session and trace details", () => {
     expect(claude?.usageScope).toBeUndefined();
     expect(claude?.tokenInputIncludesCache).toBeUndefined();
     expect(claude?.tokenOutputIncludesReasoning).toBeUndefined();
-    const [opencode] = transformOpenCode({ type: "session.step.started", data: {} });
+    const [opencode] = transformOpenCode(source);
     expect(opencode?.timestamp).toBeUndefined();
     expect(opencode?.usageScope).toBeUndefined();
-    expect(opencode?.zeroMayMeanMissing).toBeUndefined();
     expect(opencode?.tokenInputIncludesCache).toBeUndefined();
     expect(opencode?.tokenOutputIncludesReasoning).toBeUndefined();
+  });
+
+  it("keeps provider correlation IDs from OTLP without deriving new IDs", () => {
+    const claude = log([
+      attr("session.id", string("session")),
+      attr("prompt.id", string("prompt")),
+      attr("client_request_id", string("request")),
+      attr("message.uuid", string("message")),
+    ]);
+    const record = claude.payload.resourceLogs[0].scopeLogs[0].logRecords[0];
+    Object.assign(record, { traceId: "trace", spanId: "span" });
+    expect(transformClaude(claude)[0]).toMatchObject({
+      sessionId: "session",
+      promptId: "prompt",
+      clientRequestId: "request",
+      messageId: "message",
+      traceId: "trace",
+      spanId: "span",
+    });
+    const [codex] = transformCodex(log([attr("turn.id", string("turn"))]));
+    expect(codex?.turnId).toBe("turn");
+    expect(codex?.sessionId).toBeUndefined();
   });
 
   it("keeps Codex session, thread, model, request and token categories on one log record", () => {
@@ -748,46 +560,5 @@ describe("session and trace details", () => {
       spanId: "span",
       toolOutput: "result",
     });
-  });
-
-  it("keeps OpenCode v1 session creation, tool errors and v2 input completion distinct", () => {
-    const [created] = transformOpenCode({
-      type: "session.created",
-      properties: { info: { id: "session", version: "1.18.35", time: { created: 1700000000000 } } },
-    });
-    expect(created).toMatchObject({
-      sessionId: "session",
-      toolVersion: "1.18.35",
-      timestamp: "2023-11-14T22:13:20.000Z",
-    });
-    const [failed] = transformOpenCode({
-      type: "message.part.updated",
-      properties: {
-        part: {
-          id: "part",
-          messageID: "message",
-          sessionID: "session",
-          type: "tool",
-          tool: "read",
-          callID: "call",
-          state: { status: "error", error: "failed", input: { path: "x" } },
-        },
-      },
-    });
-    expect(failed).toMatchObject({
-      partId: "part",
-      messageId: "message",
-      sessionId: "session",
-      toolName: "read",
-      toolCallId: "call",
-      success: false,
-      error: "failed",
-      toolInput: { path: "x" },
-    });
-    const [input] = transformOpenCode({
-      type: "session.tool.input.ended",
-      data: { id: "call", text: '{"path":"x"}' },
-    });
-    expect(input).toMatchObject({ toolCallId: "call", toolInput: '{"path":"x"}' });
   });
 });

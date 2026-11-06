@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test } from "vitest";
 import {
-  readBindingDetails,
   selectTransfers,
   send,
   syncOtel,
@@ -29,33 +28,6 @@ afterEach(async () => {
   server = undefined;
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
-
-posixTest(
-  "rejects duplicate identity keys in a persisted binding, even with a v1 proof",
-  async () => {
-    const home = await mkdtemp(join(tmpdir(), "aidd-sync-duplicate-identity-"));
-    dirs.push(home);
-    const state = join(home, "binding.json");
-    const payload = {
-      mayHaveLinked: true,
-      session: "session",
-      binding: "branch\u0000owner/repo#1",
-      identity: [["user.email", "first@example.invalid"]],
-      identityProof: {
-        version: 1,
-        admissionKey: "a".repeat(64),
-        sources: [{ keys: ["user.email"], at: "2026-11-05T00:00:00.000Z" }],
-      },
-    };
-    await writeFile(state, JSON.stringify(payload), { mode: 0o600 });
-    await expect(readBindingDetails(state)).resolves.toMatchObject({
-      details: { identity: [["user.email", "first@example.invalid"]] },
-    });
-    payload.identity.push(["user.email", "second@example.invalid"]);
-    await writeFile(state, JSON.stringify(payload), { mode: 0o600 });
-    await expect(readBindingDetails(state)).rejects.toThrow("Sync binding state is invalid");
-  }
-);
 
 function codexLog(time: Record<string, string | number>, timestamp?: string): string {
   return JSON.stringify({
@@ -173,13 +145,9 @@ test.each([
   { sum: [] },
   { explicitBounds: ["bad"] },
 ])("rejects malformed or unrecorded NumberDataPoint values", (extra) => {
-  expect(() =>
-    selectTransfers(
-      claudePoint(extra),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
-    )
-  ).toThrow(/OTLP/);
+  expect(() => selectTransfers(claudePoint(extra), { ...options, config: "claude" })).toThrow(
+    /OTLP/
+  );
 });
 
 test.each([
@@ -193,13 +161,9 @@ test.each([
   { sum: {}, exponential_histogram: {} },
   { sum: { dataPoints: {} } },
 ])("rejects missing, unsupported or competing data on a supported metric", (data) => {
-  expect(() =>
-    selectTransfers(
-      metricData(data),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
-    )
-  ).toThrow(/OTLP metric data/);
+  expect(() => selectTransfers(metricData(data), { ...options, config: "claude" })).toThrow(
+    /OTLP metric data/
+  );
 });
 
 test("keeps valid histograms separate from NumberDataPoint's scalar oneof", () => {
@@ -212,11 +176,10 @@ test("keeps valid histograms separate from NumberDataPoint's scalar oneof", () =
     bucketCounts: ["1", "1"],
     attributes: [attribute("session.id", "session")],
   };
-  const [transfer] = selectTransfers(
-    metricData({ histogram: { dataPoints: [point] } }),
-    { ...options, config: "claude" },
-    { values: new Map(), conflict: false }
-  );
+  const [transfer] = selectTransfers(metricData({ histogram: { dataPoints: [point] } }), {
+    ...options,
+    config: "claude",
+  });
   expect(JSON.stringify(transfer.payload)).toContain('"count":"2"');
   expect(JSON.stringify(transfer.payload)).toContain('"sum":5.5');
 });
@@ -237,13 +200,9 @@ test.each([
   { bucketCounts: 1 },
   { flags: 1.5 },
 ])("rejects invalid or inexact integer metric fields before exporting", (extra) => {
-  expect(() =>
-    selectTransfers(
-      claudePoint(extra),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
-    )
-  ).toThrow(/invalid OTLP integer/i);
+  expect(() => selectTransfers(claudePoint(extra), { ...options, config: "claude" })).toThrow(
+    /invalid OTLP integer/i
+  );
 });
 
 test("preserves exact integer strings for signed and unsigned metric values", () => {
@@ -252,11 +211,7 @@ test("preserves exact integer strings for signed and unsigned metric values", ()
     count: "18446744073709551615",
     bucketCounts: ["9007199254740993", "0"],
   };
-  const [transfer] = selectTransfers(
-    claudePoint(extra),
-    { ...options, config: "claude" },
-    { values: new Map(), conflict: false }
-  );
+  const [transfer] = selectTransfers(claudePoint(extra), { ...options, config: "claude" });
   const payload = JSON.stringify(transfer.payload);
   for (const value of [extra.asInt, extra.count, ...extra.bucketCounts])
     expect(payload).toContain(`"${value}"`);
@@ -360,11 +315,10 @@ function metricWithMetadata(unit: string, temporality: number, monotonic: boolea
 
 test("distinguishes metric unit, aggregation and monotonicity when computing series identity", () => {
   const fingerprint = (unit: string, temporality: number, monotonic: boolean) => {
-    const [transfer] = selectTransfers(
-      metricWithMetadata(unit, temporality, monotonic),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
-    );
+    const [transfer] = selectTransfers(metricWithMetadata(unit, temporality, monotonic), {
+      ...options,
+      config: "claude",
+    });
     return JSON.stringify(transfer.payload).match(
       /"aidd.series_fingerprint","value":\{"stringValue":"([0-9a-f]+)"/
     )?.[1];
@@ -379,24 +333,15 @@ test("distinguishes metric unit, aggregation and monotonicity when computing ser
 test("does not convert an unsafe numeric OTLP timestamp into a fabricated Codex event time", () => {
   const unsafe = 1785044858922210000;
   const line = codexLog({ timeUnixNano: unsafe });
-  expect(() => selectTransfers(line, options, { values: new Map(), conflict: false })).toThrow(
-    /invalid OTLP integer/i
-  );
+  expect(() => selectTransfers(line, options)).toThrow(/invalid OTLP integer/i);
 });
 
 test("preserves exact decimal-string nanoseconds, including for Claude metric intervals", () => {
   const time = "1785044858922210000";
-  const [log] = selectTransfers(codexLog({ timeUnixNano: time }), options, {
-    values: new Map(),
-    conflict: false,
-  });
+  const [log] = selectTransfers(codexLog({ timeUnixNano: time }), options);
   expect(log.at).toBe("2026-07-26T05:47:38.922Z");
   expect(JSON.stringify(log.payload)).toContain(time);
-  const [metric] = selectTransfers(
-    claudeMetric(time, time),
-    { ...options, config: "claude" },
-    { values: new Map(), conflict: false }
-  );
+  const [metric] = selectTransfers(claudeMetric(time, time), { ...options, config: "claude" });
   expect(metric.start).toBe("2026-07-26T05:47:38.922Z");
   expect(metric.at).toBe("2026-07-26T05:47:38.922Z");
   expect(JSON.stringify(metric.payload)).toContain(time);
@@ -406,25 +351,19 @@ test.each([
   [1785044858922210000, "1785044858922210000"],
   ["1785044858922210000", 1785044858922210000],
 ] as const)("rejects unsafe numeric Claude metric bounds", (start, end) => {
-  expect(() =>
-    selectTransfers(
-      claudeMetric(start, end),
-      { ...options, config: "claude" },
-      { values: new Map(), conflict: false }
-    )
-  ).toThrow(/invalid OTLP integer/i);
-});
-
-test("does not forward an unsafe timestamp beside a valid Codex event timestamp", () => {
-  const line = codexLog({ timeUnixNano: 1785044858922210000 }, "2026-07-26T05:47:38.922Z");
-  expect(() => selectTransfers(line, options, { values: new Map(), conflict: false })).toThrow(
+  expect(() => selectTransfers(claudeMetric(start, end), { ...options, config: "claude" })).toThrow(
     /invalid OTLP integer/i
   );
 });
 
+test("does not forward an unsafe timestamp beside a valid Codex event timestamp", () => {
+  const line = codexLog({ timeUnixNano: 1785044858922210000 }, "2026-07-26T05:47:38.922Z");
+  expect(() => selectTransfers(line, options)).toThrow(/invalid OTLP integer/i);
+});
+
 test("uses a genuine OTLP event time when a Codex calendar date is invalid", () => {
   const line = codexLog({ timeUnixNano: "1785044858922210000" }, "2026-02-30T12:00:00Z");
-  const transfers = selectTransfers(line, options, { values: new Map(), conflict: false });
+  const transfers = selectTransfers(line, options);
   expect(transfers[0].at).toBe("2026-07-26T05:47:38.922Z");
   expect(JSON.stringify(transfers[0].payload)).not.toContain("aidd.original_event_timestamp");
   expect(JSON.stringify(transfers[0].payload)).not.toContain("2026-02-30");
@@ -436,20 +375,14 @@ test.each([
   "2026-01-01T12:00:00+24:00",
   "2026-01-01T12:00:00",
 ])("does not normalize an invalid provider event time: %s", (time) => {
-  const transfers = selectTransfers(codexLog({}, time), options, {
-    values: new Map(),
-    conflict: false,
-  });
+  const transfers = selectTransfers(codexLog({}, time), options);
   expect(transfers[0].at).toBeUndefined();
   expect(JSON.stringify(transfers[0].payload)).not.toContain("aidd.original_event_timestamp");
 });
 
 test("keeps a valid offset and leap date as the original event time", () => {
   const original = "2028-02-29T12:30:00.123456+02:30";
-  const transfers = selectTransfers(codexLog({}, original), options, {
-    values: new Map(),
-    conflict: false,
-  });
+  const transfers = selectTransfers(codexLog({}, original), options);
   expect(transfers[0].at).toBe("2028-02-29T10:00:00.123Z");
   expect(JSON.stringify(transfers[0].payload)).toContain(original);
 });
@@ -477,7 +410,7 @@ posixTest("does not export an observation-only timestamp as event activity", asy
   if (address === null || typeof address === "string") throw new Error("No test port");
   const result = await syncOtel(
     { ...options, home, endpoint: `http://127.0.0.1:${address.port}` },
-    async () => ({ state: "unbound" }),
+    async () => {},
     async () => true
   );
   expect(result.sent).toBe(0);
@@ -508,11 +441,7 @@ test("does not use Claude observation time as event activity", () => {
       ],
     },
   });
-  const transfers = selectTransfers(
-    line,
-    { ...options, config: "claude" },
-    { values: new Map(), conflict: false }
-  );
+  const transfers = selectTransfers(line, { ...options, config: "claude" });
   expect(transfers).toHaveLength(1);
   expect(transfers[0].at).toBeUndefined();
 });
@@ -540,7 +469,7 @@ test("preserves distinct submillisecond Codex event timestamps in the transmitte
       ],
     },
   });
-  const transfers = selectTransfers(line, options, { values: new Map(), conflict: false });
+  const transfers = selectTransfers(line, options);
   expect(transfers).toHaveLength(2);
   for (const [index, transfer] of transfers.entries()) {
     expect(JSON.stringify(transfer.payload)).toContain(timestamps[index]);

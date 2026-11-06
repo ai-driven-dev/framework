@@ -33,10 +33,8 @@ import {
   collectOtel,
   configureOtel,
   followCapturedSessions,
-  launchOtel,
   otelOptions,
   syncCapturedSession,
-  syncCapturedSessionTitles,
 } from "../../runtime/wiring/telemetry-otel.js";
 import {
   printForgetResult,
@@ -184,7 +182,7 @@ export function registerTelemetryCommand(program: Command): void {
                 `${result.lines} captured lines in ${result.capture}; last modified ${result.modifiedAt}`
               );
               output.info(
-                `${result.observations} normalized observations; ${result.eventLines} event lines; ${result.unrecognisedLines} unrecognised lines`
+                `${result.observations} normalized observations; ${result.unrecognisedLines} unrecognised lines`
               );
               output.info("Existing capture does not prove delivery from the current session.");
             }
@@ -222,26 +220,6 @@ export function registerTelemetryCommand(program: Command): void {
     .requiredOption("--tenant <slug>", "Gouvernail tenant slug")
     .requiredOption("--endpoint <origin>", "Loopback HTTP origin")
     .option("--follow", "Follow new events for this session", false)
-    .option(
-      "--include-session-titles",
-      "Send Codex chat titles, which may contain prompt text",
-      false
-    )
-    .option(
-      "--include-session-projects",
-      "Send native Codex project IDs and names (may contain sensitive text)",
-      false
-    )
-    .option(
-      "--include-session-repositories",
-      "Send verified Codex GitHub/GitLab repository URLs (may identify private work)",
-      false
-    )
-    .option(
-      "--titles-only",
-      "Send only Codex titles and opted-in metadata for consented sessions",
-      false
-    )
     .action(
       async (options: {
         config: (typeof otelOptions.syncConfigs)[number];
@@ -249,75 +227,15 @@ export function registerTelemetryCommand(program: Command): void {
         tenant: string;
         endpoint: string;
         follow: boolean;
-        includeSessionTitles: boolean;
-        includeSessionProjects: boolean;
-        includeSessionRepositories: boolean;
-        titlesOnly: boolean;
       }) => {
         const { output, run } = commandOf(program);
-        if (!options.session && !options.follow && !options.titlesOnly) {
+        if (!options.session && !options.follow) {
           output.error("Pass --session for a bounded sync, or --follow to discover new sessions.");
-          process.exitCode = 1;
-          return;
-        }
-        if (options.titlesOnly && options.follow) {
-          output.error("Title-only sync does not support --follow.");
-          process.exitCode = 1;
-          return;
-        }
-        if (
-          (options.includeSessionTitles ||
-            options.includeSessionProjects ||
-            options.includeSessionRepositories ||
-            options.titlesOnly) &&
-          options.config !== otelOptions.titleConfig
-        ) {
-          output.error("Session metadata sync is currently available only for Codex.");
           process.exitCode = 1;
           return;
         }
         await run(async (deps) => {
           const tool = otelOptions.usageTool(options.config);
-          const onProjectUnavailable = () =>
-            output.warn(
-              "A native Codex session project could not be verified; telemetry sync continues."
-            );
-          const onRepositoryUnavailable = () =>
-            output.warn(
-              "A native Codex Git repository could not be verified; telemetry sync continues."
-            );
-          const onTitleUnavailable = () =>
-            output.warn("A Codex session title could not be read; telemetry sync continues.");
-          if (options.titlesOnly && !options.session) {
-            const result = await syncCapturedSessionTitles(
-              {
-                config: options.config,
-                tenant: options.tenant,
-                endpoint: options.endpoint,
-                token: process.env.AIDD_OTEL_TOKEN ?? "",
-                includeSessionTitles: true,
-                includeSessionProjects: options.includeSessionProjects,
-                includeSessionRepositories: options.includeSessionRepositories,
-                onProjectUnavailable,
-                onRepositoryUnavailable,
-                onTitleUnavailable,
-              },
-              () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
-              (admission, at, start, current) =>
-                deps.telemetry.sessionFeatureUseCase.permits(admission, at, start, current)
-            );
-            output.info(
-              `Sent ${result.sent} session metadata updates; no metrics or feature bindings were sent.`
-            );
-            if (!result.sent && !result.identified)
-              output.warn(
-                "No unambiguous provider identity was found in consented capture events."
-              );
-            else if (!result.sent && !result.currentConsenting)
-              output.warn("No identified session has current clone consent.");
-            if (result.partialLine) output.info("The last incomplete capture line was not read.");
-            return;
-          }
           if (!options.session) {
             output.info("Following new consented sessions; press Ctrl-C to stop.");
             const result = await followCapturedSessions(
@@ -326,12 +244,6 @@ export function registerTelemetryCommand(program: Command): void {
                 tenant: options.tenant,
                 endpoint: options.endpoint,
                 token: process.env.AIDD_OTEL_TOKEN ?? "",
-                includeSessionTitles: options.includeSessionTitles,
-                includeSessionProjects: options.includeSessionProjects,
-                includeSessionRepositories: options.includeSessionRepositories,
-                onProjectUnavailable,
-                onRepositoryUnavailable,
-                onTitleUnavailable,
               },
               () => deps.telemetry.sessionFeatureUseCase.snapshot(tool),
               (admission, at, start, current) =>
@@ -349,7 +261,7 @@ export function registerTelemetryCommand(program: Command): void {
           const initialAdmission = admission;
           if (!initialAdmission)
             throw new Error("No consented usage found for this session; no capture was sent.");
-          const resolve = async () => {
+          const revalidate = async () => {
             const current = (await deps.telemetry.sessionFeatureUseCase.snapshot(tool)).get(
               session
             );
@@ -375,32 +287,16 @@ export function registerTelemetryCommand(program: Command): void {
               );
             }
             admission = current;
-            return admission.feature;
           };
-          await resolve();
+          await revalidate();
           if (options.follow) output.info("Following the selected session; press Ctrl-C to stop.");
           const result = await syncCapturedSession(
             {
               ...options,
-              includeSessionTitles: options.includeSessionTitles || options.titlesOnly,
-              onProjectUnavailable,
-              onRepositoryUnavailable,
               session,
-              ...(initialAdmission.cwd &&
-              (initialAdmission.repositoryId ||
-                (initialAdmission.repositoryId === null &&
-                  initialAdmission.feature.state !== "confirmed"))
-                ? {
-                    admission: {
-                      cwd: initialAdmission.cwd,
-                      repositoryId: initialAdmission.repositoryId,
-                    },
-                  }
-                : {}),
               token: process.env.AIDD_OTEL_TOKEN ?? "",
-              onTitleUnavailable,
             },
-            resolve,
+            revalidate,
             async (transfer) =>
               Boolean(
                 admission &&
@@ -421,23 +317,6 @@ export function registerTelemetryCommand(program: Command): void {
         });
       }
     );
-
-  otel
-    .command("run [args...]")
-    .description("Launch OpenCode 1 with local OTLP export. Pass tool arguments after --")
-    .addOption(
-      new Option("--config <tool>", "Tool to launch")
-        .choices(otelOptions.launchConfigs)
-        .makeOptionMandatory()
-    )
-    .action(async (args: string[]) => {
-      const { output } = parseGlobalOptions(program);
-      try {
-        process.exitCode = await launchOtel(args);
-      } catch (error) {
-        new ErrorHandler(output).handle(error);
-      }
-    });
 
   telemetry
     .command("on")

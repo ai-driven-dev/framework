@@ -30,7 +30,7 @@ ALL_COMMANDS=(
   "auth login" "auth logout" "auth status"
   "telemetry on" "telemetry off" "telemetry forget" "telemetry ingest"
   "telemetry task" "telemetry status" "telemetry report" "telemetry identity"
-  "telemetry otel init" "telemetry otel verify" "telemetry otel run" "telemetry otel sync" "telemetry otel collect"
+  "telemetry otel init" "telemetry otel verify" "telemetry otel sync" "telemetry otel collect"
 )
 
 PASS=0; FAIL=0; SKIP=0
@@ -273,23 +273,19 @@ const port = new Promise((resolve, reject) => {
 NODE
 then mark_covered "telemetry otel collect"; ok "telemetry otel collect (authenticated local capture)"
 else bad "telemetry otel collect (authenticated local capture)" "$(cat "$TMPROOT/collector-smoke.log")"; fi
-# The fake executable validates the environment handed to OpenCode 1 without using a real
+# The fake executable validates the environment handed to OpenCode 2 without using a real
 # provider, changing the user's configuration, or relying on an installed OpenCode version.
 cat > "$TMPROOT/otel-bin/opencode" <<'SCRIPT'
 #!/usr/bin/env bash
-if [[ "${1:-}" == "--version" ]]; then echo '1.18.35'; exit 0; fi
-[[ "${OTEL_EXPORTER_OTLP_ENDPOINT:-}" == 'http://127.0.0.1:14318/opencode' ]] || exit 1
-[[ "${OTEL_EXPORTER_OTLP_HEADERS:-}" == 'Authorization=Bearer test-token' ]] || exit 1
-echo 'OpenCode received local OTLP settings'
+if [[ "${1:-}" == "--version" ]]; then echo '2.2.5'; exit 0; fi
+exit 1
 SCRIPT
 chmod 700 "$TMPROOT/otel-bin/opencode"
 SMOKE_ORIGINAL_PATH="$PATH"
 export PATH="$TMPROOT/otel-bin:$PATH"
 unset OTEL_EXPORTER_OTLP_ENDPOINT OTEL_EXPORTER_OTLP_HEADERS
-run "telemetry otel init (OpenCode 1)" 0 "OpenCode 1" "$P_TEL" -- \
+run "telemetry otel init (OpenCode 2)" 0 "Restart the OpenCode background service" "$P_TEL" -- \
   telemetry otel init --config=opencode --endpoint=dev
-run "telemetry otel run (OpenCode 1)" 0 "OpenCode received local OTLP settings" "$P_TEL" -- \
-  telemetry otel run --config=opencode -- --version-check
 unset AIDD_OTEL_TOKEN
 run "telemetry otel sync (no consented session)" 1 "No consented usage found" "$P_TEL" -- \
   telemetry otel sync --config=codex --session=missing --tenant=smoke --endpoint=http://127.0.0.1:4318

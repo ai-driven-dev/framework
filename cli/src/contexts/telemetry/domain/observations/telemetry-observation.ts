@@ -11,36 +11,33 @@ export type JsonValue =
 /** A source observation. Missing values stay missing; identical observations are not merged. */
 export interface TelemetryObservation {
   readonly tool: AiToolId;
-  readonly signal: "log" | "span" | "span-event" | "metric" | "event";
+  readonly signal: "log" | "span" | "span-event" | "metric";
   readonly eventType?: string;
   readonly timestamp?: string;
   readonly observedTimestamp?: string;
   readonly startedAt?: string;
   readonly endedAt?: string;
   readonly toolVersion?: string;
-  readonly openCodeVersion?: 1 | 2;
   readonly sessionId?: string;
   readonly threadId?: string;
+  readonly turnId?: string;
+  readonly promptId?: string;
+  readonly clientRequestId?: string;
   readonly messageId?: string;
-  readonly partId?: string;
   readonly traceId?: string;
   readonly spanId?: string;
   readonly parentSpanId?: string;
   readonly requestId?: string;
   readonly provider?: string;
   readonly model?: string;
-  readonly role?: string;
   readonly prompt?: string;
   readonly response?: string;
-  /** Text whose user/assistant role cannot be established from this event alone. */
-  readonly text?: string;
   readonly toolCallId?: string;
   readonly runtimeToolCallId?: string;
   readonly toolName?: string;
   readonly toolInput?: JsonValue;
   readonly toolOutput?: JsonValue;
   readonly success?: boolean;
-  readonly error?: JsonValue;
   readonly durationMs?: number;
   readonly cwd?: string;
   readonly gitBranch?: string;
@@ -57,17 +54,11 @@ export interface TelemetryObservation {
     readonly tool?: number;
   };
   /** Snapshots and aggregates must not be summed as model calls. */
-  readonly usageScope?:
-    | "event"
-    | "span-snapshot"
-    | "step-snapshot"
-    | "message-snapshot"
-    | "session-cumulative"
-    | "metric-aggregate";
+  readonly usageScope?: "event" | "span-snapshot" | "metric-aggregate";
   readonly tokenInputIncludesCache?: boolean;
   readonly tokenOutputIncludesReasoning?: boolean;
-  /** OpenCode substitutes zero when an upstream token count was not supplied. */
-  readonly zeroMayMeanMissing?: boolean;
+  /** Codex may report zero for cache counts missing from provider usage. */
+  readonly cacheZeroMayMeanMissing?: boolean;
   /** As reported by the source, not a calculated or validated price. */
   readonly reportedCostUsd?: number;
   readonly reportedCostUsdMicros?: number;

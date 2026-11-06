@@ -143,49 +143,16 @@ describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
     expect(await initializeOtel("opencode", "dev", v2)).toMatchObject({ changed: false });
   });
 
-  it("merges the v1 instrumentation flag into the native JSONC config without touching shell profiles", async () => {
+  it("rejects OpenCode 1 and versions before 2.2.5", async () => {
     await seedToken();
-    const profile = join(home, ".zshrc");
-    await seed(profile, "# keep me");
-    const path = join(home, ".config/opencode/opencode.jsonc");
-    const original =
-      '{\n  // keep this comment\n  "experimental": { "todo": true, /* keep this too */ },\n}\n';
-    await seed(path, original);
-    const options = { home, env: {}, opencodeVersion: async () => "1.19.5" };
-    const result = await initializeOtel("opencode", "dev", options);
-    expect(result).toMatchObject({ path, changed: true });
-    expect(result.launch).toContain("aidd telemetry otel run --config=opencode");
-    const next = await readFile(path, "utf8");
-    expect(next).toContain('"openTelemetry": true');
-    expect(next).toContain("// keep this comment");
-    expect(next).toContain('"todo": true, /* keep this too */');
-    expect(next).not.toContain(TOKEN);
-    expect(await readFile(profile, "utf8")).toBe("# keep me");
-    expect(await initializeOtel("opencode", "dev", options)).toMatchObject({ changed: false });
-    expect(await readFile(path, "utf8")).toBe(next);
-  });
-
-  it("preserves a disabled v1 instrumentation flag and refuses to initialize", async () => {
-    await seedToken();
-    const path = join(home, ".config/opencode/opencode.json");
-    const original = '{"experimental":{"openTelemetry":false}}';
-    await seed(path, original);
-    const options = { home, env: {}, opencodeVersion: async () => "1.19.5" };
-    await expect(initializeOtel("opencode", "dev", options)).rejects.toThrow(
-      /openTelemetry.*disabled/
-    );
-    expect(await readFile(path, "utf8")).toBe(original);
-  });
-
-  it("initializes the locally verified v1.18.35 without admitting unverified earlier versions", async () => {
-    await seedToken();
-    const options = { home, env: {}, opencodeVersion: async () => "1.18.35" };
-    expect(await initializeOtel("opencode", "dev", options)).toMatchObject({ changed: true });
-    expect(
-      JSON.parse(await readFile(join(home, ".config/opencode/opencode.json"), "utf8"))
-    ).toMatchObject({ experimental: { openTelemetry: true } });
-    await expect(
-      initializeOtel("opencode", "dev", { ...options, opencodeVersion: async () => "1.18.34" })
-    ).rejects.toThrow(/OpenCode version/);
+    for (const version of ["1.18.35", "1.19.5", "2.2.4", "not-a-version"]) {
+      await expect(
+        initializeOtel("opencode", "dev", {
+          home,
+          env: {},
+          opencodeVersion: async () => version,
+        })
+      ).rejects.toThrow(/Unsupported OpenCode version/);
+    }
   });
 });

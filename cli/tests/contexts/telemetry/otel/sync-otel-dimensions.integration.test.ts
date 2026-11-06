@@ -53,7 +53,7 @@ function capture(dimension: string, reverse = false, unit = "token"): string {
 }
 
 function fingerprint(source: string): string {
-  const transfers = selectTransfers(source, options, { values: new Map(), conflict: false });
+  const transfers = selectTransfers(source, options);
   const body = JSON.stringify(transfers[0]?.payload);
   expect(body).not.toContain("private-agent");
   return (

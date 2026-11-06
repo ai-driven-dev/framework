@@ -1,141 +1,29 @@
-# Provider telemetry field mapping
+# Provider OpenTelemetry
 
-Use this page to see what each provider can emit, what the local collector keeps, and what the development sync actually sends. For the three modes, opt-in and identity rules, start with the [README](README.md#choose-a-mode).
+Gouvernail's AI KPI view uses provider OpenTelemetry (OTel) observations only. The framework's existing local usage ledger is separate and is not sent as OTel. A provider observation is not proof that every event was delivered; missing or ambiguous data remains unavailable.
 
-This is an inventory of source fields, not a promise that the AIDD report ingests them. Claude Code and Codex fields below were observed in local OTLP captures; OpenCode 2 fields were observed in its session event stream. OpenCode 1 fields are from its published session schema, not a verified OTLP capture. Presence depends on version, configuration, event and provider. A missing value is unknown, not zero.
+| Field | Claude Code OTel | Codex OTel | OpenCode v2 OTel |
+| --- | --- | --- | --- |
+| Session | `session.id`, when present | `conversation.id`, when present | In the `url.path` of observed `/api/session/{id}/prompt` HTTP spans |
+| Model | `model`, when present | `model`, when present | Not yet established for all signals |
+| Usage | `claude_code.token.usage` and `api_request` | `codex.sse_event` and turn traces | Not established in the observed OTLP capture |
+| Identity | Provider attributes, when emitted | Provider attributes, when emitted | Not yet established |
 
-The examples are fictional. `C` is Claude Code, `X` is Codex, `O1` is OpenCode 1 and `O2` is OpenCode 2. OTLP attribute names below are keys in the record, span or resource's `attributes` array, not necessarily JSON object properties. For O1, `info` denotes the message in `message.updated`, `part` the part in `message.part.updated`, and session information comes from `session.created` or `session.updated`; these are session-event schemas, not OTLP attributes.
+Token fields are provider-specific. Claude's input excludes cache reads and writes; Codex's input includes cached input. A Codex cache zero can mean the provider omitted cache details. Never add a log, metric and trace describing the same usage, or treat an absent value as zero.
 
-| Common element | Example | Claude Code | Codex | OpenCode (v1 / v2) |
-| --- | --- | --- | --- | --- |
-| Time | `2026-11-04T10:20:00+08:00` | `event.timestamp`, `timeUnixNano`, `observedTimeUnixNano`; span `startTimeUnixNano` / `endTimeUnixNano` | Same OTLP times | **v1:** `info.time.created`, `part.time.start` / `end`; **v2:** `created`, `data.started` on step start |
-| Event type | `tool_result` | `event.name`, log body, span or metric name | `event.name`; `eventName` may instead identify a source location | **v1/v2:** event `type` |
-| Application version | `2.2.5` | resource `service.version` | `app.version`, resource `service.version` | **v1:** session `info.version`; **v2:** `data.version` on `session.created` or resource `service.version` |
-| Session | `session-abc` | `session.id` | `conversation.id`; trace `thread.id` | **v1:** `info.sessionID`, `part.sessionID`; **v2:** `data.sessionID`, event `durable.aggregateID` |
-| Provider | `openai` | `anthropic.provider`, `gen_ai.provider.name`, `gen_ai.system` | `provider_name`, trace `provider` | **v1:** assistant `info.providerID`, user `info.model.providerID`; **v2:** `data.model.providerID` on step start |
-| Model | `model-xyz` | `model`, `gen_ai.request.model` | `model` | **v1:** assistant `info.modelID`, user `info.model.modelID`; **v2:** `data.model.id` on step start |
-| Reasoning effort | `high` | `effort` on `claude_code.token.usage` points when supplied | `reasoning_effort` on `codex.conversation_starts`; `model_reasoning_effort` on `response.completed` | Not verified |
-| User input | `Fix the test` | `prompt`, `prompt_text`, span `user_prompt` | `prompt` | **v1:** `part.text` joined by `messageID` to a user message; **v2:** `data.item.payload.text` on `session.inbox.enqueued` with `data.item.type=user` |
-| Assistant response | `The test is fixed.` | `response` | `response` | **v1:** `part.text` joined by `messageID` to an assistant message; **v2:** `data.text` on `session.text.ended`, `data.delta` on `session.text.delta` |
-| Input tokens | `1,200` | `input_tokens`; `claude_code.token.usage` metric, `type=input` | `input_token_count`, `codex.turn.token_usage.input_tokens`, `gen_ai.usage.input_tokens`; metric `token_type=input` | **v1:** `info.tokens.input` or `part.tokens.input`; **v2:** `data.tokens.input` |
-| Output tokens | `350` | `output_tokens`; metric `type=output` | `output_token_count`, `codex.turn.token_usage.output_tokens`, `gen_ai.usage.output_tokens`; metric `token_type=output` | **v1:** `info.tokens.output` or `part.tokens.output`; **v2:** `data.tokens.output` |
-| Cache read | `800` | `cache_read_tokens`; metric `type=cacheRead` | `cached_token_count`, `codex.turn.token_usage.cached_input_tokens`, `gen_ai.usage.cache_read.input_tokens`; metric `token_type=cached_input` | **v1:** `info.tokens.cache.read` or `part.tokens.cache.read`; **v2:** `data.tokens.cache.read` |
-| Cache write | `200` | `cache_creation_tokens`, `cache_creation_5m_tokens`, `cache_creation_1h_tokens`; metric `type=cacheCreation` | `cache_write_token_count`, `codex.turn.token_usage.cache_write_input_tokens`, `gen_ai.usage.cache_write.input_tokens`; metric `token_type=cache_write_input` | **v1:** `info.tokens.cache.write` or `part.tokens.cache.write`; **v2:** `data.tokens.cache.write` |
-| Tool call ID | `call-abc` | `tool_use_id`, `gen_ai.tool.call.id` | `call_id`; trace `runtime_tool_call_id` is distinct | **v1:** `part.callID`; **v2:** `data.id` |
-| Tool name | `read_file` | `tool_name`, `gen_ai.tool.name` | `tool_name`; metric `tool` | **v1:** `part.tool`; **v2:** `data.name` on `session.tool.input.started` |
-| Tool input | `{"path":"src/app.ts"}` | `tool_parameters`, `tool_input` | `arguments` | **v1:** `part.state.input`; **v2:** `data.input` on `session.tool.called`, serialized `data.text` on `session.tool.input.ended` |
-| Tool output | `File contents…` | `output` on span event `tool.output` | `output` on `codex.tool_result` | **v1:** completed `part.state.output`; **v2:** `data.content[].text` on `session.tool.success` |
-| Tool outcome | `success` | `success` on tool result | `success` on tool result | **v1:** `part.state.status` and `part.state.error`; **v2:** `session.tool.success` or `session.tool.failed`, with `data.error.type` / `data.error.message` |
+OTLP collection, verification and development forwarding are separate steps. The collector keeps provider OTLP locally; the consent-aware sync forwards only supported signals and allowlisted attributes to a loopback Gouvernail endpoint. The local collector does not check per-clone consent, so its private files may contain other sessions and sensitive data. See [the local setup recipe](../../aidd_docs/recipes/observe-agent-telemetry.md).
 
-Provider labels are not necessarily equivalent across tools. A user role does not prove a human authored the input. Some v1 fields require correlating a part with its message; v2 text and model fields depend on the event type. Codex trace `codex.turn.token_usage.non_cached_input_tokens` is a separate count.
+The current sync still reads the framework's local usage ledger to establish session-to-clone consent. It does not forward OpenCode traces. Consequently, it is not yet an OTel-only end-to-end pipeline for the three tools.
 
-## Interpretation and coverage
-
-- The Claude and Codex metric `type` / `token_type` labels above belong to `claude_code.token.usage` and `codex.turn.token_usage`, respectively. OTLP logs, traces and metrics may describe the same operation; do not add them together.
-- Claude effort is forwarded only when present on a token point with its model. It is an observation of that point, not a value inferred for other points. [Claude monitoring](https://code.claude.com/docs/en/monitoring-usage#token-counter) (read 2026-11-05).
-- Codex effort is an observation on one event, not a value inherited by other turns. The sync forwards only bounded ASCII identifiers when the same event also names its model; a missing or invalid value stays unknown. [Codex event source](https://github.com/openai/codex/blob/c90354172c5c49535b122443e9a8ed52c2233b80/codex-rs/otel/src/events/session_telemetry.rs) (read 2026-11-05).
-- OpenCode 2 emits `data.tokens.*` both on `session.step.ended` and `session.usage.updated`. The latter is cumulative; summing every update overcounts. Its `input` is non-cached input and `output` is visible output; reasoning is separate. The implementation maps missing provider usage to zero, so a reported zero does not prove zero usage.
-- Claude's `input_tokens` excludes cache reads and writes. Normalize token definitions before comparison; do not assume a similarly named field counts the same thing in all tools.
-- In the examined capture, Codex cache-write fields were present but all zero. Codex can replace absent provider cache details with zeros, so a reported zero does not establish that the provider supplied a zero. [Codex source](https://github.com/openai/codex/blob/rust-v0.166.0-alpha.6/codex-rs/codex-api/src/sse/responses.rs#L115-L145) (read 2026-11-05). A nonzero write was not verified. Not every event includes every field; OpenCode 2 text and model data may need correlation across events. Outputs can be truncated.
-- Claude can emit `cost_usd`; OpenCode 1 has assistant and step-finish `cost`, and OpenCode 2 exposes step and cumulative cost. A trustworthy equivalent was not established for Codex in the observed captures. These values do not by themselves establish an actual invoice: pricing basis and completeness must be known, and cumulative and per-step figures must not be combined as independent costs.
-- A future feature may display an **estimated token cost**, not an invoice. It would require the provider and model, price source and effective date, currency, and rates for input, output, cache reads and cache writes. Subscription, included quota, negotiated and API pricing can differ. If usage, a compatible rate or a billing basis is unknown, the estimate is unknown rather than zero. Cost calculation and pricing are outside this feature.
-- A tool session ID is not automatically a feature ID. Feature attribution requires the framework's session/branch declaration and must handle missing or ambiguous bindings. The existing local usage ledger and provider OTLP export are distinct pipelines.
-- OpenCode 2's rich session events are SSE, not the observed OTLP logs. The O1 schema above does not prove its fields are emitted over OTLP. The schema event's `durable.version` is not an application major version.
-- Prompts, responses, tool arguments and results can contain secrets. Capture and retain them only with the appropriate consent and local access controls.
-
-## What sync sends
-
-The collector keeps the provider's raw OTLP JSON locally. The separate dev sync selects only consented sessions and sends:
-
-- **Claude Code:** `tool_result` logs and selected metrics: token usage, active time, edit decisions, lines changed, sessions, commits, pull requests and the provider's `cost.usage` metric when present. The dashboard does not calculate a cost.
-- **Codex:** `conversation_starts`, `tool_result` and `response.completed` events, including available token counts.
-- **Both:** available event time, session, model, application version, provider email/account/organization IDs, tool name, call ID, outcome and duration. Confirmed framework feature bindings additionally carry the declared branch and ticket; an invalidation can be sent when a binding becomes ambiguous.
-- **Codex titles:** only with `--include-session-titles`, the free-text chat title is sent as session metadata. It may contain part of a prompt.
-- **Codex native projects:** `--include-session-projects` separately opts into sending the native project ID and free-text name as `aidd.session_project`. Names can contain sensitive text. The association must come from `thread.projectId`, then an exact `project/read` result; a second thread read checks membership has not changed. No path, repository, title, parent-thread inheritance or prompt fallback is used. A confirmed `projectId: null` clears the association; missing fields, API failures and inconsistent IDs send nothing. Clone consent is checked again immediately before sending.
-- **Codex Git repositories:** `--include-session-repositories` separately opts into sending the repository identity from the exact native thread's `gitInfo.originUrl` as `aidd.session_repository` / `aidd.repository_url`. Only canonical HTTPS links for public GitHub and GitLab hosts are sent; repository names can disclose private work. Credentials, local paths, other hosts and unsafe URLs are never forwarded. A confirmed null or unsupported Git origin clears the association; missing fields and API failures send nothing. Consent is checked again immediately before sending. [Codex app-server thread/read](https://learn.chatgpt.com/docs/app-server#read-a-stored-thread-without-resuming) (read 2026-11-05).
-
-Use `telemetry otel sync --config=codex --tenant=<slug> --endpoint=<loopback-origin> --titles-only --include-session-projects --include-session-repositories` for one metadata-only pass over consented captured sessions (titles, projects and repositories are opted in). Omit either metadata option to exclude it. It sends no token metrics or feature bindings and writes no capture checkpoint. `--follow` checks sessions loaded by the regular follower; it does not discover every historical chat. Native projects are separate from Git repositories. Claude Code has no universal native project field in this bridge; OpenCode project export is not integrated.
-
-Codex's project API is experimental. In the local 0.166.0 probe on 2026-11-05, `project/read` returned an exact ID and nonempty native name, but all ten sampled thread reads returned `projectId: null`. A separate Desktop tool listed five chats with explicit project IDs matching its project list; app-server returned `projectId: null` for those same five chats. An independent CLI's access to that Desktop source is not established. Named project export is tested against a simulated app-server, not demonstrated end to end on those local sessions. [Official project protocol](https://github.com/openai/codex/blob/c90354172c5c49535b122443e9a8ed52c2233b80/codex-rs/app-server-protocol/src/protocol/v2/project.rs) (read 2026-11-05).
-
-On macOS, `cd cli && node scripts/smoke-codex-project.mjs` checks the installed Codex app-server and the framework's metadata readers with an isolated profile and blocked network. It creates an explicitly linked test session; it does not verify existing Desktop groupings.
-
-- **Claude series:** a SHA-256 fingerprint of the source resource attributes, instrumentation scope and all point attributes helps detect different metric series that share a legacy key. The attributes used to compute it are not sent as additional plaintext, but the fingerprint can reveal equality or allow guesses about low-entropy values. Existing points lack it and cannot be certified retroactively. [OTLP metric data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/) (read 2026-11-05).
-
-The sync excludes fields for prompt and response text, tool arguments and output, raw API bodies, metric exemplars and traces. It filters attribute keys, not secrets or free text inside allowed values. OpenCode is not forwarded by this sync. These are forwarding rules, not guarantees about what the raw collector receives.
-
-Codex can replace absent cache details with zeros before emitting OTLP. A zero cache count therefore does not prove that the provider reported zero; Gouvernail displays it, and any uncached-input total depending on it, as unavailable. Nonzero counts are still observations, not proof that every event was received. [Codex response parser](https://github.com/openai/codex/blob/c90354172c5c49535b122443e9a8ed52c2233b80/codex-rs/codex-api/src/sse/responses.rs), [OTLP emitter](https://github.com/openai/codex/blob/c90354172c5c49535b122443e9a8ed52c2233b80/codex-rs/otel/src/events/session_telemetry.rs) (read 2026-11-05).
-
-### Example: a Claude metric sent locally
-
-The structure below was produced by `selectTransfers` from one real local Claude capture. The timestamps, metric value, session, organization, email, account, model and query source have been replaced with fictional values; attribute presence varies by event. It is the filtered request body, not the raw capture or its authorization header.
-
-```json
-{
-  "resourceMetrics": [{
-    "scopeMetrics": [{
-      "metrics": [{
-        "name": "claude_code.token.usage",
-        "sum": {
-          "aggregationTemporality": 1,
-          "isMonotonic": true,
-          "dataPoints": [{
-            "startTimeUnixNano": "1767225600000000000",
-            "timeUnixNano": "1767225660000000000",
-            "asDouble": 123,
-            "attributes": [
-              { "key": "session.id", "value": { "stringValue": "session-example" } },
-              { "key": "organization.id", "value": { "stringValue": "organization-example" } },
-              { "key": "user.email", "value": { "stringValue": "person@example.test" } },
-              { "key": "user.account_id", "value": { "stringValue": "account-example" } },
-              { "key": "model", "value": { "stringValue": "model-example" } },
-              { "key": "query_source", "value": { "stringValue": "example" } },
-              { "key": "type", "value": { "stringValue": "input" } }
-            ]
-          }]
-        }
-      }]
-    }]
-  }]
-}
-```
-
-## Local Gouvernail sync
-
-OTLP initialization, verification, local collection and sync require private POSIX files and are not supported on Windows.
-
-Start the collector, then configure the tools in another shell:
-
-```sh
-aidd telemetry otel collect
-# In another shell:
-aidd telemetry otel init --config=claude --endpoint=dev
-aidd telemetry otel init --config=codex --endpoint=dev
-```
-
-Restart the tools to load their settings. With local telemetry measurement enabled, start one sync process per provider:
-
-```sh
-# Set the relevant connector token in the environment without putting it in command arguments.
-export AIDD_OTEL_TOKEN='<connector token>'
-aidd telemetry otel sync --config=claude --tenant=acme --endpoint=http://127.0.0.1:3011 --follow
-# In another shell, use the Codex connector token and --config=codex.
-```
-
-The origin must be loopback HTTP; no token or prompt content is printed. Only supported observations from sessions admitted by the local ledger and covered by an uninterrupted consent interval are sent. A Claude cumulative metric whose whole interval is not covered is excluded. A successful HTTP response does not prove that Gouvernail matched a member: check its session view.
-
-An automatic follower starts with new capture events and keeps a private checkpoint. Network errors and HTTP 5xx responses are reported and retried with bounded backoff; permanent HTTP failures stop the follower. Restarting resumes from the checkpoint, and a failed post is replayed, so the receiver must remain idempotent. Unknown sessions wait for their transcript to be admitted using private byte-range indexes, without holding up other sessions. These indexes can grow until admission and depend on retaining the original capture; replaced or truncated captures require recovery rather than silently skipping data. Running a follower for each provider is an explicit operation; it does not start automatically after a machine restart. Linked session identifiers and the minimum provider identity are stored privately to detect later ambiguity, including after restart. Older sync state without identity must be refreshed with a session replay.
-
-Every delivery attempt, including a retry, rechecks session admission and the same clone's current consent and original consent interval. If consent or admission cannot be confirmed, a single-session sync stops before the next POST. The multi-session follower retains an already-admitted but unsent capture range in a private per-session journal and continues other sessions. The journal temporarily stores a SHA-256 hash of the admitted working directory and repository ID, not their plaintext; the hash may reveal equality or permit guesses and is not sent. The range and hash survive restarts, provided the original capture remains available. After renewed consent, the follower can replay it only for the same admission and clone while its original interval remains authorized; otherwise it stays pending. Other delivery errors and invalid state still stop the follower. Session identity is collected only from admitted observations. New binding state privately retains the minimum identity, admission hash and source times for each identifier, and restores them only after rechecking each source and the current consent for the same clone. Legacy bindings without that proof are not automatically replayed or invalidated: an old feature may remain visible but cannot be certified. This unresolved limitation blocks merging the feature.
-
-To replay one consented session already in the capture, pass `--session=<id>` without `--follow`. Add `--follow` to follow only that session. A feature link is sent only when every recorded call agrees on a single observed branch and a declared canonical ticket such as `owner/repo#123`; otherwise it remains unlinked. If a linked session later becomes ambiguous, an irreversible invalidation keeps it unlinked even if events arrive out of order.
+In a local OpenCode v2.2.5 capture, two prompt spans included a session ID in their HTTP path; no model or token counts were observed. This observation does not establish that every OpenCode signal includes a session ID. OpenCode session-event feeds and session exports are not provider OTLP and are not used in this view. Production export remains disabled until authenticated user identity and the destination are implemented.
 
 ## Sources
 
-Read on 2026-11-04:
+Read 2026-11-06:
 
 - [Claude Code monitoring](https://code.claude.com/docs/en/monitoring-usage)
-- [Codex observability and telemetry](https://learn.chatgpt.com/docs/config-file/config-advanced#observability-and-telemetry)
-- [Codex app-server thread metadata](https://learn.chatgpt.com/docs/app-server#read-a-stored-thread-without-resuming) and [OTLP delivery responses](https://opentelemetry.io/docs/specs/otlp/#partial-success-1) (read 2026-11-05)
-- [OpenCode 1.18.35 session schema](https://github.com/anomalyco/opencode/blob/v1.18.35/packages/schema/src/v1/session.ts) and [LLM instrumentation](https://github.com/anomalyco/opencode/blob/v1.18.35/packages/opencode/src/session/llm.ts)
-- [OpenCode 2.2.5 session events](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/schema/src/session-event.ts) and [token normalization](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/usage.ts)
+- [Codex telemetry configuration](https://learn.chatgpt.com/docs/config-file/config-advanced#what-gets-emitted)
+- [OpenCode v2.2.5 OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts)
+- [OpenCode v2 HTTP API audit](https://github.com/anomalyco/opencode/blob/dev/V2_HTTP_API_AUDIT.md) (current development branch; the v2.2.5 path was observed locally)
+- [OpenTelemetry metrics data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/)
+- [OTLP protocol](https://opentelemetry.io/docs/specs/otlp/)

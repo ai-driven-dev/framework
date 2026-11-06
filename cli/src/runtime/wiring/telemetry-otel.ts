@@ -1,12 +1,7 @@
 import { homedir } from "node:os";
-import type {
-  SessionAdmission,
-  SessionFeature,
-} from "../../contexts/telemetry/domain/report/session-feature.js";
-
+import type { SessionAdmission } from "../../contexts/telemetry/domain/report/session-feature.js";
 import { startOtelCollector } from "../../contexts/telemetry/infrastructure/otel/actions/collect.js";
 import { initializeOtel } from "../../contexts/telemetry/infrastructure/otel/actions/init.js";
-import { runOtelOpenCode } from "../../contexts/telemetry/infrastructure/otel/actions/run.js";
 import {
   type SyncOptions,
   syncOtel,
@@ -16,14 +11,8 @@ import {
   type AllOptions,
   syncAllOtel,
 } from "../../contexts/telemetry/infrastructure/otel/actions/sync-all.js";
-import {
-  syncAllSessionTitles,
-  type TitleOptions,
-} from "../../contexts/telemetry/infrastructure/otel/actions/sync-all-titles.js";
 import { verifyOtel } from "../../contexts/telemetry/infrastructure/otel/actions/verify.js";
 import {
-  CODEX_CONFIG_ID,
-  OPENCODE_CONFIG_ID,
   OTEL_CONFIGS,
   OTEL_ENDPOINTS,
   OTEL_SYNC_CONFIGS,
@@ -42,11 +31,11 @@ export function collectOtel(port: number) {
 }
 
 export function syncCapturedSession(
-  options: Omit<SyncOptions, "home" | "stateDir">,
-  resolve: () => Promise<SessionFeature>,
+  options: Omit<SyncOptions, "home">,
+  revalidate: () => Promise<void>,
   permits: (transfer: Transfer) => Promise<boolean>
 ) {
-  return syncOtel({ ...options, home: homedir(), stateDir: telemetryDir() }, resolve, permits);
+  return syncOtel({ ...options, home: homedir() }, revalidate, permits);
 }
 
 export function followCapturedSessions(
@@ -73,26 +62,11 @@ export function followCapturedSessions(
   );
 }
 
-export function syncCapturedSessionTitles(
-  options: Omit<TitleOptions, "home" | "stateDir">,
-  snapshot: () => Promise<ReadonlyMap<string, SessionAdmission>>,
-  permits: (
-    admission: SessionAdmission,
-    at: string,
-    start?: string,
-    current?: string
-  ) => Promise<"allow" | "deny" | "unknown">
-) {
-  return syncAllSessionTitles({ ...options, home: homedir() }, snapshot, permits);
-}
-
 export const otelOptions = {
   configs: OTEL_CONFIGS,
   syncConfigs: OTEL_SYNC_CONFIGS,
-  titleConfig: CODEX_CONFIG_ID,
   usageTool: usageToolForOtel,
   endpoints: OTEL_ENDPOINTS,
-  launchConfigs: [OPENCODE_CONFIG_ID],
 };
 
 export async function configureOtel(
@@ -105,10 +79,6 @@ export async function configureOtel(
   const result = await initializeOtel(config, endpoint, { home, env: process.env });
   await finishInstallationId(() => ensureInstallationId(directory), "OTLP configuration completed");
   return result;
-}
-
-export function launchOtel(args: readonly string[]) {
-  return runOtelOpenCode(args, { home: homedir(), env: process.env });
 }
 
 export function checkOtel(

@@ -10,20 +10,6 @@ interface OtelCapture {
   readonly payload: unknown;
   readonly received_at?: string;
 }
-export interface ClaudeTelemetrySource extends OtelCapture {}
-export interface CodexTelemetrySource extends OtelCapture {}
-export interface OpenCodeV1Source {
-  readonly type: string;
-  readonly properties: unknown;
-}
-export interface OpenCodeV2Source {
-  readonly type: string;
-  readonly data: unknown;
-  readonly created?: number;
-  readonly location?: unknown;
-}
-export type OpenCodeTelemetrySource = OpenCodeV1Source | OpenCodeV2Source | OtelCapture;
-
 type Obj = Record<string, unknown>;
 function json(value: unknown): JsonValue | undefined {
   if (value === null || typeof value === "boolean" || typeof value === "string") return value;
@@ -48,6 +34,11 @@ function number(value: unknown): number | undefined {
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
+function tokenCount(value: unknown): number | undefined {
+  if (typeof value === "string" && !/^\d+$/.test(value)) return undefined;
+  const count = number(value);
+  return count !== undefined && Number.isSafeInteger(count) ? count : undefined;
+}
 function bool(value: unknown): boolean | undefined {
   if (value === true || value === "true") return true;
   if (value === false || value === "false") return false;
@@ -59,15 +50,6 @@ function nanos(value: unknown): string | undefined {
     const n = BigInt(value);
     if (n <= 0n) return undefined;
     return new Date(Number(n / 1_000_000n)).toISOString();
-  } catch {
-    return undefined;
-  }
-}
-function millis(value: unknown): string | undefined {
-  const n = number(value);
-  if (n === undefined) return undefined;
-  try {
-    return new Date(n).toISOString();
   } catch {
     return undefined;
   }
@@ -96,11 +78,19 @@ function first<T>(...values: (T | undefined)[]): T | undefined {
 function pickText(attributes: Obj, ...keys: string[]): string | undefined {
   return first(...keys.map((key) => text(attributes[key])));
 }
-function pickNumber(attributes: Obj, ...keys: string[]): number | undefined {
-  return first(...keys.map((key) => number(attributes[key])));
+function pickTokenCount(attributes: Obj, ...keys: string[]): number | undefined {
+  return first(...keys.map((key) => tokenCount(attributes[key])));
 }
 function tokens(fields: TelemetryObservation["tokens"]): TelemetryObservation["tokens"] {
   return fields && Object.values(fields).some((item) => item !== undefined) ? fields : undefined;
+}
+function cacheZeroMayMeanMissing(
+  tool: TelemetryObservation["tool"],
+  usage: TelemetryObservation["tokens"]
+): true | undefined {
+  return tool === CODEX_CONFIG_ID && (usage?.cacheRead === 0 || usage?.cacheWrite === 0)
+    ? true
+    : undefined;
 }
 function base(
   tool: TelemetryObservation["tool"],
@@ -109,7 +99,7 @@ function base(
   source: unknown
 ): TelemetryObservation {
   const usage = tokens({
-    input: pickNumber(
+    input: pickTokenCount(
       a,
       "input_tokens",
       "input_token_count",
@@ -117,12 +107,12 @@ function base(
       "gen_ai.usage.input_tokens",
       "ai.usage.inputTokens"
     ),
-    inputNonCached: pickNumber(
+    inputNonCached: pickTokenCount(
       a,
       "codex.turn.token_usage.non_cached_input_tokens",
       "ai.usage.inputTokenDetails.noCacheTokens"
     ),
-    output: pickNumber(
+    output: pickTokenCount(
       a,
       "output_tokens",
       "output_token_count",
@@ -130,7 +120,7 @@ function base(
       "gen_ai.usage.output_tokens",
       "ai.usage.outputTokens"
     ),
-    cacheRead: pickNumber(
+    cacheRead: pickTokenCount(
       a,
       "cache_read_tokens",
       "cached_token_count",
@@ -139,16 +129,16 @@ function base(
       "ai.usage.cachedInputTokens",
       "ai.usage.inputTokenDetails.cacheReadTokens"
     ),
-    cacheWrite: pickNumber(
+    cacheWrite: pickTokenCount(
       a,
       "cache_creation_tokens",
       "cache_write_token_count",
       "codex.turn.token_usage.cache_write_input_tokens",
       "gen_ai.usage.cache_write.input_tokens"
     ),
-    cacheWrite5m: number(a.cache_creation_5m_tokens),
-    cacheWrite1h: number(a.cache_creation_1h_tokens),
-    reasoning: pickNumber(
+    cacheWrite5m: tokenCount(a.cache_creation_5m_tokens),
+    cacheWrite1h: tokenCount(a.cache_creation_1h_tokens),
+    reasoning: pickTokenCount(
       a,
       "reasoning_token_count",
       "codex.turn.token_usage.reasoning_output_tokens",
@@ -156,13 +146,13 @@ function base(
       "ai.usage.reasoningTokens",
       "ai.usage.outputTokenDetails.reasoningTokens"
     ),
-    total: pickNumber(
+    total: pickTokenCount(
       a,
       "codex.turn.token_usage.total_tokens",
       "codex.usage.total_tokens",
       "ai.usage.totalTokens"
     ),
-    tool: number(a.tool_token_count),
+    tool: tokenCount(a.tool_token_count),
   });
   return {
     tool,
@@ -173,6 +163,10 @@ function base(
     toolVersion: pickText(a, "app.version", "service.version"),
     sessionId: pickText(a, "session.id", "conversation.id"),
     threadId: text(a["thread.id"]),
+    turnId: tool === CODEX_CONFIG_ID ? text(a["turn.id"]) : undefined,
+    promptId: tool === CLAUDE_CONFIG_ID ? text(a["prompt.id"]) : undefined,
+    clientRequestId: tool === CLAUDE_CONFIG_ID ? text(a.client_request_id) : undefined,
+    messageId: tool === CLAUDE_CONFIG_ID ? text(a["message.uuid"]) : undefined,
     provider: pickText(
       a,
       "anthropic.provider",
@@ -193,6 +187,7 @@ function base(
     cwd: pickText(a, "cwd", "directory"),
     tokens: usage,
     usageScope: usage ? "event" : undefined,
+    cacheZeroMayMeanMissing: cacheZeroMayMeanMissing(tool, usage),
     tokenInputIncludesCache:
       usage?.input !== undefined && tool !== OPENCODE_CONFIG_ID
         ? tool === CODEX_CONFIG_ID
@@ -216,6 +211,8 @@ function fromLog(
     ...row,
     timestamp: first(row.timestamp, nanos(entry.timeUnixNano)),
     observedTimestamp: nanos(entry.observedTimeUnixNano),
+    traceId: text(entry.traceId),
+    spanId: text(entry.spanId),
     prompt:
       name === "user_prompt" || name === "codex.user_prompt"
         ? pickText(a, "prompt_text", "prompt")
@@ -265,8 +262,11 @@ function fromSpan(
         timestamp: nanos(event.timeUnixNano),
         toolVersion: row.toolVersion,
         sessionId: row.sessionId,
+        threadId: row.threadId,
+        turnId: row.turnId,
         traceId: row.traceId,
         spanId: row.spanId,
+        parentSpanId: row.parentSpanId,
         toolCallId: row.toolCallId,
         toolName: row.toolName,
         toolOutput: event.name === "tool.output" ? json(ea.output) : undefined,
@@ -286,7 +286,10 @@ function fromMetric(
       const point = object(rawPoint);
       const a = { ...resource, ...attributes(point.attributes) };
       const metricType = pickText(a, "type", "token_type");
-      const amount = first(number(point.asInt), number(point.asDouble), number(point.sum));
+      const rawAmount = [point.asInt, point.asDouble, point.sum].find(
+        (value) => number(value) !== undefined
+      );
+      const amount = number(rawAmount);
       const tokenKinds: Record<string, keyof NonNullable<TelemetryObservation["tokens"]>> = {
         input: "input",
         output: "output",
@@ -297,11 +300,12 @@ function fromMetric(
         reasoning_output: "reasoning",
       };
       const token = metricType && tokenKinds[metricType];
+      const count = tokenCount(rawAmount);
       const usage =
         (name === "claude_code.token.usage" || name === "codex.turn.token_usage") &&
         token &&
-        amount !== undefined
-          ? { [token]: amount }
+        count !== undefined
+          ? { [token]: count }
           : undefined;
       return {
         ...base(tool, "metric", a, rawPoint),
@@ -313,6 +317,7 @@ function fromMetric(
         metricValue: amount,
         tokens: usage,
         usageScope: usage ? "metric-aggregate" : undefined,
+        cacheZeroMayMeanMissing: cacheZeroMayMeanMissing(tool, usage),
       };
     })
   );
@@ -343,140 +348,10 @@ function otel(tool: TelemetryObservation["tool"], capture: OtelCapture): Telemet
     );
   });
 }
-export function transformClaude(source: ClaudeTelemetrySource): TelemetryObservation[] {
-  return otel(CLAUDE_CONFIG_ID, source);
-}
-export function transformCodex(source: CodexTelemetrySource): TelemetryObservation[] {
-  return otel(CODEX_CONFIG_ID, source);
-}
-function openCodeTokens(raw: unknown): TelemetryObservation["tokens"] {
-  const t = object(raw);
-  const cache = object(t.cache);
-  return tokens({
-    input: number(t.input),
-    output: number(t.output),
-    cacheRead: number(cache.read),
-    cacheWrite: number(cache.write),
-    reasoning: number(t.reasoning),
-    total: number(t.total),
-  });
-}
-function openCodeV1(source: OpenCodeV1Source): TelemetryObservation[] {
-  const p = object(source.properties);
-  const info = object(p.info);
-  const part = object(p.part);
-  const state = object(part.state);
-  const model = object(info.model);
-  const step = part.type === "step-finish";
-  const usage = openCodeTokens(step ? part.tokens : info.tokens);
-  const status = text(state.status);
-  return [
-    {
-      tool: OPENCODE_CONFIG_ID,
-      signal: "event",
-      source: json(source),
-      openCodeVersion: 1,
-      eventType: source.type,
-      timestamp: first(millis(p.time), millis(object(info.time).created)),
-      sessionId: first(
-        text(p.sessionID),
-        text(info.sessionID),
-        text(part.sessionID),
-        source.type === "session.created" ? text(info.id) : undefined
-      ),
-      messageId: first(
-        source.type === "message.updated" ? text(info.id) : undefined,
-        text(part.messageID)
-      ),
-      toolVersion: text(info.version),
-      partId: text(part.id),
-      provider: first(text(info.providerID), text(model.providerID)),
-      model: first(text(info.modelID), text(model.modelID)),
-      role: text(info.role),
-      text: part.type === "text" ? text(part.text) : undefined,
-      toolCallId: part.type === "tool" ? text(part.callID) : undefined,
-      toolName: part.type === "tool" ? text(part.tool) : undefined,
-      toolInput: part.type === "tool" ? json(state.input) : undefined,
-      toolOutput: part.type === "tool" ? json(state.output) : undefined,
-      success: status === "completed" ? true : status === "error" ? false : undefined,
-      error: status === "error" ? json(state.error) : undefined,
-      tokens: usage,
-      usageScope: usage
-        ? step
-          ? "step-snapshot"
-          : source.type === "session.created" || source.type === "session.updated"
-            ? "session-cumulative"
-            : "message-snapshot"
-        : undefined,
-      tokenInputIncludesCache: usage?.input !== undefined ? false : undefined,
-      tokenOutputIncludesReasoning: usage?.output !== undefined ? false : undefined,
-      zeroMayMeanMissing: usage ? true : undefined,
-      reportedCostUsd: number(step ? part.cost : info.cost),
-      cwd: text(object(info.path).cwd),
-    },
-  ];
-}
-function openCodeV2(source: OpenCodeV2Source): TelemetryObservation[] {
-  const d = object(source.data);
-  const model = object(d.model);
-  const item = object(d.item);
-  const itemPayload = object(item.payload);
-  const inboxModel = object(object(itemPayload.metadata).model);
-  const usage = openCodeTokens(d.tokens);
-  const kind = source.type;
-  return [
-    {
-      tool: OPENCODE_CONFIG_ID,
-      signal: "event",
-      source: json(source),
-      openCodeVersion: 2,
-      eventType: kind,
-      timestamp: millis(source.created),
-      toolVersion: kind === "session.created" ? text(d.version) : undefined,
-      sessionId: text(d.sessionID),
-      messageId: text(d.assistantMessageID),
-      provider: first(text(model.providerID), text(inboxModel.providerID)),
-      model: first(text(model.id), text(inboxModel.modelID)),
-      cwd: text(object(source.location).directory),
-      role: kind === "session.inbox.enqueued" ? text(item.type) : undefined,
-      prompt:
-        kind === "session.inbox.enqueued" && item.type === "user"
-          ? text(itemPayload.text)
-          : undefined,
-      response: kind === "session.text.ended" ? text(d.text) : undefined,
-      text: kind === "session.text.delta" ? text(d.delta) : undefined,
-      toolCallId: kind.startsWith("session.tool.") ? text(d.id) : undefined,
-      toolName: kind === "session.tool.input.started" ? text(d.name) : undefined,
-      toolInput:
-        kind === "session.tool.called"
-          ? json(d.input)
-          : kind === "session.tool.input.ended"
-            ? json(d.text)
-            : undefined,
-      toolOutput: kind === "session.tool.success" ? json(d.content) : undefined,
-      success:
-        kind === "session.tool.success" ? true : kind === "session.tool.failed" ? false : undefined,
-      error: kind === "session.tool.failed" ? json(d.error) : undefined,
-      tokens: usage,
-      usageScope: usage
-        ? kind === "session.usage.updated"
-          ? "session-cumulative"
-          : "event"
-        : undefined,
-      tokenInputIncludesCache: usage?.input !== undefined ? false : undefined,
-      tokenOutputIncludesReasoning: usage?.output !== undefined ? false : undefined,
-      zeroMayMeanMissing: usage ? true : undefined,
-      reportedCostUsd: number(d.cost),
-    },
-  ];
-}
-export function transformOpenCode(source: OpenCodeTelemetrySource): TelemetryObservation[] {
-  if ("signal" in source) return otel(OPENCODE_CONFIG_ID, source);
-  if ("properties" in source) return openCodeV1(source);
-  return openCodeV2(source);
-}
+export const transformClaude = (source: OtelCapture) => otel(CLAUDE_CONFIG_ID, source);
+export const transformCodex = (source: OtelCapture) => otel(CODEX_CONFIG_ID, source);
+export const transformOpenCode = (source: OtelCapture) => otel(OPENCODE_CONFIG_ID, source);
 
-/** Decode one captured JSON line. Unknown or malformed records remain visibly unrecognised. */
 export function transformCapturedLine(tool: Config, line: string): TelemetryObservation[] {
   let input: Obj;
   try {
@@ -486,19 +361,7 @@ export function transformCapturedLine(tool: Config, line: string): TelemetryObse
   }
   if (input.signal === "logs" || input.signal === "traces" || input.signal === "metrics") {
     const source: OtelCapture = { signal: input.signal, payload: input.payload };
-    if (tool === CLAUDE_CONFIG_ID) return transformClaude(source);
-    if (tool === CODEX_CONFIG_ID) return transformCodex(source);
-    return transformOpenCode(source);
+    return otel(tool, source);
   }
-  if (tool !== OPENCODE_CONFIG_ID || typeof input.type !== "string") return [];
-  if ("properties" in input)
-    return transformOpenCode({ type: input.type, properties: input.properties });
-  if ("data" in input)
-    return transformOpenCode({
-      type: input.type,
-      data: input.data,
-      created: number(input.created),
-      location: input.location,
-    });
   return [];
 }

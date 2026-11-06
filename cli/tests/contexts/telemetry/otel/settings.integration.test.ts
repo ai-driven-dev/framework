@@ -3,10 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { initializeOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/init.js";
-import {
-  openCodeVersion,
-  readToken,
-} from "../../../../src/contexts/telemetry/infrastructure/otel/settings.js";
+import { readToken } from "../../../../src/contexts/telemetry/infrastructure/otel/settings.js";
 
 let home: string;
 const tokenPath = () => join(home, ".local/share/aidd-otel-observation/collector-token");
@@ -16,41 +13,6 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   await rm(home, { recursive: true, force: true });
-});
-
-describe("OpenCode version detection", () => {
-  it.each([
-    ["1.18.35", "1"],
-    ["1.19.5", "1"],
-    ["1.20.0", "1"],
-    ["opencode v2.2.5", "2"],
-    ["2.3.0", "2"],
-  ])("accepts verified release %s", async (version, expected) => {
-    expect(await openCodeVersion({ home, env: {}, opencodeVersion: async () => version })).toBe(
-      expected
-    );
-  });
-
-  it.each(["1.18.34", "1.19.4", "2.2.4", "2.1.99", "3.0.0", "not-a-version", "1.18.35 extra"])(
-    "rejects unsupported release %s",
-    async (version) => {
-      await expect(
-        openCodeVersion({ home, env: {}, opencodeVersion: async () => version })
-      ).rejects.toThrow(/Unsupported OpenCode version/);
-    }
-  );
-
-  it("explains when the executable cannot be queried", async () => {
-    await expect(
-      openCodeVersion({
-        home,
-        env: {},
-        opencodeVersion: async () => {
-          throw new Error("missing");
-        },
-      })
-    ).rejects.toThrow(/Cannot determine OpenCode version/);
-  });
 });
 
 describe.skipIf(process.platform === "win32")("collector credential and exporter conflicts", () => {
