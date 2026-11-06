@@ -171,6 +171,11 @@ The token resolves from the first hit:
 | `kilo` | no | yes | `.kilo/` |
 | `antigravity` | no | yes | `.agents/` |
 
+A Kilo flat build writes each plugin Rule to `.kilo/rules/` and appends it to the Kilo config's `instructions`.
+Kilo loads those for every file, so a Rule scoped by `paths` fails the build; a Kilo plugin install skips it with a warning.
+Every other target skips `rules/` with a warning.
+A Rule's links to files the build does not emit, such as non-`.md` siblings, are left unchanged.
+
 ## Environment variables
 
 | Variable | Effect |

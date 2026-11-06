@@ -1,3 +1,4 @@
+import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -12,6 +13,7 @@ import {
 } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { buildKiloFlatContract } from "../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import {
   type FrameworkBuild,
@@ -20,6 +22,9 @@ import {
 import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/kernel/paths.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import type { VersionReader } from "../../../../../src/kernel/ports/version-reader.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
+import { FileAdapter } from "../../../../../src/runtime/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../../../../src/runtime/filesystem/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -50,11 +55,10 @@ function stubAssetProvider(): AssetProvider {
 function makeIsDirectory(memFs: InMemoryFileAdapter): (path: string) => Promise<boolean> {
   return async (path: string): Promise<boolean> => {
     // The adapter keys every entry with forward slashes whatever the platform joined
-    // with, so the directory asked about is spelled the same way before the prefix test.
+    // with, so the directory asked about is spelled the same way before the adapter is asked.
     const key = path.replace(/\\/g, "/");
     if (memFs.has(key)) return false;
-    const prefix = key.endsWith("/") ? key : `${key}/`;
-    return memFs.listAll().some((k) => k.startsWith(prefix));
+    return memFs.fileExists(key);
   };
 }
 
@@ -444,7 +448,7 @@ describe("EnsureBuiltMarketplaceUseCase — when a published source's sentinel c
 // outDir here is always builtMarketplaceDir(), an aidd-owned disposable cache, so a collision
 // only means a previous build is still there. A real FlatBuildStrategy catches force flipping.
 describe("force behavior at the cache-rebuild path", () => {
-  it("overwrites a colliding file already present in the build cache instead of throwing FlatTargetExistsError", async () => {
+  it("replaces a file a previous build left in the cache instead of throwing FlatTargetExistsError", async () => {
     const memFs = new InMemoryFileAdapter();
     await seedFromDirectory(memFs, FIXTURE_DIR, { useAbsolutePaths: true });
 
@@ -462,7 +466,7 @@ describe("force behavior at the cache-rebuild path", () => {
         validator,
         assetProvider,
         buildCopilotFlatContract(),
-        true, // force:true — mirrors deps.ts wiring for every *:flat target
+        { force: true }, // mirrors deps.ts wiring for every *:flat target
         outDir,
         makeIsDirectory(memFs),
         new CapturingLogger()
@@ -493,6 +497,72 @@ describe("force behavior at the cache-rebuild path", () => {
 
     expect(result.rebuilt).toBe(true);
     expect(memFs.getFile(agentPath)).not.toBe("stale cache content from a previous build");
+  });
+});
+
+describe("a rebuild starts from an empty cache", () => {
+  // On disk with the bundled assets: the build a Kilo install runs, end to end.
+  it("drops a Rule the previous build emitted once the source scopes it by paths", async () => {
+    const root = await mkdtemp(join(tmpdir(), "aidd-ensure-built-"));
+    try {
+      const sourceDir = join(root, "framework");
+      await cp(FIXTURE_DIR, sourceDir, { recursive: true });
+      const rulePath = join(sourceDir, `plugins/${PLUGIN}/rules/01-standards/naming.md`);
+      const scoped = await readFile(rulePath, "utf8");
+      await writeFile(rulePath, "# Naming Conventions\n- Files: kebab-case\n");
+
+      const diskFs = new FileAdapter(new HasherAdapter());
+      const logger = new CapturingLogger();
+      const kiloBuildFor: FrameworkBuildFor = (_target, _mode, outDir) => {
+        const validator = noopValidator();
+        const assetProvider = new BundledAssetProviderAdapter();
+        const strategy = new FlatBuildStrategy(
+          diskFs,
+          validator,
+          assetProvider,
+          buildKiloFlatContract(),
+          { force: true, inexpressibleRules: { kind: "skip", warn: logger } },
+          outDir,
+          async (path) => (await stat(path)).isDirectory(),
+          new CapturingLogger()
+        );
+        return new FrameworkBuildUseCase(
+          diskFs,
+          validator,
+          assetProvider,
+          new CapturingLogger(),
+          strategy
+        );
+      };
+      // One use case per install, as each runs in its own process and memoizes per run.
+      const install = () =>
+        new EnsureBuiltMarketplaceUseCase(
+          diskFs,
+          fakeResolve(sourceDir, "1.0.0"),
+          kiloBuildFor,
+          fakeVersion("5.0.0"),
+          () => join(root, "user-cache")
+        ).execute({
+          projectRoot: join(root, "project"),
+          marketplace: makeMarketplace(),
+          target: "kilo",
+          mode: "flat",
+        });
+
+      const first = await install();
+      const emitted = join(first.builtDir, `.kilo/rules/${PLUGIN}-01-standards-naming.md`);
+      expect(await readFile(emitted, "utf8")).toContain("kebab-case");
+
+      await writeFile(rulePath, scoped);
+      await install();
+
+      expect(logger.warnMessages.some((w) => w.includes("rules/01-standards/naming.md"))).toBe(
+        true
+      );
+      expect(await diskFs.fileExists(emitted)).toBe(false);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 

@@ -1,4 +1,4 @@
-import { basename, resolve } from "node:path";
+import { basename, dirname, posix, resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
@@ -6,15 +6,21 @@ import type {
 } from "../../../../../src/contexts/tools/domain/build-contract.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { buildKiloFlatContract } from "../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
+import {
+  FlatBuildStrategy,
+  type InexpressibleRulePolicy,
+} from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
 import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import {
+  FlatRuleNameClashError,
   FlatTargetExistsError,
   FrameworkPlaceholderInPluginError,
   JsonSchemaValidationError,
   OutDirNotDirectoryError,
+  PathScopedRuleUnsupportedError,
 } from "../../../../../src/kernel/errors.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -62,6 +68,7 @@ function makeAssetProvider(): AssetProvider {
       if (fileName === "opencode-events.js") {
         return "export async function setupOpencodeEvents() {}";
       }
+      if (fileName === "kilo.json") return { $schema: "https://app.kilo.ai/config.json" };
       if (fileName === "opencode.json") {
         return {
           $schema: "https://opencode.ai/config.json",
@@ -107,7 +114,7 @@ function makeUseCase(
     av,
     ap,
     buildCopilotFlatContract(),
-    force,
+    { force },
     ABS_OUT,
     makeIsDirectory(memFs)
   );
@@ -242,7 +249,7 @@ describe("FlatOutputStrategy integration", () => {
         new AjvSchemaValidatorAdapter(),
         ap,
         buildCopilotFlatContract(),
-        false,
+        { force: false },
         "/nonexistent",
         makeIsDirectory(emptyFs)
       );
@@ -263,7 +270,7 @@ describe("FlatOutputStrategy integration", () => {
         new AjvSchemaValidatorAdapter(),
         ap2,
         buildCopilotFlatContract(),
-        false,
+        { force: false },
         ABS_OUT,
         makeIsDirectory(fileFs)
       );
@@ -319,7 +326,7 @@ describe("FlatOutputStrategy integration", () => {
         new AjvSchemaValidatorAdapter(),
         makeAssetProvider(),
         buildCopilotFlatContract(),
-        false,
+        { force: false },
         ABS_OUT,
         makeIsDirectory(memFs)
       );
@@ -338,7 +345,7 @@ describe("FlatOutputStrategy integration", () => {
         new AjvSchemaValidatorAdapter(),
         ap,
         buildOpencodeFlatContract(),
-        force,
+        { force },
         ABS_OUT,
         makeIsDirectory(fs)
       );
@@ -388,7 +395,7 @@ describe("FlatOutputStrategy integration", () => {
         new AjvSchemaValidatorAdapter(),
         makeAssetProvider(),
         { ...base, artifacts: { ...base.artifacts, hooks: { supported: false } } },
-        false,
+        { force: false },
         ABS_OUT,
         makeIsDirectory(memFs),
         captLogger
@@ -445,14 +452,15 @@ function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildContract 
 function stubStrategy(
   memFs: InMemoryFileAdapter,
   contract: ToolBuildContract,
-  logger?: CapturingLogger
+  logger?: CapturingLogger,
+  inexpressibleRules?: InexpressibleRulePolicy
 ): FlatBuildStrategy {
   return new FlatBuildStrategy(
     memFs,
     new AjvSchemaValidatorAdapter(),
     makeAssetProvider(),
     contract,
-    false,
+    { force: false, inexpressibleRules },
     STUB_OUT,
     makeIsDirectory(memFs),
     logger
@@ -766,5 +774,216 @@ describe("what a flat layout writes once every plugin is built", () => {
       await strategy.postBuild({ name: "m", plugins: [] }, [{ name: "aidd-test" }], STUB_OUT)
     ).toBe(1);
     expect(seen).toEqual([{ names: ["aidd-test"], outDir: STUB_OUT, sourceDir: "/src" }]);
+  });
+});
+
+describe("the Rules a flat layout writes", () => {
+  const RULES_SRC = `${FIXTURE_DIR}/plugins/${PLUGIN}/rules/01-standards`;
+
+  function fullBuild(
+    memFs: InMemoryFileAdapter,
+    contract: ToolBuildContract,
+    target: "kilo" | "opencode",
+    logger = new CapturingLogger(),
+    inexpressibleRules?: InexpressibleRulePolicy
+  ) {
+    const ap = makeAssetProvider();
+    const strategy = new FlatBuildStrategy(
+      memFs,
+      new AjvSchemaValidatorAdapter(),
+      ap,
+      contract,
+      { force: true, inexpressibleRules },
+      ABS_OUT,
+      makeIsDirectory(memFs),
+      logger
+    );
+    const uc = new FrameworkBuildUseCase(memFs, makeValidator(), ap, logger, strategy);
+    return uc.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target });
+  }
+
+  // The fixture's own Rule is path-scoped; these replace it with two all-files Rules.
+  async function seedAllFilesRules(): Promise<InMemoryFileAdapter> {
+    const memFs = await makeSeededFs();
+    memFs.setFile(`${RULES_SRC}/naming.md`, "# Naming\nSee [errors](./errors.md).\n");
+    memFs.setFile(`${RULES_SRC}/errors.md`, "# Errors\n");
+    return memFs;
+  }
+
+  it("emits an all-files Rule under .kilo/rules whose sibling link still resolves", async () => {
+    const memFs = await seedAllFilesRules();
+    const result = await fullBuild(memFs, buildKiloFlatContract(), "kilo");
+
+    const rulePath = `${ABS_OUT}/.kilo/rules/aidd-test-01-standards-naming.md`;
+    const emitted = memFs.getFile(rulePath) ?? "";
+    const link = /\]\(([^)]+)\)/.exec(emitted)?.[1] ?? "";
+    expect(link).toBe("./aidd-test-01-standards-errors.md");
+    expect(memFs.has(posix.join(dirname(rulePath).replaceAll("\\", "/"), link))).toBe(true);
+    expect(result.plugins[0]?.skippedSections).toEqual(["commands"]);
+    const config = JSON.parse(memFs.getFile(`${ABS_OUT}/.kilo/kilo.jsonc`) ?? "{}") as {
+      instructions: string[];
+    };
+    expect(config.instructions).toEqual([
+      ".kilo/rules/aidd-test-01-standards-errors.md",
+      ".kilo/rules/aidd-test-01-standards-naming.md",
+    ]);
+  });
+
+  it("rebuilds with --force without duplicating Rule files or instruction entries", async () => {
+    const memFs = await seedAllFilesRules();
+    await fullBuild(memFs, buildKiloFlatContract(), "kilo");
+    const config = memFs.getFile(`${ABS_OUT}/.kilo/kilo.jsonc`);
+    const rules = memFs.listUnder(`${ABS_OUT}/.kilo/rules`);
+    await fullBuild(memFs, buildKiloFlatContract(), "kilo");
+    expect(memFs.getFile(`${ABS_OUT}/.kilo/kilo.jsonc`)).toBe(config);
+    expect(rules).toHaveLength(2);
+    expect(memFs.listUnder(`${ABS_OUT}/.kilo/rules`)).toEqual(rules);
+  });
+
+  it("keeps warning and skipping rules/ for a flat target that hosts no Rule", async () => {
+    const memFs = await makeSeededFs();
+    const logger = new CapturingLogger();
+    const result = await fullBuild(memFs, buildOpencodeFlatContract(), "opencode", logger);
+    expect(result.plugins[0]?.skippedSections).toContain("rules");
+    expect(logger.warnMessages.some((m) => m.includes("Skipping rules/"))).toBe(true);
+  });
+
+  it("writes two plugins' same-named Rules as two distinct files", async () => {
+    const memFs = new InMemoryFileAdapter({
+      "/src/plugins/aidd-a/rules/style.md": "a",
+      "/src/plugins/aidd-b/rules/style.md": "b",
+    });
+    const strategy = stubStrategy(memFs, buildKiloFlatContract());
+    await strategy.writeRules("aidd-a", "/src/plugins/aidd-a");
+    await strategy.writeRules("aidd-b", "/src/plugins/aidd-b");
+    expect(writtenUnder(memFs, STUB_OUT)).toEqual({
+      [`${STUB_OUT}/.kilo/rules/aidd-a-style.md`]: "a",
+      [`${STUB_OUT}/.kilo/rules/aidd-b-style.md`]: "b",
+    });
+  });
+
+  it("fails on a path-scoped Rule and emits none of the plugin's Rules", async () => {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/rules/all.md`]: "everywhere",
+      [`${STUB_PLUGIN_SRC}/rules/ts.md`]: "---\npaths:\n  - src/**/*.ts\n---\nTyped.\n",
+    });
+    await expect(
+      stubStrategy(memFs, buildKiloFlatContract()).writeRules("aidd-test", STUB_PLUGIN_SRC)
+    ).rejects.toThrow(
+      new PathScopedRuleUnsupportedError("aidd-test", "rules/ts.md", ["src/**/*.ts"])
+    );
+    expect(writtenUnder(memFs, STUB_OUT)).toEqual({});
+  });
+
+  it("relocates a Rule's sibling link for a layout declaring no Rule transform", async () => {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/rules/g/a.md`]: "See [b](./b.md).",
+      [`${STUB_PLUGIN_SRC}/rules/g/b.md`]: "B",
+    });
+    const contract = stubContract({
+      artifacts: {
+        ...stubContract().artifacts,
+        rules: supportedArtifact(
+          (plugin, rel) => `.stub/rules/${plugin}-${rel.slice(6).replaceAll("/", "-")}`
+        ),
+      },
+    });
+    expect(await stubStrategy(memFs, contract).writeRules("aidd-test", STUB_PLUGIN_SRC)).toBe(2);
+    expect(memFs.getFile(`${STUB_OUT}/.stub/rules/aidd-test-g-a.md`)).toBe(
+      "See [b](./aidd-test-g-b.md)."
+    );
+  });
+
+  it("refuses to overwrite an existing Rule file without --force", async () => {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/rules/style.md`]: "new",
+      [`${STUB_OUT}/.kilo/rules/aidd-test-style.md`]: "user-owned",
+    });
+    await expect(
+      stubStrategy(memFs, buildKiloFlatContract()).writeRules("aidd-test", STUB_PLUGIN_SRC)
+    ).rejects.toThrow(FlatTargetExistsError);
+    expect(memFs.getFile(`${STUB_OUT}/.kilo/rules/aidd-test-style.md`)).toBe("user-owned");
+  });
+
+  it("skips and names a path-scoped Rule when the caller asks to skip it", async () => {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/rules/all.md`]: "everywhere",
+      [`${STUB_PLUGIN_SRC}/rules/ts.md`]: "---\npaths:\n  - src/**/*.ts\n---\nTyped.\n",
+    });
+    const warnings = new CapturingLogger();
+    const written = await stubStrategy(memFs, buildKiloFlatContract(), undefined, {
+      kind: "skip",
+      warn: warnings,
+    }).writeRules("aidd-test", STUB_PLUGIN_SRC);
+    expect(written).toBe(1);
+    expect(writtenUnder(memFs, STUB_OUT)).toEqual({
+      [`${STUB_OUT}/.kilo/rules/aidd-test-all.md`]: "everywhere",
+    });
+    expect(warnings.warnMessages).toHaveLength(1);
+    expect(warnings.warnMessages[0]).toContain("'rules/ts.md'");
+    expect(warnings.warnMessages[0]).toContain("'aidd-test'");
+    expect(warnings.warnMessages[0]).toContain("src/**/*.ts");
+  });
+
+  it("lists only the emitted Rules in instructions when path-scoped ones are skipped", async () => {
+    const memFs = await makeSeededFs();
+    memFs.setFile(`${RULES_SRC}/errors.md`, "# Errors\n");
+    const warnings = new CapturingLogger();
+    await fullBuild(memFs, buildKiloFlatContract(), "kilo", new CapturingLogger(), {
+      kind: "skip",
+      warn: warnings,
+    });
+    expect(memFs.listUnder(`${ABS_OUT}/.kilo/rules`)).toEqual([
+      `${ABS_OUT.replaceAll("\\", "/")}/.kilo/rules/aidd-test-01-standards-errors.md`,
+    ]);
+    const config = JSON.parse(memFs.getFile(`${ABS_OUT}/.kilo/kilo.jsonc`) ?? "{}") as {
+      instructions: string[];
+    };
+    expect(config.instructions).toEqual([".kilo/rules/aidd-test-01-standards-errors.md"]);
+    expect(warnings.warnMessages.some((m) => m.includes("rules/01-standards/naming.md"))).toBe(
+      true
+    );
+  });
+
+  it("still fails the build on a path-scoped Rule by default", async () => {
+    const memFs = await makeSeededFs();
+    await expect(fullBuild(memFs, buildKiloFlatContract(), "kilo")).rejects.toThrow(
+      PathScopedRuleUnsupportedError
+    );
+    expect(memFs.listUnder(`${ABS_OUT}/.kilo/rules`)).toEqual([]);
+  });
+
+  it("refuses two Rules flattening to one filename", async () => {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/rules/a/b-c.md`]: "one",
+      [`${STUB_PLUGIN_SRC}/rules/a-b/c.md`]: "two",
+    });
+    const error = await stubStrategy(memFs, buildKiloFlatContract())
+      .writeRules("aidd-test", STUB_PLUGIN_SRC)
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(FlatRuleNameClashError);
+    const message = (error as Error).message;
+    expect(message).toContain("aidd-test/rules/a/b-c.md");
+    expect(message).toContain("aidd-test/rules/a-b/c.md");
+    expect(message).toContain(".kilo/rules/aidd-test-a-b-c.md");
+    expect(message).not.toContain("--force");
+    expect(writtenUnder(memFs, STUB_OUT)).toEqual({});
+  });
+
+  it("names both plugins' Rules when they flatten to one filename", async () => {
+    const memFs = new InMemoryFileAdapter({
+      "/src/plugins/aidd/rules/x-y.md": "one",
+      "/src/plugins/aidd-x/rules/y.md": "two",
+    });
+    const strategy = stubStrategy(memFs, buildKiloFlatContract());
+    await strategy.writeRules("aidd", "/src/plugins/aidd");
+    await expect(strategy.writeRules("aidd-x", "/src/plugins/aidd-x")).rejects.toThrow(
+      new FlatRuleNameClashError(
+        "aidd/rules/x-y.md",
+        "aidd-x/rules/y.md",
+        ".kilo/rules/aidd-x-y.md"
+      )
+    );
+    expect(memFs.getFile(`${STUB_OUT}/.kilo/rules/aidd-x-y.md`)).toBe("one");
   });
 });

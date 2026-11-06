@@ -5,6 +5,7 @@ import {
   genericFlatAgentPath,
   genericFlatHooksFile,
   genericFlatHooksScriptPath,
+  genericFlatRulePath,
   genericFlatSkillPath,
   genericFlatSkillTreePath,
 } from "../../../src/kernel/materialization/flat-paths.js";
@@ -170,5 +171,19 @@ describe("flatMcpKeyPrefix", () => {
 
   it("uses the full plugin name", () => {
     expect(flatMcpKeyPrefix("my-awesome-plugin")).toBe("my-awesome-plugin-");
+  });
+});
+
+describe("genericFlatRulePath", () => {
+  it("folds the Rule's group folders into one plugin-prefixed filename", () => {
+    expect(genericFlatRulePath(".kilo/rules/", "aidd-test", "rules/01-standards/naming.md")).toBe(
+      ".kilo/rules/aidd-test-01-standards-naming.md"
+    );
+  });
+
+  it("keeps a top-level Rule's own name", () => {
+    expect(genericFlatRulePath(".kilo/rules/", "aidd-dev", "rules/style.md")).toBe(
+      ".kilo/rules/aidd-dev-style.md"
+    );
   });
 });
