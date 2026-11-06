@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { initializeOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/init.js";
 import { hasOpenCodePlugin } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/opencode-plugin-file.js";
+import { verifyOtel } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/verify.js";
 
 const TOKEN = "example-private-token";
 let home: string;
@@ -27,10 +28,45 @@ function seedToken() {
 }
 
 describe.skipIf(process.platform === "win32")("OTLP initialization", () => {
+  it.each(["package.json", "server.ts", "server.tsx", "server.js", "index.ts", "index.tsx"])(
+    "refuses competing %s without changing it",
+    async (name) => {
+      await seedToken();
+      const host = { home, env: {}, opencodeVersion: async () => "2.2.5" };
+      const entry = join(home, ".config/opencode/plugins/aidd-otel", name);
+      await seed(entry, "user content");
+      await expect(initializeOtel("opencode", "dev", host)).rejects.toThrow(
+        /competing entry point/
+      );
+      expect(await readFile(entry, "utf8")).toBe("user content");
+      await expect(stat(join(dirname(entry), "index.js"))).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+    }
+  );
+  it("rejects a competing symlink and FIFO without reading either", async () => {
+    const directory = join(home, ".config/opencode/plugins/aidd-otel");
+    await mkdir(directory, { recursive: true });
+    await symlink(join(home, "missing"), join(directory, "package.json"));
+    await expect(hasOpenCodePlugin({ home, env: {} })).rejects.toThrow(/competing entry point/);
+    await rm(join(directory, "package.json"));
+    execFileSync("/usr/bin/mkfifo", [join(directory, "server.js")]);
+    await expect(hasOpenCodePlugin({ home, env: {} })).rejects.toThrow(/competing entry point/);
+  });
+  it("refuses a competing entry added after installation", async () => {
+    await seedToken();
+    const host = { home, env: {}, opencodeVersion: async () => "2.2.5" };
+    await initializeOtel("opencode", "dev", host);
+    const entry = join(home, ".config/opencode/plugins/aidd-otel/server.js");
+    await writeFile(entry, "user plugin\n");
+    await expect(hasOpenCodePlugin(host)).rejects.toThrow(/competing entry point/);
+    await expect(verifyOtel("opencode", "dev", host)).rejects.toThrow(/competing entry point/);
+    expect(await readFile(entry, "utf8")).toBe("user plugin\n");
+  });
   it("rejects a FIFO plugin without blocking", async () => {
     const path = join(home, ".config/opencode/plugins/aidd-otel/index.js");
     await mkdir(dirname(path), { recursive: true });
-    execFileSync("mkfifo", [path]);
+    execFileSync("/usr/bin/mkfifo", [path]);
     const check = hasOpenCodePlugin({ home, env: {} }).then(
       () => "accepted",
       (error: Error) => error.message

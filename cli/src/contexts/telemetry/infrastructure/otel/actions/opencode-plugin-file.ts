@@ -7,10 +7,40 @@ import { type Host, openCodeConfigDir } from "../settings.js";
 export const openCodePluginDirectory = (host: Host) =>
   join(openCodeConfigDir(host), "plugins", "aidd-otel");
 
+// OpenCode v2 resolves package exports first, then server.*, then index.*.
+const competingEntries = [
+  "package.json",
+  "server.ts",
+  "server.tsx",
+  "server.js",
+  "index.ts",
+  "index.tsx",
+];
+
 export async function hasOpenCodePlugin(host: Host): Promise<boolean> {
-  const path = join(openCodePluginDirectory(host), "index.js");
+  const directory = openCodePluginDirectory(host);
   try {
-    const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    const info = await lstat(directory);
+    if (!info.isDirectory() || info.isSymbolicLink())
+      throw new Error("Invalid OpenCode plugin directory.");
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return false;
+    throw error;
+  }
+  for (const name of competingEntries) {
+    try {
+      await lstat(join(directory, name));
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") continue;
+      throw error;
+    }
+    throw new Error("OpenCode telemetry plugin has a competing entry point.");
+  }
+  try {
+    const file = await open(
+      join(directory, "index.js"),
+      constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK
+    );
     try {
       const info = await file.stat();
       if (
@@ -36,6 +66,7 @@ export async function installOpenCodePlugin(host: Host): Promise<boolean> {
   const info = await lstat(directory);
   if (!info.isDirectory() || info.isSymbolicLink())
     throw new Error("Invalid OpenCode plugin directory.");
+  if (await hasOpenCodePlugin(host)) return false;
   await writeFile(join(directory, "index.js"), openCodePlugin, { flag: "wx", mode: 0o600 });
   return true;
 }
