@@ -144,6 +144,13 @@ describe("aidd-ui code link", () => {
       }
     });
 
+    it("reads no dot file or dot folder under a code root: they hold configuration, not UI code", () => {
+      put(tmp, "src/ui/.env.example", "ACCENT=#ff0000\n");
+      put(tmp, "src/ui/.cache/x.css", ".x { color: #ff0000; }\n");
+      put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
+      assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
+    });
+
     it("names a file under a code root no record links and no ignore covers", () => {
       put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);

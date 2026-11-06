@@ -115,13 +115,16 @@ function listedByGit(project, roots) {
   return run.stdout.split("\0").filter((file) => file && fs.lstatSync(path.join(project.root, file), { throwIfNoEntry: false })?.isFile());
 }
 
+/** Whether a path passes through a dot file or folder: configuration, a cache or a tool's state, not UI code. */
+const isDotted = (file) => file.split("/").some((segment) => segment.startsWith("."));
+
 /** The code side, listed once per run: every file under a code root, and the ignored prefixes,
  * the code's token files among them. */
 function codeTree(project) {
   if (!project.codeTree) {
     const roots = codeRoots(project);
     const files = (roots.length && listedByGit(project, roots)) || roots.flatMap((root) => walk(path.join(project.root, root)).map((file) => relative(project.root, file)));
-    project.codeTree = { files: [...new Set(files)], ignore: [...prefixes(project, IGNORE_KEY), ...codeTokens(project)] };
+    project.codeTree = { files: [...new Set(files)].filter((file) => !isDotted(file)), ignore: [...prefixes(project, IGNORE_KEY), ...codeTokens(project)] };
   }
   return project.codeTree;
 }
