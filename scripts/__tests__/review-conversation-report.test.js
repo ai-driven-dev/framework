@@ -4,7 +4,7 @@ const { resolve } = require('node:path');
 const test = require('node:test');
 const { runInNewContext } = require('node:vm');
 
-const { composePrompt, formatCount, elapsedSeconds, formatDuration } = require(resolve(
+const { composePrompt, formatCount, elapsedSeconds, formatDuration, needsDiffDialog } = require(resolve(
   __dirname,
   '../../plugins/aidd-refine/skills/05-review-conversation/assets/report.js',
 ));
@@ -236,4 +236,9 @@ test('rendered durations localize, flag only over one minute, and never infer mi
     assert.equal(node.textContent, 'Indisponible');
     assert.ok(!node.classes.has('is-slow'));
   }
+});
+
+test('the complete diff opens only when it exceeds five changed lines', () => {
+  assert.equal(needsDiffDialog(5), false);
+  assert.equal(needsDiffDialog(6), true);
 });
