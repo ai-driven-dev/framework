@@ -15,14 +15,26 @@ Token fields are provider-specific. Claude's input excludes cache reads and writ
 
 In two local OpenCode v2.2.5 executions, the raw OTLP contained 1,335 spans, 276 logs and no metric batches. A prompt span in each execution included a session ID in its HTTP path; no session-linked model, effort or token attributes were observed. Five other HTTP spans per execution contained that session ID but are not forwarded. The prompt spans had no trace-linked descendants in these captures; the model and usage spans belonged to a separate server trace without a session ID. A startup log included the requested model, but no session ID or proof of the model actually used. The framework forwards only the validated prompt span, not the other traces or logs. OpenCode computes usage on an internal event bus, which is not provider OTLP and is not used in this view. These observations do not prove what other versions or configurations emit. Production export remains disabled until authenticated user identity and the destination are implemented.
 
+## Additional coverage investigated
+
+| Provider | Available or observed in OTLP | Current limit and next step |
+| --- | --- | --- |
+| Claude Code | The documented `api_request` event can carry request and prompt IDs, model, effort, latency and separate token and cache counters. These fields appeared in both local captures. | The framework does not forward these events today. An allowlist of technical fields could expose them; avoid counting the same request again through metrics. Repository attributes require a separate opt-in. |
+| Codex | Logs, metrics and traces are independently configurable. Completed response events can include model, effort and usage. | The observed turn-usage histogram had no session ID and the response events had no turn or request ID. Neither timestamps nor a previous session's effort establish a safe join. Forward additional documented, session-linked events only after validating their fields. |
+| OpenCode v2 | The v2.2.5 exporter emits logs and traces. In our captures, session HTTP spans and model/usage spans did not share a usable correlation. | Standard emitted OTLP did not establish session-linked model, effort or usage. Instrumenting the producer before its usage normalization could emit explicit session-linked OTLP, but is not implemented or validated. Its internal plugin event bus is a different source, and normalizes missing counters to zero; a model variant is not necessarily reasoning effort. |
+
+An observed effort is evidence only for its own observation. Do not carry it into a later session or an unlinked event, and do not equate a requested model with a confirmed response model.
+
 ## Sources
 
 Read 2026-11-06:
 
 - [Claude Code monitoring](https://code.claude.com/docs/en/monitoring-usage)
+- [Claude Code API request event](https://code.claude.com/docs/en/monitoring-usage#api-request-event)
 - [Codex telemetry configuration](https://learn.chatgpt.com/docs/config-file/config-advanced#what-gets-emitted)
 - [OpenCode v2.2.5 OTLP exporter](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/util/src/observability/otlp.ts)
 - [OpenCode v2.2.5 usage projection](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/projector.ts#L81-L110)
+- [OpenCode v2.2.5 session events](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/schema/src/session-event.ts#L333-L389) and [usage normalization](https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/usage.ts#L8-L19)
 - [OpenCode v2 HTTP API audit](https://github.com/anomalyco/opencode/blob/dev/V2_HTTP_API_AUDIT.md) (current development branch; the v2.2.5 path was observed locally)
 - [OpenTelemetry metrics data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/)
 - [OTLP protocol](https://opentelemetry.io/docs/specs/otlp/)
