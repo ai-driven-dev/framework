@@ -26,7 +26,9 @@
 - **Read only task-relevant context; complete required reads.**
 - **Support `works`, `tested`, and `fixed` with evidence:** cite the relevant command, output, or file.
 - **Make minimal, scoped changes**, without over-engineering.
-- **Place changes where the responsibility belongs:** follow the project's architecture and conventions.
+- **Follow the project's architecture and conventions:** place changes where they belong; keep files focused on one responsibility and dependencies flowing one way across layers.
+- **Remove relevant duplication when it simplifies the change.**
+- **Handle errors explicitly; never fail silently.**
 - **When changing rules:** check for overlaps or conflicts, avoid duplicates, then reread the whole file and resolve conflicts.
 - **Stay on task.** Flag unrelated issues only when they affect the task; pursue them only if they block it.
 - **Solve your own issues before escalating.**
