@@ -58,7 +58,7 @@ The delegated total includes both agents. These single-run results are indicativ
 
 ### A request with subagents
 
-This example shows the decisions, tool calls and possible outcomes for one request. Explorer A is new and Explorer B is reused; their independent tasks run in parallel. Every subagent returns to the main agent.
+This example shows one successful flow. Explorer A is new and Explorer B is reused; their independent tasks run in parallel.
 
 ```mermaid
 ---
@@ -87,32 +87,14 @@ sequenceDiagram
     ExplorerB-->>Main: ↩️ "+ is allowed."
   end
   Main->>Executor: 🧰 Spawn · 💬 "Fix and test validation."
-  Executor->>Executor: 📝 Fix validation
-  Executor->>Executor: 🧰 /aidd-dev:06-test
-  Executor->>Executor: ↩️ "Test passed."
-  Executor-->>Main: ↩️ "COMPLETE."
+  Executor->>Executor: 📝 Fix validation and 🧪 test
+  Executor-->>Main: ↩️ "COMPLETE, test passed."
   Main->>Validator: 🧰 Spawn · 💬 "Verify the result."
-  alt Validation passes
-    Validator-->>Main: ↩️ "PASS."
-    Main->>Reviewer: 🧰 Spawn · 💬 "Review the change."
-    Reviewer->>Reviewer: 🧰 Run /aidd-dev:05-review
-    alt Review is clear
-      Reviewer-->>Main: ↩️ "No actionable findings."
-      Main-->>User: ↩️ "Fixed. Test passed."
-    else Review finds an issue
-      Reviewer-->>Main: ↩️ "Changes needed."
-      Main->>Executor: 🧰 Reuse · 💬 "Repair and test."
-      Executor-->>Main: ↩️ "Repair complete."
-      Main->>Validator: 🧰 Reuse · 💬 "Recheck."
-      Validator-->>Main: ↩️ "PASS."
-      Main->>Reviewer: 🧰 Reuse · 💬 "Review the repair."
-      Reviewer-->>Main: ↩️ "No actionable findings."
-      Main-->>User: ↩️ "Fixed and rechecked."
-    end
-  else Validation fails or is blocked
-    Validator-->>Main: ↩️ "FAIL or BLOCKED."
-    Main-->>User: ↩️ "Verification incomplete."
-  end
+  Validator-->>Main: ↩️ "PASS."
+  Main->>Reviewer: 🧰 Spawn · 💬 "Review the change."
+  Reviewer->>Reviewer: 🧰 Run /aidd-dev:05-review
+  Reviewer-->>Main: ↩️ "No actionable findings."
+  Main-->>User: ↩️ "Fixed. Test passed."
 ```
 
 ## 🧭 Which agent for which task
