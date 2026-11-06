@@ -71,6 +71,7 @@ if ((${#names[@]})); then
 fi
 echo "Installing AIDD CLI $version for OpenCode."
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/aidd-project-setup.XXXXXXXX")
+scratch=$(cd "$scratch" && pwd -P)
 
 # The CLI can write its GitHub token into Git cache configs. Scrub every regular
 # file without following symlinks before printing logs or removing the scratch.
@@ -114,15 +115,19 @@ cleanup() {
   if [[ $(uname -s) == Darwin ]]; then trash "$scratch"; else rm -rf -- "$scratch"; fi
 }
 trap cleanup EXIT
-mkdir -p "$scratch/setup" "$scratch/source/.claude-plugin" "$scratch/source/plugins" "$scratch/translated"
+mkdir -p "$scratch/setup" "$scratch/home" "$scratch/config" "$scratch/cache" "$scratch/data" "$scratch/codex" "$scratch/npm-cache" "$scratch/tmp"
 result=0
 (
   cd "$scratch/setup"
-  npx --yes "@ai-driven-dev/cli@$version" setup --source remote --ai opencode --plugins "$plugin_args" --yes
+  env HOME="$scratch/home" XDG_CONFIG_HOME="$scratch/config" XDG_CACHE_HOME="$scratch/cache" \
+    XDG_DATA_HOME="$scratch/data" CODEX_HOME="$scratch/codex" TMPDIR="$scratch/tmp" \
+    AIDD_USER_CONFIG_DIR="$scratch/config/aidd" npm_config_cache="$scratch/npm-cache" \
+    npx --yes "@ai-driven-dev/cli@$version" setup --source remote --ai opencode --plugins "$plugin_args" --yes
 ) > "$scratch/setup.log" 2>&1 || result=$?
 scrub || { echo 'AIDD setup output withheld because sanitization failed' >&2; exit 1; }
 cat "$scratch/setup.log"
 [[ $result == 0 ]] || { echo 'AIDD setup failed' >&2; exit "$result"; }
+[[ ! -L $scratch/setup/.opencode ]] || { echo 'Installed OpenCode directory is a symlink' >&2; exit 1; }
 
 if ((${#names[@]})); then
   installed="$scratch/setup/.aidd/manifest.json"
@@ -142,22 +147,11 @@ if ((${#names[@]})); then
     plugin_dir=$(find "$scratch/setup/.aidd/plugin-cache" -path "*/plugins/$name" -type d -print -quit)
     [[ -n $plugin_dir ]] || { echo "Plugin source unavailable for $name" >&2; exit 1; }
     [[ -z $(find "$plugin_dir" -type l -print -quit) ]] || { echo "Plugin source contains symlinks: $name" >&2; exit 1; }
-    cp -R "$plugin_dir" "$scratch/source/plugins/$name"
-  done
-
-  jq -n --arg plugins "$plugin_args" '{name:"aidd-framework",plugins:($plugins | split(",") | map({name:.}))}' > "$scratch/source/.claude-plugin/marketplace.json"
-  result=0
-  env -u AIDD_TOKEN npx --yes "@ai-driven-dev/cli@$version" translate "$scratch/source" \
-    --to opencode --as flat --out "$scratch/translated" > "$scratch/translate.log" 2>&1 || result=$?
-  scrub || { echo 'AIDD translate output withheld because sanitization failed' >&2; exit 1; }
-  cat "$scratch/translate.log"
-  [[ $result == 0 ]] || { echo 'AIDD translation failed' >&2; exit "$result"; }
-  for name in "${names[@]}"; do
-    source_skills="$scratch/source/plugins/$name/skills"
-    translated_skills="$scratch/translated/.opencode/skills/$name"
+    source_skills="$plugin_dir/skills"
+    installed_skills="$scratch/setup/.opencode/skills"
     if [[ -d $source_skills && -n $(find "$source_skills" -name SKILL.md -type f -print -quit) ]]; then
-      [[ -d $translated_skills && -n $(find "$translated_skills" -name SKILL.md -type f -print -quit) ]] || {
-        echo "Translated skills are missing for $name" >&2; exit 1;
+      [[ -d $installed_skills && -n $(find "$installed_skills" \( -path "$installed_skills/$name/*/SKILL.md" -o -path "$installed_skills/$name-*/SKILL.md" \) -type f -print -quit) ]] || {
+        echo "Installed skills are missing for $name" >&2; exit 1;
       }
     fi
   done
@@ -165,8 +159,8 @@ fi
 
 mkdir -p "$target/.opencode/skills" "$target/.opencode/agents"
 for component in skills agents; do
-  source_dir="$scratch/translated/.opencode/$component"
+  source_dir="$scratch/setup/.opencode/$component"
   [[ -d $source_dir ]] || continue
-  [[ -z $(find "$source_dir" -type l -print -quit) ]] || { echo "Translated $component contain symlinks" >&2; exit 1; }
+  [[ -z $(find "$source_dir" \( -name .git -o -type l \) -print -quit) ]] || { echo "Installed $component contain a Git directory or symlink" >&2; exit 1; }
   cp -R "$source_dir/." "$target/.opencode/$component/"
 done

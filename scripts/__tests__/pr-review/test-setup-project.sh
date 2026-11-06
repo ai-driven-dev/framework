@@ -15,26 +15,36 @@ set -euo pipefail
 printf '%s\n' "$@" >> "$NPX_LOG"
 printf 'CLI output contains %s\n' "$NPX_TEST_TOKEN"
 if [[ $3 == setup ]]; then
+  scratch=$(dirname "$PWD")
+  [[ $HOME == "$scratch/home" && $XDG_CONFIG_HOME == "$scratch/config" &&
+     $XDG_CACHE_HOME == "$scratch/cache" && $XDG_DATA_HOME == "$scratch/data" &&
+     $AIDD_USER_CONFIG_DIR == "$scratch/config/aidd" && $CODEX_HOME == "$scratch/codex" &&
+     $npm_config_cache == "$scratch/npm-cache" && $TMPDIR == "$scratch/tmp" ]] || {
+    echo 'Setup used the caller user configuration' >&2; exit 1;
+  }
+  for ((i=1; i<=$#; i++)); do
+    if [[ ${!i} == --plugins ]]; then ((i+=1)); plugin_args=${!i}; break; fi
+  done
+  if [[ $plugin_args == none ]]; then exit 0; fi
   mkdir -p .aidd/plugin-cache/dev/plugins/aidd-dev/skills/05-review .aidd/plugin-cache/dev/.git
   printf 'secret=%s\n' "$NPX_TEST_TOKEN" > .aidd/plugin-cache/dev/.git/config
   printf '# Review\n' > .aidd/plugin-cache/dev/plugins/aidd-dev/skills/05-review/SKILL.md
   printf '%s\n' '{"tools":{"opencode":{"plugins":[{"name":"aidd-dev","version":"2.2.0"}]}}}' > .aidd/manifest.json
-  [[ ${NPX_FAIL_SETUP:-0} != 1 ]] || exit 23
-elif [[ $3 == translate ]]; then
-  source=$4
-  if grep -rqF "$NPX_TEST_TOKEN" "$(dirname "$source")/setup"; then
-    echo 'Setup cache still contains a credential during translation' >&2; exit 1
+  if [[ ${NPX_LEGACY:-0} == 1 ]]; then
+    skill_dir=.opencode/skills/aidd-dev-05-review
+  else
+    skill_dir=.opencode/skills/aidd-dev/05-review
   fi
-  jq -e '.plugins | map(.name) == ["aidd-dev"]' "$source/.claude-plugin/marketplace.json" >/dev/null
-  for ((i=1; i<=$#; i++)); do
-    if [[ ${!i} == --out ]]; then ((i+=1)); out=${!i}; break; fi
-  done
-  mkdir -p "$out/.opencode/skills/aidd-dev/05-review" "$out/.opencode/agents"
+  mkdir -p "$skill_dir" .opencode/agents
   if [[ ${NPX_OMIT_SKILLS:-0} != 1 ]]; then
-    cp "$source/plugins/aidd-dev/skills/05-review/SKILL.md" "$out/.opencode/skills/aidd-dev/05-review/SKILL.md"
+    printf '# Review\n' > "$skill_dir/SKILL.md"
   fi
-  printf '# Agent\n' > "$out/.opencode/agents/aidd-dev-agent.md"
+  printf '# Agent\n' > .opencode/agents/aidd-dev-agent.md
+  if [[ ${NPX_SYMLINK:-0} == 1 ]]; then ln -s / .opencode/skills/link; fi
+  if [[ ${NPX_GIT_DIR:-0} == 1 ]]; then mkdir .opencode/agents/.git; fi
+  [[ ${NPX_FAIL_SETUP:-0} != 1 ]] || exit 23
 else
+  echo 'Unexpected CLI command; setup must materialize skills directly' >&2
   exit 2
 fi
 NPX
@@ -57,11 +67,16 @@ grep -Fq '[REDACTED]' "$work/out"
 [[ ! -e $work/target/.aidd ]]
 cmp -s "$work/original.json" "$work/project/.aidd/manifest.json"
 
+mkdir "$work/target-legacy"
+NPX_LEGACY=1 "$root/scripts/pr-review/setup-project.sh" "$work/project" "$work/target-legacy" > "$work/out" 2>&1
+[[ -f $work/target-legacy/.opencode/skills/aidd-dev-05-review/SKILL.md ]]
+
 mkdir "$work/no-manifest" "$work/target-latest"
 "$root/scripts/pr-review/setup-project.sh" "$work/no-manifest" "$work/target-latest" > "$work/out" 2>&1
 grep -Fxq '@ai-driven-dev/cli@latest' "$NPX_LOG"
 grep -Fxq 'none' "$NPX_LOG"
 grep -qi 'inventory' "$work/out"
+[[ ! -e $work/target-latest/.opencode/skills/aidd-dev ]]
 
 cat > "$work/project/.aidd/manifest.json" <<'JSON'
 {"version":8,"tools":{"claude":{"version":"5.6.0","plugins":[{"name":"aidd-dev","marketplace":"aidd-framework","version":"2.2.0"}]},"cursor":{"version":"5.6.0"}}}
@@ -77,6 +92,13 @@ if NPX_OMIT_SKILLS=1 "$root/scripts/pr-review/setup-project.sh" "$work/project" 
   echo 'Missing translated skills were accepted' >&2; exit 1
 fi
 if grep -Fq "$NPX_TEST_TOKEN" "$work/out"; then echo 'Credential appeared in output' >&2; exit 1; fi
+
+for violation in NPX_SYMLINK NPX_GIT_DIR; do
+  mkdir "$work/target-$violation"
+  if env "$violation=1" "$root/scripts/pr-review/setup-project.sh" "$work/project" "$work/target-$violation" > "$work/out" 2>&1; then
+    echo "Unsafe installed files were accepted: $violation" >&2; exit 1
+  fi
+done
 
 mkdir "$work/target-setup-failure"
 if NPX_FAIL_SETUP=1 "$root/scripts/pr-review/setup-project.sh" "$work/project" "$work/target-setup-failure" > "$work/out" 2>&1; then

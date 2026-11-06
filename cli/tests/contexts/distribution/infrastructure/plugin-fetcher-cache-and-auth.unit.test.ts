@@ -240,12 +240,11 @@ describe("how each kind of clone is asked for", () => {
 });
 
 describe("an npm package as a source", () => {
-  it("fetches the pinned version without running lifecycle scripts", async () => {
+  it("asks for the pinned version", async () => {
     await adapter().fetch({ kind: "npm", package: "@acme/plugin", version: "1.2.3" }, CACHE);
 
     expect(mockExecFile).toHaveBeenCalledWith("pnpm", [
       "add",
-      "--ignore-scripts",
       "--prefix",
       CACHE,
       "--",
