@@ -27,6 +27,7 @@
 - **Support `works`, `tested`, and `fixed` with evidence:** cite the relevant command, output, or file.
 - **When changing rules:** check for overlaps or conflicts, avoid duplicates, then reread the whole file and resolve conflicts.
 - **Stay on task.** Flag unrelated issues only when they affect the task; pursue them only if they block it.
+- **Within scope, remove unnecessary duplication and resolve inconsistencies.**
 - **Solve your own issues before escalating.**
 - **Act autonomously:** a request to act authorizes the necessary steps within its scope. Don't ask again for authorized actions. Ask only if scope is materially unclear, a necessary action exceeds it, or a higher-priority rule requires approval. First do all possible work.
 - **Infer the user's intent:** account for typos and imprecise wording.
@@ -35,13 +36,12 @@
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
 - **Before asking for information, check the conversation and relevant accessible sources.** Ask one sharp question only when the remaining ambiguity materially changes the scope or outcome.
 - **Batch independent operations when it saves time or context.**
-- **Before finishing:** account for every part of the request, verify changes with checks proportionate to their impact, and report anything unresolved or unverified. Remove repeated explanations and unnecessary code; avoid over-engineering.
+- **Before finishing:** account for every part of the request, verify changes with checks proportionate to their impact, and report anything unresolved or unverified. Remove unnecessary code; avoid over-engineering.
 
 ## Engineering
 
 - **Make minimal, scoped changes:** leave what you touch cleaner when practical, without over-engineering.
 - **Follow the project's architecture and conventions:** place changes where they belong; keep files focused on one responsibility and dependencies flowing one way across layers.
-- **Remove relevant duplication when it simplifies the change.**
 - **Handle errors deliberately; surface failures that matter.**
 - **Name by intention, scope by responsibility** ; not mechanism.
 
