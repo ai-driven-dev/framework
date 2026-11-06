@@ -76,9 +76,11 @@ function samples(file) {
 
 /** A captured sample, the scrubbed project pointed at `root` and its written file at `file`. */
 function captured(file, index, root, written = SCRUBBED_FILE) {
+  // Replaced inside the JSON text, so each value goes in JSON-escaped: a Windows path's backslashes.
+  const inJson = (value) => JSON.stringify(value).slice(1, -1);
   const text = JSON.stringify(samples(file)[index].payload)
-    .replaceAll(SCRUBBED_PROJECT, root)
-    .replaceAll(SCRUBBED_FILE, written);
+    .replaceAll(SCRUBBED_PROJECT, inJson(root))
+    .replaceAll(SCRUBBED_FILE, inJson(written));
   return JSON.parse(text);
 }
 
