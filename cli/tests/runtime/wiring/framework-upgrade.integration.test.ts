@@ -13,6 +13,7 @@ import { EnsureBuiltMarketplaceUseCase } from "../../../src/contexts/framework/a
 import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { FileHash, InstallationFile } from "../../../src/kernel/file.js";
+import { CurrentVersionAdapter } from "../../../src/runtime/self-update/current-version-adapter.js";
 import { GitHubReleaseResolverAdapter } from "../../../src/runtime/self-update/github-release-resolver-adapter.js";
 import { createDeps } from "../../../src/runtime/wiring/framework.js";
 
@@ -190,7 +191,209 @@ describe("framework release update wiring", () => {
       confirm: decline,
     });
     expect(decline).toHaveBeenCalledOnce();
+    expect(decline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shared: false,
+        impact: [{ ref, scope: "local", projectPath: await realpath(root) }],
+      })
+    );
     expect(result.cancelled).toBe(true);
+  });
+
+  it.each(["same plugin user", "another project local", "another plugin local"] as const)(
+    "requires shared approval for Claude %s and shows its exact impact",
+    async (reason) => {
+      const deps = await seed("claude");
+      const manifest = await deps.manifestRepo.load();
+      if (!manifest) throw new Error("missing project manifest");
+      const ref = "aidd-context@aidd-framework";
+      manifest.setNativeRegistrations("claude", {
+        binary: "claude",
+        marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+        pluginRefs: [],
+      });
+      await deps.manifestRepo.save(manifest);
+      const nativeRegistry = join(root, "home/.claude/plugins/installed_plugins.json");
+      await mkdir(dirname(nativeRegistry), { recursive: true });
+      const local = { scope: "local", projectPath: root };
+      const second =
+        reason === "same plugin user"
+          ? { scope: "user" }
+          : {
+              scope: "local",
+              projectPath: reason === "another project local" ? join(root, "other") : root,
+            };
+      const otherRef = reason === "another plugin local" ? "other@aidd-framework" : ref;
+      const plugins =
+        otherRef === ref ? { [ref]: [local, second] } : { [ref]: [local], [otherRef]: [second] };
+      await writeFile(nativeRegistry, JSON.stringify({ plugins }));
+      const beforeNative = await readFile(nativeRegistry, "utf8");
+      const marketplace = join(root, ".aidd/marketplaces.json");
+      const beforeMarketplace = await readFile(marketplace, "utf8");
+      const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
+      const install = vi
+        .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+        .mockRejectedValue(new Error("installation must not start"));
+
+      await expect(
+        deps.upgradeFrameworkUseCase.execute({
+          projectRoot: root,
+          release: "v5.13.0",
+          allowShared: false,
+          confirm,
+        })
+      ).rejects.toThrow(/allow-shared/);
+      const otherImpact =
+        reason === "same plugin user"
+          ? { ref, scope: "user" }
+          : {
+              ref: otherRef,
+              scope: "local",
+              projectPath:
+                reason === "another project local" ? join(root, "other") : await realpath(root),
+            };
+      expect(confirm).toHaveBeenCalledOnce();
+      expect(confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shared: true,
+          impact: [{ ref, scope: "local", projectPath: await realpath(root) }, otherImpact],
+        })
+      );
+      expect(install).not.toHaveBeenCalled();
+      expect(await readFile(nativeRegistry, "utf8")).toBe(beforeNative);
+      expect(await readFile(marketplace, "utf8")).toBe(beforeMarketplace);
+      expect(JSON.stringify((await deps.manifestRepo.load())?.toJSON())).toBe(beforeManifest);
+    }
+  );
+
+  it("uses the native marketplace name when it differs from the AIDD alias", async () => {
+    const deps = await seed("claude");
+    const manifest = await deps.manifestRepo.load();
+    if (!manifest) throw new Error("missing project manifest");
+    const hostName = "native-catalogue";
+    const ref = `aidd-context@${hostName}`;
+    manifest.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        { alias: "another-marketplace", hostName: "another-native-catalogue" },
+        { alias: "aidd-framework", hostName },
+      ],
+      pluginRefs: [ref],
+    });
+    await deps.manifestRepo.save(manifest);
+    await writeFile(
+      join(root, "home/.claude/plugins/known_marketplaces.json"),
+      JSON.stringify({
+        [hostName]: { installLocation: join(root, ".aidd/cache/built/aidd-framework/claude") },
+      })
+    );
+    const nativeRegistry = join(root, "home/.claude/plugins/installed_plugins.json");
+    await writeFile(
+      nativeRegistry,
+      JSON.stringify({ plugins: { [ref]: [{ scope: "local", projectPath: root }] } })
+    );
+    const decline = vi.fn(async () => false);
+    const result = await deps.upgradeFrameworkUseCase.execute({
+      projectRoot: root,
+      release: "v5.13.0",
+      allowShared: false,
+      confirm: decline,
+    });
+    expect(result.cancelled).toBe(true);
+    expect(decline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shared: false,
+        impact: [{ ref, scope: "local", projectPath: await realpath(root) }],
+      })
+    );
+    const install = vi
+      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .mockRejectedValue(new Error("installation reached"));
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm,
+      })
+    ).rejects.toThrow("installation reached");
+    expect(install).toHaveBeenCalledOnce();
+  });
+
+  it("previews a local Claude plugin using a shared user marketplace", async () => {
+    const deps = await seed("claude");
+    const registry = new MarketplaceRegistryAdapter();
+    const projectMarketplace = (await registry.list(root)).find((m) => m.name === "aidd-framework");
+    if (!projectMarketplace) throw new Error("missing project marketplace");
+    await registry.delete(root, "aidd-framework", "project");
+    await registry.save(
+      root,
+      Marketplace.fromJSON({ ...projectMarketplace.toJSON(), scope: "user" })
+    );
+    const userBuild = join(
+      root,
+      "home/cache/built",
+      new CurrentVersionAdapter().get(),
+      "aidd-framework/claude"
+    );
+    await mkdir(userBuild, { recursive: true });
+    await writeFile(
+      join(root, "home/.claude/plugins/known_marketplaces.json"),
+      JSON.stringify({ "aidd-framework": { installLocation: userBuild } })
+    );
+    const ref = "aidd-context@aidd-framework";
+    await writeFile(
+      join(root, "home/.claude/plugins/installed_plugins.json"),
+      JSON.stringify({ plugins: { [ref]: [{ scope: "local", projectPath: root }] } })
+    );
+    const decline = vi.fn(async () => false);
+
+    const result = await deps.upgradeFrameworkUseCase.execute({
+      projectRoot: root,
+      release: "v5.13.0",
+      allowShared: false,
+      confirm: decline,
+    });
+    expect(result.cancelled).toBe(true);
+    expect(decline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shared: true,
+        impact: [{ ref, scope: "local", projectPath: await realpath(root) }],
+      })
+    );
+  });
+
+  it("refuses duplicate native marketplace identities before confirmation or changes", async () => {
+    const deps = await seed("claude");
+    const manifest = await deps.manifestRepo.load();
+    if (!manifest) throw new Error("missing project manifest");
+    manifest.setNativeRegistrations("claude", {
+      binary: "claude",
+      marketplaces: [
+        { alias: "aidd-framework", hostName: "first" },
+        { alias: "aidd-framework", hostName: "second" },
+      ],
+      pluginRefs: [],
+    });
+    await deps.manifestRepo.save(manifest);
+    const marketplace = join(root, ".aidd/marketplaces.json");
+    const beforeMarketplace = await readFile(marketplace, "utf8");
+    const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
+    const install = vi
+      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .mockRejectedValue(new Error("installation must not start"));
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: true,
+        confirm,
+      })
+    ).rejects.toThrow(/Cannot verify Claude marketplace identity/);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(install).not.toHaveBeenCalled();
+    expect(await readFile(marketplace, "utf8")).toBe(beforeMarketplace);
+    expect(JSON.stringify((await deps.manifestRepo.load())?.toJSON())).toBe(beforeManifest);
   });
 
   it("shows shared Claude installations before confirmation without requiring plugin ownership claims", async () => {
@@ -266,6 +469,10 @@ describe("framework release update wiring", () => {
     await writeFile(nativeRegistry, JSON.stringify({ plugins }));
     const registry = join(root, ".aidd/marketplaces.json");
     const before = await readFile(registry, "utf8");
+    const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
+    const install = vi
+      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .mockRejectedValue(new Error("installation must not start"));
     await expect(
       deps.upgradeFrameworkUseCase.execute({
         projectRoot: root,
@@ -276,21 +483,25 @@ describe("framework release update wiring", () => {
     ).rejects.toThrow(/allow-shared/);
     expect(confirm).toHaveBeenCalledOnce();
     expect(await readFile(registry, "utf8")).toBe(before);
+    expect(install).not.toHaveBeenCalled();
+    const changedPlugins = { ...plugins, "new@aidd-framework": [{ scope: "user" }] };
     await expect(
       deps.upgradeFrameworkUseCase.execute({
         projectRoot: root,
         release: "v5.13.0",
         allowShared: true,
         confirm: async () => {
-          await writeFile(
-            nativeRegistry,
-            JSON.stringify({ plugins: { ...plugins, "new@aidd-framework": [{ scope: "user" }] } })
-          );
+          await writeFile(nativeRegistry, JSON.stringify({ plugins: changedPlugins }));
           return true;
         },
       })
     ).rejects.toThrow(/installations changed after the preview/);
     expect(await readFile(registry, "utf8")).toBe(before);
+    expect(await readFile(nativeRegistry, "utf8")).toBe(
+      JSON.stringify({ plugins: changedPlugins })
+    );
+    expect(JSON.stringify((await deps.manifestRepo.load())?.toJSON())).toBe(beforeManifest);
+    expect(install).not.toHaveBeenCalled();
     await writeFile(nativeRegistry, JSON.stringify({ plugins }));
     await expect(
       deps.upgradeFrameworkUseCase.execute({
@@ -307,6 +518,8 @@ describe("framework release update wiring", () => {
       })
     ).rejects.toThrow(/source changed after the preview/);
     expect(await readFile(registry, "utf8")).toBe(before);
+    expect(JSON.stringify((await deps.manifestRepo.load())?.toJSON())).toBe(beforeManifest);
+    expect(install).not.toHaveBeenCalled();
   });
 
   it("refuses a different Claude marketplace source before any write or confirmation", async () => {
@@ -1110,6 +1323,45 @@ describe("framework release update wiring", () => {
     expect(await readFile(oldPath, "utf8")).toBe("shared file");
     expect((await deps.manifestRepo.load())?.getPlugins("kilo")[0].files.has(oldRel)).toBe(true);
   });
+
+  it.skipIf(process.platform === "win32")(
+    "refuses a tracked hook script replaced by a symlink before changing the marketplace",
+    async () => {
+      const rel = ".opencode/hooks/aidd-context/start.cjs";
+      const script = join(root, rel);
+      const userFile = join(root, "user-script.cjs");
+      await mkdir(dirname(script), { recursive: true });
+      await writeFile(userFile, "original hook");
+      await symlink(userFile, script);
+      const deps = await seed("opencode");
+      const manifest = await deps.manifestRepo.load();
+      if (!manifest) throw new Error("missing manifest");
+      const plugin = manifest.getPlugins("opencode")[0];
+      manifest.removePlugin("opencode", plugin.name);
+      manifest.addPlugin(
+        "opencode",
+        InstalledPlugin.fromJSON({
+          ...plugin.toJSON(),
+          projectHooks: { entries: [], scripts: { [rel]: hash("original hook") } },
+        })
+      );
+      await deps.manifestRepo.save(manifest);
+      const marketplace = join(root, ".aidd/marketplaces.json");
+      const before = await readFile(marketplace, "utf8");
+
+      await expect(
+        deps.upgradeFrameworkUseCase.execute({
+          projectRoot: root,
+          release: "v5.13.0",
+          allowShared: false,
+          confirm,
+        })
+      ).rejects.toThrow(/symlink/i);
+      expect(confirm).not.toHaveBeenCalled();
+      expect(await readFile(marketplace, "utf8")).toBe(before);
+      expect(await readFile(userFile, "utf8")).toBe("original hook");
+    }
+  );
 
   it.skipIf(process.platform === "win32")(
     "refuses a broken symlink at an incoming target path before moving the marketplace",

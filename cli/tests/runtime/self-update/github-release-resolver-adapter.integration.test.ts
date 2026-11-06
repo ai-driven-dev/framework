@@ -191,6 +191,81 @@ describe("GitHubReleaseResolverAdapter", () => {
       expect(fetchAsset.mock.calls[0][1]?.headers).toBeUndefined();
     });
 
+    it("finds the video asset among other assets and ignores invalid entries", async () => {
+      const fetchAsset = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(JSON.stringify({ title: "Video title" }), { status: 200 }));
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Fallback",
+          assets: [null, { name: "notes.txt" }, { name: "release-video.json" }],
+        }),
+        undefined,
+        fetchAsset
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Video title",
+      });
+      expect(fetchAsset).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not fetch a video when the release has only unrelated assets", async () => {
+      const fetchAsset = vi.fn<typeof fetch>();
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Fallback",
+          assets: [null, { name: "notes.txt" }],
+        }),
+        undefined,
+        fetchAsset
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Fallback",
+      });
+      expect(fetchAsset).not.toHaveBeenCalled();
+    });
+
+    it("ignores an unsuccessful video response even when it has a title", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: "Fallback",
+          assets: [{ name: "release-video.json" }],
+        }),
+        undefined,
+        vi
+          .fn<typeof fetch>()
+          .mockResolvedValue(
+            new Response(JSON.stringify({ title: "Error page title" }), { status: 404 })
+          )
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: "Fallback",
+      });
+    });
+
+    it("normalizes control characters and bounds the title shown in the terminal", async () => {
+      const adapter = new GitHubReleaseResolverAdapter(
+        makeHttp({
+          tag_name: "v5.13.0",
+          draft: false,
+          name: `  First\n\u001bSecond ${"x".repeat(200)}  `,
+        })
+      );
+
+      expect(await adapter.resolvePublishedRelease(REPO, "v5.13.0")).toEqual({
+        title: `First Second ${"x".repeat(167)}`,
+      });
+    });
+
     it("uses a descriptive release name when the optional asset is absent or fails", async () => {
       const absentFetch = vi.fn<typeof fetch>();
       const absent = new GitHubReleaseResolverAdapter(

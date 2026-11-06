@@ -45,4 +45,17 @@ describe("Git HTTP authentication", () => {
       url: "https://github.com/owner/repo.git",
     });
   });
+
+  it.each(["user", ":password"])("accepts partial explicit userinfo", (userinfo) => {
+    const credentials = userinfo.includes(":") ? userinfo : `${userinfo}:`;
+    expect(gitHttpAuthentication(`https://${userinfo}@example.com/repo.git`, undefined)).toEqual({
+      url: "https://example.com/repo.git",
+      authorization: `Authorization: Basic ${Buffer.from(credentials).toString("base64")}`,
+    });
+  });
+
+  it("does not derive HTTP authentication from a non-HTTP URL containing an HTTP URL", () => {
+    const url = "ssh://git@example.com/path/https://other.example/repo.git";
+    expect(gitHttpAuthentication(url, "tk")).toEqual({ url });
+  });
 });
