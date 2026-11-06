@@ -387,6 +387,24 @@ describe("aidd-ui code link", () => {
       });
     }
 
+    it("opens no code file outside the files a caller narrows the check to", () => {
+      put(tmp, "src/ui/Other.tsx", 'const style = "color: #ff0000";\n');
+      const project = load(tmp);
+      project.scope = new Set(["src/ui/Button.tsx"]);
+      const opened = [];
+      const [openSync, readFileSync] = [fs.openSync, fs.readFileSync];
+      fs.openSync = (file, ...rest) => (opened.push(String(file)), openSync(file, ...rest));
+      fs.readFileSync = (file, ...rest) => (opened.push(String(file)), readFileSync(file, ...rest));
+      try {
+        code.check(project);
+      } finally {
+        [fs.openSync, fs.readFileSync] = [openSync, readFileSync];
+      }
+      // A record's code link is read for its export, whatever the scope: only a file nothing links is left unopened.
+      assert.equal(opened.includes(path.join(tmp, "src/ui/Other.tsx")), false);
+      assert.equal(opened.includes(path.join(tmp, "src/ui/Button.tsx")), true);
+    });
+
     it("reads no file holding a NUL byte, whatever its extension", () => {
       fs.writeFileSync(path.join(tmp, "src/ui/blob.bin"), Buffer.from([0x89, 0x00, ...Buffer.from('"#ff0000"')]));
       fs.writeFileSync(path.join(tmp, "src/ui/Compiled.swift"), Buffer.from([0x00, ...Buffer.from('"#ff0000"')]));

@@ -147,16 +147,19 @@ function holdsNul(project, file) {
 /** Whether a file is code to read: not a document, data, image or font, and not binary. */
 const isRead = (project, file) => !SKIPPED_EXTENSIONS.includes(path.extname(file)) && !holdsNul(project, file);
 
-/** Every file to read under a code root that no `ignore` prefix covers, relative to the project root. */
+/** Every file to read under a code root that no `ignore` prefix covers, relative to the project root:
+ * of them, only those of `project.scope` when a caller narrows the check to the files a turn wrote,
+ * so no other file is opened. */
 function codeFiles(project) {
   const tree = codeTree(project);
-  tree.read ??= tree.files.filter((file) => !tree.ignore.some((prefix) => isUnder(file, prefix))).filter((file) => isRead(project, file));
+  tree.read ??= tree.files
+    .filter((file) => !tree.ignore.some((prefix) => isUnder(file, prefix)))
+    .filter((file) => !project.scope || project.scope.has(file))
+    .filter((file) => isRead(project, file));
   return tree.read;
 }
 
-/** The code files whose text the literal rules read: all of them, or those of `project.scope` when a
- * caller narrows it to the files a turn wrote. */
-const scanned = (project, extensions) => codeFiles(project).filter((file) => (!project.scope || project.scope.has(file)) && (!extensions || extensions.includes(path.extname(file))));
+const scanned = (project, extensions) => codeFiles(project).filter((file) => !extensions || extensions.includes(path.extname(file)));
 
 /** A code file's text as the literal patterns read it: styles and markup whole, an Astro file its
  * strings and style blocks, any other file its strings only, since a colour in code lives in one. */
