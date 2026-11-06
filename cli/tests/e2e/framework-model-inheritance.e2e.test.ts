@@ -10,10 +10,11 @@ import { createTestEnv, runCli } from "./helpers.js";
 const CELLS = frameworkBuildTargetModes();
 
 // A recipe may show a model in an example block; only a declaration the host reads counts.
+// `inherit` hands the choice back to the host, so it is not an override.
 function overridesModel(path: string, content: string): boolean {
   if (path.endsWith(".toml")) return /^model\s*=/m.test(content);
   const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  return frontmatter !== null && /^model\s*:/m.test(frontmatter[1]);
+  return frontmatter !== null && /^model\s*:(?!\s*["']?inherit["']?\s*$)/m.test(frontmatter[1]);
 }
 
 describe.concurrent("E2E: the shipped framework leaves model selection to the host", () => {

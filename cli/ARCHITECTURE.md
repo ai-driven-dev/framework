@@ -2,137 +2,142 @@
 
 ## Contexts, not layers
 
+```mermaid
+flowchart LR
+  presentation["presentation"] --> contexts
+  runtime["runtime"] -.->|wiring only| contexts
+  subgraph contexts["contexts"]
+    direction LR
+    framework["framework"] --> translate["translate"] --> tools["tools"]
+    framework --> distribution["distribution"]
+  end
+  contexts --> kernel["kernel"]
+  classDef layer fill:#e9ddff,stroke:#8250df,color:#3b1d78
+  classDef base fill:#ddf4ff,stroke:#0969da,color:#0a3069
+  class presentation,runtime,framework,translate,tools,distribution layer
+  class kernel base
+  style contexts fill:none,stroke:#8c959f
 ```
-presentation ──> contexts ──> kernel
-runtime ─────────> (wiring only)
 
-framework ──> translate ──> tools ──> kernel
-framework ──> distribution ─────────> kernel
-```
+| Where | Holds |
+| --- | --- |
+| `src/kernel/` | The vocabulary every context speaks: tool identity, source location, paths, files, fingerprints, merge strategies, errors, ports shared by two contexts or more. Imports no context. No business logic. |
+| `src/contexts/tools/` | What the project targets and how each target is configured. One directory per tool: its profile beside its build contracts. |
+| `src/contexts/translate/` | Canonical source into target-native content, at every level. |
+| `src/contexts/distribution/` | Where content comes from and how it is fetched. A leaf: knows no tool and no installation record. |
+| `src/contexts/framework/` | The installation record and everything done to a project. The only context allowed to reach the others. |
+| `src/presentation/` | What speaks to a human: commands, display, prompts, output. |
+| `src/runtime/` | Technical services and wiring: auth, http, git, platform, project root, self-update, one wiring module per context. |
 
-| where | what lives there |
-|---|---|
-| `src/kernel/` | the vocabulary every context speaks: tool identity, source location, paths, files and fingerprints, merge strategies, errors, and the ports used by two contexts or more. It imports no context and carries no business logic. |
-| `src/contexts/tools/` | what the project targets and how each target is configured. One directory per tool: its profile beside its build contracts. |
-| `src/contexts/translate/` | canonical source into target-native content, at every level. |
-| `src/contexts/distribution/` | where content comes from and how it is fetched. A leaf: it knows no tool and no installation record. |
-| `src/contexts/framework/` | the installation record and everything done to a project. The only context allowed to reach the others. |
-| `src/presentation/` | what speaks to a human: commands, display, prompts, output. |
-| `src/runtime/` | technical services and wiring: auth, http, git, platform, project root, self-update, one wiring module per context. |
+## Invariants
 
-Four invariants hold this together, and none of them is enforced by this document.
+None is enforced by this document.
 
-**Which contexts may see each other.** `tests/architecture/context-graph.arch.test.ts`
-allows exactly the edges drawn above; the edges the tree has and the chain forbids are
-listed in that file with what each admits, measured.
+| Invariant | Held by |
+| --- | --- |
+| Which contexts may see each other | `tests/architecture/context-graph.arch.test.ts` allows exactly the edges above. The forbidden edges the tree still has are listed in that file |
+| What of a context is visible | `tests/architecture/context-boundary.arch.test.ts` refuses an import into a context's interior. There is no barrel file |
+| Which way the layers point | Biome overrides. `application` calls `domain`, never the reverse. `application` takes a port and never calls `infrastructure` |
+| What the kernel may know | A biome override refuses a kernel import from any context. `tests/architecture/earned-sharing.arch.test.ts` measures what belongs there |
+| The layer rules still bite | `tests/architecture/import-rules-bite.arch.test.ts` checks each override names a path that exists |
 
-**What of a context is visible.** `tests/architecture/context-boundary.arch.test.ts`
-refuses an import that reaches a context's interior: a cross-context import targets a
-module that context declares public, and there is no barrel file anywhere to make that
-convenient. Every context on disk must appear in that list, or it would be skipped rather
-than held.
+- Every context on disk must appear in the boundary list, or it is skipped instead of held.
+- The layer rule covers type-only imports, dynamic imports and any depth of `../`.
+- A domain file may import `node:path` and `smol-toml`: both are pure.
+- The rule keeps I/O and human interaction out of the domain, not imports.
 
-**Which way the layers point.** Inside a context, `application` may call `domain` and
-`domain` may never call `application`, `infrastructure`, `presentation` or `runtime`;
-`application` may not call `infrastructure` either — it takes a port and the composition
-root supplies the adapter. This one is enforced by biome overrides rather than by a test,
-and it holds against a type-only import, a dynamic import and any depth of `../`.
-`tests/architecture/import-rules-bite.arch.test.ts` checks that each of those overrides
-still names a path that exists, because a pattern matching nothing enforces nothing.
+## Domain models
 
-**What the kernel may know.** A biome override refuses an import from the kernel into any
-context. A module belongs there when two areas speak it, which
-`tests/architecture/earned-sharing.arch.test.ts` measures.
+Manifest v6.
 
-The layer rule stops at relative paths on purpose. A domain file may import `node:path` and
-`smol-toml`: both are pure — string manipulation and serialization, no I/O, no lifecycle —
-and forbidding them would mean injecting a TOML serializer through a port to gain nothing.
-The rule exists to keep I/O and human interaction out of the domain, not imports.
-
-## Key Domain Models (manifest v6)
-
-| Model | Description |
-|---|---|
-| `SetupFlow` | Aggregate carrying all setup parameters (source, tools, pluginMode, interactive) |
+| Model | Is |
+| --- | --- |
+| `SetupFlow` | Aggregate of all setup parameters: source, tools, plugin mode, interactive |
 | `MarketplaceSourceMode` | Value object: `remote()` or `local(path)` |
-| `Marketplace` | A registered marketplace (name, source, scope). Registry stored at `.aidd/marketplaces.json`, not in the manifest |
-| `MarketplaceCacheEntry` | Cached catalog fetch (marketplace name, fetchedAt, size) |
-| `Manifest` (v6) | Top-level schema: `version`, `tools`. Plugins live per-tool under `tools[id].plugins`. Stripped top-level fields: `docsDir`, `repo`, `mode`, `scripts`, `plugins`, `topPlugins`, `marketplaces`. Stored at `.aidd/manifest.json` |
-| `Plugin` | Installed plugin: id, source (marketplace + version), tool, files |
-| `PluginDistribution` | Capability files for a plugin as fetched from the source |
+| `Marketplace` | A registered marketplace: name, source, scope. Registry in `.aidd/marketplaces.json`, not in the manifest |
+| `MarketplaceCacheEntry` | A cached catalog fetch: marketplace name, fetchedAt, size |
+| `Manifest` | `version` and `tools`. Plugins live per tool under `tools[id].plugins`. Stored in `.aidd/manifest.json` |
+| `Plugin` | An installed plugin: id, source (marketplace and version), tool, files |
+| `PluginDistribution` | The capability files of a plugin, as fetched from its source |
 
-## Command Surface (grammar, not noun-first)
+## Command grammar
 
-A bare verb is an action performed now, on the CLI or the current project. A noun then a
-verb manages a resource's lifecycle — same convention Claude Code and Codex follow.
+| Form | Meaning | Commands |
+| --- | --- | --- |
+| Bare verb | An action now, on the CLI or the project | `setup`, `doctor`, `sync`, `translate`, `update`, `clean` |
+| Noun, then verb | A resource lifecycle | `framework`, `plugin`, `marketplace`, `auth`, `telemetry` |
 
-```
-# actions — bare verb
-aidd setup                              — bootstrap the whole project (marketplace + framework + tools + plugins)
-aidd doctor    [--tool ...] [--plugin]  — detected/equipped tools, plugins, drift, problems
-aidd sync      [--tool ...] [--plugin]  — regenerate owned files, driven by the manifest
-aidd translate <source> --to <target>   — convert an arbitrary source, records nothing
-aidd update | upgrade                   — update the CLI itself
-aidd clean                              — remove all AIDD-managed files
-aidd auth                               — credential management (login/logout/status)
+Every command: [CLI reference](README.md#commands).
 
-# resources — noun then verb
-aidd framework    install | update | remove          [--tool ...]
-aidd plugin       install | update | remove | list | search   [--tool ...]
-aidd marketplace  add | refresh | remove | list
-```
+## Plugins
 
-Phase 18 (`aidd_docs/tasks/2026_08/2026_08_20_refactor-contextes-cli/`) moved the surface:
+| Fact | Detail |
+| --- | --- |
+| Distribution | Marketplace catalogs: Git repos with `marketplace.json` and `plugins/` |
+| Capability files | Agents, commands, hooks, mcp, rules, skills, per AI tool format |
+| Translation | The CLI rewrites a plugin between tool formats, reverse then forward |
+| Memory files | `CLAUDE.md`, `AGENTS.md`, `copilot-instructions.md` belong to the `aidd-context` plugin, not the CLI binary |
 
-| Removed | Replacement |
-|---|---|
-| `aidd ai <verb>` / `aidd ide <verb>` | `--tool <id>` on `doctor`, `sync`, `framework install\|update\|remove` |
-| `aidd status`, `aidd ai status`, `aidd ide status` | `aidd doctor` |
-| `aidd ai doctor`, `aidd ide doctor`, `aidd plugin doctor` | `aidd doctor --tool` / `aidd doctor --plugin` |
-| `aidd restore`, `aidd ai restore`, `aidd ide restore` | `aidd sync` |
-| `aidd self-update` | `aidd update` |
-| `aidd framework build` | `aidd translate` |
-| `aidd plugin create` | removed — never documented, never used |
+## Translate
 
-`aidd cache`, `aidd config`, top-level `aidd install`, and top-level `aidd uninstall` were removed in an earlier pass. Plugin browsing is folded into `aidd plugin install` (no arg); marketplace cache is managed via `aidd marketplace refresh --force`.
-
-## Plugin Architecture
-
-Plugins are distributed via marketplace catalogs (Git repos with `marketplace.json` + `plugins/`). Each plugin provides capability files (agents, commands, hooks, mcp, rules, skills) per AI tool format. The CLI translates plugin distributions between tool formats using reverse + forward content rewriting (plugin sync pipeline).
-
-Memory ownership (CLAUDE.md, AGENTS.md, copilot-instructions.md) is delegated to the `aidd-context` plugin — not bundled in the CLI binary.
-
-## Translate (author-side)
-
-`aidd translate` converts a Claude-format framework source into a target-native distribution. The orchestrators (`MarketplaceBuildStrategy`, `FlatBuildStrategy`) read a per-tool `ToolBuildContract` without per-tool branching. **Scope:** skills, agents, mcp, and hooks are emitted; `rules` and `commands` are out of scope (warn + skip per plugin). The [CLI reference](README.md#translate) owns the supported targets and output layout matrix.
+| Fact | Detail |
+| --- | --- |
+| Strategies | `MarketplaceBuildStrategy` and `FlatBuildStrategy` read a per-tool `ToolBuildContract`, with no per-tool branching |
+| Emitted | Skills, agents, mcp, hooks |
+| Skipped | Rules and commands, with a warning per plugin |
+| Targets and layouts | [CLI reference](README.md#translate) |
 
 ## Hook adaptation
 
-OpenCode needs JS adapters. The CLI owns the shared host protocol; plugins own payload mapping. Its helper is delivered once outside plugin discovery, tracked as a tool file, and backfilled only when missing. Installation must neither rewrite user configuration nor claim existing untracked helpers. Generic `SessionStart` runs idempotently at host initialization.
+OpenCode needs JS adapters.
+
+| Owner | Owns |
+| --- | --- |
+| The CLI | The shared host protocol |
+| Plugins | The mapping of their own payloads |
+
+- The helper is delivered once, outside plugin discovery.
+- It is tracked as a tool file, and backfilled only when missing.
+- Installation never rewrites user configuration, and never claims an existing untracked helper.
+- `SessionStart` runs idempotently at host initialization.
+- Unsupported hooks and skipped surfaces are reported.
+
+Which tools run hooks: [Compatibility](../docs/COMPATIBILITY.md).
 
 <details>
-<summary>Tool compatibility and adapter contracts</summary>
+<summary>Plugin root per tool</summary>
 
-Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`; the installer translates the root for each tool.
-| Tool           | Runs bundled hooks    | Plugin root            | Notes |
-| -------------- | --------------------- | ---------------------- | ----- |
-| Claude Code    | yes                   | `${CLAUDE_PLUGIN_ROOT}` | Authoring spelling, nothing substituted |
-| Codex          | yes                   | `${PLUGIN_ROOT}`       | Also expands `${CLAUDE_PLUGIN_ROOT}`; runs a hook only once trusted |
-| GitHub Copilot | yes                   | `${PLUGIN_ROOT}`       | Declared, never observed running |
-| Cursor         | declared              | `./`                   | Own hook format: the converter rewrites the root to a plugin-relative path before token substitution. No plugin hook observed firing headless; what registers a plugin in Cursor's plugin directory is unknown |
-| OpenCode       | no, by a second route | —                      | See below |
-Runtime contracts: [hook bridge](src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts), [shared V2 adapter](assets/configs/opencode/opencode-events.js.txt). The shared helper is `.opencode/hooks/opencode-events.js`. Unsupported hooks and skipped installation surfaces must be reported.
+Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`. The installer translates it per tool.
+
+| Tool | Plugin root | Note |
+| --- | --- | --- |
+| Claude Code | `${CLAUDE_PLUGIN_ROOT}` | Authoring spelling, nothing substituted |
+| Codex | `${PLUGIN_ROOT}` | Also expands `${CLAUDE_PLUGIN_ROOT}` |
+| GitHub Copilot | `${PLUGIN_ROOT}` | |
+| Cursor | `./` | Own hook format: the converter makes the root plugin-relative before token substitution |
+| OpenCode, Kilo Code | none | No hooks file: a generated bridge replays the hooks |
+
+Runtime contracts:
+
+- [Hook bridge](src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts)
+- [Shared V2 adapter](assets/configs/opencode/opencode-events.js.txt)
+- The helper is `.opencode/hooks/opencode-events.js`.
 
 </details>
 
-## Dependency Wiring
+## Dependency wiring
 
-- `createDeps(projectRoot, globalOptions, output)` — full dep graph, memoized per project root
-- `createMenuDeps()` — pre-parse only (ManifestRepository + Prompter)
-- `deps.ts` assembles the entire adapter graph; commands never instantiate adapters directly
+| Function | Builds |
+| --- | --- |
+| `createDeps(projectRoot, globalOptions, output)` | The full dependency graph, memoized per project root |
+| `createMenuDeps()` | The pre-parse part only: `ManifestRepository` and `Prompter` |
 
-## Testing
+`deps.ts` assembles every adapter. Commands never instantiate adapters.
 
-- `*.unit.test.ts` — domain models, pure functions; no I/O
-- `*.integration.test.ts` — use-cases and adapters with real temp filesystem
-- `*.e2e.test.ts` — full CLI binary invocation via `runCli()`, temp dir per test
+## Tests
+
+| Suffix | Covers |
+| --- | --- |
+| `*.unit.test.ts` | Domain models and pure functions, no I/O |
+| `*.integration.test.ts` | Use cases and adapters, on a real temp filesystem |
+| `*.e2e.test.ts` | The full CLI binary through `runCli()`, one temp dir per test |

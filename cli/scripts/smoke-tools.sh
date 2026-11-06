@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI="$ROOT/dist/cli.js"
 FRAMEWORK_FIXTURE="$ROOT/tests/fixtures/framework"
 
-AI_TOOLS=(claude cursor copilot codex opencode kilo)
+AI_TOOLS=(claude cursor copilot codex opencode kilo antigravity)
 IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
@@ -176,7 +176,7 @@ run "unknown command exits non-zero" 1 "" "$ROOT" -- definitely-not-a-command
 # (version/help are not counted leaves)
 
 section "recipe validation (bundled)"
-run "framework validate-recipes (bundled)" 0 "PASS: 3 recipe(s) validated." "$ROOT" -- \
+run "framework validate-recipes (bundled)" 0 "PASS: 2 recipe(s) validated." "$ROOT" -- \
   framework validate-recipes --bundled "$ROOT/../plugins/aidd-context/skills/12-cook/assets/recipes"
 
 section "translate (local fixture)"
@@ -334,6 +334,9 @@ if true; then
       [[ ! -d "$BASE/.github" ]] \
         && ok "copilot declarative settings absent without native source proof" \
         || bad "copilot declarative settings written without native source proof"
+    elif [[ "$t" == antigravity ]]; then
+      # Antigravity reads the shared `.agents/` root, not a directory named after itself.
+      [[ -d "$BASE/.agents/skills" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     else
       [[ -d "$BASE/.${t}" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     fi

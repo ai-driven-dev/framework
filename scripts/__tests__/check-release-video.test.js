@@ -208,7 +208,7 @@ const words = (n) => Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
 
 test("overlongText accepts a short intro and a short lead", () => {
   const plan = {
-    intro: { tagline: words(6), highlights: [words(5), words(5), words(5)] },
+    intro: { tagline: words(6), highlights: [words(5), words(5), words(5), words(5), words(5)] },
     scenes: [{ lead: words(14) }],
     skipped: [],
   };
@@ -223,9 +223,9 @@ test("overlongText names the intro tagline that is too long", () => {
 });
 
 test("overlongText names a highlight that is too long and too many highlights", () => {
-  const plan = { intro: { highlights: [words(6), "a", "b", "c"] }, scenes: [], skipped: [] };
+  const plan = { intro: { highlights: [words(6), "a", "b", "c", "d", "e"] }, scenes: [], skipped: [] };
 
-  assert.deepEqual(overlongText(plan), ["intro highlights: 4, 3 at most", "intro highlight 1: 6 words, 5 at most"]);
+  assert.deepEqual(overlongText(plan), ["intro highlights: 6, 5 at most", "intro highlight 1: 6 words, 5 at most"]);
 });
 
 test("overlongText names the scene whose lead is too long", () => {

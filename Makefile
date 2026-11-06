@@ -1,5 +1,3 @@
-PLUGIN ?= all
-
 .DEFAULT_GOAL := help
 .PHONY: help setup doctor check reload
 
@@ -17,5 +15,6 @@ doctor: ## Check the local toolchain
 check: ## Run the pre-commit checks
 	pnpm exec lefthook run pre-commit
 
-reload: ## Dev: reload this checkout into Claude, Codex, and OpenCode (PLUGIN="aidd-refine aidd-pm", default all)
-	scripts/dev-sync.sh $(PLUGIN)
+reload: ## Dev: reload all plugins into Claude, Codex, OpenCode, Copilot, and Cursor
+	pnpm --dir cli build
+	scripts/dev-sync.sh

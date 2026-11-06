@@ -7,5 +7,6 @@
 | Regression impact | it changes existing code | tests covering the areas, risk (low, medium, high), safety-net phase of tests that lock the current behavior (yes, no) |
 | Architecture impact | it changes how parts connect | the architecture it starts from, the change it intends |
 | Documentation impact | always | documents to change and why, or none |
+| Contributor checks | always | the commands the contributing guide, Makefile, or package scripts require before a pull request, each with its source, or none |
 | Docs consulted | an assumption the code cannot settle | official URL, what it settled |
 | Project rules | they govern the feature | one-line reason each |

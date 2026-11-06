@@ -229,7 +229,7 @@ test("sweeping the repository's own plugins/ tree yields zero violations", () =>
   assert.deepEqual(violations, []);
   // A sweep that never actually exercised a skill with action files would pass the same way —
   // this pins the sweep to the measured count so it cannot go vacuously green.
-  assert.equal(skillsWithActions, 48);
+  assert.equal(skillsWithActions, 49);
 });
 
 test("a table that declares no action column cites nothing, whatever its cells read", () => {
@@ -275,6 +275,72 @@ test("a skill holding action files with no Actions section at all is refused", (
   assert.equal(violations.length, 1);
   assert.equal(violations[0].rule, "router-coherence");
   assert.match(violations[0].message, /no "## Actions" section/);
+});
+
+const leanRouterPath = "plugins/aidd-fixture-a/skills/01-lean/SKILL.md";
+const leanRouter = [
+  "# Lean skill",
+  "",
+  "```mermaid",
+  "flowchart LR",
+  '  first["first<br>actions/01-first.md"] --> second["second<br>actions/02-second.md"]',
+  "```",
+  "",
+  "## Transversal rules",
+  "",
+  "- Keep scope.",
+].join("\n");
+
+test("a preamble Mermaid flowchart names its actions without a heading or table", () => {
+  assert.deepEqual(checkArchitecture(leanRouterPath, leanRouter, ["01-first.md", "02-second.md"]), []);
+});
+
+test("removing an action path from a headerless flow still names the missing action", () => {
+  const content = leanRouter.replace("<br>actions/02-second.md", "");
+  const violations = checkArchitecture(leanRouterPath, content, ["01-first.md", "02-second.md"]);
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /never names action file "02-second\.md"/);
+  assert.equal(violations[0].line, 3);
+});
+
+test("a missing headerless action cannot be supplied by prose, an example or another flow", () => {
+  const incomplete = leanRouter.replace("<br>actions/02-second.md", "");
+  for (const extra of [
+    "actions/02-second.md",
+    "```md\nactions/02-second.md\n```",
+    '```mermaid\nflowchart LR\n  second["actions/02-second.md"]\n```',
+  ]) {
+    for (const content of [
+      incomplete.replace("## Transversal rules", `${extra}\n\n## Transversal rules`),
+      `${incomplete}\n\n${extra}`,
+    ]) {
+      const violations = checkArchitecture(leanRouterPath, content, ["01-first.md", "02-second.md"]);
+      assert.equal(violations.length, 1);
+      assert.match(violations[0].message, /never names action file "02-second\.md"/);
+    }
+  }
+});
+
+test("only a closed top-level preamble flowchart can replace the Actions section", () => {
+  for (const content of [
+    leanRouter.replace("```\n\n## Transversal rules", "\n\n## Transversal rules"),
+    leanRouter.replace("```mermaid", "```md"),
+    leanRouter.replace("flowchart LR", "classDiagram"),
+    `## Examples\n\n${leanRouter}`,
+    `\`\`\`\`md\n${leanRouter}\n\`\`\`\``,
+  ]) {
+    const violations = checkArchitecture(leanRouterPath, content, ["01-first.md", "02-second.md"]);
+    assert.equal(violations.length, 1);
+    assert.match(violations[0].message, /no "## Actions" section/);
+  }
+});
+
+test("numbered paths in a headerless flow distinguish action files sharing a stem", () => {
+  const content = leanRouter.replaceAll("01-first.md", "01-plan.md").replaceAll("02-second.md", "04-plan.md");
+  assert.deepEqual(checkArchitecture(leanRouterPath, content, ["01-plan.md", "04-plan.md"]), []);
+  const violations = checkArchitecture(leanRouterPath, content.replace("04-plan.md", "plan.md"), ["01-plan.md", "04-plan.md"]);
+  assert.equal(violations.length, 1);
+  assert.match(violations[0].message, /never names action file "04-plan\.md"/);
 });
 
 test("a glossary table before the router does not blind the router's own column", () => {

@@ -40,7 +40,6 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   ],
   // A seam artefact one plugin writes into a reader's own project and another reads back —
   // named here as the shape of that seam, never as a file this repository holds.
-  "docs/ARCHITECTURE.md": ["INSTALL.md"],
   "docs/CATALOG.md": ["INSTALL.md"],
   // The build artefact every e2e run refuses to share, named as what is avoided.
   "cli/tests/e2e/helpers.ts": ["dist/cli.js"],
@@ -70,12 +69,25 @@ function repositoryBasenames(tracked) {
   }));
 }
 
+// find exits 1 when a directory vanishes mid-scan, as another test's temp directory does; what it
+// listed before that is still the answer.
+function listed(command) {
+  try {
+    return cp.execSync(command, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+  } catch (error) {
+    if (error.status === 1 && typeof error.stdout === "string") return error.stdout;
+    throw error;
+  }
+}
+
+// Another test's scratch directory (`.tmp-*`) is no part of the repository, and it may be gone
+// by the time its files are read.
 function findFiles(command) {
-  return cp
-    .execSync(command, { cwd: ROOT, encoding: "utf8" })
+  return listed(command)
     .trim()
     .split(/\r?\n/)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((file) => !/(^|\/)\.tmp-/u.test(file));
 }
 
 function scannedFiles() {

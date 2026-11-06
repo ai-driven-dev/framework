@@ -254,7 +254,7 @@ export class PluginContentTranslator {
     const { flatNamespacePrefix } = tool.capabilities.plugins;
     if (flatNamespacePrefix === null) return { files: [], skipped: [] };
     const result: InstallationFile[] = [];
-    for (const file of dist.components.commands) {
+    for (const file of hasCommands(tool) ? dist.components.commands : []) {
       result.push(this.flatCommandFile(file, dist.manifest.name, tool, flatNamespacePrefix));
     }
     for (const section of ["agents", "rules", "skills"] as const) {
@@ -343,13 +343,36 @@ export class PluginContentTranslator {
     pluginName: string,
     tool: AiTool<HasPlugins>
   ): InstallationFile | null {
-    if (!sectionPresent(tool, section)) return null;
     const sectionDir = `${section}/`;
     const fileName = file.relativePath.slice(sectionDir.length);
+    if (!sectionPresent(tool, section)) {
+      const artifact =
+        section === "agents" ? tool.buildContracts?.flat?.().artifacts.agents : undefined;
+      if (!artifact?.supported || !isProse(file.relativePath)) return null;
+      const content = tool.rewriteContent(file.content);
+      return this.makeFile(
+        artifact.path(pluginName, file.relativePath),
+        artifact.transform?.(content, pluginName, fileName) ?? content
+      );
+    }
     // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
     // flat file left a script intact only where a tool's own rewrite happened to spare it.
     const content = isProse(file.relativePath) ? tool.rewriteContent(file.content) : file.content;
-    return this.makeFile(`${tool.directory}${section}/${pluginName}/${fileName}`, content);
+    if (section === "agents" && hasAgents(tool)) {
+      const artifact = tool.buildContracts?.flat?.().artifacts.agents;
+      if (artifact?.supported) {
+        return this.makeFile(
+          artifact.path(pluginName, file.relativePath),
+          artifact.transform?.(content, pluginName, fileName) ?? content
+        );
+      }
+    }
+    const singleLevel =
+      section === "skills" && tool.capabilities.plugins.flatSkillLayout === "single-level";
+    const path = singleLevel
+      ? `${tool.directory}skills/${pluginName}-${fileName}`
+      : `${tool.directory}${section}/${pluginName}/${fileName}`;
+    return this.makeFile(path, content);
   }
 
   private makeFile(relativePath: string, content: string): InstallationFile {

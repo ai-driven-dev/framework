@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.4.0](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.3.0...aidd-telemetry-v0.4.0) (2026-10-26)
+
+
+### Features
+
+* **telemetry:** ask a codex tui session for its task ([#1058](https://github.com/ai-driven-dev/framework/issues/1058)) ([c338b19](https://github.com/ai-driven-dev/framework/commit/c338b195464abaa7a872e46f652b7afac4251cea))
+* **telemetry:** measure codex from its own session files ([#1057](https://github.com/ai-driven-dev/framework/issues/1057)) ([e8aabe0](https://github.com/ai-driven-dev/framework/commit/e8aabe0e6fc224c9fa1e3f6ee6a8d51b0bf0ed4a))
+* **telemetry:** report envelope v2 keeps the figures apart from the run ([#1048](https://github.com/ai-driven-dev/framework/issues/1048)) ([940e8e3](https://github.com/ai-driven-dev/framework/commit/940e8e36517c153b320b8496093650770859e253))
+* **telemetry:** split and filter the report by tool ([#1064](https://github.com/ai-driven-dev/framework/issues/1064)) ([78938c9](https://github.com/ai-driven-dev/framework/commit/78938c9c4a47e590daf3368d12d6c9f0eb98e172))
+
+
+### Bug Fixes
+
+* **telemetry:** bind a branch only by the command's own declaration ([#1045](https://github.com/ai-driven-dev/framework/issues/1045)) ([8f1b968](https://github.com/ai-driven-dev/framework/commit/8f1b96864ecaa0f7bbcb004c2eeafb9328e84997))
+* **telemetry:** nothing measured is lost silently ([#1046](https://github.com/ai-driven-dev/framework/issues/1046)) ([1202ff5](https://github.com/ai-driven-dev/framework/commit/1202ff53ca9c9f8922a2bffa67f30d58d9406c6f))
+* **telemetry:** small defects the R1 audit reproduced ([#1055](https://github.com/ai-driven-dev/framework/issues/1055)) ([5a46c34](https://github.com/ai-driven-dev/framework/commit/5a46c344c02602128ad2cd1cb91f48d20b35009f))
+* **telemetry:** the simplest true rule for a call with no request id ([#1054](https://github.com/ai-driven-dev/framework/issues/1054)) ([856a8b3](https://github.com/ai-driven-dev/framework/commit/856a8b38ec1f08af05de9c9fe3d40423db5f5d48))
+
+
+### Miscellaneous
+
+* **telemetry:** clean up what the R1 work left behind ([#1053](https://github.com/ai-driven-dev/framework/issues/1053)) ([7876341](https://github.com/ai-driven-dev/framework/commit/7876341520f955abb994787e63733f0723291809))
+
 ## [0.3.0](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.2.1...aidd-telemetry-v0.3.0) (2026-10-16)
 
 

@@ -10,6 +10,7 @@ The explored source.
 
 1. Split the work into phases, each shipping and verifying on its own, the first one a safety net when the findings say so.
 2. Give each file to modify, create, or delete, and each impact, to the phase that owns it, losing none.
+   - A contributor check from the findings becomes a task of the last phase.
    - A phase that builds a screen layout (page, view, panel) draws its Wireframe per [wireframe conventions](../references/wireframe-conventions.md); other phases omit the section.
 3. Write the feature folder in the project's `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<feature-slug>/`, or in the source's own folder:
    - `plan.md` from the [plan template](../assets/plan-template.md).

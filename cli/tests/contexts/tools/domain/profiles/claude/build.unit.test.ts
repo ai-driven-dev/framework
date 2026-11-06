@@ -235,7 +235,9 @@ describe("buildClaudeFlatContract()", () => {
   it("appends a plugin's hooks to the settings file, leaving every other setting alone", () => {
     const hooks = supported(buildClaudeFlatContract().artifacts.hooks);
 
-    expect(hooks.hooksMerge?.(JSON.stringify({ model: "opus" }), HOOKS_JSON)).toStrictEqual({
+    expect(
+      hooks.hooksMerge?.(JSON.stringify({ model: "opus" }), HOOKS_JSON, "aidd-dev")
+    ).toStrictEqual({
       content: `${JSON.stringify(
         {
           model: "opus",

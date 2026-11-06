@@ -160,8 +160,8 @@ describe("ClaudeOutputStrategy", () => {
     });
   });
 
-  describe("agent frontmatter preserved (D-5)", () => {
-    it("source agent with tools/color/model — claude output preserves all frontmatter keys", async () => {
+  describe("agent frontmatter", () => {
+    it("keeps only the name, description and model Claude reads; an agent gets every tool", async () => {
       const fs = await makeSeededFsFromReal();
       fs.setFile(
         `${REAL_FIXTURE_DIR}/plugins/aidd-dev/agents/full-agent.md`,
@@ -170,10 +170,13 @@ describe("ClaudeOutputStrategy", () => {
       const uc = makeUseCase(fs);
       await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/agents/full-agent.md`) ?? "";
-      expect(out).toContain("tools:");
-      expect(out).toContain("color:");
-      expect(out).toContain("model:");
-      expect(out).toContain("name:");
+      expect(out).toBe(`---
+name: 'full-agent'
+description: 'Full agent'
+model: 'claude-sonnet'
+---
+
+Body with [foo.md](./foo.md) ref.`);
     });
 
     it("agent body gets @./ rewrite (D-4)", async () => {

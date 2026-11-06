@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Renders the release video from `aidd_docs/release-video/scenes.json`, locally, with no AI tool
- * involved: `node .claude/skills/release-video/assets/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`.
+ * involved: `node .claude/skills/release-video/assets/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`, which also writes the thumbnail next to the video as a `.png`.
  *
  * Needs `npx`, a network (fonts and avatars are local, GSAP and the avatars are fetched) and
  * ffmpeg + Chrome as Hyperframes does. The renderer is pinned: a new Hyperframes release
@@ -18,6 +18,7 @@ const PLAN = path.join(ROOT, "aidd_docs/release-video/scenes.json");
 const HYPERFRAMES = "hyperframes@0.8.162";
 const INTRO = 5;
 const INTRO_WITH_HIGHLIGHTS = 6.5;
+const VERSION_TYPING_FROM = 0.8, VERSION_TYPING_SECONDS = 1.1;
 const OUTRO = 4;
 
 const CSS = `
@@ -42,6 +43,14 @@ h2 { font-size: 78px; line-height: 1.08; letter-spacing: -0.02em; font-weight: 8
 .bar i { width: 18px; height: 18px; border-radius: 50%; display: block; }
 .body { padding: 30px 36px; display: flex; flex-direction: column; gap: 18px; font-family: "JetBrains Mono", monospace; font-weight: 500; font-size: 32px; line-height: 1.4; }
 .dim { color: #8a8fc0; } .grn { color: #5ee6a8; } .blu { color: #8aa6ff; } .pnk { color: #ff8fa8; } .amb { color: #ffd37a; }
+.row.del { color: #ff9aa8; background: rgba(255,107,107,.14); border-left: 4px solid #ff6b6b; padding-left: 14px; }
+.row.add { color: #5ee6a8; background: rgba(94,230,168,.12); border-left: 4px solid #5ee6a8; padding-left: 14px; }
+.diff .row { font-size: 27px; line-height: 1.35; }
+.figs { display: flex; gap: 24px; margin-top: 18px; }
+.fig { flex: 1; background: #0b0b36; border: 2px solid #26265f; border-radius: 16px; padding: 18px 28px; display: flex; flex-direction: column; gap: 6px; }
+.fig b { font-size: 72px; font-weight: 800; line-height: 1; }
+.fig .from { color: #ff9aa8; } .fig .arr { color: #8a8fc0; padding: 0 14px; } .fig .to { color: #5ee6a8; }
+.fig small { font-family: "JetBrains Mono", monospace; font-size: 26px; color: #8a8fc0; }
 .row.red { color: #ff9aa8; background: rgba(255,107,107,.14); border-left: 4px solid #ff6b6b; padding-left: 14px; }
 .note { font-family: "JetBrains Mono", monospace; font-size: 22px; color: #8a8fc0; }
 .chips { display: flex; flex-wrap: wrap; gap: 18px; }
@@ -74,6 +83,11 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 .av span { font-family: "JetBrains Mono", monospace; font-size: 32px; font-weight: 700; }
 #intro .inner { flex-direction: row; align-items: center; justify-content: center; gap: 90px; }
 #intro-logo { width: 420px; height: 420px; border-radius: 50%; border: 2px solid #2a2a66; }
+#thumb .inner { flex-direction: row; align-items: center; justify-content: center; gap: 110px; }
+#thumb #intro-logo { width: 560px; height: 560px; }
+#thumb #ver { font-size: 330px; }
+#thumb .intro-text { min-width: 0; gap: 30px; }
+.themes { font-family: "JetBrains Mono", monospace; font-size: 38px; font-weight: 700; color: #a6abe0; white-space: nowrap; }
 .intro-text { display: flex; flex-direction: column; gap: 22px; min-width: 720px; }
 .intro-top { display: flex; align-items: center; gap: 22px; }
 .rel { font-family: "JetBrains Mono", monospace; font-size: 28px; letter-spacing: 0.12em; color: #8a8fc0; }
@@ -81,8 +95,8 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 #ver .dot { color: #5ee6a8; }
 .tagline { font-family: "JetBrains Mono", monospace; font-size: 40px; color: #a6abe0; }
 .tagline b { color: #fff; font-weight: 700; }
-.hls { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 10px; }
-.hl { font-family: "JetBrains Mono", monospace; font-size: 28px; padding: 10px 22px; border-radius: 12px; border: 2px solid #3b4c99; color: #8aa6ff; }
+.hls { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; margin-top: 10px; }
+.hl { font-family: "JetBrains Mono", monospace; font-size: 42px; padding: 12px 28px; border-radius: 12px; border: 2px solid #3b4c99; color: #8aa6ff; }
 .lead { font-size: 36px; line-height: 1.3; color: #a6abe0; max-width: 1500px; }
 #outro .inner { align-items: center; justify-content: center; gap: 26px; }
 .logo { width: 280px; height: 280px; border-radius: 50%; }
@@ -115,6 +129,8 @@ const row = {
     `<table class="row"><thead><tr>${r.table.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>` +
     r.table.rows.map((cells) => `<tr>${cells.map(cell).join("")}</tr>`).join("") +
     `</tbody></table>`,
+  del: (r) => `<div class="row del">- ${esc(r.del)}</div>`,
+  add: (r) => `<div class="row add">+ ${esc(r.add)}</div>`,
   code: (r) => `<div class="row code">${esc(r.code)}</div>`,
   check: (r) =>
     `<div class="row check"><span class="${r.mark === "!" ? "amb" : "grn"}">${esc(r.mark ?? "✓")}</span><span>${esc(r.check)}</span></div>`,
@@ -152,12 +168,26 @@ const rowsIn = (rows = []) => rows.reduce((n, r) => n + (r.table ? 1 + r.table.r
 
 /** Rows are revealed one by one; the note comes after the last. */
 const rowElements = (s) =>
-  (s.window ? [s.window] : s.panels ?? []).reduce((n, w) => n + (w.rows ?? []).length, 0);
+  (s.window ? [s.window] : s.panels ?? [s.before, s.after].filter(Boolean)).reduce((n, w) => n + (w.rows ?? []).length, 0);
 
 const scene = {
   "terminal-demo": {
     items: (s) => rowsIn(s.window?.rows) + (s.flow ? 2 : 0),
     body: (s) => windowHtml(s.window) + (s.flow ? flowHtml(s.flow) : "") + noteHtml(s),
+  },
+  "before-after": {
+    items: (s) => (s.figures ?? []).length + rowsIn(s.before?.rows) + rowsIn(s.after?.rows),
+    body: (s) =>
+      `<div class="figs">` +
+      (s.figures ?? [])
+        .map(
+          (f) =>
+            `<div class="fig it"><b><span class="from">${esc(f.from)}</span><span class="arr">→</span><span class="to">${esc(f.to)}</span></b><small>${esc(f.label)}</small></div>`
+        )
+        .join("") +
+      `</div>` +
+      `<div class="split diff">${windowHtml({ ...s.before, flex: 1 })}${windowHtml({ ...s.after, flex: 1 })}</div>` +
+      noteHtml(s),
   },
   "two-panels": {
     items: (s) => (s.panels ?? []).reduce((n, p) => n + rowsIn(p.rows), 0),
@@ -189,7 +219,7 @@ const scene = {
 /** Head (2.5 s), a second to read the lead, a beat per item, and a closing pause. */
 function sceneDuration(s) {
   if (!scene[s.template]) throw new Error(`Unknown template: ${s.template}`);
-  return half(4.5 + (s.lead ? 1 : 0) + 0.7 * scene[s.template].items(s));
+  return half(3.5 + (s.lead ? 1 : 0) + 0.7 * scene[s.template].items(s));
 }
 
 const headHtml = (s, id) =>
@@ -248,12 +278,15 @@ const round2 = (x) => Math.round(x * 100) / 100;
 const itemsIn = (html) => (html.match(/class="[^"]*\bit\b/g) ?? []).length;
 
 /** One sound per thing that appears, at the time the timeline shows it: a whoosh as a scene
- * opens, a pop as a window or item slides in, a click per row, a key tick per typed character. */
+ * opens, a tick for its pill and lead, a pop for its title, window, items and note, a click per row,
+ * a key tick per typed character. */
 function soundCues(plan, { version }) {
   const cues = [];
   const cue = (kind, t) => cues.push({ kind, t: round2(t) });
   const chars = String(version).length + 1;
   cue("pop", 0.1);
+  cue("tick", 0.4);
+  cue("tick", 0.55);
   for (let k = 0; k < chars; k++) cue("key", 0.8 + (1.1 * k) / chars);
   if (hasTagline(plan.intro)) cue("pop", 2.0);
   (plan.intro?.highlights ?? []).forEach((_, k) => cue("pop", (hasTagline(plan.intro) ? 2.6 : 2) + 0.3 * k));
@@ -261,33 +294,78 @@ function soundCues(plan, { version }) {
   let t = introSeconds(plan);
   for (const s of plan.scenes) {
     cue("whoosh", t);
+    cue("tick", t + 0.14);
+    cue("pop", t + 0.28);
+    if (s.lead) cue("tick", t + 0.5);
     for (let k = 0; k < itemsIn(scene[s.template].body(s)); k++) cue("pop", t + 0.63 + 0.3 * k);
     for (let k = 0; k < rowElements(s); k++) cue("click", t + 1.3 + 0.45 * k);
+    if (s.note) cue("pop", t + 1.3 + 0.45 * rowElements(s) + 0.3);
     t += sceneDuration(s);
   }
+  cue("pop", t + 0.07);
+  cue("pop", t + 0.28);
   for (let k = 0; k < 2; k++) cue("pop", t + 0.63 + 0.2 * k);
   return cues.sort((a, b) => a.t - b.t);
 }
 
 const SFX_RATE = 44100;
-const square = (phase, duty = 0.5) => (phase % 1 < duty ? 1 : -1);
+const frames = (seconds) => Math.round(seconds * SFX_RATE);
 
-/** Each sound is a short 8-bit blip: a square wave with a fast decay, no noise. */
+/** Deterministic noise, so two renders of one plan sound the same. */
+const noise = (seed) => {
+  let x = seed;
+  return () => {
+    x = (x * 1664525 + 1013904223) >>> 0;
+    return x / 2147483648 - 1;
+  };
+};
+
+const onePole = (samples, hz) => {
+  const a = 1 - Math.exp((-2 * Math.PI * hz) / SFX_RATE);
+  let y = 0;
+  return samples.map((v) => (y += a * (v - y)));
+};
+
+/** A soft struck tone: a sine and a short inharmonic partial, like glass. */
+const ping = (hz, seconds, decay) =>
+  Float64Array.from({ length: frames(seconds) }, (_, i) => {
+    const x = i / SFX_RATE;
+    const tone = Math.sin(2 * Math.PI * hz * x) + 0.35 * Math.sin(2 * Math.PI * hz * 2.76 * x) * Math.exp(-x * 30);
+    return 0.5 * tone * Math.exp(-x * decay) * Math.min(1, x * 1000, (seconds - x) * 100);
+  });
+
+/** Air that turns from dark to bright while it swells and fades. */
+const whoosh = () => {
+  const seconds = 0.45;
+  const random = noise(7);
+  const air = Array.from({ length: frames(seconds) }, random);
+  const dark = onePole(air, 900);
+  const low = onePole(air, 1500);
+  const bright = onePole(air.map((v, i) => v - low[i]), 7000);
+  return Float64Array.from(air, (_, i) => {
+    const u = i / air.length;
+    return 0.9 * (dark[i] * (1 - u) + bright[i] * u) * Math.sin(Math.PI * u) ** 2;
+  });
+};
+
+/** Each sound is a short soft tone or a breath of air, never a chip-tune blip. */
 const SOUNDS = {
-  key: { seconds: 0.025, wave: (x) => square(1400 * x) * Math.exp(-x * 120) },
-  click: { seconds: 0.05, wave: (x) => square(2000 * x) * Math.exp(-x * 80) },
-  pop: { seconds: 0.12, wave: (x) => square((480 + 2000 * x) * x) * Math.exp(-x * 25) },
-  whoosh: { seconds: 0.26, wave: (x) => square((150 + 2400 * x) * x, 0.25) * Math.sin((Math.PI * x) / 0.26) * 0.6 },
+  key: () => ping(2600, 0.06, 60),
+  tick: () => ping(2000, 0.09, 60),
+  click: () => ping(1500, 0.08, 40),
+  pop: () => ping(880, 0.3, 11),
+  whoosh,
 };
 
 /** The sounds of the cues, laid on a silent mono 16-bit wav as long as the video. */
 function soundTrack(plan, { version }) {
   const total = Math.round(totalDuration(plan) * SFX_RATE);
   const mix = new Float64Array(total);
+  const made = {};
   for (const { kind, t } of soundCues(plan, { version })) {
-    const { seconds, wave } = SOUNDS[kind];
+    const sound = (made[kind] ??= SOUNDS[kind]());
     const from = Math.round(t * SFX_RATE);
-    for (let i = 0; i < Math.round(seconds * SFX_RATE) && from + i < total; i++) mix[from + i] += wave(i / SFX_RATE);
+    for (let i = 0; i < sound.length && from + i < total; i++) mix[from + i] += sound[i];
   }
   const wav = Buffer.alloc(44 + 2 * total);
   wav.write("RIFF", 0, "latin1");
@@ -303,8 +381,7 @@ function soundTrack(plan, { version }) {
   wav.write("data", 36, "latin1");
   wav.writeUInt32LE(2 * total, 40);
   for (let i = 0; i < total; i++) {
-    const steps = Math.round(Math.max(-1, Math.min(1, mix[i] * 0.8)) * 31) / 31; // 5-bit grain
-    wav.writeInt16LE(Math.round(steps * 32767), 44 + 2 * i);
+    wav.writeInt16LE(Math.round(Math.max(-1, Math.min(1, mix[i] * 0.8)) * 32767), 44 + 2 * i);
   }
   return wav;
 }
@@ -327,11 +404,11 @@ function buildHtml(plan, { version, music, sfx }) {
     `enter("#intro-pill", 0.4, { y: 20 });`,
     `enter("#intro-rel", 0.55, { y: 20 });`,
     `const typed = { n: 0 }; const full = ${JSON.stringify(String(version))};`,
-    `tl.to(typed, { n: 1, duration: 1.1, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
+    `tl.to(typed, { n: 1, duration: ${VERSION_TYPING_SECONDS}, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
       ` const [a, b = ""] = full.split(".");` +
       ` document.getElementById("ver-t").textContent = ("v" + a).slice(0, Math.min(len, a.length + 1));` +
       ` document.querySelector("#ver .dot").textContent = len > a.length + 1 ? "." : "";` +
-      ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, 0.8);`,
+      ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, ${VERSION_TYPING_FROM});`,
     ...(hasTagline(plan.intro) ? [`enter("#intro-tag", 2.0, { y: 20 });`] : []),
     `enter("#intro .hl", ${hasTagline(plan.intro) ? 2.6 : 2}, { y: 16, duration: 0.5, stagger: 0.3 });`,
     `cut("intro", ${introSeconds(plan)});`
@@ -394,7 +471,7 @@ tl.seek(0);
 
 const STEP = 0.5;
 const HOOK_STARTS_WITHIN = 2;
-const LOUD_ABOVE_MEDIAN = 8;
+const LOUD_ABOVE_MEDIAN = 3;
 
 /** The ending is the last stretch of a track before it falls silent, as long as the outro it opens: small, never louder than a hook. */
 const ENDING_SECONDS = 4;
@@ -466,8 +543,8 @@ function fitMusic(source, target, plan) {
   ffmpeg(["-i", source, "-filter_complex", filter, "-map", "[a]", "-c:a", "libmp3lame", "-q:a", "2", target]);
 }
 
-function writeProject(dir, plan, version, musicSource) {
-  fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
+/** What a Hyperframes project needs around its page: the fonts, the logo and the project files. */
+function writeShell(dir) {
   fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
   fs.cpSync(path.join(__dirname, "fonts"), path.join(dir, "assets/fonts"), { recursive: true });
   fs.copyFileSync(path.join(__dirname, "logo.png"), path.join(dir, "assets/logo.png"));
@@ -477,6 +554,10 @@ function writeProject(dir, plan, version, musicSource) {
   );
   fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify({ id: "release-video", name: "release-video" }));
   fs.writeFileSync(path.join(dir, "hyperframes.json"), JSON.stringify({ paths: { assets: "assets" } }));
+}
+
+function writeProject(dir, plan, version, musicSource) {
+  writeShell(dir);
   let music;
   if (musicSource) {
     music = "assets/music-fit.mp3";
@@ -526,9 +607,70 @@ async function main() {
   const out = path.resolve(argument("out") ?? "release-video.mp4");
   fs.copyFileSync(path.join(dir, "release-video.mp4"), out);
   console.log(`✅ ${out}`);
+
+  const still = fs.mkdtempSync(path.join(os.tmpdir(), "release-thumbnail-"));
+  writeShell(still);
+  fs.writeFileSync(path.join(still, "index.html"), thumbnailHtml(plan, { version }));
+  const stillRender = spawnSync("npx", ["--yes", HYPERFRAMES, "render", "--output", "thumbnail.mp4"], { cwd: still, stdio: "inherit" });
+  if (stillRender.status !== 0) throw new Error(`Hyperframes render of the thumbnail failed (${stillRender.status})`);
+  const thumbnail = out.replace(/\.mp4$/, ".png");
+  const frame = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", path.join(still, "thumbnail.mp4"), "-frames:v", "1", "-vf", "scale=1280:720", thumbnail], { stdio: "inherit" });
+  if (frame.status !== 0) throw new Error(`The thumbnail could not be taken (${frame.status})`);
+  console.log(`✅ ${thumbnail}`);
+
+  const probe = spawnSync("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=bit_rate", "-of", "csv=p=0", out], { encoding: "utf8" });
+  const bitrate = Number(probe.stdout.trim());
+  if (!bitrate) throw new Error("The bitrate of the video could not be read");
+  const posted = out.replace(/\.mp4$/, ".poster.mp4");
+  const withPoster = spawnSync("ffmpeg", posterArgs({ video: out, poster: thumbnail, out: posted, bitrate }), { stdio: "inherit" });
+  if (withPoster.status !== 0) throw new Error(`The thumbnail could not be put first (${withPoster.status})`);
+  fs.renameSync(posted, out);
 }
 
-module.exports = { buildHtml, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, totalDuration };
+/** The picture a video is announced with, drawn as its own still composition rather than taken from a frame
+ * of the video: the logo, the release and the whole version, then the themes. */
+function thumbnailHtml(plan, { version }) {
+  const [major, minor = ""] = String(version).split(".");
+  const themes = plan.youtube?.themes ?? [];
+  const inner =
+    `<img id="intro-logo" src="assets/logo.png" alt="" /><div class="intro-text">` +
+    `<div class="intro-top"><span class="pill">AIDD Framework</span><span class="rel">NEW RELEASE</span></div>` +
+    `<div id="ver"><span id="ver-t">v${esc(major)}</span><span class="dot">${minor ? "." : ""}</span><span id="ver-n">${esc(minor)}</span></div>` +
+    (themes.length ? `<p class="themes">${themes.map(esc).join(" · ")}</p>` : "") +
+    `</div>`;
+  return `<!doctype html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=1920, height=1080" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>${CSS}</style></head>
+<body><div id="root" data-composition-id="main" data-start="0" data-duration="1" data-width="1920" data-height="1080">
+<section id="thumb" class="scene clip" data-start="0" data-duration="1" data-track-index="0"><div class="inner">${inner}</div></section>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+window.__timelines["main"] = gsap.timeline({ paused: true });
+</script></body></html>
+`;
+}
+
+/** The video opens on its thumbnail for one frame: a chat shows a video's first frame as its preview, and the
+ * intro starts on the bare background. The video is encoded again at its own bitrate, and its sound is delayed
+ * by that frame. */
+function posterArgs({ video, poster, out, bitrate }) {
+  const kbps = Math.round(bitrate / 1000);
+  return [
+    "-y", "-v", "error",
+    "-loop", "1", "-framerate", "30", "-t", "0.0334", "-i", poster,
+    "-i", video,
+    "-filter_complex",
+    "[0:v]scale=1920:1080,setsar=1,fps=30,format=yuv420p[p];[1:v]setsar=1,fps=30,format=yuv420p[v];[p][v]concat=n=2:v=1:a=0[vo];[1:a]adelay=34|34[ao]",
+    "-map", "[vo]", "-map", "[ao]",
+    "-c:v", "libx264", "-profile:v", "high", "-b:v", `${kbps}k`, "-maxrate", `${Math.round(kbps * 1.25)}k`, "-bufsize", `${kbps * 2}k`, "-preset", "slow",
+    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+    out,
+  ];
+}
+
+module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {

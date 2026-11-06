@@ -26,7 +26,7 @@ Run the flow above. Read only the next action file.
 ## Transversal rules
 
 - The plan lives in `aidd_docs/release-video/scenes.json`; the check and the renderer are in `assets/`, their tests in `scripts/__tests__/`.
-- Show only what the product does; mark every invented demo value as an example on screen.
+- Show only what the product does; mark every invented figure as an example on screen; a demo of text alone, plainly a session, needs no mark.
 - A viewer may watch with the sound off and never read the release notes: the picture carries the message, the sound only makes it lively.
 - Never reuse the audio of a published video: it carries that video's own sounds, which then play at moments that mean nothing here.
 - Keep product choices with the user, music included: it is judged by listening, which is the user's.
