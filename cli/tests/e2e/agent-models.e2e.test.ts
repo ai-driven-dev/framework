@@ -22,7 +22,7 @@ async function agentModel(projectDir: string): Promise<unknown> {
 
 /** The main session's model, in OpenCode's user config: never a file the project tracks. */
 async function mainModel(home: string): Promise<unknown> {
-  const path = join(home, ".config", "opencode", "opencode.json");
+  const path = join(home, ".config", "opencode", "opencode.jsonc");
   if (!(await fileExists(path))) return undefined;
   return (JSON.parse(await readFile(path, "utf8")) as { model?: unknown }).model;
 }
@@ -83,7 +83,7 @@ describe("E2E: aidd setup --provider on a project", () => {
       const clean = await runCli(["clean", "--global", "--force"], projectDir, fakeHome);
       expect(clean.exitCode, clean.stderr).toBe(0);
       expect(clean.stdout).toContain("opencode main session: restored in");
-      expect(await fileExists(join(fakeHome, ".config", "opencode", "opencode.json"))).toBe(false);
+      expect(await fileExists(join(fakeHome, ".config", "opencode", "opencode.jsonc"))).toBe(false);
       expect(await fileExists(join(fakeHome, ".config", "opencode", "agents"))).toBe(false);
     } finally {
       await cleanup();

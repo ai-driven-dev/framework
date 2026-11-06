@@ -21,6 +21,8 @@ export interface MainSettings {
   /** Its JSON file name, read from the host's machine-wide directory where the host declares
    * no user settings path of its own. */
   readonly file: string;
+  /** The JSON schema heading a file AIDD creates, absent where the host publishes none. */
+  readonly schema?: string;
   /** The host's key for the effort, absent where its settings take none. */
   readonly effortKey?: string;
 }

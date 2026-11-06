@@ -78,7 +78,7 @@ Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor a
 
 - The provider holds for the whole machine: other projects get it at their next install; to update the agents they already have, run `aidd setup --ide … --provider …` there, `none` included.
 - Nothing changes until the install has succeeded.
-- The main session's model is written in the IDE's own user settings, so it changes every project on the machine: Claude Code's `settings.json` (under `CLAUDE_CONFIG_DIR` when set) and OpenCode's `~/.config/opencode/opencode.json`, or `opencode.jsonc` when that is the one there. `--provider none` restores what it replaced. A settings file holding comments is left alone, and the report says so. A `model` in a project's own settings still wins. Codex, Copilot, Cursor and Kilo keep the model picked in the IDE.
+- The main session's model is written in the IDE's own user settings, so it changes every project on the machine: Claude Code's `settings.json` (under `CLAUDE_CONFIG_DIR` when set) and OpenCode's `~/.config/opencode/opencode.jsonc`, or `opencode.json` when only that one is there. `--provider none` restores what it replaced and the file's comments stay. A `model` in a project's own settings still wins. Codex, Copilot, Cursor and Kilo keep the model picked in the IDE.
 - Effort: smart runs at `high`, the others at `medium`. Mistral Small takes no effort between `none` and `high`, so the light tier runs at `high`.
 - The command ends with a report: per IDE, the model of the main session and of each agent, and the plugins it updated.
 

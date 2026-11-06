@@ -1,3 +1,4 @@
+import { applyEdits, modify, type ParseError, parse } from "jsonc-parser";
 import { stripJsonComments } from "../../../../kernel/reading/jsonc.js";
 import { AGENT_MODELS, type AgentHost, type AgentProvider, tierModel } from "./agent-models.js";
 
@@ -24,15 +25,17 @@ export function mainModelValues(host: AgentHost, provider: AgentProvider): MainM
 }
 
 /**
- * Sets the main model in `path`, recording what each key held before. A key the person changed
- * since AIDD wrote it is theirs again, so its current value becomes the one to restore. Refuses
- * a file holding comments, which rewriting would drop, and a key holding no string.
+ * Sets the main model in `path`, recording what each key held before, and leaves the rest of the
+ * file as it is, comments included. A key the person changed since AIDD wrote it is theirs again,
+ * so its current value becomes the one to restore. Refuses a key holding no string. `schema`
+ * heads a file this creates.
  */
 export function planMainModelInstall(
   path: string,
   content: string | null,
   values: MainModelValues,
-  record: MainModelRecord | undefined
+  record: MainModelRecord | undefined,
+  schema?: string
 ): { content: string; record: MainModelRecord } {
   const settings = readSettings(content);
   const previous: Record<string, string | null> = {};
@@ -45,7 +48,10 @@ export function planMainModelInstall(
       ours && value === record.written[key] ? (record.previous[key] ?? null) : (value ?? null);
   }
   return {
-    content: serialize({ ...settings, ...values }),
+    content: edit(
+      content ?? "{}",
+      content === null && schema !== undefined ? { $schema: schema, ...values } : values
+    ),
     record: {
       path,
       written: values,
@@ -64,28 +70,38 @@ export function planMainModelRemoval(
 ): string | null {
   if (content === null) return null;
   const settings = readSettings(content);
-  let changed = false;
+  const restored: Record<string, string | undefined> = {};
   for (const [key, value] of Object.entries(record.written)) {
-    if (settings[key] !== value) continue;
-    const previous = record.previous[key] ?? null;
-    if (previous === null) delete settings[key];
-    else settings[key] = previous;
-    changed = true;
+    if (settings[key] === value) restored[key] = record.previous[key] ?? undefined;
   }
-  if (!changed) return content;
-  return record.created && Object.keys(settings).length === 0 ? null : serialize(settings);
+  if (Object.keys(restored).length === 0) return content;
+  const next = edit(content, restored);
+  return record.created && holdsOnlyWhatAiddCreated(next) ? null : next;
+}
+
+/** Nothing the person added: no key but the schema AIDD headed the file with, and no comment. */
+function holdsOnlyWhatAiddCreated(content: string): boolean {
+  const keys = Object.keys(readSettings(content)).filter((key) => key !== "$schema");
+  return keys.length === 0 && stripJsonComments(content) === content;
 }
 
 function readSettings(content: string | null): Record<string, unknown> {
   if (content === null || content.trim() === "") return {};
-  if (stripJsonComments(content) !== content)
-    throw new Error("it holds comments or trailing commas, which rewriting it would drop");
-  const parsed: unknown = JSON.parse(content);
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+  const errors: ParseError[] = [];
+  const parsed: unknown = parse(content, errors, { allowTrailingComma: true });
+  if (errors.length > 0 || typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
     throw new Error("it holds no JSON object");
   return parsed as Record<string, unknown>;
 }
 
-function serialize(settings: Record<string, unknown>): string {
-  return `${JSON.stringify(settings, null, 2)}\n`;
+/** Sets each key, or removes it when `undefined`, touching nothing else in the file. */
+function edit(content: string, changes: Record<string, string | undefined>): string {
+  let text = content.trim() === "" ? "{}" : content;
+  for (const [key, value] of Object.entries(changes)) {
+    const edits = modify(text, [key], value, {
+      formattingOptions: { tabSize: 2, insertSpaces: true },
+    });
+    text = applyEdits(text, edits);
+  }
+  return text.endsWith("\n") ? text : `${text}\n`;
 }

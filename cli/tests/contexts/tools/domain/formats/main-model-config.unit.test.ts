@@ -28,10 +28,10 @@ describe("main model settings", () => {
     expect(mainModelValues(host, provider)).toStrictEqual({});
   });
 
-  it("merges JSON settings, keeping other keys, and restores the previous value", () => {
+  it("sets the model, leaving the rest of the file as written, and restores the previous value", () => {
     const content = '{\n  "model": "opus",\n  "hooks": { "a": 1 }\n}';
     const { content: next, record } = planMainModelInstall(P, content, { model: "x" }, undefined);
-    expect(next).toBe('{\n  "model": "x",\n  "hooks": {\n    "a": 1\n  }\n}\n');
+    expect(next).toBe('{\n  "model": "x",\n  "hooks": { "a": 1 }\n}\n');
     expect(record).toStrictEqual({
       path: P,
       written: { model: "x" },
@@ -39,20 +39,46 @@ describe("main model settings", () => {
       created: false,
     });
     expect(planMainModelRemoval(next, record)).toBe(
-      '{\n  "model": "opus",\n  "hooks": {\n    "a": 1\n  }\n}\n'
+      '{\n  "model": "opus",\n  "hooks": { "a": 1 }\n}\n'
     );
   });
 
-  it("refuses a file holding comments, one holding no object, or a value that is not a string", () => {
-    expect(() =>
-      planMainModelInstall(P, '{\n  // mine\n  "a": 1\n}', { model: "x" }, undefined)
-    ).toThrow("comments");
+  it("refuses a file holding no object, or a value that is not a string", () => {
     expect(() => planMainModelInstall(P, "[]", { model: "x" }, undefined)).toThrow(
       "no JSON object"
     );
     expect(() => planMainModelInstall(P, '{ "model": 1 }', { model: "x" }, undefined)).toThrow(
       '"model" is not a string'
     );
+  });
+
+  it("keeps comments and trailing commas, on install and on removal", () => {
+    const commented = '{\n  // mine\n  "model": "opus",\n}\n';
+    const { content, record } = planMainModelInstall(P, commented, { model: "x" }, undefined);
+    expect(content).toBe('{\n  // mine\n  "model": "x",\n}\n');
+    expect(planMainModelRemoval(content, record)).toBe(commented);
+  });
+
+  it("heads a file it creates with the schema, and deletes that file once nothing else is in it", () => {
+    const { content, record } = planMainModelInstall(
+      P,
+      null,
+      { model: "x" },
+      undefined,
+      "https://example.test/schema.json"
+    );
+    expect(content).toBe(
+      '{\n  "$schema": "https://example.test/schema.json",\n  "model": "x"\n}\n'
+    );
+    expect(planMainModelRemoval(content, record)).toBeNull();
+    expect(planMainModelRemoval(content.replace("{\n", "{\n  // mine\n"), record)).toContain(
+      "// mine"
+    );
+  });
+
+  it("leaves an existing file's schema to its owner", () => {
+    const { content } = planMainModelInstall(P, "{}", { model: "x" }, undefined, "https://s.test");
+    expect(content).not.toContain("$schema");
   });
 
   it("keeps what each key held before AIDD first wrote it", () => {
@@ -71,7 +97,7 @@ describe("main model settings", () => {
     const edited = first.content.replace('"x"', '"haiku"');
     const again = planMainModelInstall(P, edited, { model: "y" }, first.record);
     expect(again.record.previous).toStrictEqual({ model: "haiku" });
-    expect(planMainModelRemoval(again.content, again.record)).toBe('{\n  "model": "haiku"\n}\n');
+    expect(planMainModelRemoval(again.content, again.record)).toBe('{ "model": "haiku" }\n');
   });
 
   it("counts a file deleted since AIDD wrote it as one AIDD creates again", () => {
@@ -88,13 +114,13 @@ describe("main model settings", () => {
     const edited = created.content.replace('"high"', '"low"');
     expect(planMainModelRemoval(edited, created.record)).toBe('{\n  "effortLevel": "low"\n}\n');
     const kept = planMainModelInstall(P, "{}", { model: "x" }, undefined);
-    expect(planMainModelRemoval(kept.content, kept.record)).toBe("{}\n");
+    expect(planMainModelRemoval(kept.content, kept.record)).toBe("{\n}\n");
   });
 
   it("leaves missing or user-edited settings untouched on removal, and refuses unreadable ones", () => {
     const record = { path: P, written: { model: "x" }, previous: { model: null }, created: false };
     expect(planMainModelRemoval(null, record)).toBeNull();
     expect(planMainModelRemoval('{"model":"mine"}', record)).toBe('{"model":"mine"}');
-    expect(() => planMainModelRemoval("// broken", record)).toThrow("comments or trailing commas");
+    expect(() => planMainModelRemoval("// broken", record)).toThrow("no JSON object");
   });
 });

@@ -41,7 +41,7 @@ The model ids are pinned in [`agent-models.json`](src/contexts/tools/domain/form
 | --- | --- |
 | `aidd setup --ide claude` | `.claude/` and `.aidd/` in this project |
 | `aidd setup --global --ide opencode --plugins all` | `~/.config/opencode/` and `~/.config/aidd/`, nothing in this project |
-| `aidd setup --ide opencode --provider mistral` | `.opencode/agents/` with Mistral models; the main session's in `~/.config/opencode/opencode.json`; the provider in `~/.config/aidd/agent-models.json`, for every project |
+| `aidd setup --ide opencode --provider mistral` | `.opencode/agents/` with Mistral models; the main session's in `~/.config/opencode/opencode.jsonc`; the provider in `~/.config/aidd/agent-models.json`, for every project |
 
 ## Commands
 

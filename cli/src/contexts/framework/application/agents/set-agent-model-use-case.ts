@@ -133,7 +133,8 @@ export class SetAgentModelUseCase {
           current,
           await this.readIfAny(current),
           mainModelValues(host, provider),
-          mainModels[host]
+          mainModels[host],
+          AGENT_MODELS.hosts[host].main?.schema
         );
         mainModels[host] = plan.record;
         changes.push({ host, path: current, content: plan.content });
@@ -167,9 +168,9 @@ export class SetAgentModelUseCase {
     return chosen;
   }
 
-  /** The host's own user settings file; a host declaring none there reads `main.file`, or its
-   * JSONC twin when only that exists, from the directory a machine-wide install copies its
-   * files into. Absent where neither exists. */
+  /** The host's own user settings file; a host declaring none there reads `main.file`, a JSONC
+   * file that outranks its JSON twin, from the directory a machine-wide install copies its files
+   * into. The twin is used only when it alone exists. Absent where neither exists. */
   private async settingsPath(host: AgentHost): Promise<string | undefined> {
     const settings = AGENT_MODELS.hosts[host].main;
     if (settings === undefined) return undefined;
@@ -179,7 +180,7 @@ export class SetAgentModelUseCase {
     const globalDir = globalFilesOf(host)?.dir(home);
     if (globalDir === undefined) return undefined;
     const path = join(globalDir, settings.file);
-    const twin = `${path}c`;
+    const twin = path.replace(/c$/, "");
     return !(await this.fs.fileExists(path)) && (await this.fs.fileExists(twin)) ? twin : path;
   }
 

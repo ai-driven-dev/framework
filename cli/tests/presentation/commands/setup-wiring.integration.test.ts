@@ -237,14 +237,14 @@ describe("aidd setup — the agents' provider", () => {
     setAgentModel.mockResolvedValue({
       reinstalled: [],
       changed: [{ host: "claude", path: "/old/settings.json" }],
-      skipped: [{ host: "claude", path: "/new/settings.json", reason: "it holds comments" }],
+      skipped: [{ host: "claude", path: "/new/settings.json", reason: "it holds no JSON object" }],
     });
 
     const lines = await run("--ide", "claude", "--provider", "anthropic");
 
     expect(lines.filter((line) => line.includes("main session"))).toEqual([]);
     expect(errors.join("")).toContain(
-      "claude main session left as it is in /new/settings.json: it holds comments."
+      "claude main session left as it is in /new/settings.json: it holds no JSON object."
     );
   });
 

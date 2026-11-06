@@ -18,7 +18,8 @@ const PROJECT = "/p";
 const HOME = "/home/me";
 const CONFIG = "/home/me/.config/aidd";
 const CLAUDE_SETTINGS = join(HOME, ".claude", "settings.json");
-const OPENCODE_SETTINGS = join(HOME, ".config", "opencode", "opencode.json");
+const OPENCODE_SETTINGS = join(HOME, ".config", "opencode", "opencode.jsonc");
+const OPENCODE_SCHEMA = '"$schema": "https://opencode.ai/config.json"';
 
 function plugin(scope: "project" | "user"): InstalledPlugin {
   return InstalledPlugin.fromJSON({
@@ -132,7 +133,9 @@ describe("SetAgentModelUseCase", () => {
       provider: "anthropic",
     });
 
-    expect(fs.getFile(OPENCODE_SETTINGS)).toBe('{\n  "model": "anthropic/claude-sonnet-5-5"\n}\n');
+    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(
+      `{\n  ${OPENCODE_SCHEMA},\n  "model": "anthropic/claude-sonnet-5-5"\n}\n`
+    );
     expect(result.changed).toStrictEqual([
       { host: "claude", path: CLAUDE_SETTINGS },
       { host: "opencode", path: OPENCODE_SETTINGS },
@@ -173,9 +176,11 @@ describe("SetAgentModelUseCase", () => {
     expect(fs.has(join(HOME, "claude-config", "settings.json"))).toBe(false);
   });
 
-  it("writes OpenCode's JSONC config when it is the only one there", async () => {
+  it("writes OpenCode's JSONC config, which outranks its JSON twin, when both are there", async () => {
     const { fs, useCase } = setup();
-    fs.setFile(`${OPENCODE_SETTINGS}c`, '{\n  "theme": "dark"\n}\n');
+    const twin = OPENCODE_SETTINGS.replace(/c$/, "");
+    fs.setFile(OPENCODE_SETTINGS, '{\n  "theme": "dark"\n}\n');
+    fs.setFile(twin, '{\n  "model": "mine"\n}\n');
 
     const result = await useCase.execute({
       projectRoot: PROJECT,
@@ -184,14 +189,44 @@ describe("SetAgentModelUseCase", () => {
       provider: "openai",
     });
 
-    expect(result.changed).toStrictEqual([{ host: "opencode", path: `${OPENCODE_SETTINGS}c` }]);
+    expect(result.changed).toStrictEqual([{ host: "opencode", path: OPENCODE_SETTINGS }]);
+    expect(fs.getFile(twin)).toBe('{\n  "model": "mine"\n}\n');
+  });
+
+  it("writes OpenCode's JSON config when it is the only one there, without creating the JSONC", async () => {
+    const { fs, useCase } = setup();
+    const twin = OPENCODE_SETTINGS.replace(/c$/, "");
+    fs.setFile(twin, '{\n  "theme": "dark"\n}\n');
+
+    const result = await useCase.execute({
+      projectRoot: PROJECT,
+      scope: "project",
+      hosts: ["opencode"],
+      provider: "openai",
+    });
+
+    expect(result.changed).toStrictEqual([{ host: "opencode", path: twin }]);
     expect(fs.has(OPENCODE_SETTINGS)).toBe(false);
   });
 
-  it("skips a settings file holding comments, writing nothing, and goes on with the others", async () => {
+  it("keeps a settings file's comments, setting then restoring only its model", async () => {
     const { fs, useCase } = setup();
-    const commented = '{\n  // mine\n  "model": "opus"\n}\n';
-    fs.setFile(CLAUDE_SETTINGS, commented);
+    const base = { projectRoot: PROJECT, scope: "project" as const, hosts: ["opencode"] as const };
+    const commented = '{\n  // mine\n  "model": "opus",\n}\n';
+    fs.setFile(OPENCODE_SETTINGS, commented);
+
+    await useCase.execute({ ...base, provider: "openai" });
+    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(
+      '{\n  // mine\n  "model": "openai/gpt-6.1-terra",\n}\n'
+    );
+
+    await useCase.execute({ ...base });
+    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(commented);
+  });
+
+  it("skips a settings file it cannot read, writing nothing, and goes on with the others", async () => {
+    const { fs, useCase } = setup();
+    fs.setFile(CLAUDE_SETTINGS, "// broken");
 
     const result = await useCase.execute({
       projectRoot: PROJECT,
@@ -200,13 +235,9 @@ describe("SetAgentModelUseCase", () => {
       provider: "anthropic",
     });
 
-    expect(fs.getFile(CLAUDE_SETTINGS)).toBe(commented);
+    expect(fs.getFile(CLAUDE_SETTINGS)).toBe("// broken");
     expect(result.skipped).toStrictEqual([
-      {
-        host: "claude",
-        path: CLAUDE_SETTINGS,
-        reason: "it holds comments or trailing commas, which rewriting it would drop",
-      },
+      { host: "claude", path: CLAUDE_SETTINGS, reason: "it holds no JSON object" },
     ]);
     expect(result.changed).toStrictEqual([{ host: "opencode", path: OPENCODE_SETTINGS }]);
   });
@@ -268,7 +299,9 @@ describe("SetAgentModelUseCase", () => {
       provider: "openai",
     });
 
-    expect(fs.getFile(OPENCODE_SETTINGS)).toBe('{\n  "model": "openai/gpt-6.1-terra"\n}\n');
+    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(
+      `{\n  ${OPENCODE_SCHEMA},\n  "model": "openai/gpt-6.1-terra"\n}\n`
+    );
   });
 
   it("refreshes this project globally too, and adds the machine-scope registrations", async () => {
@@ -381,7 +414,7 @@ describe("SetAgentModelUseCase", () => {
       hosts: ["claude"],
       provider: "anthropic",
     });
-    fs.setFile(CLAUDE_SETTINGS, '{\n  // mine\n  "model": "claude-sonnet-5-5"\n}\n');
+    fs.setFile(CLAUDE_SETTINGS, "{ broken");
 
     const reset = await useCase.reset({ dryRun: false });
 
