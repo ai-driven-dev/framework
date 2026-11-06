@@ -50,8 +50,8 @@ chown root:aidd-review "$job/metadata.json"
 chmod 0440 "$job/metadata.json"
 printf '%s' "$read_token" > "$job/token"
 unset read_token
-chown runner:runner "$job/token"
 chmod 0400 "$job/token"
+chown runner:runner "$job/token"
 timeout --kill-after=10s 15m runuser -u reviewer -- env -i HOME=/home/aidd PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 \
   AIDD_REVIEW_JOB="$job" GH_REPO="$repo" REVIEW_PR="$pr" REVIEW_BASE="$base" REVIEW_HEAD="$head" \
   /opt/aidd/model.sh "$job/incoming/workspace" "$job/incoming/manifest.json" "$job/out/result.json" 9>&-

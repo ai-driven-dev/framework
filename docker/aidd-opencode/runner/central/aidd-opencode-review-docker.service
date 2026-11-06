@@ -1,0 +1,34 @@
+[Unit]
+Description=AIDD OpenCode review rootless Docker daemon
+Wants=network-online.target
+After=network-online.target
+Requires=dbus.socket
+
+[Service]
+Type=notify
+NotifyAccess=all
+Environment=PATH=/usr/local/libexec/aidd-rootless-runtime/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=HOME=/var/lib/aidd-opencode-review/home
+Environment=XDG_RUNTIME_DIR=%t
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus
+Environment=DOCKERD_ROOTLESS_ROOTLESSKIT_NET=slirp4netns
+Environment=DOCKERD_ROOTLESS_ROOTLESSKIT_PORT_DRIVER=slirp4netns
+Environment=DOCKERD_ROOTLESS_ROOTLESSKIT_DISABLE_HOST_LOOPBACK=true
+ExecStartPre=/usr/bin/install -d -m 0700 %t/docker-exec /var/lib/aidd-opencode-review/docker
+ExecStart=/usr/bin/dockerd-rootless.sh --host=unix://%t/docker.sock --data-root=/var/lib/aidd-opencode-review/docker --exec-root=%t/docker-exec --pidfile=%t/docker.pid --storage-driver=overlay2
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+TimeoutStopSec=120
+KillMode=mixed
+Delegate=yes
+UMask=0077
+LimitNOFILE=1048576
+TasksMax=512
+CPUQuota=200%
+MemoryHigh=2G
+MemoryMax=3G
+MemorySwapMax=512M
+
+[Install]
+WantedBy=default.target

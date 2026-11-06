@@ -6,6 +6,9 @@ reads the submitted Git diff and PR discussion, then publishes through the
 workflow. Without a manifest it uses `latest` and reports the missing plugin
 inventory.
 
+On Central, follow the [isolated rootless setup](central/README.md); do not use
+the host's default Docker daemon.
+
 ```sh
 docker build -f docker/aidd-opencode/runner/Dockerfile -t aidd-review-runner:local .
 docker volume create aidd-review-oauth

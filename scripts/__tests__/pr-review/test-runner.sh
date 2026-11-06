@@ -3,7 +3,9 @@ set -euo pipefail
 
 # Exercise Git and credential boundaries in the built image with a fake GitHub CLI.
 image=${TEST_RUNNER_IMAGE:-aidd-review-runner:ci}
-docker run --rm -i --user root --entrypoint bash "$image" -s <<'CONTAINER'
+docker run --rm -i --user root --cap-drop ALL --cap-add SETUID --cap-add SETGID \
+  --cap-add CHOWN --cap-add AUDIT_WRITE --cap-add DAC_OVERRIDE --cap-add KILL \
+  --entrypoint bash "$image" -s <<'CONTAINER'
 set -euo pipefail
 cat > /usr/bin/gh <<'GH'
 #!/usr/bin/env bash
