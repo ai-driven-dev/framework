@@ -465,7 +465,7 @@ describe("aidd plugin — the help surface", () => {
     expect(optionsOf("install")).toEqual([
       ["--from <market>", "Marketplace name (when multiple match)"],
       ["--tool <toolId>", "Target AI tool (default: all installed)"],
-      ["--token <value>", "Auth token (host detected from source URL at fetch time)"],
+      ["--token <value>", "GitHub token for this operation"],
       ["--scope <user|project>", "Install scope; must match the tool's supported scope"],
       ["--yes", "Auto-resolve interactive prompts (CI mode)"],
     ]);

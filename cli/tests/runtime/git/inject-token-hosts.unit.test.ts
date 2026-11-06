@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { injectTokenIntoUrl, withoutCredentials } from "../../../src/runtime/git/inject-token.js";
-
-describe("injectTokenIntoUrl, Azure DevOps", () => {
-  it("uses an empty user with the token as password", () => {
-    expect(injectTokenIntoUrl("https://dev.azure.com/org/repo", "tok")).toBe(
-      "https://:tok@dev.azure.com/org/repo"
-    );
-  });
-});
+import { withoutCredentials } from "../../../src/runtime/git/inject-token.js";
 
 describe("withoutCredentials", () => {
   it("strips a credential from an http URL as well", () => {

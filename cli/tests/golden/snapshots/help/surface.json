@@ -72,7 +72,7 @@
   {
     "invocation": "aidd marketplace add",
     "exitCode": 0,
-    "help": "Usage: aidd marketplace add [options] [name] [source]\n\nRegister a plugin marketplace\n\nOptions:\n  --scope <user|project>  Registration scope (default: project) (default:\n                          \"project\")\n  --yes                   Skip the trust + cleanup prompts\n  --overwrite             Replace an existing marketplace with the same name\n  --token <value>         Auth token (host detected from source URL at fetch\n                          time)\n  -h, --help              display help for command"
+    "help": "Usage: aidd marketplace add [options] [name] [source]\n\nRegister a plugin marketplace\n\nOptions:\n  --scope <user|project>  Registration scope (default: project) (default:\n                          \"project\")\n  --yes                   Skip the trust + cleanup prompts\n  --overwrite             Replace an existing marketplace with the same name\n  --token <value>         GitHub token for this operation\n  -h, --help              display help for command"
   },
   {
     "invocation": "aidd marketplace check",
@@ -102,7 +102,7 @@
   {
     "invocation": "aidd plugin install",
     "exitCode": 0,
-    "help": "Usage: aidd plugin install [options] [plugin]\n\nInstall a plugin (marketplace name, local path, or interactive pick)\n\nOptions:\n  --from <market>         Marketplace name (when multiple match)\n  --tool <toolId>         Target AI tool (default: all installed)\n  --token <value>         Auth token (host detected from source URL at fetch\n                          time)\n  --scope <user|project>  Install scope; must match the tool's supported scope\n  --yes                   Auto-resolve interactive prompts (CI mode)\n  -h, --help              display help for command"
+    "help": "Usage: aidd plugin install [options] [plugin]\n\nInstall a plugin (marketplace name, local path, or interactive pick)\n\nOptions:\n  --from <market>         Marketplace name (when multiple match)\n  --tool <toolId>         Target AI tool (default: all installed)\n  --token <value>         GitHub token for this operation\n  --scope <user|project>  Install scope; must match the tool's supported scope\n  --yes                   Auto-resolve interactive prompts (CI mode)\n  -h, --help              display help for command"
   },
   {
     "invocation": "aidd plugin list",

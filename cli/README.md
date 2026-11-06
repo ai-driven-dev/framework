@@ -152,6 +152,8 @@ Needed for a private marketplace only.
 | `stored` | The token itself | `--token <value>` |
 | `external` | The provider name. The token is asked from it at fetch time | `--gh` |
 
+For Git clones, AIDD sends these tokens only to `github.com`. Configure a [Git credential helper](https://git-scm.com/docs/gitcredentials) for GitLab, Bitbucket or other hosts (documentation read 2026-11-06).
+
 The token resolves from the first hit:
 
 1. `AIDD_TOKEN`
@@ -190,7 +192,7 @@ The token resolves from the first hit:
 
 | Variable | Effect |
 | --- | --- |
-| `AIDD_TOKEN` | Token for every fetch, ahead of any stored credential |
+| `AIDD_TOKEN` | GitHub token, ahead of any stored credential |
 | `AIDD_USER_CONFIG_DIR` | Relocates the user config directory, credentials included |
 | `XDG_CONFIG_HOME` | Names the config root when `AIDD_USER_CONFIG_DIR` is unset |
 | `AIDD_SKIP_UPDATE_CHECK` | `1` skips the self-update check before a command |

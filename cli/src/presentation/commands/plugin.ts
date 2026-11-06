@@ -83,7 +83,7 @@ export function registerPluginCommand(program: Command): void {
     .description("Install a plugin (marketplace name, local path, or interactive pick)")
     .option("--from <market>", "Marketplace name (when multiple match)")
     .option("--tool <toolId>", "Target AI tool (default: all installed)")
-    .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
+    .option("--token <value>", "GitHub token for this operation")
     .option("--scope <user|project>", "Install scope; must match the tool's supported scope")
     .option("--yes", "Auto-resolve interactive prompts (CI mode)")
     .action(

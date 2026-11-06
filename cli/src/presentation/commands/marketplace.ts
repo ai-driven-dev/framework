@@ -40,7 +40,7 @@ export function registerMarketplaceCommand(program: Command): void {
     .option("--scope <user|project>", "Registration scope (default: project)", "project")
     .option("--yes", "Skip the trust + cleanup prompts")
     .option("--overwrite", "Replace an existing marketplace with the same name")
-    .option("--token <value>", "Auth token (host detected from source URL at fetch time)")
+    .option("--token <value>", "GitHub token for this operation")
     .action(
       async (
         nameArg: string | undefined,

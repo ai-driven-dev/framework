@@ -433,7 +433,7 @@ describe("aidd marketplace — the help surface", () => {
       ["--scope <user|project>", "Registration scope (default: project)", "project"],
       ["--yes", "Skip the trust + cleanup prompts", undefined],
       ["--overwrite", "Replace an existing marketplace with the same name", undefined],
-      ["--token <value>", "Auth token (host detected from source URL at fetch time)", undefined],
+      ["--token <value>", "GitHub token for this operation", undefined],
     ]);
   });
 
