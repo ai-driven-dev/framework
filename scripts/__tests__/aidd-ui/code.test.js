@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
@@ -126,6 +127,30 @@ describe("aidd-ui code link", () => {
   });
 
   describe("C3 coverage", () => {
+    it("reads, in a repository, only the files git does not ignore, untracked ones included", () => {
+      // A hook runs with no git variable of its own; one a caller sets must not point git elsewhere.
+      const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+      assert.equal(spawnSync("git", ["-C", tmp, "init", "-q"], { env }).status, 0);
+      put(tmp, ".gitignore", "node_modules/\n");
+      put(tmp, "src/ui/node_modules/kit/x.css", ".x { color: #ff0000; }\n");
+      put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
+      const caller = process.env.GIT_DIR;
+      process.env.GIT_DIR = path.join(tmp, "elsewhere");
+      try {
+        assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
+      } finally {
+        if (caller === undefined) delete process.env.GIT_DIR;
+        else process.env.GIT_DIR = caller;
+      }
+    });
+
+    it("reads no dot file or dot folder under a code root: they hold configuration, not UI code", () => {
+      put(tmp, "src/ui/.env.example", "ACCENT=#ff0000\n");
+      put(tmp, "src/ui/.cache/x.css", ".x { color: #ff0000; }\n");
+      put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
+      assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
+    });
+
     it("names a file under a code root no record links and no ignore covers", () => {
       put(tmp, "src/ui/Orphan.tsx", "export function Orphan() {}\n");
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
@@ -361,6 +386,24 @@ describe("aidd-ui code link", () => {
         assert.deepEqual(problems(), []);
       });
     }
+
+    it("opens no code file outside the files a caller narrows the check to", () => {
+      put(tmp, "src/ui/Other.tsx", 'const style = "color: #ff0000";\n');
+      const project = load(tmp);
+      project.scope = new Set(["src/ui/Button.tsx"]);
+      const opened = [];
+      const [openSync, readFileSync] = [fs.openSync, fs.readFileSync];
+      fs.openSync = (file, ...rest) => (opened.push(String(file)), openSync(file, ...rest));
+      fs.readFileSync = (file, ...rest) => (opened.push(String(file)), readFileSync(file, ...rest));
+      try {
+        code.check(project);
+      } finally {
+        [fs.openSync, fs.readFileSync] = [openSync, readFileSync];
+      }
+      // A record's code link is read for its export, whatever the scope: only a file nothing links is left unopened.
+      assert.equal(opened.includes(path.join(tmp, "src/ui/Other.tsx")), false);
+      assert.equal(opened.includes(path.join(tmp, "src/ui/Button.tsx")), true);
+    });
 
     it("reads no file holding a NUL byte, whatever its extension", () => {
       fs.writeFileSync(path.join(tmp, "src/ui/blob.bin"), Buffer.from([0x89, 0x00, ...Buffer.from('"#ff0000"')]));

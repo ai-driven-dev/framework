@@ -11,10 +11,10 @@ const { writeResolver } = require("./lib/resolver.cjs");
 const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
-const { extract } = require("./lib/extract.cjs");
+const extraction = require("./lib/extract.cjs");
 const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
 
-const CHECKS = { records, history, tokens, renders, code };
+const CHECKS = { records, history, tokens, renders, code, extraction };
 const VERDICT_VALID = "VALID";
 const EXIT_VALID = 0;
 const EXIT_INVALID = 1;
@@ -157,7 +157,7 @@ function extractTokens(args) {
     return EXIT_USAGE;
   }
   return refusing(() => {
-    console.log(JSON.stringify(extract(values[ROOT_FLAG] ?? process.cwd(), { force: flags.has(FORCE_FLAG) }), null, 2));
+    console.log(JSON.stringify(extraction.extract(values[ROOT_FLAG] ?? process.cwd(), { force: flags.has(FORCE_FLAG) }), null, 2));
     return EXIT_VALID;
   });
 }
@@ -195,14 +195,17 @@ function publishSystem(args) {
   });
 }
 
-const COMMANDS = { validate, tokens: generateTokens, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem };
+// The hook needs this file loaded first, for the checks: it is required when it runs.
+const runHook = () => require("./lib/hook.cjs").hook();
+
+const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem };
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}\n       ${PUBLISH_USAGE}`);
+  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs hook < <host event>\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}\n       ${PUBLISH_USAGE}`);
   return EXIT_USAGE;
 }
 
-if (require.main === module) process.exitCode = main(process.argv.slice(2));
-
 module.exports = { problemsOf, findingOf, isError };
+
+if (require.main === module) process.exitCode = main(process.argv.slice(2));

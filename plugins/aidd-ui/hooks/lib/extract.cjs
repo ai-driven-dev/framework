@@ -7,9 +7,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, escapeRegex } = require("./markdown.cjs");
 const { systemOf, fm, breakpointRows, breakpointsOf } = require("./model.cjs");
-const { Refusal, NO_DESIGN_SYSTEM, load, text, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE } = require("./project.cjs");
+const { Refusal, NO_DESIGN_SYSTEM, load, text, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE } = require("./project.cjs");
 const { tokenEntries, platformOfFile } = require("./code.cjs");
-const { rulesOf, declarationsIn, citedBy, RAW_CSS_EXTENSION } = require("./css.cjs");
+const { rulesOf, declarationsIn, citedBy, declarationsOf, layered, valueOf, RAW_CSS_EXTENSION } = require("./css.cjs");
+const { generate, blockers } = require("./tokens.cjs");
 const { resolverOf, fileOf, jsonText } = require("./resolver.cjs");
 const { objectsOf } = require("./script.cjs");
 const { fromCss, fromNumber } = require("./values.cjs");
@@ -27,6 +28,7 @@ const NAME_SEPARATOR = "-";
 const PATH_SEPARATOR = ".";
 const PREVIEW = 40;
 const BASE = { kind: "base" };
+const PX = /^-?\d*\.?\d+px$/;
 
 /** A script key as the CSS name part it stands for: `colorAccent` is `color-accent`. */
 const kebab = (key) => key.replace(CAPITAL, (letter) => `${NAME_SEPARATOR}${letter.toLowerCase()}`);
@@ -263,6 +265,27 @@ function filesOf(model) {
 
 const compareLeft = (a, b) => compare(a.file, b.file) || (a.line ?? 0) - (b.line ?? 0) || compare(a.name ?? "", b.name ?? "") || compare(a.why, b.why);
 
+/** The `code-tokens` files to read, as `{file, platform, source}`; what cannot be read as tokens goes
+ * to `leave`, a file that is not there to `missing`. */
+function sourcesOf(project, leave, missing) {
+  const root = project.root;
+  const platforms = list(fm(systemOf(project)).platforms);
+  const sources = [];
+  for (const { path: file, named, platform: written } of tokenEntries(project)) {
+    const source = fs.existsSync(path.join(root, file)) && fs.statSync(path.join(root, file)).isFile() ? text(project, file) : null;
+    if (source === null) {
+      missing(file);
+      continue;
+    }
+    const { platform, unknown } = named ? { platform: written } : platformOfFile(project, file);
+    if (path.extname(file) !== STYLE_EXTENSION && !SCRIPT_EXTENSIONS.includes(path.extname(file))) leave(file, null, null, "neither a stylesheet nor a script");
+    else if (named && !platforms.includes(written)) leave(file, null, null, `platform "${written}" is not in system.md`);
+    else if (platform === null && platforms.length > 1) leave(file, null, null, unknown ?? "its code root names no platform");
+    else sources.push({ file, platform, source });
+  }
+  return sources;
+}
+
 /** Writes the token files from the `code-tokens` of the project's `system.md` and returns
  * `{written, left}`. A refusal is a `Refusal`: nothing is written then. */
 function extract(root, { force }) {
@@ -274,16 +297,9 @@ function extract(root, { force }) {
   if (fs.existsSync(path.join(root, project.tokensFile)) && !force) throw new Refusal(`${project.tokensFile} already exists, --force replaces it`);
   const left = [];
   const leave = (file, line, name, why) => left.push({ file, line, name, why });
-  const sources = [];
-  for (const { path: file, named, platform: written } of entries) {
-    const source = fs.existsSync(path.join(root, file)) && fs.statSync(path.join(root, file)).isFile() ? text(project, file) : null;
-    if (source === null) throw new Refusal(`code-tokens "${file}" is no readable file`);
-    const { platform, unknown } = named ? { platform: written } : platformOfFile(project, file);
-    if (path.extname(file) !== STYLE_EXTENSION && !SCRIPT_EXTENSIONS.includes(path.extname(file))) leave(file, null, null, "neither a stylesheet nor a script");
-    else if (named && !list(fm(systemOf(project)).platforms).includes(written)) leave(file, null, null, `platform "${written}" is not in system.md`);
-    else if (platform === null && list(fm(systemOf(project)).platforms).length > 1) leave(file, null, null, unknown ?? "its code root names no platform");
-    else sources.push({ file, platform, source });
-  }
+  const sources = sourcesOf(project, leave, (file) => {
+    throw new Refusal(`code-tokens "${file}" is no readable file`);
+  });
   const model = gather(project, sources, leave);
   prune(model, leave);
   const output = filesOf(model);
@@ -295,4 +311,45 @@ function extract(root, { force }) {
   return { written: [...output.keys()].map((name) => path.posix.join(dir, name)), left: left.sort(compareLeft) };
 }
 
-module.exports = { extract, pathsOf };
+/** The stylesheet key of a code token's context: its platform's root, then a theme or a breakpoint
+ * of the first platform; null for a context `extract` leaves. */
+function sheetKey(platform, basePlatform, context) {
+  const own = platform && platform !== basePlatform ? `:root[data-platform="${platform}"]` : "";
+  if (context.kind === BASE.kind) return own;
+  if (own) return null;
+  return context.kind === "theme" ? `:root[data-theme="${context.name}"]` : `@media ${context.query}`;
+}
+
+/** A code value as the stylesheet would write it, so that `#FFF` and `#ffffff`, or `rgba()` and the
+ * `color()` the tokens command writes, read as one. */
+const asSheet = (node) => collapse(node.kind === "value" ? (valueOf(node.type, node.value) ?? node.css) : node.kind === "alias" ? `var(${node.alias})` : node.css);
+
+/** C10: each value of a `code-tokens` file that is not the one the design system's stylesheet gives the
+ * same token in the same context. A token or a context the stylesheet lacks is extract's to list. */
+function driftProblems(project) {
+  // A broken token is the token rules' to name first: its value is no design decision yet.
+  if (!systemOf(project) || blockers(project).length) return [];
+  const { css } = generate(project);
+  if (css === null) return [];
+  const sheet = declarationsOf(css);
+  const themes = list(fm(systemOf(project)).themes);
+  const basePlatform = list(fm(systemOf(project)).platforms)[0] ?? null;
+  const ignore = () => {};
+  return sourcesOf(project, ignore, ignore).flatMap(({ file, platform, source }) => {
+    const script = path.extname(file) !== STYLE_EXTENSION;
+    const read = script ? readScript(source, ignore) : readStyles(source, themes[0], ignore);
+    return read.flatMap(({ line, name, node, context }) => {
+      const key = sheetKey(platform, basePlatform, context);
+      const want = key === null || !sheet.has(key) ? undefined : layered(sheet, key).get(name);
+      if (want === undefined) return [];
+      if (asSheet(node) === collapse(want)) return [];
+      // A script holds a px length as a bare number.
+      const value = script && PX.test(want) ? want.slice(0, -"px".length) : want;
+      return [{ file, message: `line ${line}: ${name} is ${node.css} here, ${want} in the design system`, fix: `set it to ${value}, the design system's value`, excerpt: name }];
+    });
+  });
+}
+
+const check = checkOf({ C10: driftProblems });
+
+module.exports = { extract, pathsOf, check };
