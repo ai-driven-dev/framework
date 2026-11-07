@@ -9,6 +9,7 @@ In a monorepo, every workspace is scanned, never the root manifest alone.
 | `core`       | is a project at all            | always                                                                                    |
 | `ecosystem`  | works through external tools   | always                                                                                    |
 | `backlog`    | organizes planned work         | local backlog artifacts, issue templates, a ticketing tool in use, or a repo file naming backlog conventions |
+| `browsing`   | uses a browser for project work | a browser tool configured for this project, or the user's confirmed choice of browser tool |
 | `ui`         | renders a user interface       | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir |
 | `api`        | exposes HTTP or RPC            | a server framework, or a `routes/`, `controllers/`, or `api/` dir                         |
 | `database`   | persists data                  | an ORM or driver, a `migrations/` dir, or a schema file                                    |

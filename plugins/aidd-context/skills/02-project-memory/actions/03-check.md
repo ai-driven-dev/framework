@@ -17,6 +17,7 @@ A report file under `aidd_docs/tasks/`, a short summary printed, and the finding
    - A found capability, or a scaffolded path, with nothing on disk: flag it missing.
 2. **Review.** Have each memory file reviewed against [review-protocol.md](../references/review-protocol.md) in parallel.
 3. **Prune.** Offer to remove each file whose capability the scan did not find, and none when the scan asked nothing.
+   - For `browsing.md`, an undetected browser tool is not evidence that the project stopped using it. Do not offer removal unless the user confirms it is no longer needed.
 4. **Report.** Fill [report.md](../assets/report.md), write it to `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_memory-check/report.md`, and print the summary with that path.
    - The folder already holds a report: ask before replacing it.
 5. **Offer.** Ask which findings to apply, and hand the approved ones to write.
@@ -36,3 +37,4 @@ A report file under `aidd_docs/tasks/`, a short summary printed, and the finding
 | Contradiction | flagged, the line left in place |
 | Duplicate | flagged, both files left as they are |
 | Removal declined | the file is still there |
+| Browser tool unavailable | browsing memory is not proposed for removal without confirmation that it is no longer needed |

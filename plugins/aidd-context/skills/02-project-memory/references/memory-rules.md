@@ -6,6 +6,7 @@ A memory file:
 - Never restates a schema or a file tree.
 - Points to the code over a copy.
 - Holds one fact in one home, referenced elsewhere.
+- In `browsing.md`, keeps the template's working rules and adds project-specific browsing conventions.
 - A duplicate keeps its home and loses the copy.
 - Stays small: short bullets, code in backticks.
 - Names a tech without its version (`React`, not `React 19`).

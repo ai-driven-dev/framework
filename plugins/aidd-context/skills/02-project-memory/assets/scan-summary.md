@@ -1,6 +1,6 @@
 <!-- Fill both tables from the scan, show them, and remove this comment. -->
 
-Here is what I read. Correct me before I write.
+Here is what I read.
 
 | Capability     | Holds because                                  |
 | -------------- | ---------------------------------------------- |
@@ -15,9 +15,9 @@ Here is what I read. Correct me before I write.
 | `<tool>`         | `<mode>` | `<mode>` | `<file>.md`   |
 | `<tool>`         | `<mode>` | none     | none          |
 
-Then ask for what the repo cannot prove: a tool nobody committed, an access mode, a hand-off between
-two tools. Name what is missing rather than asking an open question.
+Ask for what the repo cannot prove only when it materially affects the authorized work: a tool nobody
+committed, an access mode, or a hand-off. Name what is missing rather than asking an open question.
 
-- One row per capability, one row per tool. The evidence is a path or a dependency, never a claim.
+- One row per capability, one row per tool. Evidence is a path, a dependency, or the user's explicit confirmation, never an unsupported claim.
 - A capability that holds always says so; do not invent evidence for it.
 - Drop the second table when the project reaches nothing outside itself.

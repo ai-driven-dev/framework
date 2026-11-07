@@ -12,39 +12,98 @@ Four generic agents your AI tool can hand work to, each in a fresh context. They
 
 ## 🔀 How it works
 
-Your main session keeps the conversation and decides what to delegate. Each agent gets a scoped brief, works in its own context, and returns its result to the main session, which owns the final answer.
+The main agent is the conversation window. It loads the host's project instructions, such as [`AGENTS.md` in Codex](https://developers.openai.com/codex/guides/agents-md), and owns the outcome. What subagents receive depends on the host and configuration.
+
+The main agent chooses whether delegation helps. These examples and responses are hypothetical.
+
+### A simple request
+
+When delegation would add overhead, the main agent can handle the request itself.
 
 ```mermaid
+---
+title: Fix a typo
+config:
+  sequence:
+    mirrorActors: false
+---
 sequenceDiagram
-  actor You
-  participant Main as Main session
-  participant Explorer
-  participant Executor
-  participant Validator
-  participant Reviewer
-  You->>Main: Request
-  Main->>Explorer: Where is it? How does it work?
-  Explorer-->>Main: Answer with sources
-  Main->>Executor: Build or fix this, with criteria
-  Executor-->>Main: Changes and checks
-  Main->>Validator: Does it meet the criteria?
-  Validator-->>Main: Validated yes or no
-  Main->>Reviewer: Is it clean and coherent?
-  Reviewer-->>Main: Findings
-  Main-->>You: Result
+  actor User as 👤 User
+  participant Main as 🤖 Main agent (orchestrator)
+  User->>Main: 💬 "Fix the typo in README.md."
+  Main->>Main: 📝 Update README.md and check the diff.
+  Main-->>User: ↩️ "Fixed the typo in README.md."
 ```
 
-Each step is optional: the main session calls only the agents the task needs, and repeats execution when validation or review finds a gap.
+### Measuring delegation
 
-Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so a run delegates the same way every time; other workflows ask for a responsibility. The host resolves the role to its install, `aidd-orchestrator:validator` from the Claude Code marketplace or `aidd-orchestrator-validator` in a project distribution, or gives the brief to its default subagent when the agent is not installed.
+Create two worktrees at commit `de409ef5`, change the title's `Framework` to `Framwork` in each `README.md`, and set `DIRECT` and `DELEGATED` to their paths. Install the executor and use the same Codex configuration for both runs:
+
+```sh
+prompt='Correct the typo "Framwork" in the title of README.md. Verify the result and do not commit.'
+time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=false' -C "$DIRECT" "$prompt"
+time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=true' -c 'agents.default_subagent_model="gpt-6-luna"' -C "$DELEGATED" "$prompt Delegate the edit to the aidd-orchestrator-executor subagent and wait for its result; do not use a validator."
+```
+
+Check that both titles are restored and the delegated run used the requested agent and model. Compare elapsed time and the final cumulative token usage in each rollout under `~/.codex/sessions/`: add parent and executor totals once, counting the executor only after its own model context. Cached input is already included in the total. Repeat with fresh sessions and alternating order; report cache conditions and the median.
+
+One run per approach on November 6, 2026 produced:
+
+| Approach | Time | Total tokens | Cached input tokens |
+| --- | ---: | ---: | ---: |
+| Main agent alone | 17.05 s | 104,556 | 84,864 |
+| Main agent + executor | 33.12 s | 351,634 | 287,872 |
+
+The delegated total includes both agents. These single-run results are indicative, not a general benchmark. Monetary cost was unavailable.
+
+### A request with subagents
+
+This example shows one successful flow. Explorer A is new and Explorer B is reused; their independent tasks run in parallel.
+
+```mermaid
+---
+title: Fix signup validation
+config:
+  sequence:
+    mirrorActors: false
+---
+sequenceDiagram
+  actor User as 👤 User
+  participant Main as 🤖 Main agent
+  participant ExplorerA as 🤖 explorer.md · A · new
+  participant ExplorerB as 🤖 explorer.md · B · reused
+  participant Executor as 🤖 executor.md · C
+  participant Validator as 🤖 validator.md · D
+  participant Reviewer as 🤖 reviewer.md · E
+
+  Note over Main: 📖 AGENTS.md loaded
+  User->>Main: 💬 "Allow + in signup emails."
+  Main->>Main: ⚙️ Choose agents and models
+  par Independent exploration
+    Main->>ExplorerA: 🧰 Spawn · 💬 "Check the code."
+    ExplorerA-->>Main: ↩️ "+ is rejected."
+  and
+    Main->>ExplorerB: 🧰 Reuse · 💬 "Check the policy."
+    ExplorerB-->>Main: ↩️ "+ is allowed."
+  end
+  Main->>Executor: 🧰 Spawn · 💬 "Fix and test validation."
+  Executor->>Executor: 📝 Fix validation and 🧪 test
+  Executor-->>Main: ↩️ "COMPLETE, test passed."
+  Main->>Validator: 🧰 Spawn · 💬 "Verify the result."
+  Validator-->>Main: ↩️ "PASS."
+  Main->>Reviewer: 🧰 Spawn · 💬 "Review the change."
+  Reviewer->>Reviewer: 🧰 Run /aidd-dev:05-review
+  Reviewer-->>Main: ↩️ "No actionable findings."
+  Main-->>User: ↩️ "Fixed. Test passed."
+```
 
 ## 🧭 Which agent for which task
 
 | Agent | Use it to | It returns | Writes files, by instruction |
 | --- | --- | --- | --- |
-| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
+| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Investigate scoped questions across code, documentation, services or the web | The answer, with sources and unknowns | No |
 | [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
-| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No; runs checks |
+| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `PASS`, `FAIL` or `BLOCKED`, with evidence | No; runs checks |
 | [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
 
 ## 📦 Install
