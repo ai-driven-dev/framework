@@ -10,7 +10,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | --- | --- |
 | Skills, agents, rules (markdown) | each action's own `## Test`, run end to end against a real project |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
-| `cli/` | vitest, five projects — see the CLI bank |
+| `cli/` | vitest, six projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
 | Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
 | Browser journeys | `aidd-qa:01-acceptance-qa`, see below |
@@ -35,7 +35,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | --- | --- |
 | `pnpm test:changed` | only the specs a change can break — vitest resolves the CLI's import graph, and the plugin specs are selected by the paths their own text names. What to run while working |
 | `node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'` | repository scripts and hooks |
-| `cd cli && pnpm test` | the four CLI projects. It does not build |
+| `cd cli && pnpm test` | every CLI project. It does not build |
 | `cd cli && pnpm smoke` | built binary against `cli/scripts/smoke-tools.sh` |
 | `cd kanban && pnpm test` | the board |
 | `pnpm exec lefthook run pre-push` | the local gate before pushing |

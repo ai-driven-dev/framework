@@ -41,14 +41,14 @@ Each line is a hypothesis until phase 3 or phase 2 shows a test red on the doubl
 | V5 | `fileExists` of a directory made by `createDirectory` and still empty | `false`: `createDirectory` is a no-op (`:50-52`) | `true` | `global-plugin-files.ts:62-63` creates the boundary then resolves it; `marketplace-build-strategy.ts:34-39`, `ensure-built-marketplace-use-case.ts:182` | fix (the double tracks directories) |
 | V6 | `deleteEmptyDirectories` | no-op (`:54-56`) | removes the empty chain upwards (`:53-74`) | 26 `deleteEmptyDirectories`/`deleteDirectory` call sites in `src` | fix with V5 |
 | V17 | a directory after its last file is deleted | gone: directories exist only as file-key prefixes, so `fileExists` turns false and, once V4 is fixed, `listDirectory` rejects | stays: `writeFile` made it with `mkdir -p` (`file-adapter.ts:36`), `deleteFile` removes only the file, so `fileExists` is true and `listDirectory` answers `[]` | `clean-use-case.ts:295-297` lists `aiddDir` after removing its files and deletes it when empty | fix with V5, before V4 |
-| V7 | `realpath` of a missing path | returns the path (`:112`) | rejects `ENOENT`, as the port promises (`file-reader.ts:23-24`) | `project-path-boundary.ts:19-27`, `user-scope-plugin-files.ts:126-131`, `global-plugin-files.ts:92`, `purge-declared-cache.ts:77`, `host-marketplace-source-conflict.ts:44` | fix, needs V5 |
+| V7 | `realpath` of a missing path | returns the path (`:112`) | rejects `ENOENT`, as the port promises (`file-reader.ts:23-24`) | `project-path-boundary.ts:19-27`, `user-scope-plugin-files.ts:126-131`, `global-plugin-files.ts:92`, `purge-declared-cache.ts:77`, `host-marketplace-source-conflict.ts:44` | known divergence: C19 stays `it.fails` (see phase 4 outcome) |
 | V8 | `realpath` of a path with `..` and no symlink | returned unresolved (`:112`) | resolved | the port names a corrupted manifest entry's `..` (`file-reader.ts:21-23`); `user-scope-plugin-files.ts:128` | fix |
 | V9 | `listFilesRecursive` separators on Windows | `/` keys (`:160-170`) | native, built by `join` (`file-adapter.ts:142`) | `built-tree-materialization-translator.ts:172,244`, `plugin-add-use-case.ts:328`, `ensure-built-marketplace-use-case.ts:191`, `list-installed-rules-use-case.ts:60` | decided by the Windows CI run (D9) |
 | V10 | `isExecutable` of an existing file | always `false`: the `executable` set is never filled, and the `chmodExecutable` its comment names does not exist (`:16-25`) | `access(X_OK)`; on Windows `X_OK` behaves as `F_OK`, so `true` | none: no `src` code calls `FileReader.isExecutable` (grep) | limit; dead set removed |
 | V11 | `readFile` of a directory | `ENOENT` | `EISDIR` | none found | limit |
 | V12 | `writeFile` under a parent that is a file | succeeds | rejects `ENOTDIR` | none found | limit |
 | V13 | `readFile` or `fileExists` through a symlink | not followed (`setSymlink` only feeds `realpath`, `:118-120`) | followed | none found | limit |
-| V14 | path spelling (`./`, `//`, trailing `/`) | keyed after `\` to `/` only (`:197-199`) | resolved by the OS | none found | limit |
+| V14 | path spelling (`./`, `//`, trailing `/`) | keyed after `\` to `/` only (`:197-199`) | resolved by the OS | a trailing `/` on a directory: `status-use-case.ts` | the trailing `/` is fixed (the double accepts it); `./` and `//` stay a limit |
 | V15 | error shape | `Error` with `code` and a message (`:62-66`) | `ErrnoException` with `code`, `errno`, `syscall`, `path` | product reads `.code` only (every catch cited above) | the suite asserts `code` only |
 | V16 | listing order | insertion order | `readdir` order, filesystem-defined | none relies on it found | the suite asserts sets; order stated unspecified |
 
@@ -204,6 +204,8 @@ Acceptance:
 ### Phase 4: Fix the double, one divergence at a time (sonnet)
 
 > Outcome: V5, V6, V17, V4, V8 and V10 fixed. V7 stopped at the budget: its fix reds 36 importer files (an unseeded project root such as `/test-project`, `/A`, `/project-a`), so C19 stays an expected failure and the step goes back to the caller. A trailing separator on a directory (`status-use-case.ts`) is also kept working in the double, which V14 had listed as a limit.
+>
+> V7 decision: it stays a known divergence, C19 stays in `knownDivergences` as `it.fails`. Fixing it breaks 36 importer files that never seed their project roots; each context's test kit will seed them when that context migrates to the target, and C19's marker is removed then. V14 update: a trailing `/` on a directory is sent by the product and the double now accepts it; `./` and `//` remain a limit. Seed fixes: six importer files changed only what they seed (`clean-native-cache`, `clean-user-scope-use-case`, `purge-declared-cache`, `user-source-references-adapter`, `framework-build-use-case`, `marketplace-build-strategy`): a created directory where a project root or output directory was meant, a deleted directory where a deleted marker or section was meant. No assertion changed.
 
 > The double passes the whole suite; each fix was a case red on the double first, and each fallout in the 113 importers is classified, never silenced.
 
@@ -360,7 +362,7 @@ console.log(JSON.stringify({
 ' "$B/before.json" "$B/after.json"
 ```
 
-4. Mutation on the changed lines: `cd cli && node scripts/run-mutation.mjs --changed test/test-levels-and-guards`. It diffs the merge base against the working tree (`run-mutation.mjs:204-205`, `git diff <merge-base> -- src`), so the uncommitted change is what it mutates. The moved merge now sits in scope `kernel` (break 95) instead of `runtime` (break 90).
+4. Mutation on the changed lines: `cd cli && node scripts/run-mutation.mjs --changed test/test-levels-and-guards`. It diffs the merge base against the working tree (`run-mutation.mjs:204-205`, `git diff <merge-base> -- src`), so the uncommitted change is what it mutates. The moved merge now sits in scope `kernel` (break 95) instead of `runtime` (break 90). Outcome: 96.7 on 60 mutants; the two survivors were on `PROTOTYPE_POLLUTION_KEYS` in `src/kernel/merge.ts`. `constructor` is now killed by the incoming-key drop case. `__proto__` is an equivalent mutant: without the guard the assignment only swaps the merged object's own prototype, so neither the written file nor `Object.prototype` changes; the guard stays as defence in depth.
 
 Acceptance:
 

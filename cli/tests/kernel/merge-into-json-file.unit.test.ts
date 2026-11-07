@@ -252,18 +252,21 @@ describe("FileAdapter, at the edges", () => {
       );
     });
 
-    it("drops a prototype key from the incoming content", async () => {
-      const path = join(root, "settings.json");
-      files.setFile(path, JSON.stringify({ keep: 1 }));
+    it.each(["constructor", "prototype"])(
+      "drops a %s key from the incoming content",
+      async (key) => {
+        const path = join(root, "settings.json");
+        files.setFile(path, JSON.stringify({ keep: 1 }));
 
-      await files.mergeJsonFile(
-        path,
-        '{"prototype": {"polluted": true}, "b": 2}',
-        "framework-prime"
-      );
+        await files.mergeJsonFile(
+          path,
+          `{"${key}": {"polluted": true}, "b": 2}`,
+          "framework-prime"
+        );
 
-      expect(JSON.parse(await files.readFile(path))).toStrictEqual({ keep: 1, b: 2 });
-    });
+        expect(JSON.parse(await files.readFile(path))).toStrictEqual({ keep: 1, b: 2 });
+      }
+    );
 
     it("replaces a scalar with an incoming array outright", async () => {
       const path = join(root, "settings.json");

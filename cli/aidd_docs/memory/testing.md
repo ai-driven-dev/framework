@@ -4,8 +4,9 @@ How this package is tested: the layers, the tools, the conventions.
 
 ## Strategy
 
-- Five vitest projects (`vitest.config.ts` → `test.projects`): `unit`, `integration`, `e2e`, `golden` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere. `golden` shares the e2e build setup, so it reads the same built binary.
+- Six vitest projects (`vitest.config.ts` → `test.projects`): `unit`, `contract`, `integration`, `e2e`, `golden` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere. `golden` shares the e2e build setup, so it reads the same built binary.
 - Unit: pure logic. Integration: a use case or adapter, ports substituted. E2E: the real built binary, one test per command and per family of failure plus what only a spawned process proves; a command-level check below it runs through `tests/helpers/in-process-cli.ts`. Golden: a full output compared to a versioned snapshot. Architecture: ratchets over source text.
+- Contract: one suite per port, a `describe<Port>Contract(subjectName, makeSubject)` in `tests/helpers/ports/`, called by one `*.contract.test.ts` with the in-memory double and with the real adapter. A case red on the real adapter is a wrong case; one red on the double is a divergence, fixed in the double, never the reverse. It runs under mutation between unit and integration, and on Windows as its own step.
 - A pyramid; read the split live.
 
 ## Tools
@@ -20,6 +21,7 @@ How this package is tested: the layers, the tools, the conventions.
 - `tests/` mirrors `src/`; where it does not, the mirror is wrong.
 - A tool profile's tests split by feature: `tests/contexts/tools/domain/profiles/<tool>/<feature>.unit.test.ts` (`agents`, `skills`, `rules`, `commands`, `mcp`, `hooks`, `plugins`, `settings`, `content`), with the profile's own declarations in `profile.unit.test.ts`.
 - Doubles from `tests/helpers/ports/`. Substitute at the seam; never mock functional behaviour.
+- `InMemoryFileAdapter` passes `describeFileContract` (`tests/helpers/ports/file-port-contract.ts`, run by `tests/runtime/filesystem/file-adapter.contract.test.ts`); it stores text and delegates merging to `mergeIntoJsonFile` in `src/kernel/merge.ts`. Limits, none sent by product code: listing order is unspecified on both; errors carry `code` only on the double; the double follows no symlink on a read, accepts a write under a file, answers `ENOENT` for a directory read, keys `./` and `//` unresolved and never reports a file executable (`isExecutable` has no product caller). `realpath` of a missing path answers the path on the double, where the real adapter rejects `ENOENT`: fixing it breaks the importers that never seed their project roots, so each context's test kit seeds them when that context migrates, and contract case C19 stays `it.fails` until then. Listing separators on Windows (`listFilesRecursive`) are decided by the Windows run of `test:contract`.
 - Fixtures in `tests/fixtures/`, read-only, excluded from JSON and link checks. Mutate a copy in a temp directory.
 - `.gitattributes`'s `tests/fixtures/** text eol=lf` keeps byte-for-byte comparisons (`manifest-round-trip.integration.test.ts`) passing on Windows.
 - A temp directory: `await mkdtemp(join(tmpdir(), "aidd-<thing>-"))`, never a fixed name (a plantable symlink). The prefix is what `scripts/sweep-stale-test-dirs.cjs` reclaims.
@@ -35,7 +37,7 @@ How this package is tested: the layers, the tools, the conventions.
 
 ## Run
 
-- `pnpm test` runs every project; `test:unit`, `test:integration`, `test:e2e`, `test:golden`, `test:arch` select one.
+- `pnpm test` runs every project; `test:unit`, `test:contract`, `test:integration`, `test:e2e`, `test:golden`, `test:arch` select one.
 - Failure output: vitest 5 already switches to the `minimal` reporter and drops colours when it detects an agent, and a diff shows 5 unchanged lines around each change. `diff.truncateThreshold` exists but cuts each side to its first N lines before comparing, so a change past line N vanishes from the output; it is not set. A failure diff stays as large as its changed lines.
 - `pnpm smoke` drives the real binary over the command matrix, hermetically. `pnpm smoke:full` adds the remote fetch.
 - `pnpm smoke:real` reaches real host registries: [`smoke-real.md`](internal/smoke-real.md).
