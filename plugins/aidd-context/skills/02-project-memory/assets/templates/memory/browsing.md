@@ -12,7 +12,7 @@
 - Choose the browser profile and account that match the request.
 - Use background mode for browsing and computer use, including authentication, when supported; avoid interrupting the user.
 - Reuse information and authorizations already provided; do not ask for them again within their scope.
-- Reuse a suitable open tab. When supported, group AIDD work in an `AIDD` tab group.
+- Reuse a suitable open tab. When supported, group our work in `AI-Driven Dev` tab group.
 - Close tabs created for the task when no longer needed; preserve existing user tabs unless asked to close them.
 
 <!--
