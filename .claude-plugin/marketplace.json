@@ -28,7 +28,7 @@
     {
       "name": "aidd-vcs",
       "source": "./plugins/aidd-vcs",
-      "description": "External artifacts: commit, pull-request, release-tag, issue-create",
+      "description": "External artifacts: commit, pull-request, release-tag, issue-create, answer-comments",
       "strict": true,
       "metadata": {
         "recommended": true

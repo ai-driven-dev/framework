@@ -103,6 +103,7 @@ Version-control workflows: repo init, commit, pull/merge request, release tag, i
 | `03-release-tag`  | Cut a semver release with annotated tag and notes                              | `01-release-tag`                        |
 | `04-issue-create` | Create an issue in the configured ticketing tool                               | `01-issue-create`                       |
 | `05-resolve-conflict` | Resolve deterministic conflicts or approved choices | `01-resolve` |
+| `06-answer-comments` | Answer review comments, resolve settled threads, and propose learnings | `01-answer-comments`, `02-propose-learnings` |
 
 ## 🎼 aidd-orchestrator
 
