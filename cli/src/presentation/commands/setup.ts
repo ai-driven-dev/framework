@@ -13,7 +13,7 @@ import {
   roleModels,
   supportedProvider,
   tierModel,
-} from "../../contexts/tools/domain/formats/agent-models.js";
+} from "../../contexts/tools/domain/formats/models/agent-models.js";
 import {
   assertToolIdsMatchCategory,
   copiesPluginFilesGlobally,

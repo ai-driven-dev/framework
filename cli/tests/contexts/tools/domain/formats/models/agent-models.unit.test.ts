@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { ToolBuildContract } from "../../../../../src/contexts/tools/domain/build-contract.js";
+import type { ToolBuildContract } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   AGENT_MODELS,
   withAgentModels,
-} from "../../../../../src/contexts/tools/domain/formats/agent-models.js";
-import { buildClaudeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { buildCodexFlatContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { buildCursorFlatContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
-import { buildKiloFlatContract } from "../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
-import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
+} from "../../../../../../src/contexts/tools/domain/formats/models/agent-models.js";
+import { buildClaudeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/claude/build.js";
+import { buildCodexFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
+import { buildCopilotFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { buildCursorFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
+import { buildOpencodeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 
 const AGENT = `---
 description: Reviews the work

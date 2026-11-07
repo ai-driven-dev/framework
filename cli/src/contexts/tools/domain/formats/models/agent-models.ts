@@ -1,5 +1,5 @@
-import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
-import type { ToolBuildContract } from "../build-contract.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
+import type { ToolBuildContract } from "../../build-contract.js";
 import models from "./agent-models.json" with { type: "json" };
 
 /** How much model a piece of work needs, from `smart` down to `light`; `agent-models.json`

@@ -10,7 +10,7 @@ import "../../contexts/tools/domain/profiles/kilo/profile.js";
 import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolBuildContract } from "../../contexts/tools/domain/build-contract.js";
-import { withAgentModels } from "../../contexts/tools/domain/formats/agent-models.js";
+import { withAgentModels } from "../../contexts/tools/domain/formats/models/agent-models.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import { buildContractFor } from "../../contexts/tools/domain/registry.js";
 import { FlatBuildStrategy } from "../../contexts/translate/application/strategies/flat-build-strategy.js";

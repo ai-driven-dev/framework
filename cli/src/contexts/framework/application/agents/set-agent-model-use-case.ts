@@ -8,12 +8,12 @@ import {
   type AgentHost,
   type AgentProvider,
   supportedProvider,
-} from "../../../tools/domain/formats/agent-models.js";
+} from "../../../tools/domain/formats/models/agent-models.js";
 import {
   mainModelValues,
   planMainModelInstall,
   planMainModelRemoval,
-} from "../../../tools/domain/formats/main-model-config.js";
+} from "../../../tools/domain/formats/models/main-model-config.js";
 import { globalFilesOf, userMachineLocalFilesOf } from "../../../tools/domain/registry.js";
 import type { AgentModelStore } from "../../domain/ports/agent-model-store.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

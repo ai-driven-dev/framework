@@ -40,6 +40,7 @@ src/
 │   │   ├── domain/
 │   │   │   ├── capabilities/
 │   │   │   ├── formats/
+│   │   │   │   └── models/    # provider models for agents and the main session's settings
 │   │   │   ├── models/
 │   │   │   ├── ports/
 │   │   │   └── profiles/    # one directory per tool

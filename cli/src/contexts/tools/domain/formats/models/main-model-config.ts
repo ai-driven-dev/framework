@@ -1,5 +1,5 @@
 import { applyEdits, modify, type ParseError, parse } from "jsonc-parser";
-import { stripJsonComments } from "../../../../kernel/reading/jsonc.js";
+import { stripJsonComments } from "../../../../../kernel/reading/jsonc.js";
 import { AGENT_MODELS, type AgentHost, type AgentProvider, tierModel } from "./agent-models.js";
 
 /** Main-session settings AIDD writes, keyed by the host's native config key. */

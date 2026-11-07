@@ -35,7 +35,7 @@ Check: `aidd --version`.
 `--global` installs for the machine instead, and writes nothing under the project.
 `--provider` runs the main session and the framework's agents on that provider's models, reports which model each runs on, and `--provider none` undoes it.
 
-The model ids are pinned in [`agent-models.json`](src/contexts/tools/domain/formats/agent-models.json), checked against each provider's model page on 2026-11-04. When a provider ships or retires a model, update that file, the table in [the agent guide](../docs/SUBAGENTS.md#-models), and the tests that name the ids.
+The model ids are pinned in [`agent-models.json`](src/contexts/tools/domain/formats/models/agent-models.json), checked against each provider's model page on 2026-11-04. When a provider ships or retires a model, update that file, the table in [the agent guide](../docs/SUBAGENTS.md#-models), and the tests that name the ids.
 
 | Command | Lands in |
 | --- | --- |

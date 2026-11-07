@@ -80,7 +80,7 @@ import { PluginDistributionReaderAdapter } from "../../contexts/framework/infras
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
-import { isAgentHost } from "../../contexts/tools/domain/formats/agent-models.js";
+import { isAgentHost } from "../../contexts/tools/domain/formats/models/agent-models.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";

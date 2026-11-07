@@ -3,7 +3,7 @@ import {
   mainModelValues,
   planMainModelInstall,
   planMainModelRemoval,
-} from "../../../../../src/contexts/tools/domain/formats/main-model-config.js";
+} from "../../../../../../src/contexts/tools/domain/formats/models/main-model-config.js";
 
 const P = "/home/me/.claude/settings.json";
 
