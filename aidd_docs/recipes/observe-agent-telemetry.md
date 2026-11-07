@@ -6,7 +6,7 @@ Run Claude Code, Codex and OpenCode v2 with OpenTelemetry (OTel), then inspect t
 
 ### 1) ⚙️ Prepare the collector destination
 
-Start local Gouvernail and configure each tool's connector. Generate OpenCode's token in Sources for an explicit team and member; issuing a new token replaces the previous OpenCode token for that organization. The member is the token's declared assignee, not proof of the person using it. For each tool, set `AIDD_OTEL_TOKEN` to its connector token in your shell without publishing it. The examples use the local tenant `ai-driven-dev` and loopback port `55857`; adjust them for your setup.
+Start local Gouvernail and configure each tool's connector. In Sources, generate a token for an explicit team, member and installation UUID. Rotating a token replaces the previous token for that tool and organization. The member is the token's declared assignee, not proof of the person using it. Existing shared tokens retain their previous declarative attribution. For each tool, set `AIDD_OTEL_TOKEN` to its connector token in your shell without publishing it. The examples use the local tenant `ai-driven-dev` and loopback port `55857`; adjust them for your setup.
 
 | Tool | Connector token |
 | --- | --- |
@@ -16,7 +16,7 @@ Start local Gouvernail and configure each tool's connector. Generate OpenCode's 
 
 `--yes` opts in to capturing and forwarding telemetry from that one execution. `--keep-capture` retains a private local file whose path is printed by the command, including when an execution fails after capture. Raw captures can contain prompts, responses, commands, tool output and secrets: restrict access and delete them when no longer needed. Without this option the temporary capture is removed.
 
-Add `--include-installation-id` to send the existing AIDD installation UUID as an AIDD-added `aidd.installation.id` resource attribute for that execution. It is an installation identifier, not an authenticated person; member association requires a separate authorized mapping. This flag fails if no installation UUID exists. Captures remain provider data and do not contain this added attribute.
+The new assigned tokens require `--include-installation-id`, which sends the existing AIDD installation UUID as an AIDD-added `aidd.installation.id` resource attribute for that execution. It is an installation identifier, not an authenticated person. This flag fails if no installation UUID exists. Captures remain provider data and do not contain this added attribute; the global `otel init` configuration does not add it.
 
 ### 2) 🧪 Send two messages in each session
 
