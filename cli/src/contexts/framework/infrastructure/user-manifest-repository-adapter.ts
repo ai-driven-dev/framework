@@ -29,7 +29,7 @@ export class UserManifestRepositoryAdapter implements ManifestRepository {
     return readManifestFile({
       path: this.path,
       location: "for this machine",
-      reinstallCommand: "aidd setup --scope user",
+      reinstallCommand: "aidd setup --global",
     });
   }
 

@@ -33,6 +33,9 @@ const CLAUDE_CACHE = join(HOME, ".claude", "plugins", "cache");
 const CODEX_CACHE = join(HOME, ".codex", "plugins", "cache");
 const WHITELIST_PURGE_MESSAGES = [
   `user scope: cache/built purged: ${join(USER_CONFIG_DIR, "cache", "built")}`,
+  `user scope: cache/marketplaces/aidd-framework purged: ${join(USER_CONFIG_DIR, "cache", "marketplaces", FRAMEWORK_MARKETPLACE_NAME)}`,
+  `user scope: cache/plugin-cache purged: ${join(USER_CONFIG_DIR, "cache", "plugin-cache")}`,
+  `user scope: cache/marketplaces purged: ${join(USER_CONFIG_DIR, "cache", "marketplaces")}`,
   `user scope: cache/update-check.json purged: ${join(USER_CONFIG_DIR, "cache", "update-check.json")}`,
   `user scope: cache purged: ${join(USER_CONFIG_DIR, "cache")}`,
   `user scope: update-check.json purged: ${join(USER_CONFIG_DIR, "update-check.json")}`,
@@ -176,6 +179,72 @@ function seedClaudeCache(fs: InMemoryFileAdapter, hostName = "aidd-framework"): 
 }
 
 describe("clean --scope user", () => {
+  it.each([false, true])(
+    "Copilot cleans past an unclaimed uninstall tombstone, but protects a foreign enabled=%s ref",
+    async (foreignEnabled) => {
+      const manifest = Manifest.create();
+      manifest.addTool("copilot", "1.0.0", []);
+      const source = {
+        kind: "effective-list" as const,
+        root: "/built/copilot",
+        sourceType: "local",
+        source: "/built/copilot",
+      };
+      manifest.setNativeRegistrations("copilot", {
+        binary: "copilot",
+        marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework", provenance: source }],
+        pluginRefs: ["aidd-dev@aidd-framework"],
+        pluginClaims: [{ ref: "aidd-dev@aidd-framework", dependents: [] }],
+      });
+      const repo = new InMemoryManifestRepository(manifest);
+      const hostRefs = new Map([
+        ["aidd-dev@aidd-framework", { enabled: true }],
+        ["aidd-pm@aidd-framework", { enabled: foreignEnabled }],
+      ]);
+      const activator = new FakeNativePluginActivator({ available: true });
+      const clean = new CleanUserScopeUseCase(
+        new InMemoryFileAdapter(),
+        repo,
+        new CapturingLogger(),
+        new InMemoryMarketplaceRegistry(),
+        () => USER_CONFIG_DIR,
+        new Map([["copilot", activator]]),
+        new Map(),
+        () => HOME,
+        undefined,
+        undefined,
+        new Map([
+          [
+            "copilot",
+            {
+              read: async () => ({
+                location: "marketplace list",
+                entries: new Map([["aidd-framework", source]]),
+              }),
+            },
+          ],
+        ]),
+        new Map([
+          ["copilot", new FakeHostPluginRegistryReader({ location: "plugins", refs: hostRefs })],
+        ])
+      );
+
+      const result = clean.execute({ projectRoot: "/project", force: true });
+
+      if (foreignEnabled) {
+        await expect(result).rejects.toThrow(/foreign host ref 'aidd-pm@aidd-framework'/);
+        expect(activator.uninstalledPlugins).toEqual([]);
+        expect(activator.removedMarketplaces).toEqual([]);
+        expect(repo.getCurrent()).not.toBeNull();
+      } else {
+        await expect(result).resolves.toMatchObject({ dryRun: false });
+        expect(activator.uninstalledPlugins).toEqual(["aidd-dev@aidd-framework"]);
+        expect(activator.removedMarketplaces).toEqual(["aidd-framework"]);
+        expect(repo.getCurrent()).toBeNull();
+      }
+    }
+  );
+
   it("reads canonical dependents after acquiring the machine lock", async () => {
     const machine = manifestWithClaude();
     class LockedRepository extends InMemoryManifestRepository {
@@ -195,6 +264,16 @@ describe("clean --scope user", () => {
     const cacheMarker = join(seedClaudeCache(fs), "marker.json");
     const sourceMarker = join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "catalogue.json");
     fs.setFile(sourceMarker, "source");
+    const fetched = join(
+      USER_CONFIG_DIR,
+      "cache",
+      "marketplaces",
+      FRAMEWORK_MARKETPLACE_NAME,
+      "source"
+    );
+    const plugins = join(USER_CONFIG_DIR, "cache", "plugin-cache", "source");
+    fs.setFile(fetched, "framework clone");
+    fs.setFile(plugins, "plugin clone");
     const activator = new FakeNativePluginActivator({ available: true });
     const useCase = new CleanUserScopeUseCase(
       fs,
@@ -219,6 +298,8 @@ describe("clean --scope user", () => {
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.getFile(sourceMarker)).toBe("source");
     expect(fs.getFile(cacheMarker)).toBe("{}");
+    expect(fs.getFile(fetched)).toBe("framework clone");
+    expect(fs.getFile(plugins)).toBe("plugin clone");
     expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
       { ref: "aidd-context@aidd-framework", dependents: ["/project-b"] },
     ]);
@@ -611,7 +692,94 @@ describe("clean --scope user", () => {
   });
 
   describe("whitelist", () => {
-    it("deletes exactly cache/built, manifest.json, references.json and the aidd-framework marketplaces.json entry — nothing else", async () => {
+    it("purges fetched framework and plugin caches while preserving another marketplace's source", async () => {
+      const fs = new RecordingFileAdapter();
+      const framework = join(USER_CONFIG_DIR, "cache", "marketplaces", FRAMEWORK_MARKETPLACE_NAME);
+      const plugins = join(USER_CONFIG_DIR, "cache", "plugin-cache");
+      const other = join(USER_CONFIG_DIR, "cache", "marketplaces", "other-marketplace", "source");
+      fs.setFile(join(framework, "source"), "framework clone");
+      fs.setFile(join(plugins, "source"), "plugin clone");
+      fs.setFile(other, "another marketplace's clone");
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(
+        "/wherever",
+        Marketplace.create({
+          name: "other-marketplace",
+          source: { kind: "local", path: other },
+          scope: "user",
+          addedAt: "2026-01-01T00:00:00Z",
+        })
+      );
+      const useCase = new CleanUserScopeUseCase(
+        fs,
+        new InMemoryManifestRepository(Manifest.create()),
+        new CapturingLogger(),
+        registry,
+        () => USER_CONFIG_DIR
+      );
+
+      await useCase.execute({ projectRoot: "/wherever", force: true });
+
+      expect(await fs.fileExists(framework)).toBe(false);
+      expect(await fs.fileExists(plugins)).toBe(false);
+      expect(fs.getFile(other)).toBe("another marketplace's clone");
+      expect(registry.getAll("/wherever").map((marketplace) => marketplace.name)).toEqual([
+        "other-marketplace",
+      ]);
+    });
+
+    it("removes the cache shell once the fetched framework and plugin caches are gone", async () => {
+      const fs = new RecordingFileAdapter();
+      fs.setFile(
+        join(USER_CONFIG_DIR, "cache", "marketplaces", FRAMEWORK_MARKETPLACE_NAME, "source"),
+        "framework clone"
+      );
+      fs.setFile(join(USER_CONFIG_DIR, "cache", "plugin-cache", "source"), "plugin clone");
+      const useCase = new CleanUserScopeUseCase(
+        fs,
+        new InMemoryManifestRepository(Manifest.create()),
+        new CapturingLogger(),
+        new InMemoryMarketplaceRegistry(),
+        () => USER_CONFIG_DIR
+      );
+
+      await useCase.execute({ projectRoot: "/wherever", force: true });
+
+      expect(await fs.fileExists(join(USER_CONFIG_DIR, "cache"))).toBe(false);
+      expect(fs.order).toContain(
+        `deleteDirectory:${join(USER_CONFIG_DIR, "cache", "marketplaces")}`
+      );
+      expect(fs.order).toContain(`deleteDirectory:${join(USER_CONFIG_DIR, "cache")}`);
+    });
+
+    it.each(["cache/marketplaces/aidd-framework", "cache/plugin-cache"])(
+      "preserves a fetched source resolving outside user config through %s",
+      async (relativePath) => {
+        const fs = new RecordingFileAdapter();
+        const cache = join(USER_CONFIG_DIR, relativePath);
+        const marker = join(cache, "source");
+        fs.setFile(marker, "external clone");
+        fs.setSymlink(cache, "/elsewhere/clone");
+        const logger = new CapturingLogger();
+        const useCase = new CleanUserScopeUseCase(
+          fs,
+          new InMemoryManifestRepository(Manifest.create()),
+          logger,
+          new InMemoryMarketplaceRegistry(),
+          () => USER_CONFIG_DIR
+        );
+
+        await useCase.execute({ projectRoot: "/wherever", force: true });
+
+        expect(fs.getFile(marker)).toBe("external clone");
+        expect(fs.order).not.toContain(`deleteDirectory:${cache}`);
+        expect(logger.warnMessages).toContain(
+          `user scope: ${relativePath} does not resolve inside ${USER_CONFIG_DIR}; left in place: ${cache}`
+        );
+      }
+    );
+
+    it("removes framework state and keeps other marketplace registrations", async () => {
       const fs = new RecordingFileAdapter();
       fs.setFile(
         join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "aidd-framework", "claude", "x"),
@@ -1799,6 +1967,9 @@ describe("clean --scope user", () => {
       expect(fs.has(join(cacheDir, "built", "1.0.0", "aidd-framework", "x"))).toBe(true);
       expect(logger.warnMessages).toStrictEqual([
         `user scope: cache/built does not resolve inside ${USER_CONFIG_DIR}; left in place: ${join(cacheDir, "built")}`,
+        `user scope: cache/marketplaces/aidd-framework does not resolve inside ${USER_CONFIG_DIR}; left in place: ${join(cacheDir, "marketplaces", FRAMEWORK_MARKETPLACE_NAME)}`,
+        `user scope: cache/plugin-cache does not resolve inside ${USER_CONFIG_DIR}; left in place: ${join(cacheDir, "plugin-cache")}`,
+        `user scope: cache/marketplaces does not resolve inside ${USER_CONFIG_DIR}; left in place: ${join(cacheDir, "marketplaces")}`,
         `user scope: cache/update-check.json does not resolve inside ${USER_CONFIG_DIR}; left in place: ${join(cacheDir, "update-check.json")}`,
         `user scope: cache does not resolve inside ${USER_CONFIG_DIR}; left in place: ${cacheDir}`,
       ]);

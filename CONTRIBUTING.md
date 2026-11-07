@@ -63,6 +63,7 @@ Fork the repository, or branch from it if you have write access.
 | `make setup` | Installs dependencies and git hooks, registers the marketplace, installs the plugins into Claude Code and Codex |
 | `make doctor` | Checks your environment |
 | `make reload` | Reloads your checkout into your tools |
+| `make check-hosts` | Tables what each installed tool really loads of the plugins |
 | `make check` | Runs the pre-commit checks |
 
 ## 3. The rules

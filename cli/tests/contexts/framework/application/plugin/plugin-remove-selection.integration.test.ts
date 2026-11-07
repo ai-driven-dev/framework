@@ -42,7 +42,7 @@ function manifest(): Manifest {
 }
 
 describe("plugin removal selects the recorded owner, name and tool", () => {
-  it("detaches only the selected user plugin's project claim while preserving machine files", async () => {
+  it("detaches only the selected user plugin's project claim while preserving global files", async () => {
     const project = manifest();
     const machine = manifest();
     for (const toolId of ["cursor", "claude"] as const) {
@@ -190,7 +190,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     expect(projectRepo.saveCount).toBe(0);
   });
 
-  it("explicit user removal deletes the proven machine file without touching the project copy", async () => {
+  it("explicit user removal deletes the proven global file without touching the project copy", async () => {
     const relative = `${NAME}/commands/owned.md`;
     const content = "installed machine bytes";
     const machine = manifest();

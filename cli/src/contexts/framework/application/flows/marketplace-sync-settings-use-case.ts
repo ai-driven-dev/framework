@@ -38,6 +38,7 @@ import type {
 } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import {
+  hostRefInUse,
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
   resolvePluginsCapability,
@@ -95,6 +96,12 @@ export interface MarketplaceSyncSettingsOptions {
    * never a fallback to every one.
    */
   marketplaceNames?: readonly string[];
+  /**
+   * Framework plugins a tool with native activation also enables at this run's scope, on top
+   * of the ones its manifest records — what `setup --global --plugins` asks for, since a
+   * machine-scope install records no plugin a host loads by itself.
+   */
+  enablePlugins?: readonly string[];
 }
 
 interface ActivationOutcome {
@@ -231,7 +238,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       manifest,
       marketplaces,
       toolIds,
-      scope
+      scope,
+      options.enablePlugins ?? []
     );
     let declarativeChanged = false;
     if (scope === "project") {
@@ -403,7 +411,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
     toolIds: readonly ToolId[],
-    scope: MarketplaceScope
+    scope: MarketplaceScope,
+    enablePlugins: readonly string[]
   ): Promise<ActivationRun> {
     const outcomes = new Map<ToolId, ActivationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -414,7 +423,11 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const activator = binary === undefined ? undefined : this.activators.get(binary);
       if (binary === undefined || activator === undefined) continue;
       if (!activator.isAvailable()) {
-        this.logger.warn(`${binary} CLI not found on PATH — skipping native plugin activation.`);
+        this.logger.warn(
+          `${binary} CLI not found on PATH — skipping native plugin activation.${
+            enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : ""
+          }`
+        );
         binaryMissing.push({ toolId, binary });
         continue;
       }
@@ -426,7 +439,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
           manifest,
           marketplaces,
           warnings,
-          scope
+          scope,
+          enablePlugins
         );
         outcomes.set(toolId, outcome);
       } catch (error) {
@@ -529,7 +543,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
     warnings: string[],
-    scope: MarketplaceScope
+    scope: MarketplaceScope,
+    enablePlugins: readonly string[]
   ): Promise<ActivationOutcome> {
     // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
     // and installing a plugin from it are two acts. Measured against the real `claude` binary —
@@ -608,9 +623,17 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         );
     }
     const hostNameByAlias = new Map(stillProven.map((m) => [m.alias, m.hostName]));
+    const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
+    const requested =
+      frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
     const { refsToEnable, alreadyOwnedRefs } = await this.refsThisProjectEnables(
       toolId,
-      this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias),
+      [
+        ...new Set([
+          ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
+          ...requested,
+        ]),
+      ],
       manifest,
       projectRoot
     );
@@ -759,7 +782,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    hostNameByAlias: ReadonlyMap<string, string>
+    hostNameByAlias: ReadonlyMap<string, string>,
+    scope: MarketplaceScope
   ): string[] {
     const byName = new Map(marketplaces.map((m) => [m.name, m]));
     const refs: string[] = [];
@@ -769,6 +793,18 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       const hostName = hostNameByAlias.get(marketplace.name);
       if (hostName === undefined) continue;
       refs.push(`${plugin.name}@${hostName}`);
+    }
+    // Native-only global installs record successful activations, not copied plugin files.
+    // Claims also recover a selection an older sync dropped from its projection.
+    if (scope === "user") {
+      const native = manifest.getNativeRegistrations(toolId);
+      const provenHosts = [...hostNameByAlias.values()];
+      for (const ref of [
+        ...(native?.pluginRefs ?? []),
+        ...(native?.pluginClaims ?? []).map((claim) => claim.ref),
+      ]) {
+        if (provenHosts.some((hostName) => ref.endsWith(`@${hostName}`))) refs.push(ref);
+      }
     }
     return refs;
   }
@@ -822,9 +858,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         ? []
         : (project?.getNativeRegistrations(toolId)?.pluginRefs ?? [])),
     ]);
-    const foreignRef = [...reading.refs.keys()].find(
-      (ref) => ref.endsWith(`@${hostName}`) && !claimed.has(ref)
-    );
+    const foreignRef = [...reading.refs].find(
+      ([ref, entry]) =>
+        hostRefInUse(toolId, entry.enabled) && ref.endsWith(`@${hostName}`) && !claimed.has(ref)
+    )?.[0];
     return { ...base, hostReadable: true, ...(foreignRef === undefined ? {} : { foreignRef }) };
   }
 
