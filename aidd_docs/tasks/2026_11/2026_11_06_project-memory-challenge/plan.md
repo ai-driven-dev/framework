@@ -44,7 +44,7 @@ Source: [design.md](./design.md). Stacked on the branch `refactor/lean-project-m
 | Team content: no phase may delete, move or rewrite a line or a file the person did not approve | a team's content is the one loss that cannot be undone |
 | Names by intention: the skill names a category of file, never a tool; tool names appear only in test fixtures | project convention, and the skill must work on any stack |
 | Eval spend, phases 2 to 5: one or two cases, three Haiku runs each, plus Qwen where named, about 1 USD each | keeps the measurement inside budget |
-| Merge gate: on the update repository and on a real project's own history (its bank at the bank's last commit, its code at a later commit), the Haiku refresh catches at least as many drifts as the skill on `origin/next`, and changes no team line without a yes. A phase that misses it is reverted and its design reopened | the fact sheet must not buy its safety with fewer catches |
+| Merge gate: on the update repository and on a real project's own history (its bank at the bank's last commit, its code at a later commit), the Haiku and Qwen refreshes catch at least as many drifts as the skill on `origin/next` run the same day, six runs each, and change no team line without a yes. It runs once, in the final measurement before merge; a phase that misses it there is reverted and its design reopened | the fact sheet must not buy its safety with fewer catches; one skill ranges from zero to four of four drifts between runs, so three runs decide nothing |
 | Eval spend, after phase 5: old against new, graded blind, create and update, Haiku and Qwen, about 5 to 6 USD | the final measurement decides what the plan delivered |
 
 ## Decisions

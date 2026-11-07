@@ -5,7 +5,7 @@
 - Memory holds what the code cannot show: an intent, a constraint, a warning.
 - Code silent on a line is not code that contradicts it.
 
-1. **Check** the files against the code: every path against the tree, every command against the script or target defining it, every count and named tool against the manifests.
+1. **Check** the files against the code: every path against the tree, every command and commit type against the file that defines it, per the reading rules of [reading-sources.md](reading-sources.md), every count and named tool against the manifests and the workspace file.
 2. **Flag** each of these, with a reason and a location:
    - A claim the code contradicts, or that has gone stale.
    - A command, path, or file that does not exist or would not run.

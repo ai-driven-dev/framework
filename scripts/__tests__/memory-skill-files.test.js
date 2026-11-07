@@ -462,3 +462,27 @@ test("check reviews the content of each file against its defining files before t
   assert.match(steps[at("Format")], /warnings? [^\n]*not investigated|not investigate/u, "warnings are chased");
   assert.doesNotMatch(skillText("references/review-protocol.md"), /one sweep/u, "the review is still one sweep across files");
 });
+
+test("the reading order names the files that define a command or a convention, by category and never by tool, and a fact comes from the file that defines it", () => {
+  const text = skillText("references/reading-sources.md");
+  for (const [label, pattern] of [
+    ["what runs before a commit", /before a commit/iu],
+    ["the commit message rules", /commit message rules/iu],
+    ["the task commands", /task commands/iu],
+    ["the contribution guide", /contribution guide/iu],
+    ["the AI instructions and rules", /AI instructions and rules/iu],
+    ["the workspace file", /workspace file/iu],
+  ]) assert.match(text, pattern, `the reading order lacks ${label}`);
+  assert.match(text, /defines it/u, "no defining-file rule");
+  assert.match(text, /`R`/u, "the defining file's fact does not go to the R block");
+  assert.doesNotMatch(text, /first source that answers/u, "the reading still stops at the first source");
+  assert.doesNotMatch(text, /\b(?:husky|lefthook|pre-commit|commitlint|makefile|justfile|taskfile|pnpm|npm|yarn|bun|cargo|gradle|poetry|uv|eslint|prettier|biome|ruff|turbo|nx)\b/iu, "regression guard: the reading order names a tool");
+});
+
+test("the review checks a cited command and a commit type against the files that define them", () => {
+  const text = skillText("references/review-protocol.md");
+  assert.match(text, /commit type/u, "no commit type check");
+  assert.match(text, /reading-sources\.md/u, "the defining files are not the reading order's");
+  assert.doesNotMatch(text, /\b(?:husky|lefthook|pre-commit|commitlint|makefile|pnpm|npm|yarn|bun|cargo|gradle|poetry|uv)\b/iu, "regression guard: the review names a tool");
+});
+
