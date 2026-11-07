@@ -55,6 +55,19 @@ describe("auth logout", () => {
     expect(after).toBeNull();
   });
 
+  it("with a record at both levels, removes the project one and keeps the user one", async () => {
+    const projectPath = storage.projectConfigPath(tempDir);
+    const userPath = storage.userConfigPath();
+    await storage.write(projectPath, makeAuthConfig({ level: "project" }));
+    await storage.write(userPath, makeAuthConfig({ token: "ghp_user" }));
+
+    const result = await new AuthLogoutUseCase(makeProvider()).execute();
+
+    expect(result.found && result.level).toBe("project");
+    expect(await storage.read(projectPath)).toBeNull();
+    expect(await storage.read(userPath)).not.toBeNull();
+  });
+
   it("removes user auth.json when no project config found", async () => {
     await storage.write(storage.userConfigPath(), makeAuthConfig({ token: "ghp_user" }));
 

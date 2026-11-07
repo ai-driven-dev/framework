@@ -71,6 +71,22 @@ describe("the credential a user hands the CLI", () => {
         },
       ]);
     });
+
+    it("stores nothing when the token check refuses", async () => {
+      const store = storage();
+      const refusing: TokenAuthProvider = {
+        verifyToken: async () => {
+          throw new AuthenticationError("GitHub API");
+        },
+      };
+      const adapter = new AuthProviderAdapter(store, new Map(), refusing, PROJECT_ROOT);
+
+      await expect(
+        adapter.login({ method: "stored", token: "ghp_refused" }, "user")
+      ).rejects.toThrow(AuthenticationError);
+
+      expect(store.saves, "a refused token is never recorded").toEqual([]);
+    });
   });
 
   describe("logging in through an external provider", () => {

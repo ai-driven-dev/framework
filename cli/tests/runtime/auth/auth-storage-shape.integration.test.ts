@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthStorageError } from "../../../src/kernel/errors.js";
 import { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
 import { makeAuthConfig } from "../../helpers/auth.js";
@@ -82,6 +82,53 @@ describe("AuthStorage, the shape of a record", () => {
       createdAt: written.createdAt,
       token: "ghp_x",
     });
+  });
+
+  it("writes a stored and an external record as these exact bytes", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    try {
+      const saved = Object.create(storage) as AuthStorage;
+      saved.userConfigPath = () => path;
+
+      await saved.save({
+        credential: { method: "stored", token: "ghp_x" },
+        level: "user",
+        projectRoot: tempDir,
+      });
+      const stored = await readFile(path, "utf-8");
+      await saved.save({
+        credential: { method: "external", provider: "gh" },
+        level: "user",
+        projectRoot: tempDir,
+      });
+      const external = await readFile(path, "utf-8");
+
+      expect(stored).toBe(
+        [
+          "{",
+          '  "version": 1,',
+          '  "method": "stored",',
+          '  "level": "user",',
+          '  "createdAt": "1970-01-01T00:00:00.000Z",',
+          '  "token": "ghp_x"',
+          "}",
+        ].join("\n")
+      );
+      expect(external).toBe(
+        [
+          "{",
+          '  "version": 1,',
+          '  "method": "external",',
+          '  "level": "user",',
+          '  "createdAt": "1970-01-01T00:00:00.000Z",',
+          '  "provider": "gh"',
+          "}",
+        ].join("\n")
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("synthesises a stored user-level record from AIDD_TOKEN", async () => {
