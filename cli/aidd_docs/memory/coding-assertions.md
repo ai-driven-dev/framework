@@ -15,7 +15,7 @@ The checks that must pass for code here to count as done. The repository's own h
 
 | Order | Command | Checks |
 | ----- | ------- | ------ |
-| 1 | `pnpm lint` | biome, lint and format, plus the GritQL plugin under `biome-plugins/` (`process.exit` below the command edge) and `noDefaultExport` under `src/` and `tests/`; `biome-guards-bite.arch.test.ts` proves both on a planted tree |
+| 1 | `pnpm lint` | biome, lint and format, plus the GritQL plugins under `biome-plugins/` (`process.exit` below the command edge, function and constructor parameters), `noDefaultExport` under `src/` and `tests/`, and the code-size limits on `src/` with their baselines as negated includes; `biome-guards-bite.arch.test.ts` and `code-size.arch.test.ts` prove them on planted trees |
 | 2 | `pnpm test:arch` | the architecture ratchets |
 | 3 | `pnpm typecheck` | `tsc --noEmit` |
 | 4 | `node scripts/check-cli-type-honesty.mjs` | no type widened through `unknown`, `any` or `never`, no `@ts-expect-error`/`@ts-ignore` outside a test proving something doesn't compile (`src/` and `tests/`). Dependency direction between layers and contexts is biome's job now (`cli/biome.json`'s `noRestrictedImports`). Run it from the repository root |
