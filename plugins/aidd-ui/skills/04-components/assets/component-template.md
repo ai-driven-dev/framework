@@ -1,6 +1,6 @@
 ---
 id: {{component id}}
-kind: {{atom, molecule or composition}}
+kind: {{atom, molecule or organism}}
 status: proposed
 version: 1
 uses: [{{ids it uses}}]

@@ -8,7 +8,7 @@ UI and UX design.
 | --- | --- |
 | Status | alpha |
 | Install | `/plugin install aidd-ui@aidd-framework` |
-| Start with | `/aidd-ui:01-system` |
+| Start with | `/aidd-ui:01-journeys` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-ui) |
 
 > [!WARNING]
@@ -19,10 +19,14 @@ UI and UX design.
 
 ```mermaid
 flowchart LR
-  Skill["skill 01-system"] -->|"judgement: brand, names, style"| Docs[("aidd_docs/ui/")]
-  Journeys["skill 02-journeys"] -->|"judgement: persona, steps, structure"| Docs
-  Skill -->|"calls"| Engine["hooks/aidd-ui.cjs"]
-  Journeys -->|"calls"| Engine
+  Journeys["skill 01-journeys"] -->|"judgement: persona, steps, structure"| Docs[("aidd_docs/ui/")]
+  Brand["skill 02-brand"] -->|"judgement: identity, tone, references"| Docs
+  Foundations["skill 03-foundations"] -->|"judgement: tokens, names"| Docs
+  Components["skill 04-components"] -->|"judgement: levels, variants, states"| Docs
+  Journeys -->|"calls"| Engine["hooks/aidd-ui.cjs"]
+  Brand -->|"calls"| Engine
+  Foundations -->|"calls"| Engine
+  Components -->|"calls"| Engine
   Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
   Host["host event"] --> Hook["aidd-ui.cjs hook"]
   Hook -->|"checks what a write produced, then the lines the turn changed"| Engine
@@ -32,9 +36,8 @@ flowchart LR
 ## Start
 
 1. Install the plugin; its hook needs `node` on `PATH`.
-2. Run `/aidd-ui:01-system` in your project.
-3. Follow the skill: it writes the design system under `aidd_docs/ui/`.
-4. Run `/aidd-ui:02-journeys` to map a persona's journeys and the wireframe of each screen they cross, before or after the design system.
+2. Run `/aidd-ui:01-journeys` in your project to map a persona's journeys and the wireframe of each screen they cross.
+3. Run `/aidd-ui:02-brand`, then `/aidd-ui:03-foundations`, then `/aidd-ui:04-components`: each writes its records under `aidd_docs/ui/`; foundations stops without a brand, components without a system.
 
 ## Limits
 

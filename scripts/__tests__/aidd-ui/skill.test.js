@@ -8,7 +8,11 @@ const { UI, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit
 // action says and the design system around it must still validate. A placeholder the table does
 // not know fails the test: a template cannot grow a slot nothing here fills.
 const PLUGIN = path.resolve(__dirname, "../../../plugins/aidd-ui");
-const SKILL = path.join(PLUGIN, "skills/01-system");
+const SKILLS = path.join(PLUGIN, "skills");
+const FOLDERS = ["01-journeys", "02-brand", "03-foundations", "04-components"];
+const SKILL = (name) => path.join(SKILLS, name);
+const JOURNEYS = SKILL("01-journeys");
+const OWNER = { system: "03-foundations", brand: "02-brand", component: "04-components", asset: "04-components", render: "04-components" };
 
 const PLACEHOLDER = /\{\{([^}]+)\}\}/g;
 const COMMENT = /<!--[\s\S]*?-->\n?/g;
@@ -38,7 +42,7 @@ const FILLS = {
   component: {
     "component id": "badge",
     "Component name": "Badge",
-    "atom, molecule or composition": "atom",
+    "atom, molecule or organism": "atom",
     "ids it uses": "",
     "semantic tokens": "space.md, color.text.default",
     "variants": "default",
@@ -74,7 +78,7 @@ const TEMPLATES = {
   render: "render-template.html",
 };
 
-const template = (name) => fs.readFileSync(path.join(SKILL, "assets", TEMPLATES[name]), "utf8");
+const template = (name) => fs.readFileSync(path.join(SKILL(OWNER[name]), "assets", TEMPLATES[name]), "utf8");
 
 /** A template as an action fills it: every placeholder answered, every comment deleted. */
 function filled(name) {
@@ -94,7 +98,7 @@ beforeEach(() => {
 
 afterEach(() => removeTmp(tmp));
 
-describe("aidd-ui 01-system templates", () => {
+describe("aidd-ui design system templates", () => {
   it("fill every placeholder of every template, and leave none behind", () => {
     for (const name of Object.keys(TEMPLATES)) {
       const text = filled(name);
@@ -128,7 +132,7 @@ describe("aidd-ui 01-system templates", () => {
   });
 });
 
-describe("aidd-ui 01-system variant axes", () => {
+describe("aidd-ui variant axes", () => {
   it("shows an axis in the templates, and the axis they show validates", () => {
     propose(tmp, `${UI}/components/dialog.md`);
     edit(tmp, `${UI}/components/dialog.md`, "variants: [default]", "variants: [size=sm, size=md, tone=danger]");
@@ -139,14 +143,13 @@ describe("aidd-ui 01-system variant axes", () => {
   });
 });
 
-describe("aidd-ui 01-system resolver", () => {
+describe("aidd-ui resolver", () => {
   it("holds no resolver JSON for the model to copy: the engine writes it", () => {
-    for (const file of filesUnder(SKILL)) assert.equal(/resolutionOrder|"\$ref"|"modifiers"/.test(fs.readFileSync(file, "utf8")), false, path.relative(SKILL, file));
+    for (const file of FOLDERS.flatMap((name) => filesUnder(SKILL(name)))) assert.equal(/resolutionOrder|"\$ref"|"modifiers"/.test(fs.readFileSync(file, "utf8")), false, path.relative(SKILLS, file));
   });
 
   it("has a breakpoint's query written in the template's table, and the engine turn it into the stylesheet", () => {
-    const template = fs.readFileSync(path.join(SKILL, "assets/system-template.md"), "utf8");
-    assert.ok(template.includes("| Name | Query |"));
+    assert.ok(template("system").includes("| Name | Query |"));
     propose(tmp, ...["components/button", "components/dialog", "components/search-field", "screens/home"].map((name) => `${UI}/${name}.md`));
     put(tmp, `${UI}/breakpoints/desktop.json`, JSON.stringify({ space: { md: { $value: { value: 1.5, unit: "rem" } } } }));
     edit(tmp, `${UI}/system.md`, "themes: [light, dark]", "themes: [light]");
@@ -157,7 +160,7 @@ describe("aidd-ui 01-system resolver", () => {
   });
 });
 
-describe("aidd-ui 01-system change flow", () => {
+describe("aidd-ui change flow", () => {
   it("takes a token change reaching a screen under review to a design system that validates, the engine raising the versions", () => {
     const deprecated = fs.readFileSync(path.join(tmp, `${UI}/components/old-button.md`), "utf8");
 
@@ -188,43 +191,76 @@ describe("aidd-ui 01-system change flow", () => {
   });
 });
 
-describe("aidd-ui 01-system skill", () => {
-  const texts = () => filesUnder(SKILL).map((file) => ({ file: path.relative(SKILL, file), text: fs.readFileSync(file, "utf8") }));
-
-  it("names no other skill, in any file", () => {
-    const own = new Set(["01-system", ...fs.readdirSync(path.join(SKILL, "actions")).map((name) => name.replace(/\.md$/, ""))]);
-    for (const { file, text } of texts()) {
-      assert.equal(/[a-z-]+:\d{2}-[a-z-]+/.test(text), false, `${file} names a skill as plugin:folder`);
-      for (const [numbered] of text.matchAll(/\b\d{2}-[a-z]+(?:-[a-z]+)*\b/g)) assert.ok(own.has(numbered), `${file} names ${numbered}, which is not part of this skill`);
-    }
-  });
-
-  it("ends by saying the user validates each element after its review, naming no skill", () => {
-    assert.ok(fs.readFileSync(path.join(SKILL, "actions/03-conclude.md"), "utf8").includes("each element created or raised is `proposed` until the user, after looking at its render, runs `node <engine> publish <id>`."));
-  });
-
-  it("holds no date, ticket id or em-dash", () => {
-    for (const { file, text } of texts()) {
-      assert.equal(/\d{4}[-_]\d{2}[-_]\d{2}/.test(text), false, `${file} holds a date`);
-      assert.equal(text.includes("—"), false, `${file} holds an em-dash`);
-    }
-  });
-
-  it("proposes from scratch the brand and tokens first, components when a screen asks, the user free to add more", () => {
-    const scratch = fs.readFileSync(path.join(SKILL, "references/cases.md"), "utf8").split("\n").find((line) => line.startsWith("| from scratch |"));
-    assert.ok(scratch.endsWith("; propose the brand and the tokens first, components when a screen asks for them, the user free to add more |"));
-  });
-});
-
 describe("aidd-ui skills", () => {
-  it("are the ones the plugin lists and holds", () => {
+  const texts = (name) => filesUnder(SKILL(name)).map((file) => ({ file: path.relative(SKILL(name), file), text: fs.readFileSync(file, "utf8") }));
+
+  it("are the four the plugin lists and holds", () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(PLUGIN, ".claude-plugin/plugin.json"), "utf8"));
-    assert.deepEqual(manifest.skills, ["./skills/01-system", "./skills/02-journeys"]);
-    assert.deepEqual(fs.readdirSync(path.join(PLUGIN, "skills")).sort(), ["01-system", "02-journeys"]);
+    assert.deepEqual(manifest.skills, FOLDERS.map((name) => `./skills/${name}`));
+    assert.deepEqual(fs.readdirSync(SKILLS).sort(), FOLDERS);
+  });
+
+  it("name no other skill, hold no date or em-dash, in any file", () => {
+    for (const folder of FOLDERS) {
+      const own = new Set([folder, ...fs.readdirSync(path.join(SKILL(folder), "actions")).map((name) => name.replace(/\.md$/, ""))]);
+      for (const { file, text } of texts(folder)) {
+        assert.equal(/[a-z-]+:\d{2}-[a-z-]+/.test(text), false, `${folder}/${file} names a skill as plugin:folder`);
+        for (const [numbered] of text.matchAll(/\b\d{2}-[a-z]+(?:-[a-z]+)*\b/g)) assert.ok(own.has(numbered), `${folder}/${file} names ${numbered}, which is not part of this skill`);
+        assert.equal(/\d{4}[-_]\d{2}[-_]\d{2}/.test(text), false, `${folder}/${file} holds a date`);
+        assert.equal(text.includes("\u2014"), false, `${folder}/${file} holds an em-dash`);
+      }
+    }
+  });
+
+  it("have one author for each kind of record", () => {
+    const authors = new Map();
+    for (const folder of FOLDERS) {
+      const assets = path.join(SKILL(folder), "assets");
+      if (!fs.existsSync(assets)) continue;
+      for (const file of fs.readdirSync(assets).filter((name) => name.endsWith("-template.md"))) {
+        const line = fs.readFileSync(path.join(assets, file), "utf8").split("\n").find((each) => each.startsWith("kind: "));
+        for (const kind of line.slice("kind: ".length).replace(/[{}]/g, "").split(/,| or /).map((each) => each.trim()).filter(Boolean)) authors.set(kind, [...(authors.get(kind) ?? []), folder]);
+      }
+    }
+    assert.deepEqual([...authors.entries()].filter(([, holders]) => holders.length !== 1), []);
+    assert.deepEqual([...authors.keys()].sort(), ["asset", "atom", "brand", "journey", "molecule", "organism", "system", "wireframe"]);
+  });
+
+  it("end saying the user validates each element after its render, in the skills that raise elements", () => {
+    for (const folder of ["03-foundations", "04-components"]) {
+      assert.ok(fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8").includes("each element created or raised is `proposed` until the user, after looking at its render, runs `node <engine> publish <id>`."), folder);
+    }
   });
 });
 
-const JOURNEYS = path.join(PLUGIN, "skills/02-journeys");
+describe("aidd-ui owed problems", () => {
+  const owed = (folder) => {
+    const text = fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8");
+    return text.slice(text.indexOf("## Owed by a later step")).split("\n").filter((line) => line.startsWith("| ")).flatMap((line) => line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? []);
+  };
+  const rulesOf = (dir) => [...new Set(validate(dir).out.slice(1).flatMap((line) => line.split(" ").filter((word) => /^[A-Z]\d+$/.test(word)).slice(0, 1)))].sort();
+
+  it("name, for the brand alone, the one rule it leaves", () => {
+    for (const entry of fs.readdirSync(path.join(tmp, UI))) if (entry !== "brand.md") fs.rmSync(path.join(tmp, UI, entry), { recursive: true });
+    fs.rmSync(path.join(tmp, "src"), { recursive: true });
+    assert.deepEqual(rulesOf(tmp), ["T1"]);
+    for (const rule of rulesOf(tmp)) assert.ok(owed("02-brand").includes(rule), rule);
+  });
+
+  it("name, for a token renamed by the foundations alone, the rules left to the components", () => {
+    engine("bump", "--task", "aidd_docs/tasks/rename", "--change", "action colour renamed", "--breaking", "color.action.default", "--root", tmp);
+    editTokens(tmp, (tree) => {
+      tree.color.action.primary = tree.color.action.default;
+      delete tree.color.action.default;
+    });
+    assert.deepEqual(rulesOf(tmp), ["T7", "V3"]);
+    for (const rule of rulesOf(tmp)) assert.ok(owed("03-foundations").includes(rule), rule);
+  });
+
+  it("name, for the components, the rules a record leaves until its history row and its render exist", () => {
+    assert.deepEqual(owed("04-components"), ["H1", "V1"]);
+  });
+});
 
 const JOURNEY_FILLS = {
   journey: {
@@ -263,7 +299,7 @@ function filledJourney(name) {
   });
 }
 
-describe("aidd-ui 02-journeys templates", () => {
+describe("aidd-ui journeys templates", () => {
   it("validate once filled, a missing component a warning only, and start proposed at version 1", () => {
     const render = filledJourney("wireframe-render");
     put(tmp, `${UI}/journeys/first-search.md`, filledJourney("journey"));
@@ -276,20 +312,7 @@ describe("aidd-ui 02-journeys templates", () => {
   });
 });
 
-describe("aidd-ui 02-journeys skill", () => {
-  const texts = () => filesUnder(JOURNEYS).map((file) => ({ file: path.relative(JOURNEYS, file), text: fs.readFileSync(file, "utf8") }));
-
-  it("names no other skill, holds no date or em-dash, and links nothing outside itself", () => {
-    const own = new Set(["02-journeys", ...fs.readdirSync(path.join(JOURNEYS, "actions")).map((name) => name.replace(/\.md$/, ""))]);
-    for (const { file, text } of texts()) {
-      assert.equal(/[a-z-]+:\d{2}-[a-z-]+/.test(text), false, `${file} names a skill as plugin:folder`);
-      for (const [numbered] of text.matchAll(/\b\d{2}-[a-z]+(?:-[a-z]+)*\b/g)) assert.ok(own.has(numbered), `${file} names ${numbered}, which is not part of this skill`);
-      assert.equal(/\d{4}[-_]\d{2}[-_]\d{2}/.test(text), false, `${file} holds a date`);
-      assert.equal(text.includes("—"), false, `${file} holds an em-dash`);
-      for (const [, target] of text.matchAll(/\]\(([^)#]+)[^)]*\)/g)) assert.ok(path.resolve(JOURNEYS, path.dirname(file), target).startsWith(`${JOURNEYS}${path.sep}`), `${file} links ${target}, outside the skill`);
-    }
-  });
-
+describe("aidd-ui journeys skill", () => {
   it("ends saying each record stays proposed until its review, and names the components the design system lacks", () => {
     const conclude = fs.readFileSync(path.join(JOURNEYS, "actions/03-conclude.md"), "utf8");
     assert.ok(conclude.includes("each journey and wireframe written is `proposed` until its review"));

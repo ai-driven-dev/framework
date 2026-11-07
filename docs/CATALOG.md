@@ -129,11 +129,14 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 🎨 aidd-ui
 
-🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently lays and changes the design system.
+🚧 **Alpha, not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently maps journeys and wireframes, and lays and changes the brand, tokens and components.
 
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
-| `01-system` | Lay a design system from nothing or from the code, and carry a change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
+| `01-journeys` | Write a persona's journeys and the wireframe of each screen they cross | `01-prepare`, `02-write`, `03-conclude` |
+| `02-brand` | Write a project's brand, from its code or from scratch | `01-prepare`, `02-write`, `03-conclude` |
+| `03-foundations` | Lay the system and tokens, from nothing or from the code, and carry a token change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
+| `04-components` | Write components and assets, from nothing or from the code, and carry a component change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
 
 <!--extras-aidd-ui:start-->
 
