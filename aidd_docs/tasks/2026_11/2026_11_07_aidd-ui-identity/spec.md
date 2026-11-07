@@ -63,7 +63,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 
 ## Done-when
 
-- 4a : sur les trois pilotes, le script donne les mêmes erreurs, les mêmes wireframes et un code intact qu'avant la restructuration, et aucune fiche ne porte plus `composition`. Les avertissements suivent les choix du modèle d'une exécution à l'autre et ne comptent pas.
+- 4a : sur les trois pilotes, le script donne les mêmes erreurs, les mêmes wireframes et un code intact qu'avant la restructuration, et aucune fiche ne porte plus `composition`. Les avertissements et `C10`, l'écart entre les valeurs que le modèle écrit et celles du code, suivent ses choix d'une exécution à l'autre et ne comptent pas.
 - 4b : sur le pilote vierge, `02-brand` produit trois directions distinctes, comparées dans la page, et la retenue devient `brand.md` ; un jeu de variantes sans intention ou sans différence est signalé.
 - 4c : sur les trois pilotes, chaque wireframe a son écran ; un contraste sous le seuil et une zone tactile trop petite sont signalés.
 - 4d : un écran et son wireframe revus OK puis publiés passent `validated` ; un verdict sur une version antérieure ne compte pas.

@@ -1,6 +1,6 @@
 # Run: aidd-ui 4a, restructuration
 
-Pilot lines, one per project, from `scripts/aidd-ui-pilot.cjs` (Haiku, restricted tools, the chain of the skills on throwaway copies). Errors, wireframes and code are compared; warnings follow the model's choices and do not count.
+Pilot lines, one per project, from `scripts/aidd-ui-pilot.cjs` (Haiku, restricted tools, the chain of the skills on throwaway copies). Errors, wireframes and code are compared; warnings and `C10` follow the model's choices and do not count.
 
 Both arms ran on fresh copies in the same session. Baseline: the skills of `origin/next` before the restructuration (the journeys skill, then the system skill receiving the brand, foundations and components parts together). After: the four skills of this branch, one request per skill, the parts unchanged. The chats of every copy were deleted by the script; none was left in `~/.claude/projects/` afterwards.
 
@@ -22,7 +22,16 @@ kairos errors C10 warnings C3,C4,R18,V6 wireframes all code untouched
 
 ## Verdict
 
-Errors, wireframes and code are equal per project: blank and Gouvernail have no error, Kairos holds `C10` in both arms. The warnings differ by `C4` on Gouvernail and Kairos, which does not count: it is the colour debt of the code roots the model picked.
+Errors other than `C10`, wireframes and code are equal per project: blank and Gouvernail have no error, Kairos holds only `C10` in both arms. The spec leaves `C10` out of the done-when, so it does not count. The warnings differ by `C4` on Gouvernail and Kairos, which does not count either: it is the colour debt of the code roots the model picked.
+
+## Earlier baseline runs
+
+Two earliest baseline runs on Kairos, in the first format of the script (every id on one list, `validate` in place of `errors` and `warnings`). Neither shows `C10`, so `C10` is not constant in the baseline either.
+
+```txt
+kairos validate C3,R18,V6 wireframes all code untouched
+kairos validate C3,C4,R18 wireframes all code untouched
+```
 
 ## Mutations
 
@@ -45,6 +54,8 @@ Errors, wireframes and code are equal per project: blank and Gouvernail have no 
 | pilot arguments | the missing-checkout guard removed | killed |
 | pilot arguments | the two checkouts swapped | killed |
 | pilot chain | brand, foundations and components in one request | killed |
+| twelve-word test | the rejected brand sentence re-added to `02-brand/actions/02-write.md` | killed |
+| twelve-word test | a three-clause line of 21 words joined by `;` | passes when the test also splits on `;`, killed by the split on `.` `!` `?` alone |
 | level `organism` | `composition` kept in `KIND_KEYS` and `FOLDER_KINDS` | killed |
 | level `organism` | `molecule` and `organism` swapped in `LEVELS` | killed |
 | skills | a fifth folder under `skills/` | killed |
@@ -61,7 +72,7 @@ gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
 kairos errors C10 warnings C3,C4,R18,V6 wireframes all code untouched
 ```
 
-Errors, wireframes and code equal the lines above.
+Errors other than `C10`, wireframes and code equal the lines above.
 
 ## After the strict sentence gate
 
@@ -71,4 +82,4 @@ gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
 kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
 ```
 
-Kairos shows no `C10` here. `C10` is the drift between the tokens the model wrote and the code's token file: the two first baseline runs had none either, so it follows the model's values, not the skills.
+Kairos shows no `C10` here, and the spec does not count it. `C10` is the drift between the tokens the model wrote and the code's token file: the two first baseline runs had none either, so it follows the model's values, not the skills.
