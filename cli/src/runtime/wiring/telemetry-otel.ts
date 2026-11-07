@@ -14,8 +14,15 @@ import {
 } from "../filesystem/installation-identity.js";
 import { userConfigDirOf } from "../user-config-dir.js";
 
-export function runOtelSession(options: Parameters<typeof runOtel>[0]) {
-  return runOtel(options);
+export async function runOtelSession(
+  options: Parameters<typeof runOtel>[0] & { includeInstallationId?: boolean }
+) {
+  const installationId = options.includeInstallationId
+    ? await checkInstallationId(userConfigDirOf(process.env, homedir()))
+    : undefined;
+  if (options.includeInstallationId && !installationId)
+    throw new Error("No AIDD installation ID exists. Run framework setup before including it.");
+  return runOtel({ ...options, installationId: installationId ?? undefined });
 }
 
 export function collectOtel(port: number) {

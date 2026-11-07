@@ -47,7 +47,7 @@ The Gouvernail AI KPI view uses provider OpenTelemetry (OTel) signals only. The 
 | Identifier | Purpose and storage | Sent to Gouvernail? |
 | --- | --- | --- |
 | Local report name | Optional label in `~/.config/aidd/telemetry/identity.json`; the current label is applied when reporting, not recorded as proof per call. | No. |
-| Installation UUID | Stable ID in `~/.config/aidd/installation/id.json`; not a login or credential. | Not currently. |
+| Installation UUID | Stable ID in `~/.config/aidd/installation/id.json`; not a login or credential. | Only with `otel run --include-installation-id`, as `aidd.installation.id`. |
 | Provider identity | Email, account or organization ID when emitted. Gouvernail must match an approved active member to attribute a session. | Allowlisted identifiers may be sent by `otel run`. |
 
 The default paths can change with the configured user directory. A connector bearer token authorizes the destination connection; it does not identify the person.
@@ -83,7 +83,7 @@ Codex: trust the plugin's hooks once, with `/hooks` in the TUI.
 - Data lives in `~/.config/aidd/telemetry` and the clone's git config.
 - You are named only if you choose to be.
 - `AIDD_TELEMETRY=0` refuses AIDD usage measurement everywhere.
-- Framework setup creates a stable installation UUID at `~/.config/aidd/installation/id.json` (or under the configured user directory), independently of the optional person label. It is not a credential or a login; telemetry setup creates it for older installations. It is retained when telemetry is forgotten. It is not yet attached to usage records or linked to an account.
+- Framework setup creates a stable installation UUID at `~/.config/aidd/installation/id.json` (or under the configured user directory), independently of the optional person label. It is not a credential or a login; telemetry setup creates it for older installations. It is retained when telemetry is forgotten. It is not linked to an account or attached to local usage records. The optional `otel run --include-installation-id` adds it to that execution's outgoing OTLP resources; it does not authenticate a person.
 
 ## Provider OpenTelemetry
 

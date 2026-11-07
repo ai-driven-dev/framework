@@ -5,6 +5,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { isDeepStrictEqual } from "node:util";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import { CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, type SyncConfig } from "../settings.js";
+import { attachInstallationId, checkInstallationClaim } from "./installation-attribute.js";
 import { readAttributeValue } from "./read-attribute-value.js";
 import { seriesFingerprint } from "./series-fingerprint.js";
 
@@ -18,6 +19,7 @@ export interface SyncOptions {
   readonly follow: boolean;
   readonly signal?: AbortSignal;
   readonly intervalMs?: number;
+  readonly installationId?: string;
 }
 
 type RecordObject = Record<string, unknown>;
@@ -396,6 +398,7 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
   }
   const envelope = object(parsed);
   const payload = object(envelope.payload);
+  if (options.installationId) checkInstallationClaim(payload, options.installationId);
   const out: Transfer[] = [];
   const sessionKey = options.config === CLAUDE_CONFIG_ID ? "session.id" : "conversation.id";
   if (envelope.signal === "logs") {
@@ -549,7 +552,17 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
       }
     }
   }
-  return out;
+  const installationId = options.installationId;
+  return installationId
+    ? out.map((transfer) => ({
+        ...transfer,
+        payload: attachInstallationId(
+          transfer.payload,
+          transfer.signal === "logs" ? "resourceLogs" : "resourceMetrics",
+          installationId
+        ),
+      }))
+    : out;
 }
 
 export function destination(options: SyncOptions, signal: "logs" | "metrics"): URL {

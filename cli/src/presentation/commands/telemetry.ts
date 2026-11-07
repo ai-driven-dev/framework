@@ -224,6 +224,7 @@ export function registerTelemetryCommand(program: Command): void {
       "Send a second prompt in the same session (Claude and Codex retain local history)"
     )
     .option("--include-repository", "Include repository metadata for Claude Code")
+    .option("--include-installation-id", "Send the AIDD installation ID (not a user identity)")
     .option("--keep-capture", "Retain the private local OTLP capture")
     .action(
       async (
@@ -236,6 +237,7 @@ export function registerTelemetryCommand(program: Command): void {
           model?: string;
           followUp?: string;
           includeRepository?: boolean;
+          includeInstallationId?: boolean;
           keepCapture?: boolean;
         }
       ) => {

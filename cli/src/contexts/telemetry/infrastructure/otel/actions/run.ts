@@ -17,6 +17,7 @@ import {
   readToken,
 } from "../settings.js";
 import { startOtelCollector } from "./collect.js";
+import { attachInstallationId, checkInstallationClaim } from "./installation-attribute.js";
 import { hasOpenCodePlugin } from "./opencode-plugin-file.js";
 import {
   type OpenCodePluginLog,
@@ -34,6 +35,7 @@ type RunOptions = {
   prompt: string;
   followUp?: string;
   includeRepository?: boolean;
+  installationId?: string;
   model?: string;
   retainCapture?: (path: string) => void;
   signal: AbortSignal;
@@ -539,6 +541,8 @@ export async function runOtel(options: RunOptions): Promise<number> {
       let rootSession: string | undefined;
       for await (const line of lines) {
         if (!line.trim()) continue;
+        if (options.installationId)
+          checkInstallationClaim(JSON.parse(line), options.installationId);
         for (const payload of openCodePromptSpans(line)) {
           const session = promptSession(payload);
           if (!session || (rootSession && rootSession !== session))
@@ -563,9 +567,14 @@ export async function runOtel(options: RunOptions): Promise<number> {
         );
       if (!related.some((log) => log.session === rootSession))
         throw new Error("OpenCode telemetry plugin did not emit any session observations.");
-      const logsBody = JSON.stringify({
+      const logsPayload = {
         resourceLogs: related.flatMap((log) => list(asPlainObject(log.payload)?.resourceLogs)),
-      });
+      };
+      const logsBody = JSON.stringify(
+        options.installationId
+          ? attachInstallationId(logsPayload, "resourceLogs", options.installationId)
+          : logsPayload
+      );
       if (Buffer.byteLength(logsBody, "utf8") > 2 * 1024 * 1024)
         throw new Error(
           "OpenCode observations exceed the receiver's 2 MiB limit; nothing was sent."
@@ -579,7 +588,11 @@ export async function runOtel(options: RunOptions): Promise<number> {
             authorization: `Bearer ${options.token}`,
             "content-type": "application/json",
           },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(
+            options.installationId
+              ? attachInstallationId(payload, "resourceSpans", options.installationId)
+              : payload
+          ),
         });
         if (!response.ok)
           throw new Error(`Gouvernail rejected OpenCode traces: HTTP ${response.status}.`);
