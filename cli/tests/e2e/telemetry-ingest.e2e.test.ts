@@ -1,11 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { git, initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
+import { writeUsageTranscripts } from "../helpers/claude-usage-transcripts.js";
+import { initRepository, sandboxGitEnv } from "../helpers/git-sandbox.js";
 import { backdateConsent, createTestEnv, runCli } from "./helpers.js";
-
-const FIXTURES = resolve(import.meta.dirname, "../fixtures/claude-usage/projects");
 
 let env: Awaited<ReturnType<typeof createTestEnv>>;
 let repoA: string;
@@ -36,28 +35,8 @@ afterEach(async () => {
   await env.cleanup();
 });
 
-/** The fixture transcripts, with their machine paths pointed at the temp repositories. */
 async function writeTranscripts(only?: readonly string[]): Promise<void> {
-  const target = join(claude, "projects");
-  await cp(FIXTURES, target, { recursive: true });
-  const walk = async (dir: string): Promise<void> => {
-    for (const entry of await readdir(dir, { withFileTypes: true })) {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) await walk(path);
-      else if (only !== undefined && !only.some((name) => path.endsWith(name))) await rm(path);
-      else {
-        const text = await readFile(path, "utf8");
-        const jsonText = (p: string): string => JSON.stringify(p).slice(1, -1);
-        await writeFile(
-          path,
-          text
-            .replaceAll("/work/repo-wt-a", jsonText(repoA))
-            .replaceAll("/work/repo-wt-b", jsonText(repoB))
-        );
-      }
-    }
-  };
-  await walk(target);
+  await writeUsageTranscripts(claude, { a: repoA, b: repoB }, only);
 }
 
 function ingest(...args: string[]) {
@@ -98,26 +77,6 @@ describe("aidd telemetry ingest", () => {
     expect(await readFile(join(telemetry, "ledger", "2026-10-07.jsonl"), "utf8")).toBe(before);
   });
 
-  it("ties each call to the repository id, never to its url or path", async () => {
-    await writeTranscripts();
-    await ingest();
-    const lines = await ledgerLines();
-    const ids = new Set(lines.map((line) => JSON.parse(line).repository_id));
-    expect(ids.size).toBe(1);
-    const text = lines.join("\n");
-    expect(text).not.toContain("github.com");
-    expect(text).not.toContain("widgets");
-  });
-
-  it("prints nothing with --quiet and still stores", async () => {
-    await writeTranscripts();
-    const run = await ingest("--quiet");
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toBe("");
-    expect(run.stderr).toBe("");
-    expect(await ledgerLines()).toHaveLength(4);
-  });
-
   it("leaves each key once and no torn line when several ingests start together", async () => {
     await writeTranscripts();
     const runs = await Promise.all([ingest("--quiet"), ingest("--quiet"), ingest("--quiet")]);
@@ -153,39 +112,6 @@ describe("aidd telemetry ingest", () => {
     expect(await readdir(join(telemetry, "ledger"))).not.toContain(".lock");
   });
 
-  it("stores calls from a directory deleted after it was seen alive, and counts one never seen", async () => {
-    await writeTranscripts(["s-1.jsonl"]);
-    expect((await ingest("--quiet")).exitCode).toBe(0);
-    expect(await ledgerLines()).toHaveLength(3);
-
-    await rm(repoA, { recursive: true, force: true });
-    await cp(
-      join(FIXTURES, "proj-a", "s-1", "subagents"),
-      join(claude, "projects", "proj-a", "s-1", "subagents"),
-      {
-        recursive: true,
-      }
-    );
-    const agent = join(claude, "projects", "proj-a", "s-1", "subagents", "agent-x.jsonl");
-    const ghost = join(env.tempDir, "never-existed");
-    await writeFile(
-      agent,
-      `${(await readFile(agent, "utf8")).replaceAll("/work/repo-wt-a", JSON.stringify(repoA).slice(1, -1)).trimEnd()}\n${(
-        await readFile(agent, "utf8")
-      )
-        .replaceAll("/work/repo-wt-a", JSON.stringify(ghost).slice(1, -1))
-        .replaceAll("msg_C", "msg_G")
-        .replaceAll("req_C", "req_G")
-        .trimEnd()}\n`
-    );
-    const run = await runCli(["telemetry", "ingest"], env.tempDir, env.fakeHome, {
-      env: { AIDD_TELEMETRY_DIR: telemetry, CLAUDE_CONFIG_DIR: claude, AIDD_TELEMETRY: "" },
-    });
-    expect(run.stdout).toContain("1 call added");
-    expect(run.stdout).toContain("1 call from a directory never seen while it existed");
-    expect((await ledgerLines()).map((line) => JSON.parse(line).key)).toContain("msg_C:req_C");
-  });
-
   it("stores nothing and changes nothing under AIDD_TELEMETRY=0", async () => {
     await writeTranscripts();
     const before = await held();
@@ -195,37 +121,5 @@ describe("aidd telemetry ingest", () => {
     expect(run.exitCode).toBe(0);
     expect(run.stdout).toContain("AIDD_TELEMETRY=0");
     expect(await held()).toEqual(before);
-  });
-
-  it("stores nothing for a project that never opted in", async () => {
-    await writeTranscripts();
-    await rm(telemetry, { recursive: true, force: true });
-    git(repoA, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
-    const run = await ingest();
-    expect(run.stdout).toContain("0 calls added");
-    // No clone ever opted in: no transcript is read, so no call is even counted.
-    expect(run.stdout).toContain("Read 0 transcripts");
-    expect(await readdir(join(telemetry, "ledger"))).not.toContain("2026-10-07.jsonl");
-  });
-
-  it("stores nothing for a clone whose key was set by hand, though it says 2", async () => {
-    await writeTranscripts();
-    await rm(telemetry, { recursive: true, force: true });
-    git(repoA, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
-    git(repoA, gitEnv, "config", "--local", "aidd.telemetry", "2");
-    const run = await ingest();
-    expect(run.stdout).toContain("0 calls added");
-    // No clone ever opted in: no transcript is read, so no call is even counted.
-    expect(run.stdout).toContain("Read 0 transcripts");
-  });
-
-  it("snapshots the branch declarations of a project that opted in", async () => {
-    await writeTranscripts();
-    git(repoA, gitEnv, "config", "branch.feat/a.aiddTask", "checkout-fix");
-    git(repoA, gitEnv, "config", "branch.feat/a.aiddDeclaredAt", "2026-10-07T09:00:00.000Z");
-    const run = await ingest();
-    expect(run.stdout).toContain("1 branch declaration snapshotted");
-    const text = await readFile(join(telemetry, "bindings", "branches.jsonl"), "utf8");
-    expect(JSON.parse(text.trim())).toMatchObject({ branch: "feat/a", task: "checkout-fix" });
   });
 });

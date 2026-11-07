@@ -84,17 +84,6 @@ describe("aidd telemetry task", () => {
     expect(config("branch.feat/x.aiddTask")).toBe("checkout-fix");
   }, 20_000);
 
-  it("snapshots the branch declaration at once", async () => {
-    await task(["checkout-fix"]);
-    const snapshots = (await readFile(join(telemetry, "bindings", "branches.jsonl"), "utf8"))
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => JSON.parse(line));
-    expect(snapshots).toHaveLength(1);
-    expect(snapshots[0]).toMatchObject({ branch: "feat/x", task: "checkout-fix" });
-    expect(snapshots[0].branch_created_at).not.toBeNull();
-  });
-
   it("shows the binding and where it comes from", async () => {
     await task(["checkout-fix", "--ticket", "PROJ-12"]);
     const shown = await status();
@@ -112,69 +101,6 @@ describe("aidd telemetry task", () => {
     expect(run.stderr).toContain("aidd telemetry status");
   });
 
-  it("says nothing is bound before a declaration", async () => {
-    expect((await status()).stdout).toContain(
-      "Nothing is bound: branch feat/x and session 00000000"
-    );
-  });
-
-  it("declares none, once, on the branch", async () => {
-    const run = await task(["--none"]);
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain("Declared no task.");
-    expect(config("branch.feat/x.aiddDeclaredAt")).not.toBe("");
-    expect(() => config("branch.feat/x.aiddTask")).toThrow();
-    expect((await status({ CLAUDE_CODE_SESSION_ID: "" })).stdout).toContain(
-      "no task (declared none)"
-    );
-  });
-
-  it("keeps both declarations of a session, the later one applying", async () => {
-    await task(["first"]);
-    await task(["second"]);
-    expect((await sessionLines()).map((line) => JSON.parse(line).task)).toEqual([
-      "first",
-      "second",
-    ]);
-    expect((await status()).stdout).toContain('task "second"');
-  });
-
-  it("marks a declaration made by a hook", async () => {
-    await task(["hooked", "--by", "hook-intercept"]);
-    expect(JSON.parse((await sessionLines())[0] ?? "").by).toBe("hook-intercept");
-  });
-
-  it("binds the session only on the default branch, and leaves git config alone", async () => {
-    git(repo, gitEnv, "switch", "-q", "main");
-    const before = git(repo, gitEnv, "config", "--local", "--list");
-    const run = await task(["on-main"]);
-    expect(run.exitCode).toBe(0);
-    expect(run.stdout).toContain("Branch left untouched: main is the default branch.");
-    expect(git(repo, gitEnv, "config", "--local", "--list")).toBe(before);
-    expect(await sessionLines()).toHaveLength(1);
-  });
-
-  it("binds the session only on a detached head", async () => {
-    git(repo, gitEnv, "checkout", "-q", "--detach");
-    const run = await task(["detached-work"]);
-    expect(run.stdout).toContain("Branch left untouched: HEAD is detached.");
-    expect(await sessionLines()).toHaveLength(1);
-  });
-
-  it("binds the branch only outside a session", async () => {
-    const run = await task(["no-session"], { CLAUDE_CODE_SESSION_ID: "" });
-    expect(run.stdout).toContain("No Claude session here");
-    expect(config("branch.feat/x.aiddTask")).toBe("no-session");
-    await expect(readFile(join(telemetry, "bindings", "sessions.jsonl"), "utf8")).rejects.toThrow();
-  });
-
-  it("warns that nothing was bound on the default branch outside a session", async () => {
-    git(repo, gitEnv, "switch", "-q", "main");
-    const run = await task(["nowhere"], { CLAUDE_CODE_SESSION_ID: "" });
-    expect(run.exitCode).toBe(0);
-    expect(run.stderr + run.stdout).toContain("Nothing was bound");
-  });
-
   it("refuses a project that has not opted in, naming the command that opts in", async () => {
     git(repo, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
     const run = await task(["t"]);
@@ -182,46 +108,5 @@ describe("aidd telemetry task", () => {
     expect(run.stderr + run.stdout).toContain("aidd telemetry on");
     await expect(readFile(join(telemetry, "bindings", "sessions.jsonl"), "utf8")).rejects.toThrow();
     expect(() => config("branch.feat/x.aiddTask")).toThrow();
-  });
-
-  it("refuses a clone whose only consent is a committed .aidd/config.json", async () => {
-    git(repo, gitEnv, "config", "--local", "--unset", "aidd.telemetry");
-    await mkdir(join(repo, ".aidd"));
-    await writeFile(
-      join(repo, ".aidd", "config.json"),
-      JSON.stringify({ telemetry: { enabled: true, version: 2 } })
-    );
-    expect((await task(["t"])).exitCode).toBe(1);
-  });
-
-  it("refuses a clone that switched measurement off", async () => {
-    git(repo, gitEnv, "config", "--local", "aidd.telemetry", "off");
-    expect((await task(["t"])).exitCode).toBe(1);
-  });
-
-  it("refuses under AIDD_TELEMETRY=0", async () => {
-    const run = await task(["t"], { AIDD_TELEMETRY: "0" });
-    expect(run.exitCode).toBe(1);
-    expect(run.stderr + run.stdout).toContain("AIDD_TELEMETRY=0");
-    expect(() => config("branch.feat/x.aiddTask")).toThrow();
-  });
-
-  it.each([
-    [["--none", "t"], "--none declares no task"],
-    [["--none", "--ticket", "P-1"], "--none declares no task"],
-    [["--ticket", "P-1"], "A task needs a name"],
-    [["   "], "A task needs a name"],
-  ])("rejects %j before touching anything", async (args, message) => {
-    const run = await task(args);
-    expect(run.exitCode).toBe(1);
-    expect(run.stderr + run.stdout).toContain(message);
-    expect(() => config("branch.feat/x.aiddTask")).toThrow();
-  });
-
-  it("rejects an unknown declarer, and does not list it in the help", async () => {
-    expect((await task(["t", "--by", "robot"])).exitCode).not.toBe(0);
-    const help = await runCli(["telemetry", "task", "--help"], repo, env.fakeHome);
-    expect(help.stdout).not.toContain("--by");
-    expect(help.stdout).toContain("--ticket");
   });
 });

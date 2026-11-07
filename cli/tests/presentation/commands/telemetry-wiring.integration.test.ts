@@ -400,11 +400,23 @@ describe("aidd telemetry task", () => {
     expect(declare).not.toHaveBeenCalled();
   });
 
-  it("refuses --none with a name or a ticket, and a ticket with no name", async () => {
-    expect(await run("task", "--none", "x")).toBe(1);
-    expect(await run("task", "--none", "--ticket", "P-1")).toBe(1);
-    expect(await run("task", "--ticket", "P-1")).toBe(1);
+  it.each([
+    [["--none", "t"], "--none declares no task"],
+    [["--none", "--ticket", "P-1"], "--none declares no task"],
+    [["--ticket", "P-1"], "A task needs a name"],
+    [["   "], "A task needs a name"],
+  ])("refuses %j before declaring anything, and says why", async (args, message) => {
+    expect(await run("task", ...args)).toBe(1);
+    expect(stderr()).toContain(message);
     expect(declare).not.toHaveBeenCalled();
+  });
+
+  it("refuses an unknown declarer, and does not list it in the help", async () => {
+    await expect(run("task", "t", "--by", "robot")).rejects.toMatchObject({ exitCode: 1 });
+    expect(declare).not.toHaveBeenCalled();
+    await expect(run("task", "--help")).rejects.toMatchObject({ exitCode: 0 });
+    expect(stdout()).not.toContain("--by");
+    expect(stdout()).toContain("--ticket");
   });
 
   it("exits 1 when the declaration is refused", async () => {
