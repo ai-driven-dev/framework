@@ -6,7 +6,7 @@ Run Claude Code, Codex and OpenCode v2 with OpenTelemetry (OTel), then inspect t
 
 ### 1) ⚙️ Prepare the collector destination
 
-Start local Gouvernail and configure each tool's connector. In Sources, generate a token for an explicit team, member and installation UUID. Rotating a token replaces the previous token for that tool and organization. The member is the token's declared assignee, not proof of the person using it. Existing shared tokens retain their previous declarative attribution. For each tool, set `AIDD_OTEL_TOKEN` to its connector token in your shell without publishing it. The examples use the local tenant `ai-driven-dev` and loopback port `55857`; adjust them for your setup.
+Start local Gouvernail and configure each tool's connector. A passkey-verified administrator generates tokens in Sources for an explicit team, member and installation UUID. Rotating a token replaces the previous token for that tool and organization. The member is the token's declared assignee, not proof of the person using it. Existing shared tokens retain their previous declarative attribution. For each tool, set `AIDD_OTEL_TOKEN` to its connector token in your shell without publishing it. The examples use the local tenant `ai-driven-dev` and loopback port `55857`; adjust them for your setup.
 
 | Tool | Connector token |
 | --- | --- |
