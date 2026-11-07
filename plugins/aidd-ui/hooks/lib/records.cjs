@@ -1,8 +1,8 @@
-// R1 to R17: the shape of each record and how records point at one another.
+// R1 to R18: the shape of each record and how records point at one another.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
-const { checkOf, ERROR, HISTORY_FILE } = require("./project.cjs");
+const { checkOf, ERROR, WARNING, HISTORY_FILE } = require("./project.cjs");
 const { breakpointsOf, STEPS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
@@ -248,6 +248,18 @@ function usageProblems(project) {
     .map((record) => problem(record, `lacks "## ${USAGE_SECTION}", saying when to use it and when not`, `add a "## ${USAGE_SECTION}" section saying when to use it and when not`));
 }
 
+/** A wireframe comes before the components it expects: one the design system lacks informs. */
+function expectedProblems(project) {
+  const index = byId(project);
+  return placed(project)
+    .filter((record) => fm(record).kind === "wireframe")
+    .flatMap((record) =>
+      list(fm(record).uses)
+        .filter((id) => !(index.has(id) && isComponent(index.get(id))))
+        .map((id) => ({ ...problem(record, `expects component "${id}", which the design system does not hold yet`, "add the component to the design system before a screen dresses this wireframe", id), severity: WARNING }))
+    );
+}
+
 /** The one problem a system.md written for another format earns, since every rule would misread
  * it; null when the format is this one or not stated, which R3 names. */
 function formatProblem(project) {
@@ -274,6 +286,7 @@ const RULES = {
   R15: assetProblems,
   R16: reviewStatusProblems,
   R17: usageProblems,
+  R18: expectedProblems,
 };
 
 /** Every broken record rule, in rule order. */

@@ -259,6 +259,11 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${JOURNEY}: platforms is for components and screens, never a journey`]);
     });
 
+    it("names platforms on a wireframe, which no platform holds", () => {
+      change(WIREFRAME, "zones: [query, results]", "zones: [query, results]\nplatforms: [web]");
+      assert.deepEqual(problems(), [`${WIREFRAME}: platforms is for components and screens, never a wireframe`]);
+    });
+
     it("accepts platforms that are a subset of the system's", () => {
       change(BUTTON, "role: button", "role: button\nplatforms: [web]");
       assert.deepEqual(problems(), []);
@@ -342,6 +347,17 @@ describe("aidd-ui records and history", () => {
     it("names a journey that does not describe its persona", () => {
       change(JOURNEY, "## Persona\n\nAn analyst opening the product for the first time, looking for one answer.\n\n", "");
       assert.deepEqual(problems(), [`${JOURNEY}: lacks "## Persona", describing who walks it`]);
+    });
+  });
+
+  describe("R18 expected components", () => {
+    it("warns of an expected component the design system does not hold yet, and never errs for it", () => {
+      change(WIREFRAME, "uses: [search-field]", "uses: [search-field, filter-chip, home]");
+      const found = ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R18");
+      assert.deepEqual(found.map((problem) => [problem.severity, problem.message]), [
+        ["warning", 'expects component "filter-chip", which the design system does not hold yet'],
+        ["warning", 'expects component "home", which the design system does not hold yet'],
+      ]);
     });
   });
 
@@ -736,6 +752,8 @@ const FIXES = [
   "R15 | file \"missing.svg\" does not exist beside it | \"missing.svg\" | add the file beside the record, or correct file",
   "R16 | status \"deprecated\" is for elements: reviews are proposed or validated | \"deprecated\" | set status to proposed or validated",
   "R17 | lacks \"## Usage\", saying when to use it and when not | - | add a \"## Usage\" section saying when to use it and when not",
+  "R18 | expects component \"filter-chip\", which the design system does not hold yet | \"filter-chip\" | add the component to the design system before a screen dresses this wireframe",
+  "R18 | expects component \"home\", which the design system does not hold yet | \"home\" | add the component to the design system before a screen dresses this wireframe",
   "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"wireframe\" does not belong in screens/ | \"wireframe\" | move it to the folder of its kind, or change its kind",
@@ -777,6 +795,7 @@ const FIXES = [
   "R8 | platform \"android\" is not in system.md | \"android\" | list a platform system.md declares, or declare it there",
   "R8 | platform \"ios\" is not in system.md | \"ios\" | list a platform system.md declares, or declare it there",
   "R8 | platforms is for components and screens, never a journey | \"platforms\" | remove it from the front matter",
+  "R8 | platforms is for components and screens, never a wireframe | \"platforms\" | remove it from the front matter",
   "R9 | replaced-by \"ghost\", which no record has | \"ghost\" | point replaced-by at an existing record, or none",
   "R9 | replaced-by \"old-button\" is deprecated too | \"old-button\" | point replaced-by at a record that is not deprecated",
   "R9 | replaced-by none needs a \"## Deprecation\" section saying why | - | add a \"## Deprecation\" section saying why",
