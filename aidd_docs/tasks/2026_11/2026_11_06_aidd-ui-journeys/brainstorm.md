@@ -13,7 +13,7 @@ Une personne qui conçoit l'UI avec une IA est guidée des personas au code vér
 - Le persona est demandé à la personne ; un persona déjà décrit dans un brief est repris. Le parcours porte son nom et sa description : aucun brief n'en donne un identifiant stable, et `aidd-ui` n'écrit jamais un brief.
 - Un parcours (`journeys/<id>.md`) nomme son persona et ses étapes, chaque étape un écran ; une étape sans écran crée un wireframe vide en `proposed`.
 - Un wireframe est un fichier à part (`wireframes/<id>.md` et `.html`) : zones nommées, composants attendus, états, aucun token ni couleur.
-- Un écran porte le même identifiant que son wireframe et le cite par `wireframe: <id>@<version>` : un wireframe qui monte de version met l'écran en retard, et le moteur vérifie que l'écran couvre chaque zone et chaque état.
+- Un écran cite son wireframe par `wireframe: <id>@<version>`, chacun sous son propre identifiant, unique comme toute fiche : un wireframe qui monte de version met l'écran en retard, et le moteur vérifie que l'écran couvre chaque zone et chaque état.
 - Sur une app existante, parcours et wireframes se déduisent de ses écrans réels, puis la personne les confirme.
 - Un écran se dessine sans parcours. La skill d'écran ne crée jamais de composant : il en manque un, elle s'arrête et renvoie au design system.
 - La review juge par écran, état et version, dans une page statique. Un écran déjà codé exige une capture de l'app réelle, fournie par les outils de test ; `aidd-ui` ne lance jamais l'app.
