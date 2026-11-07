@@ -368,7 +368,8 @@ test("the sheet asset fixes the grammar the engine parses, the four blocks and t
   assert.match(asset, /eight/u);
   assert.match(asset, /Capabilities: C1/u, "no capability line");
   assert.match(asset, /no backticks, line number or glob/u);
-  assert.doesNotMatch(asset, /Base|create/u, "a scope word other than setup, refresh, check, or a base before the update phase");
+  assert.match(asset, /- Base: <short id> <commit subject>/u, "an update's header carries its base and its commit subject");
+  assert.doesNotMatch(asset, /create/u, "a scope word other than setup, refresh, check");
   assert.equal(fs.existsSync(path.join(SKILL, "assets/scan-summary.md")), false, "the sheet is the one view: no second summary");
 });
 

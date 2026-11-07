@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: An update starts from what changed
@@ -12,19 +12,28 @@ status: pending
 .
 ├── aidd_docs/tasks/2026_11/2026_11_06_project-memory-challenge/
 │   └── phase-4.md ✏️
+├── cli/tests/fixtures/hooks-routes/ ✏️
 ├── plugins/
 │   └── aidd-context/
 │       ├── hooks/
-│       │   └── memory.cjs ✏️
+│       │   ├── memory.cjs ✏️
+│       │   └── lib/
+│       │       ├── bank-guard.cjs ✏️
+│       │       └── changes.cjs ✅
 │       └── skills/
 │           └── 02-project-memory/
+│               ├── SKILL.md ✏️
 │               ├── actions/
-│               │   └── 04-sync.md ✏️
-│               └── assets/
-│                   └── fact-sheet.md ✏️
+│               │   ├── 01-scan.md ✏️
+│               │   └── 03-check.md ✏️
+│               ├── assets/
+│               │   └── fact-sheet.md ✏️
+│               └── references/
+│                   └── review-protocol.md ✏️
 └── scripts/
     └── __tests__/
-        └── memory-check.test.js ✏️
+        ├── memory-check.test.js ✏️
+        └── memory-skill-files.test.js ✏️
 ```
 
 ## Test Scope

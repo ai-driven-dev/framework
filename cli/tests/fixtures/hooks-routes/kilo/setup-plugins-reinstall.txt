@@ -4,6 +4,9 @@ hook files unchanged by the second run: true
 ## project/.kilo/hooks/aidd-context/lib/bank-guard.cjs
 script, identical to the plugin source
 
+## project/.kilo/hooks/aidd-context/lib/changes.cjs
+script, identical to the plugin source
+
 ## project/.kilo/hooks/aidd-context/lib/common-rules.cjs
 script, identical to the plugin source
 
@@ -422,8 +425,9 @@ export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 
 
 # recorded
-project kilo aidd-context scope=project: 7 hook files
+project kilo aidd-context scope=project: 8 hook files
   .kilo/hooks/aidd-context/lib/bank-guard.cjs
+  .kilo/hooks/aidd-context/lib/changes.cjs
   .kilo/hooks/aidd-context/lib/common-rules.cjs
   .kilo/hooks/aidd-context/lib/fact-sheet.cjs
   .kilo/hooks/aidd-context/lib/host.cjs

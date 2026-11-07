@@ -12,7 +12,7 @@ D lines added to the sheet; on a check request, the printed report.
 
 ## Process
 
-1. **Content.** Review the files a row produces or lists under Accepted names one at a time, each against the files that define its facts, per [review-protocol.md](../references/review-protocol.md).
+1. **Content.** Take the output of the Engine's `changes`, running it when the request is check. Review per [review-protocol.md](../references/review-protocol.md): scope update, only the lines and files it names; scope audit, the files a row produces or lists under Accepted names, one at a time, against the files that define its facts.
 2. **Format.** Last of the reading, run the engine's whole-bank check once. Errors on the files a row produces or lists under Accepted names become findings, never a team file's; count its warnings in the report and do not investigate them.
 3. **Structure.** Take the structure findings of that run against [capabilities.md](../references/capabilities.md), never judge them.
    - A root file no row produces is the team's: keep it.

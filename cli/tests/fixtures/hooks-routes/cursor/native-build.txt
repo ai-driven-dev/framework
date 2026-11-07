@@ -38,6 +38,9 @@
 ## out-marketplace/plugins/aidd-context/hooks/lib/bank-guard.cjs
 script, identical to the plugin source
 
+## out-marketplace/plugins/aidd-context/hooks/lib/changes.cjs
+script, identical to the plugin source
+
 ## out-marketplace/plugins/aidd-context/hooks/lib/common-rules.cjs
 script, identical to the plugin source
 

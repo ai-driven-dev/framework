@@ -45,6 +45,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [bank-guard.cjs](hooks/lib/bank-guard.cjs) |
+| [changes.cjs](hooks/lib/changes.cjs) |
 | [common-rules.cjs](hooks/lib/common-rules.cjs) |
 | [fact-sheet.cjs](hooks/lib/fact-sheet.cjs) |
 | [host.cjs](hooks/lib/host.cjs) |

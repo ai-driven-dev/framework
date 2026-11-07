@@ -715,6 +715,317 @@ test("vanished: reads the repository of the root even when a hook exported GIT_D
   }
 });
 
+// changes: what an update starts from, read-only, computed from the last commit that touched the bank
+
+const BANK_TEXT = "# Map\n\n- Entry: app/a.ts starts it\n- Three workspace packages in total.\n- Unrelated: app/b.ts\n";
+
+/** A repository whose first commit holds the bank, then `after(root)` runs; returns the root. */
+function history(after, memory = { "codebase-map.md": BANK_TEXT, "vcs.md": "# V\n\n- hooks run `make lint-all`\n" }) {
+  const root = project(memory, { "app/a.ts": "a\n", "app/b.ts": "b\n", Makefile: "check:\n", "pnpm-workspace.yaml": "packages: [a]\n" });
+  git(root, "init", "-q");
+  commitAll(root, "bank written");
+  after(root);
+  return root;
+}
+
+function commitAll(root, message) {
+  git(root, "add", "-A");
+  git(root, "commit", "-q", "-m", message);
+}
+
+/** What `changes` prints on `root`, which it must leave byte-identical. */
+function changes(root, ...args) {
+  const before = treeState(root);
+  const run = engine("changes", root, ...args);
+  assert.deepEqual(treeState(root), before, "changes wrote to the tree");
+  return run;
+}
+
+const cleanup = (...roots) => roots.forEach((root) => fs.rmSync(root, { recursive: true, force: true }));
+
+test("changes: after a bank commit then a code commit it names the base, the changed file and the memory line citing it", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    write(dir, "app/new.ts", "n\n");
+    commitAll(dir, "code moved on");
+  });
+  try {
+    const run = changes(root);
+    const base = git(root, "rev-parse", "--short", "HEAD~1");
+    assert.equal(run.status, 0, run.stderr);
+    assert.match(run.stdout, /^scope: update$/mu);
+    assert.ok(run.stdout.includes(`base: ${base} bank written`), run.stdout);
+    assert.match(run.stdout, /^changed \(2\):\n- app\/a\.ts\n- app\/new\.ts$/mu);
+    assert.match(run.stdout, /aidd_docs\/memory\/codebase-map\.md:3 cites app\/a\.ts/u);
+    assert.doesNotMatch(run.stdout, /app\/b\.ts/u, "an unchanged path is named");
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: uncommitted and untracked files are changed files, and the bank's own files are not", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "edited\n");
+    write(dir, "app/untracked.ts", "u\n");
+    write(dir, `${MEMORY}/vcs.md`, "# V\n\n- hooks run `make check`\n");
+  });
+  try {
+    const run = changes(root);
+    assert.match(run.stdout, /^- app\/a\.ts$/mu);
+    assert.match(run.stdout, /^- app\/untracked\.ts$/mu);
+    assert.match(run.stdout, /^changed \(2\):$/mu, "the bank's own edit is counted");
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a deleted path that a memory line cites is named with that line", () => {
+  const root = history((dir) => {
+    fs.rmSync(path.join(dir, "app/b.ts"));
+    commitAll(dir, "drop b");
+  });
+  try {
+    assert.match(changes(root).stdout, /codebase-map\.md:5 cites app\/b\.ts/u);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a changed defining file names the bank files of its capability, and no other", () => {
+  const memory = Object.fromEntries(["architecture.md", "codebase-map.md", "coding-assertions.md", "testing.md", "vcs.md", "deployment.md"].map((name) => [name, "# T\n"]));
+  const root = history((dir) => {
+    write(dir, "pnpm-workspace.yaml", "packages: [a, b]\n");
+    write(dir, "app/package.json", "{}\n");
+    write(dir, "Makefile", "check:\n\techo\n");
+    commitAll(dir, "defining files");
+  }, memory);
+  try {
+    const out = changes(root).stdout;
+    assert.match(out, /memory\/architecture\.md: app\/package\.json, pnpm-workspace\.yaml \(manifest/u, "every changed defining file of the category is named");
+    assert.match(out, /memory\/codebase-map\.md: app\/package\.json, pnpm-workspace\.yaml/u);
+    assert.match(out, /memory\/coding-assertions\.md: Makefile/u);
+    assert.match(out, /memory\/vcs\.md: Makefile/u);
+    assert.doesNotMatch(out, /memory\/deployment\.md/u, "a file whose capability no changed file belongs to is named");
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a file the bank does not hold is not named", () => {
+  const root = history((dir) => {
+    write(dir, "Makefile", "check:\n\techo\n");
+    commitAll(dir, "task command");
+  });
+  try {
+    const out = changes(root).stdout;
+    assert.match(out, /memory\/vcs\.md: Makefile/u, "the bank's own file of the capability is named");
+    assert.doesNotMatch(out, /memory\/testing\.md/u);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: --since overrides the base", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    commitAll(dir, "code one");
+    write(dir, "app/b.ts", "b2\n");
+    commitAll(dir, "code two");
+  });
+  try {
+    assert.match(changes(root).stdout, /^- app\/a\.ts\n- app\/b\.ts$/mu);
+    const since = changes(root, "--since", "HEAD~1");
+    assert.ok(since.stdout.includes("code one") && /--since/u.test(since.stdout), since.stdout);
+    assert.match(since.stdout, /^changed \(1\):\n- app\/b\.ts$/mu);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: the base is the last commit that touched the bank, not the first", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    commitAll(dir, "code one");
+    write(dir, `${MEMORY}/vcs.md`, "# V\n\n- hooks run `make check`\n");
+    commitAll(dir, "bank touched again");
+    write(dir, "app/b.ts", "b2\n");
+    commitAll(dir, "code two");
+  });
+  try {
+    const out = changes(root).stdout;
+    assert.ok(out.includes("bank touched again"), out);
+    assert.match(out, /^changed \(1\):\n- app\/b\.ts$/mu);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: no repository, no commit, or a bank never committed is an audit with its reason, exit 0", () => {
+  const plain = project({ "vcs.md": BEFORE });
+  const empty = project({ "vcs.md": BEFORE });
+  git(empty, "init", "-q");
+  const unbanked = project({}, { "app/a.ts": "a\n" });
+  git(unbanked, "init", "-q");
+  commitAll(unbanked, "code only");
+  write(unbanked, `${MEMORY}/vcs.md`, BEFORE);
+  try {
+    for (const [root, reason] of [[plain, "no repository"], [empty, "no commit"], [unbanked, "bank never committed"]]) {
+      const run = changes(root);
+      assert.equal(run.status, 0, reason);
+      assert.equal(run.stdout, `scope: audit\nreason: ${reason}\n`);
+    }
+  } finally {
+    cleanup(plain, empty, unbanked);
+  }
+});
+
+test("changes: a base missing from a shallow history is an audit with its reason", () => {
+  const origin = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    commitAll(dir, "code one");
+    write(dir, "app/b.ts", "b2\n");
+    commitAll(dir, "code two");
+  });
+  const clone = path.join(os.tmpdir(), `memory-shallow-${process.pid}`);
+  try {
+    const run = spawnSync("git", ["clone", "-q", "--depth", "1", `file://${origin}`, clone], { encoding: "utf8", env: cleanEnv() });
+    assert.equal(run.status, 0, run.stderr);
+    const audit = "scope: audit\nreason: base missing from a shallow history\n";
+    assert.equal(changes(clone).stdout, audit);
+    assert.equal(changes(clone, "--since", git(origin, "rev-parse", "HEAD~2")).stdout, audit);
+  } finally {
+    cleanup(origin, clone);
+  }
+});
+
+test("changes: an unknown --since reference, or one that is an option, is an error with exit 1", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    commitAll(dir, "code");
+  });
+  try {
+    for (const ref of ["no-such-ref", "--output=x"]) {
+      const run = changes(root, "--since", ref);
+      assert.equal(run.status, 1, ref);
+      assert.equal(run.stdout, "");
+      assert.match(run.stderr, ref.startsWith("-") ? /memory: --since --output=x is not a reference/u : /memory: --since no-such-ref names no commit/u);
+    }
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a git failure in a repository fails closed with its reason", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    commitAll(dir, "code");
+  });
+  try {
+    const tree = git(root, "rev-parse", `HEAD:${MEMORY}`);
+    const object = path.join(root, ".git/objects", tree.slice(0, 2), tree.slice(2));
+    fs.chmodSync(object, 0o600);
+    fs.rmSync(object);
+    const run = engine("changes", root);
+    assert.equal(run.status, 1);
+    assert.equal(run.stdout, "");
+    assert.match(run.stderr, /memory: git/u);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: reads the repository of the root even when a hook exported GIT_DIR", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    commitAll(dir, "code");
+  });
+  try {
+    const run = spawnSync("node", [ENGINE, "changes", root], { encoding: "utf8", env: { ...process.env, GIT_DIR: path.join(os.tmpdir(), "no-such-git-dir") } });
+    assert.match(run.stdout, /^- app\/a\.ts$/mu);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a long change set prints its count and only the first files", () => {
+  const root = history((dir) => {
+    for (let index = 0; index < 80; index += 1) write(dir, `gen/f${String(index).padStart(2, "0")}.ts`, "x\n");
+    commitAll(dir, "generated");
+  });
+  try {
+    const out = changes(root).stdout;
+    assert.match(out, /^changed \(80\):$/mu);
+    assert.equal(out.split("\n").filter((line) => line.startsWith("- gen/")).length, 50);
+    assert.match(out, /30 more/u);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: --since=<ref>, a second root or any other option is an error with exit 1", () => {
+  const root = history((dir) => {
+    write(dir, "app/a.ts", "a2\n");
+    commitAll(dir, "code");
+  });
+  try {
+    for (const args of [["--since=HEAD~1"], ["--since", "HEAD~1", "other"], ["--verbose"], ["--since"]]) {
+      const run = changes(root, ...args);
+      assert.equal(run.status, 1, args.join(" "));
+      assert.equal(run.stdout, "");
+      assert.match(run.stderr, /memory: /u, args.join(" "));
+    }
+    assert.equal(changes(root, "--since", "HEAD~1").status, 0);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a memory line citing a path with a non-ASCII name is named", () => {
+  const root = history((dir) => {
+    write(dir, "app/é.ts", "e\n");
+    commitAll(dir, "accent");
+  }, { "codebase-map.md": "# Map\n\n- Entry: app/é.ts starts it\n" });
+  try {
+    assert.match(changes(root).stdout, /codebase-map\.md:3 cites app\/é\.ts/u);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a renamed file names its old path, so the line citing it is found", () => {
+  const root = history((dir) => {
+    git(dir, "mv", "app/b.ts", "app/c.ts");
+    commitAll(dir, "rename b");
+  });
+  try {
+    const out = changes(root).stdout;
+    assert.match(out, /^- app\/b\.ts$/mu);
+    assert.match(out, /codebase-map\.md:5 cites app\/b\.ts/u);
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: a root below the repository's top lists only its own files, relative to it", () => {
+  const top = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sub-"));
+  const root = path.join(top, "pkg");
+  write(top, "pkg/aidd_docs/memory/codebase-map.md", "# Map\n\n- Entry: app/a.ts starts it\n");
+  write(top, "pkg/app/a.ts", "a\n");
+  write(top, "outside.ts", "o\n");
+  git(top, "init", "-q");
+  commitAll(top, "bank written");
+  write(top, "pkg/app/a.ts", "a2\n");
+  write(top, "outside.ts", "o2\n");
+  try {
+    const out = changes(root).stdout;
+    assert.match(out, /^changed \(1\):\n- app\/a\.ts$/mu);
+    assert.match(out, /codebase-map\.md:3 cites app\/a\.ts/u);
+    assert.doesNotMatch(out, /outside/u);
+  } finally {
+    cleanup(top);
+  }
+});
+
 // facts: a sheet that cites nothing real must not reach the write
 
 const SHEET_HEAD = "# Facts: setup\n\n- Scope: setup\n- Capabilities: C1 api\n\n";

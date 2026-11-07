@@ -1,6 +1,9 @@
 ## out-flat/.kilo/hooks/aidd-context/lib/bank-guard.cjs
 script, identical to the plugin source
 
+## out-flat/.kilo/hooks/aidd-context/lib/changes.cjs
+script, identical to the plugin source
+
 ## out-flat/.kilo/hooks/aidd-context/lib/common-rules.cjs
 script, identical to the plugin source
 

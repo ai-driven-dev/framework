@@ -35,6 +35,9 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
 ## project/.github/plugins/aidd-context/hooks/lib/bank-guard.cjs
 script, identical to the plugin source
 
+## project/.github/plugins/aidd-context/hooks/lib/changes.cjs
+script, identical to the plugin source
+
 ## project/.github/plugins/aidd-context/hooks/lib/common-rules.cjs
 script, identical to the plugin source
 
@@ -144,9 +147,10 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project copilot aidd-context scope=project: 7 hook files
+project copilot aidd-context scope=project: 8 hook files
   .github/plugins/aidd-context/hooks/hooks.json
   .github/plugins/aidd-context/hooks/lib/bank-guard.cjs
+  .github/plugins/aidd-context/hooks/lib/changes.cjs
   .github/plugins/aidd-context/hooks/lib/common-rules.cjs
   .github/plugins/aidd-context/hooks/lib/fact-sheet.cjs
   .github/plugins/aidd-context/hooks/lib/host.cjs

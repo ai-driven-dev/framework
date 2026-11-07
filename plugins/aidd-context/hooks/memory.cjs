@@ -15,13 +15,19 @@
  *   answered yes quotes it, and exits 1 when it prints any. Limit: HEAD only, so an uncommitted
  *   edit made since is not seen. Without a repository or a committed bank it says so and exits 0;
  *   any other git failure exits 1. The hook never runs it.
+ * - `changes [root] [--since <ref>]`: what an update starts from, read-only. Prints the base (the
+ *   last commit that touched the bank, or the reference named) and why, the files changed since it,
+ *   uncommitted ones included, the memory lines citing one, and the memory files a changed defining
+ *   file belongs to. Without a repository, a commit, a committed bank or the base in a shallow
+ *   history it prints the audit scope and its reason, exit 0; any other git failure exits 1.
+ *   The hook never runs it.
  * - `facts <sheet> [root]`: the skill's fact sheet before a write. Exits 1 naming each line whose
  *   shape breaks the grammar or whose source is absent from the root. The hook never runs it.
  * - `sync [tool...]`: fills the memory block of each context file present, or only those of
  *   the tools named, from the current folder.
  *
  * The hook reads its event and answers only through `lib/host.cjs`. Node built-ins only: the hook
- * starts no other program; `vanished` alone reads git, and only to read.
+ * starts no other program; `vanished` and `changes` alone read git, and only to read.
  */
 
 const fs = require("node:fs");
@@ -654,6 +660,21 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
+  if (command === "changes") {
+    const flag = args.indexOf("--since");
+    const since = flag < 0 ? undefined : args[flag + 1];
+    const rest = args.filter((_, at) => flag < 0 || (at !== flag && at !== flag + 1));
+    const [root = process.cwd()] = rest;
+    try {
+      if (flag >= 0 && since === undefined) throw new Error("--since needs a reference");
+      if (rest.length > 1 || rest.some((arg) => arg.startsWith("-"))) throw new Error("usage: memory.cjs changes [root] [--since <ref>]");
+      process.stdout.write(require("./lib/changes.cjs").changes(root, MEMORY_DIR, since));
+      return EXIT_OK;
+    } catch (error) {
+      process.stderr.write(`memory: ${error.message}\n`);
+      return EXIT_ERRORS;
+    }
+  }
   if (command === "facts") {
     const [sheetFile, root = process.cwd()] = args;
     if (sheetFile === undefined) {
@@ -681,7 +702,7 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | facts <sheet> [root] | sync [tool...]\n");
+  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | sync [tool...]\n");
   return EXIT_ERRORS;
 }
 

@@ -1,6 +1,7 @@
 # Facts: <scope>
 
 - Capabilities: C1 <name>, C2 <name>
+- Base: <short id> <commit subject>, or `audit` and its reason (refresh only)
 
 Under a block, one fact per line: `- <id> | <file> > <section> | <fact> | <source> | <answer>`
 No `|` in a fact. The source is one existing plain path, no backticks, line number or glob; a removal cites the memory file; a `Q` may cite none. Leave the answer empty; the skill fills it from the person's reply.

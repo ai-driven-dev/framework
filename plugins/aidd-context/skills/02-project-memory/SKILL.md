@@ -37,10 +37,12 @@ Run the flow above, reading only the next action file.
 | `node memory.cjs check .` | whole bank | checks the whole bank |
 | `node memory.cjs facts <sheet> .` | write, before any write | exits 1 naming each bad sheet line |
 | `node memory.cjs sync <tool>...` | picked tools known | fills each named tool's block |
+| `node memory.cjs changes .` | refresh or check, before the review | prints the scope, the base, the changed files, the memory lines citing one, the files to review; `--since <ref>` names an older base |
 | `node memory.cjs vanished . --sheet <sheet>` | write, last step | lists each line gone from the bank as committed, HEAD only, unless a `D` line quotes it |
 
 ## Transversal rules
 
 - If a referenced file cannot be read, stop and say so. Never invent its content.
 - Silence is consent: an unanswered `R` or `D` line is written, an unanswered `Q` removes its slot. A `D` starting `remove` or `replace` changes or removes an existing line and needs an answer starting with `yes`; the engine lists any other line gone. Autonomous means no person: the caller's instruction answers.
+- Run no version-control command: `changes` is the change set.
 - End with a short report of what changed.

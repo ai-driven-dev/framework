@@ -74,4 +74,4 @@ function goneLines(previous, bankDir, approvals) {
   return gone;
 }
 
-module.exports = { previousBank, goneLines };
+module.exports = { previousBank, goneLines, git, succeeds, markdownUnder };

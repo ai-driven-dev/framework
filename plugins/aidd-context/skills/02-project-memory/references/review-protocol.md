@@ -1,6 +1,6 @@
 # Review protocol
 
-- Review yourself the memory files the AI loads every session, one file at a time.
+- Review yourself the memory files the AI loads every session, one file at a time, or only those `changes` names.
 - Catch what their writer could not see.
 - Memory holds what the code cannot show: an intent, a constraint, a warning.
 - Code silent on a line is not code that contradicts it.
