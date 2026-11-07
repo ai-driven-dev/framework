@@ -356,6 +356,12 @@ describe("aidd-ui records and history", () => {
   });
 
   describe("R18 expected components", () => {
+    it("warns of an expected component that is deprecated, naming what replaces it", () => {
+      change(WIREFRAME, "uses: [search-field]", "uses: [search-field, old-button]");
+      const found = ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R18");
+      assert.deepEqual(found.map((problem) => [problem.severity, problem.message]), [["warning", 'expects component "old-button", which is deprecated']]);
+    });
+
     it("warns of an expected component the design system does not hold yet, and never errs for it", () => {
       change(WIREFRAME, "uses: [search-field]", "uses: [search-field, filter-chip, home]");
       const found = ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R18");
@@ -758,6 +764,7 @@ const FIXES = [
   "R16 | status \"deprecated\" is for elements: reviews are proposed or validated | \"deprecated\" | set status to proposed or validated",
   "R17 | lacks \"## Usage\", saying when to use it and when not | - | add a \"## Usage\" section saying when to use it and when not",
   "R18 | expects component \"filter-chip\", which the design system does not hold yet | \"filter-chip\" | add the component to the design system before a screen dresses this wireframe",
+  "R18 | expects component \"old-button\", which is deprecated | \"old-button\" | expect what replaces it instead",
   "R18 | expects component \"home\", which is a screen, not a component | \"home\" | name a component, or the one the design system will add",
   "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",

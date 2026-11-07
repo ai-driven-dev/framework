@@ -248,17 +248,20 @@ function usageProblems(project) {
     .map((record) => problem(record, `lacks "## ${USAGE_SECTION}", saying when to use it and when not`, `add a "## ${USAGE_SECTION}" section saying when to use it and when not`));
 }
 
-/** A wireframe comes before the components it expects: one the design system lacks informs. */
+/** A wireframe comes before the components it expects: one the design system lacks, or has
+ * deprecated, informs. */
 function expectedProblems(project) {
   const index = byId(project);
   return placed(project)
     .filter((record) => fm(record).kind === "wireframe")
     .flatMap((record) =>
       list(fm(record).uses)
-        .filter((id) => !(index.has(id) && isComponent(index.get(id))))
+        .filter((id) => !(index.has(id) && isComponent(index.get(id)) && !isDeprecated(index.get(id))))
         .map((id) => {
           const held = index.get(id);
-          const found = held
+          const found = held && isComponent(held)
+            ? problem(record, `expects component "${id}", which is deprecated`, "expect what replaces it instead", id)
+            : held
             ? problem(record, `expects component "${id}", which is ${/^[aeiou]/.test(fm(held).kind) ? "an" : "a"} ${fm(held).kind}, not a component`, "name a component, or the one the design system will add", id)
             : problem(record, `expects component "${id}", which the design system does not hold yet`, "add the component to the design system before a screen dresses this wireframe", id);
           return { ...found, severity: WARNING };
