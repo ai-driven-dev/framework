@@ -24,7 +24,7 @@ export function installed(tool: AiTool<HasAgents>, content: string): string {
 }
 
 /** Where and what a marketplace build writes for the plugin's `planner.md`. The flat build
- * is checked against the shipped agents in `tests/e2e/agent-install.e2e.test.ts`. */
+ * is checked against the shipped agents in `tests/runtime/wiring/shipped-agents.integration.test.ts`. */
 export function inMarketplace(
   tool: AiTool<HasAgents>,
   content: string

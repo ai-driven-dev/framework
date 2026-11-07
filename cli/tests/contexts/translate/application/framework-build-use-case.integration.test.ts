@@ -222,6 +222,13 @@ describe("FrameworkBuildUseCase", () => {
       const helloOut = fs.getFile(`${OUT_DIR}/plugins/aidd-test/skills/hello.md`) ?? "";
       expect(helloOut).toContain("[commit/SKILL.md](../commit/SKILL.md)");
     });
+
+    it("leaves no @-reference to the Claude plugin root in a skill", async () => {
+      const uc = makeUseCase(fs);
+      await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
+      const helloOut = fs.getFile(`${OUT_DIR}/plugins/aidd-test/skills/hello.md`) ?? "";
+      expect(helloOut).not.toContain("@" + "$" + "{CLAUDE_PLUGIN_ROOT}");
+    });
   });
 
   describe("hooks rewrite", () => {
@@ -496,6 +503,15 @@ describe("FrameworkBuildUseCase", () => {
       expect(raw.endsWith("\n")).toBe(true);
     });
 
+    it("emitted marketplace.json carries none of the source catalog's $schema, strict or recommended", async () => {
+      const uc = makeUseCase(fs);
+      await uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" });
+      const raw = fs.getFile(`${OUT_DIR}/.plugin/marketplace.json`) ?? "";
+      expect(raw).not.toContain("$schema");
+      expect(raw).not.toContain("strict");
+      expect(raw).not.toContain("recommended");
+    });
+
     it("validates the emitted marketplace.json against the schema", async () => {
       const failingMarketplaceValidator = {
         validate(schema: object, _data: unknown): void {
@@ -541,6 +557,29 @@ describe("FrameworkBuildUseCase", () => {
       for (const key of Object.keys(firstRunFiles)) {
         expect(firstRunFiles[key]).toBe(secondRunFiles[key]);
       }
+    });
+
+    it("produces byte-identical output when a forced second run writes into the tree the first left", async () => {
+      const v = makeValidator();
+      const ap = makeAssetProvider();
+      const uc = new FrameworkBuildUseCase(
+        fs,
+        v,
+        ap,
+        logger,
+        new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract(), true)
+      );
+      const opts = { sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: "copilot" as const };
+      await uc.execute(opts);
+      const firstRunFiles = Object.fromEntries(
+        fs.listUnder(OUT_DIR).map((p) => [p, fs.getFile(p)])
+      );
+      await uc.execute(opts);
+      const secondRunFiles = Object.fromEntries(
+        fs.listUnder(OUT_DIR).map((p) => [p, fs.getFile(p)])
+      );
+      expect(Object.keys(firstRunFiles).length).toBeGreaterThan(0);
+      expect(secondRunFiles).toEqual(firstRunFiles);
     });
   });
 });
