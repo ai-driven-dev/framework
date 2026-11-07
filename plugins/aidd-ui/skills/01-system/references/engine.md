@@ -11,7 +11,7 @@ Where the engine is, and what it gives.
 | --- | --- |
 | `validate` | `VALID` when nothing is wrong, else the problems as in Output below; exit 1 only on an error |
 | `tokens` | writes `aidd_docs/ui/tokens.css`, and the resolver when one is needed; exit 1 names what blocks it |
-| `impact <token or id>…` | JSON: tokens, same-value, elements, screens, journeys, renders, code; a token as its path or its CSS name; exit 2 on an unknown one |
+| `impact <token or id>…` | JSON: tokens, same-value, elements, screens, wireframes, journeys, renders, code; a token as its path or its CSS name; exit 2 on an unknown one |
 | `extract [--force]` | writes `tokens.json` and the context files from the `code-tokens` files; JSON `written` and `left`; exit 2 with a message, nothing written, when it cannot, or when `tokens.json` exists without `--force` |
 | `bump --task <task folder> --change "<text>" [--breaking] <token or id>…` | raises the versions the refs reach, each element back to `proposed`, with its row in `history.md` and a `pending` row per state in the `## Verdicts` of each reached screen's review; JSON `changed` and `left`, the elements reached and not raised; exit 2 with a message, nothing written |
 | `bump --task <task folder> --created <id>…` | writes the first row in `history.md` of each record named, `system` as 1.0.0, and with `system` writes `aidd_docs/ui/code-debt.json`; `brand` and an id that has rows refused; JSON `changed`; exit 2 with a message, nothing written |

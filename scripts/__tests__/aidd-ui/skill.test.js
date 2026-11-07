@@ -210,9 +210,89 @@ describe("aidd-ui 01-system skill", () => {
     }
   });
 
-  it("is the only skill the plugin lists and holds", () => {
+  it("proposes from scratch the brand and tokens first, components when a screen asks, the user free to add more", () => {
+    const scratch = fs.readFileSync(path.join(SKILL, "references/cases.md"), "utf8").split("\n").find((line) => line.startsWith("| from scratch |"));
+    assert.ok(scratch.endsWith("; propose the brand and the tokens first, components when a screen asks for them, the user free to add more |"));
+  });
+});
+
+describe("aidd-ui skills", () => {
+  it("are the ones the plugin lists and holds", () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(PLUGIN, ".claude-plugin/plugin.json"), "utf8"));
-    assert.deepEqual(manifest.skills, ["./skills/01-system"]);
-    assert.deepEqual(fs.readdirSync(path.join(PLUGIN, "skills")), ["01-system"]);
+    assert.deepEqual(manifest.skills, ["./skills/01-system", "./skills/02-journeys"]);
+    assert.deepEqual(fs.readdirSync(path.join(PLUGIN, "skills")).sort(), ["01-system", "02-journeys"]);
+  });
+});
+
+const JOURNEYS = path.join(PLUGIN, "skills/02-journeys");
+
+const JOURNEY_FILLS = {
+  journey: {
+    "journey id": "first-search",
+    "Journey name": "First search",
+    "persona name": "a first-time analyst",
+    "who walks it and what they want": "An analyst opening the product for the first time, looking for one answer.",
+    "screen or wireframe id": "results",
+    "action leading to the next step": "opens a result",
+  },
+  wireframe: {
+    "wireframe id": "results",
+    "Wireframe name": "Results",
+    "components it expects": "search-field, result-card",
+    states: "default, empty",
+    zones: "query, list",
+    "the goal of its step": "See what matches the query.",
+  },
+  "wireframe-render": {
+    "BCP 47 language": "en",
+    "wireframe id": "results",
+    state: "default",
+    "first zone": "query",
+    "next zone": "list",
+  },
+};
+
+const JOURNEY_TEMPLATES = { journey: "journey-template.md", wireframe: "wireframe-template.md", "wireframe-render": "wireframe-render-template.html" };
+
+/** A journeys template as an action fills it, a render repeating its section for each state. */
+function filledJourney(name) {
+  const text = fs.readFileSync(path.join(JOURNEYS, "assets", JOURNEY_TEMPLATES[name]), "utf8").split(COMMENT).join("");
+  return text.replace(PLACEHOLDER, (_, slot) => {
+    assert.ok(Object.hasOwn(JOURNEY_FILLS[name], slot), `${JOURNEY_TEMPLATES[name]}: no fill for {{${slot}}}`);
+    return JOURNEY_FILLS[name][slot];
+  });
+}
+
+describe("aidd-ui 02-journeys templates", () => {
+  it("validate once filled, a missing component a warning only, and start proposed at version 1", () => {
+    const render = filledJourney("wireframe-render");
+    put(tmp, `${UI}/journeys/first-search.md`, filledJourney("journey"));
+    put(tmp, `${UI}/wireframes/results.md`, filledJourney("wireframe"));
+    put(tmp, `${UI}/wireframes/results.html`, render.replace(/<section[\s\S]*<\/section>/, (section) => `${section}\n${section.replace('data-state="default"', 'data-state="empty"')}`));
+    assert.equal(engine("bump", "--task", TASK, "--created", "first-search", "results", "--root", tmp).status, 0);
+    const { code, out } = validate(tmp);
+    assert.deepEqual([code, out[0], out.slice(1).map((line) => line.split(" ").slice(0, 3).join(" "))], [0, "aidd-ui: 0 errors, 1 warning", [`${UI}/wireframes/results.md R18 warning`]]);
+    for (const name of ["journey", "wireframe"]) assert.ok(/\nstatus: proposed\nversion: 1\n/.test(filledJourney(name)), name);
+  });
+});
+
+describe("aidd-ui 02-journeys skill", () => {
+  const texts = () => filesUnder(JOURNEYS).map((file) => ({ file: path.relative(JOURNEYS, file), text: fs.readFileSync(file, "utf8") }));
+
+  it("names no other skill, holds no date or em-dash, and links nothing outside itself", () => {
+    const own = new Set(["02-journeys", ...fs.readdirSync(path.join(JOURNEYS, "actions")).map((name) => name.replace(/\.md$/, ""))]);
+    for (const { file, text } of texts()) {
+      assert.equal(/[a-z-]+:\d{2}-[a-z-]+/.test(text), false, `${file} names a skill as plugin:folder`);
+      for (const [numbered] of text.matchAll(/\b\d{2}-[a-z]+(?:-[a-z]+)*\b/g)) assert.ok(own.has(numbered), `${file} names ${numbered}, which is not part of this skill`);
+      assert.equal(/\d{4}[-_]\d{2}[-_]\d{2}/.test(text), false, `${file} holds a date`);
+      assert.equal(text.includes("—"), false, `${file} holds an em-dash`);
+      for (const [, target] of text.matchAll(/\]\(([^)#]+)[^)]*\)/g)) assert.ok(path.resolve(JOURNEYS, path.dirname(file), target).startsWith(`${JOURNEYS}${path.sep}`), `${file} links ${target}, outside the skill`);
+    }
+  });
+
+  it("ends saying each record stays proposed until its review, and that a missing component is named, never created", () => {
+    const conclude = fs.readFileSync(path.join(JOURNEYS, "actions/03-conclude.md"), "utf8");
+    assert.ok(conclude.includes("each journey and wireframe written is `proposed` until its review"));
+    assert.ok(conclude.includes("never created here"));
   });
 });
