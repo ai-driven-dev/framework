@@ -138,6 +138,8 @@ Runtime contracts:
 
 | Suffix | Covers |
 | --- | --- |
-| `*.unit.test.ts` | Domain models and pure functions, no I/O |
+| `*.unit.test.ts` | Domain models and pure functions, no filesystem, no process |
 | `*.integration.test.ts` | Use cases and adapters, on a real temp filesystem |
 | `*.e2e.test.ts` | The full CLI binary through `runCli()`, one temp dir per test |
+| `*.golden.test.ts` | A complete output against a versioned snapshot, through the built binary |
+| `*.arch.test.ts` | Ratchets over source text, under `tests/architecture/` only |
