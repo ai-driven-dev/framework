@@ -1,7 +1,7 @@
 FROM node:24-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS opencode
 ARG TARGETARCH
 RUN case "$TARGETARCH" in amd64) arch=x64 ;; arm64) arch=arm64 ;; *) exit 1 ;; esac \
- && npm pack --silent --pack-destination /tmp "@opencode/cli-linux-$arch@2.2.5" \
+ && npm pack --silent --pack-destination /tmp "@opencode/cli-linux-$arch@2.2.6" \
  && mkdir /opencode && tar -xzf /tmp/*.tgz -C /opencode --strip-components=1
 
 FROM node:24-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c
