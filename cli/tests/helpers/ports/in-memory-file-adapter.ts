@@ -106,7 +106,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
       bestMatch === undefined
         ? posix.normalize(norm(path))
         : bestMatch.target + key.slice(bestMatch.link.length);
-    if (this.missingRealpathRejects && !(await this.fileExists(resolved))) {
+    if (this.missingRealpathRejects && !(await this.existsIgnoringDrive(resolved))) {
       throw enoent("realpath", norm(path));
     }
     return resolved;
@@ -163,6 +163,13 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
     this.registerAncestors(key);
   }
 
+  /** On Windows, product code resolves a virtual `/project` to `D:\project` (the working drive)
+   * before asking `realpath`; the tree was seeded drive-free, so a drive-qualified path also
+   * matches its drive-free spelling. */
+  private async existsIgnoringDrive(path: string): Promise<boolean> {
+    return (await this.fileExists(path)) || (await this.fileExists(path.replace(DRIVE_PREFIX, "")));
+  }
+
   private registerAncestors(key: string): void {
     let parent = posix.dirname(key);
     while (parent !== "." && !this.directories.has(parent)) {
@@ -201,6 +208,8 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
 
 // A real Windows filesystem accepts "/" and "\" as equivalent; this Map<path, content>
 // double does not unless every path put through it is normalized to one spelling first.
+const DRIVE_PREFIX = /^[A-Za-z]:(?=\/)/;
+
 function norm(path: string): string {
   return path.replaceAll("\\", "/");
 }
