@@ -2,15 +2,10 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import type { FileMerger } from "../../../src/contexts/tools/domain/ports/file-merger.js";
 import { FileHash } from "../../../src/kernel/file.js";
-import {
-  isPerKeyMergeStrategy,
-  type MergeStrategy,
-  type PerKeyMergeStrategy,
-} from "../../../src/kernel/merge.js";
+import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/kernel/merge.js";
 import type { FileReader } from "../../../src/kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../src/kernel/ports/file-writer.js";
 import type { Hasher } from "../../../src/kernel/ports/hasher.js";
-import { stripJsonComments } from "../../../src/kernel/reading/jsonc.js";
 
 export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   /** Executable when `chmodExecutable` was called for it, absent otherwise — the two states
@@ -120,31 +115,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
-    const normalizedPath = norm(path);
-    let existing: Record<string, unknown> = {};
-
-    const existingRaw = this.files.get(normalizedPath);
-    if (existingRaw !== undefined) {
-      try {
-        existing = JSON.parse(stripJsonComments(existingRaw)) as Record<string, unknown>;
-      } catch {
-        // File exists but is not valid JSON — overwrite
-      }
-    }
-
-    const incoming = JSON.parse(stripJsonComments(content)) as Record<string, unknown>;
-
-    if (isPerKeyMergeStrategy(strategy)) {
-      this.files.set(
-        normalizedPath,
-        JSON.stringify(mergePerKey(existing, incoming, strategy), null, 2)
-      );
-      return;
-    }
-
-    const merged =
-      strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
-    this.files.set(normalizedPath, JSON.stringify(merged, null, 2));
+    return mergeIntoJsonFile(this, path, content, strategy);
   }
 
   async deleteDirectory(dirPath: string): Promise<void> {
@@ -203,45 +174,4 @@ class DefaultHasher implements Hasher {
     const hex = createHash("md5").update(content, "utf-8").digest("hex");
     return new FileHash(hex);
   }
-}
-
-function mergePerKey(
-  existing: Record<string, unknown>,
-  incoming: Record<string, unknown>,
-  strategy: PerKeyMergeStrategy
-): Record<string, unknown> {
-  const allKeys = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
-  const result: Record<string, unknown> = {};
-  for (const key of allKeys) {
-    const isFrameworkPrime = strategy.frameworkOverrideKeys.includes(key);
-    const effectiveStrategy = isFrameworkPrime ? "framework-prime" : strategy.default;
-    if (effectiveStrategy === "framework-prime") {
-      result[key] = key in incoming ? incoming[key] : existing[key];
-    } else {
-      result[key] = key in existing ? existing[key] : incoming[key];
-    }
-  }
-  return result;
-}
-
-function deepMerge(
-  base: Record<string, unknown>,
-  overlay: Record<string, unknown>
-): Record<string, unknown> {
-  const result = { ...base };
-  for (const [key, value] of Object.entries(overlay)) {
-    if (isPlainObject(value) && isPlainObject(result[key])) {
-      result[key] = deepMerge(
-        result[key] as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-
-function isPlainObject(value: unknown): boolean {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
 }

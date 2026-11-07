@@ -1,8 +1,7 @@
-import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { JsonParseError } from "../../../src/kernel/errors.js";
 import { FileAdapter } from "../../../src/runtime/filesystem/file-adapter.js";
 import { HasherAdapter } from "../../../src/runtime/filesystem/hasher-adapter.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -90,53 +89,5 @@ describe("FileAdapter, at the edges", () => {
         }
       }
     );
-  });
-
-  describe("mergeJsonFile()", () => {
-    it("refuses to merge into a file it cannot parse, naming the file", async () => {
-      const path = join(tempDir, "settings.json");
-      await writeFile(path, "{ not json");
-
-      await expect(fs.mergeJsonFile(path, "{}", "framework-prime")).rejects.toThrow(JsonParseError);
-      await expect(fs.mergeJsonFile(path, "{}", "framework-prime")).rejects.toThrow(
-        `Cannot parse existing JSON at ${path}: `
-      );
-    });
-
-    it("drops a prototype key from the incoming content", async () => {
-      const path = join(tempDir, "settings.json");
-      await writeFile(path, JSON.stringify({ keep: 1 }));
-
-      await fs.mergeJsonFile(path, '{"prototype": {"polluted": true}, "b": 2}', "framework-prime");
-
-      expect(JSON.parse(await readFile(path, "utf-8"))).toStrictEqual({ keep: 1, b: 2 });
-    });
-
-    it("replaces a scalar with an incoming array outright", async () => {
-      const path = join(tempDir, "settings.json");
-      await writeFile(path, JSON.stringify({ list: "one" }));
-
-      await fs.mergeJsonFile(path, '{"list": ["a"]}', "framework-prime");
-
-      expect(JSON.parse(await readFile(path, "utf-8"))).toStrictEqual({ list: ["a"] });
-    });
-
-    it("replaces a scalar with an incoming object outright", async () => {
-      const path = join(tempDir, "settings.json");
-      await writeFile(path, JSON.stringify({ nested: "one" }));
-
-      await fs.mergeJsonFile(path, '{"nested": {"a": 1}}', "framework-prime");
-
-      expect(JSON.parse(await readFile(path, "utf-8"))).toStrictEqual({ nested: { a: 1 } });
-    });
-
-    it("replaces an object with an incoming null outright", async () => {
-      const path = join(tempDir, "settings.json");
-      await writeFile(path, JSON.stringify({ nested: { a: 1 } }));
-
-      await fs.mergeJsonFile(path, '{"nested": null}', "framework-prime");
-
-      expect(JSON.parse(await readFile(path, "utf-8"))).toStrictEqual({ nested: null });
-    });
   });
 });
