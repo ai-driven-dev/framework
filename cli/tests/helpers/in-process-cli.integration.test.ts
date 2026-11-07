@@ -77,6 +77,17 @@ describe("running a command in process", () => {
     expect(result.stdout).toContain("--ide claude,codex,copilot,cursor,kilo,opencode");
   });
 
+  it("explains the user-scope restrictions in setup --help", async () => {
+    const result = await runInProcess(["setup", "--help"], { cwd: project, home });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("--plugins all, recommended, none or names");
+    expect(result.stdout).toContain("no editor");
+    expect(result.stdout).toContain("must be on PATH");
+    expect(result.stdout).toContain("opencode gets their files in ~/.config/opencode");
+  });
+
   it("finds no host binary on PATH from inside a command", async () => {
     let found: Array<string | undefined> = [];
     vi.doMock("../../src/presentation/commands/clean.js", () => ({

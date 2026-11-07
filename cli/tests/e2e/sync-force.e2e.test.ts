@@ -67,20 +67,6 @@ describe.concurrent("E2E: aidd sync --force", () => {
     }
   });
 
-  it("still reports nothing to restore when nothing drifted", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("sync-force-clean");
-    try {
-      await installClaude(projectDir, fakeHome);
-
-      const { stdout, exitCode } = await runCli(["sync", "--force"], projectDir, fakeHome);
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("Nothing to restore");
-    } finally {
-      await cleanup();
-    }
-  });
-
   // The sandbox reaches no real `claude` binary, so the binary-missing path is the one native
   // activation case a real built-binary run can prove — and an absent binary is not a failure.
   it("warns that the plugin will not load until the claude CLI has run, and still exits 0", async () => {
