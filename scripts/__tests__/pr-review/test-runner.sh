@@ -111,10 +111,10 @@ for bad in '-unsafe' $'vendor/model\n--unsafe'; do
   fi
 done
 
-# Exercise model.sh itself against a fake OpenCode executable to check its argv.
+# Exercise model.sh against a fake OpenCode that follows its coverage example.
 mkdir -p /tmp/model-case/source /tmp/model-case/review-input /tmp/model-output
 printf 'context\n' > /tmp/model-case/review-input/pr-context.txt
-printf '[]\n' > /tmp/model-case/manifest.json
+printf '[{"path":"relative/path"}]\n' > /tmp/model-case/manifest.json
 printf 'prompt\n' > /tmp/model-case/prompt.txt
 printf '{}\n' > /tmp/model-case/policy.json
 chmod -R a-w /tmp/model-case
@@ -123,19 +123,23 @@ cat > /tmp/fake-opencode <<'OPENCODE'
 #!/usr/bin/env bash
 set -euo pipefail
 found=0
+prompt=${!#}
 while (($#)); do
   if [[ $1 == --model ]]; then shift; [[ ${1:-} == "$EXPECTED_MODEL" ]]; found=1; fi
   shift
 done
 [[ $found == 1 ]]
-printf '%s\n' '{"type":"text","part":{"text":"Review complete.\nAIDD_REVIEW_COVERAGE_V1: {\"reviewed\":[]}"}}'
+example=${prompt#*AIDD_REVIEW_COVERAGE_V1: }
+[[ $example != "$prompt" ]] || { echo 'Coverage example missing from prompt' >&2; exit 1; }
+example=${example%%, listing*}
+jq -nc --arg text $'Review complete.\nAIDD_REVIEW_COVERAGE_V1: '"$example" '{type:"text",part:{text:$text}}'
 OPENCODE
 chmod 755 /tmp/fake-opencode
 runuser -u reviewer -- env -i HOME=/home/aidd PATH=/usr/local/bin:/usr/bin:/bin \
   GH_REPO=test/repo REVIEW_PR=8 REVIEW_BASE="$base" REVIEW_HEAD="$head" \
   OPENCODE_REVIEW_MODEL='other-provider/another-model#medium' EXPECTED_MODEL='other-provider/another-model#medium' \
   bash -c 'source /tmp/real-model.sh; model_main /tmp/model-case /tmp/model-case/manifest.json /tmp/model-output/result.json /tmp/model-case/policy.json /tmp/model-case/prompt.txt /tmp/fake-opencode'
-jq -e '.report == "Review complete."' /tmp/model-output/result.json >/dev/null
+jq -e '.report == "Review complete." and .reviewed == ["relative/path"]' /tmp/model-output/result.json >/dev/null
 runuser -u reviewer -- env -i HOME=/home/aidd PATH=/usr/local/bin:/usr/bin:/bin \
   GH_REPO=test/repo REVIEW_PR=8 REVIEW_BASE="$base" REVIEW_HEAD="$head" \
   EXPECTED_MODEL='openai/gpt-6.1-terra#medium' \
