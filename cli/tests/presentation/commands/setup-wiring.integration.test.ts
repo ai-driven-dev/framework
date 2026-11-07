@@ -20,9 +20,13 @@ const setupToolsPrompt = vi.fn();
 const detectContext = vi.fn();
 const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
+const ensureInstallationId = vi.fn();
+const checkInstallationId = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
+    ensureInstallationId,
+    checkInstallationId,
     fs: {},
     manifestRepo: { load: loadManifest },
     setupMarketplaceRegistration: { resolveSourceIfNeeded, registerIfPresent },
@@ -98,6 +102,7 @@ async function run(...args: string[]): Promise<string[]> {
 describe("aidd setup — the flow a scripted run builds", () => {
   it("names the tools it was given, installs no plugin, and registers the default source", async () => {
     expect(await run("--ai", "claude")).toEqual(["Project is up to date."]);
+    expect(ensureInstallationId).toHaveBeenCalledOnce();
     expect({ ...builtFlow() }).toEqual({
       projectRoot: PROJECT_ROOT,
       source: undefined,
@@ -355,6 +360,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
       "Warning: [claude] claude CLI refused\nError: Sync failed for: claude. See the warnings above.\n"
     );
     expect(exit).toHaveBeenCalledWith(1);
+    expect(ensureInstallationId).not.toHaveBeenCalled();
   });
 
   it("names a failed install on stderr and fails the process", async () => {
@@ -367,6 +373,30 @@ describe("aidd setup — what it refuses and what it reports", () => {
 
     expect(errors.join("")).toBe("Error: assets are missing\n");
     expect(exit).toHaveBeenCalledWith(1);
+    expect(ensureInstallationId).not.toHaveBeenCalled();
+  });
+
+  it("refuses an invalid existing installation ID before setup changes anything", async () => {
+    checkInstallationId.mockRejectedValueOnce(new Error("invalid installation ID"));
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("--ai", "claude")).rejects.toThrow("exited");
+    expect(setupTools).not.toHaveBeenCalled();
+    expect(ensureInstallationId).not.toHaveBeenCalled();
+    expect(errors.join("")).toContain("invalid installation ID");
+  });
+
+  it("reports that setup completed if saving the installation ID fails afterward", async () => {
+    ensureInstallationId.mockRejectedValueOnce(new Error("disk full"));
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+    await expect(run("--ai", "claude")).rejects.toThrow("exited");
+    expect(setupTools).toHaveBeenCalled();
+    expect(errors.join("")).toContain(
+      "Setup completed, but the installation ID could not be saved: disk full"
+    );
   });
 
   it("builds the graph for this project at this run's verbosity", async () => {

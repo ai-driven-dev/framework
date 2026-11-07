@@ -64,6 +64,7 @@ src/
 │   │   │   ├── consent/    # a clone's identity, and when it consented
 │   │   │   ├── identity/    # the identifier a person chose to be named by
 │   │   │   ├── legacy/    # what the previous version wrote, by name and location, and its key and id rules
+│   │   │   ├── observations/    # native telemetry fields before display or aggregation
 │   │   │   ├── ports/
 │   │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
 │   │   │   │   ├── forget/
@@ -72,6 +73,8 @@ src/
 │   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
 │   │   │   └── switch/    # the previous version's config block, Claude's retention
 │   │   └── infrastructure/
+│   │       ├── otel/    # shared native OTLP settings; JSON templates in config/
+│   │       │   └── actions/    # initialize configuration, launch export, verify receipt
 │   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys

@@ -1,0 +1,125 @@
+// OpenCode server plugin v2.2.5+. The framework enables it only for an opted-in run.
+// Public event stream: https://dev.opencode.ai/v2/docs/build/plugins/server (2026-11-06).
+const types = ["session.created", "session.step.started", "session.step.ended", "session.step.failed"];
+
+const text = (key, value) => ({ key, value: { stringValue: value } });
+const integer = (key, value) => ({ key, value: { intValue: String(value) } });
+const id = (value, prefix) =>
+  typeof value === "string" && new RegExp(`^${prefix}_[A-Za-z0-9]{1,64}$`).test(value);
+const label = (value) =>
+  typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:/@+#-]{0,199}$/.test(value);
+
+function destination() {
+  const endpoint = process.env.AIDD_OPENCODE_OTEL_LOGS_ENDPOINT;
+  const authorization = /^Authorization=Bearer ([A-Za-z0-9_-]+)$/.exec(
+    process.env.AIDD_OPENCODE_OTEL_HEADERS ?? "",
+  );
+  if (!endpoint || !authorization) return;
+  try {
+    const url = new URL(endpoint);
+    const loopback = ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+    if ((url.protocol !== "https:" && !(url.protocol === "http:" && loopback)) ||
+        url.username || url.password || url.search || url.hash || !url.pathname.endsWith("/v1/logs")) return;
+    return { url: url.href, authorization: `Bearer ${authorization[1]}` };
+  } catch {
+    return;
+  }
+}
+
+// Source: https://github.com/anomalyco/opencode/blob/v2.2.5/packages/schema/src/session-event.ts
+// Usage's absent-to-zero normalization: https://github.com/anomalyco/opencode/blob/v2.2.5/packages/core/src/session/usage.ts (2026-11-06).
+function record(event) {
+  const data = event?.data;
+  const durable = event?.durable;
+  if (!types.includes(event?.type) || !id(event.id, "evt") || !id(data?.sessionID, "ses") ||
+      !Number.isSafeInteger(event.created) || event.created <= 0 ||
+      !Number.isSafeInteger(durable?.seq) || durable.seq < 0 ||
+      !Number.isSafeInteger(durable?.version) || durable.version < 1 ||
+      durable.aggregateID !== data.sessionID) return;
+  if (event.type !== "session.created" && !id(data.assistantMessageID, "msg")) return;
+  const nanos = BigInt(event.created) * 1000000n;
+  if (nanos > 18446744073709551615n) return;
+  const attributes = [
+    text("event.name", event.type),
+    text("event.id", event.id),
+    text("session.id", data.sessionID),
+    integer("opencode.event.sequence", durable.seq),
+    integer("opencode.event.version", durable.version),
+  ];
+  if (event.type === "session.created") {
+    if (label(data.projectID)) attributes.push(text("opencode.project.id", data.projectID));
+    if (id(data.parentID, "ses")) attributes.push(text("opencode.parent.session.id", data.parentID));
+  } else {
+    attributes.push(text("assistant.message.id", data.assistantMessageID));
+    if (event.type === "session.step.started") {
+      if (label(data.model?.providerID)) attributes.push(text("opencode.model.provider", data.model.providerID));
+      if (label(data.model?.id)) attributes.push(text("opencode.model.name", data.model.id));
+      if (label(data.model?.variant)) attributes.push(text("opencode.model.variant", data.model.variant));
+      if (label(data.agent)) attributes.push(text("opencode.agent.name", data.agent));
+    } else {
+      const counters = [
+        ["opencode.usage.input", data.tokens?.input],
+        ["opencode.usage.output", data.tokens?.output],
+        ["opencode.usage.reasoning", data.tokens?.reasoning],
+        ["opencode.usage.cache_read", data.tokens?.cache?.read],
+        ["opencode.usage.cache_write", data.tokens?.cache?.write],
+      ];
+      for (const [key, value] of counters) {
+        // A zero may mean the upstream provider omitted the value.
+        if (Number.isSafeInteger(value) && value > 0) attributes.push(integer(key, value));
+      }
+    }
+  }
+  return { timeUnixNano: String(nanos), attributes };
+}
+
+export default {
+  id: "aidd.otel",
+  setup(ctx) {
+    const target = destination();
+    if (!target) {
+      if (process.env.AIDD_OPENCODE_OTEL_LOGS_ENDPOINT || process.env.AIDD_OPENCODE_OTEL_HEADERS)
+        console.warn("AIDD OpenTelemetry: the OpenCode exporter configuration is invalid.");
+      return;
+    }
+    const controller = new AbortController();
+    const pending = new Set();
+    let warned = false;
+    const warn = () => {
+      if (!warned) console.warn("AIDD OpenTelemetry: an OpenCode observation could not be exported.");
+      warned = true;
+    };
+    const version = label(ctx.app?.version) ? ctx.app.version : undefined;
+    const resource = [text("service.name", "opencode")];
+    if (version) resource.push(text("service.version", version));
+    void (async () => {
+      try {
+        for await (const event of ctx.event.subscribe({ types, signal: controller.signal })) {
+          if (controller.signal.aborted) break;
+          const log = record(event);
+          if (!log) continue;
+          if (pending.size >= 64) { warn(); continue; }
+          const body = JSON.stringify({ resourceLogs: [{
+            resource: { attributes: resource },
+            scopeLogs: [{ scope: { name: "aidd.opencode.otel", version: "1" }, logRecords: [log] }],
+          }] });
+          const work = fetch(target.url, {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: target.authorization },
+            body,
+            redirect: "error",
+            signal: AbortSignal.timeout(1500),
+          }).then((response) => { if (!response.ok) warn(); }).catch(warn);
+          pending.add(work);
+          void work.finally(() => pending.delete(work));
+        }
+      } catch {
+        if (!controller.signal.aborted) warn();
+      }
+    })();
+    return async () => {
+      controller.abort();
+      await Promise.allSettled([...pending]);
+    };
+  },
+};

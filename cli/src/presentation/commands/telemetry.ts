@@ -25,8 +25,16 @@ import {
 } from "../../contexts/telemetry/domain/report/usage-report.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage-record.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
+import { finishInstallationId } from "../../runtime/filesystem/installation-identity.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
+import {
+  checkOtel,
+  collectOtel,
+  configureOtel,
+  otelOptions,
+  runOtelSession,
+} from "../../runtime/wiring/telemetry-otel.js";
 import {
   printForgetResult,
   printIdentityRule,
@@ -128,6 +136,142 @@ export function registerTelemetryCommand(program: Command): void {
   const telemetry = program
     .command("telemetry")
     .description("Measure what Claude Code and Codex sessions consume, locally");
+  const otel = telemetry.command("otel").description("Configure native OpenTelemetry exporters");
+  for (const action of ["init", "verify"] as const) {
+    otel
+      .command(action)
+      .description(
+        action === "init"
+          ? "Enable detailed local OTLP export in one tool's user configuration"
+          : "Check native OTLP configuration and existing local capture without changing files"
+      )
+      .addOption(
+        new Option(
+          "--config <tool>",
+          `User configuration to ${action === "init" ? "merge" : "verify"}`
+        )
+          .choices(otelOptions.configs)
+          .makeOptionMandatory()
+      )
+      .addOption(
+        new Option("--endpoint <environment>", "Collector destination")
+          .choices(otelOptions.endpoints)
+          .makeOptionMandatory()
+      )
+      .action(
+        async (options: {
+          config: (typeof otelOptions.configs)[number];
+          endpoint: (typeof otelOptions.endpoints)[number];
+        }) => {
+          const { output } = parseGlobalOptions(program);
+          try {
+            if (action === "init") {
+              const result = await configureOtel(options.config, options.endpoint);
+              output.info(
+                result.changed ? `Updated ${result.path}` : `Already configured in ${result.path}`
+              );
+              output.info(
+                "Local OTLP capture may include prompts, responses, commands and tool output."
+              );
+              output.info(result.launch);
+            } else {
+              const result = await checkOtel(options.config, options.endpoint);
+              output.info(`Configuration verified in ${result.path}`);
+              output.info(
+                `${result.lines} captured lines in ${result.capture}; last modified ${result.modifiedAt}`
+              );
+              output.info(
+                `${result.observations} normalized observations; ${result.unrecognisedLines} unrecognised lines`
+              );
+              output.info("Existing capture does not prove delivery from the current session.");
+            }
+          } catch (error) {
+            new ErrorHandler(output).handle(error);
+          }
+        }
+      );
+  }
+
+  otel
+    .command("collect")
+    .description("Capture authenticated OTLP on a local loopback port")
+    .option("--port <port>", "Loopback TCP port; 0 selects a free port", "14318")
+    .action(async (options: { port: string }) => {
+      const { output } = parseGlobalOptions(program);
+      try {
+        if (!/^\d+$/.test(options.port)) throw new Error("Collector port must be an integer.");
+        const collector = await collectOtel(Number(options.port));
+        output.info(`OTLP collector listening on http://127.0.0.1:${collector.port}`);
+      } catch (error) {
+        new ErrorHandler(output).handle(error);
+      }
+    });
+
+  otel
+    .command("run <prompt>")
+    .description("Run one fresh provider session and send its allowed OTLP observations")
+    .addOption(
+      new Option("--config <tool>", "Tool to run")
+        .choices(otelOptions.configs)
+        .makeOptionMandatory()
+    )
+    .requiredOption("--tenant <slug>", "Gouvernail tenant slug")
+    .requiredOption("--endpoint <origin>", "Loopback HTTP origin")
+    .option("--yes", "Consent to capture and send telemetry from this execution")
+    .option("--model <model>", "Provider model to use")
+    .option(
+      "--follow-up <prompt>",
+      "Send a second prompt in the same session (Claude and Codex retain local history)"
+    )
+    .option("--include-repository", "Include repository metadata for Claude Code")
+    .option("--include-installation-id", "Send the AIDD installation ID (not a user identity)")
+    .option("--keep-capture", "Retain the private local OTLP capture")
+    .action(
+      async (
+        prompt: string,
+        options: {
+          config: (typeof otelOptions.configs)[number];
+          tenant: string;
+          endpoint: string;
+          yes?: boolean;
+          model?: string;
+          followUp?: string;
+          includeRepository?: boolean;
+          includeInstallationId?: boolean;
+          keepCapture?: boolean;
+        }
+      ) => {
+        const { output, projectRoot } = parseGlobalOptions(program);
+        const abort = new AbortController();
+        const cancel = () => abort.abort();
+        process.once("SIGINT", cancel);
+        process.once("SIGTERM", cancel);
+        try {
+          if (!options.yes)
+            throw new Error(
+              "Pass --yes to consent to OTLP capture and delivery for this execution."
+            );
+          const sent = await runOtelSession({
+            ...options,
+            cwd: projectRoot,
+            prompt,
+            signal: abort.signal,
+            token: process.env.AIDD_OTEL_TOKEN ?? "",
+            retainCapture: options.keepCapture
+              ? (path) => output.info(`Private OTLP capture: ${path}`)
+              : undefined,
+          });
+          if (!sent)
+            throw new Error("The execution produced no supported OTLP observations to send.");
+          output.info(`Sent ${sent} OTLP observations from this execution.`);
+        } catch (error) {
+          new ErrorHandler(output).handle(error);
+        } finally {
+          process.off("SIGINT", cancel);
+          process.off("SIGTERM", cancel);
+        }
+      }
+    );
 
   telemetry
     .command("on")
@@ -173,7 +317,11 @@ export function registerTelemetryCommand(program: Command): void {
           );
           process.exit(1);
         }
+        await deps.checkInstallationId();
         const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot, choice);
+        if (result.status === "on") {
+          await finishInstallationId(deps.ensureInstallationId, "Measurement is on");
+        }
         printOnResult(output, result);
         if (result.status === "refused") process.exit(1);
       });
@@ -372,6 +520,8 @@ export function registerTelemetryCommand(program: Command): void {
             ? await use.show()
             : await use.set(id);
         printIdentityResult(output, result);
+        if (id === undefined && !cmdOptions.off)
+          output.info(`Installation ID: ${(await deps.checkInstallationId()) ?? "unavailable"}.`);
         if (result.status === "refused") process.exit(1);
       });
     });

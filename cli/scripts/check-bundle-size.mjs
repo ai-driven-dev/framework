@@ -55,6 +55,26 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // (+5.2 KB over its 712.9 KB skills profile); 0.3% measured headroom.
 // 722 KB: 720.2 KB, Antigravity portable agents and direct-local installation
 // (+2.1 KB over its 718.1 KB hooks build); 0.3% measured headroom.
+// 728 KB: 726.7 KB, explicit native OTLP configuration for three tools and the
+// OpenCode 1 launcher (+15.9 KB over the 710.8 KB build above); 0.2% measured headroom.
+// 746 KB: 744.9 KB, provider observation transformers and a persistent installation ID
+// (+18.2 KB over the 726.7 KB build above); 0.1% measured headroom.
+// 784 KB: 783.7 KB, local OTLP collector and consent-aware resumable provider sync,
+// explicit metric sanitization, retry and durable feature invalidation (+38.8 KB over 744.9 KB);
+// 0.1% measured headroom.
+// 799 KB: 798.8 KB with opt-in Codex titles, one-pass title synchronization and
+// telemetry integrity guards (+15.1 KB over 783.7 KB); less than 0.1% measured headroom.
+// 804 KB: 803.3 KB with strict OTLP attribute and metric validation (+4.5 KB);
+// 0.1% measured headroom.
+// 807 KB: 806.6 KB with opt-in native Codex project metadata and shared metadata publishing;
+// +3.3 KB, less than 0.1% measured headroom.
+// 808 KB: 807.49 KB with bounded, event-scoped Codex reasoning-effort forwarding;
+// +0.53 KB over the preceding 806.96 KB build, less than 0.1% measured headroom.
+// 810 KB: 809.79 KB with separately opted-in, sanitized Codex repository metadata.
+// 813 KB: 812.66 KB with consent and session-admission checks on every delivery attempt.
+// 819 KB: 818.39 KB with per-identifier provenance and isolated pending session ranges.
+// 829 KB: 828.93 KB with repository uncertainty and clone-proven resume after origin changes.
+// 839 KB: 838.97 KB with Claude token-point effort and merged Antigravity support.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 
