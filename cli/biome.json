@@ -82,7 +82,7 @@
                       "**/runtime/**",
                       "**/shared/**"
                     ],
-                    "message": "kernel must not import any context or shared \u2014 it is the old home of the shared vocabulary, not a consumer of one"
+                    "message": "kernel must not import any context or shared: it is the old home of the shared vocabulary, not a consumer of one"
                   }
                 ]
               }
@@ -107,7 +107,7 @@
                       "**/runtime/**",
                       "**/infrastructure/**"
                     ],
-                    "message": "shared/ports declares an interface and imports no context, no layer above it and no adapter \u2014 see 0-contexts.md"
+                    "message": "shared/ports declares an interface and imports no context, no layer above it and no adapter: see 0-contexts.md"
                   }
                 ]
               }
@@ -127,7 +127,7 @@
                 "patterns": [
                   {
                     "group": ["**/contexts/**", "**/presentation/**", "**/runtime/**"],
-                    "message": "shared/infrastructure implements a port and imports no context and nothing above it \u2014 a context is satisfied by shape, not by import"
+                    "message": "shared/infrastructure implements a port and imports no context and nothing above it: a context is satisfied by shape, not by import"
                   }
                 ]
               }
@@ -147,7 +147,7 @@
                 "patterns": [
                   {
                     "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure \u2014 take the port from shared/ports"
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
                   }
                 ]
               }
@@ -167,7 +167,7 @@
                 "patterns": [
                   {
                     "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure \u2014 take the port from shared/ports"
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
                   }
                 ]
               }
@@ -260,7 +260,7 @@
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure \u2014 take the port from shared/ports"
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
                   }
                 ]
               }
@@ -349,7 +349,7 @@
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure \u2014 take the port from shared/ports"
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
                   }
                 ]
               }
@@ -445,7 +445,7 @@
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure \u2014 take the port from shared/ports"
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
                   }
                 ]
               }
@@ -544,7 +544,7 @@
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure \u2014 take the port from shared/ports"
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
                   }
                 ]
               }
@@ -640,7 +640,7 @@
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure \u2014 take the port from shared/ports"
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
                   }
                 ]
               }

@@ -19,7 +19,7 @@ const FENCED_BLOCK = /```[\s\S]*?```/g;
  * segment, not an area.
  */
 const CITED_PATH =
-  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|(?<!\/)\b(?:kernel|shared|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+/g;
+  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
 
 /** `src/`-relative citations resolve under `src/`; rooted ones resolve as written. */
 function resolveCitation(cited: string): string {

@@ -180,6 +180,14 @@ describe("the guard itself", () => {
       'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
     );
     writeFileSync(
+      join(planted, "src/shared/infrastructure/reaches-context.ts"),
+      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
+    );
+    writeFileSync(
+      join(planted, "src/kernel/reaches-shared.ts"),
+      'import type { Home } from "../shared/ports/env.js";\nexport type Reached = Home;\n'
+    );
+    writeFileSync(
       join(planted, "src/shared/ports/env.ts"),
       "export const home = (): string | undefined => process.env.HOME;\n"
     );
@@ -223,12 +231,17 @@ describe("the guard itself", () => {
     );
   });
 
-  it("flags shared/ports reaching a context, and shared/infrastructure reaching nothing it may not", () => {
+  it("flags shared/ports and shared/infrastructure reaching a context, and kernel reaching shared", () => {
     const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
 
-    expect(findings, findings.join(", ")).toContain(
-      "src/shared/ports/reaches-context.ts:lint/style/noRestrictedImports"
-    );
+    for (const file of [
+      "src/shared/ports/reaches-context.ts",
+      "src/shared/infrastructure/reaches-context.ts",
+      "src/kernel/reaches-shared.ts",
+    ]) {
+      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    }
   });
 
   it("flags a context's infrastructure, presentation and runtime reaching shared/infrastructure, and not the composition root", () => {

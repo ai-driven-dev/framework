@@ -68,6 +68,26 @@ function pathSetVerdicts(found: readonly string[], committed: readonly string[])
   ];
 }
 
+/** The top-level entries of `src/`. A file moved to any other one escapes the counts above. */
+const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([
+  "cli.ts",
+  "contexts",
+  "kernel",
+  "presentation",
+  "runtime",
+  "shared",
+]);
+
+/** Every file under a top-level `src/` entry that is not a known area. */
+function unknownAreaVerdicts(found: readonly string[]): string[] {
+  return found
+    .filter((path) => !KNOWN_SOURCE_AREAS.has(path.split("/")[1] as string))
+    .map(
+      (path) =>
+        `${path} sits in an unknown top-level area: nothing new enters outside the known ones`
+    );
+}
+
 describe("the old layout only shrinks", () => {
   for (const [folder, committed] of Object.entries(COMMITTED_COUNTS)) {
     it(`${folder} holds its committed file count`, () => {
@@ -81,6 +101,10 @@ describe("the old layout only shrinks", () => {
     const found = sourceFiles().filter((file) => file.startsWith("src/kernel/"));
 
     expect(pathSetVerdicts(found, COMMITTED_KERNEL_PATHS)).toEqual([]);
+  });
+
+  it("src/ holds no top-level area beyond the known ones", () => {
+    expect(unknownAreaVerdicts(sourceFiles())).toEqual([]);
   });
 });
 
@@ -98,6 +122,12 @@ describe("the guard itself", () => {
     expect(pathSetVerdicts(swapped, COMMITTED_KERNEL_PATHS)).toEqual([
       "src/kernel/new-thing.ts is new: nothing new enters the old layout",
       `${COMMITTED_KERNEL_PATHS[0]} is gone: remove it from the committed set`,
+    ]);
+  });
+
+  it("reports a file in a top-level src/ area that is not a known one", () => {
+    expect(unknownAreaVerdicts(["src/foo/x.ts", "src/cli.ts", "src/runtime/a.ts"])).toEqual([
+      "src/foo/x.ts sits in an unknown top-level area: nothing new enters outside the known ones",
     ]);
   });
 

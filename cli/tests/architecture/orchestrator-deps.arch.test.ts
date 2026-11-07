@@ -20,6 +20,8 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   // `setup` brings a project from nothing to correct, so it names each stage: registration,
   // tool install, plugin prompt, settings sync, version, plus the machine-scope handoff.
   { path: "src/contexts/framework/application/setup-use-case.ts", dependencies: 11 },
+  // Five section generators reached inline through a switch on section name, plus the config
+  // generator. It resolves by registering a generator per section type, not by dropping one.
   {
     path: "src/contexts/framework/application/restore/generate-tool-distribution-use-case.ts",
     dependencies: 9,
@@ -71,12 +73,27 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   // and id rules before anything is added to it, under the same lock. A stage folded into
   // another would hide where the ledger is written.
   { path: "src/contexts/telemetry/application/ingest-usage-use-case.ts", dependencies: 6 },
+  // A report reads what is new, settles the ledger, and attributes by what was declared and
+  // who is named. The fifth locates `.` for `--repository .`, and the sixth is the
+  // environment's refusal: it must come before `.` runs git, so it cannot be left to ingest.
   { path: "src/contexts/telemetry/application/report/report-usage-use-case.ts", dependencies: 6 },
+  // Opting in is one act with five effects, each in its own collaborator: the project's
+  // config, the commit hook, the run journal, the ledger and the roots it remembers, and
+  // Claude's retention, beside the repository it is run in. The count is mostly ports; the
+  // effects share an order (consent first, the ledger's lock last) that no collaborator knows.
+  // The consent is written through its own port, apart from the project config it clears.
+  // The consent's history is the eleventh: the interval opens with the key, under the same lock.
+  // The token that names the interval, in the key and in the history, is the twelfth: a fresh
+  // random one per interval, injected so a test can name it. The person's identity is the
+  // thirteenth: written only once the consent is, so a refused `on` leaves it as it was.
   { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", dependencies: 13 },
   // Opting out is the consent's write, then the end of the clone's consent interval, under the
   // ledger's lock so an ingest sees the key and the interval change together. The order is only
   // this class's to hold; the clock is the sixth.
   { path: "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts", dependencies: 6 },
+  // Forgetting reads what was declared where (snapshots, remembered roots, the clones that
+  // consented), clears it, and erases the files, all under the ledger's lock. The declarations
+  // go before the files that lead to them, an order only this class holds.
   {
     path: "src/contexts/telemetry/application/forget/forget-telemetry-use-case.ts",
     dependencies: 6,

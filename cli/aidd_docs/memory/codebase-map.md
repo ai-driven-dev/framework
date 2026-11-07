@@ -86,11 +86,11 @@ src/
 │       ├── domain/
 │       │   └── formats/
 │       └── infrastructure/
-├── kernel/    # old home of the shared vocabulary, receives no new file — imports no context
+├── kernel/    # old home of the shared vocabulary, receives no new file. Imports no context
 │   ├── materialization/    # where content lands and how its links follow
 │   ├── ports/
 │   └── reading/    # getting at a file's location and its content safely
-├── shared/    # technology ports and their adapters — imports no context
+├── shared/    # technology ports and their adapters. Imports no context
 │   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
 │   └── ports/    # a technology port two or more contexts need
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
@@ -117,7 +117,7 @@ src/
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
 - `src/contexts/`: the five bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
-- `src/runtime/`: services that are not a context — http, git, auth, assets, filesystem, self-update — and the wiring that composes everything.
+- `src/runtime/`: services that are not a context — git, auth, assets, filesystem, self-update — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
 - `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.
