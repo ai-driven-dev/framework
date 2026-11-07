@@ -39,6 +39,8 @@ Limits of the figures, stated rather than smoothed over:
 
 Same machine and method as the baseline: three runs of each project with the JSON reporter, median per test then summed (the before figures are recomputed from the baseline reports, which gives 193.3 s where the first pass above gave 186.1 s). Wall clock is the whole `pnpm vitest run --project=<name>` command, median of three.
 
+Limits of the gain: summed time is CPU, not wall clock. Run serially, e2e plus integration saves about 1 s of wall clock; the whole-suite figure compares one baseline run with a median of three. The moved tests sit outside mutation, as the e2e tests did, so they add no mutation kills: their value is CPU and command-layer coverage. `in-process-runner-parity.arch.test.ts` holds the runner's command list to the binary's.
+
 | | Tests | Files | Summed duration | Wall |
 | --- | --- | --- | --- | --- |
 | e2e before | 248 | 42 | 193.3 s | 14.8 s |
