@@ -25,7 +25,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 
 ### 4a : restructuration
 
-- `02-brand`, `03-foundations` et `04-components` reprennent tout ce que faisait `01-system`, sans rien ajouter.
+- `02-brand`, `03-foundations` et `04-components` reprennent tout ce que faisait `01-system`, sans rien ajouter que le relais par les fichiers que la séparation impose : la direction dans `brand.md`, l'élément déjà relevé pour la tâche dans `history.md`.
 - `03-foundations` lit la direction retenue dans `brand.md`.
 
 ### 4b : variantes et marque
@@ -63,7 +63,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 
 ## Done-when
 
-- 4a : sur les trois pilotes, le script donne le même résultat qu'avant la restructuration, et aucune fiche ne porte plus `composition`.
+- 4a : sur les trois pilotes, le script donne les mêmes erreurs, les mêmes wireframes et un code intact qu'avant la restructuration, et aucune fiche ne porte plus `composition`. Les avertissements suivent les choix du modèle d'une exécution à l'autre et ne comptent pas.
 - 4b : sur le pilote vierge, `02-brand` produit trois directions distinctes, comparées dans la page, et la retenue devient `brand.md` ; un jeu de variantes sans intention ou sans différence est signalé.
 - 4c : sur les trois pilotes, chaque wireframe a son écran ; un contraste sous le seuil et une zone tactile trop petite sont signalés.
 - 4d : un écran et son wireframe revus OK puis publiés passent `validated` ; un verdict sur une version antérieure ne compte pas.
