@@ -9,6 +9,7 @@ The one place that says what a memory file must be.
 | After a write | every finding informs, nothing blocks |
 | `check` | the one strict gate: exits 1 on an error, M1, M3, M4 or a missing always-written file |
 | Every other finding, structure included (misplaced, team folder) | a warning: the skill checks or proposes, never imposes |
+| `check`, whole bank | also warns the words every session loads, markup included: the root files, the ones the context file imports |
 
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |

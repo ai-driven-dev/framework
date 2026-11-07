@@ -100,7 +100,7 @@ Rules are written to `aidd_docs/rules/` and published to each tool's rule folder
 | Memory, one line | a convention about how the project is organised or run: placement, import direction, branches, commits, test location, gates |
 | Rule | a detailed convention for writing one kind of file: error handling, logging, naming inside a layer |
 
-Before writing a convention line, the skill looks for an existing rule that covers it, in the places the rule skill's discovery reference lists: the canonical rule folder, each tool's own rule folder, the instruction files. No second list is kept here. Covered: nothing is written. Detailed and uncovered: it goes to the sheet's "To rule" block.
+Before writing a convention line, the skill looks for an existing rule that covers it, in the places the rule skill's discovery reference lists: the canonical rule folder, each tool's own rule folder, the instruction files. No second list is kept here. Covered: nothing is written. Detailed and uncovered: it goes to the sheet's "To rule" block. Dropped after measurement: the rule skill was not reachable and restatements came anyway.
 
 ## Templates
 

@@ -187,6 +187,16 @@ test("the vcs template asks for the platform, the repository and the CLI, and th
   assert.match(text, /\{\{Which commit standard does the project follow, and where does it deviate\?\}\}/u);
 });
 
+test("the brief holds the functional sections, each a question answered from the repository", () => {
+  const text = textOf({ capability: "core", name: "project-brief.md" });
+  const headings = [...text.matchAll(/^## (.+)$/gmu)].map(([, heading]) => heading);
+  assert.deepEqual(headings, ["Purpose", "Users", "Main journey", "Domain language", "Key features", "Business rules", "Out of scope"]);
+  for (const heading of ["Users", "Main journey", "Business rules"]) {
+    const body = text.slice(text.indexOf(`## ${heading}`)).split(/\n## /u)[0];
+    assert.equal([...body.matchAll(/\{\{[^{}\n]*\}\}/gu)].length, 1, `${heading} asks one question`);
+  }
+});
+
 test("the Current state only reader rule drops a secret or credential value", () => {
   const rules = fs.readFileSync(path.join(SKILL, "references/memory-rules.md"), "utf8");
   const row = rules.split(/\r?\n/u).find((line) => line.startsWith("| Current state only"));

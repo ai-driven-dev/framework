@@ -9,7 +9,7 @@
  * - `check [root] [file...]`: the bank's findings by hand, from a skill or in CI. Exits 1 when
  *   an error remains. With no file it checks the whole bank, and a missing always-written file
  *   is an error; so is a root with no bank, or a named file that does not exist. A misplaced file
- *   and a team folder are warnings.
+ *   and a team folder are warnings, and so is the count of words the root files load in every session.
  * - `vanished [root] [--sheet <facts>]`: a write's loss list, read-only. Prints each line of the
  *   bank as committed at HEAD that the working bank lost, unless a `remove` or `replace` `D` line
  *   answered yes quotes it, and exits 1 when it prints any. Limit: HEAD only, so an uncommitted
@@ -32,7 +32,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { RULES, ERROR, WARNING } = require("./lib/memory-rules.cjs");
+const { RULES, ERROR, WARNING, wordsIn } = require("./lib/memory-rules.cjs");
 const {
   formatFindings,
   isShellWrite,
@@ -205,6 +205,15 @@ function structureFindings(root) {
   return found;
 }
 
+/** The words a session loads whole: the bank's root files, the ones `sync` imports. */
+function loadFindings(root) {
+  const files = rootFiles(root);
+  if (files.length === 0) return [];
+  const words = files.reduce((total, file) => total + wordsIn(readTextOrNull(path.join(root, file)) ?? "").length, 0);
+  const message = `every session loads ${words} words, markup included, from ${files.length} ${files.length === 1 ? "file" : "files"}`;
+  return [warning(MEMORY_DIR, "load", message, "move what a session rarely needs to internal/ or external/")];
+}
+
 function missing(file, excerpt, fix) {
   return { file, rule: "missing", severity: ERROR, message: excerpt, excerpt, fix };
 }
@@ -362,7 +371,7 @@ function check(root, files = []) {
     if (!fs.existsSync(path.join(absolute, file))) found.push(missing(file, "no such file", "write it or fix the name"));
     else if (placeOf(file) === "root") found.push(...lintFile(absolute, file, RULES, failures));
   }
-  if (named.length === 0) found.push(...missingFindings(absolute), ...structureFindings(absolute));
+  if (named.length === 0) found.push(...missingFindings(absolute), ...structureFindings(absolute), ...loadFindings(absolute));
   const errors = found.filter((finding) => finding.severity === ERROR);
   const warnings = found.filter((finding) => finding.severity !== ERROR);
   // The cap on warnings binds the hook's answer to a model; a check prints every one.

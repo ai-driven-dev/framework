@@ -2,7 +2,15 @@
 
 ## Purpose
 
-- {{What does the project do, for whom, and why does it exist?}}
+- {{What does the project do, and why does it exist?}}
+
+## Users
+
+- {{Which roles use the project, one line each, as the code or the docs name them?}}
+
+## Main journey
+
+1. {{What are the three to six steps from a request to a result, read from an entry point?}}
 
 ## Domain language
 
@@ -15,6 +23,10 @@
 | Feature | Entry |
 | --- | --- |
 | {{a capability the product offers, one line}} | {{where it starts: a command, a route or a skill}} |
+
+## Business rules
+
+- {{Which rules never bend, as the code enforces them or the docs state them?}}
 
 ## Out of scope
 

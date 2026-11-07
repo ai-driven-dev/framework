@@ -315,4 +315,4 @@ const RULES = Object.freeze([
 // The limits the rules enforce, by rule id: the table in `memory-rules.md` states the same ones.
 const LIMITS = Object.freeze({ M1: PROSE_WORD_LIMIT, M5: ITEM_WORD_LIMIT, M6: FILE_WORD_LIMIT, M7: SENTENCE_WORD_FLOOR });
 
-module.exports = { ERROR, WARNING, RULES, LIMITS };
+module.exports = { ERROR, WARNING, RULES, LIMITS, wordsIn };

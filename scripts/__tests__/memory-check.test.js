@@ -369,7 +369,7 @@ test("check names a rule that throws once, as an internal error and never a find
     fs.writeFileSync(preload, `const { RULES } = require(${JSON.stringify(rules)});\nRULES.find((rule) => rule.id === "M3").check = () => { throw new Error("boom"); };\n`);
     const run = spawnSync("node", ["--require", preload, ENGINE, "check", root], { encoding: "utf8" });
     assert.equal(run.status, 1);
-    assert.equal(run.stdout, "");
+    assert.match(run.stdout, /^aidd-context: 0 errors, 1 warning\n\S+ load warning [^\n]+\n$/u);
     assert.equal(run.stderr, "aidd-context: internal error: rule M3 failed: boom\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -427,15 +427,32 @@ test("check prints the findings in the contract's shape and exits 1 only with an
     assert.equal(failing.status, 1);
     assert.equal(
       failing.stdout,
-      'aidd-context: 1 error, 1 warning\naidd_docs/memory/a.md:3 M1 "26 words, over the recommended 25" => split it into a list or a table; keep every fact\naidd_docs/memory/a.md:5 M5 warning bullet or cell of 36 words, over the recommended 35 => split it; keep every fact\n'
+      'aidd-context: 1 error, 2 warnings\naidd_docs/memory/a.md:3 M1 "26 words, over the recommended 25" => split it into a list or a table; keep every fact\naidd_docs/memory/a.md:5 M5 warning bullet or cell of 36 words, over the recommended 35 => split it; keep every fact\n' +
+        "aidd_docs/memory load warning every session loads 86 words, markup included, from 8 files => move what a session rarely needs to internal/ or external/\n"
     );
 
     const passing = check(warningOnly);
     assert.equal(passing.status, 0);
-    assert.match(passing.stdout, /^aidd-context: 0 errors, 1 warning\n.+ M5 warning .+\n$/u);
+    assert.match(passing.stdout, /^aidd-context: 0 errors, 2 warnings\n.+ M5 warning .+\n.+ load warning .+\n$/u);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(warningOnly, { recursive: true, force: true });
+  }
+});
+
+test("check warns the words every session loads: the root files only, on a whole-bank run, and exits 0", () => {
+  const root = fullBank({ "a.md": `# T\n\n${Array(4).fill(words(25)).join("\n\n")}\n`, "internal/b.md": words(500), "external/c.md": words(500), "README.md": words(300) });
+  try {
+    const run = check(root);
+    assert.equal(run.status, 0);
+    // Seven always-written files of three words each, plus the hundred and two of a.md.
+    assert.equal(
+      run.stdout,
+      "aidd-context: 0 errors, 1 warning\naidd_docs/memory load warning every session loads 123 words, markup included, from 8 files => move what a session rarely needs to internal/ or external/\n"
+    );
+    assert.equal(check(root, `${MEMORY}/a.md`).stdout, "", "a named file narrows the run: no load figure");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
@@ -445,9 +462,10 @@ test("check names the always-written files the bank lacks as the one error, and 
     const run = check(root);
     assert.equal(run.status, 1);
     assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
-      "aidd-context: 1 error, 1 warning",
+      "aidd-context: 1 error, 2 warnings",
       'aidd_docs/memory missing "project-brief.md, architecture.md, codebase-map.md, coding-assertions.md, testing.md, ecosystem.md" => write each from its template',
       "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
+      "aidd_docs/memory load warning every session loads 2 words, markup included, from 1 file => move what a session rarely needs to internal/ or external/",
     ]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -460,10 +478,11 @@ test("check: a row's file below the root and a team folder are warnings and exit
     const run = check(root);
     assert.equal(run.status, 0);
     assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
-      "aidd-context: 0 errors, 3 warnings",
+      "aidd-context: 0 errors, 4 warnings",
       "aidd_docs/memory/internal/auth.md placement warning auth.md belongs at the bank's root => move it to aidd_docs/memory/auth.md",
       "aidd_docs/memory/assets/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/assets/ to aidd_docs/memory/internal/assets/, or to the aidd_docs/ folder of the plugin that owns it",
       "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
+      "aidd_docs/memory load warning every session loads 21 words, markup included, from 7 files => move what a session rarely needs to internal/ or external/",
     ]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -475,7 +494,7 @@ test("check: a bank holding a team's cli.md and the names of older layouts gets 
   try {
     const run = check(root);
     assert.equal(run.status, 0);
-    assert.equal(run.stdout, "");
+    assert.equal(run.stdout, "aidd-context: 0 errors, 1 warning\naidd_docs/memory load warning every session loads 33 words, markup included, from 13 files => move what a session rarely needs to internal/ or external/\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -517,8 +536,8 @@ test("check prints every warning, uncapped", () => {
   const root = fullBank(Object.fromEntries(Array.from({ length: 12 }, (_, index) => [`f${index}.md`, `# T\n\n- ${words(36, `w${index}`)}\n`])));
   try {
     const lines = check(root).stdout.trim().split("\n");
-    assert.equal(lines[0], "aidd-context: 0 errors, 12 warnings");
-    assert.equal(lines.length, 13);
+    assert.equal(lines[0], "aidd-context: 0 errors, 13 warnings");
+    assert.equal(lines.length, 14);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

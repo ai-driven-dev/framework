@@ -480,6 +480,15 @@ test("the reading order names the files that define a command or a convention, b
   assert.doesNotMatch(text, /\b(?:husky|lefthook|pre-commit|commitlint|makefile|justfile|taskfile|pnpm|npm|yarn|bun|cargo|gradle|poetry|uv|eslint|prettier|biome|ruff|turbo|nx)\b/iu, "regression guard: the reading order names a tool");
 });
 
+test("scan answers the brief's functional sections from the repository on a setup or an audit, and a refresh from a base never adds them", () => {
+  const scan = skillText("actions/01-scan.md");
+  const step = scan.match(/^4\. \*\*Collect\.\*\*.*$/mu)[0];
+  for (const heading of ["Users", "Main journey", "Business rules"]) assert.ok(step.includes(`\`${heading}\``), `${heading} is not named`);
+  assert.match(step, /else a `Q` line, never invented/u, "an unanswered section is invented or silently dropped");
+  assert.match(step, /refresh from a base[^.]*never/u, "an update forces them");
+  assert.match(step, /a setup or an audit collects them/u, "a setup or an audit does not collect them");
+});
+
 test("the review checks a cited command and a commit type against the files that define them", () => {
   const text = skillText("references/review-protocol.md");
   assert.match(text, /commit type/u, "no commit type check");

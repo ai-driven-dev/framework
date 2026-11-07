@@ -15,7 +15,7 @@ Source: [design.md](./design.md). Stacked on the branch `refactor/lean-project-m
 | 2   | Facts go through one sheet before any write | [`phase-2.md`](./phase-2.md) | 1 |
 | 3   | A fact comes from the file that defines it | [`phase-3.md`](./phase-3.md) | 2 |
 | 4   | An update starts from what changed | [`phase-4.md`](./phase-4.md) | 2 |
-| 5   | The brief carries the functional macro; rules keep the coding detail; the load is measured | [`phase-5.md`](./phase-5.md) | 2 |
+| 5   | The brief carries the functional macro; the load is measured | [`phase-5.md`](./phase-5.md) | 2 |
 
 ## External sources
 
@@ -56,6 +56,6 @@ Source: [design.md](./design.md). Stacked on the branch `refactor/lean-project-m
 | Names a bank already holds from an older version (`design.md`, `forms.md`, `navigation.md`, `infra.md`, `integration.md`) are accepted for their capability, never offered a merge | a team's file is never moved or removed |
 | Silence is consent, except for a removal | asking for an answer on every line costs the person more than it protects; a removal is the one change that loses a team's content |
 | The engine computes an update's base; no fingerprint file | a small model improvises version-control commands badly; a fingerprint conflicts between branches and goes stale |
-| A detailed coding convention goes to a rule, never to memory | rules are loaded by each tool on their own, scoped to the files they govern |
+| A detailed coding convention goes to a rule, never to memory (lookup dropped after measurement) | rules are loaded by each tool on their own, scoped to the files they govern |
 | From scratch, with no code, belongs to `01-bootstrap` | there is nothing to read |
 | Deferred: read-only subagents per area, Kilo wiring | taken up only if the final measurement shows the need |
