@@ -8,6 +8,7 @@ Gouvernail's AI KPI view uses OpenTelemetry (OTel) observations. For OpenCode v2
 | Model | `model`, when present | `model`, when present | Selected model and variant on plugin step-start events, when emitted; not proof of the served model or effective effort |
 | Usage | Forwarded `claude_code.token.usage` metrics and technical fields from `api_request` events | `codex.sse_event` and turn traces | OpenCode-normalized input, output, reasoning and cache counts from plugin step-end events; ambiguous zero stays unavailable |
 | Identity | Provider attributes when emitted, or an explicit connector-token assignment | Provider attributes when emitted, or an explicit connector-token assignment | An explicit connector-token assignment |
+| Repository and branch | Repository URL when explicitly enabled; no branch attribute in the local two-turn capture | No repository or branch attribute observed in the local two-turn capture | No repository or branch attribute observed in the local two-turn capture |
 
 Token fields are provider-specific. Claude's input excludes cache reads and writes; Codex's input includes cached input. A Codex cache zero can mean the provider omitted cache details. Never add a log, metric and trace describing the same usage, or treat an absent value as zero.
 
@@ -49,3 +50,5 @@ Read 2026-11-06:
 - [OTLP protocol](https://opentelemetry.io/docs/specs/otlp/)
 
 Read 2026-11-07: [Codex 0.166.0 turn span and counters](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core/src/tasks/mod.rs#L369-L382), [turn counter capture](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core/src/tasks/mod.rs#L760-L810) and [cache defaulting](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/codex-api/src/sse/responses.rs#L131-L153).
+
+Read 2026-11-07: [Claude Code repository attributes](https://code.claude.com/docs/en/monitoring-usage#repository-attributes).
