@@ -303,7 +303,8 @@ export class PluginAddUseCase implements PluginAdd {
         marketplace,
         prev,
         foreignDir !== undefined ||
-          machine.getPlugins(toolId).some((p) => p.name === dist.manifest.name),
+          (resolveScopeForInstall(toolId) === "user" &&
+            machine.getPlugins(toolId).some((p) => p.name === dist.manifest.name)),
         prevHooksMap.get(toolId)
       );
       allSkipped.push(skipped);

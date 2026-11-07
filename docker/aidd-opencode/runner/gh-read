@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Allow the reviewer to read only the active PR using its separate read token.
+job=${1:-}
+[[ $job =~ ^/var/lib/aidd-review/jobs/job\.[[:alnum:]]{8}$ && -d $job && ! -L $job &&
+   -f $job/metadata.json && ! -L $job/metadata.json && -f $job/token && ! -L $job/token ]] || {
+  echo 'Invalid review job' >&2; exit 2;
+}
+[[ $(stat -c '%u:%a' "$job") == '0:750' && $(stat -c '%u:%a' "$job/metadata.json") == '0:440' &&
+   $(stat -c '%u:%a' "$job/token") == "$(id -u):400" ]] || {
+  echo 'Review job ownership is invalid' >&2; exit 2;
+}
+repo=$(jq -er '.repo | select(type == "string")' "$job/metadata.json")
+pr=$(jq -er '.pr | select(type == "string")' "$job/metadata.json")
+[[ $repo =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ && $pr =~ ^[1-9][0-9]*$ ]] || {
+  echo 'Invalid review metadata' >&2; exit 2;
+}
+shift
+
+run_gh() {
+  # The token is read after clearing the environment, never passed as an argument.
+  env -i PATH=/usr/bin:/bin HOME=/nonexistent GH_CONFIG_DIR=/nonexistent \
+    /bin/bash -c '
+      set -euo pipefail
+      GH_TOKEN=$(cat "$1")
+      export GH_TOKEN GH_PROMPT_DISABLED=1 GH_NO_UPDATE_NOTIFIER=1 GH_PAGER=cat
+      shift
+      exec /usr/bin/gh "$@"
+    ' _ "$job/token" "$@"
+}
+
+if [[ ${1:-} == pr && ${2:-} == view ]]; then
+  shift 2
+  comments=0
+  while (($#)); do
+    case "$1" in
+      "$pr") shift ;;
+      --comments) comments=1; shift ;;
+      --repo) [[ ${2:-} == "$repo" ]] || { echo 'Repository is outside this review' >&2; exit 2; }; shift 2 ;;
+      *) echo 'Unsupported gh pr view argument' >&2; exit 2 ;;
+    esac
+  done
+  # REST avoids the deprecated GraphQL fields used by older gh releases.
+  run_gh api "repos/$repo/pulls/$pr"
+  if [[ $comments == 1 ]]; then
+    run_gh api --paginate "repos/$repo/issues/$pr/comments?per_page=100"
+    run_gh api --paginate "repos/$repo/pulls/$pr/reviews?per_page=100"
+    run_gh api --paginate "repos/$repo/pulls/$pr/comments?per_page=100"
+  fi
+  exit 0
+fi
+
+if [[ ${1:-} == api ]]; then
+  shift
+  paginate=()
+  if [[ ${1:-} == --paginate ]]; then paginate=(--paginate); shift; fi
+  [[ $# == 1 ]] || { echo 'Unsupported gh api arguments' >&2; exit 2; }
+  endpoint=${1%%\?*}
+  query=${1#"$endpoint"}
+  case "$endpoint" in
+    "repos/$repo/pulls/$pr"|"repos/$repo/pulls/$pr/comments"|\
+    "repos/$repo/pulls/$pr/reviews"|"repos/$repo/issues/$pr/comments") ;;
+    *) echo 'GitHub endpoint is outside this review' >&2; exit 2 ;;
+  esac
+  [[ -z $query || $query == '?per_page=100' ]] || { echo 'Unsupported GitHub query' >&2; exit 2; }
+  run_gh api "${paginate[@]}" "$1"
+  exit 0
+fi
+
+echo 'Only read-only PR discussion is available' >&2
+exit 2
