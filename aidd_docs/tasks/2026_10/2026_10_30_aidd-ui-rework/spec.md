@@ -174,6 +174,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 | 4 | Un écran sans wireframe est un avertissement, qui propose d'en déduire un depuis l'écran ; jamais une erreur, un écran se dessinant sans parcours. |
 | 4 | `publish`, H6 et H8 couvrent les wireframes, validés par la même review que les écrans. |
 | 4 | Ce qui n'est pas encore validé se voit : la vitrine marque `proposed` chaque fiche qui l'est, wireframe, composant ou écran, et la page de review les liste ; une extraction depuis le code laisse tout `proposed`, l'existant n'étant jamais validé d'office. |
+| 4 | La vitrine est le point d'entrée de tout ce que l'UI génère, à la manière de Storybook : une page d'accueil et une page par fiche, sous une navigation commune groupée dans l'ordre du chemin (marque et tokens, composants par niveau, parcours, wireframes, écrans) ; chaque page relie ce qu'elle utilise et ce qui l'utilise, d'après l'impact, et la review cite la page d'un élément. Une page unique deviendrait illisible passé quelques dizaines de fiches. |
 | 5 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
 | 6 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
 | 6 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |
