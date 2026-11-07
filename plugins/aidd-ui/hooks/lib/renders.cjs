@@ -22,7 +22,13 @@ const SWITCHED_ELEMENT = "html";
 
 const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
 const WIREFRAME = "wireframe";
-const STYLE = /<style\b|<link\b|\sstyle\s*=|var\(/i; // what dresses a render: a wireframe is structure only
+// What dresses a render, each with the excerpt it names: a wireframe is structure only.
+const STYLES = [
+  [/<style\b/i, "<style"],
+  [/<link\b[^>]*\brel\s*=\s*["']?stylesheet\b/i, "<link"],
+  [/\sstyle\s*=/i, "style="],
+];
+const COMMENT = /<!--[\s\S]*?-->/g;
 
 const renderOf = (record) => `${path.dirname(record.file)}/${record.frontMatter.id}${RENDER_EXTENSION}`;
 const shownBy = (kinds) => (project) => placed(project).filter((record) => kinds.includes(record.frontMatter.kind) && record.frontMatter.id === record.name);
@@ -122,8 +128,9 @@ function stylesheetProblems(project) {
 function styleProblems(project) {
   return wireframeRenders(project).flatMap((file) =>
     readRender(project, file)
+      .replace(COMMENT, blank)
       .split(LINE_BREAK)
-      .flatMap((line, index) => (STYLE.test(line) ? [{ file, message: `line ${index + 1}: a wireframe holds no style, remove it`, fix: "remove the style: the screen dressing the wireframe carries it", excerpt: line.match(STYLE)[0].trim() }] : []))
+      .flatMap((line, index) => STYLES.filter(([pattern]) => pattern.test(line)).map(([, excerpt]) => ({ file, message: `line ${index + 1}: a wireframe holds no style, remove it`, fix: "remove the style: the screen dressing the wireframe carries it", excerpt })))
   );
 }
 

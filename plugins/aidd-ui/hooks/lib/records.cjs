@@ -194,9 +194,9 @@ function journeyProblems(project) {
     .filter((record) => fm(record).kind === "journey")
     .flatMap((record) => [
       ...(PERSONA_SECTION in record.sections ? [] : [problem(record, `lacks "## ${PERSONA_SECTION}", describing who walks it`, `add a "## ${PERSONA_SECTION}" section describing the persona`)]),
-      ...table(record.sections[STEPS_SECTION]).flatMap((row, index) => [
+      ...table(record.sections[STEPS_SECTION]).flatMap((row, index, rows) => [
         ...(screens.has(row.Screen) ? [] : [problem(record, `step ${index + 1} names screen "${row.Screen}", which no screen or wireframe has`, "name a screen or a wireframe that exists, or add a wireframe", row.Screen)]),
-        ...(row.Action ? [] : [problem(record, `step ${index + 1} has no action leading to the next`, "write the action in its Action cell")]),
+        ...(row.Action || index === rows.length - 1 ? [] : [problem(record, `step ${index + 1} has no action leading to the next`, "write the action in its Action cell")]),
       ]),
     ]);
 }
@@ -256,7 +256,13 @@ function expectedProblems(project) {
     .flatMap((record) =>
       list(fm(record).uses)
         .filter((id) => !(index.has(id) && isComponent(index.get(id))))
-        .map((id) => ({ ...problem(record, `expects component "${id}", which the design system does not hold yet`, "add the component to the design system before a screen dresses this wireframe", id), severity: WARNING }))
+        .map((id) => {
+          const held = index.get(id);
+          const found = held
+            ? problem(record, `expects component "${id}", which is ${/^[aeiou]/.test(fm(held).kind) ? "an" : "a"} ${fm(held).kind}, not a component`, "name a component, or the one the design system will add", id)
+            : problem(record, `expects component "${id}", which the design system does not hold yet`, "add the component to the design system before a screen dresses this wireframe", id);
+          return { ...found, severity: WARNING };
+        })
     );
 }
 

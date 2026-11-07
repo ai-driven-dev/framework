@@ -130,6 +130,12 @@ describe("aidd-ui bump", () => {
       assert.ok(read(HISTORY).includes(`| search-flow | 2 | adds a filter zone | no | ${TASK} | |\n`));
     });
 
+    it("raises a journey named itself", () => {
+      const { code, report } = bump("--task", TASK, "--change", "adds a filter step", "onboarding");
+      assert.deepEqual([code, report.changed.includes(`${UI}/journeys/onboarding.md`)], [0, true]);
+      assert.ok(read(HISTORY).includes(`| onboarding | 2 | adds a filter step | no | ${TASK} | |\n`));
+    });
+
     it("leaves a wireframe expecting a changed component: it names the component, it holds none of it", () => {
       change("search-field");
       assert.ok(read(`${UI}/wireframes/search-flow.md`).includes("\nversion: 1\n"));

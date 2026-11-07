@@ -15,6 +15,7 @@ The request.
 5. Journeys:
    - from the code: deduce each journey from its routes and screens, each step a screen and the action leading to the next;
    - from scratch: ask which journeys, and for each its steps;
+   - change: the journeys and wireframes the request adds or changes, and how;
    - show them, wait for the user's agreement; refused: stop.
 6. Read [write](02-write.md).
 

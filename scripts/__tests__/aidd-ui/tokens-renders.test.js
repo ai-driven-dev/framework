@@ -755,11 +755,23 @@ describe("aidd-ui tokens and renders", () => {
       ["a style block", "<style>div { margin: 0; }</style>"],
       ["a style attribute", '<div style="color: red">Query</div>'],
       ["a stylesheet", '<link rel="stylesheet" href="../tokens.css">'],
-      ["a token", "<div>var(--space-md)</div>"],
     ]) {
       it(`names ${name} in a wireframe, which is structure only`, () => {
         edit(tmp, WIREFRAME_RENDER, "</body>", `${line}\n</body>`);
         assert.deepEqual(problems(), [`${WIREFRAME_RENDER}: line 10: a wireframe holds no style, remove it`]);
+      });
+    }
+  });
+
+  describe("wireframe renders outside style", () => {
+    for (const [name, line] of [
+      ["an icon link", '<link rel="icon" href="favicon.svg">'],
+      ["prose naming var()", "<div>Reads var(x) aloud</div>"],
+      ["a comment", '<!-- no style="" here -->'],
+    ]) {
+      it(`takes ${name} as no style`, () => {
+        edit(tmp, WIREFRAME_RENDER, "</body>", `${line}\n</body>`);
+        assert.deepEqual(problems(), []);
       });
     }
   });
@@ -1012,7 +1024,6 @@ const FIXES = [
   "V10 | line 10: a wireframe holds no style, remove it | \"<link\" | remove the style: the screen dressing the wireframe carries it",
   "V10 | line 10: a wireframe holds no style, remove it | \"<style\" | remove the style: the screen dressing the wireframe carries it",
   "V10 | line 10: a wireframe holds no style, remove it | \"style=\" | remove the style: the screen dressing the wireframe carries it",
-  "V10 | line 10: a wireframe holds no style, remove it | \"var(\" | remove the style: the screen dressing the wireframe carries it",
   "V2 | no data-size=\"sm\" | \"data-size=\\\"sm\\\"\" | add an element carrying it to the render",
   "V2 | no data-state=\"empty\" | \"data-state=\\\"empty\\\"\" | add an element carrying it to the render",
   "V2 | no data-state=\"hover\" | \"data-state=\\\"hover\\\"\" | add an element carrying it to the render",

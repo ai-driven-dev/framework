@@ -339,6 +339,11 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), []);
     });
 
+    it("takes a last step without action, no step following it", () => {
+      change(JOURNEY, "| search-flow | narrows the results |", "| search-flow | |");
+      assert.deepEqual(problems(), []);
+    });
+
     it("names a step without the action leading to the next", () => {
       change(JOURNEY, "| home | opens a result |", "| home | |");
       assert.deepEqual(problems(), [`${JOURNEY}: step 2 has no action leading to the next`]);
@@ -356,7 +361,7 @@ describe("aidd-ui records and history", () => {
       const found = ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R18");
       assert.deepEqual(found.map((problem) => [problem.severity, problem.message]), [
         ["warning", 'expects component "filter-chip", which the design system does not hold yet'],
-        ["warning", 'expects component "home", which the design system does not hold yet'],
+        ["warning", 'expects component "home", which is a screen, not a component'],
       ]);
     });
   });
@@ -753,7 +758,7 @@ const FIXES = [
   "R16 | status \"deprecated\" is for elements: reviews are proposed or validated | \"deprecated\" | set status to proposed or validated",
   "R17 | lacks \"## Usage\", saying when to use it and when not | - | add a \"## Usage\" section saying when to use it and when not",
   "R18 | expects component \"filter-chip\", which the design system does not hold yet | \"filter-chip\" | add the component to the design system before a screen dresses this wireframe",
-  "R18 | expects component \"home\", which the design system does not hold yet | \"home\" | add the component to the design system before a screen dresses this wireframe",
+  "R18 | expects component \"home\", which is a screen, not a component | \"home\" | name a component, or the one the design system will add",
   "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"wireframe\" does not belong in screens/ | \"wireframe\" | move it to the folder of its kind, or change its kind",
