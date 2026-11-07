@@ -6,13 +6,15 @@ The checks that must pass for code to count as done. Minimal, run after every ch
 
 **Write the test first, and watch it fail for the reason it names.** A test written after the
 code it covers confirms what was built; only one that failed first can tell you it is
-checking anything at all.
+checking anything at all. A test that passes on its first run was not needed: its case is already covered by another test, so it is not kept.
 
 Three consequences, all learned by paying for them:
 
 - **A guard ships with the mutation that proves it.** Break the thing the test is named for
   and watch that test — not another — go red. A guard nothing fails for is not a guard, and
-  it is indistinguishable from a comment.
+  it is indistinguishable from a comment. A characterization test, written before a move over a
+  behaviour no test covers, is the one test that may start green; its proof is the same inverted
+  one, and if another test also goes red one of the two is redundant.
 - **After any scripted edit, read the file back before running anything.** A replacement
   whose anchor drifted applies to nothing and reports nothing, which is how a field can be
   declared in a type, believed by a display and produced by no code. An inconsistent state is

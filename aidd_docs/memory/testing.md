@@ -10,7 +10,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | --- | --- |
 | Skills, agents, rules (markdown) | each action's own `## Test`, run end to end against a real project |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
-| `cli/` | vitest, four projects — see the CLI bank |
+| `cli/` | vitest, five projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
 | Per-tool distributions | golden snapshots in `cli/tests/golden/`, mirrored by the `build-per-tool` CI matrix; Claude Code's own `plugin validate` over a fresh claude build, in `cli-ci.yml` |
 | Browser journeys | `aidd-qa:01-acceptance-qa`, see below |

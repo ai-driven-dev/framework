@@ -4,8 +4,8 @@ How this package is tested: the layers, the tools, the conventions.
 
 ## Strategy
 
-- Four vitest projects (`vitest.config.ts` → `test.projects`): `unit`, `integration`, `e2e` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere.
-- Unit: pure logic. Integration: a use case or adapter, ports substituted. E2E: the real built binary. Architecture: ratchets over source text.
+- Five vitest projects (`vitest.config.ts` → `test.projects`): `unit`, `integration`, `e2e`, `golden` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere. `golden` shares the e2e build setup, so it reads the same built binary.
+- Unit: pure logic. Integration: a use case or adapter, ports substituted. E2E: the real built binary. Golden: a full output compared to a versioned snapshot. Architecture: ratchets over source text.
 - A pyramid; read the split live.
 
 ## Tools
@@ -21,11 +21,13 @@ How this package is tested: the layers, the tools, the conventions.
 - A tool profile's tests split by feature: `tests/contexts/tools/domain/profiles/<tool>/<feature>.unit.test.ts` (`agents`, `skills`, `rules`, `commands`, `mcp`, `hooks`, `plugins`, `settings`, `content`), with the profile's own declarations in `profile.unit.test.ts`.
 - Doubles from `tests/helpers/ports/`. Substitute at the seam; never mock functional behaviour.
 - Fixtures in `tests/fixtures/`, read-only, excluded from JSON and link checks. Mutate a copy in a temp directory.
-- `.gitattributes`'s `tests/fixtures/** text eol=lf` keeps byte-for-byte comparisons (`manifest-round-trip.unit.test.ts`) passing on Windows.
+- `.gitattributes`'s `tests/fixtures/** text eol=lf` keeps byte-for-byte comparisons (`manifest-round-trip.integration.test.ts`) passing on Windows.
 - A temp directory: `await mkdtemp(join(tmpdir(), "aidd-<thing>-"))`, never a fixed name (a plantable symlink). The prefix is what `scripts/sweep-stale-test-dirs.cjs` reclaims.
 - A test name is a phrase of observable behaviour; nested `describe` reads as a sentence. `E2E:` is a recurring legacy prefix, not one to copy.
+- A `.unit` file imports neither `node:fs`, `node:fs/promises` nor `node:child_process`: the `biome.json` override on `tests/**/*.unit.test.ts` holds it, and `biome-guards-bite.arch.test.ts` proves it on a planted tree. A file that needs the real filesystem or a process is `.integration`. Limits: `node:os` stays allowed, since unit files use `homedir()` and `tmpdir()` as path values for the in-memory doubles; the guard sees direct imports only, so `tests/helpers/ports/seed-from-directory.ts` still reads a real directory for the unit files that import it; a bare specifier (`"fs"`) is not listed, observed in no test, and Biome reports it only as a `useNodejsImportProtocol` notice.
+- A test file over 800 lines fails `test-file-size.arch.test.ts`; its `BASELINE` holds the files over the cap and may only shrink. 400 lines is a review point, not a tool check.
 - A golden snapshot is machine-independent, never derived from an absolute path: [`golden-machine-independence.md`](../../.claude/skills/test/references/golden-machine-independence.md).
-- `describe.concurrent` appears in no unit or integration file; in e2e the golden and command-matrix suites use it. An observed split, not a rule.
+- `describe.concurrent` appears in no unit or integration file; it is used in e2e and golden. An observed split, not a rule.
 - A bug fix's review reproduces the user's scenario against the built binary: [`bug-empirical-reproduction.md`](../../.claude/skills/test/references/bug-empirical-reproduction.md).
 - A sandboxed run reaches no tool binary and no real profile: `tests/e2e/helpers.ts` narrows `PATH`, relocates `HOME`/`XDG_CONFIG_HOME`/`USERPROFILE`/`APPDATA` and `CODEX_HOME`, which Codex and the telemetry reader of its sessions read before `HOME`; `sandbox-reaches-no-tool-binary.e2e.test.ts` holds both.
 - Records land under `AppData\Roaming` on Windows, `.config` elsewhere. Assert through the helper.
@@ -33,7 +35,8 @@ How this package is tested: the layers, the tools, the conventions.
 
 ## Run
 
-- `pnpm test` runs every project; `test:unit`, `test:integration`, `test:e2e`, `test:arch` select one.
+- `pnpm test` runs every project; `test:unit`, `test:integration`, `test:e2e`, `test:golden`, `test:arch` select one.
+- Failure output: vitest 5 already switches to the `minimal` reporter and drops colours when it detects an agent, and a diff shows 5 unchanged lines around each change. `diff.truncateThreshold` exists but cuts each side to its first N lines before comparing, so a change past line N vanishes from the output; it is not set. A failure diff stays as large as its changed lines.
 - `pnpm smoke` drives the real binary over the command matrix, hermetically. `pnpm smoke:full` adds the remote fetch.
 - `pnpm smoke:real` reaches real host registries: [`smoke-real.md`](internal/smoke-real.md).
 - `pnpm smoke:collision` runs the real `codex` and `copilot` binaries in a throwaway HOME against a person's own install under the keys aidd uses, and checks `setup` and `clean` leave it as seeded. `smoke:real`'s unique names cannot meet that case.
