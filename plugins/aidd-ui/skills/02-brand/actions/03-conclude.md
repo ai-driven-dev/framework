@@ -10,8 +10,9 @@ Leave a brand that validates, and tell the user what follows.
 
 1. Run `node <engine> validate`.
 2. Fix each error line in `aidd_docs/ui/brand.md` as its `=> fix` says.
-3. Keep the errors [engine](../references/engine.md) says a later step owes.
-4. Reply with:
+3. Rerun `node <engine> validate`, and repeat until none is left there.
+4. Keep the errors [engine](../references/engine.md) says a later step owes.
+5. Reply with:
    - the brand written
    - what `validate` still prints
    - that the code is untouched.

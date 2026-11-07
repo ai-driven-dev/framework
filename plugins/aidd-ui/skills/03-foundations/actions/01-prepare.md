@@ -15,7 +15,8 @@ The request.
 5. If `aidd_docs/ui/brand.md` is missing, stop and say so.
 6. Read its personality, references and anti-references: the direction the tokens follow.
 7. Take the task folder the user named, else ask.
-   - A path under `aidd_docs/tasks/`, cited in `history.md` rows, never written. It need not exist.
+   - A path under `aidd_docs/tasks/`, only cited in `history.md` rows.
+   - Nothing is written in it. It need not exist.
 8. For a change only:
    - If vague, ask which token changes, and to which value.
    - Run `node <engine> impact <token>…`.
@@ -27,4 +28,6 @@ The request.
 
 ## Output
 
-The case, `<engine>`, the brand direction, the task folder, the agreed impact.
+- The case and `<engine>`.
+- The brand direction and the task folder.
+- For a change, its agreed impact.

@@ -26,7 +26,7 @@ Each box is a file: read it, then do what it says.
 
 - Speak only to ask or to give the final reply.
 - Otherwise call tools.
-- Run every command from the project root.
+- Run every command from the project root, the working directory.
 - Every path written in a record starts there.
 - Write only `system.md`, `tokens.json` and its context files under `aidd_docs/ui/`.
 - Never write in the code, nor by hand what the engine writes.

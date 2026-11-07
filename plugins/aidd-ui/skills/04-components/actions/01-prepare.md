@@ -14,7 +14,8 @@ The request.
 4. Name the case per [cases](../references/cases.md).
 5. If `aidd_docs/ui/system.md` is missing, stop and say so.
 6. Take the task folder the user named, else ask.
-   - A path under `aidd_docs/tasks/`, cited in `history.md` rows, never written. It need not exist.
+   - A path under `aidd_docs/tasks/`, only cited in `history.md` rows.
+   - Nothing is written in it. It need not exist.
 7. For a change only:
    - If vague, ask which element changes, and how.
    - Run `node <engine> impact <id>…`.
@@ -25,4 +26,6 @@ The request.
 
 ## Output
 
-The case, `<engine>`, the task folder, the agreed impact.
+- The case and `<engine>`.
+- The task folder.
+- For a change, its agreed impact.

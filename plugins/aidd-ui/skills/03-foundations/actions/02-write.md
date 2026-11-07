@@ -33,4 +33,5 @@ The output of [prepare](01-prepare.md).
 
 ## Output
 
-The files written, and any `bump` JSON and agreed impact.
+- The files written.
+- For a change, `bump`'s JSON and the agreed impact.

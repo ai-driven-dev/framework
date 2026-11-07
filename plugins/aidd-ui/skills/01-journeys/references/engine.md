@@ -10,7 +10,8 @@
 ### `validate`
 
 - Prints `VALID` when nothing is wrong.
-- Otherwise prints a count line, then one line per problem:
+- Otherwise prints a line counting errors and warnings.
+- Then prints one line per problem:
   `<file>[:<line>] <rule> ["<excerpt>"] => <fix>`.
 - Exits 1 only on an error.
 

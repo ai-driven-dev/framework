@@ -18,7 +18,7 @@ The output of [write](02-write.md).
    - the elements and screens created or raised, with their versions
    - for a change, the ones left in `bump`'s `left`
    - what `validate` still prints, code errors included
-   - for a change, the `code` files `impact` listed, with old values
+   - for a change, the `code` files `impact` listed, still holding old values
    - that the code is untouched
    - that each element created or raised is `proposed` until published
    - that the user publishes with `node <engine> publish <id>`

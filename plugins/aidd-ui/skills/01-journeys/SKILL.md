@@ -24,7 +24,7 @@ Each box is a file: read it, then do what it says.
 
 - Speak only to ask or to give the final reply.
 - Otherwise call tools.
-- Run every command from the project root.
+- Run every command from the project root, the working directory.
 - Write only under `aidd_docs/ui/journeys/` and `aidd_docs/ui/wireframes/`.
 - Never write in the code, a brief, or the design system.
 - After each write, fix what the hook or `node <engine> validate` reports.

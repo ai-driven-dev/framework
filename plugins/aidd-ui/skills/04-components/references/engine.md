@@ -19,7 +19,7 @@ A refused `bump` or `publish` exits 2 with a message. Nothing is written.
 
 - Writes `aidd_docs/ui/tokens.css`.
 - Writes the resolver when needed.
-- Exits 1, naming what blocks it.
+- Exits 1 only when blocked, naming what blocks it.
 
 ### `impact <id>…`
 
@@ -72,14 +72,18 @@ aidd-ui: <n> errors, <m> warnings
 ```
 
 - The first line counts errors, then warnings.
-- An error line has its rule, any text, and the `=> fix`.
+- An error line carries:
+  - its rule
+  - the offending text, when there is one
+  - the `=> fix` that clears it
 - The fix names the engine command when the engine owns the write.
+- `<engine>` stands for the engine's path.
 - A grouped line joins errors of one rule, fix and folder.
 - It names the file when all are in it.
 - `validate` prints every problem, ungrouped.
 - The hook prints at most ten warnings.
 - After a write, the hook prints problems on the lines it changed.
-- Once per turn, it prints the errors it left new elsewhere, grouped.
+- Once per turn it prints errors left new in other files, grouped.
 - New means absent at the session's start or the last turn's end.
 - At the turn's end it asks once for new errors.
 - It asks only for those on lines the turn changed.

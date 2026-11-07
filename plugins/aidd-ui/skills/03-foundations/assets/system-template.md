@@ -23,5 +23,6 @@ ignore: [{{paths no record links}}]
 - Replace every `{{...}}` and delete every comment.
 - A list with no answer is `[]`.
 - Only `code-tokens` may go.
-- Write `ar`, `he`, `fa` and `ur` locales right to left.
+- The right to left languages are `ar`, `he`, `fa` and `ur`.
+- A locale in one of them is written right to left.
 -->
