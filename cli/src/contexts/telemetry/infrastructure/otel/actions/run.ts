@@ -640,6 +640,24 @@ export async function runOtel(options: RunOptions): Promise<number> {
           async () => !options.signal.aborted
         );
         sent += result.sent;
+        if (options.config === CODEX_CONFIG_ID) {
+          if (result.sent === 0)
+            throw new Error("Codex session logs were not retained; turn traces were not sent.");
+          try {
+            const traces = await syncOtel(
+              { ...base, session, home, traceOnly: true },
+              async () => {
+                if (options.signal.aborted) throw new Error("OTLP execution was cancelled.");
+              },
+              async () => !options.signal.aborted
+            );
+            sent += traces.sent;
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : "Codex traces could not be sent.";
+            throw new Error(`${message} Logs may already have been retained.`);
+          }
+        }
       }
     }
     return sent;

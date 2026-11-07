@@ -4,7 +4,7 @@ Gouvernail's AI KPI view uses OpenTelemetry (OTel) observations. For OpenCode v2
 
 | Field | Claude Code OTel | Codex OTel | OpenCode v2 OTel |
 | --- | --- | --- | --- |
-| Session | `session.id`, when present | `conversation.id`, when present | In observed `/api/session/{id}/prompt` HTTP spans and plugin session events |
+| Session | `session.id`, when present | `conversation.id` in logs; `thread.id` in observed turn spans | In observed `/api/session/{id}/prompt` HTTP spans and plugin session events |
 | Model | `model`, when present | `model`, when present | Selected model and variant on plugin step-start events, when emitted; not proof of the served model or effective effort |
 | Usage | `claude_code.token.usage` and `api_request` | `codex.sse_event` and turn traces | OpenCode-normalized input, output, reasoning and cache counts from plugin step-end events; ambiguous zero stays unavailable |
 | Identity | Provider attributes, when emitted | Provider attributes, when emitted | Member explicitly assigned to the connector token in local Gouvernail; not a provider identity or proof of the person holding the token |
@@ -22,7 +22,7 @@ The opt-in OpenCode v2 plugin subscribes to `session.created`, `session.step.sta
 | Provider | Available or observed in OTLP | Current limit and next step |
 | --- | --- | --- |
 | Claude Code | The documented `api_request` event can carry request and prompt IDs, model, effort, latency and separate token and cache counters. These fields appeared in both local captures. | The framework does not forward these events today. An allowlist of technical fields could expose them; avoid counting the same request again through metrics. Repository attributes require a separate opt-in. |
-| Codex | Logs, metrics and traces are independently configurable. Completed response events can include model, effort and usage. | The observed turn-usage histogram had no session ID and the response events had no turn or request ID. Neither timestamps nor a previous session's effort establish a safe join. Forward additional documented, session-linked events only after validating their fields. |
+| Codex | In two local turns with CLI 0.166.0, a `session_task.turn` span contained `thread.id`, `turn.id`, selected model, effort and turn usage together. | The span counts the session usage delta during the turn and may cover several requests or models. The model is selected, not confirmed for every request. Cache and output zeros can be normalized defaults. A turn ID can recur during recovery; retain trace and span IDs. `otel run` sends allowlisted turn spans after session logs; generic `otel sync` does not yet forward these spans. Never add those counters to response-event counters. |
 | OpenCode v2 | The v2.2.5 exporter emits logs and traces. In our captures, session HTTP spans and model/usage spans did not share a usable correlation. | The opted-in plugin sends session-linked OpenCode events as OTLP. Missing counters are normalized to zero upstream, so zeros cannot establish actual usage. A model variant is not necessarily reasoning effort. |
 
 An observed effort is evidence only for its own observation. Do not carry it into a later session or an unlinked event, and do not equate a requested model with a confirmed response model.
@@ -41,3 +41,5 @@ Read 2026-11-06:
 - [OpenCode v2 HTTP API audit](https://github.com/anomalyco/opencode/blob/dev/V2_HTTP_API_AUDIT.md) (current development branch; the v2.2.5 path was observed locally)
 - [OpenTelemetry metrics data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/)
 - [OTLP protocol](https://opentelemetry.io/docs/specs/otlp/)
+
+Read 2026-11-07: [Codex 0.166.0 turn span and counters](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core/src/tasks/mod.rs#L369-L382), [turn counter capture](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/core/src/tasks/mod.rs#L760-L810) and [cache defaulting](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/codex-api/src/sse/responses.rs#L131-L153).

@@ -5,6 +5,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { isDeepStrictEqual } from "node:util";
 import { asPlainObject } from "../../../../../kernel/reading/plain-object.js";
 import { CLAUDE_CONFIG_ID, CODEX_CONFIG_ID, type SyncConfig } from "../settings.js";
+import { codexTurnTransfers } from "../turn-traces.js";
 import { attachInstallationId, checkInstallationClaim } from "./installation-attribute.js";
 import { readAttributeValue } from "./read-attribute-value.js";
 import { seriesFingerprint } from "./series-fingerprint.js";
@@ -20,6 +21,8 @@ export interface SyncOptions {
   readonly signal?: AbortSignal;
   readonly intervalMs?: number;
   readonly installationId?: string;
+  /** Used by isolated Codex runs after logs have been delivered. */
+  readonly traceOnly?: boolean;
 }
 
 type RecordObject = Record<string, unknown>;
@@ -276,7 +279,7 @@ function timeOf(entry: RecordObject) {
 }
 
 export interface Transfer {
-  readonly signal: "logs" | "metrics";
+  readonly signal: "logs" | "metrics" | "traces";
   readonly payload: RecordObject;
   readonly at?: string;
   readonly start?: string;
@@ -292,7 +295,12 @@ export function packTransfers(
   const groups = new Map<string, Array<{ transfer: Transfer; count: number; items: Transfer[] }>>();
   for (const item of transfers) {
     const key = groupByTimestamp ? `${item.signal}\0${item.at ?? ""}` : item.signal;
-    const root = item.signal === "logs" ? "resourceLogs" : "resourceMetrics";
+    const root =
+      item.signal === "logs"
+        ? "resourceLogs"
+        : item.signal === "metrics"
+          ? "resourceMetrics"
+          : "resourceSpans";
     const resources = array(item.payload[root]);
     const batches = groups.get(key) ?? [];
     const last = batches.at(-1);
@@ -399,6 +407,17 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
   const envelope = object(parsed);
   const payload = object(envelope.payload);
   if (options.installationId) checkInstallationClaim(payload, options.installationId);
+  if (options.traceOnly) {
+    if (options.config !== CODEX_CONFIG_ID || envelope.signal !== "traces") return [];
+    const transfers = codexTurnTransfers(payload, options.session);
+    const installationId = options.installationId;
+    return installationId
+      ? transfers.map((transfer) => ({
+          ...transfer,
+          payload: attachInstallationId(transfer.payload, "resourceSpans", installationId),
+        }))
+      : transfers;
+  }
   const out: Transfer[] = [];
   const sessionKey = options.config === CLAUDE_CONFIG_ID ? "session.id" : "conversation.id";
   if (envelope.signal === "logs") {
@@ -565,7 +584,7 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
     : out;
 }
 
-export function destination(options: SyncOptions, signal: "logs" | "metrics"): URL {
+export function destination(options: SyncOptions, signal: "logs" | "metrics" | "traces"): URL {
   let endpoint: URL;
   try {
     endpoint = new URL(options.endpoint);
@@ -618,8 +637,18 @@ async function assertFullDelivery(response: Response, signal: Transfer["signal"]
   if (raw === undefined || raw === null) return;
   const partial = asPlainObject(raw);
   if (!partial) throw new Error("Gouvernail returned an invalid OTLP response.");
-  const camel = signal === "logs" ? "rejectedLogRecords" : "rejectedDataPoints";
-  const snake = signal === "logs" ? "rejected_log_records" : "rejected_data_points";
+  const camel =
+    signal === "logs"
+      ? "rejectedLogRecords"
+      : signal === "metrics"
+        ? "rejectedDataPoints"
+        : "rejectedSpans";
+  const snake =
+    signal === "logs"
+      ? "rejected_log_records"
+      : signal === "metrics"
+        ? "rejected_data_points"
+        : "rejected_spans";
   if (
     Object.keys(partial).some(
       (key) => ![camel, snake, "errorMessage", "error_message"].includes(key)
