@@ -1,8 +1,8 @@
-// R1 to R17: the shape of each record and how records point at one another.
+// R1 to R18: the shape of each record and how records point at one another.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
-const { checkOf, ERROR, HISTORY_FILE } = require("./project.cjs");
+const { checkOf, ERROR, WARNING, HISTORY_FILE } = require("./project.cjs");
 const { breakpointsOf, STEPS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
@@ -14,6 +14,8 @@ const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
 const FOCUS_STATE = "focus"; // a component taking focus is driven by the keyboard
 const KEYBOARD_SECTION = "Keyboard";
+const PERSONA_SECTION = "Persona";
+const SCREEN_KINDS = ["screen", "wireframe"]; // what a journey step names
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
 const VERDICTS_SECTION = "Verdicts";
@@ -30,6 +32,7 @@ const KIND_KEYS = {
   composition: COMPONENT_KEYS,
   screen: [...VERSIONED_KEYS, "uses", "tokens", "states", "breakpoints", "route"],
   journey: [...VERSIONED_KEYS, "persona"],
+  wireframe: [...VERSIONED_KEYS, "uses", "states", "zones"],
   asset: [...VERSIONED_KEYS, "type", "file", "alt"],
   review: [...VERSIONED_KEYS, "scope", "screens"],
 };
@@ -120,7 +123,7 @@ function usesProblems(project) {
 function stateProblems(project) {
   return placed(project).flatMap((record) => {
     const states = list(fm(record).states);
-    if (fm(record).kind === "screen") return states.includes(DEFAULT_STATE) ? [] : [problem(record, `screen lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)];
+    if (SCREEN_KINDS.includes(fm(record).kind)) return states.includes(DEFAULT_STATE) ? [] : [problem(record, `${fm(record).kind} lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)];
     if (!isComponent(record)) return [];
     return [
       ...(states.includes(DEFAULT_STATE) ? [] : [problem(record, `component lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)]),
@@ -183,17 +186,19 @@ function breakpointProblems(project) {
     );
 }
 
-const screenIds = (project) => new Set(placed(project).filter((record) => fm(record).kind === "screen").map((record) => fm(record).id));
+const screenIds = (project) => new Set(placed(project).filter((record) => SCREEN_KINDS.includes(fm(record).kind)).map((record) => fm(record).id));
 
 function journeyProblems(project) {
   const screens = screenIds(project);
   return placed(project)
     .filter((record) => fm(record).kind === "journey")
-    .flatMap((record) =>
-      table(record.sections[STEPS_SECTION]).flatMap((row, index) =>
-        screens.has(row.Screen) ? [] : [problem(record, `step ${index + 1} names screen "${row.Screen}", which no screen has`, "name a screen that exists, or add it", row.Screen)]
-      )
-    );
+    .flatMap((record) => [
+      ...(PERSONA_SECTION in record.sections ? [] : [problem(record, `lacks "## ${PERSONA_SECTION}", describing who walks it`, `add a "## ${PERSONA_SECTION}" section describing the persona`)]),
+      ...table(record.sections[STEPS_SECTION]).flatMap((row, index, rows) => [
+        ...(screens.has(row.Screen) ? [] : [problem(record, `step ${index + 1} names screen "${row.Screen}", which no screen or wireframe has`, "name a screen or a wireframe that exists, or add a wireframe", row.Screen)]),
+        ...(row.Action || index === rows.length - 1 ? [] : [problem(record, `step ${index + 1} has no action leading to the next`, "write the action in its Action cell")]),
+      ]),
+    ]);
 }
 
 function reviewProblems(project) {
@@ -243,6 +248,27 @@ function usageProblems(project) {
     .map((record) => problem(record, `lacks "## ${USAGE_SECTION}", saying when to use it and when not`, `add a "## ${USAGE_SECTION}" section saying when to use it and when not`));
 }
 
+/** A wireframe comes before the components it expects: one the design system lacks, or has
+ * deprecated, informs. */
+function expectedProblems(project) {
+  const index = byId(project);
+  return placed(project)
+    .filter((record) => fm(record).kind === "wireframe")
+    .flatMap((record) =>
+      list(fm(record).uses)
+        .filter((id) => !(index.has(id) && isComponent(index.get(id)) && !isDeprecated(index.get(id))))
+        .map((id) => {
+          const held = index.get(id);
+          const found = held && isComponent(held)
+            ? problem(record, `expects component "${id}", which is deprecated`, "expect what replaces it instead", id)
+            : held
+            ? problem(record, `expects component "${id}", which is ${/^[aeiou]/.test(fm(held).kind) ? "an" : "a"} ${fm(held).kind}, not a component`, "name a component, or the one the design system will add", id)
+            : problem(record, `expects component "${id}", which the design system does not hold yet`, "add the component to the design system before a screen dresses this wireframe", id);
+          return { ...found, severity: WARNING };
+        })
+    );
+}
+
 /** The one problem a system.md written for another format earns, since every rule would misread
  * it; null when the format is this one or not stated, which R3 names. */
 function formatProblem(project) {
@@ -269,6 +295,7 @@ const RULES = {
   R15: assetProblems,
   R16: reviewStatusProblems,
   R17: usageProblems,
+  R18: expectedProblems,
 };
 
 /** Every broken record rule, in rule order. */

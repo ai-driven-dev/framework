@@ -10,7 +10,7 @@ const { load } = require(path.join(LIB, "project.cjs"));
 const tokens = require(path.join(LIB, "tokens.cjs"));
 const renders = require(path.join(LIB, "renders.cjs"));
 
-const { TOKENS, SYSTEM, BUTTON, BUTTON_RENDER, DIALOG, DIALOG_RENDER, HOME, HOME_RENDER, STYLESHEET, RESOLVER, DARK, DESKTOP } = PATHS;
+const { TOKENS, SYSTEM, BUTTON, BUTTON_RENDER, DIALOG, DIALOG_RENDER, HOME, HOME_RENDER, WIREFRAME, WIREFRAME_RENDER, STYLESHEET, RESOLVER, DARK, DESKTOP } = PATHS;
 const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">\n';
 const INSERTED_LINE = 28; // the line before </body> in button.html
 
@@ -115,6 +115,7 @@ describe("aidd-ui tokens and renders", () => {
       [{ $type: "fontWeight", $value: "semibold" }, 'fontWeight "semibold" must be 1 to 1000 or a keyword'],
       [{ $type: "fontWeight", $value: ["bold"] }, 'fontWeight ["bold"] must be 1 to 1000 or a keyword'],
       [{ $type: "cubicBezier", $value: [1.5, 0, 0.5, 1] }, "cubicBezier needs four numbers, x in 0..1"],
+      [{ $type: "fontFamily", $value: "Nunito Sans, sans-serif" }, 'fontFamily "Nunito Sans, sans-serif" is one name, which CSS finds nowhere'],
     ];
     for (const [token, message] of cases) {
       it(`names ${message}`, () => {
@@ -739,6 +740,43 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("wireframe renders", () => {
+    it("asks for a render beside a wireframe", () => {
+      fs.rmSync(path.join(tmp, WIREFRAME_RENDER));
+      assert.deepEqual(problems(), [`${WIREFRAME}: no render beside it, expected search-flow.html`]);
+    });
+
+    it("asks for each state and each zone of a wireframe", () => {
+      edit(tmp, WIREFRAME, "zones: [query, results]", "zones: [query, results, filters]");
+      edit(tmp, WIREFRAME_RENDER, '<section data-state="empty">', '<section data-state="blank">');
+      assert.deepEqual(problems(), [`${WIREFRAME_RENDER}: no data-state="empty"`, `${WIREFRAME_RENDER}: no data-zone="filters"`]);
+    });
+
+    for (const [name, line] of [
+      ["a style block", "<style>div { margin: 0; }</style>"],
+      ["a style attribute", '<div style="color: red">Query</div>'],
+      ["a stylesheet", '<link rel="stylesheet" href="../tokens.css">'],
+    ]) {
+      it(`names ${name} in a wireframe, which is structure only`, () => {
+        edit(tmp, WIREFRAME_RENDER, "</body>", `${line}\n</body>`);
+        assert.deepEqual(problems(), [`${WIREFRAME_RENDER}: line 10: a wireframe holds no style, remove it`]);
+      });
+    }
+  });
+
+  describe("wireframe renders outside style", () => {
+    for (const [name, line] of [
+      ["an icon link", '<link rel="icon" href="favicon.svg">'],
+      ["prose naming var()", "<div>Reads var(x) aloud</div>"],
+      ["a comment", '<!-- no style="" here -->'],
+    ]) {
+      it(`takes ${name} as no style`, () => {
+        edit(tmp, WIREFRAME_RENDER, "</body>", `${line}\n</body>`);
+        assert.deepEqual(problems(), []);
+      });
+    }
+  });
+
   describe("V2 every variant and state rendered", () => {
     it("names a declared variant the render lacks", () => {
       edit(tmp, BUTTON_RENDER, 'data-variant="secondary"', 'data-variant="primary"');
@@ -920,6 +958,7 @@ const FIXES = [
   "T4 | misc.x: colorSpace \"cmyk\" is not a DTCG colour space | \"misc.x\" | use a DTCG colour space, such as srgb",
   "T4 | misc.x: components must be three numbers or \"none\" | \"misc.x\" | give three numbers, or \"none\"",
   "T4 | misc.x: cubicBezier needs four numbers, x in 0..1 | \"misc.x\" | give four numbers, the two x ones from 0 to 1",
+  "T4 | misc.x: fontFamily \"Nunito Sans, sans-serif\" is one name, which CSS finds nowhere | \"misc.x\" | write it as the list [\"Nunito Sans\",\"sans-serif\"]",
   "T4 | misc.x: fontWeight \"semibold\" must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
   "T4 | misc.x: fontWeight 1200 must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
   "T4 | misc.x: fontWeight [\"bold\"] must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
@@ -983,10 +1022,16 @@ const FIXES = [
   "T9 | misc.b: cites --misc-a, which leads back to it | \"misc.b\" | break the loop: cite a token that does not lead back",
   "T9 | misc.x: var(--color-brand-gone) names no token | \"misc.x\" | cite a token that exists, or add the token",
   "V1 | no render beside it, expected dialog.html | \"dialog.html\" | write the render beside it",
+  "V1 | no render beside it, expected search-flow.html | \"search-flow.html\" | write the render beside it",
+  "V10 | line 10: a wireframe holds no style, remove it | \"<link\" | remove the style: the screen dressing the wireframe carries it",
+  "V10 | line 10: a wireframe holds no style, remove it | \"<style\" | remove the style: the screen dressing the wireframe carries it",
+  "V10 | line 10: a wireframe holds no style, remove it | \"style=\" | remove the style: the screen dressing the wireframe carries it",
   "V2 | no data-size=\"sm\" | \"data-size=\\\"sm\\\"\" | add an element carrying it to the render",
+  "V2 | no data-state=\"empty\" | \"data-state=\\\"empty\\\"\" | add an element carrying it to the render",
   "V2 | no data-state=\"hover\" | \"data-state=\\\"hover\\\"\" | add an element carrying it to the render",
   "V2 | no data-tone=\"danger\" | \"data-tone=\\\"danger\\\"\" | add an element carrying it to the render",
   "V2 | no data-variant=\"secondary\" | \"data-variant=\\\"secondary\\\"\" | add an element carrying it to the render",
+  "V2 | no data-zone=\"filters\" | \"data-zone=\\\"filters\\\"\" | add an element carrying it to the render",
   "V3 | line 28: var(--color-missing) names no token | \"var(--color-missing)\" | cite a token that exists, or add the token",
   "V4 | line 28: colour literal \"#336699\", use a token | \"#336699\" | replace it with a token",
   "V4 | line 28: colour literal \"hsl(\", use a token | \"hsl(\" | replace it with a token",

@@ -51,6 +51,7 @@ describe("aidd-ui impact", () => {
         "same-value": [],
         elements: BUTTON_AND_THOSE_USING_IT,
         screens: ["home"],
+        wireframes: ["search-flow"],
         journeys: ["onboarding"],
         renders: RENDERS,
         code: ["src/ui/Button.tsx", "src/ui/HomePage.tsx", "src/ui/tokens.css"],
@@ -136,7 +137,7 @@ describe("aidd-ui impact", () => {
 
     it("reaches nothing beyond a token no record declares", () => {
       editTokens(tmp, (tree) => (tree.misc = { unused: { $type: "number", $value: 1 } }));
-      assert.deepEqual(impact("misc.unused", "--root", tmp).report, { tokens: ["misc.unused"], "same-value": [], elements: [], screens: [], journeys: [], renders: [], code: ["src/ui/tokens.css"] });
+      assert.deepEqual(impact("misc.unused", "--root", tmp).report, { tokens: ["misc.unused"], "same-value": [], elements: [], screens: [], wireframes: [], journeys: [], renders: [], code: ["src/ui/tokens.css"] });
     });
   });
 
@@ -208,6 +209,7 @@ describe("aidd-ui impact", () => {
         "same-value": [],
         elements: BUTTON_AND_THOSE_USING_IT,
         screens: ["home"],
+        wireframes: ["search-flow"],
         journeys: ["onboarding"],
         renders: RENDERS,
         code: ["src/ui/Button.tsx", "src/ui/HomePage.tsx"],
@@ -224,6 +226,12 @@ describe("aidd-ui impact", () => {
       assert.deepEqual(impact("dialog", "--root", tmp).report.journeys, []);
     });
 
+    it("reaches a journey through the wireframe expecting a component, and leaves out its render, which holds no token", () => {
+      edit(tmp, `${UI}/journeys/onboarding.md`, "| home | types a query |\n| home | opens a result |\n", "");
+      const { wireframes, journeys, renders } = impact("search-field", "--root", tmp).report;
+      assert.deepEqual([wireframes, journeys, renders.filter((file) => file.includes("wireframes/"))], [["search-flow"], ["onboarding"], []]);
+    });
+
     it("skips the render an element does not have and the code of a library", () => {
       fs.rmSync(path.join(tmp, `${UI}/components/dialog.html`));
       const { renders, code } = impact("dialog", "--root", tmp).report;
@@ -237,6 +245,7 @@ describe("aidd-ui impact", () => {
         "same-value": [],
         elements: ["button", "dialog", "icon-search", "old-button", "search-field"],
         screens: ["home"],
+        wireframes: ["search-flow"],
         journeys: ["onboarding"],
         renders: RENDERS,
         code: ["src/ui/Button.tsx", "src/ui/HomePage.tsx", "src/ui/tokens.css"],

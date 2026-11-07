@@ -1,5 +1,6 @@
-// V1 to V9: each component and screen has its HTML render, showing every variant, axis and state
-// through the tokens its record declares alone, from the stylesheet generated out of the tokens.
+// V1 to V10: each component and screen has its HTML render, showing every variant, axis and state
+// through the tokens its record declares alone, from the stylesheet generated out of the tokens; a
+// wireframe's shows every state and zone, and no style at all.
 const path = require("node:path");
 const { list, blank, lineOf, LINE_BREAK } = require("./markdown.cjs");
 const { placed, byId, tokensUsedBy, variantOf, TOKENED_KINDS } = require("./model.cjs");
@@ -20,14 +21,25 @@ const SWITCH_ATTRIBUTE = /\sdata-(theme|platform)(?![\w-])/gi; // what shows ano
 const SWITCHED_ELEMENT = "html";
 
 const DECLARED_PROPERTY = /(--[\w-]+)\s*:/g; // a property the render sets itself, not a token
+const WIREFRAME = "wireframe";
+// What dresses a render, each with the excerpt it names: a wireframe is structure only.
+const STYLES = [
+  [/<style\b/i, "<style"],
+  [/<link\b[^>]*\brel\s*=\s*["']?stylesheet\b/i, "<link"],
+  [/\sstyle\s*=/i, "style="],
+];
+const COMMENT = /<!--[\s\S]*?-->/g;
 
 const renderOf = (record) => `${path.dirname(record.file)}/${record.frontMatter.id}${RENDER_EXTENSION}`;
-const rendered = (project) => placed(project).filter((record) => TOKENED_KINDS.includes(record.frontMatter.kind) && record.frontMatter.id === record.name);
+const shownBy = (kinds) => (project) => placed(project).filter((record) => kinds.includes(record.frontMatter.kind) && record.frontMatter.id === record.name);
+const rendered = shownBy(TOKENED_KINDS);
+const shown = shownBy([...TOKENED_KINDS, WIREFRAME]); // every record with a render
+const wireframeRenders = (project) => shownBy([WIREFRAME])(project).map(renderOf).filter((file) => project.renders.includes(file));
 /** A render's text; empty when unreadable, which the loader reports once. */
 const readRender = (project, file) => text(project, file) ?? "";
 
 function presenceProblems(project) {
-  return rendered(project)
+  return shown(project)
     .filter((record) => !project.renders.includes(renderOf(record)))
     .map((record) => ({ file: record.file, message: `no render beside it, expected ${path.basename(renderOf(record))}`, fix: "write the render beside it", excerpt: path.basename(renderOf(record)) }));
 }
@@ -39,12 +51,12 @@ function variantAttribute(item) {
 }
 
 function coverageProblems(project) {
-  return rendered(project)
+  return shown(project)
     .filter((record) => project.renders.includes(renderOf(record)))
     .flatMap((record) => {
       const html = text(project, renderOf(record))?.split(STYLE_BLOCK).join(""); // a selector in a style block shows nothing
       if (html === undefined) return [];
-      const wanted = [...list(record.frontMatter.variants).map(variantAttribute), ...list(record.frontMatter.states).map((value) => `data-state="${value}"`)];
+      const wanted = [...list(record.frontMatter.variants).map(variantAttribute), ...list(record.frontMatter.states).map((value) => `data-state="${value}"`), ...list(record.frontMatter.zones).map((value) => `data-zone="${value}"`)];
       return wanted.filter((attribute) => !html.includes(attribute)).map((attribute) => ({ file: renderOf(record), message: `no ${attribute}`, fix: "add an element carrying it to the render", excerpt: attribute }));
     });
 }
@@ -113,6 +125,15 @@ function stylesheetProblems(project) {
     .map((file) => ({ file, message: `does not load ${STYLESHEET_HREF}, add ${STYLESHEET_LINK}`, fix: `add ${STYLESHEET_LINK}`, excerpt: STYLESHEET_HREF }));
 }
 
+function styleProblems(project) {
+  return wireframeRenders(project).flatMap((file) =>
+    readRender(project, file)
+      .replace(COMMENT, blank)
+      .split(LINE_BREAK)
+      .flatMap((line, index) => STYLES.filter(([pattern]) => pattern.test(line)).map(([, excerpt]) => ({ file, message: `line ${index + 1}: a wireframe holds no style, remove it`, fix: "remove the style: the screen dressing the wireframe carries it", excerpt })))
+  );
+}
+
 const literalProblems = (pattern, { applies = () => true, scanned = styled } = {}) => (project) =>
   applies(project) ? project.renders.flatMap((file) => findLiterals(scanned(readRender(project, file)), pattern).map(({ literal, ...found }) => ({ file, ...found }))) : [];
 
@@ -126,6 +147,7 @@ const RULES = {
   V7: declaredProblems,
   V8: stylesheetProblems,
   V9: switchProblems,
+  V10: styleProblems,
 };
 
 /** Every broken render rule, in rule order. */

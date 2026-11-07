@@ -138,7 +138,9 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
   if (unknown) throw new Refusal(`no token or element named ${unknown.map((ref) => `"${ref}"`).join(", ")}`);
 
   const records = placed(project);
-  const reached = new Set([...report.elements, ...report.screens]);
+  // A wireframe or a journey names what it holds: it changes only when it is the one changed.
+  const named = (ids) => ids.filter((id) => refs.includes(id));
+  const reached = new Set([...report.elements, ...report.screens, ...named(report.wireframes), ...named(report.journeys)]);
   // A deprecated element follows a rename or a deletion: it cites the token, or uses what does.
   const cites = citations(project);
   const viaTokens = breaking ? usages(project, refs.filter((ref) => cites.has(tokenNameOf(project, ref)))) : { elements: [], screens: [] };

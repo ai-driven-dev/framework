@@ -40,7 +40,8 @@ function reached(project, written) {
   return files;
 }
 
-const REPORT_KINDS = { elements: [...COMPONENT_KINDS, "asset"], screens: ["screen"], journeys: ["journey"] };
+const REPORT_KINDS = { elements: [...COMPONENT_KINDS, "asset"], screens: ["screen"], wireframes: ["wireframe"], journeys: ["journey"] };
+const STYLED = (record) => fm(record).kind !== "wireframe"; // a wireframe render holds no token, so no change rewrites it
 
 /** `seed` grown with each candidate that cites a member, until none more joins. */
 function closure(seed, candidates, keyOf, citesOf) {
@@ -97,7 +98,7 @@ function usages(project, given) {
     tokens: [...tokens].sort(),
     "same-value": sameValue(project, tokens, cites),
     ...Object.fromEntries(Object.entries(REPORT_KINDS).map(([key, kinds]) => [key, idsOf(kinds)])),
-    renders: reachedRecords.map(renderOf).filter((file) => project.renders.includes(file)).sort(),
+    renders: reachedRecords.filter(STYLED).map(renderOf).filter((file) => project.renders.includes(file)).sort(),
     code: [...new Set([...reachedRecords.flatMap((record) => codeFilesOf(fm(record).code)), ...(tokens.size ? codeTokens(project) : [])].filter(Boolean))].sort(),
   };
 }

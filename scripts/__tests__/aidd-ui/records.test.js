@@ -12,7 +12,7 @@ const records = require(path.join(LIB, "records.cjs"));
 const historyRules = require(path.join(LIB, "history.cjs"));
 const { problemsOf } = require(path.join(LIB, "../aidd-ui.cjs"));
 
-const { SYSTEM, BRAND, BUTTON, SEARCH, DIALOG, OLD, HOME, JOURNEY, ICON, REVIEW, BUTTON_RENDER, HOME_RENDER } = PATHS;
+const { SYSTEM, BRAND, BUTTON, SEARCH, DIALOG, OLD, HOME, JOURNEY, WIREFRAME, ICON, REVIEW, BUTTON_RENDER, HOME_RENDER } = PATHS;
 const BUTTON_USAGE = "Any action a person starts; never for navigation.";
 const WIDENED = "Any action a person starts on purpose; never for navigation.";
 
@@ -46,7 +46,7 @@ describe("aidd-ui records and history", () => {
   });
 
   it("loads every record", () => {
-    assert.equal(load(tmp).records.length, 10);
+    assert.equal(load(tmp).records.length, 11);
   });
 
   describe("R1 front matter", () => {
@@ -110,6 +110,11 @@ describe("aidd-ui records and history", () => {
       put(tmp, `${UI}/screens/extra.md`, record(["id: extra", "kind: atom", "status: proposed", "version: 1"]));
       assert.deepEqual(problems(), [`${UI}/screens/extra.md: kind "atom" does not belong in screens/`]);
     });
+
+    it("names a wireframe outside wireframes/", () => {
+      fs.renameSync(path.join(tmp, WIREFRAME), path.join(tmp, `${UI}/screens/search-flow.md`));
+      assert.deepEqual(problems(), [`${UI}/screens/search-flow.md: kind "wireframe" does not belong in screens/`, `${JOURNEY}: step 3 names screen "search-flow", which no screen or wireframe has`]);
+    });
   });
 
   describe("R3 required keys and values", () => {
@@ -119,6 +124,8 @@ describe("aidd-ui records and history", () => {
       [BUTTON, "role: button\n", "role"],
       [HOME, "route: /\n", "route"],
       [JOURNEY, "persona: a first-time analyst\n", "persona"],
+      [WIREFRAME, "uses: [search-field]\n", "uses"],
+      [WIREFRAME, "zones: [query, results]\n", "zones"],
       [ICON, "alt: Search\n", "alt"],
       [REVIEW, "scope: system\n", "scope"],
     ];
@@ -214,6 +221,16 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${OLD}: component lacks state "default"`]);
     });
 
+    it("names a wireframe without states as missing them and their default", () => {
+      change(WIREFRAME, "states: [default, empty]\n", "");
+      assert.deepEqual(problems(), [`${WIREFRAME}: missing key "states"`, `${WIREFRAME}: wireframe lacks state "default"`]);
+    });
+
+    it("names a wireframe without default, as a screen", () => {
+      change(WIREFRAME, "states: [default, empty]", "states: [empty]");
+      assert.deepEqual(problems(), [`${WIREFRAME}: wireframe lacks state "default"`]);
+    });
+
     it("names a screen without default", () => {
       change(HOME, "states: [default, empty, loading, error]", "states: [empty, loading, error]");
       assert.deepEqual(problems(), [`${HOME}: screen lacks state "default"`]);
@@ -240,6 +257,11 @@ describe("aidd-ui records and history", () => {
     it("names platforms on a record that is never code", () => {
       change(JOURNEY, "version: 1", "version: 1\nplatforms: [web]");
       assert.deepEqual(problems(), [`${JOURNEY}: platforms is for components and screens, never a journey`]);
+    });
+
+    it("names platforms on a wireframe, which no platform holds", () => {
+      change(WIREFRAME, "zones: [query, results]", "zones: [query, results]\nplatforms: [web]");
+      assert.deepEqual(problems(), [`${WIREFRAME}: platforms is for components and screens, never a wireframe`]);
     });
 
     it("accepts platforms that are a subset of the system's", () => {
@@ -309,7 +331,44 @@ describe("aidd-ui records and history", () => {
   describe("R12 journeys", () => {
     it("names a step whose screen is absent", () => {
       change(JOURNEY, "| home | opens a result |", "| ghost | opens a result |");
-      assert.deepEqual(problems(), [`${JOURNEY}: step 2 names screen "ghost", which no screen has`]);
+      assert.deepEqual(problems(), [`${JOURNEY}: step 2 names screen "ghost", which no screen or wireframe has`]);
+    });
+
+    it("takes a step naming a wireframe as its screen, until a screen dresses it", () => {
+      change(JOURNEY, "| home | opens a result |", "| search-flow | opens a result |");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("takes a last step without action, no step following it", () => {
+      change(JOURNEY, "| search-flow | narrows the results |", "| search-flow | |");
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names a step without the action leading to the next", () => {
+      change(JOURNEY, "| home | opens a result |", "| home | |");
+      assert.deepEqual(problems(), [`${JOURNEY}: step 2 has no action leading to the next`]);
+    });
+
+    it("names a journey that does not describe its persona", () => {
+      change(JOURNEY, "## Persona\n\nAn analyst opening the product for the first time, looking for one answer.\n\n", "");
+      assert.deepEqual(problems(), [`${JOURNEY}: lacks "## Persona", describing who walks it`]);
+    });
+  });
+
+  describe("R18 expected components", () => {
+    it("warns of an expected component that is deprecated, naming what replaces it", () => {
+      change(WIREFRAME, "uses: [search-field]", "uses: [search-field, old-button]");
+      const found = ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R18");
+      assert.deepEqual(found.map((problem) => [problem.severity, problem.message]), [["warning", 'expects component "old-button", which is deprecated']]);
+    });
+
+    it("warns of an expected component the design system does not hold yet, and never errs for it", () => {
+      change(WIREFRAME, "uses: [search-field]", "uses: [search-field, filter-chip, home]");
+      const found = ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R18");
+      assert.deepEqual(found.map((problem) => [problem.severity, problem.message]), [
+        ["warning", 'expects component "filter-chip", which the design system does not hold yet'],
+        ["warning", 'expects component "home", which is a screen, not a component'],
+      ]);
     });
   });
 
@@ -694,17 +753,24 @@ const FIXES = [
   "R10 | uses \"old-button\", which is deprecated | \"old-button\" | use what replaces it instead",
   "R11 | breakpoint \"desktop\" is not in system.md | \"desktop\" | use a breakpoint of system.md, or add it there",
   "R11 | breakpoint \"tablet\" is not in system.md | \"tablet\" | use a breakpoint of system.md, or add it there",
-  "R12 | step 2 names screen \"ghost\", which no screen has | \"ghost\" | name a screen that exists, or add it",
+  "R12 | lacks \"## Persona\", describing who walks it | - | add a \"## Persona\" section describing the persona",
+  "R12 | step 2 has no action leading to the next | - | write the action in its Action cell",
+  "R12 | step 2 names screen \"ghost\", which no screen or wireframe has | \"ghost\" | name a screen or a wireframe that exists, or add a wireframe",
+  "R12 | step 3 names screen \"search-flow\", which no screen or wireframe has | \"search-flow\" | name a screen or a wireframe that exists, or add a wireframe",
   "R13 | no verdict row for home / loading at version 1 | - | add a row for home / loading at version 1 to \"## Verdicts\"",
   "R13 | verdict \"maybe\" for home / default must be ok, ko or pending | \"maybe\" | set the verdict to ok, ko or pending",
   "R14 | lacks \"## Users\" | - | add a \"## Users\" section",
   "R15 | file \"missing.svg\" does not exist beside it | \"missing.svg\" | add the file beside the record, or correct file",
   "R16 | status \"deprecated\" is for elements: reviews are proposed or validated | \"deprecated\" | set status to proposed or validated",
   "R17 | lacks \"## Usage\", saying when to use it and when not | - | add a \"## Usage\" section saying when to use it and when not",
+  "R18 | expects component \"filter-chip\", which the design system does not hold yet | \"filter-chip\" | add the component to the design system before a screen dresses this wireframe",
+  "R18 | expects component \"old-button\", which is deprecated | \"old-button\" | expect what replaces it instead",
+  "R18 | expects component \"home\", which is a screen, not a component | \"home\" | name a component, or the one the design system will add",
   "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",
-  "R2 | unknown kind \"toString\" | \"toString\" | set kind to system, brand, atom, molecule, composition, screen, journey, asset or review",
-  "R2 | unknown kind \"widget\" | \"widget\" | set kind to system, brand, atom, molecule, composition, screen, journey, asset or review",
+  "R2 | kind \"wireframe\" does not belong in screens/ | \"wireframe\" | move it to the folder of its kind, or change its kind",
+  "R2 | unknown kind \"toString\" | \"toString\" | set kind to system, brand, atom, molecule, composition, screen, journey, wireframe, asset or review",
+  "R2 | unknown kind \"widget\" | \"widget\" | set kind to system, brand, atom, molecule, composition, screen, journey, wireframe, asset or review",
   "R3 | missing key \"alt\" | - | add the key \"alt\" to the front matter",
   "R3 | missing key \"format\" | - | add the key \"format\" to the front matter",
   "R3 | missing key \"locales\" | - | add the key \"locales\" to the front matter",
@@ -712,7 +778,10 @@ const FIXES = [
   "R3 | missing key \"role\" | - | add the key \"role\" to the front matter",
   "R3 | missing key \"route\" | - | add the key \"route\" to the front matter",
   "R3 | missing key \"scope\" | - | add the key \"scope\" to the front matter",
+  "R3 | missing key \"states\" | - | add the key \"states\" to the front matter",
+  "R3 | missing key \"uses\" | - | add the key \"uses\" to the front matter",
   "R3 | missing key \"version\" | - | add the key \"version\" to the front matter",
+  "R3 | missing key \"zones\" | - | add the key \"zones\" to the front matter",
   "R3 | status \"done\" must be proposed, validated or deprecated | \"done\" | set status to proposed, validated or deprecated",
   "R3 | type \"photo\" must be icon, image or illustration | \"photo\" | set type to icon, image or illustration",
   "R3 | variant \"=sm\": axis \"\" must match [a-z][a-z-]* | \"=sm\" | name the axis in lowercase letters and hyphens",
@@ -733,10 +802,12 @@ const FIXES = [
   "R7 | component lacks state \"default\" | - | add \"default\" to states",
   "R7 | screen lacks state \"default\" | - | add \"default\" to states",
   "R7 | state \"focus\" needs a \"## Keyboard\" section | - | add a \"## Keyboard\" section",
+  "R7 | wireframe lacks state \"default\" | - | add \"default\" to states",
   "R8 | code is for components and screens, never an asset | \"code\" | remove it from the front matter",
   "R8 | platform \"android\" is not in system.md | \"android\" | list a platform system.md declares, or declare it there",
   "R8 | platform \"ios\" is not in system.md | \"ios\" | list a platform system.md declares, or declare it there",
   "R8 | platforms is for components and screens, never a journey | \"platforms\" | remove it from the front matter",
+  "R8 | platforms is for components and screens, never a wireframe | \"platforms\" | remove it from the front matter",
   "R9 | replaced-by \"ghost\", which no record has | \"ghost\" | point replaced-by at an existing record, or none",
   "R9 | replaced-by \"old-button\" is deprecated too | \"old-button\" | point replaced-by at a record that is not deprecated",
   "R9 | replaced-by none needs a \"## Deprecation\" section saying why | - | add a \"## Deprecation\" section saying why",

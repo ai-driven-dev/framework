@@ -27,6 +27,8 @@ aidd_docs/ui/
 ├── screens/<id>.md           écran
 ├── screens/<id>.html         maquette de l'écran, tous ses états dans un seul fichier
 ├── journeys/<id>.md          parcours utilisateur
+├── wireframes/<id>.md        wireframe d'un écran : zones, composants attendus, états
+├── wireframes/<id>.html      sa structure, tous ses états, sans aucun style
 ├── reviews/<id>.md           verdicts d'une review du design system
 └── showcase/                 vitrine générée, jamais écrite à la main, ignorée par git
 ```
@@ -35,7 +37,7 @@ Le contrat UI d'une feature, `ui.md`, vit dans le dossier de sa tâche, à côt�
 
 ### Fiches
 
-Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Les éléments, les parcours et les reviews portent en plus `status` et `version` ; `system.md` et `brand.md` n'ont ni l'un ni l'autre.
+Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Les éléments, les parcours, les wireframes et les reviews portent en plus `status` et `version` ; `system.md` et `brand.md` n'ont ni l'un ni l'autre.
 
 | Fiche | Contient en plus |
 | --- | --- |
@@ -44,7 +46,8 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Le
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
 | atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
 | écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, plateformes où il existe, un lien vers le code par plateforme |
-| parcours | persona, étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante |
+| parcours | persona, nommé et décrit, étapes ordonnées, chaque étape un écran ou son wireframe et l'action qui mène à la suivante |
+| wireframe | composants attendus, existants ou non, états (au moins défaut), zones nommées ; aucune plateforme |
 | review | écrans revus, verdict OK ou pas OK par écran, par état et par version revue, commentaire, écrans restants |
 
 ### Cycle de vie
@@ -164,13 +167,17 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 | 2 | Réalisé : le flux de changement vit dans `01-system`. Un rendu charge `../tokens.css` au lieu de porter les valeurs ; la sous-commande `tokens` régénère ce seul fichier, et le skill réécrit le balisage des rendus touchés, écrans compris, d'après le rapport d'impact. Il s'arrête en disant qu'une review est attendue, sans nommer le skill qui la conduit. |
 | 2 | Réalisé : `#Export` est facultatif pour toute techno, un composant Vue, Svelte ou Astro se lie par son chemin et sa version, sans cas particulier. Les couleurs d'un fichier sans lecteur propre sont cherchées dans ses chaînes, et une couleur écrite en nombres dans son code : un type de couleur (`Color`, `UIColor`) ou le `#colorLiteral` de Swift appelé avec un nombre en premier, nommé ou non, ou une propriété de couleur valant un nombre hexadécimal. Une ressource XML, comme le `colors.xml` d'Android, est lue en entier. Une constante de palette (`Colors.blue`) est un nom, comme un token : seule la résolution du nom l'en distinguerait, elle n'est pas trouvée. |
 | 3 | Le pilote du cas vierge est une app de respiration, web et mobile : elle éprouve les tokens de mouvement et de durée, la réduction des animations, des états riches et un thème sombre, qu'aucun pilote existant ne porte. Gouvernail a déjà ses propres contrôles de tokens et aucune couleur en dur : il éprouve l'extraction facile, pas le cas d'une app qui dérive. |
-| 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
-| 3 | La vitrine bascule thème et plateforme sur son `<html>` par un sélecteur, et compare deux combinaisons dans deux cadres côte à côte ; son propre habillage est neutre, seuls les rendus portent les tokens du projet. |
-| 3 | La review couvre aussi les composants, pour qu'un composant puisse passer à validé. |
-| 3 | La review confronte le rendu à une capture de l'app réelle par état et par plateforme, posée à côté de la fiche avec la version qu'elle montre ; aidd-ui ne lance jamais l'app. Capture obligatoire ou non : à trancher. |
-| 4 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
-| 5 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
-| 5 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |
+| 4 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
+| 4 | La vitrine bascule thème et plateforme sur son `<html>` par un sélecteur, et compare deux combinaisons dans deux cadres côte à côte ; son propre habillage est neutre, seuls les rendus portent les tokens du projet. |
+| 4 | La review couvre aussi les composants, pour qu'un composant puisse passer à validé. |
+| 4 | La review confronte le rendu à une capture de l'app réelle par état et par plateforme, posée à côté de la fiche avec la version qu'elle montre ; aidd-ui ne lance jamais l'app. La capture est exigée une fois l'écran codé. |
+| 4 | Un écran sans wireframe est un avertissement, qui propose d'en déduire un depuis l'écran ; jamais une erreur, un écran se dessinant sans parcours. |
+| 4 | `publish`, H6 et H8 couvrent les wireframes, validés par la même review que les écrans. |
+| 4 | Ce qui n'est pas encore validé se voit : la vitrine marque `proposed` chaque fiche qui l'est, wireframe, composant ou écran, et la page de review les liste ; une extraction depuis le code laisse tout `proposed`, l'existant n'étant jamais validé d'office. |
+| 4 | La vitrine est le point d'entrée de tout ce que l'UI génère, à la manière de Storybook : une page d'accueil et une page par fiche, sous une navigation commune groupée dans l'ordre du chemin (marque et tokens, composants par niveau, parcours, wireframes, écrans) ; chaque page relie ce qu'elle utilise et ce qui l'utilise, d'après l'impact, et la review cite la page d'un élément. Une page unique deviendrait illisible passé quelques dizaines de fiches. |
+| 5 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
+| 6 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
+| 6 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |
 
 ## Context
 

@@ -14,6 +14,7 @@ const FOLDER_KINDS = {
   components: ["atom", "molecule", "composition"],
   screens: ["screen"],
   journeys: ["journey"],
+  wireframes: ["wireframe"],
   assets: ["asset"],
   reviews: ["review"],
 };

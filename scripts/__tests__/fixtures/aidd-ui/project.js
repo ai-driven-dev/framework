@@ -33,6 +33,8 @@ const PATHS = {
   OLD: `${UI}/components/old-button.md`,
   HOME: `${UI}/screens/home.md`,
   JOURNEY: `${UI}/journeys/onboarding.md`,
+  WIREFRAME: `${UI}/wireframes/search-flow.md`,
+  WIREFRAME_RENDER: `${UI}/wireframes/search-flow.html`,
   ICON: `${UI}/assets/icon-search.md`,
   REVIEW: `${UI}/reviews/first-pass.md`,
   BUTTON_RENDER: `${UI}/components/button.html`,
@@ -57,7 +59,7 @@ const created = (id) => [id, "1", "created", "no", TASK];
 const ROWS = [
   ["system", "1.0.0", "first system", "no", TASK],
   ["system", "2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"],
-  ...["icon-search", "button", "search-field", "dialog", "old-button", "home", "onboarding", "first-pass"].map(created),
+  ...["icon-search", "button", "search-field", "dialog", "old-button", "home", "onboarding", "first-pass", "search-flow"].map(created),
   ["old-button", "2", "deprecated for button", "yes", "aidd_docs/tasks/retire-old-button"],
 ];
 
@@ -235,8 +237,16 @@ const HOME = record(
 const ONBOARDING = record(
   ["id: onboarding", "kind: journey", "status: validated", "version: 1", "persona: a first-time analyst"],
   "# Onboarding",
-  "## Steps\n\n| Screen | Action |\n| --- | --- |\n| home | types a query |\n| home | opens a result |"
+  "## Persona\n\nAn analyst opening the product for the first time, looking for one answer.",
+  "## Steps\n\n| Screen | Action |\n| --- | --- |\n| home | types a query |\n| home | opens a result |\n| search-flow | narrows the results |"
 );
+
+const WIREFRAME = record(
+  ["id: search-flow", "kind: wireframe", "status: proposed", "version: 1", "uses: [search-field]", "states: [default, empty]", "zones: [query, results]"],
+  "# Search flow"
+);
+
+const WIREFRAME_RENDER = `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>search-flow</title>\n</head>\n<body>\n${["default", "empty"].map((state) => `<section data-state="${state}"><div data-zone="query">Query</div><div data-zone="results">Results, ${state}</div></section>`).join("\n")}\n</body>\n</html>\n`;
 
 const REVIEW = record(
   ["id: first-pass", "kind: review", "status: proposed", "version: 1", "scope: system", "screens: [home]"],
@@ -302,6 +312,8 @@ const FILES = {
   [`${UI}/components/old-button.md`]: OLD_BUTTON,
   [`${UI}/screens/home.md`]: HOME,
   [`${UI}/journeys/onboarding.md`]: ONBOARDING,
+  [`${UI}/wireframes/search-flow.md`]: WIREFRAME,
+  [`${UI}/wireframes/search-flow.html`]: WIREFRAME_RENDER,
   [`${UI}/reviews/first-pass.md`]: REVIEW,
   ...Object.fromEntries(Object.entries(RENDERS).map(([name, html]) => [`${UI}/${name}`, html])),
   ...CODE,
