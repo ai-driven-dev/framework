@@ -1,0 +1,204 @@
+#!/usr/bin/env node
+/**
+ * Runs the aidd-ui skills in chain, with Haiku, on throwaway copies of three projects (a blank
+ * one and two real checkouts), then checks without AI what the chain left: the engine's verdict,
+ * a wireframe behind every journey step, and the project's code untouched. Run it by hand after
+ * a change to the plugin; nothing calls it.
+ *
+ * The copies keep the tracked files of a checkout and nothing else, made by `git archive`, so the
+ * checkout itself is only read. They live under the system temp folder (set `TMPDIR` to choose
+ * it), are kept, and their paths are printed.
+ *
+ * On a real project the warning ids vary between two runs of one tree (the model picks the code
+ * roots and platforms): compare the errors, the wireframes and the code, not the warnings.
+ *
+ * Usage: node scripts/aidd-ui-pilot.cjs --gouvernail <checkout> --kairos <checkout> [--only blank|gouvernail|kairos]
+ *
+ * Exit codes:
+ *   0  every pilot is VALID, every step has its wireframe and the code is untouched
+ *   1  a pilot differs: compare its line with the one before the change
+ *   2  a step could not run
+ */
+const { spawnSync } = require("node:child_process");
+const crypto = require("node:crypto");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+
+const PLUGIN = path.join(__dirname, "..", "plugins", "aidd-ui");
+const ENGINE = path.join(PLUGIN, "hooks", "aidd-ui.cjs");
+const { load } = require(path.join(PLUGIN, "hooks", "lib", "project.cjs"));
+const { table } = require(path.join(PLUGIN, "hooks", "lib", "markdown.cjs"));
+const { STEPS_SECTION } = require(path.join(PLUGIN, "hooks", "lib", "model.cjs"));
+
+const UI_DIR = "aidd_docs/ui";
+const GIT_DIR = ".git";
+const VALID = "VALID";
+const RULE_ID = /^[A-Z]\d+$/;
+const STEP_TIMEOUT_MS = 40 * 60_000;
+const ALLOWED_TOOLS = "Read,Write,Edit,Glob,Grep,Skill,Bash(node:*),Bash(ls:*),Bash(git ls-files:*)";
+const GIT = ["-c", "user.name=aidd-ui-pilot", "-c", "user.email=pilot@localhost", "-c", "core.hooksPath=/dev/null"];
+
+/** The environment without a git variable: a hook sets GIT_DIR and GIT_INDEX_FILE, which would aim git at the caller's repository. */
+const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_")));
+
+const sha256 = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+
+/** Every file under `dir` as relative path to content hash, `.git/` left out. */
+function snapshot(dir) {
+  const files = {};
+  const visit = (folder) => {
+    for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
+      const full = path.join(folder, entry.name);
+      const name = path.relative(dir, full).split(path.sep).join("/");
+      if (entry.isSymbolicLink()) files[name] = fs.readlinkSync(full);
+      else if (entry.isDirectory()) {
+        if (entry.name !== GIT_DIR) visit(full);
+      } else files[name] = sha256(full);
+    }
+  };
+  visit(dir);
+  return files;
+}
+
+/** The files added, modified or deleted between two snapshots, outside `aidd_docs/ui/`, sorted. */
+function changedOutsideUi(before, after) {
+  const paths = new Set([...Object.keys(before), ...Object.keys(after)]);
+  return [...paths].filter((file) => !file.startsWith(`${UI_DIR}/`) && before[file] !== after[file]).sort();
+}
+
+/** The tracked files of `source` copied into the empty `dest`, as a git repository with one commit.
+ * The source is only read, by `git archive`. */
+function copyProject(source, dest) {
+  const archive = spawnSync("git", ["-C", source, "archive", "HEAD"], { maxBuffer: 2 ** 32, env: cleanEnv() });
+  if (archive.status !== 0) throw new Error(`git archive failed in the source: ${archive.stderr}`);
+  const unpack = spawnSync("tar", ["-x", "-C", dest], { input: archive.stdout });
+  if (unpack.status !== 0) throw new Error(`tar failed: ${unpack.stderr}`);
+  for (const args of [["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "pilot copy", "--no-verify"]]) {
+    const run = spawnSync("git", [...GIT, ...args], { cwd: dest, encoding: "utf8", env: cleanEnv() });
+    if (run.status !== 0) throw new Error(`git ${args[0]} failed in the copy: ${run.stderr}`);
+  }
+}
+
+/** `VALID`, or the sorted unique rule ids `validate` prints for `root`, joined by commas. */
+function verdict(root) {
+  const run = spawnSync(process.execPath, [ENGINE, "validate", root], { encoding: "utf8" });
+  const out = run.stdout.trim();
+  if (out === VALID) return VALID;
+  const rules = out.split("\n").slice(1).flatMap((line) => line.split(" ").filter((word) => RULE_ID.test(word)).slice(0, 1));
+  if (!rules.length) throw new Error(`validate printed no rule: ${out || run.stderr}`);
+  return [...new Set(rules)].sort().join(",");
+}
+
+/** Each journey step whose screen is no wireframe record. */
+function stepsWithoutWireframe(root) {
+  const project = load(root);
+  if (project === null) return [];
+  const kindOf = (record) => record.frontMatter.kind;
+  const wireframes = new Set(project.records.filter((record) => kindOf(record) === "wireframe").map((record) => record.frontMatter.id));
+  return project.records
+    .filter((record) => kindOf(record) === "journey")
+    .flatMap((record) => table(record.sections[STEPS_SECTION]).map((row, at) => ({ journey: record.frontMatter.id, step: at + 1, screen: row.Screen })))
+    .filter((step) => !wireframes.has(step.screen));
+}
+
+/** One pilot's result on one line. */
+function reportLine(pilot, { verdict: ruled, missing, changed }) {
+  const wireframes = missing.length ? `missing ${missing.length}` : "all";
+  const code = changed.length ? `changed ${changed.length}` : "untouched";
+  return `${pilot} validate ${ruled} wireframes ${wireframes} code ${code}`;
+}
+
+// What each pilot asks, written once in parts and sent whole or split by the chain.
+const NON_INTERACTIVE = (task) =>
+  `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, say which, and go on; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${task}.`;
+
+const REQUESTS = {
+  blank: {
+    journeys:
+      "A breathing-exercise app, web and mobile, built from nothing: no code, no design system yet. Persona: Lea, 34, an office worker new to breathwork, who wants to calm down in two minutes between meetings. Journeys: her first guided session, from opening the app to finishing it; and setting a daily reminder.",
+    brand:
+      'Lay the design system of this breathing-exercise app, web and mobile, from scratch: no UI code exists. Its journeys and wireframes are already in aidd_docs/ui/. Brand: "Breath", calm, soft, reassuring; for Lea, 34, an office worker new to breathwork who wants to calm down in two minutes between meetings; light theme only; English.',
+    foundations: "Write the tokens.",
+    components: "Write the components the wireframes expect.",
+  },
+  real: {
+    journeys:
+      "Map two journeys of this existing app from its real screens, for its main user, with a wireframe per step. Persona: take one a brief under aidd_docs describes, else the app's main user as its README describes.",
+    brand: "Lay the design system of this existing app from its code. Write its brand from its README, package manifest and visible copy.",
+    foundations: "Write its tokens from its code.",
+    components: "Write the components its screens use, at most eight, the ones the wireframes expect first.",
+  },
+};
+
+/** The chain: each step a skill and the parts it receives, in order. */
+const CHAIN = [
+  ["01-journeys", ["journeys"]],
+  ["02-brand", ["brand"]],
+  ["03-foundations", ["foundations"]],
+  ["04-components", ["components"]],
+];
+
+const taskOf = (parts) => (parts.includes("journeys") ? "journeys" : "system");
+
+/** The request of one step: its parts, then the non-interactive suffix. */
+const requestOf = (pilot, skill, parts) => `/aidd-ui:${skill} ${parts.map((part) => REQUESTS[pilot][part]).join(" ")} ${NON_INTERACTIVE(taskOf(parts))}`;
+
+/** The folders of `~/.claude/projects` holding the chat of the copy `dir`: Claude names a folder
+ * after the path it ran in, so it ends with the copy's two last folder names. */
+const chatsOf = (names, dir) => names.filter((name) => name.endsWith(`-${path.basename(path.dirname(dir))}-${path.basename(dir)}`));
+
+/** Deletes the chats a run in `dir` left, `--no-session-persistence` keeping only its tool results. */
+function forgetChats(dir) {
+  const projects = path.join(os.homedir(), ".claude", "projects");
+  if (!fs.existsSync(projects)) return;
+  for (const name of chatsOf(fs.readdirSync(projects), dir)) fs.rmSync(path.join(projects, name), { recursive: true, force: true });
+}
+
+/** Runs one step in `cwd`; its output goes to `outFile`. Returns whether claude exited 0. */
+function runStep(cwd, request, outFile) {
+  const args = ["-p", "--model", "haiku", "--no-session-persistence", "--plugin-dir", PLUGIN, "--setting-sources", "local", "--allowedTools", ALLOWED_TOOLS, "--output-format", "text"];
+  const run = spawnSync("claude", args, { cwd, input: request, encoding: "utf8", timeout: STEP_TIMEOUT_MS, maxBuffer: 2 ** 28 });
+  fs.writeFileSync(outFile, `${run.stdout ?? ""}${run.stderr ?? ""}\nexit ${run.status}\n`);
+  forgetChats(cwd);
+  return run.status === 0;
+}
+
+/** The pilots to run as `[name, checkout]` (null for blank) from the command line, or null when a checkout is missing. */
+function pilotsOf(argv) {
+  const argumentOf = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : undefined);
+  const [gouvernail, kairos, only] = [argumentOf("--gouvernail"), argumentOf("--kairos"), argumentOf("--only")];
+  if (!gouvernail || !kairos) return null;
+  return [["blank", null], ["gouvernail", gouvernail], ["kairos", kairos]].filter(([name]) => !only || only === name);
+}
+
+function main() {
+  const pilots = pilotsOf(process.argv.slice(2));
+  if (!pilots) {
+    console.error("usage: node scripts/aidd-ui-pilot.cjs --gouvernail <checkout> --kairos <checkout> [--only blank|gouvernail|kairos]");
+    return 2;
+  }
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-pilot-"));
+  console.log(`copies in ${base}`);
+  let worst = 0;
+  for (const [pilot, source] of pilots) {
+    const dir = path.join(base, pilot);
+    fs.mkdirSync(dir);
+    if (source) copyProject(source, dir);
+    const before = snapshot(dir);
+    for (const [skill, parts] of CHAIN) {
+      if (!runStep(dir, requestOf(source ? "real" : "blank", skill, parts), path.join(base, `${pilot}.${skill}.out`))) {
+        console.log(`${pilot} step ${skill} could not run, see ${base}/${pilot}.${skill}.out`);
+        return 2;
+      }
+    }
+    const result = { verdict: verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, snapshot(dir)) };
+    console.log(reportLine(pilot, result));
+    if (result.verdict !== VALID || result.missing.length || result.changed.length) worst = 1;
+  }
+  return worst;
+}
+
+if (require.main === module) process.exit(main());
+
+module.exports = { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, chatsOf, pilotsOf };

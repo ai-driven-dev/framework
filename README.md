@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>53 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>55 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -186,7 +186,7 @@ Feature flow, issue-to-PR automation, backlog
 <a href="plugins/aidd-ui/README.md">
 <img align="right" alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" />
 <h3>🎨 aidd-ui</h3>
-2 skills · 3 hooks<br />
+4 skills · 3 hooks<br />
 UI design system, checked on every write
 </a>
 </td>
