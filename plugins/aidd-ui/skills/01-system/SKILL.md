@@ -26,6 +26,6 @@ Each box is a file: read it, then do what it says.
 
 - Speak only to ask or to give the final reply; otherwise call tools.
 - Run every command from the project root, the working directory; every path written in a record starts there.
-- Write only under `aidd_docs/ui/`, never in the code.
+- Write only under `aidd_docs/ui/`, never in the code, and never by hand what the engine writes: `history.md`, `code-debt.json`, `tokens.css`, `tokens.resolver.json`.
 - After each write, fix what the hook or `node <engine> validate` reports, except what [engine](references/engine.md) says a later step owes; never bypass a hook.
 - Commit and push only when asked.
