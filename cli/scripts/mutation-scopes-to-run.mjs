@@ -5,11 +5,8 @@ import { fileURLToPath } from "node:url";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-/**
- * The mutation setup: what reshapes how every scope is scored, relative to the repository root.
- * The stryker and vitest mutation configs, the scope declaration, the runner, the shard
- * partition and the helpers the mutation config loads. A change here runs every scope.
- */
+/** What reshapes how every scope is scored, relative to the repository root: the mutation
+ * configs, scope declaration, runner, shard partition and loaded helpers. A change runs every scope. */
 export const HARNESS = [
   "cli/mutation-scopes.json",
   "cli/stryker.conf.json",
@@ -22,17 +19,14 @@ export const HARNESS = [
   "cli/tests/helpers/throwaway-profile.ts",
 ];
 
-/**
- * These run `canary` alone: a Stryker or Vitest upgrade is caught nowhere else before promotion,
- * and incremental legs replay nothing else.
- */
+/** These run `canary` alone: it smoke-tests a Stryker or Vitest upgrade (caught nowhere else before
+ * promotion) and, for the workflow, the mutation job itself. */
 const CANARY_TRIGGERS = [
   "cli/package.json",
   "cli/pnpm-lock.yaml",
   "cli/pnpm-workspace.yaml",
   ".github/workflows/cli-ci.yml",
 ];
-const CANARY_PREFIXES = ["cli/patches/"];
 const CANARY_SCOPE = "canary";
 
 /** A scope runs when its source, mirrored tests or the mutation setup changed; a dependency or
@@ -40,7 +34,7 @@ const CANARY_SCOPE = "canary";
 export function scopesToRun(changed, scopes, { all = false } = {}) {
   const everything = all || changed.some((file) => HARNESS.includes(file));
   const canary = changed.some(
-    (file) => CANARY_TRIGGERS.includes(file) || CANARY_PREFIXES.some((p) => file.startsWith(p))
+    (file) => CANARY_TRIGGERS.includes(file) || file.startsWith("cli/patches/")
   );
   return Object.entries(scopes)
     .filter(
