@@ -369,7 +369,7 @@ describe("aidd-ui validator entries", () => {
 
     it("tells the error the write left in the record citing the written one, and holds no turn for it", () => {
       begin();
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([`${UI}/components/search-field.md R6 "button" => use only elements of its own level or lower`])));
       assert.deepEqual(hook(stop()), silent);
     });
@@ -383,18 +383,18 @@ describe("aidd-ui validator entries", () => {
 
     it("tells an error elsewhere once per turn, however many writes leave it", () => {
       begin();
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       hook(postToolUse(path.join(tmp, RECORD)));
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
 
     it("tells nothing elsewhere without a baseline, nothing then proving an error new", () => {
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
 
     it("tells nothing elsewhere the session started with", () => {
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       begin();
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });

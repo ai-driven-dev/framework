@@ -11,7 +11,7 @@ const BREAKING_VALUES = [BREAKING, NOT_BREAKING];
 const BREAKPOINTS_SECTION = "Breakpoints";
 const FOLDER_KINDS = {
   "": ["system", "brand"],
-  components: ["atom", "molecule", "composition"],
+  components: ["atom", "molecule", "organism"],
   screens: ["screen"],
   journeys: ["journey"],
   wireframes: ["wireframe"],
@@ -21,7 +21,7 @@ const FOLDER_KINDS = {
 const COMPONENT_KINDS = FOLDER_KINDS.components;
 const IMPLEMENTED_KINDS = [...COMPONENT_KINDS, "screen"];
 const TOKENED_KINDS = IMPLEMENTED_KINDS; // components and screens cite the tokens their render uses
-const LEVELS = { asset: 0, atom: 1, molecule: 2, composition: 3, screen: 4 }; // an element uses its own level or lower
+const LEVELS = { asset: 0, atom: 1, molecule: 2, organism: 3, screen: 4 }; // an element uses its own level or lower
 
 const VARIANT_AXIS = "variant"; // a bare item of `variants`, shown by data-variant
 const AXIS_SEPARATOR = "=";

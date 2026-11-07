@@ -186,7 +186,7 @@ const SEARCH_FIELD = record(
 const DIALOG = record(
   [
     "id: dialog",
-    "kind: composition",
+    "kind: organism",
     "status: validated",
     "version: 1",
     "uses: [button]",
@@ -336,7 +336,7 @@ function stamp(dir) {
   const stamped = fs.readFileSync(file, "utf8").split("\n").map((line) => {
     const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
     const record = held.get(`${cells[0]} ${cells[1]}`);
-    return record && ["atom", "molecule", "composition", "screen", "asset"].includes(record.frontMatter.kind) ? row(...cells.slice(0, 5), fingerprint(project, record)) : line;
+    return record && ["atom", "molecule", "organism", "screen", "asset"].includes(record.frontMatter.kind) ? row(...cells.slice(0, 5), fingerprint(project, record)) : line;
   });
   fs.writeFileSync(file, stamped.join("\n"));
 }

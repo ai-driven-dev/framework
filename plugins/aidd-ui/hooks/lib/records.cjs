@@ -29,7 +29,7 @@ const KIND_KEYS = {
   brand: [],
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
-  composition: COMPONENT_KEYS,
+  organism: COMPONENT_KEYS,
   screen: [...VERSIONED_KEYS, "uses", "tokens", "states", "breakpoints", "route"],
   journey: [...VERSIONED_KEYS, "persona"],
   wireframe: [...VERSIONED_KEYS, "uses", "states", "zones"],
