@@ -50,3 +50,25 @@ Errors, wireframes and code are equal per project: blank and Gouvernail have no 
 | skills | a fifth folder under `skills/` | killed |
 | one author per kind | `brand-template.md` copied into `03-foundations/assets/` | killed |
 | a skill names no other | `02-brand` names `03-foundations` in an action | killed |
+
+## After the lean rewrite
+
+Prose of the four skills cut to sentences of twelve words at most. Same pilot, fresh copies; the chats were deleted by the script.
+
+```txt
+blank errors none warnings none wireframes all code untouched
+gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
+kairos errors C10 warnings C3,C4,R18,V6 wireframes all code untouched
+```
+
+Errors, wireframes and code equal the lines above.
+
+## After the strict sentence gate
+
+```txt
+blank errors none warnings none wireframes all code untouched
+gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
+```
+
+Kairos shows no `C10` here. `C10` is the drift between the tokens the model wrote and the code's token file: the two first baseline runs had none either, so it follows the model's values, not the skills.
