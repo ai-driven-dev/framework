@@ -56,7 +56,8 @@ const WRITTEN_CONTENTS: readonly [string, string][] = [
  * What the file port promises, stated once and run against every implementation of it.
  * Paths are compared as sets and errors by `code` alone: listing order is unspecified, and
  * product code reads nothing else of an error. A case that fails on the real adapter is a wrong
- * case; one that fails on the double is a lie the double tells.
+ * case; one that fails on the double is a lie the double tells. C15 and C20 can only fail on
+ * the real adapter: the double lists no symlink and has no file modes.
  */
 export function describeFileContract(
   subjectName: string,

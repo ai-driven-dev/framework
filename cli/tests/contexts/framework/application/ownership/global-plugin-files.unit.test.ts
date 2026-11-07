@@ -147,3 +147,41 @@ describe("assertGlobalFilesWritable", () => {
     ).resolves.toBe(DIR);
   });
 });
+
+describe("assertGlobalFilesWritable on a filesystem that rejects a missing path", () => {
+  const hasher = new DeterministicHasher();
+  const DIR = join("/home/me", ".config", "opencode");
+  const file = (relativePath: string) =>
+    new InstallationFile({ relativePath, content: "new", hash: hasher.hash("new") });
+
+  it("allows a file whose parents are missing once the user directory resolves", async () => {
+    const fs = new InMemoryFileAdapter({}, hasher).rejectMissingRealpath();
+
+    await expect(
+      assertGlobalFilesWritable(
+        fs,
+        "opencode",
+        undefined,
+        "aidd-dev",
+        [file("agents/deep/a.md")],
+        "/home/me"
+      )
+    ).resolves.toBe(DIR);
+  });
+
+  it("refuses a missing file below a parent link resolving outside the user directory", async () => {
+    const fs = new InMemoryFileAdapter({ "/elsewhere/keep": "x" }, hasher).rejectMissingRealpath();
+    fs.setSymlink(join(DIR, "agents"), "/elsewhere");
+
+    await expect(
+      assertGlobalFilesWritable(
+        fs,
+        "opencode",
+        undefined,
+        "aidd-dev",
+        [file("agents/deep/a.md")],
+        "/home/me"
+      )
+    ).rejects.toThrow(`opencode: 'aidd-dev' parent '${join(DIR, "agents")}' escapes ${DIR}.`);
+  });
+});

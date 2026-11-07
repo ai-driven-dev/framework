@@ -5,6 +5,7 @@ import {
   errnoError,
   FaultingFileAdapter,
 } from "../../../../helpers/ports/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
 const ROOT = resolve("/project");
 
@@ -74,5 +75,37 @@ describe("project-local mutation boundary", () => {
     fs.setFile("/canonical-project/file", "project bytes");
 
     await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/file")).resolves.toBeUndefined();
+  });
+});
+
+describe("project-local mutation boundary on a filesystem that rejects a missing path", () => {
+  it("allows a missing nested file once an existing project parent resolves inside the root", async () => {
+    const fs = new InMemoryFileAdapter({
+      "/project/marker": "project bytes",
+    }).rejectMissingRealpath();
+
+    await expect(
+      assertProjectPathWithinRoot(fs, ROOT, "/project/new/deep/file")
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses a missing file below a link resolving outside the project", async () => {
+    const fs = new InMemoryFileAdapter({
+      "/project/marker": "project bytes",
+      "/foreign/keep": "foreign bytes",
+    }).rejectMissingRealpath();
+    fs.setSymlink("/project/link", "/foreign");
+
+    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/link/new/file")).rejects.toThrow(
+      /resolves outside project root/
+    );
+  });
+
+  it("propagates ENOENT of a project root that does not exist, refusing the mutation", async () => {
+    const fs = new InMemoryFileAdapter().rejectMissingRealpath();
+
+    await expect(assertProjectPathWithinRoot(fs, ROOT, "/project/new/file")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 });

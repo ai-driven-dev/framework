@@ -21,6 +21,8 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   /** Path → what it resolves to, for a test proving `realpath`-based containment
    * without a real filesystem — see `setSymlink`. */
   private readonly symlinks = new Map<string, string>();
+  /** Off by default: see `rejectMissingRealpath`. */
+  private missingRealpathRejects = false;
 
   constructor(seed: Record<string, string> = {}, hasher?: Hasher) {
     this.hasher = hasher ?? new DefaultHasher();
@@ -100,8 +102,22 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
       }
     }
     // `posix.normalize`, not `resolve`: a virtual `/project/file` stays drive-free on Windows.
-    if (bestMatch === undefined) return posix.normalize(norm(path));
-    return bestMatch.target + key.slice(bestMatch.link.length);
+    const resolved =
+      bestMatch === undefined
+        ? posix.normalize(norm(path))
+        : bestMatch.target + key.slice(bestMatch.link.length);
+    if (this.missingRealpathRejects && !(await this.fileExists(resolved))) {
+      throw enoent("realpath", norm(path));
+    }
+    return resolved;
+  }
+
+  /** Opt-in: `realpath` of a path that is neither a file nor a known directory rejects with
+   * `ENOENT`, as the real adapter does. Off by default, where it answers the path: the importers
+   * that never seed their project roots rely on that until each context's kit seeds them. */
+  rejectMissingRealpath(): this {
+    this.missingRealpathRejects = true;
+    return this;
   }
 
   /** Test-only: declares that `path` is a symlink resolving to `target`, so a test can
