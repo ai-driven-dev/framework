@@ -27,6 +27,8 @@ aidd_docs/ui/
 ├── screens/<id>.md           écran
 ├── screens/<id>.html         maquette de l'écran, tous ses états dans un seul fichier
 ├── journeys/<id>.md          parcours utilisateur
+├── wireframes/<id>.md        wireframe d'un écran : zones, composants attendus, états
+├── wireframes/<id>.html      sa structure, tous ses états, sans aucun style
 ├── reviews/<id>.md           verdicts d'une review du design system
 └── showcase/                 vitrine générée, jamais écrite à la main, ignorée par git
 ```
@@ -35,7 +37,7 @@ Le contrat UI d'une feature, `ui.md`, vit dans le dossier de sa tâche, à côt�
 
 ### Fiches
 
-Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Les éléments, les parcours et les reviews portent en plus `status` et `version` ; `system.md` et `brand.md` n'ont ni l'un ni l'autre.
+Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Les éléments, les parcours, les wireframes et les reviews portent en plus `status` et `version` ; `system.md` et `brand.md` n'ont ni l'un ni l'autre.
 
 | Fiche | Contient en plus |
 | --- | --- |
@@ -44,7 +46,8 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Le
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
 | atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
 | écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, plateformes où il existe, un lien vers le code par plateforme |
-| parcours | persona, étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante |
+| parcours | persona, nommé et décrit, étapes ordonnées, chaque étape un écran ou son wireframe et l'action qui mène à la suivante |
+| wireframe | composants attendus, existants ou non, états (au moins défaut), zones nommées ; aucune plateforme |
 | review | écrans revus, verdict OK ou pas OK par écran, par état et par version revue, commentaire, écrans restants |
 
 ### Cycle de vie
