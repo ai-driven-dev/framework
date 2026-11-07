@@ -53,6 +53,19 @@ const GUARDS: readonly Guard[] = [
   { name: "constructor parameters", kind: "plugin", file: "max-constructor-params.grit" },
 ];
 
+/**
+ * Entries each guard's baseline holds today. Lowered when an entry leaves, never raised: a new
+ * violator is fixed, not listed.
+ */
+const MAX_BASELINE: Readonly<Record<string, number>> = {
+  "function length": 20,
+  "cognitive complexity": 32,
+  "one class per file": 9,
+  "file length": 9,
+  "function parameters": 93,
+  "constructor parameters": 21,
+};
+
 interface Override {
   readonly includes?: readonly string[];
   readonly plugins?: readonly string[];
@@ -115,6 +128,14 @@ describe("biome carries the code-size guards", () => {
         });
       });
 
+      it("lists no more files than its ceiling", () => {
+        const ceiling = MAX_BASELINE[guard.name] as number;
+        expect(
+          baselineOf(guard).length,
+          `${guard.name} baseline grew past ${ceiling}: fix the new violator, never list it`
+        ).toBeLessThanOrEqual(ceiling);
+      });
+
       it("applies to src/** and excludes exact, sorted, unique files only", () => {
         const includes = carrierOf(guard).includes ?? [];
         expect(includes[0]).toBe("src/**");
@@ -149,7 +170,7 @@ describe("the baseline only shrinks", () => {
               assist: { enabled: false },
               linter: {
                 rules: {
-                  recommended: false,
+                  preset: "none",
                   [guard.group]: {
                     [guard.rule]: carrierOf(guard).linter?.rules?.[guard.group]?.[guard.rule],
                   },
@@ -214,6 +235,9 @@ const tangled = (
 }
 `;
 
+const branches = (name: string, count: number): string =>
+  `export function ${name}(n: number): number {\n  let total = 0;\n${lines(count, (index) => `  if (n > ${index}) total += 1;`)}\n  return total;\n}\n`;
+
 const twoClasses = (suffix: string): string =>
   `export class First${suffix} {}\nexport class Second${suffix} {}\n`;
 
@@ -266,9 +290,13 @@ describe("the guard itself", () => {
       "src/kernel/long-file.ts": constants(420, "v"),
       "src/kernel/four-params.ts": fourParams(""),
       "src/kernel/six-dependencies.ts": constructorOf(6, "Six"),
-      "src/kernel/at-limit-function.ts": `${longFunction("forty", 36)}export const one = (): number => 1;\nexport const two = (): number => 2;\n`,
+      "src/kernel/at-limit-function.ts": `${longFunction("fifty", 48)}export const one = (): number => 1;\nexport const two = (): number => 2;\n`,
       "src/kernel/at-limit-class.ts": constructorOf(5, "Five"),
-      "src/kernel/at-limit-file.ts": constants(380, "w"),
+      "src/kernel/at-limit-file.ts": constants(400, "w"),
+      "src/kernel/at-limit-complexity.ts": branches("fifteen", 15),
+      "src/kernel/over-limit-function.ts": longFunction("fiftyOne", 49),
+      "src/kernel/over-limit-file.ts": constants(401, "x"),
+      "src/kernel/over-limit-complexity.ts": branches("sixteen", 16),
       "src/kernel/at-limit-params.ts":
         "export function three(a: number, b: number, c: number): number {\n  return a + b + c;\n}\n",
       "tests/kernel/oversized.ts": [
@@ -314,6 +342,23 @@ describe("the guard itself", () => {
         id,
       ]);
     }
+  });
+
+  it("flags one step past each limit, for its own guard", () => {
+    const expected: Record<string, string> = {
+      "src/kernel/over-limit-function.ts": "lint/complexity/noExcessiveLinesPerFunction",
+      "src/kernel/over-limit-file.ts": "lint/style/noExcessiveLinesPerFile",
+      "src/kernel/over-limit-complexity.ts": "lint/complexity/noExcessiveCognitiveComplexity",
+    };
+    for (const [file, id] of Object.entries(expected)) {
+      expect(findings, `${file} must yield ${id}`).toContain(`${file}:${id}`);
+    }
+  });
+
+  it("flags a six-dependency constructor once", () => {
+    expect(
+      findings.filter((finding) => finding === "src/kernel/six-dependencies.ts:plugin")
+    ).toHaveLength(1);
   });
 
   it("counts a function, an arrow, a method and a signature, four times over", () => {
