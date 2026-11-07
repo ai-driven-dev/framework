@@ -182,7 +182,7 @@
   {
     "invocation": "aidd telemetry otel run",
     "exitCode": 0,
-    "help": "Usage: aidd telemetry otel run [options] <prompt>\n\nRun one fresh provider session and send its allowed OTLP observations\n\nOptions:\n  --config <tool>      Tool to run (choices: \"claude\", \"codex\", \"opencode\")\n  --tenant <slug>      Gouvernail tenant slug\n  --endpoint <origin>  Loopback HTTP origin\n  --yes                Consent to capture and send telemetry from this execution\n  --model <model>      Provider model to use\n  --keep-capture       Retain the private local OTLP capture\n  -h, --help           display help for command"
+    "help": "Usage: aidd telemetry otel run [options] <prompt>\n\nRun one fresh provider session and send its allowed OTLP observations\n\nOptions:\n  --config <tool>       Tool to run (choices: \"claude\", \"codex\", \"opencode\")\n  --tenant <slug>       Gouvernail tenant slug\n  --endpoint <origin>   Loopback HTTP origin\n  --yes                 Consent to capture and send telemetry from this\n                        execution\n  --model <model>       Provider model to use\n  --follow-up <prompt>  Send a second prompt in the same session (Claude and\n                        Codex retain local history)\n  --include-repository  Include repository metadata for Claude Code\n  --keep-capture        Retain the private local OTLP capture\n  -h, --help            display help for command"
   },
   {
     "invocation": "aidd telemetry otel verify",
