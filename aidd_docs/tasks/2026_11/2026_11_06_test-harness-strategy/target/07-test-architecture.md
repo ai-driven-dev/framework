@@ -291,7 +291,7 @@ The first gain (about 15 job-min per PR on average, i.e. 55 % of the mutation mi
 
 | Lever | Rule | Justification |
 | --- | --- | --- |
-| Failure output | bound the size of assertion diffs (~40 lines) and the number of detailed failures, then summarize; the exact vitest option is to verify in the installed version | a failure costs ~12.5k tokens, the reporter does not change it |
+| Failure output | diff size: not bounded, verified in vitest 5.0.5: its only size option, `diff.truncateThreshold`, cuts each side before comparing and hides the changed line; vitest already picks a minimal reporter for an agent and keeps 5 context lines. Still open: bounding the number of detailed failures and summarizing the rest | a failure costs ~12.5k tokens, the reporter does not change it |
 | Agent mode | minimal reporter, no `--reporter verbose`, for agent-driven runs | green costs ~2k |
 | File size | 800 lines is a failure, 400 a warning, checked by a mechanical script (no model) | a 3136-line file cannot be loaded at a good cost |
 | Discovery | mirror path: tests mirror `src/` of the target layout; the test of `src/contexts/installation/application/remove-plugin.ts` is `tests/contexts/installation/application/remove-plugin.unit.test.ts`; checked by an architecture test (every domain/application module has its mirror test or a written exception) | the agent finds the test without searching |
@@ -331,7 +331,7 @@ Each step is deliverable alone and does not depend on the previous one unless st
 
 | # | Step | Depends on the architecture? | Gain |
 | --- | --- | --- | --- |
-| 1 | Limit failure output and the reporter for agents | no | fewer tokens at each failure (measure to do) |
+| 1 | Limit failure output for agents: diff size settled (not boundable without hiding the cause, see section 7); the number of detailed failures is still open | no | fewer tokens at each failure (measure to do) |
 | 2 | Written discipline rules + size and naming lints as warnings (400 lines, English titles, one file per command) | no | stops the growth |
 | 3 | Fix the mutation triggers (tooling no longer launches the matrix) | no | about 15 job-min per PR on average |
 | 4 | E2E policy: one per command and per family of failure, the rest moves down to integration | no | main time lever (76 % of the time is in 255 e2e tests) |
@@ -369,4 +369,4 @@ Assumptions on ports: file, clock, env, prompter and platform are in `shared/por
 
 Open: whether `presentation`, `composition` and `orchestration` stay out of the weekly mutation run (no business logic there; the overview says the rest runs weekly).
 
-Unverified: the cost per mutation scope (only totals are known); the non-interactive installation of codex, copilot, cursor on a runner; the vitest option to truncate diffs; the number of importers of each fixture group and the identity of the orphan group; the content of `phase0/snapshot.json`; whether the three goldens rebuild the same tools; the number of runs configured for the telemetry property tests; the gain of the in-memory golden (estimate only).
+Unverified: the cost per mutation scope (only totals are known); the non-interactive installation of codex, copilot, cursor on a runner; the number of importers of each fixture group and the identity of the orphan group; the content of `phase0/snapshot.json`; whether the three goldens rebuild the same tools; the number of runs configured for the telemetry property tests; the gain of the in-memory golden (estimate only).
