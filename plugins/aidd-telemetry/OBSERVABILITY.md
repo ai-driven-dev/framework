@@ -29,6 +29,8 @@ The opt-in OpenCode v2 plugin subscribes to `session.created`, `session.step.sta
 
 An observed effort is evidence only for its own observation. Do not carry it into a later session or an unlinked event, and do not equate a requested model with a confirmed response model.
 
+In one two-prompt Claude capture, the second request's input and cache-read metric series started one millisecond before the cache-creation series, although the captured `api_request` reported all three counts together. The dashboard cannot safely join metric windows by temporal proximity, so their combined input remains unavailable. Forwarding request events with their request and prompt IDs could provide request-level evidence, but must include deduplication and must not add those counts to the metrics. Event delivery can still be incomplete. [Claude event correlation](https://code.claude.com/docs/en/monitoring-usage#event-correlation-attributes) (read 2026-11-07).
+
 ## Sources
 
 Read 2026-11-06:
