@@ -1,8 +1,5 @@
 import type { Command } from "commander";
-import { AuthLoginUseCase } from "../../contexts/auth/application/auth-login-use-case.js";
-import { AuthLogoutUseCase } from "../../contexts/auth/application/auth-logout-use-case.js";
-import { AuthStatusUseCase } from "../../contexts/auth/application/auth-status-use-case.js";
-import type { AuthCredential, AuthLevel } from "../../contexts/auth/domain/auth.js";
+import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
 import { InputRequiredError } from "../../kernel/errors.js";
 import { AIDD_DIR } from "../../kernel/paths.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
@@ -51,7 +48,7 @@ export function registerAuthCommand(program: Command): void {
             { name: `Project (${AIDD_DIR}/auth.json)`, value: "project" },
           ]));
 
-        let credential: AuthCredential;
+        let credential: Credential;
         if (cmdOptions.gh) {
           credential = { method: "external", provider: "gh" };
         } else if (cmdOptions.token) {
@@ -67,10 +64,7 @@ export function registerAuthCommand(program: Command): void {
           }
         }
 
-        const result = await new AuthLoginUseCase(deps.credentialStore).execute({
-          credential,
-          level,
-        });
+        const result = await deps.logIn.execute({ credential, level });
         printAuthenticated(output, result.login, result.level);
       } catch (error) {
         errorHandler.handle(error);
@@ -86,7 +80,7 @@ export function registerAuthCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await new AuthLogoutUseCase(deps.credentialStore).execute();
+        const result = await deps.logOut.execute();
         printLogoutResult(output, result);
       } catch (error) {
         errorHandler.handle(error);
@@ -102,7 +96,7 @@ export function registerAuthCommand(program: Command): void {
 
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await new AuthStatusUseCase(deps.credentialStore).execute();
+        const result = await deps.checkStatus.execute();
         printAuthStatus(output, result);
       } catch (error) {
         errorHandler.handle(error);

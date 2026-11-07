@@ -121,4 +121,25 @@ describe("the guard itself", () => {
       )
     ).toEqual(["shared->tools"]);
   });
+
+  it("names the composition apart from every context, reports a context reaching it and clears it reaching a context", () => {
+    const composition = "src/composition/auth.ts";
+    expect(contextOf(composition)).toBe("composition");
+    expect(isContext("composition")).toBe(false);
+
+    const reaching = isCrossing(
+      contextOf("src/contexts/tools/domain/registry.ts"),
+      contextOf(composition)
+    );
+    const reached = isCrossing(
+      contextOf(composition),
+      contextOf("src/contexts/tools/domain/registry.ts")
+    );
+
+    expect(reaching, "only the composition root imports the composition").toBe(true);
+    expect(reached, "the composition wires any context").toBe(false);
+    expect(
+      forbiddenEdges([edgeBetween("src/contexts/tools/domain/registry.ts", composition)], ALLOWED)
+    ).toEqual(["tools->composition"]);
+  });
 });

@@ -8,8 +8,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, chmod: vi.fn(async () => {}) };
 });
 
-import { AuthStorage } from "../../../../src/contexts/auth/infrastructure/auth-storage.js";
-import { makeAuthConfig } from "../../../helpers/auth.js";
+import { CredentialRecordFileAdapter } from "../../../../src/contexts/auth/infrastructure/credential-record-file-adapter.js";
 
 /** A worker thread, which is where a mutation run executes the tests, refuses to set the mask
  * and keeps the one it inherited: `undefined` then, and nothing to restore. */
@@ -21,7 +20,7 @@ function setMask(mask: number): number | undefined {
   }
 }
 
-describe("AuthStorage, the creation of a credential file", () => {
+describe("CredentialRecordFileAdapter, the creation of a credential file", () => {
   let tempDir: string;
   let previousMask: number | undefined;
 
@@ -40,7 +39,11 @@ describe("AuthStorage, the creation of a credential file", () => {
     async () => {
       const path = join(tempDir, "auth.json");
 
-      await new AuthStorage(() => tempDir).write(path, makeAuthConfig());
+      await new CredentialRecordFileAdapter(
+        tempDir,
+        () => tempDir,
+        () => new Date()
+      ).save({ method: "stored", token: "ghp_test" }, "user");
 
       expect((await stat(path)).mode & 0o777).toBe(0o600);
     }

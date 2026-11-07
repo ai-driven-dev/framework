@@ -2,19 +2,23 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthStorage } from "../../../../src/contexts/auth/infrastructure/auth-storage.js";
+import { CredentialRecordFileAdapter } from "../../../../src/contexts/auth/infrastructure/credential-record-file-adapter.js";
 import { AuthStorageError } from "../../../../src/kernel/errors.js";
-import { makeAuthConfig } from "../../../helpers/auth.js";
+import { aStoredRecord } from "../testing/credential-records.js";
 
-describe("AuthStorage, the shape of a record", () => {
+describe("CredentialRecordFileAdapter, the shape of a record", () => {
   let tempDir: string;
   let path: string;
-  let storage: AuthStorage;
+  let storage: CredentialRecordFileAdapter;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-auth-shape-"));
     path = join(tempDir, "auth.json");
-    storage = new AuthStorage(() => tempDir);
+    storage = new CredentialRecordFileAdapter(
+      tempDir,
+      () => tempDir,
+      () => new Date()
+    );
   });
 
   afterEach(async () => {
@@ -26,30 +30,24 @@ describe("AuthStorage, the shape of a record", () => {
     ["a string", '"ghp_x"'],
     ["a number", "1"],
     ["an array", "[]"],
-    ["another version", JSON.stringify({ ...makeAuthConfig(), version: 2 })],
-    ["an unknown method", JSON.stringify({ ...makeAuthConfig(), method: "gh" })],
-    ["an unknown level", JSON.stringify({ ...makeAuthConfig(), level: "global" })],
-    ["no createdAt", JSON.stringify({ ...makeAuthConfig(), createdAt: undefined })],
+    ["another version", JSON.stringify({ ...aStoredRecord(), version: 2 })],
+    ["an unknown method", JSON.stringify({ ...aStoredRecord(), method: "gh" })],
+    ["an unknown level", JSON.stringify({ ...aStoredRecord(), level: "global" })],
+    ["no createdAt", JSON.stringify({ ...aStoredRecord(), createdAt: undefined })],
   ])("reads %s as no record at all", async (_shape, content) => {
     await writeFile(path, content);
 
-    expect(await storage.read(path)).toBeNull();
+    expect(await storage.read("user")).toBeNull();
   });
 
   it("reads back exactly what it wrote, pretty-printed", async () => {
-    const config = makeAuthConfig();
+    await storage.save({ method: "stored", token: "ghp_x" }, "user");
 
-    await storage.write(path, config);
-
-    expect(await readFile(path, "utf-8")).toBe(JSON.stringify(config, null, 2));
+    expect(await readFile(path, "utf-8")).toBe(JSON.stringify(await storage.read("user"), null, 2));
   });
 
   it("records an external credential with its provider and no token", async () => {
-    await storage.save({
-      credential: { method: "external", provider: "gh" },
-      level: "user",
-      projectRoot: tempDir,
-    });
+    await storage.save({ method: "external", provider: "gh" }, "user");
 
     const written = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
     expect(written).toStrictEqual({
@@ -62,11 +60,7 @@ describe("AuthStorage, the shape of a record", () => {
   });
 
   it("records a stored credential with its token and no provider", async () => {
-    await storage.save({
-      credential: { method: "stored", token: "ghp_x" },
-      level: "user",
-      projectRoot: tempDir,
-    });
+    await storage.save({ method: "stored", token: "ghp_x" }, "user");
 
     const written = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
     expect(written).toStrictEqual({
@@ -82,17 +76,9 @@ describe("AuthStorage, the shape of a record", () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);
     try {
-      await storage.save({
-        credential: { method: "stored", token: "ghp_x" },
-        level: "user",
-        projectRoot: tempDir,
-      });
+      await storage.save({ method: "stored", token: "ghp_x" }, "user");
       const stored = await readFile(path, "utf-8");
-      await storage.save({
-        credential: { method: "external", provider: "gh" },
-        level: "user",
-        projectRoot: tempDir,
-      });
+      await storage.save({ method: "external", provider: "gh" }, "user");
       const external = await readFile(path, "utf-8");
 
       expect(stored).toBe(
@@ -122,31 +108,13 @@ describe("AuthStorage, the shape of a record", () => {
     }
   });
 
-  it("synthesises a stored user-level record from AIDD_TOKEN", async () => {
-    const saved = process.env.AIDD_TOKEN;
-    process.env.AIDD_TOKEN = "ghp_env";
-    try {
-      const active = await storage.readActive(tempDir);
-      expect(active).toStrictEqual({
-        version: 1,
-        method: "stored",
-        level: "user",
-        token: "ghp_env",
-        createdAt: active?.createdAt,
-      });
-    } finally {
-      if (saved === undefined) delete process.env.AIDD_TOKEN;
-      else process.env.AIDD_TOKEN = saved;
-    }
-  });
-
   it("refuses to grant an empty Windows account", async () => {
     const platform = Object.getOwnPropertyDescriptor(process, "platform");
     const username = process.env.USERNAME;
     Object.defineProperty(process, "platform", { value: "win32", configurable: true });
     process.env.USERNAME = "";
     try {
-      await expect(storage.write(path, makeAuthConfig())).rejects.toThrow(
+      await expect(storage.save({ method: "stored", token: "ghp_x" }, "user")).rejects.toThrow(
         new AuthStorageError(
           "Failed to set restrictive permissions on " +
             `${path}: USERNAME is not set, so no account can be granted access`

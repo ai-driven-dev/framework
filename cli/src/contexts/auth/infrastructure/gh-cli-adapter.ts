@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { AuthenticationError, GhCliError } from "../../../kernel/errors.js";
-import type { CliAuthProvider } from "../ports/oauth-provider.js";
+import type { CliAuthProvider } from "../ports/cli-auth-provider.js";
 
 export class GhCliAdapter implements CliAuthProvider {
-  resolve(): string | null {
+  read(): string | null {
     const result = spawnSync("gh", ["auth", "token"], {
       timeout: 3000,
       encoding: "utf-8",

@@ -11,7 +11,12 @@ const promptInput = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
-    credentialStore: { login, status, logout },
+    logIn: {
+      execute: (command: { credential: unknown; level: unknown }) =>
+        login(command.credential, command.level),
+    },
+    logOut: { execute: () => logout() },
+    checkStatus: { execute: () => status() },
     prompter: { select: promptSelect, confirm: promptConfirm, input: promptInput },
   })),
   createMenuDeps: vi.fn(),
@@ -70,7 +75,7 @@ function refusing(): MockInstance<typeof process.exit> {
   });
 }
 
-describe("aidd auth login — the credential it stores", () => {
+describe("aidd auth login, the credential it stores", () => {
   it("stores the token it was handed, at the level it was told", async () => {
     login.mockResolvedValue({ login: "octocat", level: "user" });
 
@@ -90,7 +95,7 @@ describe("aidd auth login — the credential it stores", () => {
   });
 });
 
-describe("aidd auth login — what it asks a person at a terminal", () => {
+describe("aidd auth login, what it asks a person at a terminal", () => {
   it("offers both storage levels, naming where each one lands", async () => {
     pretendTerminal(true);
 
@@ -136,7 +141,7 @@ describe("aidd auth login — what it asks a person at a terminal", () => {
   });
 });
 
-describe("aidd auth login — what it refuses before building anything", () => {
+describe("aidd auth login, what it refuses before building anything", () => {
   it("refuses a run that names two ways of authenticating at once", async () => {
     const exit = refusing();
 
@@ -196,7 +201,7 @@ describe("aidd auth logout", () => {
   });
 });
 
-describe("aidd auth logout — a store that refuses", () => {
+describe("aidd auth logout, a store that refuses", () => {
   it("names the failure on stderr and fails the process", async () => {
     logout.mockRejectedValue(new Error("auth.json is read-only"));
     const exit = refusing();
@@ -221,7 +226,7 @@ describe("aidd auth status", () => {
   });
 });
 
-describe("aidd auth — how every subcommand builds its graph and reports a failure", () => {
+describe("aidd auth, how every subcommand builds its graph and reports a failure", () => {
   it.each([["login", "--token", "ghp_x", "--level", "user"], ["logout"], ["status"]])(
     "hands %j this run's verbosity, never an empty option set",
     async (...args) => {
@@ -246,7 +251,7 @@ describe("aidd auth — how every subcommand builds its graph and reports a fail
   });
 });
 
-describe("aidd auth — the help surface", () => {
+describe("aidd auth, the help surface", () => {
   function authCommand(): Command {
     const program = new Command();
     registerAuthCommand(program);

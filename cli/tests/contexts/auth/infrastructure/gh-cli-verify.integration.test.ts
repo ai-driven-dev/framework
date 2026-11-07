@@ -26,7 +26,7 @@ describe("GhCliAdapter, the commands it runs", () => {
   it("reads the token through `gh auth token`, with a bounded wait", () => {
     mockSpawnSync.mockReturnValue(answer({ stdout: "ghp_abc\n" }));
 
-    new GhCliAdapter().resolve();
+    new GhCliAdapter().read();
 
     expect(mockSpawnSync.mock.calls.at(-1)).toStrictEqual([
       "gh",
@@ -78,22 +78,22 @@ describe("GhCliAdapter.verify", () => {
   });
 });
 
-describe("GhCliAdapter.resolve, reading stderr", () => {
+describe("GhCliAdapter.read, reading stderr", () => {
   it("copes with gh answering no stderr stream at all", () => {
     mockSpawnSync.mockReturnValue(answer({ status: 2, stderr: undefined }));
 
-    expect(() => new GhCliAdapter().resolve()).toThrow("gh auth token exited with code 2");
+    expect(() => new GhCliAdapter().read()).toThrow("gh auth token exited with code 2");
   });
 
   it("says the exit code is unknown when gh left none", () => {
     mockSpawnSync.mockReturnValue(answer({ status: null, stderr: "" }));
 
-    expect(() => new GhCliAdapter().resolve()).toThrow("gh auth token exited with code unknown");
+    expect(() => new GhCliAdapter().read()).toThrow("gh auth token exited with code unknown");
   });
 
   it("trims the stderr it reports", () => {
     mockSpawnSync.mockReturnValue(answer({ status: 1, stderr: "  boom  \n" }));
 
-    expect(() => new GhCliAdapter().resolve()).toThrow("gh auth token failed: boom");
+    expect(() => new GhCliAdapter().read()).toThrow("gh auth token failed: boom");
   });
 });

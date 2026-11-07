@@ -4,6 +4,7 @@ Where things live. The architecture rules carry no paths on purpose, so this is 
 
 ```txt
 src/
+├── composition/    # one wiring module per migrated context, composed by the root until it moves here
 ├── contexts/    # bounded contexts — no barrel, nothing reaches inside another
 │   ├── auth/    # the one GitHub token: where it is read, stored and checked
 │   │   ├── application/
@@ -117,6 +118,7 @@ src/
 
 ## Areas
 
+- `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it.
 - `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
 - `src/contexts/`: the six bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
@@ -143,3 +145,4 @@ src/
 | a port used by one context | that context's `domain/ports/`, adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |
 | a runtime service | `runtime/<service>/`, wired from `runtime/wiring/` |
+| a migrated context's wiring | `composition/<context>.ts`, called by `runtime/wiring/framework.ts` |

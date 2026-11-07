@@ -44,17 +44,15 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/formats/plugin-root-token.ts",
   ],
   // Measured with the composition root excluded: the adapters are wired from
-  // `runtime/wiring/` alone, so they stay internal.
+  // `composition/auth.ts` alone, so they stay internal.
   auth: [
     // the token provider other contexts and the self-update hold
     "src/contexts/auth/contract/token-provider.ts",
-    // the record and the levels a command prints and a display words
-    "src/contexts/auth/domain/auth.ts",
-    "src/contexts/auth/ports/credential-store.ts",
-    // the three operations a command drives
-    "src/contexts/auth/application/auth-login-use-case.ts",
-    "src/contexts/auth/application/auth-logout-use-case.ts",
-    "src/contexts/auth/application/auth-status-use-case.ts",
+    // the credential a command takes and the level a display words
+    "src/contexts/auth/contract/credential.ts",
+    // the results of the commands a display words
+    "src/contexts/auth/application/log-out.ts",
+    "src/contexts/auth/application/check-status.ts",
   ],
   translate: [
     // the canonical shapes framework produces and translate consumes
@@ -176,10 +174,11 @@ function contextOf(file: string): string | null {
 /**
  * The composition root wires every context by construction — a profile registers itself
  * through a side-effect import, an adapter must be named to be instantiated — so the whole
- * `runtime/wiring/` directory is exempt rather than a caller this rule tries to catch.
+ * `runtime/wiring/` directory, and `composition/` beside it, are exempt rather than callers
+ * this rule tries to catch.
  */
 function isCompositionRoot(file: string): boolean {
-  return file.startsWith("src/runtime/wiring/");
+  return file.startsWith("src/runtime/wiring/") || file.startsWith("src/composition/");
 }
 
 function reachesIntoInterior(

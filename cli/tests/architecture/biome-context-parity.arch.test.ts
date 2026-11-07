@@ -78,8 +78,9 @@ function genericLayerTargets(layer: Layer): ReadonlySet<string> {
 }
 
 /**
- * The layer-intrinsic direction, union every context and presentation/runtime this context may
- * not reach, minus what `ALLOWED` admits and minus the debt `BASELINE` carries at this layer.
+ * The layer-intrinsic direction, union every context, presentation, runtime and the composition
+ * this context may not reach, minus what `ALLOWED` admits and minus the debt `BASELINE`
+ * carries at this layer.
  */
 function expectedForbidden(
   context: string,
@@ -89,7 +90,7 @@ function expectedForbidden(
 ): Set<string> {
   const forbidden = new Set(genericLayerTargets(layer));
   const others = contexts.filter((name) => name !== context);
-  for (const target of [...others, "presentation", "runtime"]) {
+  for (const target of [...others, "presentation", "runtime", "composition"]) {
     const edge = `${context}->${target}`;
     if (ALLOWED.has(edge)) continue;
     if (baselineLayerMap.get(edge)?.has(layer)) continue;
@@ -166,7 +167,7 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
     }
   );
 
-  it("kernel forbids every context layer, shared, presentation and runtime, unconditionally", () => {
+  it("kernel forbids every context layer, shared, presentation, runtime and the composition, unconditionally", () => {
     const override = overrides.find((candidate) =>
       candidate.includes?.includes("src/kernel/**/*.ts")
     );
@@ -174,26 +175,34 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
 
     const groups = (restrictedImportGroups(override as BiomeOverride) ?? []).map(tokenOf);
     expect(new Set(groups)).toEqual(
-      new Set(["domain", "application", "infrastructure", "shared", "presentation", "runtime"])
+      new Set([
+        "domain",
+        "application",
+        "infrastructure",
+        "shared",
+        "presentation",
+        "runtime",
+        "composition",
+      ])
     );
   });
 
   it.each([
     {
       includes: "src/shared/ports/**/*.ts",
-      forbids: ["contexts", "presentation", "runtime", "infrastructure"],
+      forbids: ["contexts", "presentation", "runtime", "infrastructure", "composition"],
     },
     {
       includes: "src/shared/infrastructure/**/*.ts",
-      forbids: ["contexts", "presentation", "runtime"],
+      forbids: ["contexts", "presentation", "runtime", "composition"],
     },
     {
       includes: "src/presentation/**/*.ts",
-      forbids: ["**/shared/infrastructure/**"],
+      forbids: ["**/shared/infrastructure/**", "composition"],
     },
     {
       includes: "src/runtime/**/*.ts",
-      forbids: ["**/shared/infrastructure/**"],
+      forbids: ["**/shared/infrastructure/**", "composition"],
     },
   ])("$includes forbids exactly its groups", ({ includes, forbids }) => {
     const override = overrides.find((candidate) => candidate.includes?.includes(includes));

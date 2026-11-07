@@ -124,6 +124,7 @@ describe("the guard itself", () => {
       "src/contexts/auth/contract",
       "src/contexts/auth/domain",
       "src/contexts/distribution/infrastructure",
+      "src/composition",
     ]) {
       mkdirSync(join(planted, dir), { recursive: true });
     }
@@ -186,6 +187,19 @@ describe("the guard itself", () => {
       join(planted, "src/contexts/auth/domain/reaches-tools.ts"),
       'import type { Registry } from "../../tools/domain/registry.js";\nexport type Reached = Registry;\n'
     );
+    writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
+    const reachesComposition = (up: string): string =>
+      `import type { AuthDeps } from "${up}composition/auth.js";\nexport type Wired = AuthDeps;\n`;
+    for (const [file, up] of [
+      ["src/contexts/tools/domain/reaches-composition.ts", "../../../"],
+      ["src/kernel/reaches-composition.ts", "../"],
+      ["src/shared/infrastructure/reaches-composition.ts", "../../"],
+      ["src/presentation/display/reaches-composition.ts", "../../"],
+      ["src/runtime/self-update/reaches-composition.ts", "../../"],
+      ["src/runtime/wiring/reaches-composition.ts", "../../"],
+    ] as const) {
+      writeFileSync(join(planted, file), reachesComposition(up));
+    }
     const reachesSharedInfrastructure = (up: string): string =>
       `import type { HttpClient } from "${up}shared/infrastructure/http-client.js";\nexport type Client = HttpClient;\n`;
     for (const [file, up] of [
@@ -292,6 +306,22 @@ describe("the guard itself", () => {
     expect(findings).not.toContain(
       `src/contexts/distribution/infrastructure/reaches-auth.ts:${rule}`
     );
+  });
+
+  it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    for (const file of [
+      "src/contexts/tools/domain/reaches-composition.ts",
+      "src/kernel/reaches-composition.ts",
+      "src/shared/infrastructure/reaches-composition.ts",
+      "src/presentation/display/reaches-composition.ts",
+      "src/runtime/self-update/reaches-composition.ts",
+    ]) {
+      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    }
+    expect(findings).not.toContain(`src/runtime/wiring/reaches-composition.ts:${rule}`);
   });
 
   it("flags the process global in shared/ports and process.exit in shared/infrastructure", () => {

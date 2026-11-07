@@ -9,7 +9,7 @@ paths:
 
 ## Resolution
 
-- `AuthReaderAdapter.resolve()`: `AIDD_TOKEN`, project `.aidd/auth.json`, user `auth.json`.
+- `CachedTokenProvider.resolve()`: `AIDD_TOKEN`, project `.aidd/auth.json`, user `auth.json`.
 - First hit wins; memoized, so `gh` spawns at most once.
 - `method: "stored"` holds the token.
 - `method: "external"` runs `gh auth token` at read time, at its own level.

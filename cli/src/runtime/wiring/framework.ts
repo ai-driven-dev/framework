@@ -8,11 +8,10 @@ import "../../contexts/tools/domain/profiles/cursor/profile.js";
 import "../../contexts/tools/domain/profiles/kilo/profile.js";
 import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
-import { AuthProviderAdapter } from "../../contexts/auth/infrastructure/auth-provider-adapter.js";
-import { AuthReaderAdapter } from "../../contexts/auth/infrastructure/auth-reader-adapter.js";
-import { AuthStorage } from "../../contexts/auth/infrastructure/auth-storage.js";
-import { GhCliAdapter } from "../../contexts/auth/infrastructure/gh-cli-adapter.js";
-import type { CredentialStore } from "../../contexts/auth/ports/credential-store.js";
+import { wireAuth } from "../../composition/auth.js";
+import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
+import type { LogIn } from "../../contexts/auth/application/log-in.js";
+import type { LogOut } from "../../contexts/auth/application/log-out.js";
 import { MarketplaceAddUseCase } from "../../contexts/distribution/application/marketplace-add-use-case.js";
 import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
@@ -102,7 +101,6 @@ import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plug
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
-import { GitHubAdapter } from "../../shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { Environment } from "../../shared/ports/environment.js";
 import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
@@ -141,8 +139,9 @@ interface Deps {
   logger: Logger;
   currentVersionProvider: VersionReader;
   prompter: Prompter;
-  authReader: AuthReaderAdapter;
-  credentialStore: CredentialStore;
+  logIn: LogIn;
+  logOut: LogOut;
+  checkStatus: CheckStatus;
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
@@ -217,23 +216,16 @@ export async function createDeps(
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
   const http = new HttpClient();
-  const authStorage = new AuthStorage(userConfigDir);
-  const ghCliAdapter = new GhCliAdapter();
-  const authReader = new AuthReaderAdapter(
-    authStorage,
+  const environment = new EnvironmentAdapter();
+  const { tokenProvider, logIn, logOut, checkStatus } = wireAuth({
     projectRoot,
     logger,
-    ghCliAdapter,
-    options.token
-  );
-  const credentialStore = new AuthProviderAdapter(
-    authStorage,
-    new Map([["gh", ghCliAdapter]]),
-    new GitHubAdapter(http),
-    projectRoot
-  );
+    http,
+    environment,
+    explicitToken: options.token,
+  });
   const cliUpdater = new SelfUpdaterAdapter(http, {
-    tokenProvider: authReader,
+    tokenProvider,
     githubApiBase: process.env.AIDD_SELF_UPDATE_API_BASE,
     npmRegistryBase: process.env.AIDD_SELF_UPDATE_NPM_BASE,
     logger,
@@ -241,7 +233,6 @@ export async function createDeps(
   const currentVersionProvider = new CurrentVersionAdapter();
   const selfUpdateUseCase = new SelfUpdateUseCase(cliUpdater, currentVersionProvider);
   const platform = new PlatformAdapter();
-  const environment = new EnvironmentAdapter();
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
@@ -271,7 +262,7 @@ export async function createDeps(
     marketplaceListUseCase,
     marketplaceRefreshUseCase,
     marketplaceRegisterFrameworkUseCase,
-  } = wireDistribution({ fs, hasher, http, authReader, logger, projectRoot });
+  } = wireDistribution({ fs, hasher, http, tokenProvider, logger, projectRoot });
   const pluginRemoveUseCase = new PluginRemoveUseCase(
     fs,
     manifestRepo,
@@ -437,7 +428,7 @@ export async function createDeps(
   const detectPluginDriftUseCase = new DetectPluginDriftUseCase(fs);
   const doctorPluginUseCase = new DoctorPluginUseCase(detectPluginDriftUseCase);
   const doctorReferencesUseCase = new DoctorReferencesUseCase(fs);
-  const doctorLayoutUseCase = new DoctorLayoutUseCase(fs, authReader);
+  const doctorLayoutUseCase = new DoctorLayoutUseCase(fs, tokenProvider);
   // Named so `doctor --scope user` reuses this instance: the check takes its manifest and
   // project root per call, so nothing about it is project-scope-specific.
   const doctorRegistrationUseCase = new DoctorRegistrationUseCase(
@@ -458,7 +449,7 @@ export async function createDeps(
     doctorLayoutUseCase,
     doctorRegistrationUseCase
   );
-  const releaseResolver = new GitHubReleaseResolverAdapter(http, authReader);
+  const releaseResolver = new GitHubReleaseResolverAdapter(http, tokenProvider);
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
     prompter,
     releaseResolver
@@ -484,7 +475,7 @@ export async function createDeps(
     currentVersionProvider,
     logger,
     environment,
-    authReader,
+    tokenProvider,
     releaseResolver,
     userSourceReferences
   );
@@ -611,8 +602,9 @@ export async function createDeps(
     logger,
     currentVersionProvider,
     prompter,
-    authReader,
-    credentialStore,
+    logIn,
+    logOut,
+    checkStatus,
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,

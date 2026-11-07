@@ -1,12 +1,13 @@
-import type { AuthLevel } from "../../contexts/auth/domain/auth.js";
-import type { AuthLogoutResult, AuthStatus } from "../../contexts/auth/ports/credential-store.js";
+import type { CheckStatusResult } from "../../contexts/auth/application/check-status.js";
+import type { LogOutResult } from "../../contexts/auth/application/log-out.js";
+import type { AuthLevel } from "../../contexts/auth/contract/credential.js";
 import type { CLIOutput } from "../output.js";
 
 export function printAuthenticated(output: CLIOutput, login: string, level: AuthLevel): void {
   output.success(`Authenticated as ${login} (${level})`);
 }
 
-export function printAuthStatus(output: CLIOutput, status: AuthStatus): void {
+export function printAuthStatus(output: CLIOutput, status: CheckStatusResult): void {
   if (!status.authenticated) {
     output.info("Not authenticated.");
     return;
@@ -14,7 +15,7 @@ export function printAuthStatus(output: CLIOutput, status: AuthStatus): void {
   printAuthenticated(output, status.login, status.level);
 }
 
-export function printLogoutResult(output: CLIOutput, result: AuthLogoutResult): void {
+export function printLogoutResult(output: CLIOutput, result: LogOutResult): void {
   if (!result.found) {
     output.info("Not authenticated.");
     return;

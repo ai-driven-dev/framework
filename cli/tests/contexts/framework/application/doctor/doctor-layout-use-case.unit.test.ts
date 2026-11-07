@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
 import { DoctorLayoutUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeAuthReader } from "../../../../helpers/ports/fake-auth-reader.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
 const PROJECT_ROOT = "/project";
@@ -25,7 +25,7 @@ function manifestTrackingClaude(): Manifest {
   return manifest;
 }
 
-async function issuesFor(onDisk: Record<string, string>, authReader?: FakeAuthReader) {
+async function issuesFor(onDisk: Record<string, string>, authReader?: TokenProvider) {
   const files = Object.fromEntries(
     Object.entries(onDisk).map(([relativePath, content]) => [
       `${PROJECT_ROOT}/${relativePath}`,
@@ -62,7 +62,7 @@ describe("DoctorLayoutUseCase", () => {
 
   describe("authentication", () => {
     it("reports an info line when no token resolves", async () => {
-      const issues = await issuesFor({}, new FakeAuthReader(null));
+      const issues = await issuesFor({}, { resolve: async () => null });
 
       expect(issues).toStrictEqual([
         { severity: "info", message: "Not authenticated", fix: "Run aidd auth login" },
@@ -70,7 +70,7 @@ describe("DoctorLayoutUseCase", () => {
     });
 
     it("says nothing when a token resolves", async () => {
-      expect(await issuesFor({}, new FakeAuthReader("token"))).toStrictEqual([]);
+      expect(await issuesFor({}, { resolve: async () => "token" })).toStrictEqual([]);
     });
 
     it("says nothing when nothing here can read a token", async () => {

@@ -83,6 +83,10 @@
                       "**/shared/**"
                     ],
                     "message": "kernel must not import any context or shared: it is the old home of the shared vocabulary, not a consumer of one"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -108,6 +112,10 @@
                       "**/infrastructure/**"
                     ],
                     "message": "shared/ports declares an interface and imports no context, no layer above it and no adapter: see 0-contexts.md"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -128,6 +136,10 @@
                   {
                     "group": ["**/contexts/**", "**/presentation/**", "**/runtime/**"],
                     "message": "shared/infrastructure implements a port and imports no context and nothing above it: a context is satisfied by shape, not by import"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -148,6 +160,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -168,6 +184,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -219,6 +239,10 @@
                       "**/telemetry/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -251,6 +275,10 @@
                       "**/runtime/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -283,6 +311,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -318,6 +350,10 @@
                       "**/telemetry/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -355,6 +391,10 @@
                       "**/telemetry/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -384,6 +424,10 @@
                   {
                     "group": ["**/telemetry/**"],
                     "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -408,6 +452,10 @@
                   {
                     "group": ["**/telemetry/**"],
                     "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -432,6 +480,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -466,6 +518,10 @@
                       "**/auth/**"
                     ],
                     "message": "translate may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -497,6 +553,10 @@
                       "**/runtime/**"
                     ],
                     "message": "translate may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -528,6 +588,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -563,6 +627,10 @@
                       "**/auth/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -595,6 +663,10 @@
                       "**/runtime/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -627,6 +699,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -662,6 +738,10 @@
                       "**/manifest.js"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -696,6 +776,10 @@
                   {
                     "group": ["**/manifest.js"],
                     "message": "distribution reads a marketplace, never framework's installation record \u2014 marketplace-add-use-case.ts's own MarketplaceRemoveUseCase dependency is the one grandfathered exception (context-graph.arch.test.ts BASELINE), not a licence to read manifest.js too"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -726,6 +810,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -761,6 +849,10 @@
                       "**/auth/**"
                     ],
                     "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -793,6 +885,10 @@
                       "**/runtime/**"
                     ],
                     "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }
@@ -825,6 +921,10 @@
                   {
                     "group": ["**/shared/infrastructure/**"],
                     "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   }
                 ]
               }

@@ -25,19 +25,19 @@ describe("GhCliAdapter", () => {
   it("returns the token when gh auth token succeeds", () => {
     mockSpawnSync.mockReturnValue(makeResult({ stdout: "ghp_abc123\n" }));
 
-    expect(new GhCliAdapter().resolve()).toBe("ghp_abc123");
+    expect(new GhCliAdapter().read()).toBe("ghp_abc123");
   });
 
   it("returns null when gh is not installed (ENOENT)", () => {
     mockSpawnSync.mockReturnValue(makeResult({ error: new Error("ENOENT"), status: null }));
 
-    expect(new GhCliAdapter().resolve()).toBeNull();
+    expect(new GhCliAdapter().read()).toBeNull();
   });
 
   it("returns null when gh auth token exits 0 with empty output", () => {
     mockSpawnSync.mockReturnValue(makeResult({ stdout: "   " }));
 
-    expect(new GhCliAdapter().resolve()).toBeNull();
+    expect(new GhCliAdapter().read()).toBeNull();
   });
 
   it("throws with stderr when gh auth token exits non-zero", () => {
@@ -48,7 +48,7 @@ describe("GhCliAdapter", () => {
       })
     );
 
-    expect(() => new GhCliAdapter().resolve()).toThrow(
+    expect(() => new GhCliAdapter().read()).toThrow(
       "gh auth token failed: not logged in to any GitHub hosts"
     );
   });
@@ -56,7 +56,7 @@ describe("GhCliAdapter", () => {
   it("throws with exit code when gh auth token exits non-zero with no stderr", () => {
     mockSpawnSync.mockReturnValue(makeResult({ status: 1, stderr: "" }));
 
-    expect(() => new GhCliAdapter().resolve()).toThrow("exited with code 1");
+    expect(() => new GhCliAdapter().read()).toThrow("exited with code 1");
   });
 
   it("throws an upgrade hint when gh is too old and does not support the token subcommand", () => {
@@ -67,6 +67,6 @@ describe("GhCliAdapter", () => {
       })
     );
 
-    expect(() => new GhCliAdapter().resolve()).toThrow("gh CLI is too old to support");
+    expect(() => new GhCliAdapter().read()).toThrow("gh CLI is too old to support");
   });
 });

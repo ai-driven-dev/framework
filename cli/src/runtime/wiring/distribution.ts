@@ -1,4 +1,4 @@
-import type { AuthReaderAdapter } from "../../contexts/auth/infrastructure/auth-reader-adapter.js";
+import type { TokenProvider } from "../../contexts/auth/contract/token-provider.js";
 import { FetchMarketplaceSourceUseCase } from "../../contexts/distribution/application/fetch-marketplace-source-use-case.js";
 import { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
@@ -26,7 +26,7 @@ export interface DistributionWiringShared {
   fs: FileReader & FileWriter & FileMerger;
   hasher: Hasher;
   http: HttpClient;
-  authReader: AuthReaderAdapter;
+  tokenProvider: TokenProvider;
   logger: Logger;
   projectRoot: string;
 }
@@ -50,8 +50,8 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
   const marketplaceRegistry = new MarketplaceRegistryAdapter();
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(shared.hasher);
-  const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.authReader);
-  const rawCatalogFetcher = new GitHubRawFetcherAdapter(shared.http, shared.authReader);
+  const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
+  const rawCatalogFetcher = new GitHubRawFetcherAdapter(shared.http, shared.tokenProvider);
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(
     pluginFetcher,
     rawCatalogFetcher,
