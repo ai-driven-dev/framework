@@ -1,14 +1,11 @@
 # Review protocol
 
 - Review yourself the memory files the AI loads every session, one file at a time, or only those `changes` names.
-- Catch what their writer could not see.
-- Memory holds what the code cannot show: an intent, a constraint, a warning.
-- Code silent on a line is not code that contradicts it.
+- Memory holds what the code cannot show: an intent, a constraint, a warning. Code silent on a line does not contradict it.
 
-1. **Check** the files against the code: every path against the tree, every command and commit type against the file that defines it, per the reading rules of [reading-sources.md](reading-sources.md), every count and named tool against the manifests and the workspace file.
+1. **Check** each file against the code: every path against the tree, every command and commit type against the file that defines it, per the reading rules of [reading-sources.md](reading-sources.md), every count and named tool against the manifests and the workspace file.
 2. **Flag** each of these, with a reason and a location:
-   - A claim the code contradicts, or that has gone stale.
-   - A command, path, or file that does not exist or would not run.
+   - A claim the code contradicts or that has gone stale, or a command, path or file that would not run.
    - A "why" the code and history do not support.
    - A decision, convention, or gotcha the code shows but the file omits.
    - A fact that belongs under another file's name, for check to dedup.

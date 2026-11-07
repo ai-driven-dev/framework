@@ -91,6 +91,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [fact-sheet.md](skills/02-project-memory/assets/fact-sheet.md) | - |
 | `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
+| `references` | [engine.md](skills/02-project-memory/references/engine.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |

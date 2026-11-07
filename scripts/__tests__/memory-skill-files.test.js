@@ -91,7 +91,6 @@ function skillText(file) {
 }
 
 const FIXTURES = path.resolve(__dirname, "../../cli/tests/fixtures/hooks-routes");
-const ENGINE_NAMES = /memory\.cjs/u;
 const PLUGIN_HOOKS = /^(?:[^/]+\/)*plugins\/aidd-context\/hooks\/memory\.cjs$/u;
 const TOOL_HOOKS = /^(?:[^/]+\/)*\.[a-z]+\/hooks\/aidd-context\/memory\.cjs$/u;
 
@@ -104,7 +103,11 @@ function section(text, heading) {
 }
 
 function engineSection() {
-  return section(skillText("SKILL.md"), "Engine");
+  return skillText("references/engine.md");
+}
+
+function actionsText() {
+  return ["01-scan", "02-write", "03-check", "04-sync"].map((name) => skillText(`actions/${name}.md`)).join("\n");
 }
 
 test("check prints its findings: no report template ships and no file names one", () => {
@@ -114,7 +117,7 @@ test("check prints its findings: no report template ships and no file names one"
   }
 });
 
-test("the engine's file names live in the router's Engine section only, with no fallback for a build that ships no engine", () => {
+test("the engine reference locates the engine once, with no fallback for a build that ships no engine, and no action keeps a hand-lint table", () => {
   const engine = engineSection();
   for (const name of ["memory.cjs"]) {
     assert.ok(engine.includes(name), `the Engine section does not name ${name}`);
@@ -124,14 +127,13 @@ test("the engine's file names live in the router's Engine section only, with no 
   assert.doesNotMatch(engine, /Found none|Machine/u, "the Engine section keeps a fallback for a build with no engine");
   for (const file of skillMarkdown().filter((candidate) => !candidate.endsWith("SKILL.md"))) {
     const text = fs.readFileSync(file, "utf8");
-    assert.doesNotMatch(text, ENGINE_NAMES, `${path.relative(SKILL, file)} names an engine script`);
     assert.doesNotMatch(text, /rule table/iu, `${path.relative(SKILL, file)} names the fallback`);
   }
 });
 
 test("the lint command the skill gives takes the root first, and exits 1 on a planted unfinished marker", () => {
   const given = engineSection().match(/`node memory\.cjs check (\.) (aidd_docs\/memory\/<file>\.md)`/u);
-  assert.ok(given, "the Engine section gives no `node memory.cjs check . aidd_docs/memory/<file>.md`");
+  assert.ok(given, "the engine reference gives no `node memory.cjs check . aidd_docs/memory/<file>.md`");
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "lint-command-"));
   try {
     fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
@@ -186,8 +188,19 @@ test("the Engine section matches the install layouts the hook fixtures show", ()
   assert.deepEqual([...order].sort((a, b) => a - b), order, "the lookup order is not plugin, tool folder, skill");
 });
 
+function routerEdges() {
+  return section(skillText("SKILL.md"), "Actions")
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.includes("-->"));
+}
+
 test("refresh runs scan, check, write, then sync", () => {
-  assert.match(skillText("SKILL.md"), /\(\[refresh\]\)\s*-->\s*scan\s*-->\s*check\s*-->\s*write\s*-->\s*sync/u);
+  const edges = routerEdges();
+  assert.match(edges.find((edge) => /^request\b.*\|\s*scan\b/u.test(edge)) ?? "", /refresh/u, "refresh does not start at scan");
+  assert.match(edges.find((edge) => /^scan\b.*\|\s*check\b/u.test(edge)) ?? "", /refresh/u, "refresh does not go from scan to check");
+  assert.match(edges.find((edge) => /^check\b.*\|\s*write\b/u.test(edge)) ?? "", /refresh/u, "refresh does not go from check to write");
+  assert.ok(edges.some((edge) => /^write\b.*-->\s*sync$/u.test(edge)), "write does not go to sync");
 });
 
 test("check reads the bank at its root: a team file is kept and never linted or removed, a misplaced one is reported and never moved, an accepted older name is kept", () => {
@@ -221,9 +234,9 @@ test("write ends on the engine's guard, which lists what the sheet did not appro
   assert.match(steps.at(-1), /`vanished`/u, "the last step does not run the guard");
   assert.match(steps.at(-1), /lists/u);
   assert.match(steps.at(-1), /change nothing, go on/u);
-  assert.match(engineSection(), /memory\.cjs vanished \. --sheet/u);
-  assert.match(engineSection(), /HEAD only/u, "the Engine row hides that uncommitted edits are not seen");
-  assert.doesNotMatch(engineSection(), /memory\.cjs lines/u);
+  assert.match(skillText("actions/02-write.md"), /memory\.cjs vanished \. --sheet/u);
+  assert.match(skillText("actions/02-write.md"), /HEAD only/u, "the guard hides that uncommitted edits are not seen");
+  assert.doesNotMatch(actionsText(), /memory\.cjs lines/u);
 });
 
 test("no file of the skill offers a merge or names a former file", () => {
@@ -277,10 +290,12 @@ test("check reviews the files a row produces or accepts under another name, neve
 
 test("a check request has its own route: scan, then check, and no sync", () => {
   const router = skillText("SKILL.md");
-  const route = router.split(/\r?\n/u).find((candidate) => /\(\[check\]\)/u.test(candidate)) ?? "";
-  assert.match(route, /\(\[check\]\)\s*-->\s*scan\s*-->\s*check/u, "no check route");
-  assert.doesNotMatch(route, /sync/u, "the check route syncs");
-  assert.doesNotMatch(route, /-->\s*write/u, "the check route writes without approval");
+  const edges = routerEdges();
+  assert.match(edges.find((edge) => /^request\b.*\|\s*scan\b/u.test(edge)) ?? "", /check/u, "check does not start at scan");
+  assert.match(edges.find((edge) => /^scan\b.*\|\s*check\b/u.test(edge)) ?? "", /check/u, "no check route from scan to check");
+  const fromCheck = edges.filter((edge) => /^check\b/u.test(edge));
+  assert.ok(fromCheck.some((edge) => /check: print/u.test(edge) && /done/u.test(edge)), "the check request does not end after the report");
+  assert.doesNotMatch(fromCheck.filter((edge) => /check: print/u.test(edge)).join("\n"), /sync|write/u, "the check route syncs or writes without approval");
   assert.match(router.split(/\r?\n/u).find((candidate) => /^argument-hint:/u.test(candidate)) ?? "", /check/u, "the argument hint omits check");
 });
 
@@ -405,15 +420,15 @@ test("write ends at once on an empty sheet, drops a capability answered no, keep
   assert.match(write, /skip a `remove` or `replace`[^\n]*not yes/u);
 });
 
-test("the consent rule: silence is consent, a removal or replacement needs an explicit yes, an unanswered question removes its slot", () => {
-  const rules = section(skillText("SKILL.md"), "Transversal rules");
-  assert.match(rules, /[Ss]ilence is consent/u);
-  assert.match(rules, /starting `remove` or `replace`[^\n]*answer starting with `yes`/u, "the removal exception is not named");
-  assert.doesNotMatch(rules, /explicit/u, "an explicit yes is not a rule a small model can apply");
-  assert.match(rules, /Autonomous[^\n]*no person[^\n]*caller/u, "autonomous is not defined");
-  assert.match(rules, /engine lists/u, "the engine guard is not named");
-  assert.match(rules, /unanswered `Q`[^\n]*slot/u);
-  assert.doesNotMatch(rules, /file by file and line by line/u, "the old approval rule contradicts the new one");
+test("the consent rule, applied where write takes the answers: silence is yes, a removal or replacement needs a yes, an unanswered question drops its slot", () => {
+  const step = skillText("actions/02-write.md").match(/^1\. .*$/mu)[0];
+  assert.match(step, /Silence is yes/u);
+  assert.match(step, /except on a `remove` or `replace` line, which needs `yes`/u, "the removal exception is not named");
+  assert.doesNotMatch(step, /explicit/u, "an explicit yes is not a rule a small model can apply");
+  assert.match(step, /Autonomous:[^\n]*caller/u, "autonomous is not defined");
+  assert.match(step, /unanswered `Q` drops its slot/u);
+  assert.doesNotMatch(section(skillText("SKILL.md"), "Transversal rules"), /[Ss]ilence/u, "the consent rule is stated twice");
+  assert.doesNotMatch(step, /file by file and line by line/u, "the old approval rule contradicts the new one");
 });
 
 test("write takes its content from the sheet only, after the engine checked its sources", () => {
@@ -421,7 +436,7 @@ test("write takes its content from the sheet only, after the engine checked its 
   assert.match(write, /sheet only/u);
   assert.match(write, /`facts`/u, "the sheet is not verified before the write");
   assert.ok(write.indexOf("`facts`") < write.indexOf("**Write.**"), "the write precedes the verification");
-  assert.ok(engineSection().includes("memory.cjs facts"), "the Engine section gives no facts command");
+  assert.ok(skillText("actions/02-write.md").includes("memory.cjs facts"), "write gives no facts command");
 });
 
 test("the sheet is presented in one fixed order: what is replaced or removed first, with old and new text, then additions, questions and one answer line", () => {

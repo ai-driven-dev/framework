@@ -6,43 +6,24 @@ argument-hint: setup | refresh | check | rewire
 
 # Project Memory
 
-The memory is the macro view an AI tool loads every session and a person reads too.
+## Actions
 
 ```mermaid
 flowchart LR
-  new([no argument, or setup]) --> scan --> write --> sync --> wired([memory wired])
-  update([refresh]) --> scan --> check --> write --> sync
-  inspect([check]) --> scan --> check
-  rewire([rewire]) --> sync
-  scan -.-> empty([nothing to remember])
+  request((request)) -->|"setup, refresh, check"| scan["scan<br>actions/01-scan.md<br>script: memory.cjs changes"]
+  request -->|"rewire"| sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync"]
+  scan -->|"setup"| write["write<br>actions/02-write.md<br>script: memory.cjs facts, check, vanished"]
+  scan -->|"refresh, check"| check["check<br>actions/03-check.md<br>script: memory.cjs changes, check"]
+  scan -->|"nothing to remember"| done((done))
+  check -->|"refresh"| write
+  check -->|"check: print the report"| done
+  write --> sync
+  sync --> done
 ```
 
-## Actions
-
-Run the flow above, reading only the next action file.
-
-| Action | Does                            |
-| ------ | ------------------------------- |
-| scan   | read the project into a fact sheet |
-| write  | write the memory                |
-| check  | print what drifted |
-| sync   | wire it into the tools          |
-
-## Engine
-
-| Command | When | Effect |
-| ------- | ---- | ------ |
-| `memory.cjs`, found by file name | before any call | first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill |
-| `node memory.cjs check . aidd_docs/memory/<file>.md` | per file | checks that file |
-| `node memory.cjs check .` | whole bank | checks the whole bank |
-| `node memory.cjs facts <sheet> .` | write, before any write | exits 1 naming each bad sheet line |
-| `node memory.cjs sync <tool>...` | picked tools known | fills each named tool's block |
-| `node memory.cjs changes .` | refresh or check, before the review | prints the scope, the base, the changed files, the memory lines citing one, the files to review; `--since <ref>` names an older base |
-| `node memory.cjs vanished . --sheet <sheet>` | write, last step | lists each line gone from the bank as committed, HEAD only, unless a `D` line quotes it |
+Read an action's file, then do what it says.
 
 ## Transversal rules
 
-- If a referenced file cannot be read, stop and say so. Never invent its content.
-- Silence is consent: an unanswered `R` or `D` line is written, an unanswered `Q` removes its slot. A `D` starting `remove` or `replace` changes or removes an existing line and needs an answer starting with `yes`; the engine lists any other line gone. Autonomous means no person: the caller's instruction answers.
-- Run no version-control command: `changes` is the change set.
+- Run no version-control command: `changes` gives what changed.
 - End with a short report of what changed.

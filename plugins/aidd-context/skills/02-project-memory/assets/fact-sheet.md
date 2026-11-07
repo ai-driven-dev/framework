@@ -4,7 +4,7 @@
 - Base: <short id> <commit subject>, or `audit` and its reason (refresh only)
 
 Under a block, one fact per line: `- <id> | <file> > <section> | <fact> | <source> | <answer>`
-No `|` in a fact. The source is one existing plain path, no backticks, line number or glob; a removal cites the memory file; a `Q` may cite none. Leave the answer empty; the skill fills it from the person's reply.
+No `|` in a fact. The source is one existing plain path, no backticks, line number or glob; a removal cites the memory file; a `Q` may cite none. Leave the answer empty.
 
 ## Read
 
@@ -24,7 +24,7 @@ A convention no rule covers. T1, T2. File and section name the rule topic. Not w
 
 ## Presentation
 
-Show it once in chat as below; a removal shows `(removed: <reason and source>)` for the `+` line.
+Show it once in chat as below.
 
 ```text
 Sheet: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_memory-<scope>/facts.md

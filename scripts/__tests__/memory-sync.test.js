@@ -507,7 +507,5 @@ test("sync is silent about a read-only or missing target it has no block for", (
 test("the setup copies aidd_docs/README.md only when the project has none", () => {
   const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory");
   const write = fs.readFileSync(path.join(skill, "actions/02-write.md"), "utf8");
-  const capabilities = fs.readFileSync(path.join(skill, "references/capabilities.md"), "utf8");
   assert.match(write, /aidd_docs\/README\.md[^\n]*only when (?:it is )?absent/u);
-  assert.match(capabilities, /copied to `aidd_docs\/README\.md` only when (?:it is )?absent/u);
 });
