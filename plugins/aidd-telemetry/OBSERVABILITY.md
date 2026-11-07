@@ -19,8 +19,6 @@ In two local OpenCode v2.2.5 executions before the plugin was added, the raw OTL
 
 The opt-in OpenCode v2 plugin subscribes to `session.created`, `session.step.started`, `session.step.ended` and `session.step.failed`, and exports each event separately as OTLP logs. It includes the original event and session IDs, message ID when present, selected model and variant at step start, and positive OpenCode-normalized counters at step end. A creation event can also carry an OpenCode project ID and parent session ID; neither is a repository name. It does not export prompts, responses, tool contents or cost. The plugin stream can miss events; event IDs allow deduplication of observations received, not proof of complete delivery. Do not match retries solely by assistant message ID. Production export remains disabled.
 
-For the locally tested `claude-code` provider, OpenCode v2.2.5 documents that its HTTP request and response hooks do not run because Claude Code makes the API calls. Those hooks therefore cannot recover an ambiguous cache zero for this provider. [OpenCode Claude Agent limitations](https://github.com/anomalyco/opencode/blob/v2.2.5/specs/v2/claude-agent-provider.md#limitations) (read 2026-11-07).
-
 ## Additional coverage investigated
 
 | Provider | Available or observed in OTLP | Current limit and next step |
