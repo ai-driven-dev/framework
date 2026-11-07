@@ -6,7 +6,7 @@ Gouvernail's AI KPI view uses OpenTelemetry (OTel) observations. For OpenCode v2
 | --- | --- | --- | --- |
 | Session | `session.id`, when present | `conversation.id` in logs; `thread.id` in observed turn spans | In observed `/api/session/{id}/prompt` HTTP spans and plugin session events |
 | Model | `model`, when present | `model`, when present | Selected model and variant on plugin step-start events, when emitted; not proof of the served model or effective effort |
-| Usage | Forwarded `claude_code.token.usage` metrics; `api_request` is captured but not forwarded | `codex.sse_event` and turn traces | OpenCode-normalized input, output, reasoning and cache counts from plugin step-end events; ambiguous zero stays unavailable |
+| Usage | Forwarded `claude_code.token.usage` metrics and technical fields from `api_request` events | `codex.sse_event` and turn traces | OpenCode-normalized input, output, reasoning and cache counts from plugin step-end events; ambiguous zero stays unavailable |
 | Identity | Provider attributes when emitted, or an explicit connector-token assignment | Provider attributes when emitted, or an explicit connector-token assignment | An explicit connector-token assignment |
 
 Token fields are provider-specific. Claude's input excludes cache reads and writes; Codex's input includes cached input. A Codex cache zero can mean the provider omitted cache details. Never add a log, metric and trace describing the same usage, or treat an absent value as zero.
@@ -23,13 +23,13 @@ The opt-in OpenCode v2 plugin subscribes to `session.created`, `session.step.sta
 
 | Provider | Available or observed in OTLP | Current limit and next step |
 | --- | --- | --- |
-| Claude Code | The documented `api_request` event can carry request and prompt IDs, model, effort, latency and separate token and cache counters. These fields appeared in both local captures. | The framework does not forward these events today. An allowlist of technical fields could expose them; avoid counting the same request again through metrics. Repository attributes require a separate opt-in. |
+| Claude Code | The documented `api_request` event can carry request and prompt IDs, model, effort and separate token and cache counters. These fields appeared in both local captures and are forwarded when valid. | The receiver compares request and metric counts; it does not add the two signals. Missing or conflicting observations remain unavailable. Repository attributes require a separate opt-in. |
 | Codex | In two local turns with CLI 0.166.0, a `session_task.turn` span contained `thread.id`, `turn.id`, selected model, effort and turn usage together. | The span counts the session usage delta during the turn and may cover several requests or models. The model is selected, not confirmed for every request. Cache and output zeros can be normalized defaults. A turn ID can recur during recovery; retain trace and span IDs. `otel run` sends allowlisted turn spans after session logs; generic `otel sync` does not yet forward these spans. Never add those counters to response-event counters. |
 | OpenCode v2 | The v2.2.5 exporter emits logs and traces. In our captures, session HTTP spans and model/usage spans did not share a usable correlation. | The opted-in plugin sends session-linked OpenCode events as OTLP. Missing counters are normalized to zero upstream, so zeros cannot establish actual usage. A model variant is not necessarily reasoning effort. |
 
 An observed effort is evidence only for its own observation. Do not carry it into a later session or an unlinked event, and do not equate a requested model with a confirmed response model.
 
-In one two-prompt Claude capture, the second request's input and cache-read metric series started one millisecond before the cache-creation series, although the captured `api_request` reported all three counts together. The dashboard cannot safely join metric windows by temporal proximity, so their combined input remains unavailable. Forwarding request events with their request and prompt IDs could provide request-level evidence, but must include deduplication and must not add those counts to the metrics. Event delivery can still be incomplete. [Claude event correlation](https://code.claude.com/docs/en/monitoring-usage#event-correlation-attributes) (read 2026-11-07).
+In one two-prompt Claude capture, the second request's input and cache-read metric series started one millisecond before the cache-creation series, although `api_request` reported all three counts together. The dashboard does not join metric windows by temporal proximity. It can display the observed input including cache when the deduplicated request counts agree with each corresponding metric count. Event delivery can still be incomplete. [Claude event correlation](https://code.claude.com/docs/en/monitoring-usage#event-correlation-attributes) (read 2026-11-07).
 
 ## Sources
 

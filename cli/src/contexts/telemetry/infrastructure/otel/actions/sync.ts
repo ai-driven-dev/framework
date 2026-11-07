@@ -173,6 +173,31 @@ function safeAttributes(values: Map<string, string>) {
     }));
 }
 
+// Request fields are allowed only on Claude API request events, never on other logs.
+function claudeRequestAttributes(raw: unknown) {
+  const result: { key: string; value: { stringValue: string } }[] = [];
+  const entries = array(raw).map(object);
+  for (const key of ["request_id", "prompt.id", "effort", "model"]) {
+    const value = object(entries.find((entry) => entry.key === key)?.value).stringValue;
+    if (typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(value))
+      result.push({ key, value: { stringValue: value } });
+  }
+  for (const key of [
+    "input_tokens",
+    "output_tokens",
+    "cache_read_tokens",
+    "cache_creation_tokens",
+  ]) {
+    const rawValue = object(entries.find((entry) => entry.key === key)?.value);
+    const rawNumber = rawValue.intValue ?? rawValue.stringValue;
+    if (typeof rawNumber !== "number" && typeof rawNumber !== "string") continue;
+    const value = String(rawNumber);
+    if (/^(0|[1-9]\d*)$/.test(value) && Number.isSafeInteger(Number(value)))
+      result.push({ key, value: { stringValue: value } });
+  }
+  return result;
+}
+
 function isSafeRepositoryUrl(value: string): boolean {
   return (
     /^https:\/\/(?:github\.com|gitlab\.com)\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+$/.test(value) &&
@@ -433,7 +458,12 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
           const event = a.get("event.name") ?? eventNameFromBody(record.body);
           const wanted =
             options.config === CLAUDE_CONFIG_ID
-              ? event === "tool_result" || event === "claude_code.tool_result"
+              ? [
+                  "tool_result",
+                  "claude_code.tool_result",
+                  "api_request",
+                  "claude_code.api_request",
+                ].includes(event)
               : CODEX_EVENTS.has(event) &&
                 (event !== "codex.sse_event" || a.get("event.kind") === "response.completed");
           if (!wanted) continue;
@@ -451,6 +481,14 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
             else a.delete("event.timestamp");
           }
           const safe = safeAttributes(a);
+          if (
+            options.config === CLAUDE_CONFIG_ID &&
+            (event === "api_request" || event === "claude_code.api_request")
+          ) {
+            const model = safe.findIndex((attribute) => attribute.key === "model");
+            if (model !== -1) safe.splice(model, 1);
+            safe.push(...claudeRequestAttributes(record.attributes));
+          }
           if (options.config === CODEX_CONFIG_ID && event !== "codex.tool_result") {
             const key =
               event === "codex.conversation_starts" ? "reasoning_effort" : "model_reasoning_effort";
