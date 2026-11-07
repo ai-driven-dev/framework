@@ -6,6 +6,10 @@ reads the submitted Git diff and PR discussion, then publishes through the
 workflow. Without a manifest it uses `latest` and reports the missing plugin
 inventory.
 
+Only plugins from the trusted AIDD catalog are installed. Other recorded
+sources are reported as unavailable, and installed plugin versions may differ
+from the manifest because the remote catalog is current.
+
 Set these repository variables before enabling the workflows:
 
 - `OPENCODE_REVIEWER_ID`: numeric GitHub user ID allowed to submit reviews and
