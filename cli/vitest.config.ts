@@ -26,6 +26,20 @@ export default defineConfig({
         extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
+          name: "contract",
+          include: ["tests/**/*.contract.test.ts"],
+          globals: false,
+          environment: "node",
+          globalSetup: [
+            "./tests/helpers/sweep-stale-temp-dirs.ts",
+            "./tests/helpers/throwaway-profile.ts",
+          ],
+        },
+      },
+      {
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
           name: "architecture",
           include: ["tests/architecture/**/*.arch.test.ts"],
           globals: false,

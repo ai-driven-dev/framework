@@ -564,6 +564,7 @@ jobs:
         run: aidd --version
       - run: cd cli && pnpm test:unit
       - run: cd cli && pnpm test:integration
+      - run: cd cli && pnpm test:contract
       - run: cd cli && pnpm test:arch
       # Every e2e and golden but the one named below.
       - name: cli e2e and golden

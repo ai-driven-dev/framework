@@ -14,6 +14,7 @@ const SIZES: Record<string, number> = {
   "/t/big.unit.test.ts": 800,
   "/t/small.unit.test.ts": 20,
   "/t/a-twin.unit.test.ts": 20,
+  "/t/big.contract.test.ts": 700,
 };
 const sizeOf = (path: string) => SIZES[path] ?? 0;
 const ids = (specs: readonly { moduleId: string }[]) => specs.map((s) => s.moduleId);
@@ -33,6 +34,19 @@ describe("the order a mutant runs its test files in", () => {
       "/t/big.unit.test.ts",
       "/t/small.integration.test.ts",
       "/t/big.integration.test.ts",
+    ]);
+  });
+
+  it("runs a contract file after the unit files and before an integration file that is smaller", () => {
+    const specs = [
+      spec("integration", "/t/small.integration.test.ts"),
+      spec("contract", "/t/big.contract.test.ts"),
+      spec("unit", "/t/big.unit.test.ts"),
+    ];
+    expect(ids(mutationOrder(specs, sizeOf))).toStrictEqual([
+      "/t/big.unit.test.ts",
+      "/t/big.contract.test.ts",
+      "/t/small.integration.test.ts",
     ]);
   });
 

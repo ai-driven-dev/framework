@@ -3,7 +3,7 @@ import config from "../../vitest.config.js";
 import mutation from "../../vitest.mutation.config.js";
 
 const SETUP = "./tests/helpers/throwaway-profile.ts";
-const RUNS_SOURCE = ["unit", "integration"];
+const RUNS_SOURCE = ["unit", "contract", "integration"];
 
 function projectsRunningSource(
   projects: readonly unknown[]
@@ -21,9 +21,9 @@ describe("every project that runs the source sees a throwaway profile", () => {
     ["the suite", projectsRunningSource(config.test?.projects ?? [])],
     ["a mutation run", projectsRunningSource(mutation.test?.projects ?? [])],
   ])(
-    "%s declares the throwaway-profile setup on its unit and integration projects",
+    "%s declares the throwaway-profile setup on its unit, contract and integration projects",
     (_run, projects) => {
-      expect(projects.map((p) => p.name).sort()).toStrictEqual(["integration", "unit"]);
+      expect(projects.map((p) => p.name).sort()).toStrictEqual(["contract", "integration", "unit"]);
       for (const project of projects) expect(project.globalSetup, project.name).toContain(SETUP);
     }
   );
