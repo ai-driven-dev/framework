@@ -163,6 +163,13 @@ describe("aidd telemetry report", () => {
     expect(period.from).toBe(period.to);
   });
 
+  it("refuses --days together with --from, and a bad day, before reading anything", async () => {
+    expect(await run("report", "--days", "3", "--from", "2026-10-01")).toBe(1);
+    expect(stderr()).toContain("--days cannot be combined");
+    expect(await run("report", "--from", "yesterday")).toBe(1);
+    expect(report).not.toHaveBeenCalled();
+  });
+
   it("prints the versioned envelope with --json, and nothing else", async () => {
     report.mockResolvedValue(reported);
     await run("report", "--json");
@@ -244,6 +251,7 @@ describe("aidd telemetry report, narrowed", () => {
     ["a closed flag given twice", ["--agent", "main", "--agent", "main"], "--agent"],
     ["a bare flag given twice", ["--unattributed", "--unattributed"], "--unattributed"],
     ["a value empty once trimmed", ["--ticket", "   "], "--ticket"],
+    ["a model empty once trimmed", ["--model", "   "], "--model"],
     ["an agent no call can have", ["--agent", "robot"], "--agent"],
     ["a tool no call can have", ["--tool", "robot"], "--tool"],
     ["a tool given twice", ["--tool", "codex", "--tool", "codex"], "--tool"],

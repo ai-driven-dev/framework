@@ -1,7 +1,8 @@
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { aidd, json, rowsOf, sandbox, useReportSandbox } from "./telemetry-report-sandbox.js";
+import { rowsOf } from "../helpers/telemetry-report-seed.js";
+import { aidd, json, sandbox, useReportSandbox } from "./telemetry-report-sandbox.js";
 
 useReportSandbox();
 
