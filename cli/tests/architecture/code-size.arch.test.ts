@@ -128,12 +128,12 @@ describe("biome carries the code-size guards", () => {
         });
       });
 
-      it("lists no more files than its ceiling", () => {
+      it("lists exactly as many files as its ceiling", () => {
         const ceiling = MAX_BASELINE[guard.name] as number;
         expect(
           baselineOf(guard).length,
-          `${guard.name} baseline grew past ${ceiling}: fix the new violator, never list it`
-        ).toBeLessThanOrEqual(ceiling);
+          `${guard.name} baseline must hold ${ceiling} files: a new violator is fixed, never listed; a fixed file lowers the ceiling`
+        ).toBe(ceiling);
       });
 
       it("applies to src/** and excludes exact, sorted, unique files only", () => {
