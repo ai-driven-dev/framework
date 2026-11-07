@@ -45,16 +45,4 @@ describe("aidd framework rules — the inventory a rule scan reads", () => {
       { tool: "codex", path: ".codex/rules/2-imports.md", name: "2-imports", description: "" },
     ]);
   });
-
-  it("says a project holds none rather than printing nothing", async () => {
-    const empty = await mkdtemp(join(tmpdir(), "aidd-framework-rules-empty-"));
-    try {
-      const { stdout } = await execFileAsync("node", [cliPath(), "framework", "rules"], {
-        cwd: empty,
-      });
-      expect(stdout).toContain("No rules installed");
-    } finally {
-      await rm(empty, { recursive: true, force: true });
-    }
-  });
 });

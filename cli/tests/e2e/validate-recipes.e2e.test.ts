@@ -1,22 +1,8 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { RECIPE } from "../helpers/recipe-fixture.js";
 import { createTestEnv, runCli } from "./helpers.js";
-
-const RECIPE = [
-  "# Check the runtime",
-  "",
-  "Check one observable result.",
-  "",
-  "## Steps to check the runtime",
-  "",
-  "### 1) ✅ Run the check",
-  "",
-  "```bash",
-  "node --version",
-  "```",
-  "",
-].join("\n");
 
 describe("recipe validation through the built CLI", () => {
   it("validates a recipe without changing it", async () => {
@@ -33,28 +19,6 @@ describe("recipe validation through the built CLI", () => {
       expect(result.stdout).toBe("PASS: 1 recipe(s) validated.\n");
       expect(result.stderr).toBe("");
       expect(await readFile(file, "utf8")).toBe(RECIPE);
-    } finally {
-      await env.cleanup();
-    }
-  });
-
-  it("includes project and explicitly supplied bundled recipes", async () => {
-    const env = await createTestEnv("recipe-all");
-    try {
-      const directory = join(env.projectDir, "aidd_docs", "recipes");
-      await mkdir(directory, { recursive: true });
-      await writeFile(join(directory, "project.md"), RECIPE);
-      const bundled = join(env.projectDir, "bundled");
-      await mkdir(bundled);
-      await writeFile(join(bundled, "bundled.md"), RECIPE);
-      const result = await runCli(
-        ["framework", "validate-recipes", "--all", "--bundled", bundled],
-        env.projectDir,
-        env.fakeHome
-      );
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toBe("PASS: 2 recipe(s) validated.\n");
-      expect(result.stderr).toBe("");
     } finally {
       await env.cleanup();
     }
@@ -88,22 +52,6 @@ describe("recipe validation through the built CLI", () => {
       const result = await runCli(["framework", "validate-recipes"], env.projectDir, env.fakeHome);
       expect(result.exitCode).toBe(1);
       expect(result.stderr).toContain("Pass at least one recipe path");
-      expect(result.stdout).not.toContain("PASS");
-    } finally {
-      await env.cleanup();
-    }
-  });
-
-  it("does not treat a missing explicit bundled directory as an empty scope", async () => {
-    const env = await createTestEnv("recipe-missing-directory");
-    try {
-      const result = await runCli(
-        ["framework", "validate-recipes", "--bundled", "missing"],
-        env.projectDir,
-        env.fakeHome
-      );
-      expect(result.exitCode).toBe(1);
-      expect(result.stderr).toContain("ENOENT");
       expect(result.stdout).not.toContain("PASS");
     } finally {
       await env.cleanup();

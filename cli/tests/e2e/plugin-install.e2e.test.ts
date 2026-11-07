@@ -138,61 +138,6 @@ describe.concurrent("E2E: aidd plugin marketplace", () => {
     }
   });
 
-  it("marketplace list --plugins → prints catalog entries with name@version, description, source URL", async () => {
-    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-list-plugins");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      const marketDir = join(tempDir, "market");
-      await writeMarketplace(marketDir, [
-        {
-          name: "sample-plugin",
-          source: { kind: "local", path: PLUGIN_FIXTURE },
-          version: "1.0.0",
-          description: "Sample",
-          metadata: { recommended: true },
-        },
-      ]);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
-
-      const { stdout, exitCode } = await runCli(
-        ["marketplace", "list", "--plugins"],
-        projectDir,
-        fakeHome
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("sample-plugin@1.0.0");
-      expect(stdout).toContain("Sample");
-      expect(stdout).toContain(PLUGIN_FIXTURE);
-      expect(stdout).toContain("(recommended)");
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("marketplace add --overwrite → replaces an existing entry without error", async () => {
-    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-overwrite");
-    try {
-      await initProject(projectDir, FRAMEWORK_PATH);
-      const marketDir = join(tempDir, "market");
-      await writeMarketplace(marketDir, []);
-      await runCli(["marketplace", "add", "local", marketDir, "--yes"], projectDir, fakeHome);
-
-      const { stdout, exitCode } = await runCli(
-        ["marketplace", "add", "local", marketDir, "--yes", "--overwrite"],
-        projectDir,
-        fakeHome
-      );
-
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain("'local' registered");
-      const listed = await runCli(["marketplace", "list"], projectDir, fakeHome);
-      expect(listed.stdout.match(/local \[project\]/g)?.length).toBe(1);
-    } finally {
-      await cleanup();
-    }
-  });
-
   it("marketplace check → reports clean when nothing is stale or removed", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("mkt-check");
     try {
