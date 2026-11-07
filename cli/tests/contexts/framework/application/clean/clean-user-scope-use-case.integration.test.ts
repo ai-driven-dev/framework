@@ -42,6 +42,17 @@ const WHITELIST_PURGE_MESSAGES = [
   `user scope: references.json purged: ${join(USER_CONFIG_DIR, "references.json")}`,
 ];
 
+/** Creates every entry the user-scope whitelist names, so each purge has something to remove. */
+async function seedWhitelist(fs: InMemoryFileAdapter): Promise<void> {
+  const cache = join(USER_CONFIG_DIR, "cache");
+  await fs.createDirectory(join(cache, "built"));
+  await fs.createDirectory(join(cache, "marketplaces", FRAMEWORK_MARKETPLACE_NAME));
+  await fs.createDirectory(join(cache, "plugin-cache"));
+  fs.setFile(join(cache, "update-check.json"), "{}");
+  fs.setFile(join(USER_CONFIG_DIR, "update-check.json"), "{}");
+  fs.setFile(join(USER_CONFIG_DIR, "references.json"), "{}");
+}
+
 /** Records every delete in order, so an ordering constraint can be proved without reading
  * the use case's own private state. A shared array correlates with another recorder. */
 class RecordingFileAdapter extends InMemoryFileAdapter {
@@ -1195,6 +1206,7 @@ describe("clean --scope user", () => {
     it("names each purge, by its label and path, and nothing about a missing user registration", async () => {
       const fs = new InMemoryFileAdapter();
       seedClaudeCache(fs);
+      await seedWhitelist(fs);
       const logger = new CapturingLogger();
       const useCase = buildClaudeUseCase(fs, logger);
 
@@ -1208,6 +1220,7 @@ describe("clean --scope user", () => {
 
     it("reports no tool, and says plainly that nothing was registered, when no user manifest exists", async () => {
       const fs = new InMemoryFileAdapter();
+      await seedWhitelist(fs);
       const logger = new CapturingLogger();
       const useCase = new CleanUserScopeUseCase(
         fs,
@@ -1979,6 +1992,7 @@ describe("clean --scope user", () => {
       const fs = new RecordingFileAdapter();
       const other = join(USER_CONFIG_DIR, "cache", "other.json");
       fs.setFile(other, "{}");
+      await seedWhitelist(fs);
       const logger = new CapturingLogger();
       const useCase = new CleanUserScopeUseCase(
         fs,

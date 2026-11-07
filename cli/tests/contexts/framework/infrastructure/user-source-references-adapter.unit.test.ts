@@ -130,7 +130,7 @@ describe("the shared source's own project references", () => {
     markExisting(fs, "/project-a");
     const refs = adapter(fs);
     await refs.addReference("1.0.0", "/project-a");
-    await fs.deleteFile("/project-a/marker");
+    await fs.deleteDirectory("/project-a");
     markExisting(fs, "/project-b");
 
     await refs.addReference("2.0.0", "/project-b");

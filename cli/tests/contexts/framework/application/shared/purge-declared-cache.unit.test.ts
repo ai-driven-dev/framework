@@ -42,6 +42,7 @@ describe("resolveCacheCandidate", () => {
 describe("purgeCacheIfEmptyAndConfirmed", () => {
   it("purges an empty, confirmed cache and says so", async () => {
     const fs = new InMemoryFileAdapter();
+    await fs.createDirectory(CANDIDATE);
     const logger = new CapturingLogger();
 
     await purgeCacheIfEmptyAndConfirmed(fs, logger, CANDIDATE, true, LABEL);

@@ -203,6 +203,8 @@ Acceptance:
 
 ### Phase 4: Fix the double, one divergence at a time (sonnet)
 
+> Outcome: V5, V6, V17, V4, V8 and V10 fixed. V7 stopped at the budget: its fix reds 36 importer files (an unseeded project root such as `/test-project`, `/A`, `/project-a`), so C19 stays an expected failure and the step goes back to the caller. A trailing separator on a directory (`status-use-case.ts`) is also kept working in the double, which V14 had listed as a limit.
+
 > The double passes the whole suite; each fix was a case red on the double first, and each fallout in the 113 importers is classified, never silenced.
 
 Architecture projection:
@@ -257,33 +259,33 @@ Procedure per row: apply the break to `cli/src/runtime/filesystem/file-adapter.t
 
 | Old test (deleted) | Break in `FileAdapter` | Covering case |
 | --- | --- | --- |
-| `file-adapter.integration.test.ts:28` writes file content | `readFile` returns `""` | C1 |
-| `:60` reads and provides file content as string | same | C1 |
+| `file-adapter.integration.test.ts:28` writes file content | `writeFile` writes `""` (a `readFile` break leaves this test green: it reads with `node:fs`) | C1 |
+| `:60` reads and provides file content as string | `readFile` returns `""` | C1 |
 | `:35` creates parent directories recursively | drop the `mkdir` in `writeFile` | C2 |
 | `:69` removes an existing file | `deleteFile` does nothing | C9 |
 | `:76` handles missing file gracefully | `rm` without `force` and without the catch | C9 |
 | `:83` creates directory recursively | `createDirectory` does nothing | C8 |
 | `:91` removes empty directory | `deleteEmptyDirectories` returns at once | C11 |
 | `:98` removes chain of empty directories | stop after the first `rmdir` | C11 |
-| `:105` stops when directory is not empty | drop the `entries.length > 0` break | C11 |
+| `:105` stops when directory is not empty (kept) | drop the `entries.length > 0` break: no test goes red, `rmdir` refuses a non-empty directory itself, so the guard is an equivalent mutant and no proof exists | none |
 | `:119` lists all files recursively with relative paths | push `entry.name` instead of `posixRelative` | C12 |
 | `:134` confirms an existing file is found | `fileExists` returns `false` | C7 |
 | `:140` confirms a missing file is not found | `fileExists` returns `true` | C7 |
 | `:144` confirms an existing directory is found | `fileExists` uses `stat(...).isFile()` | C7 |
-| `:150` returns hash of file content | `readFileHash` hashes `""` | C6 |
+| `:150` returns hash of file content | `readFileHash` returns a value that is no hash (hashing `""` leaves this test green, it checks only the hex shape) | C6 |
 | `:374` skips symbolic links and does not read their content | drop the `isSymbolicLink` skip in `collectFiles` | C15 |
 | `file-adapter-edges.integration.test.ts:26` lists every file below the directory by absolute path | push `entry.name` in `collectAbsolutePaths` | C14 |
 | `edges:37` answers nothing for a directory that is not there | drop the `readdir` catch in `collectAbsolutePaths` | C14 |
 | `edges:73` copes with a directory that is not there | drop the first catch in `deleteEmptyDirectories` | C11 |
 
-Count: 18 deleted, 23 moved to unit (phase 2), 5 kept as integration. Kept, because the port does not expose what they check: `:44` writes through a temporary file and renames it into place (`vi.mock` of `rename`), `edges:41` and `edges:62` the logger's "Skipping symlink" message (the logger is a constructor argument), `edges:51` the same skip with no logger, `edges:78` the stop at a read-only directory (`chmod`, POSIX, non-root). The four edge cases move into `file-adapter.integration.test.ts`, which then holds 5 cases; `file-adapter-edges.integration.test.ts` is deleted.
+Count: 17 deleted (the table has 18 rows, `:105` kept; C16 never appears in it), 23 moved to unit (phase 2), 6 kept as integration (the 5 below plus `:105`). Kept, because the port does not expose what they check: `:44` writes through a temporary file and renames it into place (`vi.mock` of `rename`), `edges:41` and `edges:62` the logger's "Skipping symlink" message (the logger is a constructor argument), `edges:51` the same skip with no logger, `edges:78` the stop at a read-only directory (`chmod`, POSIX, non-root). The four edge cases move into `file-adapter.integration.test.ts` as a second top-level `describe("FileAdapter, at the edges")`, which keeps their names; the file then holds 6 cases; `file-adapter-edges.integration.test.ts` is deleted.
 
 Acceptance:
 
 | Command | Expected |
 | --- | --- |
 | Each row's break | the covering case and the old test red, then green after revert |
-| `cd cli && grep -cE '^\s*it(\.skipIf)?\(' tests/runtime/filesystem/file-adapter.integration.test.ts` | `5` |
+| `cd cli && grep -cE '^\s*it(\.skipIf)?\(' tests/runtime/filesystem/file-adapter.integration.test.ts` | `6` |
 | `test ! -e cli/tests/runtime/filesystem/file-adapter-edges.integration.test.ts` | exit 0 |
 | `cd cli && pnpm test:integration && pnpm test:contract` | exit 0 each |
 | `git diff --quiet -- cli/src/runtime/filesystem/file-adapter.ts && git diff --stat HEAD -- cli/src/runtime/filesystem/file-adapter.ts` | only phase 2's delegation |
@@ -330,7 +332,7 @@ Acceptance:
 
 ### Phase 7: Gates and final acceptance (haiku)
 
-> Every gate green, the suite runs the same tests minus the 18 deleted, plus the contract cases and the sequencer case, and mutation still holds on what moved.
+> Every gate green, the suite runs the same tests minus the 17 deleted, plus the contract cases and the sequencer case, and mutation still holds on what moved.
 
 Files touched: none. On a failure, one agent per failing assertion, per `coding-assertions.md`.
 
@@ -366,7 +368,7 @@ Acceptance:
 | --- | --- |
 | both lefthook runs | exit 0 |
 | `cd cli && pnpm test` | exit 0 |
-| the comparison | `missingNotMoved: 22`: the 18 of phase 5's table plus the 4 absorbed edge cases, whose names reappear under `file-adapter.integration.test.ts`; `movedFound: 23`; `addedFiles` is exactly the merge unit file, the contract file, the sequencer test and `tests/runtime/filesystem/file-adapter.integration.test.ts` (the 4 absorbed cases); `contract` is twice the number of cases (21 per subject, or fewer if phase 3 task 10 dropped one) |
+| the comparison | `missingNotMoved: 21`: the 17 deleted of phase 5's table plus the 4 absorbed edge cases (20 against a baseline listed statically, where the `it.skipIf` case is invisible; list both sides with `--staticParse=false`, since the default static parse aborts on the contract file), whose names reappear under `file-adapter.integration.test.ts`; `movedFound: 23`; `addedFiles` is exactly the merge unit file, the contract file, the sequencer test and `tests/runtime/filesystem/file-adapter.integration.test.ts` (the 4 absorbed cases); `contract` is 46: 23 tests per subject for the 20 case ids (C16 dropped, C1 runs four contents) |
 | `run-mutation.mjs --changed` | no survivor in `src/kernel/merge.ts` or `src/runtime/filesystem/file-adapter.ts`, or each survivor named with the assertion it lacks |
 | `cd cli && wc -l < "$B/fake-importers.txt"; pnpm exec vitest run $(cat "$B/fake-importers.txt")` | `113`, exit 0 |
 | After push, the PR's `cli / Windows` job | the `pnpm test:contract` step green; a red C14 on the double is V9 (D9) |

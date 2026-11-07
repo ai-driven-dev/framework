@@ -21,12 +21,7 @@ describeFileContract(
     };
   },
   {
-    C8: "V5: createDirectory is a no-op",
-    C11: "V6: deleteEmptyDirectories is a no-op",
-    C13: "V4: listing a missing directory answers an empty list",
-    C18: "V8: realpath leaves a parent segment unresolved",
     C19: "V7: realpath of a missing path answers the path",
-    C21: "V17: a directory vanishes with its last file",
   }
 );
 

@@ -86,7 +86,8 @@ function writtenUnder(fs: InMemoryFileAdapter, dir: string): Record<string, stri
 
 describe("preparing a marketplace output directory", () => {
   it("accepts a directory holding no entry yet", async () => {
-    const fs = new InMemoryFileAdapter({ [OUT_DIR]: "" });
+    const fs = new InMemoryFileAdapter();
+    await fs.createDirectory(OUT_DIR);
     await expect(strategyFor(fs, stubContract()).preBuild(OUT_DIR)).resolves.toBeUndefined();
   });
 
