@@ -9,13 +9,13 @@
  * checkout itself is only read. They live under the system temp folder (set `TMPDIR` to choose
  * it), are kept, and their paths are printed.
  *
- * On a real project the warning ids vary between two runs of one tree (the model picks the code
- * roots and platforms): compare the errors, the wireframes and the code, not the warnings.
+ * Warnings follow the model's choices (the code roots and platforms it picks) and do not count:
+ * compare the errors, the wireframes and the code.
  *
  * Usage: node scripts/aidd-ui-pilot.cjs --gouvernail <checkout> --kairos <checkout> [--only blank|gouvernail|kairos]
  *
  * Exit codes:
- *   0  every pilot is VALID, every step has its wireframe and the code is untouched
+ *   0  no pilot has an error, every step has its wireframe and the code is untouched
  *   1  a pilot differs: compare its line with the one before the change
  *   2  a step could not run
  */
@@ -80,14 +80,20 @@ function copyProject(source, dest) {
   }
 }
 
-/** `VALID`, or the sorted unique rule ids `validate` prints for `root`, joined by commas. */
+/** The sorted unique rule ids `validate` prints for `root`, the errors apart from the warnings: the
+ * engine marks a warning line with `warning` after its rule. */
 function verdict(root) {
   const run = spawnSync(process.execPath, [ENGINE, "validate", root], { encoding: "utf8" });
   const out = run.stdout.trim();
-  if (out === VALID) return VALID;
-  const rules = out.split("\n").slice(1).flatMap((line) => line.split(" ").filter((word) => RULE_ID.test(word)).slice(0, 1));
-  if (!rules.length) throw new Error(`validate printed no rule: ${out || run.stderr}`);
-  return [...new Set(rules)].sort().join(",");
+  const found = { errors: new Set(), warnings: new Set() };
+  if (out === VALID) return { errors: [], warnings: [] };
+  for (const line of out.split("\n").slice(1)) {
+    const words = line.split(" ");
+    const at = words.findIndex((word) => RULE_ID.test(word));
+    if (at >= 0) found[words[at + 1] === "warning" ? "warnings" : "errors"].add(words[at]);
+  }
+  if (!found.errors.size && !found.warnings.size) throw new Error(`validate printed no rule: ${out || run.stderr}`);
+  return { errors: [...found.errors].sort(), warnings: [...found.warnings].sort() };
 }
 
 /** Each journey step whose screen is no wireframe record. */
@@ -103,10 +109,11 @@ function stepsWithoutWireframe(root) {
 }
 
 /** One pilot's result on one line. */
-function reportLine(pilot, { verdict: ruled, missing, changed }) {
+function reportLine(pilot, { errors, warnings, missing, changed }) {
+  const ids = (list) => (list.length ? list.join(",") : "none");
   const wireframes = missing.length ? `missing ${missing.length}` : "all";
   const code = changed.length ? `changed ${changed.length}` : "untouched";
-  return `${pilot} validate ${ruled} wireframes ${wireframes} code ${code}`;
+  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} code ${code}`;
 }
 
 // What each pilot asks, written once in parts and sent whole or split by the chain.
@@ -192,9 +199,9 @@ function main() {
         return 2;
       }
     }
-    const result = { verdict: verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, snapshot(dir)) };
+    const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, snapshot(dir)) };
     console.log(reportLine(pilot, result));
-    if (result.verdict !== VALID || result.missing.length || result.changed.length) worst = 1;
+    if (result.errors.length || result.missing.length || result.changed.length) worst = 1;
   }
   return worst;
 }

@@ -108,19 +108,26 @@ describe("aidd-ui pilot snapshot", () => {
 describe("aidd-ui pilot verdict", () => {
   beforeEach(() => writeProject(copy));
 
-  it("is VALID on a valid project", () => {
-    assert.equal(verdict(copy), "VALID");
+  it("holds no error and no warning on a valid project", () => {
+    assert.deepEqual(verdict(copy), { errors: [], warnings: [] });
   });
 
-  it("names the rule of a missing token file", () => {
+  it("names the rule of a missing token file as an error", () => {
     fs.rmSync(path.join(copy, UI, "tokens.json"));
-    assert.equal(verdict(copy), "T1");
+    assert.deepEqual(verdict(copy), { errors: ["T1"], warnings: [] });
   });
 
   it("lists each failing rule once, sorted", () => {
     for (const render of ["dialog", "button"]) fs.rmSync(path.join(copy, UI, `components/${render}.html`));
     edit(copy, `${UI}/journeys/onboarding.md`, "| search-flow |", "| nowhere |");
-    assert.equal(verdict(copy), "H8,R12,V1");
+    assert.deepEqual(verdict(copy), { errors: ["H8", "R12", "V1"], warnings: [] });
+  });
+
+  it("keeps a warning apart from the errors, as the engine marks it", () => {
+    edit(copy, `${UI}/wireframes/search-flow.md`, "uses: [search-field]", "uses: [search-field, ghost]");
+    assert.deepEqual(verdict(copy), { errors: [], warnings: ["R18"] });
+    fs.rmSync(path.join(copy, UI, "tokens.json"));
+    assert.deepEqual(verdict(copy), { errors: ["T1"], warnings: ["R18"] });
   });
 });
 
@@ -142,9 +149,9 @@ describe("aidd-ui pilot journey steps", () => {
 });
 
 describe("aidd-ui pilot report line", () => {
-  it("says the verdict, the wireframes and the code in one line", () => {
-    assert.equal(reportLine("blank", { verdict: "VALID", missing: [], changed: [] }), "blank validate VALID wireframes all code untouched");
-    assert.equal(reportLine("kairos", { verdict: "C4,C6", missing: [1, 2], changed: ["a"] }), "kairos validate C4,C6 wireframes missing 2 code changed 1");
+  it("says the errors, the warnings, the wireframes and the code in one line", () => {
+    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], changed: [] }), "blank errors none warnings none wireframes all code untouched");
+    assert.equal(reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], changed: ["a"] }), "kairos errors C6 warnings C3,R18 wireframes missing 2 code changed 1");
   });
 });
 
