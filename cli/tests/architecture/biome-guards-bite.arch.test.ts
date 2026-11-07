@@ -134,6 +134,10 @@ describe("the guard itself", () => {
       'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
     );
     writeFileSync(
+      join(planted, "tests/kernel/awaits.unit.test.ts"),
+      'import { readFile } from "node:fs/promises";\nexport const read = readFile;\n'
+    );
+    writeFileSync(
       join(planted, "tests/kernel/spawns.unit.test.ts"),
       'export const load = () => import("node:child_process");\n'
     );
@@ -190,6 +194,7 @@ describe("the guard itself", () => {
     const rule = "lint/style/noRestrictedImports";
 
     expect(findings, findings.join(", ")).toContain(`tests/kernel/reads.unit.test.ts:${rule}`);
+    expect(findings, findings.join(", ")).toContain(`tests/kernel/awaits.unit.test.ts:${rule}`);
     expect(findings, findings.join(", ")).toContain(`tests/kernel/spawns.unit.test.ts:${rule}`);
     expect(findings).not.toContain(`tests/kernel/reads.integration.test.ts:${rule}`);
   });

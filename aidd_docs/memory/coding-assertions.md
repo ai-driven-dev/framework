@@ -6,7 +6,9 @@ The checks that must pass for code to count as done. Minimal, run after every ch
 
 **Write the test first, and watch it fail for the reason it names.** A test written after the
 code it covers confirms what was built; only one that failed first can tell you it is
-checking anything at all. A test that passes on its first run was not needed: its case is already covered by another test, so it is not kept.
+checking anything at all. Apart from the characterization test below, a test that passes on
+its first run was not needed: its case is already covered by another test, so it is not
+kept.
 
 Three consequences, all learned by paying for them:
 
