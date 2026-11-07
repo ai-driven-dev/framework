@@ -70,6 +70,8 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 When changing shared instructions, keep `AGENTS.md`, `CLAUDE.md`, the template and global copies aligned, preserving project memory and personal rules. When changing agents, refresh the global installations with `make reload`. The command updates only the managed Agents section of global instructions.
 
+For global agent copies, use Claude `model: haiku`, `effort: high` and Codex `model = "gpt-6-luna"`, `model_reasoning_effort = "high"`. Reapply these settings after a reload, which replaces the Codex copies. Claude plugin-scoped agents are separate from user copies.
+
 ## Monitoring
 
 None. Failures are a red run; `back-merge.yml` opens an issue when it cannot push.
