@@ -219,6 +219,11 @@ export function registerTelemetryCommand(program: Command): void {
     .requiredOption("--endpoint <origin>", "Loopback HTTP origin")
     .option("--yes", "Consent to capture and send telemetry from this execution")
     .option("--model <model>", "Provider model to use")
+    .option(
+      "--follow-up <prompt>",
+      "Send a second prompt in the same session (Claude and Codex retain local history)"
+    )
+    .option("--include-repository", "Include repository metadata for Claude Code")
     .option("--keep-capture", "Retain the private local OTLP capture")
     .action(
       async (
@@ -229,6 +234,8 @@ export function registerTelemetryCommand(program: Command): void {
           endpoint: string;
           yes?: boolean;
           model?: string;
+          followUp?: string;
+          includeRepository?: boolean;
           keepCapture?: boolean;
         }
       ) => {

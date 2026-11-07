@@ -1,9 +1,15 @@
+import { appendFile, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, it } from "vitest";
 import {
   openCodePluginLogs,
   relatedOpenCodeLogs,
 } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/opencode-plugin-logs.js";
-import { openCodePromptSpans } from "../../../../src/contexts/telemetry/infrastructure/otel/actions/run.js";
+import {
+  completeCaptureEnd,
+  openCodePromptSpans,
+} from "../../../../src/contexts/telemetry/infrastructure/otel/actions/run.js";
 
 const text = (key: string, stringValue: string) => ({ key, value: { stringValue } });
 
@@ -134,4 +140,22 @@ it("forwards only allowlisted plugin observations and never turns an ambiguous z
       })
     )
   ).toEqual([]);
+});
+
+it("only advances the capture boundary after a complete JSONL record", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "aidd-otel-boundary-"));
+  const file = join(directory, "capture.jsonl");
+  try {
+    const first = '{"value":"é"}\n';
+    await writeFile(file, `${first}{"value":`);
+    const firstEnd = Buffer.byteLength(first);
+    expect(await completeCaptureEnd(file, 0)).toBe(firstEnd);
+    expect(await completeCaptureEnd(file, firstEnd)).toBe(firstEnd);
+    await appendFile(file, '"complete"}\n');
+    expect(await completeCaptureEnd(file, firstEnd)).toBe(
+      firstEnd + Buffer.byteLength('{"value":"complete"}\n')
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

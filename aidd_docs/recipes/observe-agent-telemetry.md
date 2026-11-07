@@ -16,31 +16,30 @@ Start local Gouvernail and configure each tool's connector. Generate OpenCode's 
 
 `--yes` opts in to capturing and forwarding telemetry from that one execution. `--keep-capture` retains a private local file whose path is printed by the command, including when an execution fails after capture. Raw captures can contain prompts, responses, commands, tool output and secrets: restrict access and delete them when no longer needed. Without this option the temporary capture is removed.
 
-### 2) 🧪 Run two sessions per tool
+### 2) 🧪 Send two messages in each session
 
-Set `AIDD_OTEL_TOKEN` to the corresponding connector token before each pair. Choose models available to your accounts.
+Set `AIDD_OTEL_TOKEN` to the corresponding connector token before each command. Choose models available to your accounts.
 
 ```sh
-# Claude connector token must be set before this pair.
-for i in 1 2; do
-  aidd telemetry otel run --config claude --model haiku --tenant ai-driven-dev \
-    --endpoint http://127.0.0.1:55857 --yes --keep-capture -- "Reply with only CLAUDE-$i."
-done
+# Claude connector token
+aidd telemetry otel run --config claude --model haiku --tenant ai-driven-dev \
+  --endpoint http://127.0.0.1:55857 --yes --keep-capture \
+  --follow-up "What word did I ask you to remember?" -- "Remember ORION72. Reply READY."
 
-# Codex connector token must be set before this pair.
-for i in 1 2; do
-  aidd telemetry otel run --config codex --model gpt-5.6-luna --tenant ai-driven-dev \
-    --endpoint http://127.0.0.1:55857 --yes --keep-capture -- "Reply with only CODEX-$i."
-done
+# Codex connector token
+aidd telemetry otel run --config codex --model gpt-6-luna --tenant ai-driven-dev \
+  --endpoint http://127.0.0.1:55857 --yes --keep-capture \
+  --follow-up "What word did I ask you to remember?" -- "Remember ORION72. Reply READY."
 
-# OpenCode connector token must be set before this pair.
-for i in 1 2; do
-  aidd telemetry otel run --config opencode --model claude-code/claude-haiku-4-5-20251001 \
-    --tenant ai-driven-dev --endpoint http://127.0.0.1:55857 --yes --keep-capture -- "Reply with only OPENCODE-$i."
-done
+# OpenCode connector token
+aidd telemetry otel run --config opencode --model claude-code/claude-haiku-4-5-20251001 \
+  --tenant ai-driven-dev --endpoint http://127.0.0.1:55857 --yes --keep-capture \
+  --follow-up "What word did I ask you to remember?" -- "Remember ORION72. Reply READY."
 ```
 
-Each command launches a separate session with an isolated collector. The OpenCode command loads the AIDD plugin for that run. It does not read the framework usage ledger or establish a repository or feature association. `otel init` and the global development collector are a separate configuration path; they are not required for these commands.
+Each command uses an isolated collector and resumes the first session for the follow-up. Claude and Codex persist these conversations in their usual local session history; OpenCode uses a temporary database removed after the run. This history is used only by the tools to resume; Gouvernail receives OTLP, not the tools' session files. Verify both responses when checking continuity: a shared session ID alone does not prove the model used the first message.
+
+The command waits for an OTLP usage observation after each execution. Claude identifies the matching prompt explicitly; OpenCode supplies a completed step and message ID. Codex supplies session-linked usage but no reliable per-prompt join; observations can include additional requests, so do not attribute their totals to a specific prompt. An emitted observation does not guarantee that every requested field is available. `otel init` and the global development collector are a separate configuration path.
 
 ### 3) ✅ Check receipt
 

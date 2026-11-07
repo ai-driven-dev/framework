@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
+import { randomBytes, randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, rename, rm, writeFile } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
@@ -31,6 +32,8 @@ type RunOptions = {
   token: string;
   cwd: string;
   prompt: string;
+  followUp?: string;
+  includeRepository?: boolean;
   model?: string;
   retainCapture?: (path: string) => void;
   signal: AbortSignal;
@@ -55,14 +58,14 @@ async function provider(options: RunOptions, collector: string, token: string, d
     settings.OTEL_TRACES_EXPORTER = "none";
     settings.OTEL_METRIC_EXPORT_INTERVAL = "1000";
     settings.OTEL_LOGS_EXPORT_INTERVAL = "1000";
-    settings.OTEL_METRICS_INCLUDE_REPOSITORY = "false";
+    settings.OTEL_METRICS_INCLUDE_REPOSITORY = options.includeRepository ? "true" : "false";
     const file = join(directory, "claude-settings.json");
     await writeFile(file, JSON.stringify({ env: settings }), { mode: 0o600, flag: "wx" });
     return {
       env: { ...env, ...settings },
       args: [
         "--print",
-        "--no-session-persistence",
+        ...(options.followUp ? ["--session-id", randomUUID()] : ["--no-session-persistence"]),
         "--settings",
         file,
         ...model,
@@ -80,7 +83,7 @@ async function provider(options: RunOptions, collector: string, token: string, d
       env,
       args: [
         "exec",
-        "--ephemeral",
+        ...(options.followUp ? ["--json"] : ["--ephemeral"]),
         ...model,
         ...overrides,
         "-c",
@@ -89,6 +92,11 @@ async function provider(options: RunOptions, collector: string, token: string, d
       ],
       input: options.prompt,
     };
+  }
+  if (options.followUp) {
+    const databaseDir = join(directory, "opencode-data");
+    await mkdir(databaseDir, { mode: 0o700 });
+    env.OPENCODE_DB = join(databaseDir, "session.db");
   }
   const hasInstalledPlugin = await hasOpenCodePlugin({ home: homedir(), env: process.env });
   if (!hasInstalledPlugin) {
@@ -122,7 +130,14 @@ async function provider(options: RunOptions, collector: string, token: string, d
       AIDD_OPENCODE_OTEL_LOGS_ENDPOINT: `${collector}/${OPENCODE_CONFIG_ID}/v1/logs`,
       AIDD_OPENCODE_OTEL_HEADERS: `Authorization=Bearer ${token}`,
     },
-    args: ["run", "--standalone", ...model, "--", options.prompt],
+    args: [
+      "run",
+      "--standalone",
+      ...(options.followUp ? ["--session", `ses_${randomBytes(16).toString("hex")}`] : []),
+      ...model,
+      "--",
+      options.prompt,
+    ],
   };
 }
 
@@ -237,6 +252,7 @@ async function retainCapture(home: string, capture: string, config: Config): Pro
     await rename(capture, retained);
     await rm(join(home, ".local"), { recursive: true });
     await rm(join(home, "opencode-plugin"), { recursive: true, force: true });
+    await rm(join(home, "opencode-data"), { recursive: true, force: true });
     await rm(join(home, "claude-settings.json"), { force: true });
     return retained;
   } catch (error) {
@@ -245,10 +261,197 @@ async function retainCapture(home: string, capture: string, config: Config): Pro
   }
 }
 
+function promptSession(payload: unknown): string | undefined {
+  const resource = asPlainObject(list(asPlainObject(payload)?.resourceSpans)[0]);
+  const scope = asPlainObject(list(resource?.scopeSpans)[0]);
+  const span = asPlainObject(list(scope?.spans)[0]);
+  const path = attributes(span?.attributes).get("url.path");
+  return typeof path === "string" ? path.split("/")[3] : undefined;
+}
+
+/** Find the last complete JSONL record without consuming an in-progress append. */
+export async function completeCaptureEnd(capture: string, start: number): Promise<number> {
+  const file = await open(capture, "r");
+  try {
+    let end = (await file.stat()).size;
+    const buffer = Buffer.alloc(4096);
+    while (end > start) {
+      const length = Math.min(buffer.length, end - start);
+      const offset = end - length;
+      const { bytesRead } = await file.read(buffer, 0, length, offset);
+      const newline = buffer.subarray(0, bytesRead).lastIndexOf(10);
+      if (newline >= 0) return offset + newline + 1;
+      end = offset;
+    }
+    return start;
+  } finally {
+    await file.close();
+  }
+}
+
+async function captureSessions(capture: string, config: Config, start: number) {
+  const end = await completeCaptureEnd(capture, start);
+  const sessions = new Set<string>();
+  const prompts = new Set<string>();
+  const usage = new Set<string>();
+  if (end <= start) return { end, sessions, usage };
+  const lines = createInterface({
+    input: createReadStream(capture, { start, end: end - 1 }),
+    crlfDelay: Infinity,
+  });
+  for await (const line of lines) {
+    if (!line.trim()) continue;
+    if (config === OPENCODE_CONFIG_ID) {
+      for (const payload of openCodePromptSpans(line)) {
+        const session = promptSession(payload);
+        if (session) sessions.add(session);
+      }
+      for (const log of openCodePluginLogs(line)) {
+        const resource = asPlainObject(list(asPlainObject(log.payload)?.resourceLogs)[0]);
+        const scope = asPlainObject(list(resource?.scopeLogs)[0]);
+        const record = asPlainObject(list(scope?.logRecords)[0]);
+        const fields = attributes(record?.attributes);
+        const message = fields.get("assistant.message.id");
+        if (fields.get("event.name") === "session.step.ended" && typeof message === "string")
+          usage.add(`${log.session}:${message}`);
+      }
+    } else {
+      for (const session of sessionIdsInCapture(line, config)) sessions.add(session);
+      const envelope = asPlainObject(JSON.parse(line));
+      for (const resource of list(asPlainObject(envelope?.payload)?.resourceLogs)) {
+        for (const scope of list(asPlainObject(resource)?.scopeLogs)) {
+          for (const record of list(asPlainObject(scope)?.logRecords)) {
+            const fields = attributes(asPlainObject(record)?.attributes);
+            const name = fields.get("event.name");
+            const prompt = fields.get("prompt.id");
+            if (config === CLAUDE_CONFIG_ID && typeof prompt === "string") {
+              if (name === "user_prompt") prompts.add(prompt);
+              if (name === "api_request") usage.add(prompt);
+            }
+            if (
+              config === CODEX_CONFIG_ID &&
+              name === "codex.sse_event" &&
+              fields.get("event.kind") === "response.completed" &&
+              fields.has("input_token_count") &&
+              fields.has("output_token_count")
+            )
+              usage.add(String(fields.get("event.timestamp") ?? "completed"));
+          }
+        }
+      }
+    }
+  }
+  if (config === CLAUDE_CONFIG_ID)
+    for (const item of usage) if (!prompts.has(item)) usage.delete(item);
+  return { end, sessions, usage };
+}
+
+async function waitForUsage(
+  capture: string,
+  config: Config,
+  start: number,
+  expected: string,
+  signal: AbortSignal
+) {
+  const deadline = Date.now() + 10_000;
+  while (true) {
+    const observation = await captureSessions(capture, config, start);
+    if (config === OPENCODE_CONFIG_ID)
+      for (const item of observation.usage)
+        if (!item.startsWith(`${expected}:`)) observation.usage.delete(item);
+    if (
+      observation.sessions.size === 1 &&
+      observation.sessions.has(expected) &&
+      observation.usage.size > 0
+    )
+      return observation;
+    if (Date.now() >= deadline || signal.aborted)
+      throw new Error(
+        "The provider did not emit a completed usage observation for the expected session."
+      );
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+function requireSession(sessions: Set<string>, expected: string): void {
+  if (sessions.size !== 1 || !sessions.has(expected))
+    throw new Error("The execution did not emit exactly the expected OTLP session.");
+}
+
+async function executeProvider(input: {
+  config: Config;
+  args: string[];
+  env: NodeJS.ProcessEnv;
+  cwd: string;
+  prompt?: string;
+  signal: AbortSignal;
+  codexJson: boolean;
+}): Promise<string | undefined> {
+  let thread: string | undefined;
+  let invalidThread = false;
+  const code = await new Promise<number | null>((resolve, reject) => {
+    const child = spawn(input.config, input.args, {
+      cwd: input.cwd,
+      env: input.env,
+      signal: input.signal,
+      stdio: [input.prompt ? "pipe" : "ignore", input.codexJson ? "pipe" : "inherit", "inherit"],
+    });
+    if (child.stdout) {
+      const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
+      lines.on("line", (line) => {
+        let event: Record<string, unknown> | null = null;
+        try {
+          event = asPlainObject(JSON.parse(line));
+        } catch {
+          invalidThread = true;
+          return;
+        }
+        if (event?.type === "thread.started") {
+          const value = event.thread_id;
+          if (
+            thread ||
+            typeof value !== "string" ||
+            !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value)
+          )
+            invalidThread = true;
+          else thread = value;
+        }
+        const item = asPlainObject(event?.item);
+        if (
+          event?.type === "item.completed" &&
+          item?.type === "agent_message" &&
+          typeof item.text === "string"
+        )
+          process.stdout.write(`${item.text}\n`);
+      });
+    }
+    child.on("error", reject);
+    child.on("close", resolve);
+    child.stdin?.on("error", reject);
+    child.stdin?.end(input.prompt);
+  });
+  if (code !== 0) throw new Error(`${input.config} execution did not complete successfully.`);
+  if (input.codexJson && (!thread || invalidThread))
+    throw new Error("Codex did not report exactly one valid session ID.");
+  return thread;
+}
+
+function resumeArgs(config: Config, first: string[], session: string, prompt: string): string[] {
+  if (config === CODEX_CONFIG_ID) return ["exec", "resume", ...first.slice(1, -1), session, "-"];
+  const args = [...first];
+  if (config === CLAUDE_CONFIG_ID) args[args.indexOf("--session-id")] = "--resume";
+  args[args.length - 1] = prompt;
+  return args;
+}
+
 /** Consent covers this one invocation and its isolated collector only. */
 export async function runOtel(options: RunOptions): Promise<number> {
   if (process.env.AIDD_TELEMETRY === "0") throw new Error("AIDD telemetry is disabled.");
   if (!options.prompt.trim()) throw new Error("Pass a nonempty prompt.");
+  if (options.followUp !== undefined && !options.followUp.trim())
+    throw new Error("Pass a nonempty follow-up prompt.");
+  if (options.includeRepository && options.config !== CLAUDE_CONFIG_ID)
+    throw new Error("Repository metadata is only supported for Claude Code.");
   if (options.model && !/^[A-Za-z0-9][A-Za-z0-9._:/#-]{0,127}$/.test(options.model)) {
     throw new Error("Provider model ID is invalid.");
   }
@@ -269,19 +472,58 @@ export async function runOtel(options: RunOptions): Promise<number> {
         await readToken(home),
         home
       );
-      const code = await new Promise<number | null>((resolve, reject) => {
-        const child = spawn(options.config, launch.args, {
-          cwd: options.cwd,
-          env: launch.env,
-          signal: options.signal,
-          stdio: [launch.input ? "pipe" : "ignore", "inherit", "inherit"],
-        });
-        child.on("error", reject);
-        child.on("close", resolve);
-        child.stdin?.on("error", reject);
-        child.stdin?.end(launch.input);
+      const first = await executeProvider({
+        config: options.config,
+        args: launch.args,
+        env: launch.env,
+        cwd: options.cwd,
+        prompt: launch.input,
+        signal: options.signal,
+        codexJson: !!options.followUp && options.config === CODEX_CONFIG_ID,
       });
-      if (code !== 0) throw new Error(`${options.config} execution did not complete successfully.`);
+      if (options.followUp) {
+        const session =
+          options.config === CODEX_CONFIG_ID
+            ? first
+            : launch.args[
+                launch.args.indexOf(
+                  options.config === CLAUDE_CONFIG_ID ? "--session-id" : "--session"
+                ) + 1
+              ];
+        if (!session) throw new Error("The provider session is missing.");
+        const firstCapture = await waitForUsage(
+          capture,
+          options.config,
+          0,
+          session,
+          options.signal
+        );
+        requireSession(firstCapture.sessions, session);
+        const second = await executeProvider({
+          config: options.config,
+          args: resumeArgs(options.config, launch.args, session, options.followUp),
+          env: launch.env,
+          cwd: options.cwd,
+          prompt: options.config === CODEX_CONFIG_ID ? options.followUp : undefined,
+          signal: options.signal,
+          codexJson: options.config === CODEX_CONFIG_ID,
+        });
+        if (options.config === CODEX_CONFIG_ID && second !== session)
+          throw new Error("Codex resumed a different session.");
+        const secondCapture = await waitForUsage(
+          capture,
+          options.config,
+          firstCapture.end,
+          session,
+          options.signal
+        );
+        requireSession(secondCapture.sessions, session);
+        if (
+          options.config !== CODEX_CONFIG_ID &&
+          [...secondCapture.usage].some((id) => firstCapture.usage.has(id))
+        )
+          throw new Error("The follow-up did not emit a distinct usage observation.");
+      }
     } finally {
       await collector.close();
     }
@@ -292,27 +534,25 @@ export async function runOtel(options: RunOptions): Promise<number> {
         `/api/kpi/otel/${OPENCODE_CONFIG_ID}/${options.tenant}/v1/traces`,
         origin
       );
-      let selected: unknown;
+      const selected: unknown[] = [];
       const logs: OpenCodePluginLog[] = [];
       let rootSession: string | undefined;
       for await (const line of lines) {
         if (!line.trim()) continue;
         for (const payload of openCodePromptSpans(line)) {
-          if (selected)
-            throw new Error("The isolated OpenCode run emitted more than one prompt span.");
-          selected = payload;
-          const resource = asPlainObject(list(asPlainObject(payload)?.resourceSpans)[0]);
-          const scope = asPlainObject(list(resource?.scopeSpans)[0]);
-          const span = asPlainObject(list(scope?.spans)[0]);
-          const path = attributes(span?.attributes).get("url.path");
-          if (typeof path !== "string") throw new Error("OpenCode prompt session is missing.");
-          rootSession = path.split("/")[3];
+          const session = promptSession(payload);
+          if (!session || (rootSession && rootSession !== session))
+            throw new Error("OpenCode prompt spans do not identify the same session.");
+          rootSession = session;
+          selected.push(payload);
+          if (selected.length > (options.followUp ? 2 : 1))
+            throw new Error("The isolated OpenCode run emitted more prompt spans than expected.");
         }
         for (const log of openCodePluginLogs(line)) {
           logs.push(log);
         }
       }
-      if (!rootSession || !selected)
+      if (!rootSession || selected.length !== (options.followUp ? 2 : 1))
         throw new Error(
           "OpenCode prompt trace is missing; session attribution cannot be verified."
         );
@@ -330,7 +570,7 @@ export async function runOtel(options: RunOptions): Promise<number> {
         throw new Error(
           "OpenCode observations exceed the receiver's 2 MiB limit; nothing was sent."
         );
-      if (selected) {
+      for (const payload of selected) {
         const response = await fetch(url, {
           method: "POST",
           redirect: "manual",
@@ -339,7 +579,7 @@ export async function runOtel(options: RunOptions): Promise<number> {
             authorization: `Bearer ${options.token}`,
             "content-type": "application/json",
           },
-          body: JSON.stringify(selected),
+          body: JSON.stringify(payload),
         });
         if (!response.ok)
           throw new Error(`Gouvernail rejected OpenCode traces: HTTP ${response.status}.`);

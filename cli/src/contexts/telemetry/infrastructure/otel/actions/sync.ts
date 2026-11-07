@@ -81,6 +81,7 @@ const SAFE_ATTRIBUTES = new Set([
   "session.id",
   "conversation.id",
   "organization.id",
+  "vcs.repository.url.full",
   "event.name",
   "event.kind",
   "event.sequence",
@@ -142,7 +143,11 @@ function merge(...maps: Map<string, string>[]): Map<string, string> {
   for (const map of maps) {
     for (const [key, value] of map) {
       const previous = out.get(key);
-      if (IDENTITY_ATTRIBUTES.has(key) && previous !== undefined && previous !== value)
+      if (
+        (IDENTITY_ATTRIBUTES.has(key) || key === "vcs.repository.url.full") &&
+        previous !== undefined &&
+        previous !== value
+      )
         throw new Error("Conflicting OTLP identity attributes.");
       out.set(key, value);
     }
@@ -152,11 +157,22 @@ function merge(...maps: Map<string, string>[]): Map<string, string> {
 
 function safeAttributes(values: Map<string, string>) {
   return [...values]
-    .filter(([key]) => SAFE_ATTRIBUTES.has(key))
+    .filter(
+      ([key, value]) =>
+        SAFE_ATTRIBUTES.has(key) &&
+        (key !== "vcs.repository.url.full" || isSafeRepositoryUrl(value))
+    )
     .map(([key, value]) => ({
       key,
       value: { stringValue: value },
     }));
+}
+
+function isSafeRepositoryUrl(value: string): boolean {
+  return (
+    /^https:\/\/(?:github\.com|gitlab\.com)\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+$/.test(value) &&
+    !value.split("/").some((part) => part === "." || part === "..")
+  );
 }
 
 function eventNameFromBody(body: unknown): string {
