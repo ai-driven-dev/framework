@@ -212,6 +212,25 @@ describe("aidd-ui skills", () => {
     }
   });
 
+  it("keeps every sentence of every skill to twelve words at most", () => {
+    const MAX = 12;
+    const offenders = [];
+    for (const file of FOLDERS.flatMap((name) => filesUnder(SKILL(name))).filter((each) => each.endsWith(".md"))) {
+      const text = fs.readFileSync(file, "utf8").replace(/```[\s\S]*?```/g, (fence) => fence.replace(/[^\n]/g, "")).replace(/^---\n[\s\S]*?\n---\n/, (front) => front.replace(/[^\n]/g, ""));
+      text.split("\n").forEach((line, index) => {
+        if (line.startsWith("#") || line.startsWith("---")) return;
+        for (const cell of line.startsWith("|") ? line.split("|") : [line]) {
+          for (const raw of cell.split(/(?<=[.!?])\s+/)) {
+            const sentence = raw.replace(/^\s*([-*]|\d+\.)\s*/, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+            const words = sentence.split(/\s+/).filter(Boolean).length;
+            if (words > MAX) offenders.push(`${path.relative(SKILLS, file)}:${index + 1} ${words} words: ${sentence.trim().slice(0, 60)}`);
+          }
+        }
+      });
+    }
+    assert.deepEqual(offenders, []);
+  });
+
   it("have one author for each kind of record", () => {
     const authors = new Map();
     for (const folder of FOLDERS) {
@@ -228,7 +247,8 @@ describe("aidd-ui skills", () => {
 
   it("end saying the user validates each element after its render, in the skills that raise elements", () => {
     for (const folder of ["03-foundations", "04-components"]) {
-      assert.ok(fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8").includes("each element created or raised is `proposed` until the user, after looking at its render, runs `node <engine> publish <id>`."), folder);
+      const conclude = fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8");
+      for (const line of ["each element created or raised is `proposed` until published", "the user publishes with `node <engine> publish <id>`", "the user does so after looking at its render"]) assert.ok(conclude.includes(line), `${folder}: ${line}`);
     }
   });
 });

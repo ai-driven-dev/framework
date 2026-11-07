@@ -8,16 +8,22 @@ The request.
 
 ## Process
 
-1. Find the engine file per [engine](../references/engine.md); none: stop and say it is missing. Below, `<engine>` is its path: run it as `node <engine> <command>`.
-2. Read `aidd_docs/ui/` and the UI code, and name the case per [cases](../references/cases.md).
-3. Take the task folder the user named, else ask for it: a path under `aidd_docs/tasks/`, only cited in `history.md` rows; nothing is written in it.
-4. Persona: one a brief under `aidd_docs/` describes, proposed as written; else ask the user who walks the journey and what they want.
-5. Journeys:
-   - from the code: deduce each journey from its routes and screens;
-   - from scratch: ask which journeys, and for each its steps;
-   - change: the journeys and wireframes the request adds or changes, and how;
-   - show them, wait for the user's agreement; refused: stop.
-6. Read [write](02-write.md).
+1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
+2. Below, `<engine>` is its path, run as `node <engine> <command>`.
+3. Read `aidd_docs/ui/` and the UI code.
+4. Name the case per [cases](../references/cases.md).
+5. Take the task folder the user named, else ask.
+   - A path under `aidd_docs/tasks/`, cited in `history.md` rows, never written.
+6. Settle the persona:
+   - A brief under `aidd_docs/` describing one: propose it as written.
+   - Otherwise ask who walks the journey and what they want.
+7. Settle the journeys:
+   - Code: deduce each from its routes and screens.
+   - Scratch: ask which journeys, and the steps of each.
+   - Change: list what the request adds or changes, and how.
+   - Show them and wait for the user's agreement.
+   - If refused, stop.
+8. Read [write](02-write.md).
 
 ## Output
 

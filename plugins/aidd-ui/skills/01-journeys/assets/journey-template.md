@@ -20,5 +20,6 @@ persona: {{persona name}}
 
 <!--
 - Replace every `{{...}}` and delete every comment.
-- One row per step, in order; the last step's Action may stay empty.
+- One row per step, in order.
+- The last step's Action may stay empty.
 -->

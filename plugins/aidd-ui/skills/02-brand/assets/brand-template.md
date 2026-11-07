@@ -35,6 +35,8 @@ kind: brand
 
 <!--
 - Replace every `{{...}}` and delete every comment.
-- Add `## Imposed charter` after `## Personality and tone` when a charter is imposed.
-- Add `## Glossary`, `| Concept | Word | Forbidden |`, when the project has a vocabulary.
+- When a charter is imposed, add `## Imposed charter`.
+- Place it after `## Personality and tone`.
+- When the project has a vocabulary, add `## Glossary`.
+- Give it the columns `| Concept | Word | Forbidden |`.
 -->

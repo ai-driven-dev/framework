@@ -4,16 +4,26 @@ Leave foundations that validate, and tell the user what follows.
 
 ## Input
 
-`<engine>`, the files written, and for a change `bump`'s JSON and the agreed impact.
+The output of [write](02-write.md).
 
 ## Process
 
-1. Run `node <engine> validate` and fix each error line under `aidd_docs/ui/` as its `=> fix` says, except a fix that runs `publish`: validating is the user's. Repeat until the only errors left are in the code (C4, C6, C10) or owed by a later step; the `warning` lines are not errors.
-2. Reply to the user with:
-   - the tokens and the system written, with their versions; for a change, also the elements and screens `bump` left, from its `left` list;
-   - what `validate` still prints, errors in the code included;
-   - for a change, the `code` files `impact` listed, which still hold the old values;
-   - that the code is untouched, and that each element created or raised is `proposed` until the user, after looking at its render, runs `node <engine> publish <id>`.
+1. Run `node <engine> validate`.
+2. Fix each error line under `aidd_docs/ui/` as its `=> fix` says.
+3. Skip a fix that runs `publish`: validating is the user's.
+4. Repeat until only these remain:
+   - errors in the code (C4, C6, C10)
+   - errors owed by a later step
+   - `warning` lines, which are not errors
+5. Reply with:
+   - the tokens and the system written, with their versions
+   - for a change, the elements and screens left in `bump`'s `left`
+   - what `validate` still prints, code errors included
+   - for a change, the `code` files `impact` listed, with old values
+   - that the code is untouched
+   - that each element created or raised is `proposed` until published
+   - that the user publishes with `node <engine> publish <id>`
+   - that the user does so after looking at its render.
 
 ## Output
 

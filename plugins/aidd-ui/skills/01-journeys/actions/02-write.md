@@ -4,14 +4,20 @@ Write the journeys, then the wireframes their steps lack.
 
 ## Input
 
-The case, `<engine>`, the task folder, the persona and the agreed journeys.
+The output of [prepare](01-prepare.md).
 
 ## Process
 
-1. Each journey: write `aidd_docs/ui/journeys/<id>.md` from the [journey](../assets/journey-template.md) template.
-2. Each step naming no screen or wireframe yet: write `aidd_docs/ui/wireframes/<id>.md` and its render from the [wireframe](../assets/wireframe-template.md) and [render](../assets/wireframe-render-template.html) templates, per [wireframes](../references/wireframes.md); from the code, read its zones, states and components from the screen's code.
-3. Each existing journey or wireframe the request changes: `node <engine> bump --task <task folder> --change "<one line>" <id>…`.
-4. Records this run created: `node <engine> bump --task <task folder> --created <id>…`.
+1. Write each journey as `aidd_docs/ui/journeys/<id>.md`, from the [journey](../assets/journey-template.md) template.
+2. For each step naming no screen or wireframe yet:
+   - Write `aidd_docs/ui/wireframes/<id>.md` from the [wireframe](../assets/wireframe-template.md) template.
+   - Write its render from the [render](../assets/wireframe-render-template.html) template.
+   - Follow [wireframes](../references/wireframes.md).
+   - From the code, read its zones, states and components.
+3. For each existing journey or wireframe the request changes:
+   - Run `node <engine> bump --task <task folder> --change "<one line>" <id>…`.
+4. For the records this run created:
+   - Run `node <engine> bump --task <task folder> --created <id>…`.
 5. Read [conclude](03-conclude.md).
 
 ## Output

@@ -1,12 +1,17 @@
 # Extraction
 
-Read the code roots and the token source, even outside them; invent nothing. When several design systems coexist, ask which is the norm and follow that one.
+Read the code roots and the token source, even outside them. Invent nothing.
+
+When several design systems coexist, ask which is the norm. Follow that one.
 
 | In the code | In `aidd_docs/ui/` |
 | --- | --- |
-| token file the code consumes | in `code-tokens`, before `extract` runs, as `platform=path` when it sits outside the code root of its platform |
-| UI folder | in `code-roots`, as `platform=path` when `system.md` lists several platforms |
+| token file the code consumes | in `code-tokens`, before `extract` runs |
+| token file outside its platform's code root | in `code-tokens`, as `platform=path` |
+| UI folder | in `code-roots` |
+| UI folder, with several platforms in `system.md` | in `code-roots`, as `platform=path` |
 | theme switched by `[data-theme]` | in `themes`, the one `:root` holds first |
-| what `extract` leaves, a property scoped to a component, one written by a script or `color-scheme` among it | nothing: named to the user; a media query matching no breakpoint is a `## Breakpoints` row of `system.md` to settle, then `extract --force` |
+| what `extract` leaves: a component-scoped property, a script-written one, `color-scheme` | nothing: named to the user |
+| media query matching no breakpoint | a `## Breakpoints` row of `system.md`, settled, then `extract --force` |
 | generated output under a code root | `ignore` |
-| colour literal in the code | debt that `bump --created system` records, a warning listed; never `ignore`, never a narrower code root |
+| colour literal in the code | debt recorded by `bump --created system`. listed as a warning. never `ignore`. never a narrower code root |

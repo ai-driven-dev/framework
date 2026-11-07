@@ -1,6 +1,6 @@
 # Cases
 
-| Case | When |
-| --- | --- |
-| from scratch | no `aidd_docs/ui/brand.md`, no UI code: the user answers |
-| from the code | no `aidd_docs/ui/brand.md`, UI code exists |
+| Case | `aidd_docs/ui/brand.md` | UI code |
+| --- | --- | --- |
+| from scratch | none | none |
+| from the code | none | exists |

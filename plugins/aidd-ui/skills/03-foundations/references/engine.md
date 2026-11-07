@@ -1,22 +1,74 @@
 # Engine
 
-Where the engine is, and what it gives.
-
 | Install | Path |
 | --- | --- |
 | plugin | `../../hooks/aidd-ui.cjs` from this skill's folder |
 | flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode` |
 
-| Command | Gives |
-| --- | --- |
-| `validate` | `VALID` when nothing is wrong, else the problems as in Output below; exit 1 only on an error |
-| `tokens` | writes `aidd_docs/ui/tokens.css`, and the resolver when one is needed; exit 1 names what blocks it |
-| `impact <token>…` | JSON: tokens, same-value, elements, screens, wireframes, journeys, renders, code; a token as its path or its CSS name; exit 2 on an unknown one |
-| `extract [--force]` | writes `tokens.json` and the context files from the `code-tokens` files; JSON `written` and `left`; exit 2 with a message, nothing written, when it cannot, or when `tokens.json` exists without `--force` |
-| `bump --task <task folder> --change "<text>" [--breaking] <token>…` | raises the versions the tokens reach, each element back to `proposed`, with its row in `history.md` and a `pending` row per state in the `## Verdicts` of each reached screen's review; JSON `changed` and `left`, the elements reached and not raised; exit 2 with a message, nothing written |
-| `bump --task <task folder> --created system` | writes the first row of `system` in `history.md`, as 1.0.0, and `aidd_docs/ui/code-debt.json`; JSON `changed`; exit 2 with a message, nothing written |
-| `publish [--breaking]` | appends the `system` row to `history.md`: its Task lists every task with an element row and no earlier publication, sorted; major when one of them broke an element or with `--breaking` for tokens alone, else minor; JSON `version` and `tasks`; exit 2 with a message, nothing written, when no task is unpublished |
-| `publish <id>…` | sets each element `validated` and writes its fingerprint in the `history.md` row of its version; JSON `validated`, each `id`, `version`, `fingerprint`; exit 2 with a message, nothing written, for an id that is no element, is deprecated, has no row at its version, or whose row already holds a fingerprint: a change of a validated element goes through `bump` |
+A refused `extract`, `bump` or `publish` exits 2 with a message. Nothing is written.
+
+## Commands
+
+### `validate`
+
+- Prints `VALID` when nothing is wrong.
+- Else prints the problems, as in Output below.
+- Exits 1 only on an error.
+
+### `tokens`
+
+- Writes `aidd_docs/ui/tokens.css`.
+- Writes the resolver when needed.
+- Exits 1, naming what blocks it.
+
+### `impact <token>…`
+
+- Prints JSON: tokens, same-value, elements, screens, wireframes, journeys, renders, code.
+- Takes a token as its path or its CSS name.
+- Exits 2 on an unknown one.
+
+### `extract [--force]`
+
+- Writes `tokens.json` and the context files from the `code-tokens` files.
+- Prints JSON `written` and `left`.
+- Refuses when it cannot.
+- Refuses when `tokens.json` exists without `--force`.
+
+### `bump --task <task folder> --change "<text>" [--breaking] <token>…`
+
+- Raises the versions the tokens reach.
+- Sets each element reached back to `proposed`.
+- Writes its `history.md` row.
+- Adds a `pending` row per state.
+- The row goes to the `## Verdicts` of each reached screen's review.
+- Prints JSON `changed` and `left`.
+- `left` holds the elements reached and not raised.
+
+### `bump --task <task folder> --created system`
+
+- Writes the first row of `system` in `history.md`, as 1.0.0.
+- Writes `aidd_docs/ui/code-debt.json`.
+- Prints JSON `changed`.
+
+### `publish [--breaking]`
+
+- Appends the `system` row to `history.md`.
+- Its Task lists every unpublished task with an element row, sorted.
+- The version is major when one of them broke an element.
+- The version is also major with `--breaking` for tokens alone.
+- Otherwise the version is minor.
+- Prints JSON `version` and `tasks`.
+- Refuses when no task is unpublished.
+
+### `publish <id>…`
+
+- Sets each element `validated`.
+- Writes its fingerprint in its version's `history.md` row.
+- Prints JSON `validated`: each `id`, `version`, `fingerprint`.
+- Refuses a deprecated id, or one that is no element.
+- Refuses an id with no row at its version.
+- Refuses an id whose row holds a fingerprint.
+- A change of a validated element goes through `bump`.
 
 ## Output
 
@@ -29,10 +81,19 @@ aidd-ui: <n> errors, <m> warnings
 <file>[:<line>] <rule> warning <message> => <fix>
 ```
 
-- The first line counts the errors, then the warnings.
-- An error line carries its rule, the offending text when there is one, and the `=> fix` that clears it; the fix names the engine command when the engine owns the write, `<engine>` standing for the engine's path.
-- A grouped line joins errors of the same rule, fix and folder, naming the file when all are in it. `validate` prints every problem, ungrouped; the hook at most ten warnings.
-- After a write the hook prints the problems of the lines it changed, then, once per turn and grouped, the errors it left new in other files. New means absent at the session's start or the last turn's end. At the turn's end it asks once for the new errors still on lines the turn changed, never a warning or an error with no line.
+- The first line counts errors, then warnings.
+- An error line has its rule, any text, and the `=> fix`.
+- The fix names the engine command when the engine owns the write.
+- A grouped line joins errors of one rule, fix and folder.
+- It names the file when all are in it.
+- `validate` prints every problem, ungrouped.
+- The hook prints at most ten warnings.
+- After a write, the hook prints problems on the lines it changed.
+- Once per turn, it prints the errors it left new elsewhere, grouped.
+- New means absent at the session's start or the last turn's end.
+- At the turn's end it asks once for new errors.
+- It asks only for those on lines the turn changed.
+- It never asks for a warning, or an error with no line.
 
 ## Owed by a later step
 
