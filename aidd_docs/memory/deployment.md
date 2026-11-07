@@ -68,6 +68,8 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 `make reload` syncs all plugins and generic delegation guidance to installed hosts; details in `scripts/dev-sync.sh`.
 
+When changing shared instructions, keep `AGENTS.md`, `CLAUDE.md`, the template and global copies aligned, preserving project memory and personal rules. When changing agents, refresh the global installations with `make reload`. The command updates only the managed Agents section of global instructions.
+
 ## Monitoring
 
 None. Failures are a red run; `back-merge.yml` opens an issue when it cannot push.
