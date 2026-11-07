@@ -8,6 +8,7 @@ import type { UserSourceReferences } from "../../../../../src/contexts/framework
 import { SetupFlow } from "../../../../../src/contexts/framework/domain/setup-flow.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import { CatalogFetchAuthError } from "../../../../../src/kernel/errors.js";
+import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import type { TokenProvider } from "../../../../../src/runtime/auth/ports/token-provider.js";
 import type { LatestReleaseResolver } from "../../../../../src/runtime/self-update/latest-release-resolver.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -27,14 +28,15 @@ function makeNoOpLatestResolver(isRepoPublic = true): LatestReleaseResolver {
   };
 }
 
-function makeRegisterFramework(): MarketplaceRegisterFramework {
-  return { execute: vi.fn().mockResolvedValue({ registered: true, scope: "user" }) };
+function makeRegisterFramework(scope: MarketplaceScope): MarketplaceRegisterFramework {
+  return { execute: vi.fn().mockResolvedValue({ registered: true, scope }) };
 }
 
 interface Collaborators {
   tokenProvider?: TokenProvider;
   releaseResolver?: LatestReleaseResolver;
   userSourceReferences?: UserSourceReferences;
+  registeredScope?: MarketplaceScope;
 }
 
 function makeUseCase(
@@ -48,7 +50,7 @@ function makeUseCase(
   const refresh: MarketplaceRefresh = {
     execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }),
   };
-  const register = makeRegisterFramework();
+  const register = makeRegisterFramework(collaborators.registeredScope ?? "user");
   const useCase = new SetupMarketplaceRegistrationUseCase(
     new InMemoryFileAdapter(),
     new SetupMarketplaceSourceUseCase(new KeepPrompter(), makeNoOpLatestResolver()),
@@ -107,6 +109,17 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
         'Authentication required to fetch catalog from "https://github.com/owner/repo". Run `aidd auth login` first or use `--source local --path <dir>`.'
       );
     });
+
+    it("refuses a remote source when no token can be resolved and no release resolver can vouch for it", async () => {
+      const { useCase } = makeUseCase(new InMemoryEnvironment(), {
+        tokenProvider: { resolve: async () => null },
+      });
+      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+
+      const attempt = useCase.registerIfPresent(flow, MarketplaceSourceMode.remote("owner/repo"));
+
+      await expect(attempt).rejects.toThrow(CatalogFetchAuthError);
+    });
   });
 
   describe("registration options", () => {
@@ -149,6 +162,22 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
       await useCase.registerIfPresent(flow, MarketplaceSourceMode.local("/framework-source"));
 
       expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([PROJECT_ROOT]);
+    });
+
+    it("records no claim when the framework was registered at project scope", async () => {
+      const userSourceReferences = new UserSourceReferencesAdapter(
+        new InMemoryFileAdapter({ [`${PROJECT_ROOT}/.aidd/manifest.json`]: "{}" }),
+        () => "/user-config"
+      );
+      const { useCase } = makeUseCase(new InMemoryEnvironment(), {
+        userSourceReferences,
+        registeredScope: "project",
+      });
+      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+
+      await useCase.registerIfPresent(flow, MarketplaceSourceMode.local("/framework-source"));
+
+      expect(await userSourceReferences.listAllReferencingProjects()).toStrictEqual([]);
     });
   });
 });
