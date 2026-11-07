@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -88,6 +88,19 @@ describe("AuthStorage", () => {
       const stats = await stat(path);
       expect(stats.mode & 0o777).toBe(0o600);
     });
+
+    it.skipIf(process.platform === "win32")(
+      "restricts an existing world-readable file to its owner when it rewrites it",
+      async () => {
+        const path = join(tempDir, "auth.json");
+        await writeFile(path, "{}", { mode: 0o644 });
+        await chmod(path, 0o644);
+
+        await storage.write(path, makeAuthConfig({ token: "ghp_secret" }));
+
+        expect((await stat(path)).mode & 0o777).toBe(0o600);
+      }
+    );
 
     it("restricts the file on win32 through an icacls argument list, never a shell command line", async () => {
       const path = join(tempDir, "auth.json");
@@ -199,6 +212,25 @@ describe("AuthStorage", () => {
         } else {
           process.env.AIDD_TOKEN = original;
         }
+      }
+    });
+
+    it("answers a project record that carries no token ahead of a user record that does", async () => {
+      const original = process.env.AIDD_TOKEN;
+      delete process.env.AIDD_TOKEN;
+      try {
+        await storage.write(
+          storage.projectConfigPath(tempDir),
+          makeAuthConfig({ method: "external", level: "project", token: undefined })
+        );
+        await storage.write(storage.userConfigPath(), makeAuthConfig({ token: "user-tok" }));
+
+        const result = await storage.readActive(tempDir);
+
+        expect(result?.level).toBe("project");
+        expect(result?.method).toBe("external");
+      } finally {
+        if (original !== undefined) process.env.AIDD_TOKEN = original;
       }
     });
 

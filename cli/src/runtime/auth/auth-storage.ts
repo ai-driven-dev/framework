@@ -36,7 +36,7 @@ export class AuthStorage {
 
   async write(path: string, config: AuthConfig): Promise<void> {
     await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, JSON.stringify(config, null, 2), "utf-8");
+    await writeFile(path, JSON.stringify(config, null, 2), { encoding: "utf-8", mode: 0o600 });
     if (process.platform === "win32") {
       try {
         // An argument list, never a command line: `path` comes from an environment variable
