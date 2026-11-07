@@ -101,8 +101,8 @@ export default defineConfig({
       // spawn a built `cli.js` as a subprocess; v8 coverage does not cross a process boundary:
       // including it reports 0%. `presentation/commands/` is counted: the command tests run
       // it in process.
-      // Ports are interfaces with no runtime body, `shared/ports/` included; `runtime/wiring/` is
-      // composition.
+      // Ports are interfaces with no runtime body, `shared/ports/` and a migrated context's
+      // `ports/` and `contract/` included; `runtime/wiring/` is composition.
       // Their real net is the e2e suite and scripts/smoke-tools.sh, counted there.
       //
       // Three of these globs still named their pre-refactor locations, under the layer
@@ -114,6 +114,8 @@ export default defineConfig({
         "src/cli.ts",
         "src/kernel/ports/**",
         "src/contexts/*/domain/ports/**",
+        "src/contexts/*/ports/**",
+        "src/contexts/*/contract/**",
         "src/shared/ports/**",
         "src/runtime/wiring/**",
       ],

@@ -1,10 +1,10 @@
 import type { Command } from "commander";
+import { AuthLoginUseCase } from "../../contexts/auth/application/auth-login-use-case.js";
+import { AuthLogoutUseCase } from "../../contexts/auth/application/auth-logout-use-case.js";
+import { AuthStatusUseCase } from "../../contexts/auth/application/auth-status-use-case.js";
+import type { AuthCredential, AuthLevel } from "../../contexts/auth/domain/auth.js";
 import { InputRequiredError } from "../../kernel/errors.js";
 import { AIDD_DIR } from "../../kernel/paths.js";
-import type { AuthCredential, AuthLevel } from "../../runtime/auth/auth.js";
-import { AuthLoginUseCase } from "../../runtime/auth/auth-login-use-case.js";
-import { AuthLogoutUseCase } from "../../runtime/auth/auth-logout-use-case.js";
-import { AuthStatusUseCase } from "../../runtime/auth/auth-status-use-case.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { ErrorHandler } from "../error-handler.js";

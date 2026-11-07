@@ -8,6 +8,11 @@ import "../../contexts/tools/domain/profiles/cursor/profile.js";
 import "../../contexts/tools/domain/profiles/kilo/profile.js";
 import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
+import { AuthProviderAdapter } from "../../contexts/auth/infrastructure/auth-provider-adapter.js";
+import { AuthReaderAdapter } from "../../contexts/auth/infrastructure/auth-reader-adapter.js";
+import { AuthStorage } from "../../contexts/auth/infrastructure/auth-storage.js";
+import { GhCliAdapter } from "../../contexts/auth/infrastructure/gh-cli-adapter.js";
+import type { CredentialStore } from "../../contexts/auth/ports/credential-store.js";
 import { MarketplaceAddUseCase } from "../../contexts/distribution/application/marketplace-add-use-case.js";
 import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
@@ -101,11 +106,6 @@ import { GitHubAdapter } from "../../shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { Environment } from "../../shared/ports/environment.js";
 import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
-import { AuthProviderAdapter } from "../auth/auth-provider-adapter.js";
-import { AuthReaderAdapter } from "../auth/auth-reader-adapter.js";
-import { AuthStorage } from "../auth/auth-storage.js";
-import { GhCliAdapter } from "../auth/gh-cli-adapter.js";
-import type { CredentialStore } from "../auth/ports/credential-store.js";
 import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
@@ -217,7 +217,7 @@ export async function createDeps(
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
   const http = new HttpClient();
-  const authStorage = new AuthStorage();
+  const authStorage = new AuthStorage(userConfigDir);
   const ghCliAdapter = new GhCliAdapter();
   const authReader = new AuthReaderAdapter(
     authStorage,

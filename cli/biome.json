@@ -193,6 +193,177 @@
       }
     },
     {
+      "includes": ["src/contexts/auth/domain/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**"
+                    ],
+                    "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/auth/application/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/infrastructure/**"],
+                    "message": "application must not import infrastructure: take a port and let the composition root supply the adapter"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/auth/infrastructure/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/shared/infrastructure/**"],
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/auth/ports/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "a port must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**"
+                    ],
+                    "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/auth/contract/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/domain/**",
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/ports/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "contract is what other contexts may import: it imports no other folder of its context, nor anything above it"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**"
+                    ],
+                    "message": "auth imports only the kernel, see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/contexts/framework/domain/**/*.ts"],
       "linter": {
         "rules": {
@@ -288,7 +459,12 @@
                     "message": "domain must not import application, infrastructure, presentation or runtime"
                   },
                   {
-                    "group": ["**/framework/**", "**/distribution/**", "**/telemetry/**"],
+                    "group": [
+                      "**/framework/**",
+                      "**/distribution/**",
+                      "**/telemetry/**",
+                      "**/auth/**"
+                    ],
                     "message": "translate may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
                   }
                 ]
@@ -316,6 +492,7 @@
                       "**/framework/**",
                       "**/distribution/**",
                       "**/telemetry/**",
+                      "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -342,6 +519,7 @@
                       "**/framework/**",
                       "**/distribution/**",
                       "**/telemetry/**",
+                      "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -381,7 +559,8 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/distribution/**",
-                      "**/telemetry/**"
+                      "**/telemetry/**",
+                      "**/auth/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   }
@@ -411,6 +590,7 @@
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
+                      "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -438,6 +618,7 @@
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
+                      "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -576,7 +757,8 @@
                       "**/framework/**",
                       "**/translate/**",
                       "**/distribution/**",
-                      "**/tools/**"
+                      "**/tools/**",
+                      "**/auth/**"
                     ],
                     "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   }
@@ -606,6 +788,7 @@
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
+                      "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],
@@ -633,6 +816,7 @@
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
+                      "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**"
                     ],

@@ -1,5 +1,5 @@
-import type { AuthCredential, AuthLevel } from "./auth.js";
-import type { AuthLoginResult, CredentialStore } from "./ports/credential-store.js";
+import type { AuthCredential, AuthLevel } from "../domain/auth.js";
+import type { AuthLoginResult, CredentialStore } from "../ports/credential-store.js";
 
 interface AuthLoginOptions {
   credential: AuthCredential;

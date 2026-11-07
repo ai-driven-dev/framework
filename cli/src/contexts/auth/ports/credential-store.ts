@@ -1,4 +1,4 @@
-import type { AuthCredential, AuthLevel } from "../auth.js";
+import type { AuthCredential, AuthLevel } from "../domain/auth.js";
 
 export type AuthLogoutHint = "external-provider-cleanup";
 

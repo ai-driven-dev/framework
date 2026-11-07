@@ -13,8 +13,12 @@ import {
   sourceFiles,
 } from "./helpers.js";
 
-type Layer = "domain" | "application" | "infrastructure";
+type Layer = "domain" | "application" | "infrastructure" | "ports" | "contract";
+/** Every context has these three. */
 const LAYERS: readonly Layer[] = ["domain", "application", "infrastructure"];
+/** A migrated context also has these, and is held to them wherever the folder exists: a
+ * `contract/` folder with no override of its own is a folder nothing restricts. */
+const OPTIONAL_LAYERS: readonly Layer[] = ["ports", "contract"];
 
 interface BiomeOverride {
   readonly includes?: readonly string[];
@@ -65,6 +69,10 @@ function genericLayerTargets(layer: Layer): ReadonlySet<string> {
   if (layer === "domain") {
     return new Set(["application", "infrastructure", "presentation", "runtime"]);
   }
+  if (layer === "ports") return genericLayerTargets("domain");
+  if (layer === "contract") {
+    return new Set(["domain", "application", "infrastructure", "ports", "presentation", "runtime"]);
+  }
   if (layer === "application") return new Set(["infrastructure"]);
   return new Set(["**/shared/infrastructure/**"]);
 }
@@ -88,6 +96,13 @@ function expectedForbidden(
     forbidden.add(target);
   }
   return forbidden;
+}
+
+function layersOf(context: string, files: readonly string[]): Layer[] {
+  const optional = OPTIONAL_LAYERS.filter((layer) =>
+    files.some((file) => file.startsWith(`src/contexts/${context}/${layer}/`))
+  );
+  return [...LAYERS, ...optional];
 }
 
 function contextLayerIncludes(context: string, layer: Layer): string {
@@ -129,7 +144,11 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
     ).toEqual([]);
   });
 
-  it.each(contexts.flatMap((context) => LAYERS.map((layer) => ({ context, layer }))))(
+  it.each(
+    contexts.flatMap((context) =>
+      layersOf(context, sourceFiles()).map((layer) => ({ context, layer }))
+    )
+  )(
     "$context/$layer forbids exactly what context-graph.arch.test.ts forbids",
     ({ context, layer }) => {
       const includesGlob = contextLayerIncludes(context, layer);
@@ -215,6 +234,28 @@ describe("the guard itself", () => {
       expectedForbidden("framework", "domain", twoContexts, noBaseline).has("tools"),
       "framework->tools is one"
     ).toBe(false);
+  });
+
+  it("holds a ports folder to what the domain is held to, and a contract folder to no sibling", () => {
+    const none = new Map<string, ReadonlySet<string>>();
+    const forbidden = (layer: Layer) => expectedForbidden("auth", layer, ["auth", "tools"], none);
+
+    expect([...forbidden("ports")].sort()).toEqual([...forbidden("domain")].sort());
+    expect(forbidden("contract").has("domain")).toBe(true);
+    expect(forbidden("contract").has("ports")).toBe(true);
+    expect(forbidden("domain").has("ports")).toBe(false);
+  });
+
+  it("lists a ports or contract folder only where it exists", () => {
+    const files = ["src/contexts/auth/contract/x.ts", "src/contexts/tools/domain/y.ts"];
+
+    expect(layersOf("auth", files)).toEqual([
+      "domain",
+      "application",
+      "infrastructure",
+      "contract",
+    ]);
+    expect(layersOf("tools", files)).toEqual(["domain", "application", "infrastructure"]);
   });
 
   it("drops a target the baseline already carries at that layer, and keeps it at another", () => {

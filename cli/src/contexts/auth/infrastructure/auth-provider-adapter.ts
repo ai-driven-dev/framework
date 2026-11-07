@@ -1,14 +1,14 @@
-import { AuthenticationError } from "../../kernel/errors.js";
-import type { AuthConfig, AuthCredential, AuthLevel } from "./auth.js";
-import type { CredentialFileStore } from "./ports/credential-file-store.js";
+import { AuthenticationError } from "../../../kernel/errors.js";
+import type { AuthConfig, AuthCredential, AuthLevel } from "../domain/auth.js";
+import type { CredentialFileStore } from "../ports/credential-file-store.js";
 import type {
   AuthLoginResult,
   AuthLogoutHint,
   AuthLogoutResult,
   AuthStatus,
   CredentialStore,
-} from "./ports/credential-store.js";
-import type { CliAuthProvider, TokenAuthProvider } from "./ports/oauth-provider.js";
+} from "../ports/credential-store.js";
+import type { CliAuthProvider, TokenAuthProvider } from "../ports/oauth-provider.js";
 
 export class AuthProviderAdapter implements CredentialStore {
   constructor(

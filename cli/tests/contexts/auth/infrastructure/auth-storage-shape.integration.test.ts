@@ -2,9 +2,9 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthStorageError } from "../../../src/kernel/errors.js";
-import { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
-import { makeAuthConfig } from "../../helpers/auth.js";
+import { AuthStorage } from "../../../../src/contexts/auth/infrastructure/auth-storage.js";
+import { AuthStorageError } from "../../../../src/kernel/errors.js";
+import { makeAuthConfig } from "../../../helpers/auth.js";
 
 describe("AuthStorage, the shape of a record", () => {
   let tempDir: string;
@@ -14,7 +14,7 @@ describe("AuthStorage, the shape of a record", () => {
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-auth-shape-"));
     path = join(tempDir, "auth.json");
-    storage = new AuthStorage();
+    storage = new AuthStorage(() => tempDir);
   });
 
   afterEach(async () => {
@@ -45,10 +45,7 @@ describe("AuthStorage, the shape of a record", () => {
   });
 
   it("records an external credential with its provider and no token", async () => {
-    const saved = Object.create(storage) as AuthStorage;
-    saved.userConfigPath = () => path;
-
-    await saved.save({
+    await storage.save({
       credential: { method: "external", provider: "gh" },
       level: "user",
       projectRoot: tempDir,
@@ -65,10 +62,7 @@ describe("AuthStorage, the shape of a record", () => {
   });
 
   it("records a stored credential with its token and no provider", async () => {
-    const saved = Object.create(storage) as AuthStorage;
-    saved.userConfigPath = () => path;
-
-    await saved.save({
+    await storage.save({
       credential: { method: "stored", token: "ghp_x" },
       level: "user",
       projectRoot: tempDir,
@@ -88,16 +82,13 @@ describe("AuthStorage, the shape of a record", () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);
     try {
-      const saved = Object.create(storage) as AuthStorage;
-      saved.userConfigPath = () => path;
-
-      await saved.save({
+      await storage.save({
         credential: { method: "stored", token: "ghp_x" },
         level: "user",
         projectRoot: tempDir,
       });
       const stored = await readFile(path, "utf-8");
-      await saved.save({
+      await storage.save({
         credential: { method: "external", provider: "gh" },
         level: "user",
         projectRoot: tempDir,

@@ -727,6 +727,13 @@ Pre-filter flags: `U0` the file has no unique coverage, `D` a duplicate title, `
 | C6 | `auth-storage-create-mode.integration` (new, `chmod` mocked module-wide) › creates a new credential file readable by its owner only, before any chmod (`it.skipIf(win32)`) | SF1: the file is created `0600` | add, red first (phase 2b) | `infrastructure/credential-record-file-adapter-create-mode.integration.test.ts` › same title | written red against today's code with `chmod` stubbed to a no-op, green after `writeFile(..., { mode: 0o600 })` |
 | C7 | `auth-storage.integration` › write › rewrites an existing world-readable file to owner only | the kept `chmod` for a file that already exists (`writeFile`'s `mode` applies on creation only) | add, keep (phase 2b) | `file-adapter` › on POSIX › rewrites an existing file to owner only | phase 2b: remove the `chmod` call => C7 red, C6 green |
 
+Recorded by phases 2 and 3 for phase 8 to decide (nothing is deleted before phase 8; proofs in `$B/brk-*.json` and `$B/c-proofs-*.txt`):
+
+- C1 and C4c turn red under the same break (swap the two statements of `login`). One of the two is redundant for that behaviour: C1 pins the order at the lowest level, C4c also pins the `gh CLI` wording through the real wiring, so phase 8 decides which arm of the overlap to drop with that difference in mind.
+- C2 and C4b turn red under the same break (delete the early `return` of `logout`), and so does the existing `auth-logout-use-case.integration` › removes project auth.json and returns project level. Three tests, one behaviour; phase 8 keeps the lowest and proves the others redundant by inverted proof.
+- `auth-storage-shape.integration` has 2 unique covered elements (the statement and the branch of the object guard of `isAuthConfig`, `auth-storage.ts:107`, reached by "reads null as no record"), where the plan expected 0. It cannot be deleted without moving that case into the parse table of `record`.
+- Phase 3 killed 7 survivors of `runtime` without auth (625 to 632 of 701, 90.16), each seen red against its mutant: `FileAdapter.isExecutable`, `FileAdapter.mergeJsonFile`, the cleanup `rm` of `PrivateStorageAdapter.replace` (2), the first-match rule of `which`/`where` (2), a `null` thrown by the install. Reported, not covered: the survivors that are equivalent (`resolveProjectRoot`'s `PWD` conditions, `injectTokenIntoUrl`'s `https://` prefix guard, the `Buffer` branch of `extractStderr`, the `rm` force flag of `FileAdapter.deleteFile`), the encoding strings, `MACHINE.run`, the dist-layout branch of the schema loader (reachable only from a built layout), and those of `runtime/wiring`.
+
 ### Current tests
 
 | # | Current file › title | Behaviour it pins | Flags | Verdict | Target file › title | Proof |

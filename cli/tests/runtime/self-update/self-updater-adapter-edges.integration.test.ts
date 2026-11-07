@@ -124,6 +124,19 @@ describe("SelfUpdaterAdapter.install, what it runs", () => {
     ]);
   });
 
+  it.each([
+    ["LF", "/usr/local/bin/aidd\n/opt/other/aidd\n"],
+    ["CRLF", "/usr/local/bin/aidd\r\n/opt/other/aidd\r\n"],
+  ])(
+    "answers the first match when the lookup lists several, separated by %s",
+    (_label, listing) => {
+      mockPlatform.mockReturnValue("linux");
+      mockExecSync.mockReturnValueOnce(listing).mockReturnValue(Buffer.alloc(0));
+
+      expect(new SelfUpdaterAdapter(offline()).install()).toBe("/usr/local/bin/aidd");
+    }
+  );
+
   it("detects bun from a Windows bin directory whatever its case", () => {
     mockPlatform.mockReturnValue("win32");
     mockExecSync
@@ -159,6 +172,16 @@ describe("SelfUpdaterAdapter.install, what it runs", () => {
     mockPlatform.mockReturnValue("linux");
     mockExecSync.mockReturnValueOnce("/usr/local/bin/aidd").mockImplementationOnce(() => {
       throw "failed";
+    });
+
+    expect(() => new SelfUpdaterAdapter(offline()).install()).toThrow(new UpdateError());
+    expect(written).toStrictEqual([]);
+  });
+
+  it("refuses with the update error even when the failure thrown was null", () => {
+    mockPlatform.mockReturnValue("linux");
+    mockExecSync.mockReturnValueOnce("/usr/local/bin/aidd").mockImplementationOnce(() => {
+      throw null;
     });
 
     expect(() => new SelfUpdaterAdapter(offline()).install()).toThrow(new UpdateError());

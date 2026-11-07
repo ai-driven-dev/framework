@@ -8,20 +8,30 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, chmod: vi.fn(async () => {}) };
 });
 
-import { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
-import { makeAuthConfig } from "../../helpers/auth.js";
+import { AuthStorage } from "../../../../src/contexts/auth/infrastructure/auth-storage.js";
+import { makeAuthConfig } from "../../../helpers/auth.js";
+
+/** A worker thread, which is where a mutation run executes the tests, refuses to set the mask
+ * and keeps the one it inherited: `undefined` then, and nothing to restore. */
+function setMask(mask: number): number | undefined {
+  try {
+    return process.umask(mask);
+  } catch {
+    return undefined;
+  }
+}
 
 describe("AuthStorage, the creation of a credential file", () => {
   let tempDir: string;
-  let previousMask: number;
+  let previousMask: number | undefined;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-auth-create-mode-"));
-    previousMask = process.umask(0o022);
+    previousMask = setMask(0o022);
   });
 
   afterEach(async () => {
-    process.umask(previousMask);
+    if (previousMask !== undefined) process.umask(previousMask);
     await rm(tempDir, { recursive: true, force: true });
   });
 
@@ -30,7 +40,7 @@ describe("AuthStorage, the creation of a credential file", () => {
     async () => {
       const path = join(tempDir, "auth.json");
 
-      await new AuthStorage().write(path, makeAuthConfig());
+      await new AuthStorage(() => tempDir).write(path, makeAuthConfig());
 
       expect((await stat(path)).mode & 0o777).toBe(0o600);
     }

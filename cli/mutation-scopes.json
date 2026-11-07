@@ -6,6 +6,10 @@
       "break": 95,
       "shards": 4
     },
+    "auth": {
+      "mutate": "src/contexts/auth/**/*.ts",
+      "break": 95
+    },
     "tools": {
       "mutate": [
         "src/contexts/tools/**/*.ts",

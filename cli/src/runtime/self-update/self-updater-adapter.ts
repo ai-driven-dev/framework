@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
 import { platform } from "node:os";
+import type { TokenProvider } from "../../contexts/auth/contract/token-provider.js";
 import {
   ElevatedPermissionUpdateError,
   FrameworkResolutionError,
@@ -8,7 +9,6 @@ import {
 } from "../../kernel/errors.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { HttpGet } from "../../shared/ports/http-get.js";
-import type { TokenProvider } from "../auth/ports/token-provider.js";
 import type { CliRelease, SelfUpdater } from "./self-updater.js";
 
 // release-please tags this package per component: `cli-v<semver>`, never a bare `v<semver>`,

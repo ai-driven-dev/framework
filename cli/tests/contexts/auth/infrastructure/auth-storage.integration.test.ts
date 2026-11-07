@@ -9,8 +9,8 @@ vi.mock("node:child_process", async (importOriginal) => {
   return { ...actual, execFileSync: vi.fn() };
 });
 
-import { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
-import { makeAuthConfig } from "../../helpers/auth.js";
+import { AuthStorage } from "../../../../src/contexts/auth/infrastructure/auth-storage.js";
+import { makeAuthConfig } from "../../../helpers/auth.js";
 
 /**
  * `process.platform` is a plain value property, so it is redefined rather than spied on; the
@@ -32,11 +32,13 @@ async function asWin32<T>(run: () => Promise<T>, account = "tester"): Promise<T>
 
 describe("AuthStorage", () => {
   let tempDir: string;
+  let userDir: string;
   let storage: AuthStorage;
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "auth-storage-test-"));
-    storage = new AuthStorage();
+    userDir = tempDir;
+    storage = new AuthStorage(() => userDir);
   });
 
   afterEach(async () => {
@@ -181,19 +183,12 @@ describe("AuthStorage", () => {
       expect(path).toBe(join("/my/project", ".aidd", "auth.json"));
     });
 
-    it("userConfigPath respects AIDD_USER_CONFIG_DIR env override", () => {
-      const original = process.env.AIDD_USER_CONFIG_DIR;
-      try {
-        process.env.AIDD_USER_CONFIG_DIR = "/custom/config/dir";
-        const path = storage.userConfigPath();
-        expect(path).toBe(join("/custom/config/dir", "auth.json"));
-      } finally {
-        if (original === undefined) {
-          delete process.env.AIDD_USER_CONFIG_DIR;
-        } else {
-          process.env.AIDD_USER_CONFIG_DIR = original;
-        }
-      }
+    it("writes the user record under the directory it was given", async () => {
+      userDir = join(tempDir, "given");
+
+      await storage.write(storage.userConfigPath(), makeAuthConfig());
+
+      expect(await readFile(join(tempDir, "given", "auth.json"), "utf-8")).toContain("ghp_test");
     });
   });
 
@@ -253,10 +248,8 @@ describe("AuthStorage", () => {
 
     it("returns user config when no AIDD_TOKEN and no project auth.json", async () => {
       const original = process.env.AIDD_TOKEN;
-      const userConfigDirOriginal = process.env.AIDD_USER_CONFIG_DIR;
       delete process.env.AIDD_TOKEN;
       try {
-        process.env.AIDD_USER_CONFIG_DIR = tempDir;
         const config = makeAuthConfig({ token: "user-tok", level: "user" });
         const userPath = storage.userConfigPath();
         await storage.write(userPath, config);
@@ -266,29 +259,18 @@ describe("AuthStorage", () => {
         expect(result?.token).toBe("user-tok");
       } finally {
         if (original !== undefined) process.env.AIDD_TOKEN = original;
-        if (userConfigDirOriginal === undefined) {
-          delete process.env.AIDD_USER_CONFIG_DIR;
-        } else {
-          process.env.AIDD_USER_CONFIG_DIR = userConfigDirOriginal;
-        }
       }
     });
 
     it("returns null when no token source is available", async () => {
       const tokenOriginal = process.env.AIDD_TOKEN;
-      const userConfigDirOriginal = process.env.AIDD_USER_CONFIG_DIR;
       delete process.env.AIDD_TOKEN;
-      process.env.AIDD_USER_CONFIG_DIR = join(tempDir, "no-such-dir");
+      userDir = join(tempDir, "no-such-dir");
       try {
         const result = await storage.readActive(join(tempDir, "no-project"));
         expect(result).toBeNull();
       } finally {
         if (tokenOriginal !== undefined) process.env.AIDD_TOKEN = tokenOriginal;
-        if (userConfigDirOriginal === undefined) {
-          delete process.env.AIDD_USER_CONFIG_DIR;
-        } else {
-          process.env.AIDD_USER_CONFIG_DIR = userConfigDirOriginal;
-        }
       }
     });
   });
@@ -304,22 +286,12 @@ describe("AuthStorage", () => {
     });
 
     it("saves user-level credential to user config path", async () => {
-      const userConfigDirOriginal = process.env.AIDD_USER_CONFIG_DIR;
-      process.env.AIDD_USER_CONFIG_DIR = tempDir;
-      try {
-        const credential = { method: "stored" as const, token: "ghp_save_user" };
-        await storage.save({ credential, level: "user", projectRoot: tempDir });
+      const credential = { method: "stored" as const, token: "ghp_save_user" };
+      await storage.save({ credential, level: "user", projectRoot: tempDir });
 
-        const saved = await storage.read(storage.userConfigPath());
-        expect(saved?.token).toBe("ghp_save_user");
-        expect(saved?.level).toBe("user");
-      } finally {
-        if (userConfigDirOriginal === undefined) {
-          delete process.env.AIDD_USER_CONFIG_DIR;
-        } else {
-          process.env.AIDD_USER_CONFIG_DIR = userConfigDirOriginal;
-        }
-      }
+      const saved = await storage.read(storage.userConfigPath());
+      expect(saved?.token).toBe("ghp_save_user");
+      expect(saved?.level).toBe("user");
     });
 
     it("saves external credential without token field", async () => {

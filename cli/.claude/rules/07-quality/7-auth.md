@@ -1,7 +1,7 @@
 ---
 description: Apply when a token is read, stored or checked; one GitHub token, resolved once, never checked eagerly.
 paths:
-  - "src/runtime/auth/**/*.ts"
+  - "src/contexts/auth/**/*.ts"
   - "src/contexts/*/application/**/*.ts"
 ---
 

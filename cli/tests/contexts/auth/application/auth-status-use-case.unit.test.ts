@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { AuthStatusUseCase } from "../../../src/runtime/auth/auth-status-use-case.js";
+import { AuthStatusUseCase } from "../../../../src/contexts/auth/application/auth-status-use-case.js";
 import type {
   AuthStatus,
   CredentialStore,
-} from "../../../src/runtime/auth/ports/credential-store.js";
+} from "../../../../src/contexts/auth/ports/credential-store.js";
 
 function makeCredentialStore(status: AuthStatus): CredentialStore {
   return {

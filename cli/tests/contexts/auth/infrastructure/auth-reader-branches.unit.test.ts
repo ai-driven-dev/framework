@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { AuthConfig } from "../../../src/runtime/auth/auth.js";
-import { AuthReaderAdapter } from "../../../src/runtime/auth/auth-reader-adapter.js";
-import type { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import type { AuthConfig } from "../../../../src/contexts/auth/domain/auth.js";
+import { AuthReaderAdapter } from "../../../../src/contexts/auth/infrastructure/auth-reader-adapter.js";
+import type { CredentialFileStore } from "../../../../src/contexts/auth/ports/credential-file-store.js";
+import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 
 const PROJECT = "/project/.aidd/auth.json";
 const USER = "/home/user/.config/aidd/auth.json";
 
-function storage(project: AuthConfig | null, user: AuthConfig | null): AuthStorage {
+function storage(project: AuthConfig | null, user: AuthConfig | null): CredentialFileStore {
   return {
     userConfigPath: () => USER,
     projectConfigPath: () => PROJECT,
@@ -16,7 +16,7 @@ function storage(project: AuthConfig | null, user: AuthConfig | null): AuthStora
     delete: async () => {},
     save: async () => {},
     readActive: async () => null,
-  } as AuthStorage;
+  } as CredentialFileStore;
 }
 
 function stored(token: string | undefined): AuthConfig {

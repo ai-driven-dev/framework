@@ -1,8 +1,8 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AuthConfig } from "../../src/runtime/auth/auth.js";
-import { AuthStorage } from "../../src/runtime/auth/auth-storage.js";
+import type { AuthConfig } from "../../src/contexts/auth/domain/auth.js";
+import { AuthStorage } from "../../src/contexts/auth/infrastructure/auth-storage.js";
 
 export async function makeTempAuthStorage(prefix: string): Promise<{
   tempDir: string;
@@ -10,9 +10,7 @@ export async function makeTempAuthStorage(prefix: string): Promise<{
   cleanup: () => Promise<void>;
 }> {
   const tempDir = await mkdtemp(join(tmpdir(), `${prefix}-`));
-  const real = new AuthStorage();
-  const storage = Object.create(real) as AuthStorage;
-  storage.userConfigPath = () => join(tempDir, "user-auth.json");
+  const storage = new AuthStorage(() => tempDir);
   return {
     tempDir,
     storage,

@@ -120,6 +120,10 @@ export const ALLOWED = new Set([
   "framework->tools",
   "framework->distribution",
   "translate->tools",
+  // The token a fetch carries (`contract/token-provider.ts`), until each of the two splits
+  // from the host of the doctor and setup scenarios.
+  "distribution->auth",
+  "framework->auth",
 ]);
 
 /**
@@ -136,14 +140,14 @@ export const BASELINE: readonly {
   { edge: "distribution->framework", imports: 1, files: 1 },
   // The http client, the git token injection, the user-config directory and `atomicWriteFile`
   // are concrete: a real dependency on runtime, resolved by inverting them into ports.
-  { edge: "distribution->runtime", imports: 5, files: 3 },
+  { edge: "distribution->runtime", imports: 3, files: 2 },
   // Three framework orchestrators still name the prompt classes they are handed, type-only.
   // Inverting them into a port is a design change, so the edge is measured rather than moved.
   { edge: "framework->presentation", imports: 4, files: 3 },
   // Token provider, platform and latest-release resolver: interfaces a context may depend on,
   // sitting in the wrong place — a port two contexts need belongs in the kernel. Nothing
   // concrete crosses here.
-  { edge: "framework->runtime", imports: 8, files: 7 },
+  { edge: "framework->runtime", imports: 6, files: 6 },
 ];
 
 export function contextOf(file: string): string {
@@ -167,12 +171,13 @@ interface Crossing {
   readonly file: string;
   readonly from: string;
   readonly to: string;
-  /** `domain`, `application` or `infrastructure` — null when `file` is not itself under a
-   * context's own layer split (kernel, shared, presentation, runtime). */
-  readonly layer: "domain" | "application" | "infrastructure" | null;
+  /** `domain`, `application`, `infrastructure`, or a migrated context's `ports` or `contract`
+   * or null when `file` is not itself under a context's own layer split (kernel, shared,
+   * presentation, runtime). */
+  readonly layer: "domain" | "application" | "infrastructure" | "ports" | "contract" | null;
 }
 
-const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure)\//;
+const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure|ports|contract)\//;
 
 /** Whether an import from one layer to another is an edge worth naming. Presentation and
  * runtime may reach down, so only the reverse is one. */

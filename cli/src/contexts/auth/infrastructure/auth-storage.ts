@@ -1,10 +1,9 @@
 import { execFileSync } from "node:child_process";
 import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { AuthStorageError } from "../../kernel/errors.js";
-import { AIDD_DIR } from "../../kernel/paths.js";
-import { userConfigDir } from "../user-config-dir.js";
-import type { AuthConfig, AuthCredential, AuthLevel } from "./auth.js";
+import { AuthStorageError } from "../../../kernel/errors.js";
+import { AIDD_DIR } from "../../../kernel/paths.js";
+import type { AuthConfig, AuthCredential, AuthLevel } from "../domain/auth.js";
 
 interface SaveOptions {
   credential: AuthCredential;
@@ -15,8 +14,10 @@ interface SaveOptions {
 export class AuthStorage {
   private static readonly AUTH_FILE = "auth.json";
 
+  constructor(private readonly userConfigDir: () => string) {}
+
   userConfigPath(): string {
-    return join(userConfigDir(), AuthStorage.AUTH_FILE);
+    return join(this.userConfigDir(), AuthStorage.AUTH_FILE);
   }
 
   projectConfigPath(projectRoot: string): string {

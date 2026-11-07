@@ -141,6 +141,12 @@ describe("replacing a file", () => {
     await expect(storage.replace(path, "x")).rejects.toThrow();
     expect(await readdir(dir)).toEqual([]);
   });
+
+  it("reports the write that failed, not the cleanup of a temporary that never existed", async () => {
+    const path = join(dir, "missing", "f.json");
+
+    await expect(storage.replace(path, "x")).rejects.toMatchObject({ syscall: "open" });
+  });
 });
 
 describe("appending to a file", () => {

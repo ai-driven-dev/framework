@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { AuthConfig } from "../../../src/runtime/auth/auth.js";
-import { AuthReaderAdapter } from "../../../src/runtime/auth/auth-reader-adapter.js";
-import type { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
-import type { TokenResolver } from "../../../src/runtime/auth/ports/oauth-provider.js";
+import type { AuthConfig } from "../../../../src/contexts/auth/domain/auth.js";
+import { AuthReaderAdapter } from "../../../../src/contexts/auth/infrastructure/auth-reader-adapter.js";
+import type { CredentialFileStore } from "../../../../src/contexts/auth/ports/credential-file-store.js";
+import type { TokenResolver } from "../../../../src/contexts/auth/ports/oauth-provider.js";
 
 function makeStorage(
   overrides: Partial<{
     projectConfig: AuthConfig | null;
     userConfig: AuthConfig | null;
   }> = {}
-): AuthStorage {
+): CredentialFileStore {
   const projectConfig = overrides.projectConfig ?? null;
   const userConfig = overrides.userConfig ?? null;
   return {
@@ -24,7 +24,7 @@ function makeStorage(
     delete: async () => {},
     save: async () => {},
     readActive: async () => null,
-  } as AuthStorage;
+  } as CredentialFileStore;
 }
 
 function makeExternalProvider(token: string | null): TokenResolver {
@@ -239,7 +239,7 @@ describe("AuthReaderAdapter", () => {
   describe("memoization", () => {
     it("calls storage read only once across multiple resolve() calls", async () => {
       let readCount = 0;
-      const storage: AuthStorage = {
+      const storage: CredentialFileStore = {
         userConfigPath: () => "/home/user/.config/aidd/auth.json",
         projectConfigPath: (_root: string) => "/project/.aidd/auth.json",
         read: async () => {
@@ -250,7 +250,7 @@ describe("AuthReaderAdapter", () => {
         delete: async () => {},
         save: async () => {},
         readActive: async () => null,
-      } as AuthStorage;
+      } as CredentialFileStore;
       const reader = new AuthReaderAdapter(storage, "/project");
       await withEnv({ AIDD_TOKEN: undefined }, async () => {
         await reader.resolve();

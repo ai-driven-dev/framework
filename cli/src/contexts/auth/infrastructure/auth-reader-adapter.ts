@@ -1,8 +1,8 @@
-import type { Logger } from "../../kernel/ports/logger.js";
-import type { AuthConfig, AuthLevel, AuthMethod } from "./auth.js";
-import type { AuthStorage } from "./auth-storage.js";
-import type { TokenResolver } from "./ports/oauth-provider.js";
-import type { TokenProvider } from "./ports/token-provider.js";
+import type { Logger } from "../../../kernel/ports/logger.js";
+import type { TokenProvider } from "../contract/token-provider.js";
+import type { AuthConfig, AuthLevel, AuthMethod } from "../domain/auth.js";
+import type { CredentialFileStore } from "../ports/credential-file-store.js";
+import type { TokenResolver } from "../ports/oauth-provider.js";
 
 export interface AuthContext {
   token: string;
@@ -16,7 +16,7 @@ export class AuthReaderAdapter implements TokenProvider {
   private cached?: Promise<string | null>;
 
   constructor(
-    private readonly storage: AuthStorage,
+    private readonly storage: CredentialFileStore,
     private readonly projectRoot: string,
     private readonly logger?: Logger,
     private readonly externalProvider: TokenResolver = noopExternalProvider,

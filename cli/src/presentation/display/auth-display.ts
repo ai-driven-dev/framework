@@ -1,5 +1,5 @@
-import type { AuthLevel } from "../../runtime/auth/auth.js";
-import type { AuthLogoutResult, AuthStatus } from "../../runtime/auth/ports/credential-store.js";
+import type { AuthLevel } from "../../contexts/auth/domain/auth.js";
+import type { AuthLogoutResult, AuthStatus } from "../../contexts/auth/ports/credential-store.js";
 import type { CLIOutput } from "../output.js";
 
 export function printAuthenticated(output: CLIOutput, login: string, level: AuthLevel): void {

@@ -8,8 +8,8 @@ import {
   HttpNotFoundError,
 } from "../../../kernel/errors.js";
 import type { PluginSourceGitHub } from "../../../kernel/source.js";
-import type { TokenProvider } from "../../../runtime/auth/ports/token-provider.js";
 import type { HttpGet } from "../../../shared/ports/http-get.js";
+import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import type { RawCatalogFetcher } from "../domain/ports/raw-catalog-fetcher.js";
 
 const GITHUB_API_BASE = "https://api.github.com";

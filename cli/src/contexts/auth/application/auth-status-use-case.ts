@@ -1,4 +1,4 @@
-import type { AuthStatus, CredentialStore } from "./ports/credential-store.js";
+import type { AuthStatus, CredentialStore } from "../ports/credential-store.js";
 
 export class AuthStatusUseCase {
   constructor(private readonly authProvider: CredentialStore) {}

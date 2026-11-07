@@ -6,8 +6,8 @@ How identity and access work. No user accounts: one GitHub token gates private m
 
 - Commands: `aidd auth login | logout | status` (`src/presentation/commands/auth.ts`).
 - Method per stored config: `stored` (a token in `auth.json`) or `external` (resolved from `gh auth token` at read time). There is no `gh` method.
-- Resolution order (`src/runtime/auth/auth-reader-adapter.ts`), first hit wins: `AIDD_TOKEN`, project `.aidd/auth.json`, user config `auth.json`, else none. An `external` config is resolved at its own level, not as a final fallback.
-- Storage (`src/runtime/auth/auth-storage.ts`): project `<root>/.aidd/auth.json`, user under the config dir, which `AIDD_USER_CONFIG_DIR` moves — that is how the suites stay out of a real profile.
+- Resolution order (`src/contexts/auth/infrastructure/auth-reader-adapter.ts`), first hit wins: `AIDD_TOKEN`, project `.aidd/auth.json`, user config `auth.json`, else none. An `external` config is resolved at its own level, not as a final fallback.
+- Storage (`src/contexts/auth/infrastructure/auth-storage.ts`): project `<root>/.aidd/auth.json`, user under the config dir, which `AIDD_USER_CONFIG_DIR` moves — that is how the suites stay out of a real profile.
 - Shape: `{ version: 1, createdAt, method, token?, provider?, level }`. A file missing `version` or `createdAt` reads as null, so a hand-written one authenticates nobody.
 - The file is written `0600` on POSIX, `icacls /inheritance:r` on win32. Failing to restrict throws rather than leaving a world-readable credential.
 

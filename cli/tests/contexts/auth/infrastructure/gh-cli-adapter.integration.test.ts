@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { describe, expect, it, vi } from "vitest";
-import { GhCliAdapter } from "../../../src/runtime/auth/gh-cli-adapter.js";
+import { GhCliAdapter } from "../../../../src/contexts/auth/infrastructure/gh-cli-adapter.js";
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),

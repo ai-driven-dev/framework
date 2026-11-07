@@ -1,4 +1,4 @@
-import type { AuthConfig, AuthCredential, AuthLevel } from "../auth.js";
+import type { AuthConfig, AuthCredential, AuthLevel } from "../domain/auth.js";
 
 export interface CredentialFileSaveOptions {
   credential: AuthCredential;

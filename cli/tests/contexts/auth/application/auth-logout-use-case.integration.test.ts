@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { AuthLogoutUseCase } from "../../../src/runtime/auth/auth-logout-use-case.js";
-import { AuthProviderAdapter } from "../../../src/runtime/auth/auth-provider-adapter.js";
-import type { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
-import { GhCliAdapter } from "../../../src/runtime/auth/gh-cli-adapter.js";
-import type { CredentialStore } from "../../../src/runtime/auth/ports/credential-store.js";
-import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
-import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
-import { makeAuthConfig, makeTempAuthStorage } from "../../helpers/auth.js";
+import { AuthLogoutUseCase } from "../../../../src/contexts/auth/application/auth-logout-use-case.js";
+import { AuthProviderAdapter } from "../../../../src/contexts/auth/infrastructure/auth-provider-adapter.js";
+import type { AuthStorage } from "../../../../src/contexts/auth/infrastructure/auth-storage.js";
+import { GhCliAdapter } from "../../../../src/contexts/auth/infrastructure/gh-cli-adapter.js";
+import type { CredentialStore } from "../../../../src/contexts/auth/ports/credential-store.js";
+import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
+import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
+import { makeAuthConfig, makeTempAuthStorage } from "../../../helpers/auth.js";
 
 describe("auth logout", () => {
   let tempDir: string;

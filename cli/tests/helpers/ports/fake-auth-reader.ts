@@ -1,4 +1,4 @@
-import type { TokenProvider } from "../../../src/runtime/auth/ports/token-provider.js";
+import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
 
 /** Returns a scripted token (or null) — no disk reads. */
 export class FakeAuthReader implements TokenProvider {

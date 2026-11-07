@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { AuthenticationError } from "../../../src/kernel/errors.js";
-import type { AuthConfig } from "../../../src/runtime/auth/auth.js";
-import { AuthProviderAdapter } from "../../../src/runtime/auth/auth-provider-adapter.js";
+import type { AuthConfig } from "../../../../src/contexts/auth/domain/auth.js";
+import { AuthProviderAdapter } from "../../../../src/contexts/auth/infrastructure/auth-provider-adapter.js";
 import type {
   CredentialFileSaveOptions,
   CredentialFileStore,
-} from "../../../src/runtime/auth/ports/credential-file-store.js";
+} from "../../../../src/contexts/auth/ports/credential-file-store.js";
 import type {
   CliAuthProvider,
   TokenAuthProvider,
-} from "../../../src/runtime/auth/ports/oauth-provider.js";
+} from "../../../../src/contexts/auth/ports/oauth-provider.js";
+import { AuthenticationError } from "../../../../src/kernel/errors.js";
 
 const PROJECT_ROOT = "/work/project";
 

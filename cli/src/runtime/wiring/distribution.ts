@@ -1,3 +1,4 @@
+import type { AuthReaderAdapter } from "../../contexts/auth/infrastructure/auth-reader-adapter.js";
 import { FetchMarketplaceSourceUseCase } from "../../contexts/distribution/application/fetch-marketplace-source-use-case.js";
 import { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
@@ -19,7 +20,6 @@ import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../kernel/ports/hasher.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { HttpClient } from "../../shared/infrastructure/http-client.js";
-import type { AuthReaderAdapter } from "../auth/auth-reader-adapter.js";
 import { userConfigDir } from "../user-config-dir.js";
 
 export interface DistributionWiringShared {

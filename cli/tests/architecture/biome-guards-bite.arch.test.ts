@@ -121,6 +121,9 @@ describe("the guard itself", () => {
       "src/shared/ports",
       "src/shared/infrastructure",
       "src/contexts/tools/domain",
+      "src/contexts/auth/contract",
+      "src/contexts/auth/domain",
+      "src/contexts/distribution/infrastructure",
     ]) {
       mkdirSync(join(planted, dir), { recursive: true });
     }
@@ -164,6 +167,24 @@ describe("the guard itself", () => {
     writeFileSync(
       join(planted, "src/contexts/tools/domain/registry.ts"),
       "export type Registry = number;\n"
+    );
+    writeFileSync(
+      join(planted, "src/contexts/auth/contract/token-provider.ts"),
+      "export type TokenProvider = number;\n"
+    );
+    const reachesAuth = (up: string): string =>
+      `import type { TokenProvider } from "${up}auth/contract/token-provider.js";\nexport type Provider = TokenProvider;\n`;
+    writeFileSync(
+      join(planted, "src/contexts/tools/domain/reaches-auth.ts"),
+      reachesAuth("../../")
+    );
+    writeFileSync(
+      join(planted, "src/contexts/distribution/infrastructure/reaches-auth.ts"),
+      reachesAuth("../../")
+    );
+    writeFileSync(
+      join(planted, "src/contexts/auth/domain/reaches-tools.ts"),
+      'import type { Registry } from "../../tools/domain/registry.js";\nexport type Reached = Registry;\n'
     );
     const reachesSharedInfrastructure = (up: string): string =>
       `import type { HttpClient } from "${up}shared/infrastructure/http-client.js";\nexport type Client = HttpClient;\n`;
@@ -256,6 +277,21 @@ describe("the guard itself", () => {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
     expect(findings).not.toContain(`src/runtime/wiring/reaches-shared.ts:${rule}`);
+  });
+
+  it("flags a context nothing admits reaching auth, and auth reaching a context, and not distribution reaching auth", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    expect(findings, findings.join(", ")).toContain(
+      `src/contexts/tools/domain/reaches-auth.ts:${rule}`
+    );
+    expect(findings, findings.join(", ")).toContain(
+      `src/contexts/auth/domain/reaches-tools.ts:${rule}`
+    );
+    expect(findings).not.toContain(
+      `src/contexts/distribution/infrastructure/reaches-auth.ts:${rule}`
+    );
   });
 
   it("flags the process global in shared/ports and process.exit in shared/infrastructure", () => {

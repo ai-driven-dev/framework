@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { AuthenticationError } from "../../../src/kernel/errors.js";
-import type { AuthCredential, AuthLevel } from "../../../src/runtime/auth/auth.js";
-import { AuthLoginUseCase } from "../../../src/runtime/auth/auth-login-use-case.js";
-import type { CredentialStore } from "../../../src/runtime/auth/ports/credential-store.js";
+import { AuthLoginUseCase } from "../../../../src/contexts/auth/application/auth-login-use-case.js";
+import type { AuthCredential, AuthLevel } from "../../../../src/contexts/auth/domain/auth.js";
+import type { CredentialStore } from "../../../../src/contexts/auth/ports/credential-store.js";
+import { AuthenticationError } from "../../../../src/kernel/errors.js";
 
 describe("auth login", () => {
   function makeCredentialStore(login: string): CredentialStore {
