@@ -3,8 +3,8 @@
  * have died were never generated. `mutation-scopes.json` declares the globs, the floor each
  * scope must hold, and what is left out, so a directory belonging to neither fails by name.
  */
-import { existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { HARNESS, scopesToRun } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
@@ -116,6 +116,22 @@ describe("mutation covers every source file", () => {
   });
 });
 
+/** The helpers a mutation config text loads, and how many times it names `tests/helpers/`. */
+function helpersLoadedBy(config: string): { files: string[]; mentions: number } {
+  const specifier = /["'`](?:\.\/)?tests\/helpers\/([\w./-]+?)(?:\.(?:js|ts|mjs|cjs))?["'`]/g;
+  const files = [...config.matchAll(specifier)].map((match) => `cli/tests/helpers/${match[1]}.ts`);
+  return { files, mentions: config.split("tests/helpers/").length - 1 };
+}
+
+/** The repository files the loaded helpers import relatively, one level deep. */
+function importedBy(files: readonly string[]): string[] {
+  return files.flatMap((file) =>
+    [
+      ...readFileSync(join(REPO_ROOT, file), "utf8").matchAll(/from\s+["'](\.{1,2}\/[^"']+)["']/g),
+    ].map((match) => join(dirname(file), (match[1] ?? "").replace(/\.(?:js|mjs|cjs)$/, ".ts")))
+  );
+}
+
 describe("the guard itself", () => {
   it("rejects a canary run that skipped its covering test or ran a neighbour", () => {
     const mutant = {
@@ -226,23 +242,26 @@ describe("the guard itself", () => {
     canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100 },
   };
 
-  it.each([
-    ".github/workflows/cli-ci.yml",
-    "cli/scripts/mutation-scopes-to-run.mjs",
-    "cli/tests/helpers/repository-root.ts",
-  ])("runs no scope of its own for %s, a tooling change", (file) => {
-    expect(scopesToRun([file], withCanary)).toEqual([]);
-  });
-
-  it.each(["cli/pnpm-lock.yaml", "cli/package.json"])(
-    "runs the canary scope only for %s, a dependency change",
+  it.each(["cli/scripts/mutation-scopes-to-run.mjs", "cli/tests/helpers/repository-root.ts"])(
+    "runs no scope of its own for %s, a tooling change",
     (file) => {
-      expect(scopesToRun([file], withCanary)).toEqual(["canary"]);
+      expect(scopesToRun([file], withCanary)).toEqual([]);
     }
   );
 
-  it("runs no scope for a dependency change when no canary scope is declared", () => {
+  it.each([
+    "cli/pnpm-lock.yaml",
+    "cli/package.json",
+    "cli/pnpm-workspace.yaml",
+    "cli/patches/@stryker-mutator__vitest-runner@10.0.0.patch",
+    ".github/workflows/cli-ci.yml",
+  ])("runs the canary scope only for %s, a dependency or workflow change", (file) => {
+    expect(scopesToRun([file], withCanary)).toEqual(["canary"]);
+  });
+
+  it("runs no scope for a dependency or workflow change when no canary scope is declared", () => {
     expect(scopesToRun(["cli/pnpm-lock.yaml"], scopes)).toEqual([]);
+    expect(scopesToRun([".github/workflows/cli-ci.yml"], scopes)).toEqual([]);
   });
 
   it("a tooling change beside a source change runs that source's scope only", () => {
@@ -250,7 +269,7 @@ describe("the guard itself", () => {
       "kernel",
     ]);
     expect(
-      scopesToRun([".github/workflows/cli-ci.yml", "cli/src/kernel/paths.ts"], withCanary)
+      scopesToRun(["cli/scripts/mutation-scopes-to-run.mjs", "cli/src/kernel/paths.ts"], withCanary)
     ).toEqual(["kernel"]);
   });
 
@@ -265,13 +284,21 @@ describe("the guard itself", () => {
     expect(Object.keys(declaration().scopes)).toContain("canary");
   });
 
-  it("every helper the mutation config loads reshapes every scope", () => {
-    const config = read("vitest.mutation.config.ts");
-    const loaded = [...config.matchAll(/\.\/tests\/helpers\/([\w.-]+?)(?:\.js|\.ts)["']/g)].map(
-      (match) => `cli/tests/helpers/${match[1]}.ts`
-    );
-    expect(new Set(loaded).size).toBeGreaterThanOrEqual(4);
-    for (const file of new Set(loaded)) {
+  it.each([
+    ["no ./ prefix", 'globalSetup: ["tests/helpers/a.ts"]', "cli/tests/helpers/a.ts"],
+    ["a subfolder", 'import "./tests/helpers/sub/a.js";', "cli/tests/helpers/sub/a.ts"],
+    ["no extension", 'import "./tests/helpers/a";', "cli/tests/helpers/a.ts"],
+    ["a backtick string", "globalSetup: [`./tests/helpers/a.ts`]", "cli/tests/helpers/a.ts"],
+    ["an .mjs extension", 'import "./tests/helpers/a.mjs";', "cli/tests/helpers/a.ts"],
+  ])("sees a helper the mutation config names with %s", (_style, text, expected) => {
+    expect(helpersLoadedBy(text).files).toEqual([expected]);
+  });
+
+  it("every helper the mutation config loads reshapes every scope, and so does what it imports", () => {
+    const { files, mentions } = helpersLoadedBy(read("vitest.mutation.config.ts"));
+    expect(files.length, "a helper style the matcher cannot see").toBe(mentions);
+    expect(new Set(files).size).toBeGreaterThanOrEqual(4);
+    for (const file of new Set([...files, ...importedBy(files)])) {
       expect(HARNESS, `${file} is loaded by the mutation config`).toContain(file);
       expect(scopesToRun([file], scopes)).toEqual(["kernel", "tools"]);
     }

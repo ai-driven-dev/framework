@@ -23,25 +23,29 @@ export const HARNESS = [
 ];
 
 /**
- * Dependency files. Each leg is incremental, so a dependency change replays almost no mutant;
- * drift through a dependency is replayed by the weekly `--force` run on `main`, after promotion.
- * The `canary` scope exists to catch a Stryker or Vitest upgrade, and nothing else checks that
- * before promotion, so a dependency change runs `canary` (about half a job-minute) and no other
- * scope of its own.
+ * These run `canary` alone: a Stryker or Vitest upgrade is caught nowhere else before promotion,
+ * and incremental legs replay nothing else.
  */
-const DEPENDENCIES = ["cli/package.json", "cli/pnpm-lock.yaml"];
-const DEPENDENCY_SCOPE = "canary";
+const CANARY_TRIGGERS = [
+  "cli/package.json",
+  "cli/pnpm-lock.yaml",
+  "cli/pnpm-workspace.yaml",
+  ".github/workflows/cli-ci.yml",
+];
+const CANARY_PREFIXES = ["cli/patches/"];
+const CANARY_SCOPE = "canary";
 
-/** A scope runs when its source or its mirrored tests changed, or when the mutation setup did.
- * A dependency, workflow, selector or other test-helper change runs only what its own files
- * touch, plus `canary` for a dependency. With no usable diff, every scope runs. */
+/** A scope runs when its source, mirrored tests or the mutation setup changed; a dependency or
+ * workflow change adds `canary`. With no usable diff, every scope runs. */
 export function scopesToRun(changed, scopes, { all = false } = {}) {
   const everything = all || changed.some((file) => HARNESS.includes(file));
-  const dependencies = changed.some((file) => DEPENDENCIES.includes(file));
+  const canary = changed.some(
+    (file) => CANARY_TRIGGERS.includes(file) || CANARY_PREFIXES.some((p) => file.startsWith(p))
+  );
   return Object.entries(scopes)
     .filter(
       ([name, { mutate }]) =>
-        (dependencies && name === DEPENDENCY_SCOPE) ||
+        (canary && name === CANARY_SCOPE) ||
         [mutate].flat().some((glob) => {
           if (glob.startsWith("!")) return false;
           const source = `cli/${glob.slice(0, glob.indexOf("/**"))}/`;
