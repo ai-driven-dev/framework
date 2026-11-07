@@ -150,7 +150,12 @@ function cubicBezierProblem(value) {
 
 function fontFamilyProblem(value) {
   const valid = typeof value === "string" || (Array.isArray(value) && value.length > 0 && value.every((name) => typeof name === "string"));
-  return valid ? null : bad("fontFamily is a name or a list of names", "write a name, or a list of names");
+  if (!valid) return bad("fontFamily is a name or a list of names", "write a name, or a list of names");
+  // A name holding commas is a stack written as one string: CSS quotes it and finds no such family.
+  const joined = [value].flat().find((name) => name.includes(","));
+  if (joined === undefined) return null;
+  const names = joined.split(",").map((name) => name.trim());
+  return bad(`fontFamily ${JSON.stringify(joined)} is one name, which CSS finds nowhere`, `write it as the list ${JSON.stringify(names)}`);
 }
 
 const SHAPES = {
