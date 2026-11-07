@@ -2,12 +2,11 @@ name: OpenCode agent
 
 # Lets the repository owner hand work to OpenCode from a comment starting with `/opencode`, on an
 # issue, a pull request, or a line-level review. On a pull request the agent's changes land on
-# its branch; on an issue they land on a new branch with a pull request to `next`. The agent's
-# reply is posted back as a comment.
+# its branch; on an issue they land on a new branch with a pull request to the configured
+# base branch. The agent's reply is posted back as a comment.
 #
-# Only one account can trigger it. The repository is public, so any comment would otherwise
-# spend the subscription and feed untrusted text to an agent. The check is on the numeric
-# user id, not the login, because a login can be renamed and reclaimed.
+# Only the account configured by numeric ID can trigger it. The repository is public, so
+# any comment would otherwise spend the subscription and feed untrusted text to an agent.
 #
 # OpenCode v2 has no GitHub integration of its own, so this workflow follows the documented CI
 # recipe (`opencode run --standalone` with the key as a secret) and commits, pushes and replies
@@ -29,8 +28,7 @@ permissions: {}
 jobs:
   opencode:
     name: Run OpenCode
-    # 8973343 is @alexsoyes (Alex), the repository owner.
-    if: github.event.comment.user.id == 8973343 && startsWith(github.event.comment.body, '/opencode')
+    if: vars.OPENCODE_REVIEWER_ID != '' && format('{0}', github.event.comment.user.id) == vars.OPENCODE_REVIEWER_ID && startsWith(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -40,7 +38,19 @@ jobs:
       REPO: ${{ github.repository }}
       NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
       IS_PR: ${{ github.event.issue.pull_request != null || github.event.pull_request != null }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      BASE_BRANCH: ${{ vars.OPENCODE_BASE_BRANCH || github.event.repository.default_branch }}
     steps:
+      - name: Validate the authorized user ID
+        env:
+          OPENCODE_REVIEWER_ID: ${{ vars.OPENCODE_REVIEWER_ID }}
+        run: |
+          id=$OPENCODE_REVIEWER_ID
+          [[ $id =~ ^[1-9][0-9]*$ ]] &&
+            { (( ${#id} < 16 )) || { (( ${#id} == 16 )) && [[ $id < 9007199254740992 ]]; }; } || {
+              echo '::error::OPENCODE_REVIEWER_ID must be a positive, exactly representable GitHub user ID.'
+              exit 1
+            }
       # The image must come from the default branch, never the PR being edited.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -96,7 +106,7 @@ jobs:
       - name: Run OpenCode
         id: agent
         env:
-          MODEL: opencode-go/beam-free
+          MODEL: ${{ vars.OPENCODE_AGENT_MODEL || 'opencode-go/beam-free' }}
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
           # Load the isolated AIDD installation, but not the PR's executable configuration.

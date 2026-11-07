@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   review:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on:
       group: aidd-opencode-review
     timeout-minutes: 60
@@ -44,4 +44,6 @@ jobs:
           REVIEW_BOT_LOGIN: ${{ steps.app-token.outputs.app-slug }}[bot]
           REVIEW_MODEL_RUNNER: /opt/aidd/run-review
           AIDD_REVIEW_ENABLED_AT: ${{ vars.AIDD_REVIEW_ENABLED_AT }}
+          OPENCODE_REVIEWER_ID: ${{ vars.OPENCODE_REVIEWER_ID }}
+          OPENCODE_REVIEW_MODEL: ${{ vars.OPENCODE_REVIEW_MODEL || 'openai/gpt-6.1-terra#medium' }}
         run: bash scripts/pr-review/discover.sh

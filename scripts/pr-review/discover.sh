@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Find unprocessed review submissions and dispatch them in order.
 set -euo pipefail
+reviewer=${OPENCODE_REVIEWER_ID:-}
+[[ $reviewer =~ ^[1-9][0-9]*$ ]] &&
+  { (( ${#reviewer} < 16 )) || { (( ${#reviewer} == 16 )) && [[ $reviewer < 9007199254740992 ]]; }; } || {
+    echo '::error::OPENCODE_REVIEWER_ID must be a positive, exactly representable GitHub user ID.'; exit 1;
+  }
 [[ ${AIDD_REVIEW_ENABLED_AT:-} =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] &&
   jq -en --arg value "$AIDD_REVIEW_ENABLED_AT" \
     'try ($value | fromdateiso8601 | todateiso8601 == $value) catch false' >/dev/null || {
@@ -16,8 +21,8 @@ while IFS= read -r pr; do
   if ! reviews=$(gh api --paginate "$root/pulls/$pr/reviews?per_page=100" | jq -sc 'add // []'); then
     echo "::error::Could not list reviews for PR #$pr."; failed=1; continue
   fi
-  if ! jq -e --arg since "$AIDD_REVIEW_ENABLED_AT" '
-      any(.[]; .user.id == 8973343 and (.submitted_at | type) == "string" and .submitted_at >= $since)
+  if ! jq -e --arg since "$AIDD_REVIEW_ENABLED_AT" --arg reviewer "$reviewer" '
+      any(.[]; (.user.id | tostring) == $reviewer and (.submitted_at | type) == "string" and .submitted_at >= $since)
     ' <<<"$reviews" >/dev/null; then continue; fi
   if ! comments=$(gh api --paginate "$root/issues/$pr/comments?per_page=100" | jq -sc 'add // []'); then
     echo "::error::Could not list comments for PR #$pr."; failed=1; continue
@@ -32,8 +37,8 @@ while IFS= read -r pr; do
     | group_by(.state.review_id) | map(max_by([(.state.revision // 0), .id]))
     | map(select(.state.pending == false) | .state.review_id)' <<<"$comments")
   jq -r --argjson completed "$completed" \
-    --arg pr "$pr" --arg since "$AIDD_REVIEW_ENABLED_AT" '
-    .[] | select(.user.id == 8973343 and (.submitted_at | type) == "string" and .submitted_at >= $since)
+    --arg pr "$pr" --arg since "$AIDD_REVIEW_ENABLED_AT" --arg reviewer "$reviewer" '
+    .[] | select((.user.id | tostring) == $reviewer and (.submitted_at | type) == "string" and .submitted_at >= $since)
     | (.id | tostring) as $id | select(($completed | index($id)) == null)
     | [.submitted_at, $id, $pr] | @tsv' <<<"$reviews" >> "$queue"
 done < <(jq -r '.[].number' <<<"$prs")

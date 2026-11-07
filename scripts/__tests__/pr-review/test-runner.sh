@@ -7,6 +7,7 @@ docker run --rm -i --user root --cap-drop ALL --cap-add SETUID --cap-add SETGID 
   --cap-add CHOWN --cap-add AUDIT_WRITE --cap-add DAC_OVERRIDE --cap-add KILL \
   --entrypoint bash "$image" -s <<'CONTAINER'
 set -euo pipefail
+cp /opt/aidd/model.sh /tmp/real-model.sh
 cat > /usr/bin/gh <<'GH'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -17,6 +18,7 @@ chmod 755 /usr/bin/gh
 cat > /opt/aidd/model.sh <<'MODEL'
 #!/usr/bin/env bash
 set -euo pipefail
+[[ ${OPENCODE_REVIEW_MODEL:-} == 'other-provider/another-model#medium' ]] || { echo 'Configured review model was not propagated' >&2; exit 1; }
 export REVIEW_REPO="$1/source"
 [[ $(stat -c '%u' "$REVIEW_REPO") == 0 ]] || { echo 'Review checkout is not owned by root' >&2; exit 1; }
 /opt/aidd/bin/git diff "$REVIEW_BASE" "$REVIEW_HEAD" > /tmp/review-git-out
@@ -69,9 +71,74 @@ outside=$(runuser -u runner -- git -C "$work/input/source" rev-parse HEAD)
 runuser -u runner -- git -C "$work/input/source" checkout -q --detach "$head"
 printf '%s\n' "$outside" | runuser -u runner -- sh -c 'cat > "$1/review-input/outside-sha.txt"' _ "$work/input"
 runuser -u runner -- sh -c 'printf "[]\n" > "$1/manifest.json"' _ "$work"
-request=$(jq -n --arg work "$work" --arg base "$base" --arg head "$head" '{work:$work,repo:"test/repo",pr:"8",base:$base,head:$head}')
-printf '%s\n' "$request" | runuser -u runner -- sh -c 'cat > /var/lib/aidd-review/inbox/request.json'
-printf 'synthetic-read-token\n' | runuser -u runner -- sudo -n /opt/aidd/dispatch
-jq -e '.report == "fixture"' /var/lib/aidd-review/result.json >/dev/null
+# Exercise run-review -> dispatch with a synthetic installer and a complete trusted checkout.
+cat > /opt/aidd/setup-project <<'SETUP'
+#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p "$2/.opencode/skills" "$2/.opencode/agents"
+SETUP
+chmod 755 /opt/aidd/setup-project
+mkdir -p "$work/trusted/scripts/pr-review" "$work/trusted/docker/aidd-opencode/runner"
+while IFS='|' read -r source image_file; do
+  cp "$image_file" "$work/trusted/$source"
+done <<'FILES'
+scripts/pr-review/model.sh|/opt/aidd/model.sh
+scripts/pr-review/setup-project.sh|/opt/aidd/setup-project
+docker/aidd-opencode/review-prompt.txt|/opt/aidd/review-prompt.txt
+docker/aidd-opencode/runner/Dockerfile|/opt/aidd/source/runner-Dockerfile
+docker/aidd-opencode/runner/Dockerfile.dockerignore|/opt/aidd/source/runner-Dockerfile.dockerignore
+docker/aidd-opencode/runner/policy.json|/etc/opencode/opencode.json
+docker/aidd-opencode/runner/git|/opt/aidd/bin/git
+docker/aidd-opencode/runner/gh|/opt/aidd/bin/gh
+docker/aidd-opencode/runner/gh-read|/opt/aidd/gh-read
+docker/aidd-opencode/runner/dispatch.sh|/opt/aidd/dispatch
+docker/aidd-opencode/runner/run-review.sh|/opt/aidd/run-review
+docker/aidd-opencode/runner/runner.sh|/opt/aidd/runner
+FILES
+runuser -u runner -- touch "$work/model-output.json"
+runuser -u runner -- env GH_REVIEW_TOKEN=synthetic-read-token GH_REPO=test/repo REVIEW_PR=8 \
+  REVIEW_BASE="$base" REVIEW_HEAD="$head" OPENCODE_REVIEW_MODEL='other-provider/another-model#medium' \
+  bash -c 'cd "$1"; /opt/aidd/run-review "$2/input" "$2/manifest.json" "$2/model-output.json"' _ "$work/trusted" "$work"
+jq -e '.report == "fixture"' "$work/model-output.json" >/dev/null
+request=$(jq -n --arg work "$work" --arg base "$base" --arg head "$head" '{work:$work,repo:"test/repo",pr:"8",base:$base,head:$head,model:"other-provider/another-model#medium"}')
+
+# The privileged dispatcher must reject options and control characters in model IDs.
+for bad in '-unsafe' $'vendor/model\n--unsafe'; do
+  request=$(jq --arg model "$bad" '.model = $model' <<<"$request")
+  printf '%s\n' "$request" | runuser -u runner -- sh -c 'cat > /var/lib/aidd-review/inbox/request.json'
+  if printf 'synthetic-read-token\n' | runuser -u runner -- sudo -n /opt/aidd/dispatch >/dev/null 2>&1; then
+    echo 'Invalid review model accepted' >&2; exit 1
+  fi
+done
+
+# Exercise model.sh itself against a fake OpenCode executable to check its argv.
+mkdir -p /tmp/model-case/source /tmp/model-case/review-input /tmp/model-output
+printf 'context\n' > /tmp/model-case/review-input/pr-context.txt
+printf '[]\n' > /tmp/model-case/manifest.json
+printf 'prompt\n' > /tmp/model-case/prompt.txt
+printf '{}\n' > /tmp/model-case/policy.json
+chmod -R a-w /tmp/model-case
+chown reviewer:reviewer /tmp/model-output
+cat > /tmp/fake-opencode <<'OPENCODE'
+#!/usr/bin/env bash
+set -euo pipefail
+found=0
+while (($#)); do
+  if [[ $1 == --model ]]; then shift; [[ ${1:-} == "$EXPECTED_MODEL" ]]; found=1; fi
+  shift
+done
+[[ $found == 1 ]]
+printf '%s\n' '{"type":"text","part":{"text":"Review complete.\nAIDD_REVIEW_COVERAGE_V1: {\"reviewed\":[]}"}}'
+OPENCODE
+chmod 755 /tmp/fake-opencode
+runuser -u reviewer -- env -i HOME=/home/aidd PATH=/usr/local/bin:/usr/bin:/bin \
+  GH_REPO=test/repo REVIEW_PR=8 REVIEW_BASE="$base" REVIEW_HEAD="$head" \
+  OPENCODE_REVIEW_MODEL='other-provider/another-model#medium' EXPECTED_MODEL='other-provider/another-model#medium' \
+  bash -c 'source /tmp/real-model.sh; model_main /tmp/model-case /tmp/model-case/manifest.json /tmp/model-output/result.json /tmp/model-case/policy.json /tmp/model-case/prompt.txt /tmp/fake-opencode'
+jq -e '.report == "Review complete."' /tmp/model-output/result.json >/dev/null
+runuser -u reviewer -- env -i HOME=/home/aidd PATH=/usr/local/bin:/usr/bin:/bin \
+  GH_REPO=test/repo REVIEW_PR=8 REVIEW_BASE="$base" REVIEW_HEAD="$head" \
+  EXPECTED_MODEL='openai/gpt-6.1-terra#medium' \
+  bash -c 'source /tmp/real-model.sh; model_main /tmp/model-case /tmp/model-case/manifest.json /tmp/model-output/result.json /tmp/model-case/policy.json /tmp/model-case/prompt.txt /tmp/fake-opencode'
 echo 'Git and GitHub read boundary tests passed'
 CONTAINER

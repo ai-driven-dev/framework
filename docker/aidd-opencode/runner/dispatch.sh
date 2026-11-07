@@ -15,6 +15,9 @@ repo=$(jq -r '.repo // empty' <<<"$request")
 pr=$(jq -r '.pr // empty' <<<"$request")
 base=$(jq -r '.base // empty' <<<"$request")
 head=$(jq -r '.head // empty' <<<"$request")
+model=$(jq -er '.model | select(type == "string" and length > 0 and length <= 256 and (startswith("-") | not) and (test("[[:cntrl:][:space:]]") | not))' <<<"$request") || {
+  echo 'Invalid review model' >&2; exit 1;
+}
 [[ $work =~ ^/tmp/aidd-review\.[[:alnum:]]{8}$ || $work =~ ^/home/runner/actions-runner/_work/_temp/aidd-review\.[[:alnum:]]{8}$ ]] || { echo 'Invalid review request' >&2; exit 1; }
 [[ $repo =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ && $pr =~ ^[1-9][0-9]*$ && $base =~ ^[0-9a-f]{40}$ && $head =~ ^[0-9a-f]{40}$ ]] || { echo 'Invalid review metadata' >&2; exit 1; }
 IFS= read -r read_token
@@ -53,7 +56,7 @@ unset read_token
 chmod 0400 "$job/token"
 chown runner:runner "$job/token"
 timeout --kill-after=10s 15m runuser -u reviewer -- env -i HOME=/home/aidd PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 \
-  AIDD_REVIEW_JOB="$job" GH_REPO="$repo" REVIEW_PR="$pr" REVIEW_BASE="$base" REVIEW_HEAD="$head" \
+  AIDD_REVIEW_JOB="$job" GH_REPO="$repo" REVIEW_PR="$pr" REVIEW_BASE="$base" REVIEW_HEAD="$head" OPENCODE_REVIEW_MODEL="$model" \
   /opt/aidd/model.sh "$job/incoming/workspace" "$job/incoming/manifest.json" "$job/out/result.json" 9>&-
 runuser -u reviewer -- test -f "$job/out/result.json"
 runuser -u reviewer -- test ! -L "$job/out/result.json"

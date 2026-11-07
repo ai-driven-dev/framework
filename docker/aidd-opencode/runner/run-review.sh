@@ -57,6 +57,7 @@ for kind in skills agents; do
   fi
 done
 jq -n --arg work "$work" --arg repo "$GH_REPO" --arg pr "$REVIEW_PR" --arg base "$REVIEW_BASE" --arg head "$REVIEW_HEAD" \
-  '{work:$work,repo:$repo,pr:$pr,base:$base,head:$head}' > "$inbox/request.json"
+  --arg model "${OPENCODE_REVIEW_MODEL:-openai/gpt-6.1-terra#medium}" \
+  '{work:$work,repo:$repo,pr:$pr,base:$base,head:$head,model:$model}' > "$inbox/request.json"
 printf '%s\n' "$GH_REVIEW_TOKEN" | sudo -n /opt/aidd/dispatch
 cat /var/lib/aidd-review/result.json > "$output"

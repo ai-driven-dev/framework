@@ -1,9 +1,0 @@
-[Unit]
-Description=AIDD OpenCode review resource boundary
-
-[Slice]
-CPUQuota=200%
-MemoryHigh=2G
-MemoryMax=3G
-MemorySwapMax=512M
-TasksMax=512

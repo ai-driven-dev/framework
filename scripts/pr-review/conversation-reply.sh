@@ -22,6 +22,17 @@ fi
 
 footer="No file changed."
 if [ -n "$(git status --porcelain)" ]; then
+  : "${DEFAULT_BRANCH:?DEFAULT_BRANCH is required}"
+  BASE_BRANCH=${BASE_BRANCH:-$DEFAULT_BRANCH}
+  for value in "$DEFAULT_BRANCH" "$BASE_BRANCH" "$BRANCH"; do
+    [[ $value != -* && $(git check-ref-format --branch "$value" 2>/dev/null) == "$value" ]] || {
+      echo '::error::Invalid configured or target branch.' >&2; exit 1;
+    }
+  done
+  case "$BRANCH" in
+    "$DEFAULT_BRANCH" | "$BASE_BRANCH")
+      echo '::error::Refusing to commit to a protected branch.' >&2; exit 1 ;;
+  esac
   bot_id="$(gh api "users/${APP_SLUG}%5Bbot%5D" --jq .id)"
   git config user.name "${APP_SLUG}[bot]"
   git config user.email "${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com"
@@ -34,7 +45,7 @@ if [ -n "$(git status --porcelain)" ]; then
   if [ "$IS_PR" != "true" ]; then
     url="$(gh pr list --repo "$REPO" --head "$BRANCH" --json url --jq '.[0].url // ""')"
     if [ -z "$url" ]; then
-      url="$(gh pr create --repo "$REPO" --base next --head "$BRANCH" \
+      url="$(gh pr create --repo "$REPO" --base "$BASE_BRANCH" --head "$BRANCH" \
         --title "chore: apply opencode request from #$NUMBER" \
         --body "Refs #$NUMBER. Opened by the OpenCode agent workflow.")"
     fi

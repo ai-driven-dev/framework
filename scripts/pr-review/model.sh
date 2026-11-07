@@ -5,6 +5,7 @@ set -euo pipefail
 model_main() (
   local workspace=$1 manifest=$2 output=$3 policy=$4 prompt_file=$5
   local opencode=${6:-/usr/local/bin/opencode}
+  local model=${OPENCODE_REVIEW_MODEL:-openai/gpt-6.1-terra#medium}
   local scratch report coverage setup_notes
   [[ -d $workspace/source && -r $workspace/review-input/pr-context.txt && -r $manifest && -r $policy && -r $prompt_file ]] || {
     echo 'Missing reviewer input' >&2; return 1;
@@ -36,7 +37,7 @@ model_main() (
   # Only the trusted git and gh wrappers are permitted by the system policy.
   export PATH="/opt/aidd/bin:/usr/local/bin:/usr/bin:/bin"
   if ! (cd "$workspace/source" && "$opencode" --standalone run --auto --format json \
-      --model 'openai/gpt-6.1-terra#medium' \
+      --model "$model" \
       "$(cat "$prompt_file")
 
 The submitted diff is between $REVIEW_BASE and $REVIEW_HEAD. Use git diff $REVIEW_BASE $REVIEW_HEAD and gh pr view $REVIEW_PR --repo $GH_REPO --comments; inline comments are available with gh api --paginate repos/$GH_REPO/pulls/$REVIEW_PR/comments?per_page=100.

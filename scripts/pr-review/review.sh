@@ -7,6 +7,11 @@ set -euo pipefail
 : "${GH_REVIEW_TOKEN:?GH_REVIEW_TOKEN is required}"
 : "${REVIEW_BOT_LOGIN:?REVIEW_BOT_LOGIN is required}"
 : "${REVIEW_MODEL_RUNNER:?REVIEW_MODEL_RUNNER is required}"
+reviewer=${OPENCODE_REVIEWER_ID:-}
+[[ $reviewer =~ ^[1-9][0-9]*$ ]] &&
+  { (( ${#reviewer} < 16 )) || { (( ${#reviewer} == 16 )) && [[ $reviewer < 9007199254740992 ]]; }; } || {
+    echo 'OPENCODE_REVIEWER_ID must be a positive, exactly representable GitHub user ID' >&2; exit 2;
+  }
 pr=${1:-} review_id=${2:-}
 [[ $# == 2 && $pr =~ ^[1-9][0-9]*$ && $review_id =~ ^[1-9][0-9]*$ ]] || { echo 'Usage: review.sh PR REVIEW_ID' >&2; exit 2; }
 [[ $GH_REPO =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || { echo 'Invalid repository' >&2; exit 2; }
@@ -16,7 +21,7 @@ pr=${1:-} review_id=${2:-}
 root="repos/$GH_REPO"
 submission=$(gh api "$root/pulls/$pr/reviews/$review_id")
 pr_data=$(gh api "$root/pulls/$pr")
-jq -e --argjson id "$review_id" '.id == $id and .user.id == 8973343 and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "COMMENTED" or .state == "DISMISSED")' <<<"$submission" >/dev/null || { echo 'Not a submitted review by Alex' >&2; exit 1; }
+jq -e --argjson id "$review_id" --arg reviewer "$reviewer" '.id == $id and (.user.id | tostring) == $reviewer and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "COMMENTED" or .state == "DISMISSED")' <<<"$submission" >/dev/null || { echo 'Not a submitted review by the configured reviewer' >&2; exit 1; }
 jq -e --arg repo "$GH_REPO" '.state == "open" and .base.repo.full_name == $repo' <<<"$pr_data" >/dev/null || { echo 'PR is closed or belongs to another repository' >&2; exit 1; }
 head_sha=$(jq -r '.commit_id // empty' <<<"$submission")
 base_sha=$(jq -r '.base.sha // empty' <<<"$pr_data")
@@ -108,6 +113,7 @@ else
   : > "$output"
   if ! env -i PATH="$PATH" HOME="$HOME" TMPDIR="${TMPDIR:-/tmp}" LANG="${LANG:-C.UTF-8}" \
     GH_REPO="$GH_REPO" REVIEW_PR="$pr" REVIEW_BASE="$merge_base" REVIEW_HEAD="$head_sha" GH_REVIEW_TOKEN="$GH_REVIEW_TOKEN" \
+    OPENCODE_REVIEW_MODEL="${OPENCODE_REVIEW_MODEL:-openai/gpt-6.1-terra#medium}" \
     "$REVIEW_MODEL_RUNNER" "$work/input" "$manifest" "$output"; then
     echo 'Reviewer failed; no new files were checkpointed' >&2; exit 1
   fi

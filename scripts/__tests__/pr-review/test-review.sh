@@ -10,11 +10,14 @@ mkdir -p "$work/bin" "$work/state" "$work/repo"
 export PATH="$work/bin:$PATH" GH_REPO=test/repo GH_TOKEN=write-token GH_REVIEW_TOKEN=read-token
 export REVIEW_BOT_LOGIN='aidd[bot]' REVIEW_MODEL_RUNNER="$work/bin/model" FAKE_STATE="$work/state" FAKE_REPO="$work/repo"
 export XDG_STATE_HOME="$work/state/xdg"
+export OPENCODE_REVIEWER_ID=7654321 RUNNER_TEMP="$work/state" AIDD_REVIEW_ENABLED_AT=2026-01-01T00:00:00Z
+export OPENCODE_REVIEW_MODEL='test-provider/test-model#profile'
 
 cat > "$work/bin/gh" <<'GH'
 #!/usr/bin/env bash
 set -euo pipefail
 [[ $1 == api && ${GH_TOKEN:-} == write-token ]] || exit 2
+touch "$FAKE_STATE/api-called"
 shift
 [[ ${1:-} != --paginate ]] || shift
 method=GET
@@ -27,9 +30,13 @@ case "$endpoint" in
     printf '%s\n' "$FAKE_REPO" ;;
   repos/test/repo/pulls/8)
     jq -n --arg base "$FAKE_BASE" '{state:"open",title:"Example PR",body:"Acceptance criterion",base:{sha:$base,repo:{full_name:"test/repo"}}}' ;;
+  'repos/test/repo/pulls?state=open&per_page=100')
+    printf '[{"number":8}]\n' ;;
+  'repos/test/repo/pulls/8/reviews?per_page=100')
+    jq -n --argjson author "${FAKE_AUTHOR:-$OPENCODE_REVIEWER_ID}" '[{id:109,user:{id:$author},submitted_at:"2026-01-01T00:00:09Z"}]' ;;
   repos/test/repo/pulls/8/reviews/*)
     id=${endpoint##*/}
-    jq -n --argjson id "$id" --arg commit "${FAKE_HEAD_OVERRIDE:-$FAKE_HEAD}" --arg author "${FAKE_AUTHOR:-8973343}" \
+    jq -n --argjson id "$id" --arg commit "${FAKE_HEAD_OVERRIDE:-$FAKE_HEAD}" --arg author "${FAKE_AUTHOR:-$OPENCODE_REVIEWER_ID}" \
       '{id:$id,user:{id:($author|tonumber)},state:"COMMENTED",body:("Please handle my review feedback " + ($id|tostring)),commit_id:$commit,submitted_at:("2026-01-01T00:00:" + (($id - 100)|tostring|if length == 1 then "0" + . else . end) + "Z")}' ;;
   'repos/test/repo/issues/8/comments?per_page=100') cat "$FAKE_STATE/comments.json" ;;
   repos/test/repo/issues/8/comments)
@@ -48,6 +55,7 @@ set -euo pipefail
 state="$(dirname "$0")/../state"
 [[ -z ${GH_TOKEN:-} && -z ${GITHUB_TOKEN:-} && -z ${UNRELATED_SECRET:-} && ${GH_REVIEW_TOKEN:-} == read-token ]] || { echo 'Incorrect reviewer credentials' >&2; exit 1; }
 [[ ${GH_REPO:-} == test/repo && ${REVIEW_PR:-} == 8 ]]
+[[ ${OPENCODE_REVIEW_MODEL:-} == 'test-provider/test-model#profile' ]] || { echo 'Configured review model was not passed to the runner' >&2; exit 1; }
 [[ -d $1/source/.git && -f $1/source/link && ! -L $1/source/link ]]
 [[ $(git -C "$1/source" rev-parse HEAD) == "$REVIEW_HEAD" ]]
 git -C "$1/source" diff --no-ext-diff --no-textconv "$REVIEW_BASE" "$REVIEW_HEAD" -- a.txt > "$state/model-diff"
@@ -86,6 +94,14 @@ printf 'later-unsubmitted\n' > "$FAKE_REPO/a.txt"
 git -C "$FAKE_REPO" add .
 git -C "$FAKE_REPO" commit -qm later
 review="$root/scripts/pr-review/review.sh"
+
+# Configuration must fail closed before any review is performed.
+for invalid in '' 0 0123 -1 1e3 9007199254740992 999999999999999999999999; do
+  if OPENCODE_REVIEWER_ID="$invalid" "$review" 8 101; then echo 'Invalid reviewer ID was accepted' >&2; exit 1; fi
+  [[ ! -e $FAKE_STATE/api-called ]] || { echo 'Invalid reviewer ID reached GitHub' >&2; exit 1; }
+done
+if env -u OPENCODE_REVIEWER_ID "$review" 8 101; then echo 'Missing reviewer ID was accepted' >&2; exit 1; fi
+[[ ! -e $FAKE_STATE/api-called ]] || { echo 'Missing reviewer ID reached GitHub' >&2; exit 1; }
 
 UNRELATED_SECRET=secret "$review" 8 101
 grep -q 'Please handle my review feedback' "$FAKE_STATE/context"
@@ -164,5 +180,17 @@ export FAKE_HEAD=$(git -C "$FAKE_REPO" rev-parse HEAD)
 jq -e 'all(.[]; .path != "binary.bin" and .path != "vendor")' "$FAKE_STATE/manifest" >/dev/null
 jq -e '.[-1].body | contains("binary.bin") and contains("vendor") and contains("incomplete")' "$FAKE_STATE/comments.json" >/dev/null
 jq -e '.[-1].body | capture("<!-- aidd-review-v1:(?<data>[A-Za-z0-9+/=]+) -->\\s*$").data | @base64d | fromjson | .files | (has("binary.bin") or has("vendor")) | not' "$FAKE_STATE/comments.json" >/dev/null
+
+# Discovery must select the configured account, then revalidate it when dispatching.
+discover="$root/scripts/pr-review/discover.sh"
+before=$(wc -l < "$FAKE_STATE/calls" | tr -d ' ')
+rm "$FAKE_STATE/api-called"
+if (cd "$root" && env -u OPENCODE_REVIEWER_ID "$discover"); then echo 'Discovery accepted a missing reviewer ID' >&2; exit 1; fi
+if (cd "$root" && OPENCODE_REVIEWER_ID=0 "$discover"); then echo 'Discovery accepted an invalid reviewer ID' >&2; exit 1; fi
+[[ ! -e $FAKE_STATE/api-called ]] || { echo 'Invalid reviewer ID reached discovery API' >&2; exit 1; }
+(cd "$root" && FAKE_AUTHOR=1 "$discover")
+[[ $(wc -l < "$FAKE_STATE/calls" | tr -d ' ') == "$before" ]]
+(cd "$root" && "$discover")
+[[ $(wc -l < "$FAKE_STATE/calls" | tr -d ' ') == $((before + 1)) ]]
 
 echo 'Review orchestration tests passed'
