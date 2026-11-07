@@ -1,0 +1,8 @@
+language js
+
+// A function, method, arrow, callback or signature with more than three parameters.
+// Constructors are JsConstructorParameters, not JsParameters, and have their own limit.
+JsParameters(items=$items) as $params where {
+  $items <: [$a, $b, $c, $d, ...],
+  register_diagnostic(span=$params, message="A function takes at most 3 parameters: pass a named object instead (cli/.claude/rules/00-architecture/0-code-size.md)", severity="error")
+}

@@ -584,6 +584,272 @@
       }
     },
     {
+      "includes": [
+        "src/**",
+        "!src/contexts/framework/application/clean-use-case.ts",
+        "!src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
+        "!src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
+        "!src/contexts/framework/application/framework/translator/built-tree-materialization-translator.ts",
+        "!src/contexts/framework/application/ownership/user-marketplace-remove-use-case.ts",
+        "!src/contexts/framework/application/ownership/user-plugin-update-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-remove-use-case.ts",
+        "!src/contexts/framework/domain/recipes/recipe-validation.ts",
+        "!src/contexts/telemetry/application/ingest-usage-use-case.ts",
+        "!src/contexts/telemetry/domain/formats/claude-transcript-usage.ts",
+        "!src/contexts/telemetry/domain/formats/codex-transcript-usage.ts",
+        "!src/contexts/tools/domain/capabilities/plugins-capability.ts",
+        "!src/presentation/commands/auth.ts",
+        "!src/presentation/commands/framework.ts",
+        "!src/presentation/commands/marketplace.ts",
+        "!src/presentation/commands/plugin.ts",
+        "!src/presentation/commands/setup.ts",
+        "!src/presentation/commands/telemetry.ts",
+        "!src/runtime/wiring/framework.ts",
+        "!src/runtime/wiring/telemetry.ts"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveLinesPerFunction": {
+              "level": "error",
+              "options": {
+                "maxLines": 50,
+                "skipBlankLines": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/framework/application/clean-use-case.ts",
+        "!src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
+        "!src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
+        "!src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
+        "!src/contexts/framework/application/ownership/global-plugin-files.ts",
+        "!src/contexts/framework/application/ownership/user-plugin-update-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-add-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-remove-use-case.ts",
+        "!src/contexts/framework/application/recipes/validate-recipes-use-case.ts",
+        "!src/contexts/framework/application/setup/install-global-plugins-use-case.ts",
+        "!src/contexts/framework/application/shared/remove-project-hooks.ts",
+        "!src/contexts/framework/application/shared/user-scope-plugin-files.ts",
+        "!src/contexts/framework/domain/config-capability.ts",
+        "!src/contexts/framework/domain/manifest.ts",
+        "!src/contexts/framework/domain/marketplace-source-drift.ts",
+        "!src/contexts/framework/domain/recipes/recipe-validation.ts",
+        "!src/contexts/framework/domain/setup-flow.ts",
+        "!src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.ts",
+        "!src/contexts/telemetry/application/ingest-usage-use-case.ts",
+        "!src/contexts/telemetry/domain/formats/codex-transcript-usage.ts",
+        "!src/contexts/telemetry/domain/report/period.ts",
+        "!src/contexts/telemetry/domain/switch/legacy-config.ts",
+        "!src/contexts/telemetry/infrastructure/usage-ledger-adapter.ts",
+        "!src/contexts/tools/domain/capabilities/plugins-capability.ts",
+        "!src/contexts/tools/domain/profiles/copilot/profile.ts",
+        "!src/kernel/markdown.ts",
+        "!src/kernel/reading/jsonc.ts",
+        "!src/kernel/source.ts",
+        "!src/presentation/commands/auth.ts",
+        "!src/presentation/display/telemetry-display.ts",
+        "!src/presentation/display/telemetry/telemetry-lifecycle-display.ts",
+        "!src/presentation/display/telemetry/telemetry-report-display.ts"
+      ],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": {
+              "level": "error",
+              "options": {
+                "maxAllowedComplexity": 15
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/framework/application/global/resolve-update-decision-use-case.ts",
+        "!src/contexts/telemetry/application/directory-resolver.ts",
+        "!src/contexts/telemetry/infrastructure/ledger-lock.ts",
+        "!src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.ts",
+        "!src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.ts",
+        "!src/contexts/tools/infrastructure/native-marketplace-source-reader-adapter.ts",
+        "!src/kernel/errors.ts",
+        "!src/kernel/file.ts",
+        "!src/runtime/prompter/prompter-adapter.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveClassesPerFile": {
+              "level": "error",
+              "options": {
+                "maxClasses": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/framework/application/clean-use-case.ts",
+        "!src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
+        "!src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-add-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-remove-use-case.ts",
+        "!src/contexts/framework/domain/recipes/recipe-validation.ts",
+        "!src/contexts/translate/domain/content-translator.ts",
+        "!src/kernel/errors.ts",
+        "!src/runtime/wiring/framework.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noExcessiveLinesPerFile": {
+              "level": "error",
+              "options": {
+                "maxLines": 400,
+                "skipBlankLines": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/distribution/application/fetch-marketplace-source-use-case.ts",
+        "!src/contexts/distribution/domain/ports/marketplace-registry.ts",
+        "!src/contexts/distribution/infrastructure/marketplace-registry-adapter.ts",
+        "!src/contexts/distribution/infrastructure/plugin-fetcher-adapter.ts",
+        "!src/contexts/framework/application/clean-use-case.ts",
+        "!src/contexts/framework/application/doctor/doctor-use-case.ts",
+        "!src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
+        "!src/contexts/framework/application/framework/translator/built-tree-materialization-translator.ts",
+        "!src/contexts/framework/application/framework/translator/flat-mcp-materializer.ts",
+        "!src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.ts",
+        "!src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",
+        "!src/contexts/framework/application/framework/translator/plugin-translator.ts",
+        "!src/contexts/framework/application/framework/translator/project-hooks-materializer.ts",
+        "!src/contexts/framework/application/global/restore-all-use-case.ts",
+        "!src/contexts/framework/application/global/update-one-tool-use-case.ts",
+        "!src/contexts/framework/application/global/update-tools-use-case.ts",
+        "!src/contexts/framework/application/install/content/install-content-section-use-case.ts",
+        "!src/contexts/framework/application/install/install-ai-tool-use-case.ts",
+        "!src/contexts/framework/application/install/install-config-use-case.ts",
+        "!src/contexts/framework/application/install/install-ide-tool-use-case.ts",
+        "!src/contexts/framework/application/install/install-runtime-config-use-case.ts",
+        "!src/contexts/framework/application/ownership/global-plugin-files.ts",
+        "!src/contexts/framework/application/ownership/native-host-registration-gate.ts",
+        "!src/contexts/framework/application/ownership/native-marketplace-source-proof.ts",
+        "!src/contexts/framework/application/ownership/native-plugin-ownership.ts",
+        "!src/contexts/framework/application/ownership/project-plugin-cleanup.ts",
+        "!src/contexts/framework/application/ownership/user-plugin-file-updater.ts",
+        "!src/contexts/framework/application/ownership/user-plugin-ownership.ts",
+        "!src/contexts/framework/application/plugin/plugin-add-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-helpers.ts",
+        "!src/contexts/framework/application/plugin/plugin-remove-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-target-resolution.ts",
+        "!src/contexts/framework/application/plugin/plugin-update-use-case.ts",
+        "!src/contexts/framework/application/restore/generate-tool-distribution-use-case.ts",
+        "!src/contexts/framework/application/restore/restore-all-plugins-use-case.ts",
+        "!src/contexts/framework/application/restore/restore-merge-files-use-case.ts",
+        "!src/contexts/framework/application/restore/restore-regular-files-use-case.ts",
+        "!src/contexts/framework/application/restore/restore-use-case.ts",
+        "!src/contexts/framework/application/setup-use-case.ts",
+        "!src/contexts/framework/application/shared/ensure-built-marketplace-use-case.ts",
+        "!src/contexts/framework/application/shared/host-marketplace-source-conflict.ts",
+        "!src/contexts/framework/application/shared/purge-declared-cache.ts",
+        "!src/contexts/framework/application/shared/purge-native-marketplace-cache.ts",
+        "!src/contexts/framework/application/shared/remove-project-hooks.ts",
+        "!src/contexts/framework/application/shared/resolve-uninstall-scope.ts",
+        "!src/contexts/framework/application/shared/user-scope-plugin-files.ts",
+        "!src/contexts/framework/application/status-use-case.ts",
+        "!src/contexts/framework/application/uninstall/uninstall-plugin-use-case.ts",
+        "!src/contexts/framework/application/uninstall/uninstall-tools-use-case.ts",
+        "!src/contexts/framework/domain/installed-rule.ts",
+        "!src/contexts/framework/domain/manifest.ts",
+        "!src/contexts/framework/domain/plugins/installed-plugin.ts",
+        "!src/contexts/framework/domain/recipes/recipe-validation.ts",
+        "!src/contexts/framework/domain/setup-flow.ts",
+        "!src/contexts/telemetry/application/directory-resolver.ts",
+        "!src/contexts/telemetry/application/switch/remember-own-root.ts",
+        "!src/contexts/telemetry/domain/branch-binding.ts",
+        "!src/contexts/telemetry/domain/declaration/binding-resolution.ts",
+        "!src/contexts/telemetry/domain/formats/line-values.ts",
+        "!src/contexts/telemetry/domain/legacy/legacy-locations.ts",
+        "!src/contexts/telemetry/domain/ports/transcript-source.ts",
+        "!src/contexts/telemetry/domain/report/report-filter.ts",
+        "!src/contexts/telemetry/domain/report/usage-report.ts",
+        "!src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.ts",
+        "!src/contexts/telemetry/infrastructure/declaration/git-branch-binding-store-adapter.ts",
+        "!src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.ts",
+        "!src/contexts/telemetry/infrastructure/transcripts/transcript-files.ts",
+        "!src/contexts/tools/domain/build-contract.ts",
+        "!src/contexts/tools/domain/formats/opencode-mcp-merge.ts",
+        "!src/contexts/tools/domain/formats/vscode-mcp-merge.ts",
+        "!src/contexts/tools/domain/host-plugin-registration.ts",
+        "!src/contexts/tools/domain/marketplace-catalog.ts",
+        "!src/contexts/tools/domain/marketplace-source-conflict.ts",
+        "!src/contexts/tools/domain/profiles/claude/build.ts",
+        "!src/contexts/tools/domain/profiles/codex/build.ts",
+        "!src/contexts/tools/domain/profiles/copilot/build.ts",
+        "!src/contexts/tools/domain/profiles/cursor/build.ts",
+        "!src/contexts/tools/domain/profiles/kilo/build.ts",
+        "!src/contexts/tools/domain/profiles/opencode/build.ts",
+        "!src/contexts/translate/application/strategies/flat-build-strategy.ts",
+        "!src/contexts/translate/application/strategies/write-skill-tree.ts",
+        "!src/contexts/translate/domain/content-translator.ts",
+        "!src/kernel/materialization/flat-paths.ts",
+        "!src/kernel/paths.ts",
+        "!src/presentation/commands/clean.ts",
+        "!src/presentation/commands/doctor.ts",
+        "!src/presentation/commands/framework.ts",
+        "!src/presentation/commands/sync-native-activation.ts",
+        "!src/presentation/commands/sync.ts",
+        "!src/presentation/commands/telemetry.ts",
+        "!src/presentation/display/doctor-display.ts",
+        "!src/presentation/display/framework-display.ts",
+        "!src/presentation/prompts/sync-conflict-resolver-use-case.ts"
+      ],
+      "plugins": ["./biome-plugins/max-function-params.grit"]
+    },
+    {
+      "includes": [
+        "src/**",
+        "!src/contexts/framework/application/clean-use-case.ts",
+        "!src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
+        "!src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
+        "!src/contexts/framework/application/doctor/doctor-use-case.ts",
+        "!src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
+        "!src/contexts/framework/application/install/install-ide-tool-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-add-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-install-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-remove-use-case.ts",
+        "!src/contexts/framework/application/plugin/plugin-update-use-case.ts",
+        "!src/contexts/framework/application/restore/restore-tool-files-use-case.ts",
+        "!src/contexts/framework/application/restore/restore-use-case.ts",
+        "!src/contexts/framework/application/setup-use-case.ts",
+        "!src/contexts/framework/application/shared/setup-marketplace-registration-use-case.ts",
+        "!src/contexts/telemetry/application/directory-resolver.ts",
+        "!src/contexts/telemetry/application/forget/forget-telemetry-use-case.ts",
+        "!src/contexts/telemetry/application/ingest-usage-use-case.ts",
+        "!src/contexts/telemetry/application/report/report-usage-use-case.ts",
+        "!src/contexts/telemetry/application/switch/telemetry-off-use-case.ts",
+        "!src/contexts/telemetry/application/switch/telemetry-on-use-case.ts",
+        "!src/contexts/translate/application/strategies/flat-build-strategy.ts"
+      ],
+      "plugins": ["./biome-plugins/max-constructor-params.grit"]
+    },
+    {
       "includes": ["src/**", "tests/**", "!**/*.d.ts"],
       "linter": {
         "rules": {

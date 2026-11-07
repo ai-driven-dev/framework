@@ -2,8 +2,9 @@
  * These tests read source as text and never import the code under test, so they stay fast
  * enough for a pre-commit hook and cannot be broken by runtime wiring.
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, posix, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
+import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+import { join, posix, relative, resolve, sep } from "node:path";
 import {
   matchesGlob as scopeGlob,
   sourceFiles as srcFiles,
@@ -13,6 +14,41 @@ export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
 
 export const REPO_ROOT = resolve(CLI_ROOT, "..");
+
+// The package's own node launcher: `.bin/biome` is a shell shim, a `.cmd` on Windows.
+export const BIOME = join(CLI_ROOT, "node_modules", "@biomejs", "biome", "bin", "biome");
+
+/** A file property as the GitHub reporter escapes it, `C:` written `C%3A` on Windows. */
+export function reportedFile(raw: string): string {
+  return raw.replace(/%3A/gi, ":").replace(/%2C/gi, ",").replace(/%25/g, "%");
+}
+
+/** The diagnostics biome prints for one planted tree, as `<file>:<rule>` lines. */
+export function biomeFindings(projectDir: string, launcher = BIOME): string[] {
+  const result = spawnSync(process.execPath, [launcher, "lint", "--reporter=github", "."], {
+    cwd: projectDir,
+    encoding: "utf8",
+  });
+  const findings = `${result.stdout}\n${result.stderr}`
+    .split("\n")
+    .map((line) => /^\s*::(?:error|warning) title=(\S+),file=(\S+?),/.exec(line))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map(
+      (match) =>
+        `${relative(
+          realpathSync(projectDir),
+          realpathSync(resolve(projectDir, reportedFile(match[2] as string)))
+        )
+          .split(sep)
+          .join("/")}:${match[1]}`
+    )
+    .sort();
+  // biome exits 0 when clean and 1 with diagnostics; anything else never linted.
+  if (result.status !== 0 && !(result.status === 1 && findings.length > 0)) {
+    throw new Error(`biome did not run: ${result.error?.message ?? result.stderr}`);
+  }
+  return findings;
+}
 
 export function canonicalPath(path: string): string {
   return path.replace(/\\/g, "/");
