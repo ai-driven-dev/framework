@@ -50,7 +50,7 @@ The Gouvernail AI KPI view uses provider OpenTelemetry (OTel) signals only. The 
 | Installation UUID | Stable ID in `~/.config/aidd/installation/id.json`; not a login or credential. | Only with `otel run --include-installation-id`, as `aidd.installation.id`. |
 | Provider identity | Email, account or organization ID when emitted. Gouvernail must match an approved active member to attribute a session. | Allowlisted identifiers may be sent by `otel run`. |
 
-The default paths can change with the configured user directory. A connector bearer token authorizes the destination connection; it does not identify the person.
+The default paths can change with the configured user directory. A connector bearer token authorizes the destination connection. In local Gouvernail, an assigned token also identifies its declared member, team and installation; it does not prove who holds the token.
 
 ## Start
 

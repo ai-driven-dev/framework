@@ -6,10 +6,12 @@ Gouvernail's AI KPI view uses OpenTelemetry (OTel) observations. For OpenCode v2
 | --- | --- | --- | --- |
 | Session | `session.id`, when present | `conversation.id` in logs; `thread.id` in observed turn spans | In observed `/api/session/{id}/prompt` HTTP spans and plugin session events |
 | Model | `model`, when present | `model`, when present | Selected model and variant on plugin step-start events, when emitted; not proof of the served model or effective effort |
-| Usage | `claude_code.token.usage` and `api_request` | `codex.sse_event` and turn traces | OpenCode-normalized input, output, reasoning and cache counts from plugin step-end events; ambiguous zero stays unavailable |
-| Identity | Provider attributes, when emitted | Provider attributes, when emitted | Member explicitly assigned to the connector token in local Gouvernail; not a provider identity or proof of the person holding the token |
+| Usage | Forwarded `claude_code.token.usage` metrics; `api_request` is captured but not forwarded | `codex.sse_event` and turn traces | OpenCode-normalized input, output, reasoning and cache counts from plugin step-end events; ambiguous zero stays unavailable |
+| Identity | Provider attributes when emitted, or an explicit connector-token assignment | Provider attributes when emitted, or an explicit connector-token assignment | An explicit connector-token assignment |
 
 Token fields are provider-specific. Claude's input excludes cache reads and writes; Codex's input includes cached input. A Codex cache zero can mean the provider omitted cache details. Never add a log, metric and trace describing the same usage, or treat an absent value as zero.
+
+In local Gouvernail, an assigned connector token binds a tool to a declared member, team and installation UUID. This is not proof of the person holding the token. Older shared tokens retain declarative attribution.
 
 `otel run --yes` captures one provider execution in isolation and forwards supported observations and allowlisted attributes to loopback Gouvernail. It neither reads the local usage ledger nor asserts a clone or feature association. With `--keep-capture`, raw private files can contain sensitive content. See [the local setup recipe](../../aidd_docs/recipes/observe-agent-telemetry.md).
 
