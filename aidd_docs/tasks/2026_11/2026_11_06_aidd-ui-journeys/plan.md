@@ -1,6 +1,6 @@
 ---
 objective: "From a persona, the person gets journeys and a wireframe for each screen they cross, without style, checked without AI."
-status: approved
+status: implemented
 ---
 
 # Plan: aidd-ui journeys and wireframes
