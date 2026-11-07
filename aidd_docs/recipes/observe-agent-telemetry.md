@@ -14,7 +14,7 @@ Start local Gouvernail and configure each tool's connector. A passkey-verified a
 | Codex | Codex OTLP connector |
 | OpenCode v2 | OpenCode OTLP connector for the selected team |
 
-`--yes` opts in to capturing and forwarding telemetry from that one execution. `--keep-capture` retains a private local file whose path is printed by the command, including when an execution fails after capture. Raw captures can contain prompts, responses, commands, tool output and secrets: restrict access and delete them when no longer needed. Without this option the temporary capture is removed.
+`--yes` opts in to capturing and forwarding telemetry from that one execution. `--keep-capture` retains a private local file whose path is printed by the command, including when an execution fails after capture. The file remains in the system temporary directory and can be removed by system cleanup; copy it to a protected location if it must be retained. Raw captures can contain prompts, responses, commands, tool output and secrets: restrict access and delete them when no longer needed. Without this option the temporary capture is removed.
 
 The new assigned tokens require `--include-installation-id`, which sends the existing AIDD installation UUID as an AIDD-added `aidd.installation.id` resource attribute for that execution. It is an installation identifier, not an authenticated person. This flag fails if no installation UUID exists. Captures remain provider data and do not contain this added attribute; the global `otel init` configuration does not add it.
 

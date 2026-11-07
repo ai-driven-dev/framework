@@ -39,7 +39,7 @@ The Gouvernail AI KPI view uses provider OpenTelemetry (OTel) signals only. The 
 - `on` opts in the separate local usage ledger for one clone. `otel run --yes` opts in the single provider execution independently; it does not attribute observations to a clone or feature.
 - `otel init` separately configures a user-level exporter. Its global collector can capture other projects and does not check clone consent. It is not required for `otel run`.
 - `aidd telemetry off` and `forget` affect local usage measurement; they do not disable provider exporters or delete retained OTLP captures or data already received by Gouvernail.
-- Retained captures are private local files without automatic deletion. They can contain sensitive content. Claude metric forwarding also sends a deterministic series fingerprint, which can expose equality or allow guesses of low-entropy values.
+- Retained captures are private local files in the system temporary directory. The CLI does not delete them, but system cleanup can. They can contain sensitive content. Claude metric forwarding also sends a deterministic series fingerprint, which can expose equality or allow guesses of low-entropy values.
 - Delivery after a timeout cannot guarantee exactly-once behavior without receiver-side idempotence.
 
 ### Three different identifiers
