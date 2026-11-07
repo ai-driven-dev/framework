@@ -83,9 +83,10 @@ export default defineConfig({
       reporter: ["text", "json-summary"],
       include: ["src/**/*.ts"],
       // Excluded because measuring them here would report a false zero, not because
-      // they are untested. `cli.ts` and `presentation/commands/` are exercised by 104
-      // e2e tests and 98 smoke checks, but both spawn a built `cli.js` as a subprocess
-      // and v8 coverage does not cross a process boundary: including them reports 0%.
+      // they are untested. `cli.ts` and `presentation/commands/` are exercised by the e2e
+      // suite, the smoke checks and in-process command tests; the first two spawn a built
+      // `cli.js` as a subprocess and v8 coverage does not cross a process boundary: including
+      // them reports 0%.
       // Ports are interfaces with no runtime body; `runtime/wiring/` is composition.
       // Their real net is the e2e suite and scripts/smoke-tools.sh, counted there.
       //
