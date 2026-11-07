@@ -565,8 +565,8 @@ jobs:
       - run: cd cli && pnpm test:unit
       - run: cd cli && pnpm test:integration
       - run: cd cli && pnpm test:arch
-      # Every e2e but the one named below.
-      - name: cli e2e
+      # Every e2e and golden but the one named below.
+      - name: cli e2e and golden
         # `--max-workers=2`, and only here. Vitest transforms modules on its own main thread
         # while every worker calls back into it, and that call has a fixed 60 s timeout no
         # configuration exposes: on this runner the default pool queued it past 60 s and
@@ -574,7 +574,7 @@ jobs:
         # of two caps the competing requests whatever the runner's core count.
         run: |
           cd cli
-          pnpm exec vitest run --project=e2e --max-workers=2 \
+          pnpm exec vitest run --project=e2e --project=golden --max-workers=2 \
             --exclude "tests/e2e/persona.e2e.test.ts"
         # persona.e2e.test.ts needs /usr/bin/expect, which windows-latest does not carry.
 
