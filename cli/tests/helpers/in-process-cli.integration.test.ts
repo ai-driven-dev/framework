@@ -213,6 +213,20 @@ describe("running a command in process", () => {
     }
   });
 
+  it("leaves the caller's own environment stub and spy in place after the call", async () => {
+    vi.stubEnv("CALLER_OWN_STUB", "kept");
+    const random = vi.spyOn(Math, "random").mockReturnValue(0.25);
+    try {
+      await runInProcess(["--help"], { cwd: project, home });
+
+      expect(process.env.CALLER_OWN_STUB).toBe("kept");
+      expect(Math.random()).toBe(0.25);
+    } finally {
+      random.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("refuses a second call started before the first resolves", async () => {
     const first = runInProcess(["--help"], { cwd: project, home });
 

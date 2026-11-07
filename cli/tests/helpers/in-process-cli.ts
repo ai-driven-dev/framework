@@ -1,15 +1,24 @@
 import { realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { relative, sep } from "node:path";
+import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
-import { vi } from "vitest";
+import { type MockInstance, vi } from "vitest";
 import { sandboxedEnv } from "../e2e/helpers.js";
 
 /**
  * Drives the real Commander tree and the real `createDeps` inside the test process, under a
  * substituted environment (HOME, PATH, cwd) and nothing else. It never calls `process.chdir`,
- * which throws on the worker threads Stryker runs Vitest on: the working directory is a spy on
- * `process.cwd`, so a child process the command spawns must be given its `cwd` explicitly.
+ * which throws on worker threads: the working directory is a spy on `process.cwd`, so a child
+ * process the command spawns must be given its `cwd` explicitly.
+ *
+ * It runs on the main thread only. On a worker thread `os.homedir()` reads the main process's
+ * environment, not the substituted HOME, so the product would resolve the runner's real home.
+ * Stryker runs Vitest on worker threads, so the tests that use this helper are left out of the
+ * mutation run (`vitest.mutation.config.ts`).
+ *
+ * It restores what it changed and nothing else: a spy or an environment stub the caller made
+ * before the call is still in place after it.
  *
  * It is not a copy of `src/cli.ts`, which parses at import: it registers the same commands, in
  * the same order, and leaves out the update-check hooks, which stay an end-to-end concern.
@@ -71,18 +80,38 @@ function assertUnderTemporaryDirectory(path: string): void {
   }
 }
 
-/** Every variable of the runner that is not in the sandbox is removed, so none leaks through. */
-function stubEnvironment(sandbox: NodeJS.ProcessEnv): void {
+/**
+ * Every variable of the runner that is not in the sandbox is removed, so none leaks through.
+ * Returns the function that puts back each key it touched, to the value it had at the call.
+ */
+function substituteEnvironment(sandbox: NodeJS.ProcessEnv): () => void {
+  const previous = new Map<string, string | undefined>();
+  const assign = (key: string, value: string | undefined): void => {
+    if (!previous.has(key)) previous.set(key, process.env[key]);
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  };
   for (const key of Object.keys(process.env)) {
-    if (!(key in sandbox)) vi.stubEnv(key, undefined);
+    if (!(key in sandbox)) assign(key, undefined);
   }
-  for (const [key, value] of Object.entries(sandbox)) vi.stubEnv(key, value);
+  for (const [key, value] of Object.entries(sandbox)) assign(key, value);
+  return () => {
+    for (const [key, value] of previous) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  };
 }
 
 export async function runInProcess(
   args: readonly string[],
   options: InProcessOptions
 ): Promise<InProcessResult> {
+  if (!isMainThread) {
+    throw new Error(
+      "runInProcess needs the main thread: home isolation does not hold on a worker thread, where os.homedir() ignores the substituted HOME"
+    );
+  }
   if (inFlight) {
     throw new Error("runInProcess is running another command: it mutates process-wide state");
   }
@@ -92,24 +121,35 @@ export async function runInProcess(
 
   const out: string[] = [];
   const err: string[] = [];
+  const spies: MockInstance[] = [];
+  let restoreEnvironment = (): void => {};
   const previousExitCode = process.exitCode;
   const ttyDescriptor = Object.getOwnPropertyDescriptor(process.stdout, "isTTY");
   let exitCode = 0;
 
   try {
-    stubEnvironment({ ...sandboxedEnv(options.home, options.env), PWD: options.cwd });
-    vi.spyOn(process, "cwd").mockReturnValue(options.cwd);
-    vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
-      out.push(String(chunk));
-      return true;
+    restoreEnvironment = substituteEnvironment({
+      ...sandboxedEnv(options.home, options.env),
+      PWD: options.cwd,
     });
-    vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
-      err.push(String(chunk));
-      return true;
-    });
-    vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
-      throw new ExitSignal(code ?? 0);
-    }) as typeof process.exit);
+    spies.push(vi.spyOn(process, "cwd").mockReturnValue(options.cwd));
+    spies.push(
+      vi.spyOn(process.stdout, "write").mockImplementation((chunk: unknown) => {
+        out.push(String(chunk));
+        return true;
+      })
+    );
+    spies.push(
+      vi.spyOn(process.stderr, "write").mockImplementation((chunk: unknown) => {
+        err.push(String(chunk));
+        return true;
+      })
+    );
+    spies.push(
+      vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
+        throw new ExitSignal(code ?? 0);
+      }) as typeof process.exit)
+    );
     Object.defineProperty(process.stdout, "isTTY", { value: false, configurable: true });
     process.exitCode = undefined;
 
@@ -131,8 +171,8 @@ export async function runInProcess(
       }
     }
   } finally {
-    vi.restoreAllMocks();
-    vi.unstubAllEnvs();
+    for (const spy of spies) spy.mockRestore();
+    restoreEnvironment();
     if (ttyDescriptor) Object.defineProperty(process.stdout, "isTTY", ttyDescriptor);
     else delete (process.stdout as { isTTY?: boolean }).isTTY;
     process.exitCode = previousExitCode;

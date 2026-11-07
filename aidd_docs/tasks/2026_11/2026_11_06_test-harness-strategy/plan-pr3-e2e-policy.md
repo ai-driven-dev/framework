@@ -1,6 +1,6 @@
 ---
 objective: "The e2e project holds one test per command and per family of failure, plus what only the built binary can prove; every other e2e behaviour lives in a lower test that asserts the same thing, and no product code changes."
-status: pending
+status: done
 ---
 
 # Plan: PR 3 of stage A, e2e policy
@@ -16,7 +16,7 @@ Out of scope: goldens, smoke scripts, mutation config, product code, the kilo ru
 
 This file departs from the skill's `plan.md` plus `phase-<n>.md` layout on purpose: the caller asked for one file at this path, the shape PR 1's plan already uses. The source is text, so no `backlog-link.json` is written.
 
-Paths are relative to the repository root unless a command starts with `cd cli`. `$B` is the baseline directory: `B="${TMPDIR:-/tmp}/aidd-pr3-baseline"`. Nothing is committed.
+Paths are relative to the repository root unless a command starts with `cd cli`. `$B` is the baseline directory: `B="${TMPDIR:-/tmp}/aidd-pr3-baseline"`. The work is committed on the branch, seven commits before the review fixes, one per phase group.
 
 ### Measurement (before)
 
@@ -49,8 +49,8 @@ Same machine and method as the baseline: three runs of each project with the JSO
 Whole suite, `pnpm test`: 7049 tests and 31.8 s (one baseline run) before, 7000 tests and 28.1 s (median of three: 28.0, 28.1, 28.4) after.
 
 What the measure says against the estimate:
-- The e2e count and file count land as planned (89 tests, 35 files). The e2e summed time lands at 57.2 s against 60.0 s planned.
-- The 95 tests of the 20 new integration files (the helper's own 10 among them) cost 45.0 s summed, against 28 s estimated for the moved tests.
+- The e2e count and file count land as planned (89 tests, 35 files). `vitest list` shows 88 and 34: it leaves out the skipped `kilo-runtime` test (gated by `KILO_RUNTIME_SMOKE=1`), the only test of its file, which the run counts as skipped (88 passed, 1 skipped). `refused-marketplace-clean` runs on POSIX (`it.runIf` on `process.platform !== "win32"`); on Windows it is skipped too, so the Windows e2e job reports 87 passed, 2 skipped. The e2e summed time lands at 57.2 s against 60.0 s planned.
+- The 95 tests of the 20 new integration files (the helper's own 16 among them, one of which substitutes `isMainThread` to prove the worker-thread refusal) cost 45.0 s summed, against 28 s estimated for the moved tests.
 - The wall clock gain is smaller than the summed gain: the e2e project saves 6.7 s of wall, the integration project gains 5.7 s, and the whole suite gains 3.7 s.
 - Limits: summed durations carry the contention of a busy machine. The integration figure counts the 20 new files only; tests added to existing files are inside the "without" run.
 
@@ -125,7 +125,7 @@ Design, from what the code does today:
 
 Tasks:
 
-1. Spike first: run the helper's test file under both pools, `pnpm vitest run --project=integration --pool=forks <file>` and `--pool=threads <file>`, the second standing for Stryker's workers. Then list the spawns the moved framework commands make (`grep -rn "execFile\|spawn" src --include=*.ts`) and confirm each passes `cwd`. If either fails, stop and report: the command-level moves (homes A1, A2, F1 to F7, P5, P6, T2 to T7) fall back to "keep e2e", which keeps about 85 s of moved e2e time in e2e.
+1. Spike first: run the helper's test file under both pools, `pnpm vitest run --project=integration --pool=forks <file>` and `--pool=threads <file>`, the second standing for Stryker's workers. The spike ran the helper's own file under threads; the command-level tests were not, and they fail there (`os.homedir()`), so the helper now refuses a worker thread and `vitest.mutation.config.ts` leaves its users out. Then list the spawns the moved framework commands make (`grep -rn "execFile\|spawn" src --include=*.ts`) and confirm each passes `cwd`. If either fails, stop and report: the command-level moves (homes A1, A2, F1 to F7, P5, P6, T2 to T7) fall back to "keep e2e", which keeps about 85 s of moved e2e time in e2e.
 2. Write `in-process-cli.ts` as designed.
 3. Write `in-process-cli.integration.test.ts`, one test per guarantee:
    - `--help` returns exit 0 and the root usage on stdout.
@@ -143,8 +143,8 @@ Acceptance:
 
 | Command | Expected |
 | --- | --- |
-| `cd cli && pnpm vitest run --project=integration tests/helpers/in-process-cli.integration.test.ts` | 10 passed |
-| `cd cli && pnpm vitest run --project=integration --pool=threads tests/helpers/in-process-cli.integration.test.ts` | 10 passed |
+| `cd cli && pnpm vitest run --project=integration tests/helpers/in-process-cli.integration.test.ts` | 15 passed |
+| `cd cli && pnpm vitest run tests/helpers/in-process-cli-worker-thread.integration.test.ts` | 1 passed: the helper refuses to run on a worker thread (`isMainThread` substituted) |
 | `cd cli && pnpm test:arch` | exit 0 |
 | `cd cli && pnpm exec biome check tests/helpers/in-process-cli.ts tests/helpers/in-process-cli.integration.test.ts` | no error |
 
@@ -397,7 +397,7 @@ Acceptance:
 | `node -e 'const a=require(process.argv[1]);console.log(a.filter(t=>t.projectName==="e2e").length)' "$B/after.json"` | `89` |
 | `node -e 'console.log(require(process.argv[1]).testResults.length)' "$B/e2e-after-1.json"` | `35` |
 | `node -e 'const r=require(process.argv[1]);console.log(r.numFailedTests)' "$B/e2e-after-1.json"` | `0` |
-| `cd cli && pnpm test:coverage` | exit 0, thresholds held (deleting e2e tests cannot lower coverage: v8 does not cross the process boundary, `vitest.config.ts:84-88`) |
+| `cd cli && pnpm test:coverage` | exit 0, thresholds held (measured 98.81 / 96.08 / 99.47 / 99.34 with `src/presentation/commands/**` counted, against floors of 92 / 87 / 93 / 92) |
 | `pnpm exec lefthook run pre-commit` | exit 0 |
 
 ### Deletions and their inverted proofs
@@ -472,7 +472,7 @@ Families: S success, U usage or help, R refused precondition, H host binary abse
 | 10 | `antigravity-edited-hooks:123` antigravity hooks the user edited after setup sync --force rewrites an edited hooks.json e | 1848 | S | move | A1 | moved: `antigravity-hooks.integration` "sync --force rewrites an edited hooks.json entry and keeps the user hook". Break: drop `!overwriteEdited` from the entry guard in `remove-project-hooks.ts`; red: this test, row 11 and row 16 |
 | 11 | `antigravity-edited-hooks:138` antigravity hooks the user edited after setup clean --force removes an edited hook and eve | 1364 | S | move | A1 | moved: `antigravity-hooks.integration` "clean --force removes an edited hook and every plugin file, and keeps the user hook". Break: skip the script `deleteFile` in `removeRecordedProjectHooks`; red: this test and row 7 |
 | 12 | `antigravity-edited-hooks:156` antigravity hooks the user edited after setup sync without --force refuses an edited hook  | 2273 | R | move | A1, assert exit 1 and `/edited after install.*--force/` | moved: `antigravity-hooks.integration` "sync without --force refuses an edited hook script and names --force" (asserts exit 1, as the plan asks, where the e2e asserted non-zero). Break: `false &&` for the script digest guard in `remove-project-hooks.ts`; red: that test only |
-| 13 | `antigravity-edited-hooks:173` translate --as flat into an unparsable antigravity hooks file names the file and leaves it | 539 | R | move | X2 `flat-build-strategy.targets.integration.test.ts`; translate path has no lower test (`flat-build-strategy.ts:237`) | moved: `flat-build-strategy.targets.integration` "names the file and leaves it untouched" (asserts the thrown message; the e2e read it from stderr). Break: parse a placeholder instead of the content in `assertParsableJson`; red: that test only |
+| 13 | `antigravity-edited-hooks:173` translate --as flat into an unparsable antigravity hooks file names the file and leaves it | 539 | R | move | X2 `flat-build-strategy.targets.integration.test.ts`; translate path has no lower test (`flat-build-strategy.ts:237`) | moved: `flat-build-strategy.targets.integration` "names the file and leaves it untouched" (asserts the thrown message and the untouched file; the e2e read the message from stderr and checked a non-zero exit. It stays at the strategy so its file keeps killing `translate` mutants, which the in-process helper would remove from the mutation run. The command's part, a thrown build error printed on stderr with exit 1, is `translate-wiring.integration` "names a failed build on stderr and fails the process", so the two together hold what the e2e held). Break: parse a placeholder instead of the content in `assertParsableJson`; red: that test only |
 | 14 | `antigravity-foreign-files:14` antigravity under a .agents/ it does not own clean removes the skills it wrote and leaves  | 1240 | S | move | A2 `antigravity-restore.integration.test.ts` (IPC) | moved: `antigravity-restore.integration` "clean removes the skills it wrote and leaves a user skill beside them". Break: `deleteEmptyDirectories` removes the directory recursively, in `file-adapter.ts`; red: this test, rows 7 and 11, and row 18 |
 | 15 | `antigravity-foreign-files:51` antigravity under a .agents/ it does not own sync --force restores a drifted skill it wrot | 2167 | S | move | A2 `antigravity-restore.integration.test.ts` (IPC) | moved: `antigravity-restore.integration` "sync --force restores a drifted skill it wrote and leaves a user skill and a user named hook as they were". Break: `merge` drops the other keys of `hooks.json` (`...kept` removed); red: this test, rows 7, 9, 10 |
 | 16 | `antigravity-restore-regressions:29` Antigravity installation and restoration use the same artifacts restores a missing hooks f | 544 | S | move | A2 | moved: `antigravity-restore.integration` "restores a missing hooks file from a local plugin without claiming its scripts twice". Break: `mode-b-flat-materialization-translator` stops using `withoutHooks`; red: that test only |
@@ -724,7 +724,8 @@ Families: S success, U usage or help, R refused precondition, H host binary abse
 ## Risks
 
 - The in-process seam may leak state between calls despite `vi.resetModules()` (a module that caches the home directory, a profile registry filled twice). Phase 2's two-call test is the guard; the fallback is in phase 2, task 1.
-- Moved integration tests join the mutation runs of their scope. `telemetry` is gated per PR; about 25 telemetry tests at 100 to 300 ms each add to the time of each mutant they cover. The sequencer runs unit before integration (`tests/helpers/mutation-sequencer.ts`), so cheap killers still run first. Not measured here: mutation is out of scope.
+- The tests that use the in-process helper are left out of the mutation run: Stryker runs Vitest on worker threads, where `os.homedir()` ignores the substituted HOME, and the helper refuses to run there. `vitest.mutation.config.ts` finds them by scanning for an import of the helper, so none needs listing. The e2e tests they replace never ran under mutation either, so no mutation coverage is lost; the mutation cost of the moved tests is nil. The `stryker run --dryRunOnly` initial run passes on a `telemetry` file and on a `kernel` file.
+- Windows is unverified until the pull request opens: the 20 new real-fs integration files run on the Windows job (`cli-ci.yml:566`), and only a CI run on the branch settles them. Pending.
 - Persona rows 111 to 113 never ran on Windows (`cli-ci.yml:578` excludes `persona.e2e.test.ts`); as integration they will. A Windows failure there is a real finding, not a regression of this PR.
 - Row 50 reaches the real npm registry and asserts only that no authentication is asked for. Unchanged by this plan.
 - `clean.e2e.test.ts:148` (row 31, deleted) ran `ai install claude`, a command that does not exist, without checking its exit code. Recorded, not fixed: the test goes.
