@@ -20,22 +20,22 @@ Add `--include-installation-id` to send the existing AIDD installation UUID as a
 
 ### 2) 🧪 Send two messages in each session
 
-Set `AIDD_OTEL_TOKEN` to the corresponding connector token before each command. Choose models available to your accounts.
+Set `AIDD_OTEL_TOKEN` to the corresponding connector token before each command. Choose models available to your accounts. These examples opt in to sending the installation UUID.
 
 ```sh
 # Claude connector token
 aidd telemetry otel run --config claude --model haiku --tenant ai-driven-dev \
-  --endpoint http://127.0.0.1:55857 --yes --keep-capture \
+  --endpoint http://127.0.0.1:55857 --yes --keep-capture --include-installation-id \
   --follow-up "What word did I ask you to remember?" -- "Remember ORION72. Reply READY."
 
 # Codex connector token
 aidd telemetry otel run --config codex --model gpt-6-luna --tenant ai-driven-dev \
-  --endpoint http://127.0.0.1:55857 --yes --keep-capture \
+  --endpoint http://127.0.0.1:55857 --yes --keep-capture --include-installation-id \
   --follow-up "What word did I ask you to remember?" -- "Remember ORION72. Reply READY."
 
 # OpenCode connector token
 aidd telemetry otel run --config opencode --model claude-code/claude-haiku-4-5-20251001 \
-  --tenant ai-driven-dev --endpoint http://127.0.0.1:55857 --yes --keep-capture \
+  --tenant ai-driven-dev --endpoint http://127.0.0.1:55857 --yes --keep-capture --include-installation-id \
   --follow-up "What word did I ask you to remember?" -- "Remember ORION72. Reply READY."
 ```
 
