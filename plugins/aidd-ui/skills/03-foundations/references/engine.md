@@ -16,6 +16,7 @@ Where the engine is, and what it gives.
 | `bump --task <task folder> --change "<text>" [--breaking] <token>…` | raises the versions the tokens reach, each element back to `proposed`, with its row in `history.md` and a `pending` row per state in the `## Verdicts` of each reached screen's review; JSON `changed` and `left`, the elements reached and not raised; exit 2 with a message, nothing written |
 | `bump --task <task folder> --created system` | writes the first row of `system` in `history.md`, as 1.0.0, and `aidd_docs/ui/code-debt.json`; JSON `changed`; exit 2 with a message, nothing written |
 | `publish [--breaking]` | appends the `system` row to `history.md`: its Task lists every task with an element row and no earlier publication, sorted; major when one of them broke an element or with `--breaking` for tokens alone, else minor; JSON `version` and `tasks`; exit 2 with a message, nothing written, when no task is unpublished |
+| `publish <id>…` | sets each element `validated` and writes its fingerprint in the `history.md` row of its version; JSON `validated`, each `id`, `version`, `fingerprint`; exit 2 with a message, nothing written, for an id that is no element, is deprecated, has no row at its version, or whose row already holds a fingerprint: a change of a validated element goes through `bump` |
 
 ## Output
 
