@@ -21,7 +21,7 @@ describeFileContract(
     };
   },
   {
-    C19: "V7: realpath of a missing path answers the path",
+    C19: "realpath of a missing path answers the path instead of rejecting with ENOENT",
   }
 );
 

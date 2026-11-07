@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { posix, resolve } from "node:path";
+import { join, posix, resolve } from "node:path";
 import type { FileMerger } from "../../../src/contexts/tools/domain/ports/file-merger.js";
 import { FileHash } from "../../../src/kernel/file.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/kernel/merge.js";
@@ -135,7 +135,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
     const result: string[] = [];
     for (const key of this.files.keys()) {
       if (key.startsWith(prefix)) {
-        result.push(key);
+        result.push(join(dirPath, key.slice(prefix.length)));
       }
     }
     return result;

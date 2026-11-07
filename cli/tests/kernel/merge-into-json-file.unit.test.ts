@@ -5,7 +5,7 @@ import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js"
 
 const root = join("/", "merge");
 
-describe("FileAdapter", () => {
+describe("mergeIntoJsonFile", () => {
   let files: InMemoryFileAdapter;
 
   beforeEach(() => {
@@ -228,11 +228,18 @@ describe("FileAdapter", () => {
         expect(result.safe).toBe("updated");
         expect(({} as Record<string, unknown>).polluted).toBeUndefined();
       });
+
+      it("keeps a __proto__ payload from reaching the merged keys that follow it", async () => {
+        const path = join(root, "inherited-test.json");
+        const malicious = '{"__proto__":{"a":[1],"o":{"y":1}},"a":[2],"o":{"z":2}}';
+        await files.mergeJsonFile(path, malicious, "framework-prime");
+        expect(JSON.parse(await files.readFile(path))).toStrictEqual({ a: [2], o: { z: 2 } });
+      });
     });
   });
 });
 
-describe("FileAdapter, at the edges", () => {
+describe("mergeIntoJsonFile, at the edges", () => {
   let files: InMemoryFileAdapter;
 
   beforeEach(() => {
