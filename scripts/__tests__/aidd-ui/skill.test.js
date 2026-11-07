@@ -290,9 +290,9 @@ describe("aidd-ui 02-journeys skill", () => {
     }
   });
 
-  it("ends saying each record stays proposed until its review, and that a missing component is named, never created", () => {
+  it("ends saying each record stays proposed until its review, and names the components the design system lacks", () => {
     const conclude = fs.readFileSync(path.join(JOURNEYS, "actions/03-conclude.md"), "utf8");
     assert.ok(conclude.includes("each journey and wireframe written is `proposed` until its review"));
-    assert.ok(conclude.includes("never created here"));
+    assert.ok(conclude.includes("each component the R18 warnings name, for the design system to add"));
   });
 });
