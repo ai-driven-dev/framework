@@ -101,16 +101,14 @@ export default defineConfig({
         "src/contexts/*/domain/ports/**",
         "src/runtime/wiring/**",
       ],
-      // Set a little under 93.76 / 89.31 / 94.49 / 93.76, measured once the stale globs above
-      // were repointed: a threshold with no headroom fails on an honest change, and one far
-      // below what is measured is not a gate. Counting `presentation/commands/` measured
-      // 98.81 / 96.08 / 99.47 / 99.34, so these floors now sit well under the measure. `pnpm test:coverage` runs them,
-      // and CI runs that — until this commit the numbers were configured and never executed.
+      // Set a little under 98.81 / 96.08 / 99.47 / 99.34, measured once `presentation/commands/`
+      // was counted: a threshold with no headroom fails on an honest change, and one far below
+      // what is measured is not a gate. `pnpm test:coverage` runs them, and CI runs that.
       thresholds: {
-        statements: 92,
-        branches: 87,
-        functions: 93,
-        lines: 92,
+        statements: 98,
+        branches: 95,
+        functions: 98.5,
+        lines: 98.5,
       },
     },
   },
