@@ -14,6 +14,8 @@ const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
 const FOCUS_STATE = "focus"; // a component taking focus is driven by the keyboard
 const KEYBOARD_SECTION = "Keyboard";
+const PERSONA_SECTION = "Persona";
+const SCREEN_KINDS = ["screen", "wireframe"]; // what a journey step names
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
 const VERDICTS_SECTION = "Verdicts";
@@ -30,6 +32,7 @@ const KIND_KEYS = {
   composition: COMPONENT_KEYS,
   screen: [...VERSIONED_KEYS, "uses", "tokens", "states", "breakpoints", "route"],
   journey: [...VERSIONED_KEYS, "persona"],
+  wireframe: [...VERSIONED_KEYS, "uses", "states", "zones"],
   asset: [...VERSIONED_KEYS, "type", "file", "alt"],
   review: [...VERSIONED_KEYS, "scope", "screens"],
 };
@@ -120,7 +123,7 @@ function usesProblems(project) {
 function stateProblems(project) {
   return placed(project).flatMap((record) => {
     const states = list(fm(record).states);
-    if (fm(record).kind === "screen") return states.includes(DEFAULT_STATE) ? [] : [problem(record, `screen lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)];
+    if (SCREEN_KINDS.includes(fm(record).kind)) return states.includes(DEFAULT_STATE) ? [] : [problem(record, `${fm(record).kind} lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)];
     if (!isComponent(record)) return [];
     return [
       ...(states.includes(DEFAULT_STATE) ? [] : [problem(record, `component lacks state "${DEFAULT_STATE}"`, `add "${DEFAULT_STATE}" to states`)]),
@@ -183,17 +186,19 @@ function breakpointProblems(project) {
     );
 }
 
-const screenIds = (project) => new Set(placed(project).filter((record) => fm(record).kind === "screen").map((record) => fm(record).id));
+const screenIds = (project) => new Set(placed(project).filter((record) => SCREEN_KINDS.includes(fm(record).kind)).map((record) => fm(record).id));
 
 function journeyProblems(project) {
   const screens = screenIds(project);
   return placed(project)
     .filter((record) => fm(record).kind === "journey")
-    .flatMap((record) =>
-      table(record.sections[STEPS_SECTION]).flatMap((row, index) =>
-        screens.has(row.Screen) ? [] : [problem(record, `step ${index + 1} names screen "${row.Screen}", which no screen has`, "name a screen that exists, or add it", row.Screen)]
-      )
-    );
+    .flatMap((record) => [
+      ...(PERSONA_SECTION in record.sections ? [] : [problem(record, `lacks "## ${PERSONA_SECTION}", describing who walks it`, `add a "## ${PERSONA_SECTION}" section describing the persona`)]),
+      ...table(record.sections[STEPS_SECTION]).flatMap((row, index) => [
+        ...(screens.has(row.Screen) ? [] : [problem(record, `step ${index + 1} names screen "${row.Screen}", which no screen or wireframe has`, "name a screen or a wireframe that exists, or add a wireframe", row.Screen)]),
+        ...(row.Action ? [] : [problem(record, `step ${index + 1} has no action leading to the next`, "write the action in its Action cell")]),
+      ]),
+    ]);
 }
 
 function reviewProblems(project) {

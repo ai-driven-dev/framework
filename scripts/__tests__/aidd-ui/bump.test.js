@@ -123,6 +123,18 @@ describe("aidd-ui bump", () => {
       assert.equal(/\r/.test(read(`${UI}/components/dialog.md`)), false);
     });
 
+    it("raises a wireframe named itself, with its row in history.md", () => {
+      const { code, report } = bump("--task", TASK, "--change", "adds a filter zone", "search-flow");
+      assert.deepEqual([code, report.changed], [0, [`${UI}/history.md`, `${UI}/wireframes/search-flow.md`]]);
+      assert.ok(read(`${UI}/wireframes/search-flow.md`).includes("\nversion: 2\n"));
+      assert.ok(read(HISTORY).includes(`| search-flow | 2 | adds a filter zone | no | ${TASK} | |\n`));
+    });
+
+    it("leaves a wireframe expecting a changed component: it names the component, it holds none of it", () => {
+      change("search-field");
+      assert.ok(read(`${UI}/wireframes/search-flow.md`).includes("\nversion: 1\n"));
+    });
+
     it("keeps the code links of what it raises, and an element no ref reaches as it was", () => {
       change("space.md");
       assert.ok(read(`${UI}/components/button.md`).includes("code: src/ui/Button.tsx#Button@1\n"));
