@@ -97,7 +97,7 @@ import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plug
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
-import { GhTokenAdapter } from "../../shared/infrastructure/gh-token-adapter.js";
+import { GitHubAdapter } from "../../shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { Environment } from "../../shared/ports/environment.js";
 import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
@@ -229,7 +229,7 @@ export async function createDeps(
   const credentialStore = new AuthProviderAdapter(
     authStorage,
     new Map([["gh", ghCliAdapter]]),
-    new GhTokenAdapter(http),
+    new GitHubAdapter(http),
     projectRoot
   );
   const cliUpdater = new SelfUpdaterAdapter(http, {

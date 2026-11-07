@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AuthenticationError } from "../../../src/kernel/errors.js";
-import { GhTokenAdapter } from "../../../src/shared/infrastructure/gh-token-adapter.js";
+import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
 import type { HttpGet, HttpGetOptions, HttpResponse } from "../../../src/shared/ports/http-get.js";
 
 function http(
@@ -17,11 +17,11 @@ function http(
   };
 }
 
-describe("GhTokenAdapter", () => {
+describe("GitHubAdapter", () => {
   it("asks GitHub who the token belongs to, with the token", async () => {
     const client = http({ login: "octocat" });
 
-    const login = await new GhTokenAdapter(client).verifyToken("ghp_x");
+    const login = await new GitHubAdapter(client).verifyToken("ghp_x");
 
     expect(login).toBe("octocat");
     expect(client.calls).toHaveLength(1);
@@ -32,7 +32,7 @@ describe("GhTokenAdapter", () => {
   });
 
   it("refuses an answer carrying no login", async () => {
-    await expect(new GhTokenAdapter(http({ id: 1 })).verifyToken("ghp_x")).rejects.toThrow(
+    await expect(new GitHubAdapter(http({ id: 1 })).verifyToken("ghp_x")).rejects.toThrow(
       new AuthenticationError("GitHub API")
     );
   });
@@ -47,7 +47,7 @@ describe("GhTokenAdapter", () => {
     ["empty login", { login: "" }],
     ["blank login", { login: " " }],
   ])("refuses a malformed user response: %s", async (_label, body) => {
-    const error: unknown = await new GhTokenAdapter(http(body))
+    const error: unknown = await new GitHubAdapter(http(body))
       .verifyToken("ghp_x")
       .catch((error: unknown) => error);
 
@@ -58,7 +58,7 @@ describe("GhTokenAdapter", () => {
     "refuses HTTP %i even when the response carries a login",
     async (statusCode) => {
       await expect(
-        new GhTokenAdapter(http({ login: "octocat" }, statusCode)).verifyToken("ghp_x")
+        new GitHubAdapter(http({ login: "octocat" }, statusCode)).verifyToken("ghp_x")
       ).rejects.toThrow(new AuthenticationError("GitHub API"));
     }
   );
@@ -70,7 +70,7 @@ describe("GhTokenAdapter", () => {
         throw new Error(`Request failed for ${token}`);
       },
     };
-    const error: unknown = await new GhTokenAdapter(client)
+    const error: unknown = await new GitHubAdapter(client)
       .verifyToken(token)
       .catch((error: unknown) => error);
 

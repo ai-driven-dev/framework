@@ -4,7 +4,7 @@ import { AuthProviderAdapter } from "../../../src/runtime/auth/auth-provider-ada
 import type { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
 import { GhCliAdapter } from "../../../src/runtime/auth/gh-cli-adapter.js";
 import type { CredentialStore } from "../../../src/runtime/auth/ports/credential-store.js";
-import { GhTokenAdapter } from "../../../src/shared/infrastructure/gh-token-adapter.js";
+import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
 import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
 import { makeAuthConfig, makeTempAuthStorage } from "../../helpers/auth.js";
 
@@ -26,7 +26,7 @@ describe("auth logout", () => {
     return new AuthProviderAdapter(
       storage,
       new Map([["gh", new GhCliAdapter()]]),
-      new GhTokenAdapter(http),
+      new GitHubAdapter(http),
       tempDir
     );
   }
