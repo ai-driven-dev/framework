@@ -66,7 +66,7 @@ function genericLayerTargets(layer: Layer): ReadonlySet<string> {
     return new Set(["application", "infrastructure", "presentation", "runtime"]);
   }
   if (layer === "application") return new Set(["infrastructure"]);
-  return new Set();
+  return new Set(["**/shared/infrastructure/**"]);
 }
 
 /**
@@ -147,7 +147,7 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
     }
   );
 
-  it("kernel forbids every context layer, presentation and runtime, unconditionally", () => {
+  it("kernel forbids every context layer, shared, presentation and runtime, unconditionally", () => {
     const override = overrides.find((candidate) =>
       candidate.includes?.includes("src/kernel/**/*.ts")
     );
@@ -155,8 +155,41 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
 
     const groups = (restrictedImportGroups(override as BiomeOverride) ?? []).map(tokenOf);
     expect(new Set(groups)).toEqual(
-      new Set(["domain", "application", "infrastructure", "presentation", "runtime"])
+      new Set(["domain", "application", "infrastructure", "shared", "presentation", "runtime"])
     );
+  });
+
+  it.each([
+    {
+      includes: "src/shared/ports/**/*.ts",
+      forbids: ["contexts", "presentation", "runtime", "infrastructure"],
+    },
+    {
+      includes: "src/shared/infrastructure/**/*.ts",
+      forbids: ["contexts", "presentation", "runtime"],
+    },
+    {
+      includes: "src/presentation/**/*.ts",
+      forbids: ["**/shared/infrastructure/**"],
+    },
+    {
+      includes: "src/runtime/**/*.ts",
+      forbids: ["**/shared/infrastructure/**"],
+    },
+  ])("$includes forbids exactly its groups", ({ includes, forbids }) => {
+    const override = overrides.find((candidate) => candidate.includes?.includes(includes));
+    expect(override, `no override at ${includes}`).toBeDefined();
+
+    const groups = (restrictedImportGroups(override as BiomeOverride) ?? []).map(tokenOf);
+    expect(new Set(groups)).toEqual(new Set(forbids));
+  });
+
+  it("holds the runtime override clear of the composition root, which wires shared/infrastructure", () => {
+    const override = overrides.find((candidate) =>
+      candidate.includes?.includes("src/runtime/**/*.ts")
+    );
+
+    expect(override?.includes).toContain("!src/runtime/wiring/**");
   });
 });
 

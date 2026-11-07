@@ -2,8 +2,8 @@ import { execSync } from "node:child_process";
 import { platform } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FrameworkResolutionError, UpdateError } from "../../../src/kernel/errors.js";
-import type { HttpGet, HttpGetOptions } from "../../../src/runtime/http/http-client.js";
 import { SelfUpdaterAdapter } from "../../../src/runtime/self-update/self-updater-adapter.js";
+import type { HttpGet, HttpGetOptions } from "../../../src/shared/ports/http-get.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 
 vi.mock("node:child_process", () => ({ execSync: vi.fn() }));

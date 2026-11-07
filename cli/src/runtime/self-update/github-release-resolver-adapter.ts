@@ -4,8 +4,8 @@ import {
   CatalogFetchError,
   HttpNotFoundError,
 } from "../../kernel/errors.js";
+import type { HttpGet } from "../../shared/ports/http-get.js";
 import type { TokenProvider } from "../auth/ports/token-provider.js";
-import type { HttpGet } from "../http/http-client.js";
 import type { LatestReleaseResolver } from "./latest-release-resolver.js";
 
 const GITHUB_API_BASE = "https://api.github.com";

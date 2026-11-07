@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { EnvironmentAdapter } from "../../../../src/contexts/framework/infrastructure/environment-adapter.js";
+import { EnvironmentAdapter } from "../../../src/shared/infrastructure/environment-adapter.js";
 
 const VARIABLE = "AIDD_ENVIRONMENT_ADAPTER_PROBE";
 

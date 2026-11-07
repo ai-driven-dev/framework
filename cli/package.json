@@ -81,6 +81,7 @@
     "test:mutation:framework": "node scripts/run-mutation.mjs framework",
     "test:mutation:presentation": "node scripts/run-mutation.mjs presentation",
     "test:mutation:runtime": "node scripts/run-mutation.mjs runtime",
+    "test:mutation:shared": "node scripts/run-mutation.mjs shared",
     "test:mutation:canary": "node scripts/run-mutation.mjs canary",
     "knip": "knip"
   },

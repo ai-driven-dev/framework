@@ -54,6 +54,7 @@ describe("biome carries the exit and default-export rules", () => {
     const carrier = (config.overrides ?? []).find((o) => o.plugins?.includes(`./${PLUGIN}`));
     expect(carrier?.includes, `no override applies ${PLUGIN}`).toEqual([
       "src/kernel/**",
+      "src/shared/**",
       "src/contexts/**",
       "src/runtime/**",
     ]);
@@ -73,7 +74,11 @@ describe("biome carries the exit and default-export rules", () => {
     expect(
       carrier?.includes,
       "no override denies the process global to a context's domain and application"
-    ).toEqual(["src/contexts/*/domain/**/*.ts", "src/contexts/*/application/**/*.ts"]);
+    ).toEqual([
+      "src/contexts/*/domain/**/*.ts",
+      "src/contexts/*/application/**/*.ts",
+      "src/shared/ports/**/*.ts",
+    ]);
   });
 
   it("bans the filesystem and child processes in a unit test, and in nothing else", () => {
@@ -109,6 +114,13 @@ describe("the guard itself", () => {
       "src/contexts/framework/domain",
       "src/contexts/framework/application",
       "src/contexts/framework/infrastructure",
+      "src/contexts/tools/infrastructure",
+      "src/presentation/display",
+      "src/runtime/self-update",
+      "src/runtime/wiring",
+      "src/shared/ports",
+      "src/shared/infrastructure",
+      "src/contexts/tools/domain",
     ]) {
       mkdirSync(join(planted, dir), { recursive: true });
     }
@@ -145,6 +157,36 @@ describe("the guard itself", () => {
       join(planted, "tests/kernel/reads.integration.test.ts"),
       'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
     );
+    writeFileSync(
+      join(planted, "src/shared/infrastructure/http-client.ts"),
+      "export type HttpClient = number;\n"
+    );
+    writeFileSync(
+      join(planted, "src/contexts/tools/domain/registry.ts"),
+      "export type Registry = number;\n"
+    );
+    const reachesSharedInfrastructure = (up: string): string =>
+      `import type { HttpClient } from "${up}shared/infrastructure/http-client.js";\nexport type Client = HttpClient;\n`;
+    for (const [file, up] of [
+      ["src/contexts/tools/infrastructure/reaches-shared.ts", "../../../"],
+      ["src/presentation/display/reaches-shared.ts", "../../"],
+      ["src/runtime/self-update/reaches-shared.ts", "../../"],
+      ["src/runtime/wiring/reaches-shared.ts", "../../"],
+    ] as const) {
+      writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
+    }
+    writeFileSync(
+      join(planted, "src/shared/ports/reaches-context.ts"),
+      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
+    );
+    writeFileSync(
+      join(planted, "src/shared/ports/env.ts"),
+      "export const home = (): string | undefined => process.env.HOME;\n"
+    );
+    writeFileSync(
+      join(planted, "src/shared/infrastructure/exit.ts"),
+      "export const stop = (): never => process.exit(1);\n"
+    );
     const readsEnv = "export const home = (): string | undefined => process.env.HOME;\n";
     for (const file of [
       "src/contexts/framework/domain/env.ts",
@@ -162,7 +204,9 @@ describe("the guard itself", () => {
   it("flags process.exit under kernel/, contexts/ and runtime/, and leaves the command edge alone", () => {
     const findings = biomeFindings(planted);
     expect(findings, findings.join(", ")).toContain("src/kernel/exit.ts:plugin");
-    expect(findings.filter((f) => f.startsWith("src/presentation/"))).toEqual([]);
+    expect(
+      findings.filter((f) => f.startsWith("src/presentation/") && f.endsWith(":plugin"))
+    ).toEqual([]);
   });
 
   it("flags the process global in a context's domain and application, and not in its infrastructure", () => {
@@ -177,6 +221,37 @@ describe("the guard itself", () => {
     expect(findings.filter((f) => f.startsWith("src/contexts/framework/infrastructure/"))).toEqual(
       []
     );
+  });
+
+  it("flags shared/ports reaching a context, and shared/infrastructure reaching nothing it may not", () => {
+    const findings = biomeFindings(planted);
+
+    expect(findings, findings.join(", ")).toContain(
+      "src/shared/ports/reaches-context.ts:lint/style/noRestrictedImports"
+    );
+  });
+
+  it("flags a context's infrastructure, presentation and runtime reaching shared/infrastructure, and not the composition root", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    for (const file of [
+      "src/contexts/tools/infrastructure/reaches-shared.ts",
+      "src/presentation/display/reaches-shared.ts",
+      "src/runtime/self-update/reaches-shared.ts",
+    ]) {
+      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    }
+    expect(findings).not.toContain(`src/runtime/wiring/reaches-shared.ts:${rule}`);
+  });
+
+  it("flags the process global in shared/ports and process.exit in shared/infrastructure", () => {
+    const findings = biomeFindings(planted);
+
+    expect(findings, findings.join(", ")).toContain(
+      "src/shared/ports/env.ts:lint/style/noRestrictedGlobals"
+    );
+    expect(findings, findings.join(", ")).toContain("src/shared/infrastructure/exit.ts:plugin");
   });
 
   it("reads a file the GitHub reporter escaped, as on Windows", () => {

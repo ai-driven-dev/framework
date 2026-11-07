@@ -90,6 +90,9 @@ src/
 │   ├── materialization/    # where content lands and how its links follow
 │   ├── ports/    # a port two or more contexts both need
 │   └── reading/    # getting at a file's location and its content safely
+├── shared/    # technology ports and their adapters — imports no context
+│   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
+│   └── ports/    # a technology port two or more contexts need
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
 │   ├── commands/    # one file per command, wiring only
 │   ├── display/    # rendering a result
@@ -101,7 +104,6 @@ src/
     │   └── ports/
     ├── filesystem/
     ├── git/
-    ├── http/
     ├── platform/
     ├── project-root/
     ├── prompter/

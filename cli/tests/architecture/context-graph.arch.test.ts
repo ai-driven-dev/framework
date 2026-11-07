@@ -11,6 +11,8 @@ import {
   contextOf,
   edgesBetweenContexts,
   expectRatchet,
+  isContext,
+  isCrossing,
   sourceFiles,
   weighedEdges,
 } from "./helpers.js";
@@ -73,5 +75,31 @@ describe("the guard itself", () => {
 
     expect(forbiddenEdges([forbidden, permitted], ALLOWED)).toEqual(["tools->translate"]);
     expect(forbiddenEdges([permitted], ALLOWED)).toEqual([]);
+  });
+
+  it("names shared apart from every context, and counts no context among its files", () => {
+    expect(contextOf("src/shared/ports/http-get.ts")).toBe("shared");
+    expect(contextOf("src/shared/infrastructure/http-client.ts")).toBe("shared");
+    expect(isContext("shared")).toBe(false);
+  });
+
+  it("clears a context reaching shared and reports shared reaching a context", () => {
+    const reaching = isCrossing(
+      contextOf("src/contexts/tools/domain/registry.ts"),
+      contextOf("src/shared/ports/http-get.ts")
+    );
+    const reached = isCrossing(
+      contextOf("src/shared/ports/http-get.ts"),
+      contextOf("src/contexts/tools/domain/registry.ts")
+    );
+
+    expect(reaching, "a context may import shared/ports").toBe(false);
+    expect(reached, "shared imports no context").toBe(true);
+    expect(
+      forbiddenEdges(
+        [edgeBetween("src/shared/ports/x.ts", "src/contexts/tools/domain/registry.ts")],
+        ALLOWED
+      )
+    ).toEqual(["shared->tools"]);
   });
 });

@@ -47,6 +47,10 @@
       "mutate": "src/runtime/**/*.ts",
       "break": 90
     },
+    "shared": {
+      "mutate": "src/shared/**/*.ts",
+      "break": 95
+    },
     "tools-claude": {
       "mutate": "src/contexts/tools/domain/profiles/claude/**/*.ts",
       "break": 94

@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AuthenticationError } from "../../../src/kernel/errors.js";
-import { GhTokenAdapter } from "../../../src/runtime/auth/gh-token-adapter.js";
-import type {
-  HttpGet,
-  HttpGetOptions,
-  HttpResponse,
-} from "../../../src/runtime/http/http-client.js";
+import { GhTokenAdapter } from "../../../src/shared/infrastructure/gh-token-adapter.js";
+import type { HttpGet, HttpGetOptions, HttpResponse } from "../../../src/shared/ports/http-get.js";
 
 function http(
   body: unknown,

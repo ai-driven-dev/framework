@@ -5,8 +5,8 @@ import {
   CatalogFetchError,
   HttpNotFoundError,
 } from "../../../src/kernel/errors.js";
-import type { HttpGet } from "../../../src/runtime/http/http-client.js";
 import { GitHubReleaseResolverAdapter } from "../../../src/runtime/self-update/github-release-resolver-adapter.js";
+import type { HttpGet } from "../../../src/shared/ports/http-get.js";
 
 const REPO = "owner/repo";
 

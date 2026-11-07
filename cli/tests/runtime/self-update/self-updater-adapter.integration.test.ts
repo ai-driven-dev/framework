@@ -2,12 +2,9 @@ import { execSync } from "node:child_process";
 import { platform } from "node:os";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FrameworkResolutionError, HttpNotFoundError } from "../../../src/kernel/errors.js";
-import {
-  HttpClient,
-  type HttpGet,
-  type HttpResponse,
-} from "../../../src/runtime/http/http-client.js";
 import { SelfUpdaterAdapter } from "../../../src/runtime/self-update/self-updater-adapter.js";
+import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
+import type { HttpGet, HttpResponse } from "../../../src/shared/ports/http-get.js";
 
 interface GetCall {
   url: string;

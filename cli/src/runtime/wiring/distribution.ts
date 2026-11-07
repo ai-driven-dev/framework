@@ -18,8 +18,8 @@ import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../kernel/ports/hasher.js";
 import type { Logger } from "../../kernel/ports/logger.js";
+import type { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { AuthReaderAdapter } from "../auth/auth-reader-adapter.js";
-import type { HttpClient } from "../http/http-client.js";
 import { userConfigDir } from "../user-config-dir.js";
 
 export interface DistributionWiringShared {

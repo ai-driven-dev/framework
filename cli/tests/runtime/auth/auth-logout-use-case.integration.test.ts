@@ -3,9 +3,9 @@ import { AuthLogoutUseCase } from "../../../src/runtime/auth/auth-logout-use-cas
 import { AuthProviderAdapter } from "../../../src/runtime/auth/auth-provider-adapter.js";
 import type { AuthStorage } from "../../../src/runtime/auth/auth-storage.js";
 import { GhCliAdapter } from "../../../src/runtime/auth/gh-cli-adapter.js";
-import { GhTokenAdapter } from "../../../src/runtime/auth/gh-token-adapter.js";
 import type { CredentialStore } from "../../../src/runtime/auth/ports/credential-store.js";
-import { HttpClient } from "../../../src/runtime/http/http-client.js";
+import { GhTokenAdapter } from "../../../src/shared/infrastructure/gh-token-adapter.js";
+import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
 import { makeAuthConfig, makeTempAuthStorage } from "../../helpers/auth.js";
 
 describe("auth logout", () => {

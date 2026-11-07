@@ -136,7 +136,7 @@ export const BASELINE: readonly {
   { edge: "distribution->framework", imports: 1, files: 1 },
   // The http client, the git token injection, the user-config directory and `atomicWriteFile`
   // are concrete: a real dependency on runtime, resolved by inverting them into ports.
-  { edge: "distribution->runtime", imports: 6, files: 3 },
+  { edge: "distribution->runtime", imports: 5, files: 3 },
   // Three framework orchestrators still name the prompt classes they are handed, type-only.
   // Inverting them into a port is a design change, so the edge is measured rather than moved.
   { edge: "framework->presentation", imports: 4, files: 3 },
@@ -150,6 +150,7 @@ export function contextOf(file: string): string {
   const inContext = /^src\/contexts\/([^/]+)\//.exec(file);
   if (inContext) return inContext[1] as string;
   if (file.startsWith("src/kernel/")) return "kernel";
+  if (file.startsWith("src/shared/")) return "shared";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/runtime/")) return "runtime";
   return "outside";
@@ -159,7 +160,7 @@ export function contextOf(file: string): string {
 export const BELOW_NOTHING = new Set(["presentation", "runtime"]);
 
 export function isContext(name: string): boolean {
-  return !BELOW_NOTHING.has(name) && name !== "kernel" && name !== "outside";
+  return !BELOW_NOTHING.has(name) && !["kernel", "shared", "outside"].includes(name);
 }
 
 interface Crossing {
@@ -167,11 +168,19 @@ interface Crossing {
   readonly from: string;
   readonly to: string;
   /** `domain`, `application` or `infrastructure` — null when `file` is not itself under a
-   * context's own layer split (kernel, presentation, runtime). */
+   * context's own layer split (kernel, shared, presentation, runtime). */
   readonly layer: "domain" | "application" | "infrastructure" | null;
 }
 
 const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure)\//;
+
+/** Whether an import from one layer to another is an edge worth naming. Presentation and
+ * runtime may reach down, so only the reverse is one. */
+export function isCrossing(from: string, to: string): boolean {
+  if (from === to || to === "kernel" || to === "shared") return false;
+  if (from === "outside" || to === "outside") return false;
+  return !BELOW_NOTHING.has(from);
+}
 
 /** The one walk every edge-shaped rule in this directory builds on. */
 function crossings(files: readonly string[]): Crossing[] {
@@ -183,9 +192,7 @@ function crossings(files: readonly string[]): Crossing[] {
     for (const match of source.matchAll(INTERNAL_IMPORT)) {
       const target = resolveImportTarget(file, match[1] as string);
       const to = contextOf(target);
-      if (from === to || to === "kernel" || from === "outside" || to === "outside") continue;
-      // presentation and runtime may reach down; only the reverse is an edge worth naming.
-      if (BELOW_NOTHING.has(from)) continue;
+      if (!isCrossing(from, to)) continue;
       out.push({ file, from, to, layer: (layerMatch?.[1] as Crossing["layer"]) ?? null });
     }
   }

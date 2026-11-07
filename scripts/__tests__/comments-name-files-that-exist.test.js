@@ -27,6 +27,8 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   // dead one.
   "cli/tests/architecture/referenced-paths.arch.test.ts": [
     "kernel/gone.ts",
+    "shared/gone.ts",
+    "application/shared/x.ts",
   ],
   "scripts/__tests__/cli-type-honesty.test.js": [
     "cli/src/honest.ts",
