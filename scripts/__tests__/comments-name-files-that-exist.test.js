@@ -44,7 +44,9 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   // The design system's root record, a file of the project aidd-ui runs in, never of this repository.
   "plugins/aidd-ui/hooks/lib/resolver.cjs": ["system.md"],
   "plugins/aidd-ui/hooks/lib/extract.cjs": ["system.md"],
+  "plugins/aidd-ui/hooks/lib/help.cjs": ["history.md"],
   "scripts/__tests__/aidd-ui/extract.test.js": ["system.md"],
+  "scripts/__tests__/aidd-ui/skill.test.js": ["system.md"],
   // The build artefact every e2e run refuses to share, named as what is avoided.
   "cli/tests/e2e/helpers.ts": ["dist/cli.js"],
   "cli/tests/e2e/global-setup.ts": ["dist/cli.js"],

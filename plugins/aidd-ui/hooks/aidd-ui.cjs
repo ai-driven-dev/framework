@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The design system engine every skill and the hook call, one command per job; usage is in `main` and the *_USAGE constants.
+// The design system engine every skill and the hook call, one command per job; `node aidd-ui.cjs help` says what each does.
 const fs = require("node:fs");
 const path = require("node:path");
 const { Refusal, load, unreadable, UI_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
@@ -13,6 +13,7 @@ const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const extraction = require("./lib/extract.cjs");
 const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
+const { HELP, commandList, helpText, ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE } = require("./lib/help.cjs");
 
 const CHECKS = { records, history, tokens, renders, code, extraction };
 const VERDICT_VALID = "VALID";
@@ -90,18 +91,6 @@ function generateTokens([root = process.cwd()]) {
   console.log(file);
   return EXIT_VALID;
 }
-
-const ROOT_FLAG = "--root";
-const FORCE_FLAG = "--force";
-const IMPACT_USAGE = `node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
-const TASK_FLAG = "--task";
-const CHANGE_FLAG = "--change";
-const BREAKING_FLAG = "--breaking";
-const CREATED_FLAG = "--created";
-const REMOVED_FLAG = "--removed";
-const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG} | ${REMOVED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
-const PUBLISH_USAGE = `node aidd-ui.cjs publish ([${BREAKING_FLAG}] | <id>…) [${ROOT_FLAG} <dir>]`;
-const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
 
 /** `args` as `{values, flags, rest}`: `values` holds each of `options` given with its value, `flags`
  * the set of `flags` given, `rest` every other argument in order. An option last on the line has no
@@ -198,14 +187,29 @@ function publishSystem(args) {
 // The hook needs this file loaded first, for the checks: it is required when it runs.
 const runHook = () => require("./lib/hook.cjs").hook();
 
-const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem };
-
-function main([command, ...args]) {
-  if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs hook < <host event>\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}\n       ${PUBLISH_USAGE}`);
+/** The command list on stderr, under the usage of `help`. */
+function unknownCommand() {
+  console.error(`usage: ${HELP.help.usage[0]}\n${commandList()}`);
   return EXIT_USAGE;
 }
 
-module.exports = { problemsOf, findingOf, isError };
+/** Prints the help of the command named, or the list of commands when none is. */
+function help([name]) {
+  if (name === undefined) {
+    console.log(commandList());
+    return EXIT_VALID;
+  }
+  if (!Object.hasOwn(HELP, name)) return unknownCommand();
+  console.log(helpText(name));
+  return EXIT_VALID;
+}
+
+const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem, help };
+
+function main([command, ...args]) {
+  return Object.hasOwn(COMMANDS, command) ? COMMANDS[command](args) : unknownCommand();
+}
+
+module.exports = { problemsOf, findingOf, isError, COMMANDS };
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));

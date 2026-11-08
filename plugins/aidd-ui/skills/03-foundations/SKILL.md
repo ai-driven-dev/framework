@@ -28,7 +28,7 @@ Each box is a file: read it, then do what it says.
 - Otherwise call tools.
 - Run every command from the project root, the working directory.
 - Every path written in a record starts there.
-- Write only `system.md`, `tokens.json` and its context files under `aidd_docs/ui/`.
+- Write only `system.md`, `tokens.json`, `themes/`, `platforms/` and `breakpoints/` under `aidd_docs/ui/`.
 - Never write in the code, nor by hand what the engine writes.
 - The engine writes `history.md`, `code-debt.json`, `tokens.css` and `tokens.resolver.json`.
 - After each write, fix what the hook or `node <engine> validate` reports.
