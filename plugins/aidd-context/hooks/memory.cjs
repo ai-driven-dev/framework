@@ -79,6 +79,10 @@ const CONDITIONAL_FILES = Object.freeze([
 ]);
 const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
 
+// The names an older bank holds for an always-written file: the table's Accepted names of the
+// Always rows, held equal to it by a test. The check counts such a file as the row's own.
+const ACCEPTED_ALWAYS = Object.freeze({ "ecosystem.md": ["integration.md"] });
+
 // A shell write carries no file list: a bank file changed this recently is the command's.
 const SHELL_WINDOW_MS = 2000;
 
@@ -223,7 +227,8 @@ function missingFindings(root) {
     return [missing(MEMORY_DIR, "no memory bank under the root", "write it with the project memory skill")];
   }
   const present = new Set(rootFiles(root));
-  const absent = ALWAYS_WRITTEN.filter((name) => !present.has(`${MEMORY_DIR}/${name}`));
+  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => present.has(`${MEMORY_DIR}/${held}`));
+  const absent = ALWAYS_WRITTEN.filter((name) => !holds(name));
   return absent.length === 0 ? [] : [missing(MEMORY_DIR, absent.join(", "), "write each from its template")];
 }
 
@@ -714,6 +719,6 @@ function main(argv) {
   return EXIT_ERRORS;
 }
 
-module.exports = { ALWAYS_WRITTEN, ROW_FILES, TARGET_FILES, lintFile, lintBank, check, sync };
+module.exports = { ALWAYS_WRITTEN, ACCEPTED_ALWAYS, ROW_FILES, TARGET_FILES, lintFile, lintBank, check, sync };
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));

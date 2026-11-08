@@ -31,6 +31,7 @@ A convention no rule covers. T1, T2. File and section name the rule topic. Not w
 - Read the answer in the person's own words; ids are optional.
 - `ok` or "all good" is `yes` on every line, "all but X" is `yes` on every line but X, in one turn.
 - An answer unclear for a line leaves a `remove` or `replace` on it unapplied; silence is yes on an addition.
-- `tools: claude, codex` or "wire it into claude" picks the tools; `C2: no` appends `: no` to that `C` entry.
+- `tools: claude, codex` or "wire it into claude" picks the tools.
+- A file named in `Will write` that is answered no is not written.
 - An unanswered `Q` drops its slot.
 - Autonomous: only when the caller's instruction answers for the user.

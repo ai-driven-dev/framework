@@ -471,6 +471,18 @@ test("check names the always-written files the bank lacks as the one error, and 
   }
 });
 
+test("check: an always file under an accepted name of its row is not missing", () => {
+  const files = Object.fromEntries(ALWAYS_WRITTEN.filter((name) => name !== "ecosystem.md").map((name) => [name, "# T\n\nShort.\n"]));
+  const root = project({ ...files, "integration.md": "# G\n" });
+  try {
+    const run = check(root);
+    assert.equal(run.status, 0);
+    assert.doesNotMatch(run.stdout, /missing/u);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("check: a row's file below the root and a team folder are warnings and exit 0", () => {
   const root = fullBank({ "internal/auth.md": "# A\n", "kpi/q.md": "# K\n", "assets/diagram.png": "x" });
   try {
@@ -579,6 +591,10 @@ test("the engine's row files are the capability table's, and it holds no table o
   );
   for (const accepted of rows.flatMap((cells) => names(cells[6]))) assert.ok(!ROW_FILES.includes(accepted), `${accepted} is accepted and also a row file`);
   assert.equal(require(ENGINE).FORMER_FILES, undefined);
+  const acceptedOfAlways = Object.fromEntries(
+    rows.filter((cells) => cells[5] === "yes" && names(cells[6]).length > 0).map((cells) => [names(cells[2])[0], names(cells[6])])
+  );
+  assert.deepEqual(require(ENGINE).ACCEPTED_ALWAYS, acceptedOfAlways);
 });
 
 // vanished: a read-only list of the lines a write lost without approval, against the bank at HEAD

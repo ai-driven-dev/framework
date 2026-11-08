@@ -5,7 +5,7 @@ The chat reply that shows the sheet once, before anything is written. Reply with
 - Plain words, short lines, a blank line between sections.
 - Leave out a section with nothing in it.
 - Say what each file will hold, from the sheet's lines, never only a count.
-- Use `Will write` for a new file and `Will update` for an existing one.
+- Use `Will write` for a new file and `Will change` for an edit to existing lines.
 - Show `Tools to wire` on a setup only.
 - End with the one question below, in the person's language; name in its example only a D line or a question that exists.
 - Send it as plain chat text, not in a code fence; the fence below is for this file only.

@@ -421,7 +421,7 @@ test("write ends at once on an empty sheet, drops a capability answered no, keep
   const writing = section(skillText("references/capabilities.md"), "Writing");
   assert.match(writing, /`move <path> to <path>`[^\n]*move the file/u);
   assert.match(writing, /plus every absent always file, minus a capability answered no/u);
-  assert.match(skillText("assets/fact-sheet.md"), /`: no` to that `C` entry/u);
+  assert.match(skillText("assets/fact-sheet.md"), /A file named in `Will write` that is answered no is not written/u);
   assert.match(writing, /Skip a `remove` or `replace`[^\n]*not yes/u);
 });
 
@@ -462,6 +462,8 @@ test("the sheet message shows once, airy and in one fixed order: files with what
   assert.match(sample, /^Does this look right\? Say ok, or what to change, for example "not D\d+" or "Q\d+: …"\.$/mu, "the reply is not the one question");
   assert.doesNotMatch(sample, /·/u, "an answer syntax line is left");
   assert.match(asset, /in the person's language/u);
+  assert.match(asset, /`Will write` for a new file and `Will change` for an edit to existing lines/u, "the rule and the sample name the change section differently");
+  assert.doesNotMatch(asset, /Will update/u);
   assert.match(asset, /plain chat text, not in a code fence/u);
   assert.equal(sample.match(/aidd_docs\//gu).length, 1, "a path other than the sheet's is shown");
   assert.doesNotMatch(sample, /silence|\bgrammar\b|\bremove\b|\breplace\b/iu, "engine words reach the person");
