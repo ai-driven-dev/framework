@@ -69,7 +69,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 - 4c : sur les trois pilotes, chaque wireframe a son écran ; un contraste sous le seuil et une zone tactile trop petite sont signalés.
 - 4d : un écran et son wireframe revus OK puis publiés passent `validated` ; un verdict sur une version antérieure ne compte pas.
 - 4e : sur chaque pilote, toute fiche est atteignable depuis l'accueil, et deux générations sont identiques.
-- Fin : le script de pilote et les tests de structure passent sur tout le plugin, puis aucune phrase n'y est écrite deux fois.
+- Fin : le script de pilote et les tests de structure passent sur tout le plugin, puis aucune phrase n'y est écrite deux fois. Chaque skill a la tenue de brainstorm : actions d'intention, références courtes. Le pilote revient à l'essentiel : chaque étape écrit ses fichiers, aucune erreur.
 
 ## Open Questions
 
