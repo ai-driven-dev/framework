@@ -19,7 +19,7 @@ const SCREEN_KINDS = ["screen", "wireframe"]; // what a journey step names
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
 const VERDICTS_SECTION = "Verdicts";
-const BRAND_HEADINGS = ["Project", "Users", "Domain", "Platforms", "Personality and tone", "References", "Anti-references"];
+const BRAND_HEADINGS = ["Project", "Users", "Domain", "Personality and tone", "References", "Anti-references"];
 
 const COMMON_KEYS = ["id", "kind"];
 const VERSIONED_KEYS = ["status", "version"]; // all but the system, whose versions are its publications, and the brand

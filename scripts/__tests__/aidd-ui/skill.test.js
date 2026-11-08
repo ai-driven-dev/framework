@@ -34,7 +34,6 @@ const FILLS = {
     "what the project is": "A search tool.",
     "who uses it": "Analysts.",
     "the domain it works in": "Public records.",
-    "where it runs": "Web.",
     "how it sounds and looks": "Plain and calm.",
     "what it looks like and why": "A library catalogue.",
     "what it must never look like": "A casino.",
@@ -250,6 +249,45 @@ describe("aidd-ui skills", () => {
       const conclude = fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8");
       for (const line of ["each element created or raised is `proposed` until published", "the user publishes with `node <engine> publish <id>`", "the user does so after looking at its render"]) assert.ok(conclude.includes(line), `${folder}: ${line}`);
     }
+  });
+});
+
+describe("aidd-ui engine references", () => {
+  const { HELP } = require(path.join(PLUGIN, "hooks/lib/help.cjs"));
+  const engineOf = (folder) => fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8");
+
+  it("hold the install table, the command names and the owed table, nothing the engine's help says", () => {
+    for (const folder of FOLDERS) {
+      const text = engineOf(folder);
+      assert.deepEqual(text.split("\n").filter((line) => line.startsWith("#")), ["# Engine", "## Commands", "## Owed by a later step"], folder);
+      assert.ok(text.includes("| Install | Path |"), folder);
+      assert.ok(text.includes("`<engine>` is that path, run with `node`."), folder);
+      assert.ok(text.includes("`node <engine> help <command>`"), folder);
+      assert.equal(text.includes("```"), false, `${folder} holds a code block`);
+    }
+  });
+
+  it("list only commands the engine's help knows", () => {
+    for (const folder of FOLDERS) {
+      const commands = engineOf(folder).split("## Commands")[1].split("## Owed")[0].split("\n").filter((line) => line.startsWith("- "));
+      assert.ok(commands.length > 0, folder);
+      for (const line of commands) assert.ok(Object.hasOwn(HELP, line.match(/^- `([^`]+)`$/)?.[1]), `${folder}: ${line}`);
+    }
+  });
+});
+
+describe("aidd-ui system answers", () => {
+  const foundations = (file) => fs.readFileSync(path.join(SKILL("03-foundations"), file), "utf8");
+
+  it("come from the code per extraction, never from the README or visible copy", () => {
+    const write = foundations("actions/02-write.md");
+    const step = write.slice(write.indexOf("2. If no `system.md`"), write.indexOf("3. From the code"));
+    assert.ok(step.includes("[extraction](../references/extraction.md)"));
+    assert.equal(/README|manifest|visible copy/.test(step), false);
+  });
+
+  it("name the apps the code roots serve as the platforms", () => {
+    assert.ok(foundations("references/extraction.md").split("\n").some((line) => line.startsWith("| ") && line.includes("apps") && line.includes("`platforms`")));
   });
 });
 

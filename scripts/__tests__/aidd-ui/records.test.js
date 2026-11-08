@@ -399,6 +399,11 @@ describe("aidd-ui records and history", () => {
       change(BRAND, "## Users\n\nAnalysts.\n\n", "");
       assert.deepEqual(problems(), [`${BRAND}: lacks "## Users"`]);
     });
+
+    it("holds no platforms section: system.md alone names them", () => {
+      assert.equal(fs.readFileSync(path.join(tmp, BRAND), "utf8").includes("## Platforms"), false);
+      assert.deepEqual(problems(), []);
+    });
   });
 
   describe("R15 assets", () => {

@@ -42,7 +42,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Le
 | Fiche | Contient en plus |
 | --- | --- |
 | `system.md` | version du format des fiches, plateformes, breakpoints (le tableau `## Breakpoints`, seule source), thèmes, langues (`ar`, `he`, `fa` et `ur` s'écrivent de droite à gauche, ce qui donne le sens d'écriture), groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés ; règles transverses s'il y en a |
-| `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
+| `brand.md` | projet, utilisateurs, domaine, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
 | atome, molécule, organisme | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
 | écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, plateformes où il existe, un lien vers le code par plateforme |

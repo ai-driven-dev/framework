@@ -94,7 +94,6 @@ const BRAND = record(
   "## Project\n\nA search tool.",
   "## Users\n\nAnalysts.",
   "## Domain\n\nPublic records.",
-  "## Platforms\n\nWeb.",
   "## Personality and tone\n\nPlain and calm.",
   "## Imposed charter\n\nNone.",
   "## References\n\nA library catalogue.",

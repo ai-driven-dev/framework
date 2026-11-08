@@ -17,10 +17,6 @@ kind: brand
 
 {{the domain it works in}}
 
-## Platforms
-
-{{where it runs}}
-
 ## Personality and tone
 
 {{how it sounds and looks}}

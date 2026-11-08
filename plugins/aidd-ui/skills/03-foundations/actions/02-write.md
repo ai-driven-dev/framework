@@ -10,8 +10,8 @@ The output of [prepare](01-prepare.md).
 
 1. From the code, read it per [extraction](../references/extraction.md).
 2. If no `system.md` exists, write `aidd_docs/ui/system.md` from the [system](../assets/system-template.md) template.
-   - Code: read its README, package manifest and visible copy.
-   - Code: ask the user to confirm.
+   - Code: answer from step 1's reading, per [extraction](../references/extraction.md).
+   - Ask what extraction names no source for.
    - Scratch: ask the user for each answer.
 3. From the code, with a token file in `code-tokens`:
    - Run `node <engine> extract`.
