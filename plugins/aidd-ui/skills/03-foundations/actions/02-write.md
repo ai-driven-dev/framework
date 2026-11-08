@@ -10,28 +10,19 @@ The output of [prepare](01-prepare.md).
 
 1. From the code, read it per [extraction](../references/extraction.md).
 2. If no `system.md` exists, write `aidd_docs/ui/system.md` from the [system](../assets/system-template.md) template.
-   - Code: answer from step 1's reading, per [extraction](../references/extraction.md).
-   - Ask what extraction names no source for.
+   - Code: answer from step 1's reading.
+   - Ask what [extraction](../references/extraction.md) names no source for.
    - Scratch: ask the user for each answer.
-3. From the code, with a token file in `code-tokens`:
-   - Run `node <engine> extract`.
-   - Settle each entry of its `left` list per [extraction](../references/extraction.md).
-4. For a change, run the command below, `--breaking` per [versions](../references/versions.md):
-
-   ```
-   node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>
-   ```
-
-5. Write the tokens not extracted, new or changed:
-   - In `aidd_docs/ui/tokens.json` and its context files.
-   - Per [tokens](../references/tokens.md), following the brand direction.
-6. Run `node <engine> tokens` until it exits 0.
-   - Exit 1 stays for a blocker [engine](../references/engine.md) says a later step owes.
-7. If this run created `system`:
-   - Run `node <engine> bump --task <task folder> --created system`.
+3. With a token file in the code, extract its tokens per [engine](../references/engine.md).
+   - Settle what is left per [extraction](../references/extraction.md).
+4. For a change, raise the versions per [versions](../references/versions.md).
+5. Write the tokens not extracted, new or changed.
+   - Follow [tokens](../references/tokens.md) and the brand direction.
+6. Generate the stylesheet until nothing blocks, per [engine](../references/engine.md). A blocker the engine says a later step owes may stay.
+7. If this run created `system`, record it per [engine](../references/engine.md).
 8. Read [conclude](03-conclude.md).
 
 ## Output
 
 - The files written.
-- For a change, `bump`'s JSON and the agreed impact.
+- For a change, the raised versions and the agreed impact.

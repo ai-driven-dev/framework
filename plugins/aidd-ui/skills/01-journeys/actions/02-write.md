@@ -13,12 +13,9 @@ The output of [prepare](01-prepare.md).
    - Write `aidd_docs/ui/wireframes/<id>.md` from the [wireframe](../assets/wireframe-template.md) template.
    - Write its render from the [render](../assets/wireframe-render-template.html) template.
    - Follow [wireframes](../references/wireframes.md).
-   - From the code, read the screen's code.
-   - Take its zones, states and components from it.
-3. For each existing journey or wireframe the request changes:
-   - Run `node <engine> bump --task <task folder> --change "<one line>" <id>…`.
-4. For the records this run created:
-   - Run `node <engine> bump --task <task folder> --created <id>…`.
+   - From the code, take zones, states and components from the screen's code.
+3. For each journey or wireframe a change reaches, raise it per [engine](../references/engine.md).
+4. For the records this run created, record them per [engine](../references/engine.md).
 5. Read [conclude](03-conclude.md).
 
 ## Output

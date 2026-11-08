@@ -13,6 +13,10 @@
 
 `node <engine> help <command>` says what each does.
 
+| Step | Command |
+| --- | --- |
+| conclude 1 and 3, validate | `node <engine> validate` |
+
 ## Owed by a later step
 
 | Problem | Gone once |

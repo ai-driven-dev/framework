@@ -28,7 +28,7 @@ Each box is a file: read it, then do what it says.
 - Otherwise call tools.
 - Run every command from the project root, the working directory.
 - Write only `aidd_docs/ui/brand.md`, never in the code.
-- After each write, fix what the hook or `node <engine> validate` reports.
+- After each write, fix what the hook or the validation reports.
 - Leave what [engine](references/engine.md) says a later step owes.
 - Never bypass a hook.
 - Commit and push only when asked.

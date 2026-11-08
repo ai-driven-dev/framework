@@ -230,6 +230,19 @@ describe("aidd-ui skills", () => {
     assert.deepEqual(offenders, []);
   });
 
+  it("keeps every action free of commands, flags and code", () => {
+    const offenders = [];
+    for (const folder of FOLDERS) {
+      for (const name of fs.readdirSync(path.join(SKILL(folder), "actions"))) {
+        const text = fs.readFileSync(path.join(SKILL(folder), "actions", name), "utf8");
+        text.split("\n").forEach((line, index) => {
+          if (/node\s+<engine>/.test(line) || /(^|[\s`(])--[a-z]/.test(line) || line.includes("```")) offenders.push(`${folder}/actions/${name}:${index + 1} ${line.trim().slice(0, 60)}`);
+        });
+      }
+    }
+    assert.deepEqual(offenders, []);
+  });
+
   it("have one author for each kind of record", () => {
     const authors = new Map();
     for (const folder of FOLDERS) {
@@ -246,8 +259,9 @@ describe("aidd-ui skills", () => {
 
   it("end saying the user validates each element after its render, in the skills that raise elements", () => {
     for (const folder of ["03-foundations", "04-components"]) {
-      const conclude = fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8");
-      for (const line of ["each element created or raised is `proposed` until published", "the user publishes with `node <engine> publish <id>`", "the user does so after looking at its render"]) assert.ok(conclude.includes(line), `${folder}: ${line}`);
+      const conclude = fs.readFileSync(path.join(SKILL(folder), "references/reply.md"), "utf8");
+      assert.ok(fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").includes("`node <engine> publish <id>`"), folder);
+      for (const line of ["each element created or raised is `proposed` until published", "the user publishes each per [engine](engine.md)", "the user does so after looking at its render"]) assert.ok(conclude.includes(line), `${folder}: ${line}`);
     }
   });
 });
@@ -281,7 +295,7 @@ describe("aidd-ui system answers", () => {
 
   it("come from the code per extraction, never from the README or visible copy", () => {
     const write = foundations("actions/02-write.md");
-    const step = write.slice(write.indexOf("2. If no `system.md`"), write.indexOf("3. From the code"));
+    const step = write.slice(write.indexOf("2. If no `system.md`"), write.indexOf("3. With a token file"));
     assert.ok(step.includes("[extraction](../references/extraction.md)"));
     assert.equal(/README|manifest|visible copy/.test(step), false);
   });
@@ -374,6 +388,7 @@ describe("aidd-ui journeys skill", () => {
   it("ends saying each record stays proposed until its review, and names the components the design system lacks", () => {
     const conclude = fs.readFileSync(path.join(JOURNEYS, "actions/03-conclude.md"), "utf8");
     assert.ok(conclude.includes("each journey and wireframe written is `proposed` until its review"));
-    assert.ok(conclude.includes("each component the R18 warnings name, for the design system to add"));
+    assert.ok(fs.readFileSync(path.join(JOURNEYS, "references/wireframes.md"), "utf8").includes("warning R18"));
+    assert.ok(conclude.includes("each component a warning names, for the design system to add"));
   });
 });

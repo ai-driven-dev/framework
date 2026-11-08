@@ -5,12 +5,12 @@
 | place | components and renders in `aidd_docs/ui/components/`. Assets with their file in `aidd_docs/ui/assets/` |
 | level | asset, atom, molecule, organism. An element uses its level or lower, never itself |
 | `tokens` | the semantic tokens its own render uses, never a primitive. Those of the elements it uses come with them |
-| `states` | `default`. `hover`, `disabled`, `loading`, `error` when they exist. `focus` only if the element itself takes focus. Not `focus` if only an element it uses does |
+| `states` | `default`. `hover`, `disabled`, `loading`, `error` when they exist. `focus` only if the element itself takes focus |
 | `## Keyboard` | present with `focus`, else none |
 | `variants` | bare items, or `axis=value` for a prop varying on its own. Never `state`, `variant` or `theme` as an axis |
 | `platforms` | optional, a subset of `system.md`'s. Absent means all |
 | `code` | one link or a list. At most one link per platform |
-| `code` link | `path[#Export]@<version>` or `[platform=]package:<name>[#Export]@<version>`. `platform=` when `system.md` lists several platforms. `#Export` when the techno has one. `<version>` is the one the code implements, at most `version`. A path link sits on its code root's platform. |
+| `code` link | `path[#Export]@<version>` or `[platform=]package:<name>[#Export]@<version>`. `platform=` when `system.md` lists several platforms. `#Export` when the techno has one. `<version>` is the one the code implements, at most `version`. |
 | no link | an assembled molecule or organism whose used elements are all coded. An element coded nowhere yet |
 | render coverage | each variant value and each state at least once, on an element. No product of axes |
 | render attributes | `data-variant`, `data-<axis>`, `data-state` |

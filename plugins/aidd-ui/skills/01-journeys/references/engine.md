@@ -14,6 +14,12 @@
 
 `node <engine> help <command>` says what each does.
 
+| Step | Command |
+| --- | --- |
+| write 5, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" <id>…` |
+| write 6, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
+| conclude 1 and 3, validate | `node <engine> validate` |
+
 ## Owed by a later step
 
 | Problem | Gone once |

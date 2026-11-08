@@ -4,7 +4,7 @@ Write the brand.
 
 ## Input
 
-The case and `<engine>`.
+The case and the engine.
 
 ## Process
 

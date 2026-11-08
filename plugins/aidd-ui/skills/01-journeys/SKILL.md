@@ -27,7 +27,7 @@ Each box is a file: read it, then do what it says.
 - Run every command from the project root, the working directory.
 - Write only under `aidd_docs/ui/journeys/` and `aidd_docs/ui/wireframes/`.
 - Never write in the code, a brief, or the design system.
-- After each write, fix what the hook or `node <engine> validate` reports.
+- After each write, fix what the hook or the validation reports.
 - Leave what [engine](references/engine.md) says a later step owes.
 - Never bypass a hook.
 - Commit and push only when asked.

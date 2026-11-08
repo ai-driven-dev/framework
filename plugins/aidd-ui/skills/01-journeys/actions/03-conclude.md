@@ -4,19 +4,19 @@ Leave journeys and wireframes that validate, and tell the user what follows.
 
 ## Input
 
-`<engine>` and the files written.
+The engine and the files written.
 
 ## Process
 
-1. Run `node <engine> validate`.
+1. Validate per [engine](../references/engine.md).
 2. Fix each error line as its `=> fix` says.
    - Only in the folders this skill writes.
-3. Rerun `node <engine> validate`, and repeat until none is left there.
+3. Validate again, and repeat until none is left there.
 4. Keep the `warning` lines.
-5. Keep the errors [engine](../references/engine.md) says a later step owes.
+5. Keep the errors the [engine](../references/engine.md) says a later step owes.
 6. Reply with:
    - the journeys and wireframes written or raised, with their versions
-   - each component the R18 warnings name, for the design system to add
+   - each component a warning names, for the design system to add
    - that each journey and wireframe written is `proposed` until its review.
 
 ## Output

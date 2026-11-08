@@ -65,8 +65,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-conclude.md](skills/03-foundations/actions/03-conclude.md) | - |
 | `assets` | [system-template.md](skills/03-foundations/assets/system-template.md) | - |
 | `references` | [cases.md](skills/03-foundations/references/cases.md) | - |
+| `references` | [code-errors.md](skills/03-foundations/references/code-errors.md) | - |
 | `references` | [engine.md](skills/03-foundations/references/engine.md) | - |
 | `references` | [extraction.md](skills/03-foundations/references/extraction.md) | - |
+| `references` | [reply.md](skills/03-foundations/references/reply.md) | - |
 | `references` | [tokens.md](skills/03-foundations/references/tokens.md) | - |
 | `references` | [versions.md](skills/03-foundations/references/versions.md) | - |
 | `-` | [SKILL.md](skills/03-foundations/SKILL.md) | `Lay a project's design foundations, its system and tokens, from nothing or from its code, or carry a token change to its new versions. Use when the user wants to set up, extract, or change the design system or its tokens. Not for the brand, components, screens, or journeys.` |
@@ -81,9 +83,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [asset-template.md](skills/04-components/assets/asset-template.md) | - |
 | `assets` | [component-template.md](skills/04-components/assets/component-template.md) | - |
 | `references` | [cases.md](skills/04-components/references/cases.md) | - |
+| `references` | [code-errors.md](skills/04-components/references/code-errors.md) | - |
 | `references` | [elements.md](skills/04-components/references/elements.md) | - |
 | `references` | [engine.md](skills/04-components/references/engine.md) | - |
 | `references` | [extraction.md](skills/04-components/references/extraction.md) | - |
+| `references` | [reply.md](skills/04-components/references/reply.md) | - |
 | `references` | [versions.md](skills/04-components/references/versions.md) | - |
 | `-` | [SKILL.md](skills/04-components/SKILL.md) | `Write a project's components and assets, from nothing or from its code, or carry a component change to its new versions. Use when the user wants to add, extract, or change a component or an asset. Not for the brand, tokens, screens, or journeys.` |
 

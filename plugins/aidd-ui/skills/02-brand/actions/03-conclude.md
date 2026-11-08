@@ -4,17 +4,17 @@ Leave a brand that validates, and tell the user what follows.
 
 ## Input
 
-`<engine>` and the file written.
+The engine and the file written.
 
 ## Process
 
-1. Run `node <engine> validate`.
+1. Validate per [engine](../references/engine.md).
 2. Fix each error line in `aidd_docs/ui/brand.md` as its `=> fix` says.
-3. Rerun `node <engine> validate`, and repeat until none is left there.
-4. Keep the errors [engine](../references/engine.md) says a later step owes.
+3. Validate again, and repeat until none is left there.
+4. Keep the errors the [engine](../references/engine.md) says a later step owes.
 5. Reply with:
    - the brand written
-   - what `validate` still prints
+   - what the validation still prints
    - that the code is untouched.
 
 ## Output

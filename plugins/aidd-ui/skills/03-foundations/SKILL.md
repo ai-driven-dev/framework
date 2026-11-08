@@ -31,7 +31,7 @@ Each box is a file: read it, then do what it says.
 - Write only `system.md`, `tokens.json`, `themes/`, `platforms/` and `breakpoints/` under `aidd_docs/ui/`.
 - Never write in the code, nor by hand what the engine writes.
 - The engine writes `history.md`, `code-debt.json`, `tokens.css` and `tokens.resolver.json`.
-- After each write, fix what the hook or `node <engine> validate` reports.
+- After each write, fix what the hook or the validation reports.
 - Leave what [engine](references/engine.md) says a later step owes.
 - Never bypass a hook.
 - Commit and push only when asked.
