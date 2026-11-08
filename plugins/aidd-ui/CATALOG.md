@@ -65,7 +65,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-conclude.md](skills/03-foundations/actions/03-conclude.md) | - |
 | `assets` | [system-template.md](skills/03-foundations/assets/system-template.md) | - |
 | `references` | [cases.md](skills/03-foundations/references/cases.md) | - |
-| `references` | [code-errors.md](skills/03-foundations/references/code-errors.md) | - |
 | `references` | [engine.md](skills/03-foundations/references/engine.md) | - |
 | `references` | [extraction.md](skills/03-foundations/references/extraction.md) | - |
 | `references` | [reply.md](skills/03-foundations/references/reply.md) | - |
@@ -83,7 +82,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [asset-template.md](skills/04-components/assets/asset-template.md) | - |
 | `assets` | [component-template.md](skills/04-components/assets/component-template.md) | - |
 | `references` | [cases.md](skills/04-components/references/cases.md) | - |
-| `references` | [code-errors.md](skills/04-components/references/code-errors.md) | - |
 | `references` | [elements.md](skills/04-components/references/elements.md) | - |
 | `references` | [engine.md](skills/04-components/references/engine.md) | - |
 | `references` | [extraction.md](skills/04-components/references/extraction.md) | - |

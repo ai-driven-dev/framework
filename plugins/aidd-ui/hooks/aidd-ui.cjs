@@ -13,7 +13,8 @@ const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const extraction = require("./lib/extract.cjs");
 const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
-const { HELP, commandList, helpText, ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE } = require("./lib/help.cjs");
+const { HELP, commandList, helpText } = require("./lib/help.cjs");
+const { ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, HELP_USAGE } = require("./lib/cli.cjs");
 
 const CHECKS = { records, history, tokens, renders, code, extraction };
 const VERDICT_VALID = "VALID";
@@ -189,7 +190,7 @@ const runHook = () => require("./lib/hook.cjs").hook();
 
 /** The command list on stderr, under the usage of `help`. */
 function unknownCommand() {
-  console.error(`usage: ${HELP.help.usage[0]}\n${commandList()}`);
+  console.error(`usage: ${HELP_USAGE}\n${commandList()}`);
   return EXIT_USAGE;
 }
 

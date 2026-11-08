@@ -1,22 +1,7 @@
 // What `node aidd-ui.cjs help <command>` prints: each command's usage, effects, output and exit codes, written once.
-const ROOT_FLAG = "--root";
-const FORCE_FLAG = "--force";
-const TASK_FLAG = "--task";
-const CHANGE_FLAG = "--change";
-const BREAKING_FLAG = "--breaking";
-const CREATED_FLAG = "--created";
-const REMOVED_FLAG = "--removed";
+const { VALIDATE_USAGE, TOKENS_USAGE, HOOK_USAGE, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, HELP_USAGE } = require("./cli.cjs");
 
-const VALIDATE_USAGE = "node aidd-ui.cjs validate [project-root]";
-const TOKENS_USAGE = "node aidd-ui.cjs tokens [project-root]";
-const HOOK_USAGE = "node aidd-ui.cjs hook < <host event>";
-const IMPACT_USAGE = `node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
-const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
-const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG} | ${REMOVED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
-const PUBLISH_USAGE = `node aidd-ui.cjs publish ([${BREAKING_FLAG}] | <id>…) [${ROOT_FLAG} <dir>]`;
-const HELP_USAGE = "node aidd-ui.cjs help [<command>]";
-
-const COUNT_LINE = "aidd-ui: <n> errors, <m> warnings";
+const COUNT_LINE = "aidd-ui: <n> error(s), <m> warning(s)";
 const ERROR_LINE = '<file>[:<line>] <rule> ["<excerpt>"] => <fix>';
 const WARNING_LINE = "<file>[:<line>] <rule> warning <message> => <fix>";
 const GROUPED_LINE = '<rule> ×<count> in <file>|<folder>/* ["<excerpt>"] => <fix>';
@@ -39,6 +24,7 @@ const HELP = {
       WARNING_LINE,
       "The fix names the engine command when the engine owns the write.",
       "It prints every problem, ungrouped.",
+      "C4, C6 and C10 are about the code, not the design system.",
     ],
     exits: ["0 no error, a warning allowed.", "1 at least one error."],
   },
@@ -78,8 +64,8 @@ const HELP = {
   extract: {
     summary: "Write the tokens from the code the system names.",
     usage: [EXTRACT_USAGE],
-    effects: ["Writes `tokens.json` and the context files from the `code-tokens` files.", "Refuses when `tokens.json` exists without `--force`.", "Refuses when it cannot: no `system.md`, no `code-tokens`, or an unreadable file."],
-    output: ["Prints JSON `written` and `left`."],
+    effects: ["Writes `tokens.json`, `tokens.resolver.json` and the context files from the `code-tokens` files.", "Refuses when `tokens.json` exists without `--force`.", "Refuses when it cannot: no `system.md`, no `code-tokens`, or an unreadable file."],
+    output: ["Prints JSON `written` and `left`: what it did not write."],
     exits: ["0 the files are written.", REFUSED],
   },
   bump: {
@@ -99,7 +85,7 @@ const HELP = {
       "`--removed` writes a breaking `removed` row one version above the last.",
       "`--removed` refuses an id without rows, and `system`.",
     ],
-    output: ["Prints JSON `changed`.", "With `--change`, it also prints `left`: the elements reached and not raised."],
+    output: ["Prints JSON `changed`.", "With `--change`, it also prints `left`: each record reached and not raised.", "Each `left` holds an `id` and its `why`: deprecated, or already raised."],
     exits: ["0 the rows are written.", REFUSED],
   },
   publish: {
@@ -116,9 +102,10 @@ const HELP = {
       "It refuses a deprecated id, or one that is no element.",
       "It refuses an id with no row at its version.",
       "It refuses an id whose row holds a fingerprint.",
+      "Without ids, it refuses when no task is unpublished.",
       "A change of a validated element goes through `bump`.",
     ],
-    output: ["Without ids, prints JSON `version` and `tasks`.", "With ids, prints JSON `validated`: each `id`, `version`, `fingerprint`.", "Refuses when no task is unpublished."],
+    output: ["Without ids, prints JSON `version` and `tasks`.", "With ids, prints JSON `validated`: each `id`, `version`, `fingerprint`."],
     exits: ["0 the rows are written.", REFUSED],
   },
   help: {
@@ -140,19 +127,4 @@ function helpText(name) {
   return [`usage: ${usage.join("\n       ")}`, `Effects:\n${bullets(effects)}`, `Output:\n${bullets(output)}`, `Exit codes:\n${bullets(exits)}`].join("\n\n");
 }
 
-module.exports = {
-  HELP,
-  commandList,
-  helpText,
-  ROOT_FLAG,
-  FORCE_FLAG,
-  TASK_FLAG,
-  CHANGE_FLAG,
-  BREAKING_FLAG,
-  CREATED_FLAG,
-  REMOVED_FLAG,
-  IMPACT_USAGE,
-  EXTRACT_USAGE,
-  BUMP_USAGE,
-  PUBLISH_USAGE,
-};
+module.exports = { HELP, COUNT_LINE, ERROR_LINE, WARNING_LINE, GROUPED_LINE, commandList, helpText };
