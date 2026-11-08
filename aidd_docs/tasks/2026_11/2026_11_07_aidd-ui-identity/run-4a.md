@@ -101,3 +101,7 @@ Each guard was broken once and its own test watched going red. A "survived" note
 | E9 | the `validate` summary changed in `help.cjs` | killed, the pinned output |
 | `T8` fix | back to "cite a semantic token instead" | killed: the fix pin of `tokens-renders.test.js` |
 | `cli.cjs` | a flag exported and never shown in a usage; a usage hardcoding `--forse`; a usage exported and not in `help` | killed: `shows in its usage lines the flags the engine parses, and no other` |
+| pilot trace | `--include-hook-events` dropped; `--verbose` dropped | each killed: `spawns a step with a stream that carries tool calls, results and hook output` |
+| pilot trace | hook messages with no output kept; tool result given as blocks dropped; `is_error` ignored | each killed: `keeps each command, tool result and hook message, in order, and the reply apart` |
+| pilot trace | the `.trace.jsonl` write removed | killed: `writes the reply to the .out file and the trace beside it` |
+| engine refusal for a missing `aidd_docs/ui` | says "no design system" again; drops "Run from the project root" | each killed in `bump`, `extract` and `publish` tests (3 failures) |
