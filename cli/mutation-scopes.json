@@ -8,7 +8,7 @@
     },
     "auth": {
       "mutate": "src/contexts/auth/**/*.ts",
-      "break": 95
+      "break": 97
     },
     "tools": {
       "mutate": [

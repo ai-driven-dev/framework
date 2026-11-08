@@ -127,6 +127,21 @@ export const ALLOWED = new Set([
 ]);
 
 /**
+ * The contexts whose interior is held by Biome's folder groups instead of the public-surface
+ * list in `context-boundary.arch.test.ts`: they publish `contract/` and `application/` and
+ * keep the three folders below to themselves and the composition root. The list is data for
+ * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
+ */
+export const HELD_BY_BIOME: readonly string[] = ["auth"];
+
+const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
+
+/** The groups that forbid a held context's interior to an importer that may reach the rest. */
+export function interiorGroupsOf(context: string): string[] {
+  return INTERIOR_FOLDERS.map((folder) => `**/${context}/${folder}/**`);
+}
+
+/**
  * Edges the chain forbids and the tree still has. The list may only shrink, and each entry
  * carries its measured weight: an edge alone could absorb any number of imports in silence.
  */

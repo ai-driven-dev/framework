@@ -24,6 +24,13 @@ function sources(
   return sourcesInOrder(tokens, (level) => records.read(level));
 }
 
+/** A project record that carries no token, over a user record that does. */
+function aTokenlessProjectOverAUserToken(): InMemoryCredentialRecordRepository {
+  return new InMemoryCredentialRecordRepository()
+    .seed("project", aStoredRecord({ level: "project", token: undefined }))
+    .seed("user", aStoredRecord({ token: "ghp_u" }));
+}
+
 async function all(iterable: AsyncIterable<CredentialSource>): Promise<CredentialSource[]> {
   const out: CredentialSource[] = [];
   for await (const source of iterable) out.push(source);
@@ -74,9 +81,7 @@ describe("the sources, in order", () => {
 
 describe("when a record yields no token", () => {
   it("falls past a stored record carrying none", async () => {
-    const records = new InMemoryCredentialRecordRepository()
-      .seed("project", aStoredRecord({ level: "project", token: undefined }))
-      .seed("user", aStoredRecord({ token: "ghp_u" }));
+    const records = aTokenlessProjectOverAUserToken();
 
     expect((await firstToken(sources(supplied(), records), noExternal))?.token).toBe("ghp_u");
   });
@@ -186,9 +191,7 @@ describe("the active credential", () => {
 
 describe("the two stop rules", () => {
   it("take the token from the user record while the active credential is the tokenless project record", async () => {
-    const records = new InMemoryCredentialRecordRepository()
-      .seed("project", aStoredRecord({ level: "project", token: undefined }))
-      .seed("user", aStoredRecord({ token: "ghp_u" }));
+    const records = aTokenlessProjectOverAUserToken();
 
     expect((await firstToken(sources(supplied(), records), noExternal))?.token).toBe("ghp_u");
     expect(await activeCredential(sources(supplied(), records))).toMatchObject({

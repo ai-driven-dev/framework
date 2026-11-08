@@ -8,6 +8,8 @@ import {
   ALLOWED,
   baselineLayers,
   contextNames,
+  HELD_BY_BIOME,
+  interiorGroupsOf,
   matchesGlob,
   read,
   sourceFiles,
@@ -99,6 +101,16 @@ function expectedForbidden(
   return forbidden;
 }
 
+/**
+ * The folder groups a context's overrides carry for each held context it may import: the
+ * edge is admitted, so only the contract and the commands are open to it.
+ */
+function interiorGroupsFor(context: string): string[] {
+  return HELD_BY_BIOME.filter(
+    (held) => held !== context && ALLOWED.has(`${context}->${held}`)
+  ).flatMap(interiorGroupsOf);
+}
+
 function layersOf(context: string, files: readonly string[]): Layer[] {
   const optional = OPTIONAL_LAYERS.filter((layer) =>
     files.some((file) => file.startsWith(`src/contexts/${context}/${layer}/`))
@@ -162,6 +174,7 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
         groups.filter((pattern) => !extra.has(pattern)).map((pattern) => tokenOf(pattern))
       );
       const expected = expectedForbidden(context, layer, contexts, baselineLayerMap);
+      for (const group of interiorGroupsFor(context)) expected.add(group);
 
       expect([...actual].sort()).toEqual([...expected].sort());
     }
@@ -198,11 +211,19 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
     },
     {
       includes: "src/presentation/**/*.ts",
-      forbids: ["**/shared/infrastructure/**", "composition"],
+      forbids: [
+        "**/shared/infrastructure/**",
+        "composition",
+        ...HELD_BY_BIOME.flatMap(interiorGroupsOf),
+      ],
     },
     {
       includes: "src/runtime/**/*.ts",
-      forbids: ["**/shared/infrastructure/**", "composition"],
+      forbids: [
+        "**/shared/infrastructure/**",
+        "composition",
+        ...HELD_BY_BIOME.flatMap(interiorGroupsOf),
+      ],
     },
   ])("$includes forbids exactly its groups", ({ includes, forbids }) => {
     const override = overrides.find((candidate) => candidate.includes?.includes(includes));
@@ -253,6 +274,21 @@ describe("the guard itself", () => {
     expect(forbidden("contract").has("domain")).toBe(true);
     expect(forbidden("contract").has("ports")).toBe(true);
     expect(forbidden("domain").has("ports")).toBe(false);
+  });
+
+  it("asks an importer of a held context for the interior groups, and no other context", () => {
+    expect(interiorGroupsFor("distribution")).toEqual(interiorGroupsOf("auth"));
+    expect(interiorGroupsFor("framework")).toEqual(interiorGroupsOf("auth"));
+    expect(
+      interiorGroupsFor("tools"),
+      "tools->auth is no edge: `**/auth/**` already forbids it"
+    ).toEqual([]);
+    expect(interiorGroupsFor("auth"), "a context keeps its own interior").toEqual([]);
+    expect(interiorGroupsOf("auth")).toEqual([
+      "**/auth/domain/**",
+      "**/auth/ports/**",
+      "**/auth/infrastructure/**",
+    ]);
   });
 
   it("lists a ports or contract folder only where it exists", () => {

@@ -5,6 +5,7 @@
  */
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { builtinModules } from "node:module";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -46,6 +47,16 @@ function biomeFindings(projectDir: string, launcher = BIOME): string[] {
   return findings;
 }
 
+/** The folders that import nothing from the platform or a package but the two modules that
+ * hold no I/O. */
+const PURE_FOLDERS = [
+  "src/contexts/auth/domain/**/*.ts",
+  "src/contexts/auth/ports/**/*.ts",
+  "src/contexts/auth/contract/**/*.ts",
+  "src/shared/ports/**/*.ts",
+] as const;
+const PURE_BUILTINS: ReadonlySet<string> = new Set(["path", "crypto"]);
+
 describe("biome carries the exit and default-export rules", () => {
   it("scopes the process.exit plugin to the layers that throw, and to nothing else", () => {
     const config = JSON.parse(read("biome.json")) as {
@@ -77,8 +88,46 @@ describe("biome carries the exit and default-export rules", () => {
     ).toEqual([
       "src/contexts/*/domain/**/*.ts",
       "src/contexts/*/application/**/*.ts",
+      "src/contexts/*/ports/**/*.ts",
+      "src/contexts/*/contract/**/*.ts",
       "src/shared/ports/**/*.ts",
     ]);
+  });
+
+  it("denies a pure folder every package and every Node builtin but path and crypto", () => {
+    const config = JSON.parse(read("biome.json")) as {
+      overrides?: {
+        includes?: string[];
+        linter?: {
+          rules?: { style?: { noRestrictedImports?: { options?: { paths?: object } } } };
+        };
+      }[];
+    };
+    const deniedBy = (includes: string): string[] => {
+      const override = (config.overrides ?? []).find((o) => o.includes?.[0] === includes);
+      return Object.keys(override?.linter?.rules?.style?.noRestrictedImports?.options?.paths ?? {});
+    };
+    const pkg = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
+    const builtins = [...new Set(builtinModules.map((name) => name.replace(/^node:/, "")))]
+      .filter((name) => !PURE_BUILTINS.has(name))
+      .flatMap((name) => [name, `node:${name}`]);
+
+    for (const includes of PURE_FOLDERS) {
+      const denied = deniedBy(includes);
+      expect(denied.length, `no import path denied at ${includes}`).toBeGreaterThan(0);
+      expect(
+        builtins.filter((name) => !denied.includes(name)),
+        `${includes} lets through a builtin this Node knows`
+      ).toEqual([]);
+      for (const allowed of PURE_BUILTINS) {
+        expect(denied, `${includes} denies ${allowed}`).not.toContain(allowed);
+        expect(denied, `${includes} denies node:${allowed}`).not.toContain(`node:${allowed}`);
+      }
+      expect(
+        Object.keys(pkg.dependencies).filter((name) => !denied.includes(name)),
+        `${includes} lets through a dependency of package.json`
+      ).toEqual([]);
+    }
   });
 
   it("bans the filesystem and child processes in a unit test, and in nothing else", () => {
@@ -91,7 +140,9 @@ describe("biome carries the exit and default-export rules", () => {
       }[];
     };
     const carrier = (config.overrides ?? []).find(
-      (o) => o.linter?.rules?.style?.noRestrictedImports?.options?.paths !== undefined
+      (o) =>
+        o.linter?.rules?.style?.noRestrictedImports?.options?.paths !== undefined &&
+        !PURE_FOLDERS.some((folder) => folder === o.includes?.[0])
     );
 
     expect(carrier?.includes, "no override denies fs and child_process to a unit test").toEqual([
@@ -102,6 +153,7 @@ describe("biome carries the exit and default-export rules", () => {
 
 describe("the guard itself", () => {
   let planted: string;
+  const readsEnvSource = "export const home = (): string | undefined => process.env.HOME;\n";
 
   beforeAll(() => {
     planted = mkdtempSync(join(tmpdir(), "aidd-biome-bite-"));
@@ -123,6 +175,9 @@ describe("the guard itself", () => {
       "src/contexts/tools/domain",
       "src/contexts/auth/contract",
       "src/contexts/auth/domain",
+      "src/contexts/auth/application",
+      "src/contexts/auth/infrastructure",
+      "src/contexts/auth/ports",
       "src/contexts/distribution/infrastructure",
       "src/composition",
     ]) {
@@ -187,6 +242,71 @@ describe("the guard itself", () => {
       join(planted, "src/contexts/auth/domain/reaches-tools.ts"),
       'import type { Registry } from "../../tools/domain/registry.js";\nexport type Reached = Registry;\n'
     );
+    writeFileSync(
+      join(planted, "src/contexts/auth/contract/credential.ts"),
+      "export type Credential = number;\n"
+    );
+    writeFileSync(
+      join(planted, "src/contexts/auth/domain/credential-record.ts"),
+      "export type CredentialRecord = number;\n"
+    );
+    writeFileSync(
+      join(planted, "src/contexts/auth/ports/identity-verifier.ts"),
+      "export type IdentityVerifier = number;\n"
+    );
+    writeFileSync(
+      join(planted, "src/contexts/auth/application/log-in.ts"),
+      "export type LogIn = number;\n"
+    );
+    writeFileSync(
+      join(planted, "src/contexts/auth/infrastructure/gh-cli-adapter.ts"),
+      "export type GhCliAdapter = number;\n"
+    );
+    const reachesAuthFolder = (up: string, folder: string, file: string, name: string): string =>
+      `import type { ${name} } from "${up}auth/${folder}/${file}.js";\nexport type Reached = ${name};\n`;
+    const authFolders = [
+      ["domain", "credential-record", "CredentialRecord"],
+      ["ports", "identity-verifier", "IdentityVerifier"],
+      ["application", "log-in", "LogIn"],
+      ["infrastructure", "gh-cli-adapter", "GhCliAdapter"],
+      ["contract", "credential", "Credential"],
+    ] as const;
+    for (const [folder, file, name] of authFolders) {
+      for (const [dir, up] of [
+        ["src/presentation/display", "../../contexts/"],
+        ["src/runtime/self-update", "../../contexts/"],
+        ["src/runtime/wiring", "../../contexts/"],
+        ["src/contexts/distribution/infrastructure", "../../"],
+        ["src/contexts/framework/application", "../../"],
+      ] as const) {
+        writeFileSync(
+          join(planted, dir, `reaches-auth-${folder}.ts`),
+          reachesAuthFolder(up, folder, file, name)
+        );
+      }
+    }
+    const imports = (specifier: string): string =>
+      `import * as mod from "${specifier}";\nexport const used = mod;\n`;
+    mkdirSync(join(planted, "src/contexts/auth/domain/pure"), { recursive: true });
+    for (const [name, specifier] of [
+      ["fs", "node:fs"],
+      ["os", "node:os"],
+      ["commander", "commander"],
+      ["bare-fs", "fs"],
+      ["path", "node:path"],
+      ["crypto", "node:crypto"],
+    ] as const) {
+      writeFileSync(
+        join(planted, `src/contexts/auth/domain/pure/imports-${name}.ts`),
+        imports(specifier)
+      );
+    }
+    writeFileSync(join(planted, "src/contexts/auth/ports/imports-fs.ts"), imports("node:fs"));
+    writeFileSync(join(planted, "src/contexts/auth/contract/imports-fs.ts"), imports("node:fs"));
+    writeFileSync(join(planted, "src/shared/ports/imports-fs.ts"), imports("node:fs"));
+    writeFileSync(join(planted, "src/shared/ports/imports-path.ts"), imports("node:path"));
+    writeFileSync(join(planted, "src/contexts/auth/ports/env.ts"), readsEnvSource);
+    writeFileSync(join(planted, "src/contexts/auth/contract/env.ts"), readsEnvSource);
     writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
     const reachesComposition = (up: string): string =>
       `import type { AuthDeps } from "${up}composition/auth.js";\nexport type Wired = AuthDeps;\n`;
@@ -230,7 +350,7 @@ describe("the guard itself", () => {
       join(planted, "src/shared/infrastructure/exit.ts"),
       "export const stop = (): never => process.exit(1);\n"
     );
-    const readsEnv = "export const home = (): string | undefined => process.env.HOME;\n";
+    const readsEnv = readsEnvSource;
     for (const file of [
       "src/contexts/framework/domain/env.ts",
       "src/contexts/framework/application/env.ts",
@@ -308,6 +428,31 @@ describe("the guard itself", () => {
     );
   });
 
+  it("flags presentation, runtime and an admitted context reaching auth's domain, ports or infrastructure, and clears the contract and the commands", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+    const importers = [
+      "src/presentation/display",
+      "src/runtime/self-update",
+      "src/contexts/distribution/infrastructure",
+      "src/contexts/framework/application",
+    ];
+
+    for (const dir of importers) {
+      for (const folder of ["domain", "ports", "infrastructure"]) {
+        expect(findings, findings.join(", ")).toContain(`${dir}/reaches-auth-${folder}.ts:${rule}`);
+      }
+      for (const folder of ["contract", "application"]) {
+        expect(findings).not.toContain(`${dir}/reaches-auth-${folder}.ts:${rule}`);
+      }
+    }
+    for (const folder of ["domain", "ports", "application", "infrastructure", "contract"]) {
+      expect(findings, "the composition root imports every folder of auth").not.toContain(
+        `src/runtime/wiring/reaches-auth-${folder}.ts:${rule}`
+      );
+    }
+  });
+
   it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
@@ -322,6 +467,38 @@ describe("the guard itself", () => {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
     expect(findings).not.toContain(`src/runtime/wiring/reaches-composition.ts:${rule}`);
+  });
+
+  it("flags a package or a Node builtin in a pure folder, and clears path and crypto", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    for (const file of [
+      "src/contexts/auth/domain/pure/imports-fs.ts",
+      "src/contexts/auth/domain/pure/imports-os.ts",
+      "src/contexts/auth/domain/pure/imports-commander.ts",
+      "src/contexts/auth/domain/pure/imports-bare-fs.ts",
+      "src/contexts/auth/ports/imports-fs.ts",
+      "src/contexts/auth/contract/imports-fs.ts",
+      "src/shared/ports/imports-fs.ts",
+    ]) {
+      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    }
+    for (const file of [
+      "src/contexts/auth/domain/pure/imports-path.ts",
+      "src/contexts/auth/domain/pure/imports-crypto.ts",
+      "src/shared/ports/imports-path.ts",
+    ]) {
+      expect(findings).not.toContain(`${file}:${rule}`);
+    }
+  });
+
+  it("flags the process global in a context's ports and contract", () => {
+    const findings = biomeFindings(planted);
+
+    for (const file of ["src/contexts/auth/ports/env.ts", "src/contexts/auth/contract/env.ts"]) {
+      expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedGlobals`);
+    }
   });
 
   it("flags the process global in shared/ports and process.exit in shared/infrastructure", () => {

@@ -10,20 +10,6 @@ describe("LogOut", () => {
     });
   });
 
-  describe("when a project record is stored", () => {
-    it("deletes it and reports the project level, with no hint", async () => {
-      const records = new InMemoryCredentialRecordRepository().seed(
-        "project",
-        aStoredRecord({ level: "project" })
-      );
-
-      const result = await aLogOut().withRecords(records).build().execute();
-
-      expect(result).toStrictEqual({ found: true, level: "project", hint: undefined });
-      expect(await records.read("project")).toBeNull();
-    });
-  });
-
   describe("when only a user record is stored", () => {
     it("deletes it and reports the user level", async () => {
       const records = new InMemoryCredentialRecordRepository().seed("user", aStoredRecord());
@@ -46,14 +32,14 @@ describe("LogOut", () => {
   });
 
   describe("when both levels hold a record", () => {
-    it("deletes the project one and keeps the user one", async () => {
+    it("deletes the project one, with no hint, and keeps the user one", async () => {
       const records = new InMemoryCredentialRecordRepository()
         .seed("project", aStoredRecord({ level: "project" }))
         .seed("user", aStoredRecord({ token: "ghp_user" }));
 
       const result = await aLogOut().withRecords(records).build().execute();
 
-      expect(result).toMatchObject({ found: true, level: "project" });
+      expect(result).toStrictEqual({ found: true, level: "project", hint: undefined });
       expect(await records.read("project")).toBeNull();
       expect(await records.read("user")).not.toBeNull();
     });

@@ -66,10 +66,17 @@ describe("CheckStatus", () => {
   });
 
   describe("when an external record is active", () => {
-    it("asks the provider it names", async () => {
+    it.each([
+      ["the provider it names", "glab", "from-glab"],
+      [
+        "gh when the record names no provider, as one written before providers were named",
+        undefined,
+        "from-gh",
+      ],
+    ])("asks %s", async (_who, provider, login) => {
       const records = new InMemoryCredentialRecordRepository().seed(
         "user",
-        anExternalRecord({ provider: "glab" })
+        anExternalRecord({ provider })
       );
 
       const result = await aCheckStatus()
@@ -79,25 +86,7 @@ describe("CheckStatus", () => {
         .build()
         .execute();
 
-      expect(result).toStrictEqual({ authenticated: true, login: "from-glab", level: "user" });
-    });
-
-    it("asks gh when the record names no provider", async () => {
-      const records = new InMemoryCredentialRecordRepository().seed(
-        "user",
-        anExternalRecord({ provider: undefined })
-      );
-
-      const result = await aCheckStatus()
-        .withRecords(records)
-        .withCliProvider("gh", new FakeCliAuthProvider({ login: "from-gh" }))
-        .withCliProvider("glab", new FakeCliAuthProvider({ login: "from-glab" }))
-        .build()
-        .execute();
-
-      expect(result, "a record written before providers were named still resolves").toMatchObject({
-        login: "from-gh",
-      });
+      expect(result).toStrictEqual({ authenticated: true, login, level: "user" });
     });
 
     it("names a provider nobody registered", async () => {

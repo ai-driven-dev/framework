@@ -10,7 +10,6 @@ const { join } = require("node:path");
 // rest of the machine and nothing here is entitled to delete a stranger's files.
 const PREFIXES = [
   "aidd-",
-  "auth-storage-test-",
   "marketplace-registry-",
   "mkt-list-",
   "trust-store-",

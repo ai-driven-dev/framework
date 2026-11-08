@@ -15,15 +15,20 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, canonicalPath, expectRatchet, SRC, sourceFiles } from "./helpers.js";
 
-/** "ports" must be its own path segment: a substring check also matches `supports/` and
- * `reports/`. */
+/** "ports" and "contract" must be their own path segment: a substring check also matches
+ * `supports/` and `reports/`. A `contract/` file is a port the context offers others, so its
+ * methods need a caller as much as a `ports/` one. */
+function isPortFile(path: string): boolean {
+  return /(^|\/)(ports|contract)\//.test(path);
+}
+
 function portFiles(): string[] {
   const out: string[] = [];
   const walk = (dir: string): void => {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith(".ts") && /(^|\/)ports\//.test(canonicalPath(full))) {
+      else if (entry.endsWith(".ts") && isPortFile(canonicalPath(full))) {
         out.push(canonicalPath(relative(CLI_ROOT, full)));
       }
     }
@@ -345,6 +350,16 @@ describe("the guard itself", () => {
     ]);
 
     expect(uncalledMethods(bodies, [port])).toEqual([`${port} :: Thing.doIt`]);
+  });
+
+  it("reads a contract folder as ports, and a folder merely ending in ports as none", () => {
+    expect(isPortFile("src/contexts/auth/contract/token-provider.ts")).toBe(true);
+    expect(isPortFile("src/contexts/auth/ports/identity-verifier.ts")).toBe(true);
+    expect(isPortFile("src/contexts/telemetry/domain/ports/forget/measurement-erasure.ts")).toBe(
+      true
+    );
+    expect(isPortFile("src/presentation/reports/summary.ts")).toBe(false);
+    expect(isPortFile("src/contexts/auth/domain/credential-record.ts")).toBe(false);
   });
 
   it("reads a method off an interface block and ignores a property", () => {
