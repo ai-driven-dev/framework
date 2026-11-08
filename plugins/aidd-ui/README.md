@@ -49,6 +49,7 @@ flowchart LR
 - Every problem prints as `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` under a line counting errors and warnings; the hook never cuts the errors, and caps the warnings at ten.
 - In a git repository the code is the files git does not ignore under a code root, untracked ones included; outside one, every file under it is read, its dependencies and builds too. A dot file or folder under a code root (`.env.example`, `.storybook/`) is never read. The hook lists the code but reads the text only of the code files the session wrote, so its cost follows what the session wrote, not the size of the code; `validate` reads all of it. A shell write names no file, so the code files it changed are read only once another write names them.
 - A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
+- A key several exports of a script share takes its export's name, so adding such an export renames tokens.
 - Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
 - A palette constant in code (`Colors.blue`, `UIColor.systemBlue`) is a name, as a token is: no colour check finds it. A storyboard's `<color red=…>` is not read either.
 - A render shows a variant or state when its text holds the attribute; native behaviour (focus, validity) no render shows.

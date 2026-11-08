@@ -22,7 +22,7 @@ kairos errors C10 warnings C3,C4,R18,V6 wireframes all code untouched
 
 ## Verdict
 
-Before the drift fix, Kairos held `C10` in both arms: see the cause under "After the drift fix". The warnings differ by `C4` on Gouvernail and Kairos, which does not count either: it is the colour debt of the code roots the model picked.
+Before the drift fix, Kairos held `C10` in both arms: see the cause under "After the drift fix". The warnings differ by `C4` on Gouvernail and Kairos, which does not count: it is the colour debt of the code roots the model picked.
 
 ## Earlier baseline runs
 
@@ -61,6 +61,11 @@ kairos validate C3,C4,R18 (wireframes and code not recorded)
 | skills | a fifth folder under `skills/` | killed |
 | one author per kind | `brand-template.md` copied into `03-foundations/assets/` | killed |
 | a skill names no other | `02-brand` names `03-foundations` in an action | killed |
+| export name kept for a shared key | never kept (`shared = false`) | killed, only the shared-key test fails |
+| export name kept for a shared key | always kept (`shared = true`) | killed, 10 tests fail |
+| pilot run | the `catch` rethrows | killed, only the thrown-step test fails |
+| pilot arguments | `--only` naming no pilot returns the empty list | killed |
+| pilot chain | every step's task folder named `system` | killed |
 
 ## After the lean rewrite
 
