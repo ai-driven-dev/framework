@@ -118,6 +118,40 @@ kairos validate C3,C4,R18 (wireframes and code not recorded)
 | task folder | "need not exist" dropped from `03-foundations/actions/01-prepare.md` | killed, written red first |
 | elements | the path link sentence dropped | killed, written red first |
 | elements | the `focus` sentence dropped | killed |
+| owed table | the `T6` row put back in `03-foundations/references/engine.md`, owed by another skill | killed: `owe to another skill no problem that a step of the same skill clears` |
+| owed table | the `T10` row put back in `03-foundations/references/engine.md`, owed by another skill | killed: same test |
+| owed table | the `H1` row put back in `01-journeys/references/engine.md`, owed by another skill | killed: same test |
+| owed table | the `C4` row put back in `03-foundations/references/engine.md`, owed by another skill | killed: same test |
+| owed table | `T1` owed by another skill in `03-foundations` | killed: same test, and `say, for what its own write clears, that this skill owes it` |
+| owed table | `V1` owed by another skill in `04-components` | killed: same two tests |
+| owed table | the `T1` row dropped from `03-foundations` | killed: `say, for what its own write clears, that this skill owes it` |
+| actions keep owed errors | `03-conclude.md` of `03-foundations` or `01-journeys` back to "a later step owes" | killed: `keep, in an action, only the errors another skill owes` |
+| actions keep owed errors | `03-foundations/actions/02-write.md` step 6 back to "a later step owes" | killed: same test |
+| `engine.md` repeats `help` | a verbatim `help` sentence pasted in `04-components/references/engine.md` | killed: `repeat no sentence of the engine's help` (first with a sentence cut at "With ids," it survived: the sentence compared must be whole) |
+| `engine.md` repeats `help` | the `left` sentence of `help bump` pasted in `03-foundations/references/engine.md` | killed: same test |
+| `SKILL.md` boundary | the "The engine writes" line back in `03-foundations` or `04-components` | killed: `state the write boundary once...` |
+| `SKILL.md` boundary | "Never write in the code" back in `01-journeys`, "never in the code" back in `02-brand` | killed: same test |
+| reference files | `code-errors.md` copied back into both `03-foundations` and `04-components` | killed: `hold no reference file twice, byte for byte` |
+| reference files | `reply.md` of `03-foundations` copied over the one of `04-components` | killed: same test |
+| `help` exits | a code declared and never returned (`2` on `validate`) | killed: `declares the exit codes each command returns, and no other` |
+| `help` exits | the `1` of `validate` dropped | killed: same test |
+| `help` lines | `ERROR_LINE` with the rule before the file | killed: `shows the count line, the error line and the warning line as validate prints them` |
+| `help` lines | `WARNING_LINE` without the word `warning` | survived while the test only matched warnings; killed once an error line must not match the warning shape |
+| `help` lines | `COUNT_LINE` plural only | killed: same test (the real line says `1 warning`, so the shape became `error(s)`, `warning(s)`) |
+| `help` code rules | the "about the code" sentence dropped, or `C3` added | killed: `names, as about the code, the errors validate reports...` |
+| `help` bump | the `why` sentence dropped, or its words changed | killed: `says what bump leaves as it prints it...` |
+| `help` bump | "the elements reached and not raised" back | survived while the test pinned `why` alone; killed once it checks that a screen is left and the line names no element |
+| `help` extract | `tokens.resolver.json` dropped from the effects | killed: `names every file extract writes beside tokens.json...` |
+| `help` publish | the refusal put back under Output | killed: same test |
+| `help` hook | the grouped line added to `validate` | killed: `shows the grouped line of the hook alone` |
+| `help` words | a 13-word sentence | killed |
+| `help` entries | an entry renamed | killed |
+| `T8` fix | back to "cite a semantic token instead" | killed: the fix pin of `tokens-renders.test.js` (red first when the pin was changed) |
+| `cli.cjs` | a flag exported and never shown in a usage | killed: `shows in its usage lines the flags the engine parses, and no other` |
+| `cli.cjs` | a usage hardcoding `--forse` | killed: same test |
+| `cli.cjs` | a usage exported and not in `help` | killed: same test |
+| `ENGINE_FILES` | allowed for every step again | killed: `names a step that wrote an engine file it does not drive` |
+| `ENGINE_FILES` | `history.md` for `02-brand`, `tokens.css` for `01-journeys`, `code-debt.json` for `04-components`, `tokens.resolver.json` dropped from `03-foundations` | each killed: `lets each skill's step drive only these engine files` (first run: they survived, the test derived its expectation from the table itself) |
 
 ## After the lean rewrite
 
@@ -255,3 +289,17 @@ kairos errors none warnings C3,R18,V6 wireframes all code untouched steps ok
 ```
 
 No error on any pilot, Kairos run twice, on this exact text.
+
+### After the review repair, working tree on top of HEAD 618b592b3, not committed
+
+Owed table split by owner, `code-errors.md` and the repeated engine lines deleted, `help` made the single source, engine files allowed per skill. Chats deleted by the script.
+
+```txt
+blank errors T8 warnings V6 wireframes all code untouched steps ok
+gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+blank errors none warnings V6 wireframes all code untouched steps ok
+```
+
+The first blank broke: the foundations step listed every token group as primitive and wrote no semantic layer, so each component cited a primitive (99 times `T8`). A rerun of blank alone on the same text left no error. The cause was in the text: nothing said semantic tokens sit in groups `primitives` omits. `tokens.md`, the system template and the `T8` fix now say it.
