@@ -8,7 +8,7 @@ How a capability is detected and which file it writes.
 
 ## Capability table
 
-A file is written to `aidd_docs/memory/` from the template of the same name under `assets/templates/memory/<capability>/`.
+A file is written to `aidd_docs/memory/` from the template of the same name under `assets/templates/memory/`.
 
 | Capability | File | Meaning | Detected when | Always | Accepted names |
 | --- | --- | --- | --- | --- | --- |

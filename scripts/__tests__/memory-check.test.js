@@ -31,8 +31,7 @@ function write(root, name, text) {
 /** The first question of the template named `name`, as a project leaves it when it never answers it. */
 function slotOf(name, index = 0) {
   const templates = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory/assets/templates/memory");
-  const file = fs.readdirSync(templates).map((dir) => path.join(templates, dir, name)).find((candidate) => fs.existsSync(candidate));
-  return [...fs.readFileSync(file, "utf8").matchAll(/\{\{[^{}\n]*\}\}/gu)][index][0];
+  return [...fs.readFileSync(path.join(templates, name), "utf8").matchAll(/\{\{[^{}\n]*\}\}/gu)][index][0];
 }
 
 function lint(text, files = {}, others = {}, name = "a.md") {

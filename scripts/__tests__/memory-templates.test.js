@@ -17,14 +17,14 @@ const CONDITIONAL = [
 ];
 const MERGED_NAMES = /\b(?:contract|native|async)\.md\b/u;
 
+const CORE = ["architecture.md", "codebase-map.md", "coding-assertions.md", "project-brief.md", "testing.md", "vcs.md"];
+
 function templateFiles() {
-  return fs.readdirSync(TEMPLATES, { withFileTypes: true }).flatMap((dir) =>
-    dir.isDirectory() ? fs.readdirSync(path.join(TEMPLATES, dir.name)).map((name) => ({ capability: dir.name, name })) : []
-  );
+  return fs.readdirSync(TEMPLATES).map((name) => ({ capability: CORE.includes(name) ? "core" : name.replace(/\.md$/u, ""), name }));
 }
 
-function textOf({ capability, name }) {
-  return fs.readFileSync(path.join(TEMPLATES, capability, name), "utf8");
+function textOf({ name }) {
+  return fs.readFileSync(path.join(TEMPLATES, name), "utf8");
 }
 
 function capabilityRows() {
@@ -59,7 +59,7 @@ test("each template gives engine errors only on its question lines", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "template-probe-"));
     try {
       fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
-      fs.copyFileSync(path.join(TEMPLATES, template.capability, template.name), path.join(root, "aidd_docs/memory", template.name));
+      fs.copyFileSync(path.join(TEMPLATES, template.name), path.join(root, "aidd_docs/memory", template.name));
       const lines = textOf(template).split(/\r?\n/u);
       const errors = lintFile(root, `aidd_docs/memory/${template.name}`).filter((problem) => problem.severity === "error");
       assert.ok(errors.length > 0, `${template.name} asks no question`);
@@ -79,11 +79,11 @@ test("a template holds no angle placeholder, guidance comment or other marker", 
   }
 });
 
-test("every file of capabilities.md has a template in the folder of its capability", () => {
+test("every file of capabilities.md has a template", () => {
   for (const [capability, files] of capabilityRows()) {
     for (const file of files.match(/[\w-]+\.md/gu)) {
       assert.ok(
-        fs.existsSync(path.join(TEMPLATES, capability.replace(/`/gu, ""), file)),
+        fs.existsSync(path.join(TEMPLATES, file)),
         `${file} has no template under ${capability}`
       );
     }

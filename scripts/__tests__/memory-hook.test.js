@@ -20,8 +20,7 @@ const TEMPLATES = path.join(REPO, "plugins/aidd-context/skills/02-project-memory
 
 /** A question of the template named `name`, as a project leaves it when it never answers it. */
 function slotOf(name, index = 0) {
-  const file = fs.readdirSync(TEMPLATES).map((dir) => path.join(TEMPLATES, dir, name)).find((candidate) => fs.existsSync(candidate));
-  return [...fs.readFileSync(file, "utf8").matchAll(/\{\{[^{}\n]*\}\}/gu)][index][0];
+  return [...fs.readFileSync(path.join(TEMPLATES, name), "utf8").matchAll(/\{\{[^{}\n]*\}\}/gu)][index][0];
 }
 const SLOT = slotOf("vcs.md", 2);
 const shown = (slot) => (slot.length > 40 ? `${slot.slice(0, 39)}…` : slot);

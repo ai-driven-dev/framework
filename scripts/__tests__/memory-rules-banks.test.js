@@ -47,7 +47,7 @@ test("the count sees a planted hit of every required rule", () => {
     const bank = path.join(root, "aidd_docs/memory");
     fs.mkdirSync(path.join(bank, "kpi"), { recursive: true });
     const sentence = "the quick brown fox jumps over the lazy dog every single morning again";
-    const template = fs.readFileSync(path.join(REPO, "plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/vcs.md"), "utf8");
+    const template = fs.readFileSync(path.join(REPO, "plugins/aidd-context/skills/02-project-memory/assets/templates/memory/vcs.md"), "utf8");
     fs.writeFileSync(path.join(bank, "vcs.md"), `# A\n\n- ${template.match(/\{\{[^{}\n]*\}\}/u)[0]}\n`);
     fs.writeFileSync(path.join(bank, "a.md"), `# A\n\n- ${sentence}\n\nSee \`aidd_docs/gone.md\`.\n`);
     fs.writeFileSync(path.join(bank, "b.md"), `# B\n\n- ${sentence}\n`);

@@ -137,7 +137,7 @@ test("the lint command the skill gives takes the root first, and exits 1 on a pl
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "lint-command-"));
   try {
     fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
-    const template = fs.readFileSync(path.join(SKILL, "assets/templates/memory/core/vcs.md"), "utf8");
+    const template = fs.readFileSync(path.join(SKILL, "assets/templates/memory/vcs.md"), "utf8");
     fs.writeFileSync(path.join(root, "aidd_docs/memory/vcs.md"), `# VCS\n\n- ${template.match(/\{\{[^{}\n]*\}\}/u)[0]}\n`);
     const run = (file) =>
       spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs"), "check", given[1], file.replace("<file>", "vcs")], {
