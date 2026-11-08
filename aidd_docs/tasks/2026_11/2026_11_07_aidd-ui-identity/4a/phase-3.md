@@ -11,8 +11,8 @@ status: pending
 ├── plugins/aidd-ui/
 │   ├── .claude-plugin/plugin.json ✏️
 │   └── skills/
-│       ├── 01-system/ ❌
-│       ├── 02-journeys/ ❌
+│       ├── 01-system/
+│       ├── 02-journeys/
 │       ├── 01-journeys/ ✅
 │       │   └── SKILL.md ✅
 │       ├── 02-brand/ ✅

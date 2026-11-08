@@ -13,8 +13,8 @@ status: pending
 │   │   ├── model.cjs ✏️
 │   │   └── records.cjs ✏️
 │   └── skills/01-system/
-│       ├── assets/component-template.md ✏️
-│       └── references/elements.md ✏️
+│       ├── assets/component-template.md
+│       └── references/elements.md
 └── scripts/__tests__/
     ├── fixtures/aidd-ui/project.js ✏️
     └── aidd-ui/
