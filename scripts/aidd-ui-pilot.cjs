@@ -12,6 +12,10 @@
  * it), are kept, and their paths are printed. Remove them with
  * `rm -rf "${TMPDIR:-/tmp}"/aidd-ui-pilot-*`.
  *
+ * A step may delete a file only through `Bash(rm aidd_docs/ui/*)`: a real user would approve that `rm`,
+ * the pilot cannot. The rule is a text match, so `..` in the path would escape it; the step check on
+ * files outside its own set still catches that.
+ *
  * Warnings follow the model's choices (the code roots and platforms it picks) and do not count:
  * compare the errors, the wireframes and the code.
  *
@@ -39,7 +43,7 @@ const GIT_DIR = ".git";
 const VALID = "VALID";
 const RULE_ID = /^[A-Z]\d+$/;
 const STEP_TIMEOUT_MS = 40 * 60_000;
-const ALLOWED_TOOLS = "Read,Write,Edit,Glob,Grep,Skill,Bash(node:*),Bash(ls:*),Bash(git ls-files:*)";
+const ALLOWED_TOOLS = "Read,Write,Edit,Glob,Grep,Skill,Bash(node:*),Bash(ls:*),Bash(git ls-files:*),Bash(rm aidd_docs/ui/*)";
 const GIT = ["-c", "user.name=aidd-ui-pilot", "-c", "user.email=pilot@localhost", "-c", "core.hooksPath=/dev/null"];
 
 /** The environment without a git variable: a hook sets GIT_DIR and GIT_INDEX_FILE, which would aim git at the caller's repository. */

@@ -25,6 +25,7 @@ kairos errors C10 warnings C3,R18,V6 wireframes all code untouched
 - Primitive against semantic groups, `T8` on blank (99 lines). Cause: nothing said semantic tokens sit in groups `primitives` omits, so the model listed every group as primitive and each component cited a primitive. Fix 2b163c4e9: `tokens.md`, the system template and the `T8` fix say it. Proof: blank rerun on the same text, no error.
 - Pilot suffix, `decisions.md`. Cause: the suffix said "say which" for each choice and the model logged them in `aidd_docs/tasks/<part>/decisions.md`, so blank ended `code changed 2 steps broken 2`. Fix a82a3acb8: state each choice in the reply, write no file the skill does not name. Proof: two blank runs, `steps ok`.
 - `GIT_*` leak in the pilot test. Cause: a hook sets `GIT_DIR` and `GIT_INDEX_FILE`, which aimed the pilot's git calls at the caller's repository. Fix f2a832b21: the pilot and its test run git without any `GIT_*` variable. Proof: the mutation below and `acts on its own repositories, never on the one GIT_DIR names`.
+- Stray wireframe left in place, `R4,V1` on Gouvernail. Cause: the journeys step wrote wireframe `manager-report-issue`, same id as its journey, renamed it, then could not delete the stray file: `rm` was refused because the pilot's `ALLOWED_TOOLS` had no `rm` and a non-interactive run cannot approve one. A pilot limit, not a skill defect. Fix: this change, `Bash(rm aidd_docs/ui/*)` in `ALLOWED_TOOLS`. Proof: to come from the final pilot.
 
 ## Size
 
@@ -56,6 +57,7 @@ Each guard was broken once and its own test watched going red. A "survived" note
 | twelve-word test | the rejected brand sentence re-added to `02-brand/actions/02-write.md` | killed |
 | twelve-word test | a three-clause line of 21 words joined by `;` | passes when the test also splits on `;`; killed by the split on `.` `!` `?` alone |
 | level `organism` | `composition` kept in `KIND_KEYS` and `FOLDER_KINDS`; `molecule` and `organism` swapped in `LEVELS` | killed |
+| pilot allowed tools | `Bash(rm aidd_docs/ui/*)` dropped; widened to `Bash(rm:*)` | killed: `lets a step remove a file under aidd_docs/ui and nothing else` |
 | skills | a fifth folder under `skills/` | killed |
 | one author per kind | `brand-template.md` copied into `03-foundations/assets/` | killed |
 | a skill names no other | `02-brand` names `03-foundations` in an action | killed |

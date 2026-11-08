@@ -418,6 +418,12 @@ describe("aidd-ui pilot trace", () => {
     assert.ok(stepArgs.includes("--no-session-persistence"));
   });
 
+  it("lets a step remove a file under aidd_docs/ui and nothing else", () => {
+    const rules = stepArgs[stepArgs.indexOf("--allowedTools") + 1].split(",");
+    const removals = rules.filter((rule) => /^Bash\(rm\b/.test(rule));
+    assert.deepEqual(removals, ["Bash(rm aidd_docs/ui/*)"]);
+  });
+
   it("keeps each command, tool result and hook message, in order, and the reply apart", () => {
     const { trace, reply } = traceOf(stream);
     assert.deepEqual(trace.trim().split("\n").map((entry) => JSON.parse(entry)), [
