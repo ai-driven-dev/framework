@@ -28,12 +28,12 @@
 | conclude 1 and 4, validate | `node <engine> validate` |
 | conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
 
-`bump` prints JSON. Its `left` lists the elements and screens reached, not raised. `extract` prints JSON too, and `left` lists what it did not write. Exit 1 of `tokens` stays for a blocker owed below.
+Exit 1 of `tokens` stays for a blocker another skill owes.
 
-## Owed by a later step
+## Owed
 
-| Problem | Gone once |
-| --- | --- |
-| T1, `tokens.json` missing | the tokens are written |
-| T7, a component record cites a token that is gone | the record is updated after |
-| V3, a component render cites a token that is gone | the render is updated after |
+| Problem | Owed by | Gone once |
+| --- | --- | --- |
+| T1, `tokens.json` missing | this skill | the tokens are written |
+| T7, a component record cites a token that is gone | another skill | the record is updated |
+| V3, a component render cites a token that is gone | another skill | the render is updated |

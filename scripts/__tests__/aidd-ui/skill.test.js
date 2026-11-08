@@ -23,7 +23,7 @@ const FILLS = {
     platforms: "web",
     "themes, the base first": "light, dark",
     locales: "fr, ar",
-    "primitive token groups": "color.brand",
+    "palette and scale groups, never the semantic ones": "color.brand",
     "UI folders of the code": "src/ui",
     "token file of the code, or one per app": "[src/ui/tokens.css]",
     "paths no record links": "src/ui/vendor",
@@ -211,6 +211,26 @@ describe("aidd-ui skills", () => {
     }
   });
 
+  it("state the write boundary once, by the Write only line, and list no file the engine writes", () => {
+    for (const folder of FOLDERS) {
+      const rules = fs.readFileSync(path.join(SKILL(folder), "SKILL.md"), "utf8").split("\n").filter((line) => line.startsWith("- "));
+      assert.equal(rules.filter((line) => line.startsWith("- Write only")).length, 1, folder);
+      assert.deepEqual(rules.filter((line) => line.startsWith("- The engine writes")), [], folder);
+      if (folder === "01-journeys" || folder === "02-brand") assert.deepEqual(rules.filter((line) => /never (write )?in the code/i.test(line)), [], folder);
+    }
+  });
+
+  it("hold no reference file twice, byte for byte", () => {
+    const seen = new Map();
+    for (const folder of FOLDERS) {
+      for (const file of filesUnder(SKILL(folder)).filter((each) => each.includes(`${path.sep}references${path.sep}`))) {
+        const text = fs.readFileSync(file, "utf8");
+        assert.equal(seen.has(text), false, `${folder}/${path.basename(file)} repeats ${seen.get(text)}`);
+        seen.set(text, `${folder}/${path.basename(file)}`);
+      }
+    }
+  });
+
   it("keeps every sentence of every skill to twelve words at most", () => {
     const MAX = 12;
     const offenders = [];
@@ -270,10 +290,10 @@ describe("aidd-ui engine references", () => {
   const { HELP } = require(path.join(PLUGIN, "hooks/lib/help.cjs"));
   const engineOf = (folder) => fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8");
 
-  it("hold the install table, the command names and the owed table, nothing the engine's help says", () => {
+  it("hold the install table, the command names and the owed table", () => {
     for (const folder of FOLDERS) {
       const text = engineOf(folder);
-      assert.deepEqual(text.split("\n").filter((line) => line.startsWith("#")), ["# Engine", "## Commands", "## Owed by a later step"], folder);
+      assert.deepEqual(text.split("\n").filter((line) => line.startsWith("#")), ["# Engine", "## Commands", "## Owed"], folder);
       assert.ok(text.includes("| Install | Path |"), folder);
       assert.ok(text.includes("`<engine>` is that path, run with `node`."), folder);
       assert.ok(text.includes("`node <engine> help <command>`"), folder);
@@ -281,14 +301,43 @@ describe("aidd-ui engine references", () => {
     }
   });
 
-  it("owe no problem that a step of the same skill clears", () => {
-    // The command that clears each problem a step table can name.
-    const CLEARED_BY = { H1: /bump .*--created/, C4: /bump .*--created system/, T6: /^node <engine> tokens/, T10: /^node <engine> tokens/ };
+  it("repeat no sentence of the engine's help", () => {
+    const plain = (text) => text.replace(/[`*]/g, "").replace(/\s+/g, " ").toLowerCase();
+    const sentences = Object.values(HELP).flatMap((entry) => [entry.summary, ...entry.effects, ...entry.output, ...entry.exits]).flatMap((text) => text.split(/(?<=[.!?])\s+/)).map(plain).filter((sentence) => sentence.split(" ").length > 3);
+    for (const folder of FOLDERS) for (const sentence of sentences) assert.equal(plain(engineOf(folder)).includes(sentence), false, `${folder} repeats: ${sentence}`);
+  });
+
+  /** The owed table of a folder as `{rules, owner}` rows. */
+  const owedOf = (folder) => {
+    const lines = engineOf(folder).split("\n");
+    return lines.slice(lines.indexOf("## Owed")).filter((line) => line.startsWith("| ") && !line.startsWith("| Problem") && !line.startsWith("| ---")).map((line) => ({ rules: line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? [], owner: line.split("|")[2].trim() }));
+  };
+  // What a skill's own steps clear: by a command of its step table, or by the write step itself.
+  const CLEARED_BY = { H1: /bump .*--created/, C4: /bump .*--created system/, T6: /^node <engine> tokens/, T10: /^node <engine> tokens/ };
+  const WRITTEN_BY_ITS_WRITE = { "03-foundations": ["T1"], "04-components": ["V1"] };
+
+  it("owe to another skill no problem that a step of the same skill clears", () => {
     for (const folder of FOLDERS) {
       const lines = engineOf(folder).split("\n");
       const commands = lines.filter((line) => /^\| (prepare|write|conclude) \d/.test(line)).map((line) => line.split("|")[2].trim().replace(/^`|`.*$/g, ""));
-      const owedRules = lines.slice(lines.indexOf("## Owed by a later step")).filter((line) => line.startsWith("| ")).flatMap((line) => line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? []);
-      for (const rule of owedRules.filter((each) => CLEARED_BY[each])) assert.equal(commands.some((command) => CLEARED_BY[rule].test(command)), false, `${folder} owes ${rule}, which its own step clears`);
+      const rows = owedOf(folder);
+      for (const row of rows) assert.ok(["this skill", "another skill"].includes(row.owner), `${folder}: owner "${row.owner}"`);
+      for (const rule of rows.filter((row) => row.owner === "another skill").flatMap((row) => row.rules)) {
+        if (CLEARED_BY[rule]) assert.equal(commands.some((command) => CLEARED_BY[rule].test(command)), false, `${folder} owes ${rule}, which its own step clears`);
+        assert.equal((WRITTEN_BY_ITS_WRITE[folder] ?? []).includes(rule), false, `${folder} leaves ${rule} to another skill, which its own write clears`);
+      }
+    }
+  });
+
+  it("say, for what its own write clears, that this skill owes it", () => {
+    for (const [folder, rules] of Object.entries(WRITTEN_BY_ITS_WRITE)) for (const rule of rules) assert.ok(owedOf(folder).some((row) => row.owner === "this skill" && row.rules.includes(rule)), `${folder}: ${rule}`);
+  });
+
+  it("keep, in an action, only the errors another skill owes", () => {
+    for (const folder of FOLDERS) {
+      for (const name of fs.readdirSync(path.join(SKILL(folder), "actions"))) {
+        for (const line of fs.readFileSync(path.join(SKILL(folder), "actions", name), "utf8").split("\n").filter((each) => /\bowe/.test(each))) assert.ok(line.includes("another skill"), `${folder}/${name}: ${line.trim()}`);
+      }
     }
   });
 
@@ -380,7 +429,7 @@ describe("aidd-ui system answers", () => {
 describe("aidd-ui owed problems", () => {
   const owed = (folder) => {
     const text = fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8");
-    return text.slice(text.indexOf("## Owed by a later step")).split("\n").filter((line) => line.startsWith("| ")).flatMap((line) => line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? []);
+    return text.slice(text.indexOf("## Owed")).split("\n").filter((line) => line.startsWith("| ")).flatMap((line) => (line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? []).map((rule) => `${rule} ${line.split("|")[2].trim()}`));
   };
   const rulesOf = (dir) => [...new Set(validate(dir).out.slice(1).flatMap((line) => line.split(" ").filter((word) => /^[A-Z]\d+$/.test(word)).slice(0, 1)))].sort();
 
@@ -388,7 +437,7 @@ describe("aidd-ui owed problems", () => {
     for (const entry of fs.readdirSync(path.join(tmp, UI))) if (entry !== "brand.md") fs.rmSync(path.join(tmp, UI, entry), { recursive: true });
     fs.rmSync(path.join(tmp, "src"), { recursive: true });
     assert.deepEqual(rulesOf(tmp), ["T1"]);
-    for (const rule of rulesOf(tmp)) assert.ok(owed("02-brand").includes(rule), rule);
+    assert.deepEqual(owed("02-brand"), ["T1 another skill"]);
   });
 
   it("name, for a token renamed by the foundations alone, the rules left to the components", () => {
@@ -398,11 +447,11 @@ describe("aidd-ui owed problems", () => {
       delete tree.color.action.default;
     });
     assert.deepEqual(rulesOf(tmp), ["T7", "V3"]);
-    for (const rule of rulesOf(tmp)) assert.ok(owed("03-foundations").includes(rule), rule);
+    assert.deepEqual(owed("03-foundations").filter((each) => !each.startsWith("T1")), ["T7 another skill", "V3 another skill"]);
   });
 
   it("name, for the components, the rule a record leaves until its render exists", () => {
-    assert.deepEqual(owed("04-components"), ["V1"]);
+    assert.deepEqual(owed("04-components"), ["V1 this skill"]);
   });
 });
 

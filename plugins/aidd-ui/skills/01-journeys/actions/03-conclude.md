@@ -13,7 +13,7 @@ The engine and the files written.
    - Only in the folders this skill writes.
 3. Validate again per [engine](../references/engine.md), and repeat until none is left there.
 4. Keep the `warning` lines.
-5. Keep the errors the [engine](../references/engine.md) says a later step owes.
+5. Keep the errors the [engine](../references/engine.md) says another skill owes.
 6. Reply with:
    - the journeys and wireframes written or raised, with their versions
    - each component a warning names, for the design system to add

@@ -17,8 +17,8 @@
 | --- | --- |
 | conclude 1 and 3, validate | `node <engine> validate` |
 
-## Owed by a later step
+## Owed
 
-| Problem | Gone once |
-| --- | --- |
-| T1, `tokens.json` missing | the tokens are written |
+| Problem | Owed by | Gone once |
+| --- | --- | --- |
+| T1, `tokens.json` missing | another skill | the tokens are written |

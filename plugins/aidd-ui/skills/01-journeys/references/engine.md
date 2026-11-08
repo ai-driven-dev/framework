@@ -20,8 +20,8 @@
 | write 4, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
 | conclude 1 and 3, validate | `node <engine> validate` |
 
-## Owed by a later step
+## Owed
 
-| Problem | Gone once |
-| --- | --- |
-| T1, `tokens.json` missing | the design system is laid |
+| Problem | Owed by | Gone once |
+| --- | --- | --- |
+| T1, `tokens.json` missing | another skill | the design system is laid |

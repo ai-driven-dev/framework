@@ -30,8 +30,7 @@ Each box is a file: read it, then do what it says.
 - Every path written in a record starts there.
 - Write only `components/` and `assets/` under `aidd_docs/ui/`.
 - Never write in the code, nor by hand what the engine writes.
-- The engine writes `history.md` and `tokens.css`.
 - After each write, fix what the hook or the validation reports.
-- Leave what [engine](references/engine.md) says a later step owes.
+- Leave what [engine](references/engine.md) lists as owed.
 - Never bypass a hook.
 - Commit and push only when asked.

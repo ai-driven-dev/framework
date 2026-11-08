@@ -47,7 +47,6 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   "plugins/aidd-ui/hooks/lib/help.cjs": ["history.md", "system.md"],
   "scripts/__tests__/aidd-ui/extract.test.js": ["system.md"],
   "scripts/__tests__/aidd-ui/skill.test.js": ["system.md", "history.md"],
-  "scripts/__tests__/aidd-ui/help.test.js": ["history.md", "system.md"],
   // The build artefact every e2e run refuses to share, named as what is avoided.
   "cli/tests/e2e/helpers.ts": ["dist/cli.js"],
   "cli/tests/e2e/global-setup.ts": ["dist/cli.js"],

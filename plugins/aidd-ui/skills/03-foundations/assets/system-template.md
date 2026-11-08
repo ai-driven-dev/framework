@@ -5,7 +5,7 @@ format: 1
 platforms: [{{platforms}}]
 themes: [{{themes, the base first}}]
 locales: [{{locales}}]
-primitives: [{{primitive token groups}}]
+primitives: [{{palette and scale groups, never the semantic ones}}]
 code-roots: [{{UI folders of the code}}]
 code-tokens: {{token file of the code, or one per app}}
 ignore: [{{paths no record links}}]

@@ -27,10 +27,8 @@
 | conclude 1 and 4, validate | `node <engine> validate` |
 | conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
 
-`bump` prints JSON, and `left` lists the elements reached, not raised.
+## Owed
 
-## Owed by a later step
-
-| Problem | Gone once |
-| --- | --- |
-| V1, record without render | its render is written |
+| Problem | Owed by | Gone once |
+| --- | --- | --- |
+| V1, record without render | this skill | its render is written |

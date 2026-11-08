@@ -6,7 +6,7 @@ What the final reply says.
 | --- | --- |
 | the elements and screens created or raised, with their versions | always |
 | the ones the raise left | a change |
-| what the validation still prints, code errors included | always |
+| what the validation still prints | always |
 | the `code` files listed, still holding old values | a change |
 | that the code is untouched | always |
 | that each element created or raised is `proposed` until published | always |
