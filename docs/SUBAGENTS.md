@@ -9,6 +9,7 @@ Four generic agents your AI tool can hand work to. They ship with the `aidd-orch
 - [Install](#-install)
 - [Models](#-models)
 - [Limits](#-limits)
+- [Decisions](#-decisions)
 
 ## 🔀 How it works
 
@@ -35,26 +36,31 @@ sequenceDiagram
   Main-->>User: ↩️ "Fixed the typo in README.md."
 ```
 
-### Measuring delegation
+### Test the four agents
 
-Create two worktrees at commit `de409ef5`, change the title's `Framework` to `Framwork` in each `README.md`, and set `DIRECT` and `DELEGATED` to their paths. Install the executor with `model = "gpt-6-luna"` and `model_reasoning_effort = "medium"`, then use the same Codex configuration for both runs:
+Run this single prompt from the framework repository:
 
-```sh
-prompt='Correct the typo "Framwork" in the title of README.md. Verify the result and do not commit.'
-time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=false' -C "$DIRECT" "$prompt"
-time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=true' -C "$DELEGATED" "$prompt Delegate the edit to the aidd-orchestrator-executor subagent and wait for its result; do not use a validator."
+```text
+Compare the same task in two isolated worktrees at the same commit:
+1. Main agent alone, without subagents.
+2. Main agent with explorer, executor, validator and reviewer, using gpt-6-luna at high effort when supported.
+
+Keep the main model and its effort identical. Use fresh sessions and run the worktrees sequentially.
+
+Task: Improve scripts/check-markdown-links.js so Markdown links with angle-bracket targets, such as [guide](<docs/my guide.md>), are checked correctly. Preserve the handling of HTML and existing links. Update the help text and add meaningful tests in scripts/__tests__/check-markdown-links.test.js.
+
+In the delegated run:
+- Explorer investigates the checker and tests.
+- The main agent prepares a plan; executor implements and verifies it.
+- Validator independently verifies the outcome; reviewer examines the diff for defects.
+- Repair any confirmed gaps and check again.
+
+In the solo run, do the equivalent work directly. In both runs, execute the relevant tests and leave the changes uncommitted.
+
+Report for each run: models and effort, elapsed time, parent and child input, cached input and output tokens, checks, and findings. Sum each agent's usage once and do not double-count cached input. Compare the outcomes against the same requirements. Report missing measurements and cache conditions; do not invent costs. Preserve the diffs for review and clean up temporary files.
 ```
 
-Check that both titles are restored and the delegated run used the requested agent and model. Compare elapsed time and the final cumulative token usage in each rollout under `~/.codex/sessions/`: add parent and executor totals once, counting the executor only after its own model context. Cached input is already included in the total. Repeat with fresh sessions and alternating order; report cache conditions and the median.
-
-One run per approach on November 6, 2026 produced:
-
-| Approach | Time | Total tokens | Cached input tokens |
-| --- | ---: | ---: | ---: |
-| Main agent alone | 17.05 s | 104,556 | 84,864 |
-| Main agent + executor | 33.12 s | 351,634 | 287,872 |
-
-The delegated total includes both agents. These single-run results are indicative, not a general benchmark. Monetary cost was unavailable.
+This compares complete workflows. Per-agent usage is measurable, but attributing a gain to one agent needs separate tests.
 
 ### A request with subagents
 
@@ -103,7 +109,7 @@ sequenceDiagram
 | Agent | Use it to | It returns | Writes files, by instruction |
 | --- | --- | --- | --- |
 | [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Distill substantial code, documentation, service or web research into sourced findings | The answer, with sources and unknowns | No |
-| [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Implement a provided plan, verify changes and request review when uncertain | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
+| [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Implement a provided plan when delegation is worthwhile; verify changes and request review when uncertain | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
 | [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Independently verify an outcome, service, configuration or data change | `PASS`, `FAIL` or `BLOCKED`, with evidence | No; runs checks |
 | [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Review implemented work after a plan or when the executor has a concern | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
 
@@ -123,3 +129,23 @@ The shipped agents do not pin a model. Hosts apply their defaults unless a model
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 
 Sources: [Claude Code sub-agents](https://code.claude.com/docs/en/sub-agents), [Copilot custom agents](https://docs.github.com/en/copilot/reference/custom-agents-configuration), [OpenCode agents](https://opencode.ai/v2/docs/agents), [Codex subagents](https://developers.openai.com/codex/subagents), [Cursor subagents](https://cursor.com/docs/subagents).
+
+## 📝 Decisions
+Those are the decisions we made during the configuration of the agents.
+
+### Instructions
+
+- Define behaviors explicitly; use personas only when useful.
+- **Simplicity first:** minimize work and output while preserving reliability; avoid over-engineering.
+- **Independent judgment:** think before acting, challenge weak ideas, and avoid sycophancy. Advise proactively when it matters.
+- **Autonomy:** reuse information and authorization, verify before asking, and report unresolved work.
+- **Communication:** use the fewest words without losing meaning; prefer short bullets and no em dashes.
+- **Files:** keep durable information current, avoid unnecessary files, and clean up temporary ones.
+
+### Subagents
+
+- The main agent owns decisions and outcomes; handle small tasks directly. Use the executor for a provided plan when delegation is worthwhile, not for a micro change.
+- Delegate substantial research to the explorer, planned implementation to the executor, independent verification to the validator, and review to the reviewer.
+- Run independent tasks in parallel only when the benefit exceeds coordination costs.
+- Choose the simplest suitable model and effort; stronger reasoning may be needed for harder tasks.
+- Delegate to protect focus or gain speed or independent verification, not on the assumption that it saves tokens.
