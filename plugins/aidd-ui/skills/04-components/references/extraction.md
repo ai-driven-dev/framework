@@ -16,4 +16,4 @@ When several design systems coexist, ask which is the norm. Follow that one.
 | prop varying on its own | an axis, `size=sm` |
 | prop named `variant` | gives bare items |
 | icon, image, illustration | an asset record, never `code` |
-| file no record links (C3) | a record, `ignore`, or a backlog left listed |
+| file no record links (C3) | a record, or named to the user for `system.md`'s `ignore`. Else a backlog left listed |
