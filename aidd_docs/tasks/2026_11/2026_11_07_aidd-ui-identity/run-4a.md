@@ -58,6 +58,8 @@ kairos validate C3,C4,R18 (wireframes and code not recorded)
 | twelve-word test | a three-clause line of 21 words joined by `;` | passes when the test also splits on `;`, killed by the split on `.` `!` `?` alone |
 | level `organism` | `composition` kept in `KIND_KEYS` and `FOLDER_KINDS` | killed |
 | level `organism` | `molecule` and `organism` swapped in `LEVELS` | killed |
+| owed table | the `H1` row put back in `01-journeys/references/engine.md` | killed: `01-journeys owes H1, which its own step clears` |
+| owed table | the `C4` row put back in `03-foundations/references/engine.md` | killed |
 | skills | a fifth folder under `skills/` | killed |
 | one author per kind | `brand-template.md` copied into `03-foundations/assets/` | killed |
 | a skill names no other | `02-brand` names `03-foundations` in an action | killed |
