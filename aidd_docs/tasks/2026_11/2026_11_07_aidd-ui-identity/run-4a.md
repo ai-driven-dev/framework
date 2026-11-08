@@ -113,3 +113,14 @@ blank errors none warnings none wireframes all code untouched
 ```
 
 Both Kairos runs took `apps/mobile/shared/ui/tokens.ts`, the colliding file. Verdict: no error in any of the three projects, wireframes all there, code untouched.
+
+## On the final tree
+
+```txt
+blank errors none warnings V6 wireframes all code untouched
+gouvernail errors none warnings C3,R18,V6 wireframes all code untouched
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
+```
+
+No error on any pilot, Kairos run twice.
