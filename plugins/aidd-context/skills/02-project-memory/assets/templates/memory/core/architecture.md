@@ -31,4 +31,4 @@
 
 ## Flow
 
-- {{Does work cross processes or repositories? Draw that flow as one mermaid flowchart, a box per process or repository.}}
+- {{Which processes, hosts or repositories hand work to each other? One line `A -> B -> C`, drawn as one mermaid flowchart.}}

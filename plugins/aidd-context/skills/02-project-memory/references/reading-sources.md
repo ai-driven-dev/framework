@@ -21,6 +21,7 @@ What the scan reads to understand the project.
 ## Reading rules
 
 - A command or a convention comes from the file that defines it, as an `R` line; prose that names one is checked against that file.
+- Read the README and each doc whole, never a leading excerpt, a byte range or a jump between headings.
 - Read the code last: it corrects the others and is never summarised.
 - Read every workspace of a monorepo, never the root manifest alone.
 - Read a directory whose name repeats across areas once.

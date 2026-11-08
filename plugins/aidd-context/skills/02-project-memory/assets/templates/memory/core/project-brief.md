@@ -2,7 +2,8 @@
 
 ## Purpose
 
-- {{What does the project do, and why does it exist?}}
+- {{What does the project do?}}
+- {{Why does it exist: what would drift or break without it?}}
 
 ## Users
 
