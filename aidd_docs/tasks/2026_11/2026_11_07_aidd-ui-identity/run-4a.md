@@ -86,6 +86,36 @@ kairos validate C3,C4,R18 (wireframes and code not recorded)
 | system answers | the `platforms` row of `extraction.md` removed | killed |
 | actions free of commands | `node <engine> validate` put back in `02-brand/actions/03-conclude.md` | killed |
 | pilot request suffix | `write no file the skill does not name` dropped from the suffix | killed |
+| help | `commandList()` no longer printed for `help` alone | killed, "lists the commands" |
+| help | the warning line shape dropped from `validate` | killed, "count line, error line and warning line" |
+| help | the error line shape dropped from `validate` | killed |
+| help | the count line dropped from `validate` | killed |
+| help | the grouped line added to `validate` | killed, "no grouped line" |
+| help | the grouped line dropped from `hook` | killed, "the hook alone" |
+| help | the grouped line added to `impact` | killed, "the hook alone" |
+| help | `bump` no longer says `--task` is never written | killed |
+| pilot step files | a changed file not counted | killed |
+| pilot step files | a deleted file not counted | killed |
+| pilot step files | a file left as it was counted | killed |
+| actions guard | `--root` put back in `02-brand/actions/03-conclude.md` | killed, the `--flag` disjunct |
+| actions guard | a code fence put back in the same action | killed, the code-fence disjunct |
+| publish line | removed from `03-foundations/references/engine.md` | killed |
+| publish line | removed from `04-components/references/reply.md` | killed |
+| `wireframes.md` | `warning R18` made `warning` | killed |
+| E9 | the `validate` summary changed in `help.cjs` | killed, the pinned output |
+| exit code | `validate` returns `EXIT_USAGE` (2) in place of 1 | killed |
+| exit code | `tokens` blocked returns `EXIT_USAGE` (2) in place of 1 | killed |
+| ignore ownership | the `ignore` of the 03 C3 row replaced by `nothing` | killed, written first and green, then mutated |
+| ignore ownership | the 04 C3 row writes `ignore` in place of naming it | killed |
+| warning line | the engine prints no `warning` word | killed |
+| step table | `write 3` made `write 5` in `01-journeys/references/engine.md` | killed, written red first |
+| step table | `write 4` made `write 2` in the same file | killed |
+| help facts | `bump --created` refusals dropped | killed, written red first |
+| help facts | `extract` refusals dropped | killed |
+| help facts | `validate` "ungrouped" dropped | killed |
+| task folder | "need not exist" dropped from `03-foundations/actions/01-prepare.md` | killed, written red first |
+| elements | the path link sentence dropped | killed, written red first |
+| elements | the `focus` sentence dropped | killed |
 
 ## After the lean rewrite
 
@@ -171,7 +201,7 @@ Both sources were only read by `git archive`. Kairos showed uncommitted changes 
 
 Actions rewritten as intentions (no command, flag or code fence); the commands moved to each `engine.md`, the reply and code-error lists to `reply.md` and `code-errors.md`. Same pilot, Haiku, fresh copies, chats deleted by the script (none left in `~/.claude/projects/`), copies removed with the cleanup line. Gouvernail and Kairos were only read by `git archive`.
 
-First run, all three projects:
+First run, all three projects (skill text at 7b5753e79 as a working tree, script at c3350f731):
 
 ```txt
 blank errors none warnings none wireframes all code changed 2 steps broken 2
@@ -179,17 +209,36 @@ gouvernail errors none warnings C3,R18,V6 wireframes all code untouched steps ok
 kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
 ```
 
-The blank line broke: `02-brand` and `04-components` each wrote an unrequested `aidd_docs/tasks/<part>/decisions.md`, a log of the choices the pilot's suffix tells the model to state. Rerun of blank alone, then Kairos alone:
+The blank line broke: `02-brand` and `04-components` each wrote an unrequested `aidd_docs/tasks/<part>/decisions.md`, a log of the choices the pilot's suffix tells the model to state. Rerun of blank alone, then Kairos alone (skill text 7b5753e79, script c3350f731):
 
 ```txt
 blank errors none warnings none wireframes all code untouched steps ok
 kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
 ```
 
-Cause: the pilot suffix said "say which" for each choice, and the model logged them in a file. The suffix now says to state each choice in the final reply and to write no file the skill does not name. Two blank runs after the fix:
+Cause: the pilot suffix said "say which" for each choice, and the model logged them in a file. The suffix now says to state each choice in the final reply and to write no file the skill does not name. Two blank runs after the fix (skill text 7b5753e79, script a82a3acb8):
 
 ```txt
 blank errors none warnings none wireframes all code untouched steps ok
 blank errors none warnings none wireframes all code untouched steps ok
 ```
 
+### On the final script and skills
+
+Working tree on top of 395c28cf2, not committed: skill text and script both. Since the last block the engine `help` regained the refusals and the ungrouped validation, the prepare actions say the task folder need not exist, `elements.md` regained two sentences, the step table of each `engine.md` is checked against its actions, and the journeys and components "created" steps say "record in the history".
+
+A first Kairos run on the text before that last wording left `H1` on the journeys and wireframes: the model took the owed `H1` for a later step's and never recorded them.
+
+```txt
+kairos errors H1 warnings C3,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+```
+
+Final text, gouvernail once and Kairos twice, chats and copies deleted:
+
+```txt
+gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,R18,V6 wireframes all code untouched steps ok
+blank errors none warnings V6 wireframes all code untouched steps ok
+```
