@@ -79,7 +79,8 @@ function readStyles(source, baseTheme, leave) {
 }
 
 /** The literals of a script's exported objects as `{line, name, node, context}`. A key is a CSS
- * name part, its parent's joined to it with a dash; the export's own name is no part of it. */
+ * name part, its parent's joined to it with a dash; the export's own name is no part of it, unless
+ * several exports hold the key: each then keeps its export's name before it, so none overwrites another. */
 function readScript(source, leave) {
   const found = [];
   const add = (entry, name, nested) => {
@@ -88,7 +89,14 @@ function readScript(source, leave) {
     else if (entry.kind === "object" && !nested) for (const child of entry.entries) add(child, child.key ? `${name}${NAME_SEPARATOR}${kebab(child.key)}` : "", true);
     else leave(entry.line, name || null, entry.kind === "object" ? "an object nested deeper than one level" : `not a string or number literal: ${entry.text.slice(0, PREVIEW)}`);
   };
-  for (const { entries } of objectsOf(source)) for (const entry of entries) add(entry, entry.key ? `${DASHES}${kebab(entry.key)}` : "", false);
+  const objects = objectsOf(source);
+  const holders = (key) => objects.filter(({ entries }) => entries.some((entry) => entry.key === key)).length;
+  for (const { name: owner, entries } of objects) {
+    for (const entry of entries) {
+      const shared = entry.key && holders(entry.key) > 1;
+      add(entry, entry.key ? `${DASHES}${shared ? `${kebab(owner)}${NAME_SEPARATOR}` : ""}${kebab(entry.key)}` : "", false);
+    }
+  }
   return found;
 }
 

@@ -3,13 +3,13 @@
 // such, never guessed.
 const { LINE_BREAK, lineOf } = require("./markdown.cjs");
 
-const EXPORT = /export\s+const\s+[A-Za-z_$][\w$]*\s*(?::[^=]+)?=\s*\{/g;
+const EXPORT = /export\s+const\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*\{/g;
 const KEY = /[\w$]+/y;
 const NUMBER = /[+-]?(?:\d+\.?\d*|\.\d+)(?![\w$.])/y;
 const QUOTES = ["\"", "'", "`"];
 const OPENERS = { "(": ")", "[": "]", "{": "}" };
 
-/** The object literals exported by `source`: `[{entries}]`, each entry `{key, line, kind, ...}` with
+/** The object literals exported by `source`: `[{name, entries}]`, each entry `{key, line, kind, ...}` with
  * `kind` `string` (`value`), `number` (`value`), `object` (`entries`) or `other` (`text`, what it
  * is written as). */
 function objectsOf(source) {
@@ -112,7 +112,7 @@ function objectsOf(source) {
   const found = [];
   for (const match of source.matchAll(EXPORT)) {
     at = match.index + match[0].length - 1;
-    found.push({ entries: readObject() });
+    found.push({ name: match[1], entries: readObject() });
   }
   return found;
 }

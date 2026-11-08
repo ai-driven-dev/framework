@@ -211,6 +211,19 @@ describe("aidd-ui extract", () => {
       ]);
     });
 
+    it("keeps the export name in the token of a key that several exports of a script share, so no value overwrites another", () => {
+      const ts = "export const action = {\n  primary: '#FF6B35',\n  soft: '#FF6B3514',\n} as const\n\nexport const duelAccent = {\n  primary: '#b06cf7',\n} as const\n";
+      setup({ tokens: ["src/tokens.ts"], files: { "src/tokens.ts": ts } });
+      const { report } = extract();
+      const tree = read("tokens.json");
+      assert.equal(tree.action.primary.$value.hex, "#ff6b35");
+      assert.equal(tree.duel.accent.primary.$value.hex, "#b06cf7");
+      assert.equal(tree.soft.$value.colorSpace, "srgb");
+      assert.deepEqual(report.left, []);
+      engine("tokens", tmp);
+      assert.deepEqual(validate(tmp).out.filter((line) => / C10 /.test(line)), []);
+    });
+
     it("reads the platform a code-tokens item names, a token file outside every code root included", () => {
       const files = { "apps/web/src/styles/tokens.css": WEB_CSS, "apps/mobile/src/theme/tokens.ts": MOBILE_TS };
       setup({ platforms: ["web", "mobile"], roots: ["web=apps/web/src/components", "mobile=apps/mobile/src"], tokens: ["web=apps/web/src/styles/tokens.css", "apps/mobile/src/theme/tokens.ts"], files });
@@ -503,8 +516,8 @@ describe("aidd-ui extract", () => {
     it("is read past comments, quoted keys and a trailing as const, each export on its own", () => {
       const source = ['// tokens', 'export const a = {', '  /* ink */ ink: "#000", // trailing', '  "quoted-key": \'q\',', '  size: 12,', '  group: { x: 1 },', '} as const;', 'export const b: Record<string, number> = { y: -2.5 };'].join("\n");
       assert.deepEqual(objectsOf(source), [
-        { entries: [{ key: "ink", line: 3, kind: "string", value: "#000" }, { key: "quoted-key", line: 4, kind: "string", value: "q" }, { key: "size", line: 5, kind: "number", value: 12 }, { key: "group", line: 6, kind: "object", entries: [{ key: "x", line: 6, kind: "number", value: 1 }] }] },
-        { entries: [{ key: "y", line: 8, kind: "number", value: -2.5 }] },
+        { name: "a", entries: [{ key: "ink", line: 3, kind: "string", value: "#000" }, { key: "quoted-key", line: 4, kind: "string", value: "q" }, { key: "size", line: 5, kind: "number", value: 12 }, { key: "group", line: 6, kind: "object", entries: [{ key: "x", line: 6, kind: "number", value: 1 }] }] },
+        { name: "b", entries: [{ key: "y", line: 8, kind: "number", value: -2.5 }] },
       ]);
     });
 
