@@ -420,7 +420,7 @@ test("write ends at once on an empty sheet, drops a capability answered no, keep
   assert.match(write, /fix the sheet until it passes/u);
   const writing = section(skillText("references/capabilities.md"), "Writing");
   assert.match(writing, /`move <path> to <path>`[^\n]*move the file/u);
-  assert.match(write, /every absent always file/u);
+  assert.match(writing, /plus every absent always file, minus a capability answered no/u);
   assert.match(skillText("assets/fact-sheet.md"), /`: no` to that `C` entry/u);
   assert.match(writing, /Skip a `remove` or `replace`[^\n]*not yes/u);
 });

@@ -56,6 +56,8 @@ aidd_docs/
 
 ## Writing
 
+- Write each file the sheet names plus every absent always file, minus a capability answered no.
+- Write against [memory-rules](memory-rules.md).
 - Absent file: fill its template with the sheet's lines, dropping an empty section, unless a misplaced file covers its capability.
 - A capability whose Accepted names file exists: write into that file, create no second.
 - Existing file: apply the sheet's lines only.

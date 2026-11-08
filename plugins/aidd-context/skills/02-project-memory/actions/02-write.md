@@ -13,7 +13,7 @@ The sheet.
 3. If it holds no fact line and no absent always file, report the bank current and stop.
 4. Run [`facts`](../references/engine.md) and fix the sheet until it passes.
 5. Create the bank tree of [capabilities](../references/capabilities.md). Copy `aidd_docs/README.md` only when absent.
-6. Write each file the sheet names plus every absent always file, minus a capability answered no, per the [writing rules](../references/capabilities.md#writing), at `aidd_docs/memory/<file>`, never under its template folder, from the sheet only, against [memory-rules](../references/memory-rules.md).
+6. Write each file per the [writing rules](../references/capabilities.md#writing), at `aidd_docs/memory/<file>`, never under its template folder, from the sheet only.
 7. Lint each file written with [`check`](../references/engine.md) and fix what it names on the lines you wrote.
 8. Run [`vanished`](../references/engine.md) and change nothing.
 9. Go on to [sync](04-sync.md), then reply with the [report message](../assets/report-message.md), with what `vanished` listed.
