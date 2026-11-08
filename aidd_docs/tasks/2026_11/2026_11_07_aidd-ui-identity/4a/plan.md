@@ -56,3 +56,9 @@ Source: [spec.md](../spec.md), slice 4a; brief [brainstorm.md](../brainstorm.md)
 | The chain's requests are split once into journeys, brand, foundations and components parts; the baseline sends the last three joined to `01-system`, the restructured chain one per skill | the same words reach the model before and after, so a difference is the restructuration's |
 | `02-brand` writes `brand.md` only when absent; an existing one stops it | `01-system` never changed a brand; evolving it comes with the variants |
 | The "brand and tokens first" line of `cases.md` and its test are deleted, not ported | the amended contract: the order reads in the numbering |
+
+## Accepted limits
+
+- `extraction.md` and `reply.md` are near-duplicated in `03-foundations` and `04-components`: a skill links nothing outside its folder, so neither can point at the other's copy.
+- The install table is copied in the four `engine.md`, for the same reason.
+- Both are accepted, not fixed.

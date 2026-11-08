@@ -13,6 +13,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 - Le flux de changement ne vit plus dans un skill (décision 2) : chaque sorte de fiche a un seul skill auteur, qui la fait naître, la déduit du code et la fait évoluer ; le moteur propage par `impact` et `bump` et marque les dépendants en retard, que leur auteur reprend.
 - Depuis rien, aucun skill ne propose plus « la marque et les tokens » d'abord (spec des parcours) : l'ordre se lit dans la numérotation, et seul l'orchestrateur le proposera.
 - L'arborescence gagne `drafts/<id>/`, brouillons de variantes, ignorés par git et jamais versionnés.
+- Les plateformes passent à `system.md` seul : la marque ne les porte plus.
 
 ### Transverses
 
