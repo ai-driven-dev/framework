@@ -347,6 +347,8 @@ Each step is deliverable alone and does not depend on the previous one unless st
 
 Ordering note: the e2e policy (4) and the in-memory golden (12) come before the file-size caps taking effect as failures (6), because 76 % of the time is in 255 e2e tests and file size does not move it. Step 12 is bound by the engine, so until it lands the e2e policy is the only time lever; the caps stay warnings (2) in the meantime.
 
+Every PR that migrates a context delivers its test challenge pass, as part of the PR and not as a review comment: (1) a deterministic pre-filter over the context's tests (unique coverage per test file, measured with and without each file; `jscpd` on the tests; tests with no assertion, through `--expect.requireAssertions`; duplicate titles), which yields candidates and never verdicts; (2) an inverted proof for every deletion: the behaviour the test names is broken by hand, another named test turns red, and both are written down, and a test deleted with the code it tested names the test that now holds the behaviour; (3) the traceability table, one row per test before and after, with its verdict and its proof; (4) the counts, tests and lines before and after, kept, rewritten, merged, moved to the kit, deleted with their code, deleted by proof, added. A deletion without its proof is not merged. The template is `cli/.claude/rules/cli-contexts/reference-context.md` section 8; the `auth` pilot's pass is Appendix A of `plan-pilot-auth.md`.
+
 Steps 1 to 9 are independent of the target code. 8 and 9 can start before the moves. 10 to 13 each follow the move of the context concerned: a context that moves takes its tests, its kit and its scope the same day, never another day.
 
 ## 10. Decisions and limits

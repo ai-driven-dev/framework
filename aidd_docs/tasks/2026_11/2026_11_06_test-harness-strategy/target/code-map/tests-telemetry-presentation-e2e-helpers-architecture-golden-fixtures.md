@@ -77,7 +77,7 @@
 | `tests/e2e/helpers.ts` | `tests/e2e/testing/test-env.ts`; `tests/e2e/testing/run-cli.ts`; `tests/e2e/testing/path-without-aidd.ts` | split | proposal: no import of createDeps or any production wiring; initProject runs the built binary instead (07 section 2.1) |
 | `tests/e2e/helpers.unit.test.ts` | `tests/e2e/testing/path-without-aidd.unit.test.ts` | rename | follows the extracted path helper |
 | `tests/e2e/*` | `tests/e2e/*` | keep | keep all; the e2e policy (one per command and per family of failure, the rest down to integration) is applied under 07 section 5, no file dropped here |
-| `tests/helpers/auth.ts` | `tests/contexts/auth/testing/temp-auth-storage.ts` | move | auth kit |
+| `tests/helpers/auth.ts` | `tests/contexts/auth/testing/credential-records.ts` | move | done (auth pilot): the record builders of the auth kit |
 | `tests/helpers/mutation-sequencer.ts` | `tests/mutation/mutation-sequencer.ts` | move | proposal: mutation tooling is not a kit; delete with the per-profile scopes if they go (07 section 8) |
 | `tests/helpers/mutation-sequencer.unit.test.ts` | `tests/mutation/mutation-sequencer.unit.test.ts` | move | follows its subject |
 | `tests/helpers/stryker-filter.integration.test.ts` | `tests/mutation/stryker-filter.integration.test.ts` | move | proposal: follows the fate of mutation (07 section 6) |
@@ -106,7 +106,7 @@
 | `tests/helpers/ports/seed-from-directory.ts` | `tests/shared/testing/seed-from-directory.ts` | move | proposal: serves the per-test fixture declaration (07 section 2.2) |
 | `tests/helpers/ports/stub-asset-provider.ts` | `tests/shared/testing/stub-asset-provider.ts` | move | proposal: AssetProvider is consumed by three contexts (03 open item) |
 | `tests/helpers/ports/realpath-windows.unit.test.ts` | `tests/shared/ports/file-realpath-windows.unit.test.ts` | move | proposal: tests the fake against the file port; may fold into the file contract suite |
-| `tests/helpers/ports/fake-auth-reader.ts` | `tests/contexts/auth/testing/fake-auth-reader.ts` | move | fake of TokenProvider, auth kit |
+| `tests/helpers/ports/fake-auth-reader.ts` | `-` | delete | done (auth pilot): its one importer, a framework test, doubles `TokenProvider` inline (A6) |
 | `tests/helpers/ports/stub-ai-tool.ts` | `tests/contexts/tools/testing/stub-ai-tool.ts` | move | tools kit |
 | `tests/helpers/ports/in-memory-manifest-repository.ts` | `tests/contexts/installation/testing/in-memory-manifest-repository.ts` | move | installation kit |
 | `tests/helpers/ports/in-memory-marketplace-cache.ts` | `tests/contexts/distribution/testing/in-memory-marketplace-cache.ts` | move | distribution kit (05) |
@@ -119,8 +119,8 @@
 | `tests/helpers/ports/fake-native-marketplace-source-reader.ts` | `tests/contexts/host-registration/testing/fake-native-marketplace-source-reader.ts` | move | same |
 | `tests/helpers/ports/fake-native-plugin-activator.ts` | `tests/contexts/host-registration/testing/fake-host-actions.ts` | rename | becomes FakeHostActions (02); records calls and simulates CLI refusals |
 | - | `tests/shared/testing/run-file-contract.ts`; `tests/shared/ports/file.contract.test.ts` | add | first contract suite to land: fake and fs adapter on a temp dir (07 section 2.3 and 9) |
-| - | `tests/contexts/auth/testing/run-identity-verifier-contract.ts`; `tests/contexts/auth/ports/identity-verifier.contract.test.ts` | add | token check suite: recorded response replayed locally (05) |
-| - | `tests/contexts/auth/testing/run-credential-store-contract.ts`; `tests/contexts/auth/domain/ports/credential-store.contract.test.ts` | add | credential store suite on fake and file store (00 stage B) |
+| - | `tests/contexts/auth/testing/identity-verifier-contract.ts; tests/contexts/auth/ports/identity-verifier.contract.test.ts` | add | done (auth pilot): `describeIdentityVerifierContract` (A7), fake and `GitHubAdapter` over a local server |
+| - | `tests/contexts/auth/testing/credential-record-repository-contract.ts; tests/contexts/auth/ports/credential-record-repository.contract.test.ts` | add | done (auth pilot): `describeCredentialRecordRepositoryContract`, fake and file adapter |
 | - | `tests/contexts/host-registration/testing/run-host-actions-contract.ts`; `tests/contexts/host-registration/domain/ports/host-actions.contract.test.ts` | add | native host CLI suite replaying recorded vendor output (02, 07 section 4.2) |
 | `tests/architecture/helpers.ts` | `tests/architecture/helpers.ts` | keep | holds ALLOWED and BASELINE as data (00 section 11) |
 | `tests/architecture/context-graph.arch.test.ts` | `tests/architecture/edge-table.arch.test.ts` | merge | an absent edge is an error; replaces the baselined graph (08 section 2.2) |

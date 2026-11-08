@@ -16,18 +16,13 @@ export interface CliSubject {
   dispose(): Promise<void>;
 }
 
-export type CliCaseId = "P1" | "P2" | "P3" | "P4" | "P5";
-
-export type CliDivergences = Partial<Record<CliCaseId, string>>;
-
 /**
  * What a command-line credential provider promises, in the three situations a machine can be
  * in. The wording of what the tool printed is the adapter's translation, tested there.
  */
 export function describeCliAuthProviderContract(
   subjectName: string,
-  makeSubject: (scenario: CliScenario) => Promise<CliSubject>,
-  knownDivergences: CliDivergences = {}
+  makeSubject: (scenario: CliScenario) => Promise<CliSubject>
 ): void {
   describe(`when the command-line auth provider is ${subjectName}`, () => {
     const opened: CliSubject[] = [];
@@ -43,34 +38,29 @@ export function describeCliAuthProviderContract(
       return subject.provider;
     }
 
-    function contractCase(id: CliCaseId, name: string, body: () => Promise<void>): void {
-      const run = knownDivergences[id] === undefined ? it : it.fails;
-      run(name, body);
-    }
-
-    contractCase("P1", "answers the token the tool holds", async () => {
+    it("answers the token the tool holds", async () => {
       const provider = await given({ kind: "signed-in", token: "ghp_cli", login: "octocat" });
 
       expect(provider.read()).toBe("ghp_cli");
     });
 
-    contractCase("P2", "answers no token when the tool is not installed", async () => {
+    it("answers no token when the tool is not installed", async () => {
       expect((await given({ kind: "absent" })).read()).toBeNull();
     });
 
-    contractCase("P3", "fails rather than answer no token when the tool fails", async () => {
+    it("fails rather than answer no token when the tool fails", async () => {
       const provider = await given({ kind: "failing" });
 
       expect(() => provider.read()).toThrow();
     });
 
-    contractCase("P4", "answers the login the tool reports", async () => {
+    it("answers the login the tool reports", async () => {
       const provider = await given({ kind: "signed-in", token: "ghp_cli", login: "octocat" });
 
       expect(await provider.verify()).toBe("octocat");
     });
 
-    contractCase("P5", "refuses to verify when the tool is absent or fails", async () => {
+    it("refuses to verify when the tool is absent or fails", async () => {
       for (const kind of ["absent", "failing"] as const) {
         const provider = await given({ kind });
         await expect(provider.verify()).rejects.toThrow(new AuthenticationError("gh CLI"));

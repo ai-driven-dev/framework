@@ -34,6 +34,7 @@ flowchart LR
     Framework --> Kernel
     Tools --> Kernel
     Auth --> Kernel
+    Auth --> Shared
     Translate --> Kernel
 ```
 

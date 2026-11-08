@@ -7,7 +7,7 @@ flowchart LR
   App([App])
   GitHub["GitHub · deployment.md"]
   Npm["npm registry · deployment.md"]
-  Gh["gh · auth.md"]
+  Gh["gh · internal/auth.md"]
   Hosts["claude · codex · copilot · opencode · architecture.md"]
 
   Agent -- cli --> Gh

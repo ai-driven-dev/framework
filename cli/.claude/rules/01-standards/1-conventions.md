@@ -17,6 +17,7 @@ paths:
 ## Names
 
 - `kebab-case.ts` files; suffixes `-adapter.ts`, `-use-case.ts`.
+- A migrated context names a command by its intent, with no suffix (`log-out.ts`, `LogOut`): `reference-context.md`.
 - A port file is named for its interface: `file-merger.ts` for `FileMerger`.
 - The ratchets read those suffixes; a misnamed file is invisible.
 - `camelCase` values, `PascalCase` types, `CONSTANT_CASE` module constants.

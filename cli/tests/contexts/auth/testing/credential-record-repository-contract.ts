@@ -8,12 +8,6 @@ export interface RepositorySubject {
   dispose(): Promise<void>;
 }
 
-export type RepositoryCaseId = "R1" | "R2" | "R3" | "R4" | "R5" | "R6";
-
-/** Cases a subject is known to fail, each with the divergence it stands for; such a case runs
- * as an expected failure and goes red the day the subject is fixed. */
-export type RepositoryDivergences = Partial<Record<RepositoryCaseId, string>>;
-
 const LEVELS: readonly AuthLevel[] = ["project", "user"];
 
 /**
@@ -23,8 +17,7 @@ const LEVELS: readonly AuthLevel[] = ["project", "user"];
  */
 export function describeCredentialRecordRepositoryContract(
   subjectName: string,
-  makeSubject: () => Promise<RepositorySubject>,
-  knownDivergences: RepositoryDivergences = {}
+  makeSubject: () => Promise<RepositorySubject>
 ): void {
   describe(`when the credential record repository is ${subjectName}`, () => {
     let subject: RepositorySubject;
@@ -37,17 +30,12 @@ export function describeCredentialRecordRepositoryContract(
       await subject.dispose();
     });
 
-    function contractCase(id: RepositoryCaseId, name: string, body: () => Promise<void>): void {
-      const run = knownDivergences[id] === undefined ? it : it.fails;
-      run(name, body);
-    }
-
-    contractCase("R1", "reads no record at a level nothing was saved to", async () => {
+    it("reads no record at a level nothing was saved to", async () => {
       for (const level of LEVELS) expect(await subject.repository.read(level)).toBeNull();
     });
 
     for (const level of LEVELS) {
-      contractCase("R2", `reads a saved credential back at the ${level} level only`, async () => {
+      it(`reads a saved credential back at the ${level} level only`, async () => {
         await subject.repository.save({ method: "stored", token: "ghp_saved" }, level);
 
         expect(await subject.repository.read(level)).toMatchObject({ level, token: "ghp_saved" });
@@ -56,7 +44,7 @@ export function describeCredentialRecordRepositoryContract(
       });
     }
 
-    contractCase("R3", "keeps a stored credential with its token and no provider", async () => {
+    it("keeps a stored credential with its token and no provider", async () => {
       await subject.repository.save({ method: "stored", token: "ghp_saved" }, "user");
 
       expect(await subject.repository.read("user")).toStrictEqual({
@@ -68,7 +56,7 @@ export function describeCredentialRecordRepositoryContract(
       });
     });
 
-    contractCase("R4", "keeps an external credential with its provider and no token", async () => {
+    it("keeps an external credential with its provider and no token", async () => {
       await subject.repository.save({ method: "external", provider: "gh" }, "user");
 
       expect(await subject.repository.read("user")).toStrictEqual({
@@ -80,7 +68,7 @@ export function describeCredentialRecordRepositoryContract(
       });
     });
 
-    contractCase("R5", "deletes the record of one level and leaves the other", async () => {
+    it("deletes the record of one level and leaves the other", async () => {
       await subject.repository.save({ method: "stored", token: "ghp_project" }, "project");
       await subject.repository.save({ method: "stored", token: "ghp_user" }, "user");
 
@@ -90,7 +78,7 @@ export function describeCredentialRecordRepositoryContract(
       expect(await subject.repository.read("user")).toMatchObject({ token: "ghp_user" });
     });
 
-    contractCase("R6", "deletes a level that holds nothing without complaint", async () => {
+    it("deletes a level that holds nothing without complaint", async () => {
       await expect(subject.repository.delete("user")).resolves.toBeUndefined();
     });
   });

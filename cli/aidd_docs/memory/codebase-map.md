@@ -142,7 +142,7 @@ src/
 | a use case | the context whose concept it serves. There is no landing zone: one that fits nowhere means the contexts are wrong |
 | a tool | one profile directory under `contexts/tools/domain/profiles/` |
 | a transform shared by two profiles | `contexts/tools/domain/formats/`; used by one, that profile's own directory |
-| a port used by one context | that context's `domain/ports/`, adapter in its `infrastructure/` |
+| a port used by one context | that context's `domain/ports/` (`ports/` in a migrated context), adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |
 | a runtime service | `runtime/<service>/`, wired from `runtime/wiring/` |
 | a migrated context's wiring | `composition/<context>.ts`, called by `runtime/wiring/framework.ts` |

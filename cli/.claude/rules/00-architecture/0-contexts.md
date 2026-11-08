@@ -29,6 +29,7 @@ Organise by bounded context, never by layer.
 ## Interior
 
 - Import only a module listed in `PUBLIC_MODULES` (`context-boundary.arch.test.ts`).
+- A migrated context (`HELD_BY_BIOME`, `tests/architecture/helpers.ts`) publishes `contract/` and `application/` instead, held by `biome.json`: `reference-context.md`.
 - Everything else is internal.
 - Never leave a context to re-enter it (`context-self-reentry.arch.test.ts`).
 

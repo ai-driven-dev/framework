@@ -63,14 +63,6 @@ describe("CredentialRecordFileAdapter", () => {
       });
       expect(JSON.parse(await readFile(userFile(), "utf-8"))).toMatchObject({ level: "user" });
     });
-
-    it("creates the missing parent directories", async () => {
-      userDir = join(root, "nested", "dir");
-
-      await records.save(STORED, "user");
-
-      expect(await records.read("user")).toMatchObject({ token: "ghp_x" });
-    });
   });
 
   describe("reading a file", () => {

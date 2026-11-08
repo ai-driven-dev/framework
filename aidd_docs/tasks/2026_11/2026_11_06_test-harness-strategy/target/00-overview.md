@@ -178,27 +178,27 @@ Also in this stage, as its own PR because it changes behaviour: deleting legacy 
 ### Stage B: the pilot on `auth` (the strict reference)
 
 Why `auth`:
-- Small and self-contained: 13 source files and about 450 lines under `runtime/auth`, plus a 111-line command and its display. Only 6 files outside it import it (2 in `distribution`, 2 in `framework`, 2 in `presentation`).
+- Small and self-contained: 12 source files and 421 lines under `runtime/auth` once foundations moved the token check to `shared/` (13 and about 450 before), plus a 111-line command and its display. 10 files outside it import it (2 in `distribution`, 2 in `framework`, 2 in `presentation`, 2 in `runtime/self-update`, 2 in `runtime/wiring`).
 - It exercises every element of the model: a domain with rules of its own (resolution order, logout order, file permissions), one external system (the `gh` CLI and the token check, behind a forge port), a published contract consumed by two other contexts (`TokenProvider`), commands, a test kit, contract suites, the public-surface rule, an edge in the context map, and wiring in `composition`.
 - It depends on none of the open decisions (split of `framework`, translation engine, manifest format).
 
-Baseline measured before touching it: about 1,470 lines of tests over 11 files under `tests/runtime/auth` for about 450 source lines (3.3 test lines per source line, the same ratio as the whole repository), plus a 290-line wiring test and a 74-line display test; 175 tests in total across the 15 related files; 0.6 s of test time. The pilot therefore shows the structure and the size of tests, not the time: the time levers are stage A.
+Baseline measured before touching it: 1,380 lines of tests over 10 files under `tests/runtime/auth` for 421 source lines (about 1,470 over 11 before foundations) (3.3 test lines per source line, the same ratio as the whole repository), plus a 290-line wiring test and a 74-line display test; 121 tests across 12 files in the auth set (138 before foundations moved the 17 token-check tests to `shared/`); 0.6 s of test time. The pilot therefore shows the structure and the size of tests, not the time: the time levers are stage A.
 
 Deliverables:
 1. `contexts/auth` in the target shape: commands named by intent (one file, one class, `execute`), aggregate and value objects with their invariants, ports, adapters, a `contract/` exposing `TokenProvider`.
-2. Its tests rewritten to the target strategy: per-context kit, contract suites for the credential store and the token check (fake and real adapter), titles in English, files under the size cap, the relevance rule applied (redundant tests removed and counted).
+2. Its tests rewritten to the target strategy: per-context kit, contract suites for the credential store and the token check (fake and real adapter), titles in English, files under the size cap, the relevance rule applied (redundant tests removed and counted), with its test challenge pass (pre-filter, inverted proof per deletion, traceability table, counts).
 3. The minimal rule set in force for this context, each with a planted tree proving it bites: public surface by path, edge in the table, constructor cap, domain purity.
 4. `reference-context.md`, extracted from the real result: folder layout, command template, kit template, contract-suite template, naming, rules. This is the strict reference every other context follows; a deviation needs a written exception in it, or a change to it.
 
 Measures before and after: source files and lines, test files and lines, tests and their time, mutation time of the scope, constructor widths, and the number of files touched to add a credential source (simulated).
 
-What the pilot cannot prove, stated so a green pilot is not over-read: `auth` talks to GitHub only through the `gh` CLI, so the HTTP forge port is exercised later by `distribution` and `update`; it has no aggregate shared by several hosts, no translation, no manifest, no tool profile, no mutation sharding, and almost no e2e cost (0.6 s in total). The expensive parts of `framework`, `tools` and `translate` are not tested by it. A second pilot on a profile-heavy context is the answer if stage C needs more evidence.
+What the pilot cannot prove, stated so a green pilot is not over-read: `auth` checks a token through `gh` and through one GitHub API call, `/user`, with a single consumer, so an HTTP forge port shared by two contexts is exercised later by `distribution` and `update`; it has no aggregate shared by several hosts, no translation, no manifest, no tool profile, no mutation sharding, and almost no e2e cost (0.6 s in total). The expensive parts of `framework`, `tools` and `translate` are not tested by it. A second pilot on a profile-heavy context is the answer if stage C needs more evidence.
 
 Go / no-go, decided on these measures: if the test lines do not shrink, or adding a credential source does not touch fewer files, or the rules needed more exceptions than they removed ambiguities, the model is revised before it is scaled. Every exception the pilot needed is listed.
 
 ### Stage C: roll out the reference
 
-Gated on the pilot go/no-go and on the measured results of stage A (wall time, CI minutes): the document's own measures show the time is in e2e tests, not in the structure, so the structural moves must earn their cost. One context per PR, following `reference-context.md` strictly: `update`, `recipes`, `distribution`, then `runtime` and `kernel` into `shared` and `composition`, then the split of `framework` (`installation`, `machine-claims` as code only, `host-registration`, `orchestration/`), then renaming use cases into commands. The tests follow each context the same day (kit, contracts, mutation scope).
+Gated on the pilot go/no-go and on the measured results of stage A (wall time, CI minutes): the document's own measures show the time is in e2e tests, not in the structure, so the structural moves must earn their cost. One context per PR, following `reference-context.md` strictly: `update`, `recipes`, `distribution`, then `runtime` and `kernel` into `shared` and `composition`, then the split of `framework` (`installation`, `machine-claims` as code only, `host-registration`, `orchestration/`), then renaming use cases into commands. The tests follow each context the same day (kit, contracts, mutation scope). Each context PR carries the test challenge pass defined in `07-test-architecture.md` section 9.
 
 ### Stage D: decisions deferred until the pilot data exists
 

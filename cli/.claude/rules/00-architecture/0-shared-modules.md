@@ -22,5 +22,5 @@ paths:
 - Count first: `grep -rl <module> src`; `earned-sharing.arch.test.ts` counts the same.
 - A file nested under a shared module is its private step.
 - A promoted module follows `0-hexagonal.md`.
-- Crossing a context: declare the module public (`0-contexts.md`).
+- Crossing a context: declare the module public (`0-contexts.md`); a migrated context publishes through `contract/` (`reference-context.md`).
 - Move to `shared/` only once it stops being business logic; `kernel/` receives no new file.

@@ -220,6 +220,14 @@ A test must provide: an injected temporary user folder, a controlled `PATH`, `AI
 | `tests/helpers/auth.ts`, `tests/helpers/ports/fake-auth-reader.ts` | keep, update the import | same |
 | `tests/presentation/commands/auth-wiring.integration.test.ts`, `tests/presentation/display/auth-display.unit.test.ts` | keep | same |
 
+### What the pilot replaced
+The `auth` pilot (`plan-pilot-auth.md`) executed this section with five changes, now the reference (`cli/.claude/rules/cli-contexts/reference-context.md`):
+- D2: the `/user` check is `shared/infrastructure/github-adapter.ts`, an `IdentityVerifier` by shape; `gh-token-adapter.ts` is gone.
+- D5: no `CredentialSession` and no `CredentialResolver`: the commands orchestrate, `domain/credential-record.ts` holds the aggregate and its rules, `domain/credential-sources.ts` the one source order and its two stop rules.
+- D6: the commands are `LogIn`, `LogOut`, `CheckStatus` (`application/log-in.ts`, `log-out.ts`, `check-status.ts`), not `AuthLogin`, `AuthLogout`, `AuthStatus`.
+- SF6: memoization and logs live in `application/cached-token-provider.ts`, the clock is injected into `infrastructure/credential-record-file-adapter.ts`; the domain holds neither.
+- The file is created `0600`; shared private storage is not adopted (exception E9 of the reference), so permissions stay in the file adapter.
+
 ### Open questions and assumptions about neighbours
 - `presentation/commands/auth.ts` instantiates the commands with `new` (lines 70, 89, 105): in the target, `composition/` builds them and the presentation command receives them.
 - A second provider (GitLab) does not exist; no code is written for it (the `CliAuthProvider` port already exists). A different forge later is another adapter of the forge ports.
