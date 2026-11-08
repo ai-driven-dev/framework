@@ -1,6 +1,6 @@
 # Run: aidd-ui 4a, restructuration
 
-Pilot lines, one per project, from `scripts/aidd-ui-pilot.cjs` (Haiku, restricted tools, the chain of the skills on throwaway copies). Errors, wireframes and code are compared; warnings and `C10` follow the model's choices and do not count.
+Pilot lines, one per project, from `scripts/aidd-ui-pilot.cjs` (Haiku, restricted tools, the chain of the skills on throwaway copies). Errors, wireframes and code are compared; warnings follow the model's choices and do not count.
 
 Both arms ran on fresh copies in the same session. Baseline: the skills of `origin/next` before the restructuration (the journeys skill, then the system skill receiving the brand, foundations and components parts together). After: the four skills of this branch, one request per skill, the parts unchanged. The chats of every copy were deleted by the script; none was left in `~/.claude/projects/` afterwards.
 
@@ -22,7 +22,7 @@ kairos errors C10 warnings C3,C4,R18,V6 wireframes all code untouched
 
 ## Verdict
 
-Errors other than `C10`, wireframes and code are equal per project: blank and Gouvernail have no error, Kairos holds only `C10` in both arms. The spec leaves `C10` out of the done-when, so it does not count. The warnings differ by `C4` on Gouvernail and Kairos, which does not count either: it is the colour debt of the code roots the model picked.
+Before the drift fix, Kairos held `C10` in both arms: see the cause under "After the drift fix". The warnings differ by `C4` on Gouvernail and Kairos, which does not count either: it is the colour debt of the code roots the model picked.
 
 ## Earlier baseline runs
 
@@ -72,7 +72,7 @@ gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
 kairos errors C10 warnings C3,C4,R18,V6 wireframes all code untouched
 ```
 
-Errors other than `C10`, wireframes and code equal the lines above.
+Wireframes and code equal the lines above.
 
 ## After the strict sentence gate
 
@@ -82,7 +82,7 @@ gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
 kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
 ```
 
-Kairos shows no `C10` here, and the spec does not count it. `C10` is the drift between the tokens the model wrote and the code's token file: the two first baseline runs had none either, so it follows the model's values, not the skills.
+Kairos shows no `C10` here: it depended on which token file the model picked, see "After the drift fix".
 
 ## On the restored skills
 
@@ -93,3 +93,18 @@ kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
 ```
 
 Errors, wireframes and code hold; no `C10` this run.
+
+## After the drift fix
+
+Cause: `readScript` dropped each export's name, so two exports sharing a key (`action.primary` and `duelAccent.primary` in Kairos' `apps/mobile/shared/ui/tokens.ts`) wrote one token and the last one won. The stylesheet then held `#b06cf7` where the code's first export holds `#FF6B35`: 49 `C10` lines when the model picked that file, none when it picked `packages/ds/tokens/src/generated.ts`.
+
+Fix: a key held by several exports of a script keeps its export's name (`--action-primary`, `--duel-accent-primary`).
+
+```txt
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
+gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
+blank errors none warnings none wireframes all code untouched
+```
+
+Both Kairos runs took `apps/mobile/shared/ui/tokens.ts`, the colliding file. Verdict: no error in any of the three projects, wireframes all there, code untouched.
