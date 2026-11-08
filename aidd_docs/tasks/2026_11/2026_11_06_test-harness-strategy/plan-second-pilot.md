@@ -1,0 +1,475 @@
+---
+objective: "The tool profiles of `cli/src/contexts/tools` are registered once, from one list, and proven by one conformance suite every registered profile runs; their tests are rewritten to the target strategy through a recorded test challenge pass; the per-profile mutation scopes are merged into `tools`; the slice's rules are in force with a planted tree each; and the before and after measures, under the revised criteria fixed below, decide go or no-go for stage C, with no product behaviour changed."
+status: pending
+---
+
+# Plan: stage B, second pilot, the tool profiles of `tools`
+
+## Overview
+
+| Field      | Value |
+| ---------- | ----- |
+| **Goal**   | Validate the model as revised after the `auth` pilot on a profile-heavy, bounded slice of `tools`: one registration list, a catalog built from it, a conformance suite every profile inherits, a kit, the per-tool tests challenged, the per-profile mutation scopes merged, and a measured verdict on the revised criteria before stage C. |
+| **Source** | Text request (second pilot), grounded in `plan-pilot-auth.md` ("Verdict", "Appendix B", "After the verdict"); `cli/.claude/rules/cli-contexts/reference-context.md` (provisional, followed strictly); `target/00-overview.md` sections 3, 4, 8, 10 to 12, 14, 15; `target/04-tools-and-translate.md`; `target/07-test-architecture.md` sections 2.5, 3, 6 and 9; the tools rows of `target/code-map/`. Read on branch `refactor/second-pilot`, on top of the auth pilot. The code wins wherever a target document disagrees with it. |
+
+Conventions of this plan:
+
+- Paths are relative to the repository root unless they follow a `cd cli`. `target/*` line references are to `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/target/`; `ref:N` is line N of `cli/.claude/rules/cli-contexts/reference-context.md`.
+- `$B` is the baseline directory and `$SBX` the sandbox; each phase starts with:
+
+  ```sh
+  B="${TMPDIR:-/tmp}/aidd-second-pilot-baseline"; mkdir -p "$B"
+  SBX="$(mktemp -d "${TMPDIR:-/tmp}/aidd-second-pilot-XXXX")"; mkdir -p "$SBX/home" "$SBX/cfg"
+  sbx() { env -u AIDD_TOKEN -u GH_TOKEN -u GITHUB_TOKEN HOME="$SBX/home" AIDD_USER_CONFIG_DIR="$SBX/cfg" "$@"; }
+  ```
+
+- Safety, every phase: no `aidd`, no `node dist/cli.js`, no `pnpm smoke`, no `scripts/smoke-*.sh` by hand (`scripts/smoke-tools.sh:158` reads `gh auth token` from the real home). Every vitest and stryker run goes through `sbx`. A copy of the repository is made only with the procedure of "The representative change".
+- `size_check` is the function of `plan-pilot-auth.md` "Conventions" (the code-size rules of `chore/code-size-rules`, applied in a temp copy); expected output on every file this plan writes under `src/`: nothing.
+- Nothing is committed by this plan. Each phase ends green, in the order the migration rules require (`target/00-overview.md:170`): behaviour frozen first, seams, move, rename, logic.
+
+## Step 1: choosing the context
+
+Measured on this branch, in a sandbox, during planning (`$B` of the planning run; `sbx` as above). Test times are one sandboxed run each and were taken while other measurements ran: they rank, they do not compare; phase 1 re-takes three quiet runs for the chosen slice.
+
+### Measured comparison
+
+| Measure | `tools`, whole | Profile slice (chosen) | `translate` | `distribution` |
+| --- | --- | --- | --- | --- |
+| Source files and lines | 76 files, 6,804 (domain 70 / 6,114, of which profiles 34 / 3,340; infrastructure 6 / 690) | 34 profile files 3,340 + `registry.ts` 230 + `kernel/tool.ts` 41 + `runtime/assets/asset-loader.ts` 82 + 24 import lines in 3 wiring files; 14 files touched | 16 files, 1,661 | 22 files, 1,431 |
+| Against auth (421 source lines) | 16x | 9x owned, 14 files touched | 3.9x | 3.4x |
+| Test files and lines | 98 test files + 1 helper, 11,961 | 72 test files, 6,549, + helper `agent-fixture.ts` 38 | 18 files, 5,134 | 20 files, 3,128 |
+| Tests and time (`sbx npx vitest run <set> --reporter=json`) | 1,047 tests, 1.12 to 1.14 s | 583 tests, 4.2 to 4.9 s (three runs under load) | 362 tests, 1.56 to 1.57 s | 209 tests, 0.83 to 2.56 s |
+| Importers outside the context (`src`) | 78 files (framework 57, translate 11, presentation 5, runtime 5); 140 test files outside `tests/contexts/tools` | `registry.js` 55 `src` files, 86 test files; side-effect profile imports in 107 files (3 `src`, 104 tests) | 28 (framework 26) | 33 (framework 25) |
+| Mutation scopes, CI job-seconds on the last two weekly runs on `main`, not this branch (`gh run list --workflow cli-ci.yml --event schedule --limit 2`, then `gh run view <run> --json jobs`) | `tools` 4 shards 1,351 / 1,542 s, widest shard 545 / 471 s; 6 per-profile scopes 1,630 / 2,817 s (claude 244 / 446, codex 2 shards 360 / 660, copilot 196 / 534, cursor 231 / 312, kilo 258 / 339, opencode 341 / 526); 11 jobs; total 2,981 / 4,359 s | the 7 per-profile scopes and the `tools` share they merge into; `tools-antigravity` is not on `main` yet (the commit that added Antigravity, `git log -S'tools-antigravity' --format=%h -- cli/mutation-scopes.json`, is no ancestor of the runs' head) and ran locally: 157 mutants, 85.4 (floor 82), 32 s, 33 static mutants (21 %) estimated at 90 % of the time | 2 shards 729 / 897 s | 1 job 193 / 281 s |
+| Widest constructor | 2 (`NativePluginCliAdapter`); `PluginsCapability` takes one params object of more than 25 fields (`target/04-tools-and-translate.md:36`) | none (profiles are objects) | 8 (`FlatBuildStrategy`, `flat-build-strategy.ts:23-31`), 5 (`MarketplaceBuildStrategy`, `FrameworkBuildUseCase`) | 5 (`MarketplaceAddUseCase`, `MarketplaceRefreshUseCase`) |
+| Representative change | add a tool, measured: see below | same as `tools` | a canon content rule on both paths, measured: 5 source files (1 new) in `translate`, 5 test files (1 new), 0 snapshots, 0 docs; one shared function called from 5 sites in 4 files | a ref pin `owner/repo#ref` for a remote marketplace, measured: 0 files in `distribution` (the parser is `kernel/source.ts`), 2 source (`kernel/source.ts`, `kernel/errors.ts`), 1 test, 1 doc (`cli/README.md`) |
+
+The add-a-tool change, measured in a throwaway copy (procedure under "The representative change"), touched 40 files by name (the measuring run's own headline said 38; the named list below is the one used, and phase 1 re-counts it): 7 source outside the profile, 3 source inside it, 17 CLI test files (2 new, 7 with a real edit, 8 with an import line only), 1 repository scripts test, 4 snapshots, 2 config and scripts, 6 documents (2 of them generated). Counted apart, the same way before and after, because `target/00-overview.md:230` puts both out of this work's scope: the repository scripts test (`scripts/__tests__/smoke-real-user-scope-tool-list-parity.test.js`, a hand list), and the 11 files under `plugins/**` that name `antigravity` and would need the new tool (product content).
+
+### What each candidate would prove of the auth pilot's not-proven list
+
+The list is `target/00-overview.md:195` and `plan-pilot-auth.md` "Verdict".
+
+| Not proven by auth | `tools`, whole | Profile slice | `translate` | `distribution` |
+| --- | --- | --- | --- | --- |
+| Tool profiles | yes | yes | read only | no |
+| Conformance suite, "a new tool adds no test file" (`target/00-overview.md:119,140`) | yes | yes | no | no |
+| Single registration (`target/04-tools-and-translate.md:51,299`) | yes | yes | no | no |
+| Mutation sharding cost (per-profile scopes disappear, `target/07-test-architecture.md:253`) | yes | yes | partly (2 shards) | no |
+| Behaviour tests against kit and contract suites, revised criterion 1 | yes | yes, at scale: 45 parallel per-tool files, 2,157 lines | weakly | weakly |
+| Aggregate with behaviour | no (profiles are data, `target/04-tools-and-translate.md:56`) | no | no | yes (`Marketplace`, private constructor, `marketplace.ts:43`) |
+| Shared forge port | no | no | no | partly (`github-raw-fetcher-adapter.ts`, `distribution -> auth`) |
+| Repository with versions | no | no | no | no |
+| Wide constructors | no | no | yes (8) | at the cap (5) |
+| Translation, golden cost | no | no | yes (form 1, golden 64 s) | no |
+
+### Choice: the profile slice
+
+Chosen: the tool profiles of `tools`, with their registration, their catalog, the conformance suite, the per-tool tests and the per-profile mutation scopes. Why:
+
+- It is profile-heavy, the condition the user set for the second pilot (`plan-pilot-auth.md` "After the verdict"; `target/00-overview.md:195,201`).
+- It tests the claims the model makes hardest and the revised criterion 1 at its widest: the target's main lever here is moving cases from 45 per-tool files into a conformance suite and a kit, which is exactly the move the revised count sets apart (`target/07-test-architecture.md:176-183`).
+- Its representative change is the one the overview names as the model's promise, "one profile file and one line in the registration list" (`target/00-overview.md:115`), against a measured 40 files today.
+- It is bounded: 14 source files touched, the per-tool test set of 72 files, and a slice is what the target itself prescribes ("migrate one profile then the others", `target/07-test-architecture.md:341`; "to measure on the first migrated profile", `:183`).
+
+Not picked:
+
+- `tools`, whole: 16x auth's source, 78 importers in `src` and 140 test files outside it, and half of it (6 infrastructure files, 4 ports, the native-activation and marketplace-settings types) moves to a `host-registration` context that does not exist yet (`target/04-tools-and-translate.md:13,95,131-135,143`). Not bounded.
+- `translate`: not profile-heavy (it reads profiles), and its target is form 1 and the in-memory golden, both deferred to stage D "until the pilot data exists" (`target/00-overview.md:205`); a translate pilot would execute a deferred decision. Its measured change already costs few files (the rule went through one shared function), so it would discriminate little on criterion 2.
+- `distribution`: fails the profile-heavy condition by construction, and its representative change did not even reach the context (the source shorthand is parsed in `kernel/source.ts`). It is the control: it would prove the aggregate and the forge port, which stay on the not-proven list.
+
+What this pilot still cannot prove, stated so a green verdict is not over-read: `tools` owns no command and no adapter at target (`target/04-tools-and-translate.md:93,96`), so the command template (`ref:45-70`) and the port contract-suite template (`ref:101-107`) go unexercised; no aggregate with behaviour, no shared forge port, no repository with versions, no wide constructor, no translation engine. Those stay with stage C's first contexts (`update`, `distribution`) and stage D.
+
+## Scope of the slice
+
+In:
+
+- `src/contexts/tools/domain/registry.ts`, the 8 `src/contexts/tools/domain/profiles/<tool>/profile.ts` (their registration line only), a new registration list, `src/runtime/assets/asset-loader.ts`, the profile imports of `src/runtime/wiring/{tools,framework,translate}.ts`.
+- The 72 test files of the slice: `tests/contexts/tools/domain/profiles/**` (63 files and `agent-fixture.ts`), the 8 root files `tests/contexts/tools/domain/{build-hooks-support-declaration,host-ref-in-use,plugin-enablement-is-machine-global,plugin-root-token-declaration,registry-conformance,registry,tool-config}.unit.test.ts` and `tool-support-surface.integration.test.ts`, and `tests/kernel/tool.unit.test.ts`. The list is `$B/slice-tests.txt`.
+- The side-effect profile imports in 104 test files outside the slice (one line each, deleted).
+- The 7 per-profile mutation scopes and the `tools` scope.
+
+Out, as scope limits and not exceptions (no line of these files changes):
+
+| Out | Why | Where it goes |
+| --- | --- | --- |
+| The 6 infrastructure files, 4 native ports, `marketplace-settings.ts`, `marketplace-source-conflict.ts`, `host-plugin-registration.ts`, the native-activation part of `plugins-capability.ts` | they belong to `host-registration`, which does not exist (`target/04-tools-and-translate.md:13,95,131-135,143`) | the `host-registration` PR of stage C |
+| `build.ts` path functions turned into templates and data (`target/04-tools-and-translate.md:61,137-138`) | listed under form 1's "what moves where" (`target/04-tools-and-translate.md:219`), deferred by `target/00-overview.md:205` | stage D |
+| The two hooks bridges merged into `event-bridge` (`target/04-tools-and-translate.md:139,293`) | a source change of its own; `target/07-test-architecture.md:183` leaves the bridge tests to document 04, not to the conformance suite | its own PR |
+| Invariants I4, I5, I7, I8, I10 (`target/04-tools-and-translate.md:78-84`) | they need a translation output to check, which is the engine of form 1 | stage D; see A7 |
+| The bug found while measuring: `SkillsCapability` in `prefix` mode hard-wires `.agents/skills/` in `accepts()` and `buildOutputPath()` (`skills-capability.ts`), true for antigravity only because its directory is `.agents/` | a behaviour change, never inside a refactor (`target/00-overview.md:170`) | its own `fix/` PR; conformance case K3 below would have caught it for a new tool |
+
+## Measured baseline
+
+Measured during planning; phase 1 re-takes every line on the tree it starts from and replaces a different figure here.
+
+| Measure | Value | Command |
+| --- | --- | --- |
+| Slice source | 34 profile files, 3,340 lines; `registry.ts` 230; `contracts.ts` 87 and `build-contract.ts` 157 (read, not changed); `kernel/tool.ts` 41; `asset-loader.ts` 82; 24 profile import lines in the 3 wiring files | `find ... \| xargs wc -l` |
+| Slice tests | 72 files, 6,549 lines, plus `agent-fixture.ts` 38. Of the 63 profile test files: 45 per-tool parallel files, 2,157 lines, 264 `it` (34 of 60 lines or fewer: 1,034 lines, 133 `it`; 11 longer); 7 `build.unit` files, 1,795 lines; 11 others, 1,648 lines (bridges 948) | `wc -l`, `$B/profile-tests.tsv` |
+| Buckets, fixed below | behaviour 6,141; kit 38 (`agent-fixture.ts`); contract and conformance 320 (`registry-conformance.unit.test.ts`, a `describe.each` over the registered tools); data snapshot 88 (`tool-support-surface.integration.test.ts`; its JSON, 153 lines, reported apart); total 6,587 | same |
+| Tests and time | 583 tests in 72 files, all passed; 4,202 to 4,864 ms (three runs, under load) | `sbx npx vitest run $(cat "$B/slice-tests.txt") --reporter=json --outputFile="$B/slice-<n>.json"` |
+| Assertions | 583 of 583 | same, `--expect.requireAssertions` |
+| Pre-filter: duplication | 38 exact clones, 562 duplicated lines (8.58 %) | `npx jscpd --min-lines 5 --reporters console --silent $(cat "$B/slice-tests.txt")` |
+| Pre-filter: duplicate titles | 31 titles in two files or more (77 occurrences), 10 of them in three files or more (the conformance candidates of `target/07-test-architecture.md:180`), in `$B/dup-titles.txt` | title scan, node one-liner over `$B/slice-tests.txt` |
+| Pre-filter: unique coverage per file | phase 1, leave-one-out over the 72 files | `ref:121` |
+| Mutation, CI | see "Measured comparison"; the 8 scopes of the tools family, 12 jobs counted with `tools-antigravity` | `gh run view <id> --json jobs` |
+| Mutation, local, before | `tools-antigravity` 32 s, 85.4; the other 7 scopes in phase 1 | `sbx node scripts/run-mutation.mjs <scope> --force` |
+| Registration sites | `registerTool` at the bottom of each `profile.ts` (8); side-effect imports of profiles in 107 files (7 import all 8, 34 import 2, 32 import 1); `AI_TOOL_IDS` and the union in `kernel/tool.ts:3-28`; `CONFIG_ASSETS` keyed by every `ToolId` (`asset-loader.ts:28-35`, `antigravity: {}` required) | `grep` |
+| Overrides of the global registry in tests | `registerTool` called by 6 test files: `registry.unit`, `tool-config.unit`, and 4 framework tests (`install-runtime-config-use-case.unit:351-361`, `install-ide-tool-use-case.unit:166-170`, `install-scope.unit:68-78`, `setup-flow.unit:127-133`) | `grep -rn registerTool tests` |
+| Eager registration, probed | in a throwaway copy, `registerTool` removed from the 8 profiles and the registry built from one list in today's order: 7,058 unit, integration, contract and architecture tests, 3 failures: `tool-addition-cost.arch` (the list names tools), `setup-wiring.integration:368` (it registered 6 of 8 profiles and pinned the help of that partial world), and the copy-only `in-process-cli.integration` failure | copy deleted after |
+| Consumers of the registration order | `init-use-case.ts:52` and `doctor-layout-use-case.ts:31` iterate `getAllRegisteredTools()`; `setup.ts:105` sorts; `distributionProbesOf` sorts by depth. Today's order is the import order of `runtime/wiring/framework.ts:2-10`: antigravity, claude, codex, copilot, cursor, kilo, opencode, vscode | reading |
+
+### The representative change
+
+Definition, the same text before and after, naming no path because the slice changes where registration lives: a new AI tool `zeta`, display name `Zeta CLI`, project directory `.zeta/`, flat mode, skills only (no agents, commands, rules, hooks, MCP, native registration or config assets), skills under `.zeta/skills/aidd-<name>/SKILL.md`; selectable by `aidd setup --ai zeta` and the menu, buildable by `aidd translate --to zeta`; goldens regenerated by their own update variables and their diff read; one test per new behaviour the conventions require; every document that lists the supported tools updated; the whole `cli` suite, the typecheck, the lint and the repository scripts suite green in the copy. Skills only, because it isolates the fixed cost of registering a tool, which is what the model claims to remove (`target/00-overview.md:115`, `target/04-tools-and-translate.md:299`); a feature-rich tool adds its own work equally before and after.
+
+Procedure (the copy holds the whole tree: the goldens read `plugins/` and `.claude-plugin/` through `REPOSITORY_ROOT`):
+
+```sh
+R="$(git rev-parse --show-toplevel)"
+M="$(mktemp -d "${TMPDIR:-/tmp}/aidd-p2-tool-XXXX")"
+rsync -a --exclude node_modules --exclude .git --exclude dist --exclude reports --exclude .e2e-build --exclude .stryker-tmp "$R/" "$M/"
+ln -s "$R/cli/node_modules" "$M/cli/node_modules"; [ -d "$R/node_modules" ] && ln -s "$R/node_modules" "$M/node_modules"
+git -C "$M" init -q && git -C "$M" add -A && git -C "$M" -c user.name=m -c user.email=m@m commit -qm base
+(cd "$M/cli" && sbx npx vitest run)   # baseline of the copy; tests/helpers/in-process-cli.integration.test.ts fails in a copy, before and after
+# implement zeta by the definition, then:
+(cd "$M/cli" && sbx npx vitest run && pnpm typecheck && pnpm lint)
+(cd "$M" && node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js')
+git -C "$M" status --porcelain | tee "$B/zeta-<before|after>.txt"
+rm -rf "$M"
+```
+
+Buckets, counted apart: (a) source outside the profile directory; (b) source inside it; (c) test files, new ones named; (d) snapshots; (e) config and scripts; (f) documents; plus the `plugins/**` count.
+
+Before, measured:
+
+| Bucket | Files |
+| --- | --- |
+| (a) 7 | `kernel/tool.ts` (union and array), `presentation/commands/translate.ts:75` and `presentation/prompts/menu-use-case.ts:48,69` (help strings that list the tools), `runtime/assets/asset-loader.ts` (`zeta: {}` to compile), `runtime/wiring/{framework,tools,translate}.ts` (one side-effect import each) |
+| (b) 3 | `zeta/profile.ts` 50, `zeta/build.ts` 32, `zeta/zeta-paths.ts` 5 |
+| (c) 17, plus 1 apart | new: `profiles/zeta/profile.unit.test.ts`, `profiles/zeta/build.unit.test.ts`; real edits: `architecture/tool-addition-cost.arch` (6 BASELINE counts), `golden/framework-build-golden.golden` (`FLAT_TARGETS`, the "11 cells" strings), `tools/domain/tool-config.unit` and `framework/application/uninstall-use-case.unit` (they pin the whole id list or the error naming it), `tools/domain/registry-conformance.unit` (two hand tables), `presentation/commands/translate-wiring.integration` and `presentation/prompts/interactive-menu-use-case.unit` (they pin the help strings); apart: `scripts/__tests__/smoke-real-user-scope-tool-list-parity.test.js`; an import line only, because the test registers profiles by hand and `AI_TOOL_IDS` then names an unregistered tool: `clean-native-cache.integration`, `project-hooks-materializer.unit`, `list-installed-rules-use-case.unit`, `plugin-asset-translation.integration`, `plugin-root-token-declaration.unit`, `tool-support-surface.integration`, `host-marketplace-registry-reader-adapter.integration`, `helpers/ports/build-unit-deps.ts` |
+| (d) 4 | `framework-build/golden.json` +184, `tool-support/surface.json` +17, `help/surface.json`, `phase0/snapshot.json` |
+| (e) 2 | `.github/workflows/ci.yml` (`build-per-tool` matrix), `cli/scripts/smoke-tools.sh` (`AI_TOOLS`); left out by the measuring run and counted here as debt of today: a `tools-zeta` scope and script, and the bundle budget, 2 to 3 more |
+| (f) 6 | `README.md` and `docs/COMPATIBILITY.md` (generated from the tool-support snapshot by `scripts/sync-generated-docs.mjs`), `cli/README.md`, `docs/INSTALL.md`, `cli/aidd_docs/memory/codebase-map.md`; nothing under `cli/.claude/` |
+
+Cross-check against history: the commit that added Antigravity (found by the `git log -S` above) touched 47 files: 6 task documents, 1 memory page, 3 config (`ci.yml`, `mutation-scopes.json`, `package.json`), 2 scripts, 13 source (10 outside the profile, 3 inside), 19 test files, 3 snapshots. The 3 extra source files there (`plugins-capability.ts`, `content-translator.ts`, `built-tree-materialization-translator.ts`) carried Antigravity's flat skill layout, a feature, not registration: the skills-only definition is right to leave them out.
+
+After, predicted file by file from the design below (phase 11 measures it; the prediction is what the threshold is fixed on):
+
+| Bucket | Files | Why it still changes |
+| --- | --- | --- |
+| (a) 4 | `contexts/tools/domain/profiles/registered-profiles.ts` (one line), `kernel/tool.ts` (M-T1), `presentation/commands/translate.ts`, `presentation/prompts/menu-use-case.ts` | the list; the union until `kernel` moves; the two help strings, frozen surface |
+| (b) 3 | the profile's own files | the tool |
+| (c) 3, plus 1 apart | `architecture/tool-addition-cost.arch` (the two help-string files stay in its BASELINE, and "holds each admitted file to the number of tools its reason was written around" makes their `named` count go up), `presentation/commands/translate-wiring.integration`, `presentation/prompts/interactive-menu-use-case.unit` (they pin the frozen strings, at a lower level than the help golden, so A8 keeps them); apart: the scripts parity test | no new test file: conformance covers the profile, including its build-contract paths (K3) |
+| (d) 4 | the same four snapshots | data, read by a human |
+| (e) 2 | `ci.yml` matrix, `smoke-tools.sh` (out of scope, `target/00-overview.md:230`); no mutation scope or script (RT5) | reported |
+| (f) 6 | the same documents; 2 generated | reader-facing lists |
+
+Gone, against before: the 3 wiring files, `asset-loader.ts`, the 8 import-only tests, `tool-config.unit`, `uninstall-use-case.unit`, `registry-conformance.unit` (into conformance, which reads the profile), `framework-build-golden.golden` (targets and cell counts derived from the catalog), and the 2 new per-tool test files.
+
+## Target, file by file
+
+### Source
+
+Path under `cli/src/`.
+
+| Current | Action | Target | DDD element | Phase |
+| --- | --- | --- | --- | --- |
+| (new) | add | `contexts/tools/domain/profiles/registered-profiles.ts`: `REGISTERED_PROFILES`, one line per tool, in today's order (antigravity, claude, codex, copilot, cursor, kilo, opencode, vscode) | the single registration list (`target/04-tools-and-translate.md:299`); placement by A1 | 3 |
+| `contexts/tools/domain/registry.ts` | split in place | `createToolCatalog(profiles)`, a built value over a list (the read side and its derivations, pure); the module's free functions read one catalog built once from `REGISTERED_PROFILES`; `registerTool` becomes the override of that catalog the 6 testing files use, documented as such (E-T1); the global `Map` filled by side effect goes | catalog, a domain service over the profiles (`target/04-tools-and-translate.md:125`) | 3, 6 |
+| `contexts/tools/domain/profiles/<tool>/profile.ts` (8) | edit | the `registerTool` import and call removed (2 lines each) | profile, a value object: data and named behaviours | 3 |
+| `contexts/tools/domain/profiles/vscode/profile.ts` | rename | export `vscodeToolConfig` to `vscode`, like the seven others (3 importers) | profile | 5 |
+| `runtime/wiring/{tools,framework,translate}.ts` | edit | the 8 side-effect profile imports of each removed | composition root (M4 of the reference) | 3 |
+| `runtime/assets/asset-loader.ts` | edit | `CONFIG_ASSETS` becomes a partial map read with an empty default, so a tool without assets has no line (`target/04-tools-and-translate.md:39,299`); `antigravity: {}` removed | infrastructure, asset provider | 6 |
+| `kernel/tool.ts` | keep | the union and `AI_TOOL_IDS` stay (M-T1); the conformance suite holds them equal to the registration list (K1) | shared vocabulary | none |
+| `presentation/commands/translate.ts:75`, `presentation/prompts/menu-use-case.ts:48,69` | keep | the help strings stay written out: no list order derives them byte for byte (the registration order and `AI_TOOL_IDS` order both differ from the help's), and help text is frozen surface (`target/00-overview.md:228`) | presentation | none |
+
+Source after: 1 file added, 13 edited, 0 moved; product behaviour unchanged, held by the characterization of phase 2 and the goldens.
+
+### Tests
+
+Path under `cli/tests/`. Verdicts are planned; Appendix A holds one row per test, written in phases 6 and 7. "Read case by case" means each `it` is read, and goes up to the conformance suite when it is written identically in three profiles or more (`target/07-test-architecture.md:180`), becomes a row of that profile's bounded `it.each` table in `profiles/<tool>/profile.unit.test.ts` when it differs only by a datum (`:181`), and stays where it is otherwise (A6). A case is deleted only with its inverted proof (`ref:125`).
+
+| Current | Lines / `it` | Verdict | Target | Phase |
+| --- | --- | --- | --- | --- |
+| `contexts/tools/domain/registry-conformance.unit.test.ts` | 320 / 21 | split: the per-tool `describe.each` (`:46-116`) and `:118-127` become the conformance suite; the two hand tables naming tools read the profile instead (`TOOLS_WITHOUT_A_NATIVE_MARKETPLACE`, the rules-directory table `:298-320`); `buildTargetModesOf` (`:166-185`) and `distributionProbesOf` (`:187-218`) move to the tests of their own source, which is `translate` (`build-target.ts:20`, `plugin-format.ts:21`); `frameworkBuildModeFor`, `machineLocalFilesOf`, `userMachineLocalFilesOf`, `projectHooksFileOf` go to the catalog test, the real-tool cases kept as rows where no other test pins the datum | `testing/profile-conformance.ts`, `domain/profiles/profile-conformance.unit.test.ts`, `contexts/translate/domain/build-target.unit.test.ts`, `contexts/translate/domain/plugin-format.unit.test.ts`, `domain/catalog.unit.test.ts` | 6 |
+| `contexts/tools/domain/registry.unit.test.ts` | 163 / 8 | rewrite over a catalog of synthetic profiles from the kit instead of `registerTool` on the global | `domain/catalog.unit.test.ts` | 6 |
+| `contexts/tools/domain/tool-config.unit.test.ts` | 122 / 12 | split: "contains exactly claude, cursor, ..." (`:26`) becomes K1 (ids equal to the registration list); `stripToolSuffix` (`:40-58`) to the test of its source `formats/command.ts`; `toolIdsForCategory`, `assertToolIdsMatchCategory`, the registry cases (`:103-120`) to the catalog test | conformance; `domain/formats/command.unit.test.ts`; `domain/catalog.unit.test.ts` | 6 |
+| `contexts/tools/domain/build-hooks-support-declaration.unit.test.ts` | 57 / 1 | merge: a case over every flat profile, conformance K5 (code map `tests-tools-translate-distribution-runtime-kernel.md:13`) | conformance | 6 |
+| `contexts/tools/domain/plugin-root-token-declaration.unit.test.ts` | 100 / 6 | split: the 4 declaration cases (`:35-82`) become K6; the 2 route cases (`:84-100`) are build behaviour and stay | conformance; same file, 2 cases | 6 |
+| `contexts/tools/domain/host-ref-in-use.unit.test.ts`, `plugin-enablement-is-machine-global.unit.test.ts` | 19 / 3, 26 / 4 | merge into the catalog test: the rule over synthetic profiles, each real-tool answer kept as a row unless another test pins it (inverted proof) | `domain/catalog.unit.test.ts` | 6 |
+| `contexts/tools/domain/tool-support-surface.integration.test.ts` | 88 / 1 | keep: it is the data snapshot of every profile (`target/04-tools-and-translate.md:105`), already wired to `docs/COMPATIBILITY.md`; its 8 side-effect imports go. The proposed `profile-data.golden.test.ts` (`:364`) is not added: it would duplicate this one | same | 3 |
+| `contexts/tools/domain/profiles/agent-fixture.ts` | 38 | move to the kit (`target/04-tools-and-translate.md:362`) | `contexts/tools/testing/agent-fixture.ts` | 4 |
+| the 34 per-tool parallel files of 60 lines or fewer: antigravity `profile` 44; claude `agents` 41, `commands` 36, `content` 16, `mcp` 29, `profile` 12, `rules` 53, `skills` 12; codex `agents` 44, `commands` 24, `content` 18, `mcp` 26, `profile` 30, `rules` 24; copilot `commands` 41, `mcp` 36, `profile` 43, `settings` 31, `skills` 11; cursor `agents` 48, `commands` 24, `content` 20, `profile` 28, `skills` 16; kilo `agents` 29; opencode `agents` 40, `commands` 30, `content` 14, `hooks` 32, `plugins` 37, `rules` 41, `skills` 18; vscode `settings` 42 | 1,034 / 133 | read case by case; a file is dropped once every case has a home (`target/07-test-architecture.md:180`) | conformance, or `profiles/<tool>/profile.unit.test.ts` | 6 |
+| the 11 longer parallel files: claude `plugins` 83; codex `hooks` 94, `plugins` 62, `skills` 82; copilot `agents` 68, `content` 153, `plugins` 81, `rules` 99; cursor `rules` 69; kilo `profile` 138; opencode `mcp` 194 | 1,123 / 131 | keep, reduced to what is specific to the tool; their identical cases go up | same files | 6 |
+| the 7 `profiles/<tool>/build.unit.test.ts` | 1,795 / 104 | keep at unit level; challenged against each other and the conformance suite only, never against the golden (A8) | same | 7 |
+| the 11 other profile files: antigravity `antigravity-hook-response.integration` 95, `antigravity-hooks.unit` 178; codex `codex-agent-toml.unit` 158, `config.unit` 125, `global-files.unit` 30, `toml.unit` 42; kilo `global-files.unit` 30, `kilo-hooks-bridge.integration` 401; opencode `global-files.unit` 42, `opencode-hooks-bridge-mapping.integration` 142, `opencode-hooks-bridge.integration` 405 | 1,648 / 112 | keep; pre-filter flags only (the bridges are a scope limit); the three `global-files` files read case by case like the parallel ones | same | 7 |
+| `kernel/tool.unit.test.ts` | 54 / 9 | keep (M-T1) | same | none |
+| 104 test files outside the slice with side-effect profile imports | one line each | delete the line: the catalog is built from the list | same | 3 |
+| `presentation/commands/setup-wiring.integration.test.ts:368` | 1 case | rewrite: it pinned the help of 6 registered profiles; the production help is the 8-profile one the help golden already holds | same | 3 |
+| (new) | characterization | C1 to C3, phase 2 | see phase 2 | 2 |
+| (new) | conformance | `describeProfileConformance(profile)` in the kit, one loop file over `REGISTERED_PROFILES`; adding a tool adds no test file (`target/00-overview.md:119`) | `testing/profile-conformance.ts`, `domain/profiles/profile-conformance.unit.test.ts` | 6 |
+| (new) | kit | `aProfile()` builder of a synthetic profile with `with*` (`ref:98`), and `aCatalog(...profiles)` | `testing/profiles.ts` | 6 |
+
+Conformance cases, the content fixed now (A7): K1 the id is unique, present once in the registration list, equal to its key, and the list equals `AI_TOOL_IDS` plus `IDE_TOOL_IDS` (I1); K2 every profile directory under `profiles/` is in the list ("fails if a profile is missing from registration", `target/04-tools-and-translate.md:104`); K3 `directory` is relative and ends in `/`, and every path the profile computes for a sample plugin tree stays under it, on both sides: the install paths of its capabilities and the `path` of each supported artefact of each build contract (I2); K4 each artefact is either supported with a path or unsupported (I3), and the declared capabilities agree with the build contract; K5 a flat build contract's hooks support matches `acceptsHooks`; K6 the plugin root token rules (I6, declaration side); K7 the cases the pre-filter finds written identically in three profiles or more, after reading; K8 behaviour fixed by `onMultipleCandidates` for zero, one or several config candidates where a profile declares them (I9). Each case is seen red once against a broken synthetic profile from the kit before it is kept (`ref:107`).
+
+## The test challenge pass
+
+Delivered in this PR, by the template (`ref:116-127`), over the 72 files of `$B/slice-tests.txt`:
+
+1. Pre-filter, candidates only: leave-one-out coverage of the slice sources (`src/contexts/tools/domain/profiles/**`, `registry.ts`, `kernel/tool.ts`, `asset-loader.ts`) with every file and once without each, under `bash`; `jscpd` (38 clones today); `--expect.requireAssertions` (583 of 583 today); the duplicate titles (31, 10 in three files or more).
+2. An inverted proof for every deletion: the named behaviour broken by hand, another named test red, both written down. A case moved into the conformance suite is a move, not a deletion, and is proven the same way: broken on one profile, the conformance case for that profile red.
+3. Appendix A: one row per test before and after (file and title, behaviour, flags, verdict, target, proof).
+4. The counts per bucket: tests and lines before and after; kept, rewritten, merged into conformance, moved to the kit, deleted with their code, deleted by proof, added.
+
+## Rules in force for this slice
+
+Each enters with a planted tree that proves it bites (`target/00-overview.md:160`).
+
+| Rule | Mechanism | Planted tree |
+| --- | --- | --- |
+| RT1 no tool id outside a profile directory and the registration list (`target/04-tools-and-translate.md:114`) | `tool-addition-cost.arch.test.ts`, `isAllowed` admits `registered-profiles.ts` and nothing else; the BASELINE only shrinks | a file outside `profiles/` naming two ids is flagged; the registration list is cleared |
+| RT2 no side-effect import of a profile module | a new case in `tool-addition-cost.arch.test.ts` (the file that owns registration cost), over `src` and `tests` | a planted `import ".../profiles/claude/profile.js"` is flagged; a named import is cleared |
+| RT3 every registered profile passes the conformance suite, and a profile directory outside the list fails it | the conformance loop, K2 | a synthetic profile breaking each of K1 to K8 is red; a directory missing from the list is red |
+| RT4 `tools` imports no other context (`target/04-tools-and-translate.md:115`) | `ALLOWED` has no `tools->` edge (`tests/architecture/helpers.ts:118-127`), `context-graph.arch.test.ts` | already in force; its planted "tools to auth crossing" (`ref:91`) is cited, not re-planted |
+| RT5 no per-profile mutation scope (`target/07-test-architecture.md:253`) | a new case in `mutation-covers-source.arch.test.ts`, "no scope mutates a single tool profile": no scope's `mutate` glob reaches under `src/contexts/tools/domain/profiles/<tool>/` without reaching the rest of `tools`. The file's existing cases check coverage, overlap, floors and scripts, and a per-profile scope with its own script passes them all today | a planted `tools-claude`-shaped scope, with the `tools` glob carving it out and its script present, is red; the merged `tools` scope is green |
+| RT6 `tools/domain` holds 11 direct files, no more | `folder-size.arch.test.ts:27` | in force; the registration list sits in `profiles/`, which holds no direct file today |
+
+Written rules no tool checks, carried from the reference: the glossary (`src/contexts/tools/glossary.md`, phase 10), a kit imported by its own context only, one subject per test file, the challenge pass.
+
+## Files that name paths
+
+Checklist, each moved in the phase that changes its path (`target/00-overview.md:163`, `ref:191`):
+
+- `cli/mutation-scopes.json`: the 7 `tools-*` scopes removed, `tools.mutate` becomes `src/contexts/tools/**/*.ts`, shards from phase 8's measure; the `$comment` sentence on the per-profile split rewritten.
+- `cli/package.json`: the 7 `test:mutation:tools-*` scripts removed.
+- `tests/architecture/mutation-shards.arch.test.ts:31-32` (names `tools-codex`); `.github/workflows/cli-ci.yml:617` (a comment naming `tools-codex`).
+- `tests/architecture/tool-addition-cost.arch.test.ts` (`isAllowed`, RT2).
+- `tests/architecture/helpers.ts:64` (comment: "that is how tools register themselves").
+- `tests/architecture/folder-size.arch.test.ts:27` (unchanged, checked).
+- `knip.json`: the kit lives outside `tests/helpers/**`, so knip reports an unused kit export (`ref:99`); checked green.
+- `vitest.config.ts` coverage excludes and `scripts/sweep-stale-test-dirs.cjs` prefixes: checked; a new `tests/contexts/tools/testing/` folder is added to neither unless the phase 9 gate says so.
+- `cli/aidd_docs/memory/testing.md:22` (the per-tool test split) and `:45` (the per-profile mutation scopes); `cli/aidd_docs/memory/codebase-map.md:143` (where a tool lives: add the registration list).
+- `cli/.claude/skills/tools/SKILL.md` ("`registerTool(config)` is called once, at the bottom of `profile.ts`"; "How it's tested") and its `references/*.md` that name the registration.
+- `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/target/code-map/src-tools-translate.md:8`, `src-runtime-kernel-presentation-distribution.md:13`, `tests-tools-translate-distribution-runtime-kernel.md:9-17` and the per-tool rows: the placement A1 and A3 decide (`target/00-overview.md:254`).
+
+## Reference deviations, listed before execution
+
+Definitions, the reference's own (`ref:15-17`), with one addition for a slice, fixed now: a deviation counts only when a file this plan writes deviates from a cited target line; what the slice does not touch is a scope limit (section "Scope of the slice"), never an exception. A deviation forced by settling an ambiguity counts as that ambiguity, not twice. Any exception found during execution is added here, names the phase that found it and flips criterion 3 if it tips the count; only the reviewer accepts an addition.
+
+### Exceptions
+
+| # | Deviation | Line it deviates from | Why | Disappears when |
+| --- | --- | --- | --- | --- |
+| E-T1 | the catalog is built once at module load and read through free functions, not injected; `registerTool` survives as an override used by 6 test files | `target/07-test-architecture.md:172` ("tests of generic logic receive a test registry of 2 synthetic profiles"), `target/04-tools-and-translate.md:299` ("built once and injected") | 55 `src` files and 86 test files read `registry.js` (measured); injecting the catalog is the framework split's work. The catalog's own tests do use synthetic profiles | consumers receive a `ToolCatalog`: the framework split of stage C |
+| E-T2 | `tools` keeps its public-surface list (`PUBLIC_MODULES.tools`, `context-boundary.arch.test.ts:11-50`), has no `contract/`, is not in `HELD_BY_BIOME`, and `registry.ts` keeps its path | `ref:87-88` (types a non-context needs live in `contract/`; the interior is closed), `target/04-tools-and-translate.md:94` (`contract/tool-catalog.ts`), code map `src-tools-translate.md:8` (`domain/catalog.ts`) | renaming the read side and closing the interior rewrites 78 `src` importers and 140 test files for no behaviour; the slice rewrites `registry.ts` but not its address | `tools` migrates whole, after `host-registration` exists |
+
+### Ambiguities removed
+
+| # | Line one | Line two | Settled |
+| --- | --- | --- | --- |
+| A1 | `target/00-overview.md:205`: "the tool profile in `composition/tool-profiles/`" deferred to stage D until the pilot data exists | `target/04-tools-and-translate.md:69,376` ("Decided: a profile is ONE file per tool, in `composition/tool-profiles/`"), code map `src-runtime-kernel-presentation-distribution.md:13` | the overview wins (`target/04-tools-and-translate.md:5`): profiles and the list stay in `contexts/tools/domain/profiles/`. A list under `composition/` read by `registry.ts` would make a context import `composition/`, which `ref:92` forbids, unless the catalog is injected (E-T1). This pilot's criterion 2 is the data stage D waits for |
+| A2 | `target/04-tools-and-translate.md:117` and code map `src-runtime-kernel-presentation-distribution.md:65`: the id union derived from the registration array (`as const`) | `target/00-overview.md:238`: `ToolId` an opaque branded string in `shared/domain`, "no compile-time union derived from `composition`" | no union derived from the list (the overview wins); the union in `kernel/tool.ts` stays until `kernel` moves to `shared` (M-T1), and K1 holds it equal to the list |
+| A3 | `target/07-test-architecture.md:179`: `profile-conformance.test.ts`, no level | `target/04-tools-and-translate.md:358` and code map `tests-tools-translate-distribution-runtime-kernel.md:9`: `tests/composition/tool-profiles/profile-conformance.unit.test.ts`; `ref:103`: a suite is `*.contract.test.ts` under `ports/` | `tests/contexts/tools/domain/profiles/profile-conformance.unit.test.ts`, mirroring the list (`ref:30`), at unit level because it touches nothing but memory (`target/00-overview.md:135`); a profile is not a port, so `ports/` and `.contract` do not apply; the suite body in the kit (`ref:103`) |
+| A4 | `target/04-tools-and-translate.md:350`: floors "frozen during the transition (never raised, never lowered without a written reason)" | `target/07-test-architecture.md:266` and `ref:133`: raising to the measured score stays allowed | the landed rule (`ref:133`): the merged `tools` floor is set to its measured score at migration, rounded down; the per-file scores of kilo (64) and antigravity (82) are reported from the merged run, not hidden (`target/04-tools-and-translate.md:350`, "not to be masked") |
+| A5 | `target/00-overview.md:115`: a tool costs "one profile file and one line in the registration list" | `target/07-test-architecture.md:172`: "its profile file, its line in the registration list and its snapshot"; `target/04-tools-and-translate.md:299`: "plus its assets if it has any" | snapshots and assets are counted in their own buckets of criterion 2 and reported; the threshold binds code and test files |
+| A6 | `target/04-tools-and-translate.md:340`: merge the parallel files "of 60 lines or fewer" | `target/07-test-architecture.md:180-181`: a case moves up when written identically in three profiles; a datum-only difference becomes a bounded `it.each` | the case rule decides; the size only orders the reading (line one itself requires "each case read before the file is dropped") |
+| A7 | `target/04-tools-and-translate.md:104,342`: conformance runs I1 to I10 | `target/07-test-architecture.md:178`: the ~27 identical cases (capabilities, build contract, paths, ids, formats) | K1 to K8 above: the invariants checkable on a profile alone, plus the identical cases; I4, I5, I7, I8, I10 need a translation output and stay with form 1 (scope limit) |
+| A8 | `target/04-tools-and-translate.md:245,344`: reduce the `build.unit` tests to what the golden does not cover | `target/00-overview.md:134`, `ref:112`: a behaviour is tested at the lowest level that proves it | the lowest level (the overview wins): no unit case is deleted because the golden holds it; the golden is never the holder of an inverted proof |
+
+### Migration state
+
+Not exceptions of the model: each vanishes with an old-layout move of stage C.
+
+| # | Deviation | Vanishes when |
+| --- | --- | --- |
+| M-T1 | `AiToolId` and `AI_TOOL_IDS` in `kernel/tool.ts:3-28`, where the target has an opaque `ToolId` in `shared/domain` (`target/00-overview.md:238`); adding a tool still edits it | `kernel/` moves to `shared/` |
+| M4, M5 (reference) | the wiring still lives in `runtime/wiring/` | `runtime/wiring/` moves to `composition/` |
+| E8 (reference) | `tools` keeps `domain/ports/` | the last context migrates |
+
+Counted for criterion 3: 2 exceptions (E-T1, E-T2) against 8 ambiguities (A1 to A8): go, recorded before execution. The slice definition of an exception above is this plan's addition to `ref:15-17`, open to removal by the person before phase 1, like C1b; without it, the four scope limits that are deviations (the `host-registration` elements, `build.ts` as functions, the bridges, invariants I4, I5, I7, I8, I10; the bug is not one) count too: 6 against 8, still go, so C3 does not depend on the definition. The auth pilot's exceptions (`ref:156-164`) are its own and are not counted here.
+
+## Before and after, and go or no-go
+
+Bucket rules for test lines, fixed now and applied the same way to both sides, by path:
+
+- Kit: `tests/contexts/tools/testing/**` except the conformance suite; before, `tests/contexts/tools/domain/profiles/agent-fixture.ts`.
+- Contract and conformance: `tests/contexts/tools/testing/profile-conformance.ts` and `profile-conformance.unit.test.ts`; before, `registry-conformance.unit.test.ts`, which is the `describe.each` over the registered tools it replaces.
+- Data snapshot: `tool-support-surface.integration.test.ts`, its JSON reported apart.
+- Behaviour: every other file of the slice set after the challenge pass (Appendix A names it), the characterization tests included.
+- A case that leaves the slice set for a file outside it (`contexts/translate/domain/build-target.unit.test.ts` and `plugin-format.unit.test.ts`, both new; `contexts/tools/domain/formats/command.unit.test.ts`, existing) stays counted in the after bucket it came from: the whole file when it is new, its added lines when it exists. Leaving the set never lowers a bucket.
+- Not in any bucket, reported apart: architecture tests (the rules), and the files outside the slice whose side-effect import line was deleted.
+
+| Measure | Before | How after is measured | Go if |
+| --- | --- | --- | --- |
+| C1 behaviour test lines (revised criterion 1) | 6,141 | `wc -l` on the behaviour bucket of the final tree | lower than 6,141 |
+| C1, apart, every time | kit 38; contract and conformance 320; data snapshot 88 (JSON 153); total 6,587 | the same buckets | reported; and the total not above 6,587 (C1b, below) |
+| C2 files touched to add `zeta` (revised criterion 2) | code 7 and test 17 outside the profile (24); 3 inside; 4 snapshots; 2 config; 6 docs; apart: 1 scripts test, 11 plugin files | the same copy procedure on the final tree | code and test outside the profile at most 7 (4 code, 3 test, as predicted) and so fewer than 24; no new test file; docs not more than 6; snapshots, config and the two apart counts reported |
+| C3 exceptions against ambiguities | 2 against 8 | the lists above after phase 10 | exceptions not more than ambiguities |
+| Tests and time | 583 tests, 4.2 to 4.9 s under load; phase 1 three quiet runs | same command, three runs | reported; no time gain claimed |
+| Mutation | 8 scopes, 12 CI jobs, 2,981 / 4,359 job-seconds on `main`; local times from phase 1 | `sbx node scripts/run-mutation.mjs tools --force`, timed; shard legs timed apart | reported: merged score, its floor, local wall time against the sum of the 8 local runs, legs and the widest leg; per-file scores of kilo and antigravity |
+| Source files and lines | slice source as in the baseline | `wc -l` | reported |
+| Conformance | 0 profile-independent cases a new tool inherits (`registry-conformance` lists tools by hand) | cases in `describeProfileConformance`, each seen red | K1 to K8 present, each seen red once |
+
+C1b is this plan's addition to the user's revised criterion, recorded before execution and open to removal by the person before phase 1: in this slice the main lever is moving existing cases from behaviour files into the conformance suite and the kit, so C1 alone would be met by reclassification. Unlike auth, where the 349 contract-suite lines were new capability, here the suite replaces cases that exist. C1 counts as met only if C1b holds too; the target's own estimate, a net 500 to 800 fewer lines (`target/07-test-architecture.md:183`), is reported against, not gated.
+
+C2's threshold is the file-by-file prediction under "The representative change": 7 code and test files is the floor this slice reaches, not the target's one file and one line (`target/00-overview.md:115`), because five of the seven follow from the frozen help text (`target/00-overview.md:228`: the two strings, the two tests that pin them, the ratchet that counts them), one is the list and one is M-T1. Below the target's figure, said now: a go on C2 proves the registration cost falls from 24 files to 7, not that it reaches one.
+
+Go: C1 (with C1b), C2 and C3 all met. Otherwise no-go, and the model is revised before stage C (`target/00-overview.md:197,201`).
+
+## Phases
+
+| # | Phase | Model | Depends on |
+| --- | --- | --- | --- |
+| 1 | Baseline capture | haiku runs; sonnet for the `zeta` copy | none |
+| 2 | Freeze behaviour: characterization | sonnet; proofs reviewed in phase 11 | 1 |
+| 3 | Seams: the registration list and the catalog built from it | opus designs the catalog shape, sonnet edits | 2 |
+| 4 | Move: the kit folder | sonnet | 3 |
+| 5 | Rename | sonnet | 4 |
+| 6 | Logic: conformance suite, kit, catalog test, the per-tool files read case by case | opus designs the suite, sonnet edits | 5 |
+| 7 | The rest of the challenge pass | sonnet; each deletion's proof reviewed in phase 11 | 6 |
+| 8 | Mutation scopes merged | sonnet edits, haiku runs | 7 |
+| 9 | Rules in force with planted trees | sonnet | 6, 8 |
+| 10 | Reference, memory, rules, target docs | opus decides the reference changes (a design decision), sonnet edits | 9 |
+| 11 | Gates, after measures, go or no-go | haiku runs the gates, sonnet the `zeta` copy; opus the final review (the proofs of phases 2, 7 and 9) and the verdict | 10 |
+
+### Phase 1: Baseline capture (haiku; sonnet for step 7)
+
+Files: none in the repository. Output in `$B`.
+
+1. `$B/slice-tests.txt` and the source list re-derived; lines into `$B/src-lines.txt`, `$B/test-lines.txt`, per bucket.
+2. Tests and time: three quiet runs of the slice command, JSON; one run with `--expect.requireAssertions`.
+3. Leave-one-out coverage under `bash` (zsh does not split an unquoted list): all 72 files, then once without each, `--coverage.enabled --coverage.reporter=json --coverage.include=<slice sources>` with the four `--coverage.thresholds.*=0`, into `$B/cov-all` and `$B/cov-wo-<n>`; covered statements and branches compared.
+4. `jscpd` and duplicate titles into `$B`.
+5. Mutation, local and forced, each timed: `sbx node scripts/run-mutation.mjs <scope> --force` for `tools` and the 7 `tools-*`; scores and mutant counts from `reports/mutation/<scope>/`.
+6. `sbx npx vitest run --project=architecture`, green.
+7. The representative change, before, by the procedure (sonnet); the named list into `$B/zeta-before.txt`, replacing the planning count if it differs.
+
+Acceptance: `ls "$B"` lists each output; `git status --short` prints only `?? aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-second-pilot.md`.
+
+### Phase 2: Freeze behaviour, characterization (sonnet)
+
+Files: new tests only. Each is written against the real composition, and proven by inverted proof (`target/00-overview.md:151`): the behaviour broken by hand, this test and only this one red.
+
+- C1: the order in which the real composition's registry yields its tools is antigravity, claude, codex, copilot, cursor, kilo, opencode, vscode (`init-use-case.ts:52`, `doctor-layout-use-case.ts:31` iterate it). Proof: swap two side-effect imports in `runtime/wiring/framework.ts:2-10`, C1 red.
+- C2: a tool with no config asset yields none from the asset provider, and one with assets yields exactly its own (`asset-loader.ts:28-35`). Proof: give antigravity an asset, C2 red.
+- C3: the set of registered tools equals `AI_TOOL_IDS` plus `IDE_TOOL_IDS`, both ways, through the real composition (`registry-conformance.unit.test.ts:80,119` cover one way each with a hand-registered set). Kept only if its inverted proof shows nothing else red; otherwise not written (relevance rule, `target/00-overview.md:150`).
+- The help strings are held by `golden/help-surface.golden.test.ts`; cited, no new test.
+
+Acceptance: `sbx npx vitest run $(cat "$B/slice-tests.txt") <the new files>` green, 583 plus the kept characterization tests; each proof written in Appendix A.
+
+### Phase 3: Seams (opus designs, sonnet edits)
+
+Files: `registered-profiles.ts` (new), `registry.ts`, the 8 `profile.ts`, the 3 wiring files, the 104 test files' import lines, `setup-wiring.integration.test.ts:368`, `tool-support-surface.integration.test.ts` imports, `tool-addition-cost.arch.test.ts` (`isAllowed`).
+
+1. Opus decides the shape of `createToolCatalog(profiles)` and of its override for E-T1 (the design decision of this phase), behaviour-identical, before any edit.
+2. The list in today's order (C1); the registry reads one catalog built from it; `registerTool` overrides that catalog.
+3. `registerTool` lines out of the profiles; side-effect imports out of the wiring and the tests (a scripted edit, then each file read back, `aidd_docs/memory/coding-assertions.md`).
+4. `setup-wiring.integration.test.ts:368` rewritten to the 8-profile help.
+
+Acceptance: `cd cli && sbx npx vitest run` green (all projects), `pnpm typecheck`, `pnpm lint`; C1 to C3 green; `grep -rn 'import ".*profiles/.*/profile.js"' src tests` prints nothing.
+
+### Phase 4: Move (sonnet)
+
+Files: `tests/contexts/tools/domain/profiles/agent-fixture.ts` to `tests/contexts/tools/testing/agent-fixture.ts` and its importers.
+
+Acceptance: the slice command green, same test count; `pnpm knip` green.
+
+### Phase 5: Rename (sonnet)
+
+Files: `vscode/profile.ts` export `vscodeToolConfig` to `vscode`, its 3 importers.
+
+Acceptance: `pnpm typecheck`, the slice command green, same count.
+
+### Phase 6: Logic (opus designs the suite, sonnet edits)
+
+Files: `testing/profile-conformance.ts`, `testing/profiles.ts`, `domain/profiles/profile-conformance.unit.test.ts`, `domain/catalog.unit.test.ts`, `domain/formats/command.unit.test.ts`, `contexts/translate/domain/{build-target,plugin-format}.unit.test.ts`, the 8 `profiles/<tool>/profile.unit.test.ts`, the 45 parallel files, the 8 root files, `asset-loader.ts`, `golden/framework-build-golden.golden.test.ts` (`FLAT_TARGETS` and the cell-count strings derived from the catalog), `contexts/framework/application/uninstall-use-case.unit.test.ts` (the error string built from `AI_TOOL_IDS`).
+
+1. Opus decides the content of K1 to K8 and of the kit's broken-profile builders (the design decision of this phase); sonnet writes them, each case seen red against its broken profile.
+2. The loop over `REGISTERED_PROFILES`; `registry-conformance` split by its row.
+3. The 34 small and 11 longer parallel files read case by case (A6); every move written in Appendix A with its proof.
+4. The catalog test over synthetic profiles; `asset-loader.ts` partial map (C2 green).
+5. The two derived golden expectations and the derived error string, so adding a tool edits none of them.
+
+Acceptance: `cd cli && sbx npx vitest run` green; the conformance file loops over 8 profiles; `size_check src/contexts/tools/domain/registry.ts src/contexts/tools/domain/profiles/registered-profiles.ts src/runtime/assets/asset-loader.ts` prints nothing; test files under 400 lines (`test-file-size.arch.test.ts`).
+
+### Phase 7: The rest of the challenge pass (sonnet)
+
+Files: the 7 `build.unit` files, the 11 other profile files, Appendix A.
+
+The pre-filter's candidates read; deletions only with their inverted proof (never the golden, A8); Appendix A completed and counted.
+
+Acceptance: the slice command green; Appendix A has a row per test before and after; the counts add up to the before and after totals.
+
+### Phase 8: Mutation scopes merged (sonnet edits, haiku runs)
+
+Files: `cli/mutation-scopes.json`, `cli/package.json`, `tests/architecture/mutation-shards.arch.test.ts`, `.github/workflows/cli-ci.yml:617`.
+
+1. `sbx node scripts/run-mutation.mjs tools --force` on the merged glob, timed, with the shard count that keeps the widest leg under today's widest (545 s in CI; the local equivalent from phase 1).
+2. Floor set to the measured score, rounded down (A4); kilo's and antigravity's file scores written in the scope's `$comment`.
+
+Acceptance: `sbx npx vitest run --project=architecture` green (`mutation-covers-source`, `mutation-shards`); the merged score at or above its new floor.
+
+### Phase 9: Rules in force with planted trees (sonnet)
+
+Files: `tests/architecture/tool-addition-cost.arch.test.ts` (RT1, RT2), the conformance suite (RT3), `mutation-covers-source.arch.test.ts` (RT5).
+
+Each rule seen red on its planted tree, then green on the real one.
+
+Acceptance: `sbx npx vitest run --project=architecture` green; each planted tree's red run written down.
+
+### Phase 10: Reference, memory, rules, target docs (opus decides the reference changes, sonnet edits)
+
+Files: `cli/.claude/rules/cli-contexts/reference-context.md` (the second pilot's result and what it changes: a catalog and a conformance-suite template beside the contract-suite one, the slice definition of an exception); `src/contexts/tools/glossary.md`; `cli/.claude/rules/cli-contexts/tools.md`; `cli/.claude/skills/tools/SKILL.md` and its references; `cli/aidd_docs/memory/testing.md:22,45`, `codebase-map.md:143`; the code map rows; this plan's lists.
+
+Acceptance: `pnpm exec lefthook run pre-commit --all-files --force` green (`referenced-paths`, `markdown-links`, `doc-duplication`, `context-imports`).
+
+### Phase 11: Gates, after measures, go or no-go (haiku, sonnet, then opus)
+
+1. `pnpm exec lefthook run pre-commit --all-files --force`, `pnpm exec lefthook run pre-push --all-files --force`, `pnpm test:coverage`, `pnpm build`, `pnpm jscpd`, all green.
+2. Every line of "Before and after" re-measured with its command into Appendix B.
+3. The `zeta` change on the final tree by the same procedure, into `$B/zeta-after.txt`.
+4. Opus, final review: every inverted proof of phases 2 and 7 and every planted tree of phase 9 re-read against Appendix A; a proof that does not hold reopens its phase.
+5. The verdict, against the thresholds as written; nothing re-classified after the measure.
+
+Acceptance: Appendix B and the verdict filled; `git status --short` shows the plan's changes only, uncommitted.
+
+## Decisions
+
+| Decision | Why |
+| --- | --- |
+| The second pilot is the profile slice of `tools`, not a whole context | the only profile-heavy candidate of bounded size; whole `tools` needs `host-registration` first |
+| Profiles and the registration list stay in `contexts/tools` (A1) | the overview defers `composition/tool-profiles/` to stage D, and placing it there needs the catalog injected into 141 importers |
+| The catalog is built, not injected (E-T1) | eager registration was probed: 3 failures in 7,058 tests, against an injection that rewrites 55 `src` files |
+| Criterion 1 carries C1b, total lines not up | moving cases into the conformance suite would meet C1 by reclassification alone |
+| The help strings stay written out | no existing order reproduces them, and help text is frozen surface |
+
+## Risks, limits and open questions
+
+- C1b is this plan's addition to the user's criterion; the person may strike it before phase 1, and then C1 is judged alone, with the total reported.
+- C2's prediction rests on K3 checking a new profile's build paths well enough that its conventions need no per-tool test; if the executor of phase 11 has to add one, C2 fails and the threshold stays.
+- Merging the per-profile scopes makes `tools` the longest scope in CI, which is why it was split (`mutation-scopes.json` `$comment`); phase 8 shards it and reports the widest leg. Every scope a change touches still gates per PR today (`ref:134`).
+- The planning times ran under concurrent load; only phase 1's quiet runs compare with phase 11's.
+- The measuring run's headline count (38) and its named list (40) disagree; the named list is used and phase 1 re-counts.
+- Found while measuring, out of scope: the `SkillsCapability` prefix-mode path hard-wire; and `framework-build-golden.golden.test.ts` carries a stale "9-cell" comment beside its "11 cells".
+
+## Appendix A: traceability
+
+Filled in phases 2, 6 and 7: one row per test before and after (file and title, behaviour pinned, pre-filter flags, verdict, target, proof), then the counts per bucket.
+
+## Appendix B: after measures
+
+Filled in phase 11, one row per line of "Before and after", with the command output that gives it.
+
+## Design bar (user requirement, checked at every design review)
+
+The pilot fails its review, whatever its measures, if any of these holds:
+
+- An anemic model: a profile, capability or catalog that is only data while the rules about it live in callers. Each rule about a tool (which capabilities it hosts, how a capability lands for it, what makes a profile valid) sits on the object that owns the data, as a method or a domain function next to it, and callers ask instead of inspecting.
+- An invariant enforced outside its owner: a profile that can be built invalid (duplicate tool id, a capability without the format it needs, a registration missing a required field) is refused at construction, with a test per invariant.
+- A pattern used for its name: a registry, factory, strategy or visitor exists only where it removes a branch or a duplicate that is measured in the baseline; otherwise it is plain functions.
+- Leaking structure: callers outside the slice reach a profile's fields to decide something the profile could answer.
+- A dependency pointing inward from the domain: profiles and capabilities import no infrastructure, no `node:*` beyond `node:path`, no third-party package.
+
+Phases 3 and 6 end with an opus design review against this bar before the phase is committed; phase 11's final review re-checks it on the whole slice.
