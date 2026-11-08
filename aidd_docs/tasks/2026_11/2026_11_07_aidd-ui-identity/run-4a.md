@@ -84,6 +84,8 @@ kairos validate C3,C4,R18 (wireframes and code not recorded)
 | blank pilot requests | `web and mobile` gone from the foundations request | killed |
 | system answers | the README line back in step 2 of `02-write.md` | killed |
 | system answers | the `platforms` row of `extraction.md` removed | killed |
+| actions free of commands | `node <engine> validate` put back in `02-brand/actions/03-conclude.md` | killed |
+| pilot request suffix | `write no file the skill does not name` dropped from the suffix | killed |
 
 ## After the lean rewrite
 
@@ -164,3 +166,30 @@ kairos errors none warnings C3,R18,V6 wireframes all code untouched steps ok
 ```
 
 Both sources were only read by `git archive`. Kairos showed uncommitted changes before and after; their dates are older than the runs.
+
+## After the intent-level actions
+
+Actions rewritten as intentions (no command, flag or code fence); the commands moved to each `engine.md`, the reply and code-error lists to `reply.md` and `code-errors.md`. Same pilot, Haiku, fresh copies, chats deleted by the script (none left in `~/.claude/projects/`), copies removed with the cleanup line. Gouvernail and Kairos were only read by `git archive`.
+
+First run, all three projects:
+
+```txt
+blank errors none warnings none wireframes all code changed 2 steps broken 2
+gouvernail errors none warnings C3,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+```
+
+The blank line broke: `02-brand` and `04-components` each wrote an unrequested `aidd_docs/tasks/<part>/decisions.md`, a log of the choices the pilot's suffix tells the model to state. Rerun of blank alone, then Kairos alone:
+
+```txt
+blank errors none warnings none wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+```
+
+Cause: the pilot suffix said "say which" for each choice, and the model logged them in a file. The suffix now says to state each choice in the final reply and to write no file the skill does not name. Two blank runs after the fix:
+
+```txt
+blank errors none warnings none wireframes all code untouched steps ok
+blank errors none warnings none wireframes all code untouched steps ok
+```
+
