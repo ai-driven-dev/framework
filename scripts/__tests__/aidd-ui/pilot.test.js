@@ -3,8 +3,8 @@ const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, makeTmp, removeTmp, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
-const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, chatsOf, pilotsOf, main } = require("../../aidd-ui-pilot.cjs");
+const { UI, makeTmp, removeTmp, filesUnder, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
+const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main } = require("../../aidd-ui-pilot.cjs");
 
 // The pilot's checks hold without AI: they read files, run the engine, and compare trees.
 
@@ -148,10 +148,144 @@ describe("aidd-ui pilot journey steps", () => {
   });
 });
 
+describe("aidd-ui pilot journey steps, none to judge", () => {
+  it("returns null when nothing loads", () => {
+    assert.equal(stepsWithoutWireframe(copy), null);
+  });
+
+  it("returns null when the design system holds no journey step", () => {
+    writeProject(copy);
+    fs.rmSync(path.join(copy, UI, "journeys/onboarding.md"));
+    assert.equal(stepsWithoutWireframe(copy), null);
+  });
+});
+
 describe("aidd-ui pilot report line", () => {
-  it("says the errors, the warnings, the wireframes and the code in one line", () => {
-    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], changed: [] }), "blank errors none warnings none wireframes all code untouched");
-    assert.equal(reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], changed: ["a"] }), "kairos errors C6 warnings C3,R18 wireframes missing 2 code changed 1");
+  it("says the errors, the warnings, the wireframes, the code and the steps in one line", () => {
+    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], changed: [], broken: [] }), "blank errors none warnings none wireframes all code untouched steps ok");
+    assert.equal(reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], changed: ["a"], broken: ["x", "y", "z"] }), "kairos errors C6 warnings C3,R18 wireframes missing 2 code changed 1 steps broken 3");
+  });
+
+  it("says no journey when there is no step to judge", () => {
+    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: null, changed: [], broken: [] }), "blank errors none warnings none wireframes no journey code untouched steps ok");
+  });
+});
+
+describe("aidd-ui pilot step files", () => {
+  const ui = (rel) => `${UI}/${rel}`;
+  const hashes = (files) => Object.fromEntries(files.map((file) => [file, file]));
+  const after = (...written) => hashes(written.map(ui));
+
+  it("owns the files each skill's Write only line names", () => {
+    const SKILLS = path.resolve(__dirname, "../../../plugins/aidd-ui/skills");
+    for (const [skill, entries] of Object.entries(OWNED)) {
+      const line = fs.readFileSync(path.join(SKILLS, skill, "SKILL.md"), "utf8").split("\n").find((each) => each.startsWith("- Write only"));
+      for (const entry of entries) assert.ok(line.includes(entry), `${skill}: ${entry}`);
+    }
+  });
+
+  it("names a step and the path it wrote outside its set", () => {
+    assert.deepEqual(stepBreaks("02-brand", {}, after("brand.md", "system.md")), ["02-brand wrote aidd_docs/ui/system.md"]);
+    assert.deepEqual(stepBreaks("02-brand", {}, { ...after("brand.md"), "src/app.js": "x" }), ["02-brand wrote src/app.js"]);
+    assert.deepEqual(stepBreaks("04-components", {}, after("components/a.md", "assets/b.md", "journeys/c.md")), ["04-components wrote aidd_docs/ui/journeys/c.md"]);
+  });
+
+  it("allows each file of its set, a folder's file included, and the engine's files", () => {
+    for (const [skill, entries] of Object.entries(OWNED)) {
+      const files = entries.map((entry) => (entry.endsWith("/") ? `${entry}x.md` : entry));
+      assert.deepEqual(stepBreaks(skill, {}, after(...files, ...ENGINE_FILES)), [], skill);
+    }
+  });
+
+  it("names a step that wrote none of its files, the engine's files aside", () => {
+    assert.deepEqual(stepBreaks("03-foundations", {}, after(...ENGINE_FILES)), ["03-foundations wrote none of its files"]);
+    assert.deepEqual(stepBreaks("03-foundations", {}, {}), ["03-foundations wrote none of its files"]);
+  });
+
+  it("counts a file a step changed or deleted, not one it left as it was", () => {
+    assert.deepEqual(stepBreaks("02-brand", { [ui("brand.md")]: "a", [ui("system.md")]: "s" }, { [ui("brand.md")]: "b", [ui("system.md")]: "s" }), []);
+    assert.deepEqual(stepBreaks("02-brand", { [ui("brand.md")]: "a", [ui("system.md")]: "s" }, { [ui("brand.md")]: "a" }), ["02-brand wrote aidd_docs/ui/system.md", "02-brand wrote none of its files"]);
+  });
+});
+
+describe("aidd-ui pilot chain run", () => {
+  const SKILL_OF = /^\/aidd-ui:(\S+) /;
+  const ownedAnywhere = (rel) => ENGINE_FILES.includes(rel) || Object.values(OWNED).some((entries) => entries.some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)));
+  let full;
+  let base;
+
+  beforeEach(() => {
+    full = makeTmp("aidd-ui-pilot-full-");
+    base = makeTmp("aidd-ui-pilot-base-");
+    writeProject(full);
+    // every journey step names a wireframe, so a chain that lays the whole project leaves no step without one
+    put(full, `${UI}/journeys/onboarding.md`, fs.readFileSync(path.join(full, UI, "journeys/onboarding.md"), "utf8").replaceAll("| home |", "| search-flow |"));
+  });
+
+  afterEach(() => {
+    removeTmp(full);
+    removeTmp(base);
+  });
+
+  const copyFromFull = (cwd, file) => {
+    fs.mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true });
+    fs.copyFileSync(path.join(full, file), path.join(cwd, file));
+  };
+  const filesOf = (skill) => filesUnder(path.join(full, UI)).map((file) => path.relative(full, file)).filter((file) => {
+    const rel = path.relative(UI, file);
+    return OWNED[skill].some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)) || (skill === "03-foundations" && ENGINE_FILES.includes(rel));
+  });
+  const lay = (skill) => (cwd) => filesOf(skill).forEach((file) => copyFromFull(cwd, file));
+
+  /** A copy holding the project but for what the chain writes, then a model laying each skill's files, or `instead`. */
+  function run(instead = {}) {
+    const logs = [];
+    const [log, error, tmpdir] = [console.log, console.error, process.env.TMPDIR];
+    console.log = (line) => logs.push(String(line));
+    console.error = (line) => logs.push(String(line));
+    process.env.TMPDIR = base;
+    try {
+      const code = main(["--gouvernail", "/g", "--kairos", "/k", "--only", "kairos"], {
+        copyProject: (_, dest) => filesUnder(full).map((file) => path.relative(full, file)).filter((file) => !(file.startsWith(`${UI}/`) && ownedAnywhere(path.relative(UI, file)))).forEach((file) => copyFromFull(dest, file)),
+        runStep: (cwd, request) => {
+          const skill = request.match(SKILL_OF)[1];
+          (instead[skill] ?? lay(skill))(cwd, lay(skill));
+          return true;
+        },
+      });
+      return { code, logs };
+    } finally {
+      console.log = log;
+      console.error = error;
+      if (tmpdir === undefined) delete process.env.TMPDIR;
+      else process.env.TMPDIR = tmpdir;
+    }
+  }
+
+  it("exits 0 and says steps ok when each step wrote its own files and the engine's", () => {
+    const { code, logs } = run();
+    assert.deepEqual([code, logs.at(-1).endsWith("wireframes all code untouched steps ok")], [0, true], logs.join("|"));
+  });
+
+  it("exits 1, naming the step and the path, when a step wrote outside its set", () => {
+    const { code, logs } = run({ "02-brand": (cwd, laid) => { laid(cwd); copyFromFull(cwd, `${UI}/system.md`); } });
+    assert.equal(code, 1);
+    assert.ok(logs.some((line) => line.endsWith("steps broken 1")), logs.join("|"));
+    assert.ok(logs.includes("02-brand wrote aidd_docs/ui/system.md"), logs.join("|"));
+  });
+
+  it("exits 1, naming the step, when a step changed none of its files", () => {
+    const { code, logs } = run({ "04-components": (cwd) => copyFromFull(cwd, `${UI}/history.md`) });
+    assert.equal(code, 1);
+    assert.ok(logs.includes("04-components wrote none of its files"), logs.join("|"));
+  });
+
+  it("exits 1 and says no journey when the chain leaves no journey step, nothing else wrong", () => {
+    const history = path.join(full, UI, "history.md");
+    fs.writeFileSync(history, fs.readFileSync(history, "utf8").split("\n").filter((line) => !line.startsWith("| onboarding |")).join("\n"));
+    const { code, logs } = run({ "01-journeys": (cwd) => [".md", ".html"].forEach((extension) => copyFromFull(cwd, `${UI}/wireframes/search-flow${extension}`)) });
+    assert.equal(code, 1);
+    assert.ok(logs.some((line) => line.includes("wireframes no journey")), logs.join("|"));
   });
 });
 
@@ -171,6 +305,13 @@ describe("aidd-ui pilot chain", () => {
       for (const [part, words] of Object.entries(REQUESTS[pilot])) assert.equal(requests.filter((request) => request.includes(words)).length, 1, `${pilot} ${part}`);
       requests.forEach((request, at) => assert.ok(request.startsWith(`/aidd-ui:${CHAIN[at][0]} `), request));
     }
+  });
+});
+
+describe("aidd-ui pilot platforms", () => {
+  it("asks for web and mobile in the blank foundations request, not in the brand one", () => {
+    assert.equal(REQUESTS.blank.brand.includes("web and mobile"), false);
+    assert.ok(REQUESTS.blank.foundations.includes("web and mobile"));
   });
 });
 

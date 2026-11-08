@@ -3,11 +3,13 @@
  * Runs the aidd-ui skills in chain, with Haiku, on throwaway copies of three projects (a blank
  * one and two real checkouts), then checks without AI what the chain left: the engine's verdict,
  * a wireframe behind every journey step, and the project's code untouched. Run it by hand after
- * a change to the plugin; nothing calls it.
+ * a change to the plugin; nothing calls it. Each step must also change only its own files,
+ * and at least one of them.
  *
  * The copies keep the tracked files of a checkout and nothing else, made by `git archive`, so the
  * checkout itself is only read. They live under the system temp folder (set `TMPDIR` to choose
- * it), are kept, and their paths are printed.
+ * it), are kept, and their paths are printed. Remove them with
+ * `rm -rf "${TMPDIR:-/tmp}"/aidd-ui-pilot-*`.
  *
  * Warnings follow the model's choices (the code roots and platforms it picks) and do not count:
  * compare the errors, the wireframes and the code.
@@ -15,8 +17,8 @@
  * Usage: node scripts/aidd-ui-pilot.cjs --gouvernail <checkout> --kairos <checkout> [--only blank|gouvernail|kairos]
  *
  * Exit codes:
- *   0  no pilot has an error, every step has its wireframe and the code is untouched
- *   1  a pilot differs: compare its line with the one before the change
+ *   0  no pilot has an error, every step has its wireframe, the code is untouched and each step stayed in its files
+ *   1  any error, a missing wireframe, changed code, or a step outside its files
  *   2  a step could not run
  */
 const { spawnSync } = require("node:child_process");
@@ -61,10 +63,33 @@ function snapshot(dir) {
   return files;
 }
 
-/** The files added, modified or deleted between two snapshots, outside `aidd_docs/ui/`, sorted. */
-function changedOutsideUi(before, after) {
+/** The files added, modified or deleted between two snapshots, sorted. */
+function changedBetween(before, after) {
   const paths = new Set([...Object.keys(before), ...Object.keys(after)]);
-  return [...paths].filter((file) => !file.startsWith(`${UI_DIR}/`) && before[file] !== after[file]).sort();
+  return [...paths].filter((file) => before[file] !== after[file]).sort();
+}
+
+/** The files changed between two snapshots outside `aidd_docs/ui/`, sorted. */
+const changedOutsideUi = (before, after) => changedBetween(before, after).filter((file) => !file.startsWith(`${UI_DIR}/`));
+
+// What each skill writes under `aidd_docs/ui/`, as its SKILL.md "Write only" line says; a folder ends with `/`.
+const OWNED = {
+  "01-journeys": ["journeys/", "wireframes/"],
+  "02-brand": ["brand.md"],
+  "03-foundations": ["system.md", "tokens.json", "themes/", "platforms/", "breakpoints/"],
+  "04-components": ["components/", "assets/"],
+};
+// What the engine writes for any step.
+const ENGINE_FILES = ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"];
+
+const isIn = (file, entries) => entries.some((entry) => (entry.endsWith("/") ? file.startsWith(`${UI_DIR}/${entry}`) : file === `${UI_DIR}/${entry}`));
+
+/** What a step got wrong between two snapshots: each file it changed outside its set and the
+ * engine's files, then, when it changed none of its own, that. */
+function stepBreaks(skill, before, after) {
+  const changed = changedBetween(before, after);
+  const outside = changed.filter((file) => !isIn(file, [...OWNED[skill], ...ENGINE_FILES]));
+  return [...outside.map((file) => `${skill} wrote ${file}`), ...(changed.some((file) => isIn(file, OWNED[skill])) ? [] : [`${skill} wrote none of its files`])];
 }
 
 /** The tracked files of `source` copied into the empty `dest`, as a git repository with one commit.
@@ -96,24 +121,25 @@ function verdict(root) {
   return { errors: [...found.errors].sort(), warnings: [...found.warnings].sort() };
 }
 
-/** Each journey step whose screen is no wireframe record. */
+/** Each journey step whose screen is no wireframe record, or null when nothing loads or no step exists. */
 function stepsWithoutWireframe(root) {
   const project = load(root);
-  if (project === null) return [];
+  if (project === null) return null;
   const kindOf = (record) => record.frontMatter.kind;
   const wireframes = new Set(project.records.filter((record) => kindOf(record) === "wireframe").map((record) => record.frontMatter.id));
-  return project.records
+  const steps = project.records
     .filter((record) => kindOf(record) === "journey")
-    .flatMap((record) => table(record.sections[STEPS_SECTION]).map((row, at) => ({ journey: record.frontMatter.id, step: at + 1, screen: row.Screen })))
-    .filter((step) => !wireframes.has(step.screen));
+    .flatMap((record) => table(record.sections[STEPS_SECTION]).map((row, at) => ({ journey: record.frontMatter.id, step: at + 1, screen: row.Screen })));
+  return steps.length ? steps.filter((step) => !wireframes.has(step.screen)) : null;
 }
 
 /** One pilot's result on one line. */
-function reportLine(pilot, { errors, warnings, missing, changed }) {
+function reportLine(pilot, { errors, warnings, missing, changed, broken }) {
   const ids = (list) => (list.length ? list.join(",") : "none");
-  const wireframes = missing.length ? `missing ${missing.length}` : "all";
+  const wireframes = missing === null ? "no journey" : missing.length ? `missing ${missing.length}` : "all";
   const code = changed.length ? `changed ${changed.length}` : "untouched";
-  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} code ${code}`;
+  const steps = broken.length ? `broken ${broken.length}` : "ok";
+  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} code ${code} steps ${steps}`;
 }
 
 // What each pilot asks, one part per skill of the chain.
@@ -125,8 +151,8 @@ const REQUESTS = {
     journeys:
       "A breathing-exercise app, web and mobile, built from nothing: no code, no design system yet. Persona: Lea, 34, an office worker new to breathwork, who wants to calm down in two minutes between meetings. Journeys: her first guided session, from opening the app to finishing it; and setting a daily reminder.",
     brand:
-      'Lay the design system of this breathing-exercise app, web and mobile, from scratch: no UI code exists. Its journeys and wireframes are already in aidd_docs/ui/. Brand: "Breath", calm, soft, reassuring; for Lea, 34, an office worker new to breathwork who wants to calm down in two minutes between meetings; light theme only; English.',
-    foundations: "Write the tokens.",
+      'Lay the design system of this breathing-exercise app from scratch: no UI code exists. Its journeys and wireframes are already in aidd_docs/ui/. Brand: "Breath", calm, soft, reassuring; for Lea, 34, an office worker new to breathwork who wants to calm down in two minutes between meetings; light theme only; English.',
+    foundations: "Write the tokens, for web and mobile.",
     components: "Write the components the wireframes expect.",
   },
   real: {
@@ -194,15 +220,21 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
       fs.mkdirSync(dir);
       if (source) steps.copyProject(source, dir);
       const before = snapshot(dir);
+      let last = before;
+      const broken = [];
       for (const [skill, part] of CHAIN) {
         if (!steps.runStep(dir, requestOf(source ? "real" : "blank", skill, part), path.join(base, `${pilot}.${skill}.out`))) {
           console.log(`${pilot} step ${skill} could not run, see ${base}/${pilot}.${skill}.out`);
           return 2;
         }
+        const now = snapshot(dir);
+        broken.push(...stepBreaks(skill, last, now));
+        last = now;
       }
-      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, snapshot(dir)) };
+      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, last), broken };
       console.log(reportLine(pilot, result));
-      if (result.errors.length || result.missing.length || result.changed.length) worst = 1;
+      for (const line of broken) console.log(line);
+      if (result.errors.length || result.missing === null || result.missing.length || result.changed.length || broken.length) worst = 1;
     }
     return worst;
   } catch (error) {
@@ -213,4 +245,4 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
 
 if (require.main === module) process.exit(main());
 
-module.exports = { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, chatsOf, pilotsOf, main };
+module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main };
