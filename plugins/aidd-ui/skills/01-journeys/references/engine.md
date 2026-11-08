@@ -13,6 +13,7 @@
 - Otherwise prints a line counting errors and warnings.
 - Then prints one line per problem:
   `<file>[:<line>] <rule> ["<excerpt>"] => <fix>`.
+- A warning line reads `<file>[:<line>] <rule> warning <message> => <fix>`.
 - Exits 1 only on an error.
 
 ### `bump --task <task folder> --created <id>…`
