@@ -28,6 +28,6 @@ Run the flow above, reading only the next action file.
 ## Transversal rules
 
 - If a referenced file cannot be read, stop and say so. Never invent its content.
-- Ask before anything ambiguous. Never default silently.
-- A bank that already exists changes only through what the user approved, file by file and line by line.
+- Reuse choices and authorization already given; ask only when missing information materially affects the result or scope.
+- Change an existing bank only within the authorized scope; preserve unrelated content.
 - End with a short report of what changed.

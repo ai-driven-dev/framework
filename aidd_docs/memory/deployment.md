@@ -68,9 +68,9 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 `make reload` syncs all plugins and generic delegation guidance to installed hosts; details in `scripts/dev-sync.sh`.
 
-When changing shared instructions, keep `AGENTS.md`, `CLAUDE.md`, the template and global copies aligned, preserving project memory and personal rules. When changing agents, refresh the global installations with `make reload`. The command updates only the managed Agents section of global instructions.
+When changing shared instructions, align `AGENTS.md`, `CLAUDE.md`, the template and global copies, preserving project memory and personal rules. `make reload` updates only the managed Agents section of global instructions.
 
-For global agent copies, use Claude `model: haiku`, `effort: high` and Codex `model = "gpt-6-luna"`, `model_reasoning_effort = "high"`. Reapply these settings after a reload, which replaces the Codex copies. Claude plugin-scoped agents are separate from user copies.
+When changing agents, `make reload` refreshes the plugins and Codex copies from this checkout. Refresh the separate Claude user copies too. Use Claude `model: haiku`, `effort: high` and Codex `model = "gpt-6-luna"`, `model_reasoning_effort = "high"`. Reload replaces the Codex copies, so reapply their settings afterwards.
 
 ## Monitoring
 

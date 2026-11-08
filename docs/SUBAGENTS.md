@@ -37,12 +37,12 @@ sequenceDiagram
 
 ### Measuring delegation
 
-Create two worktrees at commit `de409ef5`, change the title's `Framework` to `Framwork` in each `README.md`, and set `DIRECT` and `DELEGATED` to their paths. Install the executor and use the same Codex configuration for both runs:
+Create two worktrees at commit `de409ef5`, change the title's `Framework` to `Framwork` in each `README.md`, and set `DIRECT` and `DELEGATED` to their paths. Install the executor with `model = "gpt-6-luna"` and `model_reasoning_effort = "medium"`, then use the same Codex configuration for both runs:
 
 ```sh
 prompt='Correct the typo "Framwork" in the title of README.md. Verify the result and do not commit.'
 time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=false' -C "$DIRECT" "$prompt"
-time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=true' -c 'agents.default_subagent_model="gpt-6-luna"' -C "$DELEGATED" "$prompt Delegate the edit to the aidd-orchestrator-executor subagent and wait for its result; do not use a validator."
+time codex exec --json --sandbox workspace-write -m gpt-6.1-terra -c 'model_reasoning_effort="medium"' -c 'agents.enabled=true' -C "$DELEGATED" "$prompt Delegate the edit to the aidd-orchestrator-executor subagent and wait for its result; do not use a validator."
 ```
 
 Check that both titles are restored and the delegated run used the requested agent and model. Compare elapsed time and the final cumulative token usage in each rollout under `~/.codex/sessions/`: add parent and executor totals once, counting the executor only after its own model context. Cached input is already included in the total. Repeat with fresh sessions and alternating order; report cache conditions and the median.
@@ -109,15 +109,15 @@ sequenceDiagram
 
 ## 📦 Install
 
-Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-framework` in Claude Code, or see the [quick start](../README.md#quick-start) for the other tools. The agents come with it, except as a Codex plugin (see [Limits](#-limits)); open a new session so the tool loads them.
+Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-framework` in Claude Code, or see [installation](INSTALL.md) for the other tools. The agents come with it, except as a Codex plugin (see [Limits](#-limits)); open a new session so the tool loads them.
 
 ## 🧠 Models
 
-No model is pinned. Each host applies its own default for subagents, usually the model of the session that called them. A model you declare in an agent reaches every host in its own format.
+The shipped agents do not pin a model. Hosts apply their defaults unless a model is configured for an agent; support varies by host.
 
 ## 🚧 Limits
 
-- **Tools:** every agent inherits the calling session's tools and permissions; what it writes is an instruction, not a restriction.
+- **Tools:** availability and permissions depend on the host and agent configuration. An instruction alone is not a tool restriction.
 - **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`. Codex loads them only in a trusted project.
 - **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
