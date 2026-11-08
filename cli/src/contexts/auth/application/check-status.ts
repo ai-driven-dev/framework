@@ -15,7 +15,7 @@ export type CheckStatusResult =
   | { authenticated: false };
 
 /** Verifies the credential this project would use, the one a token on the command line does
- * not replace: `AIDD_TOKEN`, then the records in their order. */
+ * not replace. The order of the sources is `domain/credential-sources.ts`. */
 export class CheckStatus {
   constructor(
     private readonly records: CredentialRecordRepository,

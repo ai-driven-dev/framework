@@ -13,7 +13,11 @@ export interface SuppliedTokens {
 }
 
 type CommandLineSource = { readonly kind: "command-line"; readonly token: string };
-type EnvironmentSource = { readonly kind: "environment"; readonly token: string };
+type EnvironmentSource = {
+  readonly kind: "environment";
+  readonly variable: typeof TOKEN_VARIABLE;
+  readonly token: string;
+};
 type RecordSource = {
   readonly kind: "record";
   readonly level: AuthLevel;
@@ -35,7 +39,8 @@ export async function* sourcesInOrder(
 ): AsyncGenerator<CredentialSource> {
   if (supplied.commandLine) yield { kind: "command-line", token: supplied.commandLine };
   const fromEnvironment = supplied.environment.get(TOKEN_VARIABLE);
-  if (fromEnvironment) yield { kind: "environment", token: fromEnvironment };
+  if (fromEnvironment)
+    yield { kind: "environment", variable: TOKEN_VARIABLE, token: fromEnvironment };
   for (const level of LEVELS_BY_PRECEDENCE) {
     const record = await readRecord(level);
     if (record !== null) yield { kind: "record", level, record };

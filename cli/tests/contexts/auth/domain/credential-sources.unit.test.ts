@@ -57,6 +57,14 @@ describe("the sources, in order", () => {
     ]);
   });
 
+  it("name the variable an environment source was read from", async () => {
+    const found = await all(
+      sources(supplied(undefined, "env"), new InMemoryCredentialRecordRepository())
+    );
+
+    expect(found).toEqual([{ kind: "environment", variable: "AIDD_TOKEN", token: "env" }]);
+  });
+
   it("leave out an empty command-line token, an empty AIDD_TOKEN and a level holding no record", async () => {
     const records = new InMemoryCredentialRecordRepository().seed("user", aStoredRecord());
 

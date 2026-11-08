@@ -1,5 +1,5 @@
 ---
-description: Apply when creating, migrating or changing a bounded context; the shape the auth pilot produced, status revised, not yet the reference other contexts follow.
+description: Apply when creating, migrating or changing a bounded context; the shape the auth pilot produced, provisional, adopted for the second pilot only.
 paths:
   - "src/contexts/**/*.ts"
   - "tests/contexts/**/*.ts"
@@ -7,7 +7,7 @@ paths:
 
 # Reference context
 
-Status: revised. The auth pilot's go or no-go came out no-go: its tests grew (2,093 lines against 1,786, with the three new contract suites; 1,744 without them) and adding a credential source touched more code files (6 against 4) and as many documents (2). By the pilot's own rule (`target/00-overview.md` section 12) the model is revised before it is scaled to another context. This page states the auth result as it is, every line checked against the code; it is not yet the reference for stage C. The measures and the verdict are in `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-pilot-auth.md`, Appendix B and "Verdict".
+Status: provisional: adopted for the second pilot only. The verdict of the `auth` run stays no-go, unchanged, as measured: its tests grew (2,093 lines against 1,786, with the three new contract suites) and adding a credential source touched as many code files (4 against 4) and as many documents (2) once the debts were paid. The user revised criterion 1 after seeing that result, to count behaviour tests apart from the per-context kit and the contract suites (both reported separately every time): 1,522 lines against 1,744 for auth, the like-for-like baseline being the 12 test files before the pilot, helpers apart. Because the change was made after the result, on the same context, it is validated on a second pilot, on a profile-heavy context chosen by its own plan, before stage C. Until then this page is not the reference other contexts follow. This page states the auth result as it is, every line checked against the code. The measures and the verdict are in `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-pilot-auth.md`, Appendix B, "Verdict" and "After the verdict".
 
 ## 1. Purpose and status
 

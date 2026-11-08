@@ -51,6 +51,24 @@ async function askCredential(prompter: Prompter, options: LoginOptions): Promise
   return { method: "stored", token };
 }
 
+type Deps = Awaited<ReturnType<typeof createDeps>>;
+
+/** An action that builds the dependencies, runs, and hands any failure to the error handler. */
+function reportingErrors(
+  program: Command,
+  run: (deps: Deps, output: CLIOutput) => Promise<void>
+): () => Promise<void> {
+  return async () => {
+    const { verbose, output, projectRoot } = parseGlobalOptions(program);
+    const errorHandler = new ErrorHandler(output);
+    try {
+      await run(await createDeps(projectRoot, { verbose }, output), output);
+    } catch (error) {
+      errorHandler.handle(error);
+    }
+  };
+}
+
 export function registerAuthCommand(program: Command): void {
   const authCmd = program.command("auth").description("Manage authentication");
   authCmd.action(() => authCmd.help());
@@ -81,32 +99,18 @@ export function registerAuthCommand(program: Command): void {
   authCmd
     .command("logout")
     .description("Remove stored authentication")
-    .action(async () => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.logOut.execute();
-        printLogoutResult(output, result);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
+    .action(
+      reportingErrors(program, async (deps, output) => {
+        printLogoutResult(output, await deps.logOut.execute());
+      })
+    );
 
   authCmd
     .command("status")
     .description("Show authentication status")
-    .action(async () => {
-      const { verbose, output, projectRoot } = parseGlobalOptions(program);
-      const errorHandler = new ErrorHandler(output);
-
-      try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.checkStatus.execute();
-        printAuthStatus(output, result);
-      } catch (error) {
-        errorHandler.handle(error);
-      }
-    });
+    .action(
+      reportingErrors(program, async (deps, output) => {
+        printAuthStatus(output, await deps.checkStatus.execute());
+      })
+    );
 }

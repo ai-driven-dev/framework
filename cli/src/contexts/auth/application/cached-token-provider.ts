@@ -5,7 +5,6 @@ import {
   firstToken,
   type SuppliedTokens,
   sourcesInOrder,
-  TOKEN_VARIABLE,
 } from "../domain/credential-sources.js";
 import type { CredentialRecordRepository } from "../ports/credential-record-repository.js";
 import type { ExternalTokenSource } from "../ports/external-token-source.js";
@@ -42,7 +41,7 @@ function whereFrom(source: CredentialSource): string {
     case "command-line":
       return "Token given on the command line";
     case "environment":
-      return `Token resolved from ${TOKEN_VARIABLE} env`;
+      return `Token resolved from ${source.variable} env`;
     case "record":
       return `Token resolved from ${source.level} auth.json (${source.record.method})`;
   }
