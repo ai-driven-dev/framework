@@ -33,5 +33,4 @@
 
 | Problem | Gone once |
 | --- | --- |
-| H1, record without a row in `history.md` | `bump --created` ran |
 | V1, record without render | its render is written |

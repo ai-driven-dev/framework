@@ -281,6 +281,17 @@ describe("aidd-ui engine references", () => {
     }
   });
 
+  it("owe no problem that a step of the same skill clears", () => {
+    // The command that clears each problem a step table can name.
+    const CLEARED_BY = { H1: /bump .*--created/, C4: /bump .*--created system/, T6: /^node <engine> tokens/, T10: /^node <engine> tokens/ };
+    for (const folder of FOLDERS) {
+      const lines = engineOf(folder).split("\n");
+      const commands = lines.filter((line) => /^\| (prepare|write|conclude) \d/.test(line)).map((line) => line.split("|")[2].trim().replace(/^`|`.*$/g, ""));
+      const owedRules = lines.slice(lines.indexOf("## Owed by a later step")).filter((line) => line.startsWith("| ")).flatMap((line) => line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? []);
+      for (const rule of owedRules.filter((each) => CLEARED_BY[each])) assert.equal(commands.some((command) => CLEARED_BY[rule].test(command)), false, `${folder} owes ${rule}, which its own step clears`);
+    }
+  });
+
   it("list only commands the engine's help knows", () => {
     for (const folder of FOLDERS) {
       const commands = engineOf(folder).split("## Commands")[1].split("## Owed")[0].split("\n").filter((line) => line.startsWith("- "));
@@ -390,8 +401,8 @@ describe("aidd-ui owed problems", () => {
     for (const rule of rulesOf(tmp)) assert.ok(owed("03-foundations").includes(rule), rule);
   });
 
-  it("name, for the components, the rules a record leaves until its history row and its render exist", () => {
-    assert.deepEqual(owed("04-components"), ["H1", "V1"]);
+  it("name, for the components, the rule a record leaves until its render exists", () => {
+    assert.deepEqual(owed("04-components"), ["V1"]);
   });
 });
 

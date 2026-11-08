@@ -35,9 +35,5 @@
 | Problem | Gone once |
 | --- | --- |
 | T1, `tokens.json` missing | the tokens are written |
-| T6, resolver missing | `tokens` ran |
-| T10, `tokens.css` missing or stale | `tokens` ran |
-| H1, record without a row in `history.md` | `bump --created` ran |
-| C4, `code-debt.json` missing | `bump --created system` ran |
 | T7, a component record cites a token that is gone | the record is updated after |
 | V3, a component render cites a token that is gone | the render is updated after |

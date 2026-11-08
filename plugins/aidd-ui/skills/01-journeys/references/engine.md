@@ -25,4 +25,3 @@
 | Problem | Gone once |
 | --- | --- |
 | T1, `tokens.json` missing | the design system is laid |
-| H1, record without a row in `history.md` | `bump --created` ran |
