@@ -129,11 +129,11 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 🎨 aidd-ui
 
-🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently a smoke-test only.
+🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently lays and changes the design system.
 
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
-| `01-hello` | Smoke-test that confirms the plugin loads | `01-greet` |
+| `01-system` | Lay a design system from nothing or from the code, and carry a change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
 
 <!--extras-aidd-ui:start-->
 
@@ -141,9 +141,9 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/ui-hook.cjs` |
-| `PostToolUse` | `hooks/ui-hook.cjs` |
-| `Stop` | `hooks/ui-hook.cjs` |
+| `SessionStart` | `hooks/aidd-ui.cjs` |
+| `PostToolUse` | `hooks/aidd-ui.cjs` |
+| `Stop` | `hooks/aidd-ui.cjs` |
 
 <!--extras-aidd-ui:end-->
 

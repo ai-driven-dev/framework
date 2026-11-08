@@ -41,6 +41,10 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   // A seam artefact one plugin writes into a reader's own project and another reads back —
   // named here as the shape of that seam, never as a file this repository holds.
   "docs/CATALOG.md": ["INSTALL.md"],
+  // The design system's root record, a file of the project aidd-ui runs in, never of this repository.
+  "plugins/aidd-ui/hooks/lib/resolver.cjs": ["system.md"],
+  "plugins/aidd-ui/hooks/lib/extract.cjs": ["system.md"],
+  "scripts/__tests__/aidd-ui/extract.test.js": ["system.md"],
   // The build artefact every e2e run refuses to share, named as what is avoided.
   "cli/tests/e2e/helpers.ts": ["dist/cli.js"],
   "cli/tests/e2e/global-setup.ts": ["dist/cli.js"],

@@ -1,15 +1,67 @@
+const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
+
+const HOOKS = path.resolve(__dirname, "../../../../plugins/aidd-ui/hooks");
+const LIB = path.join(HOOKS, "lib");
+const ENGINE = path.join(HOOKS, "aidd-ui.cjs");
+const { load } = require(path.join(LIB, "project.cjs"));
+const tokensCheck = require(path.join(LIB, "tokens.cjs"));
+const { fingerprint } = require(path.join(LIB, "history.cjs"));
 
 // One complete, valid aidd-ui project: every record kind, tokens, renders, and the code they
 // link to. Each validator test writes it, breaks one thing, and expects exactly one problem.
 
 const UI = "aidd_docs/ui";
 
-const history = (...rows) =>
-  ["## History", "", "| Version | Change | Breaking | Task |", "| --- | --- | --- | --- |", ...rows.map((row) => `| ${row.join(" | ")} |`)].join("\n");
+const HISTORY = `${UI}/history.md`;
 
-const FIRST_ROW = ["1", "created", "no", "aidd_docs/tasks/ds-init"];
+/** The files of the valid project that more than one spec names. */
+const PATHS = {
+  SYSTEM: `${UI}/system.md`,
+  BRAND: `${UI}/brand.md`,
+  TOKENS: `${UI}/tokens.json`,
+  RESOLVER: `${UI}/tokens.resolver.json`,
+  STYLESHEET: `${UI}/tokens.css`,
+  DARK: `${UI}/themes/dark.json`,
+  DESKTOP: `${UI}/breakpoints/desktop.json`,
+  BUTTON: `${UI}/components/button.md`,
+  SEARCH: `${UI}/components/search-field.md`,
+  DIALOG: `${UI}/components/dialog.md`,
+  OLD: `${UI}/components/old-button.md`,
+  HOME: `${UI}/screens/home.md`,
+  JOURNEY: `${UI}/journeys/onboarding.md`,
+  WIREFRAME: `${UI}/wireframes/search-flow.md`,
+  WIREFRAME_RENDER: `${UI}/wireframes/search-flow.html`,
+  ICON: `${UI}/assets/icon-search.md`,
+  REVIEW: `${UI}/reviews/first-pass.md`,
+  BUTTON_RENDER: `${UI}/components/button.html`,
+  DIALOG_RENDER: `${UI}/components/dialog.html`,
+  HOME_RENDER: `${UI}/screens/home.html`,
+};
+
+const COLUMNS = ["Id", "Version", "Change", "Breaking", "Task", "Fingerprint"];
+
+/** A table row as the engine writes it: an empty cell is one space. */
+const tableRow = (...cells) => `|${cells.map((cell) => (cell === "" ? " " : ` ${cell} `)).join("|")}|`;
+
+/** A history row, `[id, version, change, breaking, task]` with an empty fingerprint unless one is given. */
+const row = (...cells) => tableRow(...COLUMNS.map((_, at) => cells[at] ?? ""));
+
+/** history.md for these rows. */
+const history = (...rows) => ["# History", "", tableRow(...COLUMNS), tableRow(...COLUMNS.map(() => "---")), ...rows.map((each) => row(...each))].join("\n") + "\n";
+
+const TASK = "aidd_docs/tasks/ds-init";
+const created = (id) => [id, "1", "created", "no", TASK];
+
+const ROWS = [
+  ["system", "1.0.0", "first system", "no", TASK],
+  ["system", "2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"],
+  ...["icon-search", "button", "search-field", "dialog", "old-button", "home", "onboarding", "first-pass", "search-flow"].map(created),
+  ["old-button", "2", "deprecated for button", "yes", "aidd_docs/tasks/retire-old-button"],
+];
 
 const record = (frontMatter, ...sections) => `---\n${frontMatter.join("\n")}\n---\n\n${sections.join("\n\n")}\n`;
 
@@ -23,27 +75,21 @@ const SYSTEM = record(
   [
     "id: system",
     "kind: system",
-    "status: validated",
-    "version: 2.0.0",
     "format: 1",
     "platforms: [web]",
-    "breakpoints: [mobile, desktop]",
     "themes: [light, dark]",
     "locales: [fr, ar]",
-    "directions: [ltr, rtl]",
     "primitives: [color.brand]",
     "code-roots: [src/ui]",
     "code-tokens: src/ui/tokens.css",
     "ignore: [src/ui/vendor]",
-    "libraries: [@radix-ui/react-dialog]",
   ],
   "# Design system",
-  "## Breakpoints\n\n| Name | From |\n| --- | --- |\n| mobile | 0 |\n| desktop | 64rem |",
-  history(["1.0.0", "first system", "no", "aidd_docs/tasks/ds-init"], ["2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"])
+  "## Breakpoints\n\n| Name | Query |\n| --- | --- |\n| mobile | |\n| desktop | (min-width: 64rem) |"
 );
 
 const BRAND = record(
-  ["id: brand", "kind: brand", "status: validated", "version: 1"],
+  ["id: brand", "kind: brand"],
   "# Brand",
   "## Project\n\nA search tool.",
   "## Users\n\nAnalysts.",
@@ -52,8 +98,7 @@ const BRAND = record(
   "## Personality and tone\n\nPlain and calm.",
   "## Imposed charter\n\nNone.",
   "## References\n\nA library catalogue.",
-  "## Anti-references\n\nA casino.",
-  history(FIRST_ROW)
+  "## Anti-references\n\nA casino."
 );
 
 const TOKENS = {
@@ -79,17 +124,26 @@ const TOKENS = {
 // The dark theme redefines one base token; the Resolver names its file.
 const DARK = { color: { brand: { primary: { $value: { colorSpace: "srgb", components: [0.4, 0.6, 0.8], hex: "#6699cc" } } } } };
 
+// Desktop redefines one base token; mobile, the modifier's default, is tokens.json itself.
+const DESKTOP = { space: { md: { $value: { value: 1.5, unit: "rem" } } } };
+
 const RESOLVER = {
   version: "2025.10",
   sets: { base: { sources: [{ $ref: "tokens.json" }] } },
-  modifiers: { theme: { contexts: { light: [], dark: [{ $ref: "themes/dark.json" }] }, default: "light" } },
-  resolutionOrder: [{ $ref: "#/sets/base" }, { $ref: "#/modifiers/theme" }],
+  modifiers: {
+    theme: { contexts: { light: [], dark: [{ $ref: "themes/dark.json" }] }, default: "light" },
+    breakpoint: {
+      contexts: { mobile: [], desktop: [{ $ref: "breakpoints/desktop.json" }] },
+      default: "mobile",
+      $extensions: { "dev.ai-driven.media": { desktop: "(min-width: 64rem)" } },
+    },
+  },
+  resolutionOrder: [{ $ref: "#/sets/base" }, { $ref: "#/modifiers/theme" }, { $ref: "#/modifiers/breakpoint" }],
 };
 
 const ICON = record(
   ["id: icon-search", "kind: asset", "status: validated", "version: 1", "type: icon", "file: icon-search.svg", "alt: Search"],
-  "# Search icon",
-  history(FIRST_ROW)
+  "# Search icon"
 );
 
 const ICON_FILE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/></svg>\n';
@@ -100,19 +154,16 @@ const BUTTON = record(
     "kind: atom",
     "status: validated",
     "version: 1",
-    "implemented-version: 1",
     "uses: []",
     `tokens: [${BUTTON_TOKENS.join(", ")}]`,
     "variants: [primary, secondary]",
     "states: [default, hover, focus, disabled]",
-    "interactive: yes",
     "role: button",
-    "code: src/ui/Button.tsx#Button",
+    "code: src/ui/Button.tsx#Button@1",
   ],
   "# Button",
   usage("Any action a person starts; never for navigation."),
-  KEYBOARD,
-  history(FIRST_ROW)
+  KEYBOARD
 );
 
 const SEARCH_FIELD = record(
@@ -125,13 +176,11 @@ const SEARCH_FIELD = record(
     "tokens: [space.md, color.text.default]",
     "variants: [default]",
     "states: [default, hover, focus, disabled]",
-    "interactive: yes",
     "role: search",
   ],
   "# Search field",
   usage("Searching a list; never for a form field."),
-  KEYBOARD,
-  history(FIRST_ROW)
+  KEYBOARD
 );
 
 const DIALOG = record(
@@ -140,19 +189,16 @@ const DIALOG = record(
     "kind: composition",
     "status: validated",
     "version: 1",
-    "implemented-version: 1",
     "uses: [button]",
     "tokens: [space.md]",
     "variants: [default]",
     "states: [default, hover, focus, disabled]",
-    "interactive: yes",
     "role: dialog",
-    "code: package:@radix-ui/react-dialog#Root",
+    "code: package:@radix-ui/react-dialog#Root@1",
   ],
   "# Dialog",
   usage("A decision that blocks the page."),
-  "## Keyboard\n\nEscape closes it; focus stays inside while it is open.",
-  history(FIRST_ROW)
+  "## Keyboard\n\nEscape closes it; focus stays inside while it is open."
 );
 
 const OLD_BUTTON = record(
@@ -165,13 +211,11 @@ const OLD_BUTTON = record(
     "tokens: [color.action.default]",
     "variants: [default]",
     "states: [default]",
-    "interactive: no",
     "role: button",
     "replaced-by: button",
   ],
   "# Old button",
-  usage("Nowhere: replaced by button."),
-  history(FIRST_ROW, ["2", "deprecated for button", "yes", "aidd_docs/tasks/retire-old-button"])
+  usage("Nowhere: replaced by button.")
 );
 
 const HOME = record(
@@ -180,24 +224,29 @@ const HOME = record(
     "kind: screen",
     "status: validated",
     "version: 1",
-    "implemented-version: 1",
     "uses: [search-field, dialog]",
     "tokens: [space.md, color.text.default]",
     "states: [default, empty, loading, error]",
     "breakpoints: [mobile, desktop]",
     "route: /",
-    "code: src/ui/HomePage.tsx#HomePage",
+    "code: src/ui/HomePage.tsx#HomePage@1",
   ],
-  "# Home",
-  history(FIRST_ROW)
+  "# Home"
 );
 
 const ONBOARDING = record(
   ["id: onboarding", "kind: journey", "status: validated", "version: 1", "persona: a first-time analyst"],
   "# Onboarding",
-  "## Steps\n\n| Screen | Action |\n| --- | --- |\n| home | types a query |\n| home | opens a result |",
-  history(FIRST_ROW)
+  "## Persona\n\nAn analyst opening the product for the first time, looking for one answer.",
+  "## Steps\n\n| Screen | Action |\n| --- | --- |\n| home | types a query |\n| home | opens a result |\n| search-flow | narrows the results |"
 );
+
+const WIREFRAME = record(
+  ["id: search-flow", "kind: wireframe", "status: proposed", "version: 1", "uses: [search-field]", "states: [default, empty]", "zones: [query, results]"],
+  "# Search flow"
+);
+
+const WIREFRAME_RENDER = `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>search-flow</title>\n</head>\n<body>\n${["default", "empty"].map((state) => `<section data-state="${state}"><div data-zone="query">Query</div><div data-zone="results">Results, ${state}</div></section>`).join("\n")}\n</body>\n</html>\n`;
 
 const REVIEW = record(
   ["id: first-pass", "kind: review", "status: proposed", "version: 1", "scope: system", "screens: [home]"],
@@ -211,8 +260,7 @@ const REVIEW = record(
     "| home | empty | 1 | ok | |",
     "| home | loading | 1 | ko | spinner too small |",
     "| home | error | 1 | pending | |",
-  ].join("\n"),
-  history(FIRST_ROW)
+  ].join("\n")
 );
 
 /** A render's style: one custom property per token its record declares, so it uses them all
@@ -220,7 +268,7 @@ const REVIEW = record(
 const style = (tokens) => [".ui {", ...tokens.map((token, index) => `  --use-${index}: var(--${token.replaceAll(".", "-")});`), "}"].join("\n");
 
 const render = (title, tokens, body) =>
-  `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${title}</title>\n<style>\n${style(tokens)}\n</style>\n</head>\n<body>\n${body.join("\n")}\n</body>\n</html>\n`;
+  `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${title}</title>\n<link rel="stylesheet" href="../tokens.css">\n<style>\n${style(tokens)}\n</style>\n</head>\n<body>\n${body.join("\n")}\n</body>\n</html>\n`;
 
 const statesOf = (variant, states) =>
   states.map((state) => `<button class="ui" data-variant="${variant}" data-state="${state}">Search</button>`);
@@ -250,9 +298,12 @@ const CODE = {
 const FILES = {
   [`${UI}/system.md`]: SYSTEM,
   [`${UI}/brand.md`]: BRAND,
+  [HISTORY]: history(...ROWS),
+  [`${UI}/code-debt.json`]: "{}\n",
   [`${UI}/tokens.json`]: `${JSON.stringify(TOKENS, null, 2)}\n`,
   [`${UI}/tokens.resolver.json`]: `${JSON.stringify(RESOLVER, null, 2)}\n`,
   [`${UI}/themes/dark.json`]: `${JSON.stringify(DARK, null, 2)}\n`,
+  [`${UI}/breakpoints/desktop.json`]: `${JSON.stringify(DESKTOP, null, 2)}\n`,
   [`${UI}/assets/icon-search.md`]: ICON,
   [`${UI}/assets/icon-search.svg`]: ICON_FILE,
   [`${UI}/components/button.md`]: BUTTON,
@@ -261,18 +312,40 @@ const FILES = {
   [`${UI}/components/old-button.md`]: OLD_BUTTON,
   [`${UI}/screens/home.md`]: HOME,
   [`${UI}/journeys/onboarding.md`]: ONBOARDING,
+  [`${UI}/wireframes/search-flow.md`]: WIREFRAME,
+  [`${UI}/wireframes/search-flow.html`]: WIREFRAME_RENDER,
   [`${UI}/reviews/first-pass.md`]: REVIEW,
   ...Object.fromEntries(Object.entries(RENDERS).map(([name, html]) => [`${UI}/${name}`, html])),
   ...CODE,
 };
 
-/** Writes the valid project under `dir`. */
+/** Writes `tokens.css` as the engine generates it from the tokens under `dir`; leaves it alone
+ * while the tokens cannot be generated, which is a case a test sets up on purpose. */
+function generateStylesheet(dir) {
+  const project = load(dir);
+  if (tokensCheck.blockers(project).length) return;
+  const { css } = tokensCheck.generate(project);
+  if (css !== null) fs.writeFileSync(path.join(dir, tokensCheck.cssFileOf(project)), css);
+}
+
+/** Writes in history.md the fingerprint of each validated element, as validating it does. */
+function stamp(dir) {
+  const project = load(dir);
+  const file = path.join(dir, HISTORY);
+  const held = new Map(project.records.filter((each) => each.frontMatter.status === "validated").map((each) => [`${each.frontMatter.id} ${each.frontMatter.version}`, each]));
+  const stamped = fs.readFileSync(file, "utf8").split("\n").map((line) => {
+    const cells = line.split("|").slice(1, -1).map((cell) => cell.trim());
+    const record = held.get(`${cells[0]} ${cells[1]}`);
+    return record && ["atom", "molecule", "composition", "screen", "asset"].includes(record.frontMatter.kind) ? row(...cells.slice(0, 5), fingerprint(project, record)) : line;
+  });
+  fs.writeFileSync(file, stamped.join("\n"));
+}
+
+/** Writes the valid project under `dir`, each validated element published. */
 function writeProject(dir) {
-  for (const [name, content] of Object.entries(FILES)) {
-    const file = path.join(dir, name);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, content);
-  }
+  for (const [name, content] of Object.entries(FILES)) put(dir, name, content);
+  generateStylesheet(dir);
+  stamp(dir);
 }
 
 /** Replaces every `from` with `to` in one file of the project, failing when `from` is not
@@ -290,6 +363,17 @@ function editTokens(dir, change) {
   const tree = JSON.parse(fs.readFileSync(file, "utf8"));
   change(tree);
   fs.writeFileSync(file, `${JSON.stringify(tree, null, 2)}\n`);
+  generateStylesheet(dir);
+}
+
+/** Sets each record named back to proposed, an element under design whose edits no fingerprint
+ * holds: for a case about another rule that edits a validated one. */
+const propose = (dir, ...names) => names.forEach((name) => edit(dir, name, "status: validated", "status: proposed"));
+
+/** Appends rows, each `[id, version, change, breaking, task]`, to history.md. */
+function addHistory(dir, ...rows) {
+  const file = path.join(dir, HISTORY);
+  fs.writeFileSync(file, fs.readFileSync(file, "utf8") + rows.map((each) => `${row(...each)}\n`).join(""));
 }
 
 /** Writes one file of the project. */
@@ -299,4 +383,45 @@ function put(dir, name, content) {
   fs.writeFileSync(file, content);
 }
 
-module.exports = { UI, writeProject, edit, editTokens, put, record, history };
+/** A new empty directory in the OS temp dir, its name starting with `prefix`. */
+const makeTmp = (prefix) => fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+
+/** Removes a directory made by `makeTmp`, and proves it is gone. */
+function removeTmp(dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.equal(fs.existsSync(dir), false);
+}
+
+/** Every file under `dir`, whole path. */
+const filesUnder = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => (entry.isDirectory() ? filesUnder(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
+
+/** The engine run as a subprocess from `cwd`, or from here. */
+const engineIn = (cwd, ...args) => spawnSync(process.execPath, [ENGINE, ...args], { encoding: "utf8", cwd });
+const engine = (...args) => engineIn(undefined, ...args);
+
+const lines = (text) => text.split("\n").filter(Boolean);
+
+/** The `validate` command on `root`: its exit status, its lines and its stderr. */
+function validate(root) {
+  const run = engine("validate", root);
+  return { code: run.status, out: lines(run.stdout), err: run.stderr };
+}
+
+/** The fixes the rule cases of one spec file saw. `note` passes problems through, failing on one
+ * without a fix; `seen` lists each rule, message, excerpt and fix it saw, once, sorted, for the
+ * spec to pin against its table. */
+function fixLedger() {
+  const seen = new Set();
+  return {
+    note(problems) {
+      for (const found of problems) {
+        assert.ok(typeof found.fix === "string" && found.fix.length > 0, `${found.rule} has no fix: ${found.message}`);
+        seen.add([found.rule, found.message, found.excerpt === undefined ? "-" : JSON.stringify(found.excerpt), found.fix].join(" | "));
+      }
+      return problems;
+    },
+    seen: () => [...seen].sort(),
+  };
+}
+
+module.exports = { fixLedger, UI, HISTORY, PATHS, HOOKS, LIB, ENGINE, makeTmp, removeTmp, filesUnder, engine, engineIn, lines, validate, addHistory, writeProject, generateStylesheet, edit, editTokens, propose, put, record, history };

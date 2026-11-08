@@ -75,6 +75,9 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 819 KB: 818.39 KB with per-identifier provenance and isolated pending session ranges.
 // 829 KB: 828.93 KB with repository uncertainty and clone-proven resume after origin changes.
 // 839 KB: 838.97 KB with Claude token-point effort and merged Antigravity support.
+// 747 KB: 732.4 KB, the machine-wide install of `setup --global` (+12.2 KB over the 720.2 KB
+// above); 2.0% measured headroom.
+// Merged with next: 823.5 KB, within the existing 839 KB budget.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

@@ -179,7 +179,7 @@ run "unknown command exits non-zero" 1 "" "$ROOT" -- definitely-not-a-command
 # (version/help are not counted leaves)
 
 section "recipe validation (bundled)"
-run "framework validate-recipes (bundled)" 0 "PASS: 3 recipe(s) validated." "$ROOT" -- \
+run "framework validate-recipes (bundled)" 0 "PASS: 2 recipe(s) validated." "$ROOT" -- \
   framework validate-recipes --bundled "$ROOT/../plugins/aidd-context/skills/12-cook/assets/recipes"
 
 section "translate (local fixture)"

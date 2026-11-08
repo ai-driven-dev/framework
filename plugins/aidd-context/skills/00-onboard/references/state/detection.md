@@ -4,12 +4,15 @@ Which AI tools the project uses, and whether each has its memory wired. For the 
 
 A tool is used when its own dir exists, or when a file only that tool reads exists. A file several tools read (`AGENTS.md`) is a wiring target, never a detection signal.
 
+For shared `.agents/` paths, resolve the host from declared tools or the AIDD manifest; otherwise ask.
+
 | Tool     | Used when                                                                            | Wired when this file has the block |
 | -------- | ------------------------------------------------------------------------------------ | ---------------------------------- |
 | claude   | `.claude/` or `CLAUDE.md`                                                            | `CLAUDE.md`                        |
 | codex    | `.codex/`                                                                            | `AGENTS.md`                        |
 | cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                        |
 | opencode | `.opencode/`                                                                         | `AGENTS.md`                        |
+| antigravity | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json`                       | `AGENTS.md`                        |
 | copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `.github/copilot-instructions.md`  |
 
 - Detected tools only. An unused optional tool is omitted, never crossed.

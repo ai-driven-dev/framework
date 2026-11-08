@@ -8,105 +8,47 @@ UI and UX design.
 | --- | --- |
 | Status | alpha |
 | Install | `/plugin install aidd-ui@aidd-framework` |
-| Start with | `/aidd-ui:01-hello` |
+| Start with | `/aidd-ui:01-system` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-ui) |
 
 > [!WARNING]
 > Not ready for use.
 > Skills and names may change or disappear without notice.
 
-## Design system
+## How it works
 
-One file per element, under `aidd_docs/ui/`.
-
-```txt
-aidd_docs/ui/
-├── system.md             the design system
-├── brand.md              the brand
-├── tokens.json           tokens of the base theme, DTCG 2025.10
-├── tokens.resolver.json  the other themes, DTCG Resolver 2025.10
-├── themes/<theme>.json   the tokens one theme redefines
-├── assets/<id>.md        an icon, image or illustration, its file beside it
-├── components/<id>.md    an atom, molecule or composition
-├── components/<id>.html  its render: every variant and state
-├── screens/<id>.md       a screen
-├── screens/<id>.html     its render: every state
-├── journeys/<id>.md      a user journey
-└── reviews/<id>.md       the verdicts of a review
+```mermaid
+flowchart LR
+  Skill["skill 01-system"] -->|"judgement: brand, names, style"| Docs[("aidd_docs/ui/")]
+  Journeys["skill 02-journeys"] -->|"judgement: persona, steps, structure"| Docs
+  Skill -->|"calls"| Engine["hooks/aidd-ui.cjs"]
+  Journeys -->|"calls"| Engine
+  Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
+  Host["host event"] --> Hook["aidd-ui.cjs hook"]
+  Hook -->|"checks what a write produced, then the lines the turn changed"| Engine
+  Hook -->|"problems"| Host
 ```
 
-Every record opens with flat front matter, `key: value` or `key: [a, b]`, and closes with a `## History` table: Version, Change, Breaking (`yes` or `no`), Task. A task is its folder, `aidd_docs/tasks/…`.
+## Start
 
-| Record | Front matter | Body |
-| --- | --- | --- |
-| every one | `id` (the file name), `kind`, `status` (`proposed`, `validated`, `deprecated`), `version` | `## History` |
-| `system.md` | `format` (`1`), `version` in semver, `platforms`, `breakpoints`, `themes`, `locales`, `directions`, `primitives` (token groups components never cite), `code-roots`, `ignore`, `libraries`; optional `code-tokens` | optional `## Rules`: Id, Rule |
-| `brand.md` | | `## Project`, `## Users`, `## Domain`, `## Platforms`, `## Personality and tone`, `## References`, `## Anti-references`; optional `## Glossary`: Concept, Word, Forbidden |
-| atom, molecule, composition | `uses`, `tokens`, `variants`, `states`, `interactive` (`yes` or `no`), `role`; optional `code`, `implemented-version` | `## Usage`, and `## Keyboard` when interactive |
-| screen | `uses`, `tokens`, `states`, `breakpoints`, `route`; optional `code`, `implemented-version` | |
-| journey | `persona` | `## Steps`: Screen, Action |
-| asset | `type` (`icon`, `image`, `illustration`), `file`, `alt` | |
-| review | `scope`, `screens` | `## Verdicts`: Screen, State, Version, Verdict (`ok`, `ko`, `pending`), Comment |
-
-### Versions
-
-- `status` tracks the design; `implemented-version` is the version the code implements. Code is current when it equals `version`, behind when lower.
-- `code` is `path#Export`, or `package:<name>#Export` for a library component. It is required with `implemented-version`, except for a molecule or composition whose used elements are all implemented.
-- `system.md` takes a history row only when a version is published; its Task cell lists the published tasks, comma-separated. A row that publishes a task which broke an element is breaking and raises the major; a token-only change says `yes` itself. Any other row raises the minor.
-- A verdict counts for the version it names only.
-- A `format` this validator does not read is reported alone.
-
-### Links and tokens
-
-- A link to a file in a folder of its own name covers that folder, styles, hooks and tests; among siblings it covers only the files of its name.
-- An element uses elements of its own level or lower, never itself; an interactive component has `focus`, and `hover` or `disabled` only when they exist.
-- A deprecated element names `replaced-by: <id>`, or `replaced-by: none` with a `## Deprecation` section.
-- A render uses only the tokens its record lists in `tokens`.
-- `code-tokens` names the file where the code consumes the tokens; it is never checked for literals or coverage.
-- Themes: the first theme in `system.md` is held by `tokens.json`. `tokens.resolver.json` has a set whose sources hold `{"$ref": "tokens.json"}`, a `theme` modifier with one context per theme and the base as `default`, and `{"$ref": "#/modifiers/theme"}` in `resolutionOrder`. A context lists `{"$ref": "<file>"}` sources, each redefining base tokens with their type.
-- A value DTCG cannot hold, such as `color-mix()` or `100%`, is raw CSS: `"$extensions": {"dev.ai-driven.css": "<value>"}`. Each `var()` in it must name a token.
-- `$root` is not supported: name the token.
-- A token's CSS name is `--` plus its path joined by `-`.
-
-## Validation
-
-```sh
-node <plugin>/hooks/aidd-ui.cjs validate [project-root]
-```
-
-It prints `VALID`, or one `✗ <file>: <message> (<rule>)` line per error and `⚠` per warning, and exits 1 when an error remains. Warnings: a file under a code root no record links, and a render length of 2px or less.
-
-A hook runs the same check:
-
-| Moment | Prints |
-| --- | --- |
-| Session start | the counts, then the errors |
-| After a write under `aidd_docs/ui/` or a code root | the problems of the written files, their record's render and the records citing it, or all of them after a write to `system.md`, the tokens or a theme; then the count of other errors |
-| End of a turn that wrote such a file | the errors, as a reason to continue, once |
-
-Each output stops at 20 problem lines and names the command that prints the rest.
+1. Install the plugin; its hook needs `node` on `PATH`.
+2. Run `/aidd-ui:01-system` in your project.
+3. Follow the skill: it writes the design system under `aidd_docs/ui/`.
+4. Run `/aidd-ui:02-journeys` to map a persona's journeys and the wireframe of each screen they cross, before or after the design system.
 
 ## Limits
 
-- Without `node` on `PATH`, the hook does nothing.
-- After a write, the problems reach the model in the same turn on Claude Code, Codex, Copilot CLI, OpenCode and Kilo. At turn end, OpenCode and Kilo receive the errors as the next prompt. A forced continuation is never asked again. The turn mark lives in the OS temp directory; without a session id, no end-of-turn check runs.
-- Cursor is unverified.
-- Codex runs the hook only once you trust it; Copilot only in a folder it trusts, and says nothing otherwise.
-- A file written by a shell command, or deleted by a patch, is not seen.
-- A problem a write causes in a record that does not cite the written one, such as a use of a renamed id, appears at turn end only.
-- The Resolver is read in one profile: a `theme` modifier with file sources. Inline sources and other modifiers are not checked.
-- Composite tokens are checked for a `$value`, not for its shape.
-- `code-roots` and `ignore` are path prefixes, not globs. Every folder under a code root is walked, `node_modules`, build output and dot-folders included: ignore them. A linked folder counts as one file no record links.
-- A render shows a variant or state when it holds its `data-variant` or `data-state` attribute; an export exists when its name is a word of the linked file, a comment included.
-- The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, like every plugin here: a plugin path with spaces breaks it.
-- In code, only colour literals are found, in web code only, outside tests and mocks; other literals are left to the UI audit.
-- In script files, `.vue` and `.svelte` included, colours are found in string literals only. A Vue or Svelte component needs an export name in its link.
-- A word of hex letters after `#` in a stylesheet or a string, such as `#add`, counts as a colour.
-- Fixed widths on text and long translations are left to the UI audit.
-
-## Try it from a checkout
-
-| Scope | Run |
-| --- | --- |
-| This session only | `claude --plugin-dir plugins/aidd-ui` |
-| Persistent | `/plugin marketplace add .`, then `/plugin install aidd-ui@aidd-framework` |
+- The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
+- Cursor: the stop is proven on a payload, not in `-p`.
+- A journey step may name an existing screen without a wireframe: a screen cites its wireframe only once screens are dressed. A wireframe stays `proposed`, `publish` taking elements alone, until screens come with their review.
+- The hook never holds the turn on an error the turn did not produce. After a write it reports the lines the write added or changed, then the errors new in other files, once per turn, to inform. Stop asks once for the errors on the lines the turn changed, never one with no line (a missing section, a token): `validate` holds those.
+- New means absent from the errors the project held at the session's start or the last turn's end. An error made by hand between two turns counts as new for the next one, to inform only. A code file joins the baseline at the end of the first turn that writes it: until then the hook never reads its text, so an error made by hand in it is not reported, and a whole-file write to it that does not say what it replaced holds nothing. Without that baseline (a session started before the plugin), nothing of another file is reported, and a whole-file write proves its lines only when the host says what it replaced, as Claude Code does.
+- Every problem prints as `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` under a line counting errors and warnings; the hook never cuts the errors, and caps the warnings at ten.
+- In a git repository the code is the files git does not ignore under a code root, untracked ones included; outside one, every file under it is read, its dependencies and builds too. A dot file or folder under a code root (`.env.example`, `.storybook/`) is never read. The hook lists the code but reads the text only of the code files the session wrote, so its cost follows what the session wrote, not the size of the code; `validate` reads all of it. A shell write names no file, so the code files it changed are read only once another write names them.
+- A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
+- Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
+- A palette constant in code (`Colors.blue`, `UIColor.systemBlue`) is a name, as a token is: no colour check finds it. A storyboard's `<color red=…>` is not read either.
+- A render shows a variant or state when its text holds the attribute; native behaviour (focus, validity) no render shows.
+- The colour debt only grows: the engine never lowers a count, so a literal fixed leaves room for a new one until the file is edited by hand. A moved or renamed code file loses its debt, a code root added later has none, and a deleted `code-debt.json` is never written again.
+- A validated element's fingerprint covers its record, render, asset file and the resolved value of each token it uses: adding or removing a theme, platform or breakpoint changes it for every element using a token, and so does a checkout that changes an asset's line ends.
+- A token change stops at `aidd_docs/ui/`: the skill never writes the code. C10 names each value of the code's token files (`code-tokens`) that is no longer the design system's, until the code follows. A token or context the code's files do not hold, and an `@media` block matching no breakpoint, are not compared.

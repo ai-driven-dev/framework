@@ -37,14 +37,12 @@ describe("UserManifestRepositoryAdapter", () => {
       await expect(adapter.load()).rejects.toThrow(manifestPath);
     });
 
-    it('rejects a refused manifest version naming the real user manifest path and `aidd setup --scope user`, never .aidd/manifest.json or "in this project"', async () => {
+    it('rejects a refused manifest version naming the real user manifest path and `aidd setup --global`, never .aidd/manifest.json or "in this project"', async () => {
       const manifestPath = join(userConfigDir, "manifest.json");
       await writeFile(manifestPath, '{"version": 7, "tools": {}}');
 
       await expect(adapter.load()).rejects.toThrow(
-        new RegExp(
-          `${manifestPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*aidd setup --scope user`
-        )
+        new RegExp(`${manifestPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}.*aidd setup --global`)
       );
       await expect(adapter.load()).rejects.not.toThrow(/\.aidd\/manifest\.json/);
       await expect(adapter.load()).rejects.not.toThrow(/in this project/);
@@ -55,7 +53,7 @@ describe("UserManifestRepositoryAdapter", () => {
       await writeFile(manifestPath, '{"version": 7, "tools": {}}');
 
       await expect(adapter.load()).rejects.toThrow(
-        `delete ${manifestPath} for this machine, then run \`aidd setup --scope user\` to reinstall the framework.`
+        `delete ${manifestPath} for this machine, then run \`aidd setup --global\` to reinstall the framework.`
       );
     });
   });

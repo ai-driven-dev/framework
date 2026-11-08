@@ -47,6 +47,13 @@ test("referencedPaths skips a path the reader creates, never this repository's o
   assert.deepEqual(referencedPaths(content, new Set([".aidd"])), []);
 });
 
+test("referencedPaths skips the Antigravity hooks file an install writes into the reader's project", () => {
+  // This repository tracks `.agents/` for its own skills, which makes `.agents` an anchor.
+  const content = "Unzip the archive: the memory hook lands in `.agents/hooks.json`.";
+
+  assert.deepEqual(referencedPaths(content, new Set([".agents"])), []);
+});
+
 test("deadReferences names the file, the line and the path", () => {
   const tempDir = fs.mkdtempSync(path.join(root, "scripts/__tests__/.tmp-check-referenced-paths-"));
 
