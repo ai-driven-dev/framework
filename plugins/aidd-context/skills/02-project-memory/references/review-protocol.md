@@ -32,8 +32,3 @@ Take the structure findings of that run; judge none.
 - A root file no row produces is the team's: keep it.
 - A root file in a row's Accepted names column is that row's file: offer nothing on it.
 - A file a row produces found in `internal/` or a subfolder, or a folder under `memory/` other than `internal/` and `external/`, is misplaced: report it as `move <path> to <path>` and move nothing.
-
-## Report
-
-- On a check request, print three blocks headed `Structure findings`, `Format findings`, `Content findings`, no table, one finding per line.
-- Nothing drifted: say the bank is current.

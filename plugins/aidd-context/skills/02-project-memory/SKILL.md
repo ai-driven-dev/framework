@@ -1,6 +1,6 @@
 ---
 name: 02-project-memory
-description: Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up, refresh, check or rewire project memory. Not for editing one existing memory file.
+description: Set up, refresh or check the project memory of its architecture, conventions and decisions, and wire it into your AI tools. Use for any request to set up, refresh or check the project memory, even a bare "check the project memory", or to rewire it. Not for editing one existing memory file.
 argument-hint: setup | refresh | check | rewire
 ---
 

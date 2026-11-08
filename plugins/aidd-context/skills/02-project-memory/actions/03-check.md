@@ -12,7 +12,7 @@ The bank and the scan's capabilities.
 2. Check the format as it says.
 3. Judge the structure as it says.
 4. On a refresh, ask nothing: make every finding an unanswered `D` line of the [fact sheet](../assets/fact-sheet.md), then read [write](02-write.md).
-5. On a check request, print the report as the protocol says.
+5. On a check request, reply as [report message](../assets/report-message.md) shows.
 
 ## Output
 
