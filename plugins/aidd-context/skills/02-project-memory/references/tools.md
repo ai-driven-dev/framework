@@ -15,3 +15,6 @@ Wiring:
 
 - A shared `AGENTS.md` is a wiring target, never a detection signal.
 - Resolve shared `.agents/` paths from declared tools or the AIDD manifest; otherwise ask which host to wire.
+- Absent context file: create it from [AGENTS.md](../assets/templates/AGENTS.md).
+- Its AIDD structure differs: offer to reconcile it, applying only what the user approves.
+- On a refresh, the picks are the tools whose context file already carries the block, the old `<aidd_project_memory>` tag included, and nothing is asked.

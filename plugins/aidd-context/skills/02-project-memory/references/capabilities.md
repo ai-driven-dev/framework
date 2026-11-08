@@ -53,3 +53,11 @@ aidd_docs/
 - `internal/` and `external/` exist even when empty, each with a `.gitkeep`. Both are read on demand.
 - `internal/decisions/` holds decision records; it is created when the first one is written, not by scaffold.
 - A hook refreshes the memory file list; nothing in the bank lists files by hand.
+
+## Writing
+
+- Absent file: fill its template with the sheet's lines, dropping an empty section, unless a misplaced file covers its capability.
+- A capability whose Accepted names file exists: write into that file, create no second.
+- Existing file: apply the sheet's lines only.
+  - Skip a `remove` or `replace` line whose answer is not yes.
+  - For a `move <path> to <path>` line answered yes, move the file.
