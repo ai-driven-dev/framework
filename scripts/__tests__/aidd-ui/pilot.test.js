@@ -375,3 +375,11 @@ describe("aidd-ui pilot run", () => {
     assert.ok(logged.some((line) => String(line).includes("git archive failed in the source")), logged.join("|"));
   });
 });
+
+describe("aidd-ui pilot request suffix", () => {
+  it("has the model state its choices in the final reply, and write no file the skill does not name", () => {
+    const request = requestOf("blank", "02-brand", "brand");
+    assert.ok(request.includes("state each choice in your final reply"));
+    assert.ok(request.includes("write no file the skill does not name"));
+  });
+});

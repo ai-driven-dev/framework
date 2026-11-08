@@ -144,7 +144,7 @@ function reportLine(pilot, { errors, warnings, missing, changed, broken }) {
 
 // What each pilot asks, one part per skill of the chain.
 const NON_INTERACTIVE = (part) =>
-  `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, say which, and go on; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${part}.`;
+  `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, state each choice in your final reply, and go on; write no file the skill does not name; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${part}.`;
 
 const REQUESTS = {
   blank: {
