@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, makeTmp, removeTmp, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
-const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, chatsOf, pilotsOf } = require("../../aidd-ui-pilot.cjs");
+const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, chatsOf, pilotsOf, main } = require("../../aidd-ui-pilot.cjs");
 
 // The pilot's checks hold without AI: they read files, run the engine, and compare trees.
 
@@ -158,12 +158,16 @@ describe("aidd-ui pilot report line", () => {
 describe("aidd-ui pilot chain", () => {
   it("sends one request per skill, in the order of the path", () => {
     assert.deepEqual(CHAIN.map(([skill]) => skill), ["01-journeys", "02-brand", "03-foundations", "04-components"]);
-    assert.deepEqual(CHAIN.map(([, parts]) => parts), [["journeys"], ["brand"], ["foundations"], ["components"]]);
+    assert.deepEqual(CHAIN.map(([, part]) => part), ["journeys", "brand", "foundations", "components"]);
+  });
+
+  it("points each request at the task folder of its own part", () => {
+    for (const [skill, part] of CHAIN) assert.ok(requestOf("real", skill, part).endsWith(`Task folder: aidd_docs/tasks/${part}.`), part);
   });
 
   it("sends each part of a pilot's request once, whole", () => {
     for (const pilot of ["blank", "real"]) {
-      const requests = CHAIN.map(([skill, parts]) => requestOf(pilot, skill, parts));
+      const requests = CHAIN.map(([skill, part]) => requestOf(pilot, skill, part));
       for (const [part, words] of Object.entries(REQUESTS[pilot])) assert.equal(requests.filter((request) => request.includes(words)).length, 1, `${pilot} ${part}`);
       requests.forEach((request, at) => assert.ok(request.startsWith(`/aidd-ui:${CHAIN[at][0]} `), request));
     }
@@ -194,8 +198,39 @@ describe("aidd-ui pilot arguments", () => {
     assert.deepEqual(pilotsOf(["--gouvernail", "/g", "--kairos", "/k", "--only", "blank"]), [["blank", null]]);
   });
 
+  it("runs nothing when --only names no pilot", () => {
+    assert.equal(pilotsOf(["--gouvernail", "/g", "--kairos", "/k", "--only", "kairos2"]), null);
+  });
+
   it("refuses a missing checkout", () => {
     assert.equal(pilotsOf(["--gouvernail", "/g"]), null);
     assert.equal(pilotsOf([]), null);
+  });
+});
+
+describe("aidd-ui pilot run", () => {
+  it("returns 2, with the message, when a step throws, and spawns no model", () => {
+    const tmpdir = process.env.TMPDIR;
+    process.env.TMPDIR = copy;
+    const logged = [];
+    const error = console.error;
+    const log = console.log;
+    console.error = (line) => logged.push(line);
+    console.log = () => {};
+    let modelRuns = 0;
+    try {
+      const code = main(["--gouvernail", "/g", "--kairos", "/k", "--only", "kairos"], {
+        copyProject: () => { throw new Error("git archive failed in the source"); },
+        runStep: () => { modelRuns += 1; return true; },
+      });
+      assert.equal(code, 2);
+    } finally {
+      console.error = error;
+      console.log = log;
+      if (tmpdir === undefined) delete process.env.TMPDIR;
+      else process.env.TMPDIR = tmpdir;
+    }
+    assert.equal(modelRuns, 0);
+    assert.ok(logged.some((line) => String(line).includes("git archive failed in the source")), logged.join("|"));
   });
 });

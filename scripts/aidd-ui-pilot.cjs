@@ -116,9 +116,9 @@ function reportLine(pilot, { errors, warnings, missing, changed }) {
   return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} code ${code}`;
 }
 
-// What each pilot asks, written once in parts and sent whole or split by the chain.
-const NON_INTERACTIVE = (task) =>
-  `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, say which, and go on; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${task}.`;
+// What each pilot asks, one part per skill of the chain.
+const NON_INTERACTIVE = (part) =>
+  `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, say which, and go on; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${part}.`;
 
 const REQUESTS = {
   blank: {
@@ -138,18 +138,16 @@ const REQUESTS = {
   },
 };
 
-/** The chain: each step a skill and the parts it receives, in order. */
+/** The chain: each step a skill and the part it receives, in order. */
 const CHAIN = [
-  ["01-journeys", ["journeys"]],
-  ["02-brand", ["brand"]],
-  ["03-foundations", ["foundations"]],
-  ["04-components", ["components"]],
+  ["01-journeys", "journeys"],
+  ["02-brand", "brand"],
+  ["03-foundations", "foundations"],
+  ["04-components", "components"],
 ];
 
-const taskOf = (parts) => (parts.includes("journeys") ? "journeys" : "system");
-
-/** The request of one step: its parts, then the non-interactive suffix. */
-const requestOf = (pilot, skill, parts) => `/aidd-ui:${skill} ${parts.map((part) => REQUESTS[pilot][part]).join(" ")} ${NON_INTERACTIVE(taskOf(parts))}`;
+/** The request of one step: its part, then the non-interactive suffix. */
+const requestOf = (pilot, skill, part) => `/aidd-ui:${skill} ${REQUESTS[pilot][part]} ${NON_INTERACTIVE(part)}`;
 
 /** The folders of `~/.claude/projects` holding the chat of the copy `dir`: Claude names a folder
  * after the path it ran in, so it ends with the copy's two last folder names. */
@@ -171,41 +169,48 @@ function runStep(cwd, request, outFile) {
   return run.status === 0;
 }
 
-/** The pilots to run as `[name, checkout]` (null for blank) from the command line, or null when a checkout is missing. */
+/** The pilots to run as `[name, checkout]` (null for blank) from the command line, or null when a checkout is missing or `--only` names no pilot. */
 function pilotsOf(argv) {
   const argumentOf = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : undefined);
   const [gouvernail, kairos, only] = [argumentOf("--gouvernail"), argumentOf("--kairos"), argumentOf("--only")];
   if (!gouvernail || !kairos) return null;
-  return [["blank", null], ["gouvernail", gouvernail], ["kairos", kairos]].filter(([name]) => !only || only === name);
+  const pilots = [["blank", null], ["gouvernail", gouvernail], ["kairos", kairos]].filter(([name]) => !only || only === name);
+  return pilots.length ? pilots : null;
 }
 
-function main() {
-  const pilots = pilotsOf(process.argv.slice(2));
+/** Runs the pilots and returns the exit code; any step that throws gives 2 with its message. `steps` lets a test replace the copy and the model run. */
+function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
+  const pilots = pilotsOf(argv);
   if (!pilots) {
     console.error("usage: node scripts/aidd-ui-pilot.cjs --gouvernail <checkout> --kairos <checkout> [--only blank|gouvernail|kairos]");
     return 2;
   }
-  const base = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-pilot-"));
-  console.log(`copies in ${base}`);
-  let worst = 0;
-  for (const [pilot, source] of pilots) {
-    const dir = path.join(base, pilot);
-    fs.mkdirSync(dir);
-    if (source) copyProject(source, dir);
-    const before = snapshot(dir);
-    for (const [skill, parts] of CHAIN) {
-      if (!runStep(dir, requestOf(source ? "real" : "blank", skill, parts), path.join(base, `${pilot}.${skill}.out`))) {
-        console.log(`${pilot} step ${skill} could not run, see ${base}/${pilot}.${skill}.out`);
-        return 2;
+  try {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ui-pilot-"));
+    console.log(`copies in ${base}`);
+    let worst = 0;
+    for (const [pilot, source] of pilots) {
+      const dir = path.join(base, pilot);
+      fs.mkdirSync(dir);
+      if (source) steps.copyProject(source, dir);
+      const before = snapshot(dir);
+      for (const [skill, part] of CHAIN) {
+        if (!steps.runStep(dir, requestOf(source ? "real" : "blank", skill, part), path.join(base, `${pilot}.${skill}.out`))) {
+          console.log(`${pilot} step ${skill} could not run, see ${base}/${pilot}.${skill}.out`);
+          return 2;
+        }
       }
+      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, snapshot(dir)) };
+      console.log(reportLine(pilot, result));
+      if (result.errors.length || result.missing.length || result.changed.length) worst = 1;
     }
-    const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, snapshot(dir)) };
-    console.log(reportLine(pilot, result));
-    if (result.errors.length || result.missing.length || result.changed.length) worst = 1;
+    return worst;
+  } catch (error) {
+    console.error(error.message);
+    return 2;
   }
-  return worst;
 }
 
 if (require.main === module) process.exit(main());
 
-module.exports = { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, chatsOf, pilotsOf };
+module.exports = { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, chatsOf, pilotsOf, main };
