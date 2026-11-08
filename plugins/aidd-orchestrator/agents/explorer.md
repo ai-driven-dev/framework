@@ -1,6 +1,6 @@
 ---
 name: explorer
-description: Explores sources to answer scoped questions. Use to investigate code, documentation, services, or the web and return evidence with an explanation.
+description: Investigates scoped questions across code, documentation, services, or the web. Use to distill substantial sources into concise, sourced findings.
 ---
 
 # Role

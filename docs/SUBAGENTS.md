@@ -1,6 +1,6 @@
 # 🤝 Subagents
 
-Four generic agents your AI tool can hand work to, each in a fresh context. They ship with the `aidd-orchestrator` plugin; the skill that calls one gives it its concern, so the same executor writes code under `aidd-dev` and a spec under `aidd-pm`.
+Four generic agents your AI tool can hand work to. They ship with the `aidd-orchestrator` plugin and receive their task from the caller.
 
 ## 📑 Contents
 
@@ -86,7 +86,8 @@ sequenceDiagram
     Main->>ExplorerB: 🧰 Reuse · 💬 "Check the policy."
     ExplorerB-->>Main: ↩️ "+ is allowed."
   end
-  Main->>Executor: 🧰 Spawn · 💬 "Fix and test validation."
+  Main->>Main: 📝 Plan the fix
+  Main->>Executor: 🧰 Spawn · 💬 "Follow the plan and test."
   Executor->>Executor: 📝 Fix validation and 🧪 test
   Executor-->>Main: ↩️ "COMPLETE, test passed."
   Main->>Validator: 🧰 Spawn · 💬 "Verify the result."
@@ -101,10 +102,10 @@ sequenceDiagram
 
 | Agent | Use it to | It returns | Writes files, by instruction |
 | --- | --- | --- | --- |
-| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Investigate scoped questions across code, documentation, services or the web | The answer, with sources and unknowns | No |
-| [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
-| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Confirm delivered work meets the request and its acceptance criteria | `PASS`, `FAIL` or `BLOCKED`, with evidence | No; runs checks |
-| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
+| [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | Distill substantial code, documentation, service or web research into sourced findings | The answer, with sources and unknowns | No |
+| [Executor](../plugins/aidd-orchestrator/agents/executor.md) | Implement a provided plan, verify changes and request review when uncertain | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
+| [Validator](../plugins/aidd-orchestrator/agents/validator.md) | Independently verify an outcome, service, configuration or data change | `PASS`, `FAIL` or `BLOCKED`, with evidence | No; runs checks |
+| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | Review implemented work after a plan or when the executor has a concern | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
 
 ## 📦 Install
 

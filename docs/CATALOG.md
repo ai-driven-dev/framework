@@ -120,10 +120,10 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 | Agent | Role |
 | --- | --- |
-| `executor` | Implements assigned work within defined scope |
-| `explorer` | Explores sources to answer scoped questions |
-| `reviewer` | Reviews the quality and coherence of finished work |
-| `validator` | Validates that delivered work satisfies the request and acceptance criteria |
+| `executor` | Implements a provided plan within a defined scope |
+| `explorer` | Investigates scoped questions across code, documentation, services, or the web |
+| `reviewer` | Reviews implemented work after a plan or when an executor raises a concern |
+| `validator` | Independently verifies an outcome or configuration |
 
 <!--extras-aidd-orchestrator:end-->
 
