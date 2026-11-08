@@ -197,7 +197,7 @@ function routerEdges() {
 
 test("refresh runs scan, check, write, then sync", () => {
   const edges = routerEdges();
-  assert.match(edges.find((edge) => /^request\b.*\|\s*scan\b/u.test(edge)) ?? "", /refresh/u, "refresh does not start at scan");
+  assert.ok(edges.some((edge) => /^request\b.*\|\s*scan\b/u.test(edge) && /refresh/u.test(edge)), "refresh does not start at scan");
   assert.match(edges.find((edge) => /^scan\b.*\|\s*check\b/u.test(edge)) ?? "", /refresh/u, "refresh does not go from scan to check");
   assert.match(edges.find((edge) => /^check\b.*\|\s*write\b/u.test(edge)) ?? "", /refresh/u, "refresh does not go from check to write");
   assert.ok(edges.some((edge) => /^write\b.*-->\s*sync$/u.test(edge)), "write does not go to sync");
@@ -248,9 +248,7 @@ test("no file of the skill offers a merge or names a former file", () => {
 });
 
 test("sync fills the wired tools without asking when refresh calls it, the old tag form counting as wired", () => {
-  const sync = skillText("actions/04-sync.md");
   const tools = skillText("references/tools.md");
-  assert.match(sync, /refresh/u);
   assert.match(tools, /On a refresh[^\n]*nothing is asked/u);
   assert.match(tools, /<aidd_project_memory>/u);
 });
@@ -295,7 +293,7 @@ test("check reviews the files a row produces or accepts under another name, neve
 test("a check request has its own route: scan, then check, and no sync", () => {
   const router = skillText("SKILL.md");
   const edges = routerEdges();
-  assert.match(edges.find((edge) => /^request\b.*\|\s*scan\b/u.test(edge)) ?? "", /check/u, "check does not start at scan");
+  assert.ok(edges.some((edge) => /^request\b.*\|\s*scan\b/u.test(edge) && /"check"/u.test(edge)), "check does not start at scan");
   assert.match(edges.find((edge) => /^scan\b.*\|\s*check\b/u.test(edge)) ?? "", /check/u, "no check route from scan to check");
   const fromCheck = edges.filter((edge) => /^check\b/u.test(edge));
   assert.ok(fromCheck.some((edge) => /check: print/u.test(edge) && /done/u.test(edge)), "the check request does not end after the report");
@@ -399,8 +397,8 @@ test("scan collects the sheet into the task folder and write shows it once, afte
   assert.match(sheet, /aidd_docs\/tasks\/<yyyy_mm>\/<yyyy_mm_dd>_memory-<scope>\/facts\.md/u);
   assert.doesNotMatch(scan, /Show/u, "scan shows the sheet before check has added its lines");
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
-  assert.match(steps[0], /Show[^\n]*once/u);
-  assert.match(steps[0], /write the answers into it/u, "the answers do not reach the sheet");
+  assert.match(steps[0], /Show the sheet[^\n]*ask to answer/u);
+  assert.match(steps[1], /Wait for the answer, then write it into the sheet/u, "the answers do not reach the sheet");
   assert.match(skillText("actions/03-check.md"), /ask(?:ing)? nothing/u, "check asks on a refresh");
 });
 
@@ -427,11 +425,11 @@ test("write ends at once on an empty sheet, drops a capability answered no, keep
 
 test("the consent rule, applied where write takes the answers: silence is yes, a removal or replacement needs a yes, an unanswered question drops its slot", () => {
   const step = section(skillText("assets/fact-sheet.md"), "Answers");
-  assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /answers/u, "write does not point to the answers");
+  assert.match(skillText("actions/02-write.md").match(/^2\. .*$/mu)[0], /Answers/u, "write does not point to the answers");
   assert.match(step, /Silence is yes/u);
   assert.match(step, /except on a `remove` or `replace` line, which needs `yes`/u, "the removal exception is not named");
   assert.doesNotMatch(step, /explicit/u, "an explicit yes is not a rule a small model can apply");
-  assert.match(step, /Autonomous:[^\n]*caller/u, "autonomous is not defined");
+  assert.match(step, /Autonomous:[^\n]*only[^\n]*caller/u, "autonomous is not defined");
   assert.match(step, /unanswered `Q` drops its slot/u);
   assert.doesNotMatch(skillText("actions/02-write.md"), /[Ss]ilence/u, "the consent rule is stated twice");
   assert.doesNotMatch(section(skillText("SKILL.md"), "Transversal rules"), /[Ss]ilence/u, "the consent rule is stated twice");
@@ -446,18 +444,65 @@ test("write takes its content from the sheet only, after the engine checked its 
   assert.ok(skillText("references/engine.md").includes("memory.cjs facts"), "the engine gives no facts command");
 });
 
-test("the sheet is presented in one fixed order: what is replaced or removed first, with old and new text, then additions, questions and one answer line", () => {
+test("the sheet is presented in one fixed order: the files to write, what is replaced or removed with old and new text, the additions per file, questions, tool picks and one answer line", () => {
   const asset = skillText("assets/fact-sheet.md");
   const sample = asset.match(/```text\n([\s\S]*?)```/u)?.[1];
   assert.ok(sample, "no sample presentation");
   const at = (pattern) => sample.search(pattern);
-  const order = [/^Sheet: aidd_docs\/tasks\//mu, /^To replace or remove \(\d+\)/mu, /^Additions and confirmations: \d+ lines, in the sheet/mu, /^Questions \(\d+\)/mu, /^Answer ok to accept all, or by id: no D\d+, Q\d+: /mu].map(at);
+  const order = [/^Sheet: aidd_docs\/tasks\//mu, /^Files to write \(\d+\)/mu, /^To replace or remove \(\d+\), applied only on yes/mu, /^Additions and confirmations: \d+ lines/mu, /^Questions \(\d+\)/mu, /^Tools\b/mu, /^Answer ok to accept all, or by id: yes D\d+, no D\d+, C\d+: no, Q\d+: <answer>, tools: /mu].map(at);
   assert.ok(order.every((index) => index >= 0), `a part of the presentation is missing: ${order}`);
   assert.deepEqual([...order].sort((a, b) => a - b), order, "the parts are out of order");
+  const listed = sample.match(/^- C\d+ \S+\.md$/gmu) ?? [];
+  assert.equal(listed.length, Number(sample.match(/^Files to write \((\d+)\)/mu)[1]), "the capability files are not all listed with their id");
+  const counts = (sample.match(/^- \S+\.md: \d+$/gmu) ?? []).map((line) => Number(line.split(": ")[1]));
+  assert.ok(counts.length > 0 && counts.reduce((a, b) => a + b) === Number(sample.match(/^Additions and confirmations: (\d+) lines/mu)[1]), "the additions are not counted per file");
+  assert.doesNotMatch(sample, /in the sheet/u, "the additions are only pointed to");
+  assert.match(sample, /^\[x\] \w+/mu, "no detected tool is ticked");
+  assert.match(asset, /15 or fewer/u, "the small-sheet threshold is not stated");
   assert.match(sample, /^ {2}- ".+"$/mu, "the old line is not shown");
   assert.match(sample, /^ {2}\+ ".+"$/mu, "the new line is not shown");
   assert.match(sample, /\(removed: /u, "a removal shows no reason");
   assert.match(skillText("actions/02-write.md"), /Presentation/u, "write does not show the sheet as the asset says");
+  assert.match(skillText("actions/02-write.md").match(/^2\. .*$/mu)[0], /^2\. Wait for the answer/u, "write does not wait on the sheet");
+  assert.doesNotMatch(skillText("actions/02-write.md"), /end the turn/u, "the wait is a router node, not prose");
+});
+
+test("a setup asks the tools once, with the sheet; a refresh takes the wired ones; a rewire asks alone", () => {
+  const tools = skillText("references/tools.md");
+  const sync = skillText("actions/04-sync.md");
+  const answers = section(skillText("assets/fact-sheet.md"), "Answers");
+  assert.match(answers, /`tools: /u, "the answer cannot name the tools");
+  assert.match(tools, /Setup[^\n]*`tools:`[^\n]*detected[^\n]*never asked again/u, "setup does not take the sheet's picks");
+  assert.match(tools, /On a refresh[^\n]*nothing is asked/u);
+  assert.match(tools, /Rewire[^\n]*asks?\b/iu, "rewire does not ask");
+  assert.match(sync, /picks/u);
+  assert.doesNotMatch(sync, /wait for the picks/u, "sync stops a second time");
+});
+
+test("the description names every mode a request can name, so a check request reaches the skill", () => {
+  const description = skillText("SKILL.md").match(/^description: (.*)$/mu)[1];
+  for (const mode of ["set up", "refresh", "check", "rewire"]) assert.match(description, new RegExp(mode, "u"), `the description omits ${mode}`);
+});
+
+test("the router waits on the user after the sheet and the tool question, and speaks only to ask or reply", () => {
+  const edges = routerEdges();
+  assert.ok(edges.some((edge) => /^write\b.*\|\s*user\(\(user answers\)\)/u.test(edge)), "write does not go to the user");
+  assert.ok(edges.some((edge) => /^user\b.*\|\s*write\b/u.test(edge)), "the user's answer does not go back to write");
+  assert.ok(edges.some((edge) => /^sync\b.*\|\s*user\b/u.test(edge)), "the tool question does not go to the user");
+  assert.ok(edges.some((edge) => /^user\b.*\|\s*sync\b/u.test(edge)), "the tool picks do not go back to sync");
+  const rules = section(skillText("SKILL.md"), "Transversal rules");
+  assert.match(rules, /Speak only to ask or to give the final reply; otherwise call tools\./u);
+  assert.match(rules, /After the sheet or the tool question, wait\./u);
+  assert.match(rules, /Edit no memory file outside write\./u);
+  assert.ok(rules.split(/\r?\n/u).filter((line) => line.startsWith("- ")).length <= 4, "more than four transversal rules");
+});
+
+test("a request naming no mode goes to setup without a bank and to refresh with one, and setup over a bank is a refresh", () => {
+  const edges = routerEdges();
+  const toScan = edges.filter((edge) => /^request\b.*\|\s*scan\b/u.test(edge));
+  assert.ok(toScan.some((edge) => /no mode[^|]*no bank/u.test(edge) && /setup/u.test(edge) && !/refresh/u.test(edge)), "no bank does not mean setup");
+  assert.ok(toScan.some((edge) => /refresh/u.test(edge) && /no mode[^|]*a bank/u.test(edge) && /setup[^|]*a bank/u.test(edge)), "a bank does not mean refresh, whatever the mode");
+  assert.doesNotMatch(edges.join("\n"), /\{/u, "the router decides with a diamond, not labelled edges");
 });
 
 test("an ok answer writes yes on every D line, no Dn writes no, and a remove or replace fact quotes the old line", () => {

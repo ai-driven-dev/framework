@@ -28,29 +28,39 @@ A convention no rule covers. T1, T2. File and section name the rule topic. Not w
 
 ## Presentation
 
-Show it once in chat as below.
+Show it once in chat as below. Under each file, list its added lines when the sheet holds 15 or fewer in all, else only the count. Show `Tools` on a setup only.
 
 ```text
 Sheet: aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_memory-<scope>/facts.md
 
-To replace or remove (2)
+Files to write (3)
+- C1 api.md
+- C2 auth.md
+- C3 vcs.md
+
+To replace or remove (2), applied only on yes
 - D3 vcs.md > Setup
   - "pre-commit runs `make lint-all`"
   + "pre-commit runs `scripts/pre-commit.sh`"
 - D4 testing.md > Tools
   (removed: no such tool in package.json)
 
-Additions and confirmations: 12 lines, in the sheet
+Additions and confirmations: 12 lines
+- api.md: 7
+- vcs.md: 5
 
 Questions (1)
 - Q1 Which commit standard does the project follow?
 
-Answer ok to accept all, or by id: no D3, Q1: <answer>.
+Tools (detected ticked)
+[x] claude  [ ] codex  [ ] cursor  [ ] opencode  [ ] copilot
+
+Answer ok to accept all, or by id: yes D3, no D4, C2: no, Q1: <answer>, tools: claude, codex.
 ```
 
 ## Answers
 
-- `ok` is `yes` on every `D` line, `no D3` is `no` on that line, `C2: no` appends `: no` to that `C` entry.
+- `ok` is `yes` on every `D` line, `no D3` is `no` on that line, `C2: no` appends `: no` to that `C` entry, `tools: claude, codex` picks the tools.
 - Silence is yes, except on a `remove` or `replace` line, which needs `yes`.
 - An unanswered `Q` drops its slot.
-- Autonomous: the caller's instruction answers.
+- Autonomous: only when the caller's instruction answers for the user.
