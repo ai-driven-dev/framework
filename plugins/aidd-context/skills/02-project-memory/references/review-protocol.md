@@ -1,6 +1,6 @@
 # Review protocol
 
-- Review yourself the memory files the AI loads every session, one file at a time, or only those `changes` names.
+- Review yourself the memory files the AI loads every session, one file at a time, or only the ones holding a line `changes` names.
 - Memory holds what the code cannot show: an intent, a constraint, a warning. Code silent on a line does not contradict it.
 
 1. **Check** each file against the code: every path against the tree, every command and commit type against the file that defines it, per the reading rules of [reading-sources.md](reading-sources.md), every count and named tool against the manifests and the workspace file.

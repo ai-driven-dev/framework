@@ -16,11 +16,10 @@
  *   edit made since is not seen. Without a repository or a committed bank it says so and exits 0;
  *   any other git failure exits 1. The hook never runs it.
  * - `changes [root] [--since <ref>]`: what an update starts from, read-only. Prints the base (the
- *   last commit that touched the bank, or the reference named) and why, the files changed since it,
- *   uncommitted ones included, the memory lines citing one, and the memory files a changed defining
- *   file belongs to. Without a repository, a commit, a committed bank or the base in a shallow
- *   history it prints the audit scope and its reason, exit 0; any other git failure exits 1.
- *   The hook never runs it.
+ *   last commit that touched the bank, or the reference named) and why, the memory lines citing a
+ *   file changed since it or a directory above one, and the changed files, uncommitted ones
+ *   included, listed or counted by directory. Any git failure prints the audit scope and its
+ *   reason, exit 0; only a --since naming no commit exits 1. The hook never runs it.
  * - `facts <sheet> [root]`: the skill's fact sheet before a write. Exits 1 naming each line whose
  *   shape breaks the grammar or whose source is absent from the root. The hook never runs it.
  * - `sync [tool...]`: fills the memory block of each context file present, or only those of

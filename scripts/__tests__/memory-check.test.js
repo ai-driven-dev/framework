@@ -810,40 +810,6 @@ test("changes: a deleted path that a memory line cites is named with that line",
   }
 });
 
-test("changes: a changed defining file names the bank files of its capability, and no other", () => {
-  const memory = Object.fromEntries(["architecture.md", "codebase-map.md", "coding-assertions.md", "testing.md", "vcs.md", "deployment.md"].map((name) => [name, "# T\n"]));
-  const root = history((dir) => {
-    write(dir, "pnpm-workspace.yaml", "packages: [a, b]\n");
-    write(dir, "app/package.json", "{}\n");
-    write(dir, "Makefile", "check:\n\techo\n");
-    commitAll(dir, "defining files");
-  }, memory);
-  try {
-    const out = changes(root).stdout;
-    assert.match(out, /memory\/architecture\.md: app\/package\.json, pnpm-workspace\.yaml \(manifest/u, "every changed defining file of the category is named");
-    assert.match(out, /memory\/codebase-map\.md: app\/package\.json, pnpm-workspace\.yaml/u);
-    assert.match(out, /memory\/coding-assertions\.md: Makefile/u);
-    assert.match(out, /memory\/vcs\.md: Makefile/u);
-    assert.doesNotMatch(out, /memory\/deployment\.md/u, "a file whose capability no changed file belongs to is named");
-  } finally {
-    cleanup(root);
-  }
-});
-
-test("changes: a file the bank does not hold is not named", () => {
-  const root = history((dir) => {
-    write(dir, "Makefile", "check:\n\techo\n");
-    commitAll(dir, "task command");
-  });
-  try {
-    const out = changes(root).stdout;
-    assert.match(out, /memory\/vcs\.md: Makefile/u, "the bank's own file of the capability is named");
-    assert.doesNotMatch(out, /memory\/testing\.md/u);
-  } finally {
-    cleanup(root);
-  }
-});
-
 test("changes: --since overrides the base", () => {
   const root = history((dir) => {
     write(dir, "app/a.ts", "a2\n");
@@ -934,7 +900,7 @@ test("changes: an unknown --since reference, or one that is an option, is an err
   }
 });
 
-test("changes: a git failure in a repository fails closed with its reason", () => {
+test("changes: a git failure in a repository is an audit with its reason on one line, exit 0", () => {
   const root = history((dir) => {
     write(dir, "app/a.ts", "a2\n");
     commitAll(dir, "code");
@@ -945,9 +911,8 @@ test("changes: a git failure in a repository fails closed with its reason", () =
     fs.chmodSync(object, 0o600);
     fs.rmSync(object);
     const run = engine("changes", root);
-    assert.equal(run.status, 1);
-    assert.equal(run.stdout, "");
-    assert.match(run.stderr, /memory: git/u);
+    assert.equal(run.status, 0, run.stderr);
+    assert.match(run.stdout, /^scope: audit\nreason: git \S+ failed: [^\n]+\n$/u);
   } finally {
     cleanup(root);
   }
@@ -966,16 +931,65 @@ test("changes: reads the repository of the root even when a hook exported GIT_DI
   }
 });
 
-test("changes: a long change set prints its count and only the first files", () => {
-  const root = history((dir) => {
-    for (let index = 0; index < 80; index += 1) write(dir, `gen/f${String(index).padStart(2, "0")}.ts`, "x\n");
-    commitAll(dir, "generated");
+/** `count` files named `<dir>/f<i>.ts` for each `[dir, count]`, in one commit after the bank. */
+const spread = (layout) =>
+  history((dir) => {
+    for (const [name, count] of layout) for (let index = 0; index < count; index += 1) write(dir, `${name}${String(index).padStart(2, "0")}.ts`, "x\n");
+    commitAll(dir, "many");
   });
+const groupLines = (out) => out.split("\n").filter((line) => /^- .* \(\d+\)$/u.test(line));
+
+test("changes: a long change set prints one count per top-level directory, root files apart, and no file", () => {
+  const root = spread([["gen/f", 20], ["docs/d", 15], ["src/s", 12], ["top", 3]]);
   try {
     const out = changes(root).stdout;
-    assert.match(out, /^changed \(80\):$/mu);
-    assert.equal(out.split("\n").filter((line) => line.startsWith("- gen/")).length, 50);
-    assert.match(out, /30 more/u);
+    assert.match(out, /^changed \(50\):$/mu, "50 files are listed in full, so the threshold is above 50");
+    assert.equal(groupLines(out).length, 0);
+  } finally {
+    cleanup(root);
+  }
+  const many = spread([["gen/f", 20], ["docs/d", 15], ["src/s", 12], ["top", 3], ["more", 4]]);
+  try {
+    const out = changes(many).stdout;
+    assert.match(out, /^changed \(54\):$/mu);
+    assert.deepEqual(groupLines(out), ["- gen/ (20)", "- docs/ (15)", "- src/ (12)", "- (root) (7)"]);
+    assert.doesNotMatch(out, /^- gen\/f/mu, "a large set lists no file");
+  } finally {
+    cleanup(many);
+  }
+});
+
+test("changes: a top-level directory holding more than half of the change is split by its second level", () => {
+  const root = spread([["big/api/a", 40], ["big/db/b", 25], ["big/c", 2], ["other/o", 20]]);
+  try {
+    const groups = groupLines(changes(root).stdout);
+    assert.deepEqual(groups, ["- big/api/ (40)", "- big/db/ (25)", "- other/ (20)", "- big/ (2)"]);
+  } finally {
+    cleanup(root);
+  }
+  const even = spread([["a/x/f", 30], ["b/x/f", 30]]);
+  try {
+    assert.deepEqual(groupLines(changes(even).stdout), ["- a/ (30)", "- b/ (30)"], "exactly half is not more than half");
+  } finally {
+    cleanup(even);
+  }
+});
+
+test("changes: a memory line citing a directory is named with the changed files under it, whole segments only", () => {
+  const memory = { "codebase-map.md": "# Map\n\n- Sockets live in libs/net/ and nowhere else\n- Layers: backend/infrastructure holds adapters\n- The app code and docs\n- Top: docs/ and libs/ hold it all\n- Both app/a.ts and app/ change\n- Nested libs/net/deep/ only\n" };
+  const root = history((dir) => {
+    for (const file of ["libs/net/a.c", "libs/net/b.c", "libs/net/deep/c.c", "libs/net/d.c", "libs/net/e.c", "libs/network/x.c", "backend/infrastructure/db/q.ts", "app/a.ts", "docs/readme.md"]) write(dir, file, "changed\n");
+    commitAll(dir, "move");
+  }, memory);
+  try {
+    const out = changes(root).stdout;
+    assert.match(out, /codebase-map\.md:3 cites libs\/net\/ \(5 changed: libs\/net\/a\.c, libs\/net\/b\.c, libs\/net\/d\.c, \+2\): - Sockets/u, "a prefix of whole segments: the sibling libs/network is not counted");
+    assert.match(out, /codebase-map\.md:4 cites backend\/infrastructure \(1 changed: backend\/infrastructure\/db\/q\.ts\)/u, "a directory cited without its slash");
+    assert.doesNotMatch(out, /codebase-map\.md:5/u, "a word with no slash is prose, not a directory");
+    assert.doesNotMatch(out, /codebase-map\.md:6/u, "a top-level directory is too broad to name");
+    assert.match(out, /codebase-map\.md:7 cites app\/a\.ts:/u, "a changed file wins over its directory");
+    assert.match(out, /codebase-map\.md:8 cites libs\/net\/deep\/ \(1 changed: libs\/net\/deep\/c\.c\)/u);
+    assert.ok(out.indexOf("cited (") < out.indexOf("changed ("), "memory lines first");
   } finally {
     cleanup(root);
   }
