@@ -244,3 +244,14 @@ kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
 kairos errors none warnings C3,R18,V6 wireframes all code untouched steps ok
 blank errors none warnings V6 wireframes all code untouched steps ok
 ```
+
+### On HEAD 492ba372f, clean tree
+
+```txt
+blank errors none warnings none wireframes all code untouched steps ok
+gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+kairos errors none warnings C3,R18,V6 wireframes all code untouched steps ok
+```
+
+No error on any pilot, Kairos run twice, on this exact text.
