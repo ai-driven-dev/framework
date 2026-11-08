@@ -132,7 +132,7 @@ describe("aidd-ui extract", () => {
 
   describe("a refusal", () => {
     it("names a design system that is missing, a system.md that is missing and code-tokens that list nothing", () => {
-      assert.equal(extract().err, "aidd-ui: no design system under aidd_docs/ui\n");
+      assert.equal(extract().err, "aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n");
       fs.mkdirSync(path.join(tmp, UI), { recursive: true });
       assert.equal(extract().err, "aidd-ui: aidd_docs/ui/system.md is missing, write it first\n");
       setup({ tokens: [] });

@@ -26,7 +26,7 @@ const WINDOWS_LINE_ENDING = /\r\n/g;
 /** A request the engine declines, with the reason, before it writes anything. */
 class Refusal extends Error {}
 
-const NO_DESIGN_SYSTEM = `no design system under ${UI_DIR}`;
+const NO_UI_FOLDER = `no ${UI_DIR} folder at this root. Run from the project root, after writing a record.`;
 
 /** A path relative to the project root, with forward slashes on every platform. */
 const relative = (root, file) => path.relative(root, file).split(path.sep).join(PATH_SEPARATOR);
@@ -117,4 +117,4 @@ function load(root) {
   return project;
 }
 
-module.exports = { Refusal, NO_DESIGN_SYSTEM, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, ERROR, WARNING, ENGINE_REF };
+module.exports = { Refusal, NO_UI_FOLDER, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, ERROR, WARNING, ENGINE_REF };

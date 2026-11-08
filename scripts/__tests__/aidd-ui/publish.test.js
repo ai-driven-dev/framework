@@ -148,7 +148,7 @@ describe("aidd-ui publish", () => {
 
     it("names a project without a design system", () => {
       fs.rmSync(path.join(tmp, UI), { recursive: true });
-      refused("aidd-ui: no design system under aidd_docs/ui\n");
+      refused("aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n");
     });
 
     it("prints the usage and exits 2 given --breaking with an id, or --root without a value", () => {
