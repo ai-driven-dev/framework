@@ -66,6 +66,24 @@ kairos validate C3,C4,R18 (wireframes and code not recorded)
 | pilot run | the `catch` rethrows | killed, only the thrown-step test fails |
 | pilot arguments | `--only` naming no pilot returns the empty list | killed |
 | pilot chain | every step's task folder named `system` | killed |
+| `help` | one entry dropped | killed |
+| `help` | `help <unknown>` exits 0 | killed |
+| `help` | one sentence of 13 words | killed |
+| `engine.md` | the Output block pasted back into one | killed |
+| `engine.md` | `valdate` listed in one | killed |
+| `stepBreaks` | returns `[]` | killed |
+| `stepBreaks` | an engine file left out of the allowed set | killed |
+| `stepsWithoutWireframe` | `null` back to `[]` when nothing loads | killed |
+| `stepsWithoutWireframe` | `null` back to `[]` when no step exists | killed |
+| owned set pinned to its line | `platforms/` dropped from the `03-foundations` line | killed |
+| `reportLine` | no `no journey` wording | killed |
+| pilot exit | the `broken` check dropped from the exit code | killed |
+| pilot exit | the `missing === null` check dropped | survived while the chain also left an error (the error short-circuits it); killed once the test leaves no other problem |
+| `BRAND_HEADINGS` | `Platforms` back | killed |
+| blank pilot requests | `web and mobile` back in the brand request | killed |
+| blank pilot requests | `web and mobile` gone from the foundations request | killed |
+| system answers | the README line back in step 2 of `02-write.md` | killed |
+| system answers | the `platforms` row of `extraction.md` removed | killed |
 
 ## After the lean rewrite
 
@@ -124,3 +142,25 @@ kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
 ```
 
 No error on any pilot, Kairos run twice.
+
+## After the engine help and the step ownership
+
+Words in the skills (`cat plugins/aidd-ui/skills/*/*.md plugins/aidd-ui/skills/*/*/*.md | wc -w`): 5922 before, 4751 after.
+
+The engine documents its commands in `help`; each `engine.md` keeps the install table, the command names and the owed table. Each pilot step must change only its own files, and at least one of them. The brand holds no `## Platforms`; the blank pilot asks for web and mobile in its foundations request.
+
+Pilot, Haiku, fresh copies, the chats deleted by the script (none left in `~/.claude/projects/`), the copies deleted afterwards. First run, all three projects:
+
+```txt
+blank errors none warnings V6 wireframes all code untouched steps ok
+gouvernail errors none warnings C3,C4,R18 wireframes all code untouched steps ok
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched steps ok
+```
+
+Second Kairos run, `--only kairos`:
+
+```txt
+kairos errors none warnings C3,R18,V6 wireframes all code untouched steps ok
+```
+
+Both sources were only read by `git archive`. Kairos showed uncommitted changes before and after; their dates are older than the runs.

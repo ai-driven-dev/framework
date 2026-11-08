@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: skills, split `01-system`, rename `02-journeys`
