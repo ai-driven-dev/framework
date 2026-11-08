@@ -30,7 +30,7 @@ Two earliest baseline runs on Kairos, in the first format of the script (every i
 
 ```txt
 kairos validate C3,R18,V6 wireframes all code untouched
-kairos validate C3,C4,R18 wireframes all code untouched
+kairos validate C3,C4,R18 (wireframes and code not recorded)
 ```
 
 ## Mutations
@@ -83,3 +83,13 @@ kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
 ```
 
 Kairos shows no `C10` here, and the spec does not count it. `C10` is the drift between the tokens the model wrote and the code's token file: the two first baseline runs had none either, so it follows the model's values, not the skills.
+
+## On the restored skills
+
+```txt
+blank errors none warnings V6 wireframes all code untouched
+gouvernail errors none warnings C3,C4,R18,V6 wireframes all code untouched
+kairos errors none warnings C3,C4,R18,V6 wireframes all code untouched
+```
+
+Errors, wireframes and code hold; no `C10` this run.
