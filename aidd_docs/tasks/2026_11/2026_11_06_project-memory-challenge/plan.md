@@ -1,6 +1,6 @@
 ---
 objective: "A small model builds and updates the project's macro memory the way a person would: facts with sources, shown once before writing, an update that starts from what changed, and no line of a team's leaving without a yes."
-status: pending
+status: implemented
 ---
 
 # Plan: Project memory, built like a person would build it
