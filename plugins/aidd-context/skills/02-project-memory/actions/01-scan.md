@@ -8,11 +8,11 @@ The project root.
 
 ## Process
 
-1. On a refresh or a check request, run `changes` as [engine](../references/engine.md) says.
-2. Read the project as [reading sources](../references/reading-sources.md) says.
-3. Find its capabilities as [capabilities](../references/capabilities.md) says, and its outside tools as [ecosystem signals](../references/ecosystem-signals.md) says.
+1. On a refresh or a check request, run [`changes`](../references/engine.md).
+2. Read the project in the order of [reading sources](../references/reading-sources.md).
+3. Find its [capabilities](../references/capabilities.md) and its [outside tools](../references/ecosystem-signals.md).
 4. On a check request, read [check](03-check.md).
-5. Fill the [fact sheet](../assets/fact-sheet.md) for each file the capabilities select, as it says.
+5. Fill the [fact sheet](../assets/fact-sheet.md) for each file the capabilities select.
 6. On a refresh, read [check](03-check.md); otherwise read [write](02-write.md).
 
 ## Output

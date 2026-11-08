@@ -9,9 +9,9 @@ The memory bank in `aidd_docs/memory/`.
 ## Process
 
 1. Stop unless `aidd_docs/memory/` holds a `.md`.
-2. Take the picks as [tools](../references/tools.md) says.
-3. Ensure each picked tool's context file carries the block, as tools says.
-4. Run `sync` for the picked tools as [engine](../references/engine.md) says.
+2. Take the picks per [tools](../references/tools.md).
+3. Ensure each picked tool's context file carries the block, per [tools](../references/tools.md).
+4. Run [`sync`](../references/engine.md) for the picked tools.
 
 ## Output
 

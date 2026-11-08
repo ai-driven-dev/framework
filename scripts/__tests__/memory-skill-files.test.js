@@ -214,7 +214,7 @@ test("check reads the bank at its root: a team file is kept and never linted or 
   assert.match(section(protocol, "Structure"), /report it/u, "a misplaced file is not only reported");
   assert.doesNotMatch(check, /offer[^\n]*\bmove\b|\bmove\b[^\n]*offer/iu, "check offers a move");
   const report = skillText("assets/report-message.md");
-  assert.match(skillText("actions/03-check.md"), /check request, reply as \[report message\]\(\.\.\/assets\/report-message\.md\)/u, "check does not point to the report message");
+  assert.match(skillText("actions/03-check.md"), /check request, reply with the \[report message\]\(\.\.\/assets\/report-message\.md\)/u, "check does not point to the report message");
   assert.match(report, /On a check request nothing is written: reply `Needs attention` only, one line per finding with its file/u);
   assert.match(report, /the bank is current when nothing drifted/u);
   assert.match(section(protocol, "Format"), /whole-bank check/u, "Format does not run the engine");
@@ -237,7 +237,7 @@ test("write ends on the engine's guard, which lists what the sheet did not appro
   assert.match(steps.at(-2), /`vanished`/u, "no step runs the guard before the sync");
   assert.match(steps.at(-2), /change nothing/u);
   assert.match(steps.at(-1), /Go on to \[sync\]/u);
-  assert.match(steps.at(-1), /reply as \[report message\]\(\.\.\/assets\/report-message\.md\) shows, with what `vanished` listed/u, "the last step does not reply through the report message");
+  assert.match(steps.at(-1), /reply with the \[report message\]\(\.\.\/assets\/report-message\.md\), with what `vanished` listed/u, "the last step does not reply through the report message");
   assert.match(skillText("references/engine.md"), /memory\.cjs vanished \. --sheet/u);
   assert.match(skillText("references/engine.md"), /HEAD only/u, "the guard hides that uncommitted edits are not seen");
   assert.doesNotMatch(actionsText(), /memory\.cjs lines/u);
@@ -399,7 +399,7 @@ test("scan collects the sheet into the task folder and write shows it once, afte
   assert.match(sheet, /aidd_docs\/tasks\/<yyyy_mm>\/<yyyy_mm_dd>_memory-<scope>\/facts\.md/u);
   assert.doesNotMatch(scan, /Show/u, "scan shows the sheet before check has added its lines");
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
-  assert.match(steps[0], /Show the sheet as \[sheet message\]\(\.\.\/assets\/sheet-message\.md\) shows/u, "write does not show the sheet through the sheet message");
+  assert.match(steps[0], /Show the \[sheet message\]\(\.\.\/assets\/sheet-message\.md\)/u, "write does not show the sheet through the sheet message");
   assert.match(steps[1], /Wait for the answer, then write it into the sheet/u, "the answers do not reach the sheet");
   assert.match(skillText("actions/03-check.md"), /ask(?:ing)? nothing/u, "check asks on a refresh");
 });
