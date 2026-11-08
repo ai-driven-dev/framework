@@ -192,11 +192,40 @@ function forgetChats(dir) {
   for (const name of chatsOf(fs.readdirSync(projects), dir)) fs.rmSync(path.join(projects, name), { recursive: true, force: true });
 }
 
-/** Runs one step in `cwd`; its output goes to `outFile`. Returns whether claude exited 0. */
+/** The arguments of one step: a stream of events, so the commands, the tool results and the hook messages stay readable. */
+const stepArgs = ["-p", "--model", "haiku", "--no-session-persistence", "--plugin-dir", PLUGIN, "--setting-sources", "local", "--allowedTools", ALLOWED_TOOLS, "--output-format", "stream-json", "--verbose", "--include-hook-events"];
+
+/** The text of a tool result, which Claude gives as a string or as blocks. */
+const textOf = (content) => (typeof content === "string" ? content : (content ?? []).map((block) => block.text ?? "").join("\n"));
+
+/** Reads a stream of events: `trace` holds one line per hook message, text, command and tool result; `reply` is the final reply. */
+function traceOf(stream) {
+  const entries = [];
+  let reply = "";
+  for (const raw of stream.split("\n")) {
+    let event;
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    if (event.type === "result") reply = event.result ?? "";
+    if (event.type === "system" && event.subtype === "hook_response" && event.output) entries.push({ kind: "hook", name: event.hook_name, exit: event.exit_code, output: event.output });
+    for (const block of event.message?.content ?? []) {
+      if (block.type === "text") entries.push({ kind: "text", text: block.text });
+      if (block.type === "tool_use") entries.push({ kind: "call", tool: block.name, input: block.input });
+      if (block.type === "tool_result") entries.push({ kind: "result", error: block.is_error === true, content: textOf(block.content) });
+    }
+  }
+  return { trace: entries.map((entry) => `${JSON.stringify(entry)}\n`).join(""), reply };
+}
+
+/** Runs one step in `cwd`; its reply goes to `outFile` and its trace beside it, in `<name>.trace.jsonl`. Returns whether claude exited 0. */
 function runStep(cwd, request, outFile) {
-  const args = ["-p", "--model", "haiku", "--no-session-persistence", "--plugin-dir", PLUGIN, "--setting-sources", "local", "--allowedTools", ALLOWED_TOOLS, "--output-format", "text"];
-  const run = spawnSync("claude", args, { cwd, input: request, encoding: "utf8", timeout: STEP_TIMEOUT_MS, maxBuffer: 2 ** 28 });
-  fs.writeFileSync(outFile, `${run.stdout ?? ""}${run.stderr ?? ""}\nexit ${run.status}\n`);
+  const run = spawnSync("claude", stepArgs, { cwd, input: request, encoding: "utf8", timeout: STEP_TIMEOUT_MS, maxBuffer: 2 ** 28 });
+  const { trace, reply } = traceOf(run.stdout ?? "");
+  fs.writeFileSync(outFile, `${reply}${run.stderr ?? ""}\nexit ${run.status}\n`);
+  fs.writeFileSync(outFile.replace(/\.out$/, ".trace.jsonl"), trace);
   forgetChats(cwd);
   return run.status === 0;
 }
@@ -251,4 +280,4 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
 
 if (require.main === module) process.exit(main());
 
-module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main };
+module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };

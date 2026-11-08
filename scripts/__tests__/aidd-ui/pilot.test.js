@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, makeTmp, removeTmp, filesUnder, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
-const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main } = require("../../aidd-ui-pilot.cjs");
+const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep } = require("../../aidd-ui-pilot.cjs");
 
 // The pilot's checks hold without AI: they read files, run the engine, and compare trees.
 
@@ -397,5 +397,64 @@ describe("aidd-ui pilot request suffix", () => {
     const request = requestOf("blank", "02-brand", "brand");
     assert.ok(request.includes("state each choice in your final reply"));
     assert.ok(request.includes("write no file the skill does not name"));
+  });
+});
+
+describe("aidd-ui pilot trace", () => {
+  const line = (event) => JSON.stringify(event);
+  const stream = [
+    line({ type: "system", subtype: "hook_started", hook_name: "Stop" }),
+    line({ type: "system", subtype: "hook_response", hook_name: "PostToolUse:Bash", output: "", exit_code: 0 }),
+    line({ type: "system", subtype: "hook_response", hook_name: "PostToolUse:Bash", output: "no design system", exit_code: 2 }),
+    line({ type: "assistant", message: { content: [{ type: "text", text: "starting" }, { type: "tool_use", name: "Bash", input: { command: "node engine bump --created x" } }] } }),
+    line({ type: "user", message: { content: [{ type: "tool_result", content: "history written", is_error: false }] } }),
+    line({ type: "user", message: { content: [{ type: "tool_result", content: [{ type: "text", text: "refused" }], is_error: true }] } }),
+    "not json",
+    line({ type: "result", result: "all done" }),
+  ].join("\n");
+
+  it("spawns a step with a stream that carries tool calls, results and hook output", () => {
+    assert.ok(stepArgs.includes("stream-json") && stepArgs.includes("--verbose") && stepArgs.includes("--include-hook-events"));
+    assert.ok(stepArgs.includes("--no-session-persistence"));
+  });
+
+  it("keeps each command, tool result and hook message, in order, and the reply apart", () => {
+    const { trace, reply } = traceOf(stream);
+    assert.deepEqual(trace.trim().split("\n").map((entry) => JSON.parse(entry)), [
+      { kind: "hook", name: "PostToolUse:Bash", exit: 2, output: "no design system" },
+      { kind: "text", text: "starting" },
+      { kind: "call", tool: "Bash", input: { command: "node engine bump --created x" } },
+      { kind: "result", error: false, content: "history written" },
+      { kind: "result", error: true, content: "refused" },
+    ]);
+    assert.equal(reply, "all done");
+  });
+
+  it("gives an empty trace and reply for output that holds no event", () => {
+    assert.deepEqual(traceOf(""), { trace: "", reply: "" });
+  });
+});
+
+describe("aidd-ui pilot step run", () => {
+  it("writes the reply to the .out file and the trace beside it", () => {
+    const tmp = makeTmp("pilot-step-");
+    const bin = path.join(tmp, "bin");
+    fs.mkdirSync(bin);
+    const events = [
+      { type: "assistant", message: { content: [{ type: "tool_use", name: "Bash", input: { command: "ls" } }] } },
+      { type: "result", result: "the reply" },
+    ].map((event) => JSON.stringify(event)).join("\n");
+    fs.writeFileSync(path.join(bin, "claude"), `#!/bin/sh\ncat <<'EOF'\n${events}\nEOF\n`, { mode: 0o755 });
+    const before = process.env.PATH;
+    process.env.PATH = `${bin}:${before}`;
+    try {
+      const out = path.join(tmp, "p.01-journeys.out");
+      assert.equal(runStep(tmp, "request", out), true);
+      assert.match(fs.readFileSync(out, "utf8"), /^the reply\n?exit 0/);
+      assert.deepEqual(JSON.parse(fs.readFileSync(path.join(tmp, "p.01-journeys.trace.jsonl"), "utf8")), { kind: "call", tool: "Bash", input: { command: "ls" } });
+    } finally {
+      process.env.PATH = before;
+      removeTmp(tmp);
+    }
   });
 });
