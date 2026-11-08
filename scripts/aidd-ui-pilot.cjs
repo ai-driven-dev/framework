@@ -3,8 +3,9 @@
  * Runs the aidd-ui skills in chain, with Haiku, on throwaway copies of three projects (a blank
  * one and two real checkouts), then checks without AI what the chain left: the engine's verdict,
  * a wireframe behind every journey step, and the project's code untouched. Run it by hand after
- * a change to the plugin; nothing calls it. Each step must also change only its own files,
- * and at least one of them.
+ * a change to the plugin; nothing calls it. Each step must also change only its own files
+ * and the engine files it drives, and at least one of its own. A hand-written history
+ * and an engine-written one cannot be told apart.
  *
  * The copies keep the tracked files of a checkout and nothing else, made by `git archive`, so the
  * checkout itself is only read. They live under the system temp folder (set `TMPDIR` to choose
@@ -79,8 +80,13 @@ const OWNED = {
   "03-foundations": ["system.md", "tokens.json", "themes/", "platforms/", "breakpoints/"],
   "04-components": ["components/", "assets/"],
 };
-// What the engine writes for any step.
-const ENGINE_FILES = ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"];
+// What the engine writes for each skill's step. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
+const ENGINE_FILES = {
+  "01-journeys": ["history.md"],
+  "02-brand": [],
+  "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
+  "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
+};
 
 const isIn = (file, entries) => entries.some((entry) => (entry.endsWith("/") ? file.startsWith(`${UI_DIR}/${entry}`) : file === `${UI_DIR}/${entry}`));
 
@@ -88,7 +94,7 @@ const isIn = (file, entries) => entries.some((entry) => (entry.endsWith("/") ? f
  * engine's files, then, when it changed none of its own, that. */
 function stepBreaks(skill, before, after) {
   const changed = changedBetween(before, after);
-  const outside = changed.filter((file) => !isIn(file, [...OWNED[skill], ...ENGINE_FILES]));
+  const outside = changed.filter((file) => !isIn(file, [...OWNED[skill], ...ENGINE_FILES[skill]]));
   return [...outside.map((file) => `${skill} wrote ${file}`), ...(changed.some((file) => isIn(file, OWNED[skill])) ? [] : [`${skill} wrote none of its files`])];
 }
 

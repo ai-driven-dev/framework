@@ -190,15 +190,31 @@ describe("aidd-ui pilot step files", () => {
     assert.deepEqual(stepBreaks("04-components", {}, after("components/a.md", "assets/b.md", "journeys/c.md")), ["04-components wrote aidd_docs/ui/journeys/c.md"]);
   });
 
-  it("allows each file of its set, a folder's file included, and the engine's files", () => {
+  it("allows each file of its set, a folder's file included, and the engine's files it drives", () => {
     for (const [skill, entries] of Object.entries(OWNED)) {
       const files = entries.map((entry) => (entry.endsWith("/") ? `${entry}x.md` : entry));
-      assert.deepEqual(stepBreaks(skill, {}, after(...files, ...ENGINE_FILES)), [], skill);
+      assert.deepEqual(stepBreaks(skill, {}, after(...files, ...ENGINE_FILES[skill])), [], skill);
+    }
+  });
+
+  it("lets each skill's step drive only these engine files", () => {
+    assert.deepEqual(ENGINE_FILES, {
+      "01-journeys": ["history.md"],
+      "02-brand": [],
+      "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
+      "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
+    });
+  });
+
+  it("names a step that wrote an engine file it does not drive", () => {
+    const own = { "01-journeys": "journeys/x.md", "02-brand": "brand.md", "03-foundations": "system.md", "04-components": "components/x.md" };
+    for (const [skill, engineFiles] of Object.entries(ENGINE_FILES)) {
+      for (const file of ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"].filter((each) => !engineFiles.includes(each))) assert.deepEqual(stepBreaks(skill, {}, after(own[skill], file)), [`${skill} wrote ${ui(file)}`], `${skill} ${file}`);
     }
   });
 
   it("names a step that wrote none of its files, the engine's files aside", () => {
-    assert.deepEqual(stepBreaks("03-foundations", {}, after(...ENGINE_FILES)), ["03-foundations wrote none of its files"]);
+    assert.deepEqual(stepBreaks("03-foundations", {}, after(...ENGINE_FILES["03-foundations"])), ["03-foundations wrote none of its files"]);
     assert.deepEqual(stepBreaks("03-foundations", {}, {}), ["03-foundations wrote none of its files"]);
   });
 
@@ -210,7 +226,7 @@ describe("aidd-ui pilot step files", () => {
 
 describe("aidd-ui pilot chain run", () => {
   const SKILL_OF = /^\/aidd-ui:(\S+) /;
-  const ownedAnywhere = (rel) => ENGINE_FILES.includes(rel) || Object.values(OWNED).some((entries) => entries.some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)));
+  const ownedAnywhere = (rel) => Object.values(ENGINE_FILES).some((files) => files.includes(rel)) || Object.values(OWNED).some((entries) => entries.some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)));
   let full;
   let base;
 
@@ -233,7 +249,7 @@ describe("aidd-ui pilot chain run", () => {
   };
   const filesOf = (skill) => filesUnder(path.join(full, UI)).map((file) => path.relative(full, file)).filter((file) => {
     const rel = path.relative(UI, file);
-    return OWNED[skill].some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)) || (skill === "03-foundations" && ENGINE_FILES.includes(rel));
+    return OWNED[skill].some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)) || ENGINE_FILES[skill].includes(rel);
   });
   const lay = (skill) => (cwd) => filesOf(skill).forEach((file) => copyFromFull(cwd, file));
 
