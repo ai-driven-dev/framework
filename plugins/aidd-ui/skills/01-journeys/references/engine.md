@@ -7,11 +7,6 @@
 
 `<engine>` is that path, run with `node`.
 
-## Commands
-
-- `validate`
-- `bump`
-
 `node <engine> help <command>` says what each does.
 
 | Step | Command |

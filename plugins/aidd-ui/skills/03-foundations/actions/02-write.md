@@ -18,7 +18,7 @@ The output of [prepare](01-prepare.md).
 4. For a change, raise the versions per [versions](../references/versions.md).
 5. Write the tokens not extracted, new or changed.
    - Follow [tokens](../references/tokens.md) and the brand direction.
-6. Generate the stylesheet until nothing blocks, per [engine](../references/engine.md). A blocker the engine says another skill owes may stay.
+6. Generate the stylesheet until nothing blocks, per [engine](../references/engine.md).
 7. If this run created `system`, record it per [engine](../references/engine.md).
 8. Read [conclude](03-conclude.md).
 

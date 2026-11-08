@@ -7,14 +7,6 @@
 
 `<engine>` is that path, run with `node`.
 
-## Commands
-
-- `validate`
-- `tokens`
-- `impact`
-- `bump`
-- `publish`
-
 `node <engine> help <command>` says what each does.
 
 | Step | Command |

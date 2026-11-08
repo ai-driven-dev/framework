@@ -7,15 +7,6 @@
 
 `<engine>` is that path, run with `node`.
 
-## Commands
-
-- `validate`
-- `tokens`
-- `impact`
-- `extract`
-- `bump`
-- `publish`
-
 `node <engine> help <command>` says what each does.
 
 | Step | Command |
@@ -27,8 +18,6 @@
 | write 7, record the system created | `node <engine> bump --task <task folder> --created system` |
 | conclude 1 and 4, validate | `node <engine> validate` |
 | conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
-
-Exit 1 of `tokens` stays for a blocker another skill owes.
 
 ## Owed
 

@@ -290,10 +290,10 @@ describe("aidd-ui engine references", () => {
   const { HELP } = require(path.join(PLUGIN, "hooks/lib/help.cjs"));
   const engineOf = (folder) => fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8");
 
-  it("hold the install table, the command names and the owed table", () => {
+  it("hold the install table, the step table and the owed table", () => {
     for (const folder of FOLDERS) {
       const text = engineOf(folder);
-      assert.deepEqual(text.split("\n").filter((line) => line.startsWith("#")), ["# Engine", "## Commands", "## Owed"], folder);
+      assert.deepEqual(text.split("\n").filter((line) => line.startsWith("#")), ["# Engine", "## Owed"], folder);
       assert.ok(text.includes("| Install | Path |"), folder);
       assert.ok(text.includes("`<engine>` is that path, run with `node`."), folder);
       assert.ok(text.includes("`node <engine> help <command>`"), folder);
@@ -341,11 +341,11 @@ describe("aidd-ui engine references", () => {
     }
   });
 
-  it("list only commands the engine's help knows", () => {
+  it("run only commands the engine's help knows", () => {
     for (const folder of FOLDERS) {
-      const commands = engineOf(folder).split("## Commands")[1].split("## Owed")[0].split("\n").filter((line) => line.startsWith("- "));
-      assert.ok(commands.length > 0, folder);
-      for (const line of commands) assert.ok(Object.hasOwn(HELP, line.match(/^- `([^`]+)`$/)?.[1]), `${folder}: ${line}`);
+      const rows = engineOf(folder).split("\n").filter((line) => /^\| (prepare|write|conclude) \d/.test(line));
+      assert.ok(rows.length > 0, folder);
+      for (const row of rows) assert.ok(Object.hasOwn(HELP, row.match(/`node <engine> ([^ `]+)/)?.[1]), `${folder}: ${row}`);
     }
   });
 });
@@ -353,20 +353,22 @@ describe("aidd-ui engine references", () => {
 describe("aidd-ui facts the skills keep", () => {
   const read = (folder, file) => fs.readFileSync(path.join(SKILL(folder), file), "utf8");
 
-  it("say, where a task folder is taken, that it need not exist", () => {
-    for (const folder of ["01-journeys", "03-foundations", "04-components"]) assert.ok(read(folder, "actions/01-prepare.md").includes("It need not exist: only `history.md` rows cite it."), folder);
+  it("say, where a task folder is taken, that it may be absent", () => {
+    for (const folder of ["01-journeys", "03-foundations", "04-components"]) assert.match(read(folder, "actions/01-prepare.md"), /(need|has|have) not (to )?exist|may (not exist|be absent)|can be absent/i, folder);
   });
 
   it("say a path link sits on its code root's platform, and focus is the element's own", () => {
     const elements = read("04-components", "references/elements.md");
     assert.ok(elements.includes("A path link sits on its code root's platform."));
-    assert.ok(elements.includes("Not `focus` if only an element it uses does"));
+    const states = elements.split("\n").find((line) => line.startsWith("| `states`"));
+    for (const fact of ["`focus`", "itself", "it uses"]) assert.ok(states.includes(fact), `states row lacks ${fact}`);
   });
 
   it("give the ignore of an unlinked file to the foundations alone, the components only naming it", () => {
-    const row = (folder) => read(folder, "references/extraction.md").split("\n").find((line) => line.startsWith("| file no record links (C3)"));
-    assert.ok(row("03-foundations").includes("`ignore`"));
-    assert.ok(row("04-components").includes("named to the user for `system.md`'s `ignore`"));
+    const mentions = (folder) => filesUnder(SKILL(folder)).filter((file) => file.endsWith(".md")).flatMap((file) => fs.readFileSync(file, "utf8").split("\n").filter((line) => line.includes("`ignore`")).map((line) => ({ file: path.relative(SKILLS, file), line })));
+    assert.ok(mentions("03-foundations").some(({ line }) => line.startsWith("| file no record links (C3)")));
+    for (const folder of ["01-journeys", "02-brand", "04-components"]) for (const { file, line } of mentions(folder)) assert.ok(line.startsWith("| file no record links (C3)") && line.includes("to the user"), `${file} writes ignore: ${line.slice(0, 60)}`);
+    assert.equal(mentions("04-components").length, 1);
   });
 });
 
