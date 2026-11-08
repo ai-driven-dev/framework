@@ -17,7 +17,7 @@ The output of [prepare](01-prepare.md).
    - A value change rewrites no render: renders read `tokens.css`.
    - Deprecate per [versions](../references/versions.md).
 4. Generate the stylesheet until nothing blocks, per [engine](../references/engine.md).
-5. For the records this run created, record them per [engine](../references/engine.md).
+5. Record in the history each element this run created, per [engine](../references/engine.md).
 6. Read [conclude](03-conclude.md).
 
 ## Output

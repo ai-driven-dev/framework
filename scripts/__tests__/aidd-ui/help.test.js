@@ -49,6 +49,14 @@ describe("aidd-ui engine help", () => {
     assert.ok(engine("help", "bump").stdout.includes("`--task` names a folder under `aidd_docs/tasks/`, never written."));
   });
 
+  it("keeps the facts the engine's behaviour owes the skills: refusals, an uncreated task folder, ungrouped validation", () => {
+    const text = (name) => engine("help", name).stdout;
+    assert.ok(text("bump").includes("`--created` refuses `brand`, and an id that already has rows."));
+    assert.ok(text("bump").includes("`--task` need not exist: `history.md` rows only cite it."));
+    assert.ok(text("extract").includes("Refuses when it cannot: no `system.md`, no `code-tokens`, or an unreadable file."));
+    assert.ok(text("validate").includes("It prints every problem, ungrouped."));
+  });
+
   it("exits 2 on an unknown command, listing the commands on stderr alone", () => {
     const run = engine("help", "valdate");
     assert.equal(run.status, 2);

@@ -24,8 +24,8 @@
 | write 2, raise a removal | `node <engine> bump --task <task folder> --removed <ids>`, in place of `--change` |
 | write 4, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
 | write 5, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
-| conclude 1, validate | `node <engine> validate` |
-| conclude 5, the user publishes | `node <engine> publish <id>` |
+| conclude 1 and 4, validate | `node <engine> validate` |
+| conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
 
 `bump` prints JSON, and `left` lists the elements reached, not raised.
 

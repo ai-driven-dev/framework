@@ -15,7 +15,7 @@ The output of [prepare](01-prepare.md).
    - Follow [wireframes](../references/wireframes.md).
    - From the code, take zones, states and components from the screen's code.
 3. For each journey or wireframe a change reaches, raise it per [engine](../references/engine.md).
-4. For the records this run created, record them per [engine](../references/engine.md).
+4. Record in the history each record this run created, per [engine](../references/engine.md).
 5. Read [conclude](03-conclude.md).
 
 ## Output

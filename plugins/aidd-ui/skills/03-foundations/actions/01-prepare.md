@@ -13,6 +13,7 @@ The request.
 3. If `aidd_docs/ui/brand.md` is missing, stop and say so.
 4. Read its personality, references and anti-references: the tokens' direction.
 5. Take the task folder the user named, else ask.
+   - It need not exist: only `history.md` rows cite it.
 6. For a change only:
    - If vague, ask which token changes, and to which value.
    - Measure what it reaches per [engine](../references/engine.md), and show it.

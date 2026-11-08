@@ -26,7 +26,7 @@
 | write 6, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
 | write 7, record the system created | `node <engine> bump --task <task folder> --created system` |
 | conclude 1 and 4, validate | `node <engine> validate` |
-| conclude 5, the user publishes | `node <engine> publish <id>` |
+| conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
 
 `bump` prints JSON. Its `left` lists the elements and screens reached, not raised. `extract` prints JSON too, and `left` lists what it did not write. Exit 1 of `tokens` stays for a blocker owed below.
 

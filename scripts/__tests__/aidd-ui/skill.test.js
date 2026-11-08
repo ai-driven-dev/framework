@@ -290,6 +290,67 @@ describe("aidd-ui engine references", () => {
   });
 });
 
+describe("aidd-ui facts the skills keep", () => {
+  const read = (folder, file) => fs.readFileSync(path.join(SKILL(folder), file), "utf8");
+
+  it("say, where a task folder is taken, that it need not exist", () => {
+    for (const folder of ["01-journeys", "03-foundations", "04-components"]) assert.ok(read(folder, "actions/01-prepare.md").includes("It need not exist: only `history.md` rows cite it."), folder);
+  });
+
+  it("say a path link sits on its code root's platform, and focus is the element's own", () => {
+    const elements = read("04-components", "references/elements.md");
+    assert.ok(elements.includes("A path link sits on its code root's platform."));
+    assert.ok(elements.includes("Not `focus` if only an element it uses does"));
+  });
+
+  it("give the ignore of an unlinked file to the foundations alone, the components only naming it", () => {
+    const row = (folder) => read(folder, "references/extraction.md").split("\n").find((line) => line.startsWith("| file no record links (C3)"));
+    assert.ok(row("03-foundations").includes("`ignore`"));
+    assert.ok(row("04-components").includes("named to the user for `system.md`'s `ignore`"));
+  });
+});
+
+describe("aidd-ui engine step table", () => {
+  const WHAT = [
+    [/^node <engine> impact\b/, /reaches/],
+    [/^node <engine> extract\b/, /extract/],
+    [/^node <engine> tokens\b/, /stylesheet/],
+    [/^node <engine> validate\b/, /Validate/],
+    [/^node <engine> publish\b/, /publishes/],
+    [/^node <engine> bump .*--created/, /record/i],
+    [/^node <engine> bump .*--(change|removed)/, /raise/],
+  ];
+  const stepsOf = (text) => {
+    const steps = new Map();
+    let current = null;
+    for (const line of text.split("\n")) {
+      const head = line.match(/^(\d+)\. /);
+      if (head) steps.set((current = Number(head[1])), line);
+      else if (line.startsWith("## ")) current = null;
+      else if (current !== null) steps.set(current, `${steps.get(current)}\n${line}`);
+    }
+    return steps;
+  };
+
+  it("names, for each row, steps of that action which exist and say what the command does", () => {
+    for (const folder of FOLDERS) {
+      const rows = fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").split("\n").filter((line) => /^\| (prepare|write|conclude) \d/.test(line));
+      assert.ok(rows.length > 0, folder);
+      for (const row of rows) {
+        const [, step, command] = row.split("|").map((cell) => cell.trim());
+        const action = step.split(" ")[0];
+        const file = fs.readdirSync(path.join(SKILL(folder), "actions")).find((name) => name.endsWith(`-${action}.md`));
+        const steps = stepsOf(fs.readFileSync(path.join(SKILL(folder), "actions", file), "utf8"));
+        const [, expected] = WHAT.find(([shape]) => shape.test(command.replace(/^`|`.*$/g, "")));
+        for (const number of step.split(",")[0].match(/\d+/g)) {
+          assert.ok(steps.has(Number(number)), `${folder}: ${step} names no step`);
+          assert.ok(expected.test(steps.get(Number(number))), `${folder}: ${step} does not say what ${command} does`);
+        }
+      }
+    }
+  });
+});
+
 describe("aidd-ui system answers", () => {
   const foundations = (file) => fs.readFileSync(path.join(SKILL("03-foundations"), file), "utf8");
 

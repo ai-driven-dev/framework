@@ -11,6 +11,7 @@ The request.
 1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
 2. Read `aidd_docs/ui/` and the UI code. Name the case per [cases](../references/cases.md).
 3. Take the task folder the user named, else ask.
+   - It need not exist: only `history.md` rows cite it.
 4. Settle the persona:
    - A brief under `aidd_docs/` describing one: propose it as written.
    - Otherwise ask who walks the journey and what they want.
