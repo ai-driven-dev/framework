@@ -4,7 +4,7 @@ The one place that says what a memory file must be.
 
 ## Machine rules
 
-The engine checks these: fix each error on the lines you wrote, check each warning against the code and keep a true line.
+The engine checks these.
 
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |
@@ -18,14 +18,13 @@ The engine checks these: fix each error on the lines you wrote, check each warni
 
 ## Reader rules
 
-- These bind every memory file.
-- A line the user wrote is exempt only from Non-derivable, Points to the code and Current state only.
+These bind every memory file.
 
-| Rule | Keep | Drop |
-| --- | --- | --- |
-| Non-derivable | the macro and the why: a decision and its constraint, a convention the files repeat without stating, a gotcha that surprises a newcomer, the stack and how the main parts fit, the domain words a contributor must know | a fact one open file re-derives, anything true of every such project |
-| Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list |
-| One fact, one home | - | the copy, the fact keeps its home |
-| No version | `React` | `React 19` |
-| Current state only | - | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id, a secret or credential value |
-| A diagram stands alone | - | a note or a caption under it |
+| Rule | Keep | Drop | A line the user wrote |
+| --- | --- | --- | --- |
+| Non-derivable | the macro and the why: a decision and its constraint, a convention the files repeat without stating, a gotcha that surprises a newcomer, the stack and how the main parts fit, the domain words a contributor must know | a fact one open file re-derives, anything true of every such project | exempt |
+| Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list | exempt |
+| One fact, one home | - | the copy, the fact keeps its home | bound |
+| No version | `React` | `React 19` | bound |
+| Current state only | - | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id, a secret or credential value | exempt |
+| A diagram stands alone | - | a note or a caption under it | bound |

@@ -403,13 +403,16 @@ const TOC_OPEN = "<!-- files:start -->";
 const TOC_CLOSE = "<!-- files:end -->";
 const TOC_LOOSE = /^<!--\s*files:(?:start|end)\s*-->$/u;
 
-// Only Claude Code resolves the `@` import form, so AGENTS.md and the copilot instructions
-// take a markdown link, where an `@` line would be inert text loading nothing.
+// Only Claude Code resolves the `@` import form, so AGENTS.md takes a markdown link, where an
+// `@` line would be inert text loading nothing.
 const TARGET_FILES = [
   { path: "CLAUDE.md", syntax: "at" },
   { path: "AGENTS.md", syntax: "link" },
-  { path: ".github/copilot-instructions.md", syntax: "link" },
 ];
+
+// Copilot reads AGENTS.md; its own file carries this line instead of a second copy of the block.
+const COPILOT_FILE = ".github/copilot-instructions.md";
+const COPILOT_POINTER = "Project memory: [AGENTS.md](../AGENTS.md).";
 
 // Mirrors the skill's references/tools.md.
 const TOOL_FILES = {
@@ -418,7 +421,7 @@ const TOOL_FILES = {
   cursor: "AGENTS.md",
   opencode: "AGENTS.md",
   antigravity: "AGENTS.md",
-  copilot: ".github/copilot-instructions.md",
+  copilot: "AGENTS.md",
 };
 
 class UnknownToolError extends Error {}
@@ -583,6 +586,27 @@ function filledBlock(original, inner, root) {
   return { text: spliceBlock(migrated, found, inner) };
 }
 
+/**
+ * The copilot file with the pointer line in place of an old block, or appended when `create` and
+ * no block stands, or as it is. `problem` and `held` mean the same as for a filled block.
+ */
+function pointedText(original, oldBlock, root, create) {
+  const current = findBlock(original, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
+  const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
+  const problem = blockProblem(original, current, legacy);
+  if (problem !== null) return { problem };
+  const migrated = migrateLegacyMarkers(original, legacy);
+  const found = findBlock(migrated, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
+  const lines = migrated.split("\n");
+  if (found.status !== "ok") {
+    if (!create || lines.some((line) => line.trim() === COPILOT_POINTER)) return { text: original };
+    return { text: original.trim() === "" ? `${COPILOT_POINTER}\n` : `${original.replace(/\n*$/u, "")}\n\n${COPILOT_POINTER}\n` };
+  }
+  const foreign = foreignLine(lines.map((line) => line.replace(/\r$/u, "")), found, oldBlock, root);
+  if (foreign !== null) return { held: foreign };
+  return { text: [...lines.slice(0, found.openLine), COPILOT_POINTER, ...lines.slice(found.closeLine + 1)].join("\n") };
+}
+
 function tryWrite(file, text, shown, failed) {
   try {
     fs.writeFileSync(file, text, "utf8");
@@ -621,6 +645,26 @@ function sync(root, tools = [], { quiet = false } = {}) {
       result.held.push(target.path);
       report(`${target.path} holds a line the memory block would not write ("${held}"), not synced`);
     } else if (text !== original && tryWrite(target.file, text, target.path, result.failed)) result.changed.push(target.path);
+  }
+
+  const copilot = path.join(absolute, COPILOT_FILE);
+  const picked = tools.includes("copilot");
+  const sharesTarget = fs.existsSync(copilot) && ["CLAUDE.md", "AGENTS.md"].some((name) => realish(path.join(absolute, name)) === realish(copilot));
+  // A session start only retires an old block; creating the file is the pick's.
+  if ((picked || tools.length === 0) && !sharesTarget) {
+    const original = readTextOrNull(copilot) ?? "";
+    const oldBlock = [...buildBlockLines(lists, "link", "../"), ...buildBlockLines(lists, "at")];
+    const { text, problem, held } = pointedText(original, oldBlock, absolute, picked);
+    if (problem !== undefined) {
+      result.unpaired.push(COPILOT_FILE);
+      report(`${COPILOT_FILE} ${problem}, not synced`);
+    } else if (held !== undefined) {
+      result.held.push(COPILOT_FILE);
+      report(`${COPILOT_FILE} holds a line the memory block would not write ("${held}"), not synced`);
+    } else if (text !== original) {
+      fs.mkdirSync(path.dirname(copilot), { recursive: true });
+      if (tryWrite(copilot, text, COPILOT_FILE, result.failed)) result.changed.push(COPILOT_FILE);
+    }
   }
 
   const readme = path.join(absolute, MEMORY_DIR, MEMORY_README);

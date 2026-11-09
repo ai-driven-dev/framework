@@ -1,8 +1,6 @@
 # Reading sources
 
-What the scan reads to understand the project.
-
-- What survives the reading is `memory-rules.md`'s reader rules.
+What the scan reads to understand the project; what survives the reading is [memory-rules](memory-rules.md)'s reader rules.
 
 ## Read in this order
 
@@ -20,9 +18,19 @@ What the scan reads to understand the project.
 
 ## Reading rules
 
-- A command or a convention comes from the file that defines it, as an `R` line; prose that names one is checked against that file.
-- Read the root README whole, and the other docs a section needs.
-- Read the code last: it corrects the others and is never summarised.
-- Read every workspace of a monorepo, never the root manifest alone.
-- Read a directory whose name repeats across areas once.
-- Read nothing under a dependency directory, a build output, or a path the VCS ignores.
+| Case | Do |
+| --- | --- |
+| A command or a convention | take it from the file that defines it, as an `R` line; prose that names one is checked against that file |
+| The root README | read it whole, and the other docs a section needs |
+| The code | read it last: it corrects the others and is never summarised |
+| A monorepo | read every workspace, never the root manifest alone |
+| A directory whose name repeats across areas | read it once |
+| A dependency directory, a build output, or a path the VCS ignores | read nothing under it |
+
+## Filling the sheet
+
+| Slot | Fill |
+| --- | --- |
+| One the bank answers | skip it |
+| Any other | every fact the sources state for it, one line each: each gate, decision, gotcha, rule and release step |
+| The brief's `Users`, `Main journey` and `Business rules` | only what the repository states, else a `Q` line, never invented; a setup or an audit collects them, a refresh from a base never adds them |

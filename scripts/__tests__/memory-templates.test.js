@@ -32,7 +32,8 @@ function capabilityRows() {
     .readFileSync(path.join(SKILL, "references/capabilities.md"), "utf8")
     .split(/\r?\n/u)
     .filter((line) => line.startsWith("| `"))
-    .map((line) => line.replace(/^\||\|$/gu, "").split("|").map((cell) => cell.trim()));
+    .map((line) => line.replace(/^\||\|$/gu, "").split("|").map((cell) => cell.trim()))
+    .filter((cells) => cells.length === 6);
 }
 
 test("the templates are the twenty files, seven always written and thirteen conditional", () => {
@@ -176,9 +177,8 @@ test("the ui template opens on the aidd_docs/ui/ pointer and keeps its macro que
 test("a question with no answer is dropped, and a file with no answer is not written for a conditional row only", () => {
   const text = fs.readFileSync(path.join(SKILL, "references/capabilities.md"), "utf8");
   const lines = text.split(/\r?\n/u);
-  assert.ok(lines.some((line) => /question the writer answers; with no answer it is dropped\./u.test(line)), "capabilities.md does not drop a question with no answer");
-  assert.ok(lines.some((line) => /A conditional row with no answer at all writes no file;/u.test(line)), "a conditional row with no answer still writes its file");
-  assert.ok(lines.some((line) => /an always row is written whatever\./u.test(line)), "an always row is not written whatever");
+  assert.ok(lines.some((line) => /\| a question the writer answers; with no answer it is dropped \|$/u.test(line)), "capabilities.md does not drop a question with no answer");
+  assert.ok(lines.some((line) => /A conditional row with no answer at all \| writes no file; an always row is written whatever \|$/u.test(line)), "a conditional row with no answer still writes its file");
 });
 
 test("the vcs template asks for the platform, the repository and the CLI, and the standard followed", () => {

@@ -30,11 +30,14 @@ function skillMarkdown() {
   return filesUnder(SKILL).filter((file) => file.endsWith(".md"));
 }
 
+/** The first table of a file: the rows of its first run of `|` lines. */
 function tableOf(file) {
-  const rows = fs
-    .readFileSync(file, "utf8")
-    .split(/\r?\n/u)
-    .filter((line) => line.startsWith("|") && !/^\|[\s|:-]+\|$/u.test(line))
+  const lines = fs.readFileSync(file, "utf8").split(/\r?\n/u);
+  const first = lines.findIndex((line) => line.startsWith("|"));
+  const run = lines.slice(first);
+  const rows = run
+    .slice(0, run.findIndex((line) => !line.startsWith("|")) < 0 ? run.length : run.findIndex((line) => !line.startsWith("|")))
+    .filter((line) => !/^\|[\s|:-]+\|$/u.test(line))
     .map((line) => line.replace(/^\||\|$/gu, "").split("|").map((cell) => cell.trim()));
   return { header: rows[0], rows: rows.slice(1) };
 }
@@ -85,6 +88,11 @@ test("capabilities.md holds one row per file, and every memory template belongs 
   const templates = filesUnder(path.join(SKILL, "assets/templates/memory")).map((file) => path.basename(file));
   for (const template of templates) assert.ok(named.includes(template), `${template} belongs to no capability row`);
 });
+
+/** A message asset as it is sent: the template without its help comments. */
+function messageOf(file) {
+  return skillText(file).replace(/<!--[\s\S]*?-->\n*/gu, "");
+}
 
 function skillText(file) {
   return fs.readFileSync(path.join(SKILL, file), "utf8");
@@ -213,10 +221,10 @@ test("check reads the bank at its root: a team file is kept and never linted or 
   assert.match(section(protocol, "Format"), /a row produces/u, "Format is not bound to the files a row produces");
   assert.match(section(protocol, "Structure"), /report it/u, "a misplaced file is not only reported");
   assert.doesNotMatch(check, /offer[^\n]*\bmove\b|\bmove\b[^\n]*offer/iu, "check offers a move");
-  const report = skillText("assets/report-message.md");
-  assert.match(skillText("actions/03-check.md"), /check request, reply with the \[report message\]\(\.\.\/assets\/report-message\.md\)/u, "check does not point to the report message");
-  assert.match(report, /On a check request nothing is written: reply `Needs attention` only, one line per finding with its file/u);
-  assert.match(report, /the bank is current when nothing drifted/u);
+  const checkAction = skillText("actions/03-check.md");
+  assert.match(checkAction, /check request, reply with the \[report message\]\(\.\.\/assets\/report-message\.md\)/u, "check does not point to the report message");
+  assert.match(checkAction, /reply `Needs attention` only, one line per finding with its file/u);
+  assert.match(checkAction, /the bank is current when nothing drifted/u);
   assert.match(section(protocol, "Format"), /whole-bank check/u, "Format does not run the engine");
 });
 
@@ -234,6 +242,8 @@ test("write ends on the engine, writes only the root, and holds back a capabilit
 test("write ends on the engine's guard, which lists what the sheet did not approve, and keeps no copy of the bank", () => {
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
   assert.doesNotMatch(skillText("actions/02-write.md") + skillText("SKILL.md"), /scratch|copy it/u, "a bank copy or a scratch folder is left");
+  assert.match(steps[6], /fix each error on the lines you wrote, check each warning against the code and keep a true line/u, "the lint step does not say what to do with a warning");
+  assert.match(skillText("actions/01-scan.md"), /reading-sources\.md#filling-the-sheet/u, "scan does not point to the collecting rules");
   assert.match(steps.at(-2), /`vanished`/u, "no step runs the guard before the sync");
   assert.match(steps.at(-2), /change nothing/u);
   assert.match(steps.at(-1), /Go on to \[sync\]/u);
@@ -383,11 +393,12 @@ test("a recall case seeds a repo and expects the facts the restored slots must p
 test("the sheet asset fixes the grammar the engine parses, the four blocks and the cap of eight questions", () => {
   const asset = skillText("assets/fact-sheet.md");
   assert.ok(asset.includes("- <id> | <file> > <section> | <fact> | <source> | <answer>"), "no grammar line");
+  assert.ok(asset.startsWith("<!--") && asset.includes("{{") && !asset.includes("```"), "the sheet is not the template itself");
   for (const block of ["## Read", "## Inferred", "## Unknown", "## To rule"]) assert.ok(asset.includes(block), block);
   assert.match(asset, /eight/u);
   assert.match(asset, /Capabilities: C1/u, "no capability line");
   assert.match(asset, /no backticks, line number or glob/u);
-  assert.match(asset, /- Base: <short id> <commit subject>/u, "an update's header carries its base and its commit subject");
+  assert.match(asset, /- Base: \{\{short id\}\} \{\{commit subject\}\}/u, "an update's header carries its base and its commit subject");
   assert.doesNotMatch(asset, /create/u, "a scope word other than setup, refresh, check");
   assert.equal(fs.existsSync(path.join(SKILL, "assets/scan-summary.md")), false, "the sheet is the one view: no second summary");
 });
@@ -396,7 +407,7 @@ test("scan collects the sheet into the task folder and write shows it once, afte
   const scan = skillText("actions/01-scan.md");
   const sheet = skillText("assets/fact-sheet.md");
   assert.match(scan, /fact-sheet\.md/u);
-  assert.match(sheet, /aidd_docs\/tasks\/<yyyy_mm>\/<yyyy_mm_dd>_memory-<scope>\/facts\.md/u);
+  assert.match(sheet, /aidd_docs\/tasks\/\{\{yyyy_mm\}\}\/\{\{yyyy_mm_dd\}\}_memory-\{\{scope\}\}\/facts\.md/u);
   assert.doesNotMatch(scan, /Show/u, "scan shows the sheet before check has added its lines");
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
   assert.match(steps[0], /Show the \[sheet message\]\(\.\.\/assets\/sheet-message\.md\)/u, "write does not show the sheet through the sheet message");
@@ -419,23 +430,23 @@ test("write ends at once on an empty sheet, drops a capability answered no, keep
   assert.match(write, /no fact line and no absent always file[^\n]*bank current/u);
   assert.match(write, /fix the sheet until it passes/u);
   const writing = section(skillText("references/capabilities.md"), "Writing");
-  assert.match(writing, /`move <path> to <path>`[^\n]*move the file/u);
+  assert.match(writing, /`move <path> to <path>` line answered yes \| move the file/u);
   assert.match(writing, /plus every absent always file, minus a capability answered no/u);
-  assert.match(skillText("assets/fact-sheet.md"), /A file named in `Will write` that is answered no is not written/u);
-  assert.match(writing, /Skip a `remove` or `replace`[^\n]*not yes/u);
+  assert.match(writing, /A `remove` or `replace` line whose answer is not yes \| skip it/u);
 });
 
 test("the consent rule, applied where write takes the answers: silence is yes, a removal or replacement needs a yes, an unanswered question drops its slot", () => {
-  const step = section(skillText("assets/fact-sheet.md"), "Answers");
-  assert.match(skillText("actions/02-write.md").match(/^2\. .*$/mu)[0], /Answers/u, "write does not point to the answers");
-  assert.match(step, /silence is yes on an addition/u);
-  assert.match(step, /unclear for a line leaves a `remove` or `replace` on it unapplied/u, "an unclear answer could apply a removal");
+  const step = section(skillText("references/capabilities.md"), "Answers");
+  assert.match(skillText("actions/02-write.md").match(/^2\. .*$/mu)[0], /capabilities\.md#answers/u, "write does not point to the answers");
+  assert.match(step, /silence on an addition \| yes/u);
+  assert.match(step, /an answer unclear for a line \| leaves a `remove` or `replace` on it unapplied/u, "an unclear answer could apply a removal");
   assert.doesNotMatch(step, /explicit/u, "an explicit yes is not a rule a small model can apply");
-  assert.match(step, /Autonomous:[^\n]*only[^\n]*caller/u, "autonomous is not defined");
-  assert.match(step, /unanswered `Q` drops its slot/u);
+  assert.match(step, /autonomous \| only when the caller's instruction answers/u, "autonomous is not defined");
+  assert.match(step, /an unanswered `Q` \| drops its slot/u);
   assert.doesNotMatch(skillText("actions/02-write.md"), /[Ss]ilence/u, "the consent rule is stated twice");
   assert.doesNotMatch(section(skillText("SKILL.md"), "Transversal rules"), /[Ss]ilence/u, "the consent rule is stated twice");
   assert.doesNotMatch(step, /file by file and line by line/u, "the old approval rule contradicts the new one");
+  assert.doesNotMatch(skillText("assets/fact-sheet.md"), /silence|## Answers/u, "the sheet template holds the answers");
 });
 
 test("write takes its content from the sheet only, after the engine checked its sources", () => {
@@ -448,27 +459,29 @@ test("write takes its content from the sheet only, after the engine checked its 
 
 test("the sheet message shows once, airy and in one fixed order: files with what they hold, changes old to new, questions, tools, one reply line, the sheet path last", () => {
   const asset = skillText("assets/sheet-message.md");
-  const sample = asset.match(/```text\n([\s\S]*?)```/u)?.[1];
-  assert.ok(sample, "no sample message");
+  const sample = messageOf("assets/sheet-message.md");
+  assert.ok(asset.startsWith("<!--") && asset.includes("{{") && !asset.includes("```"), "the message is not the template itself");
   const at = (pattern) => sample.search(pattern);
   const order = [/^Will write$/mu, /^Will change$/mu, /^Questions$/mu, /^Tools to wire$/mu, /^Does this look right\? Say ok, or what to change/mu, /^Sheet: aidd_docs\/tasks\//mu].map(at);
   assert.ok(order.every((index) => index >= 0), `a part of the message is missing: ${order}`);
   assert.deepEqual([...order].sort((a, b) => a - b), order, "the parts are out of order");
   assert.match(sample, /^ {2}\S+\.md {2,}\S.+$/mu, "a file is listed without what it holds");
-  assert.match(sample, /^ {2}D\d+ {2}\S+\.md$/mu, "a change carries no id and file");
+  assert.match(sample, /^ {2}D\{\{n\}\} {2}\S+\.md$/mu, "a change carries no id and file");
   assert.match(sample, /^ {6}→ /mu, "a change shows no old to new");
-  assert.match(sample, /^ {2}Q\d+ {2}\S/mu);
+  assert.match(sample, /^ {2}Q\{\{n\}\} {2}\S/mu);
   assert.match(sample, /^ {2}\[x\] \w+/mu, "no detected tool is ticked");
-  assert.match(sample, /^Does this look right\? Say ok, or what to change, for example "not D\d+" or "Q\d+: …"\.$/mu, "the reply is not the one question");
+  assert.match(sample, /^Does this look right\? Say ok, or what to change, for example "not D\{\{n\}\}" or "Q\{\{n\}\}: …"\.$/mu, "the reply is not the one question");
   assert.doesNotMatch(sample, /·/u, "an answer syntax line is left");
   assert.match(asset, /in the person's language/u);
-  assert.match(asset, /`Will write` for a new file and `Will change` for an edit to existing lines/u, "the rule and the sample name the change section differently");
+  assert.match(asset, /Will write: a new file/u);
+  assert.match(asset, /Will change: an edit to existing lines/u, "the help and the sample name the change section differently");
   assert.doesNotMatch(asset, /Will update/u);
   assert.match(asset, /plain chat text, not in a code fence/u);
   assert.equal(sample.match(/aidd_docs\//gu).length, 1, "a path other than the sheet's is shown");
   assert.doesNotMatch(sample, /silence|\bgrammar\b|\bremove\b|\breplace\b/iu, "engine words reach the person");
-  assert.match(asset, /Leave out a section with nothing in it/u);
-  assert.match(asset, /Show `Tools to wire` on a setup only/u);
+  assert.match(asset, /leave out a section with nothing in it/u);
+  assert.match(asset, /A setup only/u);
+  assert.match(asset, /Stop after the message: no offer to reverse a declined line/u);
   assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /sheet-message\.md/u, "write does not show the sheet as the asset says");
   assert.match(skillText("actions/02-write.md").match(/^2\. .*$/mu)[0], /^2\. Wait for the answer/u, "write does not wait on the sheet");
   assert.doesNotMatch(skillText("actions/02-write.md"), /end the turn/u, "the wait is a router node, not prose");
@@ -476,21 +489,25 @@ test("the sheet message shows once, airy and in one fixed order: files with what
 });
 
 test("the report message is airy and keeps what was written, changed, left out and warned", () => {
-  const sample = skillText("assets/report-message.md").match(/```text\n([\s\S]*?)```/u)?.[1];
-  assert.ok(sample, "no sample message");
+  const report = skillText("assets/report-message.md");
+  const sample = messageOf("assets/report-message.md");
+  assert.ok(report.startsWith("<!--") && report.includes("{{") && !report.includes("```"), "the message is not the template itself");
   const order = [/^Written$/mu, /^Changed$/mu, /^Left out$/mu, /^Heads-up$/mu].map((pattern) => sample.search(pattern));
   assert.ok(order.every((index) => index >= 0), `a part of the message is missing: ${order}`);
   assert.deepEqual([...order].sort((a, b) => a - b), order, "the parts are out of order");
-  const report = skillText("assets/report-message.md");
+  assert.match(report, /plain chat text, not in a code fence/u);
+  assert.match(report, /Stop after the message/u);
   assert.match(report, /Never name the engine's commands, their exit codes or the warning count/u);
-  assert.match(report, /At most one line per changed file, one per left-out item, one heads-up/u);
-  assert.match(sample, /^ {2}Q\d+ .*unanswered\. .*any time/mu, "an unanswered question shows no way to add it later");
+  assert.match(report, /At most one line per changed file/u);
+  assert.match(report, /At most one line per left-out item/u);
+  assert.match(report, /At most one heads-up/u);
+  assert.match(sample, /^ {2}Q\{\{n\}\} .*unanswered\. .*any time/mu, "an unanswered question shows no way to add it later");
 });
 
 test("a setup asks the tools once, with the sheet; a refresh takes the wired ones; a rewire asks alone", () => {
   const tools = skillText("references/tools.md");
   const sync = skillText("actions/04-sync.md");
-  const answers = section(skillText("assets/fact-sheet.md"), "Answers");
+  const answers = section(skillText("references/capabilities.md"), "Answers");
   assert.match(answers, /`tools: /u, "the answer cannot name the tools");
   assert.match(tools, /Setup[^\n]*`tools:`[^\n]*detected[^\n]*never asked again/u, "setup does not take the sheet's picks");
   assert.match(tools, /On a refresh[^\n]*nothing is asked/u);
@@ -527,9 +544,10 @@ test("a request naming no mode goes to setup without a bank and to refresh with 
 });
 
 test("an ok answer writes yes on every D line, no Dn writes no, and a remove or replace fact quotes the old line", () => {
-  const answers = section(skillText("assets/fact-sheet.md"), "Answers");
-  assert.match(answers, /in the person's own words; ids are optional/u);
-  assert.match(answers, /`ok` or "all good" is `yes` on every line, "all but X" is `yes` on every line but X, in one turn/u);
+  const answers = section(skillText("references/capabilities.md"), "Answers");
+  assert.match(answers, /the person's own words \| ids optional/u);
+  assert.match(answers, /`ok` or "all good" \| `yes` on every line/u);
+  assert.match(answers, /"all but X" \| `yes` on every line but X, in one turn/u);
   assert.match(skillText("assets/fact-sheet.md"), /quote the old line exactly between double quotes/u);
 });
 
@@ -570,7 +588,7 @@ test("the reading order names the files that define a command or a convention, b
 });
 
 test("scan answers the brief's functional sections from the repository on a setup or an audit, and a refresh from a base never adds them", () => {
-  const step = skillText("assets/fact-sheet.md");
+  const step = skillText("references/reading-sources.md");
   for (const heading of ["Users", "Main journey", "Business rules"]) assert.ok(step.includes(`\`${heading}\``), `${heading} is not named`);
   assert.match(step, /else a `Q` line, never invented/u, "an unanswered section is invented or silently dropped");
   assert.match(step, /refresh from a base[^.]*never/u, "an update forces them");

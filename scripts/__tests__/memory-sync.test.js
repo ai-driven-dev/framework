@@ -229,21 +229,6 @@ test("AGENTS.md gets markdown links, resolvable from the repository root", () =>
   assert.doesNotMatch(content, /\(\.\.\//u);
 });
 
-// A link resolves against the file holding it, so a nested context file climbs back out.
-// Hardcoding one level makes every root-level link escape the repository.
-test("a nested context file prefixes its links with the climb back out", () => {
-  const content = run({
-    context: `${OPEN}\n${CLOSE}\n`,
-    contextAt: ".github/copilot-instructions.md",
-    args: ["copilot"],
-  }).content;
-
-  assert.match(
-    content,
-    /^\[aidd_docs\/memory\/architecture\.md\]\(\.\.\/aidd_docs\/memory\/architecture\.md\)$/mu,
-  );
-});
-
 // The README sits inside the memory directory, so its links are relative to it. The path
 // is joined with the platform separator but the file paths are normalised to "/", so a
 // replace on the joined form silently matches nothing on Windows.
@@ -508,4 +493,97 @@ test("the setup copies aidd_docs/README.md only when the project has none", () =
   const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory");
   const write = fs.readFileSync(path.join(skill, "actions/02-write.md"), "utf8");
   assert.match(write, /aidd_docs\/README\.md[^\n]*only when (?:it is )?absent/u);
+});
+
+// Copilot reads AGENTS.md, so its own file only points there: a block copied into both files
+// would load the memory twice.
+const POINTER = "Project memory: [AGENTS.md](../AGENTS.md).";
+const COPILOT = ".github/copilot-instructions.md";
+const exists = (root, name) => fs.existsSync(path.join(root, name));
+
+test("picking copilot fills AGENTS.md and creates copilot-instructions.md with the one pointer line", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.match(read(root, "AGENTS.md"), /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
+    assert.equal(read(root, COPILOT), `${POINTER}\n`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("copilot-instructions.md is created only when copilot is picked", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(exists(root, COPILOT), false, "naming codex created the copilot file");
+    assert.equal(sync(root).status, 0);
+    assert.equal(exists(root, COPILOT), false, "a session start created the copilot file");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a team's copilot-instructions.md keeps its content and gains the pointer once", () => {
+  const team = "# Team rules\n\nAlways answer in French.\n";
+  const root = sandbox({ [COPILOT]: team, "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.equal(read(root, COPILOT), `${team}\n${POINTER}\n`);
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.equal(read(root, COPILOT), `${team}\n${POINTER}\n`, "a second run adds it again");
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(read(root, COPILOT), `${team}\n${POINTER}\n`, "an unpicked tool's file is left alone");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a memory block left in copilot-instructions.md becomes the pointer line, on a pick and at a session start", () => {
+  const old = `# Team\n\n${OPEN}\n\n[aidd_docs/memory/architecture.md](../aidd_docs/memory/architecture.md)\n\n${CLOSE}\n\nAfter.\n`;
+  const legacy = "# Team\n\n<aidd_project_memory>\n@aidd_docs/memory/architecture.md\n</aidd_project_memory>\n\nAfter.\n";
+  for (const [content, args] of [[old, ["copilot"]], [old, []], [legacy, ["copilot"]], [legacy, []]]) {
+    const root = sandbox({ [COPILOT]: content, "AGENTS.md": EMPTY });
+    try {
+      assert.equal(sync(root, ...args).status, 0);
+      assert.equal(read(root, COPILOT), `# Team\n\n${POINTER}\n\nAfter.\n`, `${args}`);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("a team line inside the old copilot block is held, never erased", () => {
+  const team = `${OPEN}\n\n[aidd_docs/memory/architecture.md](../aidd_docs/memory/architecture.md)\nAsk Ana before editing the ui.\n\n${CLOSE}\n`;
+  const root = sandbox({ [COPILOT]: team, "AGENTS.md": EMPTY });
+  try {
+    const result = sync(root, "copilot");
+    assert.equal(read(root, COPILOT), team);
+    assert.match(result.stderr, /copilot-instructions\.md holds a line the memory block would not write/u);
+    assert.equal(result.status, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("copilot-instructions.md linked to AGENTS.md is never given the pointer", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY }, { [COPILOT]: "../AGENTS.md" });
+  try {
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.doesNotMatch(read(root, "AGENTS.md"), /Project memory:/u);
+    assert.ok(fs.lstatSync(path.join(root, COPILOT)).isSymbolicLink());
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("naming another tool leaves an old copilot block as it is", () => {
+  const old = `${OPEN}\n\n[aidd_docs/memory/architecture.md](../aidd_docs/memory/architecture.md)\n\n${CLOSE}\n`;
+  const root = sandbox({ [COPILOT]: old, "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(read(root, COPILOT), old);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

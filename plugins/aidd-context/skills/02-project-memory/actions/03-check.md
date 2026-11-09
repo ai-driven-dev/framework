@@ -22,3 +22,4 @@ D lines added to the sheet; on a check request, the printed report.
 
 - Change no memory file.
 - Never offer to remove a file.
+- On a check request, reply `Needs attention` only, one line per finding with its file, or say the bank is current when nothing drifted.

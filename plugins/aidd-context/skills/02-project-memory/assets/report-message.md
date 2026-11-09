@@ -1,29 +1,25 @@
-# Report message
+<!-- Ends a request. Send plain chat text, not in a code fence, with only this message: no lead-in, no closing line. Replace every `{{...}}`, delete every comment, leave out a section with nothing in it. Stop after the message: no offer to reverse a declined line, no "say ... if you want" closing. -->
 
-The chat reply that ends a request. Reply with only this: no lead-in, no closing line.
-
-- Plain words, one line per item, a blank line between sections.
-- Leave out a section with nothing in it.
-- Never name the engine's commands, their exit codes or the warning count; say what changed for the person.
-- At most one line per changed file, one per left-out item, one heads-up.
-- Send it as plain chat text, not in a code fence; the fence below is for this file only.
-- Stop after the message: no offer to reverse a declined line, no "say ... if you want" closing.
-- On a check request nothing is written: reply `Needs attention` only, one line per finding with its file, and say the bank is current when nothing drifted.
-
-```text
 Memory ready
 
+<!-- At most one line per file written. -->
+
 Written
-  aidd_docs/memory: project-brief.md, vcs.md, testing.md
-  CLAUDE.md: wired
+  aidd_docs/memory: {{files}}
+  {{context file}}: wired
+
+<!-- At most one line per changed file, in what changed for the person. -->
 
 Changed
-  D3  vcs.md: pre-commit now runs `scripts/pre-commit.sh`
+  D{{n}}  {{file}}.md: {{what changed}}
+
+<!-- At most one line per left-out item. An unanswered question says how to add it later. -->
 
 Left out
-  D4  testing.md: you declined
-  Q1  commit standard: unanswered. Tell me the answer any time and I add it to vcs.md.
+  D{{n}}  {{file}}.md: you declined
+  Q{{n}}  {{topic}}: unanswered. Tell me the answer any time and I add it to {{file}}.md.
+
+<!-- At most one heads-up. Never name the engine's commands, their exit codes or the warning count. -->
 
 Heads-up
-  Every session loads 295 words from 9 files.
-```
+  Every session loads {{n}} words from {{n}} files.

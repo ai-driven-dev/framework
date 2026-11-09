@@ -9,7 +9,7 @@ Arguments accepted by `hooks/memory.cjs sync`. It maps tool names to context fil
 | `cursor` | `AGENTS.md` |
 | `opencode` | `AGENTS.md` |
 | `antigravity` | `AGENTS.md` |
-| `copilot` | `.github/copilot-instructions.md` |
+| `copilot` | `AGENTS.md`, and a pointer line in `.github/copilot-instructions.md` |
 
 Rules:
 

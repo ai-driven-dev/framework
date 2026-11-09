@@ -582,7 +582,8 @@ test("the engine's row files are the capability table's, and it holds no table o
     .readFileSync(CAPABILITIES, "utf8")
     .split(/\r?\n/u)
     .filter((line) => line.startsWith("| `"))
-    .map((line) => line.split("|").map((cell) => cell.trim()));
+    .map((line) => line.split("|").map((cell) => cell.trim()))
+    .filter((cells) => cells.length === 8);
   const names = (cell) => [...cell.matchAll(/`([^`]+\.md)`/gu)].map((match) => match[1]);
   assert.deepEqual([...ROW_FILES].sort(), rows.flatMap((cells) => names(cells[2])).sort());
   assert.deepEqual(
