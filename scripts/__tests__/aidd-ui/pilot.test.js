@@ -442,25 +442,21 @@ describe("aidd-ui pilot trace", () => {
 });
 
 describe("aidd-ui pilot step run", () => {
-  // A POSIX shell stub stands in for claude: Windows runs neither the stub nor a ':' PATH.
-  it("writes the reply to the .out file and the trace beside it", { skip: process.platform === "win32" }, () => {
+  it("writes the reply to the .out file and the trace beside it", () => {
     const tmp = makeTmp("pilot-step-");
-    const bin = path.join(tmp, "bin");
-    fs.mkdirSync(bin);
     const events = [
       { type: "assistant", message: { content: [{ type: "tool_use", name: "Bash", input: { command: "ls" } }] } },
       { type: "result", result: "the reply" },
     ].map((event) => JSON.stringify(event)).join("\n");
-    fs.writeFileSync(path.join(bin, "claude"), `#!/bin/sh\ncat <<'EOF'\n${events}\nEOF\n`, { mode: 0o755 });
-    const before = process.env.PATH;
-    process.env.PATH = `${bin}:${before}`;
+    // A node script stands in for claude, so the test runs on every platform.
+    const stub = path.join(tmp, "claude.js");
+    fs.writeFileSync(stub, `process.stdout.write(${JSON.stringify(`${events}\n`)});\n`);
     try {
       const out = path.join(tmp, "p.01-journeys.out");
-      assert.equal(runStep(tmp, "request", out), true);
+      assert.equal(runStep(tmp, "request", out, [process.execPath, stub]), true);
       assert.match(fs.readFileSync(out, "utf8"), /^the reply\n?exit 0/);
       assert.deepEqual(JSON.parse(fs.readFileSync(path.join(tmp, "p.01-journeys.trace.jsonl"), "utf8")), { kind: "call", tool: "Bash", input: { command: "ls" } });
     } finally {
-      process.env.PATH = before;
       removeTmp(tmp);
     }
   });

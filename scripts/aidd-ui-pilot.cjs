@@ -226,8 +226,8 @@ function traceOf(stream) {
 }
 
 /** Runs one step in `cwd`; its reply goes to `outFile` and its trace beside it, in `<name>.trace.jsonl`. Returns whether claude exited 0. */
-function runStep(cwd, request, outFile) {
-  const run = spawnSync("claude", stepArgs, { cwd, input: request, encoding: "utf8", timeout: STEP_TIMEOUT_MS, maxBuffer: 2 ** 28 });
+function runStep(cwd, request, outFile, [command, ...prefix] = ["claude"]) {
+  const run = spawnSync(command, [...prefix, ...stepArgs], { cwd, input: request, encoding: "utf8", timeout: STEP_TIMEOUT_MS, maxBuffer: 2 ** 28 });
   const { trace, reply } = traceOf(run.stdout ?? "");
   fs.writeFileSync(outFile, `${reply}${run.stderr ?? ""}\nexit ${run.status}\n`);
   fs.writeFileSync(outFile.replace(/\.out$/, ".trace.jsonl"), trace);
