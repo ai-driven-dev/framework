@@ -247,8 +247,8 @@ describe("aidd-ui pilot chain run", () => {
     fs.mkdirSync(path.dirname(path.join(cwd, file)), { recursive: true });
     fs.copyFileSync(path.join(full, file), path.join(cwd, file));
   };
-  const filesOf = (skill) => filesUnder(path.join(full, UI)).map((file) => path.relative(full, file)).filter((file) => {
-    const rel = path.relative(UI, file);
+  const filesOf = (skill) => filesUnder(path.join(full, UI)).map((file) => path.relative(full, file).split(path.sep).join("/")).filter((file) => {
+    const rel = path.posix.relative(UI, file);
     return OWNED[skill].some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)) || ENGINE_FILES[skill].includes(rel);
   });
   const lay = (skill) => (cwd) => filesOf(skill).forEach((file) => copyFromFull(cwd, file));
@@ -262,7 +262,7 @@ describe("aidd-ui pilot chain run", () => {
     process.env.TMPDIR = base;
     try {
       const code = main(["--gouvernail", "/g", "--kairos", "/k", "--only", "kairos"], {
-        copyProject: (_, dest) => filesUnder(full).map((file) => path.relative(full, file)).filter((file) => !(file.startsWith(`${UI}/`) && ownedAnywhere(path.relative(UI, file)))).forEach((file) => copyFromFull(dest, file)),
+        copyProject: (_, dest) => filesUnder(full).map((file) => path.relative(full, file).split(path.sep).join("/")).filter((file) => !(file.startsWith(`${UI}/`) && ownedAnywhere(path.posix.relative(UI, file)))).forEach((file) => copyFromFull(dest, file)),
         runStep: (cwd, request) => {
           const skill = request.match(SKILL_OF)[1];
           (instead[skill] ?? lay(skill))(cwd, lay(skill));
