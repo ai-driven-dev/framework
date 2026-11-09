@@ -258,14 +258,14 @@ describe("Codex", () => {
 
     expect([event?.event, event?.files, event?.command]).toStrictEqual([
       "PostToolUse",
-      [{ path: NOTES, written: "hello" }],
+      [{ path: NOTES, written: "hello", replaced: "" }],
       undefined,
     ]);
   });
 
   it("reads an apply_patch naming an absolute path as that file", () => {
     expect(read("codex", sample("codex-PostToolUse.json", 2).payload).event?.files).toStrictEqual([
-      { path: NOTES, written: "hello" },
+      { path: NOTES, written: "hello", replaced: "" },
     ]);
   });
 
@@ -289,7 +289,7 @@ describe("Codex", () => {
     const { event } = read("codex", { ...payload, tool_input: { command: patch } });
 
     expect(event?.files).toStrictEqual([
-      { path: NOTES, written: "hello\nagain" },
+      { path: NOTES, written: "hello\nagain", replaced: "" },
       { path: at("docs/a.md") },
       { path: at("docs/b.md"), written: "y", replaced: "x" },
       { path: at("old.md") },
@@ -317,7 +317,7 @@ describe("Codex", () => {
     const { event } = read("codex", { ...payload, tool_input: { command: patch } });
 
     expect(event?.files).toStrictEqual([
-      { path: at("a.md"), written: "a1\na2" },
+      { path: at("a.md"), written: "a1\na2", replaced: "" },
       { path: at("b.md"), written: "b1", replaced: "gone" },
       { path: at("c.md"), written: "", replaced: "only removed" },
     ]);
@@ -331,7 +331,7 @@ describe("Codex", () => {
     );
 
     expect(read("codex", { ...payload, tool_input: { command } }).event?.files).toStrictEqual([
-      { path: NOTES, written: "hello" },
+      { path: NOTES, written: "hello", replaced: "" },
     ]);
   });
 
@@ -429,7 +429,7 @@ describe("Copilot", () => {
 
     expect([event?.event, event?.files, event?.command]).toStrictEqual([
       "PostToolUse",
-      [{ path: NOTES, written: "hello." }],
+      [{ path: NOTES, written: "hello.", replaced: "" }],
       undefined,
     ]);
   });
@@ -441,8 +441,8 @@ describe("Copilot", () => {
     const { event } = read("copilot", { ...payload, tool_input: patch });
 
     expect(event?.files).toStrictEqual([
-      { path: at("a.md"), written: "a" },
-      { path: at("b.md"), written: "b" },
+      { path: at("a.md"), written: "a", replaced: "" },
+      { path: at("b.md"), written: "b", replaced: "" },
       { path: at("c.md") },
     ]);
   });
@@ -453,7 +453,7 @@ describe("Copilot", () => {
       "*** Begin Patch\n*** Update File: a.md\n@@\n+one\n+two\n*** Update File: a.md\n@@\n+three\n*** End Patch\n";
 
     expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
-      { path: at("a.md"), written: "one\ntwo\nthree" },
+      { path: at("a.md"), written: "one\ntwo\nthree", replaced: "" },
     ]);
   });
 
@@ -472,7 +472,7 @@ describe("Copilot", () => {
     const patch = String(payload.tool_input).replaceAll("\n", "\r\n");
 
     expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
-      { path: NOTES, written: "hello." },
+      { path: NOTES, written: "hello.", replaced: "" },
     ]);
   });
 
@@ -483,7 +483,7 @@ describe("Copilot", () => {
 
     expect(read("copilot", { ...payload, tool_input: patch }).event?.files).toStrictEqual([
       { path: at("a.md") },
-      { path: at("docs/a.md"), written: "a" },
+      { path: at("docs/a.md"), written: "a", replaced: "" },
     ]);
   });
 
