@@ -107,7 +107,8 @@ function stepBreaks(skill, before, after) {
 function copyProject(source, dest) {
   const archive = spawnSync("git", ["-C", source, "archive", "HEAD"], { maxBuffer: 2 ** 32, env: cleanEnv() });
   if (archive.status !== 0) throw new Error(`git archive failed in the source: ${archive.stderr}`);
-  const unpack = spawnSync("tar", ["-x", "-C", dest], { input: archive.stdout });
+  // Run in `dest`, never `-C dest`: GNU tar reads a Windows `C:\…` path as a remote host.
+  const unpack = spawnSync("tar", ["-x"], { input: archive.stdout, cwd: dest });
   if (unpack.status !== 0) throw new Error(`tar failed: ${unpack.stderr}`);
   for (const args of [["init", "-q"], ["add", "-A"], ["commit", "-q", "-m", "pilot copy", "--no-verify"]]) {
     const run = spawnSync("git", [...GIT, ...args], { cwd: dest, encoding: "utf8", env: cleanEnv() });
