@@ -1,5 +1,5 @@
 // What `node aidd-ui.cjs help <command>` prints: each command's usage, effects, output and exit codes, written once.
-const { VALIDATE_USAGE, TOKENS_USAGE, HOOK_USAGE, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, HELP_USAGE } = require("./cli.cjs");
+const { VALIDATE_USAGE, TOKENS_USAGE, HOOK_USAGE, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, COMPARE_USAGE, KEEP_USAGE, HELP_USAGE } = require("./cli.cjs");
 
 const COUNT_LINE = "aidd-ui: <n> error(s), <m> warning(s)";
 const ERROR_LINE = '<file>[:<line>] <rule> ["<excerpt>"] => <fix>';
@@ -107,6 +107,49 @@ const HELP = {
     ],
     output: ["Without ids, prints JSON `version` and `tasks`.", "With ids, prints JSON `validated`: each `id`, `version`, `fingerprint`."],
     exits: ["0 the rows are written.", REFUSED],
+  },
+  compare: {
+    summary: "Check a set of variants and write their comparison page.",
+    usage: [COMPARE_USAGE],
+    effects: [
+      "A set lives in `aidd_docs/ui/drafts/<set>/`, which validation skips.",
+      "Its `variants.md` holds a table: `Variant`, `Intent`, then one column per axis.",
+      "Each variant has a folder there, mirroring `aidd_docs/ui/`.",
+      "A `preview.html` in a variant's folder is never kept.",
+      "It writes `drafts/.gitignore`, so drafts stay out of git.",
+      "It writes `drafts/<set>/compare.html`, a page to open as a file.",
+      "It hands back the feedback by copying it.",
+      "In Chromium it also saves it, the person choosing the folder.",
+      "Pasted elsewhere, the copy is saved as `drafts/<set>/feedback.json`.",
+      "Refuses a set with no `variants.md`, or a project with no `aidd_docs/ui`.",
+    ],
+    output: [
+      "Prints JSON `variants`: each `name` and `intent`, in table order.",
+      "It also prints `page`, the path of the page.",
+      'The feedback is JSON: {"draft": "<set>", "variants": [<entry>…]}.',
+      'An entry is {"name", "rating": 1-5 or null, "discarded", "comment"}.',
+      "Entries follow the order of `variants.md`.",
+      "With problems, prints them as `help validate` shows, and writes nothing.",
+      "D1 fewer than two variants.",
+      "D2 a variant with no intent.",
+      "D3 no axis column, or an empty axis cell.",
+      "D4 two variants alike on every axis.",
+      "D5 a variant with no folder, or an empty one.",
+    ],
+    exits: ["0 the set is sound.", "1 at least one problem.", REFUSED],
+  },
+  keep: {
+    summary: "Make one variant of a set the design system's own.",
+    usage: [KEEP_USAGE],
+    effects: [
+      "Checks the set as `compare` does.",
+      "Copies the variant's folder into `aidd_docs/ui/`, replacing files.",
+      "It leaves out the variant's `preview.html`.",
+      "Then it deletes the set's folder.",
+      "Refuses a set with problems, or an unknown variant.",
+    ],
+    output: ["Prints JSON `kept` and `written`: the files copied."],
+    exits: ["0 the variant is kept.", REFUSED],
   },
   help: {
     summary: "Print a command's usage, effects, output and exit codes.",

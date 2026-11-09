@@ -204,7 +204,7 @@ describe("aidd-ui validator entries", () => {
   describe("E9 commands", () => {
     it("names the commands and exits 2 on one it does not know", () => {
       const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
-      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs help [<command>]\nvalidate: Check the design system and print its problems.\ntokens: Write the stylesheet from the tokens.\nhook: Answer a host event with the problems it caused.\nimpact: List what a token or element reaches.\nextract: Write the tokens from the code the system names.\nbump: Raise the versions a change reaches, or start a history.\npublish: Publish the system, or validate elements.\nhelp: Print a command's usage, effects, output and exit codes.\n" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs help [<command>]\nvalidate: Check the design system and print its problems.\ntokens: Write the stylesheet from the tokens.\nhook: Answer a host event with the problems it caused.\nimpact: List what a token or element reaches.\nextract: Write the tokens from the code the system names.\nbump: Raise the versions a change reaches, or start a history.\npublish: Publish the system, or validate elements.\ncompare: Check a set of variants and write their comparison page.\nkeep: Make one variant of a set the design system's own.\nhelp: Print a command's usage, effects, output and exit codes.\n" });
     });
   });
 
@@ -386,6 +386,13 @@ describe("aidd-ui validator entries", () => {
       edit(tmp, RECORD, "kind: atom", "kind: organism");
       hook(postToolUse(path.join(tmp, RECORD)));
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
+    });
+
+    it("tells nothing of a draft written in the drafts folder, whatever it holds", () => {
+      const draft = path.join(tmp, UI, "drafts/brand/a/brand.md");
+      fs.mkdirSync(path.dirname(draft), { recursive: true });
+      fs.writeFileSync(draft, "---\nid: brand\nkind: nothing-known\n---\n\n# Draft\n");
+      assert.deepEqual(hook(postToolUse(draft)), silent);
     });
 
     it("tells nothing elsewhere without a baseline, nothing then proving an error new", () => {
@@ -920,6 +927,7 @@ describe("aidd-ui validator entries", () => {
       ["runs the engine installed flat", "node .claude/hooks/aidd-ui/aidd-ui.cjs bump --task aidd_docs/tasks/x --change y color.brand.primary"],
       ["extracts the tokens", `node ${ENGINE} extract --force --root ${tmp}`],
       ["publishes the system", `node ${ENGINE} publish --breaking --root ${tmp}`],
+      ["keeps a variant", `node ${ENGINE} keep brand b --root ${tmp}`],
       ["writes after a read", `node ${ENGINE} validate ${tmp} && node ${ENGINE} tokens ${tmp}`],
       ["names aidd_docs/ui/ and writes", "sed -i s/a/b/ aidd_docs/ui/brand.md"],
     ];
@@ -966,6 +974,7 @@ describe("aidd-ui validator entries", () => {
       'grep -n "=>" aidd_docs/ui/brand.md',
       "git rm --cached aidd_docs/ui/brand.md",
       "git reset aidd_docs/ui/brand.md",
+      "node .claude/hooks/aidd-ui/aidd-ui.cjs compare brand",
     ];
     for (const command of READS) {
       it(`does not mark the turn when a command only reads aidd_docs/ui/: ${command}`, () => {

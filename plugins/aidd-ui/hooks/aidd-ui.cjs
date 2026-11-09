@@ -12,9 +12,10 @@ const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const extraction = require("./lib/extract.cjs");
+const drafts = require("./lib/drafts.cjs");
 const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
 const { HELP, commandList, helpText } = require("./lib/help.cjs");
-const { ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, HELP_USAGE } = require("./lib/cli.cjs");
+const { ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, COMPARE_USAGE, KEEP_USAGE, HELP_USAGE } = require("./lib/cli.cjs");
 
 const CHECKS = { records, history, tokens, renders, code, extraction };
 const VERDICT_VALID = "VALID";
@@ -185,6 +186,37 @@ function publishSystem(args) {
   });
 }
 
+/** Checks a set of variants: its problems as `validate` prints them, else what the comparison shows. */
+function compareSet(args) {
+  const { values, rest, error } = parse(args, { options: [ROOT_FLAG] });
+  if (error || rest.length !== 1) {
+    console.error(`usage: ${COMPARE_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    const { problems, ...done } = drafts.compare(values[ROOT_FLAG] ?? process.cwd(), rest[0]);
+    if (problems) {
+      console.log(formatAll(problems));
+      return EXIT_INVALID;
+    }
+    console.log(JSON.stringify(done, null, 2));
+    return EXIT_VALID;
+  });
+}
+
+/** Makes one variant of a set the design system's own, and deletes the set. */
+function keepVariant(args) {
+  const { values, rest, error } = parse(args, { options: [ROOT_FLAG] });
+  if (error || rest.length !== 2) {
+    console.error(`usage: ${KEEP_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    console.log(JSON.stringify(drafts.keep(values[ROOT_FLAG] ?? process.cwd(), ...rest), null, 2));
+    return EXIT_VALID;
+  });
+}
+
 // The hook needs this file loaded first, for the checks: it is required when it runs.
 const runHook = () => require("./lib/hook.cjs").hook();
 
@@ -205,7 +237,7 @@ function help([name]) {
   return EXIT_VALID;
 }
 
-const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem, help };
+const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem, compare: compareSet, keep: keepVariant, help };
 
 function main([command, ...args]) {
   return Object.hasOwn(COMMANDS, command) ? COMMANDS[command](args) : unknownCommand();

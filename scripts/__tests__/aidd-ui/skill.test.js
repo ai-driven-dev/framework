@@ -319,7 +319,7 @@ describe("aidd-ui engine references", () => {
   it("owe to another skill no problem that a step of the same skill clears", () => {
     for (const folder of FOLDERS) {
       const lines = engineOf(folder).split("\n");
-      const commands = lines.filter((line) => /^\| (prepare|write|conclude) \d/.test(line)).map((line) => line.split("|")[2].trim().replace(/^`|`.*$/g, ""));
+      const commands = lines.filter((line) => /^\| (prepare|propose|choose|write|conclude) \d/.test(line)).map((line) => line.split("|")[2].trim().replace(/^`|`.*$/g, ""));
       const rows = owedOf(folder);
       for (const row of rows) assert.ok(["this skill", "another skill"].includes(row.owner), `${folder}: owner "${row.owner}"`);
       for (const rule of rows.filter((row) => row.owner === "another skill").flatMap((row) => row.rules)) {
@@ -343,7 +343,7 @@ describe("aidd-ui engine references", () => {
 
   it("run only commands the engine's help knows", () => {
     for (const folder of FOLDERS) {
-      const rows = engineOf(folder).split("\n").filter((line) => /^\| (prepare|write|conclude) \d/.test(line));
+      const rows = engineOf(folder).split("\n").filter((line) => /^\| (prepare|propose|choose|write|conclude) \d/.test(line));
       assert.ok(rows.length > 0, folder);
       for (const row of rows) assert.ok(Object.hasOwn(HELP, row.match(/`node <engine> ([^ `]+)/)?.[1]), `${folder}: ${row}`);
     }
@@ -378,6 +378,8 @@ describe("aidd-ui engine step table", () => {
     [/^node <engine> extract\b/, /extract/],
     [/^node <engine> tokens\b/, /stylesheet/],
     [/^node <engine> validate\b/, /Validate/],
+    [/^node <engine> compare\b/, /compar/i],
+    [/^node <engine> keep\b/, /keep/i],
     [/^node <engine> publish\b/, /publishes/],
     [/^node <engine> bump .*--created/, /record/i],
     [/^node <engine> bump .*--(change|removed)/, /raise/],
@@ -396,7 +398,7 @@ describe("aidd-ui engine step table", () => {
 
   it("names, for each row, steps of that action which exist and say what the command does", () => {
     for (const folder of FOLDERS) {
-      const rows = fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").split("\n").filter((line) => /^\| (prepare|write|conclude) \d/.test(line));
+      const rows = fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").split("\n").filter((line) => /^\| (prepare|propose|choose|write|conclude) \d/.test(line));
       assert.ok(rows.length > 0, folder);
       for (const row of rows) {
         const [, step, command] = row.split("|").map((cell) => cell.trim());
@@ -418,7 +420,7 @@ describe("aidd-ui system answers", () => {
 
   it("come from the code per extraction, never from the README or visible copy", () => {
     const write = foundations("actions/02-write.md");
-    const step = write.slice(write.indexOf("2. If no `system.md`"), write.indexOf("3. With a token file"));
+    const step = write.slice(write.indexOf("3. If no `system.md`"), write.indexOf("4. With a token file"));
     assert.ok(step.includes("[extraction](../references/extraction.md)"));
     assert.equal(/README|manifest|visible copy/.test(step), false);
   });

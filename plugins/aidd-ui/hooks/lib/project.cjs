@@ -11,6 +11,7 @@ const CSS_FILE = "tokens.css";
 const HISTORY_FILE = `${UI_DIR}/history.md`; // the engine's: one row per version of each record, no record itself
 const CODE_DEBT_FILE = `${UI_DIR}/code-debt.json`; // the colour literals the code held when the system started, by file
 const SHOWCASE_DIR = "showcase";
+const DRAFTS_DIR = "drafts"; // the sets of variants being compared: not the design system yet
 const RECORD_EXTENSION = ".md";
 const RENDER_EXTENSION = ".html";
 const PATH_SEPARATOR = "/";
@@ -107,14 +108,14 @@ function readRecord(project, file) {
 function load(root) {
   const uiDir = path.join(root, UI_DIR);
   if (!fs.existsSync(uiDir) || !fs.statSync(uiDir).isDirectory()) return null;
-  const showcase = path.join(uiDir, SHOWCASE_DIR);
+  const skipped = [SHOWCASE_DIR, DRAFTS_DIR].map((name) => path.join(uiDir, name));
   const project = { root, texts: new Map(), tokensFile: `${UI_DIR}/${TOKENS_FILE}` };
   const unlisted = (dir) => project.texts.set(relative(root, dir), null);
-  const files = walk(uiDir, (dir) => dir === showcase, unlisted).map((file) => relative(root, file));
+  const files = walk(uiDir, (dir) => skipped.includes(dir), unlisted).map((file) => relative(root, file));
   project.records = files.filter((file) => file.endsWith(RECORD_EXTENSION) && file !== HISTORY_FILE).flatMap((file) => readRecord(project, file));
   project.history = files.includes(HISTORY_FILE) ? table({ lines: (text(project, HISTORY_FILE) ?? "").split(LINE_BREAK) }) : [];
   project.renders = files.filter((file) => file.endsWith(RENDER_EXTENSION));
   return project;
 }
 
-module.exports = { Refusal, NO_UI_FOLDER, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, ERROR, WARNING, ENGINE_REF };
+module.exports = { Refusal, NO_UI_FOLDER, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, DRAFTS_DIR, ERROR, WARNING, ENGINE_REF };

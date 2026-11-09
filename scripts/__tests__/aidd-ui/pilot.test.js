@@ -200,10 +200,21 @@ describe("aidd-ui pilot step files", () => {
   it("lets each skill's step drive only these engine files", () => {
     assert.deepEqual(ENGINE_FILES, {
       "01-journeys": ["history.md"],
-      "02-brand": [],
+      "02-brand": ["drafts/.gitignore"],
       "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
       "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
     });
+  });
+
+  it("names a draft a step left behind", () => {
+    assert.deepEqual(stepBreaks("02-brand", {}, after("brand.md", "drafts/.gitignore", "drafts/brand/calm/brand.md")), ["02-brand wrote aidd_docs/ui/drafts/brand/calm/brand.md"]);
+  });
+
+  it("has each Write only line name the drafts its skill may leave while it works", () => {
+    const SKILLS = path.resolve(__dirname, "../../../plugins/aidd-ui/skills");
+    const lineOf = (skill) => fs.readFileSync(path.join(SKILLS, skill, "SKILL.md"), "utf8").split("\n").find((each) => each.startsWith("- Write only"));
+    assert.ok(lineOf("02-brand").includes("aidd_docs/ui/drafts/brand/"));
+    for (const skill of ["03-foundations", "04-components"]) assert.ok(lineOf(skill).includes("`drafts/`"), skill);
   });
 
   it("names a step that wrote an engine file it does not drive", () => {
@@ -325,6 +336,10 @@ describe("aidd-ui pilot chain", () => {
 });
 
 describe("aidd-ui pilot platforms", () => {
+  it("asks for three directions in the blank brand request", () => {
+    assert.ok(REQUESTS.blank.brand.includes("three"));
+  });
+
   it("asks for web and mobile in the blank foundations request, not in the brand one", () => {
     assert.equal(REQUESTS.blank.brand.includes("web and mobile"), false);
     assert.ok(REQUESTS.blank.foundations.includes("web and mobile"));

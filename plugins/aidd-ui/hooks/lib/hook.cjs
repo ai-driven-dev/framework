@@ -20,7 +20,7 @@ const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // alike), or when it names the design system's folder and matches a write form the hooks share. Any other
 // command only reads: `validate`, `impact`, and `publish` given ids, which validates them.
 const ENGINE_RUN = /aidd-ui\.cjs["']?\s+(\w+)([^;&|\n]*)/g;
-const ENGINE_WRITES = new Set(["tokens", "extract", "bump"]);
+const ENGINE_WRITES = new Set(["tokens", "extract", "bump", "keep"]);
 const PUBLISH_OPTIONS = /\s--breaking\b|\s--root\s+\S+/g;
 const UI_FOLDER = /aidd_docs\/ui\//;
 // The hooks' state folder: one per user where the system has users, the temp dir being per user elsewhere.

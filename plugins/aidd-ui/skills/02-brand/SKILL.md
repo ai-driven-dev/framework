@@ -1,6 +1,6 @@
 ---
 name: 02-brand
-description: Write a project's brand, from its code or from scratch. Use when the user wants to set or capture a project's identity, users, tone and references. Not for tokens, components, screens, or journeys.
+description: Write a project's brand, from its code or from scratch, or evolve it, by comparing directions. Use when the user wants to set or capture a project's identity, users, tone and references. Not for tokens, components, screens, or journeys.
 argument-hint: request
 ---
 # Brand
@@ -9,15 +9,17 @@ argument-hint: request
 
 ```mermaid
 flowchart LR
-  prepare["prepare<br>actions/01-prepare.md"] --> write["write<br>actions/02-write.md"]
-  write --> conclude["conclude<br>actions/03-conclude.md"]
+  prepare["prepare<br>actions/01-prepare.md"] --> propose["propose<br>actions/02-propose.md"]
+  propose --> choose["choose<br>actions/03-choose.md"]
+  choose --> conclude["conclude<br>actions/04-conclude.md"]
   prepare -->|"a decision blocks"| user((user answers))
-  write -->|"a decision blocks"| user
+  propose -->|"a decision blocks"| user
+  choose -->|"no direction stands out"| propose
   user --> prepare
-  user --> write
+  user --> propose
   conclude -->|"an error is left"| conclude
   conclude --> done((done))
-  prepare -->|"no engine, or a brand already written"| stop((stop))
+  prepare -->|"no engine"| stop((stop))
 ```
 
 Each box is a file: read it, then do what it says.
@@ -27,7 +29,7 @@ Each box is a file: read it, then do what it says.
 - Speak only to ask or to give the final reply.
 - Otherwise call tools.
 - Run every command from the project root, the working directory.
-- Write only `aidd_docs/ui/brand.md`.
+- Write only `aidd_docs/ui/brand.md` and `aidd_docs/ui/drafts/brand/`.
 - After each write, fix what the hook or the validation reports.
 - Never bypass a hook.
 - Commit and push only when asked.

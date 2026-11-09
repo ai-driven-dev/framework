@@ -27,7 +27,7 @@ flowchart LR
   Brand -->|"calls"| Engine
   Foundations -->|"calls"| Engine
   Components -->|"calls"| Engine
-  Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
+  Engine -->|"validate, tokens, impact, extract, bump, publish, compare, keep"| Docs
   Host["host event"] --> Hook["aidd-ui.cjs hook"]
   Hook -->|"checks what a write produced, then the lines the turn changed"| Engine
   Hook -->|"problems"| Host
@@ -37,10 +37,12 @@ flowchart LR
 
 1. Install the plugin; its hook needs `node` on `PATH`.
 2. Run `/aidd-ui:01-journeys` in your project to map a persona's journeys and the wireframe of each screen they cross.
-3. Run `/aidd-ui:02-brand`, then `/aidd-ui:03-foundations`, then `/aidd-ui:04-components`: each writes its records under `aidd_docs/ui/`; foundations stops without a brand, components without a system.
+3. Run `/aidd-ui:02-brand`, then `/aidd-ui:03-foundations`, then `/aidd-ui:04-components`: the brand proposes directions and compares them, and each skill writes its records under `aidd_docs/ui/`; foundations stops without a brand, components without a system.
 
 ## Limits
 
+- The frames of a comparison page are not sandboxed: a variant's render runs as written.
+- A comparison page is a file to open, with no server. Saving its feedback to a folder needs Chromium; elsewhere the feedback is copied.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
 - A journey step may name an existing screen without a wireframe: a screen cites its wireframe only once screens are dressed. A wireframe stays `proposed`, `publish` taking elements alone, until screens come with their review.
