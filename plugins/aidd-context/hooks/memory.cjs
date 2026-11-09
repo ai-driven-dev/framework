@@ -580,6 +580,7 @@ function endsInFence(content) {
 /**
  * The new text of one context file, or the reason it is left as it is. A file holding no block
  * gains one after its last line when `add` is set, and `added` says so; every byte above it stays.
+ * Without `add`, `missing` says it holds none.
  * `outside` marks a file reached through a link leaving the project, never given a block.
  */
 function filledBlock(original, inner, root, { add = false, outside = false } = {}) {
@@ -588,7 +589,7 @@ function filledBlock(original, inner, root, { add = false, outside = false } = {
   const problem = blockProblem(original, current, legacy);
   if (problem !== null) return { problem };
   if (current.status === "none" && legacy.status === "none") {
-    if (!add) return { text: original };
+    if (!add) return { text: original, missing: true };
     if (outside) return { problem: "links outside the project" };
     if (endsInFence(original)) return { problem: "ends inside a code fence" };
     const ending = original.includes("\r\n") ? "\r\n" : "\n";
@@ -660,8 +661,11 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
     const relative = path.relative(absolute, target.file);
     const outside = relative.startsWith("..") || path.isAbsolute(relative);
     const inner = buildBlockLines(lists, target.syntax, target.prefix);
-    const { text, problem, held, added } = filledBlock(original, inner, absolute, { add: add && tools.length > 0, outside });
-    if (problem !== undefined) {
+    const { text, problem, held, added, missing } = filledBlock(original, inner, absolute, { add: add && tools.length > 0, outside });
+    if (missing && tools.length > 0) {
+      const tool = tools.find((name) => TOOL_FILES[name] === target.path);
+      report(`${target.path} has no memory block; run sync --add ${tool} to add one`);
+    } else if (problem !== undefined) {
       result.unpaired.push(target.path);
       report(`${target.path} ${problem}, not synced`);
     } else if (held !== undefined) {

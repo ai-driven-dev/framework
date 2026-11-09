@@ -345,10 +345,11 @@ test("sync --add appends the block a picked tool's file lacks, after the team's 
   }
 });
 
-test("naming a tool without --add only fills a block that stands", () => {
+test("naming a tool without --add only fills a block that stands, and names the fix for a file holding none", () => {
   const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": EMPTY });
   try {
-    assert.deepEqual(sync(root, "claude", "codex"), { status: 0, stdout: "", stderr: "" });
+    const result = sync(root, "codex", "claude");
+    assert.deepEqual(result, { status: 0, stdout: "", stderr: "memory: CLAUDE.md has no memory block; run sync --add claude to add one\n" });
     assert.equal(read(root, "CLAUDE.md"), TEAM);
     assert.equal(read(root, "AGENTS.md"), `# P\n\n${FILLED_LINK}\n`);
   } finally {
@@ -390,6 +391,7 @@ test("a session start, or a sync naming no tool, never adds a block to a file ho
     assert.equal(hook.status, 0, hook.stderr);
     assert.equal(read(root, "CLAUDE.md"), TEAM, "the session start added a block");
     assert.deepEqual(sync(root, "--add"), { status: 0, stdout: "", stderr: "" });
+    assert.deepEqual(sync(root), { status: 0, stdout: "", stderr: "" }, "a bare sync spoke about a file it never adds to");
     assert.equal(read(root, "CLAUDE.md"), TEAM, "a sync naming no tool added a block");
     assert.equal(read(root, "AGENTS.md"), TEAM);
   } finally {
