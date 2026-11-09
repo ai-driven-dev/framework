@@ -52,7 +52,7 @@ const stateOf = () => ({
   variants: variants.map((el) => ({ name: el.dataset.name, rating: $(".rating", el).value, discarded: $(".discard", el).checked, comment: $(".comment", el).value })),
 });
 const show = () => {
-  right.hidden = !side.checked;
+  $("#with").hidden = !side.checked;
   const wanted = side.checked ? [left.value, right.value] : [left.value];
   for (const el of variants) el.hidden = !wanted.includes(el.dataset.name);
   out.value = JSON.stringify(feedbackOf(stateOf()), null, 2);
@@ -130,7 +130,7 @@ function pageOf({ id, variants, tokens, themes }) {
     `<h1>${escaped(id)}</h1>`,
     choice("Show", `<select id="left">${options(names)}</select>`),
     '<label><input type="checkbox" id="side"> Side by side</label>',
-    choice("with", `<select id="right" hidden>${options(names)}</select>`),
+    `<label id="with" hidden>with <select id="right">${options(names)}</select></label>`,
     ...(states.length ? [choice("State", `<select id="state">${options(states, "all")}</select>`)] : []),
     ...(themes.length ? [choice("Theme", `<select id="theme">${options(themes)}</select>`)] : []),
     "</header>",

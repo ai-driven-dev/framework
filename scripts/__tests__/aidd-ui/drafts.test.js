@@ -81,6 +81,13 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
+    it("drops the feedback of an earlier page, so a new round never reads it", () => {
+      writeSet("brand");
+      fs.writeFileSync(path.join(tmp, DRAFTS, "brand", "feedback.json"), "{}\n");
+      assert.equal(compare().code, 0);
+      assert.equal(fs.existsSync(path.join(tmp, DRAFTS, "brand", "feedback.json")), false);
+    });
+
     it("D1 flags a set of one variant", () => {
       writeSet("brand", { rows: ROWS.slice(0, 1) });
       assertFlags(["D1"]);

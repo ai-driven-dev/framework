@@ -121,6 +121,7 @@ const HELP = {
       "It hands back the feedback by copying it.",
       "In Chromium it also saves it, the person choosing the folder.",
       "Pasted elsewhere, the copy is saved as `drafts/<set>/feedback.json`.",
+      "A new page deletes the earlier feedback.",
       "Refuses a set with no `variants.md`, or a project with no `aidd_docs/ui`.",
     ],
     output: [

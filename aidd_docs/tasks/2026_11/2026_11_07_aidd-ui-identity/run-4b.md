@@ -28,6 +28,8 @@ Brand step of the blank pilot, from its trace. `compare brand` exits 0 with thre
 
 Then `keep brand sea-glass` exits 0 with `{ "kept": "sea-glass", "written": ["aidd_docs/ui/brand.md"] }`. Only `.gitignore` remains under `drafts/`.
 
+Limit: the pilot request tells the model to compare and keep, so it chose sea-glass itself. No page was handed over and no feedback read. The browser pass and the real save used a separate hand-made set. Each piece is proven; the whole loop with a person is not.
+
 ## Browser
 
 `@playwright/cli@0.1.17` over `file://`, with `PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS=1`. Two pages: three brand variants, and two component variants with states and two themes. Console: no error on either.
@@ -85,6 +87,7 @@ Each guard broken once, its own test red, then restored.
 | D5 | folder check disabled | D5 flags a variant without a folder, then an empty folder |
 | D5, row name | type check, then name check removed | D5 flags a table without a Variant column, and a variant named like a path |
 | `compare` ignore file | write removed | checks a valid set |
+| `compare` drops old feedback | removal skipped | drops the feedback of an earlier page |
 | `keep` leaves the preview | preview filter removed | makes the variant the design system's file |
 | `keep` deletes the set | removal skipped | makes the variant the design system's file |
 | `keep` refuses an invalid set | refusal disabled | refuses a set that has a problem |
