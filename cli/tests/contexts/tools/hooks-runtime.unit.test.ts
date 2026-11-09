@@ -4,7 +4,7 @@
  * host was seen sending (the repository's hook-payload fixtures); where a case was never seen,
  * the test name says it is derived from a captured payload.
  * OpenCode and Kilo receive what their bridge sends, so they are read through the bridge in
- * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all five adapters here.
+ * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all six adapters here.
  */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -16,7 +16,7 @@ import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 // Beside this package, never the repository's: a mutation run mutates its own copy.
 const RUNTIME = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
-const HOSTS = ["claude", "codex", "copilot", "cursor", "bridge"] as const;
+const HOSTS = ["claude", "codex", "copilot", "cursor", "antigravity", "bridge"] as const;
 
 const require = createRequire(import.meta.url);
 const fs = require("node:fs") as typeof import("node:fs");
@@ -693,6 +693,39 @@ describe("Cursor", () => {
     const { adapter } = read("cursor", cursorStop(index));
     adapter.continueTurn("again");
     adapter.answer({ level: 1, text: "again" });
+
+    expect(printed).toStrictEqual([]);
+  });
+});
+
+describe("Antigravity CLI", () => {
+  it("reads SessionStart from its captured payload, which names no event", () => {
+    const { payload } = sample("antigravity-SessionStart.json", 0);
+
+    expect(read("antigravity", payload).event).toStrictEqual({
+      host: "antigravity",
+      event: "SessionStart",
+      files: [],
+      stopActive: false,
+      sessionId: SESSION,
+      cwd: CWD,
+      raw: payload,
+    });
+  });
+
+  it("reads a payload naming a tool call as no event: no tool event is delivered to it (derived from the captured SessionStart)", () => {
+    const { payload } = sample("antigravity-SessionStart.json", 0);
+
+    expect(read("antigravity", { ...payload, toolCall: { name: "write_to_file" } }).event).toBe(
+      undefined
+    );
+  });
+
+  it("prints nothing for any answer: what it hands the model was never seen", () => {
+    const { payload } = sample("antigravity-SessionStart.json", 0);
+    const { adapter } = read("antigravity", payload);
+    adapter.answer({ level: 2, text: "x" });
+    adapter.continueTurn("x");
 
     expect(printed).toStrictEqual([]);
   });

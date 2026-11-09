@@ -1,3 +1,5 @@
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../../assets/hooks-runtime/host-antigravity.cjs";
 import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
 import { ANTIGRAVITY_DIRECTORY } from "./antigravity-paths.js";
 
@@ -10,4 +12,5 @@ export const ANTIGRAVITY_HOOKS = {
     scriptsDir: `${ANTIGRAVITY_DIRECTORY}hooks/`,
     sharedFile: `${ANTIGRAVITY_DIRECTORY}hooks.json`,
   },
+  runtime: { adapter },
 } as const satisfies HooksDescriptor;
