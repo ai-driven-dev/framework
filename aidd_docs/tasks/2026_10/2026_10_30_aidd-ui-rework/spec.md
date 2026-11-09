@@ -22,7 +22,7 @@ aidd_docs/ui/
 ├── platforms/<nom>.json      valeurs qui changent pour une plateforme
 ├── tokens.css                généré depuis les tokens, jamais écrit à la main
 ├── assets/<id>.md            icône, image, illustration, avec son fichier à côté
-├── components/<id>.md        atome, molécule ou composition
+├── components/<id>.md        atome, molécule ou organisme
 ├── components/<id>.html      rendu du composant, toutes variantes et tous états
 ├── screens/<id>.md           écran
 ├── screens/<id>.html         maquette de l'écran, tous ses états dans un seul fichier
@@ -42,9 +42,9 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Le
 | Fiche | Contient en plus |
 | --- | --- |
 | `system.md` | version du format des fiches, plateformes, breakpoints (le tableau `## Breakpoints`, seule source), thèmes, langues (`ar`, `he`, `fa` et `ur` s'écrivent de droite à gauche, ce qui donne le sens d'écriture), groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés ; règles transverses s'il y en a |
-| `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
+| `brand.md` | projet, utilisateurs, domaine, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
-| atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
+| atome, molécule, organisme | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
 | écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, plateformes où il existe, un lien vers le code par plateforme |
 | parcours | persona, nommé et décrit, étapes ordonnées, chaque étape un écran ou son wireframe et l'action qui mène à la suivante |
 | wireframe | composants attendus, existants ou non, états (au moins défaut), zones nommées ; aucune plateforme |
@@ -55,7 +55,7 @@ Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Le
 Deux axes, jamais mêlés : où en est le design, et quelle version le code implémente.
 
 - `status` dit le design : `proposed` (créé, pas encore validé), `validated` (rendu approuvé en review), `deprecated` (ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas).
-- Chaque lien vers le code porte la version de l'élément que ce code implémente. Une plateforme est à jour quand elle égale `version`, en retard quand elle est plus petite ; un élément sans lien n'est codé nulle part, sauf une molécule ou une composition implémentée par ce qu'elle utilise.
+- Chaque lien vers le code porte la version de l'élément que ce code implémente. Une plateforme est à jour quand elle égale `version`, en retard quand elle est plus petite ; un élément sans lien n'est codé nulle part, sauf une molécule ou un organisme implémenté par ce qu'elle utilise.
 - Modifier un élément implémenté monte sa `version` et le repasse à `proposed` ; les versions de ses liens ne bougent pas, et le retard de chaque plateforme reste visible jusqu'à ce que la feature fasse suivre son code.
 - Un élément non déprécié n'utilise jamais un élément déprécié.
 
@@ -65,7 +65,7 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 - Un élément utilise des éléments de son niveau ou d'un niveau inférieur, jamais lui-même.
 - Un composant de librairie est lié à son paquet et à son nom exporté.
 - Chaque fichier sous un dossier UI déclaré est lié à une fiche ou couvert par un chemin ignoré.
-- Les usages se lisent dans les fiches : un token mène aux composants qui le déclarent, un composant aux compositions et écrans qui l'utilisent, un écran aux parcours, chaque élément à son fichier de code. Le rapport d'impact suit ce chemin.
+- Les usages se lisent dans les fiches : un token mène aux composants qui le déclarent, un composant aux organismes et écrans qui l'utilisent, un écran aux parcours, chaque élément à son fichier de code. Le rapport d'impact suit ce chemin.
 
 ### Versions et historique
 

@@ -8,7 +8,7 @@ UI and UX design.
 | --- | --- |
 | Status | alpha |
 | Install | `/plugin install aidd-ui@aidd-framework` |
-| Start with | `/aidd-ui:01-system` |
+| Start with | `/aidd-ui:01-journeys` |
 | Skills, agents, hooks | [Catalog](../../docs/CATALOG.md#-aidd-ui) |
 
 > [!WARNING]
@@ -19,10 +19,14 @@ UI and UX design.
 
 ```mermaid
 flowchart LR
-  Skill["skill 01-system"] -->|"judgement: brand, names, style"| Docs[("aidd_docs/ui/")]
-  Journeys["skill 02-journeys"] -->|"judgement: persona, steps, structure"| Docs
-  Skill -->|"calls"| Engine["hooks/aidd-ui.cjs"]
-  Journeys -->|"calls"| Engine
+  Journeys["skill 01-journeys"] -->|"judgement: persona, steps, structure"| Docs[("aidd_docs/ui/")]
+  Brand["skill 02-brand"] -->|"judgement: identity, tone, references"| Docs
+  Foundations["skill 03-foundations"] -->|"judgement: tokens, names"| Docs
+  Components["skill 04-components"] -->|"judgement: levels, variants, states"| Docs
+  Journeys -->|"calls"| Engine["hooks/aidd-ui.cjs"]
+  Brand -->|"calls"| Engine
+  Foundations -->|"calls"| Engine
+  Components -->|"calls"| Engine
   Engine -->|"validate, tokens, impact, extract, bump, publish"| Docs
   Host["host event"] --> Hook["aidd-ui.cjs hook"]
   Hook -->|"checks what a write produced, then the lines the turn changed"| Engine
@@ -32,9 +36,8 @@ flowchart LR
 ## Start
 
 1. Install the plugin; its hook needs `node` on `PATH`.
-2. Run `/aidd-ui:01-system` in your project.
-3. Follow the skill: it writes the design system under `aidd_docs/ui/`.
-4. Run `/aidd-ui:02-journeys` to map a persona's journeys and the wireframe of each screen they cross, before or after the design system.
+2. Run `/aidd-ui:01-journeys` in your project to map a persona's journeys and the wireframe of each screen they cross.
+3. Run `/aidd-ui:02-brand`, then `/aidd-ui:03-foundations`, then `/aidd-ui:04-components`: each writes its records under `aidd_docs/ui/`; foundations stops without a brand, components without a system.
 
 ## Limits
 
@@ -46,6 +49,7 @@ flowchart LR
 - Every problem prints as `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` under a line counting errors and warnings; the hook never cuts the errors, and caps the warnings at ten.
 - In a git repository the code is the files git does not ignore under a code root, untracked ones included; outside one, every file under it is read, its dependencies and builds too. A dot file or folder under a code root (`.env.example`, `.storybook/`) is never read. The hook lists the code but reads the text only of the code files the session wrote, so its cost follows what the session wrote, not the size of the code; `validate` reads all of it. A shell write names no file, so the code files it changed are read only once another write names them.
 - A shell write the hook does not know is not seen; it knows redirections, `tee`, `sed -i`, `mv`, `cp`, `rm`, `touch`, `mkdir`, `patch`, `git apply`, `checkout`, `restore` and the engine.
+- A key several exports of a script share takes its export's name, so adding such an export renames tokens.
 - Overlapping breakpoint queries cascade in the stylesheet: at a width two match, the later keeps a token the earlier alone redefines.
 - A palette constant in code (`Colors.blue`, `UIColor.systemBlue`) is a name, as a token is: no colour check finds it. A storyboard's `<color red=…>` is not read either.
 - A render shows a variant or state when its text holds the attribute; native behaviour (focus, validity) no render shows.

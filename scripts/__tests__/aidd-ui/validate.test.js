@@ -204,7 +204,7 @@ describe("aidd-ui validator entries", () => {
   describe("E9 commands", () => {
     it("names the commands and exits 2 on one it does not know", () => {
       const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
-      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs hook < <host event>\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created | --removed) <token or id>… [--root <dir>]\n       node aidd-ui.cjs publish ([--breaking] | <id>…) [--root <dir>]\n" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs help [<command>]\nvalidate: Check the design system and print its problems.\ntokens: Write the stylesheet from the tokens.\nhook: Answer a host event with the problems it caused.\nimpact: List what a token or element reaches.\nextract: Write the tokens from the code the system names.\nbump: Raise the versions a change reaches, or start a history.\npublish: Publish the system, or validate elements.\nhelp: Print a command's usage, effects, output and exit codes.\n" });
     });
   });
 
@@ -369,7 +369,7 @@ describe("aidd-ui validator entries", () => {
 
     it("tells the error the write left in the record citing the written one, and holds no turn for it", () => {
       begin();
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([`${UI}/components/search-field.md R6 "button" => use only elements of its own level or lower`])));
       assert.deepEqual(hook(stop()), silent);
     });
@@ -383,18 +383,18 @@ describe("aidd-ui validator entries", () => {
 
     it("tells an error elsewhere once per turn, however many writes leave it", () => {
       begin();
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       hook(postToolUse(path.join(tmp, RECORD)));
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
 
     it("tells nothing elsewhere without a baseline, nothing then proving an error new", () => {
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
 
     it("tells nothing elsewhere the session started with", () => {
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       begin();
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
