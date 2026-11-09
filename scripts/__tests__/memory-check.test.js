@@ -607,7 +607,8 @@ function engine(...args) {
 const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
 
 function git(root, ...args) {
-  const run = spawnSync("git", ["-C", root, "-c", "user.name=t", "-c", "user.email=t@t", ...args], { encoding: "utf8", env: cleanEnv() });
+  // No background maintenance: it writes `.git/objects/maintenance.lock` while treeState reads the tree.
+  const run = spawnSync("git", ["-C", root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "maintenance.auto=false", "-c", "gc.auto=0", ...args], { encoding: "utf8", env: cleanEnv() });
   assert.equal(run.status, 0, run.stderr);
   return run.stdout.trim();
 }
