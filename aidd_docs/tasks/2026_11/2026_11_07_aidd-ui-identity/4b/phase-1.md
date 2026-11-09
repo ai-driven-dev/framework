@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction : moteur, brouillons ignorés, `compare` vérifie, `keep` tranche

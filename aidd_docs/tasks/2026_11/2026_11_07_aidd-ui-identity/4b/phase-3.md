@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction : skills, `02-brand` propose toujours et évolue, 03 et 04 sur demande ; pilote

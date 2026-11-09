@@ -73,7 +73,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 
 ## Open Questions
 
-- TBD: la page ouverte en local peut-elle écrire `feedback.json` elle-même ? Vérifié en 4b ; si non, le copier-coller reste seul et la limite s'écrit.
+- Tranché en 4b : la page écrit `feedback.json` sous Chromium, après un clic, la personne choisissant le dossier ; ailleurs, elle copie seulement. Preuve : [run-4b](./run-4b.md).
 
 ## Context
 

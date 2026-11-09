@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction : une passe pilote, une passe navigateur, `run-4b.md`, gates

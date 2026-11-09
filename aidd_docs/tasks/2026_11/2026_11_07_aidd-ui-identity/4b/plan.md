@@ -1,6 +1,6 @@
 ---
 objective: "Sur le pilote vierge, `02-brand` propose trois directions distinctes, comparées dans une page statique, et la retenue devient `brand.md` ; le moteur signale un jeu de variantes sans intention ou sans différence."
-status: pending
+status: done
 ---
 
 # Plan : aidd-ui 4b, variantes et marque
