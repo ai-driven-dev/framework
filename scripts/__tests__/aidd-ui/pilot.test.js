@@ -442,7 +442,8 @@ describe("aidd-ui pilot trace", () => {
 });
 
 describe("aidd-ui pilot step run", () => {
-  it("writes the reply to the .out file and the trace beside it", () => {
+  // A POSIX shell stub stands in for claude: Windows runs neither the stub nor a ':' PATH.
+  it("writes the reply to the .out file and the trace beside it", { skip: process.platform === "win32" }, () => {
     const tmp = makeTmp("pilot-step-");
     const bin = path.join(tmp, "bin");
     fs.mkdirSync(bin);
