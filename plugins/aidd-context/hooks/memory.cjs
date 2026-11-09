@@ -22,8 +22,10 @@
  *   reason, exit 0; only a --since naming no commit exits 1. The hook never runs it.
  * - `facts <sheet> [root]`: the skill's fact sheet before a write. Exits 1 naming each line whose
  *   shape breaks the grammar or whose source is absent from the root. The hook never runs it.
- * - `sync [tool...]`: fills the memory block of each context file present, or only those of
- *   the tools named, from the current folder.
+ * - `sync [--add] [tool...]`: fills the memory block of each context file present, or only those
+ *   of the tools named, from the current folder. With `--add`, a named tool's file holding no
+ *   block gains one at its end, unless it links outside the project or ends inside a code fence;
+ *   without it, and at a session start, a file holding none is left as it is.
  *
  * The hook reads its event and answers only through `lib/host.cjs`. Node built-ins only: the hook
  * starts no other program; `vanished` and `changes` alone read git, and only to read.
@@ -569,13 +571,30 @@ function existingTargets(root, targets) {
     });
 }
 
-/** The new text of one context file, or the reason it is left as it is. */
-function filledBlock(original, inner, root) {
+/** Whether a code fence is still open after the content's last line. */
+function endsInFence(content) {
+  const lines = markdownLines(`${content}\nx`);
+  return lines[lines.length - 1].kind === "fence";
+}
+
+/**
+ * The new text of one context file, or the reason it is left as it is. A file holding no block
+ * gains one after its last line when `add` is set, and `added` says so; every byte above it stays.
+ * `outside` marks a file reached through a link leaving the project, never given a block.
+ */
+function filledBlock(original, inner, root, { add = false, outside = false } = {}) {
   const current = findBlock(original, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
   const problem = blockProblem(original, current, legacy);
   if (problem !== null) return { problem };
-  if (current.status === "none" && legacy.status === "none") return { text: original };
+  if (current.status === "none" && legacy.status === "none") {
+    if (!add) return { text: original };
+    if (outside) return { problem: "links outside the project" };
+    if (endsInFence(original)) return { problem: "ends inside a code fence" };
+    const ending = original.includes("\r\n") ? "\r\n" : "\n";
+    const gap = original === "" ? "" : original.endsWith(ending) ? ending : ending + ending;
+    return { text: original + gap + [BLOCK_OPEN, ...inner, BLOCK_CLOSE, ""].join(ending), added: true };
+  }
   // Compared against what is on disk, not against the migrated text: an unchanged memory
   // list would otherwise skip the write and leave the old markers in place forever.
   const migrated = migrateLegacyMarkers(original, legacy);
@@ -619,13 +638,14 @@ function tryWrite(file, text, shown, failed) {
 }
 
 /**
- * Fills the memory block of each context file that already holds one, and the memory README's
- * list when it opts in with its own markers. Stages nothing. A file it cannot write is skipped and
- * named; a block it cannot fill (an unpaired, duplicated or malformed marker, markers in a fence,
- * a line it would not write) is left as it is and reported. Returns the files it changed, the
- * unfilled ones with markers at fault, the ones holding a foreign line and the ones unwritable.
+ * Fills the memory block of each context file that holds one, adds it with `add` to a named tool's
+ * file holding none, and fills the memory README's list when it opts in with its own markers.
+ * Stages nothing. A file it cannot write is skipped and named; a block it cannot fill (an unpaired,
+ * duplicated or malformed marker, markers in a fence, a line it would not write, a link leaving
+ * the project, a file ending in an open fence) is left as it is and reported. Returns the files it
+ * changed, the unfilled ones at fault, the ones holding a foreign line and the ones unwritable.
  */
-function sync(root, tools = [], { quiet = false } = {}) {
+function sync(root, tools = [], { quiet = false, add = false } = {}) {
   const absolute = realish(path.resolve(root));
   const result = { changed: [], unpaired: [], held: [], failed: [] };
   if (!fs.existsSync(path.join(absolute, DOCS_DIR))) return result;
@@ -637,14 +657,20 @@ function sync(root, tools = [], { quiet = false } = {}) {
   for (const target of existingTargets(absolute, resolveTargets(tools))) {
     const original = readTextOrNull(target.file);
     if (original === null) continue;
-    const { text, problem, held } = filledBlock(original, buildBlockLines(lists, target.syntax, target.prefix), absolute);
+    const relative = path.relative(absolute, target.file);
+    const outside = relative.startsWith("..") || path.isAbsolute(relative);
+    const inner = buildBlockLines(lists, target.syntax, target.prefix);
+    const { text, problem, held, added } = filledBlock(original, inner, absolute, { add: add && tools.length > 0, outside });
     if (problem !== undefined) {
       result.unpaired.push(target.path);
       report(`${target.path} ${problem}, not synced`);
     } else if (held !== undefined) {
       result.held.push(target.path);
       report(`${target.path} holds a line the memory block would not write ("${held}"), not synced`);
-    } else if (text !== original && tryWrite(target.file, text, target.path, result.failed)) result.changed.push(target.path);
+    } else if (text !== original && tryWrite(target.file, text, target.path, result.failed)) {
+      result.changed.push(target.path);
+      if (added) report(`${target.path} had no project memory block, added at its end`);
+    }
   }
 
   const copilot = path.join(absolute, COPILOT_FILE);
@@ -749,17 +775,24 @@ function main(argv) {
     return problems.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
   if (command === "sync") {
+    // Every other command takes the root as `.`: a path here is that habit, not a tool.
+    const given = args.find((arg) => /[./\\]/u.test(arg));
+    if (given !== undefined) {
+      process.stderr.write(`memory: sync takes tool names, run it from the project root (got "${given}")\n`);
+      return EXIT_ERRORS;
+    }
+    const tools = args.filter((arg) => arg !== "--add").map((arg) => arg.toLowerCase());
     try {
-      const { unpaired, held, failed } = sync(process.cwd(), args.map((arg) => arg.toLowerCase()));
+      const { unpaired, held, failed } = sync(process.cwd(), tools, { add: args.includes("--add") });
       // Only when tools were named: an unnamed run must never fail over a file the user has yet to repair.
-      return unpaired.length + held.length + failed.length > 0 && args.length > 0 ? EXIT_ERRORS : EXIT_OK;
+      return unpaired.length + held.length + failed.length > 0 && tools.length > 0 ? EXIT_ERRORS : EXIT_OK;
     } catch (error) {
       if (!(error instanceof UnknownToolError)) throw error;
       process.stderr.write(`memory: ${error.message}\n`);
       return EXIT_ERRORS;
     }
   }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | sync [tool...]\n");
+  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | sync [--add] [tool...]\n");
   return EXIT_ERRORS;
 }
 

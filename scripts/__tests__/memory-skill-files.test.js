@@ -411,8 +411,22 @@ test("scan collects the sheet into the task folder and write shows it once, afte
   assert.doesNotMatch(scan, /Show/u, "scan shows the sheet before check has added its lines");
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
   assert.match(steps[0], /Show the \[sheet message\]\(\.\.\/assets\/sheet-message\.md\)/u, "write does not show the sheet through the sheet message");
-  assert.match(steps[1], /Wait for the answer, then write it into the sheet/u, "the answers do not reach the sheet");
+  assert.match(steps[1], /Wait for the answer, then write it into the sheet's answer fields[^\n]*, before any memory file\./u, "the answers do not reach the sheet before the bank");
   assert.match(skillText("actions/03-check.md"), /ask(?:ing)? nothing/u, "check asks on a refresh");
+});
+
+// A model that cannot find the markers opens the engine's source to learn them: the engine adds the
+// block itself, and the skill sends no one into its code.
+test("sync adds a missing block itself on a pick, so the skill only creates an absent file and never opens the engine", () => {
+  const engine = engineSection();
+  assert.match(engine, /^- Run the engine; never open its source or `lib\/`\.$/mu);
+  assert.match(engine, /`node memory\.cjs sync \[--add\] <tool>\.\.\.` \| [^|]+ \| tool names only, no root; [^\n]*`--add` appends the block to a picked tool's file holding none/u);
+  const sync = skillText("actions/04-sync.md");
+  assert.match(sync, /^3\. Create each picked tool's absent context file, and offer to reconcile one whose AIDD structure differs, per \[tools\]/mu);
+  assert.match(sync, /^4\. Run \[`sync`\]\([^)]+\) with `--add` for the picked tools, per \[tools\]/mu);
+  assert.doesNotMatch(sync, /carries the block, per/u, "the skill still makes the model write the block");
+  assert.match(skillText("references/tools.md"), /^\| Its AIDD structure differs \| offer to reconcile it, applying only what the user approves; `--add` only once accepted or already following it \|$/mu);
+  assert.match(skillText("../10-learn/references/sync-arguments.md"), /^\| Argument \| Refreshes \|$/mu, "10-learn's bare sync no longer only refreshes");
 });
 
 test("check on a refresh adds its findings to the sheet as unanswered D lines", () => {
@@ -543,11 +557,13 @@ test("a request naming no mode goes to setup without a bank and to refresh with 
   assert.doesNotMatch(edges.join("\n"), /\{/u, "the router decides with a diamond, not labelled edges");
 });
 
-test("an ok answer writes yes on every D line, no Dn writes no, and a remove or replace fact quotes the old line", () => {
+test("an ok answer writes yes only where a line takes one, all but X writes no on X, and a remove or replace fact quotes the old line", () => {
   const answers = section(skillText("references/capabilities.md"), "Answers");
   assert.match(answers, /the person's own words \| ids optional/u);
-  assert.match(answers, /`ok` or "all good" \| `yes` on every line/u);
-  assert.match(answers, /"all but X" \| `yes` on every line but X, in one turn/u);
+  assert.match(answers, /`ok` or "all good" \| `yes` on each `remove`, `replace` and `move` line, the others left blank/u);
+  assert.match(answers, /"all but X" \| as `ok`, with `no` on X, in one turn/u);
+  assert.match(answers, /silence on an addition \| yes/u);
+  assert.match(section(skillText("references/capabilities.md"), "Writing"), /^\| A line answered no \| skip it \|$/mu);
   assert.match(skillText("assets/fact-sheet.md"), /quote the old line exactly between double quotes/u);
 });
 

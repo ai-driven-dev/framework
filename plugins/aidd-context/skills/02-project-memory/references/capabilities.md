@@ -52,6 +52,7 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 | Absent file | fill its template with the sheet's lines, dropping an empty section, unless a misplaced file covers its capability |
 | A capability whose Accepted names file exists | write into that file, create no second |
 | Existing file | apply the sheet's lines only |
+| A line answered no | skip it |
 | A `remove` or `replace` line whose answer is not yes | skip it |
 | A `move <path> to <path>` line answered yes | move the file |
 
@@ -60,8 +61,8 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 | Answer | Read as |
 | --- | --- |
 | the person's own words | ids optional |
-| `ok` or "all good" | `yes` on every line |
-| "all but X" | `yes` on every line but X, in one turn |
+| `ok` or "all good" | `yes` on each `remove`, `replace` and `move` line, the others left blank |
+| "all but X" | as `ok`, with `no` on X, in one turn |
 | silence on an addition | yes |
 | an answer unclear for a line | leaves a `remove` or `replace` on it unapplied |
 | `tools: claude, codex` or "wire it into claude" | the tools picked |

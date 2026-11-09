@@ -5,7 +5,7 @@
  *
  *   - <id> | <file> > <section> | <fact> | <source> | <answer>
  *
- * The answer may be left out, and a `Q` line may cite no source. A `T` line names a rule topic
+ * The answer may be left out, and a `Q` line may cite no source, or `none`. A `T` line names a rule topic
  * where the others name a file and section, bank-relative. A fact holds no `|`. Prose outside a
  * block is never read; inside one, any line holding a `|` is a fact line, and a wrong one is a
  * problem. An id is used once and at most eight lines are `Q`. Node built-ins only.
@@ -68,7 +68,7 @@ function checkSheet(sheetFile, root) {
     if (ids.has(entry.fields[0])) problems.push(`${where} id already used`);
     ids.add(entry.fields[0]);
     const source = plainSource(entry.fields[3]);
-    if (source === "" && entry.fields[0][0] === "Q") continue;
+    if ((source === "" || source === "none") && entry.fields[0][0] === "Q") continue;
     const relative = path.relative(root, path.resolve(root, source));
     if (path.isAbsolute(source) || relative.startsWith("..")) problems.push(`${where} source outside the root: ${source}`);
     else if (!fs.existsSync(path.resolve(root, source))) problems.push(`${where} source not found: ${source}`);

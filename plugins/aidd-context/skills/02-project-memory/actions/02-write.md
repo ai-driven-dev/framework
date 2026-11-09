@@ -9,7 +9,7 @@ The sheet.
 ## Process
 
 1. Show the [sheet message](../assets/sheet-message.md) with the detected [tools](../references/tools.md).
-2. Wait for the answer, then write it into the sheet by the [Answers](../references/capabilities.md#answers).
+2. Wait for the answer, then write it into the sheet's answer fields by the [Answers](../references/capabilities.md#answers), before any memory file.
 3. If it holds no fact line and no absent always file, report the bank current and stop.
 4. Run [`facts`](../references/engine.md) and fix the sheet until it passes.
 5. Create the bank tree of [capabilities](../references/capabilities.md). Copy `aidd_docs/README.md` only when absent.

@@ -1134,6 +1134,14 @@ test("facts: a Q line may cite no source, any other line may not", () => {
   assert.equal(factsRun(sheet(GOOD, "- R2 | project-brief.md > Purpose | a fact | | ")).status, 1);
 });
 
+// The template says a Q may cite none, and a model writes that word.
+test("facts: a Q line may cite the word none, any other line citing it is a missing source", () => {
+  assert.equal(factsRun(sheet(GOOD, "- Q1 | project-brief.md > Users | who reads it | none |")).status, 0);
+  const other = factsRun(sheet(GOOD, "- R2 | project-brief.md > Purpose | a fact | none |"));
+  assert.equal(other.status, 1);
+  assert.match(other.stdout, /R2 source not found: none/u);
+});
+
 test("facts: a To rule line names a rule topic, not a memory file", () => {
   assert.equal(factsRun(sheet(GOOD, "- T1 | error handling | wrap every adapter call | package.json |")).status, 0);
   assert.equal(factsRun(sheet(GOOD, "- R2 | error handling | a fact | package.json |")).status, 1);
