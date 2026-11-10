@@ -296,7 +296,7 @@ describe("aidd-ui drafts", () => {
       compare();
       assert.equal(panelBodies().length, ROWS.length);
       for (const body of panelBodies()) {
-        assert.deepEqual([...body.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)" aria-pressed="false">/g)].map((match) => match[1]), ["keep", "revise", "discard"]);
+        assert.deepEqual([...body.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)" aria-pressed="false"[^>]*>/g)].map((match) => match[1]), ["keep", "revise", "discard"]);
         assert.match(body, /<textarea class="comment" autocomplete="off"/); // a browser restoring the text would outlive a changed set
       }
     });
@@ -325,7 +325,118 @@ describe("aidd-ui drafts", () => {
       writeSet("brand");
       compare();
       assert.match(page(), /<details>\s*<summary>Show JSON<\/summary>\s*<textarea id="feedback"/);
-      assert.match(page(), /<button type="button" id="copy">/);
+      assert.match(page(), /<button type="button" id="copy"[^>]*>/);
+    });
+
+    const canvasOf = () => page().split('<main id="canvas">')[1].split("</main>")[0];
+    const headerOf = () => page().split("<header>")[1].split("</header>")[0];
+    const inspectorOf = () => page().split('<aside id="inspector">')[1].split("</aside>")[0];
+
+    it("puts the view, layout and preview controls in a toolbar inside the canvas", () => {
+      componentSet();
+      compare("button");
+      const canvas = read(`${DRAFTS}/button/compare.html`).split('<main id="canvas">')[1].split("</main>")[0];
+      const toolbar = canvas.match(/<div class="toolbar">([\s\S]*?)<\/div>\s*<div class="stage">/)?.[1] ?? "";
+      assert.deepEqual([...toolbar.matchAll(/<button type="button" class="mode"[^>]*>([^<]*)<\/button>/g)].map((match) => match[1]), ["Screen", "Spec", "1 up", "2 up", "Desktop", "Mobile"]);
+      assert.match(toolbar, /<select id="state">/);
+      assert.match(toolbar, /<select id="theme">/);
+    });
+
+    it("defaults the screen size to Desktop, 1280 by 800, with Mobile 390 by 844 in the script", () => {
+      writeSet("brand");
+      compare();
+      assert.match(canvasOf(), /data-device="desktop" aria-pressed="true"/);
+      assert.match(canvasOf(), /data-device="mobile" aria-pressed="false"/);
+      assert.match(page(), /desktop: \[1280, 800\]/);
+      assert.match(page(), /mobile: \[390, 844\]/);
+    });
+
+    it("shows the zoom in each title bar and scales a real viewport inside a box", () => {
+      writeSet("brand");
+      compare();
+      canvasOf().split('<section class="variant"').slice(1).forEach((chunk) => assert.match(chunk, /<span class="zoom"[^>]*><\/span>/));
+      assert.match(canvasOf(), /<div class="shot"><iframe /);
+      assert.doesNotMatch(page(), /clamp\(/);
+    });
+
+    it("gives the inspector 18rem", () => {
+      writeSet("brand");
+      compare();
+      assert.match(page(), /minmax\(0, 1fr\) 18rem;/);
+    });
+
+    it("keeps the preview selects out of the top bar", () => {
+      componentSet();
+      compare("button");
+      const header = read(`${DRAFTS}/button/compare.html`).split("<header>")[1].split("</header>")[0];
+      assert.doesNotMatch(header, /<select/);
+    });
+
+    it("opens on Screen when a variant has html, on Spec when none has, and says when a view is empty", () => {
+      writeSet("brand");
+      compare();
+      assert.match(canvasOf(), /data-view="screen" aria-pressed="true"/);
+      assert.match(canvasOf(), /data-view="spec" aria-pressed="false"/);
+      assert.match(canvasOf(), /<div class="file" data-kind="screen">/);
+      assert.match(canvasOf(), /<div class="file" data-kind="spec" hidden>\s*<div class="page">/);
+      writeSet("notes", { rows: ROWS.slice(0, 2), files: () => ({ "brand.md": "# Brand\n" }) });
+      compare("notes");
+      const notes = read(`${DRAFTS}/notes/compare.html`);
+      assert.match(notes, /data-view="spec" aria-pressed="true"/);
+      assert.match(notes, /data-kind="screen" hidden><p class="none">No screen in this variant\.<\/p>/);
+    });
+
+    it("shows each variant in a window with a title bar holding its name and verdict pill", () => {
+      writeSet("brand");
+      compare();
+      const windows = canvasOf().split('<section class="variant"').slice(1);
+      assert.equal(windows.length, ROWS.length);
+      windows.forEach((chunk, at) => assert.match(chunk, new RegExp(`<div class="win">\\s*<div class="title"><b>${ROWS[at][0]}</b><span class="slot" aria-hidden="true"></span>(?:<span class="zoom"[^>]*></span>)?<span class="vpill" data-verdict="">Undecided</span></div>`)));
+    });
+
+    it("has a help button and a sheet listing every shortcut", () => {
+      writeSet("brand");
+      compare();
+      assert.match(headerOf(), /<button type="button" id="help" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-expanded="false" aria-controls="sheet" title="Shortcuts \(\?\)">\?<\/button>/);
+      const sheet = headerOf().match(/<dialog id="sheet"[^>]*>([\s\S]*?)<\/dialog>/)?.[1] ?? "";
+      assert.deepEqual([...sheet.matchAll(/<kbd>([^<]+)<\/kbd>/g)].map((match) => match[1]), ["K", "R", "D", "←→", "C", "?", "Esc"]);
+    });
+
+    it("gives each verdict button its key as a cap and a title, its name staying the verdict", () => {
+      writeSet("brand");
+      compare();
+      assert.equal(panelBodies().length, ROWS.length);
+      for (const body of panelBodies()) {
+        const buttons = [...body.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)"[^>]*? title="([^"]*)"><span aria-hidden="true">\S<\/span>(\w+)<kbd aria-hidden="true">(\w)<\/kbd><\/button>/g)];
+        assert.deepEqual(buttons.map((match) => match.slice(1)), [["keep", "Keep (K)", "Keep", "K"], ["revise", "Revise (R)", "Revise", "R"], ["discard", "Discard (D)", "Discard", "D"]]);
+      }
+      assert.match(headerOf(), /<button type="button" id="copy" title="Copy feedback \(C\)">/);
+    });
+
+    it("shows a legend of the four dots under the list, and no shortcut grid in the inspector", () => {
+      writeSet("brand");
+      compare();
+      const nav = page().split("<nav")[1].split("</nav>")[0];
+      const legend = nav.match(/<ul class="legend"[^>]*>([\s\S]*?)<\/ul>/)?.[1] ?? "";
+      assert.deepEqual([...legend.matchAll(/<li><span class="dot" data-verdict="(\w*)" aria-hidden="true"><\/span>([^<]+)<\/li>/g)].map((match) => match.slice(1)), [["keep", "Keep"], ["revise", "Revise"], ["discard", "Discard"], ["", "Undecided"]]);
+      assert.doesNotMatch(inspectorOf(), /class="keys"/);
+    });
+
+    it("hides the completion hint until every variant has a verdict, the progress still reading 0/N", () => {
+      writeSet("brand");
+      compare();
+      assert.match(headerOf(), /<span id="done" hidden>Copy the feedback into the chat\.<\/span>/);
+      assert.match(headerOf(), /<span id="progress">0\/3 decided<\/span>/);
+    });
+
+    it("keeps the chrome greyscale: every neutral colour has equal channels, in both schemes", () => {
+      writeSet("brand");
+      compare();
+      const style = page().match(/<style>([\s\S]*?)<\/style>/)[1];
+      const neutral = ["bg", "text", "muted", "line", "canvas", "dot", "hover", "press", "pill", "pill-text", "kbd-line", "title", "win", "win-line", "track"];
+      const found = neutral.flatMap((name) => [...style.matchAll(new RegExp(`--${name}: (#[0-9a-f]{6})`, "g"))].map((match) => [name, match[1]]));
+      assert.equal(found.length, neutral.length * 2, "each neutral is defined in light and in dark");
+      for (const [name, hex] of found) assert.equal(hex.slice(1, 3) === hex.slice(3, 5) && hex.slice(3, 5) === hex.slice(5, 7), true, `--${name}: ${hex}`);
     });
 
     it("redefines its chrome colours under the dark scheme", () => {
@@ -406,7 +517,7 @@ describe("aidd-ui drafts", () => {
       writeSet("brand");
       compare();
       assert.doesNotMatch(page(), /showSaveFilePicker|id="save"/);
-      assert.match(page(), /<button type="button" id="copy">/);
+      assert.match(page(), /<button type="button" id="copy"[^>]*>/);
       assert.match(page(), /<textarea id="feedback" readonly/);
     });
 
