@@ -83,6 +83,7 @@ const OWNED = {
   "02-brand": ["brand.md"],
   "03-foundations": ["system.md", "tokens.json", "themes/", "platforms/", "breakpoints/"],
   "04-components": ["components/", "assets/"],
+  "05-screens": ["screens/"],
 };
 // What the engine writes for each skill's step. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
 const ENGINE_FILES = {
@@ -90,6 +91,7 @@ const ENGINE_FILES = {
   "02-brand": ["drafts/.gitignore"],
   "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
   "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
+  "05-screens": ["history.md", "drafts/.gitignore"],
 };
 
 const isIn = (file, entries) => entries.some((entry) => (entry.endsWith("/") ? file.startsWith(`${UI_DIR}/${entry}`) : file === `${UI_DIR}/${entry}`));
@@ -144,13 +146,24 @@ function stepsWithoutWireframe(root) {
   return steps.length ? steps.filter((step) => !wireframes.has(step.screen)) : null;
 }
 
+/** Each wireframe no screen names by its `wireframe` key, or null when nothing loads or no wireframe exists. */
+function wireframesWithoutScreen(root) {
+  const project = load(root);
+  if (project === null) return null;
+  const ofKind = (kind) => project.records.filter((record) => record.frontMatter.kind === kind);
+  const dressed = new Set(ofKind("screen").map((record) => record.frontMatter.wireframe));
+  const wireframes = ofKind("wireframe").map((record) => record.frontMatter.id);
+  return wireframes.length ? wireframes.filter((id) => !dressed.has(id)) : null;
+}
+
 /** One pilot's result on one line. */
-function reportLine(pilot, { errors, warnings, missing, changed, broken }) {
+function reportLine(pilot, { errors, warnings, missing, unscreened, changed, broken }) {
   const ids = (list) => (list.length ? list.join(",") : "none");
   const wireframes = missing === null ? "no journey" : missing.length ? `missing ${missing.length}` : "all";
+  const screens = unscreened === null ? "no wireframe" : unscreened.length ? `missing ${unscreened.length}` : "all";
   const code = changed.length ? `changed ${changed.length}` : "untouched";
   const steps = broken.length ? `broken ${broken.length}` : "ok";
-  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} code ${code} steps ${steps}`;
+  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} screens ${screens} code ${code} steps ${steps}`;
 }
 
 // What each pilot asks, one part per skill of the chain.
@@ -165,13 +178,15 @@ const REQUESTS = {
       'Lay the design system of this breathing-exercise app from scratch: no UI code exists. Its journeys and wireframes are already in aidd_docs/ui/. Propose three directions for it, compare them and keep the one that fits. Brand: "Breath", calm, soft, reassuring; for Lea, 34, an office worker new to breathwork who wants to calm down in two minutes between meetings; light theme only; English.',
     foundations: "Write the tokens, for web and mobile.",
     components: "Write the components the wireframes expect.",
+    screens: "Write a screen for each wireframe, with at least two variants of each.",
   },
   real: {
     journeys:
       "Map two journeys of this existing app from its real screens, for its main user, with a wireframe per step. Persona: take one a brief under aidd_docs describes, else the app's main user as its README describes.",
     brand: "Lay the design system of this existing app from its code. Write its brand from its README, package manifest and visible copy.",
     foundations: "Write its tokens from its code.",
-    components: "Write the components its screens use, at most eight, the ones the wireframes expect first.",
+    components: "Write the components its screens use, and every one the wireframes expect.",
+    screens: "Write a screen for each wireframe, with at least two variants of each.",
   },
 };
 
@@ -181,6 +196,7 @@ const CHAIN = [
   ["02-brand", "brand"],
   ["03-foundations", "foundations"],
   ["04-components", "components"],
+  ["05-screens", "screens"],
 ];
 
 /** The request of one step: its part, then the non-interactive suffix. */
@@ -271,10 +287,10 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
         broken.push(...stepBreaks(skill, last, now));
         last = now;
       }
-      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), changed: changedOutsideUi(before, last), broken };
+      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), unscreened: wireframesWithoutScreen(dir), changed: changedOutsideUi(before, last), broken };
       console.log(reportLine(pilot, result));
       for (const line of broken) console.log(line);
-      if (result.errors.length || result.missing === null || result.missing.length || result.changed.length || broken.length) worst = 1;
+      if (result.errors.length || result.missing === null || result.missing.length || result.unscreened === null || result.unscreened.length || result.changed.length || broken.length) worst = 1;
     }
     return worst;
   } catch (error) {
@@ -285,4 +301,4 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
 
 if (require.main === module) process.exit(main());
 
-module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };
+module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, wireframesWithoutScreen, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };

@@ -34,7 +34,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 - `02-brand` propose toujours au moins deux variantes ; `03-foundations` et `04-components` sur demande. Chaque variante déclare son intention et ses axes ; le skill guide la décision sans prescrire de style.
 - Le moteur porte seul la mécanique des variantes : il vérifie au moins deux variantes, une intention chacune, une vraie différence sur les axes déclarés ; la variante retenue devient une fiche, les autres sont effacées.
 - La page de comparaison est un fichier statique, sans serveur : basculer entre variantes, en mettre deux côte à côte, en écarter une, changer d'état et de thème, noter chacune.
-- Le retour de la page a un seul format, écrit dans `drafts/<id>/feedback.json` quand le navigateur le permet, sinon copié dans le chat.
+- Le retour de la page a un seul format, copié puis collé dans le chat.
 
 ### 4c : écrans, contraste, zones tactiles
 
@@ -54,6 +54,7 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 - Le moteur génère la vitrine par `showcase`, lancée en fin de chaque skill : accueil, une page par fiche, navigation dans l'ordre du chemin, wireframes et écrans rangés sous templates et pages, liens « utilise » et « utilisé par ».
 - Elle partage le socle de la page de comparaison, et tient les décisions 4 du contrat : bascule thème et plateforme, deux combinaisons côte à côte, habillage neutre, `proposed` marqué.
 - Deux générations sur les mêmes fiches donnent le même résultat.
+- En 4e, un 80/20 suffit. Une passe produit l'affine après la passe lean.
 
 ## Non-goals
 
@@ -66,14 +67,16 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 
 - 4a : sur les trois pilotes, Kairos lancé deux fois, le script ne donne aucune erreur, tous les wireframes et un code intact, et aucune fiche ne porte plus `composition`. Les avertissements suivent les choix du modèle et ne comptent pas.
 - 4b : sur le pilote vierge, `02-brand` produit trois directions distinctes, comparées dans la page, et la retenue devient `brand.md` ; un jeu de variantes sans intention ou sans différence est signalé.
-- 4c : sur les trois pilotes, chaque wireframe a son écran ; un contraste sous le seuil et une zone tactile trop petite sont signalés.
+- 4c : sur le pilote vierge et un réel, chaque wireframe a son écran ; un contraste sous le seuil et une zone tactile trop petite sont signalés.
 - 4d : un écran et son wireframe revus OK puis publiés passent `validated` ; un verdict sur une version antérieure ne compte pas.
 - 4e : sur chaque pilote, toute fiche est atteignable depuis l'accueil, et deux générations sont identiques.
 - Fin : le script de pilote et les tests de structure passent sur tout le plugin, puis aucune phrase n'y est écrite deux fois. Chaque skill a la tenue de brainstorm : actions d'intention, références courtes. Le pilote revient à l'essentiel : chaque étape écrit ses fichiers, aucune erreur.
 
 ## Open Questions
 
-- Tranché en 4b : la page écrit `feedback.json` sous Chromium, après un clic, la personne choisissant le dossier ; ailleurs, elle copie seulement. Preuve : [run-4b](./run-4b.md).
+- Tranché en 4b : la page rend le retour par copie seule, collé dans le chat. L'écriture de `feedback.json` a été retirée. Preuve : [run-4b](./run-4b.md).
+- Passe produit, après la passe lean : page et vitrine assez abouties pour se passer de Figma ou de Claude Design. Simple, mais complète.
+- Sujet suivant : relier le design system à des outils externes, comme Figma.
 
 ## Context
 

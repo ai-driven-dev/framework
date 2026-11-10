@@ -13,6 +13,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/02-brand`](#skills02-brand)
   - [`skills/03-foundations`](#skills03-foundations)
   - [`skills/04-components`](#skills04-components)
+  - [`skills/05-screens`](#skills05-screens)
 
 ---
 
@@ -90,4 +91,19 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [variants.md](skills/04-components/references/variants.md) | - |
 | `references` | [versions.md](skills/04-components/references/versions.md) | - |
 | `-` | [SKILL.md](skills/04-components/SKILL.md) | `Write a project's components and assets, from nothing or from its code, or carry a component change to its new versions. Use when the user wants to add, extract, or change a component or an asset. Not for the brand, tokens, screens, or journeys.` |
+
+#### `skills/05-screens`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-prepare.md](skills/05-screens/actions/01-prepare.md) | - |
+| `actions` | [02-propose.md](skills/05-screens/actions/02-propose.md) | - |
+| `actions` | [03-choose.md](skills/05-screens/actions/03-choose.md) | - |
+| `actions` | [04-conclude.md](skills/05-screens/actions/04-conclude.md) | - |
+| `assets` | [screen-template.md](skills/05-screens/assets/screen-template.md) | - |
+| `references` | [cases.md](skills/05-screens/references/cases.md) | - |
+| `references` | [engine.md](skills/05-screens/references/engine.md) | - |
+| `references` | [screens.md](skills/05-screens/references/screens.md) | - |
+| `references` | [variants.md](skills/05-screens/references/variants.md) | - |
+| `-` | [SKILL.md](skills/05-screens/SKILL.md) | `Write a project's screens, one for each wireframe, by comparing variants of each. Use when the user wants to dress a wireframe as a screen. Not for the brand, tokens, components, or journeys.` |
 

@@ -224,6 +224,16 @@ describe("aidd-ui extract", () => {
       assert.deepEqual(validate(tmp).out.filter((line) => / C10 /.test(line)), []);
     });
 
+    it("reads a bare number as px when its export names a size, though the token drops that name", () => {
+      const ts = "export const spacing = {\n  12: 48,\n} as const\n\nexport const fontSize = {\n  label: 12,\n} as const\n\nexport const opacity = {\n  muted: 0.4,\n} as const\n";
+      setup({ tokens: ["src/tokens.ts"], files: { "src/tokens.ts": ts } });
+      extract();
+      const tree = read("tokens.json");
+      assert.deepEqual([tree["12"].$type, tree["12"].$value], ["dimension", { value: 48, unit: "px" }]);
+      assert.deepEqual([tree.label.$type, tree.label.$value], ["dimension", { value: 12, unit: "px" }]);
+      assert.deepEqual([tree.muted.$type, tree.muted.$value], ["number", 0.4]);
+    });
+
     it("reads the platform a code-tokens item names, a token file outside every code root included", () => {
       const files = { "apps/web/src/styles/tokens.css": WEB_CSS, "apps/mobile/src/theme/tokens.ts": MOBILE_TS };
       setup({ platforms: ["web", "mobile"], roots: ["web=apps/web/src/components", "mobile=apps/mobile/src"], tokens: ["web=apps/web/src/styles/tokens.css", "apps/mobile/src/theme/tokens.ts"], files });

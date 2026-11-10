@@ -1,4 +1,4 @@
-// R1 to R18: the shape of each record and how records point at one another.
+// R1 to R19: the shape of each record and how records point at one another.
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
@@ -269,6 +269,22 @@ function expectedProblems(project) {
     );
 }
 
+/** A screen dresses one wireframe: without it the screen answers no agreed layout, which warns;
+ * naming a record that is no wireframe errs. */
+function wireframeProblems(project) {
+  const index = byId(project);
+  return placed(project)
+    .filter((record) => fm(record).kind === "screen")
+    .flatMap((record) => {
+      const id = fm(record).wireframe;
+      if (id === undefined) return [{ ...problem(record, "has no wireframe", "add wireframe: <id> naming the wireframe this screen dresses"), severity: WARNING }];
+      const held = index.get(id);
+      if (!held) return [problem(record, `wireframe "${id}" is no record`, "name a wireframe that exists, or add it", id)];
+      const kind = fm(held).kind;
+      return kind === "wireframe" ? [] : [problem(record, `wireframe "${id}" is ${/^[aeiou]/.test(kind) ? "an" : "a"} ${kind}, not a wireframe`, "name a wireframe", id)];
+    });
+}
+
 /** The one problem a system.md written for another format earns, since every rule would misread
  * it; null when the format is this one or not stated, which R3 names. */
 function formatProblem(project) {
@@ -296,6 +312,7 @@ const RULES = {
   R16: reviewStatusProblems,
   R17: usageProblems,
   R18: expectedProblems,
+  R19: wireframeProblems,
 };
 
 /** Every broken record rule, in rule order. */

@@ -9,10 +9,10 @@ const { UI, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit
 // not know fails the test: a template cannot grow a slot nothing here fills.
 const PLUGIN = path.resolve(__dirname, "../../../plugins/aidd-ui");
 const SKILLS = path.join(PLUGIN, "skills");
-const FOLDERS = ["01-journeys", "02-brand", "03-foundations", "04-components"];
+const FOLDERS = ["01-journeys", "02-brand", "03-foundations", "04-components", "05-screens"];
 const SKILL = (name) => path.join(SKILLS, name);
 const JOURNEYS = SKILL("01-journeys");
-const OWNER = { system: "03-foundations", brand: "02-brand", component: "04-components", asset: "04-components", render: "04-components" };
+const OWNER = { system: "03-foundations", brand: "02-brand", component: "04-components", asset: "04-components", render: "04-components", screen: "05-screens", "screen-render": "05-screens" };
 
 const PLACEHOLDER = /\{\{([^}]+)\}\}/g;
 const COMMENT = /<!--[\s\S]*?-->\n?/g;
@@ -67,6 +67,33 @@ const FILLS = {
     "first state": "default",
     "next state": "focus",
   },
+  screen: {
+    "screen id": "search",
+    "wireframe id": "search-flow",
+    "components it shows": "search-field",
+    "semantic tokens": "space.md, color.text.default, color.surface.default, color.action.default, size.control",
+    states: "default, empty",
+    breakpoints: "mobile",
+    route: "/search",
+    "Screen name": "Search",
+    "what the screen shows, and its main action": "The query field and the results; the main action searches.",
+  },
+  "screen-render": {
+    "BCP 47 language": "en",
+    "ltr or rtl": "ltr",
+    "screen id": "search",
+    "surface token CSS name": "color-surface-default",
+    "spacing token CSS name": "space-md",
+    "text token CSS name": "color-text-default",
+    "control size token CSS name": "size-control",
+    "text on action token CSS name": "color-surface-default",
+    "action token CSS name": "color-action-default",
+    "first state": "default",
+    "next state": "empty",
+    "first zone": "query",
+    "next zone": "results",
+    "main action": "Search",
+  },
 };
 
 const TEMPLATES = {
@@ -75,6 +102,8 @@ const TEMPLATES = {
   component: "component-template.md",
   asset: "asset-template.md",
   render: "render-template.html",
+  screen: "screen-template.md",
+  "screen-render": "render-template.html",
 };
 
 const template = (name) => fs.readFileSync(path.join(SKILL(OWNER[name]), "assets", TEMPLATES[name]), "utf8");
@@ -128,6 +157,53 @@ describe("aidd-ui design system templates", () => {
 
   it("hold no history section: history.md is the engine's", () => {
     for (const name of ["system", "brand", "component", "asset"]) assert.equal(template(name).includes("## History"), false, name);
+  });
+});
+
+describe("aidd-ui screens skill", () => {
+  const SCREENS = path.join(PLUGIN, "skills/05-screens");
+  const colour = (hex) => ({ $value: { colorSpace: "srgb", components: [0, 0, 0], hex } });
+  // The template's pairs and control size need tokens a project holds: a light and a dark surface, a control height.
+  const withTokens = () => {
+    editTokens(tmp, (tree) => {
+      tree.color.surface = { default: colour("#ffffff") };
+      tree.size = { control: { $type: "dimension", $value: { value: 2.75, unit: "rem" } } };
+    });
+    put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ color: { brand: { primary: colour("#6699cc") }, surface: { default: colour("#0b1f33") } } }));
+    assert.equal(engine("tokens", tmp).status, 0);
+  };
+  const variant = (id, root) => {
+    put(tmp, `${UI}/drafts/${id}/${root}/screens/${id}.md`, filled("screen"));
+    put(tmp, `${UI}/drafts/${id}/${root}/screens/${id}.html`, filled("screen-render"));
+  };
+
+  it("validates once filled, kept from a compared set and recorded, its pairs and control size read", () => {
+    withTokens();
+    variant("search", "airy");
+    variant("search", "dense");
+    put(tmp, `${UI}/drafts/search/variants.md`, "| Variant | Intent | Density |\n| --- | --- | --- |\n| airy | calm | loose |\n| dense | fast | tight |\n");
+    const compared = JSON.parse(engine("compare", "search", "--root", tmp).stdout);
+    assert.deepEqual(compared.variants.map(({ name }) => name), ["airy", "dense"]);
+    const page = fs.readFileSync(path.join(tmp, compared.page), "utf8");
+    assert.ok(page.includes("airy screens/search.html") && page.includes("dense screens/search.html"), "the page shows each variant's screen");
+    assert.equal(page.includes("../tokens.css"), false, "the stylesheet is inlined");
+    assert.deepEqual(JSON.parse(engine("keep", "search", "dense", "--root", tmp).stdout).written, [`${UI}/screens/search.html`, `${UI}/screens/search.md`]);
+    assert.equal(engine("bump", "--task", TASK, "--created", "search", "--root", tmp).status, 0);
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+  });
+
+  it("is held to its floor: a control below it fails V12 the template's size would pass", () => {
+    withTokens();
+    put(tmp, `${UI}/screens/search.md`, filled("screen"));
+    put(tmp, `${UI}/screens/search.html`, filled("screen-render").replaceAll("--size-control", "--space-md"));
+    edit(tmp, `${UI}/screens/search.md`, "size.control", "space.md");
+    assert.equal(engine("bump", "--task", TASK, "--created", "search", "--root", tmp).status, 0);
+    assert.ok(validate(tmp).out.some((line) => line.includes("V12")));
+  });
+
+  it("names the wireframe it dresses, and says to stop on a missing component", () => {
+    assert.ok(fs.readFileSync(path.join(SCREENS, "assets/screen-template.md"), "utf8").includes("wireframe: {{wireframe id}}"));
+    assert.match(fs.readFileSync(path.join(SCREENS, "actions/01-prepare.md"), "utf8"), /stop and name it/);
   });
 });
 
@@ -193,7 +269,7 @@ describe("aidd-ui change flow", () => {
 describe("aidd-ui skills", () => {
   const texts = (name) => filesUnder(SKILL(name)).map((file) => ({ file: path.relative(SKILL(name), file), text: fs.readFileSync(file, "utf8") }));
 
-  it("are the four the plugin lists and holds", () => {
+  it("are the five the plugin lists and holds", () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(PLUGIN, ".claude-plugin/plugin.json"), "utf8"));
     assert.deepEqual(manifest.skills, FOLDERS.map((name) => `./skills/${name}`));
     assert.deepEqual(fs.readdirSync(SKILLS).sort(), FOLDERS);
@@ -274,7 +350,7 @@ describe("aidd-ui skills", () => {
       }
     }
     assert.deepEqual([...authors.entries()].filter(([, holders]) => holders.length !== 1), []);
-    assert.deepEqual([...authors.keys()].sort(), ["asset", "atom", "brand", "journey", "molecule", "organism", "system", "wireframe"]);
+    assert.deepEqual([...authors.keys()].sort(), ["asset", "atom", "brand", "journey", "molecule", "organism", "screen", "system", "wireframe"]);
   });
 
   it("end saying the user validates each element after its render, in the skills that raise elements", () => {

@@ -228,6 +228,7 @@ const HOME = record(
     "states: [default, empty, loading, error]",
     "breakpoints: [mobile, desktop]",
     "route: /",
+    "wireframe: search-flow",
     "code: src/ui/HomePage.tsx#HomePage@1",
   ],
   "# Home"
