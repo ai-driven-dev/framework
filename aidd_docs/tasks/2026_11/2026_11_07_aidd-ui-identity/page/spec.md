@@ -118,7 +118,7 @@ Both sit at the foot of the inspector.
 
 | # | Statement |
 | --- | --- |
-| B1 | It lists the shortcuts as key caps in two columns: `K` keep, `R` revise, `D` discard, `←→` variant, `C` copy. |
+| B1 | The `?` sheet lists the shortcuts as key caps: `K` keep, `R` revise, `D` discard, `←→` variant, `C` copy, `?` help. |
 | B2 | `<details>` with summary `Show JSON` holds `#feedback`, closed in the written file. |
 
 ### Chrome theme and accessibility
@@ -142,13 +142,31 @@ The page reads like a current design tool: quiet chrome, the work in the middle,
 | V2 | Spacing on a 4px grid. Radius 6px on controls, 10px on cards. Hairline borders, one neutral tone. Shadows only on canvas cards. |
 | V3 | Light: white chrome, canvas a soft grey with a faint dot grid. Dark: near-black chrome, canvas a step lighter. One blue accent, for the primary button, selection and focus. |
 | V4 | Verdict colours: keep green, revise amber, discard red. Each has a tinted background and a strong foreground, in both schemes. They appear on the pressed verdict button and as a status dot in the list. Nowhere else. |
-| V5 | Top bar, 48px: a small square mark and the set name, a `N variants` pill, then `Preview theme` and `Preview state` as styled selects (`appearance: none`, a text chevron). Right side: a thin progress bar beside `n/N decided`, then the primary `Copy feedback` button with its `C` key hint. |
+| V5 | Top bar, 48px: a small square mark and the set name, a `N variants` pill. Right side: a thin progress bar beside `n/N decided`, the `?` button, then the primary `Copy feedback` button with its `C` key hint. |
 | V6 | Variant list: a `Variants` caption in small caps. Each row: status dot (empty ring when undecided), name, intent on a second muted line, cut with an ellipsis. Selected row: accent tint. Paired row: a small `B` badge, the selected one `A`. The hint below shows `⇧` as a key. |
 | V7 | Canvas: each frame is a white card with its name and file as a label above it, like a design tool's frame. A markdown file renders as a document, at most 68 characters wide: front matter as small chips, then headings, paragraphs, lists, tables and inline code. Any other line stays a plain paragraph. An html file shows in its frame, without border. |
-| V8 | Inspector: name 16px semibold, intent, axes as rows split by hairlines. `Verdict` caption, then a segmented control of three equal buttons with glyphs `✓ Keep`, `↻ Revise`, `✕ Discard`. Comment textarea with the placeholder `What should change?`. Below, the shortcuts as key caps, then the `Show JSON` disclosure. The bottom strip goes. |
+| V8 | Inspector: name 16px semibold, intent, axes as rows split by hairlines. `Verdict` caption, then a segmented control of three equal buttons with glyphs `✓ Keep`, `↻ Revise`, `✕ Discard`. Comment textarea with the placeholder `What should change?`. Below, the `Show JSON` disclosure. The bottom strip goes. |
 | V9 | Keys shown as `<kbd>` caps: hairline border, small radius, mono 11px. |
 | V10 | Hover and press states on every button. Transitions 120ms, none under `prefers-reduced-motion: reduce`. |
 | V11 | Below 900px wide, regions stack: top bar, list as a horizontal row, canvas, inspector. No horizontal page scroll at 375px. |
+
+### Chrome and work
+
+Benchmarks: Figma frames on a neutral canvas; Storybook's Canvas and Docs tabs; Chromatic's 1-up and 2-up review with accept or deny; Linear's `?` shortcut sheet. The chrome stays neutral so the work carries all the colour.
+
+| # | Statement |
+| --- | --- |
+| W1 | Chrome is greyscale: no colour but the accent and the verdict colours. The work alone carries its own palette. |
+| W2 | Each shown variant sits in a window frame on the canvas: a thin neutral title bar holding its name and its verdict pill, then the work, with a shadow. The frame is ours; everything inside is the variant's. |
+| W3 | A canvas toolbar sits above the frames, inside the canvas. It holds `Screen` and `Spec`, `1 up` and `2 up`, then the preview selects. The top bar keeps the set, progress, help and copy. |
+| W4 | `Screen` shows each variant's html files; `Spec` shows its markdown as a document. A set with html opens on `Screen`. A view with nothing for a variant says so in its frame. |
+| W5 | `2 up` shows the selected variant beside its pair, `A` and `B`. The pair defaults to the next variant. Shift-click in the list still picks the pair. `1 up` shows the selected one alone. |
+| W6 | The verdict buttons show their key as a cap: `Keep K`, `Revise R`, `Discard D`. Each control carries a `title` with its key. |
+| W7 | A `?` button in the top bar opens a small sheet listing every shortcut. `?` toggles it, `Escape` closes it. The inspector's shortcut grid goes. |
+| W8 | Under the list, a legend shows the four dots: keep, revise, discard, undecided. |
+| W9 | When every variant has a verdict, the progress bar turns green and a hint beside it reads `Copy the feedback into the chat.` `#progress` still reads `N/N decided`. |
+| W10 | A screen renders at a real viewport, then scales down to fit its frame, like a design tool's zoom. `Desktop` is 1280 by 800, `Mobile` 390 by 844. The toolbar holds `Desktop` and `Mobile`; Desktop by default, remembered. The frame shows the zoom as a percentage in its title bar. |
+| W11 | The inspector is 18rem wide, so the canvas gets the room. |
 
 ## Memory across reload
 
@@ -199,11 +217,10 @@ Foundations and components: revise-only feedback means revise per the comments, 
 | Left out | Why |
 | --- | --- |
 | Zoom, pan, drag, resizing frames | a review of two to five variants fits the canvas |
-| More than two side by side | the mockup shows two; three already squeezes previews |
-| Pairing from the keyboard | shift-click alone; the keyboard reviews one variant at a time |
+| More than two side by side | two is a comparison; three already squeezes previews |
 | A chrome theme toggle | the system scheme decides |
-| Narrow screens | opened on a desktop beside the chat; no layout below about 1024px wide |
-| Device sizes or per-frame themes | the Theme select applies to all frames |
+| Per-frame themes or viewports | the toolbar applies to all frames |
+| Viewports beyond Desktop and Mobile | two cover the review |
 | i18n | UI strings are English |
 | Save to a file | dropped before: the person never picks a folder |
 
