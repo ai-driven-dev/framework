@@ -75,6 +75,8 @@ The person clicked Save on the brand page, in Chrome, and picked the set's folde
 
 The open question of the spec is closed: the page writes the file under Chromium, after a click, the person choosing the folder. Elsewhere it copies only.
 
+Then dropped: the person never picks a folder in practice. The page now hands the feedback back by copy only, pasted in the chat.
+
 ## Mutations
 
 Each guard broken once, its own test red, then restored.
@@ -107,3 +109,9 @@ Each guard broken once, its own test red, then restored.
 | Pilot blank request | "three" removed | asks for three directions in the blank brand request |
 
 The page's discard and frame height are browser script, checked in the browser pass, not in node.
+
+## Copy only
+
+Same runner, a fresh set of three, in Chromium, Firefox and WebKit. No Save button in any. Copy hands the clipboard a json fence holding `set` and the four fields of each variant, the comment trimmed. The text is identical in the three. Console: no error. With the clipboard forced to refuse, Firefox and WebKit select the whole text instead.
+
+Limit: Playwright's own Firefox and WebKit builds, headless, not the installed Safari or Firefox apps.

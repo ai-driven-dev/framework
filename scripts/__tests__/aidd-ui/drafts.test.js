@@ -4,7 +4,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, PATHS, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject } = require("../fixtures/aidd-ui/project.js");
 
-const { feedbackOf } = require(path.join(LIB, "page.cjs"));
+const { feedbackOf, copiedOf } = require(path.join(LIB, "page.cjs"));
 
 // A set of variants is driven as a subprocess, as the skill calls it: `compare` checks it and
 // writes its page, `keep` makes one of its variants the design system's own file.
@@ -79,13 +79,6 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(JSON.parse(run.out).variants, ROWS.map(([name, intent]) => ({ name, intent })));
       assert.equal(read(`${DRAFTS}/.gitignore`), "*\n");
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
-    });
-
-    it("drops the feedback of an earlier page, so a new round never reads it", () => {
-      writeSet("brand");
-      fs.writeFileSync(path.join(tmp, DRAFTS, "brand", "feedback.json"), "{}\n");
-      assert.equal(compare().code, 0);
-      assert.equal(fs.existsSync(path.join(tmp, DRAFTS, "brand", "feedback.json")), false);
     });
 
     it("D1 flags a set of one variant", () => {
@@ -278,14 +271,14 @@ describe("aidd-ui drafts", () => {
 
     it("builds the feedback of a rated, discarded and commented state, a missing rating being null", () => {
       const state = {
-        draft: "brand",
+        set: "brand",
         variants: [
-          { name: "a", rating: "4", discarded: false, comment: "calm" },
+          { name: "a", rating: "4", discarded: false, comment: "  calm \n" },
           { name: "b", rating: "", discarded: true, comment: "" },
         ],
       };
       assert.deepEqual(feedbackOf(state), {
-        draft: "brand",
+        set: "brand",
         variants: [
           { name: "a", rating: 4, discarded: false, comment: "calm" },
           { name: "b", rating: null, discarded: true, comment: "" },
@@ -293,20 +286,23 @@ describe("aidd-ui drafts", () => {
       });
     });
 
-    it("carries feedbackOf as the module has it", () => {
+    it("copies the feedback as 2-space JSON in a json fence", () => {
+      const state = { set: "brand", variants: [{ name: "a", rating: "4", discarded: false, comment: "calm" }] };
+      assert.equal(copiedOf(state), '```json\n{\n  "set": "brand",\n  "variants": [\n    {\n      "name": "a",\n      "rating": 4,\n      "discarded": false,\n      "comment": "calm"\n    }\n  ]\n}\n```\n');
+    });
+
+    it("carries feedbackOf and copiedOf as the module has them", () => {
       writeSet("brand");
       compare();
       assert.ok(page().includes(feedbackOf.toString()));
+      assert.ok(page().includes(copiedOf.toString()));
+      assert.ok(page().includes("out.value = copiedOf(stateOf());"), "the textarea, so Copy and select agree, holds the fenced text");
     });
 
-    it("saves to a file only where the browser can, and copies everywhere", () => {
+    it("copies the feedback from a textarea", () => {
       writeSet("brand");
       compare();
-      const guard = page().indexOf('if (typeof window.showSaveFilePicker === "function")');
-      assert.ok(guard >= 0, "the guard");
-      assert.ok(page().indexOf("window.showSaveFilePicker({") > guard, "the call lies behind it");
-      assert.equal(page().match(/showSaveFilePicker\(/g).length, 1);
-      assert.match(page(), /<button id="save" hidden>/);
+      assert.doesNotMatch(page(), /showSaveFilePicker|id="save"/);
       assert.match(page(), /<button id="copy">/);
       assert.match(page(), /<textarea id="feedback" readonly/);
     });

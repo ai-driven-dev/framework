@@ -9,7 +9,6 @@ const VARIANTS_FILE = "variants.md";
 const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while comparing and never kept
 const PAGE_FILE = "compare.html";
 const IGNORE_FILE = ".gitignore";
-const FEEDBACK_FILE = "feedback.json";
 const IGNORE_ALL = "*\n";
 const VARIANT_COLUMN = "Variant";
 const INTENT_COLUMN = "Intent";
@@ -72,14 +71,13 @@ function shownOf({ dir, axes }, row) {
 const readIfThere = (root, name) => (fs.existsSync(path.join(root, UI_DIR, name)) ? clean(fs.readFileSync(path.join(root, UI_DIR, name), "utf8")) : null);
 
 /** The set's problems when it has any. Else writes `drafts/.gitignore` and the set's page, and says
- * where the page is and which variants it shows. An earlier page's feedback goes. */
+ * where the page is and which variants it shows. */
 function compare(root, id) {
   const set = setOf(root, id);
   const problems = check(set);
   if (problems.length) return { problems };
   const draftsDir = path.join(root, UI_DIR, DRAFTS_DIR);
   fs.writeFileSync(path.join(draftsDir, IGNORE_FILE), IGNORE_ALL);
-  fs.rmSync(path.join(set.dir, FEEDBACK_FILE), { force: true });
   const system = readIfThere(root, SYSTEM_FILE);
   const variants = set.rows.map((row) => shownOf(set, row));
   fs.writeFileSync(path.join(set.dir, PAGE_FILE), pageOf({ id, variants, tokens: readIfThere(root, CSS_FILE), themes: system === null ? [] : list(parseRecord(system).frontMatter.themes) }));

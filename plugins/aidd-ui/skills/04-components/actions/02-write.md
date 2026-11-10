@@ -13,9 +13,8 @@ The output of [prepare](01-prepare.md).
 3. If the user asks for variants of an element, propose and choose.
    - Follow [variants](../references/variants.md).
    - Compare the set per [engine](../references/engine.md).
-   - Give the user the page, and say how to return the feedback.
+   - Give the user the page. Ask them to paste the copied feedback here.
    - Wait for the feedback.
-     - Read the feedback file beside the page. Else write the pasted feedback there.
      - Read a comment against the state it names.
      - Where ratings tie, prefer the one with fewer states to maintain.
    - Keep the chosen variant per [engine](../references/engine.md).

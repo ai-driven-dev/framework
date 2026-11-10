@@ -42,7 +42,7 @@ flowchart LR
 ## Limits
 
 - The frames of a comparison page are not sandboxed: a variant's render runs as written.
-- A comparison page is a file to open, with no server. Saving its feedback to a folder needs Chromium; elsewhere the feedback is copied.
+- A comparison page is a file to open, with no server. Its feedback is copied and pasted in the chat, in any browser.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
 - A journey step may name an existing screen without a wireframe: a screen cites its wireframe only once screens are dressed. A wireframe stays `proposed`, `publish` taking elements alone, until screens come with their review.

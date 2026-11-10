@@ -5,18 +5,23 @@ const HTML_FILE = /\.html$/;
 const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">'; // how a render loads the tokens
 const RATINGS = [1, 2, 3, 4, 5];
 
-/** The feedback a person gives, from the page's state: the one format of `feedback.json`. The page
+/** The feedback a person gives, from the page's state: the format the page copies. The page
  * carries this source as it stands, so it uses nothing outside itself. */
 function feedbackOf(state) {
   return {
-    draft: state.draft,
+    set: state.set,
     variants: state.variants.map((variant) => ({
       name: variant.name,
       rating: Number(variant.rating) || null,
       discarded: Boolean(variant.discarded),
-      comment: String(variant.comment ?? ""),
+      comment: String(variant.comment ?? "").trim(),
     })),
   };
+}
+
+/** What Copy hands over: the feedback as 2-space JSON in a json fence. Carried like `feedbackOf`. */
+function copiedOf(state) {
+  return "```json\n" + JSON.stringify(feedbackOf(state), null, 2) + "\n```\n";
 }
 
 /** `text` as HTML text or as an attribute value. */
@@ -48,14 +53,14 @@ const left = $("#left");
 const right = $("#right");
 const side = $("#side");
 const stateOf = () => ({
-  draft: DRAFT,
+  set: SET,
   variants: variants.map((el) => ({ name: el.dataset.name, rating: $(".rating", el).value, discarded: $(".discard", el).checked, comment: $(".comment", el).value })),
 });
 const show = () => {
   $("#with").hidden = !side.checked;
   const wanted = side.checked ? [left.value, right.value] : [left.value];
   for (const el of variants) el.hidden = !wanted.includes(el.dataset.name);
-  out.value = JSON.stringify(feedbackOf(stateOf()), null, 2);
+  out.value = copiedOf(stateOf());
 };
 const apply = (frame) => {
   const doc = frame.contentDocument;
@@ -73,20 +78,6 @@ $("#copy").addEventListener("click", async () => {
     out.select();
   }
 });
-if (typeof window.showSaveFilePicker === "function") {
-  const save = $("#save");
-  save.hidden = false;
-  save.addEventListener("click", async () => {
-    try {
-      const handle = await window.showSaveFilePicker({ suggestedName: "feedback.json", types: [{ accept: { "application/json": [".json"] } }] });
-      const stream = await handle.createWritable();
-      await stream.write(out.value);
-      await stream.close();
-    } catch {
-      out.select();
-    }
-  });
-}
 if (right.options.length > 1) right.selectedIndex = 1;
 show();
 `;
@@ -138,15 +129,14 @@ function pageOf({ id, variants, tokens, themes }) {
     ...variants.map((variant) => variantOf(variant, tokens)),
     "</main>",
     "<footer>",
-    '<button id="save" hidden>Save feedback.json</button>',
     '<button id="copy">Copy feedback</button>',
     '<textarea id="feedback" readonly rows="10" aria-label="Feedback"></textarea>',
     "</footer>",
-    `<script>\nconst DRAFT = ${JSON.stringify(id)};\n${feedbackOf.toString()}${SCRIPT}</script>`,
+    `<script>\nconst SET = ${JSON.stringify(id)};\n${feedbackOf.toString()}\n${copiedOf.toString()}\n${SCRIPT}</script>`,
     "</body>",
     "</html>",
     "",
   ].join("\n");
 }
 
-module.exports = { pageOf, feedbackOf };
+module.exports = { pageOf, feedbackOf, copiedOf };

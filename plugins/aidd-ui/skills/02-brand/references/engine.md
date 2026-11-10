@@ -12,7 +12,7 @@
 | Step | Command |
 | --- | --- |
 | propose 4, compare the set | `node <engine> compare brand` |
-| choose 5, keep the chosen variant | `node <engine> keep brand <variant>` |
+| choose 4, keep the chosen variant | `node <engine> keep brand <variant>` |
 | conclude 1 and 3, validate | `node <engine> validate` |
 
 ## Owed
