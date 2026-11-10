@@ -243,7 +243,10 @@ test("write ends on the engine's guard, which lists what the sheet did not appro
   assert.match(steps.at(-2), /`vanished`/u, "no step runs the guard before the sync");
   assert.match(steps.at(-2), /change nothing/u);
   assert.match(steps.at(-1), /Go on to \[sync\]/u);
-  assert.match(steps.at(-1), /reply with the \[report message\]\(\.\.\/assets\/report-message\.md\), with what `vanished` listed/u, "the last step does not reply through the report message");
+  assert.doesNotMatch(steps.at(-1), /report message/u, "write replies before the sync runs");
+  const syncSteps = skillText("actions/04-sync.md").match(/^\d+\. .*$/gmu);
+  assert.match(syncSteps.at(-1), /Reply with the \[report message\]\(\.\.\/assets\/report-message\.md\), with what `vanished` listed/u, "the last step to run does not reply through the report message");
+  assert.match(skillText("SKILL.md"), /sync -->\|"reply: assets\/report-message\.md"\| done/u, "the router ends without the report");
   assert.match(skillText("references/engine.md"), /memory\.cjs vanished \. --sheet/u);
   assert.match(skillText("references/engine.md"), /HEAD only/u, "the guard hides that uncommitted edits are not seen");
   assert.doesNotMatch(actionsText(), /memory\.cjs lines/u);

@@ -21,7 +21,7 @@ flowchart LR
   write --> sync
   sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync"] -->|"offer to reconcile"| user
   user -->|"reconcile answered"| sync
-  sync --> done
+  sync -->|"reply: assets/report-message.md"| done
 ```
 
 - Each box: read its action file, then follow it.

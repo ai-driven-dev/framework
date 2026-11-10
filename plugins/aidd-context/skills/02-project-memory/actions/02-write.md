@@ -16,7 +16,7 @@ The sheet.
 6. Write each file per the [writing rules](../references/capabilities.md#writing), at `aidd_docs/memory/<file>`, never under its template folder, from the sheet only.
 7. Lint each file written with [`check`](../references/engine.md): fix each error on the lines you wrote, check each warning against the code and keep a true line.
 8. Run [`vanished`](../references/engine.md) and change nothing.
-9. Go on to [sync](04-sync.md), then reply with the [report message](../assets/report-message.md), with what `vanished` listed.
+9. Go on to [sync](04-sync.md).
 
 ## Output
 
