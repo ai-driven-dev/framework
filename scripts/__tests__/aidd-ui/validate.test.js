@@ -1059,15 +1059,6 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_input: {} })), silent);
     });
 
-    it("answers nothing, exit 0, when the state a turn left cannot be read", () => {
-      breakOnePerFamily();
-      const temp = path.join(tmp, "temp");
-      fs.mkdirSync(temp);
-      hook(postToolUse(path.join(tmp, BRAND)), temp);
-      fs.writeFileSync(`${markPath(sid, temp)}.base`, JSON.stringify([["not a key", 1]]));
-      assert.deepEqual(hook(stop(), temp), silent);
-    });
-
     for (const [name, input] of [["empty", ""], ["non-JSON", "not json"]]) {
       it(`ignores ${name} stdin`, () => {
         assert.deepEqual(hook(input), silent);

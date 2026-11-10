@@ -215,7 +215,6 @@ describe("aidd-ui drafts", () => {
   describe("the comparison page", () => {
     const page = () => read(PAGE);
     const render = (title, states) => read(PATHS.BUTTON_RENDER).replace("<title>button</title>", `<title>${title}</title>`).replace(/<button class="ui"[\s\S]*<\/button>/, states.map((state) => `<button class="ui" data-state="${state}">${title}</button>`).join("\n"));
-    const optionsOf = (id) => [...(page().match(new RegExp(`<select id="${id}">([\\s\\S]*?)</select>`))?.[1] ?? "").matchAll(/<option value="([^"]*)"/g)].map((match) => match[1]);
     const componentSet = (states = ["default", "hover"]) => writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.html": render(name, states) }) });
 
     it("is written beside the set by compare, and named in its output", () => {

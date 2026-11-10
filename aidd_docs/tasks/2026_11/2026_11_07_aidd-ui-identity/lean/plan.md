@@ -124,3 +124,4 @@ Règle 5, auditée : aucune liste par stack dans `lib/`. `SCRIPT_EXTENSIONS`, `S
 - Moteur : 4381 lignes. Hors projet UI, `validate`, `tokens` et `impact` sortent en 2.
 - Pilote vierge, deux passes : `steps ok`, `errors none`, `code untouched`. Warnings `none` puis `V6`, selon les choix du modèle.
 - Suite des scripts : 1649 tests, 0 échec. Pre-commit vert.
+- E5 : gardé par les deux tests d'écriture d'état. Le test sur un état corrompu, entrée jamais observée, est retiré.
