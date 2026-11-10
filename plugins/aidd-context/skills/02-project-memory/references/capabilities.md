@@ -63,6 +63,7 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 | the person's own words | ids optional |
 | `ok` or "all good" | `yes` on each `remove`, `replace` and `move` line, the others left blank |
 | "all but X" | as `ok`, with `no` on X, in one turn |
+| `no`, or the plan declined | `no` on every line: nothing is written, nothing is synced |
 | silence on an addition | yes |
 | an answer unclear for a line | leaves a `remove` or `replace` on it unapplied |
 | `tools: claude, codex` or "wire it into claude" | the tools picked |

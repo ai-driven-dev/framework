@@ -37,9 +37,9 @@ It writes nothing for the team to fill in. See [Concepts](CONCEPTS.md#project-me
 
 | Goal | Run |
 | --- | --- |
-| Print what drifted, without changing a file | `/aidd-context:02-project-memory check` |
+| See what drifted, and change nothing unless you approve | `/aidd-context:02-project-memory` |
 
-`check` prints three blocks of findings, Structure, Format and Content, and writes no report file. A file in the wrong place is offered a move to the bank root. A file named after an older layout, such as a separate design or infrastructure file, is kept and reviewed as its capability's file. A file you added yourself is left alone.
+Over an existing bank it reviews every line against the code and shows its plan first; answer no and nothing is written. A file in the wrong place is offered a move to the bank root. A file named after an older layout, such as a separate design or infrastructure file, is kept and reviewed as its capability's file. A file you added yourself is left alone.
 
 ## 3. Harness engineering
 
@@ -300,8 +300,7 @@ flowchart TD
 
 | Goal | Run |
 | --- | --- |
-| Refresh the project memory: check, apply what you approve, then sync the tools already wired | `/aidd-context:02-project-memory refresh` |
-| Wire the memory into another tool | `/aidd-context:02-project-memory rewire` |
+| Refresh the project memory: review the whole bank, apply what you approve, then sync the tools already wired | `/aidd-context:02-project-memory refresh` |
 | Update the plugins | [Install guide](INSTALL.md#update) |
 
 Every skill is described in the [catalog](CATALOG.md).

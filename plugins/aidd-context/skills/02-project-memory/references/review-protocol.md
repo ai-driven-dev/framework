@@ -4,10 +4,12 @@ Review yourself the memory files the AI loads every session: code silent on a li
 
 ## Scope
 
-| Request | Review |
+| Case | Review |
 | --- | --- |
-| Update | only the lines `changes` names |
-| Audit | the files a row produces or lists under Accepted names, one at a time, against the files that define its facts |
+| Every refresh | every line of the files a row produces or lists under Accepted names, one at a time, against its source and the code |
+| First | the lines `changes` cites |
+| New facts | looked for in the files `changes` lists |
+| A line outside the change set | reviewed all the same, never skipped |
 
 ## Content
 

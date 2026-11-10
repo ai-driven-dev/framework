@@ -2,6 +2,10 @@
 
 Memory plan
 
+<!-- Since: a refresh only, the first line `changes` printed, copied as it is; information, never a question. -->
+
+Since {{short sha}} ({{subject}}), {{relative date}}: {{n}} commits, {{m}} files changed
+
 <!-- Will write: a new file. Say what it will hold, from the sheet's lines, never only a count. -->
 
 Will write

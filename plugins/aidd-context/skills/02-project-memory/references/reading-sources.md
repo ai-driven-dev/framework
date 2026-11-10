@@ -33,4 +33,4 @@ What the scan reads to understand the project; what survives the reading is [mem
 | --- | --- |
 | One the bank answers | skip it |
 | Any other | every fact the sources state for it, one line each: each gate, decision, gotcha, rule and release step |
-| The brief's `Users`, `Main journey` and `Business rules` | only what the repository states, else a `Q` line, never invented; a setup or an audit collects them, a refresh from a base never adds them |
+| The brief's `Users`, `Main journey` and `Business rules` | only what the repository states, else a `Q` line, never invented; a setup collects them, a refresh never adds them |

@@ -3,9 +3,9 @@
 # Facts: {{scope}}
 
 - Capabilities: C1 {{name}}, C2 {{name}}
-- Base: {{short id}} {{commit subject}}
+- {{the `Since` line `changes` printed}}
 
-<!-- Refresh only: the base, or `audit` and its reason. -->
+<!-- Refresh only, copied as it is. -->
 
 ## Read
 

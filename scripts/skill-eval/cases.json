@@ -195,7 +195,7 @@
     "plugin": "aidd-context",
     "skill": "02-project-memory",
     "evalName": "xeval-memory",
-    "name": "check keeps a team file and flags a misplaced one",
+    "name": "a declined plan keeps a team file and shows a misplaced one",
     "setup": {
       "files": {
         "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\" }\n",
@@ -207,18 +207,14 @@
         "aidd_docs/memory/kpi/metrics.md": "# Metrics\n\n- Weekly active shops.\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted and delete nothing.",
+    "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available: decline every change, so nothing is written, and do not wait for input.",
     "expect": {
       "stdoutContains": [
-        "Structure findings",
-        "Format findings",
-        "Content findings",
         "internal/auth.md",
         "kpi"
       ],
       "filesAbsent": [
-        "aidd_docs/memory/auth.md",
-        "aidd_docs/tasks"
+        "aidd_docs/memory/auth.md"
       ],
       "filesUnchanged": [
         "aidd_docs/memory/architecture.md",
@@ -247,7 +243,7 @@
     "plugin": "aidd-context",
     "skill": "02-project-memory",
     "evalName": "xeval-memory",
-    "name": "check keeps a team's api.md and offers no merge",
+    "name": "a declined plan keeps a team's api.md and offers no merge",
     "setup": {
       "files": {
         "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\", \"dependencies\": { \"express\": \"^4.19.0\" } }\n",
@@ -257,14 +253,10 @@
         "aidd_docs/memory/api.md": "# API\n\n- GET /orders lists the orders.\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted, change nothing, and do not wait for input.",
+    "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available: decline every change, so nothing is written, and do not wait for input.",
     "expect": {
-      "stdoutContains": [
-        "Structure findings"
-      ],
       "filesAbsent": [
-        "aidd_docs/memory/contract.md",
-        "aidd_docs/tasks"
+        "aidd_docs/memory/contract.md"
       ],
       "filesUnchanged": [
         "aidd_docs/memory/api.md",
@@ -291,7 +283,7 @@
     "plugin": "aidd-context",
     "skill": "02-project-memory",
     "evalName": "xeval-memory",
-    "name": "check flags the always file the bank lacks",
+    "name": "a declined plan names the always file the bank lacks and writes nothing",
     "setup": {
       "files": {
         "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\" }\n",
@@ -301,17 +293,13 @@
         "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node, CommonJS\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available, so report what drifted, change nothing, and do not wait for input.",
+    "prompt": "Use the {{SKILL}} skill to check the project memory. You are running headless with no human available: decline every change, so nothing is written, and do not wait for input.",
     "expect": {
       "stdoutContains": [
-        "Structure findings",
-        "Format findings",
-        "Content findings",
         "ecosystem"
       ],
       "filesAbsent": [
-        "aidd_docs/memory/ecosystem.md",
-        "aidd_docs/tasks"
+        "aidd_docs/memory/ecosystem.md"
       ],
       "filesUnchanged": [
         "aidd_docs/memory/vcs.md",
@@ -332,7 +320,7 @@
     "plugin": "aidd-context",
     "skill": "02-project-memory",
     "evalName": "xeval-memory",
-    "name": "rewire fills the context block",
+    "name": "a bank wired under the old tag gets its block filled",
     "setup": {
       "files": {
         "package.json": "{ \"name\": \"shop\", \"version\": \"1.0.0\" }\n",
@@ -341,7 +329,7 @@
         "CLAUDE.md": "# Shop\n\n## Memory Management\n\n<aidd_project_memory>\n</aidd_project_memory>\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill to rewire the existing project memory into Claude. You are running headless with no human available, so pick Claude yourself and do not wait for input.",
+    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
     "expect": {
       "fileContains": {
         "CLAUDE.md": [

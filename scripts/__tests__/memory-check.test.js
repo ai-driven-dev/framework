@@ -789,11 +789,38 @@ test("changes: after a bank commit then a code commit it names the base, the cha
     const run = changes(root);
     const base = git(root, "rev-parse", "--short", "HEAD~1");
     assert.equal(run.status, 0, run.stderr);
-    assert.match(run.stdout, /^scope: update$/mu);
-    assert.ok(run.stdout.includes(`base: ${base} bank written`), run.stdout);
+    assert.match(run.stdout, new RegExp(`^Since ${base} \\(bank written\\), \\d+ seconds? ago: 1 commit, 2 files changed\n`, "u"), run.stdout);
     assert.match(run.stdout, /^changed \(2\):\n- app\/a\.ts\n- app\/new\.ts$/mu);
     assert.match(run.stdout, /aidd_docs\/memory\/codebase-map\.md:3 cites app\/a\.ts/u);
     assert.doesNotMatch(run.stdout, /app\/b\.ts/u, "an unchanged path is named");
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: the first line says, for information, since when: the base, its age from git, the commits and the files changed since", () => {
+  const days = (count) => `${Math.floor(Date.now() / 1000) - count * 86400} +0000`;
+  const dated = (root, message, when) => {
+    git(root, "add", "-A");
+    const run = spawnSync("git", ["-C", root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "maintenance.auto=false", "-c", "gc.auto=0", "commit", "-q", "-m", message], {
+      encoding: "utf8",
+      env: { ...cleanEnv(), GIT_AUTHOR_DATE: when, GIT_COMMITTER_DATE: when },
+    });
+    assert.equal(run.status, 0, run.stderr);
+  };
+  const root = project({ "codebase-map.md": BANK_TEXT }, { "app/a.ts": "a\n", "app/b.ts": "b\n" });
+  git(root, "init", "-q");
+  dated(root, "bank written (first)", days(3));
+  write(root, "app/a.ts", "a2\n");
+  dated(root, "code one", days(2));
+  write(root, "app/b.ts", "b2\n");
+  dated(root, "code two", days(1));
+  write(root, "app/c.ts", "untracked\n");
+  try {
+    const run = spawnSync("node", [ENGINE, "changes", root], { encoding: "utf8", env: { ...process.env, LC_ALL: "fr_FR.UTF-8", LANG: "fr_FR.UTF-8" } });
+    assert.equal(run.status, 0, run.stderr);
+    const base = git(root, "rev-parse", "--short", "HEAD~2");
+    assert.equal(run.stdout.split("\n")[0], `Since ${base} (bank written (first)), 3 days ago: 2 commits, 3 files changed`);
   } finally {
     cleanup(root);
   }
@@ -837,7 +864,7 @@ test("changes: --since overrides the base", () => {
   try {
     assert.match(changes(root).stdout, /^- app\/a\.ts\n- app\/b\.ts$/mu);
     const since = changes(root, "--since", "HEAD~1");
-    assert.ok(since.stdout.includes("code one") && /--since/u.test(since.stdout), since.stdout);
+    assert.match(since.stdout, /^Since \S+ \(code one\), [^:]+: 1 commit, 1 file changed$/mu, since.stdout);
     assert.match(since.stdout, /^changed \(1\):\n- app\/b\.ts$/mu);
   } finally {
     cleanup(root);
@@ -874,7 +901,7 @@ test("changes: no repository, no commit, or a bank never committed is an audit w
     for (const [root, reason] of [[plain, "no repository"], [empty, "no commit"], [unbanked, "bank never committed"]]) {
       const run = changes(root);
       assert.equal(run.status, 0, reason);
-      assert.equal(run.stdout, `scope: audit\nreason: ${reason}\n`);
+      assert.equal(run.stdout, `Since: no history, full review\nreason: ${reason}\n`);
     }
   } finally {
     cleanup(plain, empty, unbanked);
@@ -892,7 +919,7 @@ test("changes: a base missing from a shallow history is an audit with its reason
   try {
     const run = spawnSync("git", ["clone", "-q", "--depth", "1", `file://${origin}`, clone], { encoding: "utf8", env: cleanEnv() });
     assert.equal(run.status, 0, run.stderr);
-    const audit = "scope: audit\nreason: base missing from a shallow history\n";
+    const audit = "Since: no history, full review\nreason: base missing from a shallow history\n";
     assert.equal(changes(clone).stdout, audit);
     assert.equal(changes(clone, "--since", git(origin, "rev-parse", "HEAD~2")).stdout, audit);
   } finally {
@@ -929,7 +956,7 @@ test("changes: a git failure in a repository is an audit with its reason on one 
     fs.rmSync(object);
     const run = engine("changes", root);
     assert.equal(run.status, 0, run.stderr);
-    assert.match(run.stdout, /^scope: audit\nreason: git \S+ failed: [^\n]+\n$/u);
+    assert.match(run.stdout, /^Since: no history, full review\nreason: git \S+ failed: [^\n]+\n$/u);
   } finally {
     cleanup(root);
   }

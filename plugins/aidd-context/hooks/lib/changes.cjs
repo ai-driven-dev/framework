@@ -1,11 +1,13 @@
 "use strict";
 /**
- * What an update starts from: the files changed since the bank was last written, and the memory
- * lines that cite one or a directory above one. The base is the last commit that touched the bank,
- * or the reference the person named. Reads git with no shell, GIT_* stripped, and never writes.
- * It never blocks: no repository, no commit, a bank never committed, a base missing from a shallow
- * history or any other git failure is an audit, with its reason. Only a --since naming no commit
- * is an error. No list of file names or stacks: relevance comes from what the bank itself cites.
+ * Where a refresh looks first: the files changed since the bank was last written, and the memory
+ * lines that cite one or a directory above one. It orders the review and limits none of it. The
+ * first line says since when, for information: the base, the last commit that touched the bank or
+ * the reference the person named, its age, and the commits and files changed since. Reads git with
+ * no shell, GIT_* stripped, and never writes. It never blocks: no repository, no commit, a bank
+ * never committed, a base missing from a shallow history or any other git failure is a full review,
+ * with its reason. Only a --since naming no commit is an error. No list of file names or stacks:
+ * relevance comes from what the bank itself cites.
  *
  * Limits: a cited path holding a space is never matched; a word with no slash is prose, and a
  * top-level directory is too broad to name; a changed file no memory line cites is only counted. Node built-ins only.
@@ -20,20 +22,19 @@ const MAX_NAMED = 3;
 const ROOT_GROUP = "(root)";
 
 const nulList = (text) => text.split("\0").filter((name) => name !== "");
-const audit = (reason) => `scope: audit\nreason: ${reason.replace(/\s+/gu, " ").trim().slice(0, 300)}\n`;
+const audit = (reason) => `Since: no history, full review\nreason: ${reason.replace(/\s+/gu, " ").trim().slice(0, 300)}\n`;
 const usage = (message) => Object.assign(new Error(message), { usage: true });
 
 /** Words of a line that can be a path: the characters a path holds, a leading `./` dropped. */
 const tokensOf = (line) => line.split(/[^\p{L}\p{N}_@+./-]+/u).map((token) => token.replace(/^\.\//u, "").replace(/[.,:;]+$/u, "")).filter((token) => token !== "");
 
-/** The base `{ sha, subject, why }`, or `{ reason }` when the update has none. */
+/** The base `{ sha, subject, time }`, or `{ reason }` when the refresh has none. */
 function baseOf(root, bank, since) {
   if (!succeeds(root, ["rev-parse", "--git-dir"])) return { reason: "no repository" };
   if (!succeeds(root, ["rev-parse", "--verify", "-q", "HEAD"])) return { reason: "no commit" };
   const shallow = git(root, ["rev-parse", "--is-shallow-repository"]).trim() === "true";
   const missing = { reason: "base missing from a shallow history" };
   let sha;
-  let why = `last commit touching ${bank}`;
   if (since !== undefined) {
     if (since.startsWith("-")) throw usage(`--since ${since} is not a reference`);
     if (!succeeds(root, ["rev-parse", "--verify", "-q", `${since}^{commit}`])) {
@@ -41,14 +42,14 @@ function baseOf(root, bank, since) {
       throw usage(`--since ${since} names no commit`);
     }
     sha = git(root, ["rev-parse", `${since}^{commit}`]).trim();
-    why = "named by --since";
   } else {
     sha = git(root, ["rev-list", "-1", "HEAD", "--", bank]).trim();
     if (sha === "") return shallow ? missing : { reason: "bank never committed" };
   }
   // In a shallow history the oldest commit shows every file as added: it says nothing of the bank.
   if (shallow && git(root, ["rev-list", "--parents", "-n", "1", sha]).trim().split(" ").length === 1) return missing;
-  return { sha, subject: git(root, ["log", "-1", "--no-show-signature", "--format=%s", sha]).trim(), why };
+  const [subject, time] = git(root, ["log", "-1", "--no-show-signature", "--format=%s%x00%ct", sha]).trim().split("\0");
+  return { sha, subject, time: Number(time) };
 }
 
 /** The files changed since `sha` under `root`, uncommitted and untracked ones included, the bank excluded. */
@@ -115,6 +116,23 @@ function groups(changed) {
   return [...counts.entries()].sort((one, two) => two[1] - one[1] || (one[0] < two[0] ? -1 : 1)).map(([group, count]) => `${group} (${count})`);
 }
 
+const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+
+/** The age of a commit time, in git's units, in English whatever the locale. */
+function age(time, now = Date.now() / 1000) {
+  const seconds = Math.max(0, Math.round(now - time));
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.round(seconds / 3600);
+  const days = Math.round(seconds / 86400);
+  if (seconds < 90) return `${plural(seconds, "second")} ago`;
+  if (minutes < 90) return `${plural(minutes, "minute")} ago`;
+  if (hours < 36) return `${plural(hours, "hour")} ago`;
+  if (days < 14) return `${plural(days, "day")} ago`;
+  if (days < 70) return `${plural(Math.round(days / 7), "week")} ago`;
+  if (days < 365) return `${plural(Math.round(days / 30), "month")} ago`;
+  return `${plural(Math.round(days / 365), "year")} ago`;
+}
+
 const section = (title, items, total = items.length) => `${title} (${total}):\n${items.map((item) => `- ${item}`).join("\n")}${items.length > 0 ? "\n" : ""}`;
 
 /** The text `changes` prints for `root`; `bank` is the bank's path below it. */
@@ -124,9 +142,10 @@ function changes(root, bank, since) {
     if (base.reason !== undefined) return audit(base.reason);
     const changed = changedSince(root, base.sha, bank);
     const shown = changed.length <= MAX_LISTED ? changed : groups(changed);
+    const short = git(root, ["rev-parse", "--short", base.sha]).trim();
+    const commits = Number(git(root, ["rev-list", "--count", `${base.sha}..HEAD`]).trim());
     return [
-      "scope: update",
-      `base: ${git(root, ["rev-parse", "--short", base.sha]).trim()} ${base.subject} (${base.why})`,
+      `Since ${short} (${base.subject}), ${age(base.time)}: ${plural(commits, "commit")}, ${plural(changed.length, "file")} changed`,
       `${section("cited", citingLines(root, bank, changed))}${section("changed", shown, changed.length)}`,
     ].join("\n");
   } catch (error) {
