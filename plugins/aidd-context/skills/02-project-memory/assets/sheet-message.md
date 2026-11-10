@@ -1,4 +1,4 @@
-<!-- Shows the sheet once, before anything is written. Send plain chat text, not in a code fence, with only this message: no lead-in, no closing line. Replace every `{{...}}`, delete every comment, leave out a section with nothing in it. Number the items 1 to n across Will write, Will add and Will change: a number in the answer means the sheet lines behind that item. Stop after the message: no offer to reverse a declined line, no "say ... if you want" closing. -->
+<!-- Shows the sheet once, before anything is written. Send plain chat text, not in a code fence, with only this message: no lead-in, no closing line. Replace every `{{...}}`, delete every comment, leave out a section with nothing in it. Number the items 1 to n across Will write, Will add, Will change and Will delete: a number in the answer means the sheet lines behind that item. Stop after the message: no offer to reverse a declined line, no "say ... if you want" closing. -->
 
 Memory plan
 
@@ -17,11 +17,17 @@ Will add
   {{n}}. {{file}}.md, {{section}}
      + {{line as it will read}}
 
-<!-- Will change: an edit to existing lines: the start of the old line, then the new text, "same facts, split into a list", or why it goes. Name any fact the change drops. -->
+<!-- Will change: an edit to existing lines or a moved file: the start of the old line, then the new text or "same facts, split into a list". Name any fact the change drops. -->
 
 Will change
   {{n}}. {{file}}.md: "{{start of the old line}}…"
-     → {{new text, same facts split into a list, or why it goes}}
+     → {{new text, or same facts split into a list}}
+
+<!-- Will delete: a line that goes, quoted whole, then why. -->
+
+Will delete
+  {{n}}. {{file}}.md: "{{the whole line}}"
+     why: {{why it goes}}
 
 <!-- One line per question. -->
 

@@ -474,7 +474,7 @@ test("the sheet message shows once, airy and in one fixed order: files with what
   const sample = messageOf("assets/sheet-message.md");
   assert.ok(asset.startsWith("<!--") && asset.includes("{{") && !asset.includes("```"), "the message is not the template itself");
   const at = (pattern) => sample.search(pattern);
-  const order = [/^Memory plan$/mu, /^Changes since the last memory update \(\{\{short sha\}\}, \{\{relative date\}\}\): \{\{n\}\} commits, \{\{m\}\} files$/mu, /^Will write$/mu, /^Will add$/mu, /^Will change$/mu, /^Questions$/mu, /^Tools to wire$/mu, /^Does this look right\? Say ok, or what to change/mu, /^Sheet: aidd_docs\/tasks\//mu].map(at);
+  const order = [/^Memory plan$/mu, /^Changes since the last memory update \(\{\{short sha\}\}, \{\{relative date\}\}\): \{\{n\}\} commits, \{\{m\}\} files$/mu, /^Will write$/mu, /^Will add$/mu, /^Will change$/mu, /^Will delete$/mu, /^Questions$/mu, /^Tools to wire$/mu, /^Does this look right\? Say ok, or what to change/mu, /^Sheet: aidd_docs\/tasks\//mu].map(at);
   assert.ok(order.every((index) => index >= 0), `a part of the message is missing: ${order}`);
   assert.deepEqual([...order].sort((a, b) => a - b), order, "the parts are out of order");
   assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md {2,}\S.+$/mu, "a file is listed without its number and what it holds");
@@ -482,6 +482,8 @@ test("the sheet message shows once, airy and in one fixed order: files with what
   assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md: "/mu, "a change carries no number, file and old line");
   assert.match(sample, /^ {5}→ /mu, "a change shows no old to new");
   assert.doesNotMatch(sample, /\b[RDT]\{\{n\}\}/u, "a sheet id reaches the person");
+  assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md: "\{\{the whole line\}\}"\n {5}why: /mu, "a removal does not quote the whole line it loses and why");
+  assert.match(asset, /Will delete: a line that goes, quoted whole/u);
   assert.match(sample, /^ {2}Q\{\{n\}\} {2}\S/mu);
   assert.match(sample, /^ {2}\[x\] \w+/mu, "no detected tool is ticked");
   assert.match(sample, /^Does this look right\? Say ok, or what to change, for example "not \{\{n\}\}" or "Q\{\{n\}\}: …"\.$/mu, "the reply is not the one question");
@@ -519,6 +521,9 @@ test("the report message is airy and keeps what was written, changed, left out a
   assert.match(report, /At most one line per left-out item/u);
   assert.match(report, /At most one heads-up/u);
   assert.match(sample, /^ {2}Q\{\{n\}\} .*unanswered\. .*any time/mu, "an unanswered question shows no way to add it later");
+  assert.doesNotMatch(sample, /\b[RDT]\{\{n\}\}/u, "a sheet id reaches the person");
+  assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md: /mu, "a change does not carry the plan's number");
+  assert.match(sample, /^ {2}\{\{context file\}\}: memory block refreshed$/mu, "a context file the sync rewrote is not reported");
 });
 
 test("the tools are asked once, with the sheet: a setup takes the picks, a refresh adds them to the wired ones; nothing asks the tools alone", () => {
