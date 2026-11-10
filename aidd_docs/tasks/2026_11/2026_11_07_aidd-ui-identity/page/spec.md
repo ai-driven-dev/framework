@@ -65,14 +65,14 @@ Existing guards restrict the new chrome. The no-address test forbids any `src=` 
 
 ## The page
 
-Four regions: top bar, variant list, canvas, inspector, plus a bottom strip. UI strings are English.
+Four regions: top bar, variant list, canvas, inspector. UI strings are English.
 
 ### Top bar
 
 | # | Statement |
 | --- | --- |
 | P1 | It shows the set name and `N variants`. |
-| P2 | It holds the Theme and State selects as today. |
+| P2 | It holds the selects as today, labelled `Preview theme` and `Preview state`: they act on previews, not on the chrome. |
 | P3 | `#progress` reads `n/N decided`, n the variants whose verdict is not null. It reads `0/N decided` in the written file and updates on every change. |
 | P4 | `#copy` is a `<button type="button">`, the primary action, labelled `Copy feedback`. |
 | P5 | After the clipboard accepts the text, its label reads `Copied`. It reverts to `Copy feedback` on the next change to the feedback. No timer. |
@@ -112,11 +112,13 @@ Four regions: top bar, variant list, canvas, inspector, plus a bottom strip. UI 
 | I5 | Comment is a `<textarea class="comment">` labelled `Comment`. |
 | I6 | Every change in a panel updates the list, `#progress` and `#feedback` at once. |
 
-### Bottom strip
+### Shortcuts and JSON
+
+Both sit at the foot of the inspector.
 
 | # | Statement |
 | --- | --- |
-| B1 | It lists the shortcuts: `K keep · R revise · D discard · ←→ variant · C copy`. |
+| B1 | It lists the shortcuts as key caps in two columns: `K` keep, `R` revise, `D` discard, `←→` variant, `C` copy. |
 | B2 | `<details>` with summary `Show JSON` holds `#feedback`, closed in the written file. |
 
 ### Chrome theme and accessibility
@@ -129,6 +131,24 @@ Four regions: top bar, variant list, canvas, inspector, plus a bottom strip. UI 
 | A4 | Every focusable control shows an outline on `:focus-visible`. |
 | A5 | All text meets WCAG AA 4.5:1 against its background in both schemes, the dimmed name of a discarded variant included. |
 | A6 | Every button is at least 24 by 24 CSS px. |
+
+### Visual design
+
+The page reads like a current design tool: quiet chrome, the work in the middle, colour only where it carries meaning. No request, so system fonts only, and no inline SVG.
+
+| # | Statement |
+| --- | --- |
+| V1 | Type: `ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`, 13px chrome, 15px document text. Mono only for the JSON and inline code. Two weights: 400 and 600. |
+| V2 | Spacing on a 4px grid. Radius 6px on controls, 10px on cards. Hairline borders, one neutral tone. Shadows only on canvas cards. |
+| V3 | Light: white chrome, canvas a soft grey with a faint dot grid. Dark: near-black chrome, canvas a step lighter. One blue accent, for the primary button, selection and focus. |
+| V4 | Verdict colours: keep green, revise amber, discard red. Each has a tinted background and a strong foreground, in both schemes. They appear on the pressed verdict button and as a status dot in the list. Nowhere else. |
+| V5 | Top bar, 48px: a small square mark and the set name, a `N variants` pill, then `Preview theme` and `Preview state` as styled selects (`appearance: none`, a text chevron). Right side: a thin progress bar beside `n/N decided`, then the primary `Copy feedback` button with its `C` key hint. |
+| V6 | Variant list: a `Variants` caption in small caps. Each row: status dot (empty ring when undecided), name, intent on a second muted line, cut with an ellipsis. Selected row: accent tint. Paired row: a small `B` badge, the selected one `A`. The hint below shows `⇧` as a key. |
+| V7 | Canvas: each frame is a white card with its name and file as a label above it, like a design tool's frame. A markdown file renders as a document, at most 68 characters wide: front matter as small chips, then headings, paragraphs, lists, tables and inline code. Any other line stays a plain paragraph. An html file shows in its frame, without border. |
+| V8 | Inspector: name 16px semibold, intent, axes as rows split by hairlines. `Verdict` caption, then a segmented control of three equal buttons with glyphs `✓ Keep`, `↻ Revise`, `✕ Discard`. Comment textarea with the placeholder `What should change?`. Below, the shortcuts as key caps, then the `Show JSON` disclosure. The bottom strip goes. |
+| V9 | Keys shown as `<kbd>` caps: hairline border, small radius, mono 11px. |
+| V10 | Hover and press states on every button. Transitions 120ms, none under `prefers-reduced-motion: reduce`. |
+| V11 | Below 900px wide, regions stack: top bar, list as a horizontal row, canvas, inspector. No horizontal page scroll at 375px. |
 
 ## Memory across reload
 
@@ -217,6 +237,8 @@ Node tests see only the written HTML and the help text. Behaviour is proven by o
 | 22 | Verdicts, comments, selection and pair set, then reload: all restored, `#feedback` equal to before, in all three engines (M3). | browser |
 | 23 | The page regenerated after a variant file changed opens empty, `0/N decided` (M4). | browser |
 | 24 | With `localStorage` access forced to throw, the page loads without console error, and criteria 13 and 14 hold; a reload restores nothing (M5). | browser |
+| 25a | A markdown variant renders headings as `h1` to `h3` and a table as `<table>`, never inside `<pre>` (V7). | node |
+| 25b | Screenshots at 1280 and 375px wide, light and dark, in the three engines; no horizontal scroll at 375 (V11). | browser |
 | 25 | `pnpm exec lefthook run pre-commit` passes; the scripts suite passes wrapped. | command |
 
 Each node guard ships with the mutation that turns its own test red:
@@ -234,6 +256,7 @@ Each node guard ships with the mutation that turns its own test red:
 | 10 Fingerprint follows content | file texts left out of the hash | criterion 10 |
 | 11 Help names verdict | the `rating` entry line restored | criterion 11 |
 | 1 Order, rewritten | list buttons written in reverse | criterion 1's order test |
+| 25a Markdown document | text files written back into `<pre>` | criterion 25a |
 | 1 Feedback, rewritten | `verdict` emitted as `""` instead of null | criterion 1's feedback test |
 
 Script behaviour (selection, pairing, keys, copy label, storage) has no node guard: the browser pass is its proof. The skills' wording is checked by reading.
