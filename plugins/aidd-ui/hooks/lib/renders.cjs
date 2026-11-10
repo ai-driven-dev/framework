@@ -22,8 +22,6 @@ const NOT_MARKUP = /<!--[\s\S]*?-->|<(style|script)\b[\s\S]*?<\/\1\s*>/gi; // co
 const TAG = /<([a-z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
 const TAG_OR_END = /<(\/?)([a-z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
 const VOID_TAGS = ["meta", "link", "input", "img"]; // the ones renders use: they close nothing
-const BODY = "body";
-const PSEUDO = /:+[\w-]+/g; // a pseudo-class or pseudo-element restricts nothing here
 const PSEUDO_ELEMENT = "::";
 const STATE = /[[:]/; // a selector that holds only in a state
 const QUOTED_VALUE = /"[^"]*"|'[^']*'/g;
@@ -188,7 +186,9 @@ const backgroundOf = (declarations) => declarations.get("background-color") ?? d
 const selectorsOf = (selector) => selector.split(",").map((each) => each.trim());
 const classesOf = (attributes) => (CLASS_ATTRIBUTE.exec(attributes)?.slice(1).find(Boolean) ?? "").split(/\s+/).filter(Boolean);
 
-/** The elements of a render as `{tag, classes, parent}`, nested by their tags alone: a closing tag
+const attributeNames = (attributes) => [...attributes.replace(QUOTED_VALUE, "").matchAll(/\s([^\s=/>]+)/g)].map(([, name]) => name.toLowerCase());
+
+/** The elements of a render as `{tag, classes, attributes, parent}`, nested by their tags alone: a closing tag
  * closes the last one open. */
 function elementsIn(html) {
   const open = [];
@@ -196,7 +196,7 @@ function elementsIn(html) {
   for (const [, closing, tag, attributes] of html.replace(NOT_MARKUP, blank).matchAll(TAG_OR_END)) {
     if (closing) open.pop();
     else {
-      const element = { tag: tag.toLowerCase(), classes: classesOf(attributes), parent: open.at(-1) };
+      const element = { tag: tag.toLowerCase(), classes: classesOf(attributes), attributes: attributeNames(attributes), parent: open.at(-1) };
       elements.push(element);
       if (!VOID_TAGS.includes(element.tag)) open.push(element);
     }
@@ -205,13 +205,13 @@ function elementsIn(html) {
 }
 
 /** A selector's chains, each from its outermost compound to the one it targets, as `{tag, classes}`.
- * `>` reads as a descendant. */
+ * `>` reads as a descendant; an attribute filter asks for the attribute, whatever its value. */
 const chainsOf = (selector) =>
-  selectorsOf(selector.replace(SELECTOR_FILTERS, "").replace(PSEUDO, "")).map((each) =>
-    each.split(/\s*>\s*|\s+/).map((compound) => ({ tag: /^[a-z][\w-]*/i.exec(compound)?.[0].toLowerCase(), classes: [...compound.matchAll(/\.([\w-]+)/g)].map(([, name]) => name) }))
+  selectorsOf(selector).map((each) =>
+    each.split(/\s*>\s*|\s+/).map((compound) => ({ tag: /^[a-z][\w-]*/i.exec(compound)?.[0].toLowerCase(), classes: [...compound.matchAll(/\.([\w-]+)/g)].map(([, name]) => name), attributes: [...compound.matchAll(/\[\s*([\w:-]+)/g)].map(([, name]) => name.toLowerCase()) }))
   );
 
-const fits = ({ tag, classes }, element) => (tag === undefined || tag === element.tag) && classes.every((name) => element.classes.includes(name));
+const fits = ({ tag, classes, attributes }, element) => (tag === undefined || tag === element.tag) && classes.every((name) => element.classes.includes(name)) && attributes.every((name) => element.attributes.includes(name));
 
 /** Whether an element is the target of a chain: each compound before the last fits an ancestor. */
 function reaches(chain, element) {
@@ -242,13 +242,13 @@ function ratioOf(top, below, backdrop) {
   return back ? contrast(over(top, back), back) : null;
 }
 
-/** The backgrounds behind an element, nearest first, read from itself up to `body`. A state's is
+/** The backgrounds behind an element, nearest first, read from itself up through its ancestors. A state's is
  * read and the walk goes on; a transparent one is passed over; the first base one is the last read;
  * one in another notation ends the walk unread. */
 function backgroundsBehind(element, rules, properties) {
   const found = [];
   for (let each = element; each; each = each.parent) {
-    let stop = each.tag === BODY;
+    let stop = false;
     for (const rule of rules.filter(({ chains }) => chains.some((chain) => reaches(chain, each)))) {
       const written = backgroundOf(rule.declarations);
       const value = withValues(written, properties);
@@ -266,8 +266,8 @@ function backgroundsBehind(element, rules, properties) {
 
 /** A pair's text and background are read once their tokens are resolved, a translucent background
  * over the body's. A text with a colour alone is read on each background behind the elements its
- * rule targets, one finding per background rule, except one a base pair targets: that pair reads
- * it alone. Any other notation leaves it unchecked. */
+ * rule targets, one finding per background rule, except one a pair targets: that pair reads it
+ * alone, but for a state's colour. Any other notation leaves it unchecked. */
 function contrastProblems(project) {
   const resolved = resolvedOf(project);
   const themes = list(systemOf(project)?.frontMatter.themes);
@@ -275,7 +275,7 @@ function contrastProblems(project) {
     const rules = rulesIn(html);
     const elements = elementsIn(html);
     const grounded = rules.filter(({ selector, declarations }) => !selector.includes(PSEUDO_ELEMENT) && backgroundOf(declarations) !== undefined).map((rule) => ({ ...rule, chains: chainsOf(rule.selector) }));
-    const pairs = grounded.filter(({ selector, declarations }) => declarations.has("color") && !STATE.test(selector));
+    const pairs = grounded.filter(({ selector, declarations }) => declarations.has("color"));
     return (themes.length ? themes : [null]).flatMap((theme) => {
       const properties = propertiesIn(resolved, `:root[data-theme="${theme}"]`);
       const backdrop = backdropOf(rules, properties);
@@ -289,7 +289,7 @@ function contrastProblems(project) {
         if (behind === undefined) {
           if (selector.includes(PSEUDO_ELEMENT)) return [];
           const chains = chainsOf(selector);
-          const backgrounds = new Map(elements.filter((element) => chains.some((chain) => reaches(chain, element)) && !pairs.some((pair) => pair.chains.some((chain) => reaches(chain, element)))).flatMap((element) => backgroundsBehind(element, grounded, properties)).map((each) => [each.rule, each]));
+          const backgrounds = new Map(elements.filter((element) => chains.some((chain) => reaches(chain, element)) && (STATE.test(selector) || !pairs.some((pair) => pair.chains.some((chain) => reaches(chain, element))))).flatMap((element) => backgroundsBehind(element, grounded, properties)).map((each) => [each.rule, each]));
           return [...backgrounds.values()].flatMap(({ rule, written: shown, value, colour }) => {
             const ratio = ratioOf(top, colour, backdrop);
             return ratio === null || ratio >= CONTRAST_MINIMUM ? [] : found(selector, `${shownAs(written, text)} on ${shownAs(shown, value)} behind ${rule.selector}`, ratio);

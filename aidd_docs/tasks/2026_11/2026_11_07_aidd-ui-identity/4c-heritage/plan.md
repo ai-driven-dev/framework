@@ -27,7 +27,7 @@ Lues sur les écrans des pilotes Gouvernail et Kairos. Jamais recopiées dans le
 - Balises vides observées : `meta`, `link`, `input`, `img`.
 - Sélecteurs descendants fréquents : `.m-tableau-libelles td`, `.practice-card small`.
 - `>` deux fois, sur des règles sans couleur ni fond.
-- `+` seulement devant `::before`. Aucun `#id`, aucune virgule, aucun `:not()`.
+- `+` seulement devant `::before`. Aucun `#id`, aucun `:not()`.
 - `::before` porte des fonds : pastilles, frises. Pas un fond derrière le texte.
 - Filtres d'état : `.practice-card[aria-pressed="true"] { background }`, `tr[data-state="hover"] td`.
 - Pseudo-classes : `:focus-visible`, `:first-child`, `:disabled`. Aucun `:disabled` avec `color` seul.
@@ -47,7 +47,7 @@ Lues sur les écrans des pilotes Gouvernail et Kairos. Jamais recopiées dans le
 - Une pile : une ouvrante empile, une fermante dépile. Les balises vides n'empilent pas.
 - Chaque élément : balise, classes, parent.
 - Un sélecteur vise par sa chaîne descendante entière, de droite à gauche.
-- Composé : balise et classes. Filtres d'attribut et pseudo-classes ne restreignent rien.
+- Composé : balise et classes. Un filtre d'attribut exige l'attribut, quelle que soit sa valeur ; une pseudo-classe ne restreint rien.
 - `>` lu comme un descendant ; un composé vide vise tout élément.
 - Une règle à `::` n'est ni texte ni fond.
 - V12 garde `targets()` : sa sortie réelle ne change pas.
@@ -64,7 +64,8 @@ Tests dans `screen-renders.test.js`, par V11 : la pile n'a pas d'API propre.
 - Le premier fond de base arrête la remontée ; il est vérifié.
 - Plusieurs fonds de base sur cet élément : chacun est vérifié.
 - Fond translucide : composé sur le fond de `body`, comme aujourd'hui.
-- Un élément porté par une paire couleur et fond de base n'est lu que par elle.
+- Un élément porté par une paire couleur et fond n'est lu que par elle, sauf pour la couleur d'un état.
+- Un fond illisible, dégradé par exemple, arrête la remontée : aucun message.
 - Aucun fond jusqu'à `body` inclus : règle non vérifiée.
 - Thèmes : la boucle actuelle, inchangée.
 - Message, forme de la paire plus la source :
@@ -90,6 +91,9 @@ Tests, couleurs synthétiques, chacun avec sa mutation :
 | fond `transparent` proche : l'ancêtre est lu | ne pas sauter l'alpha nul |
 | `<style>` aux `>` et `::before` : aucun élément lu | lire le HTML brut |
 | élément porté par une paire : la règle à `color` seul le saute | retirer le bouclier de la paire |
+| couleur d'état sur un élément porté par une paire : lue sur le fond de la paire | blinder aussi les règles d'état |
+| filtre d'attribut : la règle ne vise que les éléments portant l'attribut | ignorer les noms d'attribut |
+| fond dégradé proche, fond opaque plus haut : rien | ne pas arrêter sur un fond illisible |
 
 - Renommer « skips a rule without both colours ».
 - Nouveau nom : « skips a colour that names no element ».
@@ -124,7 +128,7 @@ Fichier : `03-foundations/references/extraction.md`. Aucune ligne ajoutée ; une
 - La sonde est refaite depuis les hooks neufs avant de compter.
 - Une erreur V11 réelle est un constat, pas un échec du pilote.
 - Chaque erreur héritée est tracée : vraie, ou artefact de filtre.
-- Si les artefacts dominent, lire les filtres d'attribut devient la suite.
+- Si les artefacts dominent, lire la valeur des filtres d'attribut devient la suite.
 - `run-4c-heritage.md`, à côté de `run-4c.md` : sortie, comptes avant et après, mutations.
 - Gates : suite enveloppée, `pnpm exec lefthook run pre-commit`.
 
@@ -157,8 +161,9 @@ Fichier : `03-foundations/references/extraction.md`. Aucune ligne ajoutée ; une
 
 ## Accepted limits
 
+- Un texte en `::placeholder` n'est pas vérifié.
 - La cascade et la spécificité ne sont pas calculées.
-- Filtres et pseudo-classes ignorés : un état prête son fond à tous.
+- Valeur des filtres et pseudo-classes ignorées : un état prête son fond à tous les éléments portant l'attribut.
 - `:disabled` vérifié comme un autre état, bien que WCAG l'exempte.
 - `>` lu comme un descendant ; `+` et `~` non lus.
 - Une balise mal fermée décale l'imbrication. Auto-fermante non lue.

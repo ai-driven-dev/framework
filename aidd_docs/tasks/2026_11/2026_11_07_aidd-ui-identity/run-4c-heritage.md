@@ -4,7 +4,7 @@ Evidence for [the plan](4c-heritage/plan.md): one pilot pass, the checks on its 
 
 ## Suites
 
-- Wrapped scripts suite: 1751 pass, 0 fail, 0 skipped.
+- Wrapped scripts suite: 1754 pass, 0 fail, 0 skipped.
 - `pnpm exec lefthook run pre-commit`: green on both commits.
 
 ## Pilot
@@ -41,6 +41,10 @@ On the previous Kairos output, the first engine named three rules:
 
 The two false ones led to one fix, test first: an element a base pair targets is read by that pair alone. The third remains.
 
+The review then removed four untested guards, with no change on real output.
+
+The state fix surfaced a false error on blank: `[data-zone="hero"]` matched every descendant, so each `.button` took the hero's colour. Reading attribute names fixed it. Rerun on the blank, Gouvernail and Kairos outputs, only the two `.winner-banner span` lines remain.
+
 ## C3 and the code roots
 
 | | Code roots | C3 | C4 |
@@ -53,7 +57,7 @@ The server and generated folders are out. Two remain, as a finding, with no reru
 - `src/modules/common`: 363 C3. Domain and persistence code, not UI.
 - `src/routes/api`: 41 C3. Server routes under a UI folder.
 
-The rest are UI files no record links yet: the pilot records a few components only.
+Server files also remain beside UI files: 162 `*.server.ts` under `src/features` and `src/routes`, plus schema and model files. `ignore` matches a folder prefix, so it cannot leave them out. The done-when "no server C3" is not met.
 
 ## Mutations
 
@@ -75,8 +79,11 @@ Each guard broken once, its own test red, then restored. The `FIXES` ledger test
 | Transparent | alpha 0 not skipped | walks past a transparent background |
 | Style block | raw HTML read | reads no element out of a style block |
 | Pair shield | shield removed | reads an element a pair targets by that pair alone |
+| State not shielded | state colours shielded again | reads a state's colour on the background of the pair that targets its element |
+| Attribute filter | attribute names ignored | restricts an attribute filter to the elements carrying that attribute |
+| Unreadable background | walk not stopped | stops at a background it cannot read |
 
 ## Limits
 
 - Haiku runs the pilot; Kairos was not rerun, its C3 after the change is not measured.
-- Three negative cases were shown red by their mutation only, not before their code.
+- Four negative cases were shown red by their mutation only, not before their code.

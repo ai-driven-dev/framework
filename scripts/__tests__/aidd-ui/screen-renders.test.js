@@ -202,7 +202,7 @@ describe("aidd-ui V11 contrast", () => {
 
     it("reads a state background and the base one above it", () => {
       tint("#dddddd");
-      addToHome(`${BEHIND("base")}\n.on[data-x] { background: var(--ink-tint); }\n${TEXT}`, '<div class="base"><div class="on"><p class="t">x</p></div></div>');
+      addToHome(`${BEHIND("base")}\n.on[data-x] { background: var(--ink-tint); }\n${TEXT}`, '<div class="base"><div class="on" data-x><p class="t">x</p></div></div>');
       assert.deepEqual(problems(), inEveryTheme(behind(".on[data-x]", "1.71", "#dddddd", "tint"), behind(".base")));
     });
 
@@ -215,6 +215,24 @@ describe("aidd-ui V11 contrast", () => {
     it("reads an element a pair targets by that pair alone", () => {
       tint(BLACK);
       addToHome(`.a { background: var(--ink-tint); }\n.a span { color: var(--ink-fg); }\n.a .own { color: var(--ink-dark); background: var(--ink-bg); }`, '<div class="a"><span class="own">x</span></div>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("reads a state's colour on the background of the pair that targets its element", () => {
+      tint(BLACK);
+      addToHome(".a .own { color: var(--ink-dark); background: var(--ink-bg); }\n.own[data-x] { color: var(--ink-fg); }", '<div class="a"><span class="own" data-x>x</span></div>');
+      assert.deepEqual(problems(), everyTheme(`.own[data-x]: ${raw("fg", "#aaaaaa")} on ${raw("bg", WHITE)} behind .a .own is 2.32:1, below 4.5`));
+    });
+
+    it("stops at a background it cannot read", () => {
+      tint(BLACK);
+      addToHome(`${BEHIND("far")}\n.near { background: linear-gradient(var(--ink-dark), var(--ink-dark)); }\n${TEXT}`, '<div class="far"><div class="near"><p class="t">x</p></div></div>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("restricts an attribute filter to the elements carrying that attribute", () => {
+      tint(BLACK);
+      addToHome('.s { background: var(--ink-tint); }\n.s > [data-zone="z"] { color: var(--ink-fg); }\n.btn { color: var(--ink-dark); background: var(--ink-bg); }', '<div class="s"><p data-zone="z">t</p><span class="btn">b</span></div>');
       assert.deepEqual(problems(), []);
     });
 
@@ -392,6 +410,8 @@ const FIXES = [
   "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (color(srgb 0 0 0 / 0.5)) behind .box is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
   "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-tint) (#dddddd) behind .b is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
   "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-tint) (#dddddd) behind .on[data-x] is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .own[data-x]: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .a .own is 2.32:1, below 4.5 | \".own[data-x]\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .own[data-x]: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .a .own is 2.32:1, below 4.5 | \".own[data-x]\" | use tokens whose contrast reaches 4.5:1",
   "V12 | a (.go): min-height 16px is below the 24px floor of web | \".go\" | give it at least 24px",
   "V12 | button (.go): height 16px is below the 24px floor of web | \".go\" | give it at least 24px",
   "V12 | button (.go): min-height 16px is below the 24px floor of web | \".go\" | give it at least 24px",
