@@ -23,7 +23,7 @@ Will change
 Questions
   Q{{n}}  {{question}}
 
-<!-- Ticked: on a setup the detected tools, on a refresh the wired ones; the others unticked. -->
+<!-- Tools: never left out, on a setup or a refresh. Ticked: on a setup the detected tools, on a refresh the wired ones; the others unticked. -->
 
 Tools to wire
   [x] claude  [ ] codex  [ ] cursor  [ ] opencode  [ ] copilot

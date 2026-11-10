@@ -1,7 +1,5 @@
 # Engine
 
-The commands the actions run.
-
 - Find `memory.cjs` by file name before any call; the first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
 - Run the engine; never open its source or `lib/`.
 

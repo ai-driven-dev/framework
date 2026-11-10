@@ -1,7 +1,5 @@
 # Tools
 
-The AI tools a project can use.
-
 | Tool     | Detected when                                                                        | Context file                      |
 | -------- | ------------------------------------------------------------------------------------ | --------------------------------- |
 | claude   | `.claude/` or `CLAUDE.md`                                                            | `CLAUDE.md`                       |

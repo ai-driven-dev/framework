@@ -1,10 +1,6 @@
 # Memory rules
 
-The one place that says what a memory file must be.
-
 ## Machine rules
-
-The engine checks these.
 
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |
@@ -17,8 +13,6 @@ The engine checks these.
 | M7 | warning | 12 words | a sentence also written in another memory file |
 
 ## Reader rules
-
-These bind every memory file.
 
 | Rule | Keep | Drop | A line the user wrote |
 | --- | --- | --- | --- |

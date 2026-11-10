@@ -35,7 +35,8 @@
 
 ## Agents
 
-Fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
+- Fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work.
+- You stay the caller: you own scope, delegation, and final acceptance.
 
 | Responsibility | Agent |
 | --- | --- |
@@ -43,14 +44,12 @@ Fan out genuinely independent subtasks to agents by responsibility when coordina
 | Implement assigned work and verify it | `executor` |
 | Confirm the outcome meets its acceptance criteria | `validator` |
 | Review quality, coherence, and needless complexity | `reviewer` |
-
-Without the agent, give the same brief to the host's default subagent.
+| Any of these, its agent missing | the host's default subagent, with the same brief |
 
 ## Memory Management
 
-Project docs, memory, specs, and plans live in `aidd_docs/`.
-
-Read only task-relevant context and linked memory files; complete required reads.
+- Project docs, memory, specs, and plans live in `aidd_docs/`.
+- Read only task-relevant context and linked memory files; complete required reads.
 
 <!-- aidd_project_memory:start -->
 <!-- aidd_project_memory:end -->

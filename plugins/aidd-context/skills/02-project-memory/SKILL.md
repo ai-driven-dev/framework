@@ -24,7 +24,7 @@ flowchart LR
   sync --> done
 ```
 
-Read an action's file, then follow it.
+- Each box: read its action file, then follow it.
 
 ## Transversal rules
 

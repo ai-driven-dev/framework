@@ -1,11 +1,10 @@
 # Ecosystem signals
 
-What the scan learns about the services the project uses and does not build, not the [AI hosts](tools.md).
-
 ## What earns an entry
 
 | Case | Verdict |
 | --- | --- |
+| A service the project builds, or an [AI host](tools.md) | never an entry |
 | It holds state, or does work, outside the repo past a single CI run | an entry; a build step is not |
 | A platform that is also the tracker | one entry per role |
 | The VCS platform | always an entry, so the graph is never empty |

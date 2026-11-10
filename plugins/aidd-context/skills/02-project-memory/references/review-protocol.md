@@ -1,11 +1,10 @@
 # Review protocol
 
-Review yourself the memory files the AI loads every session: code silent on a line does not contradict it, memory holding what it cannot show.
-
 ## Scope
 
 | Case | Review |
 | --- | --- |
+| Reviewer | you, never a subagent |
 | Every refresh | every line of the files a row produces or lists under Accepted names, one at a time, against its source and the code |
 | First | the lines `changes` cites |
 | New facts | looked for in the files `changes` lists |
@@ -13,14 +12,13 @@ Review yourself the memory files the AI loads every session: code silent on a li
 
 ## Content
 
-Flag each finding with a reason and a location.
-
-| Check | Flag when |
+| Check | Flag, with a reason and a location, when |
 | --- | --- |
 | Every path | the tree lacks it |
 | Every command and commit type | the file that defines it, per the reading rules of [reading-sources.md](reading-sources.md), disagrees or it would not run |
 | Every count and named tool | the manifests or the workspace file disagree |
 | A claim | the code contradicts it or it has gone stale |
+| A line the code is silent on | never: memory holds what the code cannot show |
 | A "why" | the code and history do not support it |
 | A decision, convention, or gotcha | the code shows it and the file omits it |
 | A fact | it belongs under another file's name, for check to dedup |
@@ -36,10 +34,9 @@ Flag each finding with a reason and a location.
 
 ## Structure
 
-Take the structure findings of that run; judge none.
-
 | Found | Do |
 | --- | --- |
+| Any structure finding | taken from that run; judge none of your own |
 | A root file no row produces | the team's: keep it |
 | A root file in a row's Accepted names column | that row's file: offer nothing on it |
 | A file a row produces in `internal/` or a subfolder, or a folder under `memory/` other than `internal/` and `external/` | misplaced: report it as `move <path> to <path>` and move nothing |

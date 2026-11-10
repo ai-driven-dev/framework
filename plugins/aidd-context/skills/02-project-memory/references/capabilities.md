@@ -1,10 +1,6 @@
 # Capabilities
 
-How a capability is detected and which file it writes.
-
 ## Capability table
-
-A file is written to `aidd_docs/memory/` from the template of the same name under `assets/templates/memory/`.
 
 | Capability | File | Meaning | Detected when | Always | Accepted names |
 | --- | --- | --- | --- | --- | --- |
@@ -31,6 +27,7 @@ A file is written to `aidd_docs/memory/` from the template of the same name unde
 
 | Case | Do |
 | --- | --- |
+| A row's template | the file of the same name under `assets/templates/memory/` |
 | Detecting | read from the table, from a concrete fact in the repo, never inferred from the domain |
 | A file present | its row's capability held when the bank was written |
 | A template line in `{{…}}` | a question the writer answers; with no answer it is dropped |

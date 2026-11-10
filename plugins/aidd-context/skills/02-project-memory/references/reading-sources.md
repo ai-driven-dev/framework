@@ -1,7 +1,5 @@
 # Reading sources
 
-What the scan reads to understand the project; what survives the reading is [memory-rules](memory-rules.md)'s reader rules.
-
 ## Read in this order
 
 | Order | Source | Answers |
@@ -20,6 +18,7 @@ What the scan reads to understand the project; what survives the reading is [mem
 
 | Case | Do |
 | --- | --- |
+| A fact read | kept only if the reader rules of [memory-rules](memory-rules.md) keep it |
 | A command or a convention | take it from the file that defines it, as an `R` line; prose that names one is checked against that file |
 | The root README | read it whole, and the other docs a section needs |
 | The code | read it last: it corrects the others and is never summarised |

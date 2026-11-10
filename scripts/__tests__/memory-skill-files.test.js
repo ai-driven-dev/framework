@@ -492,7 +492,7 @@ test("the sheet message shows once, airy and in one fixed order: files with what
   assert.equal(sample.match(/aidd_docs\//gu).length, 1, "a path other than the sheet's is shown");
   assert.doesNotMatch(sample, /silence|\bgrammar\b|\bremove\b|\breplace\b/iu, "engine words reach the person");
   assert.match(asset, /leave out a section with nothing in it/u);
-  assert.match(asset, /<!-- Ticked: on a setup the detected tools, on a refresh the wired ones; the others unticked\. -->/u, "the tools are a setup's only");
+  assert.match(asset, /<!-- Tools: never left out, on a setup or a refresh\. Ticked: on a setup the detected tools, on a refresh the wired ones; the others unticked\. -->/u, "the tools are a setup's only, or a refresh leaves them out");
   assert.match(asset, /<!-- Since: a refresh only, the first line `changes` printed, copied as it is; information, never a question\. -->/u, "the Since line has no help comment");
   assert.match(asset, /Stop after the message: no offer to reverse a declined line/u);
   assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /sheet-message\.md/u, "write does not show the sheet as the asset says");
