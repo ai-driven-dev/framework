@@ -23,5 +23,7 @@ The strictest that holds.
 | Verdict | When |
 | --- | --- |
 | `blocked` | a critical finding |
-| `changes-requested` | a major finding, an unchecked criterion, or `functional` with no criterion met |
+| `changes-requested` | a major finding, an unchecked criterion, or `functional` with no criterion in scope |
 | `approve` | otherwise |
+
+An out-of-the-diff or unverified criterion is neither unchecked nor blocking. A round without `functional` takes its verdict from its findings alone.
