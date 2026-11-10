@@ -127,10 +127,96 @@ describe("aidd-ui V11 contrast", () => {
     assert.deepEqual(problems(), everyTheme(`.note: ${raw("fg", "#aaaaaa")} on ${raw("bg", WHITE)} is 2.32:1, below 4.5`));
   });
 
-  it("skips a rule without both colours", () => {
+  it("skips a colour that names no element", () => {
     inks("#aaaaaa", WHITE);
     addToHome(".a { color: var(--ink-fg); }\n.b { background: var(--ink-bg); }");
     assert.deepEqual(problems(), []);
+  });
+
+  describe("a text without a background of its own", () => {
+    const TEXT = ".t { color: var(--ink-fg); }";
+    const BEHIND = (name) => `.${name} { background: var(--ink-bg); }`;
+    const behind = (source, ratio = "2.32", value = WHITE, name = "bg") => `.t: ${raw("fg", "#aaaaaa")} on ${raw(name, value)} behind ${source} is ${ratio}:1, below 4.5`;
+    const inEveryTheme = (...tails) => ["light", "dark"].flatMap((theme) => tails.map((tail) => `${home}: ${theme}: ${tail}`));
+    const tint = (hex) => addTokens("ink", { fg: srgb("#aaaaaa"), bg: srgb(WHITE), tint: srgb(hex), dark: srgb(BLACK) });
+
+    it("is read on the opaque background of an ancestor", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`${BEHIND("box")}\n${TEXT}`, '<div class="box"><p class="t">x</p></div>');
+      assert.deepEqual(problems(), everyTheme(behind(".box")));
+    });
+
+    it("is read on a background another rule sets on the element itself", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`${BEHIND("on")}\n${TEXT}`, '<p class="t on">x</p>');
+      assert.deepEqual(problems(), everyTheme(behind(".on")));
+    });
+
+    it("is read on the nearest background, not a farther one", () => {
+      tint(WHITE);
+      addToHome(`${BEHIND("far")}\n.near { background: var(--ink-dark); }\n${TEXT}`, '<div class="far"><div class="near"><p class="t">x</p></div></div>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("follows the whole descendant chain, not its last compound", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`${BEHIND("bar")}\n.a .t { color: var(--ink-fg); }`, '<div class="a"></div><div class="bar"><p class="t">x</p></div>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("takes a pseudo-element's background for none behind the text", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`.box::before { background: var(--ink-bg); }\n${TEXT}`, '<div class="box"><p class="t">x</p></div>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("does not open an element for a void tag", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`${BEHIND("in")}\n.in .t { color: var(--ink-fg); }`, '<input class="in"><span class="t">x</span>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("composes a translucent ancestor over the body's", () => {
+      addTokens("ink", { fg: srgb("#aaaaaa"), bg: srgb(BLACK, 0.5), page: srgb(WHITE) });
+      addToHome(`body { background: var(--ink-page); }\n${BEHIND("box")}\n${TEXT}`, '<div class="box"><p class="t">x</p></div>');
+      assert.deepEqual(problems(), everyTheme(behind(".box", "1.71", "color(srgb 0 0 0 / 0.5)")));
+    });
+
+    it("leaves a text unchecked when no background lies behind it up to the body", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(TEXT, '<p class="t">x</p>');
+      assert.deepEqual(problems(), []);
+    });
+
+    it("reads each of two backgrounds on one element", () => {
+      tint("#dddddd");
+      addToHome(`${BEHIND("a")}\n.b { background: var(--ink-tint); }\n${TEXT}`, '<p class="t a b">x</p>');
+      assert.deepEqual(problems(), inEveryTheme(behind(".a"), behind(".b", "1.71", "#dddddd", "tint")));
+    });
+
+    it("names a rule once for a background it reaches in two containers", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`${BEHIND("box")}\n${TEXT}`, '<div class="box"><p class="t">x</p></div><div class="box"><p class="t">y</p></div>');
+      assert.deepEqual(problems(), everyTheme(behind(".box")));
+    });
+
+    it("reads a state background and the base one above it", () => {
+      tint("#dddddd");
+      addToHome(`${BEHIND("base")}\n.on[data-x] { background: var(--ink-tint); }\n${TEXT}`, '<div class="base"><div class="on"><p class="t">x</p></div></div>');
+      assert.deepEqual(problems(), inEveryTheme(behind(".on[data-x]", "1.71", "#dddddd", "tint"), behind(".base")));
+    });
+
+    it("walks past a transparent background", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`${BEHIND("far")}\n.near { background: transparent; }\n${TEXT}`, '<div class="far"><div class="near"><p class="t">x</p></div></div>');
+      assert.deepEqual(problems(), everyTheme(behind(".far")));
+    });
+
+    it("reads no element out of a style block", () => {
+      inks("#aaaaaa", WHITE);
+      addToHome(`${BEHIND("box")}\n${TEXT}\n.x > .y::before { content: "<div class='box'><b>"; }`, '<p class="t">x</p>');
+      assert.deepEqual(problems(), []);
+    });
   });
 
   it("skips a value it cannot read", () => {
@@ -284,6 +370,22 @@ const FIXES = [
   "V11 | light: .note: var(--ink-fg) (#ffffff) on transparent is 1.00:1, below 4.5 | \".note\" | use tokens whose contrast reaches 4.5:1",
   "V11 | light: .note: var(--ink-fg) (#ffffff) on var(--ink-bg) (color(srgb 0 0 0 / 0.5)) is 3.98:1, below 4.5 | \".note\" | use tokens whose contrast reaches 4.5:1",
   "V11 | light: .note: var(--ink-fg) (color(srgb 0 0 0 / 0.2)) on var(--ink-bg) (#ffffff) is 1.61:1, below 4.5 | \".note\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .a is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .base is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .box is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .far is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .on is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (color(srgb 0 0 0 / 0.5)) behind .box is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-tint) (#dddddd) behind .b is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | dark: .t: var(--ink-fg) (#aaaaaa) on var(--ink-tint) (#dddddd) behind .on[data-x] is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .a is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .base is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .box is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .far is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (#ffffff) behind .on is 2.32:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-bg) (color(srgb 0 0 0 / 0.5)) behind .box is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-tint) (#dddddd) behind .b is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
+  "V11 | light: .t: var(--ink-fg) (#aaaaaa) on var(--ink-tint) (#dddddd) behind .on[data-x] is 1.71:1, below 4.5 | \".t\" | use tokens whose contrast reaches 4.5:1",
   "V12 | a (.go): min-height 16px is below the 24px floor of web | \".go\" | give it at least 24px",
   "V12 | button (.go): height 16px is below the 24px floor of web | \".go\" | give it at least 24px",
   "V12 | button (.go): min-height 16px is below the 24px floor of web | \".go\" | give it at least 24px",

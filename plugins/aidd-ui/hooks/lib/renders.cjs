@@ -1,7 +1,8 @@
 // V1 to V12: each component and screen has its HTML render, showing every variant, axis and state
 // through the tokens its record declares alone, from the stylesheet generated out of the tokens; a
 // wireframe's shows every state and zone, and no style at all. A screen's also keeps its text
-// readable (V11) and its controls large enough to touch (V12).
+// readable (V11), on its own background or on the one an ancestor lays behind it, and its controls
+// large enough to touch (V12).
 const path = require("node:path");
 const { list, blank, lineOf, escapeRegex, LINE_BREAK } = require("./markdown.cjs");
 const { placed, byId, tokensUsedBy, variantOf, systemOf, fm, TOKENED_KINDS } = require("./model.cjs");
@@ -19,6 +20,12 @@ const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
 
 const NOT_MARKUP = /<!--[\s\S]*?-->|<(style|script)\b[\s\S]*?<\/\1\s*>/gi; // copy and code, not tags
 const TAG = /<([a-z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
+const TAG_OR_END = /<(\/?)([a-z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
+const VOID_TAGS = ["meta", "link", "input", "img"]; // the ones renders use: they close nothing
+const BODY = "body";
+const PSEUDO = /:+[\w-]+/g; // a pseudo-class or pseudo-element restricts nothing here
+const PSEUDO_ELEMENT = "::";
+const STATE = /[[:]/; // a selector that holds only in a state
 const QUOTED_VALUE = /"[^"]*"|'[^']*'/g;
 const SWITCH_ATTRIBUTE = /\sdata-(theme|platform)(?![\w-])/gi; // what shows another theme or platform
 const SWITCHED_ELEMENT = "html";
@@ -179,6 +186,44 @@ const propertiesIn = (resolved, context) => new Map([...(resolved.get(context) ?
 const withValues = (value, properties) => value.replace(VAR_CALL, (call, name) => properties.get(name) ?? call);
 const backgroundOf = (declarations) => declarations.get("background-color") ?? declarations.get("background");
 const selectorsOf = (selector) => selector.split(",").map((each) => each.trim());
+const classesOf = (attributes) => (CLASS_ATTRIBUTE.exec(attributes)?.slice(1).find(Boolean) ?? "").split(/\s+/).filter(Boolean);
+
+/** The elements of a render as `{tag, classes, parent}`, nested by their tags alone: a closing tag
+ * closes the last one open. */
+function elementsIn(html) {
+  const open = [];
+  const elements = [];
+  for (const [, closing, tag, attributes] of html.replace(NOT_MARKUP, blank).matchAll(TAG_OR_END)) {
+    if (closing) open.pop();
+    else {
+      const element = { tag: tag.toLowerCase(), classes: classesOf(attributes), parent: open.at(-1) };
+      elements.push(element);
+      if (!VOID_TAGS.includes(element.tag)) open.push(element);
+    }
+  }
+  return elements;
+}
+
+/** A selector's chains, each from its outermost compound to the one it targets, as `{tag, classes}`.
+ * `>` reads as a descendant. */
+const chainsOf = (selector) =>
+  selectorsOf(selector.replace(SELECTOR_FILTERS, "").replace(PSEUDO, "")).map((each) =>
+    each.split(/\s*>\s*|\s+/).map((compound) => ({ tag: /^[a-z][\w-]*/i.exec(compound)?.[0].toLowerCase(), classes: [...compound.matchAll(/\.([\w-]+)/g)].map(([, name]) => name) }))
+  );
+
+const fits = ({ tag, classes }, element) => (tag === undefined || tag === element.tag) && classes.every((name) => element.classes.includes(name));
+
+/** Whether an element is the target of a chain: each compound before the last fits an ancestor. */
+function reaches(chain, element) {
+  if (!fits(chain.at(-1), element)) return false;
+  let above = element.parent;
+  for (const compound of chain.slice(0, -1).reverse()) {
+    while (above && !fits(compound, above)) above = above.parent;
+    if (!above) return false;
+    above = above.parent;
+  }
+  return true;
+}
 
 /** What a value reads as once its tokens are resolved, beside what the render wrote. */
 const shownAs = (written, value) => (written === value ? written : `${written} (${value})`);
@@ -190,27 +235,68 @@ function backdropOf(rules, properties) {
   return colour?.a === 1 ? colour : null;
 }
 
+/** The ratio of a text over a background, the background composed over the body's when translucent;
+ * null when it has nothing to lie on. */
+function ratioOf(top, below, backdrop) {
+  const back = below.a === 1 ? below : backdrop && over(below, backdrop);
+  return back ? contrast(over(top, back), back) : null;
+}
+
+/** The backgrounds behind an element, nearest first, read from itself up to `body`. A state's is
+ * read and the walk goes on; a transparent one is passed over; the first base one is the last read;
+ * one in another notation ends the walk unread. */
+function backgroundsBehind(element, rules, properties) {
+  const found = [];
+  for (let each = element; each; each = each.parent) {
+    let stop = each.tag === BODY;
+    for (const rule of rules.filter(({ chains }) => chains.some((chain) => reaches(chain, each)))) {
+      const written = backgroundOf(rule.declarations);
+      const value = withValues(written, properties);
+      const colour = parse(value);
+      if (colour === null) stop = true;
+      else if (colour.a > 0) {
+        found.push({ rule, written, value, colour });
+        if (!STATE.test(rule.selector)) stop = true;
+      }
+    }
+    if (stop) break;
+  }
+  return found;
+}
+
 /** A pair's text and background are read once their tokens are resolved, a translucent background
- * over the body's. Any other notation leaves the pair unchecked. */
+ * over the body's. A text with a colour alone is read on each background behind the elements its
+ * rule targets, one finding per background rule. Any other notation leaves it unchecked. */
 function contrastProblems(project) {
   const resolved = resolvedOf(project);
   const themes = list(systemOf(project)?.frontMatter.themes);
   return screenRenders(project).flatMap(({ file, html }) => {
     const rules = rulesIn(html);
+    const elements = elementsIn(html);
+    const grounded = rules.filter(({ selector, declarations }) => !selector.includes(PSEUDO_ELEMENT) && backgroundOf(declarations) !== undefined).map((rule) => ({ ...rule, chains: chainsOf(rule.selector) }));
     return (themes.length ? themes : [null]).flatMap((theme) => {
       const properties = propertiesIn(resolved, `:root[data-theme="${theme}"]`);
       const backdrop = backdropOf(rules, properties);
+      const found = (selector, said, ratio) => [{ file, message: `${theme ?? "base"}: ${selector}: ${said} is ${ratio.toFixed(2)}:1, below ${CONTRAST_MINIMUM}`, fix: `use tokens whose contrast reaches ${CONTRAST_MINIMUM}:1`, excerpt: selector }];
       return rules.flatMap(({ selector, declarations }) => {
         const [written, behind] = [declarations.get("color"), backgroundOf(declarations)];
-        if (written === undefined || behind === undefined) return [];
-        const [text, background] = [withValues(written, properties), withValues(behind, properties)];
-        const [top, below] = [parse(text), parse(background)];
-        if (top === null || below === null) return [];
-        const back = below.a === 1 ? below : backdrop && over(below, backdrop);
-        if (!back) return [];
-        const ratio = contrast(over(top, back), back);
-        if (ratio >= CONTRAST_MINIMUM) return [];
-        return [{ file, message: `${theme ?? "base"}: ${selector}: ${shownAs(written, text)} on ${shownAs(behind, background)} is ${ratio.toFixed(2)}:1, below ${CONTRAST_MINIMUM}`, fix: `use tokens whose contrast reaches ${CONTRAST_MINIMUM}:1`, excerpt: selector }];
+        if (written === undefined) return [];
+        const text = withValues(written, properties);
+        const top = parse(text);
+        if (top === null) return [];
+        if (behind === undefined) {
+          if (selector.includes(PSEUDO_ELEMENT)) return [];
+          const chains = chainsOf(selector);
+          const backgrounds = new Map(elements.filter((element) => chains.some((chain) => reaches(chain, element))).flatMap((element) => backgroundsBehind(element, grounded, properties)).map((each) => [each.rule, each]));
+          return [...backgrounds.values()].flatMap(({ rule, written: shown, value, colour }) => {
+            const ratio = ratioOf(top, colour, backdrop);
+            return ratio === null || ratio >= CONTRAST_MINIMUM ? [] : found(selector, `${shownAs(written, text)} on ${shownAs(shown, value)} behind ${rule.selector}`, ratio);
+          });
+        }
+        const background = withValues(behind, properties);
+        const below = parse(background);
+        const ratio = below === null ? null : ratioOf(top, below, backdrop);
+        return ratio === null || ratio >= CONTRAST_MINIMUM ? [] : found(selector, `${shownAs(written, text)} on ${shownAs(behind, background)}`, ratio);
       });
     });
   });
@@ -219,7 +305,7 @@ function contrastProblems(project) {
 /** The interactive elements of a render, as `{tag, classes}`. */
 function interactiveIn(html) {
   return [...html.replace(NOT_MARKUP, blank).matchAll(TAG)]
-    .map(({ 1: tag, 2: attributes }) => ({ tag: tag.toLowerCase(), classes: (CLASS_ATTRIBUTE.exec(attributes)?.slice(1).find(Boolean) ?? "").split(/\s+/).filter(Boolean), role: CONTROL_ROLES.includes(ROLE_ATTRIBUTE.exec(attributes)?.[1].toLowerCase()) }))
+    .map(({ 1: tag, 2: attributes }) => ({ tag: tag.toLowerCase(), classes: classesOf(attributes), role: CONTROL_ROLES.includes(ROLE_ATTRIBUTE.exec(attributes)?.[1].toLowerCase()) }))
     .filter(({ tag, role }) => role || INTERACTIVE.includes(tag));
 }
 
