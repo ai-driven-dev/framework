@@ -301,6 +301,26 @@ describe("aidd-ui drafts", () => {
       }
     });
 
+    it("renders a markdown variant as a document, never as preformatted text", () => {
+      const markdown = (name) => `---\nid: brand\nkind: brand\n---\n\n# Brand ${name}\n\n## Users\n\nAnalysts use \`${name}-code\` daily.\n<script>alert(1)</script>\n\n### Glossary\n\n- first item\n- second item\n\n| Concept | Word | Forbidden |\n| --- | --- | --- |\n| order | Order <i> | basket |\n\n#### Deep\n`;
+      writeSet("brand", { files: (name) => ({ "brand.md": markdown(name), "preview.html": `<p>${name}</p>\n` }) });
+      compare();
+      const canvas = page().split('<main id="canvas">')[1].split("</main>")[0];
+      const count = (pattern) => (canvas.match(pattern) ?? []).length;
+      assert.equal(count(/<h1>Brand \w<\/h1>/g), ROWS.length);
+      assert.equal(count(/<h2>Users<\/h2>/g), ROWS.length);
+      assert.equal(count(/<h3>Glossary<\/h3>/g), ROWS.length);
+      assert.equal(count(/<table>/g), ROWS.length);
+      assert.equal(count(/<th>Forbidden<\/th>/g), ROWS.length);
+      assert.equal(count(/<td>Order &lt;i&gt;<\/td>/g), ROWS.length);
+      assert.equal(count(/<li>second item<\/li>/g), ROWS.length);
+      assert.equal(count(/<code>\w-code<\/code>/g), ROWS.length);
+      assert.equal(count(/<span class="chip">[^<]*<span class="key">kind<\/span>brand<\/span>/g), ROWS.length);
+      assert.equal(count(/<p>#### Deep<\/p>/g), ROWS.length);
+      assert.equal(count(/&lt;script&gt;alert\(1\)&lt;\/script&gt;/g), ROWS.length);
+      assert.doesNotMatch(canvas, /<pre|<script|<i>/);
+    });
+
     it("keeps the feedback in a closed Show JSON disclosure and Copy a plain button", () => {
       writeSet("brand");
       compare();
