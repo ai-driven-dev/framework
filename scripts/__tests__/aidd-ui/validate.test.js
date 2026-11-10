@@ -309,16 +309,16 @@ describe("aidd-ui validator entries", () => {
       });
     });
 
-    it("prints nothing without aidd_docs/ui/ and writes nothing", () => {
+    it("refuses without aidd_docs/ui/ and writes nothing", () => {
       fs.rmSync(path.join(tmp, UI), { recursive: true });
-      assert.deepEqual(generate(tmp), { code: 0, out: [], err: "", css: null });
+      assert.deepEqual(generate(tmp), { code: 2, out: [], err: "aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n", css: null });
     });
   });
 
   describe("E1 no design system", () => {
-    it("prints nothing without aidd_docs/ui/", () => {
+    it("refuses without aidd_docs/ui/", () => {
       fs.rmSync(path.join(tmp, UI), { recursive: true });
-      assert.deepEqual(validate(tmp), { code: 0, out: [], err: "" });
+      assert.deepEqual(validate(tmp), { code: 2, out: [], err: "aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n" });
     });
   });
 
@@ -531,6 +531,20 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(stop()), finish(errorsText([literal(28)])));
     });
 
+    it("still holds the turn when the baseline cannot be written", () => {
+      begin();
+      const before = rendered();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER), before));
+      fs.rmSync(`${markPath(sid)}.base`, { force: true });
+      fs.mkdirSync(`${markPath(sid)}.base`);
+      try {
+        assert.deepEqual(hook(stop()), finish(errorsText([literal(28)])));
+      } finally {
+        fs.rmSync(`${markPath(sid)}.base`, { recursive: true, force: true });
+      }
+    });
+
     it("holds with every error of the changed lines, none cut, and no warning", () => {
       begin();
       const before = rendered();
@@ -617,6 +631,16 @@ describe("aidd-ui validator entries", () => {
       breakOnePerFamily();
       hook(postToolUse(path.join(tmp, BRAND)));
       assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(errorsText([BRAND_FAILURE])));
+    });
+
+    it("still hands the problems back when the turn's state cannot be written", () => {
+      breakOnePerFamily();
+      fs.mkdirSync(markPath(sid), { recursive: true, mode: 0o700 });
+      try {
+        assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(errorsText([BRAND_FAILURE])));
+      } finally {
+        fs.rmSync(markPath(sid), { recursive: true, force: true });
+      }
     });
 
     it("still hands the problems back when the turn mark cannot be written", () => {
@@ -1033,6 +1057,15 @@ describe("aidd-ui validator entries", () => {
     it("ignores a PostToolUse payload without tool_input.file_path, as a host without matcher sends", () => {
       breakOnePerFamily();
       assert.deepEqual(hook(JSON.stringify({ hook_event_name: "PostToolUse", cwd: tmp, tool_input: {} })), silent);
+    });
+
+    it("answers nothing, exit 0, when the state a turn left cannot be read", () => {
+      breakOnePerFamily();
+      const temp = path.join(tmp, "temp");
+      fs.mkdirSync(temp);
+      hook(postToolUse(path.join(tmp, BRAND)), temp);
+      fs.writeFileSync(`${markPath(sid, temp)}.base`, JSON.stringify([["not a key", 1]]));
+      assert.deepEqual(hook(stop(), temp), silent);
     });
 
     for (const [name, input] of [["empty", ""], ["non-JSON", "not json"]]) {

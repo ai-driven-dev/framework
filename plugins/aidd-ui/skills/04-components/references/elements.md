@@ -6,7 +6,6 @@
 | level | asset, atom, molecule, organism. An element uses its level or lower, never itself |
 | `tokens` | the semantic tokens its own render uses, never a primitive. Those of the elements it uses come with them |
 | `states` | `default`. `hover`, `disabled`, `loading`, `error` when they exist. `focus` only if the element itself takes focus. Not `focus` if only an element it uses does |
-| `## Keyboard` | present with `focus`, else none |
 | `variants` | bare items, or `axis=value` for a prop varying on its own. Never `state`, `variant` or `theme` as an axis |
 | `platforms` | optional, a subset of `system.md`'s. Absent means all |
 | `code` | one link or a list. At most one link per platform |

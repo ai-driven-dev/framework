@@ -9,7 +9,7 @@ The request.
 ## Process
 
 1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
-2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the case per [cases](../references/cases.md).
+2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the [case](../references/cases.md).
 3. If `aidd_docs/ui/brand.md` is missing, stop and say so.
 4. Read its personality, references and anti-references: the tokens' direction.
 5. Take the task folder the user named, else ask.

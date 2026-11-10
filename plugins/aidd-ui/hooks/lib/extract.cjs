@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, escapeRegex } = require("./markdown.cjs");
 const { systemOf, fm, breakpointRows, breakpointsOf } = require("./model.cjs");
-const { Refusal, NO_UI_FOLDER, load, text, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE } = require("./project.cjs");
+const { Refusal, required, text, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE } = require("./project.cjs");
 const { tokenEntries, platformOfFile } = require("./code.cjs");
 const { rulesOf, declarationsIn, citedBy, declarationsOf, layered, valueOf, RAW_CSS_EXTENSION } = require("./css.cjs");
 const { generate, blockers } = require("./tokens.cjs");
@@ -297,8 +297,7 @@ function sourcesOf(project, leave, missing) {
 /** Writes the token files from the `code-tokens` of the project's `system.md` and returns
  * `{written, left}`. A refusal is a `Refusal`: nothing is written then. */
 function extract(root, { force }) {
-  const project = load(root);
-  if (project === null) throw new Refusal(NO_UI_FOLDER);
+  const project = required(root);
   if (!systemOf(project)) throw new Refusal(`${UI_DIR}/${SYSTEM_FILE} is missing, write it first`);
   const entries = tokenEntries(project);
   if (!entries.length) throw new Refusal("system.md lists no code-tokens");

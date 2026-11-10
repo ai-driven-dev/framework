@@ -26,14 +26,14 @@ const HELP = {
       "It prints every problem, ungrouped.",
       "C4, C6 and C10 are about the code, not the design system.",
     ],
-    exits: ["0 no error, a warning allowed.", "1 at least one error."],
+    exits: ["0 no error, a warning allowed.", "1 at least one error.", REFUSED],
   },
   tokens: {
     summary: "Write the stylesheet from the tokens.",
     usage: [TOKENS_USAGE],
     effects: ["Writes `aidd_docs/ui/tokens.css`.", "Writes the resolver when needed."],
     output: ["Prints the path of `tokens.css`.", "When blocked, prints the problems as `help validate` shows."],
-    exits: ["0 the stylesheet is written.", "1 blocked, naming what blocks it."],
+    exits: ["0 the stylesheet is written.", "1 blocked, naming what blocks it.", REFUSED],
   },
   hook: {
     summary: "Answer a host event with the problems it caused.",
@@ -59,7 +59,7 @@ const HELP = {
     usage: [IMPACT_USAGE],
     effects: ["Reads the design system and writes nothing.", "Takes a token as its path or its CSS name."],
     output: ["Prints JSON: tokens, same-value, elements, screens, wireframes, journeys, renders, code."],
-    exits: ["0 the report is printed.", "2 an unknown ref, or a wrong usage."],
+    exits: ["0 the report is printed.", "2 an unknown ref, no design system, or a wrong usage."],
   },
   extract: {
     summary: "Write the tokens from the code the system names.",

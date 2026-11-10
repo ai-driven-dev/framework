@@ -1,20 +1,10 @@
-// What a change reaches. After a write: the written files, the record each belongs to with its
-// render, and every record citing that one, so the feedback names what it broke elsewhere
-// without repeating the whole design system. Before a change: the tokens, elements, screens,
-// journeys, renders and code files that depend on the tokens or elements it touches.
+// What a change reaches: the tokens, elements, screens, journeys, renders and code files that
+// depend on the tokens or elements it touches.
 const { list, table } = require("./markdown.cjs");
 const { placed, fm, COMPONENT_KINDS, STEPS_SECTION } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
-const { codeOwner, codeFilesOf, codeTokens } = require("./code.cjs");
+const { codeFilesOf, codeTokens } = require("./code.cjs");
 const { citations, resolvedValues, tokenNameOf } = require("./tokens.cjs");
-const { CONTEXT_FOLDERS } = require("./resolver.cjs");
-const { isUnder, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CODE_DEBT_FILE } = require("./project.cjs");
-
-// Files every record, or every code file, reads: a write to one reaches the whole design system.
-const SHARED_FILES = [...[SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE].map((name) => `${UI_DIR}/${name}`), CODE_DEBT_FILE];
-const SHARED_DIRS = CONTEXT_FOLDERS.map((folder) => `${UI_DIR}/${folder}`);
-
-const isShared = (file) => SHARED_FILES.includes(file) || SHARED_DIRS.some((dir) => isUnder(file, dir));
 
 /** The ids a record cites: what it uses, what replaces it, the screens a review or journey names. */
 const cited = (record) => [
@@ -23,22 +13,6 @@ const cited = (record) => [
   ...(fm(record).kind === "review" ? list(fm(record).screens) : []),
   ...table(record.sections[STEPS_SECTION]).map((row) => row.Screen),
 ];
-
-/** The record a written file belongs to: the record itself, its render, or the code it links. */
-const ownerOf = (project, records, file) => records.find((record) => record.file === file || renderOf(record) === file) ?? codeOwner(project, file);
-
-/** The files a write of `written`, project-relative, reaches; null when it reaches them all. */
-function reached(project, written) {
-  if (written.some(isShared)) return null;
-  const records = placed(project);
-  const files = new Set(written);
-  for (const owner of written.map((file) => ownerOf(project, records, file)).filter(Boolean)) {
-    files.add(owner.file);
-    files.add(renderOf(owner));
-    for (const record of records) if (cited(record).includes(fm(owner).id)) files.add(record.file);
-  }
-  return files;
-}
 
 const REPORT_KINDS = { elements: [...COMPONENT_KINDS, "asset"], screens: ["screen"], wireframes: ["wireframe"], journeys: ["journey"] };
 const STYLED = (record) => fm(record).kind !== "wireframe"; // a wireframe render holds no token, so no change rewrites it
@@ -103,4 +77,4 @@ function usages(project, given) {
   };
 }
 
-module.exports = { reached, usages };
+module.exports = { usages };

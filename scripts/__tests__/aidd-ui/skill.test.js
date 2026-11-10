@@ -279,9 +279,9 @@ describe("aidd-ui skills", () => {
 
   it("end saying the user validates each element after its render, in the skills that raise elements", () => {
     for (const folder of ["03-foundations", "04-components"]) {
-      const conclude = fs.readFileSync(path.join(SKILL(folder), "references/reply.md"), "utf8");
+      const conclude = fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8");
       assert.ok(fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").includes("`node <engine> publish <id>`"), folder);
-      for (const line of ["each element created or raised is `proposed` until published", "the user publishes each per [engine](engine.md)", "the user does so after looking at its render"]) assert.ok(conclude.includes(line), `${folder}: ${line}`);
+      for (const line of ["each element created or raised is `proposed` until published", "the user publishes each per [engine](../references/engine.md)", "the user does so after looking at its render"]) assert.ok(conclude.includes(line), `${folder}: ${line}`);
     }
   });
 });

@@ -8,9 +8,14 @@ The output of [prepare](01-prepare.md).
 
 ## Process
 
-1. From the code, read it per [extraction](../references/extraction.md).
+1. From the code, [read it](../references/extraction.md).
 2. If the user asks for variants, propose and choose per [variants](../references/variants.md).
    - Compare the set per [engine](../references/engine.md).
+   - Give the user the page, and say how to return the feedback.
+   - Wait for the feedback.
+     - Read the feedback file beside the page. Else write the pasted feedback there.
+     - Read a comment against the tokens it names.
+     - Where ratings tie, compare the axes: keep the one nearer the brand.
    - Keep the chosen variant per [engine](../references/engine.md).
 3. If no `system.md` exists, write `aidd_docs/ui/system.md` from the [system](../assets/system-template.md) template.
    - Code: answer from step 1's reading.

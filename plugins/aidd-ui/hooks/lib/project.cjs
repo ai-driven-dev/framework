@@ -118,4 +118,11 @@ function load(root) {
   return project;
 }
 
-module.exports = { Refusal, NO_UI_FOLDER, load, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, DRAFTS_DIR, ERROR, WARNING, ENGINE_REF };
+/** The design system under `root`; a refusal when the project has none. */
+function required(root) {
+  const project = load(root);
+  if (project === null) throw new Refusal(NO_UI_FOLDER);
+  return project;
+}
+
+module.exports = { Refusal, NO_UI_FOLDER, load, required, walk, text, clean, unreadable, relative, isUnder, withoutTrailingSeparators, besideTokens, checkOf, UI_DIR, SYSTEM_FILE, TOKENS_FILE, RESOLVER_FILE, CSS_FILE, HISTORY_FILE, CODE_DEBT_FILE, RENDER_EXTENSION, DRAFTS_DIR, ERROR, WARNING, ENGINE_REF };

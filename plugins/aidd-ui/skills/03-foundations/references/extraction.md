@@ -16,4 +16,4 @@ When several design systems coexist, ask which is the norm. Follow that one.
 | media query matching no breakpoint | a `## Breakpoints` row of `system.md`, settled, then `extract --force` |
 | generated output under a code root | `ignore` |
 | file no record links (C3), not a component | `ignore` |
-| colour literal in the code | debt recorded by `bump --created system`. Listed as a warning. Never `ignore`. Never a narrower code root |
+| colour literal in the code | debt recorded by `bump --created system`. Never `ignore`. Never a narrower code root |

@@ -15,8 +15,10 @@ flowchart LR
   prepare -->|"a decision blocks"| user((user answers))
   propose -->|"a decision blocks"| user
   choose -->|"no direction stands out"| propose
+  choose -->|"give the page, wait"| user
   user --> prepare
   user --> propose
+  user --> choose
   conclude -->|"an error is left"| conclude
   conclude --> done((done))
   prepare -->|"no engine"| stop((stop))
@@ -27,8 +29,9 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask or to give the final reply.
+- After asking, wait for the answer.
 - Otherwise call tools.
-- Run every command from the project root, the working directory.
+- Run the engine from the project root; never read its source.
 - Write only `aidd_docs/ui/brand.md` and `aidd_docs/ui/drafts/brand/`.
 - After each write, fix what the hook or the validation reports.
 - Never bypass a hook.

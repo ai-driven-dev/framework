@@ -2,7 +2,7 @@
 // The design system engine every skill and the hook call, one command per job; `node aidd-ui.cjs help` says what each does.
 const fs = require("node:fs");
 const path = require("node:path");
-const { Refusal, load, unreadable, UI_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
+const { Refusal, load, required, unreadable, UI_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
 const { formatFindings } = require("./lib/common-rules.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
@@ -66,32 +66,32 @@ function findingsOf(problems) {
 const formatAll = (problems) => formatFindings(PLUGIN, findingsOf(problems), { warningsCap: Infinity });
 
 function validate([root = process.cwd()]) {
-  const project = load(root);
-  if (project === null) return EXIT_VALID;
-  const problems = problemsOf(project);
-  console.log(problems.length ? formatAll(problems) : VERDICT_VALID);
-  return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
+  return refusing(() => {
+    const problems = problemsOf(required(root));
+    console.log(problems.length ? formatAll(problems) : VERDICT_VALID);
+    return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
+  });
 }
 
 /** Writes the Resolver from system.md and the context files, then regenerates the stylesheet the
  * renders load. A token with an error, or a composite token with no raw CSS, leaves the stylesheet
  * untouched: the problems are printed instead. */
 function generateTokens([root = process.cwd()]) {
-  const first = load(root);
-  if (first === null) return EXIT_VALID;
-  writeResolver(first);
-  const project = load(root); // read again: the checks below read the Resolver just written
-  const blocked = tokens.blockers(project);
-  const { css, problems } = blocked.length ? { css: null, problems: blocked } : tokens.generate(project);
-  const ruled = problems.map((problem) => ({ rule: TOKENS_RULE, ...problem })); // a composite without raw CSS is T10's
-  if (css === null) {
-    console.log(formatAll(ruled));
-    return EXIT_INVALID;
-  }
-  const file = tokens.cssFileOf(project);
-  fs.writeFileSync(path.join(root, file), css);
-  console.log(file);
-  return EXIT_VALID;
+  return refusing(() => {
+    writeResolver(required(root));
+    const project = load(root); // read again: the checks below read the Resolver just written
+    const blocked = tokens.blockers(project);
+    const { css, problems } = blocked.length ? { css: null, problems: blocked } : tokens.generate(project);
+    const ruled = problems.map((problem) => ({ rule: TOKENS_RULE, ...problem })); // a composite without raw CSS is T10's
+    if (css === null) {
+      console.log(formatAll(ruled));
+      return EXIT_INVALID;
+    }
+    const file = tokens.cssFileOf(project);
+    fs.writeFileSync(path.join(root, file), css);
+    console.log(file);
+    return EXIT_VALID;
+  });
 }
 
 /** `args` as `{values, flags, rest}`: `values` holds each of `options` given with its value, `flags`
@@ -118,15 +118,15 @@ function impact(args) {
     console.error(`usage: ${IMPACT_USAGE}`);
     return EXIT_USAGE;
   }
-  const project = load(values[ROOT_FLAG] ?? process.cwd());
-  if (project === null) return EXIT_VALID;
-  const { unknown, ...report } = usages(project, rest);
-  if (unknown) {
-    for (const ref of unknown) console.error(`aidd-ui: no token or element named "${ref}"`);
-    return EXIT_USAGE;
-  }
-  console.log(JSON.stringify(report, null, 2));
-  return EXIT_VALID;
+  return refusing(() => {
+    const { unknown, ...report } = usages(required(values[ROOT_FLAG] ?? process.cwd()), rest);
+    if (unknown) {
+      for (const ref of unknown) console.error(`aidd-ui: no token or element named "${ref}"`);
+      return EXIT_USAGE;
+    }
+    console.log(JSON.stringify(report, null, 2));
+    return EXIT_VALID;
+  });
 }
 
 /** Runs a command that refuses with a message and an exit code instead of printing a result. */

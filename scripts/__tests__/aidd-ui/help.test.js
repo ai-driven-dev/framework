@@ -49,10 +49,11 @@ describe("aidd-ui engine help", () => {
 
   it("declares the exit codes each command returns, and no other", () => {
     const withoutTokens = () => fs.rmSync(path.join(tmp, UI, "tokens.json"));
+    const empty = makeTmp("aidd-ui-help-empty-");
     // for each command, the arguments that give each code
     const runs = {
-      validate: { 0: ["validate", tmp], 1: () => (withoutTokens(), ["validate", tmp]) },
-      tokens: { 0: ["tokens", tmp], 1: () => (withoutTokens(), ["tokens", tmp]) },
+      validate: { 0: ["validate", tmp], 1: () => (withoutTokens(), ["validate", tmp]), 2: ["validate", empty] },
+      tokens: { 0: ["tokens", tmp], 1: () => (withoutTokens(), ["tokens", tmp]), 2: ["tokens", empty] },
       hook: { 0: ["hook"] },
       impact: { 0: ["impact", "color.action.default", "--root", tmp], 2: ["impact", "no.such.token", "--root", tmp] },
       extract: { 0: ["extract", "--force", "--root", tmp], 2: ["extract", "--root", tmp] },
@@ -77,6 +78,7 @@ describe("aidd-ui engine help", () => {
       assert.deepEqual(seen, Object.fromEntries(Object.keys(byCode).map((code) => [code, Number(code)])), name);
       assert.deepEqual(Object.keys(byCode).map(Number).sort(), declared, name);
     }
+    removeTmp(empty);
   });
 
   it("shows the count line, the error line and the warning line as validate prints them", () => {

@@ -22,8 +22,3 @@ An axis is one decision that variants answer differently.
 
 - Show the variant on a few tokens at work, in several states.
 - It carries its own styles.
-
-## Feedback
-
-- Read a comment against the tokens it names.
-- Where ratings tie, compare the axes: keep the one nearer the brand.
