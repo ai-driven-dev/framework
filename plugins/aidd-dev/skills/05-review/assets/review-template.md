@@ -9,6 +9,8 @@
 
 ### Criteria
 
+Score: {{met}}/{{total}} met, {{n}} unmet, {{n}} unverified at runtime, {{n}} out of the diff
+
 - [x] {{criterion met}} — {{file:line, or the run record}}
 - [ ] {{criterion unmet}} — {{gap}}
 - Unverified at runtime: {{criterion}} — {{what a run would show}}
