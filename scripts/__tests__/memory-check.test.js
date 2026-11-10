@@ -617,6 +617,13 @@ test("vanished: a line quoted by a remove or replace D line answered yes is not 
   }
 });
 
+// A model quotes a list line without its marker as often as with it.
+test("vanished: an approval may quote a list line without its marker", () => {
+  const { run } = vanished({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'replace "lose me" with "found"', "yes")]);
+  assert.equal(run.stdout, "");
+  assert.equal(run.status, 0);
+});
+
 test("vanished: an approval covers the line it quotes and no other", () => {
   const two = { "vcs.md": BEFORE.replace("- lose me\n", "").replace("- run it\n", "") };
   const { run } = vanished({ "vcs.md": BEFORE }, two, [approve("- lose me")]);

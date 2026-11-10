@@ -12,7 +12,7 @@ argument-hint: setup | refresh
 flowchart LR
   request((request)) -->|"no bank: set up"| scan["scan<br>actions/01-scan.md<br>script: memory.cjs changes"]
   request -->|"a bank: refresh"| scan
-  scan -->|"setup"| write["write<br>actions/02-write.md<br>script: memory.cjs facts, check, vanished"]
+  scan -->|"setup"| write["write<br>actions/02-write.md<br>script: memory.cjs plan, answer, check, vanished"]
   scan -->|"refresh"| check["check<br>actions/03-check.md<br>script: memory.cjs check"]
   scan -->|"nothing to remember"| done((done))
   check -->|"findings in the sheet"| write

@@ -23,6 +23,12 @@
  *   no commit exits 1. The hook never runs it.
  * - `facts <sheet> [root]`: the skill's fact sheet before a write. Exits 1 naming each line whose
  *   shape breaks the grammar or whose source is absent from the root. The hook never runs it.
+ * - `plan <sheet> [--tools <tool,...>]`: the plan the person reads, from the sheet, the tools given ticked.
+ *   Exits 1 printing each line whose shape breaks the grammar, whose source is absent, or whose
+ *   `remove` or `replace` quotes no whole line of its bank file; it prints no plan then.
+ * - `answer <sheet> <reply>`: marks yes or no on each line behind each numbered item, for ok, no,
+ *   not <n> and all but <n>, and names the `tools:` and `Q<n>:` clauses it leaves to the model. Any
+ *   other reply exits 1 and changes nothing. It writes only the sheet.
  * - `sync [--add] [tool...]`: fills the memory block of each context file present, or only those
  *   of the tools named, from the current folder. With `--add`, a named tool's file holding no
  *   block gains one at its end, unless it links outside the project or ends inside a code fence;
@@ -779,6 +785,35 @@ function main(argv) {
     if (problems.length > 0) process.stdout.write(`${problems.join("\n")}\n`);
     return problems.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
+  if (command === "plan" || command === "answer") {
+    const plan = require("./lib/plan.cjs");
+    const [sheetFile, ...rest] = args;
+    if (sheetFile === undefined) {
+      process.stderr.write(`usage: memory.cjs ${command} <sheet> ${command === "plan" ? "[--tools <tool,...>]" : "<reply>"}\n`);
+      return EXIT_ERRORS;
+    }
+    const root = plan.rootOf(sheetFile);
+    try {
+      if (command === "answer") {
+        process.stdout.write(`${plan.answerSheet(sheetFile, root, rest.join(" "))}\n`);
+        return EXIT_OK;
+      }
+      const problems = [...require("./lib/fact-sheet.cjs").checkSheet(sheetFile, root), ...plan.quoteProblems(sheetFile, root)];
+      if (problems.length > 0) {
+        process.stdout.write(`${problems.join("\n")}\n`);
+        return EXIT_ERRORS;
+      }
+      const flag = rest.indexOf("--tools");
+      const ticked = flag < 0 ? [] : (rest[flag + 1] ?? "").split(",").map((tool) => tool.trim().toLowerCase()).filter(Boolean);
+      const unknown = ticked.find((tool) => !(tool in TOOL_FILES));
+      if (unknown !== undefined) throw new UnknownToolError(`unknown tool "${unknown}"`);
+      process.stdout.write(plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked));
+      return EXIT_OK;
+    } catch (error) {
+      process.stderr.write(`memory: ${error instanceof plan.ReplyError || error instanceof UnknownToolError ? error.message : `${sheetFile} not read (${error.code ?? error.message})`}\n`);
+      return EXIT_ERRORS;
+    }
+  }
   if (command === "sync") {
     // Every other command takes the root as `.`: a path here is that habit, not a tool.
     const given = args.find((arg) => /[./\\]/u.test(arg));
@@ -797,7 +832,7 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | sync [--add] [tool...]\n");
+  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | plan <sheet> [--tools <tool,...>] | answer <sheet> <reply> | sync [--add] [tool...]\n");
   return EXIT_ERRORS;
 }
 

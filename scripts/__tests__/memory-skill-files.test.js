@@ -238,7 +238,7 @@ test("write ends on the engine, writes only the root, and holds back a capabilit
 test("write ends on the engine's guard, which lists what the sheet did not approve, and keeps no copy of the bank", () => {
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
   assert.doesNotMatch(skillText("actions/02-write.md") + skillText("SKILL.md"), /scratch|copy it/u, "a bank copy or a scratch folder is left");
-  assert.match(steps[6], /fix each error on the lines you wrote, check each warning against the code and keep a true line/u, "the lint step does not say what to do with a warning");
+  assert.match(steps[5], /fix each error on the lines you wrote, check each warning against the code and keep a true line/u, "the lint step does not say what to do with a warning");
   assert.match(skillText("actions/01-scan.md"), /reading-sources\.md#filling-the-sheet/u, "scan does not point to the collecting rules");
   assert.match(steps.at(-2), /`vanished`/u, "no step runs the guard before the sync");
   assert.match(steps.at(-2), /change nothing/u);
@@ -412,8 +412,8 @@ test("scan collects the sheet into the task folder and write shows it once, afte
   assert.match(sheet, /aidd_docs\/tasks\/\{\{yyyy_mm\}\}\/\{\{yyyy_mm_dd\}\}_memory-\{\{scope\}\}\/facts\.md/u);
   assert.doesNotMatch(scan, /Show/u, "scan shows the sheet before check has added its lines");
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
-  assert.match(steps[0], /Show the \[sheet message\]\(\.\.\/assets\/sheet-message\.md\)/u, "write does not show the sheet through the sheet message");
-  assert.match(steps[1], /Wait for the answer, then write it into the sheet's answer fields[^\n]*, before any memory file\./u, "the answers do not reach the sheet before the bank");
+  assert.match(steps[0], /^1\. Run \[`plan`\]\(\.\.\/references\/engine\.md\)/u, "write does not show the plan the engine prints");
+  assert.match(steps[1], /^2\. Wait for the answer, then run \[`answer`\]\(\.\.\/references\/engine\.md\) with it[^\n]*, before any memory file\./u, "the answers do not reach the sheet before the bank");
   assert.match(skillText("actions/03-check.md"), /ask(?:ing)? nothing/u, "check asks on a refresh");
 });
 
@@ -468,47 +468,26 @@ test("the consent rule, applied where write takes the answers: silence is yes, a
 test("write takes its content from the sheet only, after the engine checked its sources", () => {
   const write = skillText("actions/02-write.md");
   assert.match(write, /sheet only/u);
-  assert.match(write, /`facts`/u, "the sheet is not verified before the write");
-  assert.ok(write.indexOf("`facts`") < write.indexOf("Write each file"), "the write precedes the verification");
-  assert.ok(skillText("references/engine.md").includes("memory.cjs facts"), "the engine gives no facts command");
+  assert.match(write, /`plan`/u, "the sheet is not verified before the write");
+  assert.ok(write.indexOf("`plan`") < write.indexOf("Write each file"), "the write precedes the verification");
+  assert.ok(skillText("references/engine.md").includes("memory.cjs plan"), "the engine gives no plan command");
 });
 
-test("the sheet message shows once, airy and in one fixed order: files with what they hold, changes old to new, questions, tools, one reply line, the sheet path last", () => {
-  const asset = skillText("assets/sheet-message.md");
-  const sample = messageOf("assets/sheet-message.md");
-  assert.ok(asset.startsWith("<!--") && asset.includes("{{") && !asset.includes("```"), "the message is not the template itself");
-  const at = (pattern) => sample.search(pattern);
-  const order = [/^Memory plan$/mu, /^Changes since the last memory update \(\{\{short sha\}\}, \{\{relative date\}\}\): \{\{n\}\} commits, \{\{m\}\} files$/mu, /^Will write$/mu, /^Will add$/mu, /^Will change$/mu, /^Will delete$/mu, /^Questions$/mu, /^Tools to wire$/mu, /^Does this look right\? Say ok, or what to change/mu, /^Sheet: aidd_docs\/tasks\//mu].map(at);
-  assert.ok(order.every((index) => index >= 0), `a part of the message is missing: ${order}`);
-  assert.deepEqual([...order].sort((a, b) => a - b), order, "the parts are out of order");
-  assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md {2,}\S.+$/mu, "a file is listed without its number and what it holds");
-  assert.match(sample, /^ {5}\+ \{\{line as it will read\}\}$/mu, "an addition does not show the line as it will read");
-  assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md: "/mu, "a change carries no number, file and old line");
-  assert.match(sample, /^ {5}→ /mu, "a change shows no old to new");
-  assert.doesNotMatch(sample, /\b[RDT]\{\{n\}\}/u, "a sheet id reaches the person");
-  assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md: "\{\{the whole line\}\}"\n {5}why: /mu, "a removal does not quote the whole line it loses and why");
-  assert.match(asset, /Will delete: a line that goes, quoted whole/u);
-  assert.match(sample, /^ {2}Q\{\{n\}\} {2}\S/mu);
-  assert.match(sample, /^ {2}\[x\] \w+/mu, "no detected tool is ticked");
-  assert.match(sample, /^Does this look right\? Say ok, or what to change, for example "not \{\{n\}\}" or "Q\{\{n\}\}: …"\.$/mu, "the reply is not the one question");
-  assert.doesNotMatch(sample, /·/u, "an answer syntax line is left");
-  assert.match(asset, /in the person's language/u);
-  assert.match(asset, /Will write: a new file/u);
-  assert.match(asset, /Will add: lines added to an existing file, each written out as it will read/u);
-  assert.match(asset, /Will change: an edit to existing lines/u, "the help and the sample name the change section differently");
-  assert.match(asset, /a number in the answer means the sheet lines behind that item/u, "a number in the answer maps to nothing");
-  assert.doesNotMatch(asset, /Will update/u);
-  assert.match(asset, /plain chat text, not in a code fence/u);
-  assert.equal(sample.match(/aidd_docs\//gu).length, 1, "a path other than the sheet's is shown");
-  assert.doesNotMatch(sample, /silence|\bgrammar\b|\bremove\b|\breplace\b/iu, "engine words reach the person");
-  assert.match(asset, /leave out a section with nothing in it/u);
-  assert.match(asset, /<!-- Tools: never left out, on a setup or a refresh\. Ticked: on a setup the detected tools, on a refresh the wired ones; the others unticked\. -->/u, "the tools are a setup's only, or a refresh leaves them out");
-  assert.match(asset, /<!-- Since: a refresh only, from the `Since` line `changes` printed: its sha, relative date and counts; information, never a question\. -->/u, "the Since line has no help comment");
-  assert.match(asset, /Stop after the message: no offer to reverse a declined line/u);
-  assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /sheet-message\.md/u, "write does not show the sheet as the asset says");
-  assert.match(skillText("actions/02-write.md").match(/^2\. .*$/mu)[0], /^2\. Wait for the answer/u, "write does not wait on the sheet");
-  assert.doesNotMatch(skillText("actions/02-write.md"), /end the turn/u, "the wait is a router node, not prose");
-  assert.doesNotMatch(skillText("assets/fact-sheet.md"), /## Presentation/u, "the sheet file still holds the message");
+// The engine prints the plan from the sheet and reads the reply, so the numbers the person
+// answers are the ones it marks: the model only relays the text.
+test("write sends the plan the engine prints, as it is, and hands the reply to the engine before any memory file", () => {
+  const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
+  assert.match(steps[0], /^1\. Run \[`plan`\]\(\.\.\/references\/engine\.md\) with the ticked \[tools\]\(\.\.\/references\/tools\.md\)/u);
+  assert.match(steps[0], /fix the sheet until it passes/u, "a broken sheet reaches the person");
+  assert.match(steps[0], /send its output as it is, in plain chat text, nothing before or after it/u, "the plan is rewritten by the model");
+  assert.match(steps[1], /[Oo]n exit 1, write the answers into the sheet's answer fields by the \[Answers\]\(\.\.\/references\/capabilities\.md#answers\)/u, "a free reply has no path");
+  assert.match(steps[1], /what it leaves to you/u, "the tools and questions of a reply are dropped");
+  assert.equal(fs.existsSync(path.join(SKILL, "assets/sheet-message.md")), false, "the plan has a second format beside the engine's");
+  const engine = skillText("references/engine.md");
+  assert.match(engine, /`node memory\.cjs plan <sheet> --tools <tool,\.\.\.>`/u);
+  assert.match(engine, /`node memory\.cjs answer <sheet> "<reply>"`/u);
+  assert.doesNotMatch(engine, /memory\.cjs facts/u, "two commands check the sheet");
+  assert.doesNotMatch(skillText("actions/02-write.md"), /`facts`/u, "the sheet is checked twice");
 });
 
 test("the report message is airy and keeps what was written, changed, left out and warned", () => {
@@ -537,7 +516,7 @@ test("the tools are asked once, with the sheet: a setup takes the picks, a refre
   assert.match(answers, /`tools: /u, "the answer cannot name the tools");
   assert.match(tools, /Setup[^\n]*`tools:`[^\n]*detected[^\n]*never asked again/u, "setup does not take the sheet's picks");
   assert.match(tools, /On a refresh[^\n]*shown ticked with the sheet/u, "a refresh hides the tools");
-  assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /with the \[tools\]/u, "write shows only the detected tools");
+  assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /with the ticked \[tools\]/u, "write shows only the detected tools");
   assert.doesNotMatch(tools, /^\| Rewire/mu, "a rewire still asks the tools alone");
   assert.match(sync, /picks/u);
   assert.doesNotMatch(sync, /wait for the picks/u, "sync stops a second time");

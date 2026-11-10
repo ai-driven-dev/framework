@@ -83,4 +83,4 @@ function approvedRemovals(sheetFile) {
     .map(({ fields }) => fields[2].trim().replace(/\s+/gu, " "));
 }
 
-module.exports = { checkSheet, approvedRemovals };
+module.exports = { checkSheet, approvedRemovals, factLines };

@@ -13,6 +13,7 @@ const path = require("node:path");
 const MAX_FILE_BYTES = 16 * 1024 * 1024;
 
 const collapse = (line) => line.trim().replace(/\s+/gu, " ");
+const unmarked = (line) => line.replace(/^(?:[-*+]|\d+[.)])\s+/u, "");
 
 /** Git as the user's repository sees it, whatever a hook exported into this process. */
 function git(root, args) {
@@ -53,7 +54,7 @@ function markdownUnder(dir, relative = "") {
   });
 }
 
-/** Every line of `previous` that the bank under `bankDir` lost, as `file: line`, unless an approval, a collapsed fact, quotes it. */
+/** Every line of `previous` that the bank under `bankDir` lost, as `file: line`, unless an approval, a collapsed fact, quotes it, its list marker optional. */
 function goneLines(previous, bankDir, approvals) {
   const held = new Map();
   for (const file of markdownUnder(bankDir)) {
@@ -68,7 +69,7 @@ function goneLines(previous, bankDir, approvals) {
       const line = collapse(raw);
       if (line === "") continue;
       if ((held.get(line) ?? 0) > 0) held.set(line, held.get(line) - 1);
-      else if (!approvals.some((fact) => fact.includes(line))) gone.push(`${file}: ${line}`);
+      else if (!approvals.some((fact) => fact.includes(line) || fact.includes(`"${unmarked(line)}"`))) gone.push(`${file}: ${line}`);
     }
   }
   return gone;
