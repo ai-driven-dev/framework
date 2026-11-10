@@ -28,21 +28,9 @@ const STRUCTURAL_LINE = /^(?:\||#|>|[-*+]\s|\d+[.)]\s)/u;
 const LIST_ITEM = /^(?:[-*+]\s|\d+[.)]\s)/u;
 const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
 
-// A count is a number, in digits or words, before a plural noun, whatever the noun, with at most
-// one word between ("4 pull requests"). A digit stuck to a name, a version, a time, a port, a
-// range or a thousands separator is not one, and "one" alone is a pronoun too often to count.
-// Limits: "two" and "three" are left out, they open design prose more often than a count ("three
-// files" and "Two gates" pass), and a label followed by a number and a verb ("Step 2 shows
-// errors") reads as a count.
-const NUMBER_WORDS = [
-  "four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen",
-  "eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred",
-].join("|");
-const NOT_NOUNS = "of|with|for|on|in|to|and|or|at|by|per|its";
-const PLURAL_NOUN = `(?!(?:${NOT_NOUNS})\\b)(?:[a-z]+\\s+)?(?!(?:${NOT_NOUNS})\\b)(?![a-z]*(?:ss|us|is)\\b)[a-z]{2,}s\\b`;
-const COUNT_OF_THINGS = new RegExp(`(?<![\\w.:+#/,-])(?:\\d{1,6}|${NUMBER_WORDS})\\s+${PLURAL_NOUN}`, "iu");
+// Only a date is flagged: it is exact in every language. A count or a time word needs judgment
+// (a count that goes stale or a business constant), so the reader rules own those.
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
-const TIME_WORDS = /\b(?:currently|as of|right now|at the moment)\b/iu;
 
 const TEMPLATE_SLOT = /\{\{[^{}\n]*\}\}/gu;
 const SKILL = "02-project-memory";
@@ -151,7 +139,7 @@ function volatileFacts({ file, text }) {
   const found = [];
   for (const { number, text: line } of proseLines(text)) {
     const prose = line.replace(INLINE_CODE, "");
-    const match = prose.match(COUNT_OF_THINGS) ?? prose.match(ISO_DATE) ?? prose.match(TIME_WORDS);
+    const match = prose.match(ISO_DATE);
     if (!match) continue;
     const message = `"${excerpt(match[0])}" goes stale`;
     found.push(problem({ file, line: number, rule: "M2", severity: WARNING, message, fix: STALE_FIX, offending: match[0] }));

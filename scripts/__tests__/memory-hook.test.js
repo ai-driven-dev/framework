@@ -308,17 +308,17 @@ test("a shell command not naming aidd_docs/ reads nothing of the project", () =>
 });
 
 test("a shell command writing a bank file reaches that file", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nNow 41 commits.\n" });
-  const { stdout } = run("claude", shellPayload("claude", root, `cat > ${MEMORY}/vcs.md <<EOF\nNow 41 commits.\nEOF`));
-  assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 warning "41 commits" goes stale => check it against the code; keep it if true$/mu);
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nShipped 2026-01-02.\n" });
+  const { stdout } = run("claude", shellPayload("claude", root, `cat > ${MEMORY}/vcs.md <<EOF\nShipped 2026-01-02.\nEOF`));
+  assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 warning "2026-01-02" goes stale => check it against the code; keep it if true$/mu);
 });
 
 test("a Claude PowerShell redirect writing a bank file reaches that file", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nNow 41 commits.\n" });
+  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nShipped 2026-01-02.\n" });
   const payload = captured("claude-PostToolUse.json", 4, root);
-  payload.tool_input.command = `"Now 41 commits." > ${MEMORY}/vcs.md`;
+  payload.tool_input.command = `"Shipped 2026-01-02." > ${MEMORY}/vcs.md`;
   const { stdout } = run("claude", payload);
-  assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 warning "41 commits" goes stale => check it against the code; keep it if true$/mu);
+  assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 warning "2026-01-02" goes stale => check it against the code; keep it if true$/mu);
 });
 
 // A shell write carries no touched lines: its findings inform, grouped, and never block.
@@ -348,7 +348,7 @@ test("a shell write naming the bank skips a file it did not just change", () => 
 
 // Contract rule 3: only what this write produced. An edit or a patch says what it wrote, and
 // only errors on the lines that text now stands on are this write's.
-const STANDING = `# VCS\n\n${SLOT}\n\nNow 12 commits.\n\nKept.\n`;
+const STANDING = `# VCS\n\n${SLOT}\n\nShipped 2026-01-02.\n\nKept.\n`;
 
 for (const host of EDITS_SAY_WHAT) {
   test(`${host}: an edit adding a clean line to a file holding standing errors answers nothing`, () => {
@@ -366,11 +366,11 @@ for (const host of EDITS_SAY_WHAT) {
   });
 
   test(`${host}: an edit of several lines reports each line it wrote, and none it did not`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "One 2 files.\n\nMiddle.\n\nTwo 5 runs.") });
-    const text = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "One 2 files.\n\nMiddle.\n\nTwo 5 runs.")).stdout).text;
+    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "One 2026-01-02.\n\nMiddle.\n\nTwo 2026-03-04.") });
+    const text = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "One 2026-01-02.\n\nMiddle.\n\nTwo 2026-03-04.")).stdout).text;
     assert.deepEqual(text.split("\n").slice(1), [
-      `${MEMORY}/vcs.md:7 M2 warning "2 files" goes stale => check it against the code; keep it if true`,
-      `${MEMORY}/vcs.md:11 M2 warning "5 runs" goes stale => check it against the code; keep it if true`,
+      `${MEMORY}/vcs.md:7 M2 warning "2026-01-02" goes stale => check it against the code; keep it if true`,
+      `${MEMORY}/vcs.md:11 M2 warning "2026-03-04" goes stale => check it against the code; keep it if true`,
     ]);
   });
 }

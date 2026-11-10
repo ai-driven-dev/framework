@@ -5,7 +5,7 @@
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |
 | M1 | error | 25 words | a sentence over the limit outside a table, list item, heading, code or diagram: make it one of those |
-| M2 | warning | none | a fact that goes stale: a number before a plural noun, a date, a time word |
+| M2 | warning | none | a date, which goes stale |
 | M3 | error | none | a template slot left unfilled, fences included |
 | M4 | error | none | a backticked file path that names nothing on disk |
 | M5 | warning | 35 words | a bullet or a table cell over the limit |

@@ -122,36 +122,14 @@ test("M6: the 400 words are counted outside code and diagrams", () => {
   assert.deepEqual(ids(lint(`# T\n\n${Array(41).fill(`- ${words(10)}`).join("\n")}\n\n${code}`)), ["M6"]);
 });
 
-test("M2: counts of things, dates and time words are warnings, never errors", () => {
-  for (const line of [
-    "Holds 12 commits.",
-    "Across 3 branches today.",
-    "About 40 files.",
-    "7 tests pass.",
-    "300 lines long.",
-    "2 issues open.",
-    "4 pull requests.",
-    "5 PRs merged.",
-    "9 users.",
-    "8 records.",
-    "6 runs.",
-    "2 sessions.",
-    "Dated 2026-01-31 here.",
-    "It is currently slow.",
-    "As of now it works.",
-    "Fine right now.",
-    "Down at the moment.",
-  ]) {
-    assert.deepEqual(lint(`# T\n\n${line}\n`).map(({ rule, severity }) => [rule, severity]), [["M2", "warning"]], line);
-  }
+test("M2: a date is a warning, never an error", () => {
+  assert.deepEqual(lint("# T\n\nDated 2026-01-31 here.\n").map(({ rule, severity }) => [rule, severity]), [["M2", "warning"]]);
 });
 
 test("each message names what is wrong, never its fix: the fix stands apart", () => {
   const message = (text, files) => lint(text, files)[0].message;
   assert.equal(message(`# T\n\n${words(26)}\n`), "sentence of 26 words, over the recommended 25");
-  assert.equal(message("# T\n\nWe have 41 commits.\n"), '"41 commits" goes stale');
   assert.equal(message("# T\n\nShipped 2026-01-02.\n"), '"2026-01-02" goes stale');
-  assert.equal(message("# T\n\nIt is Currently fine.\n"), '"Currently" goes stale');
   assert.equal(message("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), "`src/gone.cfg` names nothing on disk");
 });
 
@@ -161,7 +139,7 @@ test("each error carries its excerpt and its fix apart, as the findings formatte
     return { excerpt, fix };
   };
   assert.deepEqual(parts(`# T\n\n${words(26)}\n`), { excerpt: "26 words, over the recommended 25", fix: "split it into a list or a table; keep every fact" });
-  assert.deepEqual(parts("# T\n\nWe have 41 commits.\n"), { excerpt: "41 commits", fix: "check it against the code; keep it if true" });
+  assert.deepEqual(parts("# T\n\nShipped 2026-01-02.\n"), { excerpt: "2026-01-02", fix: "check it against the code; keep it if true" });
   assert.deepEqual(parts("# T\n\nSee `src/gone.cfg`.\n", { "src/here.cfg": "" }), { excerpt: "src/gone.cfg", fix: "fix the path; keep the fact" });
   assert.deepEqual(parts(`# T\n\n- ${words(36)}\n`), { excerpt: undefined, fix: "split it; keep every fact" });
 });
@@ -171,62 +149,26 @@ test("an excerpt over 40 characters is cut with an ellipsis", () => {
   assert.equal(lint(`# T\n\nSee \`src/${long}.cfg\`.\n`, { "src/here.cfg": "" })[0].message, `\`src/${"x".repeat(35)}…\` names nothing on disk`);
 });
 
-// Counts as observed in the four real banks (framework root, cli, gouvernail, kairos-app).
-const OBSERVED_COUNTS = [
+// Counts and time words as observed in real banks, in any language: telling a count that goes
+// stale from a business constant needs judgment, so the reader rules own them, not the engine.
+const COUNTS_AND_TIME_WORDS = [
   "9 plugins ship, 3 off the curated install path",
   "Config: `release-please-config.json`, eleven packages.",
-  "vitest, four projects — see the CLI bank",
-  "One interface for five tools",
-  "`vitest.config.ts` composes four projects",
-  "Three apps and twelve packages share one lockfile",
-  "6 formats, 2 taps to start",
   "The suite holds 2718 tests across 582 files",
-  "A mutation run kills 578 mutants",
-  "Vitest holds 129 suites",
-  "The browser lane boots eight containers",
-  "Six routes and seven screens",
+  "Retention lasts 30 days.",
+  "A pool of 100 connections.",
+  "It is currently slow.",
+  "HTML for now.",
+  "Actuellement, le format est HTML.",
+  "Pour l'instant douze routes.",
 ];
 
-// Names, versions, times, ports and numbered lists as observed: a number that is not a count.
-const OBSERVED_LOOK_ALIKES = [
-  "Node >=22.12 and Node 22 on port 3000.",
-  "Steps 1–2 run at scope user, see step 2.",
-  "by luck (08:36 follows 07:24) and the gap",
-  "v7.1 draws no screen of its own",
-  "Tab map (4+1 tabs)",
-  "1. Write the failing test first",
-  "2) Rewrite the table",
-  "One fact in one home, one exists per rule.",
-  "It reports 12,065 unknown words.",
-  "The hash 35466894742 contradicts the log.",
-  "Six of its parts.",
-  "Takes 6-12 hours, or thirty-six on a slow day.",
-];
-
-test("M2: a count of any things, in digits or words, is an error", () => {
-  for (const line of OBSERVED_COUNTS) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
+test("M2: a count or a time word stays quiet, whatever the language", () => {
+  for (const line of COUNTS_AND_TIME_WORDS) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), [], line);
 });
 
-// Stated limit: "two" and "three" are mostly design prose, so they are not counts.
-test("M2 limit: two and three are not counts", () => {
-  for (const line of ["Two policies and three files.", "Two gates."]) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), [], line);
-});
-
-// Stated limit, a known false positive and not required behaviour: a label followed by a number
-// and a verb reads as a count. A future narrowing of the rule may flip these cases.
-test("M2 limit: a label, a number and a verb read as a count", () => {
-  for (const line of ["Step 2 shows errors.", "Python 3 ships wheels.", "Vitest 5 uses canonical names."]) {
-    assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), ["M2"], line);
-  }
-});
-
-test("M2: a name, a version, a time, a port and a numbered list stay quiet", () => {
-  for (const line of OBSERVED_LOOK_ALIKES) assert.deepEqual(ids(lint(`# T\n\n${line}\n`)), [], line);
-});
-
-test("M2: today, so far, a version, and a fence stay quiet", () => {
-  const text = "# T\n\nToday it works.\n\nSo far so good.\n\nNode >=22.12 and Node 22 on port 3000.\n\nSteps 1–2 run at scope user, see step 2.\n\n```\n3 files 2026-01-01\n```\n";
-  assert.deepEqual(ids(lint(text)), []);
+test("M2: a date in a fence stays quiet", () => {
+  assert.deepEqual(ids(lint("# T\n\n```\n2026-01-01\n```\n")), []);
 });
 
 const VCS_SLOT = slotOf("vcs.md", 2);
