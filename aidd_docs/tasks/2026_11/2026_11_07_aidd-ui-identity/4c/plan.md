@@ -105,7 +105,7 @@ Tests : V12 dans `screen-renders.test.js`, plancher par défaut et relevé.
 
 ## Accepted limits
 
-- Pas d'héritage : une règle sans paire complète n'est pas vérifiée.
+- Pas d'héritage : une règle sans paire complète n'est pas vérifiée. Levée par [4c-heritage](../4c-heritage/plan.md).
 - Seuil 4.5 partout, plus strict que AA pour un grand texte.
 - `opacity` ignorée, donc l'état désactivé, que WCAG exempte, n'est pas vérifié.
 - Une taille non déclarée n'est pas vérifiée ; `rem` suppose une base de 16 px.

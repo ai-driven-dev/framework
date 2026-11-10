@@ -1,6 +1,6 @@
 ---
 objective: "V11 vérifie aussi un texte sans fond propre, sur le fond hérité. Le code d'un écran réel ne noie plus C3."
-status: draft
+status: done
 ---
 
 # Plan : aidd-ui 4c, fond hérité et bruit C3
