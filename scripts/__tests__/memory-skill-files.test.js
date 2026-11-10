@@ -255,10 +255,8 @@ test("no file of the skill offers a merge or names a former file", () => {
   }
 });
 
-test("sync fills the wired tools without asking when refresh calls it, the old tag form counting as wired", () => {
-  const tools = skillText("references/tools.md");
-  assert.match(tools, /On a refresh[^\n]*nothing is asked/u);
-  assert.match(tools, /<aidd_project_memory>/u);
+test("a refresh shows the wired tools ticked, the old tag form counting as wired, and silence keeps the wiring", () => {
+  assert.match(skillText("references/tools.md"), /^\| On a refresh \| wired: a context file holding a block, the old `<aidd_project_memory>` tag included; shown ticked with the sheet, the detected others not; run `sync --add` with each tool the answer adds, then always a bare `sync`, which refreshes every block and copilot's pointer; silence keeps the wiring \|$/mu, "a refresh does not show the wired tools or cannot add one");
 });
 
 test("the cases cover the kept older name, the misplaced move, the team cli.md, the CLI setup and the refresh sync", () => {
@@ -422,10 +420,11 @@ test("sync adds a missing block itself on a pick, so the skill only creates an a
   assert.match(engine, /^- Run the engine; never open its source or `lib\/`\.$/mu);
   assert.match(engine, /`node memory\.cjs sync \[--add\] <tool>\.\.\.` \| [^|]+ \| tool names only, no root; [^\n]*`--add` appends the block to a picked tool's file holding none/u);
   const sync = skillText("actions/04-sync.md");
-  assert.match(sync, /^3\. Create each picked tool's absent context file, and offer to reconcile one whose AIDD structure differs, per \[tools\]/mu);
+  assert.match(sync, /^3\. Create each picked tool's absent context file, per \[tools\]/mu);
+  assert.match(sync, /^5\. Offer in the report to reconcile a picked tool's context file whose AIDD structure differs, per \[tools\]/mu, "a differing file stops before the picked tool is wired");
   assert.match(sync, /on a setup, run it with `--add` and the picked tools, per \[tools\]/mu);
   assert.doesNotMatch(sync, /carries the block, per/u, "the skill still makes the model write the block");
-  assert.match(skillText("references/tools.md"), /^\| Its AIDD structure differs \| offer to reconcile it, applying only what the user approves; `--add` only once accepted or already following it \|$/mu);
+  assert.match(skillText("references/tools.md"), /^\| Its AIDD structure differs \| a picked tool still gets its block with `--add`; offer to reconcile the rest in the report, applying only what the user approves \|$/mu, "a picked tool waits on a reconcile");
   assert.match(skillText("../10-learn/references/sync-arguments.md"), /^\| Argument \| Refreshes \|$/mu, "10-learn's bare sync no longer only refreshes");
 });
 
@@ -440,7 +439,7 @@ test("check on a refresh adds its findings to the sheet as unanswered D lines", 
 
 test("write ends at once on an empty sheet, drops a capability answered no, keeps every absent always file and skips an unapproved removal", () => {
   const write = skillText("actions/02-write.md");
-  assert.match(write, /no fact line and no absent always file[^\n]*bank current/u);
+  assert.match(write, /no fact line, no absent always file and no added tool[^\n]*bank current/u);
   assert.match(write, /fix the sheet until it passes/u);
   const writing = section(skillText("references/capabilities.md"), "Writing");
   assert.match(writing, /`move <path> to <path>` line answered yes \| move the file/u);
@@ -493,7 +492,7 @@ test("the sheet message shows once, airy and in one fixed order: files with what
   assert.equal(sample.match(/aidd_docs\//gu).length, 1, "a path other than the sheet's is shown");
   assert.doesNotMatch(sample, /silence|\bgrammar\b|\bremove\b|\breplace\b/iu, "engine words reach the person");
   assert.match(asset, /leave out a section with nothing in it/u);
-  assert.match(asset, /A setup only/u);
+  assert.match(asset, /<!-- Ticked: on a setup the detected tools, on a refresh the wired ones; the others unticked\. -->/u, "the tools are a setup's only");
   assert.match(asset, /<!-- Since: a refresh only, the first line `changes` printed, copied as it is; information, never a question\. -->/u, "the Since line has no help comment");
   assert.match(asset, /Stop after the message: no offer to reverse a declined line/u);
   assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /sheet-message\.md/u, "write does not show the sheet as the asset says");
@@ -518,13 +517,14 @@ test("the report message is airy and keeps what was written, changed, left out a
   assert.match(sample, /^ {2}Q\{\{n\}\} .*unanswered\. .*any time/mu, "an unanswered question shows no way to add it later");
 });
 
-test("a setup asks the tools once, with the sheet; a refresh takes the wired ones; nothing asks the tools alone", () => {
+test("the tools are asked once, with the sheet: a setup takes the picks, a refresh adds them to the wired ones; nothing asks the tools alone", () => {
   const tools = skillText("references/tools.md");
   const sync = skillText("actions/04-sync.md");
   const answers = section(skillText("references/capabilities.md"), "Answers");
   assert.match(answers, /`tools: /u, "the answer cannot name the tools");
   assert.match(tools, /Setup[^\n]*`tools:`[^\n]*detected[^\n]*never asked again/u, "setup does not take the sheet's picks");
-  assert.match(tools, /On a refresh[^\n]*nothing is asked/u);
+  assert.match(tools, /On a refresh[^\n]*shown ticked with the sheet/u, "a refresh hides the tools");
+  assert.match(skillText("actions/02-write.md").match(/^1\. .*$/mu)[0], /with the \[tools\]/u, "write shows only the detected tools");
   assert.doesNotMatch(tools, /^\| Rewire/mu, "a rewire still asks the tools alone");
   assert.match(sync, /picks/u);
   assert.doesNotMatch(sync, /wait for the picks/u, "sync stops a second time");
@@ -641,11 +641,10 @@ test("a refresh reviews the whole bank every time: changes orders the review and
 test("declining the plan writes nothing: no memory file, no sync", () => {
   const answers = section(skillText("references/capabilities.md"), "Answers");
   assert.match(answers, /^\| `no`, or the plan declined \| `no` on every line: nothing is written, nothing is synced \|$/mu, "a declined plan is not read as no on every line");
-  assert.match(skillText("actions/02-write.md").match(/^3\. .*$/mu)[0], /^3\. If the plan is declined, write nothing and stop; if it holds no fact line and no absent always file, report the bank current and stop\.$/u, "write does not stop on a declined plan");
+  assert.match(skillText("actions/02-write.md").match(/^3\. .*$/mu)[0], /^3\. If the plan is declined, write nothing and stop; if it holds no fact line, no absent always file and no added tool, report the bank current and stop\.$/u, "write does not stop on a declined plan, or a tool added to a current bank is never wired");
 });
 
-test("a refresh runs a bare sync, which refreshes every block already there, so it needs no pick; only a setup adds the picked tools", () => {
+test("a refresh adds each tool the answer picks, then always runs a bare sync for every block; a setup adds the picked tools", () => {
   const sync = skillText("actions/04-sync.md");
-  assert.match(sync, /^4\. On a refresh, run \[`sync`\]\([^)]+\) with no tool name; on a setup, run it with `--add` and the picked tools, per \[tools\]/mu, "a refresh still waits for a pick before it syncs");
-  assert.match(skillText("references/tools.md"), /^\| On a refresh \| no pick: a bare `sync` refreshes every block already there, the old `<aidd_project_memory>` tag included, and copilot's pointer; nothing is asked \|$/mu, "a refresh still needs the wired tools named");
+  assert.match(sync, /^4\. On a refresh, run \[`sync`\]\([^)]+\) with `--add` and each tool the answer adds, then always with no tool name; on a setup, run it with `--add` and the picked tools, per \[tools\]/mu, "a refresh waits for a pick before it syncs, or drops a tool the answer adds");
 });
