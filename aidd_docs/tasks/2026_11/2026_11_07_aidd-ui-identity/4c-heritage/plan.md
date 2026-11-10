@@ -64,6 +64,7 @@ Tests dans `screen-renders.test.js`, par V11 : la pile n'a pas d'API propre.
 - Le premier fond de base arrête la remontée ; il est vérifié.
 - Plusieurs fonds de base sur cet élément : chacun est vérifié.
 - Fond translucide : composé sur le fond de `body`, comme aujourd'hui.
+- Un élément porté par une paire couleur et fond de base n'est lu que par elle.
 - Aucun fond jusqu'à `body` inclus : règle non vérifiée.
 - Thèmes : la boucle actuelle, inchangée.
 - Message, forme de la paire plus la source :
@@ -88,6 +89,7 @@ Tests, couleurs synthétiques, chacun avec sa mutation :
 | fond d'état seul proche, fond de base plus haut : deux messages | arrêter au fond d'état |
 | fond `transparent` proche : l'ancêtre est lu | ne pas sauter l'alpha nul |
 | `<style>` aux `>` et `::before` : aucun élément lu | lire le HTML brut |
+| élément porté par une paire : la règle à `color` seul le saute | retirer le bouclier de la paire |
 
 - Renommer « skips a rule without both colours ».
 - Nouveau nom : « skips a colour that names no element ».

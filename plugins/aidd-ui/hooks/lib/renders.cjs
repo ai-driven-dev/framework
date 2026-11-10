@@ -266,7 +266,8 @@ function backgroundsBehind(element, rules, properties) {
 
 /** A pair's text and background are read once their tokens are resolved, a translucent background
  * over the body's. A text with a colour alone is read on each background behind the elements its
- * rule targets, one finding per background rule. Any other notation leaves it unchecked. */
+ * rule targets, one finding per background rule, except one a base pair targets: that pair reads
+ * it alone. Any other notation leaves it unchecked. */
 function contrastProblems(project) {
   const resolved = resolvedOf(project);
   const themes = list(systemOf(project)?.frontMatter.themes);
@@ -274,6 +275,7 @@ function contrastProblems(project) {
     const rules = rulesIn(html);
     const elements = elementsIn(html);
     const grounded = rules.filter(({ selector, declarations }) => !selector.includes(PSEUDO_ELEMENT) && backgroundOf(declarations) !== undefined).map((rule) => ({ ...rule, chains: chainsOf(rule.selector) }));
+    const pairs = grounded.filter(({ selector, declarations }) => declarations.has("color") && !STATE.test(selector));
     return (themes.length ? themes : [null]).flatMap((theme) => {
       const properties = propertiesIn(resolved, `:root[data-theme="${theme}"]`);
       const backdrop = backdropOf(rules, properties);
@@ -287,7 +289,7 @@ function contrastProblems(project) {
         if (behind === undefined) {
           if (selector.includes(PSEUDO_ELEMENT)) return [];
           const chains = chainsOf(selector);
-          const backgrounds = new Map(elements.filter((element) => chains.some((chain) => reaches(chain, element))).flatMap((element) => backgroundsBehind(element, grounded, properties)).map((each) => [each.rule, each]));
+          const backgrounds = new Map(elements.filter((element) => chains.some((chain) => reaches(chain, element)) && !pairs.some((pair) => pair.chains.some((chain) => reaches(chain, element)))).flatMap((element) => backgroundsBehind(element, grounded, properties)).map((each) => [each.rule, each]));
           return [...backgrounds.values()].flatMap(({ rule, written: shown, value, colour }) => {
             const ratio = ratioOf(top, colour, backdrop);
             return ratio === null || ratio >= CONTRAST_MINIMUM ? [] : found(selector, `${shownAs(written, text)} on ${shownAs(shown, value)} behind ${rule.selector}`, ratio);

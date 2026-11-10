@@ -212,6 +212,12 @@ describe("aidd-ui V11 contrast", () => {
       assert.deepEqual(problems(), everyTheme(behind(".far")));
     });
 
+    it("reads an element a pair targets by that pair alone", () => {
+      tint(BLACK);
+      addToHome(`.a { background: var(--ink-tint); }\n.a span { color: var(--ink-fg); }\n.a .own { color: var(--ink-dark); background: var(--ink-bg); }`, '<div class="a"><span class="own">x</span></div>');
+      assert.deepEqual(problems(), []);
+    });
+
     it("reads no element out of a style block", () => {
       inks("#aaaaaa", WHITE);
       addToHome(`${BEHIND("box")}\n${TEXT}\n.x > .y::before { content: "<div class='box'><b>"; }`, '<p class="t">x</p>');
