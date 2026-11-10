@@ -391,11 +391,12 @@ test("a recall case seeds a repo and expects the facts the restored slots must p
 
 // the fact sheet: every fact with its source, one view, one rule of consent
 
-test("the sheet asset fixes the grammar the engine parses, the four blocks and the cap of eight questions", () => {
+test("the sheet asset fixes the grammar the engine parses, the three blocks and the cap of eight questions", () => {
   const asset = skillText("assets/fact-sheet.md");
   assert.ok(asset.includes("- <id> | <file> > <section> | <fact> | <source> | <answer>"), "no grammar line");
   assert.ok(asset.startsWith("<!--") && asset.includes("{{") && !asset.includes("```"), "the sheet is not the template itself");
-  for (const block of ["## Read", "## Inferred", "## Unknown", "## To rule"]) assert.ok(asset.includes(block), block);
+  for (const block of ["## Read", "## Inferred", "## Unknown"]) assert.ok(asset.includes(block), block);
+  assert.ok(!asset.includes("## To rule"), "a block nothing reads");
   assert.match(asset, /eight/u);
   assert.match(asset, /Capabilities: C1/u, "no capability line");
   assert.match(asset, /no backticks, line number or glob/u);
@@ -596,6 +597,7 @@ test("check reviews the content of each file against its defining files before t
   assert.ok(at("Content") >= 0 && at("Content") < at("Format"), "Content does not precede Format");
   assert.match(section(protocol, "Scope"), /one at a time/u, "the files are not reviewed one at a time");
   assert.match(section(protocol, "Format"), /not investigate/u, "warnings are chased");
+  assert.match(section(protocol, "Format"), /^\| Its warnings \| not findings: do not investigate or count them \|$/mu, "warnings are still counted");
   assert.doesNotMatch(protocol, /one sweep/u, "the review is still one sweep across files");
   const steps = skillText("actions/03-check.md").match(/^\d+\. .*$/gmu);
   assert.ok(steps.findIndex((step) => /content/u.test(step)) < steps.findIndex((step) => /format/u.test(step)), "check does not review the content before the format");

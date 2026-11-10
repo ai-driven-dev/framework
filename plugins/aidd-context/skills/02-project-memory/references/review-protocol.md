@@ -30,7 +30,7 @@
 | --- | --- |
 | Last of the reading | run the whole-bank check once |
 | Its errors on the files a row produces or lists under Accepted names | become findings, never a team file's |
-| Its warnings | count them and do not investigate them |
+| Its warnings | not findings: do not investigate or count them |
 
 ## Structure
 

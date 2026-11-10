@@ -5,8 +5,8 @@
  *
  *   - <id> | <file> > <section> | <fact> | <source> | <answer>
  *
- * The answer may be left out, and a `Q` line may cite no source, or `none`. A `T` line names a rule topic
- * where the others name a file and section, bank-relative. A fact holds no `|`. Prose outside a
+ * The answer may be left out, and a `Q` line may cite no source, or `none`. Every line names a file and
+ * section, bank-relative. A fact holds no `|`. Prose outside a
  * block is never read; inside one, any line holding a `|` is a fact line, and a wrong one is a
  * problem. An id is used once and at most eight lines are `Q`. Node built-ins only.
  */
@@ -14,8 +14,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const BLOCKS = new Set(["Read", "Inferred", "Unknown", "To rule"]);
-const ID = /^[RDQT]\d+$/u;
+const BLOCKS = new Set(["Read", "Inferred", "Unknown"]);
+const ID = /^[RDQ]\d+$/u;
 const TARGET = /^(?!aidd_docs\/)\S+\.md > \S.*$/u;
 const MAX_QUESTIONS = 8;
 const MIN_FIELDS = 4;
@@ -40,8 +40,8 @@ function shapeProblem({ fields, stray }) {
   const [id, target, fact, source] = fields;
   if (fields.length > MAX_FIELDS) return "shape: a `|` in a fact";
   if (fields.length < MIN_FIELDS) return `shape: ${fields.length} fields, expected 4 or 5`;
-  if (!ID.test(id)) return `shape: id "${id}" is not R, D, Q or T and a number`;
-  if (id[0] !== "T" && !TARGET.test(target)) return `shape: "${target}" is not a bank-relative <file>.md > <section>`;
+  if (!ID.test(id)) return `shape: id "${id}" is not R, D or Q and a number`;
+  if (!TARGET.test(target)) return `shape: "${target}" is not a bank-relative <file>.md > <section>`;
   if (fact === "" || (source === "" && id[0] !== "Q")) return "shape: the fact and its source are required";
   return null;
 }

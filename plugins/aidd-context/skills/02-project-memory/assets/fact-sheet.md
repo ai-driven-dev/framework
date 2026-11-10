@@ -24,9 +24,3 @@
 <!-- What the code cannot say. Q1, Q2. At most eight. -->
 
 - Q1 | {{file}}.md > {{section}} | {{question}} | {{source, or none}} |
-
-## To rule
-
-<!-- A convention no rule covers. T1, T2. File and section name the rule topic. Not written to memory. -->
-
-- T1 | {{file}}.md > {{section}} | {{convention}} | {{source}} |

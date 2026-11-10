@@ -1111,8 +1111,11 @@ test("facts: a Q line may cite the word none, any other line citing it is a miss
   assert.match(other.stdout, /R2 source not found: none/u);
 });
 
-test("facts: a To rule line names a rule topic, not a memory file", () => {
-  assert.equal(factsRun(sheet(GOOD, "- T1 | error handling | wrap every adapter call | package.json |")).status, 0);
+// Nothing reads a convention set aside for a rule, so the sheet has no block for one.
+test("facts: a T line is no fact id, and every line names a memory file", () => {
+  const ruled = factsRun(sheet(GOOD, "- T1 | testing.md > Run | wrap every adapter call | package.json |"));
+  assert.equal(ruled.status, 1);
+  assert.match(ruled.stdout, /id "T1" is not R, D or Q/u);
   assert.equal(factsRun(sheet(GOOD, "- R2 | error handling | a fact | package.json |")).status, 1);
 });
 
