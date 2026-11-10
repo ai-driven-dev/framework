@@ -5,7 +5,7 @@ const STATE_ATTRIBUTE = /data-state="([^"]+)"/g;
 const HTML_FILE = /\.html$/;
 const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">'; // how a render loads the tokens
 const VERDICTS = [["keep", "Keep", "✓"], ["revise", "Revise", "↻"], ["discard", "Discard", "✕"]];
-const SHORTCUTS = [["K", "Keep the variant"], ["R", "Revise the variant"], ["D", "Discard the variant"], ["←→", "Previous or next variant"], ["C", "Copy the feedback"], ["?", "Show or hide this sheet"], ["Esc", "Close this sheet"]];
+const SHORTCUTS = [["K", "Keep the variant"], ["R", "Revise the variant"], ["D", "Discard the variant"], ["←→", "Previous or next variant"], ["C", "Copy the feedback"], ["\\", "Focus the canvas"], ["?", "Show or hide this sheet"], ["Esc", "Close this sheet"]];
 const LEGEND = [["keep", "Keep"], ["revise", "Revise"], ["discard", "Discard"], ["", "Undecided"]];
 
 /** The feedback a person gives, from the page's state: the format the page copies. The page
@@ -68,6 +68,7 @@ button:active { background: var(--press); }
 #help { width: 28px; padding: 0; font-weight: 600; color: var(--muted); }
 #copy { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 600; }
 #copy:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+#focus { display: inline-flex; align-items: center; gap: 8px; }
 #copy kbd { color: var(--on-accent); background: rgba(0, 0, 0, 0.22); border-color: rgba(255, 255, 255, 0.45); }
 kbd { font: 11px/16px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; display: inline-block; min-width: 18px; padding: 0 4px; text-align: center; color: var(--pill-text); background: var(--bg); border: 1px solid var(--kbd-line); border-radius: 4px; }
 #sheet { position: fixed; top: 52px; right: 16px; left: auto; margin: 0; width: 18rem; padding: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
@@ -112,6 +113,11 @@ select { appearance: none; -webkit-appearance: none; font: inherit; color: var(-
 select:hover { background: var(--hover); }
 .stage { flex: 1; min-height: 0; overflow: auto; padding: 24px; display: flex; gap: 24px; align-items: flex-start; background-image: radial-gradient(var(--dot) 1px, transparent 1px); background-size: 16px 16px; }
 .variant { flex: 1 1 0; min-width: 0; }
+.stage[data-arrange] { justify-content: center; align-items: center; }
+.stage[data-arrange] .variant { flex: none; }
+.stage[data-arrange="stack"] { flex-direction: column; }
+body[data-focus] { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "canvas"; }
+body[data-focus] nav, body[data-focus] aside { display: none; }
 .win { background: var(--win); border-radius: 10px; box-shadow: 0 0 0 1px var(--win-line), var(--shadow); overflow: hidden; }
 #canvas[data-up="2"] .variant.current .win { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
 .title { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; background: var(--title); border-bottom: 1px solid var(--win-line); color: var(--muted); font-size: 12px; }
@@ -215,6 +221,7 @@ let paired = -1;
 let view = $(".mode[data-view][aria-pressed='true']").dataset.view;
 let up = 1;
 let device = "desktop";
+let focus = false;
 const VIEWPORTS = { desktop: [1280, 800], mobile: [390, 844] };
 const pairOf = () => (up < 2 || panels.length < 2 ? -1 : paired >= 0 && paired !== current ? paired : current + 1 < panels.length ? current + 1 : current - 1);
 const slotOf = (i, pair) => (pair < 0 ? "" : i === current ? "A" : i === pair ? "B" : "");
@@ -224,7 +231,7 @@ const stateOf = () => ({
 });
 const save = () => {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ verdicts: panels.map((el) => el.dataset.verdict), comments: panels.map((el) => $(".comment", el).value), current, paired, view, up, device }));
+    localStorage.setItem(KEY, JSON.stringify({ verdicts: panels.map((el) => el.dataset.verdict), comments: panels.map((el) => $(".comment", el).value), current, paired, view, up, device, focus }));
   } catch {}
 };
 const restore = () => {
@@ -240,20 +247,38 @@ const restore = () => {
     if (saved.view === "screen" || saved.view === "spec") view = saved.view;
     if (saved.up === 1 || saved.up === 2) up = saved.up;
     if (saved.device in VIEWPORTS) device = saved.device;
+    if (saved.focus === true) focus = true;
   } catch {}
 };
+const stage = $(".stage");
 const fit = () => {
   const [width, height] = VIEWPORTS[device];
-  $$(".shot").forEach((box) => {
-    const frame = $("iframe", box);
-    const room = box.clientWidth;
-    if (!room) return;
-    const scale = Math.min(1, room / width);
+  const shown = sections.filter((el) => !el.hidden);
+  if (view !== "screen") {
+    stage.removeAttribute("data-arrange");
+    shown.forEach((el) => (el.style.width = ""));
+    return;
+  }
+  const n = shown.length;
+  const style = getComputedStyle(stage);
+  const gap = parseFloat(style.rowGap);
+  const pad = parseFloat(style.paddingTop) * 2;
+  const room = stage.clientWidth - pad;
+  const tall = matchMedia("(max-width: 900px)").matches ? Infinity : stage.clientHeight - pad;
+  const bar = $(".title", shown[0]).offsetHeight;
+  const side = Math.min((room - gap * (n - 1)) / n / width, (tall - bar) / height);
+  const stack = Math.min(room / width, (tall - bar * n - gap * (n - 1)) / (height * n));
+  const stacked = stack > side;
+  const scale = Math.min(1, Math.max(side, stack));
+  stage.dataset.arrange = stacked ? "stack" : "side";
+  shown.forEach((el) => {
+    const frame = $("iframe", el);
     frame.style.width = width + "px";
     frame.style.height = height + "px";
     frame.style.transform = "scale(" + scale + ")";
-    box.style.height = Math.round(height * scale) + "px";
-    $(".zoom", box.closest(".variant")).textContent = Math.round(scale * 100) + "%";
+    $(".shot", el).style.height = Math.floor(height * scale) + "px";
+    el.style.width = Math.floor(width * scale) + "px";
+    $(".zoom", el).textContent = Math.round(scale * 100) + "%";
   });
 };
 const show = () => {
@@ -272,6 +297,8 @@ const show = () => {
   modes.forEach((el) => el.setAttribute("aria-pressed", String(el.dataset.view ? el.dataset.view === view : el.dataset.device ? el.dataset.device === device : Number(el.dataset.up) === up)));
   $$(".zoom").forEach((el) => (el.hidden = view !== "screen"));
   canvas.dataset.up = up;
+  document.body.toggleAttribute("data-focus", focus);
+  $("#focus").setAttribute("aria-pressed", String(focus));
   panels.forEach((el, i) => (el.hidden = i !== current));
   fit();
   save();
@@ -346,10 +373,14 @@ document.addEventListener("click", (event) => {
   const pick = event.target.closest(".pick");
   const verdict = event.target.closest(".verdict");
   const mode = event.target.closest(".mode");
+  const toggle = event.target.closest("#focus");
   const section = event.target.closest("#canvas .variant");
   if (sheet.open && !event.target.closest("#sheet, #help")) setSheet(false);
   if (verdict) decide(verdict.closest(".panel"), verdict.dataset.verdict);
-  else if (mode) {
+  else if (toggle) {
+    focus = !focus;
+    show();
+  } else if (mode) {
     if (mode.dataset.view) view = mode.dataset.view;
     else if (mode.dataset.device) device = mode.dataset.device;
     else up = Number(mode.dataset.up);
@@ -374,6 +405,10 @@ document.addEventListener("keydown", (event) => {
   if (event.ctrlKey || event.metaKey || event.altKey || event.target.closest("textarea, select")) return;
   if (event.key === "?") return setSheet(!sheet.open);
   if (event.shiftKey) return;
+  if (event.key === "\\\\") {
+    focus = !focus;
+    return show();
+  }
   const key = event.key.toLowerCase();
   if (KEYS[key]) decide(panels[current], KEYS[key]);
   else if (key === "c") copyOut();
@@ -387,7 +422,7 @@ restore();
 refresh();
 show();
 const watch = new ResizeObserver(() => requestAnimationFrame(fit));
-$$(".shot").forEach((box) => watch.observe(box));
+watch.observe(stage);
 `;
 
 const inline = (text) => escaped(text).replace(/`([^`]+)`/g, "<code>$1</code>");
@@ -514,6 +549,7 @@ function pageOf({ id, variants, tokens, themes }) {
     `<div class="seg" role="group" aria-label="Layout">${mode("up", "1", "1 up", true)}${mode("up", "2", "2 up", false)}</div>`,
     `<div class="seg" role="group" aria-label="Screen size">${mode("device", "desktop", "Desktop", true)}${mode("device", "mobile", "Mobile", false)}</div>`,
     '<div class="tools">',
+    '<div class="seg"><button type="button" id="focus" aria-pressed="false" title="Focus (\\)"><span>Focus</span><kbd aria-hidden="true">\\</kbd></button></div>',
     ...(states.length ? [choice("Preview state", `<select id="state">${options(states, "all")}</select>`)] : []),
     ...(themes.length ? [choice("Preview theme", `<select id="theme">${options(themes)}</select>`)] : []),
     "</div>",

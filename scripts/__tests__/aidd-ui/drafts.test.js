@@ -365,6 +365,31 @@ describe("aidd-ui drafts", () => {
       assert.match(page(), /minmax\(0, 1fr\) 18rem;/);
     });
 
+    it("fits each screen to the canvas, side by side or stacked, whichever scales larger", () => {
+      writeSet("brand");
+      compare();
+      assert.match(page(), /const side = Math\.min\(/);
+      assert.match(page(), /const stack = Math\.min\(/);
+      assert.match(page(), /const stacked = stack > side;/);
+      assert.match(page(), /stage\.dataset\.arrange = stacked \? "stack" : "side"/);
+      assert.match(page(), /watch\.observe\(stage\)/);
+      assert.match(page(), /\.stage\[data-arrange="stack"\] \{ flex-direction: column; \}/);
+      assert.match(page(), /\.stage\[data-arrange\] \{ justify-content: center; align-items: center; \}/);
+      assert.match(page(), /const scale = Math\.min\(1, Math\.max\(side, stack\)\);/);
+    });
+
+    it("has a Focus toggle that hides the navigator and the inspector and is remembered", () => {
+      writeSet("brand");
+      compare();
+      const toolbar = canvasOf().match(/<div class="toolbar">([\s\S]*?)<\/div>\s*<div class="stage">/)?.[1] ?? "";
+      assert.match(toolbar, /<button type="button" id="focus" aria-pressed="false" title="Focus \(\\\)"><span>Focus<\/span><kbd aria-hidden="true">\\<\/kbd><\/button>/);
+      assert.match(page(), /body\[data-focus\] nav, body\[data-focus\] aside \{ display: none; \}/);
+      assert.match(page(), /body\[data-focus\] \{ grid-template-columns: minmax\(0, 1fr\); grid-template-areas: "top" "canvas"; \}/);
+      assert.match(page(), /view, up, device, focus \}/);
+      assert.match(page(), /if \(saved\.focus === true\) focus = true;/);
+      assert.match(page(), /if \(event\.key === "\\\\"\) \{/);
+    });
+
     it("keeps the preview selects out of the top bar", () => {
       componentSet();
       compare("button");
@@ -399,7 +424,7 @@ describe("aidd-ui drafts", () => {
       compare();
       assert.match(headerOf(), /<button type="button" id="help" aria-label="Keyboard shortcuts" aria-haspopup="dialog" aria-expanded="false" aria-controls="sheet" title="Shortcuts \(\?\)">\?<\/button>/);
       const sheet = headerOf().match(/<dialog id="sheet"[^>]*>([\s\S]*?)<\/dialog>/)?.[1] ?? "";
-      assert.deepEqual([...sheet.matchAll(/<kbd>([^<]+)<\/kbd>/g)].map((match) => match[1]), ["K", "R", "D", "←→", "C", "?", "Esc"]);
+      assert.deepEqual([...sheet.matchAll(/<kbd>([^<]+)<\/kbd>/g)].map((match) => match[1]), ["K", "R", "D", "←→", "C", "\\", "?", "Esc"]);
     });
 
     it("gives each verdict button its key as a cap and a title, its name staying the verdict", () => {
