@@ -68,7 +68,7 @@ npx @ai-driven-dev/cli@latest setup
 ```
 
 <p align="center">
-  <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the six recommended plugins into a new project" width="720" />
+  <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the recommended plugins into a new project" width="720" />
 </p>
 
 Marketplace, flat files, update, remove: [install guide](docs/INSTALL.md).
@@ -122,9 +122,8 @@ flowchart TD
 
 ## Plugins
 
-Install the stable ones.
-
-Beta, alpha and preview plugins are off the recommended path.
+- Stable: the recommended path.
+- Beta, alpha and preview: off it.
 
 <!--plugins:start-->
 
