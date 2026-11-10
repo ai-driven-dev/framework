@@ -6,6 +6,8 @@ import {
   conflictsOf,
   type ReportFilters,
 } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
+import { createDeps } from "../../../src/runtime/wiring/framework.js";
+import * as otel from "../../../src/runtime/wiring/telemetry-otel.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();
@@ -19,9 +21,13 @@ const confirm = vi.fn();
 const select = vi.fn();
 const input = vi.fn();
 const propose = vi.fn();
+const ensureInstallationId = vi.fn();
+const checkInstallationId = vi.fn();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
   createDeps: vi.fn(async () => ({
+    ensureInstallationId,
+    checkInstallationId,
     prompter: { confirm, select, input },
     telemetry: {
       telemetryOnUseCase: { execute: turnOn },
@@ -69,6 +75,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 async function run(...args: string[]): Promise<number | null> {
@@ -297,9 +304,12 @@ describe("aidd telemetry report, narrowed", () => {
 describe("aidd telemetry identity", () => {
   it("shows who is named when given nothing", async () => {
     identity.show.mockResolvedValue({ status: "unset" });
+    checkInstallationId.mockResolvedValueOnce("installation-id");
     expect(await run("identity")).toBeNull();
     expect(identity.show).toHaveBeenCalled();
+    expect(checkInstallationId).toHaveBeenCalledOnce();
     expect(stdout()).toContain("No identity is set");
+    expect(stdout()).toContain("Installation ID: installation-id");
   });
 
   it("names the person it is given", async () => {
@@ -363,6 +373,12 @@ describe("aidd telemetry status", () => {
     expect(await run("status")).toBeNull();
     expect(show).toHaveBeenCalledWith(process.cwd());
   });
+
+  it("passes the global verbose setting to the telemetry dependencies", async () => {
+    show.mockResolvedValue({ status: "refused", reason: "no-consent" });
+    expect(await run("status", "--verbose")).toBeNull();
+    expect(createDeps).toHaveBeenCalledWith(process.cwd(), { verbose: true }, expect.anything());
+  });
 });
 
 describe("aidd telemetry task", () => {
@@ -375,7 +391,8 @@ describe("aidd telemetry task", () => {
 
   it("declares the task it is given, with its ticket", async () => {
     declare.mockResolvedValue(declared);
-    await run("task", "checkout", "--ticket", "P-1");
+    expect(await run("task", "checkout", "--ticket", "P-1")).toBeNull();
+    expect(stdout()).toContain('Declared task "checkout"');
     expect(declare).toHaveBeenCalledWith({
       cwd: process.cwd(),
       request: { kind: "task", task: "checkout", ticket: "P-1" },
@@ -410,6 +427,7 @@ describe("aidd telemetry task", () => {
   it("exits 1 when the declaration is refused", async () => {
     declare.mockResolvedValue({ status: "refused", reason: "no-consent" });
     expect(await run("task", "x")).toBe(1);
+    expect(stderr()).toContain("no task was declared");
   });
 });
 
@@ -434,6 +452,7 @@ describe("aidd telemetry on", () => {
   it("turns measurement on in the directory it was run from, without asking, with --yes and a choice", async () => {
     expect(await run("on", "--yes", "--anonymous")).toBeNull();
     expect(turnOn).toHaveBeenCalledWith(process.cwd(), "none");
+    expect(ensureInstallationId).toHaveBeenCalledOnce();
     expect(confirm).not.toHaveBeenCalled();
     expect(stdout()).toContain("Measurement is on");
   });
@@ -455,6 +474,7 @@ describe("aidd telemetry on", () => {
     expect(await run("on", "--yes")).toBe(1);
     expect(turnOn).not.toHaveBeenCalled();
     expect(propose).not.toHaveBeenCalled();
+    expect(ensureInstallationId).not.toHaveBeenCalled();
     expect(stderr()).toContain("--as <id>");
     expect(stderr()).toContain("--anonymous");
   });
@@ -466,7 +486,7 @@ describe("aidd telemetry on", () => {
   });
 
   it("refuses an identifier the identity rules refuse, before asking anything", async () => {
-    expect(await run("on", "--as", "a".repeat(129))).toBe(1);
+    expect(await run("on", "--yes", "--as", "a".repeat(129))).toBe(1);
     expect(confirm).not.toHaveBeenCalled();
     expect(turnOn).not.toHaveBeenCalled();
     expect(stderr()).toContain(
@@ -584,6 +604,16 @@ describe("aidd telemetry on", () => {
     turnOn.mockResolvedValue({ status: "refused", reason: "identity-set" });
     expect(await run("on", "--yes", "--anonymous")).toBe(1);
     expect(stderr()).toContain("aidd telemetry identity --off");
+    expect(ensureInstallationId).not.toHaveBeenCalled();
+  });
+
+  it("reports that measurement is on if saving the installation ID fails afterward", async () => {
+    ensureInstallationId.mockRejectedValueOnce(new Error("disk full"));
+    expect(await run("on", "--yes", "--anonymous")).toBe(1);
+    expect(turnOn).toHaveBeenCalled();
+    expect(stderr()).toContain(
+      "Measurement is on, but the installation ID could not be saved: disk full"
+    );
   });
 });
 
@@ -645,5 +675,131 @@ describe("the telemetry command surface", () => {
     useCase().mockRejectedValue(new Error("disk full"));
     expect(await run(name)).toBe(1);
     expect(stderr()).toContain("disk full");
+  });
+});
+
+describe("telemetry otel init", () => {
+  it("refuses the production endpoint through the command without touching ledger wiring", async () => {
+    expect(await run("otel", "init", "--config=codex", "--endpoint=prod")).toBe(1);
+    expect(stderr()).toContain("Gouvernail");
+    expect(turnOn).not.toHaveBeenCalled();
+  });
+});
+
+describe("native telemetry commands", () => {
+  let previousExitCode: typeof process.exitCode;
+
+  beforeEach(() => {
+    previousExitCode = process.exitCode;
+  });
+
+  afterEach(() => {
+    process.exitCode = previousExitCode;
+  });
+
+  it("starts the local collector on its default or requested port", async () => {
+    const collect = vi.spyOn(otel, "collectOtel").mockResolvedValue({
+      port: 54321,
+      close: async () => {},
+    });
+    expect(await run("otel", "collect")).toBeNull();
+    expect(collect).toHaveBeenCalledWith(14318);
+    expect(stdout()).toContain("OTLP collector listening on http://127.0.0.1:54321");
+    expect(await run("otel", "collect", "--port=0")).toBeNull();
+    expect(collect).toHaveBeenLastCalledWith(0);
+  });
+
+  it("rejects malformed collector ports and reports binding failures", async () => {
+    const collect = vi.spyOn(otel, "collectOtel").mockRejectedValue(new Error("port in use"));
+    for (const value of ["abc", "prefix42", "42suffix"]) {
+      expect(await run("otel", "collect", `--port=${value}`)).toBe(1);
+      expect(stderr()).toContain("Collector port must be an integer");
+    }
+    expect(collect).not.toHaveBeenCalled();
+    expect(await run("otel", "collect", "--port=42")).toBe(1);
+    expect(stderr()).toContain("port in use");
+  });
+
+  it("reports a new exporter, then reports the same configuration unchanged", async () => {
+    const configure = vi
+      .spyOn(otel, "configureOtel")
+      .mockResolvedValueOnce({
+        path: "/config/claude",
+        launch: "Restart Claude Code",
+        changed: true,
+      })
+      .mockResolvedValueOnce({
+        path: "/config/claude",
+        launch: "Restart Claude Code",
+        changed: false,
+      });
+    const args = ["otel", "init", "--config=claude", "--endpoint=dev"];
+    expect(await run(...args), stderr()).toBeNull();
+    expect(stdout()).toContain("Updated ");
+    expect(stdout()).toContain("Restart Claude Code");
+    expect(stdout()).toContain(
+      "Local OTLP capture may include prompts, responses, commands and tool output."
+    );
+    out = [];
+    expect(await run(...args), stderr()).toBeNull();
+    expect(stdout()).toContain("Already configured in ");
+    expect(configure).toHaveBeenCalledTimes(2);
+    expect(configure).toHaveBeenCalledWith("claude", "dev");
+    expect(turnOn).not.toHaveBeenCalled();
+  });
+
+  it("reports capture counts without exposing their content, and fails when no capture exists", async () => {
+    const check = vi
+      .spyOn(otel, "checkOtel")
+      .mockRejectedValueOnce(new Error("No OTLP capture found"))
+      .mockResolvedValueOnce({
+        path: "/config/claude",
+        capture: "/capture/claude.jsonl",
+        lines: 1,
+        modifiedAt: "2026-11-04T00:00:00.000Z",
+        observations: 1,
+        unrecognisedLines: 0,
+      });
+    expect(await run("otel", "verify", "--config=claude", "--endpoint=dev")).toBe(1);
+    expect(stderr()).toContain("No OTLP capture found");
+    out = [];
+    expect(await run("otel", "verify", "--config=claude", "--endpoint=dev")).toBeNull();
+    expect(stdout()).toContain("Configuration verified in /config/claude");
+    expect(stdout()).toContain("1 captured lines");
+    expect(stdout()).toContain("1 normalized observations; 0 unrecognised lines");
+    expect(stdout()).toContain(
+      "Existing capture does not prove delivery from the current session."
+    );
+    expect(check).toHaveBeenCalledWith("claude", "dev");
+  });
+
+  it("requires explicit execution consent before launching a provider", async () => {
+    const runOtel = vi.spyOn(otel, "runOtelSession");
+    const args = [
+      "otel",
+      "run",
+      "--config=claude",
+      "--tenant=acme",
+      "--endpoint=http://127.0.0.1:3000",
+    ];
+    expect(await run(...args, "--", "reply OK")).toBe(1);
+    expect(stderr()).toContain("Pass --yes to consent");
+    expect(runOtel).not.toHaveBeenCalled();
+    runOtel.mockImplementation(async ({ retainCapture }) => {
+      retainCapture?.("/private/claude.jsonl");
+      throw new Error("Provider exited early.");
+    });
+    expect(await run(...args, "--yes", "--keep-capture", "--model=haiku", "--", "reply OK")).toBe(
+      1
+    );
+    expect(runOtel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: "claude",
+        model: "haiku",
+        prompt: "reply OK",
+        retainCapture: expect.any(Function),
+      })
+    );
+    expect(stdout()).toContain("Private OTLP capture: /private/claude.jsonl");
   });
 });

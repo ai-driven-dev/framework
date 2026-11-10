@@ -1,0 +1,23 @@
+{
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "CLAUDE_CODE_ENHANCED_TELEMETRY_BETA": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_LOGS_EXPORTER": "otlp",
+    "OTEL_TRACES_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_PROTOCOL": "http/json",
+    "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT": "{collector}/claude/v1/metrics",
+    "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT": "{collector}/claude/v1/logs",
+    "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": "{collector}/claude/v1/traces",
+    "OTEL_EXPORTER_OTLP_HEADERS": "Authorization=Bearer {token}"
+  },
+  "defaults": {
+    "OTEL_LOG_USER_PROMPTS": "1",
+    "OTEL_LOG_ASSISTANT_RESPONSES": "1",
+    "OTEL_LOG_TOOL_DETAILS": "1",
+    "OTEL_LOG_TOOL_CONTENT": "1",
+    "OTEL_LOG_RAW_API_BODIES": "1",
+    "CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH": "262144",
+    "OTEL_METRICS_INCLUDE_REPOSITORY": "true"
+  }
+}
