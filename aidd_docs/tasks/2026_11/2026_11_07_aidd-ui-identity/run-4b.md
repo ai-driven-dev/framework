@@ -59,6 +59,8 @@ Feedback copied by the brand page, in the format of `help compare`:
 
 The clipboard was not read back: the check saw the value handed to the clipboard.
 
+Recheck after the lean pass, same runner, a fresh set of three. "with" shows only side by side. Variants switch, pair and unpair. Rating, discard and comment reach the feedback. A real click on Save hands the same JSON to a stubbed picker, named `feedback.json`. Console: no error. `keep` still empties the set with a `feedback.json` beside it.
+
 ## Real save
 
 The person clicked Save on the brand page, in Chrome, and picked the set's folder. `drafts/brand/feedback.json` was written, in the same format, nothing rated:
