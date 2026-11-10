@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, makeTmp, removeTmp, filesUnder, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
-const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep } = require("../../aidd-ui-pilot.cjs");
+const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, wireframesWithoutScreen, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep } = require("../../aidd-ui-pilot.cjs");
 
 // The pilot's checks hold without AI: they read files, run the engine, and compare trees.
 
@@ -160,14 +160,36 @@ describe("aidd-ui pilot journey steps, none to judge", () => {
   });
 });
 
+describe("aidd-ui pilot wireframes without a screen", () => {
+  beforeEach(() => writeProject(copy));
+
+  it("lists no wireframe when a screen names each by its wireframe key", () => {
+    assert.deepEqual(wireframesWithoutScreen(copy), []);
+  });
+
+  it("lists a wireframe no screen names, whether its key names another or is absent", () => {
+    edit(copy, `${UI}/screens/home.md`, "wireframe: search-flow", "wireframe: nowhere");
+    assert.deepEqual(wireframesWithoutScreen(copy), ["search-flow"]);
+    edit(copy, `${UI}/screens/home.md`, "wireframe: nowhere\n", "");
+    assert.deepEqual(wireframesWithoutScreen(copy), ["search-flow"]);
+  });
+
+  it("returns null when nothing loads, or the design system holds no wireframe", () => {
+    fs.rmSync(path.join(copy, UI, "wireframes"), { recursive: true });
+    assert.equal(wireframesWithoutScreen(copy), null);
+    fs.rmSync(path.join(copy, UI), { recursive: true });
+    assert.equal(wireframesWithoutScreen(copy), null);
+  });
+});
+
 describe("aidd-ui pilot report line", () => {
   it("says the errors, the warnings, the wireframes, the code and the steps in one line", () => {
-    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], changed: [], broken: [] }), "blank errors none warnings none wireframes all code untouched steps ok");
-    assert.equal(reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], changed: ["a"], broken: ["x", "y", "z"] }), "kairos errors C6 warnings C3,R18 wireframes missing 2 code changed 1 steps broken 3");
+    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], unscreened: [], changed: [], broken: [] }), "blank errors none warnings none wireframes all screens all code untouched steps ok");
+    assert.equal(reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], unscreened: ["a"], changed: ["a"], broken: ["x", "y", "z"] }), "kairos errors C6 warnings C3,R18 wireframes missing 2 screens missing 1 code changed 1 steps broken 3");
   });
 
   it("says no journey when there is no step to judge", () => {
-    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: null, changed: [], broken: [] }), "blank errors none warnings none wireframes no journey code untouched steps ok");
+    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: null, unscreened: null, changed: [], broken: [] }), "blank errors none warnings none wireframes no journey screens no wireframe code untouched steps ok");
   });
 });
 
@@ -203,6 +225,7 @@ describe("aidd-ui pilot step files", () => {
       "02-brand": ["drafts/.gitignore"],
       "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
       "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
+      "05-screens": ["history.md", "drafts/.gitignore"],
     });
   });
 
@@ -214,11 +237,11 @@ describe("aidd-ui pilot step files", () => {
     const SKILLS = path.resolve(__dirname, "../../../plugins/aidd-ui/skills");
     const lineOf = (skill) => fs.readFileSync(path.join(SKILLS, skill, "SKILL.md"), "utf8").split("\n").find((each) => each.startsWith("- Write only"));
     assert.ok(lineOf("02-brand").includes("aidd_docs/ui/drafts/brand/"));
-    for (const skill of ["03-foundations", "04-components"]) assert.ok(lineOf(skill).includes("`drafts/`"), skill);
+    for (const skill of ["03-foundations", "04-components", "05-screens"]) assert.ok(lineOf(skill).includes("`drafts/`"), skill);
   });
 
   it("names a step that wrote an engine file it does not drive", () => {
-    const own = { "01-journeys": "journeys/x.md", "02-brand": "brand.md", "03-foundations": "system.md", "04-components": "components/x.md" };
+    const own = { "01-journeys": "journeys/x.md", "02-brand": "brand.md", "03-foundations": "system.md", "04-components": "components/x.md", "05-screens": "screens/x.md" };
     for (const [skill, engineFiles] of Object.entries(ENGINE_FILES)) {
       for (const file of ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"].filter((each) => !engineFiles.includes(each))) assert.deepEqual(stepBreaks(skill, {}, after(own[skill], file)), [`${skill} wrote ${ui(file)}`], `${skill} ${file}`);
     }
@@ -291,7 +314,7 @@ describe("aidd-ui pilot chain run", () => {
 
   it("exits 0 and says steps ok when each step wrote its own files and the engine's", () => {
     const { code, logs } = run();
-    assert.deepEqual([code, logs.at(-1).endsWith("wireframes all code untouched steps ok")], [0, true], logs.join("|"));
+    assert.deepEqual([code, logs.at(-1).endsWith("wireframes all screens all code untouched steps ok")], [0, true], logs.join("|"));
   });
 
   it("exits 1, naming the step and the path, when a step wrote outside its set", () => {
@@ -318,8 +341,8 @@ describe("aidd-ui pilot chain run", () => {
 
 describe("aidd-ui pilot chain", () => {
   it("sends one request per skill, in the order of the path", () => {
-    assert.deepEqual(CHAIN.map(([skill]) => skill), ["01-journeys", "02-brand", "03-foundations", "04-components"]);
-    assert.deepEqual(CHAIN.map(([, part]) => part), ["journeys", "brand", "foundations", "components"]);
+    assert.deepEqual(CHAIN.map(([skill]) => skill), ["01-journeys", "02-brand", "03-foundations", "04-components", "05-screens"]);
+    assert.deepEqual(CHAIN.map(([, part]) => part), ["journeys", "brand", "foundations", "components", "screens"]);
   });
 
   it("points each request at the task folder of its own part", () => {

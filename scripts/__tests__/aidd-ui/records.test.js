@@ -164,7 +164,7 @@ describe("aidd-ui records and history", () => {
     });
 
     it("names an id two records hold", () => {
-      const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "tokens: []", "states: [default]", "breakpoints: [mobile]", "route: /brand"];
+      const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "tokens: []", "states: [default]", "breakpoints: [mobile]", "route: /brand", "wireframe: search-flow"];
       put(tmp, `${UI}/screens/brand.md`, record(screen));
       addHistory(tmp, ["brand", "1", "created", "no", "aidd_docs/tasks/ds-init"]);
       assert.deepEqual(problems(), [`${UI}/screens/brand.md: id "brand" already belongs to ${BRAND}`]);
@@ -374,6 +374,29 @@ describe("aidd-ui records and history", () => {
         ["warning", 'expects component "filter-chip", which the design system does not hold yet'],
         ["warning", 'expects component "home", which is a screen, not a component'],
       ]);
+    });
+  });
+
+  describe("R19 wireframe of a screen", () => {
+    const found = () => ledger.note(records.check(load(tmp))).filter((problem) => problem.rule === "R19").map((problem) => [problem.severity, problem.message]);
+
+    it("holds no problem for a screen whose wireframe exists", () => {
+      assert.deepEqual(found(), []);
+    });
+
+    it("warns of a screen with no wireframe, and never errs for it", () => {
+      change(HOME, "wireframe: search-flow\n", "");
+      assert.deepEqual(found(), [["warning", "has no wireframe"]]);
+    });
+
+    it("names a wireframe no record has", () => {
+      change(HOME, "wireframe: search-flow", "wireframe: ghost");
+      assert.deepEqual(found(), [["error", 'wireframe "ghost" is no record']]);
+    });
+
+    it("names a wireframe that is a record of another kind", () => {
+      change(HOME, "wireframe: search-flow", "wireframe: button");
+      assert.deepEqual(found(), [["error", 'wireframe "button" is an atom, not a wireframe']]);
     });
   });
 
@@ -776,6 +799,9 @@ const FIXES = [
   "R18 | expects component \"filter-chip\", which the design system does not hold yet | \"filter-chip\" | add the component to the design system before a screen dresses this wireframe",
   "R18 | expects component \"old-button\", which is deprecated | \"old-button\" | expect what replaces it instead",
   "R18 | expects component \"home\", which is a screen, not a component | \"home\" | name a component, or the one the design system will add",
+  "R19 | has no wireframe | - | add wireframe: <id> naming the wireframe this screen dresses",
+  "R19 | wireframe \"button\" is an atom, not a wireframe | \"button\" | name a wireframe",
+  "R19 | wireframe \"ghost\" is no record | \"ghost\" | name a wireframe that exists, or add it",
   "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"wireframe\" does not belong in screens/ | \"wireframe\" | move it to the folder of its kind, or change its kind",
