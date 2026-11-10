@@ -44,7 +44,7 @@ const INTERACTIVE = ["button", "a", "input", "select", "textarea"];
 const STYLE_TAGS = /^<style\b[^>]*>|<\/style>$/gi;
 const DECLARATION = /([\w-]+)\s*:\s*([^;]+)/g;
 const VAR_CALL = /var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)/g;
-const LENGTH = /^(?:calc\()?(-?\d*\.?\d+)(px|rem| \* 1px\))?$/;
+const LENGTH = /^(-?\d*\.?\d+)(px|rem)?$/;
 const CLASS_ATTRIBUTE = /\sclass\s*=\s*(?:"([^"]*)"|'([^']*)')/i;
 const ROLE_ATTRIBUTE = /\srole\s*=\s*["']?([a-z]+)/i;
 const CONTROL_ROLES = ["link", "radio", "switch", "tab"];

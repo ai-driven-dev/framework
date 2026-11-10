@@ -65,7 +65,7 @@ With the real engine, every screen of both pilots passes both.
 
 The Kairos output changed V12 twice, each fix test first:
 
-- Kairos writes sizes as `calc(var(--12) * 1px)` over unitless tokens. V12 read none of them. It now reads that form.
+- Kairos writes sizes as `calc(var(--12) * 1px)`. `extract` had typed its spacing and font sizes `number`: their tokens drop the export's name, where the size word sat. `extract` now reads that name, and they are px dimensions. On a copy, the 38 tokens its screens scaled by `1px` all are. V12 reads no `calc()`.
 - Any `role` made an element a control, so a `role="status"` label and a `role="progressbar"` bar were flagged. Only the control roles Kairos uses count now: `link`, `radio`, `switch`, `tab`.
 
 On a copy of the blank output, one screen's text set to its background token and one button's height set to a 16px token:
@@ -111,7 +111,7 @@ Each guard broken once, its own test red, then restored.
 | Class match | off | names a target below it |
 | Size properties | `height` unread | reads height, block-size and min-block-size too |
 | Role | not interactive | targets an element carrying a role |
-| `calc()` size | `* 1px` written `* 2px` | reads a unitless size scaled to px by calc |
+| Export's size word | export's name left out of the guess | reads a bare number as px when its export names a size, though the token drops that name |
 | Control roles | any role accepted | leaves an element whose role is no control |
 | Control roles | `tab` removed | targets an element carrying a role |
 | Pilot screens check | screen `id` read instead of `wireframe` | lists no wireframe when a screen names each by its wireframe key |

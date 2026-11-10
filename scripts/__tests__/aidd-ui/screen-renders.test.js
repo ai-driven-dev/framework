@@ -176,15 +176,6 @@ describe("aidd-ui V12 touch targets", () => {
     assert.deepEqual(problems(), [`${home}: button (.go): min-height 16px is below the 24px floor of web`]);
   });
 
-  it("reads a unitless size scaled to px by calc", () => {
-    sized(16);
-    target(".go { min-height: calc(var(--size-go) * 1px); }");
-    assert.deepEqual(problems(), [
-      `${home}: line 20: literal "1px", only tokens carry values`,
-      `${home}: button (.go): min-height 16px is below the 24px floor of web`,
-    ]);
-  });
-
   it("reads height, block-size and min-block-size too", () => {
     sized(16, "px");
     target(".go { height: var(--size-go); }\n.up { block-size: var(--size-go); }\n.in { min-block-size: var(--size-go); }", '<button class="go up in">Go</button>');
@@ -301,7 +292,6 @@ const FIXES = [
   "V12 | button (.up): block-size 16px is below the 24px floor of web | \".up\" | give it at least 24px",
   "V12 | button (button): min-height 16px is below the 24px floor of web | \"button\" | give it at least 24px",
   "V12 | div (.tab): min-height 16px is below the 24px floor of web | \".tab\" | give it at least 24px",
-  "V6 | line 20: literal \"1px\", only tokens carry values | \"1px\" | replace it with a token",
 ];
 
 describe("aidd-ui fixes of V11 and V12", () => {
