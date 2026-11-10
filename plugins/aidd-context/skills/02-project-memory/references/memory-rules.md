@@ -26,5 +26,6 @@ These bind every memory file.
 | Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list | exempt |
 | One fact, one home | - | the copy, the fact keeps its home | bound |
 | No version | `React` | `React 19` | bound |
+| Name, never count or date | the packages by name | `four packages`, a date, `currently` | exempt |
 | Current state only | - | an unused section, a placeholder, a plan, a wish, a thing not shipped, a work item, a live value, a technical id, a secret or credential value | exempt |
 | A diagram stands alone | - | a note or a caption under it | bound |

@@ -6,7 +6,7 @@ What the scan reads to understand the project; what survives the reading is [mem
 
 | Order | Source | Answers |
 | --- | --- | --- |
-| 1 | the manifests, the workspace file and a lockfile | the stack, the packages and their count, the published name |
+| 1 | the manifests, the workspace file and a lockfile | the stack, the packages by name, the published name |
 | 2 | the root README, then any `docs/` | what it does, for whom, its domain words |
 | 3 | the top-level directories | the shape, who owns what |
 | 4 | the entry points the manifests declare | where execution starts |

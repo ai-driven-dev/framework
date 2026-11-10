@@ -618,3 +618,8 @@ test("the review checks a cited command and a commit type against the files that
   assert.doesNotMatch(text, /\b(?:husky|lefthook|pre-commit|commitlint|makefile|pnpm|npm|yarn|bun|cargo|gradle|poetry|uv)\b/iu, "regression guard: the review names a tool");
 });
 
+
+test("the memory names what it lists and never asks for a count or a date", () => {
+  assert.doesNotMatch(skillText("references/reading-sources.md"), /\bcount\b/u);
+  assert.match(skillText("references/memory-rules.md"), /\| Name, never count or date \| the packages by name \| `four packages`, a date, `currently` \| exempt \|/u);
+});
