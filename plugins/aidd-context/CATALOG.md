@@ -22,6 +22,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/10-learn`](#skills10-learn)
   - [`skills/11-explore`](#skills11-explore)
   - [`skills/12-cook`](#skills12-cook)
+  - [`skills/13-access-check`](#skills13-access-check)
 
 ---
 
@@ -102,7 +103,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-write.md](skills/04-skill-generate/actions/03-write.md) | - |
 | `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<what it produces>. Use when the user wants to <intents>. <Not for X when needed.>` |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<One sentence: what it does, then when to use it, about 150 characters.>` |
+| `references` | [fill-norm.md](skills/04-skill-generate/references/fill-norm.md) | - |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
 | `references` | [review-protocol.md](skills/04-skill-generate/references/review-protocol.md) | - |
 | `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
@@ -111,7 +113,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
 | `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
 | `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
-| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.` |
+| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generates a lean router-based skill across the host AI tools, when the user wants to create, scaffold or refactor a skill.` |
 
 #### `skills/05-rule-generate`
 
@@ -161,7 +163,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [hook-template.json](skills/08-hook-generate/assets/hook-template.json) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
 | `references` | [tool-paths.md](skills/08-hook-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generate a hook, a handler that runs at a lifecycle event, across the host AI tools. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills or rules.` |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create, scaffold or refactor one.` |
 
 #### `skills/09-mermaid`
 
@@ -218,4 +220,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [recipe-locations.md](skills/12-cook/references/recipe-locations.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
 | `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.` |
+
+#### `skills/13-access-check`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-check.md](skills/13-access-check/actions/01-check.md) | - |
+| `assets` | [access-report.md](skills/13-access-check/assets/access-report.md) | - |
+| `-` | [SKILL.md](skills/13-access-check/SKILL.md) | `Check that the assistant can reach the services recorded in project memory, read-only. Use when the user wants to verify or diagnose service access. Not for installing or configuring services.` |
 

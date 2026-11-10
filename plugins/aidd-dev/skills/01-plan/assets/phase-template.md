@@ -8,7 +8,7 @@ status: pending
 
 ## Architecture projection
 
-> Tree of the final files. ✅ create · ✏️ modify · ❌ delete
+> Tree of the final files from the project root, each folder ending in `/`. ✅ create · ✏️ modify · ❌ delete
 
 ```txt
 .

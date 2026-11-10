@@ -164,13 +164,12 @@ describe("buildOpencodeFlatContract()", () => {
     );
   });
 
-  it("declares an agent a subagent, renames it after its plugin, and points its references at their flat destinations", () => {
+  it("declares an agent a subagent, leaves its ID to the file name, and points its references at their flat destinations", () => {
     const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
         "---",
-        "name: 'aidd-dev-planner'",
         "description: 'Plans the work'",
         "mode: 'subagent'",
         "---",
@@ -179,16 +178,6 @@ describe("buildOpencodeFlatContract()", () => {
         "Run [journal.cjs](../../hooks/journal.cjs)",
         "",
       ].join("\n")
-    );
-  });
-
-  it("drops only the trailing .md from the name it gives a flat agent", () => {
-    const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
-
-    expect(
-      transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
-    ).toBe(
-      "---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\nmode: 'subagent'\n---\nBody.\n"
     );
   });
 

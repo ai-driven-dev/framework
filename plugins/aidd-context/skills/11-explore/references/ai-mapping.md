@@ -6,6 +6,8 @@ Where to look for each artifact type per AI tool. Scan-only: the paths and forma
 
 A tool is present only when one of its own mapped surfaces below holds a file. A shared parent directory is never a signal by itself.
 
+Resolve shared `.agents/` paths from declared tools or the AIDD manifest; otherwise report ambiguous ownership.
+
 ## AI quick map - content artifacts
 
 | AI             | Agents                      | Commands / Prompts                            | Rules                                    | Skills                                | Context file                      |
@@ -15,6 +17,7 @@ A tool is present only when one of its own mapped surfaces below holds a file. A
 | OpenCode       | `.opencode/agents/`         | `.opencode/commands/`                         | `aidd_docs/rules/` (canonical sources); shared `aidd_rules` contribution in root `AGENTS.md`  | `.opencode/skills/`                   | `AGENTS.md`                       |
 | GitHub Copilot | `.github/agents/*.agent.md` | `.github/prompts/*.prompt.md`                 | `.github/instructions/*.instructions.md` | `.github/skills/`                     | `.github/copilot-instructions.md` |
 | Codex CLI      | `.codex/agents/{name}.toml` | **Not supported**                             | `aidd_docs/rules/` (canonical sources); shared `aidd_rules` contribution in root `AGENTS.md`, not execution policies | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
+| Antigravity CLI | `.agents/agents/{name}/agent.md` | Not mapped                          | `.agents/rules/<slug>.md`, flat         | `.agents/skills/aidd-{name}/SKILL.md` | `AGENTS.md`                       |
 
 ## AI quick map - hooks, plugins
 
@@ -25,6 +28,7 @@ A tool is present only when one of its own mapped surfaces below holds a file. A
 | OpenCode       | JS/TS module under `.opencode/plugins/` (parse as JS, not JSON)                                | Not supported                |
 | GitHub Copilot | `.github/hooks/*.json` (workspace), `~/.copilot/hooks` (user), `<plugin>/hooks.json` or `<plugin>/hooks/hooks.json` (plugin) | `plugin.json` at plugin root |
 | Codex CLI      | `.codex/hooks.json` (project / user) OR `[hooks]` table in `.codex/config.toml`               | `.codex-plugin/plugin.json`  |
+| Antigravity CLI | `.agents/hooks.json` (project), keyed by hook name                                            | Not mapped |
 
 ## MCP config per tool
 

@@ -1,5 +1,6 @@
 // Registers every tool profile as a side effect, so the registry `nativeActivationOf`
 // reads is populated regardless of which other wiring module gets imported first.
+import "../../contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";

@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.10.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.9.0...aidd-context-v2.10.0) (2026-10-26)
+
+
+### Features
+
+* **aidd-context:** assess existing rules before writing ([#1006](https://github.com/ai-driven-dev/framework/issues/1006)) ([708eefa](https://github.com/ai-driven-dev/framework/commit/708eefad4e5125cc2795c6c4cf2ef446fab81ffa))
+
+
+### Documentation
+
+* **aidd-context:** ask the project memory for its tickets and hooks ([#1066](https://github.com/ai-driven-dev/framework/issues/1066)) ([160caf3](https://github.com/ai-driven-dev/framework/commit/160caf3f84b9cd21eafefa03c763e6b85ff43153))
+
 ## [2.9.0](https://github.com/ai-driven-dev/framework/compare/aidd-context-v2.8.1...aidd-context-v2.9.0) (2026-10-16)
 
 

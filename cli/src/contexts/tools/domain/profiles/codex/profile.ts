@@ -30,6 +30,8 @@ import {
   mergeCodexConfigToml,
   stripCodexSkillFrontmatter,
 } from "./build.js";
+import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
+import { codexGlobalFilePath } from "./codex-paths.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -138,7 +140,13 @@ export const codex: AiTool<
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
   capabilities: {
-    agents: new AgentsCapability({ directory: DIRECTORY, toolSuffix: TOOL_SUFFIX, format: "toml" }),
+    agents: new AgentsCapability({
+      directory: DIRECTORY,
+      toolSuffix: TOOL_SUFFIX,
+      format: "toml",
+      frontmatter: codexAgentFrontmatter,
+      serialize: codexAgentToml,
+    }),
     skills: new SkillsCapability({
       prefix: "aidd-",
       buildInstallPath: buildCodexSkillFilePath,
@@ -174,6 +182,7 @@ export const codex: AiTool<
       mode: "native",
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
+      globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
       acceptsMcp: true,
       translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a

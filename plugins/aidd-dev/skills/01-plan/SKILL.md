@@ -9,23 +9,17 @@ argument-hint: request | ticket | file
 
 ```mermaid
 flowchart LR
-  capture --> explore
+  capture["capture<br>actions/01-capture.md"] --> explore["explore<br>actions/02-explore.md"]
   explore -->|"the code opens a question"| explore
   explore -->|"a decision blocks"| user((user answers))
   user --> explore
-  explore -->|"nothing blocks"| conclude
+  explore -->|"nothing blocks"| conclude["conclude<br>actions/03-conclude.md<br>script: scripts/validate-plan.cjs"]
   conclude -->|"correct: revise, ask again"| conclude
   conclude -->|"explore more"| explore
   conclude -->|"approve"| done((done))
 ```
 
-Read an action's file, then do what it says.
-
-| Action | File |
-| ------ | ---- |
-| capture | [actions/01-capture.md](actions/01-capture.md) |
-| explore | [actions/02-explore.md](actions/02-explore.md) |
-| conclude | [actions/03-conclude.md](actions/03-conclude.md) |
+Each box is a file: read it, then do what it says.
 
 ## Transversal rules
 

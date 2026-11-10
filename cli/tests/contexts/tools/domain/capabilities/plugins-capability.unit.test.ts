@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { cursorProjectHooksFormat } from "../../../../../src/contexts/tools/domain/formats/cursor-hooks-project-merge.js";
 
 const MARKETPLACE_SETTINGS = {
   settingsPath: ".claude/settings.json",
@@ -289,6 +290,33 @@ describe("PluginsCapability base directory resolution", () => {
     expect(() => new PluginsCapability({ ...native, hooksDestination: "project" })).toThrow(
       "hooksDestination 'project' requires a projectHooksRelativePath."
     );
+  });
+
+  it("refuses a project hooks destination that declares no file format", () => {
+    expect(
+      () =>
+        new PluginsCapability({
+          ...native,
+          hooksDestination: "project",
+          projectHooksRelativePath: ".x/hooks.json",
+        })
+    ).toThrow("hooksDestination 'project' requires a projectHooksFormat.");
+  });
+
+  it("lets a flat capability merge its hooks into a project hooks file", () => {
+    const cap = new PluginsCapability({
+      mode: "flat",
+      acceptsHooks: true,
+      flatHooksDir: ".x/hooks/",
+      flatNamespacePrefix: "aidd-",
+      hooksDestination: "project",
+      projectHooksRelativePath: ".x/hooks.json",
+      projectHooksFormat: cursorProjectHooksFormat,
+    });
+
+    expect(cap.hooksDestination).toBe("project");
+    expect(cap.projectHooksRelativePath).toBe(".x/hooks.json");
+    expect(cap.projectHooksFormat).toBe(cursorProjectHooksFormat);
   });
 });
 

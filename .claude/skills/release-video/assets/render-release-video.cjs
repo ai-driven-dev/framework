@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Renders the release video from `aidd_docs/release-video/scenes.json`, locally, with no AI tool
- * involved: `node .claude/skills/release-video/assets/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`.
+ * involved: `node .claude/skills/release-video/assets/render-release-video.cjs --version 5.13 [--plan <file>] [--music <file>] [--out <file>]`, which also writes the thumbnail next to the video as a `.png`.
  *
  * Needs `npx`, a network (fonts and avatars are local, GSAP and the avatars are fetched) and
  * ffmpeg + Chrome as Hyperframes does. The renderer is pinned: a new Hyperframes release
@@ -18,6 +18,7 @@ const PLAN = path.join(ROOT, "aidd_docs/release-video/scenes.json");
 const HYPERFRAMES = "hyperframes@0.8.162";
 const INTRO = 5;
 const INTRO_WITH_HIGHLIGHTS = 6.5;
+const VERSION_TYPING_FROM = 0.8, VERSION_TYPING_SECONDS = 1.1;
 const OUTRO = 4;
 
 const CSS = `
@@ -82,6 +83,11 @@ td { padding: 14px 14px; border-bottom: 2px solid #15153f; vertical-align: top; 
 .av span { font-family: "JetBrains Mono", monospace; font-size: 32px; font-weight: 700; }
 #intro .inner { flex-direction: row; align-items: center; justify-content: center; gap: 90px; }
 #intro-logo { width: 420px; height: 420px; border-radius: 50%; border: 2px solid #2a2a66; }
+#thumb .inner { flex-direction: row; align-items: center; justify-content: center; gap: 110px; }
+#thumb #intro-logo { width: 560px; height: 560px; }
+#thumb #ver { font-size: 330px; }
+#thumb .intro-text { min-width: 0; gap: 30px; }
+.themes { font-family: "JetBrains Mono", monospace; font-size: 38px; font-weight: 700; color: #a6abe0; white-space: nowrap; }
 .intro-text { display: flex; flex-direction: column; gap: 22px; min-width: 720px; }
 .intro-top { display: flex; align-items: center; gap: 22px; }
 .rel { font-family: "JetBrains Mono", monospace; font-size: 28px; letter-spacing: 0.12em; color: #8a8fc0; }
@@ -398,11 +404,11 @@ function buildHtml(plan, { version, music, sfx }) {
     `enter("#intro-pill", 0.4, { y: 20 });`,
     `enter("#intro-rel", 0.55, { y: 20 });`,
     `const typed = { n: 0 }; const full = ${JSON.stringify(String(version))};`,
-    `tl.to(typed, { n: 1, duration: 1.1, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
+    `tl.to(typed, { n: 1, duration: ${VERSION_TYPING_SECONDS}, ease: "none", onUpdate: () => { const len = Math.round(typed.n * (full.length + 1));` +
       ` const [a, b = ""] = full.split(".");` +
       ` document.getElementById("ver-t").textContent = ("v" + a).slice(0, Math.min(len, a.length + 1));` +
       ` document.querySelector("#ver .dot").textContent = len > a.length + 1 ? "." : "";` +
-      ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, 0.8);`,
+      ` document.getElementById("ver-n").textContent = len > a.length + 1 ? b.slice(0, len - a.length - 1) : ""; } }, ${VERSION_TYPING_FROM});`,
     ...(hasTagline(plan.intro) ? [`enter("#intro-tag", 2.0, { y: 20 });`] : []),
     `enter("#intro .hl", ${hasTagline(plan.intro) ? 2.6 : 2}, { y: 16, duration: 0.5, stagger: 0.3 });`,
     `cut("intro", ${introSeconds(plan)});`
@@ -537,8 +543,8 @@ function fitMusic(source, target, plan) {
   ffmpeg(["-i", source, "-filter_complex", filter, "-map", "[a]", "-c:a", "libmp3lame", "-q:a", "2", target]);
 }
 
-function writeProject(dir, plan, version, musicSource) {
-  fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
+/** What a Hyperframes project needs around its page: the fonts, the logo and the project files. */
+function writeShell(dir) {
   fs.mkdirSync(path.join(dir, "assets"), { recursive: true });
   fs.cpSync(path.join(__dirname, "fonts"), path.join(dir, "assets/fonts"), { recursive: true });
   fs.copyFileSync(path.join(__dirname, "logo.png"), path.join(dir, "assets/logo.png"));
@@ -548,6 +554,10 @@ function writeProject(dir, plan, version, musicSource) {
   );
   fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify({ id: "release-video", name: "release-video" }));
   fs.writeFileSync(path.join(dir, "hyperframes.json"), JSON.stringify({ paths: { assets: "assets" } }));
+}
+
+function writeProject(dir, plan, version, musicSource) {
+  writeShell(dir);
   let music;
   if (musicSource) {
     music = "assets/music-fit.mp3";
@@ -597,9 +607,70 @@ async function main() {
   const out = path.resolve(argument("out") ?? "release-video.mp4");
   fs.copyFileSync(path.join(dir, "release-video.mp4"), out);
   console.log(`✅ ${out}`);
+
+  const still = fs.mkdtempSync(path.join(os.tmpdir(), "release-thumbnail-"));
+  writeShell(still);
+  fs.writeFileSync(path.join(still, "index.html"), thumbnailHtml(plan, { version }));
+  const stillRender = spawnSync("npx", ["--yes", HYPERFRAMES, "render", "--output", "thumbnail.mp4"], { cwd: still, stdio: "inherit" });
+  if (stillRender.status !== 0) throw new Error(`Hyperframes render of the thumbnail failed (${stillRender.status})`);
+  const thumbnail = out.replace(/\.mp4$/, ".png");
+  const frame = spawnSync("ffmpeg", ["-y", "-v", "error", "-i", path.join(still, "thumbnail.mp4"), "-frames:v", "1", "-vf", "scale=1280:720", thumbnail], { stdio: "inherit" });
+  if (frame.status !== 0) throw new Error(`The thumbnail could not be taken (${frame.status})`);
+  console.log(`✅ ${thumbnail}`);
+
+  const probe = spawnSync("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=bit_rate", "-of", "csv=p=0", out], { encoding: "utf8" });
+  const bitrate = Number(probe.stdout.trim());
+  if (!bitrate) throw new Error("The bitrate of the video could not be read");
+  const posted = out.replace(/\.mp4$/, ".poster.mp4");
+  const withPoster = spawnSync("ffmpeg", posterArgs({ video: out, poster: thumbnail, out: posted, bitrate }), { stdio: "inherit" });
+  if (withPoster.status !== 0) throw new Error(`The thumbnail could not be put first (${withPoster.status})`);
+  fs.renameSync(posted, out);
 }
 
-module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, soundTrack, totalDuration };
+/** The picture a video is announced with, drawn as its own still composition rather than taken from a frame
+ * of the video: the logo, the release and the whole version, then the themes. */
+function thumbnailHtml(plan, { version }) {
+  const [major, minor = ""] = String(version).split(".");
+  const themes = plan.youtube?.themes ?? [];
+  const inner =
+    `<img id="intro-logo" src="assets/logo.png" alt="" /><div class="intro-text">` +
+    `<div class="intro-top"><span class="pill">AIDD Framework</span><span class="rel">NEW RELEASE</span></div>` +
+    `<div id="ver"><span id="ver-t">v${esc(major)}</span><span class="dot">${minor ? "." : ""}</span><span id="ver-n">${esc(minor)}</span></div>` +
+    (themes.length ? `<p class="themes">${themes.map(esc).join(" · ")}</p>` : "") +
+    `</div>`;
+  return `<!doctype html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=1920, height=1080" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>${CSS}</style></head>
+<body><div id="root" data-composition-id="main" data-start="0" data-duration="1" data-width="1920" data-height="1080">
+<section id="thumb" class="scene clip" data-start="0" data-duration="1" data-track-index="0"><div class="inner">${inner}</div></section>
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+window.__timelines["main"] = gsap.timeline({ paused: true });
+</script></body></html>
+`;
+}
+
+/** The video opens on its thumbnail for one frame: a chat shows a video's first frame as its preview, and the
+ * intro starts on the bare background. The video is encoded again at its own bitrate, and its sound is delayed
+ * by that frame. */
+function posterArgs({ video, poster, out, bitrate }) {
+  const kbps = Math.round(bitrate / 1000);
+  return [
+    "-y", "-v", "error",
+    "-loop", "1", "-framerate", "30", "-t", "0.0334", "-i", poster,
+    "-i", video,
+    "-filter_complex",
+    "[0:v]scale=1920:1080,setsar=1,fps=30,format=yuv420p[p];[1:v]setsar=1,fps=30,format=yuv420p[v];[p][v]concat=n=2:v=1:a=0[vo];[1:a]adelay=34|34[ao]",
+    "-map", "[vo]", "-map", "[ao]",
+    "-c:v", "libx264", "-profile:v", "high", "-b:v", `${kbps}k`, "-maxrate", `${Math.round(kbps * 1.25)}k`, "-bufsize", `${kbps * 2}k`, "-preset", "slow",
+    "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart",
+    out,
+  ];
+}
+
+module.exports = { buildHtml, measureRms, musicSections, musicSegments, sceneDuration, soundCues, posterArgs, soundTrack, thumbnailHtml, totalDuration };
 
 if (require.main === module) {
   main().catch((error) => {

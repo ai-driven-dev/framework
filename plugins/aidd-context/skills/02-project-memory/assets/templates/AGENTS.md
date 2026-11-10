@@ -17,7 +17,7 @@
 - **When clarification is needed,** prefer the host's question tool when available; otherwise ask in chat. Offer clear options and put the recommended choice first.
 - **Skip redundant preambles, recaps, and closers.**
 - **Quote the shortest decisive error line.**
-- **Don't narrate tool calls.** Use formatting only when it improves scanability.
+- **Report progress at milestones, not per tool call.** Use formatting only when it improves scanability.
 - **Use full prose when nuance or safety requires it.**
 - **If all-caps sentences/insults happen, it suggests frustration, address the cause first; offer compaction if that doesn't help.**
 
@@ -32,8 +32,20 @@
 - **Don't assume your knowledge is current**: the doc could also be wrong.
 - **Verify APIs, signatures, flags, and behavior against source or docs.**
 - **Batch independent operations when it saves time or context.**
-- **Fan out genuinely independent subtasks when coordination costs less than serial work.**
 - **Name by intention, scope by responsibility** ; not mechanism.
+
+## Agents
+
+Fan out genuinely independent subtasks to agents by responsibility when coordination costs less than serial work. You stay the caller: you own scope, delegation, and final acceptance.
+
+| Responsibility | Agent |
+| --- | --- |
+| Answer a scoped codebase question with sources | `explorer` |
+| Implement assigned work and verify it | `executor` |
+| Confirm the outcome meets its acceptance criteria | `validator` |
+| Review quality, coherence, and needless complexity | `reviewer` |
+
+Without the agent, give the same brief to the host's default subagent.
 
 ## Memory Management
 

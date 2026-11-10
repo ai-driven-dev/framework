@@ -1,6 +1,6 @@
-// V2's tool lifecycle splits the name, arguments and completion across three events.
-// Keep only in-flight calls; consuming success once prevents duplicate PostToolUse calls.
-function eventsForV2(event, toolCalls, directory) {
+// V2 reports a turn through its execution events. The tool hook is where a finished call's
+// result can change, so a hook's answer lands in the result the model reads.
+function eventsForV2(event, directory) {
   const data = event?.data;
   if (typeof data?.sessionID !== "string") return [];
   if (event.type === "session.created") {
@@ -13,77 +13,64 @@ function eventsForV2(event, toolCalls, directory) {
       },
     ];
   }
-  const properties = { sessionID: data.sessionID, directory: event.location?.directory };
   if (
     event.type === "session.execution.succeeded" ||
     event.type === "session.execution.failed" ||
     event.type === "session.execution.interrupted"
   ) {
-    for (const [key, call] of toolCalls) {
-      if (call.sessionID === data.sessionID) toolCalls.delete(key);
-    }
     if (event.type === "session.execution.interrupted" && data.reason === "shutdown") return [];
-    return [{ type: "session.idle", properties }];
-  }
-  if (typeof data.assistantMessageID !== "string" || typeof data.id !== "string") return [];
-  const key = JSON.stringify([data.sessionID, data.assistantMessageID, data.id]);
-  if (event.type === "session.tool.input.started" && typeof data.name === "string") {
-    toolCalls.set(key, {
-      sessionID: data.sessionID,
-      name: data.name,
-      directory: properties.directory,
-    });
-  } else if (event.type === "session.tool.called") {
-    const call = toolCalls.get(key);
-    if (call) {
-      call.input = data.input;
-      call.directory = properties.directory ?? call.directory;
-    }
-  } else if (event.type === "session.tool.success") {
-    const call = toolCalls.get(key);
-    toolCalls.delete(key);
-    if (call?.input === undefined) return [];
     return [
       {
-        type: "message.part.updated",
-        properties: {
-          ...properties,
-          directory: properties.directory ?? call.directory,
-          part: {
-            type: "tool",
-            tool: call.name,
-            state: { status: "completed", input: call.input },
-          },
-        },
+        type: "session.idle",
+        properties: { sessionID: data.sessionID, directory: event.location?.directory },
       },
     ];
-  } else if (event.type === "session.tool.failed") {
-    toolCalls.delete(key);
   }
   return [];
 }
 
+// A string result takes the answer after a blank line; a list of parts takes a text part.
+function withAnswer(content, answer) {
+  if (Array.isArray(content)) return [...content, { type: "text", text: answer }];
+  return content ? `${content}\n\n${answer}` : answer;
+}
+
 export async function setupOpencodeEvents(ctx, factory) {
   const controller = new AbortController();
-  const toolCalls = new Map();
-  const hooks = await factory({ directory: ctx.location.directory });
+  // A Stop script's block becomes the session's next prompt, sent through the V2 session API.
+  const client = {
+    session: {
+      promptAsync: ({ path, body }) =>
+        ctx.session.prompt({
+          sessionID: path.id,
+          text: body.parts.map((part) => part.text).join("\n"),
+        }),
+    },
+  };
+  const hooks = await factory({ directory: ctx.location.directory, client });
+  const toolHook = await ctx.tool.hook("execute.after", async (call) => {
+    if (call.status !== "completed" || !call.result) return;
+    const output = { output: "" };
+    await hooks["tool.execute.after"]({ tool: call.tool, sessionID: call.sessionID, args: call.input }, output);
+    const answer = output.output.trim();
+    if (answer) call.result.content = withAnswer(call.result.content, answer);
+  });
   // The subscription lives until cleanup. Awaiting it here would block plugin startup.
   void (async () => {
     try {
       for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
         if (controller.signal.aborted) break;
-        for (const mapped of eventsForV2(event, toolCalls, ctx.location.directory)) {
+        for (const mapped of eventsForV2(event, ctx.location.directory)) {
           await hooks.event({ event: mapped });
         }
       }
     } catch {
       // Stream failures and cancellation must not reject into the host.
       controller.abort();
-      toolCalls.clear();
     }
   })();
-  return () => {
+  return async () => {
     controller.abort();
-    toolCalls.clear();
+    await toolHook.dispose();
   };
 }

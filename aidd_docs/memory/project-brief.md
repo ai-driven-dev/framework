@@ -33,7 +33,7 @@ What this project is, the problem it solves, and its domain language. The non-de
 
 | Capability | Entry |
 | --- | --- |
-| Install and refresh a tool's configuration | `aidd setup --ai <ids> --ide <ids>` |
+| Install and refresh a tool's configuration | `aidd setup --ide <ids>`; `--global` for every project on the machine |
 | Install plugins from a marketplace | `aidd plugin install`, `aidd marketplace add` |
 | Build a target-native distribution | `aidd translate <source> --to <tool> --out <dir>` |
 | Bootstrap and refresh project memory | `aidd-context:02-project-memory` |

@@ -13,7 +13,6 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { stripCursorAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
 import { mergeCursorFlatHooks } from "../../formats/flat-hooks-merge.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
@@ -22,18 +21,23 @@ import {
   buildClaudeStyleMarketplace,
   synthesizeClaudeStyleManifest,
 } from "../../marketplace-catalog.js";
+import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import {
   OUTPUT_CURSOR_MANIFEST_RELATIVE,
   OUTPUT_CURSOR_MARKETPLACE_RELATIVE,
 } from "./cursor-paths.js";
 
-function transformCursorAgent(content: string, _plugin: string, outName: string): string {
+function transformCursorAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const stripped = stripCursorAgentFrontmatter(frontmatter);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: `agents/${outName}`,
   });
-  return serializeFrontmatter(stripped, rewrittenBody);
+  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter(
+    cursorAgentFrontmatter({ ...frontmatter, name }),
+    rewrittenBody,
+    "double"
+  );
 }
 
 export function buildCursorContract(): ToolBuildContract {
@@ -108,14 +112,17 @@ function cursorFlatResolveTarget(plugin: string, rel: string): string {
 
 function transformCursorFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const stripped = stripCursorAgentFrontmatter(frontmatter);
   const flatRelPath = cursorFlatAgentPath(plugin, `agents/${outName}`);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => cursorFlatResolveTarget(plugin, rel),
   });
-  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
+  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter(
+    cursorAgentFrontmatter({ ...frontmatter, name }),
+    rewrittenBody,
+    "double"
+  );
 }
 
 export function buildCursorFlatContract(): ToolBuildContract {

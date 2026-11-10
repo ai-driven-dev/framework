@@ -32,7 +32,8 @@ The rendered screen, and the user's reply.
 ## Test
 
 - The framing line shows on the first report of the session only.
-- An existing repo renders memory as step 1 of 2.
+- An existing repo renders memory as step 1 of 3.
+- A session that found memory wired lists no access step.
 - A greenfield repo renders the stack first.
 - The banner shows on entry screens only.
 - Every `⚠️` carries a keyed fix.

@@ -356,22 +356,27 @@
     "programme": [
       {
         "surface": "aidd telemetry",
+        "theme": "Télémétrie",
         "text": "compter aussi ce que coûte le travail fait avec Codex, avec le rapport complet."
       },
       {
         "surface": "aidd-telemetry:00-init",
-        "text": "activer la mesure et distinguer le résultat par outil, Claude Code ou Codex."
+        "theme": "Télémétrie",
+        "text": "activer la mesure, avec votre accord, du travail fait avec Claude Code et Codex."
       },
       {
         "surface": "aidd-dev:01-plan",
+        "theme": "Plan",
         "text": "alléger le plan de moitié, y lister l'ordre des phases et l'impact, et le faire relire par un juge indépendant."
       },
       {
         "surface": "aidd-refine:01-brainstorm",
+        "theme": "Brainstorm",
         "text": "alléger le brainstorm et distinguer ce qui est établi, supposé ou resté ouvert."
       },
       {
         "surface": "aidd-context:05-rule-generate",
+        "theme": "Règles",
         "text": "vérifier qu'une règle n'en contredit pas une autre, et décider laquelle garder."
       }
     ]

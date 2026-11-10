@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.2](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.1.1...aidd-refine-v3.1.2) (2026-10-26)
+
+
+### Refactoring
+
+* **aidd-refine:** lean the brainstorm skill for small models ([#1072](https://github.com/ai-driven-dev/framework/issues/1072)) ([f9a1ba2](https://github.com/ai-driven-dev/framework/commit/f9a1ba2b9d01b1d3b7bf9ff93111a2b88d2d973a))
+
 ## [3.1.1](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.1.0...aidd-refine-v3.1.1) (2026-10-16)
 
 

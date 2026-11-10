@@ -1,4 +1,5 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
+import type { AgentFrontmatter } from "../formats/agent-format.js";
 
 function agentNameFromFrontmatter(
   fm: Record<string, unknown>,
@@ -7,22 +8,6 @@ function agentNameFromFrontmatter(
   const base = fileName?.split("/").at(-1);
   const name = fm.name ?? base?.replace(/\.md$/, "");
   return typeof name === "string" ? name : undefined;
-}
-
-function tomlString(value: string): string {
-  return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-}
-
-function buildTomlContent(frontmatter: Record<string, unknown>, body: string): string {
-  const lines: string[] = [
-    `name = ${tomlString(String(frontmatter.name ?? ""))}`,
-    `description = ${tomlString(String(frontmatter.description ?? ""))}`,
-  ];
-  if (frontmatter.model !== undefined) {
-    lines.push(`model = ${tomlString(String(frontmatter.model))}`);
-  }
-  lines.push(`developer_instructions = """\n${body}\n"""`);
-  return `${lines.join("\n")}\n`;
 }
 
 function stripSuffix(toolSuffix: string, fileName: string): string {
@@ -51,12 +36,14 @@ export class AgentsCapability {
       directory: string;
       toolSuffix: string;
       format: "markdown" | "toml";
+      /** The host's own agent frontmatter, shared with its built distributions. */
+      frontmatter: AgentFrontmatter;
       userFileExt?: string;
+      /** How frontmatter strings are quoted; `double` for readers that keep single quotes. */
+      quote?: "single" | "double";
+      /** Writes the agent file when the host's format is not markdown frontmatter. */
+      serialize?: (frontmatter: Record<string, unknown>, body: string) => string;
       buildInstallPath?: (fileName: string) => string | null;
-      convertFrontmatter?: (
-        fm: Record<string, unknown>,
-        fileName?: string
-      ) => Record<string, unknown>;
     }
   ) {}
 
@@ -84,21 +71,12 @@ export class AgentsCapability {
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
-    if (this.params.convertFrontmatter) return this.params.convertFrontmatter(fm, fileName);
-    const name = agentNameFromFrontmatter(fm, fileName);
-    if (this.params.format === "toml") {
-      const result: Record<string, unknown> = { name, description: fm.description };
-      if (fm.model !== undefined) result.model = fm.model;
-      return result;
-    }
-    return { name, description: fm.description };
+    return this.params.frontmatter({ ...fm, name: agentNameFromFrontmatter(fm, fileName) });
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
-    if (this.params.format === "toml") {
-      return buildTomlContent(frontmatter, body);
-    }
-    return serializeFrontmatter(frontmatter, body);
+    if (this.params.serialize) return this.params.serialize(frontmatter, body);
+    return serializeFrontmatter(frontmatter, body, this.params.quote);
   }
 
   deserialize(content: string): { frontmatter: Record<string, unknown>; body: string } {

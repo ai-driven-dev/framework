@@ -8,13 +8,13 @@
 
 ## Process
 
-1. <Imperative step. Sub-bullet for a case or a loop back.>
-2. <Run the observable success check and handle failure.>
-3. <Name the next action file when the flow continues; omit at a terminal action.>
+1. <Imperative step. Sub-bullet for a case or a branch.>
+2. <Validate, fix, repeat until it passes, linking the check. Only when the action checks something.>
+3. <Read the next action file as a link; omit at a terminal action.>
 
 ## Output
 
-<MANDATORY. One line naming what is produced.>
+<MANDATORY. What exists when the action is finished.>
 
 ## Rules
 

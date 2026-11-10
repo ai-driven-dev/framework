@@ -1,20 +1,21 @@
 ---
 name: <skill-name>
-description: <what it produces>. Use when the user wants to <intents>. <Not for X when needed.>
+description: <One sentence: what it does, then when to use it, about 150 characters.>
 argument-hint: <what the user brings: their cases, or the artifact consumed>
+<OPTIONAL. The plan's accepted risk step, `disable-model-invocation: true` or a `hooks:` block. Omit otherwise.>
 ---
 
 # <Skill Name>
 
 ```mermaid
 flowchart LR
-  <the journey: each action node displays only its actions/NN-slug.md path; a back-edge per loop, an entry per case, a quoted label per condition, a terminal per outcome>
+  <one node per action file, labeled only with its actions/NN-slug.md path; an entry per case, a back-edge per loop, a quoted label per condition, a terminal per outcome>
 ```
 
 ## Transversal rules
 
-<Rules owned by no reference or single action, one per line.>
+<OPTIONAL. Rules owned by no reference or single action, one per line. Omit the section when none.>
 
 - **<Important opening words>** <rest of the rule>
 
-> Fill every `<...>` and delete this line. An angle bracket left in the written file is a bug.
+> Fill every `<...>` and delete this line. Remove `argument-hint` when no action has `## Input`. An angle bracket left in the written file is a bug.

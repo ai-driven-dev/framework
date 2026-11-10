@@ -10,11 +10,11 @@ Write the skill tree from the plan.
 ## Process
 
 1. Create the shape in [skill-tree.md](../references/skill-tree.md).
-2. Fill [skill-template.md](../assets/skill-template.md) against [skill-authoring.md](../references/skill-authoring.md), and strip the scaffold.
-3. Fill [action-template.md](../assets/action-template.md) per row against `skill-authoring.md`, placing its success check in the process and its constraints in the rules.
+2. Fill [skill-template.md](../assets/skill-template.md) per [fill-norm.md](../references/fill-norm.md), and strip the scaffold, adding the risk step to the frontmatter only when the plan records one.
+3. Fill [action-template.md](../assets/action-template.md) per row per `fill-norm.md`, placing its success check in the process and its constraints in the rules.
 4. Write once per confirmed target, using [tool-write.md](../references/tool-write.md).
-5. Check the tree against `skill-tree.md`, read back every written file against the contract, and remove remaining placeholders or scaffold instructions.
-6. Continue to [validate](04-validate.md).
+5. Check the tree against `skill-tree.md`, read back every written file against [skill-authoring.md](../references/skill-authoring.md), and remove remaining placeholders or scaffold instructions.
+6. Read [validate](04-validate.md).
 
 ## Output
 

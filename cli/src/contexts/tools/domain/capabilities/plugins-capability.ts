@@ -1,6 +1,6 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
-import type { HooksContentFormat } from "../hooks-format.js";
+import type { HooksContentFormat, ProjectHooksFormat } from "../hooks-format.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 
@@ -22,6 +22,15 @@ export interface NativeActivation {
    * Claude's *local* scope — the registration names an absolute path, wrong for everyone
    * else in the shared project settings. Omit where the registry has no scopes. */
   scopeArgs?: Readonly<Record<"project" | "user", readonly string[]>>;
+  /** Scope arguments `plugin marketplace remove` takes at user scope instead of
+   * `scopeArgs.user` when no project uses the marketplace, run from the home directory.
+   * Measured on Claude 2.1.318: `remove --scope user` drops the settings declaration and keeps
+   * the registration and a project's install; a remove naming no scope deletes the registration
+   * and uninstalls that project's plugins too, with their saved options. */
+  userRemoveArgs?: readonly string[];
+  /** The host keeps an uninstalled plugin's ref, disabled, so a disabled ref cannot be told
+   * from one the person disabled and is not taken for a plugin in use. */
+  uninstallLeavesRefDisabled?: boolean;
   /** Arguments that make `plugin marketplace remove` succeed with plugins installed from it.
    * Permits reclaiming a name, so declare it only alongside `sourceCheckVerb`. */
   forceRemoveArgs?: readonly string[];
@@ -63,7 +72,57 @@ export interface NativeActivation {
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
 
-export interface NativePluginsParams {
+/** A hook lands in the plugin's own dir, or merged into the project hooks file measured to fire. */
+export interface ProjectHooksDelivery {
+  hooksDestination?: "plugin" | "project";
+  projectHooksRelativePath?: string;
+  projectHooksFormat?: ProjectHooksFormat;
+}
+
+/**
+ * What a machine-scope install (`setup --global`) copies out of this tool's built tree into
+ * the user's own configuration directory, for a host that loads those files from there rather
+ * than from a plugin it enables itself: OpenCode's and Kilo's skills and agents, Codex's agents.
+ */
+export interface GlobalFiles {
+  /** The user configuration directory the files land in, given a homedir. */
+  readonly dir: (homedir: string) => string;
+  /** A built-tree path (relative to the tool's built dir) to its path under `dir` for one
+   * plugin, or `null` when that file is not this plugin's or is not installed machine-wide. */
+  readonly map: (builtPath: string, plugin: GlobalPlugin) => string | null;
+}
+
+/** The plugin a global file is read for: its name, and the agents its source ships, by base
+ * name. A flat build prefixes an agent with its plugin, so a prefix alone cannot tell
+ * `aidd-dev`'s agents from those of a plugin named `aidd-dev-tools`. */
+export interface GlobalPlugin {
+  readonly name: string;
+  readonly agents: ReadonlySet<string>;
+}
+
+/**
+ * The global-file mapping of a flat tool whose user configuration directory takes the same
+ * `skills/` and `agents/` its project directory does (OpenCode, Kilo): a plugin's skills and
+ * agents under `directory` keep their path below it. Hooks, commands and MCP entries stay
+ * project-scoped.
+ */
+export function flatGlobalFilePath(directory: string): GlobalFiles["map"] {
+  return (builtPath, plugin) => {
+    if (!builtPath.startsWith(directory)) return null;
+    const relative = builtPath.slice(directory.length);
+    if (relative.startsWith(`skills/${plugin.name}/`)) return relative;
+    const agent = /^agents\/(.+)\.md$/.exec(relative)?.[1];
+    if (agent === undefined || !agent.startsWith(`${plugin.name}-`)) return null;
+    return plugin.agents.has(agent.slice(plugin.name.length + 1)) ? relative : null;
+  };
+}
+
+/** Shared by every mode: where a tool's machine-scope files go, when it has any. */
+interface GlobalFilesParams {
+  globalFiles?: GlobalFiles;
+}
+
+export interface NativePluginsParams extends ProjectHooksDelivery {
   mode: "native";
   pluginsDir: string;
   /** Set to `null` to suppress writing a plugin manifest file into the plugin directory. */
@@ -71,13 +130,6 @@ export interface NativePluginsParams {
   mcpRelativePath?: string;
   hooksRelativePath?: string;
   hooksContentFormat?: HooksContentFormat;
-  /** Where a delivered hook actually lands: under this capability's own plugin directory
-   * (default), or merged into the project's own hooks file — the destination measured to
-   * actually fire. Declared per capability, never guessed per tool. */
-  hooksDestination?: "plugin" | "project";
-  /** Where the project-scope hooks file merges into, relative to the project root. Required
-   * exactly when `hooksDestination` is `"project"` — nothing reads it otherwise. */
-  projectHooksRelativePath?: string;
   acceptsMcp?: boolean;
   /** The variable this tool expands to the installed plugin's directory, as written in a
    * hook or MCP command. Absent means nothing is substituted. */
@@ -113,7 +165,7 @@ export interface FlatHooksBridge {
 }
 
 export type FlatHooksSupport =
-  | {
+  | ({
       acceptsHooks: true;
       flatHooksDir: string;
       /**
@@ -124,12 +176,16 @@ export type FlatHooksSupport =
       /** See {@link FlatHooksBridge}. Omit when this loader triggers a plugin's hooks some
        * other way. */
       flatHooksBridge?: FlatHooksBridge;
-    }
+    } & ProjectHooksDelivery)
   | { acceptsHooks: false; hooksUnsupportedReason: string };
+
+/** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
+export type FlatSkillLayout = "nested" | "single-level";
 
 export type FlatPluginsParams = {
   mode: "flat";
   flatNamespacePrefix: string;
+  flatSkillLayout?: FlatSkillLayout;
 } & FlatHooksSupport;
 
 export interface UnsupportedPluginsParams {
@@ -149,10 +205,12 @@ export type HooksSupport =
   | { acceptsHooks: true; hooksTrustNotice?: string }
   | { acceptsHooks: false; hooksUnsupportedReason: string };
 
-type PluginsParams =
+type PluginsParams = (
   | (NativePluginsParams & HooksSupport)
   | FlatPluginsParams
-  | UnsupportedPluginsParams;
+  | UnsupportedPluginsParams
+) &
+  GlobalFilesParams;
 
 export class PluginsCapability {
   readonly mode: PluginsMode;
@@ -173,6 +231,7 @@ export class PluginsCapability {
   readonly hooksDestination: "plugin" | "project";
   /** Relative to the project root, or `null` when `hooksDestination` is `"plugin"`. */
   readonly projectHooksRelativePath: string | null;
+  readonly projectHooksFormat: ProjectHooksFormat | null;
   /** Where a flat-mode hook lands, relative to the project root, or `null` when this
    * capability accepts no hooks. */
   readonly flatHooksDir: string | null;
@@ -180,18 +239,23 @@ export class PluginsCapability {
   readonly flatHooksLoaderEntry: FlatHooksLoaderEntry | null;
   /** See {@link FlatHooksBridge}, or `null` when this capability declares none. */
   readonly flatHooksBridge: FlatHooksBridge | null;
+  readonly flatSkillLayout: FlatSkillLayout;
   readonly marketplaceSettings: MarketplaceSettings | null;
   readonly nativeActivation: NativeActivation | null;
   readonly translationMode: PluginTranslationMode | null;
   readonly installScope: "project" | "user";
+  /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
+  readonly globalFiles: GlobalFiles | null;
 
   private readonly _userPluginsDir?: (homedir: string) => string;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
+    this.globalFiles = params.globalFiles ?? null;
     this.translationMode = PluginsCapability.resolveTranslationMode(params);
     this.installScope = PluginsCapability.resolveInstallScope(params);
     PluginsCapability.validateUserScope(params);
+    PluginsCapability.validateProjectHooks(params);
     if (params.mode === "native") {
       this.pluginsDir = params.pluginsDir;
       this.pluginManifestRelativePath = params.pluginManifestRelativePath;
@@ -206,9 +270,11 @@ export class PluginsCapability {
       this.hooksContentFormat = params.hooksContentFormat ?? DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = params.hooksDestination ?? "plugin";
       this.projectHooksRelativePath = params.projectHooksRelativePath ?? null;
+      this.projectHooksFormat = params.projectHooksFormat ?? null;
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
+      this.flatSkillLayout = "nested";
       this.marketplaceSettings = params.marketplaceSettings ?? null;
       this.nativeActivation = params.nativeActivation ?? null;
       this._userPluginsDir = params.userPluginsDir;
@@ -223,14 +289,20 @@ export class PluginsCapability {
         ? (params.flatHooksLoaderEntry ?? null)
         : null;
       this.flatHooksBridge = params.acceptsHooks ? (params.flatHooksBridge ?? null) : null;
+      this.flatSkillLayout = params.flatSkillLayout ?? "nested";
       this.hooksTrustNotice = null;
       this.pluginRootToken = null;
       this.acceptsMcp = false;
       this.mcpRelativePath = DEFAULT_MCP_PATH;
       this.hooksRelativePath = DEFAULT_HOOKS_PATH;
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
-      this.hooksDestination = "plugin";
-      this.projectHooksRelativePath = null;
+      this.hooksDestination = params.acceptsHooks
+        ? (params.hooksDestination ?? "plugin")
+        : "plugin";
+      this.projectHooksRelativePath = params.acceptsHooks
+        ? (params.projectHooksRelativePath ?? null)
+        : null;
+      this.projectHooksFormat = params.acceptsHooks ? (params.projectHooksFormat ?? null) : null;
       this.marketplaceSettings = null;
       this.nativeActivation = null;
       this._userPluginsDir = undefined;
@@ -243,6 +315,7 @@ export class PluginsCapability {
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
       this.flatHooksBridge = null;
+      this.flatSkillLayout = "nested";
       this.hooksTrustNotice = null;
       this.pluginRootToken = null;
       this.acceptsMcp = false;
@@ -251,6 +324,7 @@ export class PluginsCapability {
       this.hooksContentFormat = DEFAULT_HOOKS_FORMAT;
       this.hooksDestination = "plugin";
       this.projectHooksRelativePath = null;
+      this.projectHooksFormat = null;
       this.marketplaceSettings = null;
       this.nativeActivation = null;
       this._userPluginsDir = undefined;
@@ -268,7 +342,7 @@ export class PluginsCapability {
    * independently of this capability's own `installScope`: a caller resolving a *recorded*
    * scope still needs the directory that scope means. */
   userPluginsBaseDir(homedir: string): string | null {
-    return this._userPluginsDir?.(homedir) ?? null;
+    return this._userPluginsDir?.(homedir) ?? this.globalFiles?.dir(homedir) ?? null;
   }
 
   pluginOutputDir(pluginName: string): string | null {
@@ -294,10 +368,18 @@ export class PluginsCapability {
         "installScope 'user' requires a userPluginsDir resolver function."
       );
     }
-    if (params.hooksDestination === "project" && params.projectHooksRelativePath === undefined) {
+  }
+
+  private static validateProjectHooks(params: PluginsParams): void {
+    if (params.mode === "unsupported" || !params.acceptsHooks) return;
+    if (params.hooksDestination !== "project") return;
+    if (params.projectHooksRelativePath === undefined) {
       throw new CapabilityConfigError(
         "hooksDestination 'project' requires a projectHooksRelativePath."
       );
+    }
+    if (params.projectHooksFormat === undefined) {
+      throw new CapabilityConfigError("hooksDestination 'project' requires a projectHooksFormat.");
     }
   }
 }

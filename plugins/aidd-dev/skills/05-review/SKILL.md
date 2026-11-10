@@ -1,36 +1,28 @@
 ---
 name: 05-review
-description: Reviews a change or a diff and says whether it is ready to ship, naming every problem with its fix. Use when the user wants a change checked before it ships. Not for fixing what the review finds, and not for auditing a whole codebase.
-argument-hint: diff | plan
+description: Reviews a diff read-only into one verdict naming each defect and its fix, when the user wants a change checked before shipping.
+argument-hint: work | plan
 ---
 
 # Review
 
 ```mermaid
 flowchart LR
-  all([all axes]) --> prepare
-  one([one axis named]) --> prepare
-  prepare --> review-code & review-functional & review-relevancy --> finalize
-  finalize --> approve([approve])
-  finalize --> changes([changes-requested])
-  finalize --> blocked([blocked])
-  changes -.->|a later run| all
-  blocked -.->|a later run| all
+  work([work]) --> prepare["actions/01-prepare.md"]
+  plan([plan]) --> prepare
+  prepare -->|"empty diff"| stop((stop))
+  prepare -->|"axes named without a plan"| axes((user names a plan)) --> prepare
+  prepare -->|"work and axes settled"| review["actions/02-review.md"]
+  review --> conclude["actions/03-conclude.md"]
+  conclude -->|"no task folder"| keep((user chooses to keep the report)) --> conclude
+  conclude -->|"a critical finding"| blocked([blocked])
+  conclude -->|"a major finding or unchecked criterion"| changes([changes-requested])
+  conclude -->|"otherwise"| approve([approve])
 ```
-
-## Actions
-
-Run the flow above, reading only the next action file.
-
-| Action | Does |
-| --- | --- |
-| prepare | resolve the diff and open the round |
-| review-code | grade the changed lines on clean code |
-| review-functional | trace the diff against the plan's criteria |
-| review-relevancy | judge whether the change belongs |
-| finalize | judge the round and check its shape |
 
 ## Transversal rules
 
-- Ask which entry the caller wants when the request does not say.
-- Review statically: never run the app.
+- **Speak only to ask** or to give the final reply; otherwise call tools.
+- **Read only:** leave the app and its checks unrun.
+- **Change nothing but the report:** no code, no test, no config.
+- **Judge this work alone,** and no earlier round.

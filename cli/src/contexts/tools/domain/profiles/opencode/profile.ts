@@ -23,6 +23,7 @@ import {
 } from "../../formats/command.js";
 import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
+import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
 import {
   makeOpencodeHooksBridgePath,
@@ -32,6 +33,7 @@ import {
   OPENCODE_FLAT_HOOKS_DIR,
   OPENCODE_HOOKS_DIR,
   OPENCODE_PLUGIN_ENTRY_BASENAME,
+  opencodeGlobalFilePath,
 } from "./opencode-paths.js";
 
 const DIRECTORY = OPENCODE_DIRECTORY;
@@ -58,7 +60,7 @@ export const opencode: AiTool<
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+      frontmatter: opencodeAgentFrontmatter,
     }),
     skills: new SkillsCapability({
       directory: DIRECTORY,
@@ -105,6 +107,10 @@ export const opencode: AiTool<
     plugins: new PluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
+      globalFiles: {
+        dir: (homedir) => join(homedir, ".config", "opencode"),
+        map: opencodeGlobalFilePath,
+      },
       acceptsHooks: true,
       flatHooksDir: OPENCODE_HOOKS_DIR,
       flatHooksLoaderEntry: {

@@ -20,9 +20,11 @@ import {
   convertCommandFrontmatter,
   stripToolSuffix,
 } from "../../formats/command.js";
+import { cursorProjectHooksFormat } from "../../formats/cursor-hooks-project-merge.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { registerTool } from "../../registry.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
+import { cursorAgentFrontmatter } from "./cursor-agent.js";
 
 const DIRECTORY = ".cursor/";
 const TOOL_SUFFIX = ".cursor.md";
@@ -52,6 +54,9 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         format: "markdown",
+        frontmatter: cursorAgentFrontmatter,
+        // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
+        quote: "double",
       }),
       skills: new SkillsCapability({
         directory: DIRECTORY,
@@ -113,6 +118,7 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         hooksContentFormat: "flat",
         hooksDestination: "project",
         projectHooksRelativePath: ".cursor/hooks.json",
+        projectHooksFormat: cursorProjectHooksFormat,
         acceptsMcp: true,
         mcpRelativePath: "mcp.json",
         installScope: "user",
