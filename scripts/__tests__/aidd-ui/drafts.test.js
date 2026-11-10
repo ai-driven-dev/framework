@@ -255,10 +255,91 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(states, ["", "default", "hover"]);
     });
 
+    const order = (pattern) => [...page().matchAll(pattern)].map((match) => match[1]);
+    const PICK = /<button type="button" class="pick" data-name="(\w+)"/g;
+    const SECTION = /<section class="variant" data-name="(\w+)"/g;
+    const PANEL = /<section class="panel" data-name="(\w+)"/g;
+    const tagsOf = (pattern) => page().match(pattern) ?? [];
+    const panelBodies = () => page().split('<section class="panel"').slice(1).map((chunk) => chunk.split("</section>")[0]);
+
     it("lists the variants in the order of variants.md", () => {
       writeSet("brand", { rows: [ROWS[1], ROWS[0], ROWS[2]] });
       compare();
-      assert.deepEqual([...page().matchAll(/<section class="variant" data-name="(\w+)"/g)].map((match) => match[1]), ["b", "a", "c"]);
+      assert.deepEqual(order(PICK), ["b", "a", "c"]);
+      assert.deepEqual(order(SECTION), ["b", "a", "c"]);
+    });
+
+    it("has a variants list, a canvas, an inspector and a progress reading 0/N decided", () => {
+      writeSet("brand");
+      compare();
+      assert.match(page(), /<nav aria-label="Variants">/);
+      assert.match(page(), /<main id="canvas">/);
+      assert.match(page(), /<aside id="inspector">/);
+      assert.match(page(), /<span id="progress"[^>]*>0\/3 decided<\/span>/);
+    });
+
+    it("has one pick, one canvas section and one panel per variant, in order", () => {
+      writeSet("brand", { rows: [ROWS[1], ROWS[0], ROWS[2]] });
+      compare();
+      for (const pattern of [PICK, SECTION, PANEL]) assert.deepEqual(order(pattern), ["b", "a", "c"]);
+    });
+
+    it("shows only the first variant: its section and panel are not hidden, its pick is current", () => {
+      writeSet("brand");
+      compare();
+      for (const pattern of [/<section class="variant"[^>]*>/g, /<section class="panel"[^>]*>/g]) assert.deepEqual(tagsOf(pattern).map((tag) => /\shidden/.test(tag)), [false, true, true]);
+      assert.deepEqual(tagsOf(/<button type="button" class="pick"[^>]*>/g).map((tag) => tag.includes('aria-current="true"')), [true, false, false]);
+    });
+
+    it("gives each panel three unpressed verdict buttons and a comment", () => {
+      writeSet("brand");
+      compare();
+      assert.equal(panelBodies().length, ROWS.length);
+      for (const body of panelBodies()) {
+        assert.deepEqual([...body.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)" aria-pressed="false">/g)].map((match) => match[1]), ["keep", "revise", "discard"]);
+        assert.match(body, /<textarea class="comment" autocomplete="off"/); // a browser restoring the text would outlive a changed set
+      }
+    });
+
+    it("keeps the feedback in a closed Show JSON disclosure and Copy a plain button", () => {
+      writeSet("brand");
+      compare();
+      assert.match(page(), /<details>\s*<summary>Show JSON<\/summary>\s*<textarea id="feedback"/);
+      assert.match(page(), /<button type="button" id="copy">/);
+    });
+
+    it("redefines its chrome colours under the dark scheme", () => {
+      writeSet("brand");
+      compare();
+      assert.match(page(), /@media \(prefers-color-scheme: dark\) \{[^}]*--[\w-]+:/);
+    });
+
+    const keyOf = () => page().match(/"aidd-ui:brand:([0-9a-f]+)"/)?.[1];
+
+    it("stores the review under a key of the set and a hex fingerprint", () => {
+      writeSet("brand");
+      compare();
+      assert.match(keyOf() ?? "", /^[0-9a-f]{64}$/);
+    });
+
+    it("writes the same fingerprint on two runs", () => {
+      writeSet("brand");
+      compare();
+      const first = keyOf();
+      assert.ok(first);
+      compare();
+      assert.equal(keyOf(), first);
+    });
+
+    it("writes another fingerprint once a variant file's text changes", () => {
+      writeSet("brand");
+      compare();
+      const first = keyOf();
+      assert.ok(first);
+      put(`${DRAFTS}/brand/b/preview.html`, "<p>changed</p>\n");
+      compare();
+      assert.ok(keyOf());
+      assert.notEqual(keyOf(), first);
     });
 
     it("is the same bytes on a second run", () => {
@@ -269,26 +350,28 @@ describe("aidd-ui drafts", () => {
       assert.equal(page(), first);
     });
 
-    it("builds the feedback of a rated, discarded and commented state, a missing rating being null", () => {
+    it("builds the feedback of a decided and an undecided variant, trimming the comment", () => {
       const state = {
         set: "brand",
         variants: [
-          { name: "a", rating: "4", discarded: false, comment: "  calm \n" },
-          { name: "b", rating: "", discarded: true, comment: "" },
+          { name: "a", verdict: "keep", comment: "  calm \n" },
+          { name: "b", verdict: "", comment: "" },
+          { name: "c", verdict: "discard", comment: "loud" },
         ],
       };
       assert.deepEqual(feedbackOf(state), {
         set: "brand",
         variants: [
-          { name: "a", rating: 4, discarded: false, comment: "calm" },
-          { name: "b", rating: null, discarded: true, comment: "" },
+          { name: "a", verdict: "keep", comment: "calm" },
+          { name: "b", verdict: null, comment: "" },
+          { name: "c", verdict: "discard", comment: "loud" },
         ],
       });
     });
 
     it("copies the feedback as 2-space JSON in a json fence", () => {
-      const state = { set: "brand", variants: [{ name: "a", rating: "4", discarded: false, comment: "calm" }] };
-      assert.equal(copiedOf(state), '```json\n{\n  "set": "brand",\n  "variants": [\n    {\n      "name": "a",\n      "rating": 4,\n      "discarded": false,\n      "comment": "calm"\n    }\n  ]\n}\n```\n');
+      const state = { set: "brand", variants: [{ name: "a", verdict: "revise", comment: "calm" }, { name: "b", verdict: "", comment: "" }] };
+      assert.equal(copiedOf(state), '```json\n{\n  "set": "brand",\n  "variants": [\n    {\n      "name": "a",\n      "verdict": "revise",\n      "comment": "calm"\n    },\n    {\n      "name": "b",\n      "verdict": null,\n      "comment": ""\n    }\n  ]\n}\n```\n');
     });
 
     it("carries feedbackOf and copiedOf as the module has them", () => {
@@ -303,7 +386,7 @@ describe("aidd-ui drafts", () => {
       writeSet("brand");
       compare();
       assert.doesNotMatch(page(), /showSaveFilePicker|id="save"/);
-      assert.match(page(), /<button id="copy">/);
+      assert.match(page(), /<button type="button" id="copy">/);
       assert.match(page(), /<textarea id="feedback" readonly/);
     });
 

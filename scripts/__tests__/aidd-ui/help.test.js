@@ -122,6 +122,14 @@ describe("aidd-ui engine help", () => {
     for (const [name, entry] of Object.entries(HELP)) assert.deepEqual(entry.output.filter((line) => /^Refuses/.test(line)), [], name);
   });
 
+  it("names the verdict of a compare entry, and no rating", () => {
+    const { output, effects } = HELP.compare;
+    assert.ok(output.includes('An entry is {"name", "verdict", "comment"}.'));
+    assert.ok(output.includes('A verdict is "keep", "revise", "discard", or null if undecided.'));
+    assert.ok(effects.includes("The page remembers the review across reloads, until the set changes."));
+    assert.doesNotMatch(engine("help", "compare").stdout, /rating|discarded/);
+  });
+
   it("shows the grouped line of the hook alone", () => {
     for (const name of Object.keys(HELP)) assert.equal(engine("help", name).stdout.includes(GROUPED_LINE), name === "hook", name);
   });
