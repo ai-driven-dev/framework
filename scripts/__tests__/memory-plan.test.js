@@ -15,6 +15,9 @@ const BANK = {
   "codebase-map.md": "# Codebase Map\n\n## Packages\n\n- Three workspace packages in total.\n\n## Entry points\n\n- The server and cron doors.\n- `legacy/` holds the old door.\n",
 };
 
+// Every always file present but testing.md, which the sheet writes.
+const FULL = { ...BANK, ...Object.fromEntries(["project-brief", "coding-assertions", "vcs", "ecosystem"].map((name) => [`${name}.md`, `# ${name}\n`])) };
+
 const REFRESH = [
   "# Facts: refresh",
   "",
@@ -107,7 +110,7 @@ test("plan: prints the sheet as the person reads it, in fixed order and numberin
     assert.equal(run.stderr, "");
     assert.equal(run.status, 0);
     assert.equal(run.stdout, PLAN);
-  });
+  }, REFRESH, FULL);
 });
 
 test("plan: a setup has no Since line, an empty section is left out, and no question means the example names only a number", () => {
@@ -119,6 +122,17 @@ test("plan: a setup has no Since line, an empty section is left out, and no ques
     assert.match(out, /^ {2}\[ \] claude {2}\[ \] codex/mu, "no tool given ticks none");
     assert.match(out, /^Does this look right\? Say ok, or what to change, for example "not 1"\.$/mu);
   }, setup, {});
+});
+
+// An always file is written whatever the sheet holds, so the plan names it, with no number to decline.
+test("plan: an absent always file is listed under Will write with no number, an accepted name counts as present", () => {
+  withProject((root) => {
+    const out = engine(root, "plan", SHEET).stdout;
+    for (const name of ["project-brief.md", "vcs.md"]) assert.match(out, new RegExp(`^ {2}${name.replace(".", "\\.")} {3}from its template, always written$`, "mu"), name);
+    assert.doesNotMatch(out, /^ {2}(?:architecture|codebase-map|testing)\.md {3}from its template/mu, "a present file or a sheet item is listed again");
+    assert.doesNotMatch(out, /ecosystem\.md/u, "an accepted name does not count as the always file");
+    assert.deepEqual([...out.matchAll(/^ {2}(\d+)\. /gmu)].map((match) => match[1]), ["1", "2", "3", "4", "5"], "an always file took a number");
+  }, REFRESH, { ...BANK, "coding-assertions.md": "# Coding Assertions\n", "integration.md": "# Integration\n" });
 });
 
 test("plan: a sheet that breaks the grammar or quotes no whole line of the bank prints the problems and no plan", () => {
@@ -200,5 +214,5 @@ test("plan and answer share one numbering: not N reaches exactly the sheet lines
       const declined = ["R1", "R2", "R3", "D1", "D2", "D3"].filter((id) => answerOf(text, id) === "no");
       assert.deepEqual(declined.sort(), shownBy[n].sort(), `item ${n}`);
     }
-  });
+  }, REFRESH, FULL);
 });

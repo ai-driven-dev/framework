@@ -3,7 +3,7 @@
  * The plan the person reads and the answer that marks the sheet, from one numbering. Items run in
  * a fixed order: a new file (one item for all its lines), lines added to an existing file (one item
  * per file and section), then each `D` line that replaces, moves or removes. A question keeps its
- * sheet id and is never an item. `answer` reads only a closed set of replies and writes only the
+ * sheet id and is never an item; an absent always file is listed with no number, as nothing declines it. `answer` reads only a closed set of replies and writes only the
  * sheet's answer field: the bank is never written here. Node built-ins only.
  */
 
@@ -118,16 +118,18 @@ function itemLines(item, root) {
 const TITLES = { write: "Will write", add: "Will add", change: "Will change", delete: "Will delete" };
 
 /** The plan as the person reads it: plain text, sections in order, an empty one left out. */
-function renderPlan(sheetFile, root, tools, ticked) {
+function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const text = fs.readFileSync(sheetFile, "utf8");
   const items = itemsOf(text, root);
   const questions = entriesOf(text).filter(({ id }) => id[0] === "Q");
   const blocks = [["Memory plan"]];
   const since = text.match(SINCE);
   if (since !== null) blocks.push([`Changes since the last memory update (${since[1]}, ${since[2]}): ${since[3]}, ${since[4]}`]);
+  const unlisted = always.filter((name) => !items.some((item) => item.kind === "write" && item.file === name));
   for (const kind of ORDER) {
-    const own = items.filter((item) => item.kind === kind);
-    if (own.length > 0) blocks.push([TITLES[kind], ...own.flatMap((item) => itemLines(item, root))]);
+    const own = items.filter((item) => item.kind === kind).flatMap((item) => itemLines(item, root));
+    if (kind === "write") own.push(...unlisted.map((name) => `  ${name}   from its template, always written`));
+    if (own.length > 0) blocks.push([TITLES[kind], ...own]);
   }
   if (questions.length > 0) blocks.push(["Questions", ...questions.map(({ id, fact }) => `  ${id}  ${fact}`)]);
   blocks.push(["Tools to wire", `  ${tools.map((tool) => `[${ticked.includes(tool) ? "x" : " "}] ${tool}`).join("  ")}`]);

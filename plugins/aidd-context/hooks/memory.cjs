@@ -230,14 +230,19 @@ function missing(file, excerpt, fix) {
   return { file, rule: "missing", severity: ERROR, message: excerpt, excerpt, fix };
 }
 
+/** The always-written files the bank lacks, an accepted name counting as the file. */
+function absentAlways(root) {
+  const present = new Set(rootFiles(root));
+  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => present.has(`${MEMORY_DIR}/${held}`));
+  return ALWAYS_WRITTEN.filter((name) => !holds(name));
+}
+
 /** The bank's absence, or the always-written files it lacks, as errors. */
 function missingFindings(root) {
   if (!fs.existsSync(path.join(root, MEMORY_DIR))) {
     return [missing(MEMORY_DIR, "no memory bank under the root", "write it with the project memory skill")];
   }
-  const present = new Set(rootFiles(root));
-  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => present.has(`${MEMORY_DIR}/${held}`));
-  const absent = ALWAYS_WRITTEN.filter((name) => !holds(name));
+  const absent = absentAlways(root);
   return absent.length === 0 ? [] : [missing(MEMORY_DIR, absent.join(", "), "write each from its template")];
 }
 
@@ -807,7 +812,7 @@ function main(argv) {
       const ticked = flag < 0 ? [] : (rest[flag + 1] ?? "").split(",").map((tool) => tool.trim().toLowerCase()).filter(Boolean);
       const unknown = ticked.find((tool) => !(tool in TOOL_FILES));
       if (unknown !== undefined) throw new UnknownToolError(`unknown tool "${unknown}"`);
-      process.stdout.write(plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked));
+      process.stdout.write(plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked, absentAlways(root)));
       return EXIT_OK;
     } catch (error) {
       process.stderr.write(`memory: ${error instanceof plan.ReplyError || error instanceof UnknownToolError ? error.message : `${sheetFile} not read (${error.code ?? error.message})`}\n`);
