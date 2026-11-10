@@ -152,7 +152,7 @@ The page reads like a current design tool: quiet chrome, the work in the middle,
 
 ### Chrome and work
 
-Benchmarks: Figma frames on a neutral canvas; Storybook's Canvas and Docs tabs; Chromatic's 1-up and 2-up review with accept or deny; Linear's `?` shortcut sheet. The chrome stays neutral so the work carries all the colour.
+Benchmarks: Figma frames on a neutral canvas, its zoom to fit and its hide UI; Polypane's viewports side by side; Kaleidoscope's side by side or over and under; Storybook's Canvas and Docs tabs; Chromatic's 1-up and 2-up review with accept or deny; Linear's `?` shortcut sheet. The chrome stays neutral so the work carries all the colour.
 
 | # | Statement |
 | --- | --- |
@@ -167,6 +167,9 @@ Benchmarks: Figma frames on a neutral canvas; Storybook's Canvas and Docs tabs; 
 | W9 | When every variant has a verdict, the progress bar turns green and a hint beside it reads `Copy the feedback into the chat.` `#progress` still reads `N/N decided`. |
 | W10 | A screen renders at a real viewport, then scales down to fit its frame, like a design tool's zoom. `Desktop` is 1280 by 800, `Mobile` 390 by 844. The toolbar holds `Desktop` and `Mobile`; Desktop by default, remembered. The frame shows the zoom as a percentage in its title bar. |
 | W11 | The inspector is 18rem wide, so the canvas gets the room. |
+| W12 | A frame fits the canvas in both width and height: no scroll. Never above 100%, the real size. Frames sit centred in the canvas. Like Figma's zoom to fit. |
+| W13 | `2 up` sets the two frames side by side or stacked, whichever shows them larger. Wide screens stack, tall ones sit side by side. |
+| W14 | `Focus` hides the variant list and the inspector, so the canvas takes the window. A toolbar button, showing its `\` key cap, and the key toggle it; remembered. Verdict keys still act; each title bar shows the verdict. Like Figma's hide UI. |
 
 ## Memory across reload
 
@@ -189,6 +192,7 @@ Shortcuts act on the selected variant.
 | `K` `R` `D` | sets keep, revise or discard; the active verdict's key clears it |
 | `←` `→` | selects the previous or next variant, shown alone; nothing at either end |
 | `C` | copies, as the button does, label included |
+| `\` | toggles focus |
 
 | # | Statement |
 | --- | --- |
