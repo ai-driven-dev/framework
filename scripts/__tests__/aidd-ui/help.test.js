@@ -11,6 +11,13 @@ const { HELP, COUNT_LINE, ERROR_LINE, WARNING_LINE, GROUPED_LINE } = require(pat
 
 const MAX_WORDS = 12;
 const TASK = "aidd_docs/tasks/help";
+/** A set of variants `id` holding one folder per row, `[name, intent, tone]`. */
+const draft = (dir, id, rows) => {
+  const table = ["| Variant | Intent | Tone |", "| --- | --- | --- |", ...rows.map(([name, intent, tone]) => `| ${name} | ${intent} | ${tone} |`)];
+  put(dir, `${UI}/drafts/${id}/variants.md`, `${table.join("\n")}\n`);
+  for (const [name, , tone] of rows) put(dir, `${UI}/drafts/${id}/${name}/brand.md`, `${tone}\n`);
+};
+const PAIR = [["a", "calm", "calm"], ["b", "bold", "bold"]];
 /** The regular expression a printed line must match to have the shape `help` shows. */
 const matching = (shape) =>
   new RegExp(
@@ -42,15 +49,22 @@ describe("aidd-ui engine help", () => {
 
   it("declares the exit codes each command returns, and no other", () => {
     const withoutTokens = () => fs.rmSync(path.join(tmp, UI, "tokens.json"));
+    const empty = makeTmp("aidd-ui-help-empty-");
     // for each command, the arguments that give each code
     const runs = {
-      validate: { 0: ["validate", tmp], 1: () => (withoutTokens(), ["validate", tmp]) },
-      tokens: { 0: ["tokens", tmp], 1: () => (withoutTokens(), ["tokens", tmp]) },
+      validate: { 0: ["validate", tmp], 1: () => (withoutTokens(), ["validate", tmp]), 2: ["validate", empty] },
+      tokens: { 0: ["tokens", tmp], 1: () => (withoutTokens(), ["tokens", tmp]), 2: ["tokens", empty] },
       hook: { 0: ["hook"] },
       impact: { 0: ["impact", "color.action.default", "--root", tmp], 2: ["impact", "no.such.token", "--root", tmp] },
       extract: { 0: ["extract", "--force", "--root", tmp], 2: ["extract", "--root", tmp] },
       bump: { 0: ["bump", "--task", TASK, "--change", "c", "color.action.default", "--root", tmp], 2: ["bump", "--root", tmp] },
       publish: { 0: () => (engine("bump", "--task", TASK, "--change", "c", "color.action.default", "--root", tmp), ["publish", "--root", tmp]), 2: ["publish", "--root", tmp] },
+      compare: {
+        0: () => (draft(tmp, "ok", PAIR), ["compare", "ok", "--root", tmp]),
+        1: () => (draft(tmp, "one", PAIR.slice(0, 1)), ["compare", "one", "--root", tmp]),
+        2: ["compare", "none", "--root", tmp],
+      },
+      keep: { 0: () => (draft(tmp, "ok", PAIR), ["keep", "ok", "a", "--root", tmp]), 2: ["keep", "none", "a", "--root", tmp] },
       help: { 0: ["help", "validate"], 2: ["help", "nothing"] },
     };
     assert.deepEqual(Object.keys(runs).sort(), Object.keys(HELP).sort());
@@ -64,6 +78,7 @@ describe("aidd-ui engine help", () => {
       assert.deepEqual(seen, Object.fromEntries(Object.keys(byCode).map((code) => [code, Number(code)])), name);
       assert.deepEqual(Object.keys(byCode).map(Number).sort(), declared, name);
     }
+    removeTmp(empty);
   });
 
   it("shows the count line, the error line and the warning line as validate prints them", () => {

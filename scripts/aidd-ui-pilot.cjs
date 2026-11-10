@@ -87,7 +87,7 @@ const OWNED = {
 // What the engine writes for each skill's step. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
 const ENGINE_FILES = {
   "01-journeys": ["history.md"],
-  "02-brand": [],
+  "02-brand": ["drafts/.gitignore"],
   "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
   "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
 };
@@ -162,7 +162,7 @@ const REQUESTS = {
     journeys:
       "A breathing-exercise app, web and mobile, built from nothing: no code, no design system yet. Persona: Lea, 34, an office worker new to breathwork, who wants to calm down in two minutes between meetings. Journeys: her first guided session, from opening the app to finishing it; and setting a daily reminder.",
     brand:
-      'Lay the design system of this breathing-exercise app from scratch: no UI code exists. Its journeys and wireframes are already in aidd_docs/ui/. Brand: "Breath", calm, soft, reassuring; for Lea, 34, an office worker new to breathwork who wants to calm down in two minutes between meetings; light theme only; English.',
+      'Lay the design system of this breathing-exercise app from scratch: no UI code exists. Its journeys and wireframes are already in aidd_docs/ui/. Propose three directions for it, compare them and keep the one that fits. Brand: "Breath", calm, soft, reassuring; for Lea, 34, an office worker new to breathwork who wants to calm down in two minutes between meetings; light theme only; English.',
     foundations: "Write the tokens, for web and mobile.",
     components: "Write the components the wireframes expect.",
   },

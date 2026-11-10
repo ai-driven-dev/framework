@@ -14,8 +14,10 @@
 | prepare 5, what a change reaches | `node <engine> impact <id>…` |
 | write 2, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>` |
 | write 2, raise a removal | `node <engine> bump --task <task folder> --removed <ids>`, in place of `--change` |
-| write 4, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
-| write 5, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
+| write 3, compare the set | `node <engine> compare <set>` |
+| write 3, keep the chosen variant | `node <engine> keep <set> <variant>` |
+| write 5, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
+| write 6, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
 | conclude 1 and 4, validate | `node <engine> validate` |
 | conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
 

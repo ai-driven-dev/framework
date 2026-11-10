@@ -20,7 +20,7 @@ const SAFE_SESSION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 // alike), or when it names the design system's folder and matches a write form the hooks share. Any other
 // command only reads: `validate`, `impact`, and `publish` given ids, which validates them.
 const ENGINE_RUN = /aidd-ui\.cjs["']?\s+(\w+)([^;&|\n]*)/g;
-const ENGINE_WRITES = new Set(["tokens", "extract", "bump"]);
+const ENGINE_WRITES = new Set(["tokens", "extract", "bump", "keep"]);
 const PUBLISH_OPTIONS = /\s--breaking\b|\s--root\s+\S+/g;
 const UI_FOLDER = /aidd_docs\/ui\//;
 // The hooks' state folder: one per user where the system has users, the temp dir being per user elsewhere.
@@ -69,11 +69,7 @@ function ownFolder(folder) {
 function stateFolder() {
   const hooks = path.join(os.tmpdir(), HOOKS_FOLDER);
   const plugin = path.join(hooks, PLUGIN);
-  try {
-    return ownFolder(hooks) && ownFolder(plugin) ? plugin : null;
-  } catch {
-    return null;
-  }
+  return ownFolder(hooks) && ownFolder(plugin) ? plugin : null;
 }
 
 /** The mark a turn leaves for its Stop, one file per session in the state folder; its baseline sits
@@ -111,16 +107,11 @@ function readPairs(file) {
 }
 
 /** Writes `pairs` by writing a new file beside `file`, created only where nothing exists, then renaming
- * it over: a rename replaces a link planted at the path instead of writing through it, on every system.
- * State that cannot be written never costs the write its feedback. */
+ * it over: a rename replaces a link planted at the path instead of writing through it, on every system. */
 function writePairs(file, pairs) {
   const next = `${file}.${process.pid}`;
-  try {
-    fs.writeFileSync(next, JSON.stringify([...pairs]), { flag: "wx", mode: 0o600 });
-    fs.renameSync(next, file);
-  } catch {
-    fs.rmSync(next, { force: true }); // no writable temp dir, or a file left at the new file's path
-  }
+  fs.writeFileSync(next, JSON.stringify([...pairs]), { flag: "wx", mode: 0o600 });
+  fs.renameSync(next, file);
 }
 
 /** An error's identity across writes: its file, rule and excerpt, never its line, which moves. */
@@ -259,9 +250,9 @@ function afterWrite(project, event) {
   }
   const files = written.map(({ file }) => file);
   findings.reached.push(...tellOnce(problems, files, baseline, turn.told).map(findingOf));
-  leaveTurn(mark, turn);
   const text = formatFindings(PLUGIN, findings);
   if (text) answer({ level: INFORM, text });
+  leaveTurn(mark, turn);
   return EXIT_SILENT;
 }
 
@@ -294,9 +285,9 @@ function atStop(project, mark, turn) {
     candidates.push(...problems.filter((problem) => problem.file === file && isError(problem) && touched.has(findingOf(problem).line)));
   }
   const required = baseline ? newErrors(candidates, baseline) : candidates;
-  leaveBaseline(mark, problems, project.scope);
   const reason = formatFindings(PLUGIN, { errors: required.map(findingOf) });
   if (reason) continueTurn(reason);
+  leaveBaseline(mark, problems, project.scope);
   return EXIT_SILENT;
 }
 

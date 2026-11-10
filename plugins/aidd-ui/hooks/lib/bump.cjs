@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { placed, byId, isSystem, isElement, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
-const { Refusal, NO_UI_FOLDER, load, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
+const { Refusal, required, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
 const { colourDebt } = require("./code.cjs");
@@ -86,8 +86,7 @@ const rowAt = (lines, id, version) => lines.findIndex((line) => {
 /** Writes the first row of each record named, its version 1 and its task `folder`: the system's
  * first publication is 1.0.0. */
 function create(root, folder, ids) {
-  const project = load(root);
-  if (project === null) throw new Refusal(NO_UI_FOLDER);
+  const project = required(root);
   const index = byId(project);
   const files = editing(root);
   const { lines, end } = historyIn(files);
@@ -106,8 +105,7 @@ function create(root, folder, ids) {
 /** Writes a `removed` row for each id named, one version above its last, breaking: the record and
  * its render are deleted next. */
 function remove(root, folder, ids) {
-  const project = load(root);
-  if (project === null) throw new Refusal(NO_UI_FOLDER);
+  const project = required(root);
   const files = editing(root);
   const { lines, end } = historyIn(files);
   for (const id of new Set(ids)) {
@@ -132,8 +130,7 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
   if (created) return create(root, folder, refs);
   if (removed) return remove(root, folder, refs);
   if (!change.trim() || CELL_BREAKERS.test(change)) throw new Refusal('the change must be one line without "|"');
-  const project = load(root);
-  if (project === null) throw new Refusal(NO_UI_FOLDER);
+  const project = required(root);
   const { unknown, ...report } = usages(project, refs);
   if (unknown) throw new Refusal(`no token or element named ${unknown.map((ref) => `"${ref}"`).join(", ")}`);
 
@@ -189,8 +186,7 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
  * broke an element or `breaking` says the tokens alone did, else the minor. Returns
  * `{version, tasks}`; a refusal is thrown before the file is written. */
 function publish(root, { breaking }) {
-  const project = load(root);
-  if (project === null) throw new Refusal(NO_UI_FOLDER);
+  const project = required(root);
   const last = byVersion(rowsOf(project, SYSTEM_ID), true).at(-1);
   if (!last) throw new Refusal(`${HISTORY_FILE} has no system row, write the first with bump --created system`);
   const published = new Set(rowsOf(project, SYSTEM_ID).flatMap((row) => taskList(row.Task)));
@@ -211,8 +207,7 @@ function publish(root, { breaking }) {
  * the row of its current version. Returns `{validated}`, each `{id, version, fingerprint}`; a
  * refusal is thrown before any file is written. */
 function validate(root, ids) {
-  const project = load(root);
-  if (project === null) throw new Refusal(NO_UI_FOLDER);
+  const project = required(root);
   const index = byId(project);
   const chosen = [...new Set(ids)].map((id) => {
     const record = index.get(id);
