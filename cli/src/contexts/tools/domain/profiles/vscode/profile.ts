@@ -8,7 +8,7 @@ import type { HasSettings, IdeToolConfig } from "../../contracts.js";
 
 const DIRECTORY = ".vscode/";
 
-export const vscodeToolConfig: IdeToolConfig & HasSettings = {
+export const vscode: IdeToolConfig & HasSettings = {
   kind: "ide",
   toolId: "vscode",
   directory: DIRECTORY,

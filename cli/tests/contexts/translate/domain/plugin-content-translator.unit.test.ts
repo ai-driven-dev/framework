@@ -7,7 +7,7 @@ import { parseToml } from "../../../../src/contexts/tools/domain/profiles/codex/
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { vscodeToolConfig } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
+import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import {
@@ -320,7 +320,7 @@ describe("PluginContentTranslator.translate()", () => {
 
   describe("vscode (IDE tool)", () => {
     it("returns empty array", () => {
-      expect(translator.translate(makeDist(), vscodeToolConfig)).toEqual([]);
+      expect(translator.translate(makeDist(), vscode)).toEqual([]);
     });
   });
 });
@@ -773,9 +773,7 @@ describe("a target that hosts no plugin", () => {
   const emptyResult = { files: [], componentPaths: new Map(), skipped: [], notices: [] };
 
   it("produces nothing for an IDE", () => {
-    expect(translator.translateWithComponentPaths(makeDist(), vscodeToolConfig)).toEqual(
-      emptyResult
-    );
+    expect(translator.translateWithComponentPaths(makeDist(), vscode)).toEqual(emptyResult);
   });
 
   it("produces nothing for a tool declaring plugins unsupported", () => {

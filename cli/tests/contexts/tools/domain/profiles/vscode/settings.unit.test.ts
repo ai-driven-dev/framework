@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { vscodeToolConfig } from "../../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
+import { vscode } from "../../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 
-describe("vscodeToolConfig settings", () => {
+describe("vscode settings", () => {
   describe("settings capabilities", () => {
-    const settings = Array.isArray(vscodeToolConfig.settings)
-      ? vscodeToolConfig.settings
-      : [vscodeToolConfig.settings];
+    const settings = Array.isArray(vscode.settings) ? vscode.settings : [vscode.settings];
 
     it("maps vscodeExtensions to .vscode/extensions.json", () => {
       const cap = settings.find((s) => s.consumes.includes("vscodeExtensions"));
