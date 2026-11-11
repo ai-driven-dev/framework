@@ -9,7 +9,7 @@ The request.
 ## Process
 
 1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
-2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the case per [cases](../references/cases.md).
+2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the [case](../references/cases.md).
 3. If `aidd_docs/ui/system.md` is missing, stop and say so.
 4. Take the task folder the user named, else ask.
    - It need not exist: only `history.md` rows cite it.

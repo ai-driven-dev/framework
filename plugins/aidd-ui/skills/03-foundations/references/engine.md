@@ -12,10 +12,12 @@
 | Step | Command |
 | --- | --- |
 | prepare 6, what a change reaches | `node <engine> impact <token>…` |
-| write 3, extract the tokens of the code | `node <engine> extract` |
-| write 4, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>` |
-| write 6, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
-| write 7, record the system created | `node <engine> bump --task <task folder> --created system` |
+| write 2, compare the set | `node <engine> compare <set>` |
+| write 2, keep the chosen variant | `node <engine> keep <set> <variant>` |
+| write 4, extract the tokens of the code | `node <engine> extract` |
+| write 5, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>` |
+| write 7, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
+| write 8, record the system created | `node <engine> bump --task <task folder> --created system` |
 | conclude 1 and 4, validate | `node <engine> validate` |
 | conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
 

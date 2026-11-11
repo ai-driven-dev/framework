@@ -386,6 +386,11 @@ describe("aidd-ui css", () => {
       assert.deepEqual(rulesOf(SOURCE).others.map(({ prelude, line }) => [prelude, line]), [["@supports (display: grid)", 14]]);
     });
 
+    it("takes a block never closed, a file mid-edit, to run to the end of the text", () => {
+      const { rules } = rulesOf(":root {\n  --a: 1px;\n  --b: 2px;");
+      assert.deepEqual(rules.map(({ selector, body }) => [selector, declarationsIn(body, 1).map(({ name }) => name)]), [[":root", ["--a", "--b"]]]);
+    });
+
     it("reads the custom properties of a body with their lines, the last needing no semicolon", () => {
       const [{ body, bodyLine }] = rulesOf(SOURCE).rules;
       assert.deepEqual(declarationsIn(body, bodyLine), [

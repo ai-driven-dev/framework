@@ -204,9 +204,6 @@ function covers(target, file) {
   return path.posix.dirname(file) === folder && stem(file) === stem(target);
 }
 
-/** The record whose code link covers `file`, project-relative; undefined when none does. */
-const codeOwner = (project, file) => linked(project).find(({ link }) => link && link.library === null && covers(path.posix.normalize(link.target), file))?.record;
-
 function coverageProblems(project) {
   const targets = linked(project).flatMap(({ link }) => (link && link.library === null ? [path.posix.normalize(link.target)] : []));
   return codeFiles(project)
@@ -342,4 +339,4 @@ const RULES = {
 /** Every broken code rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, colourDebt, codeRoots, codeOwner, codeFilesOf, codeTokens, tokenEntries, platformOfFile };
+module.exports = { check, colourDebt, codeRoots, codeFilesOf, codeTokens, tokenEntries, platformOfFile };
