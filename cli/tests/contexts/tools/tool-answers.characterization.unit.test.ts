@@ -242,6 +242,74 @@ describe("what every registered tool answers to the contexts that read it", () =
     );
   });
 
+  it("answers through the capability's methods what its fields and the registry answer", () => {
+    const catalog = new ToolCatalog(REGISTERED_PROFILES);
+    for (const config of REGISTERED_PROFILES.filter(isAiTool)) {
+      const plugins = catalog.resolvePluginsCapability(config.toolId);
+      if (plugins === null) continue;
+      const id = config.toolId;
+      const layout = plugins.flatLayout();
+      const acceptance = plugins.hooksAcceptance();
+      const delivery = plugins.projectHooksDelivery();
+      const registryDelivery = projectHooksDeliveryOf(id);
+
+      expect(
+        {
+          buildMode: plugins.buildMode(),
+          isNative: plugins.isNative(),
+          requiresUserScope: plugins.requiresUserScope(),
+          deliversHooksToProject: plugins.deliversHooksToProject(),
+          projectPluginsDir: plugins.projectPluginsDir(),
+          manifestPath: plugins.manifestPath(),
+          rootToken: plugins.rootToken(),
+          accepts: acceptance.accepts,
+          unsupportedReason: acceptance.unsupportedReason,
+          trustNotice: plugins.trustNotice(),
+          flatSkillLayout: layout.skillLayout,
+          flatNamespacePrefix: layout.namespacePrefix,
+          flatHooksDir: layout.hooksDir,
+          flatHooksLoaderEntry: loaderEntryAnswer(layout.hooksLoaderEntry),
+          flatHooksBridge: layout.hooksBridge === plugins.flatHooksBridge,
+          activation: activationAnswer(plugins.activation()),
+          marketplaceRegistration: marketplaceSettingsAnswer(plugins.marketplaceRegistration()),
+          enablementIsMachineGlobal: plugins.enablementIsMachineGlobal(),
+          supportsUserScopeActivation: plugins.supportsUserScopeActivation(),
+          copiesFilesGlobally: plugins.copiesFilesGlobally(),
+          globalFiles: globalFilesAnswer(plugins.globalFilesOrNull(), config.directory),
+          projectHooksDelivery: delivery === null ? null : delivery.relativePath,
+          projectHooksFormat: delivery?.format === plugins.projectHooksFormat,
+          projectHooksScript: delivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
+        },
+        id
+      ).toEqual({
+        buildMode: frameworkBuildModeFor(id),
+        isNative: plugins.mode === "native",
+        requiresUserScope: plugins.installScope === "user",
+        deliversHooksToProject: plugins.hooksDestination === "project",
+        projectPluginsDir: plugins.pluginsDir,
+        manifestPath: plugins.pluginManifestRelativePath,
+        rootToken: plugins.pluginRootToken,
+        accepts: plugins.acceptsHooks,
+        unsupportedReason: plugins.hooksUnsupportedReason,
+        trustNotice: plugins.hooksTrustNotice,
+        flatSkillLayout: plugins.flatSkillLayout,
+        flatNamespacePrefix: plugins.flatNamespacePrefix,
+        flatHooksDir: plugins.flatHooksDir,
+        flatHooksLoaderEntry: loaderEntryAnswer(plugins.flatHooksLoaderEntry),
+        flatHooksBridge: true,
+        activation: activationAnswer(nativeActivationOf(id) ?? null),
+        marketplaceRegistration: marketplaceSettingsAnswer(plugins.marketplaceSettings),
+        enablementIsMachineGlobal: pluginEnablementIsMachineGlobal(id),
+        supportsUserScopeActivation: supportsUserScopeActivation(id),
+        copiesFilesGlobally: copiesPluginFilesGlobally(id),
+        globalFiles: globalFilesAnswer(globalFilesOf(id), config.directory),
+        projectHooksDelivery: registryDelivery === null ? null : projectHooksFileOf(id),
+        projectHooksFormat: registryDelivery !== null,
+        projectHooksScript: registryDelivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
+      });
+    }
+  });
+
   it("lists the tools in registration order from the catalog and sorted by id from the free function", () => {
     const catalog = new ToolCatalog(REGISTERED_PROFILES);
 

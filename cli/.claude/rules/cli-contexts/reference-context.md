@@ -166,6 +166,7 @@ Written rules no tool checks: the glossary, a kit imported by its own context on
 | E6 | R1b counts any importer outside the context, presentation included | `target/00-overview.md:63` | presentation consumes the credential types | the target counts presentation as a reader |
 | E8 | `ports/` in a migrated context, `domain/ports/` in the others | `target/05-distribution-auth-update.md:118`, `target/code-map/src-runtime-kernel-presentation-distribution.md:3` | one context per PR | the last context migrates |
 | E9 | auth keeps its own permission code | `target/05-distribution-auth-update.md:213,351` | the private-storage port is telemetry's (`auth -> telemetry`), has no read and no delete, and grants a directory, where auth grants the file | private storage moves to `shared/` with read and delete |
+| E-T6 | the tools plugins capability keeps its public fields beside the answer methods | `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-tools-clean.md` section 3.1 | callers migrate to the methods one phase at a time | the union split makes the fields private (P5d) |
 | M1 | `shared/ports/http-get.ts` has one importing context, distribution | `target/00-overview.md:69` | created by foundations; auth receives `GitHubAdapter`, it does not import `HttpGet` | `update` migrates |
 
 ### Ambiguities removed

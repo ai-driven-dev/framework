@@ -328,6 +328,105 @@ export class PluginsCapability {
     return this._userPluginsDir?.(homedir) ?? this.globalFiles?.dir(homedir) ?? null;
   }
 
+  /** Whether this tool is built as a marketplace dist or a flat workspace inject. */
+  buildMode(): "marketplace" | "flat" {
+    return this.mode === "flat" ? "flat" : "marketplace";
+  }
+
+  isNative(): boolean {
+    return this.mode === "native";
+  }
+
+  requiresUserScope(): boolean {
+    return this.installScope === "user";
+  }
+
+  deliversHooksToProject(): boolean {
+    return this.hooksDestination === "project";
+  }
+
+  projectPluginsDir(): string | null {
+    return this.pluginsDir;
+  }
+
+  manifestPath(): string | null {
+    return this.pluginManifestRelativePath;
+  }
+
+  rootToken(): string | null {
+    return this.pluginRootToken;
+  }
+
+  /** Whether a delivered hook runs on this tool, and why not when it does not. */
+  hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null } {
+    return { accepts: this.acceptsHooks, unsupportedReason: this.hooksUnsupportedReason };
+  }
+
+  trustNotice(): string | null {
+    return this.hooksTrustNotice;
+  }
+
+  /** Where a flat-mode plugin lands and how its hooks are loaded; each part is `null` or
+   * `"nested"` when the mode has none. */
+  flatLayout(): {
+    skillLayout: FlatSkillLayout;
+    namespacePrefix: string | null;
+    hooksDir: string | null;
+    hooksLoaderEntry: FlatHooksLoaderEntry | null;
+    hooksBridge: FlatHooksBridge | null;
+  } {
+    return {
+      skillLayout: this.flatSkillLayout,
+      namespacePrefix: this.flatNamespacePrefix,
+      hooksDir: this.flatHooksDir,
+      hooksLoaderEntry: this.flatHooksLoaderEntry,
+      hooksBridge: this.flatHooksBridge,
+    };
+  }
+
+  activation(): NativeActivation | null {
+    return this.nativeActivation;
+  }
+
+  marketplaceRegistration(): MarketplaceRegistration | null {
+    return this.marketplaceSettings;
+  }
+
+  /** Whether enabling a plugin applies to the whole machine, the host taking no scope. */
+  enablementIsMachineGlobal(): boolean {
+    return this.nativeActivation?.scopeArgs === undefined;
+  }
+
+  supportsUserScopeActivation(): boolean {
+    return (
+      this.nativeActivation !== null || this.installScope === "user" || this.globalFiles !== null
+    );
+  }
+
+  copiesFilesGlobally(): boolean {
+    return this.installScope === "user" || this.globalFiles !== null;
+  }
+
+  /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
+  globalFilesOrNull(): GlobalFiles | null {
+    return this.globalFiles;
+  }
+
+  /** Where a hook lands in the project and how, or `null` when it lands in the plugin. */
+  projectHooksDelivery(): {
+    relativePath: string;
+    format: ProjectHooksFormat;
+    hookScript: HookScript;
+  } | null {
+    if (this.hooksDestination !== "project") return null;
+    if (this.projectHooksRelativePath === null || this.projectHooksFormat === null) return null;
+    return {
+      relativePath: this.projectHooksRelativePath,
+      format: this.projectHooksFormat,
+      hookScript: this.hookScript,
+    };
+  }
+
   pluginOutputDir(pluginName: string): string | null {
     if (this.mode !== "native" || this.pluginsDir === null) return null;
     return `${this.pluginsDir}${pluginName}/`;

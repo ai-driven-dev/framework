@@ -94,25 +94,19 @@ export class ToolCatalog {
   }
 
   nativeActivationOf(toolId: ToolId): NativeActivation | undefined {
-    return this.resolvePluginsCapability(toolId)?.nativeActivation ?? undefined;
+    return this.resolvePluginsCapability(toolId)?.activation() ?? undefined;
   }
 
   frameworkBuildModeFor(toolId: ToolId): FrameworkBuildMode {
-    return this.resolvePluginsCapability(toolId)?.mode === "flat" ? "flat" : "marketplace";
+    return this.resolvePluginsCapability(toolId)?.buildMode() ?? "marketplace";
   }
 
   pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {
-    return this.nativeActivationOf(toolId)?.scopeArgs === undefined;
+    return this.resolvePluginsCapability(toolId)?.enablementIsMachineGlobal() ?? true;
   }
 
   supportsUserScopeActivation(toolId: ToolId): boolean {
-    const capability = this.resolvePluginsCapability(toolId);
-    if (capability === null) return false;
-    return (
-      capability.nativeActivation !== null ||
-      capability.installScope === "user" ||
-      capability.globalFiles !== null
-    );
+    return this.resolvePluginsCapability(toolId)?.supportsUserScopeActivation() ?? false;
   }
 
   hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
@@ -120,13 +114,11 @@ export class ToolCatalog {
   }
 
   copiesPluginFilesGlobally(toolId: ToolId): boolean {
-    const capability = this.resolvePluginsCapability(toolId);
-    if (capability === null) return false;
-    return capability.installScope === "user" || capability.globalFiles !== null;
+    return this.resolvePluginsCapability(toolId)?.copiesFilesGlobally() ?? false;
   }
 
   globalFilesOf(toolId: ToolId): GlobalFiles | null {
-    return this.resolvePluginsCapability(toolId)?.globalFiles ?? null;
+    return this.resolvePluginsCapability(toolId)?.globalFilesOrNull() ?? null;
   }
 
   buildContractFor(
@@ -149,7 +141,7 @@ export class ToolCatalog {
 
   machineLocalFilesOf(toolId: ToolId): readonly string[] {
     const path =
-      this.resolvePluginsCapability(toolId)?.marketplaceSettings?.marketplacesSettingsPath;
+      this.resolvePluginsCapability(toolId)?.marketplaceRegistration()?.marketplacesSettingsPath;
     // `null` means the tool has nowhere machine-local to write, so there is no such file to keep
     // out of `status` or the gitignore either.
     return typeof path === "string" ? [path] : [];
@@ -167,15 +159,9 @@ export class ToolCatalog {
   } | null {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return null;
-    const cap = this.resolvePluginsCapability(toolId);
-    if (cap === null || cap.hooksDestination !== "project") return null;
-    if (cap.projectHooksRelativePath === null || cap.projectHooksFormat === null) return null;
-    return {
-      relativePath: cap.projectHooksRelativePath,
-      format: cap.projectHooksFormat,
-      toolName: config.displayName,
-      hookScript: cap.hookScript,
-    };
+    const delivery = this.resolvePluginsCapability(toolId)?.projectHooksDelivery();
+    if (delivery === null || delivery === undefined) return null;
+    return { ...delivery, toolName: config.displayName };
   }
 
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {

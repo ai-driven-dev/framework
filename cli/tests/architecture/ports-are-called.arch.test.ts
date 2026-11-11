@@ -84,6 +84,23 @@ const CAPABILITY_BASELINE: readonly {
   readonly reason: string;
 }[] = [
   {
+    file: "src/contexts/tools/domain/capabilities/plugins-capability.ts",
+    className: "PluginsCapability",
+    methods: [
+      "deliversHooksToProject",
+      "flatLayout",
+      "hooksAcceptance",
+      "isNative",
+      "manifestPath",
+      "projectPluginsDir",
+      "requiresUserScope",
+      "rootToken",
+      "trustNotice",
+    ],
+    reason:
+      "answer methods beside the fields until callers migrate; read only by the characterization test",
+  },
+  {
     file: "src/contexts/tools/domain/capabilities/agents-capability.ts",
     className: "AgentsCapability",
     methods: ["accepts", "deserialize", "equals"],
