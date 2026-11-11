@@ -1,6 +1,6 @@
 ---
 objective: "La revue se fait dans la vitrine. OK ou à revoir par état et par version, copiés vers l'IA. Un écran codé se juge à côté de sa capture réelle, puis se publie."
-status: todo
+status: done
 ---
 
 # Plan : aidd-ui 4d et 4e, revue dans la vitrine

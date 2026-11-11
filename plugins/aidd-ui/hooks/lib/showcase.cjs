@@ -225,7 +225,9 @@ const rowsOf = (project) =>
  * ("none" when there is none), `outdated` the version of the latest older verdict when only older ones exist. */
 function verdictOf(rows, record, state) {
   const own = rows.filter((row) => row.screen === fm(record).id && row.state === state);
-  const now = own.filter((row) => row.version === String(fm(record).version)).at(-1);
+  const atVersion = own.filter((row) => row.version === String(fm(record).version));
+  // a later review round leaves the bump's pending row in the earlier review: it never hides a set verdict
+  const now = atVersion.filter((row) => row.verdict !== "pending").at(-1) ?? atVersion.at(-1);
   if (now) return { current: now.verdict, comment: now.comment, outdated: null };
   const older = own.map((row) => row.version).sort((a, b) => Number(b) - Number(a))[0];
   return { current: "none", comment: "", outdated: older ?? null };

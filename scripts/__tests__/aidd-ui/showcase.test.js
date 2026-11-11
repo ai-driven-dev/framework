@@ -180,6 +180,13 @@ describe("aidd-ui showcase", () => {
       assert.match(articleOf(home, "error"), /data-current="pending"/);
     });
 
+    it("never lets a pending row hide a verdict set at the same version, as the publication reads it", () => {
+      verdicts(["home", "default", "1", "ok", ""], ["home", "default", "1", "pending", ""]);
+      const home = pagesOf()["home.html"];
+      assert.match(articleOf(home, "default"), /data-current="ok"/);
+      assert.match(home, /<p class="count" data-ok="1" data-total="4">1\/4 OK<\/p>/);
+    });
+
     it("puts the states with no verdict or a pending one first, the others in the record's order", () => {
       verdicts(["home", "default", "1", "ok", ""], ["home", "empty", "1", "ok", ""], ["home", "loading", "0", "ok", ""], ["home", "error", "1", "pending", ""]);
       assert.deepEqual(statesIn(pagesOf()["home.html"]), ["loading", "error", "default", "empty"]);
