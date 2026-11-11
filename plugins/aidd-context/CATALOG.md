@@ -98,7 +98,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or update the project memory of its architecture, conventions and decisions, and wire it into your AI tools. Use for any request about the project memory, even a bare "check the project memory"; with no bank it sets one up, with a bank it refreshes it. Not for editing one existing memory file.` |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or wire project memory into AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.` |
 
 #### `skills/03-context-generate`
 

@@ -1,4 +1,9 @@
-<!-- Path: `aidd_docs/tasks/{{yyyy_mm}}/{{yyyy_mm_dd}}_memory-{{scope}}/facts.md`, the scope being setup or refresh. Replace every `{{...}}` and delete every comment; never add, rename, or reorder a block. One fact per line under a block: `- <id> | <file> > <section> | <fact> | <source> | <answer>`. A fact may quote a table row, its `|` kept; then keep the answer slot, even empty. The source is one existing plain path, no backticks, line number or glob; a removal cites the memory file; a `Q` may cite none. Leave the answer empty. -->
+<!-- Path: `aidd_docs/tasks/{{yyyy_mm}}/{{yyyy_mm_dd}}_memory-{{scope}}/facts.md`, the scope being setup or refresh. -->
+<!-- Replace every `{{...}}`, delete every comment, never add, rename or reorder a block. -->
+<!-- One fact per line under a block: `- <id> | <file> > <section> | <fact> | <source> | <answer>`. -->
+<!-- A fact may quote a table row, its `|` kept; then keep the answer slot, even empty. Leave the answer empty. -->
+<!-- The source is one existing plain path, no backticks, line number or glob. -->
+<!-- A removal cites the memory file; a `Q` may cite none. -->
 
 # Facts: {{scope}}
 
@@ -15,7 +20,9 @@
 
 ## Inferred
 
-<!-- Deduced from the code. D1, D2. To change or remove an existing line, start with `remove` or `replace` and quote the old line exactly between double quotes. To relocate a misplaced file, write `move <path> to <path>`. -->
+<!-- Deduced from the code. D1, D2. -->
+<!-- To change or remove an existing line, start with `remove` or `replace`, then quote the old line exactly between double quotes. -->
+<!-- To relocate a misplaced file, write `move <path> to <path>`. -->
 
 - D1 | {{file}}.md > {{section}} | {{fact}} | {{source}} |
 

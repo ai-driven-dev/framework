@@ -1,14 +1,21 @@
 # Engine
 
-- Find `memory.cjs` from this skill's own folder before any call, never elsewhere in the project, which may hold another copy; the first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
+- Find `memory.cjs` from this skill's own folder, never elsewhere in the project: it may hold another copy.
+- The first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
 - Run the engine; never open its source or `lib/`.
 
 | Command | When | Effect |
 | ------- | ---- | ------ |
-| `node memory.cjs check . aidd_docs/memory/<file>.md` | per file | checks that file |
-| `node memory.cjs check .` | whole bank | checks the whole bank |
+| `node memory.cjs check . aidd_docs/memory/<file>.md` | per file | lints that file |
+| `node memory.cjs check .` | whole bank | lints the bank |
 | `node memory.cjs changes .` | refresh, before the review | prints the `Since` line, the memory lines citing a changed file or directory, the changed files by directory; `--since <ref>` names an older base |
-| `node memory.cjs plan <sheet> --tools <tool,...>` | before the answer | checks the sheet, writes the whole plan to `plan.md` and a snapshot of the bank beside it, then prints the counts and, in full, each line a remove or replace makes disappear, to send as it is; exits 1 naming each bad sheet line |
-| `node memory.cjs answer <sheet> "<reply>"` | after the answer | marks each item's sheet lines yes or no for ok, no, not <n> or a range; any other reply exits 1 and changes nothing |
-| `node memory.cjs report <sheet>` | after the sync | prints the closing message to send as it is: each line gone from the bank since the plan's snapshot, unless a `D` line answered yes quotes it, first, or says none was checked; then what was written, changed and left out, by the plan's numbers, each seen on disk |
-| `node memory.cjs sync [--add] <tool>...` | after the write | tool names only, no root; fills each named tool's block, or with none every block already there; `--add` appends the block to a picked tool's file holding none; stop on a non-zero exit |
+| `node memory.cjs plan <sheet> --tools <tool,...>` | before the answer | checks the sheet; writes `plan.md` and a snapshot of the bank beside it; prints the counts and, in full, each line a remove or replace drops; exits 1 naming each bad sheet line |
+| `node memory.cjs answer <sheet> "<reply>"` | after the answer | marks each item's sheet lines yes or no for ok, no, not <n> or a range; any other reply exits 1, changing nothing |
+| `node memory.cjs report <sheet>` | after the sync | prints the closing message, described below |
+| `node memory.cjs sync [--add] <tool>...` | after the write | tool names only, no root; fills each named tool's block, or with none every block there and copilot's pointer; `--add` appends the block to a picked tool's file holding none; stop on non-zero exit |
+
+The `report` message holds, in this order:
+
+- Each line gone from the bank since the plan's snapshot, but not one a `D` line answered yes quotes.
+- If no line was checked, it says so there instead.
+- What was written, changed and left out, by the plan's numbers, each seen on disk.
