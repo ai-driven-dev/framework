@@ -5,7 +5,6 @@ import type { AssetProvider } from "../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../kernel/ports/logger.js";
-import type { JsonSchemaValidator } from "../../tools/domain/ports/schema-validator.js";
 import {
   type BuildPluginResult,
   type FrameworkBuildOptions,
@@ -14,6 +13,7 @@ import {
   SOURCE_MARKETPLACE_RELATIVE,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
 } from "../domain/build-target.js";
+import type { JsonSchemaValidator } from "../domain/ports/schema-validator.js";
 import type {
   BuildOutputStrategy,
   SourceMarketplace,

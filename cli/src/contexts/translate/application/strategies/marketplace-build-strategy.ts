@@ -4,12 +4,12 @@ import type { AssetProvider, SchemaName } from "../../../../kernel/ports/asset-p
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { PluginPresence, ToolBuildContract } from "../../../tools/domain/build-contract.js";
-import type { JsonSchemaValidator } from "../../../tools/domain/ports/schema-validator.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
 } from "../../domain/build-target.js";
 import { rewritePluginRootToken } from "../../domain/formats/plugin-root-token-rewrite.js";
+import type { JsonSchemaValidator } from "../../domain/ports/schema-validator.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import type { BuildOutputStrategy, SourceMarketplace } from "./build-output-strategy.js";
 import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";

@@ -7,10 +7,10 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import { buildOpencodeFlatConfig } from "../../../tools/domain/formats/opencode-mcp-merge.js";
-import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
 import {
   getToolConfig,
   isAiTool,

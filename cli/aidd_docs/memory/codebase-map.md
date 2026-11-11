@@ -95,7 +95,8 @@ src/
 │       ├── application/
 │       │   └── strategies/
 │       ├── domain/
-│       │   └── formats/
+│       │   ├── formats/
+│       │   └── ports/
 │       └── infrastructure/
 ├── kernel/    # old home of the shared vocabulary, receives no new file. Imports no context
 │   ├── materialization/    # where content lands and how its links follow

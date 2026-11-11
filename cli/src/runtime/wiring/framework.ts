@@ -71,7 +71,6 @@ import { PluginDistributionReaderAdapter } from "../../contexts/framework/infras
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
-import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
 import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
@@ -95,6 +94,7 @@ import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-con
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { Environment } from "../../shared/ports/environment.js";
+import type { FileMerger } from "../../shared/ports/file-merger.js";
 import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
 import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";

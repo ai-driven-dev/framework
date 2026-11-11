@@ -85,7 +85,12 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | File signals | `hasToolSignals(fs, ...)` | `application/detect-tool-signals.ts` over the kernel `FileReader`; domain keeps `signalPattern`, `signalDir` |
 | MCP output path | `resolveOutputPath(root, fs)`, kilo `resolveKiloConfigPath(fs)` | domain `outputPathCandidates()`; `application/resolve-mcp-output-path.ts` picks the first that exists |
 | Native host CLIs and registries | `domain/ports`, `infrastructure/` | `host-registration` (D2) |
-| `FileMerger`, `SchemaValidator` | `domain/ports` | `shared/ports` |
+| `FileMerger` | `domain/ports` | `shared/ports/file-merger.ts` |
+| `SchemaValidator` | `domain/ports` | `translate/domain/ports/schema-validator.ts` |
+
+Deviation from §1.4 and the line above, decided at P8.
+- `SchemaValidator` has one consumer, translate; codebase-map places a port used by one context in its own `ports/`, so it does not go to `shared/ports`.
+- `FileMerger` goes to `shared/ports` while its only consumer is framework, whose `domain/ports` is blocked: `old-layout-count` holds `src/contexts/framework/` at 125, so one more file there is red. Limit: single consumer, an adapter in `runtime/filesystem/`.
 | Hooks host adapters (`.cjs`) | E-T3 `EVENTS` tables | unchanged (D6) |
 
 ## 3. Public surface: answers, not fields

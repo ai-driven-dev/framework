@@ -5,11 +5,11 @@ import type {
   ConfigArtifactInput,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/domain/build-contract.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/domain/ports/schema-validator.js";
 import {
   FlatTargetExistsError,
   FrameworkPlaceholderInPluginError,
