@@ -97,6 +97,24 @@ describe("SWR matrix: printFromCacheOnly", () => {
     expect(selfUpdater.fetchLatestRelease).not.toHaveBeenCalled();
   });
 
+  it("a cache written at the path before it moved is still read, with no network call", async () => {
+    const { logger, warns } = makeLogger();
+    const store = new Map<string, string>();
+    store.set(
+      join(userConfigDir(), "update-check.json"),
+      JSON.stringify({ checkedAt: Date.now(), latest: "99.0.0" })
+    );
+    const selfUpdater = makeSelfUpdater("99.0.0");
+    await new CheckUpdateUseCase(
+      selfUpdater,
+      makeVersionReader("1.0.0"),
+      logger,
+      makeFsStub(store)
+    ).printFromCacheOnly();
+    expect(warns.some((w) => w.includes("99.0.0"))).toBe(true);
+    expect(selfUpdater.fetchLatestRelease).not.toHaveBeenCalled();
+  });
+
   it("absent cache → no notice, no network call", async () => {
     const { logger, warns } = makeLogger();
     const selfUpdater = makeSelfUpdater("2.0.0");

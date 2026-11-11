@@ -134,6 +134,15 @@ describe("MarketplaceRefreshUseCase", () => {
     expect(bad?.error).toBeDefined();
   });
 
+  it("refreshes nothing and raises nothing when no marketplace is registered", async () => {
+    const { useCase, cache } = await buildUseCase();
+
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+
+    expect(result).toEqual({ results: [], failedCount: 0 });
+    expect(cache.clearCalls).toEqual([]);
+  });
+
   it("filters by name when provided", async () => {
     const { useCase, registry } = await buildUseCase();
     await registry.save(

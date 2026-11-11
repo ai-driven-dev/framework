@@ -190,6 +190,7 @@ describe("reporting usage", () => {
     s.transcripts.files.set("/t/1.jsonl", [
       line("A", 10, "2026-10-01T10:00:00.000Z"),
       line("B", 20, "2026-10-07T10:00:00.000Z"),
+      line("C", 40, "2026-10-08T10:00:00.000Z"),
     ]);
     await s.sessions.append(
       "s-1",
@@ -206,7 +207,7 @@ describe("reporting usage", () => {
       axis: "total",
       period: { from: "2026-10-07", to: null },
     });
-    expect(result).toMatchObject({ coverage: { records: 1 } });
+    expect(result).toMatchObject({ coverage: { records: 2 } });
   });
 
   it("moves work done before its branch was declared from no-binding to the task, on the next report", async () => {

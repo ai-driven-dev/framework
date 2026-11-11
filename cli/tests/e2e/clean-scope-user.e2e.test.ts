@@ -1,9 +1,15 @@
 import { execFile } from "node:child_process";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { environmentWithoutGitVariables } from "../../src/runtime/git/git-environment.js";
+import {
+  directoryExists,
+  gitStatusPorcelain,
+  listFilesUnder,
+  readJson,
+} from "../helpers/project-state.js";
 import { createTestEnv, gitInit, runCli } from "./helpers.js";
 
 // CI runners carry no git identity; a commit made by a test brings its own.
@@ -11,52 +17,6 @@ const GIT_TEST_IDENTITY = ["-c", "user.email=t@t.com", "-c", "user.name=t"];
 
 const execFileAsync = promisify(execFile);
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
-
-async function gitStatusPorcelain(cwd: string): Promise<string> {
-  const { stdout } = await execFileAsync("git", ["status", "--porcelain"], {
-    cwd,
-    env: environmentWithoutGitVariables(process.env),
-  });
-  return stdout;
-}
-
-/** Every file under `dir`, relative to it, recursively — `[]` for a directory that no
- * longer exists, the honest "nothing left" answer rather than a thrown ENOENT. */
-async function listFilesUnder(dir: string): Promise<string[]> {
-  let entries: Array<{ name: string; isDirectory(): boolean }>;
-  try {
-    entries = await readdir(dir, { withFileTypes: true });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw error;
-  }
-  const results: string[] = [];
-  for (const entry of entries) {
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      for (const nested of await listFilesUnder(full)) results.push(join(entry.name, nested));
-    } else {
-      results.push(entry.name);
-    }
-  }
-  return results;
-}
-
-/** Whether a directory is still there at all — `listFilesUnder` answers `[]` for an empty
- * one and a removed one alike, so proving a shell was removed needs its own question. */
-async function directoryExists(dir: string): Promise<boolean> {
-  try {
-    await readdir(dir);
-    return true;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
-    throw error;
-  }
-}
-
-async function readJson(path: string): Promise<Record<string, unknown>> {
-  return JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
-}
 
 describe("E2E: clean --scope user purges the shared source", () => {
   it("purges its own whitelist only, leaving auth.json, telemetry/ and an unrelated marketplace entry untouched, after setup --scope user", async () => {
@@ -162,76 +122,6 @@ describe("E2E: clean --scope user purges the shared source", () => {
       // `listFilesUnder` sees files, never an empty directory, so the shell itself has to
       // be asked for by name.
       expect(await directoryExists(join(userConfigDir, "cache"))).toBe(false);
-    } finally {
-      await cleanup();
-    }
-  });
-
-  it("still purges the whitelist when no user manifest exists, the state a plain project-scope setup leaves", async () => {
-    const { projectDir, fakeHome, cleanup } = await createTestEnv("clean-scope-user-no-manifest");
-    try {
-      await gitInit(projectDir);
-      await execFileAsync("git", [...GIT_TEST_IDENTITY, "commit", "--allow-empty", "-m", "empty"], {
-        cwd: projectDir,
-        env: environmentWithoutGitVariables(process.env),
-      });
-
-      // A plain, project-scope setup — no `--scope user` — never writes a user manifest,
-      // yet still registers the shared source machine-wide.
-      const setupResult = await runCli(
-        [
-          "setup",
-          "--source",
-          "local",
-          "--path",
-          FRAMEWORK_REAL_PATH,
-          "--ai",
-          "claude",
-          "--plugins",
-          "none",
-          "--yes",
-        ],
-        projectDir,
-        fakeHome
-      );
-      expect(setupResult.exitCode).toBe(0);
-
-      const userConfigDir = join(fakeHome, ".config", "aidd");
-      const before = (await listFilesUnder(userConfigDir)).sort();
-      expect(before.some((f) => f.startsWith(join("cache", "built")))).toBe(true);
-      expect(before).toContain("references.json");
-      expect(await readJson(join(userConfigDir, "manifest.json")).catch(() => null)).toBeNull();
-
-      const blocked = await runCli(["clean", "--scope", "user", "--force"], projectDir, fakeHome);
-      expect(blocked.exitCode).toBe(1);
-      expect(blocked.stderr).toContain(projectDir);
-
-      const projectClean = await runCli(
-        ["clean", "--scope", "project", "--force"],
-        projectDir,
-        fakeHome
-      );
-      expect(projectClean.exitCode).toBe(0);
-      const statusBeforeClean = await gitStatusPorcelain(projectDir);
-      const cleanResult = await runCli(
-        ["clean", "--scope", "user", "--force"],
-        projectDir,
-        fakeHome
-      );
-
-      expect(cleanResult.exitCode).toBe(0);
-      expect(cleanResult.stdout).toContain("No host registration was undone");
-      expect(await gitStatusPorcelain(projectDir)).toBe(statusBeforeClean);
-
-      const after = (await listFilesUnder(userConfigDir)).sort();
-      expect(after).not.toContain("references.json");
-      expect(after.some((f) => f.startsWith("cache"))).toBe(false);
-      expect(await directoryExists(join(userConfigDir, "cache"))).toBe(false);
-      const afterMarketplaces = await readJson(join(userConfigDir, "marketplaces.json"));
-      const afterNames = (afterMarketplaces.marketplaces as Array<{ name: string }>).map(
-        (m) => m.name
-      );
-      expect(afterNames).not.toContain("aidd-framework");
     } finally {
       await cleanup();
     }

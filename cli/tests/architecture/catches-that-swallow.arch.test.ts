@@ -26,10 +26,6 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     count: 1,
     reason: "a refusal to delete something present must not fail an uninstall midway",
   },
-  "tests/e2e/framework-build.e2e.test.ts": {
-    count: 1,
-    reason: "hashing a tree skips directories and vanished entries",
-  },
   "tests/golden/framework-build-golden.golden.test.ts": {
     count: 1,
     reason: "hashing a tree skips directories and vanished entries",

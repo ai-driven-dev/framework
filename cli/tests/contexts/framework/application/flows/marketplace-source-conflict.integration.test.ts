@@ -227,6 +227,23 @@ describe("the sync guard against a marketplace name a host already holds", () =>
     expect(result.errors).toEqual([]);
   });
 
+  it("does not refuse a catalog registered again with only its version changed, though no earlier claim proves its source", async () => {
+    const hostReader = new FakeHostMarketplaceRegistryReader({
+      location: REGISTRY_LOCATION,
+      entries: new Map([["probe-mkt", "/other/src"]]),
+    });
+
+    const { result, activator } = await sync({
+      hostReader,
+      requestedVersion: "2.0.0",
+      requestedPluginNames: ["sample-plugin"],
+      registeredCatalog: { path: "/other/src", version: "1.0.0", pluginNames: ["sample-plugin"] },
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(activator.addedMarketplaces).toEqual([]);
+  });
+
   it("does not refuse when the host's registry already holds the same resolved source", async () => {
     const hostReader = new FakeHostMarketplaceRegistryReader({
       location: REGISTRY_LOCATION,
@@ -286,7 +303,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       entries: new Map(),
     });
 
-    const { result, activator } = await sync({
+    const { result, activator, manifestRepo } = await sync({
       aiddName: "mon-nom",
       catalogName: "upstream",
       hostReader,
@@ -294,6 +311,10 @@ describe("the sync guard against a marketplace name a host already holds", () =>
 
     expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
     expect(result.errors).toEqual([]);
+    const registrations = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    expect(registrations?.marketplaces).toEqual([
+      expect.objectContaining({ alias: "mon-nom", hostName: "upstream" }),
+    ]);
   });
 
   it("never reads a host registry for a tool whose profile declares none, and still registers it", async () => {

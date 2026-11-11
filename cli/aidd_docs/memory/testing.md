@@ -5,7 +5,7 @@ How this package is tested: the layers, the tools, the conventions.
 ## Strategy
 
 - Five vitest projects (`vitest.config.ts` → `test.projects`): `unit`, `integration`, `e2e`, `golden` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere. `golden` shares the e2e build setup, so it reads the same built binary.
-- Unit: pure logic. Integration: a use case or adapter, ports substituted. E2E: the real built binary. Golden: a full output compared to a versioned snapshot. Architecture: ratchets over source text.
+- Unit: pure logic. Integration: a use case or adapter, ports substituted. E2E: the real built binary, one test per command and per family of failure plus what only a spawned process proves; a command-level check below it runs through `tests/helpers/in-process-cli.ts`. Golden: a full output compared to a versioned snapshot. Architecture: ratchets over source text.
 - A pyramid; read the split live.
 
 ## Tools

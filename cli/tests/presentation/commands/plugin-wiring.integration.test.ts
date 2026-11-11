@@ -182,6 +182,14 @@ describe("aidd plugin install", () => {
     });
   });
 
+  it("narrows an install from a local path to the one tool that was named", async () => {
+    await run("install", "/plugins/sample-plugin", "--tool", "claude");
+
+    expect(pluginInstall).toHaveBeenCalledWith(
+      expect.objectContaining({ pluginArg: "/plugins/sample-plugin", toolIds: ["claude"] })
+    );
+  });
+
   it("hands --token to the composition root, where every fetcher reads it, and to nothing else", async () => {
     await run("install", "aidd-dev", "--token", "ghp_x");
 

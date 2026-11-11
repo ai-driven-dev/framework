@@ -103,6 +103,27 @@ describe("preparing a marketplace output directory", () => {
       strategyFor(fs, stubContract(), { force: true }).preBuild(OUT_DIR)
     ).resolves.toBeUndefined();
   });
+
+  it("accepts a directory that is not there yet when forced", async () => {
+    const fs = new InMemoryFileAdapter();
+    await expect(
+      strategyFor(fs, stubContract(), { force: true }).preBuild(OUT_DIR)
+    ).resolves.toBeUndefined();
+  });
+
+  it("writes its own output and keeps the file it did not write when forced", async () => {
+    const fs = new InMemoryFileAdapter({
+      [`${OUT_DIR}/keep.txt`]: "keepme",
+      [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello\n",
+    });
+    const strategy = strategyFor(fs, stubContract(), { force: true });
+
+    await strategy.preBuild(OUT_DIR);
+    await strategy.writeSkills(PLUGIN, PLUGIN_SRC, OUT_DIR);
+
+    expect(fs.getFile(`${OUT_DIR}/keep.txt`)).toBe("keepme");
+    expect(fs.getFile(`${PLUGIN_OUT}/skills/hello/SKILL.md`)).toBe("# Hello\n");
+  });
 });
 
 describe("the plugin manifest a marketplace layout synthesizes", () => {

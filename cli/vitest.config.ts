@@ -83,9 +83,10 @@ export default defineConfig({
       reporter: ["text", "json-summary"],
       include: ["src/**/*.ts"],
       // Excluded because measuring them here would report a false zero, not because
-      // they are untested. `cli.ts` and `presentation/commands/` are exercised by 104
-      // e2e tests and 98 smoke checks, but both spawn a built `cli.js` as a subprocess
-      // and v8 coverage does not cross a process boundary: including them reports 0%.
+      // they are untested. `cli.ts` is exercised by the e2e suite and the smoke checks, which
+      // spawn a built `cli.js` as a subprocess; v8 coverage does not cross a process boundary:
+      // including it reports 0%. `presentation/commands/` is counted: the command tests run
+      // it in process.
       // Ports are interfaces with no runtime body; `runtime/wiring/` is composition.
       // Their real net is the e2e suite and scripts/smoke-tools.sh, counted there.
       //
@@ -96,20 +97,18 @@ export default defineConfig({
       // this file, so a glob cannot outlive the directory it points at again.
       exclude: [
         "src/cli.ts",
-        "src/presentation/commands/**",
         "src/kernel/ports/**",
         "src/contexts/*/domain/ports/**",
         "src/runtime/wiring/**",
       ],
-      // Measured 93.76 / 89.31 / 94.49 / 93.76 once the stale globs above were repointed.
-      // Set a little under that: a threshold with no headroom fails on an honest change,
-      // and one far below what is measured is not a gate. `pnpm test:coverage` runs them,
-      // and CI runs that — until this commit the numbers were configured and never executed.
+      // Set a little under 98.81 / 96.08 / 99.47 / 99.34, measured once `presentation/commands/`
+      // was counted: a threshold with no headroom fails on an honest change, and one far below
+      // what is measured is not a gate. `pnpm test:coverage` runs them, and CI runs that.
       thresholds: {
-        statements: 92,
-        branches: 87,
-        functions: 93,
-        lines: 92,
+        statements: 98,
+        branches: 95,
+        functions: 98.5,
+        lines: 98.5,
       },
     },
   },
