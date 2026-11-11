@@ -32,7 +32,7 @@ Scope: `cli/src/contexts/tools/` (7265 lines) and `cli/tests/contexts/tools/`. T
 | `ToolProfile` | aggregate root, built only by `defineAiTool` or `defineIdeTool` (branded) | id, displayName, directory, suffix, sections, build contracts, `rewriteContent` | id not in `AI_TOOL_IDS` or IDE ids; `directory` absolute or not ending in `/`; AI tool without build contract; unknown section key |
 | `ToolSuffix` | VO | suffix; `strip(name)`; `isForeign(fileName)` | not `^\.[a-z]+\.md$` |
 | `ForeignSuffixFilter` | VO, built once from `AI_TOOL_IDS` | the `accepts(fileName)` the 4 capabilities share | none, derived |
-| `ProfileSections` | typed optional record: `agents`, `commands`, `rules`, `skills`, `mcp`, `hooks`, `settings[]`, `plugins` | section instances | unknown key fails at compile time; `settings` normalized once |
+| `ProfileSections` | typed optional record: `agents`, `commands`, `rules`, `skills`, `mcp`, `hooks`, `settings[]`, `plugins` | section instances | unknown key refused at runtime by `refuseUnknownSections` only: the generic `C extends ProfileSections` does not refuse extra keys at compile time, so the compile-time refusal this row first claimed does not hold; `settings` normalized once |
 | `PluginDelivery` | discriminated union: `NativePlugins`, `FlatPlugins`, `UnsupportedPlugins` | delivery rules (section 3) | native without `pluginRootToken` (new); `MarketplaceRegistration` without `NativeActivation` (new); user scope without `userPluginsDir`; project hooks without path and format |
 | `NativeActivation` | VO | binary, verbs, args, registry paths | empty binary; missing verb |
 | `MarketplaceRegistration` | VO, formerly `marketplaceSettings` | settings path function, shape | required with native activation |
