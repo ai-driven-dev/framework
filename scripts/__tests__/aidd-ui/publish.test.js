@@ -43,6 +43,11 @@ const reviewed = (dir, ...ids) => {
   fs.writeFileSync(path.join(dir, GATE), record(["id: gate", "kind: review", "status: proposed", "version: 1", "scope: system", `screens: [${ids.join(", ")}]`], "# Gate", verdicts));
   if (first) addHistory(dir, ["gate", "1", "created", "no", "aidd_docs/tasks/ds-init"]);
 };
+const HOME_STATES = ["default", "empty", "loading", "error"];
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+/** Writes the capture of each state of a screen at `version`, beside its record. */
+const captured = (dir, id, states, version = "1") =>
+  states.forEach((state) => fs.writeFileSync(path.join(dir, `${UI}/screens/${id}.${state}@${version}.png`), PNG));
 const unsealed = () => fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).replace(/ \| [0-9a-f]{12} \|$/gm, " |  |"));
 const snapshot = () => filesUnder(tmp).map((file) => [file, fs.readFileSync(file, "utf8")]);
 
@@ -105,6 +110,7 @@ describe("aidd-ui publish", () => {
 
     it("writes the fingerprint H8 reads into a history table written before the Fingerprint column", () => {
       reviewed(tmp, "icon-search", "button", "search-field", "dialog", "home");
+      captured(tmp, "home", HOME_STATES);
       fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).split("\n").map((line) => line.replace(/ \| [^|]*\|$/, " |")).join("\n"));
       assert.equal(validate(tmp).code, 1);
       assert.equal(publish("icon-search", "button", "search-field", "dialog", "home").code, 0);
@@ -151,13 +157,13 @@ describe("aidd-ui publish", () => {
         refused(["button"], '"button" has no ok verdict for state default at version 1, review it first');
       });
 
-      it("names the first state whose verdict is pending or ko", () => {
+      it("names the first state whose verdict is pending or revise", () => {
         unsealed();
         reviewed(tmp, "button");
         edit(tmp, GATE, "| button | hover | 1 | ok |", "| button | hover | 1 | pending |");
         refused(["button"], '"button" has no ok verdict for state hover at version 1, review it first');
         edit(tmp, GATE, "| button | hover | 1 | pending |", "| button | hover | 1 | ok |");
-        edit(tmp, GATE, "| button | focus | 1 | ok |", "| button | focus | 1 | ko |");
+        edit(tmp, GATE, "| button | focus | 1 | ok |", "| button | focus | 1 | revise | needs more contrast |");
         refused(["button"], '"button" has no ok verdict for state focus at version 1, review it first');
       });
 
@@ -192,6 +198,74 @@ describe("aidd-ui publish", () => {
         edit(tmp, BUTTON, "version: 1", "version: 2");
         refused(["button"], '"button" has no history row at its version 2');
       });
+    });
+  });
+
+  describe("a screen", () => {
+    const HOME = `${UI}/screens/home.md`;
+    const CODE_LINE = "code: src/ui/HomePage.tsx#HomePage@1";
+    beforeEach(() => fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).replace(/^(\| home \| 1 \|.*) [0-9a-f]{12} \|$/m, "$1  |")));
+
+    const refused = (message) => {
+      const before = snapshot();
+      const done = publish("home");
+      assert.deepEqual([done.code, done.report, done.err], [2, null, `aidd-ui: ${message}\n`]);
+      assert.deepEqual(snapshot(), before);
+    };
+
+    it("is published with no capture when no code is linked to it", () => {
+      edit(tmp, HOME, `${CODE_LINE}\n`, "");
+      reviewed(tmp, "home");
+      const { code, report } = publish("home");
+      assert.equal(code, 0);
+      assert.match(report.validated[0].fingerprint, /^[0-9a-f]{12}$/);
+      assert.ok(read(HOME).includes("\nstatus: validated\n"));
+    });
+
+    it("is published with each state's capture when its code is at its version, and the capture stays out of its fingerprint", () => {
+      reviewed(tmp, "home");
+      captured(tmp, "home", HOME_STATES);
+      const { code, report } = publish("home");
+      assert.equal(code, 0);
+      assert.match(report.validated[0].fingerprint, /^[0-9a-f]{12}$/);
+      fs.writeFileSync(path.join(tmp, `${UI}/screens/home.default@1.png`), Buffer.concat([PNG, Buffer.from("again")]));
+      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+    });
+
+    it("is refused when its code is at its version and a state has no capture, naming the path to write", () => {
+      reviewed(tmp, "home");
+      refused("home: default has no capture at screens/home.default@1.png");
+      captured(tmp, "home", ["default", "empty"]);
+      refused("home: loading has no capture at screens/home.loading@1.png");
+    });
+
+    it("is refused when only the capture of an earlier version exists", () => {
+      reviewed(tmp, "home");
+      captured(tmp, "home", HOME_STATES, "0");
+      refused("home: default has no capture at screens/home.default@1.png");
+    });
+
+    it("is published with no capture when its code is at an earlier version", () => {
+      edit(tmp, HOME, CODE_LINE, "code: src/ui/HomePage.tsx#HomePage@0");
+      reviewed(tmp, "home");
+      assert.equal(publish("home").code, 0);
+    });
+
+    it("is refused when a state holds a revise verdict, capture or not", () => {
+      reviewed(tmp, "home");
+      captured(tmp, "home", HOME_STATES);
+      edit(tmp, GATE, "| home | loading | 1 | ok | |", "| home | loading | 1 | revise | spinner too small |");
+      refused('"home" has no ok verdict for state loading at version 1, review it first');
+    });
+
+  });
+
+  describe("a capture", () => {
+    it("is no record: a png beside a record is left unread, and validate says nothing of it", () => {
+      const before = load(tmp).records.length;
+      captured(tmp, "home", HOME_STATES);
+      assert.equal(load(tmp).records.length, before);
+      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
   });
 

@@ -258,7 +258,7 @@ const REVIEW = record(
     "| --- | --- | --- | --- | --- |",
     "| home | default | 1 | ok | |",
     "| home | empty | 1 | ok | |",
-    "| home | loading | 1 | ko | spinner too small |",
+    "| home | loading | 1 | revise | spinner too small |",
     "| home | error | 1 | pending | |",
   ].join("\n")
 );

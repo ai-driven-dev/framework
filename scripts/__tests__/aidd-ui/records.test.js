@@ -402,7 +402,7 @@ describe("aidd-ui records and history", () => {
 
   describe("R13 reviews", () => {
     it("names a screen state with no verdict row", () => {
-      change(REVIEW, "| home | loading | 1 | ko | spinner too small |\n", "");
+      change(REVIEW, "| home | loading | 1 | revise | spinner too small |\n", "");
       assert.deepEqual(problems(), [`${REVIEW}: no verdict row for home / loading at version 1`]);
     });
 
@@ -411,9 +411,33 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${REVIEW}: no verdict row for home / loading at version 1`]);
     });
 
-    it("names a verdict that is not ok, ko or pending", () => {
+    it("names a verdict that is not ok, revise or pending", () => {
       change(REVIEW, "| home | default | 1 | ok | |", "| home | default | 1 | maybe | |");
-      assert.deepEqual(problems(), [`${REVIEW}: verdict "maybe" for home / default must be ok, ko or pending`]);
+      assert.deepEqual(problems(), [`${REVIEW}: verdict "maybe" for home / default must be ok, revise or pending`]);
+    });
+
+    it("accepts a revise verdict that says what to change", () => {
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names a ko verdict, which no review holds any more", () => {
+      change(REVIEW, "| home | loading | 1 | revise | spinner too small |", "| home | loading | 1 | ko | spinner too small |");
+      assert.deepEqual(problems(), [`${REVIEW}: verdict "ko" for home / loading must be ok, revise or pending`]);
+    });
+
+    it("names a revise verdict with no comment", () => {
+      change(REVIEW, "| home | loading | 1 | revise | spinner too small |", "| home | loading | 1 | revise | |");
+      assert.deepEqual(problems(), [`${REVIEW}: verdict "revise" for home / loading has no comment`]);
+    });
+
+    it("accepts an ok verdict with no comment", () => {
+      assert.ok(fs.readFileSync(path.join(tmp, REVIEW), "utf8").includes("| home | default | 1 | ok | |"));
+      assert.deepEqual(problems(), []);
+    });
+
+    it("accepts a pending verdict with no comment", () => {
+      assert.ok(fs.readFileSync(path.join(tmp, REVIEW), "utf8").includes("| home | error | 1 | pending | |"));
+      assert.deepEqual(problems(), []);
     });
   });
 
@@ -791,7 +815,9 @@ const FIXES = [
   "R12 | step 2 names screen \"ghost\", which no screen or wireframe has | \"ghost\" | name a screen or a wireframe that exists, or add a wireframe",
   "R12 | step 3 names screen \"search-flow\", which no screen or wireframe has | \"search-flow\" | name a screen or a wireframe that exists, or add a wireframe",
   "R13 | no verdict row for home / loading at version 1 | - | add a row for home / loading at version 1 to \"## Verdicts\"",
-  "R13 | verdict \"maybe\" for home / default must be ok, ko or pending | \"maybe\" | set the verdict to ok, ko or pending",
+  "R13 | verdict \"ko\" for home / loading must be ok, revise or pending | \"ko\" | set the verdict to ok, revise or pending",
+  "R13 | verdict \"maybe\" for home / default must be ok, revise or pending | \"maybe\" | set the verdict to ok, revise or pending",
+  "R13 | verdict \"revise\" for home / loading has no comment | - | write what to change in the Comment cell",
   "R14 | lacks \"## Users\" | - | add a \"## Users\" section",
   "R15 | file \"missing.svg\" does not exist beside it | \"missing.svg\" | add the file beside the record, or correct file",
   "R16 | status \"deprecated\" is for elements: reviews are proposed or validated | \"deprecated\" | set status to proposed or validated",

@@ -9,7 +9,8 @@ const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
 const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
 const FORMAT = "1"; // the record format this validator reads
 const ASSET_TYPES = ["icon", "image", "illustration"];
-const VERDICTS = ["ok", "ko", "pending"];
+const VERDICTS = ["ok", "revise", "pending"];
+const REVISE = "revise"; // a change asked for: it must say which
 const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
 const FOCUS_STATE = "focus"; // a component taking focus is driven by the keyboard
@@ -218,7 +219,10 @@ function reviewProblems(project) {
       const verdicts = rows
         .filter((row) => !VERDICTS.includes(row.Verdict))
         .map((row) => problem(record, `verdict "${row.Verdict}" for ${row.Screen} / ${row.State} must be ${listWithOr(VERDICTS)}`, `set the verdict to ${listWithOr(VERDICTS)}`, row.Verdict));
-      return [...missing, ...verdicts];
+      const silent = rows
+        .filter((row) => row.Verdict === REVISE && !row.Comment)
+        .map((row) => problem(record, `verdict "${REVISE}" for ${row.Screen} / ${row.State} has no comment`, "write what to change in the Comment cell"));
+      return [...missing, ...verdicts, ...silent];
     });
 }
 

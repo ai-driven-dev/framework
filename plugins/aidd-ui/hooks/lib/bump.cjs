@@ -7,7 +7,7 @@ const { placed, byId, isSystem, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATE
 const { Refusal, required, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
-const { colourDebt } = require("./code.cjs");
+const { colourDebt, parseLink } = require("./code.cjs");
 const { jsonText } = require("./resolver.cjs");
 const { isReviewed, fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks } = require("./history.cjs");
 
@@ -22,6 +22,7 @@ const PUBLISHED = "published";
 const VERDICTS_SECTION = "Verdicts";
 const VERDICTS_HEADING = `## ${VERDICTS_SECTION}`;
 const OK = "ok";
+const SCREEN = "screen";
 const ALREADY_RAISED = "already raised for this task";
 const CARRIAGE_RETURN = "\r";
 const CELL_BREAKERS = /[|\r\n]/;
@@ -214,6 +215,14 @@ function unreviewedState(project, record) {
   return list(states).find((state) => !ok(state)) ?? null;
 }
 
+/** The first state of a screen whose code is at its version and that has no capture beside it, as `{state, file}` with `file` relative to the design system folder; null for any other record. */
+function uncapturedState(project, record) {
+  const { kind, id, version, states, code } = fm(record);
+  if (kind !== SCREEN || !list(code).some((link) => parseLink(link)?.version === version)) return null;
+  const missing = list(states).find((state) => !fs.existsSync(path.join(project.root, path.dirname(record.file), `${id}.${state}@${version}.png`)));
+  return missing === undefined ? null : { state: missing, file: `${record.folder}/${id}.${missing}@${version}.png` };
+}
+
 /** Validates each element or wireframe `ids` names, each with an ok verdict at its current version
  * for every state: sets its status to validated and writes its fingerprint in the row of its current version. Returns `{validated}`, each `{id, version, fingerprint}`; a
  * refusal is thrown before any file is written. */
@@ -230,6 +239,8 @@ function validate(root, ids) {
     if (row.Fingerprint) throw new Refusal(`"${id}" version ${fm(record).version} is already validated, raise its version with bump to change it`);
     const state = unreviewedState(project, record);
     if (state !== null) throw new Refusal(`"${id}" has no ok verdict${state ? ` for state ${state}` : ""} at version ${fm(record).version}, review it first`);
+    const capture = uncapturedState(project, record);
+    if (capture !== null) throw new Refusal(`${id}: ${capture.state} has no capture at ${capture.file}`);
     return record;
   });
   const files = editing(root);
