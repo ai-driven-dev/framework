@@ -65,6 +65,7 @@ describe("aidd-ui engine help", () => {
         2: ["compare", "none", "--root", tmp],
       },
       keep: { 0: () => (draft(tmp, "ok", PAIR), ["keep", "ok", "a", "--root", tmp]), 2: ["keep", "none", "a", "--root", tmp] },
+      showcase: { 0: ["showcase", "--root", tmp], 2: ["showcase", "extra", "--root", tmp] },
       help: { 0: ["help", "validate"], 2: ["help", "nothing"] },
     };
     assert.deepEqual(Object.keys(runs).sort(), Object.keys(HELP).sort());

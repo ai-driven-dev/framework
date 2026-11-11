@@ -1,5 +1,5 @@
 // What `node aidd-ui.cjs help <command>` prints: each command's usage, effects, output and exit codes, written once.
-const { VALIDATE_USAGE, TOKENS_USAGE, HOOK_USAGE, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, COMPARE_USAGE, KEEP_USAGE, HELP_USAGE } = require("./cli.cjs");
+const { VALIDATE_USAGE, TOKENS_USAGE, HOOK_USAGE, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, COMPARE_USAGE, KEEP_USAGE, SHOWCASE_USAGE, HELP_USAGE } = require("./cli.cjs");
 
 const COUNT_LINE = "aidd-ui: <n> error(s), <m> warning(s)";
 const ERROR_LINE = '<file>[:<line>] <rule> ["<excerpt>"] => <fix>';
@@ -157,6 +157,21 @@ const HELP = {
     ],
     output: ["Prints JSON `kept` and `written`: the files copied."],
     exits: ["0 the variant is kept.", REFUSED],
+  },
+  showcase: {
+    summary: "Write a static page for each record, to look at and review.",
+    usage: [SHOWCASE_USAGE],
+    effects: [
+      "Writes `aidd_docs/ui/showcase/`, replacing it whole.",
+      "It writes `index.html`, one page per record, and a `.gitignore` of `*`.",
+      "Each page holds the records it uses and those that use it.",
+      "A record with states and a render holds a review.",
+      "A coded screen shows its captures beside each render.",
+      "The pages need no server and no network.",
+      "`--lang` picks `en` or `fr`, `en` by default.",
+    ],
+    output: ["Prints JSON `page`, `pages` and `lang`."],
+    exits: ["0 the pages are written.", "2 an unknown argument, or a request refused, nothing written."],
   },
   help: {
     summary: "Print a command's usage, effects, output and exit codes.",

@@ -77,4 +77,4 @@ function usages(project, given) {
   };
 }
 
-module.exports = { usages };
+module.exports = { usages, cited };
