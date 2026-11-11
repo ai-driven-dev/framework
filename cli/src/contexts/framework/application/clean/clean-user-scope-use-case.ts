@@ -382,7 +382,7 @@ export class CleanUserScopeUseCase {
       `It would have unregistered ${registrations.marketplaces.length} marketplace(s) ` +
       `and ${registrations.pluginClaims?.length ?? 0} plugin ref(s).`;
     if (!isAiToolId(toolId)) return base;
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(this.homeDir());
+    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(this.homeDir());
     if (cacheRoot === undefined) return base;
     const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
     if (paths.length === 0) return base;

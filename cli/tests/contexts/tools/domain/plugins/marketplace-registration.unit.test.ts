@@ -18,11 +18,11 @@ const activation = new NativeActivation({
 describe("MarketplaceRegistration", () => {
   it("reads back where and how the tool records its marketplaces", () => {
     const registration = new MarketplaceRegistration(settings, activation);
-    expect(registration.settingsPath).toBe(".claude/settings.json");
-    expect(registration.settingsKey).toBe("extraKnownMarketplaces");
-    expect(registration.marketplacesSettingsPath).toBeNull();
-    expect(registration.enabledPluginsKey).toBeUndefined();
-    expect(registration.toEntryKey({ name: "m", source: { kind: "github", repo: "a/b" } })).toBe(
+    expect(registration.sharedSettingsFile()).toBe(".claude/settings.json");
+    expect(registration.marketplacesKey()).toBe("extraKnownMarketplaces");
+    expect(registration.localSettingsFile()).toBeNull();
+    expect(registration.enabledPluginsKey()).toBeUndefined();
+    expect(registration.entryKeyFor({ name: "m", source: { kind: "github", repo: "a/b" } })).toBe(
       "entry"
     );
   });

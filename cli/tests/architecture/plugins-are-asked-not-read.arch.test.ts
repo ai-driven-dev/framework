@@ -21,11 +21,6 @@ const ANSWERING_DIRS = [
   "src/contexts/tools/domain/capabilities",
   "src/contexts/tools/domain/plugins",
 ];
-/** Declarations a profile hands over as data, whose fields are read as they are written. */
-const DATA_DECLARATIONS = [
-  "src/contexts/tools/domain/plugins/native-activation.ts",
-  "src/contexts/tools/domain/plugins/marketplace-registration.ts",
-];
 
 const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\))`;
 /** `kind` is the one read allowed: the discriminant a caller narrows the variant on. */
@@ -67,7 +62,7 @@ function answeringFiles(): string[] {
     readdirSync(join(CLI_ROOT, dir))
       .filter((entry) => entry.endsWith(".ts"))
       .map((entry) => `${dir}/${entry}`)
-  ).filter((file) => !DATA_DECLARATIONS.includes(file));
+  );
 }
 
 /** What a class leaves readable in one source: each entry is a read a caller can make. */
@@ -124,11 +119,12 @@ describe("a tool's plugin delivery is asked, never read", () => {
     ]);
   });
 
-  it("reads every capability and plugins file, and none of the data declarations", () => {
+  it("reads every capability and plugins file, the activation and registration included", () => {
     const files = answeringFiles();
     expect(files).toContain("src/contexts/tools/domain/capabilities/settings-capability.ts");
     expect(files).toContain("src/contexts/tools/domain/plugins/native-plugins.ts");
-    for (const declaration of DATA_DECLARATIONS) expect(files).not.toContain(declaration);
+    expect(files).toContain("src/contexts/tools/domain/plugins/native-activation.ts");
+    expect(files).toContain("src/contexts/tools/domain/plugins/marketplace-registration.ts");
   });
 
   it("sees a read and a destructuring where one is written", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasRules } from "../../../src/contexts/tools/domain/contracts.js";
-import type { MarketplaceSettings } from "../../../src/contexts/tools/domain/marketplace-settings.js";
+import type { MarketplaceRegistration } from "../../../src/contexts/tools/domain/plugins/marketplace-registration.js";
 import type { NativeActivation } from "../../../src/contexts/tools/domain/plugins/native-activation.js";
 import type {
   GlobalFiles,
@@ -73,37 +73,37 @@ function globalFilesAnswer(files: GlobalFiles | null, directory: string): unknow
 
 function activationAnswer(activation: NativeActivation | null): unknown {
   if (activation === null) return null;
+  const shape = activation.cliShape();
   return {
-    binary: activation.binary,
-    scopeArgs: activation.scopeArgs ?? null,
-    userRemoveArgs: activation.userRemoveArgs ?? null,
-    uninstallLeavesRefDisabled: activation.uninstallLeavesRefDisabled ?? null,
-    forceRemoveArgs: activation.forceRemoveArgs ?? null,
-    sourceCheckVerb: activation.sourceCheckVerb ?? null,
-    upgradeVerb: activation.upgradeVerb ?? null,
-    updateVerb: activation.updateVerb ?? null,
-    enableVerb: activation.enableVerb ?? null,
-    disableVerb: activation.disableVerb ?? null,
-    pluginArgs: activation.pluginArgs ?? null,
-    marketplaceRegistry: activation.marketplaceRegistry?.location(HOME) ?? null,
-    pluginCacheDir: activation.pluginCacheDir?.(HOME) ?? null,
+    binary: activation.hostBinary(),
+    scopeArgs: shape.scopeArgs ?? null,
+    userRemoveArgs: shape.userRemoveArgs ?? null,
+    uninstallLeavesRefDisabled: activation.takesRefForInUse(false) ? null : true,
+    forceRemoveArgs: shape.forceRemoveArgs ?? null,
+    sourceCheckVerb: shape.sourceCheckVerb ?? null,
+    upgradeVerb: shape.upgradeVerb ?? null,
+    updateVerb: shape.updateVerb ?? null,
+    enableVerb: shape.enableVerb ?? null,
+    disableVerb: shape.disableVerb ?? null,
+    pluginArgs: shape.pluginArgs ?? null,
+    marketplaceRegistry: activation.marketplaceRegistryDeclaration()?.location(HOME) ?? null,
+    pluginCacheDir: activation.pluginCacheRoot(HOME) ?? null,
     userSettingsPath: {
-      noEnv: activation.userSettingsPath?.(HOME, NO_ENV) ?? null,
-      echoEnv: activation.userSettingsPath?.(HOME, ECHO_ENV) ?? null,
+      noEnv: activation.userSettingsFile(HOME, NO_ENV) ?? null,
+      echoEnv: activation.userSettingsFile(HOME, ECHO_ENV) ?? null,
     },
   };
 }
 
-function marketplaceSettingsAnswer(settings: MarketplaceSettings | null): unknown {
+function marketplaceSettingsAnswer(settings: MarketplaceRegistration | null): unknown {
   if (settings === null) return null;
   return {
-    settingsPath: settings.settingsPath,
-    settingsKey: settings.settingsKey,
-    enabledPluginsKey: settings.enabledPluginsKey ?? null,
-    declarativePluginActivationRequiresNativeProof:
-      settings.declarativePluginActivationRequiresNativeProof ?? null,
-    marketplacesSettingsPath: settings.marketplacesSettingsPath,
-    toEntryKey: SOURCES.map((source) => settings.toEntryKey({ name: "aidd-framework", source })),
+    settingsPath: settings.sharedSettingsFile(),
+    settingsKey: settings.marketplacesKey(),
+    enabledPluginsKey: settings.enabledPluginsKey() ?? null,
+    declarativePluginActivationRequiresNativeProof: settings.requiresNativeProof() ? true : null,
+    marketplacesSettingsPath: settings.localSettingsFile(),
+    toEntryKey: SOURCES.map((source) => settings.entryKeyFor({ name: "aidd-framework", source })),
   };
 }
 

@@ -103,23 +103,23 @@ export interface NativeActivationSpec {
   userSettingsPath?: (homedir: string, env: EnvironmentReader) => string;
 }
 
-export class NativeActivation implements NativeActivationSpec {
-  readonly binary: NativeActivationSpec["binary"];
-  readonly pluginRegistry?: NativeActivationSpec["pluginRegistry"];
-  readonly marketplaceSources?: NativeActivationSpec["marketplaceSources"];
-  readonly enableVerb: NativeActivationSpec["enableVerb"];
-  readonly disableVerb: NativeActivationSpec["disableVerb"];
-  readonly scopeArgs?: NativeActivationSpec["scopeArgs"];
-  readonly userRemoveArgs?: NativeActivationSpec["userRemoveArgs"];
-  readonly uninstallLeavesRefDisabled?: NativeActivationSpec["uninstallLeavesRefDisabled"];
-  readonly forceRemoveArgs?: NativeActivationSpec["forceRemoveArgs"];
-  readonly sourceCheckVerb?: NativeActivationSpec["sourceCheckVerb"];
-  readonly upgradeVerb?: NativeActivationSpec["upgradeVerb"];
-  readonly updateVerb?: NativeActivationSpec["updateVerb"];
-  readonly pluginArgs?: NativeActivationSpec["pluginArgs"];
-  readonly marketplaceRegistry?: NativeActivationSpec["marketplaceRegistry"];
-  readonly pluginCacheDir?: NativeActivationSpec["pluginCacheDir"];
-  readonly userSettingsPath?: NativeActivationSpec["userSettingsPath"];
+/** What the host's own CLI is driven with: the verbs and arguments that differ between hosts. */
+export type NativeCliShape = Pick<
+  NativeActivationSpec,
+  | "scopeArgs"
+  | "userRemoveArgs"
+  | "forceRemoveArgs"
+  | "sourceCheckVerb"
+  | "upgradeVerb"
+  | "updateVerb"
+  | "enableVerb"
+  | "disableVerb"
+  | "pluginArgs"
+>;
+
+/** A tool's native activation, asked and never read: every stored value sits behind an answer. */
+export class NativeActivation {
+  readonly #spec: NativeActivationSpec;
 
   constructor(spec: NativeActivationSpec) {
     if (spec.binary === "")
@@ -128,27 +128,68 @@ export class NativeActivation implements NativeActivationSpec {
       throw new CapabilityConfigError(
         "A native activation reads its marketplace sources from a registry it does not declare"
       );
-    this.binary = spec.binary;
-    this.pluginRegistry = spec.pluginRegistry;
-    this.marketplaceSources = spec.marketplaceSources;
-    this.enableVerb = spec.enableVerb;
-    this.disableVerb = spec.disableVerb;
-    this.scopeArgs = spec.scopeArgs;
-    this.userRemoveArgs = spec.userRemoveArgs;
-    this.uninstallLeavesRefDisabled = spec.uninstallLeavesRefDisabled;
-    this.forceRemoveArgs = spec.forceRemoveArgs;
-    this.sourceCheckVerb = spec.sourceCheckVerb;
-    this.upgradeVerb = spec.upgradeVerb;
-    this.updateVerb = spec.updateVerb;
-    this.pluginArgs = spec.pluginArgs;
-    this.marketplaceRegistry = spec.marketplaceRegistry;
-    this.pluginCacheDir = spec.pluginCacheDir;
-    this.userSettingsPath = spec.userSettingsPath;
+    this.#spec = spec;
+  }
+
+  /** The host's executable, which also keys the matching `HostActions`. */
+  hostBinary(): string {
+    return this.#spec.binary;
+  }
+
+  /** The verbs and arguments the host's CLI is driven with. */
+  cliShape(): NativeCliShape {
+    const spec = this.#spec;
+    return {
+      scopeArgs: spec.scopeArgs,
+      userRemoveArgs: spec.userRemoveArgs,
+      forceRemoveArgs: spec.forceRemoveArgs,
+      sourceCheckVerb: spec.sourceCheckVerb,
+      upgradeVerb: spec.upgradeVerb,
+      updateVerb: spec.updateVerb,
+      enableVerb: spec.enableVerb,
+      disableVerb: spec.disableVerb,
+      pluginArgs: spec.pluginArgs,
+    };
+  }
+
+  /** Where the host's plugin registry lives and how it is read, when it was measured. */
+  pluginRegistryDeclaration(): NativeActivationSpec["pluginRegistry"] {
+    return this.#spec.pluginRegistry;
+  }
+
+  /** Where the host's marketplace registry lives and how it is read, when it keeps one. */
+  marketplaceRegistryDeclaration(): NativeActivationSpec["marketplaceRegistry"] {
+    return this.#spec.marketplaceRegistry;
+  }
+
+  /** Where a marketplace's current source is read from, when the host has a witness. */
+  marketplaceSourcesDeclaration(): NativeActivationSpec["marketplaceSources"] {
+    return this.#spec.marketplaceSources;
+  }
+
+  /** Whether the host keeps a registry of marketplaces that this CLI can read. */
+  keepsMarketplaceRegistry(): boolean {
+    return this.#spec.marketplaceRegistry !== undefined;
+  }
+
+  /** Whether the host's own CLI can update one installed plugin ref. */
+  refreshesOnePlugin(): boolean {
+    return this.#spec.updateVerb !== undefined;
+  }
+
+  /** Where the host leaves its plugin cache after an uninstall, or undefined when it declares none. */
+  pluginCacheRoot(home: string): string | undefined {
+    return this.#spec.pluginCacheDir?.(home);
+  }
+
+  /** The host's own user-scope settings file, or undefined when none is declared. */
+  userSettingsFile(home: string, env: EnvironmentReader): string | undefined {
+    return this.#spec.userSettingsPath?.(home, env);
   }
 
   /** Whether a plugin ref stays in use. A host that keeps an uninstalled ref, disabled, makes a
    * disabled ref indistinguishable from one the person disabled, so only an enabled one counts. */
   takesRefForInUse(enabled: boolean): boolean {
-    return enabled || this.uninstallLeavesRefDisabled !== true;
+    return enabled || this.#spec.uninstallLeavesRefDisabled !== true;
   }
 }

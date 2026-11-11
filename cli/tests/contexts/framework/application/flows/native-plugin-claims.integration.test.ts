@@ -357,7 +357,7 @@ for (const [toolId, catalogPath] of [
         []
       );
       const removeFs = new InMemoryFileAdapter();
-      const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(resolveHomeDir());
+      const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(resolveHomeDir());
       const cachedBytes =
         cacheRoot === undefined ? undefined : join(cacheRoot, hostName, "test-plugin", "skill.md");
       if (cachedBytes !== undefined)

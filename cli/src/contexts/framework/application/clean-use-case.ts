@@ -505,7 +505,7 @@ export class CleanUseCase {
    * `NativeActivation.pluginCacheDir` (copilot). */
   private describeSurvivingCachePath(toolId: ToolId, hostName: string, home: string): string {
     if (!isAiToolId(toolId)) return "";
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(home);
+    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(home);
     if (cacheRoot === undefined) return "";
     return `, and its cache at: ${join(cacheRoot, hostName)}`;
   }
@@ -519,7 +519,7 @@ export class CleanUseCase {
     home: string
   ): string {
     if (!isAiToolId(toolId)) return "";
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(home);
+    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(home);
     if (cacheRoot === undefined) return "";
     const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
     if (paths.length === 0) return "";
@@ -760,7 +760,7 @@ export class CleanUseCase {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
       const cacheRoot = isAiToolId(toolId)
-        ? nativeActivationOf(toolId)?.pluginCacheDir?.(home)
+        ? nativeActivationOf(toolId)?.pluginCacheRoot(home)
         : undefined;
       preview.push({
         toolId,

@@ -6,8 +6,8 @@ import type { AiToolId } from "../../src/kernel/tool.js";
 /** The list contract a tool's own declaration yields, as the composition builds it. */
 export function listContractOf(tool: AiToolId): NativeMarketplaceSourceListContract {
   const activation = nativeActivationOf(tool);
-  const sources = activation?.marketplaceSources;
+  const sources = activation?.marketplaceSourcesDeclaration();
   if (activation === undefined || sources?.from !== "list-command")
     throw new Error(`${tool} declares no list-command marketplace sources`);
-  return marketplaceListContract(activation.binary, sources);
+  return marketplaceListContract(activation.hostBinary(), sources);
 }

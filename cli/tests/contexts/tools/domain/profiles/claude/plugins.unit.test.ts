@@ -25,51 +25,51 @@ describe("claude plugins", () => {
 
     it("declares its own marketplace registry and plugin cache root, for clean's own purge", () => {
       const activation = nativeOf(claude.section("plugins")).activation();
-      expect(activation?.marketplaceRegistry?.location("/home/tester")).toBe(
+      expect(activation?.marketplaceRegistryDeclaration()?.location("/home/tester")).toBe(
         join("/home/tester", ".claude", "plugins", "known_marketplaces.json")
       );
-      expect(activation?.pluginCacheDir?.("/home/tester")).toBe(
+      expect(activation?.pluginCacheRoot("/home/tester")).toBe(
         join("/home/tester", ".claude", "plugins", "cache")
       );
     });
 
     it("declares where claude's own user-scope settings file lives, for --scope user", () => {
       const activation = nativeOf(claude.section("plugins")).activation();
-      expect(activation?.userSettingsPath?.("/home/tester", () => undefined)).toBe(
+      expect(activation?.userSettingsFile("/home/tester", () => undefined)).toBe(
         join("/home/tester", ".claude", "settings.json")
       );
     });
 
     it("drives the claude binary at local scope, with the verbs claude uses and nothing else", () => {
-      // Exhaustive, not `toMatchObject`: a field added by mistake must fail here.
-      expect({ ...nativeOf(claude.section("plugins")).activation() }).toEqual({
-        binary: "claude",
+      const activation = nativeOf(claude.section("plugins")).activation();
+      // Exhaustive, not `toMatchObject`: a verb added by mistake must fail here.
+      expect(activation?.hostBinary()).toBe("claude");
+      expect(activation?.cliShape()).toEqual({
         scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
         userRemoveArgs: [],
         enableVerb: "install",
         disableVerb: "uninstall",
         upgradeVerb: "update",
         pluginArgs: ["--yes"],
-        marketplaceRegistry: {
-          location: expect.any(Function),
-          layout: "install-locations-by-name",
-        },
-        marketplaceSources: { from: "marketplace-registry" },
-        pluginRegistry: { location: expect.any(Function), layout: "plugin-entries-by-scope" },
-        pluginCacheDir: expect.any(Function),
-        userSettingsPath: expect.any(Function),
       });
+      expect(activation?.marketplaceRegistryDeclaration()?.layout).toBe(
+        "install-locations-by-name"
+      );
+      expect(activation?.marketplaceSourcesDeclaration()).toStrictEqual({
+        from: "marketplace-registry",
+      });
+      expect(activation?.pluginRegistryDeclaration()?.layout).toBe("plugin-entries-by-scope");
     });
 
     it("registers a marketplace in the file claude writes itself, and enables plugins in the tracked one", () => {
       const settings = nativeOf(claude.section("plugins")).marketplaceRegistration();
 
       expect({
-        settingsPath: settings?.settingsPath,
-        settingsKey: settings?.settingsKey,
-        marketplacesSettingsPath: settings?.marketplacesSettingsPath,
-        enabledPluginsKey: settings?.enabledPluginsKey,
-        entryKey: settings?.toEntryKey?.({
+        settingsPath: settings?.sharedSettingsFile(),
+        settingsKey: settings?.marketplacesKey(),
+        marketplacesSettingsPath: settings?.localSettingsFile(),
+        enabledPluginsKey: settings?.enabledPluginsKey(),
+        entryKey: settings?.entryKeyFor({
           name: "aidd-framework",
           source: { kind: "local", path: "/abs/cache" },
         }),

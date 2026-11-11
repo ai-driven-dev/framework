@@ -80,8 +80,11 @@ export function wireHostRegistration(home: string = resolveHomeDir()): HostRegis
   for (const id of AI_TOOL_IDS) {
     const activation = nativeActivationOf(id);
     if (activation === undefined) continue;
-    hostActions.set(activation.binary, new HostCliAdapter(activation.binary, activation));
-    const { pluginRegistry, marketplaceRegistry, marketplaceSources: sources } = activation;
+    const binary = activation.hostBinary();
+    hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
+    const pluginRegistry = activation.pluginRegistryDeclaration();
+    const marketplaceRegistry = activation.marketplaceRegistryDeclaration();
+    const sources = activation.marketplaceSourcesDeclaration();
     if (pluginRegistry !== undefined)
       pluginRegistries.set(
         id,
@@ -98,9 +101,7 @@ export function wireHostRegistration(home: string = resolveHomeDir()): HostRegis
     if (sources?.from === "list-command") {
       marketplaceSources.set(
         id,
-        new NativeMarketplaceSourceReaderAdapter(
-          marketplaceListContract(activation.binary, sources)
-        )
+        new NativeMarketplaceSourceReaderAdapter(marketplaceListContract(binary, sources))
       );
     }
   }

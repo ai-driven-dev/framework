@@ -7,44 +7,43 @@ describe("codex plugins", () => {
   describe("capabilities.plugins", () => {
     it("declares native codex CLI activation, with the verbs codex uses, and nothing else", () => {
       const activation = nativeOf(codex.section("plugins")).activation();
-      // Exhaustive, not `toMatchObject`: a field added by mistake must fail here rather than
-      // escape. `pluginCacheDir` is `expect.any(Function)`, since a function matches no literal.
-      expect(activation).toEqual({
-        binary: "codex",
+      // Exhaustive, not `toMatchObject`: a verb added by mistake must fail here rather than escape.
+      expect(activation?.hostBinary()).toBe("codex");
+      expect(activation?.cliShape()).toEqual({
         upgradeVerb: "upgrade",
         enableVerb: "add",
         disableVerb: "remove",
-        pluginCacheDir: expect.any(Function),
-        pluginRegistry: { location: expect.any(Function), layout: "toml-plugin-tables" },
-        marketplaceSources: expect.objectContaining({
-          from: "list-command",
-          layout: "marketplaces-with-source",
-        }),
-        userSettingsPath: expect.any(Function),
       });
+      expect(activation?.pluginRegistryDeclaration()?.layout).toBe("toml-plugin-tables");
+      expect(activation?.marketplaceSourcesDeclaration()).toEqual(
+        expect.objectContaining({ from: "list-command", layout: "marketplaces-with-source" })
+      );
     });
 
     it("declares its own plugin cache root, so clean can purge the empty shell codex leaves behind", () => {
-      const pluginCacheDir = nativeOf(codex.section("plugins")).activation()?.pluginCacheDir;
-      expect(pluginCacheDir?.("/home/tester")).toBe(
+      const activation = nativeOf(codex.section("plugins")).activation();
+      expect(activation?.pluginCacheRoot("/home/tester")).toBe(
         join("/home/tester", ".codex", "plugins", "cache")
       );
     });
 
-    describe("nativeActivation.userSettingsPath()", () => {
+    describe("nativeActivation.userSettingsFile()", () => {
       const environment = (vars: Record<string, string>) => (name: string) => vars[name];
 
       it("falls back to ~/.codex/config.toml when CODEX_HOME is unset", () => {
-        const userSettingsPath = nativeOf(codex.section("plugins")).activation()?.userSettingsPath;
-        expect(userSettingsPath?.("/home/tester", environment({}))).toBe(
+        const activation = nativeOf(codex.section("plugins")).activation();
+        expect(activation?.userSettingsFile("/home/tester", environment({}))).toBe(
           join("/home/tester", ".codex", "config.toml")
         );
       });
 
       it("follows CODEX_HOME when a real machine has it set — the real codex binary reads there, not ~/.codex", () => {
-        const userSettingsPath = nativeOf(codex.section("plugins")).activation()?.userSettingsPath;
+        const activation = nativeOf(codex.section("plugins")).activation();
         expect(
-          userSettingsPath?.("/home/tester", environment({ CODEX_HOME: "/somewhere/else" }))
+          activation?.userSettingsFile(
+            "/home/tester",
+            environment({ CODEX_HOME: "/somewhere/else" })
+          )
         ).toBe(join("/somewhere/else", "config.toml"));
       });
     });

@@ -24,7 +24,7 @@ export async function purgeAllNativeCaches(
 ): Promise<void> {
   for (const [toolId, { registrations, removedHostNames }] of undone) {
     if (!isAiToolId(toolId)) continue;
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(home);
+    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(home);
     if (cacheRoot === undefined) continue;
     for (const { hostName } of registrations.marketplaces) {
       await purgeNativeMarketplaceCache(

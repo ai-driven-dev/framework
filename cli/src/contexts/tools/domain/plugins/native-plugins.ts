@@ -118,7 +118,7 @@ export class NativePlugins extends PluginDeliveryBase {
   }
   /** Whether enabling a plugin acts on the whole machine: the tool declares no scope arguments. */
   enablementIsMachineGlobal(): boolean {
-    return this.#nativeActivation?.scopeArgs === undefined;
+    return this.#nativeActivation?.cliShape().scopeArgs === undefined;
   }
   override userPluginsBaseDir(homedir: string): string | null {
     return this.#userPluginsDir?.(homedir) ?? super.userPluginsBaseDir(homedir);

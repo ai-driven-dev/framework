@@ -26,7 +26,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // what a tool declares about plugins: installing is framework work
     "src/contexts/tools/domain/plugins/plugins-capability.ts",
     "src/contexts/tools/domain/plugins/plugin-params.ts",
-    "src/contexts/tools/domain/marketplace-settings.ts",
+    "src/contexts/tools/domain/plugins/marketplace-registration.ts",
     "src/contexts/tools/domain/plugin-translation-mode.ts",
     "src/contexts/tools/domain/models/plugin-install-notice.ts",
     // The variable each tool expands to an installed plugin's directory: a tool declares it,

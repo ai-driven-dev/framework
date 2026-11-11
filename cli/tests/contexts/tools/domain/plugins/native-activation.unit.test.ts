@@ -10,13 +10,13 @@ const driven = { binary: "claude", enableVerb: "install", disableVerb: "uninstal
 describe("NativeActivation", () => {
   it("reads back what the tool declares", () => {
     const activation = new NativeActivation({ ...driven, upgradeVerb: "update" });
-    expect([activation.binary, activation.enableVerb, activation.disableVerb]).toEqual([
-      "claude",
-      "install",
-      "uninstall",
-    ]);
-    expect(activation.upgradeVerb).toBe("update");
-    expect(activation.scopeArgs).toBeUndefined();
+    expect([
+      activation.hostBinary(),
+      activation.cliShape().enableVerb,
+      activation.cliShape().disableVerb,
+    ]).toEqual(["claude", "install", "uninstall"]);
+    expect(activation.cliShape().upgradeVerb).toBe("update");
+    expect(activation.cliShape().scopeArgs).toBeUndefined();
   });
 
   it("does not compile without an enable verb", () => {
@@ -46,6 +46,8 @@ describe("NativeActivation", () => {
       marketplaceSources: { from: "marketplace-registry" },
     });
 
-    expect(activation.marketplaceSources).toStrictEqual({ from: "marketplace-registry" });
+    expect(activation.marketplaceSourcesDeclaration()).toStrictEqual({
+      from: "marketplace-registry",
+    });
   });
 });

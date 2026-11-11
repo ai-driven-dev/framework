@@ -27,12 +27,12 @@ export class NativeHostRegistrationGate {
     registrations?: NativeRegistrations
   ): Promise<HostActions> {
     const activation = nativeActivationOf(toolId);
-    if (activation?.updateVerb === undefined) {
+    if (activation?.refreshesOnePlugin() !== true) {
       throw new Error(
         `${toolId} does not support targeted native plugin update for '${claim.ref}'; use marketplace refresh or framework update instead.`
       );
     }
-    const activator = this.activators.get(activation.binary);
+    const activator = this.activators.get(activation.hostBinary());
     const reader = this.registries.get(toolId);
     if (
       activator === undefined ||

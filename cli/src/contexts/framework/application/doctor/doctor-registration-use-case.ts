@@ -19,7 +19,6 @@ import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { MarketplaceSettings } from "../../../tools/domain/marketplace-settings.js";
 import { nativeActivationOf, resolveNativePlugins } from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -110,7 +109,7 @@ export class DoctorRegistrationUseCase {
     const issues: DoctorIssue[] = [];
     for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
       if (!isAiToolId(toolId)) continue;
-      if (nativeActivationOf(toolId)?.marketplaceRegistry === undefined) continue;
+      if (nativeActivationOf(toolId)?.keepsMarketplaceRegistry() !== true) continue;
       const reader = this.hostMarketplaceRegistries.get(toolId);
       if (reader === undefined) continue;
       for (const marketplace of expected) {
@@ -232,7 +231,7 @@ export class DoctorRegistrationUseCase {
         issues.push({
           severity: "warning",
           message: `${toolId} no longer declares marketplace '${marketplace.name}'`,
-          fix: `Run \`aidd marketplace refresh\` to write it back to ${settings.marketplacesSettingsPath}.`,
+          fix: `Run \`aidd marketplace refresh\` to write it back to ${settings.file}.`,
         });
       }
     }
@@ -318,19 +317,20 @@ export class DoctorRegistrationUseCase {
 
   private untrackedSettingsOf(
     toolId: ToolId
-  ): (MarketplaceSettings & { marketplacesSettingsPath: string }) | undefined {
+  ): { file: string; marketplacesKey: string } | undefined {
     const settings = resolveNativePlugins(toolId)?.marketplaceRegistration();
     // `null` means the tool writes no machine-local registration at all, so there is
     // nothing here to check — only a declared path leaves a file worth looking at.
-    if (typeof settings?.marketplacesSettingsPath !== "string") return undefined;
-    return settings as MarketplaceSettings & { marketplacesSettingsPath: string };
+    const file = settings?.localSettingsFile();
+    if (settings == null || typeof file !== "string") return undefined;
+    return { file, marketplacesKey: settings.marketplacesKey() };
   }
 
   private async registeredNames(
     projectRoot: string,
-    settings: MarketplaceSettings & { marketplacesSettingsPath: string }
+    settings: { file: string; marketplacesKey: string }
   ): Promise<Set<string>> {
-    const path = join(projectRoot, settings.marketplacesSettingsPath);
+    const path = join(projectRoot, settings.file);
     if (!(await this.fs.fileExists(path))) return new Set();
     let parsed: unknown;
     try {
@@ -339,7 +339,7 @@ export class DoctorRegistrationUseCase {
       return new Set();
     }
     if (parsed === null || typeof parsed !== "object") return new Set();
-    const value = (parsed as Record<string, unknown>)[settings.settingsKey];
+    const value = (parsed as Record<string, unknown>)[settings.marketplacesKey];
     if (Array.isArray(value)) return new Set(value.map(String));
     if (value !== null && typeof value === "object") return new Set(Object.keys(value));
     return new Set();
@@ -348,7 +348,7 @@ export class DoctorRegistrationUseCase {
   private canRegisterItself(toolId: ToolId): boolean {
     const activation = nativeActivationOf(toolId);
     if (activation === undefined) return true;
-    return this.activators.get(activation.binary)?.isAvailable() ?? false;
+    return this.activators.get(activation.hostBinary())?.isAvailable() ?? false;
   }
 
   /** The one preamble all three passes open with, so `--tool <id>` narrows every one of them the
