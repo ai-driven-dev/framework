@@ -59,7 +59,7 @@ describe("Claude Code's own installed_plugins.json", () => {
 
   /**
    * `aidd` registers every plugin at project scope (`host-cli-adapter.ts`'s
-   * `PROJECT_SCOPE_ARGS`), so an entry's `projectPath` decides whether this host loads it here.
+   * `scopeArgs`), so an entry's `projectPath` decides whether this host loads it here.
    */
   it("does not count a ref installed only for another project", async () => {
     await write(
