@@ -6,7 +6,7 @@
 | --- | --- |
 | Finding | a defect tied to the diff, with its proof and its smallest fix |
 | Proof | the `file:line` that makes the defect real: where the value comes from, who calls the code, the contract it breaks |
-| Limit | a doubt left unproven, or a shape nothing reaches; never a finding |
+| Limit | a doubt left unproven, or a shape nothing reaches; not a finding |
 
 ## Severity
 
