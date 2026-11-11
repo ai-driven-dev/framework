@@ -13,7 +13,7 @@ The confirmed frame, written nowhere, per [scope-frame.md](../references/scope-f
 ## Process
 
 1. **Detect.** Detect the installed tools per [tool-detect.md](../references/tool-detect.md).
-2. **Fill.** For each field in [scope-frame.md](../references/scope-frame.md), propose a value or ask one question. Kilo defaults to native `.kilo/skills/`; ask before choosing portable `.agents/skills/`.
+2. **Fill.** For each field in [scope-frame.md](../references/scope-frame.md), propose a value or ask one question.
 3. **Check.** Check the name per [naming.md](../references/naming.md) and surface any overlap.
 4. **Confirm.** Hand the confirmed frame to plan.
 

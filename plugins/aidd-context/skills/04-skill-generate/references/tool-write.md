@@ -31,4 +31,4 @@ Emit `description` always, `name` only where listed, drop the rest.
 
 For Kilo, the skill name must match its parent directory, use lowercase letters, digits and single hyphens, and contain at most 64 characters. The description must be nonempty and at most 1024 characters. Omit `argument-hint` and Claude-only fields. Native and portable paths are both loader-compatible; compatibility does not authorize copying. Require explicit user agreement before choosing `.agents/skills/`, and never write the same skill to both locations.
 
-Kilo source: [Skills](https://kilo.ai/docs/customize/skills), verified 2026-09-25.
+Kilo source: [Skills](https://kilo.ai/docs/customize/skills).

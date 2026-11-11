@@ -14,7 +14,7 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | Antigravity CLI | `.agents/agents/<name>/agent.md` | markdown + frontmatter |
 | Kilo           | `.kilo/agents/<name>.md`         | markdown + frontmatter |
 
-Kilo sources agents from `.kilo/agents/`; the filename defines the name. Source: [custom subagents](https://kilo.ai/docs/customize/custom-subagents), verified 2026-09-25.
+Kilo sources agents from `.kilo/agents/`; the filename defines the name. See the [custom subagent contract](https://kilo.ai/docs/customize/custom-subagents) for path and frontmatter fields.
 
 User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
 
@@ -64,7 +64,7 @@ Resolve shared paths from declared tools or the AIDD manifest; otherwise confirm
 | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
 | `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | Kilo |
 
-For Kilo, `.kilocode/` detects legacy projects only; new output uses `.kilo/`. AIDD does not infer Kilo from `AGENTS.md` or `opencode.json[c]` alone, though Kilo may read legacy OpenCode-named config for compatibility. The filename and optional fields follow the [custom subagent contract](https://kilo.ai/docs/customize/custom-subagents), verified 2026-09-25.
+For Kilo, `.kilocode/` detects legacy projects only; new output uses `.kilo/`. AIDD does not infer Kilo from `AGENTS.md` or `opencode.json[c]` alone, though Kilo may read legacy OpenCode-named config for compatibility.
 
 ## Write targets
 

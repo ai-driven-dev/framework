@@ -30,7 +30,7 @@ Drop a field a tool does not support. Never invent a substitute.
 | GitHub Copilot | `description`, `applyTo` (no `model`)                                                 |
 | Kilo           | `description`, optional requested `agent`, `model`, `variant`, `subtask`              |
 
-For Kilo, use documented frontmatter only; omit Claude-only fields. Source: [workflows](https://kilo.ai/docs/customize/workflows), verified 2026-09-25.
+For Kilo, use documented frontmatter only; omit Claude-only fields. Source: [workflows](https://kilo.ai/docs/customize/workflows).
 
 ## Detect (which tools are installed)
 
@@ -42,7 +42,7 @@ For Kilo, use documented frontmatter only; omit Claude-only fields. Source: [wor
 | `.github/copilot-instructions.md` | GitHub Copilot |
 | `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | Kilo |
 
-`.kilocode/` is legacy detection only; new output uses `.kilo/commands/`. AIDD does not infer Kilo from `AGENTS.md` or `opencode.json[c]` alone, though Kilo may read legacy OpenCode-named config for compatibility. Source: [Kilo settings](https://kilo.ai/docs/getting-started/settings), verified 2026-09-25.
+`.kilocode/` is legacy detection only; new output uses `.kilo/commands/`. AIDD does not infer Kilo from `AGENTS.md` or `opencode.json[c]` alone, though Kilo may read legacy OpenCode-named config for compatibility. Source: [Kilo settings](https://kilo.ai/docs/getting-started/settings).
 
 ## Write targets
 
