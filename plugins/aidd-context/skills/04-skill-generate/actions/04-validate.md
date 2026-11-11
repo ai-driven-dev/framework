@@ -9,7 +9,11 @@ The files written by write.
 ## Process
 
 1. Validate each file the plan lists, fix each breach, and repeat until it passes.
-   - Read each file with its cited references, flag each breach of [skill-authoring.md](../references/skill-authoring.md), check that the diagram matches `actions/` (R8) and draws each stop, question and loop an action states (R9), that a step uses each Input item and produces each Output item (R14), and that each file satisfies the Fill and Always true rows of its kind in [fill-norm.md](../references/fill-norm.md).
+   - Run [check-skill.cjs](../scripts/check-skill.cjs) on the skill folder and fix each error it reports.
+   - Read each file with its cited references and flag each breach of [skill-authoring.md](../references/skill-authoring.md).
+   - Check that the diagram draws each stop, question and loop an action states (R9).
+   - Check that a step uses each Input item and produces each Output item (R14).
+   - Check that each file satisfies the Fill and Always true rows of its kind in [fill-norm.md](../references/fill-norm.md).
    - Every item the plan lists to preserve still holds, else restore it.
    - A breach found in a cited file the plan does not list: add it to the plan, confirm it with the user, then fix it.
    - Unresolved breach: report the blocker and stop only if the user declines or the fix cannot be completed.
