@@ -84,9 +84,9 @@ function engine(root, ...args) {
 const sheetOf = (root) => fs.readFileSync(path.join(root, SHEET), "utf8");
 const answerOf = (text, id) => text.split("\n").find((line) => line.startsWith(`- ${id} |`)).split("|")[4]?.trim() ?? "";
 
-// Beside the message, never inside it: the model sends stdout, the order stays out of the chat.
-const PLAN_SEND = "Send the message above as it is, in plain chat text, nothing before or after it, then wait for the reply.\n";
-const REPORT_SEND = "Send the message above as it is, in plain chat text, nothing before or after it, then stop.\n";
+// Beside the message, never inside it. A host merges both streams in arrival order, so the order names no position.
+const PLAN_SEND = "Send this command's other lines as they are, in plain chat text, nothing before or after them, then wait for the reply.\n";
+const REPORT_SEND = "Send this command's other lines as they are, in plain chat text, nothing before or after them, then stop.\n";
 
 function withProject(fn, sheet, bank) {
   const root = project(sheet, bank);

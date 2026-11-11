@@ -654,8 +654,8 @@ function runChanges(args) {
   }
 }
 
-/** Beside the message, on stderr, so the order to send it never lands in the chat. */
-const sendAsIs = (then) => `Send the message above as it is, in plain chat text, nothing before or after it, then ${then}.\n`;
+/** On stderr, so the order never lands in the chat. A host merges both streams in arrival order: it names no position. */
+const sendAsIs = (then) => `Send this command's other lines as they are, in plain chat text, nothing before or after them, then ${then}.\n`;
 
 function runPlan([sheetFile, ...rest]) {
   if (sheetFile === undefined) return usageOf("plan");
