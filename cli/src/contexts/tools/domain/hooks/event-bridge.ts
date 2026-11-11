@@ -3,6 +3,15 @@
  * the three hook events a bridge replays and how a plugin's name becomes its module's identifier.
  */
 
+// biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
+import adapter from "../../../../../assets/hooks-runtime/host-bridge.cjs";
+import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import type { AiToolId } from "../../../../kernel/tool.js";
+import {
+  declareHooks,
+  type HookEventRoute,
+  type HooksDescriptor,
+} from "../formats/hooks-descriptor.js";
 import {
   type BridgeHookCall,
   bridgeHookCalls,
@@ -40,4 +49,33 @@ export function pascalCasePluginName(plugin: string): string {
     .filter(Boolean)
     .map((part) => part[0]?.toUpperCase() + part.slice(1))
     .join("");
+}
+
+/** The native events of a loader that reads no hooks file, one per event a bridge replays. */
+export type BridgeNativeEvents = readonly [sessionStart: string, postToolUse: string, stop: string];
+
+/** A loader that reads no hooks file: the three events it fires reach the hook through a bridge
+ * generated per plugin, and one adapter, stamped for the tool, serves them all. */
+export function declareBridgeHooks<
+  const L extends {
+    /** The loader's module for a plugin, beside which its generated bridge is written. */
+    readonly loaderEntry: FlatHooksLoaderEntry;
+    readonly bridgeRuntime?: HooksDescriptor["bridgeRuntime"];
+  },
+>(
+  toolId: AiToolId,
+  directory: string,
+  [sessionStart, postToolUse, stop]: BridgeNativeEvents,
+  { loaderEntry, ...rest }: L
+) {
+  const bridged = (native: string): HookEventRoute => ({ native: [native], relay: "bridge" });
+  return declareHooks(toolId, directory, adapter, {
+    ...rest,
+    flat: { scriptsDir: `${directory}hooks/`, loaderEntry },
+    events: {
+      SessionStart: bridged(sessionStart),
+      PostToolUse: bridged(postToolUse),
+      Stop: bridged(stop),
+    },
+  });
 }

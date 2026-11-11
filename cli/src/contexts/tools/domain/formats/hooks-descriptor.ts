@@ -30,6 +30,7 @@ import {
   pluginScriptPath,
   unmergeHooks,
 } from "./hooks-merge.js";
+import { PLUGIN_ROOT_TOKEN } from "./plugin-root-token.js";
 
 /** The events a plugin's hooks may name, whichever tool runs them. */
 export const CANONICAL_HOOK_EVENTS = [
@@ -352,19 +353,37 @@ export function flatProjectHooksDelivery(
   };
 }
 
-/** A descriptor as its tool writes it: the events by name. */
-export interface HooksDeclaration extends Omit<HooksDescriptor, "events" | "eventMap"> {
-  readonly events: Readonly<Record<string, HookEventRoute>>;
+/** An event as its tool declares it: the native event it fires on, or several, through the
+ * tool's hooks file; or the whole route. */
+export type HookEventDeclaration = string | readonly string[] | HookEventRoute;
+
+/** A descriptor as its tool writes it. What it leaves out is what most tools share: every
+ * canonical event fired under its own name, an event it never names still reaching the hook,
+ * and the plugin-root variable a hooks file's commands hold. */
+export interface HooksDeclaration
+  extends Omit<
+    HooksDescriptor,
+    "events" | "eventMap" | "runtime" | "undeclaredEvents" | "rootToken"
+  > {
+  readonly events?: Readonly<Record<string, HookEventDeclaration>>;
+  readonly undeclaredEvents?: HooksDescriptor["undeclaredEvents"];
+  readonly rootToken?: string;
 }
 
 type Refuse = (invariant: HooksInvariant, detail: string) => never;
 
+function routeOf(declared: HookEventDeclaration): HookEventRoute {
+  if (typeof declared === "string") return { native: [declared], relay: "native" };
+  return "native" in declared ? declared : { native: declared, relay: "native" };
+}
+
 function canonicalEvents(
-  declared: Readonly<Record<string, HookEventRoute>>,
+  declared: Readonly<Record<string, HookEventDeclaration>>,
   refuse: Refuse
 ): ReadonlyMap<CanonicalHookEvent, HookEventRoute> {
   const events = new Map<CanonicalHookEvent, HookEventRoute>();
-  for (const [name, route] of Object.entries(declared)) {
+  for (const [name, declaredRoute] of Object.entries(declared)) {
+    const route = routeOf(declaredRoute);
     const event = CANONICAL_HOOK_EVENTS.find((canonical) => canonical === name);
     if (event === undefined) return refuse("unknown-event", `${name} is not a canonical event`);
     if (route.native.length === 0) {
@@ -391,28 +410,42 @@ function ownPaths(declaration: HooksDeclaration): readonly string[] {
   ].filter((path): path is string => path !== undefined);
 }
 
-function stamped(toolId: AiToolId, runtime: HooksRuntime, refuse: Refuse): HooksRuntime {
+function stamped(toolId: AiToolId, adapter: string, refuse: Refuse): HooksRuntime {
   const stamp = `const HOST = "${toolId}";`;
-  const adapter = runtime.adapter.replace('const HOST = "unstamped";', stamp);
-  return adapter.includes(stamp)
-    ? { adapter }
+  const stampedAdapter = adapter.replace('const HOST = "unstamped";', stamp);
+  return stampedAdapter.includes(stamp)
+    ? { adapter: stampedAdapter }
     : refuse("adapter-not-stamped", `the adapter does not name ${toolId} as its host`);
 }
 
-/** The one door to a descriptor: refuses what no tool could run, and derives what the readers
- * of a descriptor need from the events it declares. */
-export function declareHooks<const D extends HooksDeclaration & { readonly runtime: HooksRuntime }>(
-  owner: { readonly toolId: AiToolId; readonly directory: string },
-  declaration: D
-): Omit<D, "events" | "runtime"> & {
+type DeclaredHooks<D extends HooksDeclaration> = Omit<
+  D,
+  "events" | "undeclaredEvents" | "rootToken"
+> & {
   readonly events: ReadonlyMap<CanonicalHookEvent, HookEventRoute>;
   readonly eventMap: Readonly<Record<string, readonly string[]>>;
+  readonly undeclaredEvents: HooksDescriptor["undeclaredEvents"];
+  readonly rootToken: string | undefined;
   readonly runtime: HooksRuntime;
-} & HooksBrand {
+} & HooksBrand;
+
+/** The one door to a descriptor: refuses what no tool could run, and derives what the readers
+ * of a descriptor need from the events it declares. */
+export function declareHooks<const D extends HooksDeclaration>(
+  toolId: AiToolId,
+  directory: string,
+  adapter: string,
+  declaration: D
+): DeclaredHooks<D> {
   const refuse: Refuse = (invariant, detail) => {
-    throw new InvalidHooksDescriptorError(owner.toolId, invariant, detail);
+    throw new InvalidHooksDescriptorError(toolId, invariant, detail);
   };
-  const { events: declared, runtime, ...rest } = declaration;
+  const {
+    events: declared = ownNameEvents(),
+    undeclaredEvents = "relayed",
+    rootToken,
+    ...rest
+  } = declaration;
   const events = canonicalEvents(declared, refuse);
   if (declaration.project !== undefined && declaration.file === undefined) {
     refuse("project-without-file", "a project route merges through the hooks file's format");
@@ -420,30 +453,30 @@ export function declareHooks<const D extends HooksDeclaration & { readonly runti
   if (declaration.flat?.loaderEntry !== undefined && declaration.file !== undefined) {
     refuse("loader-with-file", "a loader imports a bridge instead of reading a hooks file");
   }
-  if ((declaration.rootToken !== undefined) !== (declaration.file !== undefined)) {
+  if (rootToken !== undefined && declaration.file === undefined) {
     refuse("root-token-without-file", "the root token names what a hooks file's commands hold");
   }
   for (const path of ownPaths(declaration)) {
-    if (isAbsolute(path) || path.split("/").includes("..") || !path.startsWith(owner.directory)) {
-      refuse("path-outside-directory", `${path} is not under ${owner.directory}`);
+    if (isAbsolute(path) || path.split("/").includes("..") || !path.startsWith(directory)) {
+      refuse("path-outside-directory", `${path} is not under ${directory}`);
     }
   }
-  const declared_: Omit<D, "events" | "runtime"> & {
-    readonly events: ReadonlyMap<CanonicalHookEvent, HookEventRoute>;
-    readonly eventMap: Readonly<Record<string, readonly string[]>>;
-    readonly runtime: HooksRuntime;
-  } = {
+  const declared_ = {
     ...rest,
-    runtime: stamped(owner.toolId, runtime, refuse),
+    runtime: stamped(toolId, adapter, refuse),
     events,
+    undeclaredEvents,
     eventMap: Object.fromEntries([...events].map(([event, route]) => [event, route.native])),
+    rootToken: declaration.file === undefined ? undefined : (rootToken ?? PLUGIN_ROOT_TOKEN),
   };
   return declared_ as typeof declared_ & HooksBrand;
 }
 
-/** The events a tool names, each fired under its own name through the tool's hooks file. */
+/** The events a tool fires under their own names through its hooks file: every canonical event,
+ * less those it never fires. */
 export function ownNameEvents(
-  ...names: readonly CanonicalHookEvent[]
+  without: { readonly except?: readonly CanonicalHookEvent[] } = {}
 ): Record<string, HookEventRoute> {
+  const names = CANONICAL_HOOK_EVENTS.filter((name) => !without.except?.includes(name));
   return Object.fromEntries(names.map((name) => [name, { native: [name], relay: "native" }]));
 }

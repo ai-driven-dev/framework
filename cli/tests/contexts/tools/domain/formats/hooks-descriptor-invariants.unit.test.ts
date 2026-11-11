@@ -1,22 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
+  CANONICAL_HOOK_EVENTS,
   declareHooks,
   type HookEventRoute,
   type HooksDeclaration,
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
+import { PLUGIN_ROOT_TOKEN } from "../../../../../src/contexts/tools/domain/formats/plugin-root-token.js";
 import type { HooksInvariant } from "../../../../../src/kernel/errors.js";
+import type { AiToolId } from "../../../../../src/kernel/tool.js";
 
-const OWNER = { toolId: "claude", directory: ".claude/" } as const;
+const UNSTAMPED = 'const HOST = "unstamped";';
+const OWNER = ["claude", ".claude/", UNSTAMPED] as const;
 const ROUTE: HookEventRoute = { native: ["SessionStart"], relay: "native" };
 const FILE = { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } } as const;
 
-type Declaration = HooksDeclaration & { readonly runtime: { readonly adapter: string } };
-
-function declaration(overrides: Partial<Declaration> = {}): Declaration {
+function declaration(overrides: Partial<HooksDeclaration> = {}): HooksDeclaration {
   return {
     undeclaredEvents: "relayed",
     events: { SessionStart: ROUTE },
-    runtime: { adapter: 'const HOST = "unstamped";' },
     ...overrides,
   };
 }
@@ -24,8 +25,8 @@ function declaration(overrides: Partial<Declaration> = {}): Declaration {
 const BROKEN: readonly {
   invariant: HooksInvariant;
   case: string;
-  owner?: typeof OWNER | { toolId: "codex"; directory: string };
-  broken: () => Declaration;
+  owner?: readonly [AiToolId, string, string];
+  broken: () => HooksDeclaration;
 }[] = [
   {
     invariant: "unknown-event",
@@ -81,17 +82,41 @@ const BROKEN: readonly {
   {
     invariant: "adapter-not-stamped",
     case: "an adapter naming another tool as its host",
-    owner: { toolId: "codex", directory: ".codex/" },
-    broken: () => declaration({ runtime: { adapter: 'const HOST = "claude";' } }),
+    owner: ["codex", ".codex/", 'const HOST = "claude";'],
+    broken: () => declaration(),
   },
 ];
 
 describe("declaring a tool's hooks", () => {
   it("accepts a declaration that breaks no invariant", () => {
-    expect(declareHooks(OWNER, declaration()).runtime.adapter).toContain('const HOST = "claude";');
+    expect(declareHooks(...OWNER, declaration()).runtime.adapter).toContain(
+      'const HOST = "claude";'
+    );
   });
 
   it.each(BROKEN)("refuses $case", ({ invariant, owner = OWNER, broken }) => {
-    expect(() => declareHooks(owner, broken())).toThrow(expect.objectContaining({ invariant }));
+    expect(() => declareHooks(...owner, broken())).toThrow(expect.objectContaining({ invariant }));
+  });
+
+  describe("what a declaration leaves out", () => {
+    it("fires every canonical event under its own name, and relays the rest", () => {
+      const declared = declareHooks(...OWNER, {});
+      expect([...declared.events.keys()]).toEqual([...CANONICAL_HOOK_EVENTS]);
+      expect(declared.eventMap.Stop).toEqual(["Stop"]);
+      expect(declared.undeclaredEvents).toBe("relayed");
+    });
+
+    it("reads a name or a list of names as native events of the hooks file", () => {
+      const declared = declareHooks(...OWNER, {
+        events: { SessionStart: "begin", Stop: ["a", "b"] },
+      });
+      expect(declared.events.get("SessionStart")).toEqual({ native: ["begin"], relay: "native" });
+      expect(declared.events.get("Stop")).toEqual({ native: ["a", "b"], relay: "native" });
+    });
+
+    it("holds the generic plugin-root variable for a hooks file's commands", () => {
+      expect(declareHooks(...OWNER, { file: FILE }).rootToken).toBe(PLUGIN_ROOT_TOKEN);
+      expect(declareHooks(...OWNER, {}).rootToken).toBeUndefined();
+    });
   });
 });
