@@ -33,7 +33,7 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 
 - `HostCliAdapter` spawns the declared binary with a 120 second timeout.
 - On Windows it runs `.cmd` and `.bat` launchers through a shell, with the command line quoted by `windowsCommandLine`.
-- A plugin is enabled at the scope it is asked for. Omitting it lets a real `claude` choose machine scope.
+- Each call takes a scope and turns it into the host's own scope flags through the declared `scopeArgs`. A plugin uninstalled must use the scope it was enabled with, or the entry written is missed.
 
 ## Tests
 
