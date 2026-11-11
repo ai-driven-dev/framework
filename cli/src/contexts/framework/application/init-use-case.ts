@@ -6,7 +6,8 @@ import {
 import { AIDD_DIR } from "../../../kernel/paths.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import { getAllRegisteredTools, hasToolSignals } from "../../tools/domain/registry.js";
+import { detectToolSignals } from "../../tools/application/detect-tool-signals.js";
+import { getAllRegisteredTools } from "../../tools/domain/registry.js";
 import { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import { GitignoreUseCase } from "./gitignore-use-case.js";
@@ -50,7 +51,7 @@ export class InitUseCase {
 
   private async hasAiddSignals(projectRoot: string): Promise<boolean> {
     for (const tool of getAllRegisteredTools().values()) {
-      if ((await hasToolSignals(this.fs, tool, projectRoot)).length > 0) return true;
+      if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) return true;
     }
     return false;
   }

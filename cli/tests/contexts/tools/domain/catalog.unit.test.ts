@@ -1,11 +1,8 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { NativeActivation } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { MarketplaceSettings } from "../../../../src/contexts/tools/domain/marketplace-settings.js";
 import {
   assertToolIdsMatchCategory,
-  hasToolSignals,
-  type ToolConfig,
   toolIdsForCategory,
 } from "../../../../src/contexts/tools/domain/registry.js";
 import {
@@ -14,7 +11,6 @@ import {
   UnregisteredToolError,
 } from "../../../../src/kernel/errors.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
 import {
   aCatalog,
   anIdeProfile,
@@ -220,38 +216,6 @@ describe("what a profile's plugins capability says about activation", () => {
     expect(catalog.buildContractFor("claude", "flat")).toBeDefined();
     expect(catalog.buildContractFor("claude", "marketplace")).toBeUndefined();
     expect(catalog.buildContractFor("vscode", "flat")).toBeUndefined();
-  });
-});
-
-describe("a tool's own files as a signal it is in use", () => {
-  const cursor = (signalDir: string | null): ToolConfig =>
-    aProfile("cursor").withSignalDir(signalDir).build();
-
-  it("answers nothing for a tool declaring no signal directory", async () => {
-    const fs = new InMemoryFileAdapter({ "/p/.cursor/commands/a.md": "name: aidd:x" });
-
-    expect(await hasToolSignals(fs, cursor(null), "/p")).toStrictEqual([]);
-  });
-
-  it("answers nothing when the signal directory does not exist", async () => {
-    expect(
-      await hasToolSignals(new InMemoryFileAdapter(), cursor(".cursor/commands"), "/p")
-    ).toStrictEqual([]);
-  });
-
-  it("names every markdown file whose frontmatter declares an aidd name, and only those", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/p/.cursor/commands/colon.md": "---\nname: aidd:plan\n---",
-      "/p/.cursor/commands/quoted.md": "---\nname: 'aidd_plan'\n---",
-      "/p/.cursor/commands/tight.md": "name:aidd:plan",
-      "/p/.cursor/commands/indented.md": "  name: aidd:plan",
-      "/p/.cursor/commands/other.md": "name: mine",
-      "/p/.cursor/commands/notes.txt": "name: aidd:plan",
-    });
-
-    expect((await hasToolSignals(fs, cursor(".cursor/commands"), "/p")).sort()).toStrictEqual(
-      ["colon.md", "quoted.md", "tight.md"].map((file) => join(".cursor/commands", file))
-    );
   });
 });
 

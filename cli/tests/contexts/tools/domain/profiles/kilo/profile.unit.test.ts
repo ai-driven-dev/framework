@@ -1,16 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { hasToolSignals } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { distributionProbesOf } from "../../../../../../src/contexts/translate/domain/plugin-format.js";
-import { KiloDualConfigError } from "../../../../../../src/kernel/errors.js";
 import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
-function makeFs(existingPaths: string[]): FileReader {
+function _makeFs(existingPaths: string[]): FileReader {
   return {
     fileExists: async (path) =>
       existingPaths.includes(path.replaceAll("\\", "/").replace(/^\/project\//, "")),
@@ -48,17 +45,6 @@ describe("kilo", () => {
     ).toEqual({ name: "aidd:01:greet", description: "Greet someone" });
   });
 
-  it("detects installed AIDD commands in Kilo's command directory", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/project/.kilo/commands/aidd/01/greet.md": "---\nname: aidd:01:greet\n---\nHello",
-      "/project/.kilo/commands/custom.md": "---\nname: custom\n---\nCustom",
-    });
-    const signals = await hasToolSignals(fs, kilo, "/project");
-    expect(signals.map((path) => path.replaceAll("\\", "/"))).toEqual([
-      ".kilo/commands/aidd/01/greet.md",
-    ]);
-  });
-
   it("declares a flat build", () => {
     expect(kilo.buildContracts?.flat).toBeDefined();
   });
@@ -70,27 +56,6 @@ describe("kilo", () => {
     ["rules", "standards.kilo.md", ".kilo/rules/standards.md"],
   ])("installs %s file %s at %s", (kind, built, path) => {
     expect(installPathOf(kilo, kind, built)).toBe(path);
-  });
-
-  it("prefers project-local JSONC and reuses an existing Kilo config", async () => {
-    expect(await kilo.capabilities.mcp.resolveOutput("/project", makeFs([]))).toBe(
-      ".kilo/kilo.jsonc"
-    );
-    expect(await kilo.capabilities.mcp.resolveOutput("/project", makeFs([".kilo/kilo.json"]))).toBe(
-      ".kilo/kilo.json"
-    );
-    expect(await kilo.capabilities.mcp.resolveOutput("/project", makeFs(["kilo.jsonc"]))).toBe(
-      "kilo.jsonc"
-    );
-    await expect(
-      kilo.capabilities.mcp.resolveOutput("/project", makeFs(["kilo.json", "kilo.jsonc"]))
-    ).rejects.toThrow(KiloDualConfigError);
-    await expect(
-      kilo.capabilities.mcp.resolveOutput(
-        "/project",
-        makeFs([".kilo/kilo.json", ".kilo/kilo.jsonc"])
-      )
-    ).rejects.toThrow(KiloDualConfigError);
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {

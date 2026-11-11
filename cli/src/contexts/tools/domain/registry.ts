@@ -1,11 +1,9 @@
-import { join } from "node:path";
 import {
   CategoryMismatchError,
   DuplicateToolIdError,
   UnknownToolCategoryError,
   UnregisteredToolError,
 } from "../../../kernel/errors.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import {
   AI_TOOL_IDS,
   type AiToolId,
@@ -326,22 +324,4 @@ export function projectHooksDeliveryOf(toolId: ToolId): {
  * its callers: it reads nothing but this registry, and its callers span three of them. */
 export function resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
   return catalog.resolvePluginsCapability(toolId);
-}
-
-export async function hasToolSignals(
-  fs: FileReader,
-  config: ToolConfig,
-  projectRoot: string
-): Promise<string[]> {
-  if (!config.signalDir) return [];
-  const dir = join(projectRoot, config.signalDir);
-  if (!(await fs.fileExists(dir))) return [];
-  const files = await fs.listDirectory(dir);
-  const matches: string[] = [];
-  for (const filePath of files) {
-    if (!filePath.endsWith(".md")) continue;
-    const content = await fs.readFile(join(dir, filePath));
-    if (/^name:\s*['"]?aidd[_:]/m.test(content)) matches.push(join(config.signalDir, filePath));
-  }
-  return matches;
 }

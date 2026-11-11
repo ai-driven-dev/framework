@@ -12,6 +12,7 @@ import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
 import type { MarketplaceScope } from "../../../../kernel/scope.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import type { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
 import type {
@@ -578,7 +579,7 @@ export class PluginRemoveUseCase {
     const caps = toolConfig.capabilities as Record<string, unknown>;
     if (!isFrameworkPrimeFlatMcp(caps)) return;
     const mcpCap = caps.mcp as McpCapability;
-    const outputRelPath = await mcpCap.resolveOutput(projectRoot, this.fs);
+    const outputRelPath = await resolveMcpOutputPath(this.fs, mcpCap, projectRoot);
     const outputPath = join(projectRoot, outputRelPath);
     const existing = await this.readExistingJson(outputPath);
     if (existing === null) return;

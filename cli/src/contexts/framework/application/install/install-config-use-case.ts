@@ -5,6 +5,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
+import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import { CONFIG_MCP, type ConfigRef } from "../../../tools/domain/capabilities/config-refs.js";
 import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
@@ -110,7 +111,7 @@ export class InstallConfigUseCase {
     projectRoot: string
   ): Promise<string | null> {
     if (capability instanceof McpCapability) {
-      return capability.resolveOutput(projectRoot, this.fs);
+      return resolveMcpOutputPath(this.fs, capability, projectRoot);
     }
     return capability.buildOutputPath();
   }

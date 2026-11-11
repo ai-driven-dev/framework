@@ -7,6 +7,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import { buildOpencodeFlatConfig } from "../../../tools/domain/formats/opencode-mcp-merge.js";
@@ -135,7 +136,7 @@ export class InstallRuntimeConfigUseCase {
     const caps = toolConfig.capabilities as Record<string, unknown>;
     const mcp = caps.mcp;
     if (!(mcp instanceof McpCapability) || mcp.params.outputPath !== fileName) return outputPath;
-    return mcp.resolveOutput(options.projectRoot, this.fs);
+    return resolveMcpOutputPath(this.fs, mcp, options.projectRoot);
   }
 
   private async readExistingConfig(

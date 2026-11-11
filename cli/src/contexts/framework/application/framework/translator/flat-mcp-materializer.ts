@@ -3,6 +3,7 @@ import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
+import { resolveMcpOutputPath } from "../../../../tools/application/resolve-mcp-output-path.js";
 import type { McpCapability } from "../../../../tools/domain/capabilities/mcp-capability.js";
 import { mergeOpencodeMcp } from "../../../../tools/domain/formats/opencode-mcp-merge.js";
 import { getToolConfig, isAiTool } from "../../../../tools/domain/registry.js";
@@ -50,7 +51,7 @@ export async function materializeFlatMcp(
   }
 
   const mcpCap = caps.mcp as McpCapability;
-  const outputRelPath = await mcpCap.resolveOutput(projectRoot, fs);
+  const outputRelPath = await resolveMcpOutputPath(fs, mcpCap, projectRoot);
   const outputPath = join(projectRoot, outputRelPath);
   const existingContent = await readExistingJson(fs, outputPath);
   const transformed = mcpCap.transform(dist.components.mcp[0].content);
