@@ -27,7 +27,8 @@ const PLUGINS_FILES = [
 ];
 
 const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|PluginsCapability\))`;
-const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(\w+)\b(?!\s*\()`, "g");
+/** `kind` is the one read allowed: the discriminant a caller narrows the variant on. */
+const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(?!kind\b)(\w+)\b(?!\s*\()`, "g");
 const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
 
 const CLASS_BLOCK = /^(?:export )?(?:abstract )?class (\w+)[^{]*\{([\s\S]*?)\n\}/gm;
@@ -112,5 +113,8 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
     const asked = 'const d = tool.section("plugins").buildMode();';
     expect([...asked.matchAll(FIELD_READ)]).toHaveLength(0);
+
+    const narrowed = 'if (tool.section("plugins").kind === "flat") return;';
+    expect([...narrowed.matchAll(FIELD_READ)]).toHaveLength(0);
   });
 });

@@ -2,6 +2,7 @@ import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/fl
 import {
   AS_SHIPPED,
   type FlatLayout,
+  type HooksAcceptance,
   PluginDeliveryBase,
   type ProjectHooksPlacement,
   resolveProjectHooks,
@@ -10,7 +11,7 @@ import type { FlatHooksBridge, FlatParams, FlatSkillLayout, HookScript } from ".
 
 /** A tool that loads a plugin's skills, agents and hooks from its own workspace directory. */
 export class FlatPlugins extends PluginDeliveryBase {
-  readonly #acceptance: { accepts: boolean; unsupportedReason: string | null };
+  readonly #acceptance: HooksAcceptance;
   readonly #layout: FlatLayout;
   readonly #delivered: HookScript;
   readonly #projectHooks: ProjectHooksPlacement | null;
@@ -19,13 +20,13 @@ export class FlatPlugins extends PluginDeliveryBase {
     super(params.globalFiles ?? null);
     const skillLayout: FlatSkillLayout = params.flatSkillLayout ?? "nested";
     if (!params.acceptsHooks) {
-      this.#acceptance = { accepts: false, unsupportedReason: params.hooksUnsupportedReason };
+      this.#acceptance = { accepts: false, reason: params.hooksUnsupportedReason };
       this.#layout = layoutOf(skillLayout, params.flatNamespacePrefix, null, null, null);
       this.#delivered = AS_SHIPPED;
       this.#projectHooks = null;
       return;
     }
-    this.#acceptance = { accepts: true, unsupportedReason: null };
+    this.#acceptance = { accepts: true };
     this.#delivered = params.hookScript ?? AS_SHIPPED;
     this.#projectHooks = resolveProjectHooks(params, this.#delivered);
     this.#layout = layoutOf(
@@ -37,13 +38,13 @@ export class FlatPlugins extends PluginDeliveryBase {
     );
   }
 
-  override buildMode(): "flat" {
+  get kind(): "flat" {
     return "flat";
   }
-  hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null } {
+  hooksAcceptance(): HooksAcceptance {
     return this.#acceptance;
   }
-  override flatLayout(): FlatLayout {
+  flatLayout(): FlatLayout {
     return this.#layout;
   }
   override projectHooksDelivery(): ProjectHooksPlacement | null {

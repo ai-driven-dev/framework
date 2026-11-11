@@ -4,6 +4,7 @@ import { MarketplaceRegistration } from "./marketplace-registration.js";
 import { NativeActivation } from "./native-activation.js";
 import {
   AS_SHIPPED,
+  type HooksAcceptance,
   PluginDeliveryBase,
   type ProjectHooksPlacement,
   resolveProjectHooks,
@@ -17,7 +18,7 @@ const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 export class NativePlugins extends PluginDeliveryBase {
   readonly #pluginsDir: string;
   readonly #manifestRelativePath: string | null;
-  readonly #hooksSupport: { accepts: boolean; unsupportedReason: string | null };
+  readonly #hooksSupport: HooksAcceptance;
   readonly #hooksTrustNotice: string | null;
   readonly #pluginRootToken: string;
   readonly #acceptsMcp: boolean;
@@ -47,10 +48,9 @@ export class NativePlugins extends PluginDeliveryBase {
     this.#pluginRootToken = params.pluginRootToken;
     this.#pluginsDir = params.pluginsDir;
     this.#manifestRelativePath = params.pluginManifestRelativePath;
-    this.#hooksSupport = {
-      accepts: params.acceptsHooks,
-      unsupportedReason: params.acceptsHooks ? null : params.hooksUnsupportedReason,
-    };
+    this.#hooksSupport = params.acceptsHooks
+      ? { accepts: true }
+      : { accepts: false, reason: params.hooksUnsupportedReason };
     this.#hooksTrustNotice = params.acceptsHooks ? (params.hooksTrustNotice ?? null) : null;
     this.#acceptsMcp = params.acceptsMcp ?? false;
     this.#mcpRelativePath = params.mcpRelativePath ?? DEFAULT_MCP_PATH;
@@ -65,11 +65,11 @@ export class NativePlugins extends PluginDeliveryBase {
     this.#userPluginsDir = params.userPluginsDir;
   }
 
+  get kind(): "native" {
+    return "native";
+  }
   override translatesAsMarketplace(): boolean {
     return this.#translationMode === "marketplace";
-  }
-  override isNative(): boolean {
-    return true;
   }
   override requiresUserScope(): boolean {
     return this.#installScope === "user";
@@ -80,7 +80,7 @@ export class NativePlugins extends PluginDeliveryBase {
   override rootToken(): string {
     return this.#pluginRootToken;
   }
-  hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null } {
+  hooksAcceptance(): HooksAcceptance {
     return this.#hooksSupport;
   }
   override trustNotice(): string | null {
@@ -95,10 +95,12 @@ export class NativePlugins extends PluginDeliveryBase {
   override projectHooksDelivery(): ProjectHooksPlacement | null {
     return this.#projectHooks;
   }
-  override mcpFile(): { accepts: boolean; relativePath: string } {
+  /** Whether the tool takes a plugin's MCP file, and where it lands in the plugin directory. */
+  mcpFile(): { accepts: boolean; relativePath: string } {
     return { accepts: this.#acceptsMcp, relativePath: this.#mcpRelativePath };
   }
-  override hooksFilePath(): string {
+  /** Where the plugin's hooks manifest lands in the plugin directory. */
+  hooksFilePath(): string {
     return this.#hooksRelativePath;
   }
   override hookScript(pluginPath: string, content: string): string {

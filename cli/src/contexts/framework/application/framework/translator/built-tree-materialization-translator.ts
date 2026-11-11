@@ -190,7 +190,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     // `skills/` nests the whole plugin under one exactly-named segment; every other flat section
     // hyphen-prefixes the leaf segment.
     if (segments[1] === "skills") {
-      return resolvePluginsCapability(toolId)?.flatLayout().skillLayout === "single-level"
+      const plugins = resolvePluginsCapability(toolId);
+      return plugins?.kind === "flat" && plugins.flatLayout().skillLayout === "single-level"
         ? segments[2].startsWith(`${name}-`)
         : segments[2] === name;
     }
@@ -198,7 +199,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   }
 
   private flatHookOutputPaths(dist: PluginDistribution, toolId: AiToolId): ReadonlySet<string> {
-    const layout = resolvePluginsCapability(toolId)?.flatLayout();
+    const plugins = resolvePluginsCapability(toolId);
+    const layout = plugins?.kind === "flat" ? plugins.flatLayout() : undefined;
     const flatHooksDir = layout?.hooksDir;
     if (layout === undefined || flatHooksDir === null || flatHooksDir === undefined) {
       return new Set();

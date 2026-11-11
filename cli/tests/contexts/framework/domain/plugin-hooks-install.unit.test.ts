@@ -8,6 +8,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
+import { flatOf, nativeOf } from "../../tools/testing/plugin-mode.js";
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */
@@ -84,7 +85,7 @@ describe("installing a plugin that ships hooks", () => {
     for (const tool of HOOK_HOSTS) {
       const served = contentEndingWith(
         installedFor(tool),
-        tool.section("plugins").mcpFile().relativePath
+        nativeOf(tool.section("plugins")).mcpFile().relativePath
       );
 
       // A tool that delivered no mcp file would pass the assertion below by never
@@ -98,7 +99,7 @@ describe("installing a plugin that ships hooks", () => {
     const result = installedFor(opencode);
 
     expect(result.skipped).toEqual([]);
-    const flatHooksDir = opencode.section("plugins").flatLayout().hooksDir ?? "";
+    const flatHooksDir = flatOf(opencode.section("plugins")).flatLayout().hooksDir ?? "";
     expect(contentEndingWith(result, "journal.cjs")).toBe(SCRIPT);
     expect(result.files.some((file) => file.relativePath === `${flatHooksDir}hooks.json`)).toBe(
       false
@@ -109,9 +110,9 @@ describe("installing a plugin that ships hooks", () => {
 describe("what a tool says about the hooks it runs", () => {
   it("never leaves its answer to a default", () => {
     for (const tool of [...HOOK_HOSTS, opencode]) {
-      const { accepts, unsupportedReason } = tool.section("plugins").hooksAcceptance();
+      const acceptance = tool.section("plugins").hooksAcceptance();
 
-      expect(accepts === (unsupportedReason === null), tool.toolId).toBe(true);
+      expect(acceptance.accepts || acceptance.reason.length > 0, tool.toolId).toBe(true);
     }
   });
 });

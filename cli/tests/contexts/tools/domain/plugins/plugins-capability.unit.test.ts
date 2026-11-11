@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
 import { pluginsCapability } from "../../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
-import { pluginModeOf } from "../../testing/plugin-mode.js";
+import { flatOf, nativeOf, pluginModeOf } from "../../testing/plugin-mode.js";
 
 const projectHooksFormat: ProjectHooksFormat = {
   merge: () => ({ content: "", warnings: [] }),
@@ -42,10 +42,6 @@ describe("PluginsCapability", () => {
       expect(cap.manifestPath()).toBe(".claude-plugin/plugin.json");
     });
 
-    it("flatNamespacePrefix is null", () => {
-      expect(cap.flatLayout().namespacePrefix).toBeNull();
-    });
-
     it("pluginOutputDir returns the plugin subdirectory", () => {
       expect(cap.pluginOutputDir("my-plugin")).toBe(".claude/plugins/my-plugin/");
     });
@@ -64,7 +60,7 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes flatNamespacePrefix", () => {
-      expect(cap.flatLayout().namespacePrefix).toBe("aidd-");
+      expect(flatOf(cap).flatLayout().namespacePrefix).toBe("aidd-");
     });
 
     it("pluginsDir is null", () => {
@@ -79,14 +75,11 @@ describe("PluginsCapability", () => {
       expect(cap.pluginOutputDir("my-plugin")).toBeNull();
     });
 
-    it("flatHooksDir is null", () => {
-      expect(cap.flatLayout().hooksDir).toBeNull();
-    });
-
     it("exposes hooksUnsupportedReason", () => {
-      expect(cap.hooksAcceptance().unsupportedReason).toBe(
-        "a test double that hosts no plugin directory"
-      );
+      expect(cap.hooksAcceptance()).toStrictEqual({
+        accepts: false,
+        reason: "a test double that hosts no plugin directory",
+      });
     });
   });
 
@@ -103,15 +96,15 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes flatHooksDir", () => {
-      expect(cap.flatLayout().hooksDir).toBe(".test-tool/plugin/");
+      expect(flatOf(cap).flatLayout().hooksDir).toBe(".test-tool/plugin/");
     });
 
-    it("hooksUnsupportedReason is null", () => {
-      expect(cap.hooksAcceptance().unsupportedReason).toBeNull();
+    it("states no reason when hooks are accepted", () => {
+      expect(cap.hooksAcceptance()).toStrictEqual({ accepts: true });
     });
 
     it("flatHooksLoaderEntry is null when not declared", () => {
-      expect(cap.flatLayout().hooksLoaderEntry).toBeNull();
+      expect(flatOf(cap).flatLayout().hooksLoaderEntry).toBeNull();
     });
   });
 
@@ -125,7 +118,7 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes flatHooksLoaderEntry", () => {
-      expect(cap.flatLayout().hooksLoaderEntry).toEqual({
+      expect(flatOf(cap).flatLayout().hooksLoaderEntry).toEqual({
         dir: ".test-tool/plugin/",
         baseName: "test-tool-plugin.js",
       });
@@ -148,10 +141,6 @@ describe("PluginsCapability", () => {
 
     it("pluginManifestRelativePath is null", () => {
       expect(cap.manifestPath()).toBeNull();
-    });
-
-    it("flatNamespacePrefix is null", () => {
-      expect(cap.flatLayout().namespacePrefix).toBeNull();
     });
 
     it("pluginOutputDir returns null", () => {
@@ -234,10 +223,7 @@ describe("PluginsCapability", () => {
           pluginsDir: ".claude/plugins/",
           pluginManifestRelativePath: "plugin.json",
         });
-        expect([cap.translatesAsMarketplace(), cap.buildMode()]).toStrictEqual([
-          false,
-          "marketplace",
-        ]);
+        expect([cap.translatesAsMarketplace(), cap.kind]).toStrictEqual([false, "native"]);
       });
     });
 
@@ -249,7 +235,7 @@ describe("PluginsCapability", () => {
           hooksUnsupportedReason: "a test double that hosts no plugin directory",
           flatNamespacePrefix: "aidd-",
         });
-        expect([cap.translatesAsMarketplace(), cap.buildMode()]).toStrictEqual([false, "flat"]);
+        expect([cap.translatesAsMarketplace(), cap.kind]).toStrictEqual([false, "flat"]);
       });
     });
 
@@ -259,10 +245,7 @@ describe("PluginsCapability", () => {
           mode: "unsupported",
           hooksUnsupportedReason: "a test double that hosts no plugin directory",
         });
-        expect([cap.translatesAsMarketplace(), cap.buildMode()]).toStrictEqual([
-          false,
-          "marketplace",
-        ]);
+        expect([cap.translatesAsMarketplace(), cap.kind]).toStrictEqual([false, "unsupported"]);
       });
     });
   });
@@ -354,10 +337,13 @@ describe("PluginsCapability defaults each mode falls back to", () => {
       pluginManifestRelativePath: null,
     });
 
-    expect([cap.mcpFile().accepts, cap.deliversHooksToProject()]).toStrictEqual([false, false]);
+    expect([nativeOf(cap).mcpFile().accepts, cap.deliversHooksToProject()]).toStrictEqual([
+      false,
+      false,
+    ]);
   });
 
-  it("fixes the same two answers for a flat tool", () => {
+  it("lands a flat tool's hooks in the plugin", () => {
     const cap = pluginsCapability({
       mode: "flat",
       acceptsHooks: true,
@@ -365,17 +351,16 @@ describe("PluginsCapability defaults each mode falls back to", () => {
       flatNamespacePrefix: "aidd-",
     });
 
-    expect([cap.mcpFile().accepts, cap.deliversHooksToProject()]).toStrictEqual([false, false]);
+    expect(cap.deliversHooksToProject()).toBe(false);
   });
 
-  it("accepts neither hooks nor mcp for a tool hosting no plugin at all", () => {
+  it("accepts no hooks for a tool hosting no plugin at all", () => {
     const cap = pluginsCapability({ mode: "unsupported", hooksUnsupportedReason: "none" });
 
-    expect([
-      cap.hooksAcceptance().accepts,
-      cap.mcpFile().accepts,
-      cap.deliversHooksToProject(),
-    ]).toStrictEqual([false, false, false]);
+    expect([cap.hooksAcceptance().accepts, cap.deliversHooksToProject()]).toStrictEqual([
+      false,
+      false,
+    ]);
   });
 });
 

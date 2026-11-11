@@ -170,7 +170,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {
     const plugins = profile.section("plugins");
     const flat = profile.buildContracts?.flat?.();
-    if (plugins?.buildMode() !== "flat" || flat === undefined) return;
+    if (plugins?.kind !== "flat" || flat === undefined) return;
     expect(flat.artifacts.hooks.supported).toBe(plugins.hooksAcceptance().accepts);
   }),
   aiCheck("names a variable, never a path", (profile) => {

@@ -107,7 +107,7 @@ export class ToolCatalog {
   }
 
   frameworkBuildModeFor(toolId: ToolId): FrameworkBuildMode {
-    return this.resolvePluginsCapability(toolId)?.buildMode() ?? "marketplace";
+    return this.resolvePluginsCapability(toolId)?.kind === "flat" ? "flat" : "marketplace";
   }
 
   pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {

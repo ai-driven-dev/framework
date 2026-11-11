@@ -4,7 +4,7 @@ import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/co
 describe("copilot plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(copilot.section("plugins").isNative()).toBe(true);
+      expect(copilot.section("plugins").kind).toBe("native");
     });
 
     it("uses .github/plugins/ as plugins directory", () => {

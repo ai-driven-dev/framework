@@ -5,7 +5,7 @@ import { claude } from "../../../../../../src/contexts/tools/domain/profiles/cla
 describe("claude plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(claude.section("plugins").isNative()).toBe(true);
+      expect(claude.section("plugins").kind).toBe("native");
     });
 
     it("uses .claude/plugins/ as plugins directory", () => {

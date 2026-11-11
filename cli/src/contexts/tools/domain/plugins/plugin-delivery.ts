@@ -28,79 +28,27 @@ export interface ProjectHooksPlacement {
   hookScript: HookScript;
 }
 
-const NESTED_LAYOUT: FlatLayout = {
-  skillLayout: "nested",
-  namespacePrefix: null,
-  hooksDir: null,
-  hooksLoaderEntry: null,
-  hooksBridge: null,
-};
-
 export const AS_SHIPPED: HookScript = (_pluginPath, content) => content;
 
-const DEFAULT_MCP_PATH = ".mcp.json";
-const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
+/** Whether a delivered hook runs on this tool, and why not when it does not. */
+export type HooksAcceptance = { accepts: true } | { accepts: false; reason: string };
 
 /**
- * What a tool answers about how a plugin is delivered to it. One variant per way a tool takes
- * plugins (native, flat, unsupported), each holding only the data that way needs; callers ask
- * and never read a field.
+ * What a tool answers about how a plugin is delivered, as every way a tool takes plugins
+ * (native, flat, unsupported) answers it; an answer only one way has lives on that variant,
+ * reached by narrowing on `kind`. Callers ask and never read a field.
  */
-export interface PluginDelivery {
-  /** Whether this tool is built as a marketplace dist or a flat workspace inject. */
-  buildMode(): "marketplace" | "flat";
-  /** Whether the tool declares a marketplace dist as its translation, as a neutral native does not. */
-  translatesAsMarketplace(): boolean;
-  isNative(): boolean;
-  requiresUserScope(): boolean;
-  deliversHooksToProject(): boolean;
-  manifestPath(): string | null;
-  rootToken(): string | null;
-  /** Whether a delivered hook runs on this tool, and why not when it does not. */
-  hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null };
-  trustNotice(): string | null;
-  flatLayout(): FlatLayout;
-  activation(): NativeActivation | null;
-  marketplaceRegistration(): MarketplaceRegistration | null;
-  /** Whether enabling a plugin applies to the whole machine, the host taking no scope. */
-  enablementIsMachineGlobal(): boolean;
-  supportsUserScopeActivation(): boolean;
-  copiesFilesGlobally(): boolean;
-  /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
-  globalFiles(): GlobalFiles | null;
-  /** Where a hook lands in the project and how, or `null` when it lands in the plugin. */
-  projectHooksDelivery(): ProjectHooksPlacement | null;
-  /** Whether the tool takes a plugin's MCP file, and where it lands in the plugin directory. */
-  mcpFile(): { accepts: boolean; relativePath: string };
-  /** Where the plugin's hooks manifest lands in the plugin directory. */
-  hooksFilePath(): string;
-  /** A delivered hook script as this tool runs it: the tool's host adapter in place of the one
-   * the plugin ships, every other script as shipped. */
-  hookScript(pluginPath: string, content: string): string;
-  pluginOutputDir(pluginName: string): string | null;
-  /** The absolute user-scope plugins directory this tool declares, or `null`. Read
-   * independently of the tool's own scope: a caller resolving a *recorded* scope still needs
-   * the directory that scope means. */
-  userPluginsBaseDir(homedir: string): string | null;
-}
-
-/** The answers a tool gives when it does nothing special; each variant overrides what it does. */
-export abstract class PluginDeliveryBase implements PluginDelivery {
+export abstract class PluginDeliveryBase {
   readonly #machineFiles: GlobalFiles | null;
 
   constructor(machineFiles: GlobalFiles | null) {
     this.#machineFiles = machineFiles;
   }
 
-  abstract hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null };
+  abstract get kind(): "native" | "flat" | "unsupported";
+  abstract hooksAcceptance(): HooksAcceptance;
 
-  buildMode(): "marketplace" | "flat" {
-    return "marketplace";
-  }
   translatesAsMarketplace(): boolean {
-    return false;
-  }
-  isNative(): boolean {
     return false;
   }
   requiresUserScope(): boolean {
@@ -117,9 +65,6 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
   }
   trustNotice(): string | null {
     return null;
-  }
-  flatLayout(): FlatLayout {
-    return NESTED_LAYOUT;
   }
   activation(): NativeActivation | null {
     return null;
@@ -141,12 +86,6 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
   }
   projectHooksDelivery(): ProjectHooksPlacement | null {
     return null;
-  }
-  mcpFile(): { accepts: boolean; relativePath: string } {
-    return { accepts: false, relativePath: DEFAULT_MCP_PATH };
-  }
-  hooksFilePath(): string {
-    return DEFAULT_HOOKS_PATH;
   }
   hookScript(_pluginPath: string, content: string): string {
     return content;

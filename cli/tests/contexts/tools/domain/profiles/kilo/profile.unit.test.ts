@@ -4,6 +4,7 @@ import { distributionProbesOf } from "../../../../../../src/contexts/translate/d
 import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
+import { flatOf } from "../../../testing/plugin-mode.js";
 import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
@@ -61,13 +62,13 @@ describe("kilo", () => {
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    const plugins = kilo.section("plugins");
+    const plugins = flatOf(kilo.section("plugins"));
     expect([
-      plugins.buildMode(),
+      plugins.kind,
       plugins.hooksAcceptance().accepts,
       plugins.flatLayout().hooksDir,
     ]).toStrictEqual(["flat", true, ".kilo/hooks/"]);
-    expect(kilo.section("plugins").flatLayout().hooksBridge?.path("aidd-context")).toBe(
+    expect(plugins.flatLayout().hooksBridge?.path("aidd-context")).toBe(
       ".kilo/plugin/aidd-context-hooks.js"
     );
     expect(

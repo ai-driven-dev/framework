@@ -1,11 +1,12 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { nativeOf } from "../../../testing/plugin-mode.js";
 
 describe("cursor plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(cursor.section("plugins").isNative()).toBe(true);
+      expect(cursor.section("plugins").kind).toBe("native");
     });
 
     it("pluginsDir is empty string (base-relative path prefix)", () => {
@@ -25,7 +26,7 @@ describe("cursor plugins", () => {
     });
 
     it("acceptsMcp is true (Cursor auto-discovers mcp.json at plugin root)", () => {
-      expect(cursor.section("plugins").mcpFile().accepts).toBe(true);
+      expect(nativeOf(cursor.section("plugins")).mcpFile().accepts).toBe(true);
     });
 
     it("marketplaceSettings is null", () => {

@@ -121,12 +121,24 @@ function loaderEntryAnswer(entry: FlatHooksLoaderEntry | null): unknown {
   return entry === null ? null : { dir: entry.dir, baseName: entry.baseName };
 }
 
+// What the snapshot records for a tool that has no such answer: a native-only or flat-only
+// answer is asked of its own kind alone, and these are the values the record keeps for the rest.
+const NO_FLAT_LAYOUT = {
+  skillLayout: "nested",
+  namespacePrefix: null,
+  hooksDir: null,
+  hooksLoaderEntry: null,
+  hooksBridge: null,
+} as const;
+const NO_MCP_FILE = { accepts: false, relativePath: ".mcp.json" } as const;
+const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
+
 function pluginsAnswer(plugins: PluginsCapability | null, directory: string): unknown {
   if (plugins === null) return null;
-  const layout = plugins.flatLayout();
+  const layout = plugins.kind === "flat" ? plugins.flatLayout() : NO_FLAT_LAYOUT;
   const bridge = layout.hooksBridge;
   const acceptance = plugins.hooksAcceptance();
-  const mcp = plugins.mcpFile();
+  const mcp = plugins.kind === "native" ? plugins.mcpFile() : NO_MCP_FILE;
   const delivery = plugins.projectHooksDelivery();
   return {
     mode: pluginModeOf(plugins),
@@ -139,11 +151,11 @@ function pluginsAnswer(plugins: PluginsCapability | null, directory: string): un
     pluginManifestRelativePath: plugins.manifestPath(),
     pluginRootToken: plugins.rootToken(),
     acceptsHooks: acceptance.accepts,
-    hooksUnsupportedReason: acceptance.unsupportedReason,
+    hooksUnsupportedReason: acceptance.accepts ? null : acceptance.reason,
     hooksTrustNotice: plugins.trustNotice(),
     acceptsMcp: mcp.accepts,
     mcpRelativePath: mcp.relativePath,
-    hooksRelativePath: plugins.hooksFilePath(),
+    hooksRelativePath: plugins.kind === "native" ? plugins.hooksFilePath() : DEFAULT_HOOKS_PATH,
     projectHooksRelativePath: delivery?.relativePath ?? null,
     projectHooksFormat: projectHooksFormatAnswer(delivery?.format ?? null),
     hookScript: {
@@ -171,7 +183,7 @@ function pluginsAnswer(plugins: PluginsCapability | null, directory: string): un
 }
 
 function translationModeOf(plugins: PluginsCapability): "flat" | "marketplace" | null {
-  if (plugins.buildMode() === "flat") return "flat";
+  if (plugins.kind === "flat") return "flat";
   return plugins.translatesAsMarketplace() ? "marketplace" : null;
 }
 
@@ -263,7 +275,7 @@ describe("what every registered tool answers to the contexts that read it", () =
 
       expect(
         {
-          buildMode: plugins.buildMode(),
+          buildMode: plugins.kind === "flat" ? "flat" : "marketplace",
           activation: activationAnswer(plugins.activation()),
           enablementIsMachineGlobal: plugins.enablementIsMachineGlobal(),
           supportsUserScopeActivation: plugins.supportsUserScopeActivation(),

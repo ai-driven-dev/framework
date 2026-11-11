@@ -4,6 +4,7 @@ import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domai
 import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { flatOf } from "../../../testing/plugin-mode.js";
 import { installPathOf } from "../../../testing/profiles.js";
 
 describe("antigravity", () => {
@@ -31,9 +32,9 @@ describe("antigravity", () => {
   });
 
   it("is a flat host merging plugin hooks into .agents/hooks.json, scripts under .agents/hooks/", () => {
-    const plugins = antigravity.section("plugins");
+    const plugins = flatOf(antigravity.section("plugins"));
     expect({
-      mode: plugins.buildMode(),
+      mode: plugins.kind,
       flatLayout: plugins.flatLayout(),
       acceptsHooks: plugins.hooksAcceptance().accepts,
       deliversHooksToProject: plugins.deliversHooksToProject(),
