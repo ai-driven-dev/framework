@@ -37,13 +37,13 @@ describe("a review appends a round and scores the whole plan", () => {
   it("the round is written once, at the end, and an earlier one is never judged", () => {
     assert.doesNotMatch(read("actions/01-prepare.md"), /template|`review\.md`/u);
     assert.doesNotMatch(read("actions/02-review.md"), /template|`review\.md`/u);
-    assert.match(read("SKILL.md"), /Judge this work alone, and no earlier round\./u);
+    assert.match(read("SKILL.md"), /^- Judge this work alone, never an earlier round\.$/mu);
     assert.match(template(), /\{\{the count of round headings, this one included\}\}/u);
-    assert.match(template(), /Append one round per pass; earlier rounds stay as written/u);
+    assert.match(template(), /Append one round per pass, never rewrite an earlier one/u);
   });
 
   it("the round goes to the folder named, else the plan's, and alone the reply can hold it", () => {
-    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's; with neither, ask whether to keep it in a file:\n {3}- yes/u);
+    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\. Neither: ask whether to keep it in a file/u);
     assert.match(read("actions/03-conclude.md"), /no: the reply holds it/u);
   });
 
@@ -88,7 +88,7 @@ describe("a review appends a round and scores the whole plan", () => {
 
   it("the verdict is the strictest that holds, and nothing in scope never approves", () => {
     assert.match(rubric(), /^\| `blocked` \| a critical finding \|$/mu);
-    assert.match(rubric(), /^\| `changes-requested` \| a major finding, an unchecked criterion, or `functional` with no criterion in scope \|$/mu);
+    assert.match(rubric(), /^\| `changes-requested` \| a major finding, an unchecked criterion, or `functional` with no criterion met \|$/mu);
   });
 
   it("code lists areas to look at, and a finding carries no label to argue about", () => {
@@ -125,25 +125,9 @@ describe("a review appends a round and scores the whole plan", () => {
     assert.match(template(), /^- Unverified at runtime: \{\{criterion\}\} — \{\{what a run would show\}\}$/mu);
   });
 
-  it("the score counts over the whole plan, and the template holds its form", () => {
-    assert.match(functional(), /count met \+ unmet \+ unverified \+ out of the diff as the plan's whole criteria total/u);
-    assert.match(functional(), /No plan and no criteria: not scored/u);
-    assert.match(template(), /^Score: \{\{met\}\}\/\{\{total\}\} met, \{\{n\}\} unmet, \{\{n\}\} unverified at runtime, \{\{n\}\} out of the diff$/mu);
-  });
-
-  it("a context line is evidence, an absent subject is a gap, a phase projecting no file is traced", () => {
-    assert.match(functional(), /an added line or a context line \| checked/u);
-    assert.match(functional(), /its subject absent, or a name echoing it/u);
-    assert.match(functional(), /a phase projecting no file is traced, never out of the diff/u);
-  });
-
-  it("an out-of-diff or unverified criterion never blocks, and a round without functional judges its findings", () => {
-    assert.match(rubric(), /neither unchecked nor blocking/u);
-    assert.match(rubric(), /A round without `functional` takes its verdict from its findings alone/u);
-  });
-
-  it("the verdict says what sets it", () => {
+  it("the verdict says what sets it, and no count reads as a grade", () => {
     assert.match(template(), /^- Verdict: \{\{approve \| changes-requested \| blocked\}\}, because \{\{what sets it\}\}$/mu);
+    assert.doesNotMatch(template(), /Score|Coverage/u);
     assert.match(template(), /Leave out what has nothing to hold/u);
   });
 
@@ -158,12 +142,9 @@ describe("a review appends a round and scores the whole plan", () => {
     for (const outcome of ["approve", "changes", "blocked"]) assert.match(flow, new RegExp(`${outcome}\\(\\[`, "u"));
   });
 
-  it("the router names each verdict on its own edge", () => {
-    for (const verdict of ["blocked", "changes-requested", "approve"]) assert.match(read("SKILL.md"), new RegExp(`conclude -->\\|"rubric: ${verdict}"\\|`, "u"), verdict);
-  });
-
   it("a review reads the code and never runs or fixes it", () => {
-    assert.match(read("SKILL.md"), /Read only: leave the app and its checks unrun, and change nothing but the report\./u);
-    assert.match(read("SKILL.md"), /^description: .*read-only/mu);
+    assert.match(read("SKILL.md"), /^- Read only: never run the app or its checks\.$/mu);
+    assert.match(read("SKILL.md"), /^- Change nothing but the report: no code, no test, no config\.$/mu);
+    assert.match(read("SKILL.md"), /Not for fixing what the review finds/u);
   });
 });

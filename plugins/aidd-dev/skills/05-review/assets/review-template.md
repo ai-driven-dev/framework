@@ -9,8 +9,6 @@
 
 ### Criteria
 
-Score: {{met}}/{{total}} met, {{n}} unmet, {{n}} unverified at runtime, {{n}} out of the diff
-
 - [x] {{criterion met}} — {{file:line, or the run record}}
 - [ ] {{criterion unmet}} — {{gap}}
 - Unverified at runtime: {{criterion}} — {{what a run would show}}
@@ -29,7 +27,7 @@ Score: {{met}}/{{total}} met, {{n}} unmet, {{n}} unverified at runtime, {{n}} ou
 - {{the doubt}} — {{what would settle it}}
 
 <!--
-- Append one round per pass; earlier rounds stay as written.
+- Append one round per pass, never rewrite an earlier one.
 - Replace every `{{...}}` and delete every comment.
 - Leave out what has nothing to hold.
 -->

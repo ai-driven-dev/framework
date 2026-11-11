@@ -32,7 +32,7 @@ How to fill each file kind. Four questions, asked in this order. The constraints
 | --- | --- |
 | Do in order | State the result in one sentence. List the input. Write the steps. Add a check step that loops until it passes only when R14 asks for one. Name the next action in the last step. State the output. |
 | Consult | the plan row, the references the steps cite |
-| Fill | one sentence per step; a judgment call points to a reference; a constraint goes in Rules or the router |
+| Fill | one sentence per step; a judgment call or a fact the step looks up (a path, a format, a per-tool value) lives in a reference the step cites; a constraint goes in Rules or the router |
 | Always true | R12, R13, R14, R15, R16 |
 
 ## Reference

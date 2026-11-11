@@ -10,17 +10,13 @@ argument-hint: work | plan
 
 ```mermaid
 flowchart LR
-  work([work]) --> prepare["actions/01-prepare.md"]
-  plan([plan]) --> prepare
-  prepare -->|"no work to review"| stop((stop))
-  prepare -->|"functional named without a plan or criteria"| axes((user names a plan or criteria)) --> prepare
-  prepare -->|"work and axes settled"| review["actions/02-review.md"]
-  review --> conclude["actions/03-conclude.md"]
-  conclude -->|"no task folder named or in the plan"| keep((user chooses to keep the report)) --> conclude
-  conclude -->|"round misses a template field"| conclude
-  conclude -->|"rubric: blocked"| blocked([blocked])
-  conclude -->|"rubric: changes-requested"| changes([changes-requested])
-  conclude -->|"rubric: approve"| approve([approve])
+  prepare["prepare<br>actions/01-prepare.md"] --> review["review<br>actions/02-review.md"]
+  review --> conclude["conclude<br>actions/03-conclude.md"]
+  prepare -->|"empty diff"| stop((stop))
+  conclude -->|"round misses the template"| conclude
+  conclude --> approve([approve])
+  conclude --> changes([changes-requested])
+  conclude --> blocked([blocked])
 ```
 
 Each box is a file: read it, then do what it says.
@@ -28,5 +24,6 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask or to give the final reply; otherwise call tools.
-- Read only: leave the app and its checks unrun, and change nothing but the report.
-- Judge this work alone, and no earlier round.
+- Read only: never run the app or its checks.
+- Change nothing but the report: no code, no test, no config.
+- Judge this work alone, never an earlier round.
