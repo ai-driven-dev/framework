@@ -59,8 +59,9 @@ describeHostMarketplaceSourcesContract(
   }
 );
 
-/** The listing is a script on a `PATH` that holds nothing else. `spawnSync` resolves no `.cmd`
- * and the repository fakes binaries with `#!/bin/sh` only, so Windows runs the other arms. */
+/** The listing is a script on a `PATH` that holds nothing else. The adapter runs `.cmd` launchers
+ * through a shell on Windows, but the repository fakes binaries with `#!/bin/sh` only, so Windows
+ * runs the other arms. */
 describe.skipIf(process.platform === "win32")("on a POSIX machine", () => {
   let previousPath: string | undefined;
 

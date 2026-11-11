@@ -29,7 +29,8 @@ describeHostActionsContract(
 );
 
 /** The host's CLI is a script on a `PATH` that holds nothing else, never a real host binary.
- * `spawnSync` resolves no `.cmd` and the repository fakes binaries with `#!/bin/sh` only. */
+ * The adapter runs `.cmd` launchers through a shell on Windows, but the repository fakes binaries
+ * with `#!/bin/sh` only. */
 describe.skipIf(process.platform === "win32")("on a POSIX machine", () => {
   let previousPath: string | undefined;
 
