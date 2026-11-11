@@ -12,7 +12,7 @@ const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/
 const REFERENCE_OR_CALL =
   /^(?!(?:true|false|null)\b)(?:new\s+)?[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*\s*(?:\(|,|;|\}|$)/;
 const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b|new\s+(?:Map|Set)\(|Object\.freeze\()/;
-const HOOKS_PATH = /^["'`][^"'`]*(?:^|[/.{}"'`])hooks(?:\/|\.json)/;
+const HOOKS_PATH = /^["'`][^"'`]*[/.{}"'`]hooks(?:\/|\.json)/;
 
 /** Each member of an interface in the descriptor's type file, true when its type is another of
  * them: a route, which only an object literal restates, so `scopeArgs.project` stays out. */

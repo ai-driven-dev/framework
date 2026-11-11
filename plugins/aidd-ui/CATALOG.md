@@ -39,6 +39,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | [code.cjs](hooks/lib/code.cjs) |
 | [common-rules.cjs](hooks/lib/common-rules.cjs) |
 | [css.cjs](hooks/lib/css.cjs) |
+| [drafts.cjs](hooks/lib/drafts.cjs) |
 | [extract.cjs](hooks/lib/extract.cjs) |
 | [graph.cjs](hooks/lib/graph.cjs) |
 | [help.cjs](hooks/lib/help.cjs) |
@@ -48,6 +49,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | [literals.cjs](hooks/lib/literals.cjs) |
 | [markdown.cjs](hooks/lib/markdown.cjs) |
 | [model.cjs](hooks/lib/model.cjs) |
+| [page.cjs](hooks/lib/page.cjs) |
 | [project.cjs](hooks/lib/project.cjs) |
 | [records.cjs](hooks/lib/records.cjs) |
 | [renders.cjs](hooks/lib/renders.cjs) |
