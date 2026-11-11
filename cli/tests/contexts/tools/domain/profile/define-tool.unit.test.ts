@@ -62,16 +62,16 @@ describe("defineAiTool", () => {
   });
 
   it("answers a declared section, and null for one it does not declare", () => {
-    const tool = defineAiTool({ ...aiSpec, capabilities: () => ({ settings }) });
+    const tool = defineAiTool({ ...aiSpec, capabilities: () => ({ settings: [settings] }) });
 
-    expect(tool.section("settings")).toBe(settings);
+    expect(tool.section("settings")).toStrictEqual([settings]);
     expect(tool.section("mcp")).toBeNull();
   });
 
   it("answers from its own sections once detached from the profile", () => {
-    const { section } = defineAiTool({ ...aiSpec, capabilities: () => ({ settings }) });
+    const { section } = defineAiTool({ ...aiSpec, capabilities: () => ({ settings: [settings] }) });
 
-    expect(section("settings")).toBe(settings);
+    expect(section("settings")).toStrictEqual([settings]);
     expect(section("mcp")).toBeNull();
   });
 
@@ -106,7 +106,7 @@ describe("defineAiTool", () => {
   });
 
   it("refuses a section key no tool can declare", () => {
-    const sections = { settings, bogus: 1 };
+    const sections = { settings: [settings], bogus: 1 };
 
     expect(
       refusalOf(() => defineAiTool({ ...aiSpec, capabilities: () => sections })).invariant

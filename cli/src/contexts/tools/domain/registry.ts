@@ -181,12 +181,8 @@ export class ToolCatalog {
     return config.section("mcp");
   }
 
-  settingsCapabilitiesOf(toolId: ToolId): readonly SettingsCapability[] {
-    const config = this.getToolConfig(toolId);
-    if (!isAiTool(config)) return [];
-    const declared = config.section("settings");
-    if (declared === null) return [];
-    return Array.isArray(declared) ? declared : [declared];
+  settingsCapabilitiesOf(toolId: AiToolId): readonly SettingsCapability[] {
+    return this.getAiToolConfig(toolId).section("settings") ?? [];
   }
 
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
@@ -334,7 +330,7 @@ export function mcpCapabilityOf(toolId: ToolId): McpCapability | null {
 }
 
 /** The settings capabilities a tool declares, whether one or several; empty for none. */
-export function settingsCapabilitiesOf(toolId: ToolId): readonly SettingsCapability[] {
+export function settingsCapabilitiesOf(toolId: AiToolId): readonly SettingsCapability[] {
   return catalog.settingsCapabilitiesOf(toolId);
 }
 

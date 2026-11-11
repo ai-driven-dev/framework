@@ -11,7 +11,7 @@ import { sourceFiles } from "./helpers.js";
 /** Source files under each folder that is still counted. Lower a value when files leave. */
 const COMMITTED_COUNTS: Readonly<Record<string, number>> = {
   "src/runtime/": 25,
-  "src/contexts/framework/": 126,
+  "src/contexts/framework/": 125,
 };
 
 /** The paths `src/kernel/` holds. It receives no new file; a path leaves when it moves out. */

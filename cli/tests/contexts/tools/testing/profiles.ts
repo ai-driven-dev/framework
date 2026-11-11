@@ -24,7 +24,7 @@ export type KitCapabilities = {
   readonly plugins?: PluginsCapability;
   readonly mcp?: McpCapability;
   readonly commands?: CommandsCapability;
-  readonly settings?: SettingsCapability | SettingsCapability[];
+  readonly settings?: SettingsCapability[];
 };
 
 type Contracts = NonNullable<AiTool<KitCapabilities>["buildContracts"]>;
@@ -127,7 +127,7 @@ export class ProfileBuilder {
   }
 
   withSettings(settings: SettingsCapability | SettingsCapability[]): this {
-    this.capabilities = { ...this.capabilities, settings };
+    this.capabilities = { ...this.capabilities, settings: [settings].flat() };
     return this;
   }
 

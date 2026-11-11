@@ -10,7 +10,7 @@ import { AgentsCapability } from "../capabilities/agents-capability.js";
 import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
 import { SkillsCapability } from "../capabilities/skills-capability.js";
-import type { AiTool, IdeToolConfig } from "../contracts.js";
+import type { AiTool, ConfigCapability, IdeToolConfig } from "../contracts.js";
 import {
   isProfileSectionKey,
   type ProfileSection,
@@ -39,7 +39,10 @@ export interface BoundTool {
   rules(params: Unbound<ParamsOf<typeof RulesCapability>>): RulesCapability;
 }
 
-type AiToolFields = Omit<AiTool<ProfileSections>, "kind" | "toolId" | "capabilities" | "section">;
+type AiToolFields = Omit<
+  AiTool<ProfileSections>,
+  "kind" | "toolId" | "capabilities" | "section" | "configCapabilities"
+>;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
   readonly toolId: string;
@@ -98,6 +101,14 @@ function sectionReader(
   return (key) => sections[key] ?? null;
 }
 
+function aiConfigCapabilities(sections: ProfileSections): ConfigCapability[] {
+  return [
+    ...(sections.mcp === undefined ? [] : [sections.mcp]),
+    ...(sections.hooks === undefined ? [] : [sections.hooks]),
+    ...(sections.settings ?? []),
+  ];
+}
+
 function aiToolId(id: string): AiToolId {
   const known = AI_TOOL_IDS.find((candidate) => candidate === id);
   if (known === undefined) {
@@ -136,6 +147,7 @@ export function defineAiTool<C extends ProfileSections>(
     kind: "ai",
     toolId,
     section: sectionReader(capabilities),
+    configCapabilities: () => aiConfigCapabilities(capabilities),
   };
   return profile as AiTool<C> & ProfileBrand;
 }
@@ -153,6 +165,7 @@ export function defineIdeTool<C extends ProfileSections>(
     kind: "ide",
     toolId,
     section: sectionReader(capabilities),
+    configCapabilities: () => [...(capabilities.settings ?? [])],
   };
   return profile as IdeToolConfig<C> & ProfileBrand;
 }

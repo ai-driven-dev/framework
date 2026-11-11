@@ -359,7 +359,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     it("merges a single declared settings capability and records its keys", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      registerTool(withSections(cursor, { settings: inline }));
+      registerTool(withSections(cursor, { settings: [inline] }));
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       deps.fs.setFile(join(PROJECT_ROOT, ".cursor/aidd-static.json"), '{"user.setting": 7}');
 

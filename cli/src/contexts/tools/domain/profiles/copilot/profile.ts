@@ -248,12 +248,14 @@ export const copilot = defineAiTool({
         return content;
       },
     }),
-    settings: new SettingsCapability({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "framework-prime",
-      staticContentAssetFile: "vscode-settings.json",
-      requiresTool: "vscode",
-    }),
+    settings: [
+      new SettingsCapability({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+        staticContentAssetFile: "vscode-settings.json",
+        requiresTool: "vscode",
+      }),
+    ],
     plugins: new PluginsCapability({
       mode: "native",
       pluginsDir: ".github/plugins/",

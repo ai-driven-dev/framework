@@ -2,8 +2,11 @@ import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { AgentsCapability } from "./capabilities/agents-capability.js";
 import type { CommandsCapability } from "./capabilities/commands-capability.js";
+import type { HooksCapability } from "./capabilities/hooks-capability.js";
+import type { McpCapability } from "./capabilities/mcp-capability.js";
 import type { PluginsCapability } from "./capabilities/plugins-capability.js";
 import type { RulesCapability } from "./capabilities/rules-capability.js";
+import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { SkillsCapability } from "./capabilities/skills-capability.js";
 import type {
   ProfileSection,
@@ -26,6 +29,8 @@ export interface HasCommands {
 export interface HasRules {
   readonly rules: RulesCapability;
 }
+
+export type ConfigCapability = McpCapability | HooksCapability | SettingsCapability;
 
 export interface HasPlugins {
   readonly plugins: PluginsCapability;
@@ -67,6 +72,8 @@ export interface AiTool<C extends ProfileSections = ProfileSections> {
    * own type declares answers without `null`. */
   section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
+  /** The config files this tool writes: mcp, hooks, then each settings file. */
+  configCapabilities(): ConfigCapability[];
 }
 
 export interface IdeToolConfig<C extends ProfileSections = ProfileSections> {
@@ -76,6 +83,8 @@ export interface IdeToolConfig<C extends ProfileSections = ProfileSections> {
   readonly signalDir: string | null;
   section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
+  /** The config files this tool writes: each settings file. */
+  configCapabilities(): ConfigCapability[];
 }
 
 /** Whether this tool declares a rules capability at all. Generic over the tool's own capability

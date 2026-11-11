@@ -13,7 +13,6 @@ import type {
 } from "../../../tools/domain/contracts.js";
 import { declaresSection, isAiTool, type ToolConfig } from "../../../tools/domain/registry.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../translate/domain/canon.js";
-import { extractConfigCapabilities } from "../../domain/config-capability.js";
 import { InstallAgentsUseCase } from "../install/content/install-agents-use-case.js";
 import { InstallCommandsUseCase } from "../install/content/install-commands-use-case.js";
 import { InstallRulesUseCase } from "../install/content/install-rules-use-case.js";
@@ -50,7 +49,7 @@ export class GenerateToolDistributionUseCase {
     projectRoot: string
   ): Promise<InstallationFile[]> {
     const configFiles = await new InstallConfigUseCase(this.fs, this.hasher).execute({
-      capabilities: extractConfigCapabilities(config),
+      capabilities: config.configCapabilities(),
       configRefs: descriptor.configRefs,
       contentFiles,
       projectRoot,
@@ -67,7 +66,7 @@ export class GenerateToolDistributionUseCase {
   ): Promise<InstallationFile[]> {
     const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
     const configFiles = await new InstallConfigUseCase(this.fs, this.hasher).execute({
-      capabilities: extractConfigCapabilities(config),
+      capabilities: config.configCapabilities(),
       configRefs: descriptor.configRefs,
       contentFiles,
       projectRoot,

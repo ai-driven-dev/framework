@@ -16,7 +16,7 @@ export interface ProfileSections {
   mcp?: McpCapability;
   hooks?: HooksCapability;
   plugins?: PluginsCapability;
-  settings?: SettingsCapability | SettingsCapability[];
+  settings?: SettingsCapability[];
 }
 
 export type ProfileSectionKey = keyof ProfileSections;

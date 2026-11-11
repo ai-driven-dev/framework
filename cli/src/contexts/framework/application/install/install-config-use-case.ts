@@ -9,8 +9,8 @@ import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-out
 import { CONFIG_MCP, type ConfigRef } from "../../../tools/domain/capabilities/config-refs.js";
 import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
+import type { ConfigCapability } from "../../../tools/domain/contracts.js";
 import { transformFor as transformMcpForPlatform } from "../../../tools/domain/mcp-launch-command.js";
-import type { ConfigCapability } from "../../domain/config-capability.js";
 
 interface InstallConfigOptions {
   capabilities: readonly ConfigCapability[];
