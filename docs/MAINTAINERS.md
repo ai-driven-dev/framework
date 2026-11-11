@@ -65,7 +65,7 @@ Release rules: [Release](../RELEASE.md#rules).
 | An agent | `/aidd-context:06-agent-generate` |
 | A rule | `/aidd-context:05-rule-generate` |
 | A command | `/aidd-context:07-command-generate` |
-| A hook | `/aidd-context:08-hook-generate` |
+| A hook | [Hooks](ARCHITECTURE.md#hooks) |
 
 ## Create a plugin
 

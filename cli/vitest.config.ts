@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
-const TEXT_EXTENSIONS = [".md", ".toml", ".txt"] as const;
+const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
 export default defineConfig({
   plugins: [textLoader(TEXT_EXTENSIONS)],

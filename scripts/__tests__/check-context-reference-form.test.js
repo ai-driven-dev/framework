@@ -101,7 +101,7 @@ test("prose and html comments inside the block are not references", () => {
   assert.deepEqual(referenceFormProblems(content, "link"), []);
 });
 
-// An unpaired marker is `update_memory.js`'s own reported failure; duplicating
+// An unpaired marker is `memory.cjs sync`'s own reported failure; duplicating
 // the diagnosis here would give two voices for one fault.
 test("an unclosed block is left to the hook to report", () => {
   const unclosed = "# Title\n\n<!-- aidd_project_memory:start -->\n\n" + AT_LINE + "\n";
