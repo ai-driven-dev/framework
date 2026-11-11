@@ -347,6 +347,15 @@ test("report: a line the write lost with no approved item heads the message, und
   }, { bank: lossy });
 });
 
+test("report: a plan run again after the answer keeps the first snapshot, so the write's loss still shows", () => {
+  const lossy = { "codebase-map.md": BANK["codebase-map.md"].replace("- The server and cron doors.\n", "") };
+  assert.notEqual(lossy["codebase-map.md"], BANK["codebase-map.md"]);
+  written((root) => {
+    assert.equal(engine(root, "plan", SHEET).status, 0, "the rerun must pass for this case to bite");
+    assert.match(engine(root, "report", SHEET).stdout, /^Memory written, 1 line lost\n/u);
+  }, { bank: lossy, reply: "no" });
+});
+
 // Limit: a replacement that changes only a short word (three to four) keeps every fact word and is not listed.
 test("report: a sheet never answered applies no approval, so a removed line is lost and each item has no answer recorded", () => {
   written((root) => {

@@ -51,8 +51,10 @@ const diskBank = (root) => (file) => {
 
 const snapshotFile = (sheetFile) => path.join(path.dirname(path.resolve(sheetFile)), SNAPSHOT);
 
-/** The bank as it stands, beside the sheet: what the report counts lost and applied against. */
+/** The bank as it stands, beside the sheet: what the report counts lost and applied against. Once the sheet holds an answer, the first snapshot stays. */
 function writeSnapshot(sheetFile, root) {
+  const answered = factLines(fs.readFileSync(sheetFile, "utf8")).some(({ fields }) => (fields?.[4] ?? "") !== "");
+  if (answered && fs.existsSync(snapshotFile(sheetFile))) return;
   const dir = path.join(root, MEMORY);
   const files = markdownUnder(dir).map((file) => [file.split(path.sep).join("/"), fs.readFileSync(path.join(dir, file), "utf8")]);
   fs.writeFileSync(snapshotFile(sheetFile), JSON.stringify(Object.fromEntries(files)));
