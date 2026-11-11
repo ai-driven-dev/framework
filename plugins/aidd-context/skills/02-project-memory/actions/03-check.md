@@ -9,8 +9,7 @@ The bank and the scan's capabilities.
 ## Process
 
 1. Review the whole bank per the [review protocol](../references/review-protocol.md), the output of `changes` first.
-2. Check the format and the structure.
-3. Make every finding an unanswered `D` line of the [fact sheet](../assets/fact-sheet.md), asking nothing, then read [write](02-write.md).
+2. Make every finding an unanswered `D` line of the [fact sheet](../assets/fact-sheet.md), asking nothing, then read [write](02-write.md).
 
 ## Output
 

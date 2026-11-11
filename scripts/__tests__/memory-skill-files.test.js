@@ -238,8 +238,7 @@ test("write hands over to the sync, and the sync ends on the engine's report, wh
   assert.doesNotMatch(skillText("actions/02-write.md"), /`vanished`|`report`/u, "write runs a guard or replies before the sync");
   assert.match(steps.at(-1), /Go on to \[sync\]/u);
   const syncSteps = skillText("actions/04-sync.md").match(/^\d+\. .*$/gmu);
-  assert.match(syncSteps.at(-1), /Run \[`report`\]\(\.\.\/references\/engine\.md\) with the sheet and send its output as it is, in plain chat text, nothing before it; after it, only the offer of step 5, if any/u, "the last step to run does not send the engine's report");
-  assert.match(syncSteps.at(-2), /^5\. Offer after the report to reconcile/u, "the reconcile offer moved");
+  assert.match(syncSteps.at(-1), /Run \[`report`\]\(\.\.\/references\/engine\.md\) with the sheet and send its output as it is, in plain chat text, nothing before it; after it, only an offer to reconcile/u, "the last step to run does not send the engine's report");
   assert.match(skillText("SKILL.md"), /sync -->\|"reply: the report"\| done/u, "the router ends without the report");
   assert.equal(fs.existsSync(path.join(SKILL, "assets/report-message.md")), false, "the report has a second format beside the engine's");
   assert.match(skillText("references/engine.md"), /`node memory\.cjs report <sheet>`/u);
@@ -420,7 +419,7 @@ test("sync adds a missing block itself on a pick, so the skill only creates an a
   assert.match(engine, /`node memory\.cjs sync \[--add\] <tool>\.\.\.` \| [^|]+ \| tool names only, no root; [^\n]*`--add` appends the block to a picked tool's file holding none/u);
   const sync = skillText("actions/04-sync.md");
   assert.match(sync, /^3\. Create each picked tool's absent context file, per \[tools\]/mu);
-  assert.match(sync, /^5\. Offer after the report to reconcile a picked tool's context file whose AIDD structure differs, per \[tools\]/mu, "a differing file stops before the picked tool is wired");
+  assert.match(sync, /after it, only an offer to reconcile a picked tool's context file whose AIDD structure differs, per \[tools\]/u, "a differing file stops before the picked tool is wired");
   assert.match(sync, /on a setup, run it with `--add` and the picked tools, per \[tools\]/mu);
   assert.doesNotMatch(sync, /carries the block, per/u, "the skill still makes the model write the block");
   assert.match(skillText("references/tools.md"), /^\| Its AIDD structure differs \| a picked tool still gets its block with `--add`; offer to reconcile the rest after the report, applying only what the user approves \|$/mu, "a picked tool waits on a reconcile");
@@ -513,7 +512,7 @@ test("the router waits on the user after the sheet, and speaks only to ask or re
   assert.ok(!edges.some((edge) => /^sync\b.*\|\s*user\b/u.test(edge) && /tools/u.test(edge)), "sync asks the tools alone");
   const rules = section(skillText("SKILL.md"), "Transversal rules");
   assert.match(rules, /Speak only to ask or to give the final reply; otherwise call tools\./u);
-  assert.match(rules, /After the sheet or a reconcile offer, wait\./u);
+  assert.match(rules, /After the plan or a reconcile offer, wait\./u);
   assert.match(rules, /Edit no memory file outside write\./u);
   assert.ok(rules.split(/\r?\n/u).filter((line) => line.startsWith("- ")).length <= 4, "more than four transversal rules");
 });
@@ -554,8 +553,6 @@ test("check reviews the content of each file against its defining files before t
   assert.match(section(protocol, "Format"), /not investigate/u, "warnings are chased");
   assert.match(section(protocol, "Format"), /^\| Its warnings \| not findings: do not investigate or count them \|$/mu, "warnings are still counted");
   assert.doesNotMatch(protocol, /one sweep/u, "the review is still one sweep across files");
-  const steps = skillText("actions/03-check.md").match(/^\d+\. .*$/gmu);
-  assert.ok(steps.findIndex((step) => /content/u.test(step)) < steps.findIndex((step) => /format/u.test(step)), "check does not review the content before the format");
 });
 
 test("the reading order names the files that define a command or a convention, by category and never by tool, and a fact comes from the file that defines it", () => {

@@ -16,8 +16,8 @@ flowchart LR
   scan -->|"refresh"| check["check<br>actions/03-check.md<br>script: memory.cjs check"]
   scan -->|"nothing to remember"| done((done))
   check -->|"findings in the sheet"| write
-  write -->|"show the sheet"| user((user answers))
-  user -->|"sheet answered"| write
+  write -->|"show the plan"| user((user answers))
+  user -->|"plan answered"| write
   write --> sync
   sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync, report"] -->|"offer to reconcile"| user
   user -->|"reconcile answered"| sync
@@ -29,6 +29,6 @@ flowchart LR
 ## Transversal rules
 
 - Speak only to ask or to give the final reply; otherwise call tools.
-- After the sheet or a reconcile offer, wait.
+- After the plan or a reconcile offer, wait.
 - Edit no memory file outside write.
 - Run no version-control command: `changes` gives what changed.
