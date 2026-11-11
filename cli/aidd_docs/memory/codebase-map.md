@@ -47,6 +47,7 @@ src/
 │   │   ├── domain/
 │   │   │   ├── capabilities/
 │   │   │   ├── formats/
+│   │   │   ├── hooks/
 │   │   │   ├── models/
 │   │   │   ├── ports/
 │   │   │   └── profiles/    # one directory per tool
