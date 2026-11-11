@@ -7,8 +7,8 @@ import type { NativeActivation } from "./native-activation.js";
 export class MarketplaceRegistration implements MarketplaceSettings {
   readonly settingsPath: string;
   readonly settingsKey: string;
-  declare readonly enabledPluginsKey?: string;
-  declare readonly declarativePluginActivationRequiresNativeProof?: boolean;
+  readonly enabledPluginsKey?: string;
+  readonly declarativePluginActivationRequiresNativeProof?: boolean;
   readonly marketplacesSettingsPath: string | null;
   readonly toEntryKey: (input: MarketplaceSettingsInput) => string | null;
 
@@ -22,6 +22,14 @@ export class MarketplaceRegistration implements MarketplaceSettings {
     this.settingsKey = settings.settingsKey;
     this.marketplacesSettingsPath = settings.marketplacesSettingsPath;
     this.toEntryKey = settings.toEntryKey;
-    Object.assign(this, settings);
+    this.enabledPluginsKey = settings.enabledPluginsKey;
+    this.declarativePluginActivationRequiresNativeProof =
+      settings.declarativePluginActivationRequiresNativeProof;
+  }
+
+  /** The file this tool's registrations live in, when it has one of its own to keep out of
+   * `status` and the gitignore; `null` means nowhere machine-local to write. */
+  machineLocalFiles(): readonly string[] {
+    return this.marketplacesSettingsPath === null ? [] : [this.marketplacesSettingsPath];
   }
 }

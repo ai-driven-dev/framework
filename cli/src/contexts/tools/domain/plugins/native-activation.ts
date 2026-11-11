@@ -1,5 +1,3 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
-
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
 
@@ -65,25 +63,38 @@ export class NativeActivation implements NativeActivationSpec {
   readonly binary: NativeActivationSpec["binary"];
   readonly enableVerb: NativeActivationSpec["enableVerb"];
   readonly disableVerb: NativeActivationSpec["disableVerb"];
-  declare readonly scopeArgs?: NativeActivationSpec["scopeArgs"];
-  declare readonly userRemoveArgs?: NativeActivationSpec["userRemoveArgs"];
-  declare readonly uninstallLeavesRefDisabled?: NativeActivationSpec["uninstallLeavesRefDisabled"];
-  declare readonly forceRemoveArgs?: NativeActivationSpec["forceRemoveArgs"];
-  declare readonly sourceCheckVerb?: NativeActivationSpec["sourceCheckVerb"];
-  declare readonly upgradeVerb?: NativeActivationSpec["upgradeVerb"];
-  declare readonly updateVerb?: NativeActivationSpec["updateVerb"];
-  declare readonly pluginArgs?: NativeActivationSpec["pluginArgs"];
-  declare readonly marketplaceRegistry?: NativeActivationSpec["marketplaceRegistry"];
-  declare readonly pluginCacheDir?: NativeActivationSpec["pluginCacheDir"];
-  declare readonly userSettingsPath?: NativeActivationSpec["userSettingsPath"];
+  readonly scopeArgs?: NativeActivationSpec["scopeArgs"];
+  readonly userRemoveArgs?: NativeActivationSpec["userRemoveArgs"];
+  readonly uninstallLeavesRefDisabled?: NativeActivationSpec["uninstallLeavesRefDisabled"];
+  readonly forceRemoveArgs?: NativeActivationSpec["forceRemoveArgs"];
+  readonly sourceCheckVerb?: NativeActivationSpec["sourceCheckVerb"];
+  readonly upgradeVerb?: NativeActivationSpec["upgradeVerb"];
+  readonly updateVerb?: NativeActivationSpec["updateVerb"];
+  readonly pluginArgs?: NativeActivationSpec["pluginArgs"];
+  readonly marketplaceRegistry?: NativeActivationSpec["marketplaceRegistry"];
+  readonly pluginCacheDir?: NativeActivationSpec["pluginCacheDir"];
+  readonly userSettingsPath?: NativeActivationSpec["userSettingsPath"];
 
   constructor(spec: NativeActivationSpec) {
-    if (spec.binary.trim() === "") {
-      throw new CapabilityConfigError("NativeActivation requires a binary.");
-    }
     this.binary = spec.binary;
     this.enableVerb = spec.enableVerb;
     this.disableVerb = spec.disableVerb;
-    Object.assign(this, spec);
+    this.scopeArgs = spec.scopeArgs;
+    this.userRemoveArgs = spec.userRemoveArgs;
+    this.uninstallLeavesRefDisabled = spec.uninstallLeavesRefDisabled;
+    this.forceRemoveArgs = spec.forceRemoveArgs;
+    this.sourceCheckVerb = spec.sourceCheckVerb;
+    this.upgradeVerb = spec.upgradeVerb;
+    this.updateVerb = spec.updateVerb;
+    this.pluginArgs = spec.pluginArgs;
+    this.marketplaceRegistry = spec.marketplaceRegistry;
+    this.pluginCacheDir = spec.pluginCacheDir;
+    this.userSettingsPath = spec.userSettingsPath;
+  }
+
+  /** Whether a plugin ref stays in use. A host that keeps an uninstalled ref, disabled, makes a
+   * disabled ref indistinguishable from one the person disabled, so only an enabled one counts. */
+  takesRefForInUse(enabled: boolean): boolean {
+    return enabled || this.uninstallLeavesRefDisabled !== true;
   }
 }

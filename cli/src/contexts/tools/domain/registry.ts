@@ -123,7 +123,7 @@ export class ToolCatalog {
   }
 
   hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
-    return enabled || this.nativeActivationOf(toolId)?.uninstallLeavesRefDisabled !== true;
+    return this.nativeActivationOf(toolId)?.takesRefForInUse(enabled) ?? true;
   }
 
   copiesPluginFilesGlobally(toolId: ToolId): boolean {
@@ -153,11 +153,9 @@ export class ToolCatalog {
   }
 
   machineLocalFilesOf(toolId: ToolId): readonly string[] {
-    const path =
-      this.resolvePluginsCapability(toolId)?.marketplaceRegistration()?.marketplacesSettingsPath;
-    // `null` means the tool has nowhere machine-local to write, so there is no such file to keep
-    // out of `status` or the gitignore either.
-    return typeof path === "string" ? [path] : [];
+    return (
+      this.resolvePluginsCapability(toolId)?.marketplaceRegistration()?.machineLocalFiles() ?? []
+    );
   }
 
   projectHooksFileOf(toolId: ToolId): string | undefined {

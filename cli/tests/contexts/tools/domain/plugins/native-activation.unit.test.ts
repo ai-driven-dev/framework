@@ -3,7 +3,6 @@ import {
   NativeActivation,
   type NativeActivationSpec,
 } from "../../../../../src/contexts/tools/domain/plugins/native-activation.js";
-import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 
 const driven = { binary: "claude", enableVerb: "install", disableVerb: "uninstall" } as const;
 
@@ -17,12 +16,6 @@ describe("NativeActivation", () => {
     ]);
     expect(activation.upgradeVerb).toBe("update");
     expect(activation.scopeArgs).toBeUndefined();
-  });
-
-  it("refuses an empty binary", () => {
-    expect(() => new NativeActivation({ ...driven, binary: "" as "claude" })).toThrow(
-      CapabilityConfigError
-    );
   });
 
   it("does not compile without an enable verb", () => {

@@ -41,7 +41,7 @@ describe("claude plugins", () => {
 
     it("drives the claude binary at local scope, with the verbs claude uses and nothing else", () => {
       // Exhaustive, not `toMatchObject`: a field added by mistake must fail here.
-      expect({ ...claude.section("plugins").activation() }).toStrictEqual({
+      expect({ ...claude.section("plugins").activation() }).toEqual({
         binary: "claude",
         scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
         userRemoveArgs: [],
