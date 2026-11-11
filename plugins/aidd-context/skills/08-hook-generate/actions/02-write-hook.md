@@ -1,23 +1,28 @@
 # 02 - Write hook
 
-Render the entry for each confirmed tool, merge it into the chosen scope, and write the backing script.
+Write the hook's entry for each confirmed tool, merged into the chosen scope, and its backing script.
 
 ## Input
 
-From 01: the moment, action, script need, matcher, scope, confirmed tools, and write mode.
+From 01: the moment, script, matcher, scope, confirmed tools, and write mode.
 
 ## Process
 
-1. Write the backing script when the action needs one, per [hook-authoring.md](../references/hook-authoring.md).
-   - Copy [hook-script-template.sh](../assets/hook-script-template.sh) and fill the logic.
-   - Place it in the scope's script directory from [tool-paths.md](../references/tool-paths.md), and make it executable.
+1. Write the backing script, so the entry only wires it.
+   - Copy [hook-script-template.sh](../assets/hook-script-template.sh), fill the logic, and remove its placeholder logic and example comments.
+   - Set the exit code and stdout the way each target tool reads them, per [hook-handlers.md](../references/hook-handlers.md).
+   - Place it where [hook-paths.md](../references/hook-paths.md) says, and make it executable.
    - One script can back every tool.
-2. Fill [hook-template.json](../assets/hook-template.json) per confirmed tool, using that tool's shape in `tool-paths.md`, and strip the scaffold.
-   - Point the handler at the script by absolute path or an approved `${VAR}`.
-3. Read each target file, then append the entry to the moment's list under the right key for the scope.
-   - Preserve every sibling and overwrite none.
+2. Build the entry per confirmed tool in that tool's shape from [hook-shapes.md](../references/hook-shapes.md).
+   - [hook-template.json](../assets/hook-template.json) is the Claude Code shape only.
+   - Replace each `<...>` slot with the event name, the matcher and the handler command, and drop the matcher line for a match-all hook.
+   - Point the handler at the script in a form `hook-paths.md` allows.
+3. Write each target file the scope names in [hook-scopes.md](../references/hook-scopes.md).
+   - Missing: create it holding the entry.
+   - Existing: read it, append the entry to the moment's list, and keep every other entry.
+   - A Codex `config.toml`: merge into its `[hooks]` table the same way.
 4. Read [validate](03-validate.md).
 
 ## Output
 
-The updated target file per tool, any script written, and the list of paths touched.
+The updated target file per tool, the script written, and the list of paths touched.

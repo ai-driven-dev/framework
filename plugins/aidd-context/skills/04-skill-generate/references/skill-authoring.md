@@ -4,64 +4,82 @@ The constraints every generated skill satisfies. `skill-generate` obeys them too
 
 ## The skill
 
-- **R1.** One domain per skill; name it per `naming.md`.
-- **R2.** Keep colons and invocation prefixes out of `name`: they break loading. In prose, use `plugin:folder`.
-- **R3.** `description` is the only always-on text: one sentence, third person, what the skill does then when to use it, about 150 characters, no colon or dash.
-- **R4.** In plugin source, `argument-hint` names requested cases (`setup | refresh | rewire`) or consumed artifacts (`request | epic`).
-  - Use one or two words per case; avoid action slugs.
-  - Omit it when no action declares `## Input`.
-  - Native publication follows `tool-write.md`.
-- **R5.** Prefer English unless the user requests another language.
-- **R6.** `disable-model-invocation` and `hooks` are optional frontmatter. Add one only when the plan records an accepted risk step; host support follows `tool-write.md`.
+| Id | Rule | Why |
+| --- | --- | --- |
+| R1 | One domain per skill; name it per `naming.md`. | A skill with two domains triggers on the wrong request. |
+| R2 | Keep colons and invocation prefixes out of `name`. In prose, use `plugin:folder`. | A colon in `name` breaks loading. |
+| R3 | `description` is one sentence, third person, saying what the skill does then when to use it, under 150 characters, with no colon, and no dash used as a separator (a hyphen inside a word is fine). | It is the only always-on text, so every extra word is paid on every call. |
+| R4 | In plugin source, `argument-hint` names requested cases (`setup \| refresh`) or consumed artifacts (`request \| epic`). | Autocomplete shows it as the prompt for what to type. |
+| R4 | Use one or two words per case and avoid action slugs. | Slugs are internal and say nothing to the user. |
+| R4 | Omit `argument-hint` when no action declares `## Input`. | A hint with nothing to take misleads. |
+| R4 | Native publication follows `tool-write.md`. | Hosts differ in what they support. |
+| R5 | Prefer English unless the user requests another language. | The tree is maintained in one language. |
+| R6 | `disable-model-invocation` and `hooks` are optional frontmatter. Add one only when the plan records an accepted risk step. Host support follows `tool-write.md`. | Each one changes how the host runs the skill. |
 
 ## The router
 
-- **R7.** After its title, keep only the diagram and `## Transversal rules`: no Actions heading, action table or generic reading instruction.
-- **R8.** The diagram is `flowchart LR` with one node per action file, labeled only with its relative path (`actions/01-plan.md`). It is the only list of nodes.
-- **R9.** Show every path in the diagram: an entry node per case, a back-edge per loop, a terminal per outcome, quoted edge labels for conditions.
-- **R10.** Put rules no single action or reference owns in `## Transversal rules`; omit the section when none exists.
-- **R11.** The router loads on every call; keep action and reference detail in those files.
+| Id | Rule | Why |
+| --- | --- | --- |
+| R7 | After its title, keep only the diagram and `## Transversal rules`: no Actions heading, action table or generic reading instruction. | The diagram already lists the actions. |
+| R8 | The diagram is `flowchart LR` with one node per action file, labeled only with its relative path (`actions/01-plan.md`). It is the only list of action nodes; entry, user-question and terminal nodes are allowed besides them. | A second list drifts from the first. |
+| R9 | Show every path in the diagram: an entry node per case, a back-edge per loop, a terminal per outcome, quoted edge labels for conditions. | A path missing from the diagram is invisible to the reader. |
+| R10 | Put rules no single action or reference owns in `## Transversal rules`. Omit the section when none exists. | An empty section is noise. |
+| R11 | Keep action and reference detail in their own files. | The router loads on every call. |
 
 ## An action
 
-- **R12.** Start with `# <NN> - <Title>` and one sentence naming the result.
-  - Follow with `## Input` when needed, `## Process`, `## Output`, then `## Rules`.
-  - Omit sections with no content; add none (no `## Test`, no done-when) and preserve this order.
-- **R13.** Number imperative process steps in execution order, one sentence each.
-  - Put cases, branches and step-specific constraints under their owning step as dash sub-items.
-  - A return to an earlier point is a step naming its number or a link to the action.
-  - A check ends in a step: `validate, fix, repeat until it passes`, linking the check, or naming the steps that hold it.
-  - The final step reads the next action file, as a link; a terminal action has none.
-- **R14.** `## Output` is the done condition: what exists when the action is finished.
-- **R15.** `## Rules` holds whole-action constraints, one per line. Move rules shared by actions to the router's transversal rules.
-- **R16.** An action stays under 100 lines.
+| Id | Rule | Why |
+| --- | --- | --- |
+| R12 | Start with `# <NN> - <Title>` and one sentence naming the result. | The number fixes the order in the tree. |
+| R12 | Follow with `## Input` when needed, `## Process`, `## Output`, then `## Rules`, in that order. | A fixed order lets a reader find each part by habit. |
+| R12 | Omit sections with no content and add none, such as `## Test` or a done-when. | Extra sections duplicate Output. |
+| R13 | Number imperative process steps in execution order, one sentence each. | One sentence per step keeps each step checkable. |
+| R13 | Put cases, branches and step-specific constraints under their owning step as dash sub-items. | The constraint stays next to the step it governs. |
+| R13 | A return to an earlier point is a step naming its number or a link to the action. | The loop is explicit, not implied. |
+| R13 | A check ends in a step: validate, fix, repeat until it passes, linking the check or naming the steps that hold it. | A check with no loop is only advice. |
+| R13 | The final step reads the next action file, as a link. A terminal action has none. | The chain of actions has no gap. |
+| R14 | `## Output` is the done condition: what exists when the action is finished. | The next action needs a clear start state. |
+| R15 | `## Rules` holds whole-action constraints, one per line. Move rules shared by actions to the router's transversal rules. | A constraint repeated in each action gets edited in one and not the others. |
+| R16 | An action stays under 100 lines. | Past that length an action holds several jobs. |
 
 ## A reference
 
-- **R17.** Keep references flat; nest one directory deep only for a load boundary. Each stands alone without pulling in another. Name siblings in backticks, without links.
-- **R18.** Use tables, Mermaid diagrams or lists, one fact per row. Use prose only when none fits.
-- **R19.** A reference stays under 100 lines.
+| Id | Rule | Why |
+| --- | --- | --- |
+| R17 | Keep references flat and nest one directory deep only for a load boundary. | A deep tree hides files from a reader who lists the top level. |
+| R17 | Each reference stands alone without pulling in another. Name siblings in backticks, without links. | A link chain loads files the task does not need. |
+| R18 | Use tables, Mermaid diagrams or lists, one fact per row. Use prose only when none fits. | A row is checked on its own; a sentence mixes several facts. |
+| R19 | A reference stays under 100 lines. | A reference loads whole, so its size is paid on every load. |
 
 ## An asset
 
-- **R20.** State how to fill the asset and what to remove. Leave no scaffold in the resulting artifact.
+| Id | Rule | Why |
+| --- | --- | --- |
+| R20 | State how to fill the asset and what to remove. Leave no scaffold in the resulting artifact. | A leftover placeholder ships as a bug. |
+| R20 | An asset is a template an action fills, whatever its format, such as a `.sh` template. A file run unedited is a script (R21). | The kind decides who owns the fill note. |
+| R20 | For an asset whose format holds no comment (JSON), put the fill note in the action that fills it. | The note cannot live in the asset without breaking its format. |
 
 ## A script
 
-- **R21.** A script does one job, takes input by argument or stdin, runs without edits, and exits non-zero with a readable failure.
+| Id | Rule | Why |
+| --- | --- | --- |
+| R21 | A script does one job, takes input by argument or stdin, runs without edits, and exits non-zero with a readable failure. | A caller can run it and trust its exit code. |
 
 ## Across all of them
 
-- **R22.** One fact, one home: constraints in rules, judgment in references, the node list in the diagram. Actions apply router rules and cite references instead of restating either. Before adding or changing an instruction, check the whole skill for overlap or conflict; resolve it by revising the owning rule.
-- **R23.** In each authoring file:
-  - Use a relative Markdown link, `[name](path)`, for a file's first prose citation, except sibling references under R17.
-  - For repeat mentions within that file, use the filename in backticks when unambiguous; otherwise retain the link.
-  - Place citations in the sentence, step, output or rule using them, not on standalone lines.
-  - Avoid unresolved `@` includes.
-- **R24.** One artifact per file. Split artifacts only when a path needs one without the other.
-- **R25.** State needed capabilities; the host discovers providers by description. Naming another skill or `/command`, including within the same plugin, is reserved for orchestrator references naming the providers they sequence.
-- **R26.** Write short sentences, one idea each. Bold meaningful bullet openings instead of adding procedural labels.
-- **R27.** Identify content to read or edit by purpose, not by line numbers, exact headings or quoted anchors. Retain exact names the artifact's format requires.
-- **R28.** Prefer positive instructions or `avoid` over `never`. Express mandatory boundaries as explicit conditions.
-- **R29.** Keep emitted fenced content in the format its consumer requires.
-- **R30.** Write no dates or ticket IDs in any file.
+| Id | Rule | Why |
+| --- | --- | --- |
+| R22 | One fact, one home: constraints in rules, judgment in references, the node list in the diagram. Actions apply router rules and cite references instead of restating either. | Two copies of a fact drift apart. |
+| R22 | Before adding or changing an instruction, check the whole skill for overlap or conflict, and resolve it by revising the owning rule. | A parallel rule contradicts the first. |
+| R23 | In each authoring file, use a relative Markdown link, `[name](path)`, for a file's first prose citation, except sibling references under R17. | The first mention lets the reader open the file. |
+| R23 | For repeat mentions within that file, use the filename in backticks when unambiguous. Otherwise retain the link. | Repeated links add noise. |
+| R23 | Place citations in the sentence, step, output or rule using them, not on standalone lines. | A citation outside its use is easy to skip. |
+| R23 | Avoid unresolved `@` includes. | An include that does not resolve loads nothing. |
+| R24 | One artifact per file. Split artifacts only when a path needs one without the other. | A file with two artifacts loads both for either. |
+| R25 | State needed capabilities and let the host discover providers by description. Naming another skill or `/command`, including within the same plugin, is reserved for orchestrator references naming the providers they sequence. | A named provider breaks when it is renamed or absent. |
+| R26 | Write short sentences, one idea each. Open a rule with the instruction itself, not a label. | A long sentence hides which part is the instruction. |
+| R27 | Identify content to read or edit by purpose, not by line numbers, exact headings or quoted anchors. Keep as an exact name any heading the artifact's format or a cited document requires. | Line numbers and headings change as files are edited. |
+| R28 | Prefer positive instructions or `avoid` over `never`, and express mandatory boundaries as explicit conditions. This governs instructions, not a classification cell such as "never a finding". | A condition says when the boundary applies. |
+| R29 | Keep emitted fenced content in the format its consumer requires. | The consumer parses it as is. |
+| R30 | Write no dates or ticket IDs in any file. A date-format placeholder such as `<yyyy_mm>` is allowed. | They go stale and carry no lasting meaning. |
+| R31 | Use no bold in a generated skill's rules and steps; write plain sentences. | A bold lead-in is a label that adds weight to every load and loses meaning when repeated. |

@@ -103,17 +103,16 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-write.md](skills/04-skill-generate/actions/03-write.md) | - |
 | `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<One sentence: what it does, then when to use it, about 150 characters.>` |
+| `assets` | [scope-frame.md](skills/04-skill-generate/assets/scope-frame.md) | - |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<One sentence: what it does, then when to use it.>` |
 | `references` | [fill-norm.md](skills/04-skill-generate/references/fill-norm.md) | - |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
-| `references` | [review-protocol.md](skills/04-skill-generate/references/review-protocol.md) | - |
 | `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
-| `references` | [scope-frame.md](skills/04-skill-generate/references/scope-frame.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
 | `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
 | `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
-| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generates a lean router-based skill across the host AI tools, when the user wants to create, scaffold or refactor a skill.` |
+| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generates a skill across the host AI tools, when the user wants to create, scaffold or refactor one.` |
 
 #### `skills/05-rule-generate`
 
@@ -162,7 +161,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [hook-script-template.sh](skills/08-hook-generate/assets/hook-script-template.sh) | - |
 | `assets` | [hook-template.json](skills/08-hook-generate/assets/hook-template.json) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
-| `references` | [tool-paths.md](skills/08-hook-generate/references/tool-paths.md) | - |
+| `references` | [hook-handlers.md](skills/08-hook-generate/references/hook-handlers.md) | - |
+| `references` | [hook-moments.md](skills/08-hook-generate/references/hook-moments.md) | - |
+| `references` | [hook-paths.md](skills/08-hook-generate/references/hook-paths.md) | - |
+| `references` | [hook-scopes.md](skills/08-hook-generate/references/hook-scopes.md) | - |
+| `references` | [hook-shapes.md](skills/08-hook-generate/references/hook-shapes.md) | - |
+| `references` | [hook-support.md](skills/08-hook-generate/references/hook-support.md) | - |
 | `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create, scaffold or refactor one.` |
 
 #### `skills/09-mermaid`

@@ -1,6 +1,6 @@
 ---
 name: <skill-name>
-description: <One sentence: what it does, then when to use it, about 150 characters.>
+description: <One sentence: what it does, then when to use it.>
 argument-hint: <what the user brings: their cases, or the artifact consumed>
 <OPTIONAL. The plan's accepted risk step, `disable-model-invocation: true` or a `hooks:` block. Omit otherwise.>
 ---
@@ -16,6 +16,6 @@ flowchart LR
 
 <OPTIONAL. Rules owned by no reference or single action, one per line. Omit the section when none.>
 
-- **<Important opening words>** <rest of the rule>
+- <One plain sentence.>
 
-> Fill every `<...>` and delete this line. Remove `argument-hint` when no action has `## Input`. An angle bracket left in the written file is a bug.
+> Fill every `<...>` and delete this line. An angle bracket left in the written file is a bug.

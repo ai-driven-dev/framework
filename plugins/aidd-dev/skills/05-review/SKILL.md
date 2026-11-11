@@ -15,14 +15,13 @@ flowchart LR
   prepare -->|"work and axes settled"| review["actions/02-review.md"]
   review --> conclude["actions/03-conclude.md"]
   conclude -->|"no task folder"| keep((user chooses to keep the report)) --> conclude
-  conclude -->|"a critical finding"| blocked([blocked])
-  conclude -->|"a major finding or unchecked criterion"| changes([changes-requested])
-  conclude -->|"otherwise"| approve([approve])
+  conclude -->|"rubric: blocked"| blocked([blocked])
+  conclude -->|"rubric: changes-requested"| changes([changes-requested])
+  conclude -->|"rubric: approve"| approve([approve])
 ```
 
 ## Transversal rules
 
-- **Speak only to ask** or to give the final reply; otherwise call tools.
-- **Read only:** leave the app and its checks unrun.
-- **Change nothing but the report:** no code, no test, no config.
-- **Judge this work alone,** and no earlier round.
+- Speak only to ask or to give the final reply; otherwise call tools.
+- Read only: leave the app and its checks unrun, and change nothing but the report.
+- Judge this work alone, and no earlier round.
