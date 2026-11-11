@@ -173,6 +173,12 @@ Rejected: visitor (one switch site), strategy registry (the catalog is the regis
 | kilo MCP transform | `formats/opencode-mcp-merge.ts` after P6 |
 | shared kilo and opencode bridge behaviour | `domain/hooks/event-bridge.ts` (E-T5) |
 
+Written limits:
+
+- A new host-registry layout is one union member, one reader in `host-registration/infrastructure/` and one table line in `src/composition/host-registration.ts`; `tsc` forces all three.
+- A config asset a tool needs at runtime is one entry in `src/runtime/assets/asset-loader.ts`; nothing else finds it.
+- The codex plugin registry is read from `~/.codex/config.toml` and ignores `CODEX_HOME`, frozen on purpose in `profiles/codex/profile.ts`; the user settings file follows `CODEX_HOME`.
+
 ## 6. Phases
 
 Each phase: green commits, no behaviour change, an inverted proof.

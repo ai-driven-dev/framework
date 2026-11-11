@@ -15,14 +15,14 @@
         "src/contexts/host-registration/contract/**/*.ts",
         "src/contexts/host-registration/domain/**/*.ts"
       ],
-      "break": 1
+      "break": 100
     },
     "host-registration-adapters": {
       "mutate": [
         "src/contexts/host-registration/infrastructure/**/*.ts",
         "src/contexts/host-registration/application/**/*.ts"
       ],
-      "break": 1
+      "break": 90
     },
     "tools": {
       "mutate": [
