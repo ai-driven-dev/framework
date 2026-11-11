@@ -2,8 +2,8 @@
 // the project, the engine's problems, the tokens stylesheet and the captures already read. Pure:
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
-const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, COMPONENT_KINDS } = require("./model.cjs");
+const { list, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { placed, fm, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
@@ -11,8 +11,6 @@ const { text } = require("./project.cjs");
 const { STYLE, escaped, documentOf, STYLESHEET_LINK } = require("./page.cjs");
 
 const DEFAULT_LANGUAGE = "en";
-const VERDICTS_SECTION = "Verdicts";
-const REVIEW_KIND = "review";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
 const SYSTEM_KINDS = ["brand", "system"];
 const LEVELS = ["asset", ...COMPONENT_KINDS];
@@ -214,22 +212,12 @@ copy.addEventListener("click", () => {
 refresh();
 `;
 
-/** The verdict rows of every review, as `{screen, state, version, verdict, comment}`, in record order. */
-const rowsOf = (project) =>
-  placed(project)
-    .filter((record) => fm(record).kind === REVIEW_KIND)
-    .flatMap((record) => table(record.sections[VERDICTS_SECTION]))
-    .map((row) => ({ screen: row.Screen, state: row.State, version: row.Version, verdict: row.Verdict, comment: row.Comment ?? "" }));
-
-/** What a review says of a state of `record`: `current` is the verdict set at the record's version
+/** What a review says of a state of `record`: `current` is the verdict that decides it at the record's version
  * ("none" when there is none), `outdated` the version of the latest older verdict when only older ones exist. */
 function verdictOf(rows, record, state) {
-  const own = rows.filter((row) => row.screen === fm(record).id && row.state === state);
-  const atVersion = own.filter((row) => row.version === String(fm(record).version));
-  // a later review round leaves the bump's pending row in the earlier review: it never hides a set verdict
-  const now = atVersion.filter((row) => row.verdict !== "pending").at(-1) ?? atVersion.at(-1);
-  if (now) return { current: now.verdict, comment: now.comment, outdated: null };
-  const older = own.map((row) => row.version).sort((a, b) => Number(b) - Number(a))[0];
+  const now = stateVerdict(rows, record, state);
+  if (now) return { current: now.Verdict, comment: now.Comment ?? "", outdated: null };
+  const older = rows.filter((row) => row.Screen === fm(record).id && row.State === state).map((row) => row.Version).sort((a, b) => Number(b) - Number(a))[0];
   return { current: "none", comment: "", outdated: older ?? null };
 }
 
@@ -356,7 +344,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
   const labels = LABELS[language];
   const records = placed(project).filter((record) => fm(record).kind !== REVIEW_KIND && fm(record).id);
   const ids = new Set(records.map((record) => fm(record).id));
-  const rows = rowsOf(project);
+  const rows = verdictRows(placed(project));
   const system = project.records.find((record) => fm(record).kind === "system");
   const pages = { "index.html": pageOf(labels.title, language, navigationOf(records, labels, null), `<h1>${labels.title}</h1><p>${labels.pick}</p>`, false) };
   for (const record of records) {

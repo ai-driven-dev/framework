@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, byId, isSystem, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
+const { placed, byId, isSystem, fm, verdictRows, stateVerdict, REVIEW_KIND, VERDICTS_SECTION, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
 const { Refusal, required, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
@@ -19,7 +19,6 @@ const FIRST_VERSION = "1";
 const FIRST_SYSTEM_VERSION = "1.0.0";
 const CREATED = "created";
 const PUBLISHED = "published";
-const VERDICTS_SECTION = "Verdicts";
 const VERDICTS_HEADING = `## ${VERDICTS_SECTION}`;
 const OK = "ok";
 const SCREEN = "screen";
@@ -165,7 +164,7 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
     }
   }
 
-  for (const review of records.filter((each) => fm(each).kind === "review")) {
+  for (const review of records.filter((each) => fm(each).kind === REVIEW_KIND)) {
     for (const id of list(fm(review).screens).filter((screen) => raised.has(screen))) {
       const screen = records.find((each) => fm(each).id === id);
       const { lines, end } = files.editOf(review.file);
@@ -198,13 +197,13 @@ function publish(root, { breaking }) {
   return { version, tasks };
 }
 
-/** The first state of `record` no review holds an ok verdict for at its current version, `""` for a record without states with no ok verdict at all, or null. */
+/** The first state of `record` no review holds an ok verdict for at its current version, as `{state, verdict}` (`state` undefined for a record without states, `verdict` undefined when no row decides it), or null. A revise at that version blocks it. */
 function unreviewedState(project, record) {
-  const { id, version, states } = fm(record);
-  const verdicts = placed(project).filter((each) => fm(each).kind === "review").flatMap((each) => table(each.sections[VERDICTS_SECTION]));
-  const ok = (state) => verdicts.some((row) => row.Screen === id && row.Version === version && row.Verdict === OK && (state === undefined || row.State === state));
-  if (!list(states).length) return ok() ? null : "";
-  return list(states).find((state) => !ok(state)) ?? null;
+  const rows = verdictRows(placed(project));
+  const states = list(fm(record).states);
+  const decided = (state) => stateVerdict(rows, record, state)?.Verdict;
+  const blocked = (states.length ? states : [undefined]).filter((each) => decided(each) !== OK);
+  return blocked.length ? { state: blocked[0], verdict: decided(blocked[0]) } : null;
 }
 
 /** The first state of a screen whose code is at its version and that has no capture beside it, as `{state, file}` with `file` relative to the design system folder; null for any other record. */
@@ -229,8 +228,11 @@ function validate(root, ids) {
     if (!row) throw new Refusal(`"${id}" has no history row at its version ${fm(record).version}`);
     // A sealed version is never sealed again: an edit since would pass H8 without a raise.
     if (row.Fingerprint) throw new Refusal(`"${id}" version ${fm(record).version} is already validated, raise its version with bump to change it`);
-    const state = unreviewedState(project, record);
-    if (state !== null) throw new Refusal(`"${id}" has no ok verdict${state ? ` for state ${state}` : ""} at version ${fm(record).version}, review it first`);
+    const unreviewed = unreviewedState(project, record);
+    if (unreviewed !== null) {
+      const where = `${unreviewed.state ? ` for state ${unreviewed.state}` : ""} at version ${fm(record).version}`;
+      throw new Refusal(unreviewed.verdict === "revise" ? `"${id}" has a revise verdict${where}, change it first` : `"${id}" has no ok verdict${where}, review it first`);
+    }
     const capture = uncapturedState(project, record);
     if (capture !== null) throw new Refusal(`${id}: ${capture.state} has no capture at ${capture.file}`);
     return record;

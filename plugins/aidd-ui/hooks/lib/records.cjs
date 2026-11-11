@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf, ERROR, WARNING, HISTORY_FILE } = require("./project.cjs");
-const { breakpointsOf, STEPS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { breakpointsOf, STEPS_SECTION, REVIEW_KIND, VERDICTS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
 const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
@@ -19,7 +19,6 @@ const PERSONA_SECTION = "Persona";
 const SCREEN_KINDS = ["screen", "wireframe"]; // what a journey step names
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";
-const VERDICTS_SECTION = "Verdicts";
 const BRAND_HEADINGS = ["Project", "Users", "Domain", "Personality and tone", "References", "Anti-references"];
 
 const COMMON_KEYS = ["id", "kind"];
@@ -205,7 +204,7 @@ function journeyProblems(project) {
 function reviewProblems(project) {
   const index = byId(project);
   return placed(project)
-    .filter((record) => fm(record).kind === "review")
+    .filter((record) => fm(record).kind === REVIEW_KIND)
     .flatMap((record) => {
       const rows = table(record.sections[VERDICTS_SECTION]);
       // A verdict judges one version: a row for an older one leaves the current one unreviewed.
@@ -241,7 +240,7 @@ function assetProblems(project) {
 
 function reviewStatusProblems(project) {
   return placed(project)
-    .filter((record) => fm(record).kind === "review")
+    .filter((record) => fm(record).kind === REVIEW_KIND)
     .filter((record) => STATUSES.includes(fm(record).status) && !REVIEW_STATUSES.includes(fm(record).status))
     .map((record) => problem(record, `status "${fm(record).status}" is for elements: reviews are ${listWithOr(REVIEW_STATUSES)}`, `set status to ${listWithOr(REVIEW_STATUSES)}`, fm(record).status));
 }

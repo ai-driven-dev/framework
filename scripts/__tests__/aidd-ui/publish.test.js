@@ -154,7 +154,16 @@ describe("aidd-ui publish", () => {
         refused(["button"], '"button" has no ok verdict for state hover at version 1, review it first');
         edit(tmp, GATE, "| button | hover | 1 | pending |", "| button | hover | 1 | ok |");
         edit(tmp, GATE, "| button | focus | 1 | ok |", "| button | focus | 1 | revise | needs more contrast |");
-        refused(["button"], '"button" has no ok verdict for state focus at version 1, review it first');
+        refused(["button"], '"button" has a revise verdict for state focus at version 1, change it first');
+      });
+
+      it("names a state holding an ok and a revise at its version, in either order", () => {
+        unsealed();
+        reviewed(tmp, "button");
+        edit(tmp, GATE, "| button | hover | 1 | ok | |", "| button | hover | 1 | ok | |\n| button | hover | 1 | revise | needs more contrast |");
+        refused(["button"], '"button" has a revise verdict for state hover at version 1, change it first');
+        edit(tmp, GATE, "| button | hover | 1 | ok | |\n| button | hover | 1 | revise | needs more contrast |", "| button | hover | 1 | revise | needs more contrast |\n| button | hover | 1 | ok | |");
+        refused(["button"], '"button" has a revise verdict for state hover at version 1, change it first');
       });
 
       it("names a state with no verdict row while another state is ok", () => {
@@ -194,7 +203,11 @@ describe("aidd-ui publish", () => {
   describe("a screen", () => {
     const HOME = `${UI}/screens/home.md`;
     const CODE_LINE = "code: src/ui/HomePage.tsx#HomePage@1";
-    beforeEach(() => fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).replace(/^(\| home \| 1 \|.*) [0-9a-f]{12} \|$/m, "$1  |")));
+    beforeEach(() => {
+      fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).replace(/^(\| home \| 1 \|.*) [0-9a-f]{12} \|$/m, "$1  |"));
+      // the fixture's own review holds a revise on home: a revise blocks the publication, so these cases start without it
+      edit(tmp, `${UI}/reviews/first-pass.md`, "| home | loading | 1 | revise | spinner too small |", "| home | loading | 1 | pending | |");
+    });
 
     const refused = (message) => {
       const before = snapshot();
@@ -245,7 +258,7 @@ describe("aidd-ui publish", () => {
       reviewed(tmp, "home");
       captured(tmp, "home", HOME_STATES);
       edit(tmp, GATE, "| home | loading | 1 | ok | |", "| home | loading | 1 | revise | spinner too small |");
-      refused('"home" has no ok verdict for state loading at version 1, review it first');
+      refused('"home" has a revise verdict for state loading at version 1, change it first');
     });
 
   });

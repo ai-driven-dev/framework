@@ -1,7 +1,7 @@
 // What a change reaches: the tokens, elements, screens, journeys, renders and code files that
 // depend on the tokens or elements it touches.
 const { list, table } = require("./markdown.cjs");
-const { placed, fm, COMPONENT_KINDS, STEPS_SECTION } = require("./model.cjs");
+const { placed, fm, COMPONENT_KINDS, STEPS_SECTION, REVIEW_KIND } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { codeFilesOf, codeTokens } = require("./code.cjs");
 const { citations, resolvedValues, tokenNameOf } = require("./tokens.cjs");
@@ -10,7 +10,7 @@ const { citations, resolvedValues, tokenNameOf } = require("./tokens.cjs");
 const cited = (record) => [
   ...list(fm(record).uses),
   ...list(fm(record)["replaced-by"]),
-  ...(fm(record).kind === "review" ? list(fm(record).screens) : []),
+  ...(fm(record).kind === REVIEW_KIND ? list(fm(record).screens) : []),
   ...table(record.sections[STEPS_SECTION]).map((row) => row.Screen),
 ];
 

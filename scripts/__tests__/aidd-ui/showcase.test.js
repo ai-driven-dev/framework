@@ -180,6 +180,13 @@ describe("aidd-ui showcase", () => {
       assert.match(articleOf(home, "error"), /data-current="pending"/);
     });
 
+    it("shows a revise over an ok at the same version, in either order", () => {
+      verdicts(["home", "default", "1", "ok", ""], ["home", "default", "1", "revise", "too pale"]);
+      assert.match(articleOf(pagesOf()["home.html"], "default"), /data-current="revise"[\s\S]*<p class="said">too pale<\/p>/);
+      verdicts(["home", "default", "1", "revise", "too pale"], ["home", "default", "1", "ok", ""]);
+      assert.match(articleOf(pagesOf()["home.html"], "default"), /data-current="revise"[\s\S]*<p class="said">too pale<\/p>/);
+    });
+
     it("never lets a pending row hide a verdict set at the same version, as the publication reads it", () => {
       verdicts(["home", "default", "1", "ok", ""], ["home", "default", "1", "pending", ""]);
       const home = pagesOf()["home.html"];
