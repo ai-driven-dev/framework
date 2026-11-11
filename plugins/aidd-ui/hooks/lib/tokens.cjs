@@ -500,7 +500,22 @@ function stylesheetProblems(tree, project) {
   return current === null || current === css ? [] : [{ file, message: `out of date with the tokens, regenerate it ${REGENERATE}`, fix: RUN_TOKENS }];
 }
 
-const RULES = { ...BASE_RULES, T10: stylesheetProblems };
+/** A primitive group whose type of token no semantic token cites: no record may cite a primitive, so none can use it. */
+function coverageProblems(tree, project) {
+  const system = systemOf(project);
+  const groups = list(system?.frontMatter.primitives);
+  if (!groups.length || blockers(project).length) return [];
+  const cited = new Set([...citations(project)].filter(([name]) => !isPrimitive(name, groups)).flatMap(([, names]) => names));
+  return groups.flatMap((group) => {
+    const members = [...tree.tokens].filter(([name]) => isPrimitive(name, [group]));
+    const types = [...new Set(members.map(([, token]) => typeOf(tree, token)))].filter((type) => type !== undefined);
+    return types
+      .filter((type) => !members.some(([name, token]) => typeOf(tree, token) === type && cited.has(name)))
+      .map((type) => ({ file: system.file, message: `primitives "${group}": no semantic token cites its ${type} tokens, so no record can use them`, fix: "add a semantic token citing one, in a group primitives does not list", excerpt: group }));
+  });
+}
+
+const RULES = { ...BASE_RULES, T10: stylesheetProblems, T11: coverageProblems };
 
 /** Every broken token rule, in rule order. */
 const check = checkOf(RULES, run);

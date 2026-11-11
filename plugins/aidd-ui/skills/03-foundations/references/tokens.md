@@ -6,6 +6,7 @@ DTCG 2025.10 in `aidd_docs/ui/tokens.json`.
 | --- | --- |
 | file | `aidd_docs/ui/tokens.json`, and its context files |
 | levels, blank project | primitives: the palette and scales, in the groups `primitives` lists. Then semantic tokens aliasing them as `{group.name}`. Semantic tokens sit in groups `primitives` omits: primitive `palette`, semantic `color`. |
+| semantic set, blank project | colour: background, surface, text, text-muted, accent, text-on-accent, border, focus. Type: body and heading, each with family, size, line height, weight. Spacing: inset, gap. Corner: control, surface. `control.min-height`, at least each platform's touch floor. Any other primitive type: one semantic token named by its role. |
 | levels, extracted | the code's structure, no invented layer. `primitives: []` allowed |
 | colour | `{"colorSpace": "srgb", "components": [r, g, b], "alpha": 0.5, "hex": "#rrggbb"}`. `alpha` optional |
 | dimension, duration | `{"value": 1, "unit": "rem"}`, `{"value": 150, "unit": "ms"}` |

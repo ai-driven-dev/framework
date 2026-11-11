@@ -18,6 +18,7 @@
 | no file found | only after that search: leave `code` out, say why |
 | render | one `<section data-state>` per state, each holding the wireframe's zones |
 | render style | `var()` of tokens only. No colour literal. No length literal but a hairline |
+| render text | font family, size and line height from tokens, set on `body` |
 | colour | state `color` and `background` together in one rule, each a token |
 | contrast | each text reaches 4.5:1 on what lies behind it, in every theme |
 | control size | give each button, link, field and select a `min-height` from a token |

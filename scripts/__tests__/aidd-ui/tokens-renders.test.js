@@ -644,6 +644,40 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("T11 semantic coverage", () => {
+    const declarePrimitive = (group) => edit(tmp, SYSTEM, "primitives: [color.brand]", `primitives: [color.brand, ${group}]`);
+    const uncited = (group, type) => `${SYSTEM}: primitives "${group}": no semantic token cites its ${type} tokens, so no record can use them`;
+
+    it("names a primitive group whose type no semantic token cites, without blocking the stylesheet", () => {
+      addToken("gap", { $type: "dimension", $value: { value: 1, unit: "rem" } });
+      declarePrimitive("misc");
+      assert.deepEqual(problems(), [uncited("misc", "dimension")]);
+      assert.deepEqual(tokens.blockers(load(tmp)), []);
+    });
+
+    it("stays silent when a semantic token cites it by alias, or by var() in raw CSS", () => {
+      addToken("gap", { $type: "dimension", $value: { value: 1, unit: "rem" } });
+      declarePrimitive("misc");
+      editTokens(tmp, (tree) => (tree.space.pad = { $value: "{misc.gap}" }));
+      assert.deepEqual(problems(), []);
+      editTokens(tmp, (tree) => (tree.space.pad = { $type: "dimension", $extensions: { "dev.ai-driven.css": "calc(var(--misc-gap) * 2)" } }));
+      assert.deepEqual(problems(), []);
+    });
+
+    it("names the type of a group that no semantic token cites, when another type of it is cited", () => {
+      addToken("gap", { $type: "dimension", $value: { value: 1, unit: "rem" } });
+      addToken("tint", { $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" } });
+      declarePrimitive("misc");
+      editTokens(tmp, (tree) => (tree.space.pad = { $value: "{misc.gap}" }));
+      assert.deepEqual(problems(), [uncited("misc", "color")]);
+    });
+
+    it("stays silent when system.md lists no primitive group", () => {
+      edit(tmp, SYSTEM, "primitives: [color.brand]", "primitives: []");
+      assert.deepEqual(problems(), []);
+    });
+  });
+
   describe("T10 generated stylesheet", () => {
     const REGENERATE = "with the engine's tokens command";
 
@@ -965,6 +999,8 @@ const FIXES = [
   "T10 | misc.shadow: a shadow has no CSS of its own, give it a dev.ai-driven.css value | \"misc.shadow\" | give it a dev.ai-driven.css value",
   "T10 | missing, generate it with the engine's tokens command | - | run node <engine> tokens",
   "T10 | out of date with the tokens, regenerate it with the engine's tokens command | - | run node <engine> tokens",
+  "T11 | primitives \"misc\": no semantic token cites its color tokens, so no record can use them | \"misc\" | add a semantic token citing one, in a group primitives does not list",
+  "T11 | primitives \"misc\": no semantic token cites its dimension tokens, so no record can use them | \"misc\" | add a semantic token citing one, in a group primitives does not list",
   "T2 | color.$foo: \"$foo\" is not a reserved key | \"color.$foo\" | use a reserved key, or drop the $ from its name",
   "T2 | misc.a.b: a name never holds \".\", \"{\" or \"}\" | \"misc.a.b\" | rename it without \".\", \"{\" or \"}\"",
   "T2 | misc.x.$root: \"$root\" is not supported, name the token | \"misc.x.$root\" | give the token a name instead of $root",
