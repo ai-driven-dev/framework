@@ -18,4 +18,4 @@ Which file each scope writes, per tool. A `-` means the tool has no such scope.
 | Write mode | Scope |
 | --- | --- |
 | host project | asked, among the rows above except plugin |
-| plugin source | the plugin row, never asked: the entry merges into that plugin's `hooks/hooks.json`; a tool with `-` there is skipped |
+| plugin source | the plugin row, with no scope question: the entry merges into that plugin's `hooks/hooks.json`; a tool with `-` there is skipped |

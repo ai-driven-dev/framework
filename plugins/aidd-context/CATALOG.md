@@ -180,7 +180,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [hook-scopes.md](skills/08-hook-generate/references/hook-scopes.md) | - |
 | `references` | [hook-shapes.md](skills/08-hook-generate/references/hook-shapes.md) | - |
 | `references` | [hook-support.md](skills/08-hook-generate/references/hook-support.md) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create, scaffold or refactor one.` |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create or scaffold one.` |
 
 #### `skills/09-mermaid`
 

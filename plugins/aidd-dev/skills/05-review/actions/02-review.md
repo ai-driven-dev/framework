@@ -18,4 +18,4 @@ The diff, the need, the axes, and the plan, criteria, task folder or evidence if
 
 ## Output
 
-The findings, the assumptions, the limits and the criteria, with the diff, the axes and the task folder if any.
+The findings, the assumptions, the limits and the criteria, with the diff, the axes, and the plan or task folder if any.

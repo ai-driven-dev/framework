@@ -10,13 +10,14 @@ argument-hint: work | plan
 
 ```mermaid
 flowchart LR
-  prepare["prepare<br>actions/01-prepare.md"] --> review["review<br>actions/02-review.md"]
-  review --> conclude["conclude<br>actions/03-conclude.md"]
-  prepare -->|"empty diff"| stop((stop))
-  prepare -->|"axes named without a plan"| axes((user names a plan)) --> prepare
+  work([work]) --> prepare["actions/01-prepare.md"]
+  plan([plan]) --> prepare
+  prepare -->|"no work to review"| stop((stop))
+  prepare -->|"functional named without a plan or criteria"| axes((user names a plan or criteria)) --> prepare
   prepare -->|"work and axes settled"| review["actions/02-review.md"]
   review --> conclude["actions/03-conclude.md"]
-  conclude -->|"no task folder"| keep((user chooses to keep the report)) --> conclude
+  conclude -->|"no task folder named or in the plan"| keep((user chooses to keep the report)) --> conclude
+  conclude -->|"round misses a template field"| conclude
   conclude -->|"rubric: blocked"| blocked([blocked])
   conclude -->|"rubric: changes-requested"| changes([changes-requested])
   conclude -->|"rubric: approve"| approve([approve])

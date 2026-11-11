@@ -4,12 +4,12 @@ Write the hook's entry for each confirmed tool, merged into the chosen scope, an
 
 ## Input
 
-From 01: the moment, script, matcher, scope with its plugin or file, confirmed tools, and write mode.
+From 01: the moment, script, whether it blocks, matcher, scope with its plugin or file, confirmed tools, and write mode.
 
 ## Process
 
 1. Write the backing script, so the entry only wires it.
-   - Copy [hook-script-template.sh](../assets/hook-script-template.sh), fill the logic, and remove its placeholder logic and example comments.
+   - Copy [hook-script-template.sh](../assets/hook-script-template.sh) and fill the logic.
    - Set the exit code and stdout the way each target tool reads them, per [hook-handlers.md](../references/hook-handlers.md).
    - Place it where [hook-paths.md](../references/hook-paths.md) says, and make it executable.
    - One script can back every tool.
