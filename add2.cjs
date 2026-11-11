@@ -1,0 +1,16 @@
+const fs=require('fs');
+const [,,file,marker,...entries]=process.argv;
+let t=fs.readFileSync(file,'utf8');
+const idx=t.indexOf(marker); if(idx<0) throw new Error('marker');
+const end=t.lastIndexOf(']',idx);
+const open=t.lastIndexOf('[',end);
+const block=t.slice(open+1,end);
+const ind=block.match(/\n(\s*)"/)[1];
+const items=[...block.matchAll(/"([^"]+)"/g)].map(m=>m[1]);
+const head=items.shift();
+const set=new Set(items.map(s=>s.replace(/^!/,'')));
+for(const e of entries) set.add(e);
+const sorted=[...set].sort().map(s=>'!'+s);
+const nb='\n'+[head,...sorted].map(s=>ind+'"'+s+'"').join(',\n')+'\n'+ind.slice(2);
+t=t.slice(0,open+1)+nb+t.slice(end);
+fs.writeFileSync(file,t);
