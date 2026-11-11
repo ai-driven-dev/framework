@@ -137,7 +137,7 @@ nav a[aria-current="page"] { font-weight: 600; color: var(--text); }
 .pair { display: flex; gap: 12px; flex-wrap: wrap; }
 .render { display: flex; gap: 12px; flex: 1 1 24rem; min-width: 0; }
 .render iframe { flex: 1; min-width: 0; width: 100%; min-block-size: 120px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
-.render iframe[data-platform="mobile"] { flex: 0 0 390px; inline-size: 390px; }
+.state .render iframe[data-platform="mobile"] { flex: 0 0 390px; inline-size: 390px; }
 .capture { flex: 1 1 24rem; margin: 0; min-width: 0; }
 .capture img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
 .capture.missing { display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line); border-radius: 6px; color: var(--muted); padding: 12px; }
@@ -370,9 +370,22 @@ ul { list-style: none; margin: 0; padding: 0; }
 li { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(6rem, 1fr) 2fr; gap: 12px; align-items: center; padding: 4px 0; border-bottom: 1px solid #8884; }
 code, .value { overflow-wrap: anywhere; }
 .value { opacity: 0.7; }
-.swatch { display: block; inline-size: 48px; block-size: 24px; border-radius: 4px; border: 1px solid #8886; }
+.swatch { display: block; inline-size: 100%; block-size: 56px; border-radius: 6px; border: 1px solid #8886; }
 .bar { display: block; block-size: 12px; background: #888; border-radius: 2px; }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 16px 12px; }
+.swatches li { display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 0; border: 0; }
+.swatches .specimen { order: -1; margin-bottom: 4px; border-radius: 6px; background: repeating-conic-gradient(#8883 0 25%, transparent 0 50%) 0 0 / 12px 12px; }
 `;
+
+const ALPHA_COLOUR = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+) \/ ([\d.]+)\)$/;
+
+/** A value as a person reads it: a colour with alpha as its hex and its opacity, anything else as is. */
+function shownValue(value) {
+  const match = ALPHA_COLOUR.exec(value);
+  if (!match) return value;
+  const hex = match.slice(1, 4).map((part) => Math.round(Number(part) * 255).toString(16).padStart(2, "0")).join("");
+  return `#${hex} · ${Math.round(Number(match[4]) * 100)}%`;
+}
 
 /** What shows a token in the gallery: a swatch, a bar, a sample of text, or nothing beside its value. */
 function specimenOf({ type, property }) {
@@ -390,10 +403,10 @@ function galleryOf({ project, system, tokens, labels, language }) {
   const entries = tokens === null ? [] : catalog(project);
   if (!entries.length) return "";
   const values = resolvedValues(project).get(BASE_CONTEXT) ?? new Map();
-  const row = (entry) => `<li data-token="${escaped(entry.name)}"><code>${escaped(entry.name)}</code><span class="value">${escaped(values.get(entry.name) ?? "")}</span><span class="specimen">${specimenOf(entry)}</span></li>`;
+  const row = (entry) => `<li data-token="${escaped(entry.name)}"><code>${escaped(entry.name)}</code><span class="value">${escaped(shownValue(values.get(entry.name) ?? ""))}</span><span class="specimen">${specimenOf(entry)}</span></li>`;
   const sections = [...TYPES, UNTYPED].flatMap((type) => {
     const own = entries.filter((entry) => (entry.type ?? UNTYPED) === type);
-    return own.length ? [`<section data-type="${type}"><h3>${type}</h3><ul>${own.map(row).join("")}</ul></section>`] : [];
+    return own.length ? [`<section data-type="${type}"><h3>${type}</h3><ul${type === "color" ? ' class="swatches"' : ""}>${own.map(row).join("")}</ul></section>`] : [];
   });
   const doc = ["<!doctype html>", `<html lang="${language}">`, "<head>", '<meta charset="utf-8">', STYLESHEET_LINK, `<style>${GALLERY_STYLE}</style>`, "</head>", "<body>", `<h2>${labels.tokens}</h2>`, ...sections, "</body>", "</html>"].join("\n");
   return `<section class="gallery">${toolbarOf(system, labels)}<div class="pair"><div class="render"><iframe data-combo="a"${platformOf(system)} title="${escaped(labels.tokens)}" srcdoc="${escaped(inlined(doc, tokens))}"></iframe></div></div></section>`;

@@ -126,7 +126,7 @@ describe("aidd-ui showcase", () => {
 
     it("gives a mobile frame a phone's width and leaves the others fluid", () => {
       const html = pagesOf()["home.html"];
-      assert.match(html, /\.render iframe\[data-platform="mobile"\] \{ flex: 0 0 390px; inline-size: 390px; \}/);
+      assert.match(html, /\.state \.render iframe\[data-platform="mobile"\] \{ flex: 0 0 390px; inline-size: 390px; \}/);
       assert.doesNotMatch(html, /\[data-platform="web"\] \{/);
       assert.ok(!html.includes("height: 320px"));
     });
@@ -174,6 +174,15 @@ describe("aidd-ui showcase", () => {
       assert.match(html, /<div class="toolbar">/);
       assert.match(html.match(/<iframe [^>]*>/)[0], /data-platform="web"/);
       assert.ok(frameOf(html).includes(":where(html) { font-family: system-ui, sans-serif; }"));
+    });
+
+    it("lays the colors out as a grid of swatches, an alpha shown as hex and percent", () => {
+      editTokens(tmp, (tree) => (tree.color.brand.veil = { $type: "color", $value: { colorSpace: "srgb", components: [1, 0.4196, 0.2078], alpha: 0.0784, hex: "#ff6b35" } }));
+      const frame = frameOf(systemPage());
+      assert.match(frame, /<section data-type="color"><h3>color<\/h3><ul class="swatches">/);
+      assert.match(frame, /<section data-type="dimension"><h3>dimension<\/h3><ul>/);
+      assert.ok(rowOf(frame, "color.brand.veil").includes("#ff6b35 · 8%"));
+      assert.ok(!rowOf(frame, "color.brand.veil").includes("color(srgb"));
     });
 
     it("shows no gallery without a stylesheet", () => {
