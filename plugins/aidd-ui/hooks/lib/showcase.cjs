@@ -133,6 +133,7 @@ nav a[aria-current="page"] { font-weight: 600; color: var(--text); }
 .choose { display: flex; gap: 8px; }
 .verdict[aria-pressed="true"] { background: var(--sel); border-color: var(--sel-line); }
 .outdated, .said, .count { margin: 0; color: var(--muted); }
+textarea.out { width: 100%; min-height: 8rem; font: 12px ui-monospace, monospace; }
 textarea.comment { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
 `;
 
@@ -192,24 +193,23 @@ review.querySelectorAll("article.state").forEach((article) => {
   }));
   field.addEventListener("input", refresh);
 });
-function written(content) {
-  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(content);
-  const area = document.createElement("textarea");
+function shown(content) {
+  const area = review.querySelector("textarea.out") || copy.insertAdjacentElement("afterend", document.createElement("textarea"));
+  area.className = "out";
+  area.readOnly = true;
   area.value = content;
-  document.body.append(area);
+  area.focus();
   area.select();
-  document.execCommand("copy");
-  area.remove();
-  return Promise.resolve();
 }
 copy.addEventListener("click", () => {
   if (blocked()) return;
   const body = { record: review.dataset.record, version: Number(review.dataset.version), verdicts: chosen() };
-  written("\`\`\`json\\n" + JSON.stringify(body, null, 2) + "\\n\`\`\`\\n").then(() => {
+  const content = "\`\`\`json\\n" + JSON.stringify(body, null, 2) + "\\n\`\`\`\\n";
+  Promise.resolve().then(() => navigator.clipboard.writeText(content)).then(() => {
     const label = copy.textContent;
     copy.textContent = copy.dataset.copied;
     setTimeout(() => { copy.textContent = label; }, 1500);
-  });
+  }, () => shown(content));
 });
 refresh();
 `;
