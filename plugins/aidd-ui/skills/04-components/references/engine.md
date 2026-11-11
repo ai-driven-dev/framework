@@ -19,7 +19,7 @@
 | write 5, generate the stylesheet | `node <engine> tokens`, until it exits 0 |
 | write 6, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
 | conclude 1 and 4, validate | `node <engine> validate` |
-| conclude 3, a fix that publishes is the user's | `node <engine> publish <id>` |
+| conclude 5, write the showcase | `node <engine> showcase --lang <code>` |
 
 ## Owed
 

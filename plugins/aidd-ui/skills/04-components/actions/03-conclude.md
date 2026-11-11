@@ -10,19 +10,18 @@ The output of [write](02-write.md).
 
 1. Validate per [engine](../references/engine.md).
 2. Fix each error line under `aidd_docs/ui/` as its `=> fix` says.
-3. Skip a fix that publishes, per [engine](../references/engine.md): validating is the user's.
+3. Skip a fix that publishes: the review publishes.
 4. Validate again per [engine](../references/engine.md), and repeat until only these remain:
    - errors the [engine](../references/engine.md) says are about the code
    - `warning` lines, which are not errors
-5. Reply with:
+5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+6. Reply with:
    - the elements and screens created or raised, with their versions
    - the ones the raise left, for a change
    - what the validation still prints
    - the `code` files listed, still holding old values, for a change
    - that the code is untouched
-   - that each element created or raised is `proposed` until published
-   - that the user publishes each per [engine](../references/engine.md)
-   - that the user does so after looking at its render
+   - that each element created or raised is `proposed` until its review
 
 ## Output
 

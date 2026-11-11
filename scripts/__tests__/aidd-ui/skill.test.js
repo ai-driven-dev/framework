@@ -9,10 +9,10 @@ const { UI, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit
 // not know fails the test: a template cannot grow a slot nothing here fills.
 const PLUGIN = path.resolve(__dirname, "../../../plugins/aidd-ui");
 const SKILLS = path.join(PLUGIN, "skills");
-const FOLDERS = ["01-journeys", "02-brand", "03-foundations", "04-components", "05-screens"];
+const FOLDERS = ["01-journeys", "02-brand", "03-foundations", "04-components", "05-screens", "06-review"];
 const SKILL = (name) => path.join(SKILLS, name);
 const JOURNEYS = SKILL("01-journeys");
-const OWNER = { system: "03-foundations", brand: "02-brand", component: "04-components", asset: "04-components", render: "04-components", screen: "05-screens", "screen-render": "05-screens" };
+const OWNER = { system: "03-foundations", brand: "02-brand", component: "04-components", asset: "04-components", render: "04-components", screen: "05-screens", "screen-render": "05-screens", review: "06-review" };
 
 const PLACEHOLDER = /\{\{([^}]+)\}\}/g;
 const COMMENT = /<!--[\s\S]*?-->\n?/g;
@@ -75,8 +75,19 @@ const FILLS = {
     states: "default, empty",
     breakpoints: "mobile",
     route: "/search",
+    "the route's file, as path#Export@version": "src/ui/SearchPage.tsx#SearchPage@1",
     "Screen name": "Search",
     "what the screen shows, and its main action": "The query field and the results; the main action searches.",
+  },
+  review: {
+    "review id": "first-round",
+    "ids of the records reviewed": "search-flow",
+    "Review name": "First round",
+    "record id": "search-flow",
+    state: "default",
+    version: "1",
+    "ok or revise": "ok",
+    comment: "",
   },
   "screen-render": {
     "BCP 47 language": "en",
@@ -104,6 +115,7 @@ const TEMPLATES = {
   render: "render-template.html",
   screen: "screen-template.md",
   "screen-render": "render-template.html",
+  review: "review-template.md",
 };
 
 const template = (name) => fs.readFileSync(path.join(SKILL(OWNER[name]), "assets", TEMPLATES[name]), "utf8");
@@ -169,6 +181,7 @@ describe("aidd-ui screens skill", () => {
       tree.color.surface = { default: colour("#ffffff") };
       tree.size = { control: { $type: "dimension", $value: { value: 2.75, unit: "rem" } } };
     });
+    put(tmp, "src/ui/SearchPage.tsx", "export const SearchPage = 1;\n");
     put(tmp, `${UI}/themes/dark.json`, JSON.stringify({ color: { brand: { primary: colour("#6699cc") }, surface: { default: colour("#0b1f33") } } }));
     assert.equal(engine("tokens", tmp).status, 0);
   };
@@ -266,10 +279,26 @@ describe("aidd-ui change flow", () => {
   });
 });
 
+describe("aidd-ui review skill", () => {
+  it("validates once filled, with a row for each state, and holds no pending row", () => {
+    const template = filled("review");
+    assert.equal(/\| pending \|/.test(template), false);
+    put(tmp, `${UI}/reviews/first-round.md`, template.replace(/(\| search-flow \| default \| 1 \| ok \| *\|)/, "$1\n| search-flow | empty | 1 | revise | the empty state hides the query |"));
+    assert.equal(engine("bump", "--task", TASK, "--created", "first-round", "--root", tmp).status, 0);
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+  });
+
+  it("leaves a state without a row to R13", () => {
+    put(tmp, `${UI}/reviews/first-round.md`, filled("review"));
+    assert.equal(engine("bump", "--task", TASK, "--created", "first-round", "--root", tmp).status, 0);
+    assert.deepEqual(validate(tmp).out.slice(1), [`${UI}/reviews/first-round.md R13 => add a row for search-flow / empty at version 1 to "## Verdicts"`]);
+  });
+});
+
 describe("aidd-ui skills", () => {
   const texts = (name) => filesUnder(SKILL(name)).map((file) => ({ file: path.relative(SKILL(name), file), text: fs.readFileSync(file, "utf8") }));
 
-  it("are the five the plugin lists and holds", () => {
+  it("are the six the plugin lists and holds", () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(PLUGIN, ".claude-plugin/plugin.json"), "utf8"));
     assert.deepEqual(manifest.skills, FOLDERS.map((name) => `./skills/${name}`));
     assert.deepEqual(fs.readdirSync(SKILLS).sort(), FOLDERS);
@@ -350,15 +379,16 @@ describe("aidd-ui skills", () => {
       }
     }
     assert.deepEqual([...authors.entries()].filter(([, holders]) => holders.length !== 1), []);
-    assert.deepEqual([...authors.keys()].sort(), ["asset", "atom", "brand", "journey", "molecule", "organism", "screen", "system", "wireframe"]);
+    assert.deepEqual([...authors.keys()].sort(), ["asset", "atom", "brand", "journey", "molecule", "organism", "review", "screen", "system", "wireframe"]);
   });
 
-  it("end saying the user validates each element after its render, in the skills that raise elements", () => {
+  it("end saying each element is proposed until its review, and leave publishing to the review skill", () => {
     for (const folder of ["03-foundations", "04-components"]) {
       const conclude = fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8");
-      assert.ok(fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").includes("`node <engine> publish <id>`"), folder);
-      for (const line of ["each element created or raised is `proposed` until published", "the user publishes each per [engine](../references/engine.md)", "the user does so after looking at its render"]) assert.ok(conclude.includes(line), `${folder}: ${line}`);
+      assert.equal(fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").includes("publish"), false, folder);
+      assert.ok(conclude.includes("each element created or raised is `proposed` until its review"), folder);
     }
+    assert.ok(fs.readFileSync(path.join(SKILL("06-review"), "references/engine.md"), "utf8").includes("`node <engine> publish <id>`"));
   });
 });
 
@@ -457,6 +487,7 @@ describe("aidd-ui engine step table", () => {
     [/^node <engine> compare\b/, /compar/i],
     [/^node <engine> keep\b/, /keep/i],
     [/^node <engine> publish\b/, /publishes/],
+    [/^node <engine> showcase\b/, /showcase/],
     [/^node <engine> bump .*--created/, /record/i],
     [/^node <engine> bump .*--(change|removed)/, /raise/],
   ];

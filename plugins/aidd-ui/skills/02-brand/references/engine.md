@@ -14,6 +14,7 @@
 | propose 4, compare the set | `node <engine> compare brand` |
 | choose 4, keep the chosen variant | `node <engine> keep brand <variant>` |
 | conclude 1 and 3, validate | `node <engine> validate` |
+| conclude 5, write the showcase | `node <engine> showcase --lang <code>` |
 
 ## Owed
 

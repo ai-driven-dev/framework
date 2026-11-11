@@ -40,6 +40,7 @@ flowchart LR
 1. Install the plugin; its hook needs `node` on `PATH`.
 2. Run `/aidd-ui:01-journeys` in your project to map a persona's journeys and the wireframe of each screen they cross.
 3. Run `/aidd-ui:02-brand`, then `/aidd-ui:03-foundations`, then `/aidd-ui:04-components`, then `/aidd-ui:05-screens`: the brand proposes directions and compares them, the screens propose variants of each wireframe and compare them, and each skill writes its records under `aidd_docs/ui/`; foundations stops without a brand, components without a system, screens on a component a wireframe expects and the system lacks.
+4. Run `/aidd-ui:06-review`: the showcase shows each record with its states, you mark each one OK or Revise and paste the copy back, and the review publishes what is all OK.
 
 ## Limits
 
@@ -47,7 +48,7 @@ flowchart LR
 - A comparison page is a file to open, with no server. Its feedback is copied and pasted in the chat, in any browser.
 - The hook command names `${CLAUDE_PLUGIN_ROOT}` unquoted, and the OpenCode and Kilo bridges replay only that form: a plugin path with spaces breaks it.
 - Cursor: the stop is proven on a payload, not in `-p`.
-- A journey step may name an existing screen without a wireframe, and a screen without a `wireframe` key only warns. A wireframe stays `proposed`, `publish` taking elements alone, until screens come with their review.
+- A journey step may name an existing screen without a wireframe, and a screen without a `wireframe` key only warns. A wireframe or screen stays `proposed` until its review. A coded screen also needs a capture of the real app per state.
 - The hook never holds the turn on an error the turn did not produce. After a write it reports the lines the write added or changed, then the errors new in other files, once per turn, to inform. Stop asks once for the errors on the lines the turn changed, never one with no line (a missing section, a token): `validate` holds those.
 - New means absent from the errors the project held at the session's start or the last turn's end. An error made by hand between two turns counts as new for the next one, to inform only. A code file joins the baseline at the end of the first turn that writes it: until then the hook never reads its text, so an error made by hand in it is not reported, and a whole-file write to it that does not say what it replaced holds nothing. Without that baseline (a session started before the plugin), nothing of another file is reported, and a whole-file write proves its lines only when the host says what it replaced, as Claude Code does.
 - Every problem prints as `<file>[:<line>] <rule> ["<excerpt>"] => <fix>` under a line counting errors and warnings; the hook never cuts the errors, and caps the warnings at ten.

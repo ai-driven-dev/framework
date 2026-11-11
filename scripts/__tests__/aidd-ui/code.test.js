@@ -52,6 +52,14 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), [`${SEARCH}: code file "src/ui/Missing.tsx" does not exist`]);
     });
 
+    it("reads a route path that holds parentheses, brackets and a dollar sign", () => {
+      const file = "src/ui/(app)/agon/[duelId]/$terms.tsx";
+      assert.deepEqual(code.parseLink(`${file}#Terms@1`), { platform: null, target: file, name: "Terms", version: "1", library: null });
+      put(tmp, file, "export const SearchField = 1;\n");
+      linkSearch(`${file}#SearchField@1`);
+      assert.deepEqual(problems(), []);
+    });
+
     it("reads code-roots and ignore written with a leading ./", () => {
       edit(tmp, SYSTEM, "code-roots: [src/ui]", "code-roots: [./src/ui]");
       edit(tmp, SYSTEM, "ignore: [src/ui/vendor]", "ignore: [./src/ui/vendor]");

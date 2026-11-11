@@ -14,6 +14,7 @@
 | write 3, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" <id>…` |
 | write 4, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
 | conclude 1 and 3, validate | `node <engine> validate` |
+| conclude 6, write the showcase | `node <engine> showcase --lang <code>` |
 
 ## Owed
 

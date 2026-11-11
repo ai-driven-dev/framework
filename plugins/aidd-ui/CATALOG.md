@@ -14,6 +14,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/03-foundations`](#skills03-foundations)
   - [`skills/04-components`](#skills04-components)
   - [`skills/05-screens`](#skills05-screens)
+  - [`skills/06-review`](#skills06-review)
 
 ---
 
@@ -106,4 +107,19 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [screens.md](skills/05-screens/references/screens.md) | - |
 | `references` | [variants.md](skills/05-screens/references/variants.md) | - |
 | `-` | [SKILL.md](skills/05-screens/SKILL.md) | `Write a project's screens, one for each wireframe, by comparing variants of each. Use when the user wants to dress a wireframe as a screen. Not for the brand, tokens, components, or journeys.` |
+
+#### `skills/06-review`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-prepare.md](skills/06-review/actions/01-prepare.md) | - |
+| `actions` | [02-propose.md](skills/06-review/actions/02-propose.md) | - |
+| `actions` | [03-choose.md](skills/06-review/actions/03-choose.md) | - |
+| `actions` | [04-write.md](skills/06-review/actions/04-write.md) | - |
+| `actions` | [05-conclude.md](skills/06-review/actions/05-conclude.md) | - |
+| `assets` | [review-template.md](skills/06-review/assets/review-template.md) | - |
+| `references` | [cases.md](skills/06-review/references/cases.md) | - |
+| `references` | [engine.md](skills/06-review/references/engine.md) | - |
+| `references` | [review.md](skills/06-review/references/review.md) | - |
+| `-` | [SKILL.md](skills/06-review/SKILL.md) | `Review a project's wireframes, screens, and components in the showcase, then publish the ones every state of which is OK. Use when the user wants to review, approve, or publish them. Not for writing or changing them.` |
 

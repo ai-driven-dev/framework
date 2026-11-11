@@ -9,6 +9,7 @@ tokens: [{{semantic tokens}}]
 states: [{{states}}]
 breakpoints: [{{breakpoints}}]
 route: {{route}}
+code: {{the route's file, as path#Export@version}}
 ---
 
 # {{Screen name}}
@@ -17,4 +18,5 @@ route: {{route}}
 
 <!--
 - Replace every `{{...}}` and delete every comment.
+- Delete the `code` line when the app lacks the screen.
 -->

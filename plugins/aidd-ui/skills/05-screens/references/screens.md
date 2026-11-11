@@ -10,6 +10,8 @@
 | `tokens` | the semantic tokens its render uses, never a primitive |
 | `breakpoints` | each one `system.md` declares that the screen adapts to |
 | `route` | the path it answers |
+| `code` | the route's file, linked at the screen's version |
+| no file found | ask the user to name it, else leave `code` out |
 | render | one `<section data-state>` per state, each holding the wireframe's zones |
 | render style | `var()` of tokens only. No colour literal. No length literal but a hairline |
 | colour | state `color` and `background` together in one rule, each a token |
