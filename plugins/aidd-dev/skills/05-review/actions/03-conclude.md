@@ -4,7 +4,7 @@ Judge the round and keep it.
 
 ## Input
 
-The findings, the limits, the criteria, and the task folder if any.
+The diff, the axes, the findings, the assumptions, the limits, the criteria, and the task folder if any.
 
 ## Process
 

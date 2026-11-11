@@ -11,8 +11,10 @@ A free-form request to add a hook.
 1. Read every file in `references/` and `assets/` before asking or writing anything.
 2. Detect the installed tools.
 3. Check each against [hook-support.md](../references/hook-support.md), and confirm which to target.
+   - A tool without hooks: skip it with the reason, and give the user its note from `hook-support.md`.
 4. Pick the narrowest lifecycle moment that fits per [hook-authoring.md](../references/hook-authoring.md).
 5. Check each target tool exposes the moment in [hook-moments.md](../references/hook-moments.md).
+   - A tool without the moment: skip it with the reason.
 6. Decide what the backing script does at the moment, and whether it blocks, per [hook-handlers.md](../references/hook-handlers.md).
 7. Set a matcher only when the moment must be filtered, per `hook-authoring.md`.
 8. Choose the write mode: a host project or a plugin source.
@@ -27,8 +29,10 @@ In-context decisions, nothing written yet:
 
 - the lifecycle moment the hook targets
 - the backing script the hook runs
+- whether the script blocks
 - the matcher, or none for every occurrence
 - the scope to install into: the plugin scope for a plugin source
+- the plugin name for a plugin source, or the skill or agent file for a component scope
 - the confirmed tools, and any skipped with a reason
 - the write mode: a host project, or a plugin source
 

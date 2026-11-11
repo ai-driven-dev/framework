@@ -19,4 +19,4 @@ The work, and its plan, criteria, ticket, task folder or evidence if any.
 
 ## Output
 
-The diff, the need and the axes.
+The diff, the need, the axes, and the plan, criteria, task folder or evidence if any.

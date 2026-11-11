@@ -2,8 +2,6 @@
 
 Where the script goes, and which path forms a handler command may use.
 
-The entry goes in the file the scope names in `hook-scopes`, in both write modes.
-
 | Write mode | Script goes in |
 | --- | --- |
 | Host project | a `hooks/` dir beside the config by default, or another dir the user names |
