@@ -108,16 +108,6 @@ describe("aidd-ui publish", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
-    it("writes the fingerprint H8 reads into a history table written before the Fingerprint column", () => {
-      reviewed(tmp, "icon-search", "button", "search-field", "dialog", "home");
-      captured(tmp, "home", HOME_STATES);
-      fs.writeFileSync(path.join(tmp, HISTORY), read(HISTORY).split("\n").map((line) => line.replace(/ \| [^|]*\|$/, " |")).join("\n"));
-      assert.equal(validate(tmp).code, 1);
-      assert.equal(publish("icon-search", "button", "search-field", "dialog", "home").code, 0);
-      assert.ok(read(HISTORY).includes("| Id | Version | Change | Breaking | Task | Fingerprint |\n| --- | --- | --- | --- | --- | --- |\n"));
-      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
-    });
-
     it("validates an asset with no state given one ok verdict", () => {
       unsealed();
       reviewed(tmp, "icon-search");

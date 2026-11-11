@@ -220,7 +220,7 @@ const literalsOf = (project, pattern, extensions = null) =>
     .filter((file) => !isTest(file))
     .flatMap((file) => findLiterals(searchable(project, file), pattern).map((found) => ({ file, ...found })));
 
-const literalProblems = (pattern, extensions = null, applies = () => true) => (project) =>
+const literalProblems = (pattern, extensions, applies) => (project) =>
   applies(project) ? literalsOf(project, pattern, extensions).map(({ literal, ...found }) => found) : [];
 
 /** Each colour literal of the code outside its tests, written or as numbers, with its file. */

@@ -52,14 +52,6 @@ function rowOf(...cells) {
   return `${ROW_START}${cells.map((cell) => (cell === "" ? " " : ` ${cell} `)).join(ROW_START)}${ROW_START}`;
 }
 
-/** history.md's lines, with the Fingerprint column added to a table written before it: a row
- * written to it with six cells would lose the sixth. */
-function withFingerprintColumn(edit) {
-  const at = edit.lines.findIndex((line) => line.trim().startsWith(ROW_START));
-  if (at >= 0 && cells(edit.lines[at]).length === COLUMNS.length - 1) [edit.lines[at], edit.lines[at + 1]] = headerOf(COLUMNS).map((line) => `${line}${edit.end}`);
-  return edit;
-}
-
 /** The lines of the files being changed, each with the line end it was written with, and what
  * writing them takes. */
 function editing(root) {
@@ -121,7 +113,7 @@ function remove(root, folder, ids) {
 }
 
 /** history.md as `files` edits it, written from its header when absent. */
-const historyIn = (files) => withFingerprintColumn(files.editOf(HISTORY_FILE, HISTORY_HEADER));
+const historyIn = (files) => files.editOf(HISTORY_FILE, HISTORY_HEADER);
 
 /** Raises the versions `refs` reach, as `change` of `task`, with `created` writes the first row
  * of the records `refs` name, with `removed` their removal. Returns the files changed and, for a change, `left`, the elements

@@ -3,7 +3,7 @@
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
 const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm } = require("./model.cjs");
+const { placed, fm, COMPONENT_KINDS } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
@@ -15,7 +15,7 @@ const VERDICTS_SECTION = "Verdicts";
 const REVIEW_KIND = "review";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
 const SYSTEM_KINDS = ["brand", "system"];
-const LEVELS = ["asset", "atom", "molecule", "organism"];
+const LEVELS = ["asset", ...COMPONENT_KINDS];
 const GROUPS = ["system", "components", "journeys", "templates", "pages"];
 
 /** The words of the page chrome, one table per language: the same keys in each. */
@@ -93,7 +93,7 @@ const languageOf = (code) => (Object.hasOwn(LABELS, code) ? code : DEFAULT_LANGU
 
 const filled = (label, values) => label.replace(/\{(\w+)\}/g, (_, key) => values[key]);
 const byCode = (a, b) => (a < b ? -1 : a > b ? 1 : 0); // the same order on every machine
-const byId = (a, b) => byCode(fm(a).id, fm(b).id);
+const byRecordId = (a, b) => byCode(fm(a).id, fm(b).id);
 
 const LAYOUT = `
 body { display: block; height: auto; }
@@ -234,7 +234,7 @@ function verdictOf(rows, record, state) {
 }
 
 /** Whether the record has a render to show state by state. */
-const isReviewed = (project, record) => list(fm(record).states).length > 0 && project.renders.includes(renderOf(record)) && text(project, renderOf(record)) !== null;
+const hasRender = (project, record) => list(fm(record).states).length > 0 && project.renders.includes(renderOf(record)) && text(project, renderOf(record)) !== null;
 
 /** Whether a screen's code is at its version: its states then each need a capture. */
 const isCoded = (record) => fm(record).kind === "screen" && list(fm(record).code).some((link) => parseLink(link)?.version === fm(record).version);
@@ -257,10 +257,10 @@ function navigationOf(records, labels, current) {
   const sections = GROUPS.flatMap((group) => {
     const own = records.filter((record) => groupOf(record) === group);
     if (!own.length) return [];
-    if (group !== "components") return [`<section data-group="${group}"><h2>${labels[group]}</h2><ul>${own.sort(byId).map(item).join("")}</ul></section>`];
+    if (group !== "components") return [`<section data-group="${group}"><h2>${labels[group]}</h2><ul>${own.sort(byRecordId).map(item).join("")}</ul></section>`];
     const levels = LEVELS.flatMap((level) => {
-      const inLevel = own.filter((record) => (fm(record).kind === "asset" ? "asset" : fm(record).kind) === level);
-      return inLevel.length ? [`<h3>${labels[level]}</h3><ul data-level="${level}">${inLevel.sort(byId).map(item).join("")}</ul>`] : [];
+      const inLevel = own.filter((record) => fm(record).kind === level);
+      return inLevel.length ? [`<h3>${labels[level]}</h3><ul data-level="${level}">${inLevel.sort(byRecordId).map(item).join("")}</ul>`] : [];
     });
     return [`<section data-group="${group}"><h2>${labels[group]}</h2>${levels.join("")}</section>`];
   });
@@ -295,7 +295,7 @@ function checksOf(problems, record, labels) {
 function stateDocument(render, tokens, state) {
   const hide = `<style>[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }</style>`;
   const doc = render.replaceAll(STYLESHEET_LINK, () => (tokens === null ? "" : `<style>\n${tokens}</style>`));
-  return /<\/head>/i.test(doc) ? doc.replace(/<\/head>/i, () => `${hide}</head>`) : `${doc}${hide}`;
+  return doc.replace(/<\/head>/i, () => `${hide}</head>`);
 }
 
 const optionsOf = (values, second) => values.map((value, at) => `<option value="${escaped(value)}"${second && at === 1 ? " selected" : ""}>${escaped(value)}</option>`).join("");
@@ -363,7 +363,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
     const id = fm(record).id;
     const uses = [...new Set(cited(record))].filter((each) => each !== id && ids.has(each)).sort(byCode);
     const usedBy = records.filter((other) => fm(other).id !== id && cited(other).includes(id)).map((other) => fm(other).id).sort(byCode);
-    const reviewed = isReviewed(project, record);
+    const reviewed = hasRender(project, record);
     const body = [
       `<h1>${escaped(id)}</h1>`,
       `<div class="chips">${chipsOf(record)}</div>`,
