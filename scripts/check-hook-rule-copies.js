@@ -75,7 +75,7 @@ function scriptsUnder(dir) {
 
 /** Whether a script under the plugin's hooks folder requires the library, from `hooks/` or `hooks/lib/`. */
 function requiresLibrary(pluginDir, library) {
-  const name = path.basename(library).replace(/\./gu, "\\.");
+  const name = path.basename(library).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   const pattern = new RegExp(`require\\(\\s*["']\\./(?:lib/)?${name}["']\\s*\\)`, "u");
   return scriptsUnder(path.join(pluginDir, "hooks")).some((script) => pattern.test(fs.readFileSync(script, "utf8")));
 }
