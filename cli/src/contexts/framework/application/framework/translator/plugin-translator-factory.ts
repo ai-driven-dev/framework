@@ -26,7 +26,7 @@ export function resolveTranslator(
   plugins: PluginsCapability,
   deps: TranslatorDeps
 ): PluginTranslator | null {
-  if (plugins.installScope === "user" || plugins.translationMode === "flat") {
+  if (plugins.requiresUserScope() || plugins.buildMode() === "flat") {
     return new BuiltTreeMaterializationTranslator(
       deps.fs,
       deps.hasher,
@@ -35,7 +35,7 @@ export function resolveTranslator(
       deps.marketplaceRegistry
     );
   }
-  if (plugins.translationMode === "marketplace") {
+  if (plugins.translatesAsMarketplace()) {
     return new ModeAMarketplaceTranslator();
   }
   return null;

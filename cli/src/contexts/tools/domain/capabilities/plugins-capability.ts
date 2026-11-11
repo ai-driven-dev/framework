@@ -333,6 +333,11 @@ export class PluginsCapability {
     return this.mode === "flat" ? "flat" : "marketplace";
   }
 
+  /** Whether the tool declares a marketplace dist as its translation, as a neutral native does not. */
+  translatesAsMarketplace(): boolean {
+    return this.translationMode === "marketplace";
+  }
+
   isNative(): boolean {
     return this.mode === "native";
   }

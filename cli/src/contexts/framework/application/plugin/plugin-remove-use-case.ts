@@ -55,7 +55,7 @@ import {
 import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
 import { deletePluginFilesForTool, loadPluginManifest } from "./plugin-helpers.js";
 import {
-  isFrameworkPrimeFlatMcp,
+  frameworkPrimeFlatMcpOf,
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
 } from "./plugin-target-resolution.js";
@@ -148,7 +148,7 @@ export class PluginRemoveUseCase {
     projectRoot: string,
     registrations: NativeRegistrations | undefined
   ): Promise<void> {
-    const activation = resolvePluginsCapability(toolId)?.nativeActivation;
+    const activation = resolvePluginsCapability(toolId)?.activation();
     if (activation == null || plugin.marketplace === undefined) return;
     const activator = this.activators.get(activation.binary);
     if (activator === undefined || !activator.isAvailable()) return;
@@ -375,7 +375,7 @@ export class PluginRemoveUseCase {
     projectRoot: string,
     registrations: NativeRegistrations | undefined
   ): Promise<boolean | undefined> {
-    const nativeActivation = resolvePluginsCapability(toolId)?.nativeActivation;
+    const nativeActivation = resolvePluginsCapability(toolId)?.activation();
     if (nativeActivation == null || plugin.marketplace === undefined) return undefined;
     const activator = this.activators.get(nativeActivation.binary);
     if (activator === undefined) return undefined;
@@ -574,11 +574,8 @@ export class PluginRemoveUseCase {
     projectRoot: string
   ): Promise<void> {
     if (plugin.mcpEntries.size === 0) return;
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return;
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    if (!isFrameworkPrimeFlatMcp(caps)) return;
-    const mcpCap = caps.mcp as McpCapability;
+    const mcpCap = frameworkPrimeFlatMcpOf(toolId);
+    if (mcpCap === null) return;
     const outputRelPath = await resolveMcpOutputPath(this.fs, mcpCap, projectRoot);
     const outputPath = join(projectRoot, outputRelPath);
     const existing = await this.readExistingJson(outputPath);

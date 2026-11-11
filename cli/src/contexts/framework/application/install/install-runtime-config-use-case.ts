@@ -8,11 +8,15 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import { buildOpencodeFlatConfig } from "../../../tools/domain/formats/opencode-mcp-merge.js";
 import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
+import {
+  getToolConfig,
+  isAiTool,
+  mcpCapabilityOf,
+  settingsCapabilitiesOf,
+} from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
@@ -103,9 +107,9 @@ export class InstallRuntimeConfigUseCase {
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       if (await this.isUserOwned(resolvedPath, options)) continue;
-      const mcp = (toolConfig.capabilities as Record<string, unknown>).mcp;
+      const mcp = mcpCapabilityOf(options.toolId);
       if (
-        mcp instanceof McpCapability &&
+        mcp !== null &&
         mcp.params.outputPath === fileName &&
         mcp.params.format === "json" &&
         mcp.params.mergeStrategy === "framework-prime"
@@ -133,9 +137,8 @@ export class InstallRuntimeConfigUseCase {
     outputPath: string,
     options: InstallRuntimeConfigOptions
   ): Promise<string> {
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    const mcp = caps.mcp;
-    if (!(mcp instanceof McpCapability) || mcp.params.outputPath !== fileName) return outputPath;
+    const mcp = mcpCapabilityOf(toolConfig.toolId);
+    if (mcp === null || mcp.params.outputPath !== fileName) return outputPath;
     return resolveMcpOutputPath(this.fs, mcp, options.projectRoot);
   }
 
@@ -152,13 +155,8 @@ export class InstallRuntimeConfigUseCase {
   }
 
   private buildStaticSettingsFiles(options: InstallRuntimeConfigOptions): InstallationFile[] {
-    const toolConfig = getToolConfig(options.toolId);
-    if (!isAiTool(toolConfig)) return [];
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    const raw = caps.settings;
-    const capabilities = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
     const result: InstallationFile[] = [];
-    for (const cap of capabilities) {
+    for (const cap of settingsCapabilitiesOf(options.toolId)) {
       const file = this.buildStaticSettingsFile(cap, options);
       if (file !== null) result.push(file);
     }

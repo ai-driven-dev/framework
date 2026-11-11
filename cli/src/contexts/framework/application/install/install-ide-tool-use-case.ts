@@ -6,9 +6,9 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, IdeToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
+import type { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
+import { settingsCapabilitiesOf } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
@@ -57,14 +57,8 @@ export class InstallIdeToolUseCase {
     projectRoot: string,
     manifest: Manifest
   ): Promise<void> {
-    const toolConfig = getToolConfig(aiId);
-    if (!isAiTool(toolConfig)) return;
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    const raw = caps.settings;
-    const capabilities = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
-    const toMerge = capabilities.filter(
-      (c): c is SettingsCapability =>
-        c instanceof SettingsCapability &&
+    const toMerge = settingsCapabilitiesOf(aiId).filter(
+      (c) =>
         (c.staticContent !== undefined || c.staticContentAssetFile !== undefined) &&
         c.requiresTool === ideId
     );

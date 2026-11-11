@@ -86,17 +86,7 @@ const CAPABILITY_BASELINE: readonly {
   {
     file: "src/contexts/tools/domain/capabilities/plugins-capability.ts",
     className: "PluginsCapability",
-    methods: [
-      "deliversHooksToProject",
-      "flatLayout",
-      "hooksAcceptance",
-      "isNative",
-      "manifestPath",
-      "projectPluginsDir",
-      "requiresUserScope",
-      "rootToken",
-      "trustNotice",
-    ],
+    methods: ["hooksAcceptance", "manifestPath", "projectPluginsDir", "rootToken", "trustNotice"],
     reason:
       "answer methods beside the fields until callers migrate; read only by the characterization test",
   },

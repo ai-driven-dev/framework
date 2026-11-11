@@ -225,7 +225,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     if (scope === "project") {
       for (const toolId of toolIds) {
         if (
-          resolvePluginsCapability(toolId)?.marketplaceSettings
+          resolvePluginsCapability(toolId)?.marketplaceRegistration()
             ?.declarativePluginActivationRequiresNativeProof === true
         )
           continue;
@@ -244,7 +244,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     let declarativeChanged = false;
     if (scope === "project") {
       for (const [toolId, outcome] of activation.outcomes) {
-        const settings = resolvePluginsCapability(toolId)?.marketplaceSettings;
+        const settings = resolvePluginsCapability(toolId)?.marketplaceRegistration();
         if (settings?.declarativePluginActivationRequiresNativeProof !== true) continue;
         const hostNames = new Set(outcome.marketplaces.map((entry) => entry.hostName));
         const provenRefs = outcome.pluginRefs.filter((ref) =>
@@ -526,7 +526,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   }
 
   private marketplaceSettingsOf(toolId: ToolId): MarketplaceSettings | undefined {
-    return resolvePluginsCapability(toolId)?.marketplaceSettings ?? undefined;
+    return resolvePluginsCapability(toolId)?.marketplaceRegistration() ?? undefined;
   }
 
   private nativeActivationBinary(toolId: ToolId): string | undefined {
@@ -1243,7 +1243,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     manifest: Manifest,
     marketplaces: readonly Marketplace[]
   ): Promise<boolean> {
-    const marketplaceSettings = resolvePluginsCapability(toolId)?.marketplaceSettings;
+    const marketplaceSettings = resolvePluginsCapability(toolId)?.marketplaceRegistration();
     if (marketplaceSettings == null) return false;
     return this.syncToolSettings(toolId, projectRoot, manifest, marketplaces, marketplaceSettings);
   }

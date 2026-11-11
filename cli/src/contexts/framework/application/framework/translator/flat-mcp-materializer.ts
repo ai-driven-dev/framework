@@ -4,16 +4,14 @@ import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
 import { resolveMcpOutputPath } from "../../../../tools/application/resolve-mcp-output-path.js";
-import type { McpCapability } from "../../../../tools/domain/capabilities/mcp-capability.js";
 import { mergeOpencodeMcp } from "../../../../tools/domain/formats/opencode-mcp-merge.js";
-import { getToolConfig, isAiTool } from "../../../../tools/domain/registry.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type {
   PluginTranslationSkip,
   ReadonlySkipList,
 } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { isFrameworkPrimeFlatMcp } from "../../plugin/plugin-target-resolution.js";
+import { frameworkPrimeFlatMcpOf } from "../../plugin/plugin-target-resolution.js";
 
 export async function refreshTrackedMcpConfigHash(
   fs: FileReader,
@@ -41,16 +39,10 @@ export async function materializeFlatMcp(
   mcpSkips: ReadonlySkipList;
   outputRelPath?: string;
 }> {
-  const toolConfig = getToolConfig(toolId);
-  if (!isAiTool(toolConfig) || dist.components.mcp.length === 0) {
+  const mcpCap = dist.components.mcp.length === 0 ? null : frameworkPrimeFlatMcpOf(toolId);
+  if (mcpCap === null) {
     return { mcpEntries: new Map(), mcpSkips: [], outputRelPath: undefined };
   }
-  const caps = toolConfig.capabilities as Record<string, unknown>;
-  if (!isFrameworkPrimeFlatMcp(caps)) {
-    return { mcpEntries: new Map(), mcpSkips: [], outputRelPath: undefined };
-  }
-
-  const mcpCap = caps.mcp as McpCapability;
   const outputRelPath = await resolveMcpOutputPath(fs, mcpCap, projectRoot);
   const outputPath = join(projectRoot, outputRelPath);
   const existingContent = await readExistingJson(fs, outputPath);

@@ -5,6 +5,7 @@ import {
   isInstallScope,
   parseInstallScope,
 } from "../../../../src/contexts/framework/domain/install-scope.js";
+import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { getToolConfig, registerTool } from "../../../../src/contexts/tools/domain/registry.js";
 import { InvalidPluginScopeError } from "../../../../src/kernel/errors.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
@@ -69,7 +70,17 @@ describe("install-scope value object", () => {
       });
 
       it("answers project when the capability names no install scope", () => {
-        registerTool(stubAiTool("opencode", { plugins: {} }));
+        registerTool(
+          stubAiTool("opencode", {
+            plugins: new PluginsCapability({
+              mode: "native",
+              pluginRootToken: "$X_PLUGIN_ROOT",
+              acceptsHooks: true,
+              pluginsDir: ".x/plugins/",
+              pluginManifestRelativePath: "plugin.json",
+            }),
+          })
+        );
 
         expect(getToolSupportedScope("opencode")).toBe("project");
       });

@@ -88,7 +88,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     // The built tree still carries a plugin's hooks for a capability declaring `hooksDestination:
     // "project"`: dropped from the plugin's files, recorded once, by the project-hooks side channel
     // the local-source route uses, so both land where the tool's own declaration says.
-    const deliversHooksToProject = resolvePluginsCapability(toolId)?.hooksDestination === "project";
+    const deliversHooksToProject =
+      resolvePluginsCapability(toolId)?.deliversHooksToProject() === true;
     const builtFiles =
       mode === "flat"
         ? await this.readFlatFiles(builtDir, dist, toolId, deliversHooksToProject)
@@ -189,7 +190,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     // `skills/` nests the whole plugin under one exactly-named segment; every other flat section
     // hyphen-prefixes the leaf segment.
     if (segments[1] === "skills") {
-      return resolvePluginsCapability(toolId)?.flatSkillLayout === "single-level"
+      return resolvePluginsCapability(toolId)?.flatLayout().skillLayout === "single-level"
         ? segments[2].startsWith(`${name}-`)
         : segments[2] === name;
     }
@@ -197,23 +198,20 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   }
 
   private flatHookOutputPaths(dist: PluginDistribution, toolId: AiToolId): ReadonlySet<string> {
-    const plugins = resolvePluginsCapability(toolId);
-    const flatHooksDir = plugins?.flatHooksDir;
-    if (plugins === null || flatHooksDir === null || flatHooksDir === undefined) return new Set();
+    const layout = resolvePluginsCapability(toolId)?.flatLayout();
+    const flatHooksDir = layout?.hooksDir;
+    if (layout === undefined || flatHooksDir === null || flatHooksDir === undefined) {
+      return new Set();
+    }
     const name = dist.manifest.name;
     const paths = new Set(
       dist.components.hooks
         .filter((f) => f.relativePath !== "hooks/hooks.json")
         .map((f) =>
-          flatHooksPathWithLoaderEntry(
-            flatHooksDir,
-            plugins.flatHooksLoaderEntry,
-            name,
-            f.relativePath
-          )
+          flatHooksPathWithLoaderEntry(flatHooksDir, layout.hooksLoaderEntry, name, f.relativePath)
         )
     );
-    const bridge = plugins.flatHooksBridge;
+    const bridge = layout.hooksBridge;
     const hooksJson = dist.components.hooks.find((f) => f.relativePath === "hooks/hooks.json");
     const hasOwnBridge =
       bridge !== null &&

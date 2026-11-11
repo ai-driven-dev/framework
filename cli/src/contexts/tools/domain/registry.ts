@@ -13,12 +13,14 @@ import {
   type ToolId,
 } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
+import { McpCapability } from "./capabilities/mcp-capability.js";
 import type {
   GlobalFiles,
   HookScript,
   PluginsCapability,
   ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
+import { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
@@ -164,6 +166,21 @@ export class ToolCatalog {
     return { ...delivery, toolName: config.displayName };
   }
 
+  mcpCapabilityOf(toolId: ToolId): McpCapability | null {
+    const config = this.getToolConfig(toolId);
+    if (!isAiTool(config)) return null;
+    const mcp = (config.capabilities as Record<string, unknown>).mcp;
+    return mcp instanceof McpCapability ? mcp : null;
+  }
+
+  settingsCapabilitiesOf(toolId: ToolId): readonly SettingsCapability[] {
+    const config = this.getToolConfig(toolId);
+    if (!isAiTool(config)) return [];
+    const raw = (config.capabilities as Record<string, unknown>).settings;
+    const declared = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
+    return declared.filter((c): c is SettingsCapability => c instanceof SettingsCapability);
+  }
+
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
     const toolConfig = this.getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return null;
@@ -303,6 +320,16 @@ export function projectHooksDeliveryOf(toolId: ToolId): {
   hookScript: HookScript;
 } | null {
   return catalog.projectHooksDeliveryOf(toolId);
+}
+
+/** The tool's MCP capability, or `null` when it declares none or is not an AI tool. */
+export function mcpCapabilityOf(toolId: ToolId): McpCapability | null {
+  return catalog.mcpCapabilityOf(toolId);
+}
+
+/** The settings capabilities a tool declares, whether one or several; empty for none. */
+export function settingsCapabilitiesOf(toolId: ToolId): readonly SettingsCapability[] {
+  return catalog.settingsCapabilitiesOf(toolId);
 }
 
 /** A tool's plugin capability, or `null` when it declares none. Here rather than beside one of
