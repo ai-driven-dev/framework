@@ -13,6 +13,9 @@ import {
   type ToolId,
 } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
+import type { AgentsCapability } from "./capabilities/agents-capability.js";
+import type { CommandsCapability } from "./capabilities/commands-capability.js";
+import type { HooksCapability } from "./capabilities/hooks-capability.js";
 import { McpCapability } from "./capabilities/mcp-capability.js";
 import type {
   GlobalFiles,
@@ -20,7 +23,9 @@ import type {
   PluginsCapability,
   ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
+import type { RulesCapability } from "./capabilities/rules-capability.js";
 import { SettingsCapability } from "./capabilities/settings-capability.js";
+import type { SkillsCapability } from "./capabilities/skills-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
@@ -31,6 +36,45 @@ import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
 export type FrameworkBuildMode = "marketplace" | "flat";
 
 export type ToolConfig = AiTool<unknown> | IdeToolConfig;
+
+/** What a tool can declare, by the key it declares it under. */
+interface CapabilitySections {
+  agents: AgentsCapability;
+  skills: SkillsCapability;
+  commands: CommandsCapability;
+  rules: RulesCapability;
+  mcp: McpCapability;
+  hooks: HooksCapability;
+  plugins: PluginsCapability;
+  settings: SettingsCapability | SettingsCapability[];
+}
+
+type CapabilitySectionKey = keyof CapabilitySections;
+
+const CAPABILITY_SECTION_KEYS: readonly string[] = [
+  "agents",
+  "skills",
+  "commands",
+  "rules",
+  "mcp",
+  "hooks",
+  "plugins",
+  "settings",
+] satisfies CapabilitySectionKey[];
+
+export function isCapabilitySectionKey(name: string): name is CapabilitySectionKey {
+  return CAPABILITY_SECTION_KEYS.includes(name);
+}
+
+/** The section a tool declares under `key`, or `null` when it declares none. */
+export function sectionOf<K extends CapabilitySectionKey>(
+  tool: AiTool<unknown>,
+  key: K
+): CapabilitySections[K] | null {
+  const declared = tool.capabilities;
+  if (typeof declared !== "object" || declared === null) return null;
+  return (declared as Partial<CapabilitySections>)[key] ?? null;
+}
 
 export function isAiTool(config: ToolConfig): config is AiTool<unknown> {
   return config.kind === "ai";
@@ -169,24 +213,22 @@ export class ToolCatalog {
   mcpCapabilityOf(toolId: ToolId): McpCapability | null {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return null;
-    const mcp = (config.capabilities as Record<string, unknown>).mcp;
+    const mcp = sectionOf(config, "mcp");
     return mcp instanceof McpCapability ? mcp : null;
   }
 
   settingsCapabilitiesOf(toolId: ToolId): readonly SettingsCapability[] {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return [];
-    const raw = (config.capabilities as Record<string, unknown>).settings;
-    const declared = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
+    const raw = sectionOf(config, "settings");
+    const declared = Array.isArray(raw) ? raw : raw !== null ? [raw] : [];
     return declared.filter((c): c is SettingsCapability => c instanceof SettingsCapability);
   }
 
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
     const toolConfig = this.getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return null;
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    if (!("plugins" in caps)) return null;
-    return caps.plugins as PluginsCapability;
+    return sectionOf(toolConfig, "plugins");
   }
 }
 

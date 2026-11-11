@@ -1,7 +1,7 @@
 import { HooksCapability } from "../../tools/domain/capabilities/hooks-capability.js";
 import { McpCapability } from "../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../tools/domain/capabilities/settings-capability.js";
-import type { ToolConfig } from "../../tools/domain/registry.js";
+import { sectionOf, type ToolConfig } from "../../tools/domain/registry.js";
 
 export type ConfigCapability = McpCapability | HooksCapability | SettingsCapability;
 
@@ -15,13 +15,13 @@ export function extractConfigCapabilities(config: ToolConfig): ConfigCapability[
   }
 
   if (config.kind === "ai") {
-    const aiCaps = config.capabilities as Record<string, unknown>;
-    if (typeof aiCaps === "object" && aiCaps !== null) {
-      if (aiCaps.mcp instanceof McpCapability) result.push(aiCaps.mcp);
-      if (aiCaps.hooks instanceof HooksCapability) result.push(aiCaps.hooks);
-      if (aiCaps.settings instanceof SettingsCapability) result.push(aiCaps.settings);
-      if (Array.isArray(aiCaps.settings)) result.push(...(aiCaps.settings as SettingsCapability[]));
-    }
+    const mcp = sectionOf(config, "mcp");
+    if (mcp instanceof McpCapability) result.push(mcp);
+    const hooks = sectionOf(config, "hooks");
+    if (hooks instanceof HooksCapability) result.push(hooks);
+    const settings = sectionOf(config, "settings");
+    if (settings instanceof SettingsCapability) result.push(settings);
+    if (Array.isArray(settings)) result.push(...settings);
   }
 
   return result;

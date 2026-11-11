@@ -11,7 +11,12 @@ import type {
   HasRules,
   HasSkills,
 } from "../../../tools/domain/contracts.js";
-import { isAiTool, type ToolConfig } from "../../../tools/domain/registry.js";
+import {
+  isAiTool,
+  isCapabilitySectionKey,
+  sectionOf,
+  type ToolConfig,
+} from "../../../tools/domain/registry.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import { extractConfigCapabilities } from "../../domain/config-capability.js";
 import { InstallAgentsUseCase } from "../install/content/install-agents-use-case.js";
@@ -65,13 +70,7 @@ export class GenerateToolDistributionUseCase {
     contentFiles: Map<string, string>,
     projectRoot: string
   ): Promise<InstallationFile[]> {
-    const caps = config.capabilities as Record<string, unknown>;
-    const sectionFiles = this.generateCapabilitySectionFiles(
-      caps,
-      config,
-      descriptor,
-      contentFiles
-    );
+    const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
     const configFiles = await new InstallConfigUseCase(this.fs, this.hasher).execute({
       capabilities: extractConfigCapabilities(config),
       configRefs: descriptor.configRefs,
@@ -104,14 +103,15 @@ export class GenerateToolDistributionUseCase {
   }
 
   private generateCapabilitySectionFiles(
-    caps: Record<string, unknown>,
     config: AiTool<unknown>,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
     const results: InstallationFile[] = [];
     for (const section of descriptor.contentSections) {
-      if (!(section.name in caps)) continue;
+      if (!isCapabilitySectionKey(section.name) || sectionOf(config, section.name) === null) {
+        continue;
+      }
       results.push(...this.generateSectionFiles(config, section, contentFiles));
     }
     return results;
