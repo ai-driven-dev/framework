@@ -212,20 +212,36 @@ describe("aidd-ui pilot step files", () => {
     assert.deepEqual(stepBreaks("04-components", {}, after("components/a.md", "assets/b.md", "journeys/c.md")), ["04-components wrote aidd_docs/ui/journeys/c.md"]);
   });
 
+  const fileOf = (entry) => (entry.endsWith("/") ? `${entry}x.md` : entry);
+
   it("allows each file of its set, a folder's file included, and the engine's files it drives", () => {
     for (const [skill, entries] of Object.entries(OWNED)) {
-      const files = entries.map((entry) => (entry.endsWith("/") ? `${entry}x.md` : entry));
-      assert.deepEqual(stepBreaks(skill, {}, after(...files, ...ENGINE_FILES[skill])), [], skill);
+      const files = [...entries, ...ENGINE_FILES[skill]].map(fileOf);
+      assert.deepEqual(stepBreaks(skill, {}, after(...files)), [], skill);
     }
+  });
+
+  it("lets every step leave the showcase the engine writes, a page of a record included", () => {
+    for (const skill of Object.keys(OWNED)) {
+      assert.deepEqual(stepBreaks(skill, {}, after(fileOf(OWNED[skill][0]), "showcase/index.html", "showcase/home.html")), [], skill);
+    }
+  });
+
+  it("lets only the review rewrite the records it publishes, never a journey or the brand", () => {
+    assert.deepEqual(stepBreaks("06-review", {}, after("reviews/x.md", "wireframes/a.md", "components/b.md", "screens/c.md", "assets/d.md")), []);
+    assert.deepEqual(stepBreaks("06-review", {}, after("reviews/x.md", "journeys/a.md", "brand.md")), ["06-review wrote aidd_docs/ui/brand.md", "06-review wrote aidd_docs/ui/journeys/a.md"]);
+    assert.deepEqual(stepBreaks("05-screens", {}, after("screens/x.md", "wireframes/a.md")), ["05-screens wrote aidd_docs/ui/wireframes/a.md"]);
+    assert.deepEqual(stepBreaks("01-journeys", {}, after("journeys/x.md", "screens/a.md")), ["01-journeys wrote aidd_docs/ui/screens/a.md"]);
   });
 
   it("lets each skill's step drive only these engine files", () => {
     assert.deepEqual(ENGINE_FILES, {
-      "01-journeys": ["history.md"],
-      "02-brand": ["drafts/.gitignore"],
-      "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
-      "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
-      "05-screens": ["history.md", "drafts/.gitignore"],
+      "01-journeys": ["history.md", "showcase/"],
+      "02-brand": ["drafts/.gitignore", "showcase/"],
+      "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
+      "04-components": ["history.md", "tokens.css", "tokens.resolver.json", "showcase/"],
+      "05-screens": ["history.md", "drafts/.gitignore", "showcase/"],
+      "06-review": ["history.md", "components/", "screens/", "wireframes/", "assets/", "showcase/"],
     });
   });
 
@@ -241,7 +257,7 @@ describe("aidd-ui pilot step files", () => {
   });
 
   it("names a step that wrote an engine file it does not drive", () => {
-    const own = { "01-journeys": "journeys/x.md", "02-brand": "brand.md", "03-foundations": "system.md", "04-components": "components/x.md", "05-screens": "screens/x.md" };
+    const own = { "01-journeys": "journeys/x.md", "02-brand": "brand.md", "03-foundations": "system.md", "04-components": "components/x.md", "05-screens": "screens/x.md", "06-review": "reviews/x.md" };
     for (const [skill, engineFiles] of Object.entries(ENGINE_FILES)) {
       for (const file of ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"].filter((each) => !engineFiles.includes(each))) assert.deepEqual(stepBreaks(skill, {}, after(own[skill], file)), [`${skill} wrote ${ui(file)}`], `${skill} ${file}`);
     }
@@ -260,7 +276,9 @@ describe("aidd-ui pilot step files", () => {
 
 describe("aidd-ui pilot chain run", () => {
   const SKILL_OF = /^\/aidd-ui:(\S+) /;
-  const ownedAnywhere = (rel) => Object.values(ENGINE_FILES).some((files) => files.includes(rel)) || Object.values(OWNED).some((entries) => entries.some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)));
+  const held = (rel, entries) => entries.some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry));
+  // a record folder the review may rewrite is no engine output of the chain: only the files a skill owns or the engine's own are laid by it
+  const ownedAnywhere = (rel) => Object.values(ENGINE_FILES).some((files) => files.some((entry) => !entry.endsWith("/") && entry === rel)) || Object.values(OWNED).some((entries) => held(rel, entries));
   let full;
   let base;
 
@@ -283,7 +301,7 @@ describe("aidd-ui pilot chain run", () => {
   };
   const filesOf = (skill) => filesUnder(path.join(full, UI)).map((file) => path.relative(full, file).split(path.sep).join("/")).filter((file) => {
     const rel = path.posix.relative(UI, file);
-    return OWNED[skill].some((entry) => (entry.endsWith("/") ? rel.startsWith(entry) : rel === entry)) || ENGINE_FILES[skill].includes(rel);
+    return held(rel, OWNED[skill]) || ENGINE_FILES[skill].includes(rel);
   });
   const lay = (skill) => (cwd) => filesOf(skill).forEach((file) => copyFromFull(cwd, file));
 
@@ -317,6 +335,22 @@ describe("aidd-ui pilot chain run", () => {
     assert.deepEqual([code, logs.at(-1).endsWith("wireframes all screens all code untouched steps ok")], [0, true], logs.join("|"));
   });
 
+  it("exits 0 when every step also wrote the showcase", () => {
+    const withShowcase = (skill) => (cwd, laid) => {
+      laid(cwd);
+      fs.mkdirSync(path.join(cwd, UI, "showcase"), { recursive: true });
+      fs.writeFileSync(path.join(cwd, UI, "showcase/index.html"), `${skill}\n`);
+    };
+    const { code, logs } = run(Object.fromEntries(CHAIN.map(([skill]) => [skill, withShowcase(skill)])));
+    assert.deepEqual([code, logs.at(-1).endsWith("steps ok")], [0, true], logs.join("|"));
+  });
+
+  it("exits 1 when a step before the review rewrote a record of a later skill", () => {
+    const { code, logs } = run({ "04-components": (cwd, laid) => { laid(cwd); fs.appendFileSync(path.join(cwd, UI, "wireframes/search-flow.md"), "edited\n"); } });
+    assert.equal(code, 1);
+    assert.ok(logs.includes("04-components wrote aidd_docs/ui/wireframes/search-flow.md"), logs.join("|"));
+  });
+
   it("exits 1, naming the step and the path, when a step wrote outside its set", () => {
     const { code, logs } = run({ "02-brand": (cwd, laid) => { laid(cwd); copyFromFull(cwd, `${UI}/system.md`); } });
     assert.equal(code, 1);
@@ -341,8 +375,8 @@ describe("aidd-ui pilot chain run", () => {
 
 describe("aidd-ui pilot chain", () => {
   it("sends one request per skill, in the order of the path", () => {
-    assert.deepEqual(CHAIN.map(([skill]) => skill), ["01-journeys", "02-brand", "03-foundations", "04-components", "05-screens"]);
-    assert.deepEqual(CHAIN.map(([, part]) => part), ["journeys", "brand", "foundations", "components", "screens"]);
+    assert.deepEqual(CHAIN.map(([skill]) => skill), ["01-journeys", "02-brand", "03-foundations", "04-components", "05-screens", "06-review"]);
+    assert.deepEqual(CHAIN.map(([, part]) => part), ["journeys", "brand", "foundations", "components", "screens", "review"]);
   });
 
   it("points each request at the task folder of its own part", () => {
@@ -354,6 +388,16 @@ describe("aidd-ui pilot chain", () => {
       const requests = CHAIN.map(([skill, part]) => requestOf(pilot, skill, part));
       for (const [part, words] of Object.entries(REQUESTS[pilot])) assert.equal(requests.filter((request) => request.includes(words)).length, 1, `${pilot} ${part}`);
       requests.forEach((request, at) => assert.ok(request.startsWith(`/aidd-ui:${CHAIN[at][0]} `), request));
+    }
+  });
+});
+
+describe("aidd-ui pilot review request", () => {
+  it("pastes an ok verdict for every state, with no comment and no capture, in both pilots", () => {
+    for (const pilot of ["blank", "real"]) {
+      const words = REQUESTS[pilot].review;
+      assert.ok(words.includes("`ok`") && words.includes("no comment"), pilot);
+      assert.equal(/capture/.test(words.replace("no capture", "")), false, pilot);
     }
   });
 });

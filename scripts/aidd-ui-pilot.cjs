@@ -84,14 +84,17 @@ const OWNED = {
   "03-foundations": ["system.md", "tokens.json", "themes/", "platforms/", "breakpoints/"],
   "04-components": ["components/", "assets/"],
   "05-screens": ["screens/"],
+  "06-review": ["reviews/"],
 };
-// What the engine writes for each skill's step. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
+// What the engine writes for each skill's step; a folder ends with `/`. The history is the engine's, and a model could write it by hand: the snapshot cannot tell the two apart.
+// Every step ends by writing the showcase. The review's publication rewrites the status of the reviewed records: wireframes and elements, never a journey.
 const ENGINE_FILES = {
-  "01-journeys": ["history.md"],
-  "02-brand": ["drafts/.gitignore"],
-  "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json"],
-  "04-components": ["history.md", "tokens.css", "tokens.resolver.json"],
-  "05-screens": ["history.md", "drafts/.gitignore"],
+  "01-journeys": ["history.md", "showcase/"],
+  "02-brand": ["drafts/.gitignore", "showcase/"],
+  "03-foundations": ["history.md", "code-debt.json", "tokens.css", "tokens.resolver.json", "showcase/"],
+  "04-components": ["history.md", "tokens.css", "tokens.resolver.json", "showcase/"],
+  "05-screens": ["history.md", "drafts/.gitignore", "showcase/"],
+  "06-review": ["history.md", "components/", "screens/", "wireframes/", "assets/", "showcase/"],
 };
 
 const isIn = (file, entries) => entries.some((entry) => (entry.endsWith("/") ? file.startsWith(`${UI_DIR}/${entry}`) : file === `${UI_DIR}/${entry}`));
@@ -170,6 +173,9 @@ function reportLine(pilot, { errors, warnings, missing, unscreened, changed, bro
 const NON_INTERACTIVE = (part) =>
   `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, state each choice in your final reply, and go on; write no file the skill does not name; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${part}.`;
 
+// The person's paste, stated outright: the pilot cannot answer. A screen coded at its version is refused by the publication for want of a capture, which is expected: no capture is asked.
+const REVIEW = "Review the proposed records. My verdicts, pasted: every state of each record with states and a render is `ok`, no comment, no capture. Language: the one in memory, else en.";
+
 const REQUESTS = {
   blank: {
     journeys:
@@ -179,6 +185,7 @@ const REQUESTS = {
     foundations: "Write the tokens, for web and mobile.",
     components: "Write the components the wireframes expect.",
     screens: "Write a screen for each wireframe, with at least two variants of each.",
+    review: REVIEW,
   },
   real: {
     journeys:
@@ -187,6 +194,7 @@ const REQUESTS = {
     foundations: "Write its tokens from its code.",
     components: "Write the components its screens use, and every one the wireframes expect.",
     screens: "Write a screen for each wireframe, with at least two variants of each.",
+    review: REVIEW,
   },
 };
 
@@ -197,6 +205,7 @@ const CHAIN = [
   ["03-foundations", "foundations"],
   ["04-components", "components"],
   ["05-screens", "screens"],
+  ["06-review", "review"],
 ];
 
 /** The request of one step: its part, then the non-interactive suffix. */
