@@ -37,12 +37,11 @@ export interface NativeActivationSpec {
   upgradeVerb?: string;
   /** Exact host command for updating one installed plugin ref. Copilot declares `update`; Codex does not. */
   updateVerb?: string;
-  /** Verb this CLI uses to enable a plugin, after `plugin`. Omit when the tool loads plugins
-   * from a project file this CLI writes. */
-  enableVerb?: string;
+  /** Verb this CLI uses to enable a plugin, after `plugin`. */
+  enableVerb: string;
   /** How the tool spells removing a plugin it installed: `remove` for codex, `uninstall` for
-   * claude and copilot. Absent where this CLI enables plugins through a file it writes. */
-  disableVerb?: string;
+   * claude and copilot. */
+  disableVerb: string;
   /** Arguments every `plugin <verb> <ref>` call carries, after the reference. Claude needs
    * `--yes` on install and uninstall alike: a headless stdin can answer no prompt. */
   pluginArgs?: readonly string[];
@@ -64,6 +63,8 @@ export interface NativeActivationSpec {
 
 export class NativeActivation implements NativeActivationSpec {
   readonly binary: NativeActivationSpec["binary"];
+  readonly enableVerb: NativeActivationSpec["enableVerb"];
+  readonly disableVerb: NativeActivationSpec["disableVerb"];
   declare readonly scopeArgs?: NativeActivationSpec["scopeArgs"];
   declare readonly userRemoveArgs?: NativeActivationSpec["userRemoveArgs"];
   declare readonly uninstallLeavesRefDisabled?: NativeActivationSpec["uninstallLeavesRefDisabled"];
@@ -71,8 +72,6 @@ export class NativeActivation implements NativeActivationSpec {
   declare readonly sourceCheckVerb?: NativeActivationSpec["sourceCheckVerb"];
   declare readonly upgradeVerb?: NativeActivationSpec["upgradeVerb"];
   declare readonly updateVerb?: NativeActivationSpec["updateVerb"];
-  declare readonly enableVerb?: NativeActivationSpec["enableVerb"];
-  declare readonly disableVerb?: NativeActivationSpec["disableVerb"];
   declare readonly pluginArgs?: NativeActivationSpec["pluginArgs"];
   declare readonly marketplaceRegistry?: NativeActivationSpec["marketplaceRegistry"];
   declare readonly pluginCacheDir?: NativeActivationSpec["pluginCacheDir"];
@@ -82,13 +81,9 @@ export class NativeActivation implements NativeActivationSpec {
     if (spec.binary.trim() === "") {
       throw new CapabilityConfigError("NativeActivation requires a binary.");
     }
-    if (spec.enableVerb === undefined) {
-      throw new CapabilityConfigError("NativeActivation requires an enableVerb.");
-    }
-    if (spec.disableVerb === undefined) {
-      throw new CapabilityConfigError("NativeActivation requires a disableVerb.");
-    }
     this.binary = spec.binary;
+    this.enableVerb = spec.enableVerb;
+    this.disableVerb = spec.disableVerb;
     Object.assign(this, spec);
   }
 }

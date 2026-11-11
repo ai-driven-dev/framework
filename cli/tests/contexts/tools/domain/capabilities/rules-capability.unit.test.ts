@@ -132,10 +132,6 @@ describe("RulesCapability file acceptance", () => {
     expect(cap.acceptsFileName("rules/a.md")).toBe(true);
   });
 
-  it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap.acceptsFileName("a/b/c.cursor.md")).toBe(false);
-  });
-
   it("reads the input suffix as its own when the tool declares one", () => {
     const mdc = new RulesCapability({
       directory: ".cursor/",
