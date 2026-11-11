@@ -677,6 +677,7 @@ test("report, lost lines: an approved move rewrites the paths it names before an
   const after = { "vcs.md": "# V\n\n- See aidd_docs/memory/internal/kpi/index.md for the indicators.\n" };
   const move = dline("D1", "vcs.md > Setup", "move aidd_docs/memory/kpi to aidd_docs/memory/internal/kpi", "yes");
   assert.equal(lostLines(before, after, [move]).run.stdout, "");
+  assert.equal(lostLines(before, before, [move]).run.stdout, "", "a move approved and not made yet loses nothing");
   assert.match(lostLines(before, after).run.stdout, /kpi\/index\.md/u, "an unapproved path change is a loss");
 });
 

@@ -72,7 +72,8 @@ function goneLines(previous, bankDir, approvals) {
   const moves = approvals.map((fact) => fact.match(/^move\s+(\S+)\s+to\s+(\S+)/iu)).filter(Boolean);
   const moved = (text) => moves.reduce((result, [, from, to]) => result.split(from).join(to), text);
   const approved = (line) => approvals.some((fact) => fact.includes(line) || fact.includes(`"${unmarked(line)}"`));
-  const now = markdownUnder(bankDir).map((file) => fs.readFileSync(path.join(bankDir, file), "utf8")).join("\n");
+  // Both sides: a move approved and not made yet still names its old path on disk.
+  const now = moved(markdownUnder(bankDir).map((file) => fs.readFileSync(path.join(bankDir, file), "utf8")).join("\n"));
   const held = tally(now.split("\n").map(collapse));
   const before = previous.flatMap(({ file, text }) =>
     moved(text)

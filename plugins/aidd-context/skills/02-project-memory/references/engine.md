@@ -1,6 +1,6 @@
 # Engine
 
-- Find `memory.cjs` by file name before any call; the first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
+- Find `memory.cjs` from this skill's own folder before any call, never elsewhere in the project, which may hold another copy; the first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
 - Run the engine; never open its source or `lib/`.
 
 | Command | When | Effect |
