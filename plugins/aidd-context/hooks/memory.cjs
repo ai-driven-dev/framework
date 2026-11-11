@@ -342,11 +342,6 @@ const LEGACY_BLOCK_CLOSE = "</aidd_project_memory>";
 const ON_DEMAND_NOTE = "<!-- read on demand, not auto-loaded -->";
 const OWNED_NOTE = "<!-- folders other plugins own, read on demand -->";
 
-// Only the list between these markers is refreshed.
-const MEMORY_README = "README.md";
-const TOC_OPEN = "<!-- files:start -->";
-const TOC_CLOSE = "<!-- files:end -->";
-const TOC_LOOSE = /^<!--\s*files:(?:start|end)\s*-->$/u;
 
 // Only Claude Code resolves `@` imports; AGENTS.md takes a markdown link.
 const TARGET_FILES = [
@@ -462,17 +457,6 @@ function spliceBlock(content, found, inner) {
   const ending = lines[found.openLine].endsWith("\r") ? "\r" : "";
   const block = inner.map((line) => line + ending);
   return [...lines.slice(0, found.openLine + 1), ...block, ...lines.slice(found.closeLine)].join("\n");
-}
-
-function buildToc({ rooted, onDemand }) {
-  const link = (file) => {
-    const relative = file.slice(MEMORY_DIR.length + 1);
-    return `- [${relative}](${relative})`;
-  };
-  const lines = rooted.map(link);
-  if (onDemand.length > 0) lines.push("", "Read on demand:", "", ...onDemand.map(link));
-  if (lines.length === 0) lines.push("_No memory files yet._");
-  return lines;
 }
 
 // No tool named: every target present, as the session start wants.
@@ -605,15 +589,6 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
       fs.mkdirSync(path.dirname(copilot), { recursive: true });
       if (tryWrite(copilot, text, COPILOT_FILE, result.failed)) result.changed.push(COPILOT_FILE);
     }
-  }
-
-  const readme = path.join(absolute, MEMORY_DIR, MEMORY_README);
-  const readmeOriginal = readTextOrNull(readme);
-  const toc = readmeOriginal === null ? { status: "none" } : findBlock(readmeOriginal, TOC_OPEN, TOC_CLOSE, TOC_LOOSE);
-  if (toc.status === "ok") {
-    const updated = spliceBlock(readmeOriginal, toc, buildToc(lists));
-    const shown = `${MEMORY_DIR}/${MEMORY_README}`;
-    if (updated !== readmeOriginal && tryWrite(readme, updated, shown, result.failed)) result.changed.push(shown);
   }
 
   return result;

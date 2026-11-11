@@ -222,32 +222,6 @@ test("AGENTS.md gets markdown links, resolvable from the repository root", () =>
   assert.doesNotMatch(content, /\(\.\.\//u);
 });
 
-// The README sits inside the memory directory, so its links are relative to it. The path
-// is joined with the platform separator but the file paths are normalised to "/", so a
-// replace on the joined form silently matches nothing on Windows.
-test("the memory README lists its files relative to itself, on every platform's separator", () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-"));
-  try {
-    const memory = path.join(root, "aidd_docs/memory");
-    fs.mkdirSync(path.join(memory, "internal/decisions"), { recursive: true });
-    fs.writeFileSync(path.join(memory, "architecture.md"), "# x\n");
-    fs.writeFileSync(path.join(memory, "internal/decisions/x.md"), "# x\n");
-    fs.writeFileSync(path.join(memory, "README.md"), "<!-- files:start -->\n<!-- files:end -->\n");
-    fs.writeFileSync(path.join(root, "CLAUDE.md"), `${OPEN}\n${CLOSE}\n`);
-
-    const result = spawnSync(process.execPath, [HOOK, "sync", "claude"], { cwd: root, env: HOOK_ENV });
-    assert.equal(result.status, 0, result.stderr.toString());
-
-    const readme = fs.readFileSync(path.join(memory, "README.md"), "utf8");
-    const toc = readme.slice(readme.indexOf("<!-- files:start -->"), readme.indexOf("<!-- files:end -->"));
-    assert.match(toc, /^- \[architecture\.md\]\(architecture\.md\)$/mu);
-    assert.match(toc, /^- \[internal\/decisions\/x\.md\]\(internal\/decisions\/x\.md\)$/mu);
-    assert.doesNotMatch(toc, /aidd_docs\/memory\//u);
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
 test("the block lists every aidd_docs/ folder other than the bank, read on demand, after the bank's own files", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-"));
   try {
@@ -314,6 +288,23 @@ const FILLED_AT = `${OPEN}\n\n@aidd_docs/memory/architecture.md\n\n${CLOSE}`;
 
 // A tool picked with --add: its context file gains the block it lacks. Without it, and at a session
 // start, sync only refreshes the blocks that already stand.
+test("sync leaves the memory README as it is: it no longer keeps a list of files", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-"));
+  try {
+    const memory = path.join(root, "aidd_docs/memory");
+    fs.mkdirSync(memory, { recursive: true });
+    fs.writeFileSync(path.join(memory, "architecture.md"), "# x\n");
+    const readme = "# memory/\n\n<!-- files:start -->\n<!-- files:end -->\n";
+    fs.writeFileSync(path.join(memory, "README.md"), readme);
+    fs.writeFileSync(path.join(root, "CLAUDE.md"), `${OPEN}\n${CLOSE}\n`);
+    const result = spawnSync(process.execPath, [HOOK, "sync", "claude"], { cwd: root, env: HOOK_ENV });
+    assert.equal(result.status, 0, result.stderr.toString());
+    assert.equal(fs.readFileSync(path.join(memory, "README.md"), "utf8"), readme);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 const TEAM = "# Team\n\n```md\n@README.md\n```\n\n- Answer in French.\n";
 const FILLED_LINK = `${OPEN}\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n${CLOSE}`;
 
