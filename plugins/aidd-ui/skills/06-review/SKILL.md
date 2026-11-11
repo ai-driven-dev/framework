@@ -32,7 +32,6 @@ Each box is a file: read it, then do what it says.
 - After asking, wait for the answer.
 - Otherwise call tools.
 - Run the engine from the project root; never read its source.
-- Every path written in a record starts there.
 - Write only `reviews/` under `aidd_docs/ui/`.
 - Never write in the code, nor by hand what the engine writes.
 - Never write a capture: the user saves it.

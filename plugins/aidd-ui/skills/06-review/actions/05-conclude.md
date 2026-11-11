@@ -16,7 +16,7 @@ The review written.
 4. Validate again per [engine](../references/engine.md), and repeat until only these remain:
    - errors the [engine](../references/engine.md) says are about the code
    - `warning` lines, which are not errors
-5. Write the showcase per [engine](../references/engine.md), in the user's language.
+5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 6. Reply with:
    - the records published, with their versions
    - the records sent back for change, with their comments
