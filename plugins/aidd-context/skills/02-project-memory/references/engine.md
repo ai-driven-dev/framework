@@ -1,7 +1,10 @@
 # Engine
 
-- Find `memory.cjs` from this skill's own folder, never elsewhere in the project: it may hold another copy.
-- The first hit wins: the plugin's `hooks/` beside `skills/`, then `hooks/aidd-context/` under the tool's folder, then `hooks/` inside this skill.
+- Take the first `memory.cjs` found, in this order:
+  1. The plugin's `hooks/`, beside its `skills/` folder.
+  2. `<dot folder>/hooks/aidd-context/` at the project root: hooks may sit in another dot folder than this skill.
+  3. `hooks/` inside this skill.
+- Never take another copy from elsewhere in the project.
 - Run the engine; never open its source or `lib/`.
 
 | Command | When | Effect |

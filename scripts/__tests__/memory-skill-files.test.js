@@ -150,6 +150,7 @@ test("the Engine section matches the install layouts the hook fixtures show", ()
     }
   }
   assert.match(engine, /hooks\/aidd-context\//u, "no tool-folder layout");
+  assert.match(engine, /at the project root/u, "the tool-folder layout is not anchored at the project root, where a flat install puts the hooks apart from the skills");
   assert.match(engine, /plugin's `hooks\/`/u, "no plugin layout");
   assert.match(engine, /inside this skill/u, "no skill-own layout");
   const order = ["plugin's `hooks/`", "hooks/aidd-context/", "inside this skill"].map((needle) => engine.indexOf(needle));
