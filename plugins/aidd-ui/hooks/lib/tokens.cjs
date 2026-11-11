@@ -512,6 +512,13 @@ function cssNames(project) {
   return tree.unusable ? null : propertiesOf(tree);
 }
 
+/** Every token as `{name, type, property}`, in tokens.json's order. `type` is absent for a raw CSS
+ * token without `$type`. */
+function catalog(project) {
+  const tree = read(project);
+  return [...tree.tokens].map(([name, token]) => ({ name, type: typeOf(tree, token), property: customProperty(name) }));
+}
+
 /** Every token's name by its CSS custom property. */
 const namesByProperty = (tree) => new Map([...tree.tokens.keys()].map((name) => [customProperty(name), name]));
 
@@ -548,4 +555,4 @@ function resolvedValues(project) {
  * itself when it names none. */
 const tokenNameOf = (project, ref) => namesByProperty(read(project)).get(ref) ?? ref;
 
-module.exports = { check, blockers, generate, citations, resolvedValues, tokenNameOf, cssNames, cssFileOf };
+module.exports = { check, blockers, generate, catalog, citations, resolvedValues, tokenNameOf, cssNames, cssFileOf };

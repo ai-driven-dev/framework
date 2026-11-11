@@ -55,6 +55,25 @@ describe("aidd-ui tokens and renders", () => {
     assert.equal(names.size, 8);
   });
 
+  describe("catalog", () => {
+    it("lists each token in tokens.json order with its type and custom property", () => {
+      const found = tokens.catalog(load(tmp));
+      assert.deepEqual(found.slice(0, 2), [
+        { name: "color.brand.primary", type: "color", property: "--color-brand-primary" },
+        { name: "color.text.default", type: "color", property: "--color-text-default" },
+      ]);
+      assert.equal(found.length, 8);
+    });
+
+    it("gives an aliased token its target's type, and a token with raw CSS alone none", () => {
+      addToken("gap", { $value: "{space.md}" });
+      addToken("ring", { $extensions: { "dev.ai-driven.css": "0 0 0 2px red" } });
+      const byName = new Map(tokens.catalog(load(tmp)).map((entry) => [entry.name, entry.type]));
+      assert.equal(byName.get("misc.gap"), "dimension");
+      assert.equal(byName.get("misc.ring"), undefined);
+    });
+  });
+
   describe("T1 JSON", () => {
     it("names a tokens file that is not JSON", () => {
       fs.writeFileSync(path.join(tmp, TOKENS), "{ not json");

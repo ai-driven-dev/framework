@@ -35,6 +35,7 @@ const path = require("node:path");
 const PLUGIN = path.join(__dirname, "..", "plugins", "aidd-ui");
 const ENGINE = path.join(PLUGIN, "hooks", "aidd-ui.cjs");
 const { load } = require(path.join(PLUGIN, "hooks", "lib", "project.cjs"));
+const { catalog } = require(path.join(PLUGIN, "hooks", "lib", "tokens.cjs"));
 const { table } = require(path.join(PLUGIN, "hooks", "lib", "markdown.cjs"));
 const { STEPS_SECTION } = require(path.join(PLUGIN, "hooks", "lib", "model.cjs"));
 const { isReviewed } = require(path.join(PLUGIN, "hooks", "lib", "history.cjs"));
@@ -178,6 +179,15 @@ function codedOf(root) {
   return { coded: routed.filter((record) => (record.frontMatter.code ?? []).length).length, total: routed.length };
 }
 
+/** How many screens with a render cite a `fontFamily` and a `dimension` token, `{ dressed, total }`; zero when nothing loads. */
+function dressedOf(root) {
+  const project = load(root);
+  const screens = project === null ? [] : kindsOf(project, "screen").filter((record) => project.renders.includes(record.file.replace(/\.md$/, ".html")));
+  const types = project === null ? new Map() : new Map(catalog(project).map((entry) => [entry.name, entry.type]));
+  const cited = (record) => new Set((record.frontMatter.tokens ?? []).map((name) => types.get(name)));
+  return { dressed: screens.filter((record) => cited(record).has("fontFamily") && cited(record).has("dimension")).length, total: screens.length };
+}
+
 /** The ids of the reviews named with a date. */
 function datedReviews(root) {
   const project = load(root);
@@ -211,7 +221,7 @@ function stableOf(root, run = regenerate) {
 }
 
 /** One pilot's result on one line. */
-function reportLine(pilot, { errors, warnings, missing, unscreened, changed, broken, published, coded, unreached, stable, dated }) {
+function reportLine(pilot, { errors, warnings, missing, unscreened, changed, broken, published, coded, dressed, unreached, stable, dated }) {
   const ids = (list) => (list.length ? list.join(",") : "none");
   const wireframes = missing === null ? "no journey" : missing.length ? `missing ${missing.length}` : "all";
   const screens = unscreened === null ? "no wireframe" : unscreened.length ? `missing ${unscreened.length}` : "all";
@@ -219,7 +229,7 @@ function reportLine(pilot, { errors, warnings, missing, unscreened, changed, bro
   const steps = broken.length ? `broken ${broken.length}` : "ok";
   const reach = unreached.length ? `unreached ${unreached.length}` : "reachable";
   const reviews = dated.length ? `dated ${dated.length}` : "clean";
-  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} screens ${screens} code ${code} steps ${steps} published ${published.validated}/${published.total} coded ${coded.coded}/${coded.total} showcase ${reach} ${stable ? "stable" : "unstable"} review ids ${reviews}`;
+  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} screens ${screens} code ${code} steps ${steps} published ${published.validated}/${published.total} coded ${coded.coded}/${coded.total} dressed ${dressed.dressed}/${dressed.total} showcase ${reach} ${stable ? "stable" : "unstable"} review ids ${reviews}`;
 }
 
 // What each pilot asks, one part per skill of the chain.
@@ -349,7 +359,7 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
         broken.push(...stepBreaks(skill, last, now));
         last = now;
       }
-      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), unscreened: wireframesWithoutScreen(dir), changed: changedOutsideUi(before, last), broken, stable: stableOf(dir), published: publishedOf(dir), coded: codedOf(dir), unreached: unreachedOf(dir), dated: datedReviews(dir) };
+      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), unscreened: wireframesWithoutScreen(dir), changed: changedOutsideUi(before, last), broken, stable: stableOf(dir), published: publishedOf(dir), coded: codedOf(dir), dressed: dressedOf(dir), unreached: unreachedOf(dir), dated: datedReviews(dir) };
       console.log(reportLine(pilot, result));
       for (const line of broken) console.log(line);
       if (result.errors.length || result.missing === null || result.missing.length || result.unscreened === null || result.unscreened.length || result.changed.length || broken.length || !result.stable || result.unreached.length || result.dated.length) worst = 1;
@@ -363,4 +373,4 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
 
 if (require.main === module) process.exit(main());
 
-module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, wireframesWithoutScreen, publishedOf, codedOf, unreachedOf, stableOf, datedReviews, regenerate, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };
+module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, wireframesWithoutScreen, publishedOf, codedOf, dressedOf, unreachedOf, stableOf, datedReviews, regenerate, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };

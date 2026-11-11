@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, makeTmp, removeTmp, filesUnder, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
-const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, wireframesWithoutScreen, publishedOf, codedOf, unreachedOf, stableOf, datedReviews, regenerate, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep } = require("../../aidd-ui-pilot.cjs");
+const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, wireframesWithoutScreen, publishedOf, codedOf, dressedOf, unreachedOf, stableOf, datedReviews, regenerate, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep } = require("../../aidd-ui-pilot.cjs");
 
 // The pilot's checks hold without AI: they read files, run the engine, and compare trees.
 
@@ -182,15 +182,15 @@ describe("aidd-ui pilot wireframes without a screen", () => {
   });
 });
 
-const SEEN = { published: { validated: 4, total: 6 }, coded: { coded: 1, total: 1 }, unreached: [], stable: true, dated: [] };
-const SEEN_LINE = "published 4/6 coded 1/1 showcase reachable stable review ids clean";
+const SEEN = { published: { validated: 4, total: 6 }, coded: { coded: 1, total: 1 }, dressed: { dressed: 0, total: 1 }, unreached: [], stable: true, dated: [] };
+const SEEN_LINE = "published 4/6 coded 1/1 dressed 0/1 showcase reachable stable review ids clean";
 
 describe("aidd-ui pilot report line", () => {
   it("says the errors, the warnings, the wireframes, the code, the steps, the publication and the showcase in one line", () => {
     assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], unscreened: [], changed: [], broken: [], ...SEEN }), `blank errors none warnings none wireframes all screens all code untouched steps ok ${SEEN_LINE}`);
     assert.equal(
-      reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], unscreened: ["a"], changed: ["a"], broken: ["x", "y", "z"], published: { validated: 0, total: 3 }, coded: { coded: 2, total: 5 }, unreached: ["a.html", "b.html"], stable: false, dated: ["review-2026-11-10"] }),
-      "kairos errors C6 warnings C3,R18 wireframes missing 2 screens missing 1 code changed 1 steps broken 3 published 0/3 coded 2/5 showcase unreached 2 unstable review ids dated 1"
+      reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], unscreened: ["a"], changed: ["a"], broken: ["x", "y", "z"], published: { validated: 0, total: 3 }, coded: { coded: 2, total: 5 }, dressed: { dressed: 1, total: 3 }, unreached: ["a.html", "b.html"], stable: false, dated: ["review-2026-11-10"] }),
+      "kairos errors C6 warnings C3,R18 wireframes missing 2 screens missing 1 code changed 1 steps broken 3 published 0/3 coded 2/5 dressed 1/3 showcase unreached 2 unstable review ids dated 1"
     );
   });
 
@@ -219,6 +219,19 @@ describe("aidd-ui pilot publication, code links and review ids", () => {
     assert.deepEqual(codedOf(copy), { coded: 0, total: 1 });
     edit(copy, `${UI}/screens/home.md`, "route: /\n", "");
     assert.deepEqual(codedOf(copy), { coded: 0, total: 0 });
+  });
+
+  it("counts the screens with a render whose tokens cite a font family and a dimension", () => {
+    assert.deepEqual(dressedOf(copy), { dressed: 0, total: 1 });
+    edit(copy, `${UI}/screens/home.md`, "tokens: [space.md,", "tokens: [font.body, space.md,");
+    assert.deepEqual(dressedOf(copy), { dressed: 1, total: 1 });
+    edit(copy, `${UI}/screens/home.md`, "tokens: [font.body, space.md, color.text.default]", "tokens: [font.body, color.text.default]");
+    assert.deepEqual(dressedOf(copy), { dressed: 0, total: 1 });
+  });
+
+  it("counts no screen when nothing loads", () => {
+    fs.rmSync(path.join(copy, UI), { recursive: true });
+    assert.deepEqual(dressedOf(copy), { dressed: 0, total: 0 });
   });
 
   it("names a review id that holds a date", () => {
