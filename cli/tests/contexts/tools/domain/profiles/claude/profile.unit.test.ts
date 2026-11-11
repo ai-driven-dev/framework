@@ -1,5 +1,7 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
 import {
   expectClaudeStyleCatalog,
   flatPathsOf,
@@ -59,5 +61,33 @@ describe("claude build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(claude.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("claude as the registry answers for it", () => {
+  const catalog = new ToolCatalog([claude]);
+
+  it("builds a marketplace and keeps its settings.local.json out of tracking", () => {
+    expect(catalog.frameworkBuildModeFor("claude")).toBe("marketplace");
+    expect(catalog.machineLocalFilesOf("claude")).toEqual([".claude/settings.local.json"]);
+  });
+
+  it("names its user settings file under the home directory", () => {
+    expect(catalog.userMachineLocalFilesOf("claude", "/home/tester", () => undefined)).toEqual([
+      join("/home/tester", ".claude", "settings.json"),
+    ]);
+  });
+
+  it("merges no hooks into the project, enables plugins per project and keeps a disabled host ref", () => {
+    expect(catalog.projectHooksFileOf("claude")).toBeUndefined();
+    expect(catalog.pluginEnablementIsMachineGlobal("claude")).toBe(false);
+    expect(catalog.hostRefInUse("claude", false)).toBe(true);
+  });
+
+  it("installs its rules into .claude/rules/ as markdown", () => {
+    expect(claude.capabilities.rules.installedLocation()).toEqual({
+      directory: ".claude/rules/",
+      extension: ".md",
+    });
   });
 });

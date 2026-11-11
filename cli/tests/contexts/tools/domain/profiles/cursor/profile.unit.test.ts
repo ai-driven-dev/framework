@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
 import {
   expectClaudeStyleCatalog,
   flatPathsOf,
@@ -76,5 +77,26 @@ describe("cursor build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(cursor.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("cursor as the registry answers for it", () => {
+  const catalog = new ToolCatalog([cursor]);
+
+  it("keeps its project hooks file out of the machine-local files and names it as the hooks file", () => {
+    expect(catalog.machineLocalFilesOf("cursor")).not.toContain(".cursor/hooks.json");
+    expect(catalog.projectHooksFileOf("cursor")).toBe(".cursor/hooks.json");
+  });
+
+  it("names no user settings file, and enables plugins machine-wide", () => {
+    expect(catalog.userMachineLocalFilesOf("cursor", "/home/tester", () => undefined)).toEqual([]);
+    expect(catalog.pluginEnablementIsMachineGlobal("cursor")).toBe(true);
+  });
+
+  it("installs its rules into .cursor/rules/ as .mdc", () => {
+    expect(cursor.capabilities.rules.installedLocation()).toEqual({
+      directory: ".cursor/rules/",
+      extension: ".mdc",
+    });
   });
 });

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { distributionProbesOf } from "../../../../../../src/contexts/translate/domain/plugin-format.js";
 import { flatPathsOf, rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
@@ -41,5 +43,23 @@ describe("opencode build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(opencode.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("opencode as the registry answers for it", () => {
+  it("builds flat, and probes a marketplace although it builds none natively", () => {
+    expect(new ToolCatalog([opencode]).frameworkBuildModeFor("opencode")).toBe("flat");
+    expect(
+      distributionProbesOf(new Map([[opencode.toolId, opencode]]), "marketplace").map(
+        (probe) => probe.format
+      )
+    ).toEqual(["opencode"]);
+  });
+
+  it("installs its rules into .opencode/rules/ as markdown", () => {
+    expect(opencode.capabilities.rules.installedLocation()).toEqual({
+      directory: ".opencode/rules/",
+      extension: ".md",
+    });
   });
 });

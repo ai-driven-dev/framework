@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { hasToolSignals } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { distributionProbesOf } from "../../../../../../src/contexts/translate/domain/plugin-format.js";
 import { KiloDualConfigError } from "../../../../../../src/kernel/errors.js";
 import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
@@ -132,5 +133,22 @@ describe("kilo build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(kilo.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("kilo as the registry answers for it", () => {
+  it("probes a marketplace although it builds none natively", () => {
+    expect(
+      distributionProbesOf(new Map([[kilo.toolId, kilo]]), "marketplace").map(
+        (probe) => probe.format
+      )
+    ).toEqual(["kilo"]);
+  });
+
+  it("installs its rules into .kilo/rules/ as markdown", () => {
+    expect(kilo.capabilities.rules.installedLocation()).toEqual({
+      directory: ".kilo/rules/",
+      extension: ".md",
+    });
   });
 });

@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { nativeActivationOf } from "../../../../../../src/contexts/tools/domain/registry.js";
+import {
+  nativeActivationOf,
+  ToolCatalog,
+} from "../../../../../../src/contexts/tools/domain/registry.js";
 import {
   flatPathsOf,
   pluginTreeShapeOf,
@@ -117,5 +120,22 @@ describe("copilot build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(copilot.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("copilot as the registry answers for it", () => {
+  const catalog = new ToolCatalog([copilot]);
+
+  it("enables plugins machine-wide and takes a disabled host ref for none in use", () => {
+    expect(catalog.pluginEnablementIsMachineGlobal("copilot")).toBe(true);
+    expect(catalog.hostRefInUse("copilot", false)).toBe(false);
+    expect(catalog.hostRefInUse("copilot", true)).toBe(true);
+  });
+
+  it("installs its rules into .github/instructions/ as .instructions.md", () => {
+    expect(copilot.capabilities.rules.installedLocation()).toEqual({
+      directory: ".github/instructions/",
+      extension: ".instructions.md",
+    });
   });
 });

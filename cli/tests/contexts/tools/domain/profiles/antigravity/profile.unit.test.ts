@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { hasRules } from "../../../../../../src/contexts/tools/domain/contracts.js";
 import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
+import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { installPathOf } from "../../../testing/profiles.js";
 
 describe("antigravity", () => {
@@ -39,5 +41,17 @@ describe("antigravity", () => {
     });
     expect(antigravity.capabilities.plugins.projectHooksFormat?.merge).toBe(mergeAntigravityHooks);
     expect(Object.keys(antigravity.capabilities).sort()).toEqual(["plugins", "skills"]);
+  });
+});
+
+describe("antigravity as the registry answers for it", () => {
+  it("names .agents/hooks.json as the project hooks file", () => {
+    expect(new ToolCatalog([antigravity]).projectHooksFileOf("antigravity")).toBe(
+      ".agents/hooks.json"
+    );
+  });
+
+  it("installs no rules", () => {
+    expect(hasRules(antigravity)).toBe(false);
   });
 });

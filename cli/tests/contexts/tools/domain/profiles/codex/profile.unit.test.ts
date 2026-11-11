@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { PLUGIN_TREE_SOURCES, supported } from "../../../testing/build-artifacts.js";
 import { contractOf, flatPathsOf, marketplaceSourcesOf } from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
@@ -46,5 +47,18 @@ describe("codex build and conversion tables", () => {
         "agents/notes.md-helper.md"
       )
     ).toBe("codex-agents/notes.md-helper.toml");
+  });
+});
+
+describe("codex as the registry answers for it", () => {
+  it("enables plugins machine-wide", () => {
+    expect(new ToolCatalog([codex]).pluginEnablementIsMachineGlobal("codex")).toBe(true);
+  });
+
+  it("installs its rules into .codex/rules/ as markdown", () => {
+    expect(codex.capabilities.rules.installedLocation()).toEqual({
+      directory: ".codex/rules/",
+      extension: ".md",
+    });
   });
 });
