@@ -123,9 +123,16 @@ export type HooksFileMerge = NonNullable<
   Extract<ArtifactContract, { supported: true }>["hooksFile"]
 >["merge"];
 
+/** Phantom, never built: its private member makes the type nominal, so only `declareHooks` yields
+ * a value of it and a literal object is refused where a builder takes a descriptor. */
+export declare class HooksBrand {
+  private readonly hooksBrand: true;
+}
+
 /** What the builders read of a descriptor: where the hooks go, never the events' routes. */
 export type HooksRouting = Omit<HooksDescriptor, DerivedKeys> &
-  Partial<Pick<HooksDescriptor, DerivedKeys>>;
+  Partial<Pick<HooksDescriptor, DerivedKeys>> &
+  HooksBrand;
 
 function hookScript(descriptor: HooksRouting): HookScript | undefined {
   const adapter = descriptor.runtime?.adapter;
@@ -360,8 +367,11 @@ function canonicalEvents(
   for (const [name, route] of Object.entries(declared)) {
     const event = CANONICAL_HOOK_EVENTS.find((canonical) => canonical === name);
     if (event === undefined) return refuse("unknown-event", `${name} is not a canonical event`);
-    if (route.native.length === 0 || new Set(route.native).size !== route.native.length) {
-      return refuse("unknown-event", `${name} needs a native list with no duplicate`);
+    if (route.native.length === 0) {
+      return refuse("empty-native-list", `${name} is fired on no native event`);
+    }
+    if (new Set(route.native).size !== route.native.length) {
+      return refuse("duplicate-native-event", `${name} names a native event twice`);
     }
     events.set(event, route);
   }
@@ -398,7 +408,7 @@ export function declareHooks<const D extends HooksDeclaration & { readonly runti
   readonly events: ReadonlyMap<CanonicalHookEvent, HookEventRoute>;
   readonly eventMap: Readonly<Record<string, readonly string[]>>;
   readonly runtime: HooksRuntime;
-} {
+} & HooksBrand {
   const refuse: Refuse = (invariant, detail) => {
     throw new InvalidHooksDescriptorError(owner.toolId, invariant, detail);
   };
@@ -418,12 +428,17 @@ export function declareHooks<const D extends HooksDeclaration & { readonly runti
       refuse("path-outside-directory", `${path} is not under ${owner.directory}`);
     }
   }
-  return {
+  const declared_: Omit<D, "events" | "runtime"> & {
+    readonly events: ReadonlyMap<CanonicalHookEvent, HookEventRoute>;
+    readonly eventMap: Readonly<Record<string, readonly string[]>>;
+    readonly runtime: HooksRuntime;
+  } = {
     ...rest,
     runtime: stamped(owner.toolId, runtime, refuse),
     events,
     eventMap: Object.fromEntries([...events].map(([event, route]) => [event, route.native])),
   };
+  return declared_ as typeof declared_ & HooksBrand;
 }
 
 /** The events a tool names, each fired under its own name through the tool's hooks file. */

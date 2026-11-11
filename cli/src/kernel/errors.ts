@@ -111,6 +111,8 @@ export class DuplicateToolIdError extends Error {
 
 export type HooksInvariant =
   | "unknown-event"
+  | "empty-native-list"
+  | "duplicate-native-event"
   | "project-without-file"
   | "loader-with-file"
   | "path-outside-directory"

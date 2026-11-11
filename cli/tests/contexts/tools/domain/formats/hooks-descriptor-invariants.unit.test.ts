@@ -33,9 +33,15 @@ const BROKEN: readonly {
     broken: () => declaration({ events: { Bogus: ROUTE } }),
   },
   {
-    invariant: "unknown-event",
+    invariant: "empty-native-list",
     case: "an event fired on no native event",
     broken: () => declaration({ events: { SessionStart: { native: [], relay: "native" } } }),
+  },
+  {
+    invariant: "duplicate-native-event",
+    case: "an event fired twice on the same native event",
+    broken: () =>
+      declaration({ events: { SessionStart: { native: ["start", "start"], relay: "native" } } }),
   },
   {
     invariant: "project-without-file",
