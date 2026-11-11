@@ -166,6 +166,21 @@ test("plan: an absent always file is listed under Will write with no number, an 
   }, REFRESH, { ...BANK, "coding-assertions.md": "# Coding Assertions\n", "integration.md": "# Integration\n" });
 });
 
+// A refresh with nothing to remember leaves a sheet with no fact line: that is a current bank, not a broken sheet.
+test("plan: a sheet with no fact line is a bank that is current, exit 0, the tools still listed", () => {
+  const empty = ["# Facts: refresh", "", "## Read", "", "## Inferred", "", "## Unknown", ""].join("\n");
+  withProject((root) => {
+    const run = engine(root, "plan", SHEET, "--tools", "claude");
+    assert.equal(run.stderr, "");
+    assert.equal(run.status, 0, run.stdout);
+    assert.match(run.stdout, /^Memory plan: 0 changes, the bank is current$/mu);
+    assert.match(run.stdout, /^ {2}\[x\] claude {2}\[ \] codex/mu);
+    assert.doesNotMatch(run.stdout, /Say ok/u);
+  }, empty, { ...FULL, "testing.md": "# Testing\n" });
+  withProject((root) => assert.match(engine(root, "plan", SHEET).stdout, /^ {2}1 write · 1 add · 2 change · 1 remove/mu), REFRESH, FULL);
+  withProject((root) => assert.match(engine(root, "plan", SHEET).stdout, /^Memory plan: 0 changes$/mu), empty.replace("## Unknown\n", "## Unknown\n\n- Q1 | testing.md > Run | Which gate runs before a push? | none |\n"), FULL);
+});
+
 test("plan: a sheet that breaks the grammar or quotes no whole line of the bank prints the problems and no plan", () => {
   const fragment = REFRESH.replace('replace "- TypeScript everywhere. `backend/`: Express on Node."', 'replace "`backend/`: Express on Node."');
   withProject((root) => {

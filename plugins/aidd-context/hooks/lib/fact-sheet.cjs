@@ -50,7 +50,6 @@ const plainSource = (source) => source.replace(/^`+|`+$/gu, "");
 function checkSheet(sheetFile, root) {
   const name = path.basename(sheetFile);
   const lines = factLines(fs.readFileSync(sheetFile, "utf8"));
-  if (lines.length === 0) return [`${name}: no fact line under a block`];
   const problems = [];
   const ids = new Set();
   const questions = lines.filter(({ fields }) => fields?.[0]?.[0] === "Q").length;

@@ -1141,10 +1141,10 @@ test("plan, sheet check: a line that breaks the grammar exits 1 and names it", (
   }
 });
 
-test("plan, sheet check: a sheet with no fact line exits 1, a header bullet is no fact line", () => {
+test("plan, sheet check: a sheet with no fact line exits 0, a header bullet is no fact line", () => {
   const run = factsRun(`${SHEET_HEAD}## Read\n\nNothing to add.\n`);
-  assert.equal(run.status, 1);
-  assert.match(run.stdout, /no fact line/u);
+  assert.equal(run.status, 0);
+  assert.match(run.stdout, /^Memory plan: 0 changes$/mu);
   assert.equal(factsRun(sheet(GOOD)).stdout.includes("Scope"), false);
 });
 

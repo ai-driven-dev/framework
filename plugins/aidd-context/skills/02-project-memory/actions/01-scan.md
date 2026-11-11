@@ -12,7 +12,7 @@ The project root.
 2. Read the project in the order of [reading sources](../references/reading-sources.md).
 3. Find its [capabilities](../references/capabilities.md) and its [outside tools](../references/ecosystem-signals.md).
 4. Fill the [fact sheet](../assets/fact-sheet.md) for each file the capabilities select, per [filling the sheet](../references/reading-sources.md#filling-the-sheet).
-5. On a refresh, read [check](03-check.md); otherwise read [write](02-write.md).
+5. If nothing is worth remembering, leave the sheet with no fact line. On a refresh, read [check](03-check.md); otherwise read [write](02-write.md).
 
 ## Output
 
