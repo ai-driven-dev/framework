@@ -135,6 +135,98 @@ function outputStrings(output: string): string[] {
 }
 
 describeNative("E2E: saved native generation in Kilo", () => {
+  it("executes a project workflow through kilo run --command and passes its arguments to the model", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("kilo-workflow-command");
+    let model: Awaited<ReturnType<typeof localModel>> | undefined;
+    const observedRequests: KiloChatRequest[] = [];
+    try {
+      const xdg = join(fakeHome, ".xdg");
+      const env = {
+        ...process.env,
+        HOME: fakeHome,
+        USERPROFILE: fakeHome,
+        APPDATA: join(fakeHome, "AppData", "Roaming"),
+        LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
+        XDG_CONFIG_HOME: join(xdg, "config"),
+        XDG_DATA_HOME: join(xdg, "data"),
+        XDG_STATE_HOME: join(xdg, "state"),
+        XDG_CACHE_HOME: join(xdg, "cache"),
+        KILO_PURE: "1",
+        KILO_DISABLE_EXTERNAL_SKILLS: "true",
+      };
+      for (const name of ["config", "data", "state", "cache"]) {
+        await mkdir(join(xdg, name), { recursive: true });
+      }
+      await mkdir(join(projectDir, ".kilo", "commands"), { recursive: true });
+      await writeFile(
+        join(projectDir, ".kilo", "commands", "verify-arguments.md"),
+        "---\ndescription: Verify workflow invocation and argument forwarding.\n---\n\n" +
+          "AC11_WORKFLOW_BODY_MARKER\nArguments: $ARGUMENTS\n"
+      );
+      const modelConfig = (baseURL: string) =>
+        JSON.stringify({
+          model: "openai-compatible/fake",
+          provider: {
+            "openai-compatible": {
+              options: { baseURL },
+              models: {
+                fake: {
+                  name: "Local deterministic workflow test",
+                  tool_call: true,
+                  limit: { context: 8192, output: 256 },
+                },
+              },
+            },
+          },
+        });
+      model = await localModel({
+        respond(request) {
+          observedRequests.push(request);
+          return { content: "AC11_WORKFLOW_INVOKED" };
+        },
+      });
+      await writeFile(join(projectDir, "kilo.jsonc"), modelConfig(model.url));
+
+      const result = await execFileAsync(
+        KILO_BIN,
+        [
+          "run",
+          "--pure",
+          "--auto",
+          "--dir",
+          projectDir,
+          "--command",
+          "verify-arguments",
+          "first argument",
+          "second-argument",
+          "--model",
+          "openai-compatible/fake",
+          "--format",
+          "json",
+        ],
+        { cwd: projectDir, env, timeout: 60000, maxBuffer: 8 * 1024 * 1024, shell: KILO_SHELL }
+      );
+
+      expect(observedRequests).toHaveLength(1);
+      const transmitted = observedRequests[0].messages
+        .map((message) => textLeaves(message.content).join("\n"))
+        .join("\n");
+      expect(transmitted).toContain("AC11_WORKFLOW_BODY_MARKER");
+      expect(transmitted).toContain("first argument");
+      expect(transmitted).toContain("second-argument");
+      expect(result.stdout).toContain("AC11_WORKFLOW_INVOKED");
+    } finally {
+      const server = model?.server;
+      if (server) {
+        server.closeAllConnections();
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve()))
+        );
+      }
+      await cleanup();
+    }
+  }, 90000);
+
   it("merges coexisting project instructions and deduplicates identical references", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
       "kilo-config-instruction-merge"
