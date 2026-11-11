@@ -84,6 +84,10 @@ function engine(root, ...args) {
 const sheetOf = (root) => fs.readFileSync(path.join(root, SHEET), "utf8");
 const answerOf = (text, id) => text.split("\n").find((line) => line.startsWith(`- ${id} |`)).split("|")[4]?.trim() ?? "";
 
+// Beside the message, never inside it: the model sends stdout, the order stays out of the chat.
+const PLAN_SEND = "Send the message above as it is, in plain chat text, nothing before or after it, then wait for the reply.\n";
+const REPORT_SEND = "Send the message above as it is, in plain chat text, nothing before or after it, then stop.\n";
+
 function withProject(fn, sheet, bank) {
   const root = project(sheet, bank);
   try {
@@ -96,7 +100,7 @@ function withProject(fn, sheet, bank) {
 test("plan: prints the sheet as the person reads it, in fixed order and numbering, the ticked tools given", () => {
   withProject((root) => {
     const run = engine(root, "plan", SHEET, "--tools", "claude");
-    assert.equal(run.stderr, "");
+    assert.equal(run.stderr, PLAN_SEND, "the model is told to send the message as it is");
     assert.equal(run.status, 0);
     assert.equal(run.stdout, PLAN);
     const detail = detailOf(root);
@@ -176,7 +180,7 @@ test("plan: a sheet with no fact line is a bank that is current, exit 0, the too
   const empty = ["# Facts: refresh", "", "## Read", "", "## Inferred", "", "## Unknown", ""].join("\n");
   withProject((root) => {
     const run = engine(root, "plan", SHEET, "--tools", "claude");
-    assert.equal(run.stderr, "");
+    assert.equal(run.stderr, PLAN_SEND, "the model is told to send the message as it is");
     assert.equal(run.status, 0, run.stdout);
     assert.match(run.stdout, /^Memory plan: 0 changes, the bank is current$/mu);
     assert.match(run.stdout, /^ {2}\[x\] claude {2}\[ \] codex/mu);
@@ -331,7 +335,7 @@ test("report: prints the closing message with the plan's numbers, what the write
   written((root) => {
     const before = treeState(root);
     const run = engine(root, "report", SHEET);
-    assert.equal(run.stderr, "");
+    assert.equal(run.stderr, REPORT_SEND, "the model is told to send the message as it is");
     assert.equal(run.status, 0);
     assert.equal(words(run.stdout), REPORT);
     assert.deepEqual(treeState(root), before, "report wrote to the tree");

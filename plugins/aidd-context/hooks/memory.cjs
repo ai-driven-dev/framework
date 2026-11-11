@@ -654,6 +654,9 @@ function runChanges(args) {
   }
 }
 
+/** Beside the message, on stderr, so the order to send it never lands in the chat. */
+const sendAsIs = (then) => `Send the message above as it is, in plain chat text, nothing before or after it, then ${then}.\n`;
+
 function runPlan([sheetFile, ...rest]) {
   if (sheetFile === undefined) return usageOf("plan");
   const plan = require("./lib/plan.cjs");
@@ -672,6 +675,7 @@ function runPlan([sheetFile, ...rest]) {
     fs.writeFileSync(detailFile, detail);
     plan.writeSnapshot(sheetFile, root);
     process.stdout.write(summary);
+    process.stderr.write(sendAsIs("wait for the reply"));
     return EXIT_OK;
   } catch (error) {
     return fail(notRead(sheetFile, error));
@@ -693,6 +697,7 @@ function runReport([sheetFile]) {
   if (sheetFile === undefined) return usageOf("report");
   try {
     process.stdout.write(report(sheetFile));
+    process.stderr.write(sendAsIs("stop"));
     return EXIT_OK;
   } catch (error) {
     return fail(notRead(sheetFile, error));
