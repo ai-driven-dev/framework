@@ -174,338 +174,349 @@ async function stopKilo(child: ReturnType<typeof spawn>): Promise<void> {
 }
 
 describeKiloRuntime("E2E: real Kilo runtime", () => {
-  it("runs memory and declared hooks exactly once through a real local read-tool turn", async () => {
-    phase("test: creating temporary environment");
-    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("kilo-runtime");
-    let child: ReturnType<typeof spawn> | undefined;
-    let kiloUrl: string | undefined;
-    phase("test: creating local model");
-    const model = await localModel();
-    try {
-      phase("build: primary generated project");
-      const generatedProject = join(tempDir, "generated");
-      await mkdir(generatedProject, { recursive: true });
-      const config = {
-        model: "openai-compatible/fake",
-        instructions: ["AGENTS.md"],
-        provider: {
-          "openai-compatible": {
-            options: { baseURL: model.url },
-            models: {
-              fake: { name: "Local fake", tool_call: true, limit: { context: 8192, output: 256 } },
+  it(
+    "runs memory and declared hooks exactly once through a real local read-tool turn",
+    async () => {
+      phase("test: creating temporary environment");
+      const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("kilo-runtime");
+      let child: ReturnType<typeof spawn> | undefined;
+      let kiloUrl: string | undefined;
+      phase("test: creating local model");
+      const model = await localModel();
+      try {
+        phase("build: primary generated project");
+        const generatedProject = join(tempDir, "generated");
+        await mkdir(generatedProject, { recursive: true });
+        const config = {
+          model: "openai-compatible/fake",
+          instructions: ["AGENTS.md"],
+          provider: {
+            "openai-compatible": {
+              options: { baseURL: model.url },
+              models: {
+                fake: {
+                  name: "Local fake",
+                  tool_call: true,
+                  limit: { context: 8192, output: 256 },
+                },
+              },
             },
           },
-        },
-      };
-      const configPath = join(generatedProject, "kilo.jsonc");
-      const originalConfig = JSON.stringify(config);
-      await writeFile(configPath, originalConfig);
-      const build = await runCli(
-        ["translate", REPOSITORY_ROOT, "--to", "kilo", "--as", "flat", "--out", generatedProject],
-        projectDir,
-        fakeHome
-      );
-      phase("build: primary generated project complete");
-      expect(build.exitCode, build.stderr).toBe(0);
-      expect(JSON.parse(await readFile(configPath, "utf8"))).toMatchObject(config);
+        };
+        const configPath = join(generatedProject, "kilo.jsonc");
+        const originalConfig = JSON.stringify(config);
+        await writeFile(configPath, originalConfig);
+        const build = await runCli(
+          ["translate", REPOSITORY_ROOT, "--to", "kilo", "--as", "flat", "--out", generatedProject],
+          projectDir,
+          fakeHome
+        );
+        phase("build: primary generated project complete");
+        expect(build.exitCode, build.stderr).toBe(0);
+        expect(JSON.parse(await readFile(configPath, "utf8"))).toMatchObject(config);
 
-      const allowed = new Set([
-        "PATH",
-        "Path",
-        "HOME",
-        "USERPROFILE",
-        "APPDATA",
-        "LOCALAPPDATA",
-        "XDG_CONFIG_HOME",
-        "XDG_CACHE_HOME",
-        "XDG_DATA_HOME",
-        "XDG_STATE_HOME",
-        "SystemRoot",
-        "SYSTEMROOT",
-        "windir",
-        "WINDIR",
-        "ComSpec",
-        "COMSPEC",
-        "PATHEXT",
-        "TEMP",
-        "TMP",
-        "LANG",
-        "LC_ALL",
-        "TZ",
-        "KILO_SERVER_PASSWORD",
-        "KILO_TREE_SITTER_WASM_DIR",
-      ]);
-      const env = Object.fromEntries(
-        Object.entries(
-          sandboxedEnv(fakeHome, {
-            ...KILO_ENV,
-            XDG_CACHE_HOME: join(fakeHome, ".cache"),
-            XDG_DATA_HOME: join(fakeHome, ".local", "share"),
-            XDG_STATE_HOME: join(fakeHome, ".local", "state"),
-            XDG_CONFIG_HOME: join(fakeHome, ".config"),
-            APPDATA: join(fakeHome, "AppData", "Roaming"),
-            LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
-            USERPROFILE: fakeHome,
-            KILO_SERVER_PASSWORD: "",
-          })
-        ).filter(([key]) => allowed.has(key))
-      );
-      phase("Kilo CLI: version");
-      const version = await execFileAsync(KILO_BIN, ["--version"], {
-        env,
-        shell: KILO_SHELL,
-        timeout: KILO_QUICK_COMMAND_TIMEOUT_MS,
-      });
-      expect(version.stdout.trim()).toBe("7.7.5");
-      phase("Kilo CLI: debug skill");
-      const skills = await execFileAsync(KILO_BIN, ["debug", "skill"], {
-        cwd: generatedProject,
-        env,
-        shell: KILO_SHELL,
-        timeout: KILO_DISCOVERY_TIMEOUT_MS,
-        maxBuffer: 8 * 1024 * 1024,
-      });
-      const discoveredSkills = JSON.parse(skills.stdout) as Array<{ location?: string }>;
-      const generatedSkillFiles = (
-        await readdir(join(generatedProject, ".kilo", "skills"), {
-          recursive: true,
-        })
-      ).filter((file) => file.replaceAll("\\", "/").endsWith("/SKILL.md")).length;
-      expect(
-        discoveredSkills.filter((skill) =>
-          skill.location?.replaceAll("\\", "/").includes(".kilo/skills/aidd-")
-        ).length
-      ).toBe(generatedSkillFiles);
-
-      phase("Kilo CLI: agent list (generated project)");
-      const agents = await execFileAsync(KILO_BIN, ["agent", "list"], {
-        cwd: generatedProject,
-        env,
-        shell: KILO_SHELL,
-        timeout: KILO_DISCOVERY_TIMEOUT_MS,
-        maxBuffer: 8 * 1024 * 1024,
-      });
-      for (const role of ["explorer", "executor", "validator", "reviewer"]) {
-        expect(agents.stdout).toContain(`aidd-orchestrator-${role}`);
-      }
-
-      const mcpProject = join(tempDir, "generated-mcp");
-      await mkdir(mcpProject, { recursive: true });
-      phase("build: MCP fixture");
-      const mcpBuild = await runCli(
-        [
-          "translate",
-          join(REPOSITORY_ROOT, "cli/tests/fixtures/framework"),
-          "--to",
-          "kilo",
-          "--as",
-          "flat",
-          "--out",
-          mcpProject,
-        ],
-        projectDir,
-        fakeHome
-      );
-      phase("build: MCP fixture complete");
-      expect(mcpBuild.exitCode, mcpBuild.stderr).toBe(0);
-      phase("Kilo CLI: agent list (MCP fixture)");
-      const fixtureAgents = await execFileAsync(KILO_BIN, ["agent", "list"], {
-        cwd: mcpProject,
-        env,
-        shell: KILO_SHELL,
-        timeout: KILO_DISCOVERY_TIMEOUT_MS,
-        maxBuffer: 8 * 1024 * 1024,
-      });
-      expect(fixtureAgents.stdout).toContain("aidd-test-code-reviewer");
-      phase("Kilo CLI: mcp list");
-      const mcp = await execFileAsync(KILO_BIN, ["mcp", "list"], {
-        cwd: mcpProject,
-        env,
-        shell: KILO_SHELL,
-        timeout: KILO_DISCOVERY_TIMEOUT_MS,
-        maxBuffer: 8 * 1024 * 1024,
-      });
-      expect(mcp.stdout).toContain("aidd-test-aidd-test-server");
-
-      const marker = join(generatedProject, "AGENTS.md");
-      await mkdir(join(generatedProject, "aidd_docs", "memory"), { recursive: true });
-      await writeFile(join(generatedProject, "aidd_docs", "memory", "runtime.md"), "Kilo memory\n");
-      await writeFile(
-        marker,
-        "# Runtime\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n"
-      );
-      const bridgePath = join(generatedProject, ".kilo", "plugin", "aidd-context-hooks.js");
-      expect(existsSync(bridgePath)).toBe(true);
-      const memoryScript = join(generatedProject, ".kilo", "hooks", "aidd-context", "memory.cjs");
-      expect(await readFile(memoryScript, "utf8")).toBe(
-        await readFile(
-          join(REPOSITORY_ROOT, "plugins", "aidd-context", "hooks", "memory.cjs"),
-          "utf8"
-        )
-      );
-      await writeFile(join(generatedProject, "probe.txt"), "KILO_LOCAL_READ_OK\n");
-      const payloadPath = join(generatedProject, "payloads.jsonl");
-      const eventPath = join(generatedProject, "events.jsonl");
-      const root = "$" + "{CLAUDE_PLUGIN_ROOT}";
-      const capture = { command: `node ${root}/hooks/capture.js` };
-      const proofSource = join(tempDir, "proof-source");
-      const proofPlugin = join(proofSource, "plugins", "runtime-proof");
-      await mkdir(join(proofSource, ".claude-plugin"), { recursive: true });
-      await mkdir(join(proofPlugin, ".claude-plugin"), { recursive: true });
-      await mkdir(join(proofPlugin, "hooks"));
-      await writeFile(
-        join(proofSource, ".claude-plugin", "marketplace.json"),
-        JSON.stringify({
-          name: "runtime-proof",
-          plugins: [{ name: "runtime-proof", source: "./plugins/runtime-proof" }],
-        })
-      );
-      await writeFile(
-        join(proofPlugin, ".claude-plugin", "plugin.json"),
-        JSON.stringify({ name: "runtime-proof", version: "1.0.0" })
-      );
-      await writeFile(
-        join(proofPlugin, "hooks", "capture.js"),
-        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); if (payload.hook_event_name === "PostToolUse") { process.stderr.write("KILO_HOOK_FEEDBACK\\n"); process.exitCode = 2; } });`
-      );
-      await writeFile(
-        join(proofPlugin, "hooks", "hooks.json"),
-        JSON.stringify({
-          hooks: {
-            SessionStart: [{ hooks: [capture] }],
-            PostToolUse: [{ matcher: "read", hooks: [capture] }],
-            Stop: [{ hooks: [capture] }],
-          },
-        })
-      );
-      phase("build: hook proof project");
-      const proofBuild = await runCli(
-        ["translate", proofSource, "--to", "kilo", "--as", "flat", "--out", generatedProject],
-        projectDir,
-        fakeHome
-      );
-      expect(proofBuild.exitCode, proofBuild.stderr).toBe(0);
-      expect(existsSync(join(generatedProject, ".kilo", "plugin", "runtime-proof-hooks.js"))).toBe(
-        true
-      );
-      await writeFile(
-        join(generatedProject, ".kilo", "plugin", "observer.js"),
-        `import { appendFileSync } from "node:fs"; import { join } from "node:path"; export default { id: "runtime-observer", server: async ({ directory }) => ({ event: async ({ event }) => appendFileSync(join(directory, "events.jsonl"), JSON.stringify(event) + "\\n") }) };`
-      );
-
-      const deliveredConfig = await readFile(configPath, "utf8");
-      phase("Kilo server: startup");
-      const started = await startKilo(generatedProject, env);
-      child = started.child;
-      kiloUrl = `http://127.0.0.1:${started.port}`;
-      phase("Kilo runtime: local model turn and hooks");
-      const run = await execFileAsync(
-        KILO_BIN,
-        [
-          "run",
-          "--attach",
-          kiloUrl,
-          "--dir",
-          generatedProject,
-          "--format",
-          "json",
-          "--auto",
-          "--model",
-          "openai-compatible/fake",
-          "Read probe.txt with the read tool.",
-        ],
-        {
+        const allowed = new Set([
+          "PATH",
+          "Path",
+          "HOME",
+          "USERPROFILE",
+          "APPDATA",
+          "LOCALAPPDATA",
+          "XDG_CONFIG_HOME",
+          "XDG_CACHE_HOME",
+          "XDG_DATA_HOME",
+          "XDG_STATE_HOME",
+          "SystemRoot",
+          "SYSTEMROOT",
+          "windir",
+          "WINDIR",
+          "ComSpec",
+          "COMSPEC",
+          "PATHEXT",
+          "TEMP",
+          "TMP",
+          "LANG",
+          "LC_ALL",
+          "TZ",
+          "KILO_SERVER_PASSWORD",
+          "KILO_TREE_SITTER_WASM_DIR",
+        ]);
+        const env = Object.fromEntries(
+          Object.entries(
+            sandboxedEnv(fakeHome, {
+              ...KILO_ENV,
+              XDG_CACHE_HOME: join(fakeHome, ".cache"),
+              XDG_DATA_HOME: join(fakeHome, ".local", "share"),
+              XDG_STATE_HOME: join(fakeHome, ".local", "state"),
+              XDG_CONFIG_HOME: join(fakeHome, ".config"),
+              APPDATA: join(fakeHome, "AppData", "Roaming"),
+              LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
+              USERPROFILE: fakeHome,
+              KILO_SERVER_PASSWORD: "",
+            })
+          ).filter(([key]) => allowed.has(key))
+        );
+        phase("Kilo CLI: version");
+        const version = await execFileAsync(KILO_BIN, ["--version"], {
+          env,
+          shell: KILO_SHELL,
+          timeout: KILO_QUICK_COMMAND_TIMEOUT_MS,
+        });
+        expect(version.stdout.trim()).toBe("7.7.5");
+        phase("Kilo CLI: debug skill");
+        const skills = await execFileAsync(KILO_BIN, ["debug", "skill"], {
           cwd: generatedProject,
           env,
           shell: KILO_SHELL,
-          timeout: 60000,
+          timeout: KILO_DISCOVERY_TIMEOUT_MS,
           maxBuffer: 8 * 1024 * 1024,
+        });
+        const discoveredSkills = JSON.parse(skills.stdout) as Array<{ location?: string }>;
+        const generatedSkillFiles = (
+          await readdir(join(generatedProject, ".kilo", "skills"), {
+            recursive: true,
+          })
+        ).filter((file) => file.replaceAll("\\", "/").endsWith("/SKILL.md")).length;
+        expect(
+          discoveredSkills.filter((skill) =>
+            skill.location?.replaceAll("\\", "/").includes(".kilo/skills/aidd-")
+          ).length
+        ).toBe(generatedSkillFiles);
+
+        phase("Kilo CLI: agent list (generated project)");
+        const agents = await execFileAsync(KILO_BIN, ["agent", "list"], {
+          cwd: generatedProject,
+          env,
+          shell: KILO_SHELL,
+          timeout: KILO_DISCOVERY_TIMEOUT_MS,
+          maxBuffer: 8 * 1024 * 1024,
+        });
+        for (const role of ["explorer", "executor", "validator", "reviewer"]) {
+          expect(agents.stdout).toContain(`aidd-orchestrator-${role}`);
         }
-      );
-      expect(run.stdout).toContain("KILO_LOCAL_READ_CONFIRMED");
-      phase("Kilo runtime: checking model payload and generated memory");
-      expect(model.requests.flatMap((request) => request.messages)).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            role: "tool",
-            content: expect.stringContaining("KILO_LOCAL_READ_OK"),
-          }),
-          expect.objectContaining({
-            role: "tool",
-            content: expect.stringContaining("KILO_HOOK_FEEDBACK"),
-          }),
-        ])
-      );
-      await expect
-        .poll(() => markerContent(marker), { timeout: 5000 })
-        .toContain("[aidd_docs/memory/runtime.md](aidd_docs/memory/runtime.md)");
-      await expect
-        .poll(async () => (await markerContent(payloadPath)).trim().split("\n").length, {
-          timeout: 5000,
-        })
-        .toBe(3);
-      await stopKilo(child);
-      phase("Kilo server: stopped; validating events and hook processes");
-      child = undefined;
-      const events = (await readFile(eventPath, "utf8"))
-        .trim()
-        .split("\n")
-        .map((line) => JSON.parse(line));
-      const created = events.find((event) => event.type === "session.created");
-      const sessionId = created.properties.sessionID;
-      expect(sessionId).toEqual(expect.any(String));
-      const completed = events.filter(
-        (event) =>
-          event.type === "message.part.updated" &&
-          event.properties.part?.type === "tool" &&
-          event.properties.part.state.status === "completed"
-      );
-      expect(completed).toHaveLength(1);
-      expect(completed[0].properties.part.state.output).toContain("KILO_LOCAL_READ_OK");
-      expect(events.filter((event) => event.type === "session.idle")).toHaveLength(1);
-      const calls = (await readFile(payloadPath, "utf8"))
-        .trim()
-        .split("\n")
-        .map((line) => JSON.parse(line));
-      expect(calls).toHaveLength(3);
-      expect(calls.map((call) => call.payload)).toEqual(
-        expect.arrayContaining([
-          { hook_event_name: "SessionStart", session_id: sessionId, cwd: generatedProject },
+
+        const mcpProject = join(tempDir, "generated-mcp");
+        await mkdir(mcpProject, { recursive: true });
+        phase("build: MCP fixture");
+        const mcpBuild = await runCli(
+          [
+            "translate",
+            join(REPOSITORY_ROOT, "cli/tests/fixtures/framework"),
+            "--to",
+            "kilo",
+            "--as",
+            "flat",
+            "--out",
+            mcpProject,
+          ],
+          projectDir,
+          fakeHome
+        );
+        phase("build: MCP fixture complete");
+        expect(mcpBuild.exitCode, mcpBuild.stderr).toBe(0);
+        phase("Kilo CLI: agent list (MCP fixture)");
+        const fixtureAgents = await execFileAsync(KILO_BIN, ["agent", "list"], {
+          cwd: mcpProject,
+          env,
+          shell: KILO_SHELL,
+          timeout: KILO_DISCOVERY_TIMEOUT_MS,
+          maxBuffer: 8 * 1024 * 1024,
+        });
+        expect(fixtureAgents.stdout).toContain("aidd-test-code-reviewer");
+        phase("Kilo CLI: mcp list");
+        const mcp = await execFileAsync(KILO_BIN, ["mcp", "list"], {
+          cwd: mcpProject,
+          env,
+          shell: KILO_SHELL,
+          timeout: KILO_DISCOVERY_TIMEOUT_MS,
+          maxBuffer: 8 * 1024 * 1024,
+        });
+        expect(mcp.stdout).toContain("aidd-test-aidd-test-server");
+
+        const marker = join(generatedProject, "AGENTS.md");
+        await mkdir(join(generatedProject, "aidd_docs", "memory"), { recursive: true });
+        await writeFile(
+          join(generatedProject, "aidd_docs", "memory", "runtime.md"),
+          "Kilo memory\n"
+        );
+        await writeFile(
+          marker,
+          "# Runtime\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n"
+        );
+        const bridgePath = join(generatedProject, ".kilo", "plugin", "aidd-context-hooks.js");
+        expect(existsSync(bridgePath)).toBe(true);
+        const memoryScript = join(generatedProject, ".kilo", "hooks", "aidd-context", "memory.cjs");
+        expect(await readFile(memoryScript, "utf8")).toBe(
+          await readFile(
+            join(REPOSITORY_ROOT, "plugins", "aidd-context", "hooks", "memory.cjs"),
+            "utf8"
+          )
+        );
+        await writeFile(join(generatedProject, "probe.txt"), "KILO_LOCAL_READ_OK\n");
+        const payloadPath = join(generatedProject, "payloads.jsonl");
+        const eventPath = join(generatedProject, "events.jsonl");
+        const root = "$" + "{CLAUDE_PLUGIN_ROOT}";
+        const capture = { command: `node ${root}/hooks/capture.js` };
+        const proofSource = join(tempDir, "proof-source");
+        const proofPlugin = join(proofSource, "plugins", "runtime-proof");
+        await mkdir(join(proofSource, ".claude-plugin"), { recursive: true });
+        await mkdir(join(proofPlugin, ".claude-plugin"), { recursive: true });
+        await mkdir(join(proofPlugin, "hooks"));
+        await writeFile(
+          join(proofSource, ".claude-plugin", "marketplace.json"),
+          JSON.stringify({
+            name: "runtime-proof",
+            plugins: [{ name: "runtime-proof", source: "./plugins/runtime-proof" }],
+          })
+        );
+        await writeFile(
+          join(proofPlugin, ".claude-plugin", "plugin.json"),
+          JSON.stringify({ name: "runtime-proof", version: "1.0.0" })
+        );
+        await writeFile(
+          join(proofPlugin, "hooks", "capture.js"),
+          `import { appendFileSync } from "node:fs"; import { join } from "node:path"; let input = ""; process.stdin.on("data", chunk => input += chunk); process.stdin.on("end", () => { const payload = JSON.parse(input); appendFileSync(join(payload.cwd, "payloads.jsonl"), JSON.stringify({ pid: process.pid, payload }) + "\\n"); if (payload.hook_event_name === "PostToolUse") { process.stderr.write("KILO_HOOK_FEEDBACK\\n"); process.exitCode = 2; } });`
+        );
+        await writeFile(
+          join(proofPlugin, "hooks", "hooks.json"),
+          JSON.stringify({
+            hooks: {
+              SessionStart: [{ hooks: [capture] }],
+              PostToolUse: [{ matcher: "read", hooks: [capture] }],
+              Stop: [{ hooks: [capture] }],
+            },
+          })
+        );
+        phase("build: hook proof project");
+        const proofBuild = await runCli(
+          ["translate", proofSource, "--to", "kilo", "--as", "flat", "--out", generatedProject],
+          projectDir,
+          fakeHome
+        );
+        expect(proofBuild.exitCode, proofBuild.stderr).toBe(0);
+        expect(
+          existsSync(join(generatedProject, ".kilo", "plugin", "runtime-proof-hooks.js"))
+        ).toBe(true);
+        await writeFile(
+          join(generatedProject, ".kilo", "plugin", "observer.js"),
+          `import { appendFileSync } from "node:fs"; import { join } from "node:path"; export default { id: "runtime-observer", server: async ({ directory }) => ({ event: async ({ event }) => appendFileSync(join(directory, "events.jsonl"), JSON.stringify(event) + "\\n") }) };`
+        );
+
+        const deliveredConfig = await readFile(configPath, "utf8");
+        phase("Kilo server: startup");
+        const started = await startKilo(generatedProject, env);
+        child = started.child;
+        kiloUrl = `http://127.0.0.1:${started.port}`;
+        phase("Kilo runtime: local model turn and hooks");
+        const run = await execFileAsync(
+          KILO_BIN,
+          [
+            "run",
+            "--attach",
+            kiloUrl,
+            "--dir",
+            generatedProject,
+            "--format",
+            "json",
+            "--auto",
+            "--model",
+            "openai-compatible/fake",
+            "Read probe.txt with the read tool.",
+          ],
           {
-            hook_event_name: "PostToolUse",
-            session_id: sessionId,
             cwd: generatedProject,
-            tool_name: "read",
-            tool_input: { filePath: "probe.txt", file_path: "probe.txt" },
-          },
-          {
-            hook_event_name: "Stop",
-            session_id: sessionId,
-            cwd: generatedProject,
-            stop_hook_active: false,
-          },
-        ])
-      );
-      for (const call of calls) await expect.poll(() => alive(call.pid)).toBe(false);
-      expect(await readFile(configPath, "utf8")).toBe(deliveredConfig);
-    } finally {
-      phase("cleanup: stopping processes and closing local model");
-      try {
-        if (child) await stopKilo(child);
-        if (kiloUrl)
-          await expect(fetch(kiloUrl, { signal: AbortSignal.timeout(1000) })).rejects.toThrow();
+            env,
+            shell: KILO_SHELL,
+            timeout: 60000,
+            maxBuffer: 8 * 1024 * 1024,
+          }
+        );
+        expect(run.stdout).toContain("KILO_LOCAL_READ_CONFIRMED");
+        phase("Kilo runtime: checking model payload and generated memory");
+        expect(model.requests.flatMap((request) => request.messages)).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              role: "tool",
+              content: expect.stringContaining("KILO_LOCAL_READ_OK"),
+            }),
+            expect.objectContaining({
+              role: "tool",
+              content: expect.stringContaining("KILO_HOOK_FEEDBACK"),
+            }),
+          ])
+        );
+        await expect
+          .poll(() => markerContent(marker), { timeout: 5000 })
+          .toContain("[aidd_docs/memory/runtime.md](aidd_docs/memory/runtime.md)");
+        await expect
+          .poll(async () => (await markerContent(payloadPath)).trim().split("\n").length, {
+            timeout: 5000,
+          })
+          .toBe(3);
+        await stopKilo(child);
+        phase("Kilo server: stopped; validating events and hook processes");
+        child = undefined;
+        const events = (await readFile(eventPath, "utf8"))
+          .trim()
+          .split("\n")
+          .map((line) => JSON.parse(line));
+        const created = events.find((event) => event.type === "session.created");
+        const sessionId = created.properties.sessionID;
+        expect(sessionId).toEqual(expect.any(String));
+        const completed = events.filter(
+          (event) =>
+            event.type === "message.part.updated" &&
+            event.properties.part?.type === "tool" &&
+            event.properties.part.state.status === "completed"
+        );
+        expect(completed).toHaveLength(1);
+        expect(completed[0].properties.part.state.output).toContain("KILO_LOCAL_READ_OK");
+        expect(events.filter((event) => event.type === "session.idle")).toHaveLength(1);
+        const calls = (await readFile(payloadPath, "utf8"))
+          .trim()
+          .split("\n")
+          .map((line) => JSON.parse(line));
+        expect(calls).toHaveLength(3);
+        expect(calls.map((call) => call.payload)).toEqual(
+          expect.arrayContaining([
+            { hook_event_name: "SessionStart", session_id: sessionId, cwd: generatedProject },
+            {
+              hook_event_name: "PostToolUse",
+              session_id: sessionId,
+              cwd: generatedProject,
+              tool_name: "read",
+              tool_input: { filePath: "probe.txt", file_path: "probe.txt" },
+            },
+            {
+              hook_event_name: "Stop",
+              session_id: sessionId,
+              cwd: generatedProject,
+              stop_hook_active: false,
+            },
+          ])
+        );
+        for (const call of calls) await expect.poll(() => alive(call.pid)).toBe(false);
+        expect(await readFile(configPath, "utf8")).toBe(deliveredConfig);
       } finally {
+        phase("cleanup: stopping processes and closing local model");
         try {
-          model.server.closeAllConnections();
-          await new Promise<void>((resolve, reject) =>
-            model.server.close((error) => (error ? reject(error) : resolve()))
-          );
-          expect(model.server.listening).toBe(false);
+          if (child) await stopKilo(child);
+          if (kiloUrl)
+            await expect(fetch(kiloUrl, { signal: AbortSignal.timeout(1000) })).rejects.toThrow();
         } finally {
-          await cleanup();
-          phase("cleanup: temporary environment removed");
+          try {
+            model.server.closeAllConnections();
+            await new Promise<void>((resolve, reject) =>
+              model.server.close((error) => (error ? reject(error) : resolve()))
+            );
+            expect(model.server.listening).toBe(false);
+          } finally {
+            await cleanup();
+            phase("cleanup: temporary environment removed");
+          }
         }
       }
-    }
-  }, KILO_RUNTIME_TIMEOUT_MS);
+    },
+    KILO_RUNTIME_TIMEOUT_MS
+  );
 });
