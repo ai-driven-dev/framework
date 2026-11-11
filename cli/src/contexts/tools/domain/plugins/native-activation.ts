@@ -1,5 +1,40 @@
+import { CapabilityConfigError } from "../../../../kernel/errors.js";
+
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
+
+/** How a host's own plugin registry is laid out. The names describe the file's shape, never
+ * the tool that keeps it, so a second host with the same shape declares the same layout. */
+export type PluginRegistryLayout =
+  | "plugin-entries-by-scope"
+  | "toml-plugin-tables"
+  | "enabled-plugins-map";
+
+/** How a host's own marketplace registry is laid out. */
+export type MarketplaceRegistryLayout = "install-locations-by-name";
+
+/** How a host's marketplace list answers when asked for JSON. */
+export type MarketplaceListLayout = "marketplaces-with-source" | "name-source-rows";
+
+/** Where a host's registry lives, given a homedir, and the layout its file is read as. */
+export interface HostRegistryDeclaration<Layout extends string> {
+  readonly location: (homedir: string) => string;
+  readonly layout: Layout;
+}
+
+/** Where a native marketplace's current source is read from: the host's own registry, or its
+ * structured list command, whose words the declaration carries. */
+export type MarketplaceSourcesDeclaration =
+  | { readonly from: "marketplace-registry" }
+  | {
+      readonly from: "list-command";
+      readonly args: readonly string[];
+      readonly layout: MarketplaceListLayout;
+      /** How the host is named in what a parse refuses. */
+      readonly hostLabel: string;
+      readonly unavailableMessage: string;
+      readonly unverifiedMessage: string;
+    };
 
 /**
  * A tool that writes its own marketplace registration, through its own CLI: driving the
@@ -7,7 +42,8 @@ export type EnvironmentReader = (name: string) => string | undefined;
  * `binary` keys the matching `NativePluginActivator`.
  */
 export interface NativeActivationSpec {
-  binary: "claude" | "codex" | "copilot";
+  /** Names the host's executable and keys the matching `NativePluginActivator`. Refused when empty. */
+  binary: string;
   /** One mapping serves add and remove: a remove omitting the scope the add used drops
    * Claude's declaration from every scope at once. A project-scoped marketplace maps to
    * Claude's *local* scope — the registration names an absolute path, wrong for everyone
@@ -43,11 +79,19 @@ export interface NativeActivationSpec {
   /** Arguments every `plugin <verb> <ref>` call carries, after the reference. Claude needs
    * `--yes` on install and uninstall alike: a headless stdin can answer no prompt. */
   pluginArgs?: readonly string[];
+  /** This tool's own plugin registry: the file it keeps and the layout it is read as. Read by
+   * `doctor` to compare what the host loads with what a manifest claims. Omit for a tool whose
+   * registry was never measured; it is then reported unanswerable rather than assumed to agree. */
+  pluginRegistry?: HostRegistryDeclaration<PluginRegistryLayout>;
   /** Root of this tool's own marketplace registry, given a homedir — a root, not a
    * per-marketplace path. Declared for Claude alone, which derives a registration's name
    * from the source's own catalog and silently repoints a same-named entry from a different
    * source; its absence is what keeps the guard reading it claude-only. */
-  marketplaceRegistry?: (homedir: string) => string;
+  marketplaceRegistry?: HostRegistryDeclaration<MarketplaceRegistryLayout>;
+  /** Where a marketplace's current source is read from before a native mutation. Omit and no
+   * source witness exists for this tool. `from: "marketplace-registry"` requires
+   * `marketplaceRegistry`. */
+  marketplaceSources?: MarketplaceSourcesDeclaration;
   /** Root of this tool's own plugin cache, given a homedir. Declared only where the host's
    * own CLI leaves something behind after `clean` drove its uninstall and remove: claude
    * keeps the whole built tree, marked `.orphaned_at`; codex the empty `cache/<hostName>/`
@@ -61,6 +105,8 @@ export interface NativeActivationSpec {
 
 export class NativeActivation implements NativeActivationSpec {
   readonly binary: NativeActivationSpec["binary"];
+  readonly pluginRegistry?: NativeActivationSpec["pluginRegistry"];
+  readonly marketplaceSources?: NativeActivationSpec["marketplaceSources"];
   readonly enableVerb: NativeActivationSpec["enableVerb"];
   readonly disableVerb: NativeActivationSpec["disableVerb"];
   readonly scopeArgs?: NativeActivationSpec["scopeArgs"];
@@ -76,7 +122,15 @@ export class NativeActivation implements NativeActivationSpec {
   readonly userSettingsPath?: NativeActivationSpec["userSettingsPath"];
 
   constructor(spec: NativeActivationSpec) {
+    if (spec.binary === "")
+      throw new CapabilityConfigError("A native activation declares an empty binary");
+    if (spec.marketplaceSources?.from === "marketplace-registry" && !spec.marketplaceRegistry)
+      throw new CapabilityConfigError(
+        "A native activation reads its marketplace sources from a registry it does not declare"
+      );
     this.binary = spec.binary;
+    this.pluginRegistry = spec.pluginRegistry;
+    this.marketplaceSources = spec.marketplaceSources;
     this.enableVerb = spec.enableVerb;
     this.disableVerb = spec.disableVerb;
     this.scopeArgs = spec.scopeArgs;

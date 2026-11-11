@@ -85,7 +85,7 @@ function activationAnswer(activation: NativeActivation | null): unknown {
     enableVerb: activation.enableVerb ?? null,
     disableVerb: activation.disableVerb ?? null,
     pluginArgs: activation.pluginArgs ?? null,
-    marketplaceRegistry: activation.marketplaceRegistry?.(HOME) ?? null,
+    marketplaceRegistry: activation.marketplaceRegistry?.location(HOME) ?? null,
     pluginCacheDir: activation.pluginCacheDir?.(HOME) ?? null,
     userSettingsPath: {
       noEnv: activation.userSettingsPath?.(HOME, NO_ENV) ?? null,

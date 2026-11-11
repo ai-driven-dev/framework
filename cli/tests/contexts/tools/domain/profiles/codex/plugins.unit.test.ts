@@ -15,6 +15,11 @@ describe("codex plugins", () => {
         enableVerb: "add",
         disableVerb: "remove",
         pluginCacheDir: expect.any(Function),
+        pluginRegistry: { location: expect.any(Function), layout: "toml-plugin-tables" },
+        marketplaceSources: expect.objectContaining({
+          from: "list-command",
+          layout: "marketplaces-with-source",
+        }),
         userSettingsPath: expect.any(Function),
       });
     });

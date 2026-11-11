@@ -1,9 +1,6 @@
 import { readFile, realpath } from "node:fs/promises";
-import { join } from "node:path";
 import { describeError } from "../../../kernel/describe-error.js";
-import { resolveHomeDir } from "../../../kernel/reading/home-dir.js";
 import type { MarketplaceScope } from "../../../kernel/scope.js";
-import type { AiToolId } from "../../../kernel/tool.js";
 import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReader,
@@ -17,31 +14,17 @@ function failedRead(location: string, error: unknown): HostPluginRegistryReading
 }
 
 /**
- * One reader per host whose own plugin registry was measured; a tool absent from the map is
- * one nothing here claims to know, and the diagnostic reports it unanswerable rather than
- * assuming it agrees. The shapes measured:
+ * One reader per registry layout a host's profile declares. The file comes from the
+ * declaration, and a tool whose profile declares none is one nothing here claims to know: the
+ * diagnostic reports it unanswerable rather than assuming it agrees. The layouts measured:
  *
- *   Claude Code  ~/.claude/plugins/installed_plugins.json   { version, plugins: { ref: [ … ] } }
- *   Codex        ~/.codex/config.toml                       [plugins."ref"] enabled = true
- *   Copilot      ~/.copilot/settings.json                   { enabledPlugins: { ref: true } }
+ *   plugin-entries-by-scope  { version, plugins: { ref: [ … ] } }
+ *   toml-plugin-tables       [plugins."ref"] enabled = true
+ *   enabled-plugins-map      { enabledPlugins: { ref: true } }
  *
- * Copilot's registry is `settings.json`, never `config.json`, whose `installedPlugins` reads
- * empty on a machine that has run installs. `copilot plugin uninstall` sets a key to `false`
- * rather than deleting it, so registered-but-off is an ordinary state, not a Codex-only one.
+ * A host that uninstalls by setting a key to `false` rather than deleting it makes
+ * registered-but-off an ordinary state, not a TOML-only one.
  */
-export function hostPluginRegistryReaders(
-  home: string = resolveHomeDir()
-): ReadonlyMap<AiToolId, HostPluginRegistryReader> {
-  return new Map<AiToolId, HostPluginRegistryReader>([
-    [
-      "claude",
-      new ClaudeInstalledPluginsReader(join(home, ".claude", "plugins", "installed_plugins.json")),
-    ],
-    ["codex", new CodexConfigPluginsReader(join(home, ".codex", "config.toml"))],
-    ["copilot", new CopilotSettingsPluginsReader(join(home, ".copilot", "settings.json"))],
-  ]);
-}
-
 /**
  * Claude Code's own registry: a JSON document whose `plugins` object is keyed by the same
  * `<plugin>@<marketplace>` ref `enabledPlugins` uses, each key holding one entry per scope the
@@ -49,7 +32,7 @@ export function hostPluginRegistryReaders(
  * scope also carries `projectPath`, which is what tells one project's ref from a machine-wide
  * one.
  */
-class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
+export class PluginEntriesByScopeReader implements HostPluginRegistryReader {
   constructor(private readonly path: string) {}
 
   async read(projectRoot: string): Promise<HostPluginRegistryReading> {
@@ -60,7 +43,7 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
       return failedRead(this.path, error);
     }
     try {
-      const parsed = JSON.parse(content) as { plugins?: Record<string, ClaudeEntry[]> };
+      const parsed = JSON.parse(content) as { plugins?: Record<string, ScopedEntry[]> };
       const plugins = parsed.plugins;
       if (plugins === undefined || typeof plugins !== "object") {
         return { location: this.path, unreadable: "no `plugins` object" };
@@ -86,7 +69,7 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
  * through: a host that knows a plugin and declines it must not print like one that never
  * heard of it.
  */
-class CodexConfigPluginsReader implements HostPluginRegistryReader {
+export class TomlPluginTablesReader implements HostPluginRegistryReader {
   constructor(private readonly path: string) {}
 
   // `projectRoot` is unused: Codex's plugin tables carry `enabled` and nothing else — no path,
@@ -98,7 +81,7 @@ class CodexConfigPluginsReader implements HostPluginRegistryReader {
     } catch (error) {
       return failedRead(this.path, error);
     }
-    return { location: this.path, refs: scanCodexPluginTables(content) };
+    return { location: this.path, refs: scanTomlPluginTables(content) };
   }
 }
 
@@ -107,7 +90,7 @@ class CodexConfigPluginsReader implements HostPluginRegistryReader {
  * `<plugin>@<marketplace>` ref as every other host and carrying a boolean. No project binding,
  * so like Codex it answers for the machine and cannot answer for one project.
  */
-class CopilotSettingsPluginsReader implements HostPluginRegistryReader {
+export class EnabledPluginsMapReader implements HostPluginRegistryReader {
   constructor(private readonly path: string) {}
 
   async read(_projectRoot: string): Promise<HostPluginRegistryReading> {
@@ -133,10 +116,10 @@ class CopilotSettingsPluginsReader implements HostPluginRegistryReader {
   }
 }
 
-const CODEX_PLUGIN_HEADER = /^\[plugins\."(.+?)"\]\s*(?:#.*)?$/u;
-const CODEX_TABLE_HEADER = /^\[/u;
-const CODEX_ENABLED_LINE = /^enabled\s*=\s*(true|false)\s*(?:#.*)?$/u;
-const CODEX_MULTILINE_DELIMITER = /"""|'''/gu;
+const TOML_PLUGIN_HEADER = /^\[plugins\."(.+?)"\]\s*(?:#.*)?$/u;
+const TOML_TABLE_HEADER = /^\[/u;
+const TOML_ENABLED_LINE = /^enabled\s*=\s*(true|false)\s*(?:#.*)?$/u;
+const TOML_MULTILINE_DELIMITER = /"""|'''/gu;
 
 /**
  * Reads each plugin table's body, and only outside multi-line strings: a header spelled inside
@@ -148,12 +131,12 @@ const CODEX_MULTILINE_DELIMITER = /"""|'''/gu;
  * between "the host listed this plugin" and "listed it and said nothing", the listing is the
  * fact.
  */
-function scanCodexPluginTables(content: string): ReadonlyMap<string, HostPluginRegistryEntry> {
+function scanTomlPluginTables(content: string): ReadonlyMap<string, HostPluginRegistryEntry> {
   const refs = new Map<string, HostPluginRegistryEntry>();
   const lines = outsideMultilineStrings(content.split("\n"));
   for (const [index, line] of lines.entries()) {
     if (line === null) continue;
-    const ref = CODEX_PLUGIN_HEADER.exec(line.trim())?.[1];
+    const ref = TOML_PLUGIN_HEADER.exec(line.trim())?.[1];
     if (ref === undefined || refs.has(ref)) continue;
     refs.set(ref, { enabled: enabledInTableBody(lines, index + 1) });
   }
@@ -171,7 +154,7 @@ function outsideMultilineStrings(lines: readonly string[]): readonly (string | n
   let inside = false;
   return lines.map((line) => {
     const wasInside = inside;
-    const delimiters = line.match(CODEX_MULTILINE_DELIMITER)?.length ?? 0;
+    const delimiters = line.match(TOML_MULTILINE_DELIMITER)?.length ?? 0;
     if (delimiters % 2 === 1) inside = !inside;
     return wasInside ? null : line;
   });
@@ -185,9 +168,9 @@ function enabledInTableBody(lines: readonly (string | null)[], from: number): bo
     const line = lines[at];
     if (line === null || line === undefined) continue;
     const trimmed = line.trim();
-    if (CODEX_TABLE_HEADER.test(trimmed)) return true;
+    if (TOML_TABLE_HEADER.test(trimmed)) return true;
     if (trimmed === "" || trimmed.startsWith("#")) continue;
-    const enabled = CODEX_ENABLED_LINE.exec(trimmed);
+    const enabled = TOML_ENABLED_LINE.exec(trimmed);
     if (enabled !== null) return enabled[1] === "true";
   }
   return true;
@@ -196,7 +179,7 @@ function enabledInTableBody(lines: readonly (string | null)[], from: number): bo
 /** One installed-plugin entry, narrowed to the two fields that decide whether a ref counts for
  * the project being diagnosed. Everything else Claude records there describes what was
  * installed, never where it applies. */
-interface ClaudeEntry {
+interface ScopedEntry {
   readonly scope?: string;
   readonly projectPath?: string;
 }
@@ -207,7 +190,7 @@ interface ClaudeEntry {
  * match whatever the array's order, so a caller choosing an uninstall's own scope reads the
  * answer that is true rather than the one that sorted first. */
 async function scopeForProject(
-  entries: readonly ClaudeEntry[],
+  entries: readonly ScopedEntry[],
   projectRoot: string
 ): Promise<MarketplaceScope | null> {
   if (!Array.isArray(entries)) return null;

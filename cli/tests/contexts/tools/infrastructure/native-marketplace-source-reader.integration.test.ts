@@ -1,11 +1,10 @@
 import { spawnSync } from "node:child_process";
 import { describe, expect, it, vi } from "vitest";
-import { codexMarketplaceSourceListContract } from "../../../../src/contexts/tools/domain/profiles/codex/native-marketplace-source.js";
-import { copilotMarketplaceSourceListContract } from "../../../../src/contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
 import {
   HostRegistryMarketplaceSourceReaderAdapter,
   NativeMarketplaceSourceReaderAdapter,
 } from "../../../../src/contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
+import { listContractOf } from "../../../helpers/list-command-contract.js";
 
 vi.mock("node:child_process", () => ({ spawnSync: vi.fn() }));
 const spawn = vi.mocked(spawnSync);
@@ -68,9 +67,9 @@ describe("native marketplace source reader", () => {
       )
     );
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-b");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-b"
+    );
 
     expect(spawn).toHaveBeenCalledWith(
       "codex",
@@ -88,9 +87,9 @@ describe("native marketplace source reader", () => {
   it("proves an empty Codex host only from a valid structured empty list", async () => {
     spawn.mockReturnValue(result('{"marketplaces":[]}'));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-a"
+    );
 
     expect(reading.entries?.size).toBe(0);
     expect(reading.unreadable).toBeUndefined();
@@ -99,9 +98,9 @@ describe("native marketplace source reader", () => {
   it("marks a named Codex row without configured source unproven", async () => {
     spawn.mockReturnValue(result('{"marketplaces":[{"name":"foreign","root":"/foreign/cache"}]}'));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-a"
+    );
 
     expect(reading.entries?.has("foreign")).toBe(true);
     expect(reading.entries?.get("foreign")).toBeNull();
@@ -116,9 +115,9 @@ describe("native marketplace source reader", () => {
     ]) {
       spawn.mockReturnValue(result(output));
 
-      const reading = await new NativeMarketplaceSourceReaderAdapter(
-        codexMarketplaceSourceListContract
-      ).read("/project-a");
+      const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+        "/project-a"
+      );
 
       expect(reading.entries).toBeUndefined();
       expect(reading.unreadable).toContain("codex marketplace list");
@@ -140,9 +139,9 @@ describe("native marketplace source reader", () => {
   ])("keeps Codex provenance unreadable for a %s", async (_name, payload) => {
     spawn.mockReturnValue(result(JSON.stringify(payload)));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-a"
+    );
 
     expect(reading.entries).toBeUndefined();
     expect(reading.unreadable).toContain("codex marketplace list could not prove a source");
@@ -166,9 +165,9 @@ describe("native marketplace source reader", () => {
       )
     );
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-a"
+    );
 
     expect(reading.entries).toBeUndefined();
     expect(reading.unreadable).toContain("codex marketplace list could not prove a source");
@@ -190,9 +189,9 @@ describe("native marketplace source reader", () => {
       )
     );
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-a"
+    );
 
     expect(reading.entries).toBeUndefined();
     expect(reading.unreadable).toContain("codex marketplace list could not prove a source");
@@ -208,9 +207,9 @@ describe("native marketplace source reader", () => {
   ])("identifies the provenance repair needed for %s", async (output, diagnosis) => {
     spawn.mockReturnValue(result(output));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-a"
+    );
 
     expect(reading.entries).toBeUndefined();
     expect(reading.unreadable).toBe(
@@ -221,9 +220,9 @@ describe("native marketplace source reader", () => {
   it("gives an actionable Codex diagnostic without treating a failed listing as absence", async () => {
     spawn.mockReturnValue(result("", 1, "permission denied"));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      codexMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("codex")).read(
+      "/project-a"
+    );
 
     expect(reading.entries).toBeUndefined();
     expect(reading.unreadable).toBe(
@@ -234,9 +233,9 @@ describe("native marketplace source reader", () => {
   it("refuses Copilot 1.0.83's unsupported --json without a human-text fallback", async () => {
     spawn.mockReturnValue(result("", 1, "error: unknown option '--json'"));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      copilotMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("copilot")).read(
+      "/project-a"
+    );
 
     expect(spawn).toHaveBeenCalledWith(
       "copilot",
@@ -258,9 +257,9 @@ describe("native marketplace source reader", () => {
       )
     );
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      copilotMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("copilot")).read(
+      "/project-a"
+    );
 
     expect(reading.entries?.get("aidd-framework")).toEqual({
       kind: "effective-list",
@@ -282,9 +281,9 @@ describe("native marketplace source reader", () => {
   ])("refuses the Copilot listing %s rather than guess a source", async (stdout) => {
     spawn.mockReturnValue(result(stdout));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      copilotMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("copilot")).read(
+      "/project-a"
+    );
 
     expect(reading.entries).toBeUndefined();
     expect(reading.unreadable).toMatch(
@@ -295,9 +294,9 @@ describe("native marketplace source reader", () => {
   it("leaves a Copilot source reading just 'Local: ' unproven", async () => {
     spawn.mockReturnValue(result('[{"name":"x","source":"Local: "}]'));
 
-    const reading = await new NativeMarketplaceSourceReaderAdapter(
-      copilotMarketplaceSourceListContract
-    ).read("/project-a");
+    const reading = await new NativeMarketplaceSourceReaderAdapter(listContractOf("copilot")).read(
+      "/project-a"
+    );
 
     expect(reading.entries?.get("x")).toBeNull();
   });

@@ -5,6 +5,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
@@ -14,7 +15,6 @@ import type {
   HostMarketplaceRegistryReading,
 } from "../../../../src/contexts/tools/domain/ports/host-marketplace-registry-reader.js";
 import type { NativeMarketplaceSourceReader } from "../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
-import { hostMarketplaceRegistryReaders } from "../../../../src/contexts/tools/infrastructure/host-marketplace-registry-reader-adapter.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
 import { AIDD_DIR } from "../../../../src/kernel/paths.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
@@ -695,7 +695,7 @@ describe("clean purges a host's own plugin cache", () => {
     const activator = new FakeNativePluginActivator({ available: true });
     // The real adapter, resolved from the same sentinel the cache root is composed from — a
     // fake reader built independently of `homeDir` could never catch the two halves drifting.
-    const reader = hostMarketplaceRegistryReaders(SENTINEL_HOME).get("claude");
+    const reader = wireHostRegistration(SENTINEL_HOME).marketplaceRegistries.get("claude");
     if (reader === undefined) throw new Error("claude must declare marketplaceRegistry");
 
     const useCase = buildUseCase({

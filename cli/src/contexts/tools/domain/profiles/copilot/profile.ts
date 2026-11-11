@@ -281,6 +281,23 @@ export const copilot = defineAiTool({
         // Where `copilot plugin marketplace add`/`install` land, measured against the real
         // binary. Never written by aidd; named here for a diagnostic alone.
         userSettingsPath: (h) => join(h, ".copilot", "settings.json"),
+        // Copilot's registry is `settings.json`, never `config.json`, whose `installedPlugins`
+        // reads empty on a machine that has run installs.
+        pluginRegistry: {
+          location: (h) => join(h, ".copilot", "settings.json"),
+          layout: "enabled-plugins-map",
+        },
+        // 1.0.98 answers `--json`; the installed 1.0.83 rejects it and stays unreadable.
+        marketplaceSources: {
+          from: "list-command",
+          args: ["plugin", "marketplace", "list", "--json"],
+          layout: "name-source-rows",
+          hostLabel: "Copilot",
+          unavailableMessage:
+            "Copilot CLI marketplace list --json unavailable; upgrade to a supported binary and retry",
+          unverifiedMessage:
+            "Copilot CLI marketplace list --json output shape is not verified; upgrade to a supported binary and reconcile manually",
+        },
       },
       // Copilot CLI and cloud agent read this repository file; enabledPlugins auto-installs.
       // Keep machine-local marketplace paths out and project only proven native refs.

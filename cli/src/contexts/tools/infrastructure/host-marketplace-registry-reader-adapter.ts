@@ -1,37 +1,17 @@
 import { readFile, realpath } from "node:fs/promises";
 import { describeError } from "../../../kernel/describe-error.js";
-import { resolveHomeDir } from "../../../kernel/reading/home-dir.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
 import type {
   HostMarketplaceRegistryReader,
   HostMarketplaceRegistryReading,
 } from "../domain/ports/host-marketplace-registry-reader.js";
-import { nativeActivationOf } from "../domain/registry.js";
 
 /**
- * One reader per host whose own profile declares `NativeActivation.marketplaceRegistry` — claude
- * only, today: Codex refuses a re-add from a different source itself and Copilot refuses every
- * re-add, so neither declares a resolver. The path is never repeated as a literal here; it comes
- * from calling that resolver, since a second hard-coded copy is exactly what let it drift from
- * the profile unnoticed.
- *
- * Of the entry a real `claude plugin marketplace add` writes, `installLocation` is the field
- * that decides what the name currently resolves to — `source.path` is only what the CLI was
- * pointed at.
+ * Reads a host's own marketplace registry: a JSON object keyed by marketplace name. Of the
+ * entry a real `claude plugin marketplace add` writes, `installLocation` is the field that
+ * decides what the name currently resolves to — `source.path` is only what the CLI was
+ * pointed at. The file is the declaration's, never repeated as a literal here.
  */
-export function hostMarketplaceRegistryReaders(
-  home: string = resolveHomeDir()
-): ReadonlyMap<AiToolId, HostMarketplaceRegistryReader> {
-  const readers = new Map<AiToolId, HostMarketplaceRegistryReader>();
-  for (const toolId of AI_TOOL_IDS) {
-    const registryPath = nativeActivationOf(toolId)?.marketplaceRegistry?.(home);
-    if (registryPath === undefined) continue;
-    readers.set(toolId, new ClaudeKnownMarketplacesReader(registryPath));
-  }
-  return readers;
-}
-
-class ClaudeKnownMarketplacesReader implements HostMarketplaceRegistryReader {
+export class InstallLocationsByNameReader implements HostMarketplaceRegistryReader {
   constructor(private readonly path: string) {}
 
   async read(): Promise<HostMarketplaceRegistryReading> {

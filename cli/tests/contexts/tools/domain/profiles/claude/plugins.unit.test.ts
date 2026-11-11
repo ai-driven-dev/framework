@@ -25,7 +25,7 @@ describe("claude plugins", () => {
 
     it("declares its own marketplace registry and plugin cache root, for clean's own purge", () => {
       const activation = nativeOf(claude.section("plugins")).activation();
-      expect(activation?.marketplaceRegistry?.("/home/tester")).toBe(
+      expect(activation?.marketplaceRegistry?.location("/home/tester")).toBe(
         join("/home/tester", ".claude", "plugins", "known_marketplaces.json")
       );
       expect(activation?.pluginCacheDir?.("/home/tester")).toBe(
@@ -50,7 +50,12 @@ describe("claude plugins", () => {
         disableVerb: "uninstall",
         upgradeVerb: "update",
         pluginArgs: ["--yes"],
-        marketplaceRegistry: expect.any(Function),
+        marketplaceRegistry: {
+          location: expect.any(Function),
+          layout: "install-locations-by-name",
+        },
+        marketplaceSources: { from: "marketplace-registry" },
+        pluginRegistry: { location: expect.any(Function), layout: "plugin-entries-by-scope" },
         pluginCacheDir: expect.any(Function),
         userSettingsPath: expect.any(Function),
       });

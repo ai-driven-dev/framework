@@ -2,11 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { codexMarketplaceSourceListContract } from "../../../../src/contexts/tools/domain/profiles/codex/native-marketplace-source.js";
-import { copilotMarketplaceSourceListContract } from "../../../../src/contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
-import { hostMarketplaceRegistryReaders } from "../../../../src/contexts/tools/infrastructure/host-marketplace-registry-reader-adapter.js";
-import { hostPluginRegistryReaders } from "../../../../src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
-import { wireTools } from "../../../../src/runtime/wiring/tools.js";
+import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
+import { listContractOf } from "../../../helpers/list-command-contract.js";
 
 /**
  * What the host-registration derivation produces today, per native tool: the map keys, the
@@ -33,7 +30,7 @@ async function write(relative: string, content: string): Promise<void> {
 
 describe("the plugin registry readers", () => {
   it("are keyed by the three native tools, and by no other", () => {
-    expect([...hostPluginRegistryReaders(home).keys()]).toStrictEqual([
+    expect([...wireHostRegistration(home).pluginRegistries.keys()].sort()).toStrictEqual([
       "claude",
       "codex",
       "copilot",
@@ -45,7 +42,7 @@ describe("the plugin registry readers", () => {
     ["codex", join(".codex", "config.toml")],
     ["copilot", join(".copilot", "settings.json")],
   ] as const)("read %s from its own registry file under the home", async (tool, relative) => {
-    const reading = await hostPluginRegistryReaders(home).get(tool)?.read(PROJECT);
+    const reading = await wireHostRegistration(home).pluginRegistries.get(tool)?.read(PROJECT);
 
     expect(reading).toStrictEqual({ location: join(home, relative), absent: true });
   });
@@ -54,7 +51,7 @@ describe("the plugin registry readers", () => {
     const previous = process.env.CODEX_HOME;
     process.env.CODEX_HOME = join(home, "elsewhere");
     try {
-      const reading = await hostPluginRegistryReaders(home).get("codex")?.read(PROJECT);
+      const reading = await wireHostRegistration(home).pluginRegistries.get("codex")?.read(PROJECT);
 
       expect(reading?.location).toBe(join(home, ".codex", "config.toml"));
     } finally {
@@ -69,7 +66,7 @@ describe("the plugin registry readers", () => {
       JSON.stringify({ plugins: { "a@m": [{ scope: "user" }] } })
     );
 
-    const reading = await hostPluginRegistryReaders(home).get("claude")?.read(PROJECT);
+    const reading = await wireHostRegistration(home).pluginRegistries.get("claude")?.read(PROJECT);
 
     expect(reading?.refs?.get("a@m")).toStrictEqual({ enabled: true, scope: "user" });
   });
@@ -77,7 +74,7 @@ describe("the plugin registry readers", () => {
   it("read codex as TOML plugin tables carrying an enabled flag and no scope", async () => {
     await write(join(".codex", "config.toml"), '[plugins."a@m"]\nenabled = false\n');
 
-    const reading = await hostPluginRegistryReaders(home).get("codex")?.read(PROJECT);
+    const reading = await wireHostRegistration(home).pluginRegistries.get("codex")?.read(PROJECT);
 
     expect(reading?.refs?.get("a@m")).toStrictEqual({ enabled: false });
   });
@@ -88,7 +85,7 @@ describe("the plugin registry readers", () => {
       JSON.stringify({ enabledPlugins: { "a@m": false } })
     );
 
-    const reading = await hostPluginRegistryReaders(home).get("copilot")?.read(PROJECT);
+    const reading = await wireHostRegistration(home).pluginRegistries.get("copilot")?.read(PROJECT);
 
     expect(reading?.refs?.get("a@m")).toStrictEqual({ enabled: false });
   });
@@ -96,11 +93,11 @@ describe("the plugin registry readers", () => {
 
 describe("the marketplace registry readers", () => {
   it("are keyed by claude alone", () => {
-    expect([...hostMarketplaceRegistryReaders(home).keys()]).toStrictEqual(["claude"]);
+    expect([...wireHostRegistration(home).marketplaceRegistries.keys()]).toStrictEqual(["claude"]);
   });
 
   it("read claude from known_marketplaces.json under the home, keyed by name", async () => {
-    const reader = hostMarketplaceRegistryReaders(home).get("claude");
+    const reader = wireHostRegistration(home).marketplaceRegistries.get("claude");
     expect(await reader?.read()).toStrictEqual({
       location: join(home, ".claude", "plugins", "known_marketplaces.json"),
       absent: true,
@@ -118,7 +115,7 @@ describe("the marketplace registry readers", () => {
 
 describe("the native activators", () => {
   it("are keyed by the binary each activation declares", () => {
-    expect([...wireTools().nativePluginActivators.keys()].sort()).toStrictEqual([
+    expect([...wireHostRegistration(home).hostActions.keys()].sort()).toStrictEqual([
       "claude",
       "codex",
       "copilot",
@@ -127,16 +124,17 @@ describe("the native activators", () => {
 });
 
 describe("the marketplace source list contracts", () => {
-  it.each([
-    ["codex", codexMarketplaceSourceListContract],
-    ["copilot", copilotMarketplaceSourceListContract],
-  ] as const)("ask %s's own binary for its marketplace list as JSON", (binary, contract) => {
-    expect(contract.binary).toBe(binary);
-    expect(contract.args).toStrictEqual(["plugin", "marketplace", "list", "--json"]);
-  });
+  it.each(["codex", "copilot"] as const)(
+    "ask %s's own binary for its marketplace list as JSON",
+    (binary) => {
+      const contract = listContractOf(binary);
+      expect(contract.binary).toBe(binary);
+      expect(contract.args).toStrictEqual(["plugin", "marketplace", "list", "--json"]);
+    }
+  );
 
   it("read codex's list as rows carrying a marketplaceSource, an effective-list source", () => {
-    const entries = codexMarketplaceSourceListContract.parse?.(
+    const entries = listContractOf("codex").parse?.(
       JSON.stringify({
         marketplaces: [
           { name: "m", root: "/r", marketplaceSource: { sourceType: "local", source: "/s" } },
@@ -154,7 +152,7 @@ describe("the marketplace source list contracts", () => {
   });
 
   it("read copilot's list as name and source rows, only a Local source being proven", () => {
-    const entries = copilotMarketplaceSourceListContract.parse?.(
+    const entries = listContractOf("copilot").parse?.(
       JSON.stringify([
         { name: "m", source: "Local: /s" },
         { name: "n", source: "GitHub: o/r" },
@@ -170,20 +168,20 @@ describe("the marketplace source list contracts", () => {
   });
 
   it("word each refusal after its own tool", () => {
-    expect(codexMarketplaceSourceListContract.unavailableMessage).toBe(
+    expect(listContractOf("codex").unavailableMessage).toBe(
       "Codex marketplace list --json unavailable; inspect the host CLI and retry"
     );
-    expect(copilotMarketplaceSourceListContract.unavailableMessage).toBe(
+    expect(listContractOf("copilot").unavailableMessage).toBe(
       "Copilot CLI marketplace list --json unavailable; upgrade to a supported binary and retry"
     );
-    expect(copilotMarketplaceSourceListContract.unverifiedMessage).toBe(
+    expect(listContractOf("copilot").unverifiedMessage).toBe(
       "Copilot CLI marketplace list --json output shape is not verified; upgrade to a supported binary and reconcile manually"
     );
   });
 
   it("name the tool in each parse refusal, so a reader taken from a declaration keeps the wording", () => {
-    const codex = codexMarketplaceSourceListContract.parse;
-    const copilot = copilotMarketplaceSourceListContract.parse;
+    const codex = listContractOf("codex").parse;
+    const copilot = listContractOf("copilot").parse;
 
     expect(() => codex?.("{}")).toThrow("unexpected Codex JSON shape");
     expect(() => codex?.('{"marketplaces":[{"name":""}]}')).toThrow(

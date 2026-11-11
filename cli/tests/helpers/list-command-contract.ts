@@ -1,0 +1,13 @@
+import { marketplaceListContract } from "../../src/composition/host-registration.js";
+import type { NativeMarketplaceSourceListContract } from "../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import { nativeActivationOf } from "../../src/contexts/tools/domain/registry.js";
+import type { AiToolId } from "../../src/kernel/tool.js";
+
+/** The list contract a tool's own declaration yields, as the composition builds it. */
+export function listContractOf(tool: AiToolId): NativeMarketplaceSourceListContract {
+  const activation = nativeActivationOf(tool);
+  const sources = activation?.marketplaceSources;
+  if (activation === undefined || sources?.from !== "list-command")
+    throw new Error(`${tool} declares no list-command marketplace sources`);
+  return marketplaceListContract(activation.binary, sources);
+}

@@ -59,24 +59,15 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
 
 /**
  * Files naming a tool outside its profile today, with how many they name; the list may only
- * shrink, and a listed file may not take on another tool. Three are not debt:
- * `tool-recommendations.ts`, `config-refs.ts` and `native-activation.ts`, each naming a tool
- * for a reason no profile carries. The rest is host wiring and words shown to a user.
+ * shrink, and a listed file may not take on another tool. Two are not debt:
+ * `tool-recommendations.ts` and `config-refs.ts`, each naming a tool for a reason no profile
+ * carries. The rest is host wiring and words shown to a user.
  */
 const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/framework/domain/tool-recommendations.ts", named: 4 },
   { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
-  { path: "src/contexts/tools/domain/plugins/native-activation.ts", named: 3 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
   { path: "src/runtime/assets/asset-loader.ts", named: 7 },
-  // The composition names the hosts whose native marketplace readers it builds.
-  { path: "src/runtime/wiring/framework.ts", named: 3 },
-  // Which file each host keeps its plugin registry in, called from the composition root
-  // alone; the reader classes beside it name no tool.
-  {
-    path: "src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.ts",
-    named: 3,
-  },
   // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
   // reader needs no change to the record, and is not a list a new tool joins.
   { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },

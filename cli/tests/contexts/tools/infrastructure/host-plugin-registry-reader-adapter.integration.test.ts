@@ -2,7 +2,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { hostPluginRegistryReaders } from "../../../../src/contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
+import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 
 /**
@@ -28,7 +28,7 @@ async function write(relative: string, content: string): Promise<void> {
 }
 
 function readerFor(tool: AiToolId) {
-  const reader = hostPluginRegistryReaders(home).get(tool);
+  const reader = wireHostRegistration(home).pluginRegistries.get(tool);
   if (reader === undefined) throw new Error(`no reader declared for ${tool}`);
   return reader;
 }
