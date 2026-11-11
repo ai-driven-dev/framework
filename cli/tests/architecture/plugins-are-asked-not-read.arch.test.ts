@@ -34,6 +34,52 @@ const PUBLIC_FIELD =
 const PARAMETER_PROPERTY = /constructor\([^)]*\b(?:public|private|protected|readonly)\s+(\w+)/g;
 /** A getter that only hands back a stored value is a field read renamed. */
 const STORED_VALUE_GETTER = /^ {2}get (\w+)\(\)[^{]*\{\s*return this\.#?[\w.]+;\s*\}/gm;
+/** So is a method whose whole body returns a stored field: the same read, with parentheses. */
+const STORED_VALUE_METHOD =
+  /^ {2}(?!get |set )(?:public )?(\w+)\([^)]*\)[^{]*\{\s*return this\.#?[\w.]+;\s*\}/gm;
+
+/** Stored values a variant still answers verbatim, each with the caller that needs the value itself.
+ * Shrink-only: an entry the code no longer matches fails the test, and none is added. */
+const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
+  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.hostBinary":
+    "the executable is the key every host registry and driver is looked up by; no computation sits behind it",
+  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration":
+    "the composition root picks the source reader by the declared form, which carries its own list command and wording",
+  "src/contexts/tools/domain/plugins/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile":
+    "the path that names the tracked file in the manifest, resolved against a project root and hashed by its caller",
+  "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.outputPath":
+    "a capability's declared destination, asked by every install and clean step",
+  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPath":
+    "a capability's declared destination, asked by every install and clean step",
+  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.outputPath":
+    "a capability's declared destination, asked by every install and clean step",
+  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.mergeStrategy":
+    "the declared way a settings file is merged, asked by the merge step",
+  "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.flatLayout":
+    "the declared layout of a flat tool, asked by the flat build",
+  "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.hooksAcceptance":
+    "the declared hooks stance, asked by every caller that places hooks",
+  "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.projectHooksDelivery":
+    "the declared project hooks delivery, asked by the hooks installer",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.activation":
+    "hands back the native activation entity, which answers for itself",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.marketplaceRegistration":
+    "hands back the marketplace registration entity, which answers for itself",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.hooksAcceptance":
+    "the declared hooks stance, asked by every caller that places hooks",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.hooksFilePath":
+    "the declared hooks file, asked by the hooks installer",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.manifestPath":
+    "the declared plugin manifest path, asked by the plugin build",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.projectHooksDelivery":
+    "the declared project hooks delivery, asked by the hooks installer",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.rootToken":
+    "the declared plugin root token, substituted by the plugin build",
+  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.trustNotice":
+    "the declared hooks trust notice, shown by the installer",
+  "src/contexts/tools/domain/plugins/plugin-delivery.ts :: PluginDeliveryBase.globalFiles":
+    "the declared global files, asked by the global install",
+};
 
 function testFiles(): string[] {
   return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, encoding: "utf8" })
@@ -70,7 +116,12 @@ function readableIn(file: string, source: string): string[] {
   const fields: string[] = [];
   for (const block of source.matchAll(CLASS_BLOCK)) {
     const body = block[2] as string;
-    for (const pattern of [PUBLIC_FIELD, PARAMETER_PROPERTY, STORED_VALUE_GETTER]) {
+    for (const pattern of [
+      PUBLIC_FIELD,
+      PARAMETER_PROPERTY,
+      STORED_VALUE_GETTER,
+      STORED_VALUE_METHOD,
+    ]) {
       for (const field of body.matchAll(pattern)) fields.push(`${file} :: ${block[1]}.${field[1]}`);
     }
   }
@@ -84,16 +135,31 @@ function readableFields(): string[] {
     .sort();
 }
 
+/** What is readable and not allowed, then what is allowed and no longer readable. */
+function verdictOn(readable: readonly string[], allowed: readonly string[]): string[] {
+  return [
+    ...readable.filter((entry) => !allowed.includes(entry)).map((entry) => `readable: ${entry}`),
+    ...allowed.filter((entry) => !readable.includes(entry)).map((entry) => `stale: ${entry}`),
+  ];
+}
+
 describe("a tool's plugin delivery is asked, never read", () => {
   it("no code outside the tools context reads a field of a plugins capability", () => {
     expect(readsOutsideTools([...sourceFiles(), ...testFiles()])).toEqual([]);
   });
 
   it("no capability or plugins class leaves a stored value readable", () => {
-    expect(readableFields()).toEqual([]);
+    expect(verdictOn(readableFields(), Object.keys(STORED_ANSWERS_ALLOWED))).toEqual([]);
   });
 
-  it("sees a public field, a keyword-private one, a parameter property and a stored-value getter, and clears a # field", () => {
+  it("names a stored value nobody allowed, and an allowed entry the code no longer holds", () => {
+    expect(verdictOn(["a :: A.x", "a :: A.y"], ["a :: A.y", "a :: A.gone"])).toEqual([
+      "readable: a :: A.x",
+      "stale: a :: A.gone",
+    ]);
+  });
+
+  it("sees a public field, a keyword-private one, a parameter property, a stored-value getter and a stored-value method, and clears a # field", () => {
     const planted = [
       "class A {",
       "  readonly open: string;",
@@ -109,6 +175,12 @@ describe("a tool's plugin delivery is asked, never read", () => {
       "  ask(): string {",
       "    return this.#hidden;",
       "  }",
+      "  askPlain(): string {",
+      "    return this.shown;",
+      "  }",
+      "  derived(): boolean {",
+      "    return this.#hidden !== undefined;",
+      "  }",
       "}",
     ].join("\n");
     expect(readableIn("a.ts", planted)).toEqual([
@@ -116,6 +188,8 @@ describe("a tool's plugin delivery is asked, never read", () => {
       "a.ts :: A.secret",
       "a.ts :: A.leaked",
       "a.ts :: A.echoed",
+      "a.ts :: A.ask",
+      "a.ts :: A.askPlain",
     ]);
   });
 

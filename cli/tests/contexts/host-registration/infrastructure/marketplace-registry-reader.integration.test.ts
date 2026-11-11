@@ -20,9 +20,9 @@ afterEach(async () => {
 /** Read off claude's own profile, never a literal, so this path cannot drift from
  * `profile.ts`'s own `marketplaceRegistry`. */
 function registryPath(): string {
-  const declared = nativeActivationOf("claude")?.marketplaceRegistryDeclaration();
+  const declared = nativeActivationOf("claude")?.marketplaceRegistryAt(home);
   if (declared === undefined) throw new Error("claude's profile declares no marketplaceRegistry");
-  return declared.location(home);
+  return declared.path;
 }
 
 async function write(content: string): Promise<void> {

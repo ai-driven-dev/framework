@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { keyAskedOf } from "../../../../../helpers/settings-key-probe.js";
 import { nativeOf } from "../../../testing/plugin-mode.js";
 
 describe("claude plugins", () => {
@@ -25,7 +26,7 @@ describe("claude plugins", () => {
 
     it("declares its own marketplace registry and plugin cache root, for clean's own purge", () => {
       const activation = nativeOf(claude.section("plugins")).activation();
-      expect(activation?.marketplaceRegistryDeclaration()?.location("/home/tester")).toBe(
+      expect(activation?.marketplaceRegistryAt("/home/tester")?.path).toBe(
         join("/home/tester", ".claude", "plugins", "known_marketplaces.json")
       );
       expect(activation?.pluginCacheRoot("/home/tester")).toBe(
@@ -52,13 +53,13 @@ describe("claude plugins", () => {
         upgradeVerb: "update",
         pluginArgs: ["--yes"],
       });
-      expect(activation?.marketplaceRegistryDeclaration()?.layout).toBe(
+      expect(activation?.marketplaceRegistryAt("/home/tester")?.layout).toBe(
         "install-locations-by-name"
       );
       expect(activation?.marketplaceSourcesDeclaration()).toStrictEqual({
         from: "marketplace-registry",
       });
-      expect(activation?.pluginRegistryDeclaration()?.layout).toBe("plugin-entries-by-scope");
+      expect(activation?.pluginRegistryAt("/home/tester")?.layout).toBe("plugin-entries-by-scope");
     });
 
     it("registers a marketplace in the file claude writes itself, and enables plugins in the tracked one", () => {
@@ -66,9 +67,9 @@ describe("claude plugins", () => {
 
       expect({
         settingsPath: settings?.sharedSettingsFile(),
-        settingsKey: settings?.marketplacesKey(),
-        marketplacesSettingsPath: settings?.localSettingsFile(),
-        enabledPluginsKey: settings?.enabledPluginsKey(),
+        settingsKey: keyAskedOf((shared) => settings?.dropMarketplaces(shared)),
+        marketplacesSettingsPath: settings?.machineLocalFiles()[0] ?? null,
+        enabledPluginsKey: keyAskedOf((shared) => settings?.enabledPluginsIn(shared)),
         entryKey: settings?.entryKeyFor({
           name: "aidd-framework",
           source: { kind: "local", path: "/abs/cache" },

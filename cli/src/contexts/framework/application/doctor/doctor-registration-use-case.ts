@@ -19,6 +19,7 @@ import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { MarketplaceRegistration } from "../../../tools/domain/plugins/marketplace-registration.js";
 import { nativeActivationOf, resolveNativePlugins } from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -317,18 +318,18 @@ export class DoctorRegistrationUseCase {
 
   private untrackedSettingsOf(
     toolId: ToolId
-  ): { file: string; marketplacesKey: string } | undefined {
-    const settings = resolveNativePlugins(toolId)?.marketplaceRegistration();
-    // `null` means the tool writes no machine-local registration at all, so there is
-    // nothing here to check — only a declared path leaves a file worth looking at.
-    const file = settings?.localSettingsFile();
-    if (settings == null || typeof file !== "string") return undefined;
-    return { file, marketplacesKey: settings.marketplacesKey() };
+  ): { file: string; registration: MarketplaceRegistration } | undefined {
+    const registration = resolveNativePlugins(toolId)?.marketplaceRegistration();
+    // No machine-local file means the tool writes no machine-local registration at all, so
+    // there is nothing here to check.
+    const file = registration?.machineLocalFiles()[0];
+    if (registration == null || file === undefined) return undefined;
+    return { file, registration };
   }
 
   private async registeredNames(
     projectRoot: string,
-    settings: { file: string; marketplacesKey: string }
+    settings: { file: string; registration: MarketplaceRegistration }
   ): Promise<Set<string>> {
     const path = join(projectRoot, settings.file);
     if (!(await this.fs.fileExists(path))) return new Set();
@@ -338,11 +339,7 @@ export class DoctorRegistrationUseCase {
     } catch {
       return new Set();
     }
-    if (parsed === null || typeof parsed !== "object") return new Set();
-    const value = (parsed as Record<string, unknown>)[settings.marketplacesKey];
-    if (Array.isArray(value)) return new Set(value.map(String));
-    if (value !== null && typeof value === "object") return new Set(Object.keys(value));
-    return new Set();
+    return settings.registration.declaredMarketplaceNames(parsed);
   }
 
   private canRegisterItself(toolId: ToolId): boolean {

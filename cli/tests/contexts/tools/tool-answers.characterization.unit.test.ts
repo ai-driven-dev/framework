@@ -29,6 +29,7 @@ import {
 } from "../../../src/contexts/tools/domain/registry.js";
 import type { FlatHooksLoaderEntry } from "../../../src/kernel/materialization/flat-paths.js";
 import type { PluginSource } from "../../../src/kernel/source.js";
+import { keyAskedOf } from "../../helpers/settings-key-probe.js";
 import { pluginModeOf } from "./testing/plugin-mode.js";
 
 const HOME = "/fake/home";
@@ -86,7 +87,7 @@ function activationAnswer(activation: NativeActivation | null): unknown {
     enableVerb: shape.enableVerb ?? null,
     disableVerb: shape.disableVerb ?? null,
     pluginArgs: shape.pluginArgs ?? null,
-    marketplaceRegistry: activation.marketplaceRegistryDeclaration()?.location(HOME) ?? null,
+    marketplaceRegistry: activation.marketplaceRegistryAt(HOME)?.path ?? null,
     pluginCacheDir: activation.pluginCacheRoot(HOME) ?? null,
     userSettingsPath: {
       noEnv: activation.userSettingsFile(HOME, NO_ENV) ?? null,
@@ -99,10 +100,10 @@ function marketplaceSettingsAnswer(settings: MarketplaceRegistration | null): un
   if (settings === null) return null;
   return {
     settingsPath: settings.sharedSettingsFile(),
-    settingsKey: settings.marketplacesKey(),
-    enabledPluginsKey: settings.enabledPluginsKey() ?? null,
+    settingsKey: keyAskedOf((shared) => settings.dropMarketplaces(shared)),
+    enabledPluginsKey: keyAskedOf((shared) => settings.enabledPluginsIn(shared)),
     declarativePluginActivationRequiresNativeProof: settings.requiresNativeProof() ? true : null,
-    marketplacesSettingsPath: settings.localSettingsFile(),
+    marketplacesSettingsPath: settings.machineLocalFiles()[0] ?? null,
     toEntryKey: SOURCES.map((source) => settings.entryKeyFor({ name: "aidd-framework", source })),
   };
 }

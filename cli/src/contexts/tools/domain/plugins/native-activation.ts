@@ -22,6 +22,12 @@ export interface HostRegistryDeclaration<Layout extends string> {
   readonly layout: Layout;
 }
 
+/** Where a host's registry sits for one home, and the layout its file is read as. */
+export interface HostRegistryPlacement<Layout extends string> {
+  readonly path: string;
+  readonly layout: Layout;
+}
+
 /** Where a native marketplace's current source is read from: the host's own registry, or its
  * structured list command, whose words the declaration carries. */
 export type MarketplaceSourcesDeclaration =
@@ -152,14 +158,23 @@ export class NativeActivation {
     };
   }
 
-  /** Where the host's plugin registry lives and how it is read, when it was measured. */
-  pluginRegistryDeclaration(): NativeActivationSpec["pluginRegistry"] {
-    return this.#spec.pluginRegistry;
+  /** Where the host's plugin registry sits for this home and how it is read, when it was measured. */
+  pluginRegistryAt(home: string): HostRegistryPlacement<PluginRegistryLayout> | undefined {
+    const declared = this.#spec.pluginRegistry;
+    return declared && { path: declared.location(home), layout: declared.layout };
   }
 
-  /** Where the host's marketplace registry lives and how it is read, when it keeps one. */
-  marketplaceRegistryDeclaration(): NativeActivationSpec["marketplaceRegistry"] {
-    return this.#spec.marketplaceRegistry;
+  /** Where the host's marketplace registry sits for this home and how it is read, when it keeps one. */
+  marketplaceRegistryAt(
+    home: string
+  ): HostRegistryPlacement<MarketplaceRegistryLayout> | undefined {
+    const declared = this.#spec.marketplaceRegistry;
+    return declared && { path: declared.location(home), layout: declared.layout };
+  }
+
+  /** Whether the host's own CLI takes a scope for enabling a plugin. */
+  scopesEnablement(): boolean {
+    return this.#spec.scopeArgs !== undefined;
   }
 
   /** Where a marketplace's current source is read from, when the host has a witness. */

@@ -14,7 +14,7 @@ describe("codex plugins", () => {
         enableVerb: "add",
         disableVerb: "remove",
       });
-      expect(activation?.pluginRegistryDeclaration()?.layout).toBe("toml-plugin-tables");
+      expect(activation?.pluginRegistryAt("/home/tester")?.layout).toBe("toml-plugin-tables");
       expect(activation?.marketplaceSourcesDeclaration()).toEqual(
         expect.objectContaining({ from: "list-command", layout: "marketplaces-with-source" })
       );

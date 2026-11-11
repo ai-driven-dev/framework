@@ -1256,10 +1256,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       settings,
       marketplaces
     );
-    const pluginsChanged =
-      settings.enabledPluginsKey() != null
-        ? await this.syncEnabledPluginsFile(toolId, projectRoot, manifest, marketplaces, settings)
-        : false;
+    const pluginsChanged = settings.writesEnabledPlugins()
+      ? await this.syncEnabledPluginsFile(toolId, projectRoot, manifest, marketplaces, settings)
+      : false;
     return marketplaceChanged || pluginsChanged;
   }
 
@@ -1289,8 +1288,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   ): Promise<boolean> {
     const sharedPath = resolve(projectRoot, settings.sharedSettingsFile());
     const shared = await this.loadSettings(sharedPath);
-    if (!(settings.marketplacesKey() in shared)) return false;
-    delete shared[settings.marketplacesKey()];
+    if (!settings.dropMarketplaces(shared)) return false;
     const content = JSON.stringify(shared, null, 2);
     await this.fs.writeFile(sharedPath, content);
     manifest.updateTrackedFileHash(
@@ -1331,14 +1329,13 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     marketplaces: readonly Marketplace[],
     provenRefs?: readonly string[]
   ): boolean {
-    const pluginsKey = settings.enabledPluginsKey();
-    if (pluginsKey == null) return false;
-    const existing = this.existingRecord(json, pluginsKey);
+    if (!settings.writesEnabledPlugins()) return false;
+    const existing = settings.enabledPluginsIn(json);
     const toAdd: Record<string, boolean> = {};
     if (provenRefs !== undefined) {
       for (const ref of provenRefs) if (!(ref in existing)) toAdd[ref] = true;
       if (Object.keys(toAdd).length === 0) return false;
-      json[pluginsKey] = { ...existing, ...toAdd };
+      settings.recordEnabledPlugins(json, { ...existing, ...toAdd });
       return true;
     }
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
@@ -1355,19 +1352,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       if (!(key in existing)) toAdd[key] = true;
     }
     if (Object.keys(toAdd).length === 0) return false;
-    json[pluginsKey] = { ...existing, ...toAdd };
+    settings.recordEnabledPlugins(json, { ...existing, ...toAdd });
     return true;
-  }
-
-  private existingRecord(
-    json: Record<string, unknown>,
-    settingsKey: string
-  ): Record<string, unknown> {
-    const raw = json[settingsKey];
-    if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {
-      return raw as Record<string, unknown>;
-    }
-    return {};
   }
 
   // These files are co-owned and the machine-local one is untracked and gitignored, which is

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { keyAskedOf } from "../../../../../helpers/settings-key-probe.js";
 import { nativeOf } from "../../../testing/plugin-mode.js";
 
 describe("copilot plugins", () => {
@@ -35,11 +36,11 @@ describe("copilot plugins", () => {
     });
 
     it("uses extraKnownMarketplaces as settings key", () => {
-      expect(ms?.marketplacesKey()).toBe("extraKnownMarketplaces");
+      expect(keyAskedOf((shared) => ms?.dropMarketplaces(shared))).toBe("extraKnownMarketplaces");
     });
 
     it("uses enabledPlugins as enabled plugins key", () => {
-      expect(ms?.enabledPluginsKey()).toBe("enabledPlugins");
+      expect(keyAskedOf((shared) => ms?.enabledPluginsIn(shared))).toBe("enabledPlugins");
     });
 
     describe("the key a marketplace is recorded under", () => {

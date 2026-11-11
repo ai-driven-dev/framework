@@ -21,19 +21,41 @@ export class MarketplaceRegistration {
     return this.#settings.settingsPath;
   }
 
-  /** The key the shared file declares marketplaces under. */
-  marketplacesKey(): string {
-    return this.#settings.settingsKey;
+  /** Takes the marketplaces declaration out of a parsed shared file; whether one was there. */
+  dropMarketplaces(shared: Record<string, unknown>): boolean {
+    const key = this.#settings.settingsKey;
+    if (!(key in shared)) return false;
+    delete shared[key];
+    return true;
   }
 
-  /** The key the shared file enables plugins under, when the tool writes one. */
-  enabledPluginsKey(): string | undefined {
-    return this.#settings.enabledPluginsKey;
+  /** The marketplace names a parsed settings file declares, whether as a list or as a map. */
+  declaredMarketplaceNames(parsed: unknown): Set<string> {
+    if (parsed === null || typeof parsed !== "object") return new Set();
+    const value = (parsed as Record<string, unknown>)[this.#settings.settingsKey];
+    if (Array.isArray(value)) return new Set(value.map(String));
+    if (value !== null && typeof value === "object") return new Set(Object.keys(value));
+    return new Set();
   }
 
-  /** The machine-local file the tool's registrations live in, or null when it keeps none. */
-  localSettingsFile(): string | null {
-    return this.#settings.marketplacesSettingsPath;
+  /** Whether the tool enables plugins in the shared file. */
+  writesEnabledPlugins(): boolean {
+    return this.#settings.enabledPluginsKey != null;
+  }
+
+  /** The enabled-plugins map a parsed shared file holds, empty when absent or not a map. */
+  enabledPluginsIn(shared: Record<string, unknown>): Record<string, unknown> {
+    const key = this.#settings.enabledPluginsKey;
+    const raw = key === undefined ? undefined : shared[key];
+    return raw !== null && typeof raw === "object" && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  }
+
+  /** Sets the enabled-plugins map of a parsed shared file; nothing when the tool writes none. */
+  recordEnabledPlugins(shared: Record<string, unknown>, entries: Record<string, unknown>): void {
+    const key = this.#settings.enabledPluginsKey;
+    if (key != null) shared[key] = entries;
   }
 
   /** The name a marketplace is keyed by in the enabled-plugins map, or null when none is written. */

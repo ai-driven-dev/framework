@@ -82,18 +82,13 @@ export function wireHostRegistration(home: string = resolveHomeDir()): HostRegis
     if (activation === undefined) continue;
     const binary = activation.hostBinary();
     hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
-    const pluginRegistry = activation.pluginRegistryDeclaration();
-    const marketplaceRegistry = activation.marketplaceRegistryDeclaration();
+    const pluginRegistry = activation.pluginRegistryAt(home);
+    const marketplaceRegistry = activation.marketplaceRegistryAt(home);
     const sources = activation.marketplaceSourcesDeclaration();
     if (pluginRegistry !== undefined)
-      pluginRegistries.set(
-        id,
-        PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.location(home))
-      );
+      pluginRegistries.set(id, PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.path));
     if (marketplaceRegistry !== undefined) {
-      const registry = MARKETPLACE_READERS[marketplaceRegistry.layout](
-        marketplaceRegistry.location(home)
-      );
+      const registry = MARKETPLACE_READERS[marketplaceRegistry.layout](marketplaceRegistry.path);
       marketplaceRegistries.set(id, registry);
       if (sources?.from === "marketplace-registry")
         marketplaceSources.set(id, new HostRegistryMarketplaceSourceReaderAdapter(registry));
