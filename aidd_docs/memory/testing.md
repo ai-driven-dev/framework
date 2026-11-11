@@ -8,7 +8,9 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 | Surface | Validated by |
 | --- | --- |
-| Skills, agents, rules (markdown) | run end to end against a real project |
+| Skills (markdown) | the skill generator's validate step, and the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
+| Agents (markdown) | `architecture-rules` over `plugins/*/agents/`, then run end to end against a real project |
+| Rules (markdown) | run end to end against a real project; no pre-commit guard reads them |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |

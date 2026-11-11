@@ -124,6 +124,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
 | `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
 | `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
+| `scripts` | [check-skill.cjs](skills/04-skill-generate/scripts/check-skill.cjs) | - |
 | `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generates a skill across the host AI tools, when the user wants to create, scaffold or refactor one.` |
 
 #### `skills/05-rule-generate`

@@ -9,7 +9,7 @@ argument-hint: <what the user brings: their cases, or the artifact consumed>
 
 ```mermaid
 flowchart LR
-  <the journey: each action node displays only its actions/NN-slug.md path; a back-edge per loop, an entry per case, a quoted label per condition, a terminal per outcome>
+  <one node per action file, labeled only with its actions/NN-slug.md path; an entry per case, a back-edge per loop, a quoted label per condition, a terminal per outcome>
 ```
 
 ## Transversal rules

@@ -1,6 +1,6 @@
 # Skill authoring
 
-The contract every generated skill satisfies. `skill-generate` obeys it too.
+The constraints every generated skill satisfies. `skill-generate` obeys them too. How to fill each file is judgment, in `fill-norm.md`.
 
 ## The skill
 
