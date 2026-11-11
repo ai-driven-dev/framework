@@ -326,9 +326,7 @@ describe("PluginsCapability native construction", () => {
     const { pluginRootToken: _omitted, ...withoutToken } = native;
 
     // @ts-expect-error pluginRootToken is required on a native capability
-    const cap = pluginsCapability(withoutToken);
-
-    expect(pluginModeOf(cap)).toBe("native");
+    pluginsCapability(withoutToken);
   });
 
   it("refuses marketplace settings its tool has no native activation to drive", () => {

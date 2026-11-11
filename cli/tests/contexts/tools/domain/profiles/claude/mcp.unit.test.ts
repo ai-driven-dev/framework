@@ -11,7 +11,7 @@ describe("claude mcp", () => {
       const written = claude
         .section("mcp")
         .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
-      expect(() => JSON.parse(written)).not.toThrow();
+      expect(JSON.parse(written)).toHaveProperty("mcpServers");
     });
 
     it("does not consume unknown config names", () => {

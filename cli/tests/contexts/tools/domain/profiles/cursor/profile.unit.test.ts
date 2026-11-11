@@ -30,9 +30,9 @@ describe("cursor declarations the rest of the CLI reads", () => {
   it("writes its MCP servers as JSON under `mcpServers`, in .cursor/mcp.json", () => {
     const mcp = cursor.section("mcp");
     expect(mcp.outputPath()).toBe(".cursor/mcp.json");
-    expect(() =>
+    expect(
       JSON.parse(mcp.transform(JSON.stringify({ mcpServers: { a: { command: "node" } } })))
-    ).not.toThrow();
+    ).toHaveProperty("mcpServers");
     expect(cursor.section("mcp").consumes(CONFIG_MCP)).toBe(true);
   });
 

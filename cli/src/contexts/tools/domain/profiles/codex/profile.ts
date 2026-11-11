@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
@@ -65,7 +64,7 @@ export const codex = defineAiTool({
       frontmatter: codexAgentFrontmatter,
       serialize: codexAgentToml,
     }),
-    skills: new SkillsCapability({
+    skills: bound.skills({
       agentsSkillsDirectory: true,
       buildInstallPath: buildCodexSkillFilePath,
       convertFrontmatter: stripCodexSkillFrontmatter,
