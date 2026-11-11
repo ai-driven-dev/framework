@@ -47,6 +47,12 @@ script, identical to the host adapter host-antigravity.cjs
 ## project/.agents/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
+## project/.agents/hooks/aidd-context/lib/plan.cjs
+script, identical to the plugin source
+
+## project/.agents/hooks/aidd-context/lib/report.cjs
+script, identical to the plugin source
+
 ## project/.agents/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 

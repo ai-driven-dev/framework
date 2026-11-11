@@ -23,6 +23,18 @@
         "timeout": 5
       }
     ],
+    "stop": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
+      }
+    ],
     "beforeSubmitPrompt": [
       {
         "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
@@ -49,6 +61,12 @@ script, identical to the plugin source
 script, identical to the host adapter host-cursor.cjs
 
 ## out-flat/.cursor/hooks/aidd-context/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-context/lib/plan.cjs
+script, identical to the plugin source
+
+## out-flat/.cursor/hooks/aidd-context/lib/report.cjs
 script, identical to the plugin source
 
 ## out-flat/.cursor/hooks/aidd-context/memory.cjs

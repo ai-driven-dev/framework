@@ -25,6 +25,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory lines before finishing"
+          }
+        ]
+      }
     ]
   }
 }
@@ -46,6 +58,12 @@ script, identical to the plugin source
 script, identical to the host adapter host-claude.cjs
 
 ## project/.claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/plan.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/report.cjs
 script, identical to the plugin source
 
 ## project/.claude/plugins/aidd-context/hooks/memory.cjs
@@ -156,7 +174,7 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 8 hook files
+project claude aidd-context scope=project: 10 hook files
   .claude/plugins/aidd-context/hooks/hooks.json
   .claude/plugins/aidd-context/hooks/lib/bank-guard.cjs
   .claude/plugins/aidd-context/hooks/lib/changes.cjs
@@ -164,6 +182,8 @@ project claude aidd-context scope=project: 8 hook files
   .claude/plugins/aidd-context/hooks/lib/fact-sheet.cjs
   .claude/plugins/aidd-context/hooks/lib/host.cjs
   .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
+  .claude/plugins/aidd-context/hooks/lib/plan.cjs
+  .claude/plugins/aidd-context/hooks/lib/report.cjs
   .claude/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []

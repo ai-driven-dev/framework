@@ -30,6 +30,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory lines before finishing"
+          }
+        ]
+      }
     ]
   }
 }
@@ -51,6 +63,12 @@ script, identical to the plugin source
 script, identical to the host adapter host-codex.cjs
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/plan.cjs
+script, identical to the plugin source
+
+## out-marketplace/plugins/aidd-context/hooks/lib/report.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-context/hooks/memory.cjs
