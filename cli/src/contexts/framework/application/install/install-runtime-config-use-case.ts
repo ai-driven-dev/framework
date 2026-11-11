@@ -170,10 +170,10 @@ export class InstallRuntimeConfigUseCase {
     );
     if (content === null) return null;
     return new InstallationFile({
-      relativePath: cap.buildOutputPath(),
+      relativePath: cap.outputPath(),
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: cap.getMergeStrategy(),
+      mergeStrategy: cap.mergeStrategy(),
     });
   }
 

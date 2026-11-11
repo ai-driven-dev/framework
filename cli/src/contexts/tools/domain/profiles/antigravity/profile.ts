@@ -37,7 +37,7 @@ export const antigravity = defineAiTool({
     skills: bound.skills({
       prefix: SKILLS_PREFIX,
       buildInstallPath: (fileName) =>
-        `${ANTIGRAVITY_DIRECTORY}skills/${SKILLS_PREFIX}${skillName(fileName)}/SKILL.md`,
+        `${bound.installUnder(`skills/${SKILLS_PREFIX}`)(skillName(fileName))}/SKILL.md`,
       convertFrontmatter: (fm) => fm,
     }),
     plugins: pluginsCapability({

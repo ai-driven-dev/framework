@@ -93,9 +93,9 @@ export interface NativePluginsParams extends ProjectHooksDelivery {
   hooksRelativePath?: string;
   acceptsMcp?: boolean;
   /** The variable this tool expands to the installed plugin's directory, as written in a
-   * hook or MCP command. Absent means nothing is substituted. */
-  pluginRootToken?: string;
-  /** See {@link PluginDeliveryBase.hookScript}. */
+   * hook or MCP command. */
+  pluginRootToken: string;
+  /** See {@link NativePlugins.hookScript}. */
   hookScript?: HookScript;
   marketplaceSettings?: MarketplaceSettings;
   /** Enables native CLI-driven plugin activation. See {@link NativeActivationSpec}. */
@@ -139,7 +139,7 @@ export type FlatHooksSupport =
       /** See {@link FlatHooksBridge}. Omit when this loader triggers a plugin's hooks some
        * other way. */
       flatHooksBridge?: FlatHooksBridge;
-      /** See {@link PluginDeliveryBase.hookScript}. */
+      /** See {@link FlatPlugins.hookScript}. */
       hookScript?: HookScript;
     } & ProjectHooksDelivery)
   | { acceptsHooks: false; hooksUnsupportedReason: string };

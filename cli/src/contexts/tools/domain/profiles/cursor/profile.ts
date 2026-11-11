@@ -72,7 +72,6 @@ export const cursor = defineAiTool({
     mcp: new McpCapability({
       outputPath: `${DIRECTORY}mcp.json`,
       format: "json",
-      entrySection: "mcpServers",
       consumes: [CONFIG_MCP],
     }),
     plugins: pluginsCapability({

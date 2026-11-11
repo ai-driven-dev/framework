@@ -339,8 +339,7 @@ export function resolvePluginsCapability(toolId: ToolId): PluginsCapability | nu
   return catalog.resolvePluginsCapability(toolId);
 }
 
-/** A tool's plugin capability when it installs natively, or `null`: the one place a caller
- * wanting a native-only answer narrows on `kind`. */
+/** A tool's plugin capability when it installs natively, or `null`. */
 export function resolveNativePlugins(toolId: ToolId): NativePluginsCapability | null {
   return catalog.resolveNativePlugins(toolId);
 }

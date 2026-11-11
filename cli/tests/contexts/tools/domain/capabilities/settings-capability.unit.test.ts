@@ -167,17 +167,17 @@ describe("SettingsCapability", () => {
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
       });
-      expect(cap.buildOutputPath()).toBe(".vscode/settings.json");
+      expect(cap.outputPath()).toBe(".vscode/settings.json");
     });
   });
 
-  describe("getMergeStrategy", () => {
+  describe("mergeStrategy", () => {
     it("returns the configured merge strategy", () => {
       const cap = new SettingsCapability({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "user-prime",
       });
-      expect(cap.getMergeStrategy()).toBe("user-prime");
+      expect(cap.mergeStrategy()).toBe("user-prime");
     });
   });
 });

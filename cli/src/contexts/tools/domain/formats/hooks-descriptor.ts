@@ -5,7 +5,11 @@
  */
 
 import { isAbsolute } from "node:path";
-import { type HooksInvariant, InvalidHooksDescriptorError } from "../../../../kernel/errors.js";
+import {
+  CapabilityConfigError,
+  type HooksInvariant,
+  InvalidHooksDescriptorError,
+} from "../../../../kernel/errors.js";
 import {
   type FlatHooksLoaderEntry,
   flatHooksPathWithLoaderEntry,
@@ -266,15 +270,18 @@ export function hooksConfigCapability(descriptor: {
 /** A native tool's plugins capability, as far as hooks go. */
 export function nativeHooksSupport(descriptor: HooksRouting): {
   readonly acceptsHooks: true;
-  readonly pluginRootToken?: string;
+  readonly pluginRootToken: string;
   readonly hooksTrustNotice?: string;
   readonly hookScript?: HookScript;
 } {
   const { rootToken, trustNotice } = descriptor;
+  if (rootToken === undefined) {
+    throw new CapabilityConfigError("native mode requires a pluginRootToken.");
+  }
   return {
     acceptsHooks: true,
     ...withHookScript(descriptor),
-    ...(rootToken === undefined ? {} : { pluginRootToken: rootToken }),
+    pluginRootToken: rootToken,
     ...(trustNotice === undefined ? {} : { hooksTrustNotice: trustNotice }),
   };
 }

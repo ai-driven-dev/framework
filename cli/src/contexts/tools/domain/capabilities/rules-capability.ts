@@ -18,19 +18,14 @@ export class RulesCapability {
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
   }
 
-  buildOutputPath(ruleName: string): string {
-    return `${this.#params.directory}rules/${ruleName}${this.#params.toolSuffix}`;
-  }
-
   /** A name no rule of a reader's own will ever carry, asked of `buildInstallPath` only so its
    * answer can be read back. Long on purpose: it reaches no output and no disk, and a short one
    * could collide with a real rule name. */
   static readonly #PROBE_STEM = "aidd-installed-location-probe";
 
   /** Where an installed rule of this tool lives, and what it is called at the end, asked of the
-   * installer rather than restated beside it: `buildOutputPath` answers where the framework's
-   * own source form goes, while a reader scanning a project needs the *installed* shape, and
-   * only `buildInstallPath` — a closure written per tool — knows it. `null` when the tool
+   * installer rather than restated beside it: a reader scanning a project needs the *installed*
+   * shape, and only `buildInstallPath` — a closure written per tool — knows it. `null` when the tool
    * installs nothing for the name asked about, or answers a path whose stem it rewrote past
    * recognition; neither is a guess. */
   installedLocation(): { readonly directory: string; readonly extension: string } | null {

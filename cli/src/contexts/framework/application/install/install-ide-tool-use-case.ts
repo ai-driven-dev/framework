@@ -72,18 +72,18 @@ export class InstallIdeToolUseCase {
     existingEntries: MergeFileEntry[],
     manifest: Manifest
   ): Promise<void> {
-    const fullPath = join(projectRoot, cap.buildOutputPath());
+    const fullPath = join(projectRoot, cap.outputPath());
     const content = this.resolveCapabilityContent(cap, aiId);
-    await this.fs.mergeJsonFile(fullPath, content, cap.getMergeStrategy());
+    await this.fs.mergeJsonFile(fullPath, content, cap.mergeStrategy());
     const diskContent = await this.fs.readFile(fullPath);
     const hashes = extractMergeEntries(diskContent, null, this.hasher);
     const newEntry: MergeFileEntry = {
-      relativePath: cap.buildOutputPath(),
+      relativePath: cap.outputPath(),
       sectionKey: null,
       entries: hashes,
     };
     const updated = [
-      ...existingEntries.filter((e) => e.relativePath !== cap.buildOutputPath()),
+      ...existingEntries.filter((e) => e.relativePath !== cap.outputPath()),
       newEntry,
     ];
     manifest.updateToolMergeFiles(aiId, updated);

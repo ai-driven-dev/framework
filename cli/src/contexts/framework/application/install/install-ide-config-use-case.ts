@@ -90,7 +90,7 @@ export class InstallIdeConfigUseCase {
     capability: SettingsCapability,
     options: InstallIdeConfigOptions
   ): Promise<InstallationFile | null> {
-    const outputPath = capability.buildOutputPath();
+    const outputPath = capability.outputPath();
     if (await this.isUserOwned(outputPath, options)) return null;
     const fileName = basename(outputPath);
     const asset = this.assets.loadConfigAsset(options.toolId, fileName);
@@ -99,7 +99,7 @@ export class InstallIdeConfigUseCase {
       relativePath: outputPath,
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: capability.getMergeStrategy(),
+      mergeStrategy: capability.mergeStrategy(),
     });
   }
 

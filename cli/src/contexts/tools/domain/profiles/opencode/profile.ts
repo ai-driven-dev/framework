@@ -58,7 +58,6 @@ export const opencode = defineAiTool({
     mcp: new McpCapability({
       outputPath: "opencode.json",
       format: "json",
-      entrySection: "mcp",
       mergeStrategy: "framework-prime",
       transformContent: toTypedMcpSection,
       consumes: [CONFIG_MCP, CONFIG_OPENCODE],

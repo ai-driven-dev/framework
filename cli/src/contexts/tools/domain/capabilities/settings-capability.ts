@@ -59,11 +59,11 @@ export class SettingsCapability {
     return relativePath === this.#params.outputPath;
   }
 
-  getMergeStrategy(): MergeStrategy {
+  mergeStrategy(): MergeStrategy {
     return this.#params.mergeStrategy;
   }
 
-  buildOutputPath(): string {
+  outputPath(): string {
     return this.#params.outputPath;
   }
 

@@ -18,18 +18,6 @@ describe("AgentsCapability", () => {
     frontmatter: identity,
   };
 
-  describe("buildOutputPath", () => {
-    it("combines directory, agents folder, name, and tool suffix", () => {
-      const cap = new AgentsCapability(markdownParams);
-      expect(cap.buildOutputPath("my-agent")).toBe(".claude/agents/my-agent.claude.md");
-    });
-
-    it("uses toml params when format is toml", () => {
-      const cap = new AgentsCapability(tomlParams);
-      expect(cap.buildOutputPath("my-agent")).toBe(".codex/agents/my-agent.codex.md");
-    });
-  });
-
   describe("accepts", () => {
     it("returns true when path starts with directory", () => {
       const cap = new AgentsCapability(markdownParams);

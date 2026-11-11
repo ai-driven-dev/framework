@@ -8,24 +8,6 @@ const stubCallbacks = {
 };
 
 describe("SkillsCapability", () => {
-  describe("buildOutputPath (directory mode)", () => {
-    it("combines directory, skills folder, name, and tool suffix", () => {
-      const cap = new SkillsCapability({
-        directory: ".claude/",
-        toolSuffix: ".claude.md",
-        ...stubCallbacks,
-      });
-      expect(cap.buildOutputPath("my-skill")).toBe(".claude/skills/my-skill.claude.md");
-    });
-  });
-
-  describe("buildOutputPath (prefix/codex mode)", () => {
-    it("uses SKILL.md convention under .agents/skills/", () => {
-      const cap = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
-      expect(cap.buildOutputPath("my-skill")).toBe(".agents/skills/aidd-my-skill/SKILL.md");
-    });
-  });
-
   describe("accepts (directory mode)", () => {
     it("returns true when path starts with directory", () => {
       const cap = new SkillsCapability({
@@ -98,28 +80,6 @@ describe("SkillsCapability", () => {
       const b = new SkillsCapability({ prefix: "other-", ...stubCallbacks });
       expect(a.equals(b)).toBe(false);
     });
-  });
-});
-
-describe("SkillsCapability without a tool suffix", () => {
-  it("names the skill file by its bare name", () => {
-    const cap = new SkillsCapability({
-      directory: ".claude/",
-      buildInstallPath: (fileName) => fileName,
-      convertFrontmatter: (fm) => fm,
-    });
-
-    expect(cap.buildOutputPath("planning")).toBe(".claude/skills/planning");
-  });
-
-  it("names what a capability lacking both prefix and directory is missing", () => {
-    expect(
-      () =>
-        new SkillsCapability({
-          buildInstallPath: (fileName) => fileName,
-          convertFrontmatter: (fm) => fm,
-        })
-    ).toThrow("SkillsCapability requires either prefix or directory");
   });
 });
 

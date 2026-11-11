@@ -42,9 +42,6 @@ export class NativePlugins extends PluginDeliveryBase {
     }
     this.#delivered = params.hookScript ?? AS_SHIPPED;
     this.#projectHooks = params.acceptsHooks ? resolveProjectHooks(params, this.#delivered) : null;
-    if (params.pluginRootToken === undefined) {
-      throw new CapabilityConfigError("native mode requires a pluginRootToken.");
-    }
     this.#pluginRootToken = params.pluginRootToken;
     this.#pluginsDir = params.pluginsDir;
     this.#manifestRelativePath = params.pluginManifestRelativePath;

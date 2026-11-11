@@ -3,7 +3,6 @@ import { CapabilityConfigError } from "../../../../kernel/errors.js";
 type HooksCapabilityParams = {
   outputPath: string;
   mergeStrategy?: "user-prime" | "none";
-  entrySection?: string;
   consumes?: readonly string[];
 };
 
@@ -26,16 +25,12 @@ export class HooksCapability {
     return this.#params.consumes?.includes(configName) ?? false;
   }
 
-  buildOutputPath(): string {
+  outputPath(): string {
     return this.#params.outputPath;
   }
 
-  getMergeStrategy(): "user-prime" | "none" {
+  mergeStrategy(): "user-prime" | "none" {
     return this.#params.mergeStrategy ?? "user-prime";
-  }
-
-  getEntrySection(): string | null {
-    return this.#params.entrySection ?? null;
   }
 
   accepts(relativePath: string): boolean {
@@ -45,8 +40,7 @@ export class HooksCapability {
   equals(other: HooksCapability): boolean {
     return (
       this.#params.outputPath === other.#params.outputPath &&
-      this.#params.mergeStrategy === other.#params.mergeStrategy &&
-      this.#params.entrySection === other.#params.entrySection
+      this.#params.mergeStrategy === other.#params.mergeStrategy
     );
   }
 }

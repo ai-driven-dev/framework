@@ -12,7 +12,6 @@ export type McpOutputPathCandidates = {
 type McpCapabilityParams = {
   outputPath: string;
   format: "json" | "toml";
-  entrySection?: string;
   mergeStrategy?: "user-prime" | "framework-prime" | "none";
   mergeFn?: (existing: string, incoming: string) => string;
   transformContent?: (content: string) => string;
@@ -39,12 +38,12 @@ export class McpCapability {
     return this.#params.format;
   }
 
-  getMergeStrategy(): "user-prime" | "framework-prime" | "none" {
+  mergeStrategy(): "user-prime" | "framework-prime" | "none" {
     return this.#params.mergeStrategy ?? "user-prime";
   }
 
   isFrameworkPrime(): boolean {
-    return this.getMergeStrategy() === "framework-prime";
+    return this.mergeStrategy() === "framework-prime";
   }
 
   /** Whether `fileName` is the JSON file this tool shares with a person, the framework's half of
@@ -93,7 +92,6 @@ export class McpCapability {
     return (
       this.#params.outputPath === other.#params.outputPath &&
       this.#params.format === other.#params.format &&
-      this.#params.entrySection === other.#params.entrySection &&
       this.#params.mergeStrategy === other.#params.mergeStrategy
     );
   }

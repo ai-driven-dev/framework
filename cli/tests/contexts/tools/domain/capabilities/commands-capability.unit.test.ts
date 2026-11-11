@@ -10,13 +10,6 @@ const stubParams = {
 describe("CommandsCapability", () => {
   const params = { directory: ".claude/", toolSuffix: ".claude.md", ...stubParams };
 
-  describe("buildOutputPath", () => {
-    it("combines directory, commands folder, name, and tool suffix", () => {
-      const cap = new CommandsCapability(params);
-      expect(cap.buildOutputPath("my-command")).toBe(".claude/commands/my-command.claude.md");
-    });
-  });
-
   describe("accepts", () => {
     it("returns true when path starts with directory", () => {
       const cap = new CommandsCapability(params);

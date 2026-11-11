@@ -98,7 +98,7 @@ const CAPABILITY_BASELINE: readonly {
   {
     file: "src/contexts/tools/domain/capabilities/hooks-capability.ts",
     className: "HooksCapability",
-    methods: ["accepts", "equals", "getEntrySection"],
+    methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {

@@ -48,10 +48,6 @@ export class AgentsCapability {
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
-  buildOutputPath(agentName: string): string {
-    return `${this.#params.directory}agents/${agentName}${this.#params.toolSuffix}`;
-  }
-
   buildInstallPath(relativeFileName: string): string | null {
     if (this.#params.buildInstallPath) return this.#params.buildInstallPath(relativeFileName);
     const basename = relativeFileName.split("/").at(-1) ?? relativeFileName;

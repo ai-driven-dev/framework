@@ -234,7 +234,6 @@ export const copilot = defineAiTool({
     mcp: new McpCapability({
       outputPath: ".vscode/mcp.json",
       format: "json",
-      entrySection: "servers",
       consumes: [CONFIG_MCP],
       transformContent: (content) => {
         const parsed = JSON.parse(content) as Record<string, unknown>;

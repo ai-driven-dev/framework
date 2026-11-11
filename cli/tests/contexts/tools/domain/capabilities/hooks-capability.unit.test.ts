@@ -8,7 +8,7 @@ describe("HooksCapability", () => {
   describe("buildOutputPath", () => {
     it("returns the configured output path", () => {
       const cap = new HooksCapability(params);
-      expect(cap.buildOutputPath()).toBe(".codex/hooks.json");
+      expect(cap.outputPath()).toBe(".codex/hooks.json");
     });
   });
 
@@ -48,44 +48,20 @@ describe("HooksCapability declarations", () => {
   });
 
   it("lets the user's file win unless the tool declares otherwise", () => {
-    expect(new HooksCapability({ outputPath: "h.json" }).getMergeStrategy()).toBe("user-prime");
+    expect(new HooksCapability({ outputPath: "h.json" }).mergeStrategy()).toBe("user-prime");
     expect(
-      new HooksCapability({ outputPath: "h.json", mergeStrategy: "none" }).getMergeStrategy()
+      new HooksCapability({ outputPath: "h.json", mergeStrategy: "none" }).mergeStrategy()
     ).toBe("none");
   });
 
-  it("names its entry section only when one is declared", () => {
-    expect(new HooksCapability({ outputPath: "h.json" }).getEntrySection()).toBeNull();
-    expect(
-      new HooksCapability({ outputPath: "h.json", entrySection: "hooks" }).getEntrySection()
-    ).toBe("hooks");
-  });
+  it("differs on the merge strategy alone", () => {
+    const cap = new HooksCapability({ outputPath: "h.json", mergeStrategy: "none" });
 
-  it("differs on the merge strategy or the entry section alone", () => {
-    const cap = new HooksCapability({
-      outputPath: "h.json",
-      mergeStrategy: "none",
-      entrySection: "a",
-    });
-
+    expect(cap.equals(new HooksCapability({ outputPath: "h.json", mergeStrategy: "none" }))).toBe(
+      true
+    );
     expect(
-      cap.equals(
-        new HooksCapability({ outputPath: "h.json", mergeStrategy: "none", entrySection: "a" })
-      )
-    ).toBe(true);
-    expect(
-      cap.equals(
-        new HooksCapability({
-          outputPath: "h.json",
-          mergeStrategy: "user-prime",
-          entrySection: "a",
-        })
-      )
-    ).toBe(false);
-    expect(
-      cap.equals(
-        new HooksCapability({ outputPath: "h.json", mergeStrategy: "none", entrySection: "b" })
-      )
+      cap.equals(new HooksCapability({ outputPath: "h.json", mergeStrategy: "user-prime" }))
     ).toBe(false);
   });
 });
@@ -106,7 +82,7 @@ describe("HooksCapability output path", () => {
   );
 
   it("keeps a name that merely holds two dots", () => {
-    expect(new HooksCapability({ outputPath: ".tool/a..b.json" }).buildOutputPath()).toBe(
+    expect(new HooksCapability({ outputPath: ".tool/a..b.json" }).outputPath()).toBe(
       ".tool/a..b.json"
     );
   });

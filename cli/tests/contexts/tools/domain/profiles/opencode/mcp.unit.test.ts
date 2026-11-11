@@ -28,7 +28,7 @@ describe("opencode mcp", () => {
     });
 
     it("uses framework-prime merge strategy", () => {
-      expect(opencode.section("mcp").getMergeStrategy()).toBe("framework-prime");
+      expect(opencode.section("mcp").mergeStrategy()).toBe("framework-prime");
     });
 
     it("writes its config as JSON", () => {

@@ -67,7 +67,7 @@ export class InstallConfigUseCase {
       relativePath: outputPath,
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: capability.getMergeStrategy(),
+      mergeStrategy: capability.mergeStrategy(),
       frameworkPath: ref.path,
     });
   }
@@ -90,7 +90,7 @@ export class InstallConfigUseCase {
       relativePath: outputPath,
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: capability.getMergeStrategy(),
+      mergeStrategy: capability.mergeStrategy(),
     });
   }
 
@@ -101,7 +101,7 @@ export class InstallConfigUseCase {
     if (capability instanceof McpCapability) {
       return resolveMcpOutputPath(this.fs, capability, projectRoot);
     }
-    return capability.buildOutputPath();
+    return capability.outputPath();
   }
 
   private applyTransforms(

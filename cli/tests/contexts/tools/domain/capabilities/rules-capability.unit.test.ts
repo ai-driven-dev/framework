@@ -10,14 +10,7 @@ const stubParams = {
 describe("RulesCapability", () => {
   const params = { directory: ".claude/", toolSuffix: ".claude.md", ...stubParams };
 
-  describe("buildOutputPath", () => {
-    it("combines directory, rules folder, name, and tool suffix", () => {
-      const cap = new RulesCapability(params);
-      expect(cap.buildOutputPath("my-rule")).toBe(".claude/rules/my-rule.claude.md");
-    });
-  });
-
-  // Where a rule lands is `buildInstallPath`, not `buildOutputPath`, and it is a closure per tool.
+  // Where a rule lands is `buildInstallPath`, a closure per tool.
   // Asking it with a sentinel keeps the answer where the knowledge is, not in a path parser here.
   describe("installedLocation", () => {
     it("answers the directory and the extension an installed rule actually carries", () => {

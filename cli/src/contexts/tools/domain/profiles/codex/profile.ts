@@ -81,7 +81,6 @@ export const codex = defineAiTool({
     mcp: new McpCapability({
       outputPath: ".codex/config.toml",
       format: "toml",
-      entrySection: "mcp_servers",
       mergeFn: mergeCodexConfigToml,
       consumes: [CONFIG_MCP],
     }),

@@ -11,6 +11,7 @@ import {
   pluginTreeHooksArtifact,
   projectHooksSupport,
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
+import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 
 const SOURCE = { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" };
 const LOADER = { dir: ".tool/plugin/", baseName: "tool-plugin.js" };
@@ -77,7 +78,7 @@ describe("the host adapter a build puts behind a plugin's hooks", () => {
   });
 
   it("replaces it on a native install, and on a flat one", () => {
-    const native = nativeHooksSupport(routed({ runtime: RUNTIME }));
+    const native = nativeHooksSupport(routed({ runtime: RUNTIME, rootToken: "$ROOT" }));
     const flat = flatHooksSupport(
       routed({ runtime: RUNTIME, flat: { scriptsDir: ".tool/hooks/" } })
     );
@@ -91,7 +92,7 @@ describe("the host adapter a build puts behind a plugin's hooks", () => {
   it("leaves every script as shipped where the descriptor names no adapter", () => {
     expect([
       supported(pluginTreeHooksArtifact(routed({}))).script,
-      nativeHooksSupport(routed({})).hookScript,
+      nativeHooksSupport(routed({ rootToken: "$ROOT" })).hookScript,
       flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/" } })).hookScript,
     ]).toStrictEqual([undefined, undefined, undefined]);
   });
@@ -266,14 +267,12 @@ describe("the hooks file the framework install writes", () => {
       config: {
         outputPath: ".tool/hooks.json",
         mergeStrategy: "none",
-        entrySection: "Start",
         consumes: ["tool-hooks"],
       },
     });
 
-    expect(capability.buildOutputPath()).toBe(".tool/hooks.json");
-    expect(capability.getMergeStrategy()).toBe("none");
-    expect(capability.getEntrySection()).toBe("Start");
+    expect(capability.outputPath()).toBe(".tool/hooks.json");
+    expect(capability.mergeStrategy()).toBe("none");
     expect(capability.consumes("tool-hooks")).toBe(true);
   });
 });
@@ -293,7 +292,10 @@ describe("a tool's plugins capability, as far as hooks go", () => {
       pluginRootToken: "$ROOT",
       hooksTrustNotice: "trust it",
     });
-    expect(nativeHooksSupport(routed({}))).toStrictEqual({ acceptsHooks: true });
+  });
+
+  it("refuses a native tool whose descriptor names no plugin root token", () => {
+    expect(() => nativeHooksSupport(routed({}))).toThrow(CapabilityConfigError);
   });
 
   it("accepts hooks flat, into the route's scripts folder", () => {

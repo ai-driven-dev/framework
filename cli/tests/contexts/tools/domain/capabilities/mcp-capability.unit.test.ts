@@ -104,21 +104,12 @@ describe("McpCapability declarations", () => {
     ).toBe(true);
   });
 
-  it("is not equal to a capability that differs in entrySection or mergeStrategy alone", () => {
+  it("is not equal to a capability that differs in mergeStrategy alone", () => {
     const base = { outputPath: ".mcp.json", format: "json" as const };
-    const cap = new McpCapability({ ...base, entrySection: "mcp", mergeStrategy: "user-prime" });
+    const cap = new McpCapability({ ...base, mergeStrategy: "user-prime" });
 
-    expect(
-      cap.equals(new McpCapability({ ...base, entrySection: "mcp", mergeStrategy: "user-prime" }))
-    ).toBe(true);
-    expect(
-      cap.equals(
-        new McpCapability({ ...base, entrySection: "servers", mergeStrategy: "user-prime" })
-      )
-    ).toBe(false);
-    expect(
-      cap.equals(new McpCapability({ ...base, entrySection: "mcp", mergeStrategy: "none" }))
-    ).toBe(false);
+    expect(cap.equals(new McpCapability({ ...base, mergeStrategy: "user-prime" }))).toBe(true);
+    expect(cap.equals(new McpCapability({ ...base, mergeStrategy: "none" }))).toBe(false);
   });
 });
 

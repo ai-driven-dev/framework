@@ -20,10 +20,6 @@ export class CommandsCapability {
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
-  buildOutputPath(commandName: string): string {
-    return `${this.#params.directory}commands/${commandName}${this.#params.toolSuffix}`;
-  }
-
   buildInstallPath(fileName: string): string | null {
     return this.#params.buildInstallPath(fileName);
   }

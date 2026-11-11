@@ -21,7 +21,6 @@ export const CODEX_HOOKS = declareHooks("codex", CODEX_DIRECTORY, adapter, {
   config: {
     outputPath: ".codex/hooks.json",
     mergeStrategy: "user-prime",
-    entrySection: "SessionStart",
     consumes: ["codex-hooks"],
   },
 });

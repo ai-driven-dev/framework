@@ -52,7 +52,6 @@ export const kilo = defineAiTool({
     mcp: new McpCapability({
       outputPath: "kilo.json",
       format: "json",
-      entrySection: "mcp",
       mergeStrategy: "framework-prime",
       transformContent: toTypedMcpSection,
       consumes: [CONFIG_MCP],

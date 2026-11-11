@@ -322,11 +322,6 @@ describe("PluginsCapability native construction", () => {
     pluginRootToken: "$X_PLUGIN_ROOT",
   };
 
-  it("refuses a native mode that names no plugin root token", () => {
-    const { pluginRootToken: _omitted, ...withoutToken } = native;
-    expect(() => pluginsCapability(withoutToken)).toThrow("pluginRootToken");
-  });
-
   it("refuses marketplace settings its tool has no native activation to drive", () => {
     expect(() =>
       pluginsCapability({ ...native, marketplaceSettings: MARKETPLACE_SETTINGS })

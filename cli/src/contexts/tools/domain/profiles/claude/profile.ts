@@ -74,7 +74,6 @@ export const claude = defineAiTool({
     mcp: new McpCapability({
       outputPath: ".mcp.json",
       format: "json",
-      entrySection: "mcpServers",
       consumes: [CONFIG_MCP],
     }),
     plugins: pluginsCapability({

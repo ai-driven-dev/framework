@@ -24,13 +24,6 @@ export class SkillsCapability {
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix ?? "");
   }
 
-  buildOutputPath(skillName: string): string {
-    if (this.#params.prefix !== undefined) {
-      return `${AGENTS_SKILLS_PREFIX}${this.#params.prefix}${skillName}/SKILL.md`;
-    }
-    return `${this.#params.directory}skills/${skillName}${this.#params.toolSuffix ?? ""}`;
-  }
-
   buildInstallPath(fileName: string): string | null {
     return this.#params.buildInstallPath(fileName);
   }

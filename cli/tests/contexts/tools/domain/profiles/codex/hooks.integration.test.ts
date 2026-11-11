@@ -8,7 +8,7 @@ import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
 describe("codex hooks", () => {
   describe("capabilities.hooks", () => {
     it("outputs to .codex/hooks.json", () => {
-      expect(codex.section("hooks").buildOutputPath()).toBe(".codex/hooks.json");
+      expect(codex.section("hooks").outputPath()).toBe(".codex/hooks.json");
     });
 
     it("consumes the codex-hooks config name", () => {
@@ -16,11 +16,7 @@ describe("codex hooks", () => {
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.section("hooks").getMergeStrategy()).toBe("user-prime");
-    });
-
-    it("uses SessionStart as entry section", () => {
-      expect(codex.section("hooks").getEntrySection()).toBe("SessionStart");
+      expect(codex.section("hooks").mergeStrategy()).toBe("user-prime");
     });
   });
 });
