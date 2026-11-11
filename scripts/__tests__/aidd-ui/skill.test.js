@@ -283,6 +283,7 @@ describe("aidd-ui review skill", () => {
   it("validates once filled, with a row for each state, and holds no pending row", () => {
     const template = filled("review");
     assert.equal(/\| pending \|/.test(template), false);
+    assert.match(template, /\nstatus: validated\nversion: 1\n/);
     put(tmp, `${UI}/reviews/first-round.md`, template.replace(/(\| search-flow \| default \| 1 \| ok \| *\|)/, "$1\n| search-flow | empty | 1 | revise | the empty state hides the query |"));
     assert.equal(engine("bump", "--task", TASK, "--created", "first-round", "--root", tmp).status, 0);
     assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });

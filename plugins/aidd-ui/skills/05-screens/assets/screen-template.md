@@ -18,5 +18,5 @@ code: {{the route's file, as path#Export@version}}
 
 <!--
 - Replace every `{{...}}` and delete every comment.
-- Delete the `code` line when the app lacks the screen.
+- Delete the `code` line only when no file answers the route.
 -->

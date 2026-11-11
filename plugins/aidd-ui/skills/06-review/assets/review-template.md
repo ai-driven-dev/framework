@@ -1,7 +1,7 @@
 ---
 id: {{review id}}
 kind: review
-status: proposed
+status: validated
 version: 1
 scope: system
 screens: [{{ids of the records reviewed}}]
