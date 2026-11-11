@@ -1,6 +1,8 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
+import { isAiTool } from "../../../src/contexts/tools/domain/registry.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
 
 const build = vi.fn();
@@ -204,7 +206,9 @@ describe("aidd translate — the help surface", () => {
     ).toEqual([
       [
         "--to <target>",
-        "Conversion target (claude, cursor, copilot, codex, opencode, kilo, antigravity)",
+        `Conversion target (${REGISTERED_PROFILES.filter(isAiTool)
+          .map((profile) => profile.toolId)
+          .join(", ")})`,
         undefined,
       ],
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],

@@ -68,8 +68,6 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
   { path: "src/contexts/tools/domain/capabilities/plugins-capability.ts", named: 3 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
-  { path: "src/presentation/commands/translate.ts", named: 7 },
-  { path: "src/presentation/prompts/menu-use-case.ts", named: 8 },
   { path: "src/runtime/assets/asset-loader.ts", named: 7 },
   // The composition names the hosts whose native marketplace readers it builds.
   { path: "src/runtime/wiring/framework.ts", named: 3 },

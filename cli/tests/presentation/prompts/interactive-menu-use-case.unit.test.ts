@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
+import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import type { Prompter } from "../../../src/kernel/ports/prompter.js";
 import { InteractiveMenuUseCase } from "../../../src/presentation/prompts/menu-use-case.js";
 import { buildUnitDeps, initProject } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
+const TOOL_PROMPT = `Tool (e.g. ${REGISTERED_PROFILES.map((profile) => profile.toolId).join(", ")})`;
 
 type SelectChoice = { name: string; value: string };
 
@@ -522,14 +524,8 @@ describe("interactive menu — the command each pick hands over", () => {
   });
 
   it.each([
-    [
-      ["inspect", "doctor-tool"],
-      "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, antigravity, vscode)",
-    ],
-    [
-      ["manage-tools", "framework-install"],
-      "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, antigravity, vscode)",
-    ],
+    [["inspect", "doctor-tool"], TOOL_PROMPT],
+    [["manage-tools", "framework-install"], TOOL_PROMPT],
     [["manage-tools", "framework-remove"], "Tool to remove"],
     [["manage-tools", "framework-update-one"], "Tool to update"],
     [

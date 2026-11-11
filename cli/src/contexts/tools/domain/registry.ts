@@ -206,8 +206,19 @@ export function getAiToolConfig(toolId: AiToolId): AiTool<unknown> {
   return catalog.getAiToolConfig(toolId);
 }
 
+/** Every registered tool, sorted by id: the order the setup and doctor flows walk them,
+ * whatever order the registration list keeps for its help texts. */
 export function getAllRegisteredTools(): Map<ToolId, ToolConfig> {
-  return catalog.getAllRegisteredTools();
+  return new Map(
+    [...catalog.getAllRegisteredTools()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  );
+}
+
+/** The ids of one category, in registration order: the order a help text names the tools. */
+export function registeredToolIds(category: ToolCategory): readonly ToolId[] {
+  return [...catalog.getAllRegisteredTools().values()]
+    .filter((config) => config.kind === category)
+    .map((config) => config.toolId);
 }
 
 /** The tool's native plugin CLI declaration, or undefined when it has none. Read from the

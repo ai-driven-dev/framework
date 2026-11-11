@@ -1,4 +1,5 @@
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
+import { registeredToolIds } from "../../contexts/tools/domain/registry.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 
 interface MenuLeaf {
@@ -27,6 +28,8 @@ function toChoice(node: MenuNode): { name: string; value: string; description?: 
   return { name: node.name, value: node.value, description: node.description };
 }
 
+const TOOL_PROMPT = `Tool (e.g. ${[...registeredToolIds("ai"), ...registeredToolIds("ide")].join(", ")})`;
+
 const INSTALLED_NODES: MenuNode[] = [
   {
     name: "Inspect",
@@ -44,8 +47,7 @@ const INSTALLED_NODES: MenuNode[] = [
         value: "doctor-tool",
         description: "Scope the report to a single AI or IDE tool",
         command: ["doctor", "--tool"],
-        inputPrompt:
-          "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, antigravity, vscode)",
+        inputPrompt: TOOL_PROMPT,
       },
       {
         name: "Plugins",
@@ -65,8 +67,7 @@ const INSTALLED_NODES: MenuNode[] = [
         value: "framework-install",
         description: "Add a tool to this project",
         command: ["framework", "install", "--tool"],
-        inputPrompt:
-          "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, antigravity, vscode)",
+        inputPrompt: TOOL_PROMPT,
       },
       {
         name: "Remove",

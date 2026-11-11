@@ -8,14 +8,16 @@ import { kilo } from "./kilo/profile.js";
 import { opencode } from "./opencode/profile.js";
 import { vscode } from "./vscode/profile.js";
 
-/** The order the setup and doctor flows walk the tools; a new tool adds its line here. */
+/** The registration list, in the order a help text names the tools: AI tools first, then IDE
+ * tools. A new tool adds its line here, before the IDE tools if it is an AI tool. The setup and
+ * doctor flows walk the tools sorted by id instead, see `getAllRegisteredTools`. */
 export const REGISTERED_PROFILES: readonly (AiTool<unknown> | IdeToolConfig)[] = [
-  antigravity,
   claude,
-  codex,
-  copilot,
   cursor,
-  kilo,
+  copilot,
+  codex,
   opencode,
+  kilo,
+  antigravity,
   vscode,
 ];
