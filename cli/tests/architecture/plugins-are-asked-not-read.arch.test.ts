@@ -32,29 +32,52 @@ const PUBLIC_FIELD =
   /^ {2}(?!static |constructor|abstract |override |async |get |set )(?:(?:public|private|protected) )?(?:readonly )?(\w+)[?!]?\s*[:=]/gm;
 /** A parameter property cannot be a `#` field, so it is refused outright. */
 const PARAMETER_PROPERTY = /constructor\([^)]*\b(?:public|private|protected|readonly)\s+(\w+)/g;
+/** What a stored-value answer hands back: a stored field, an optional read of one, a `?? literal`
+ * default over it, or a spread copy of it. A call in the expression makes it a computation. */
+const STORED = String.raw`(?:this\.#?\w+(?:\??\.\w+)*(?: \?\? [^;()]+)?|\{\s*\.\.\.this\.#?\w+(?:\.\w+)*\s*\})`;
 /** A getter that only hands back a stored value is a field read renamed. */
-const STORED_VALUE_GETTER = /^ {2}get (\w+)\(\)[^{]*\{\s*return this\.#?[\w.]+;\s*\}/gm;
+const STORED_VALUE_GETTER = new RegExp(
+  String.raw`^ {2}(?:override )?get (\w+)\(\)[^{]*\{\s*return ${STORED};\s*\}`,
+  "gm"
+);
 /** So is a method whose whole body returns a stored field: the same read, with parentheses. */
-const STORED_VALUE_METHOD =
-  /^ {2}(?!get |set )(?:public )?(\w+)\([^)]*\)[^{]*\{\s*return this\.#?[\w.]+;\s*\}/gm;
+const STORED_VALUE_METHOD = new RegExp(
+  String.raw`^ {2}(?!get |set )(?:override )?(?:public )?(\w+)(?:<[^>]*>)?\([^)]*\)[^{]*\{\s*return ${STORED};\s*\}`,
+  "gm"
+);
+/** So is a method that returns an object literal built only of stored fields, read straight or
+ * through a local alias of one: the declaration handed out whole, field by field. */
+const STORED_OBJECT_COPY =
+  /^ {2}(?!get |set )(?:override )?(?:public )?(\w+)\([^)]*\)[^{]*\{\s*(?:const (\w+) = this\.#?\w+;\s*)?return \{\s*(?:(?:\.\.\.this\.#?\w+|\w+: (?:this\.#?\w+|\w+)\.\w+),\s*)+\};\s*\}/gm;
 
 /** Stored values a variant still answers verbatim, each with the caller that needs the value itself.
- * Shrink-only: an entry the code no longer matches fails the test, and none is added. */
+ * The eleven on the plugin delivery classes are the answers `plan-tools-clean.md` section 3.1
+ * names; the others are declared values recorded there with their reason. Shrink-only: an entry the code no longer matches fails the test, and none is added. */
 const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.hostBinary":
     "the executable is the key every host registry and driver is looked up by; no computation sits behind it",
+  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.cliShape":
+    "the composition root configures the host CLI adapter with the whole declared shape; an answer per field would make the adapter ask the tool nine times for what it is handed once",
   "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration":
     "the composition root picks the source reader by the declared form, which carries its own list command and wording",
   "src/contexts/tools/domain/plugins/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile":
     "the path that names the tracked file in the manifest, resolved against a project root and hashed by its caller",
   "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.outputPath":
-    "a capability's declared destination, asked by every install and clean step",
+    "the declared destination, asked by the framework install use cases (config, runtime config) and written into the manifest",
+  "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.mergeStrategy":
+    "the declared way the hooks file is merged, recorded on each installed file by the framework install use cases",
   "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPath":
-    "a capability's declared destination, asked by every install and clean step",
+    "the declared destination, asked by the framework install use cases (config, runtime config) and by resolve-mcp-output-path",
+  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.mergeStrategy":
+    "the declared way the mcp file is merged, recorded on each installed file by the framework install use cases",
+  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPathCandidates":
+    "the declared places a tool's mcp file may already sit, probed in order by resolve-mcp-output-path",
   "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.outputPath":
-    "a capability's declared destination, asked by every install and clean step",
+    "the declared destination, asked by the framework install use cases (ide tool, runtime config) and written into the manifest",
   "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.mergeStrategy":
-    "the declared way a settings file is merged, asked by the merge step",
+    "the declared way the settings file is merged, handed to the file merge by the framework install use cases",
+  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.requiredTool":
+    "the declared tool a settings section applies to, matched against the installed one by the ide tool and runtime config install use cases",
   "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.flatLayout":
     "the declared layout of a flat tool, asked by the flat build",
   "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.hooksAcceptance":
@@ -68,7 +91,7 @@ const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.hooksAcceptance":
     "the declared hooks stance, asked by every caller that places hooks",
   "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.hooksFilePath":
-    "the declared hooks file, asked by the hooks installer",
+    "the declared hooks file, asked by the plugin content translator, which places the hooks manifest and the scripts beside it",
   "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.manifestPath":
     "the declared plugin manifest path, asked by the plugin build",
   "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.projectHooksDelivery":
@@ -76,7 +99,7 @@ const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.rootToken":
     "the declared plugin root token, substituted by the plugin build",
   "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.trustNotice":
-    "the declared hooks trust notice, shown by the installer",
+    "the declared hooks trust notice, collected by the plugin content translator into the install notices",
   "src/contexts/tools/domain/plugins/plugin-delivery.ts :: PluginDeliveryBase.globalFiles":
     "the declared global files, asked by the global install",
 };
@@ -121,6 +144,7 @@ function readableIn(file: string, source: string): string[] {
       PARAMETER_PROPERTY,
       STORED_VALUE_GETTER,
       STORED_VALUE_METHOD,
+      STORED_OBJECT_COPY,
     ]) {
       for (const field of body.matchAll(pattern)) fields.push(`${file} :: ${block[1]}.${field[1]}`);
     }
@@ -159,7 +183,7 @@ describe("a tool's plugin delivery is asked, never read", () => {
     ]);
   });
 
-  it("sees a public field, a keyword-private one, a parameter property, a stored-value getter and a stored-value method, and clears a # field", () => {
+  it("sees a public field, a keyword-private one, a parameter property, a stored-value getter and method in each written shape, an object of stored fields, and clears a # field and a computed answer", () => {
     const planted = [
       "class A {",
       "  readonly open: string;",
@@ -181,6 +205,47 @@ describe("a tool's plugin delivery is asked, never read", () => {
       "  derived(): boolean {",
       "    return this.#hidden !== undefined;",
       "  }",
+      "  derivedFromOptional(name: string): boolean {",
+      "    return this.#hidden?.includes(name) ?? false;",
+      "  }",
+      "  override get overridden(): string {",
+      "    return this.#hidden;",
+      "  }",
+      "  override askOverridden(): string {",
+      "    return this.#hidden;",
+      "  }",
+      "  askGeneric<T>(): T {",
+      "    return this.#hidden;",
+      "  }",
+      "  askWithDefault(): string {",
+      '    return this.#hidden ?? "none";',
+      "  }",
+      "  askOptional(): string | undefined {",
+      "    return this.#hidden?.inner;",
+      "  }",
+      "  askCopy(): Shape {",
+      "    return { ...this.#hidden };",
+      "  }",
+      "  askShape(): Shape {",
+      "    const spec = this.#hidden;",
+      "    return {",
+      "      first: spec.first,",
+      "      second: spec.second,",
+      "    };",
+      "  }",
+      "  askShapeDirect(): Shape {",
+      "    return {",
+      "      first: this.#hidden.first,",
+      "      second: this.#hidden.second,",
+      "    };",
+      "  }",
+      "  askComputedShape(): Shape {",
+      "    const spec = this.#hidden;",
+      "    return {",
+      "      first: spec.first,",
+      "      second: spec.second.trim(),",
+      "    };",
+      "  }",
       "}",
     ].join("\n");
     expect(readableIn("a.ts", planted)).toEqual([
@@ -188,8 +253,16 @@ describe("a tool's plugin delivery is asked, never read", () => {
       "a.ts :: A.secret",
       "a.ts :: A.leaked",
       "a.ts :: A.echoed",
+      "a.ts :: A.overridden",
       "a.ts :: A.ask",
       "a.ts :: A.askPlain",
+      "a.ts :: A.askOverridden",
+      "a.ts :: A.askGeneric",
+      "a.ts :: A.askWithDefault",
+      "a.ts :: A.askOptional",
+      "a.ts :: A.askCopy",
+      "a.ts :: A.askShape",
+      "a.ts :: A.askShapeDirect",
     ]);
   });
 

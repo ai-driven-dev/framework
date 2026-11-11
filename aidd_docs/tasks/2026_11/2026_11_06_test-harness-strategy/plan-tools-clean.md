@@ -119,6 +119,17 @@ Deviation from §1.4 and the line above, decided at P8.
 | `copiesFilesGlobally()`, `globalFiles()` | `copiesPluginFilesGlobally`, `globalFilesOf` |
 | `projectHooksDelivery()` | `projectHooksDeliveryOf`, `projectHooksFileOf` |
 
+Declared values approved as stored answers, outside the table above. Each is a value the caller needs as written, kept in the arch guard's allowlist (`tests/architecture/plugins-are-asked-not-read.arch.test.ts`) with its reason, shrink-only:
+
+| Member | Why it stays a stored answer |
+| --- | --- |
+| `HooksCapability.outputPath`, `McpCapability.outputPath`, `SettingsCapability.outputPath` | the declared destination, written into the manifest by the framework install use cases |
+| `HooksCapability.mergeStrategy`, `McpCapability.mergeStrategy`, `SettingsCapability.mergeStrategy` | the declared merge mode, recorded on each installed file or handed to the file merge |
+| `McpCapability.outputPathCandidates` | the declared places probed in order by `resolve-mcp-output-path.ts` |
+| `SettingsCapability.requiredTool` | the declared tool a section applies to, matched against the installed one |
+| `NativePlugins.hooksFilePath` | the declared hooks file, placed by `translate/domain/content-translator.ts` |
+| `NativeActivation.cliShape` | the whole declared shape configures the host CLI adapter once in the composition root |
+
 `ToolCatalog`: `get(id)`, `aiProfile(id)`, `inHelpOrder()`, `sortedById()`, `ids(category)`, `assertIdsMatch(category, ids)`.
 
 ### 3.2 External caller migration
