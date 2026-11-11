@@ -22,7 +22,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 | --- | --- | --- |
 | R7 | After its title, keep only the diagram and `## Transversal rules`: no Actions heading, action table or generic reading instruction. | The diagram already lists the actions. |
 | R8 | The diagram is `flowchart LR` with one node per action file, labeled only with its relative path (`actions/01-plan.md`). It is the only list of action nodes; entry, user-question and terminal nodes are allowed besides them. | A second list drifts from the first. |
-| R9 | Show every path in the diagram: an entry node per case, a back-edge per loop, a terminal per outcome. Each quoted edge label states the condition its action tests, and each stop or confirm branch of an action, or stop a transversal rule names, is an edge or terminal drawn from every node that can take it. | A path or label that differs from the action is invisible or misleading to the reader. |
+| R9 | Show every path in the diagram: an entry node per case, a back-edge per loop, a terminal per outcome. Each quoted edge label states the condition its action tests, an outcome a reference decides being labeled by its name only, and each stop or confirm branch of an action, or stop a transversal rule names, is an edge or terminal drawn from every node that can take it. | A path or label that differs from the action is invisible or misleading to the reader. |
 | R10 | Put rules no single action or reference owns in `## Transversal rules`. Omit the section when none exists. | An empty section is noise. |
 | R11 | Keep action and reference detail in their own files. | The router loads on every call. |
 
@@ -38,7 +38,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 | R13 | A return to an earlier point is a step naming its number or a link to the action. | The loop is explicit, not implied. |
 | R13 | A check ends in a step: validate, fix, repeat until it passes, linking the check or naming the steps that hold it. | A check with no loop is only advice. |
 | R13 | The final step reads the next action file, as a link. A terminal action has none. | The chain of actions has no gap. |
-| R14 | `## Output` is the done condition and the action's check: what exists when the action is finished. Add a check step only when the action changes files or state. | The next action needs a clear start state. |
+| R14 | `## Output` is the done condition: what exists when the action is finished, without restating a check a step runs. Add a check step only when the action changes files or state. | The next action needs a clear start state. |
 | R14 | `## Input` names what the action uses; `## Output` names only what it produces. Neither carries items through for a later action. | Carried items lengthen every action and repeat the one before. |
 | R15 | `## Rules` holds whole-action constraints, one per line. Move rules shared by actions to the router's transversal rules. | A constraint repeated in each action gets edited in one and not the others. |
 | R16 | An action stays under 100 lines. | Past that length an action holds several jobs. |

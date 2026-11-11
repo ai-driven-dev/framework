@@ -21,4 +21,8 @@ The confirmed frame, or, when the skill folder exists, the existing skill read i
 
 ## Output
 
-A plan table, one row per file touched. An action row holds its slug, input to output, rules, branches and outcomes (entry cases, loops, user questions, terminal outcomes), its check step if any, and any dependency. Another row holds its path, kind and the change. The table also holds the accepted risk step if any, and the content to preserve and the facts dropped or added.
+A confirmed plan table, one row per file touched.
+
+- An action row: slug, input to output, rules, branches and outcomes (entries, loops, questions, terminals), check step, dependency.
+- Any other row: path, kind, change.
+- Below the table: the accepted risk step, the content to preserve, the facts dropped or added.

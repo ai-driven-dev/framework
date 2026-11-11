@@ -29,6 +29,6 @@ Emit `name` and `description`. Plugin sources retain the input hint defined by `
 
 Codex's optional prompt is a short example mentioning `$skill-name`; availability across every Codex interface is unverified. See the [field reference](https://github.com/openai/skills/blob/main/skills/.system/skill-creator/references/openai_yaml.md), read 2026-11-03.
 
-OpenCode's command descriptions and `$ARGUMENTS` or positional substitution are separate features, not skill hints. Keep expected inputs in the skill's Input sections; do not generate a command wrapper solely to replace a hint. Sources read 2026-11-03: [v1 arguments](https://opencode.ai/docs/commands/#arguments), [v1 description](https://opencode.ai/docs/commands/#description), [v2 command fields](https://dev.opencode.ai/v2/docs/commands/#fields).
+OpenCode's command descriptions and `$ARGUMENTS` substitution are not skill hints. Keep expected inputs in the skill's Input sections. Generate no command wrapper only to replace a hint. Sources: [v1 arguments](https://opencode.ai/docs/commands/#arguments), [v1 description](https://opencode.ai/docs/commands/#description), [v2 command fields](https://dev.opencode.ai/v2/docs/commands/#fields).
 
 These are generation rules for native targets, not a description of what a separate distribution translator preserves.
