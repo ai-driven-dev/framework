@@ -585,6 +585,22 @@ C1 verdict: behaviour after 5578 < 6414 holds. C1b, total after 6887 <= 6860, is
 
 Filled in phase 11, one row per line of "Before and after", with the command output that gives it.
 
+Re-run, after the revised sections 6, 7, 9 and 10 of the reference:
+
+| Measure | Limit | Measured | Met |
+| --- | --- | --- | --- |
+| C1 behaviour | below 6414 | 5639 | yes |
+| C1b total | at most T1 | 6618 against 6860; with the 5 hooks files, under 7802 either way | yes |
+| C2 code and test outside the profile | at most 7 | 2 (`kernel/tool.ts`, `registered-profiles.ts`) | yes |
+| New test file outside the profile | none | none | yes |
+| Docs | at most 5 | 5, 2 of them generated | yes |
+| C3 | exceptions not above ambiguities | 3 against 10 | yes |
+
+- Counts: `count-after.mjs` from `cli/`, total 6618.
+- C2: the zeta probe replayed on the final tree, all gates green, then discarded.
+
+Measures: go. Verdict waits on the design bar review.
+
 ## Design bar (user requirement, checked at every design review)
 
 The pilot fails its review, whatever its measures, if any of these holds:
