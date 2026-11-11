@@ -29,18 +29,45 @@ approval_policy = "on-request"
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory lines before finishing"
+          }
+        ]
+      }
     ]
   }
 }
 
 
+## project/.codex/plugins/aidd-context/hooks/lib/bank-guard.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/lib/changes.cjs
+script, identical to the plugin source
+
 ## project/.codex/plugins/aidd-context/hooks/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-codex.cjs
 
 ## project/.codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/lib/plan.cjs
+script, identical to the plugin source
+
+## project/.codex/plugins/aidd-context/hooks/lib/report.cjs
 script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-context/hooks/memory.cjs
@@ -140,11 +167,16 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project codex aidd-context scope=project: 5 hook files
+project codex aidd-context scope=project: 10 hook files
   .codex/plugins/aidd-context/hooks/hooks.json
+  .codex/plugins/aidd-context/hooks/lib/bank-guard.cjs
+  .codex/plugins/aidd-context/hooks/lib/changes.cjs
   .codex/plugins/aidd-context/hooks/lib/common-rules.cjs
+  .codex/plugins/aidd-context/hooks/lib/fact-sheet.cjs
   .codex/plugins/aidd-context/hooks/lib/host.cjs
   .codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
+  .codex/plugins/aidd-context/hooks/lib/plan.cjs
+  .codex/plugins/aidd-context/hooks/lib/report.cjs
   .codex/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []

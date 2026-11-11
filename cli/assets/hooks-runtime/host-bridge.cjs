@@ -32,7 +32,7 @@ function readPayload() {
 }
 
 /** Every file a patch names, once each, in the order it names them, with the lines the patch
- * added to it and, when it removed some, those as what it replaced: an added or updated file,
+ * added to it and those it removed as what it replaced, empty when none: an added or updated file,
  * or a move's new path. A deleted file and a move's source carry none. */
 function patchedFiles(patch, cwd) {
   const files = new Map();
@@ -58,10 +58,7 @@ function patchedFiles(patch, cwd) {
   }
   return [...files].map(([file, lines]) => {
     if (lines === undefined) return { path: file };
-    const written = { path: file, written: lines.added.join("\n") };
-    return lines.removed.length === 0
-      ? written
-      : { ...written, replaced: lines.removed.join("\n") };
+    return { path: file, written: lines.added.join("\n"), replaced: lines.removed.join("\n") };
   });
 }
 

@@ -151,13 +151,6 @@ test("a file holding one marker without its pair reports instead of skipping sil
   assert.match(result.stderr, /unpaired project memory marker/u);
 });
 
-test("a context file with no block at all is skipped quietly", () => {
-  const result = run({ context: "# P\n\nNo block here.\n" });
-
-  assert.equal(result.stderr, "");
-  assert.equal(result.content, "# P\n\nNo block here.\n");
-});
-
 test("an unknown tool name is rejected", () => {
   const result = run({ context: `${OPEN}\n${CLOSE}\n`, args: ["emacs"] });
 
@@ -227,21 +220,6 @@ test("AGENTS.md gets markdown links, resolvable from the repository root", () =>
 
   assert.match(content, /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
   assert.doesNotMatch(content, /\(\.\.\//u);
-});
-
-// A link resolves against the file holding it, so a nested context file climbs back out.
-// Hardcoding one level makes every root-level link escape the repository.
-test("a nested context file prefixes its links with the climb back out", () => {
-  const content = run({
-    context: `${OPEN}\n${CLOSE}\n`,
-    contextAt: ".github/copilot-instructions.md",
-    args: ["copilot"],
-  }).content;
-
-  assert.match(
-    content,
-    /^\[aidd_docs\/memory\/architecture\.md\]\(\.\.\/aidd_docs\/memory\/architecture\.md\)$/mu,
-  );
 });
 
 // The README sits inside the memory directory, so its links are relative to it. The path
@@ -327,12 +305,149 @@ function sandbox(files, links = {}) {
 
 function sync(root, ...tools) {
   const result = spawnSync(process.execPath, [HOOK, "sync", ...tools], { cwd: root, env: HOOK_ENV, encoding: "utf8" });
-  return { status: result.status, stderr: result.stderr };
+  return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
 const read = (root, name) => fs.readFileSync(path.join(root, name), "utf8");
 const EMPTY = `# P\n\n${OPEN}\n${CLOSE}\n`;
 const FILLED_AT = `${OPEN}\n\n@aidd_docs/memory/architecture.md\n\n${CLOSE}`;
+
+// A tool picked with --add: its context file gains the block it lacks. Without it, and at a session
+// start, sync only refreshes the blocks that already stand.
+const TEAM = "# Team\n\n```md\n@README.md\n```\n\n- Answer in French.\n";
+const FILLED_LINK = `${OPEN}\n\n[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)\n\n${CLOSE}`;
+
+// Every other command takes the root as `.`; a model copies it onto sync.
+test("a root or path given to sync is refused with the fix, and nothing is written", () => {
+  for (const arg of [".", "./", "../proj", "/tmp/proj"]) {
+    const root = sandbox({ "CLAUDE.md": TEAM });
+    try {
+      const result = sync(root, "claude", arg);
+      assert.equal(result.status, 1, arg);
+      assert.equal(result.stderr, `memory: sync takes tool names, run it from the project root (got "${arg}")\n`, arg);
+      assert.equal(read(root, "CLAUDE.md"), TEAM, arg);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("sync --add appends the block a picked tool's file lacks, after the team's content left byte for byte", () => {
+  const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": TEAM });
+  try {
+    const result = sync(root, "--add", "claude");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(read(root, "CLAUDE.md"), `${TEAM}\n${FILLED_AT}\n`);
+    assert.equal(result.stderr, "memory: CLAUDE.md had no project memory block, added at its end\n");
+    assert.equal(read(root, "AGENTS.md"), TEAM, "an unpicked tool's file is left alone");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("naming a tool without --add only fills a block that stands, and names the fix for a file holding none", () => {
+  const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": EMPTY });
+  try {
+    const result = sync(root, "codex", "claude");
+    assert.deepEqual(result, { status: 0, stdout: "", stderr: "memory: CLAUDE.md has no memory block; run sync --add claude to add one\n" });
+    assert.equal(read(root, "CLAUDE.md"), TEAM);
+    assert.equal(read(root, "AGENTS.md"), `# P\n\n${FILLED_LINK}\n`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("AGENTS.md gains the block in the link form, and a second run changes nothing", () => {
+  const root = sandbox({ "AGENTS.md": "# Agents\nNo trailing newline" });
+  try {
+    assert.equal(sync(root, "--add", "codex").status, 0);
+    const once = read(root, "AGENTS.md");
+    assert.equal(once, `# Agents\nNo trailing newline\n\n${FILLED_LINK}\n`);
+    const again = sync(root, "--add", "codex");
+    assert.equal(read(root, "AGENTS.md"), once);
+    assert.equal(again.stderr, "", "a second run reports no addition");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a CRLF file gains the block in CRLF, and an empty file the block alone", () => {
+  const crlf = (text) => text.replace(/\n/gu, "\r\n");
+  const root = sandbox({ "CLAUDE.md": crlf(TEAM), "AGENTS.md": "" });
+  try {
+    assert.equal(sync(root, "--add", "claude", "codex").status, 0);
+    assert.equal(read(root, "CLAUDE.md"), crlf(`${TEAM}\n${FILLED_AT}\n`));
+    assert.equal(read(root, "AGENTS.md"), `${FILLED_LINK}\n`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a session start, or a sync naming no tool, never adds a block to a file holding none", () => {
+  const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": TEAM });
+  try {
+    const payload = JSON.stringify({ hook_event_name: "SessionStart", session_id: "sync-no-block", cwd: root, source: "startup" });
+    const hook = spawnSync(process.execPath, [HOOK, "hook"], { cwd: root, env: HOOK_ENV, input: payload, encoding: "utf8" });
+    assert.equal(hook.status, 0, hook.stderr);
+    assert.equal(read(root, "CLAUDE.md"), TEAM, "the session start added a block");
+    assert.deepEqual(sync(root, "--add"), { status: 0, stdout: "", stderr: "" });
+    assert.deepEqual(sync(root), { status: 0, stdout: "", stderr: "" }, "a bare sync spoke about a file it never adds to");
+    assert.equal(read(root, "CLAUDE.md"), TEAM, "a sync naming no tool added a block");
+    assert.equal(read(root, "AGENTS.md"), TEAM);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("CLAUDE.md linked to AGENTS.md with no block gains one block, in the @ form", () => {
+  const root = sandbox({ "AGENTS.md": TEAM }, { "CLAUDE.md": "AGENTS.md" });
+  try {
+    assert.equal(sync(root, "--add", "claude", "codex").status, 0);
+    assert.equal(read(root, "AGENTS.md"), `${TEAM}\n${FILLED_AT}\n`);
+    assert.ok(fs.lstatSync(path.join(root, "CLAUDE.md")).isSymbolicLink(), "the link stays a link");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a link to nothing and a copilot file linked to AGENTS.md are still never written", () => {
+  const root = sandbox({ "AGENTS.md": TEAM }, { "CLAUDE.md": "gone.md", [".github/copilot-instructions.md"]: "../AGENTS.md" });
+  try {
+    assert.equal(sync(root, "--add", "claude", "copilot").status, 0);
+    assert.equal(fs.existsSync(path.join(root, "gone.md")), false, "a dangling link was followed");
+    assert.equal(read(root, "AGENTS.md"), `${TEAM}\n${FILLED_LINK}\n`, "copilot's pick fills AGENTS.md once, with no pointer");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a file reached through a link leaving the project is never given a block", () => {
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-shared-"));
+  fs.writeFileSync(path.join(outside, "G.md"), TEAM);
+  const root = sandbox({}, { "CLAUDE.md": path.join(outside, "G.md") });
+  try {
+    const result = sync(root, "--add", "claude");
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "memory: CLAUDE.md links outside the project, not synced\n");
+    assert.equal(fs.readFileSync(path.join(outside, "G.md"), "utf8"), TEAM);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("a file ending inside an open code fence is never given a block", () => {
+  const open = "# P\n\n```md\n@README.md\n";
+  const root = sandbox({ "CLAUDE.md": open });
+  try {
+    const result = sync(root, "--add", "claude");
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "memory: CLAUDE.md ends inside a code fence, not synced\n");
+    assert.equal(read(root, "CLAUDE.md"), open);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("a target that cannot be written is named, and the others still sync", (t) => {
   if (process.getuid?.() === 0) return t.skip("root writes through a read-only file");
@@ -498,7 +613,7 @@ test("a CRLF file keeps CRLF, and an unchanged block is not rewritten", () => {
 test("sync is silent about a read-only or missing target it has no block for", () => {
   const root = sandbox({});
   try {
-    assert.deepEqual(sync(root), { status: 0, stderr: "" });
+    assert.deepEqual(sync(root), { status: 0, stdout: "", stderr: "" });
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -507,7 +622,98 @@ test("sync is silent about a read-only or missing target it has no block for", (
 test("the setup copies aidd_docs/README.md only when the project has none", () => {
   const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory");
   const write = fs.readFileSync(path.join(skill, "actions/02-write.md"), "utf8");
-  const capabilities = fs.readFileSync(path.join(skill, "references/capabilities.md"), "utf8");
   assert.match(write, /aidd_docs\/README\.md[^\n]*only when (?:it is )?absent/u);
-  assert.match(capabilities, /copied to `aidd_docs\/README\.md` only when (?:it is )?absent/u);
+});
+
+// Copilot reads AGENTS.md, so its own file only points there: a block copied into both files
+// would load the memory twice.
+const POINTER = "Project memory: [AGENTS.md](../AGENTS.md).";
+const COPILOT = ".github/copilot-instructions.md";
+const exists = (root, name) => fs.existsSync(path.join(root, name));
+
+test("picking copilot fills AGENTS.md and creates copilot-instructions.md with the one pointer line", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.match(read(root, "AGENTS.md"), /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
+    assert.equal(read(root, COPILOT), `${POINTER}\n`);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("copilot-instructions.md is created only when copilot is picked", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(exists(root, COPILOT), false, "naming codex created the copilot file");
+    assert.equal(sync(root).status, 0);
+    assert.equal(exists(root, COPILOT), false, "a session start created the copilot file");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a team's copilot-instructions.md keeps its content and gains the pointer once", () => {
+  const team = "# Team rules\n\nAlways answer in French.\n";
+  const root = sandbox({ [COPILOT]: team, "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.equal(read(root, COPILOT), `${team}\n${POINTER}\n`);
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.equal(read(root, COPILOT), `${team}\n${POINTER}\n`, "a second run adds it again");
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(read(root, COPILOT), `${team}\n${POINTER}\n`, "an unpicked tool's file is left alone");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a memory block left in copilot-instructions.md becomes the pointer line, on a pick and at a session start", () => {
+  const old = `# Team\n\n${OPEN}\n\n[aidd_docs/memory/architecture.md](../aidd_docs/memory/architecture.md)\n\n${CLOSE}\n\nAfter.\n`;
+  const legacy = "# Team\n\n<aidd_project_memory>\n@aidd_docs/memory/architecture.md\n</aidd_project_memory>\n\nAfter.\n";
+  for (const [content, args] of [[old, ["copilot"]], [old, []], [legacy, ["copilot"]], [legacy, []]]) {
+    const root = sandbox({ [COPILOT]: content, "AGENTS.md": EMPTY });
+    try {
+      assert.equal(sync(root, ...args).status, 0);
+      assert.equal(read(root, COPILOT), `# Team\n\n${POINTER}\n\nAfter.\n`, `${args}`);
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("a team line inside the old copilot block is held, never erased", () => {
+  const team = `${OPEN}\n\n[aidd_docs/memory/architecture.md](../aidd_docs/memory/architecture.md)\nAsk Ana before editing the ui.\n\n${CLOSE}\n`;
+  const root = sandbox({ [COPILOT]: team, "AGENTS.md": EMPTY });
+  try {
+    const result = sync(root, "copilot");
+    assert.equal(read(root, COPILOT), team);
+    assert.match(result.stderr, /copilot-instructions\.md holds a line the memory block would not write/u);
+    assert.equal(result.status, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("copilot-instructions.md linked to AGENTS.md is never given the pointer", () => {
+  const root = sandbox({ "AGENTS.md": EMPTY }, { [COPILOT]: "../AGENTS.md" });
+  try {
+    assert.equal(sync(root, "copilot").status, 0);
+    assert.doesNotMatch(read(root, "AGENTS.md"), /Project memory:/u);
+    assert.ok(fs.lstatSync(path.join(root, COPILOT)).isSymbolicLink());
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("naming another tool leaves an old copilot block as it is", () => {
+  const old = `${OPEN}\n\n[aidd_docs/memory/architecture.md](../aidd_docs/memory/architecture.md)\n\n${CLOSE}\n`;
+  const root = sandbox({ [COPILOT]: old, "AGENTS.md": EMPTY });
+  try {
+    assert.equal(sync(root, "codex").status, 0);
+    assert.equal(read(root, COPILOT), old);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

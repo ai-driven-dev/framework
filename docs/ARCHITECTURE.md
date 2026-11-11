@@ -109,9 +109,9 @@ Placing a gap: judgment needed, no hook; one write, after the write, several, at
    <file>[:<line>] <rule> ["<excerpt>"] => <fix>
    ```
 4. **One entry per concern.** `node ${CLAUDE_PLUGIN_ROOT}/hooks/<concern>.cjs hook|check|sync`: the same file runs by hand, from a skill and in CI.
-5. **Node built-ins only.** CommonJS, `fs`, `path`, `os`. No dependency, child process, git or network.
+5. **Node built-ins; anything heavier is justified and measured.** CommonJS, `fs`, `path`, `os`, no dependency. A child process, git included, or a network call runs on every write or turn end it hooks: use one only when no built-in can do the job, keep it read-only and scoped to what the hook guards, and measure it under the hook's timeout on a large repository before it ships.
 6. **Bounded.** A 5 s declared timeout. Exit 0 on garbage, empty stdin or an unknown event; an internal failure answers nothing.
-7. **Turn state is the plugin's own.** A plugin with a Stop check keeps its own per-session state, and may tell an error new in another file once per turn; the shared library holds none. `aidd-context` has no Stop check: a memory finding informs after the write, and `memory.cjs check`, which the skill runs when it writes the bank, is its one strict gate.
+7. **Turn state is the plugin's own.** A plugin with a Stop check keeps its own per-session state, and may tell an error new in another file once per turn; the shared library holds none. `aidd-context` keeps none: a format finding informs after the write, and its Stop check compares the bank to HEAD, so it needs no state of its own.
 8. **Status message.** Every handler carries a short `statusMessage` naming its plugin and action (`AIDD Context: check memory file`); Codex shows it when asking for trust.
 
 ### What the CLI carries

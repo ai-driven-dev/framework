@@ -27,18 +27,45 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory lines before finishing"
+          }
+        ]
+      }
     ]
   }
 }
 
 
+## project/.claude/plugins/aidd-context/hooks/lib/bank-guard.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/changes.cjs
+script, identical to the plugin source
+
 ## project/.claude/plugins/aidd-context/hooks/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.claude/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-claude.cjs
 
 ## project/.claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/plan.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/lib/report.cjs
 script, identical to the plugin source
 
 ## project/.claude/plugins/aidd-context/hooks/memory.cjs
@@ -149,11 +176,16 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 5 hook files
+project claude aidd-context scope=project: 10 hook files
   .claude/plugins/aidd-context/hooks/hooks.json
+  .claude/plugins/aidd-context/hooks/lib/bank-guard.cjs
+  .claude/plugins/aidd-context/hooks/lib/changes.cjs
   .claude/plugins/aidd-context/hooks/lib/common-rules.cjs
+  .claude/plugins/aidd-context/hooks/lib/fact-sheet.cjs
   .claude/plugins/aidd-context/hooks/lib/host.cjs
   .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
+  .claude/plugins/aidd-context/hooks/lib/plan.cjs
+  .claude/plugins/aidd-context/hooks/lib/report.cjs
   .claude/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []

@@ -21,3 +21,7 @@ flowchart LR
   Vcs -- "{{trigger}}" --> Tracker
   Bot -- "{{trigger}}" --> Vcs
 ```
+
+## Services
+
+- {{Which external services does the project call, how does a call authenticate, retry and time out, and what happens when the service is down?}}

@@ -1,13 +1,6 @@
 /**
- * The format rules of a memory file, as functions of its text and of what the project and the
- * rest of the bank hold. The engine reads the bank and passes the other files in the context;
- * M4 reads the disk through the shared hook library, under the project root it is given, and M3
- * reads the skill's templates.
- *
- * Each rule takes `{ file, text, root, others }` and returns problems:
- * `{ file, line, rule, severity, message, fix }`, plus the offending `excerpt` when there is one
- * and `endLine` when the problem spans several lines. `message` says what is wrong and `fix` what
- * to do, apart, as the findings formatter prints them.
+ * The format rules of a memory file. Each takes `{ file, text, root, others }` and returns
+ * `{ file, line, rule, severity, message, fix }` problems, `excerpt` and `endLine` when known.
  */
 
 const fs = require("node:fs");
@@ -28,21 +21,8 @@ const STRUCTURAL_LINE = /^(?:\||#|>|[-*+]\s|\d+[.)]\s)/u;
 const LIST_ITEM = /^(?:[-*+]\s|\d+[.)]\s)/u;
 const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
 
-// A count is a number, in digits or words, before a plural noun, whatever the noun, with at most
-// one word between ("4 pull requests"). A digit stuck to a name, a version, a time, a port, a
-// range or a thousands separator is not one, and "one" alone is a pronoun too often to count.
-// Limits: "two" and "three" are left out, they open design prose more often than a count ("three
-// files" and "Two gates" pass), and a label followed by a number and a verb ("Step 2 shows
-// errors") reads as a count.
-const NUMBER_WORDS = [
-  "four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen",
-  "eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred",
-].join("|");
-const NOT_NOUNS = "of|with|for|on|in|to|and|or|at|by|per|its";
-const PLURAL_NOUN = `(?!(?:${NOT_NOUNS})\\b)(?:[a-z]+\\s+)?(?!(?:${NOT_NOUNS})\\b)(?![a-z]*(?:ss|us|is)\\b)[a-z]{2,}s\\b`;
-const COUNT_OF_THINGS = new RegExp(`(?<![\\w.:+#/,-])(?:\\d{1,6}|${NUMBER_WORDS})\\s+${PLURAL_NOUN}`, "iu");
+// Only a date: exact in every language. A count or time word needs judgment, left to the reader.
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
-const TIME_WORDS = /\b(?:currently|as of|right now|at the moment)\b/iu;
 
 const TEMPLATE_SLOT = /\{\{[^{}\n]*\}\}/gu;
 const SKILL = "02-project-memory";
@@ -54,16 +34,12 @@ const LIST_OR_QUOTE_MARKER = /^\s*(?:[>*+-]\s+|\d+[.)]\s+)/u;
 const SENTENCE_END = /(?<=[.!?])\s+/u;
 const SENTENCE_LAST_WORD = /[.!?]["'”’)\]`*_]*$/u;
 
-/**
- * One finding. `offending` is the whole text it stands on, and its cut form is the `excerpt`
- * unless one is given.
- */
+/** `offending` is the whole text; its cut form is the `excerpt` unless one is given. */
 function problem({ offending, excerpt: shown, ...finding }) {
   const cut = shown ?? (offending === undefined ? undefined : excerpt(offending));
   return { ...finding, ...(cut === undefined ? {} : { excerpt: cut }), ...(offending === undefined ? {} : { offending }) };
 }
 
-/** A quoted excerpt of the offending text, cut so one line stays short. */
 function excerpt(text) {
   return text.length > EXCERPT_LIMIT ? `${text.slice(0, EXCERPT_LIMIT - 1)}…` : text;
 }
@@ -76,12 +52,7 @@ function isListItem(line) {
   return LIST_ITEM.test(line);
 }
 
-/**
- * The paragraphs of a file: the lines of prose that run together once rendered, each as
- * `{ number, text }`. A table, a heading, a quote, a list item and the lines continuing it, a fence,
- * a comment, indented code and front matter are not prose. A line ending in a hard break ends its
- * paragraph, so a stack of labelled lines is one unit each.
- */
+/** Prose paragraphs as `{ number, text }`; tables, headings, lists, fences, comments are not. */
 function paragraphs(text) {
   const found = [];
   let current = [];
@@ -118,7 +89,6 @@ function paragraphs(text) {
   return found;
 }
 
-/** The sentences of a paragraph, each as its words and the lines it starts and ends on. */
 function sentencesIn(paragraph) {
   const found = [];
   let current = [];
@@ -136,12 +106,12 @@ function sentencesIn(paragraph) {
 }
 
 function longProseSentences({ file, text }) {
-  const fix = "make it a table, a list or a heading";
+  const fix = "split it into a list or a table; keep every fact";
   return paragraphs(text)
     .flatMap(sentencesIn)
     .filter((sentence) => sentence.length > PROSE_WORD_LIMIT)
     .map((sentence) => {
-      const over = `${sentence.length} words, over ${PROSE_WORD_LIMIT}`;
+      const over = `${sentence.length} words, over the recommended ${PROSE_WORD_LIMIT}`;
       const [line, endLine] = [sentence[0].number, sentence[sentence.length - 1].number];
       return problem({ file, line, endLine, rule: "M1", severity: ERROR, message: `sentence of ${over}`, fix, excerpt: over });
     });
@@ -151,7 +121,7 @@ function volatileFacts({ file, text }) {
   const found = [];
   for (const { number, text: line } of proseLines(text)) {
     const prose = line.replace(INLINE_CODE, "");
-    const match = prose.match(COUNT_OF_THINGS) ?? prose.match(ISO_DATE) ?? prose.match(TIME_WORDS);
+    const match = prose.match(ISO_DATE);
     if (!match) continue;
     const message = `"${excerpt(match[0])}" goes stale`;
     found.push(problem({ file, line: number, rule: "M2", severity: WARNING, message, fix: STALE_FIX, offending: match[0] }));
@@ -159,8 +129,7 @@ function volatileFacts({ file, text }) {
   return found;
 }
 
-/** The templates folder of the skill held by a `skills` folder: the skill's own name, a plugin
- * prefix on it (`aidd-context-02-project-memory`), or a folder named for the plugin around it. */
+/** The skill's own name, a plugin prefix on it, or a folder named for the plugin around it. */
 function templatesIn(skills) {
   for (const entry of namesIn(skills)) {
     for (const skill of [path.join(skills, entry), path.join(skills, entry, SKILL)]) {
@@ -172,11 +141,7 @@ function templatesIn(skills) {
   return null;
 }
 
-/**
- * The skill's templates folder, found from the hooks folder this library sits in: beside it in the
- * plugin tree, in the tool's own folder in a flat build, under the project's `.agents` for a flat
- * Codex build, or in the skill that carries its own copy of the hooks.
- */
+/** Beside the hooks, in the tool's folder, under `.agents` for Codex, or in the skill's copy. */
 function templatesFolder() {
   const hooks = path.resolve(__dirname, "..");
   const above = (levels, ...rest) => path.join(hooks, ...Array(levels).fill(".."), ...rest);
@@ -189,7 +154,6 @@ function templatesFolder() {
   );
 }
 
-/** Every `{{…}}` slot of the template named `name`, wherever it sits under the templates folder. */
 function templateSlots(name, folder) {
   if (folder === null) return [];
   const slots = new Set();
@@ -201,14 +165,10 @@ function templateSlots(name, folder) {
   return [...slots];
 }
 
-/**
- * A slot copied from the template of the same name and left unfilled, fences included. Only an
- * exact slot of that template counts, so a `{{` of GitHub Actions, Helm or Vue, TODO and TBD are
- * never flagged. Limit: with no templates folder next to the library, nothing is found.
- */
+/** Only an exact slot of the same template counts. Limit: no templates folder, nothing found. */
 function unfilledSlots({ file, text, templates = templatesFolder() }) {
   const slots = templateSlots(path.posix.basename(file), templates);
-  const fix = "fill it or remove it";
+  const fix = "fill it from the code";
   const found = [];
   for (const [index, line] of text.split("\n").entries()) {
     const slot = slots.find((candidate) => line.includes(candidate));
@@ -220,9 +180,8 @@ function unfilledSlots({ file, text, templates = templatesFolder() }) {
   return found;
 }
 
-/** The dead-path rule every plugin applies to its own files, from the shared hook library. */
 function deadReferences({ file, text, root }) {
-  const fix = "fix the path or remove it";
+  const fix = "fix the path; keep the fact";
   return deadPaths(text, root, path.dirname(path.join(root, file))).map(({ line, path: dead }) =>
     problem({ file, line, rule: "M4", severity: ERROR, message: `\`${excerpt(dead)}\` names nothing on disk`, fix, offending: dead })
   );
@@ -240,9 +199,10 @@ function longItems({ file, text }) {
     if (line.startsWith("|")) items = tableCells(line);
     else if (LIST_ITEM.test(line)) items = [line.replace(LIST_ITEM, "")];
 
-    if (items.some((item) => wordsIn(item).length > ITEM_WORD_LIMIT)) {
-      const message = `bullet or table cell over ${ITEM_WORD_LIMIT} words`;
-      found.push(problem({ file, line: number, rule: "M5", severity: WARNING, message, fix: "split it" }));
+    const longest = Math.max(0, ...items.map((item) => wordsIn(item).length));
+    if (longest > ITEM_WORD_LIMIT) {
+      const message = `bullet or cell of ${longest} words, over the recommended ${ITEM_WORD_LIMIT}`;
+      found.push(problem({ file, line: number, rule: "M5", severity: WARNING, message, fix: "split it; keep every fact" }));
     }
   }
   return found;
@@ -251,8 +211,8 @@ function longItems({ file, text }) {
 function longFile({ file, text }) {
   const count = proseLines(text).reduce((total, { text: line }) => total + wordsIn(line).length, 0);
   if (count <= FILE_WORD_LIMIT) return [];
-  const message = `file over ${FILE_WORD_LIMIT} words`;
-  return [problem({ file, line: 1, rule: "M6", severity: WARNING, message, fix: "split it or cut it" })];
+  const message = `file of ${count} words, over the recommended ${FILE_WORD_LIMIT}`;
+  return [problem({ file, line: 1, rule: "M6", severity: WARNING, message, fix: "move a section to the capability file it belongs to; keep every fact" })];
 }
 
 function normalise(piece) {
@@ -266,10 +226,7 @@ function normalise(piece) {
     .replace(/[.!?]+$/u, "");
 }
 
-/**
- * Copied from `scripts/check-doc-duplication.js`: a line break ends a sentence as surely as a
- * period, and tables and headings are skipped. Returns each sentence with its first line.
- */
+/** Copied from `scripts/check-doc-duplication.js`: a line break ends a sentence too. */
 function sentencesOf(text) {
   const found = new Map();
   for (const { number, text: line } of proseLines(text)) {
@@ -311,7 +268,7 @@ const RULES = Object.freeze([
   { id: "M7", severity: WARNING, check: repeatedSentences },
 ]);
 
-// The limits the rules enforce, by rule id: the table in `memory-rules.md` states the same ones.
+// By rule id; the table in `memory-rules.md` states the same ones.
 const LIMITS = Object.freeze({ M1: PROSE_WORD_LIMIT, M5: ITEM_WORD_LIMIT, M6: FILE_WORD_LIMIT, M7: SENTENCE_WORD_FLOOR });
 
-module.exports = { ERROR, WARNING, RULES, LIMITS };
+module.exports = { ERROR, WARNING, RULES, LIMITS, wordsIn };

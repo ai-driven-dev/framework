@@ -1,7 +1,5 @@
 # Project AI Docs
 
-What the AI knows about this project, what it produces, and how to change either.
-
 ## What the AI knows
 
 | Folder | Holds | Loaded |
@@ -9,39 +7,27 @@ What the AI knows about this project, what it produces, and how to change either
 | `memory/` | the architecture, conventions and decisions, one file per concern | every session |
 | `memory/internal/` | decision records and workflow notes | when a task needs it |
 | `memory/external/` | outside documentation | when you ask |
-| `rules/` | coding standards | automatically |
+| `rules/` | coding standards, published to each AI tool's rules | automatically |
 
 ## What it produces
 
-| Folder | Holds |
+| Path | Holds |
 | --- | --- |
 | `tasks/` | specs, plans and reviews, one folder per piece of work |
 | `backlog/` | epics, user stories, tasks, spikes and defects |
 | `product/` | product briefs |
 | `ui/` | the design system |
 | `recipes/` | how-to sheets |
+| INSTALL.md | the install guide of a new project |
 
-The install guide of a new project, INSTALL.md, sits in this folder.
+## Keep it current
 
-## Change what the AI knows
-
-```mermaid
-flowchart LR
-  edit["Edit a file in memory/"] --> check["Format checked at the write"]
-  check --> fix{"Problem?"}
-  fix -- yes --> edit
-  fix -- no --> block["Context block refreshed at session start"]
-  block --> ai([The AI reads it])
-```
-
-The context block in each AI context file is generated. Never edit it by hand.
-
-## Hooks
-
-| Hook | Runs | Does |
-| --- | --- | --- |
-| Memory refresh | when a session starts | lists the memory files in the context block of each AI tool |
-| Memory check | after a file write | reports a memory file that breaks the format rules |
+| When | What happens |
+| --- | --- |
+| A memory file is written | its format is checked, and the AI is told what to fix |
+| A session starts | the context block of each AI context file lists the memory files |
+| You edit the context block | lost at the next session: it is generated |
+| The memory drifts from the code | run the project-memory skill, `aidd-context:02-project-memory` |
 
 ## Learn more
 

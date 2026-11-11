@@ -25,18 +25,45 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory lines before finishing"
+          }
+        ]
+      }
     ]
   }
 }
 
 
+## project/.github/plugins/aidd-context/hooks/lib/bank-guard.cjs
+script, identical to the plugin source
+
+## project/.github/plugins/aidd-context/hooks/lib/changes.cjs
+script, identical to the plugin source
+
 ## project/.github/plugins/aidd-context/hooks/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.github/plugins/aidd-context/hooks/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.github/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-copilot.cjs
 
 ## project/.github/plugins/aidd-context/hooks/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.github/plugins/aidd-context/hooks/lib/plan.cjs
+script, identical to the plugin source
+
+## project/.github/plugins/aidd-context/hooks/lib/report.cjs
 script, identical to the plugin source
 
 ## project/.github/plugins/aidd-context/hooks/memory.cjs
@@ -136,11 +163,16 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project copilot aidd-context scope=project: 5 hook files
+project copilot aidd-context scope=project: 10 hook files
   .github/plugins/aidd-context/hooks/hooks.json
+  .github/plugins/aidd-context/hooks/lib/bank-guard.cjs
+  .github/plugins/aidd-context/hooks/lib/changes.cjs
   .github/plugins/aidd-context/hooks/lib/common-rules.cjs
+  .github/plugins/aidd-context/hooks/lib/fact-sheet.cjs
   .github/plugins/aidd-context/hooks/lib/host.cjs
   .github/plugins/aidd-context/hooks/lib/memory-rules.cjs
+  .github/plugins/aidd-context/hooks/lib/plan.cjs
+  .github/plugins/aidd-context/hooks/lib/report.cjs
   .github/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []

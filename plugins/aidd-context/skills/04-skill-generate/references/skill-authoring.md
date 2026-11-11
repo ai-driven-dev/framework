@@ -7,7 +7,7 @@ The contract every generated skill satisfies. `skill-generate` obeys it too.
 - **R1.** One skill, one domain. Named per `naming.md`.
 - **R2.** `name` is not the invocation token: a colon or prefix breaks loading. In prose call a skill `plugin:folder`.
 - **R3.** `description` is the only always-on text: verb-led, third person, about 240 chars, `Use when the user wants to <intents>` and an optional `Not for <X>`. No colon or dash, no other skill or `/command` named.
-- **R4.** `argument-hint` names what the user brings: the cases they can ask for (`setup | refresh | rewire`) or the artifact the skill consumes (`request | epic`). One or two words per case, never the action slugs. Present unless no action declares an `## Input`, which means the skill takes nothing.
+- **R4.** `argument-hint` names what the user brings: the cases they can ask for (`setup | refresh`) or the artifact the skill consumes (`request | epic`). One or two words per case, never the action slugs. Present unless no action declares an `## Input`, which means the skill takes nothing.
 - **R5.** English only, one idea per sentence.
 
 ## The router

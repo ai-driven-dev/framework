@@ -16,18 +16,40 @@
         "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
         "timeout": 5
       }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./.github/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
+      }
     ]
   }
 }
 
 
+## out-flat/.github/hooks/aidd-context/lib/bank-guard.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-context/lib/changes.cjs
+script, identical to the plugin source
+
 ## out-flat/.github/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## out-flat/.github/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter host-copilot.cjs
 
 ## out-flat/.github/hooks/aidd-context/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-context/lib/plan.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-context/lib/report.cjs
 script, identical to the plugin source
 
 ## out-flat/.github/hooks/aidd-context/memory.cjs

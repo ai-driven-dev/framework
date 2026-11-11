@@ -1,10 +1,25 @@
+## out-flat/.claude/hooks/aidd-context/lib/bank-guard.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-context/lib/changes.cjs
+script, identical to the plugin source
+
 ## out-flat/.claude/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## out-flat/.claude/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter host-claude.cjs
 
 ## out-flat/.claude/hooks/aidd-context/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-context/lib/plan.cjs
+script, identical to the plugin source
+
+## out-flat/.claude/hooks/aidd-context/lib/report.cjs
 script, identical to the plugin source
 
 ## out-flat/.claude/hooks/aidd-context/memory.cjs
@@ -106,6 +121,18 @@ script, identical to the plugin source
             "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
             "timeout": 5,
             "statusMessage": "AIDD Context: check memory file"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./.claude/hooks/aidd-context/memory.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: check memory lines before finishing"
           }
         ]
       }
