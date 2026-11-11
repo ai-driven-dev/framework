@@ -12,9 +12,9 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -133,7 +133,7 @@ function attachFutureSupportedNativeClaim(deps: Deps) {
     pluginRefs: ["native-plugin@aidd-catalog"],
     pluginClaims: [{ ref: "native-plugin@aidd-catalog", dependents: [PROJECT_ROOT] }],
   });
-  const activator = new FakeNativePluginActivator({ available: true });
+  const activator = new FakeHostActions({ available: true });
   const nativeHost = new NativeHostRegistrationGate(
     new Map([["copilot", activator]]),
     new Map([

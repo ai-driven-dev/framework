@@ -12,14 +12,14 @@ import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
 import type { MarketplaceScope } from "../../../../kernel/scope.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
+import type {
+  HostPluginRegistry,
+  HostPluginRegistryReading,
+} from "../../../host-registration/contract/host-plugin-registry.js";
 import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
-import type {
-  HostPluginRegistryReader,
-  HostPluginRegistryReading,
-} from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import {
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
@@ -69,14 +69,11 @@ export class PluginRemoveUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator>,
+    private readonly activators: ReadonlyMap<string, HostActions>,
     /** Host plugin registry readers keyed by `AiToolId`, consulted before uninstalling a ref so
      * the scope asked for is the one the host actually registered it at. Absent falls back to the
      * manifest's own recorded scope. */
-    private readonly hostPluginRegistries: ReadonlyMap<
-      AiToolId,
-      HostPluginRegistryReader
-    > = new Map(),
+    private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
     /** The registry of projects referencing the shared machine-scope source, needed for the
      * guard: uninstalling a ref a host enables machine-wide (codex, copilot) would disable it for
      * another project on this machine too. Absent skips the guard entirely. */
@@ -88,7 +85,7 @@ export class PluginRemoveUseCase {
     private readonly userManifestRepo?: ManifestRepository,
     private readonly nativeMarketplaceSources: ReadonlyMap<
       AiToolId,
-      NativeMarketplaceSourceReader
+      HostMarketplaceSources
     > = new Map()
   ) {}
 
@@ -498,7 +495,7 @@ export class PluginRemoveUseCase {
    * attempt rather than silently leaving the entry behind.
    */
   private async uninstallViaActivator(
-    activator: NativePluginActivator,
+    activator: HostActions,
     binary: string,
     ref: string,
     toolId: AiToolId,

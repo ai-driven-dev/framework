@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import type { HostPluginRegistryReader } from "../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 import { buildDoctorUseCase, buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
-import { FakeHostPluginRegistryReader } from "../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/dev/.claude/plugins/installed_plugins.json";
@@ -27,11 +27,8 @@ describe("doctor represents what claude's own registry answers", () => {
   it("is unhealthy with one error per ref the registry does not carry, naming `aidd sync`", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await deps.manifestRepo.save(await manifestWithTwoNativePlugins());
-    const hostRegistries = new Map<AiToolId, HostPluginRegistryReader>([
-      [
-        "claude",
-        new FakeHostPluginRegistryReader({ location: REGISTRY_LOCATION, refs: new Map() }),
-      ],
+    const hostRegistries = new Map<AiToolId, HostPluginRegistry>([
+      ["claude", new FakeHostPluginRegistry({ location: REGISTRY_LOCATION, refs: new Map() })],
     ]);
 
     const useCase = buildDoctorUseCase(deps, undefined, hostRegistries);
@@ -49,10 +46,10 @@ describe("doctor represents what claude's own registry answers", () => {
   it("is healthy when the registry carries every expected ref, enabled", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await deps.manifestRepo.save(await manifestWithTwoNativePlugins());
-    const hostRegistries = new Map<AiToolId, HostPluginRegistryReader>([
+    const hostRegistries = new Map<AiToolId, HostPluginRegistry>([
       [
         "claude",
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: REGISTRY_LOCATION,
           refs: new Map([
             [CONTEXT_REF, { enabled: true }],

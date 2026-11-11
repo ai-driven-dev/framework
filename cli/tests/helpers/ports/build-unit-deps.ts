@@ -24,10 +24,10 @@ import { CLIOutput } from "../../../src/presentation/output.js";
 import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { SilentPrompterAdapter } from "../../../src/runtime/prompter/prompter-adapter.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
-import { FakeNativePluginActivator } from "./fake-native-plugin-activator.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
@@ -69,7 +69,7 @@ export async function buildUnitDeps(_projectRoot: string) {
   const currentVersionProvider = new FakeCurrentVersion();
 
   const syncConflictResolver = new SyncConflictResolverUseCase(fs);
-  const nativePluginActivators = new Map([["codex", new FakeNativePluginActivator()]]);
+  const nativePluginActivators = new Map([["codex", new FakeHostActions()]]);
   const marketplaceSyncSettings = new MarketplaceSyncSettingsUseCase(
     fs,
     manifestRepo,

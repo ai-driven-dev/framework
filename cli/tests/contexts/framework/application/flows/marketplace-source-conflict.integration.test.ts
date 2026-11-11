@@ -7,13 +7,13 @@ import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -35,7 +35,7 @@ interface Setup {
   readonly aiddName?: string;
   readonly requestedVersion?: string;
   readonly requestedPluginNames?: readonly string[];
-  readonly hostReader?: FakeHostMarketplaceRegistryReader;
+  readonly hostReader?: FakeHostMarketplaceRegistry;
   /** Catalog content to pre-write at the path this test's `hostReader` names as registered;
    * omitted, that path holds nothing readable, standing in for a directory that is gone. */
   readonly registeredCatalog?: RegisteredCatalog;
@@ -104,11 +104,11 @@ async function sync(setup: Setup = {}) {
       })
     );
   }
-  const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+  const activator = new FakeHostActions({ available: true, enablesPlugins: false });
   const hostRegistries = new Map(
     setup.hostReader === undefined
       ? []
-      : ([[toolId, setup.hostReader]] as [AiToolId, FakeHostMarketplaceRegistryReader][])
+      : ([[toolId, setup.hostReader]] as [AiToolId, FakeHostMarketplaceRegistry][])
   );
   const hostReading = toolId === "claude" ? await setup.hostReader?.read() : undefined;
   const registeredSource = hostReading?.entries?.get(catalogName);
@@ -155,7 +155,7 @@ async function sync(setup: Setup = {}) {
     new Map([
       [
         toolId,
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: `/home/${toolId}/plugins/installed_plugins.json`,
           refs: new Map(),
         }),
@@ -172,7 +172,7 @@ async function sync(setup: Setup = {}) {
                 unreadable: hostReading.unreadable,
               }),
             }
-          : new FakeNativeMarketplaceSourceReader(
+          : new FakeHostMarketplaceSources(
               activator,
               toolId === "claude" ? "registry" : "effective-list",
               (path) => (path === builtDir ? catalogName : undefined),
@@ -187,7 +187,7 @@ async function sync(setup: Setup = {}) {
 
 describe("the sync guard against a marketplace name a host already holds", () => {
   it("refuses when a different catalog is registered under the same name, and names both sources and the plugin difference", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/other/src"]]),
     });
@@ -208,7 +208,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("does not refuse when only the version differs under the same name and plugin set — the host repointing to a newer build it already knows, not a different marketplace", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/other/src"]]),
     });
@@ -226,7 +226,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("does not refuse a catalog registered again with only its version changed, though no earlier claim proves its source", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/other/src"]]),
     });
@@ -243,7 +243,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("does not refuse when the host's registry already holds the same resolved source", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       // InMemoryFileAdapter.realpath is identity absent a declared symlink, so this is exactly what
       // the guard resolves `builtDir` to: both reads land on the same catalog.
@@ -259,7 +259,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   it("does not refuse when the same catalog is registered from a different, resolved path — two projects sharing one build", async () => {
     // Two independent projects build the same framework fixture to their own cache and
     // register under the same name: same version, same plugins, only a different directory.
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/other-project/built/claude"]]),
     });
@@ -281,7 +281,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("refuses an unproven dead entry instead of re-adding over its host name", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/gone"]]),
     });
@@ -296,7 +296,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("registers freely when this project's own local alias diverges from its built catalog's own name — a supported capability, not a fault", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map(),
     });
@@ -318,7 +318,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   it("never reads a host registry for a tool whose profile declares none, and still registers it", async () => {
     // Codex's own profile declares no `marketplaceRegistry` — this reader would refuse
     // every request if it were ever consulted, which is exactly what proves it is not.
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: "/wherever",
       entries: new Map([["probe-mkt", "/anything-else"]]),
     });
@@ -331,7 +331,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("names both sources, the plugin difference, the registry file and the commands to run, in the refusal", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/other/src"]]),
     });
@@ -352,7 +352,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
   });
 
   it("registers from the built path as given when that path cannot be resolved", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([["probe-mkt", "/old/claude"]]),
     });

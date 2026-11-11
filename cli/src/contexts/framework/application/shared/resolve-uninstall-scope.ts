@@ -1,5 +1,5 @@
 import type { MarketplaceScope } from "../../../../kernel/scope.js";
-import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
+import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
 
 /**
  * The scope(s) worth asking a host's own CLI to uninstall `ref` at, in the order to try them.
@@ -13,7 +13,7 @@ import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-
  * a mismatched-scope uninstall outright rather than silently missing it.
  */
 export async function resolveUninstallScopeOrder(
-  reader: HostPluginRegistryReader | undefined,
+  reader: HostPluginRegistry | undefined,
   ref: string,
   projectRoot: string,
   manifestScope: MarketplaceScope
@@ -25,7 +25,7 @@ export async function resolveUninstallScopeOrder(
 }
 
 async function readRegistryScope(
-  reader: HostPluginRegistryReader | undefined,
+  reader: HostPluginRegistry | undefined,
   ref: string,
   projectRoot: string
 ): Promise<MarketplaceScope | undefined> {

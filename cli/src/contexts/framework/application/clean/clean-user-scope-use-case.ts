@@ -9,10 +9,10 @@ import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
 import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
-import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
 import { nativeActivationOf } from "../../../tools/domain/registry.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -76,26 +76,20 @@ export class CleanUserScopeUseCase {
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly userConfigDir: () => string,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator> = new Map(),
+    private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
     /** Readers of a host's own marketplace registry, keyed by `AiToolId` —
      * `purgeAllNativeCaches`'s own post-condition. */
     private readonly hostMarketplaceRegistries: ReadonlyMap<
       AiToolId,
-      HostMarketplaceRegistryReader
+      HostMarketplaceRegistry
     > = new Map(),
     /** The one resolver for the OS home directory this use case ever calls. */
     private readonly homeDir: () => string = resolveHomeDir,
     /** Absent reports no referencing project at all rather than guessing one. */
     private readonly userSourceReferences?: UserSourceReferences,
     private readonly prompter?: Prompter,
-    private readonly nativeSources: ReadonlyMap<
-      AiToolId,
-      NativeMarketplaceSourceReader
-    > = new Map(),
-    private readonly hostPluginRegistries: ReadonlyMap<
-      AiToolId,
-      HostPluginRegistryReader
-    > = new Map()
+    private readonly nativeSources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map(),
+    private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map()
   ) {}
 
   async execute(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {

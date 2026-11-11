@@ -4,14 +4,14 @@ import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/ap
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type {
-  HostPluginRegistryReader,
+  HostPluginRegistry,
   HostPluginRegistryReading,
-} from "../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+} from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
-import { FakeHostPluginRegistryReader } from "../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;
@@ -51,7 +51,7 @@ async function issuesFor(
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   const activators = new Map([
-    ["claude", new FakeNativePluginActivator({ available: toolInstalled, enablesPlugins: false })],
+    ["claude", new FakeHostActions({ available: toolInstalled, enablesPlugins: false })],
   ]);
   return new DoctorRegistrationUseCase(
     fs,
@@ -171,11 +171,11 @@ async function nativeIssuesFor(
   const fs = new InMemoryFileAdapter();
   const registry = new InMemoryMarketplaceRegistry();
   const activators = new Map([
-    ["claude", new FakeNativePluginActivator({ available: true, enablesPlugins: true })],
+    ["claude", new FakeHostActions({ available: true, enablesPlugins: true })],
   ]);
-  const hostRegistries = new Map<AiToolId, HostPluginRegistryReader>();
+  const hostRegistries = new Map<AiToolId, HostPluginRegistry>();
   if (reading !== "unreachable") {
-    hostRegistries.set("claude", new FakeHostPluginRegistryReader(reading));
+    hostRegistries.set("claude", new FakeHostPluginRegistry(reading));
   }
   return new DoctorRegistrationUseCase(
     fs,

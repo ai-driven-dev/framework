@@ -11,13 +11,13 @@ import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -82,8 +82,8 @@ async function sync(options: {
     );
   }
   if (options.staleCacheFile !== undefined) await fs.writeFile(options.staleCacheFile, "stale");
-  const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
-  const hostReader = new FakeHostMarketplaceRegistryReader({
+  const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+  const hostReader = new FakeHostMarketplaceRegistry({
     location: REGISTRY_LOCATION,
     entries:
       options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
@@ -104,7 +104,7 @@ async function sync(options: {
     new Map([
       [
         "claude",
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "/home/.claude/plugins/installed_plugins.json",
           refs: new Map(),
         }),
@@ -114,7 +114,7 @@ async function sync(options: {
     new Map([
       [
         "claude",
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "registry",
           (path) => (path === builtDir ? name : undefined),

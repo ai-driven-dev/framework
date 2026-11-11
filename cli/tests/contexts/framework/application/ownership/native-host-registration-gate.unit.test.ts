@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
 import type { NativeRegistrations } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../../../src/contexts/tools/domain/ports/native-plugin-activator.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
+import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
+import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 
 const REF = "test-plugin@real-catalog";
 const HOST = "real-catalog";
@@ -20,7 +20,7 @@ describe("native host registration gate", () => {
   it.each([undefined, { ...registrations, marketplaces: [{ alias: "other", hostName: "other" }] }])(
     "requires a canonical catalogue matching the exact target ref",
     async (recorded) => {
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const gate = new NativeHostRegistrationGate(
         new Map([["copilot", activator]]),
         new Map([
@@ -45,7 +45,7 @@ describe("native host registration gate", () => {
   it.each(["update", "removal"])(
     "refuses %s when the canonical catalogue is absent on the host",
     async (operation) => {
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const gate = new NativeHostRegistrationGate(
         new Map([["copilot", activator]]),
         new Map([
@@ -84,7 +84,7 @@ describe("native host registration gate", () => {
       hostName: HOST,
       provenance: { kind: "registry" as const, source: "/owned/source" },
     };
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
       new Map([["copilot", activator]]),
       new Map([["copilot", { read: async () => ({ location: "/registry", refs: new Map() }) }]]),
@@ -128,7 +128,7 @@ describe("native host registration gate", () => {
     pluginRefs: [REF],
     pluginClaims: [claim],
   } satisfies NativeRegistrations;
-  const hostSource = (source: string): NativeMarketplaceSourceReader => ({
+  const hostSource = (source: string): HostMarketplaceSources => ({
     read: async () => ({
       location: "codex plugin marketplace list --json",
       entries: new Map([[HOST, { ...provenCodex.marketplaces[0].provenance, source }]]),
@@ -137,11 +137,11 @@ describe("native host registration gate", () => {
   const reader = (refs?: ReadonlyMap<string, { enabled: boolean; scope?: "user" | "project" }>) =>
     ({
       read: async () => ({ location: "/host/registry", refs }),
-    }) satisfies HostPluginRegistryReader;
+    }) satisfies HostPluginRegistry;
   const enabled = () => new Map([[REF, { enabled: true, scope: "user" as const }]]);
 
   it("refuses a Codex removal when a stale canonical claim points at a foreign current source", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
       new Map([["codex", activator]]),
       new Map([["codex", reader(enabled())]]),
@@ -156,7 +156,7 @@ describe("native host registration gate", () => {
   });
 
   it("refuses a legacy Codex claim without exact source even if refs are enabled", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
       new Map([["codex", activator]]),
       new Map([["codex", reader(enabled())]]),
@@ -175,7 +175,7 @@ describe("native host registration gate", () => {
   });
 
   it("requires the verified target-update verb before contacting a Codex host", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
       new Map([["codex", activator]]),
       new Map([["codex", reader(enabled())]])
@@ -187,8 +187,8 @@ describe("native host registration gate", () => {
   });
 
   it("requires each independent Copilot update capability and keeps the claim on refusal", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
-    const withoutUpdate: NativePluginActivator = {
+    const activator = new FakeHostActions({ available: true });
+    const withoutUpdate: HostActions = {
       isAvailable: () => true,
       addMarketplace: (source, scope) => activator.addMarketplace(source, scope),
       enablesPlugins: () => activator.enablesPlugins(),
@@ -201,7 +201,7 @@ describe("native host registration gate", () => {
     for (const gate of [
       new NativeHostRegistrationGate(new Map(), new Map([["copilot", reader(enabled())]])),
       new NativeHostRegistrationGate(
-        new Map([["copilot", new FakeNativePluginActivator({ available: false })]]),
+        new Map([["copilot", new FakeHostActions({ available: false })]]),
         new Map([["copilot", reader(enabled())]])
       ),
       new NativeHostRegistrationGate(
@@ -238,12 +238,12 @@ describe("native host registration gate", () => {
   });
 
   it("refuses catalogue removal unless CLI, registry, and every owned ref are proven", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const registration = registrations.marketplaces[0];
     for (const gate of [
       new NativeHostRegistrationGate(new Map(), new Map([["copilot", reader(enabled())]])),
       new NativeHostRegistrationGate(
-        new Map([["copilot", new FakeNativePluginActivator({ available: false })]]),
+        new Map([["copilot", new FakeHostActions({ available: false })]]),
         new Map([["copilot", reader(enabled())]])
       ),
       new NativeHostRegistrationGate(new Map([["copilot", activator]]), new Map()),
@@ -269,7 +269,7 @@ describe("native host registration gate", () => {
   });
 
   it("does not adopt a foreign same-catalogue ref, and returns only exact owned host scopes", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const host = new Map<string, { enabled: boolean; scope?: "project" | "user" }>(enabled());
     host.set("foreign@real-catalog", { enabled: true, scope: "project" });
     const gate = new NativeHostRegistrationGate(

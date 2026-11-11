@@ -10,10 +10,10 @@ import {
 } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/kernel/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const ROOT = "/test-project";
 const OTHER = "/another-project";
@@ -385,7 +385,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     );
     fs.setFile(cache, "target cache");
     fs.setFile(foreignCache, "foreign cache");
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: options.available ?? true,
       failOnUninstall: options.fail ? [REF] : [],
     });
@@ -399,7 +399,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       new Map([
         [
           "claude",
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: "/host/registry",
             refs: new Map([[REF, { enabled: true, scope: "project" }]]),
           }),
@@ -518,7 +518,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     machine.setNativeRegistrations("codex", registrations);
     const userRepo = new InMemoryManifestRepository(machine);
     const projectRepo = new InMemoryManifestRepository(project, ROOT);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const remove = new PluginRemoveUseCase(
       new InMemoryFileAdapter(),

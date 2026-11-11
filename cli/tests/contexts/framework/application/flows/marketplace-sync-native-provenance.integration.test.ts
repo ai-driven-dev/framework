@@ -3,18 +3,18 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/project-a";
 const CATALOG = "aidd-framework";
@@ -24,7 +24,7 @@ const CACHE_WITNESS = "/fake-home/host-cache/aidd-framework/foreign-plugin/bytes
 const HOST_CATALOG_WITNESS = "/fake-home/host-catalog/aidd-framework/marketplace.json";
 const FOREIGN_CATALOG_BYTES = '{"name":"aidd-framework","source":"foreign-repo","marker":7}';
 
-class NamedActivator extends FakeNativePluginActivator {
+class NamedActivator extends FakeHostActions {
   readonly refreshedCatalogs: string[] = [];
 
   override upgradeMarketplaces(name?: string): void {
@@ -40,8 +40,8 @@ function makeSync(
     hostRefs?: ReadonlyMap<string, { enabled: boolean }>;
     conflictOnAdd?: boolean;
     projectNativePluginRefs?: readonly string[];
-    hostReader?: HostPluginRegistryReader;
-    sourceReader?: NativeMarketplaceSourceReader;
+    hostReader?: HostPluginRegistry;
+    sourceReader?: HostMarketplaceSources;
   } = {}
 ) {
   const builtDir = `/built/${toolId}`;
@@ -121,7 +121,7 @@ function makeSync(
       [
         toolId as AiToolId,
         options.hostReader ??
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: `/fake-home/${toolId}/registry`,
             refs: hostRefs,
           }),
@@ -132,7 +132,7 @@ function makeSync(
       [
         toolId as AiToolId,
         options.sourceReader ??
-          new FakeNativeMarketplaceSourceReader(
+          new FakeHostMarketplaceSources(
             activator,
             "effective-list",
             (path) => (path === builtDir ? CATALOG : undefined),
@@ -218,7 +218,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
         ],
       });
       let sourceReads = 0;
-      const sourceReader: NativeMarketplaceSourceReader = {
+      const sourceReader: HostMarketplaceSources = {
         read: async () => {
           sourceReads += 1;
           if (sourceReads === 1)
@@ -235,7 +235,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
         },
       };
       let registryReads = 0;
-      const hostReader: HostPluginRegistryReader = {
+      const hostReader: HostPluginRegistry = {
         read: async () => {
           registryReads += 1;
           if (registryReads > 1 && change === "unreadable refs")
@@ -429,7 +429,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
     async (change) => {
       let sourceReads = 0;
       let registryReads = 0;
-      const sourceReader: NativeMarketplaceSourceReader = {
+      const sourceReader: HostMarketplaceSources = {
         read: async () => {
           sourceReads += 1;
           if (sourceReads > 1 && change === "unreadable source")
@@ -454,7 +454,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
           };
         },
       };
-      const hostReader: HostPluginRegistryReader = {
+      const hostReader: HostPluginRegistry = {
         read: async () => {
           registryReads += 1;
           if (registryReads > 1 && change === "unreadable refs")

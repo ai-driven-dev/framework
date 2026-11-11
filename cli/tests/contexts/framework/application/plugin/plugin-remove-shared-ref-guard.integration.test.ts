@@ -11,10 +11,10 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
@@ -101,7 +101,7 @@ function seedReferences(fs: InMemoryFileAdapter, roots: readonly string[]): void
 
 function buildUseCase(
   fs: InMemoryFileAdapter,
-  activator: FakeNativePluginActivator,
+  activator: FakeHostActions,
   logger: CapturingLogger,
   manifest: Manifest = seedManifest(),
   marketplaceRegistry: InMemoryMarketplaceRegistry = seedSharedMarketplaceRegistry(),
@@ -131,7 +131,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, []);
     fs.setFile(`${PROJECT_ROOT}/user-note.md`, "user bytes");
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { removeUseCase, manifestRepo } = buildUseCase(fs, activator, new CapturingLogger());
     const savesBefore = manifestRepo.saveCount;
 
@@ -196,7 +196,7 @@ describe("plugin remove guards a ref another project on this machine still needs
       })),
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { removeUseCase, manifestRepo } = buildUseCase(
       fs,
       activator,
@@ -245,7 +245,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     const HOST_REF = `${PLUGIN_NAME}@${HOST_NAME}`;
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const manifest = seedManifest();
     manifest.setNativeRegistrations("codex", {
       binary: "codex",
@@ -276,7 +276,7 @@ describe("plugin remove guards a ref another project on this machine still needs
   it("refuses legacy removal without native registrations before any host or local mutation", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, []);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildUseCase(
       fs,
@@ -302,7 +302,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     it("refuses an unclaimed ref even when another marketplace is unrelated to the framework source", async () => {
       const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
       seedReferences(fs, [OTHER_PROJECT]);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
       const registry = seedSharedMarketplaceRegistry();
       await registry.save(
@@ -337,7 +337,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     it("refuses an unclaimed ref whose marketplace the project's local registry no longer lists", async () => {
       const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
       seedReferences(fs, [OTHER_PROJECT]);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
       const { removeUseCase, manifestRepo } = buildUseCase(
         fs,
@@ -363,7 +363,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     it("still refuses unclaimed machine-global removal without references.json", async () => {
       const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
       seedReferences(fs, [OTHER_PROJECT]);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const removeUseCase = new PluginRemoveUseCase(
         fs,
         new InMemoryManifestRepository(seedManifest(), PROJECT_ROOT),
@@ -390,7 +390,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     it("still refuses unclaimed machine-global removal without a local marketplace registry", async () => {
       const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
       seedReferences(fs, [OTHER_PROJECT]);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const removeUseCase = new PluginRemoveUseCase(
         fs,
         new InMemoryManifestRepository(seedManifest(), PROJECT_ROOT),

@@ -15,11 +15,11 @@ import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/
 import type { LatestReleaseResolver } from "../../../../src/runtime/self-update/latest-release-resolver.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
+import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -84,11 +84,11 @@ async function buildUseCaseWithConflict() {
     "/other/src/.claude-plugin/marketplace.json",
     JSON.stringify({ name: "probe-mkt", version: "2.0.0", plugins: [{ name: "different-plugin" }] })
   );
-  const hostReader = new FakeHostMarketplaceRegistryReader({
+  const hostReader = new FakeHostMarketplaceRegistry({
     location: REGISTRY_LOCATION,
     entries: new Map([["probe-mkt", "/other/src"]]),
   });
-  const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+  const activator = new FakeHostActions({ available: true, enablesPlugins: false });
   const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
     deps.fs,
     deps.manifestRepo,

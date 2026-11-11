@@ -11,20 +11,20 @@ import { CleanUseCase } from "../../../../src/contexts/framework/application/cle
 import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import type {
-  HostMarketplaceRegistryReader,
+  HostMarketplaceRegistry,
   HostMarketplaceRegistryReading,
-} from "../../../../src/contexts/tools/domain/ports/host-marketplace-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
-import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
+} from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
 import { AIDD_DIR } from "../../../../src/kernel/paths.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 // Resolve once for this in-memory fixture, then inject it into CleanUseCase: Stryker reuses
@@ -36,7 +36,7 @@ const MARKETPLACE = "probe-mkt";
 const REF = "plugin-a@probe-mkt";
 
 /** Codex's current catalogue is a literal host snapshot, not derived from the machine claim. */
-function codexHostSource(): NativeMarketplaceSourceReader {
+function codexHostSource(): HostMarketplaceSources {
   return {
     read: async () => ({
       location: "fixture Codex effective catalogue",
@@ -97,7 +97,7 @@ class LockTrackingManifestRepository extends InMemoryManifestRepository {
   }
 }
 
-class LockAwareActivator extends FakeNativePluginActivator {
+class LockAwareActivator extends FakeHostActions {
   readonly removalsUnderLock: boolean[] = [];
 
   constructor(private readonly machineRepo: LockTrackingManifestRepository) {
@@ -129,13 +129,13 @@ class RealpathDeniedFileAdapter extends RecordingFileAdapter {
  * Mirrors `activator.removedMarketplaces` at read time rather than answering a canned "gone",
  * which is what proves ordering: a registry read before `removeMarketplace` still sees it.
  */
-class RegistryMirroringActivatorState implements HostMarketplaceRegistryReader {
+class RegistryMirroringActivatorState implements HostMarketplaceRegistry {
   reads = 0;
 
   constructor(
     private readonly location: string,
     private readonly initialNames: readonly string[],
-    private readonly activator: FakeNativePluginActivator
+    private readonly activator: FakeHostActions
   ) {}
 
   async read(): Promise<HostMarketplaceRegistryReading> {
@@ -195,17 +195,17 @@ function seedAiddMarketplaceRegistry(
 function buildUseCase(deps: {
   fs: InMemoryFileAdapter;
   manifest: Manifest;
-  activator: FakeNativePluginActivator;
+  activator: FakeHostActions;
   binary: AiToolId;
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
-  hostMarketplaceRegistries?: ReadonlyMap<AiToolId, HostMarketplaceRegistryReader>;
+  hostMarketplaceRegistries?: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
   homeDir?: () => string;
   userManifestRepo?: InMemoryManifestRepository;
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const claudeHostRegistry = deps.hostMarketplaceRegistries?.get("claude");
-  const nativeReader: NativeMarketplaceSourceReader | undefined =
+  const nativeReader: HostMarketplaceSources | undefined =
     deps.binary === "codex"
       ? codexHostSource()
       : deps.binary === "claude" && claudeHostRegistry !== undefined
@@ -225,7 +225,7 @@ function buildUseCase(deps: {
     new Map([
       [
         deps.binary,
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "fixture host plugin registry",
           refs: new Map(),
         }),
@@ -260,7 +260,7 @@ describe("clean purges a host's own plugin cache", () => {
       pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
@@ -302,7 +302,7 @@ describe("clean purges a host's own plugin cache", () => {
       pluginClaims: [{ ref: "other-plugin@other-catalog", dependents: ["/project-b"] }],
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       fs: new RecordingFileAdapter(),
       manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
@@ -369,7 +369,7 @@ describe("clean purges a host's own plugin cache", () => {
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const emptyCache = join(CODEX_CACHE_ROOT, MARKETPLACE);
     const fs = new EmptyNativeCacheFileAdapter(emptyCache);
@@ -390,7 +390,7 @@ describe("clean purges a host's own plugin cache", () => {
       "no user manifest can prove no other project still uses it"
     );
 
-    const noRepoActivator = new FakeNativePluginActivator({ available: true });
+    const noRepoActivator = new FakeHostActions({ available: true });
     const noRepoLogger = new CapturingLogger();
     const noRepoFs = new EmptyNativeCacheFileAdapter(emptyCache);
     const noRepoUseCase = buildUseCase({
@@ -424,7 +424,7 @@ describe("clean purges a host's own plugin cache", () => {
       pluginClaims: [{ ref, dependents: [PROJECT_ROOT, "/project-b"] }],
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       fs: new RecordingFileAdapter(),
       manifest: project,
@@ -465,7 +465,7 @@ describe("clean purges a host's own plugin cache", () => {
       pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
@@ -497,7 +497,7 @@ describe("clean purges a host's own plugin cache", () => {
       pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT, "/project-b"] }],
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
@@ -524,7 +524,7 @@ describe("clean purges a host's own plugin cache", () => {
       "now"
     );
 
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const reader = new RegistryMirroringActivatorState(
       "known_marketplaces.json",
       [MARKETPLACE],
@@ -553,7 +553,7 @@ describe("clean purges a host's own plugin cache", () => {
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const reader = new RegistryMirroringActivatorState(
       "known_marketplaces.json",
       [MARKETPLACE],
@@ -590,7 +590,7 @@ describe("clean purges a host's own plugin cache", () => {
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
-    const activator = new FakeNativePluginActivator({ available: true, throwOnRemove: true });
+    const activator = new FakeHostActions({ available: true, throwOnRemove: true });
     const reader = new RegistryMirroringActivatorState(
       "known_marketplaces.json",
       [MARKETPLACE],
@@ -620,8 +620,8 @@ describe("clean purges a host's own plugin cache", () => {
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
-    const activator = new FakeNativePluginActivator({ available: true });
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const activator = new FakeHostActions({ available: true });
+    const reader = new FakeHostMarketplaceRegistry({
       location: "known_marketplaces.json",
       absent: true,
     });
@@ -649,8 +649,8 @@ describe("clean purges a host's own plugin cache", () => {
     const cacheEntry = join(CLAUDE_CACHE_ROOT, MARKETPLACE, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
-    const activator = new FakeNativePluginActivator({ available: true });
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const activator = new FakeHostActions({ available: true });
+    const reader = new FakeHostMarketplaceRegistry({
       location: "known_marketplaces.json",
       unreadable: "EACCES",
     });
@@ -692,7 +692,7 @@ describe("clean purges a host's own plugin cache", () => {
     );
     await fs.writeFile(cacheEntry, "{}");
 
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     // The real adapter, resolved from the same sentinel the cache root is composed from — a
     // fake reader built independently of `homeDir` could never catch the two halves drifting.
     const reader = wireHostRegistration(SENTINEL_HOME).marketplaceRegistries.get("claude");
@@ -727,7 +727,7 @@ describe("clean purges a host's own plugin cache", () => {
     // collapse `path.join` already performs, not a path this test invents.
     await fs.writeFile(join(witness, "keep-me.txt"), "still here");
 
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const reader = new RegistryMirroringActivatorState(
       "known_marketplaces.json",
       [hostName],
@@ -757,7 +757,7 @@ describe("clean purges a host's own plugin cache", () => {
     const candidate = join(CLAUDE_CACHE_ROOT, MARKETPLACE);
     fs.setSymlink(candidate, "/outside/evil-target");
 
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const reader = new RegistryMirroringActivatorState(
       "known_marketplaces.json",
       [MARKETPLACE],
@@ -786,7 +786,7 @@ describe("clean purges a host's own plugin cache", () => {
     const cacheEntry = join(candidate, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const reader = new RegistryMirroringActivatorState(
       "known_marketplaces.json",
       [MARKETPLACE],
@@ -814,7 +814,7 @@ describe("clean purges a host's own plugin cache", () => {
 
   it("detaches a shared Copilot claim locally without a host source reader or HOME deletion", async () => {
     const fs = new RecordingFileAdapter();
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const manifest = Manifest.create();
     manifest.addTool("copilot", "1.0.0", []);
     manifest.setNativeRegistrations("copilot", {
@@ -845,7 +845,7 @@ describe("clean purges a host's own plugin cache", () => {
     const cacheEntry = join(CLAUDE_CACHE_ROOT, hostName, "plugin-a", "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
 
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const reader = new RegistryMirroringActivatorState(
       "known_marketplaces.json",
       [hostName],
@@ -872,7 +872,7 @@ describe("clean purges a host's own plugin cache", () => {
     // `marketplaceRegistry`, so `purgeOneMarketplaceCache` proves emptiness instead.
     const fs = new RecordingFileAdapter();
     await fs.createDirectory(join(CODEX_CACHE_ROOT, MARKETPLACE));
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
@@ -893,7 +893,7 @@ describe("clean purges a host's own plugin cache", () => {
     // `removeMarketplace` throws, so the host was never confirmed to have forgotten the name.
     const fs = new RecordingFileAdapter();
 
-    const activator = new FakeNativePluginActivator({ available: true, throwOnRemove: true });
+    const activator = new FakeHostActions({ available: true, throwOnRemove: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
@@ -918,7 +918,7 @@ describe("clean purges a host's own plugin cache", () => {
     const leftover = join(CODEX_CACHE_ROOT, MARKETPLACE, "leftover.txt");
     await fs.writeFile(leftover, "still here");
 
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,

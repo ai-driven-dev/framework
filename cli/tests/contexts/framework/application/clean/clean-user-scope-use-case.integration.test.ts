@@ -10,18 +10,18 @@ import { CleanUserScopeUseCase } from "../../../../../src/contexts/framework/app
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
-import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../../../src/contexts/tools/domain/ports/native-plugin-activator.js";
+import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
+import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { RecordingPrompter } from "../../../../helpers/ports/recording-prompter.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const HOME = "/fake-home";
@@ -72,7 +72,7 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
 
 /** Pushes into the same shared `order` log the file adapter above writes to, so "the host was
  * asked to forget this marketplace" and "its cache was deleted" sit on one timeline. */
-class RecordingActivator implements NativePluginActivator {
+class RecordingActivator implements HostActions {
   readonly order: string[];
   readonly removedMarketplaces: string[] = [];
   readonly removedMarketplaceScopes: MarketplaceScope[] = [];
@@ -143,7 +143,7 @@ function manifestWithClaude(): Manifest {
 
 function provenClaudeSources(
   source = "/built/claude"
-): ReadonlyMap<"claude", NativeMarketplaceSourceReader> {
+): ReadonlyMap<"claude", HostMarketplaceSources> {
   return new Map([
     [
       "claude",
@@ -159,14 +159,14 @@ function provenClaudeSources(
 
 function provenHostPlugins(
   manifest: Manifest
-): ReadonlyMap<"claude" | "codex", FakeHostPluginRegistryReader> {
-  const readers = new Map<"claude" | "codex", FakeHostPluginRegistryReader>();
+): ReadonlyMap<"claude" | "codex", FakeHostPluginRegistry> {
+  const readers = new Map<"claude" | "codex", FakeHostPluginRegistry>();
   for (const toolId of ["claude", "codex"] as const) {
     const registrations = manifest.getNativeRegistrations(toolId);
     if (registrations === undefined) continue;
     readers.set(
       toolId,
-      new FakeHostPluginRegistryReader({
+      new FakeHostPluginRegistry({
         location: `${toolId} installed plugins`,
         refs: new Map(
           (registrations.pluginClaims ?? []).map(({ ref }) => [ref, { enabled: true }])
@@ -208,7 +208,7 @@ describe("clean --scope user", () => {
         ["aidd-dev@aidd-framework", { enabled: true }],
         ["aidd-pm@aidd-framework", { enabled: foreignEnabled }],
       ]);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const clean = new CleanUserScopeUseCase(
         new InMemoryFileAdapter(),
         repo,
@@ -231,9 +231,7 @@ describe("clean --scope user", () => {
             },
           ],
         ]),
-        new Map([
-          ["copilot", new FakeHostPluginRegistryReader({ location: "plugins", refs: hostRefs })],
-        ])
+        new Map([["copilot", new FakeHostPluginRegistry({ location: "plugins", refs: hostRefs })]])
       );
 
       const result = clean.execute({ projectRoot: "/project", force: true });
@@ -281,7 +279,7 @@ describe("clean --scope user", () => {
     const plugins = join(USER_CONFIG_DIR, "cache", "plugin-cache", "source");
     fs.setFile(fetched, "framework clone");
     fs.setFile(plugins, "plugin clone");
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const useCase = new CleanUserScopeUseCase(
       fs,
       repo,
@@ -319,7 +317,7 @@ describe("clean --scope user", () => {
     const foreignCache = join(CLAUDE_CACHE, "aidd-framework", "foreign-payload", "bytes");
     fs.setFile(foreignCache, "foreign bytes");
     const activator = new RecordingActivator([]);
-    const hostPlugins = new FakeHostPluginRegistryReader({
+    const hostPlugins = new FakeHostPluginRegistry({
       location: "installed_plugins.json",
       refs: new Map([
         ["aidd-context@aidd-framework", { enabled: true }],
@@ -369,7 +367,7 @@ describe("clean --scope user", () => {
     const fs = new RecordingFileAdapter();
     const claudeSource = provenClaudeSources().get("claude");
     if (claudeSource === undefined) throw new Error("fixture missing Claude source reader");
-    const sources = new Map<"claude" | "codex", NativeMarketplaceSourceReader>([
+    const sources = new Map<"claude" | "codex", HostMarketplaceSources>([
       ["claude", claudeSource],
       [
         "codex",
@@ -435,7 +433,7 @@ describe("clean --scope user", () => {
     const repo = new InMemoryManifestRepository(machine);
     const fs = new RecordingFileAdapter();
     const activator = new RecordingActivator([]);
-    const source: NativeMarketplaceSourceReader = {
+    const source: HostMarketplaceSources = {
       read: async () => ({
         location: "host",
         entries: new Map([
@@ -487,7 +485,7 @@ describe("clean --scope user", () => {
       new Map([
         [
           "claude",
-          new FakeHostMarketplaceRegistryReader({
+          new FakeHostMarketplaceRegistry({
             location: "known_marketplaces.json",
             entries: new Map(),
           }),
@@ -675,7 +673,7 @@ describe("clean --scope user", () => {
         new Map([
           [
             "claude",
-            new FakeHostMarketplaceRegistryReader({
+            new FakeHostMarketplaceRegistry({
               location: "known_marketplaces.json",
               entries: new Map(),
             }),
@@ -1161,11 +1159,11 @@ describe("clean --scope user", () => {
         logger,
         new InMemoryMarketplaceRegistry(),
         () => USER_CONFIG_DIR,
-        new Map([["claude", new FakeNativePluginActivator({ available: true })]]),
+        new Map([["claude", new FakeHostActions({ available: true })]]),
         new Map([
           [
             "claude",
-            new FakeHostMarketplaceRegistryReader({
+            new FakeHostMarketplaceRegistry({
               location: "known_marketplaces.json",
               entries: new Map(),
             }),
@@ -1350,9 +1348,9 @@ describe("clean --scope user", () => {
       manifest?: Manifest;
       repo?: InMemoryManifestRepository;
       binary?: string;
-      nativeSources?: ReadonlyMap<"claude" | "codex", NativeMarketplaceSourceReader>;
-      hostPlugins?: ReadonlyMap<"claude" | "codex", FakeHostPluginRegistryReader>;
-      activator: NativePluginActivator;
+      nativeSources?: ReadonlyMap<"claude" | "codex", HostMarketplaceSources>;
+      hostPlugins?: ReadonlyMap<"claude" | "codex", FakeHostPluginRegistry>;
+      activator: HostActions;
     }) {
       return new CleanUserScopeUseCase(
         deps.fs,
@@ -1371,7 +1369,7 @@ describe("clean --scope user", () => {
     }
 
     it("uninstalls every plugin ref at the user scope", async () => {
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const useCase = buildUseCase({
         fs: new InMemoryFileAdapter(),
         logger: new CapturingLogger(),
@@ -1396,7 +1394,7 @@ describe("clean --scope user", () => {
       const fs = new InMemoryFileAdapter();
       const sourceMarker = join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "catalogue.json");
       fs.setFile(sourceMarker, "source");
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
 
       const result = await buildUseCase({
         fs,
@@ -1429,8 +1427,8 @@ describe("clean --scope user", () => {
       const repo = new InMemoryManifestRepository(manifest);
       const fs = new RecordingFileAdapter();
       const marker = join(seedClaudeCache(fs), "marker.json");
-      const activator = new FakeNativePluginActivator({ available: true });
-      const source: NativeMarketplaceSourceReader = {
+      const activator = new FakeHostActions({ available: true });
+      const source: HostMarketplaceSources = {
         read: async () => ({ location: "Claude source registry", entries: new Map() }),
       };
 
@@ -1454,7 +1452,7 @@ describe("clean --scope user", () => {
 
     it("retains canonical state if the binary disappears after source preflight", async () => {
       let available = true;
-      class DisappearingActivator extends FakeNativePluginActivator {
+      class DisappearingActivator extends FakeHostActions {
         override isAvailable(): boolean {
           return available;
         }
@@ -1464,7 +1462,7 @@ describe("clean --scope user", () => {
       const fs = new RecordingFileAdapter();
       const marker = join(seedClaudeCache(fs), "marker.json");
       const activator = new DisappearingActivator({ available: true });
-      const source: NativeMarketplaceSourceReader = {
+      const source: HostMarketplaceSources = {
         read: async () => {
           available = false;
           return {
@@ -1520,11 +1518,11 @@ describe("clean --scope user", () => {
         const fs = new InMemoryFileAdapter();
         const cacheMarker = join(seedClaudeCache(fs), "marker.json");
         const cacheBytes = fs.getFile(cacheMarker);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const hostPlugins = new Map([
           [
             "claude" as const,
-            new FakeHostPluginRegistryReader({
+            new FakeHostPluginRegistry({
               location: "literal host plugin registry",
               refs: new Map(
                 fault === "missing ref"
@@ -1577,7 +1575,7 @@ describe("clean --scope user", () => {
       const fs = new InMemoryFileAdapter();
       const cacheMarker = join(seedClaudeCache(fs), "marker.json");
       const before = await fs.readFile(cacheMarker);
-      const claude = new FakeNativePluginActivator({ available: true });
+      const claude = new FakeHostActions({ available: true });
       const useCase = buildUseCase({
         fs,
         logger: new CapturingLogger(),
@@ -1615,7 +1613,7 @@ describe("clean --scope user", () => {
         const fs = new InMemoryFileAdapter();
         const cacheMarker = join(seedClaudeCache(fs), "marker.json");
         const before = await fs.readFile(cacheMarker);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const useCase = buildUseCase({
           fs,
           logger: new CapturingLogger(),
@@ -1651,7 +1649,7 @@ describe("clean --scope user", () => {
       const fs = new InMemoryFileAdapter();
       const cacheMarker = join(seedClaudeCache(fs), "marker.json");
       const before = await fs.readFile(cacheMarker);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const useCase = buildUseCase({
         fs,
         logger: new CapturingLogger(),
@@ -1672,7 +1670,7 @@ describe("clean --scope user", () => {
     });
 
     it("aborts before marketplace removal when the host refuses plugin uninstall", async () => {
-      const activator = new FakeNativePluginActivator({
+      const activator = new FakeHostActions({
         available: true,
         failOnUninstall: ["aidd-context@aidd-framework"],
       });
@@ -1708,7 +1706,7 @@ describe("clean --scope user", () => {
       const useCase = buildUseCase({
         fs: new InMemoryFileAdapter(),
         logger,
-        activator: new FakeNativePluginActivator({ available: true, throwOnRemove: true }),
+        activator: new FakeHostActions({ available: true, throwOnRemove: true }),
       });
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(
@@ -1769,7 +1767,7 @@ describe("clean --scope user", () => {
             },
           ],
         ]),
-        activator: new FakeNativePluginActivator({ available: true, throwOnRemove: true }),
+        activator: new FakeHostActions({ available: true, throwOnRemove: true }),
       });
 
       await expect(useCase.execute({ projectRoot: "/wherever", force: true })).rejects.toThrow(

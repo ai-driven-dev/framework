@@ -17,8 +17,8 @@ Read when touching `registerMarketplace`, `checkMarketplaceSources` or `nativeRe
 
 ## The check
 
-- `MarketplaceSyncSettingsUseCase.registerMarketplace` reads `known_marketplaces.json` first (`contexts/tools/domain/ports/host-marketplace-registry-reader.ts`, through `realpath`).
-- Refuses only a `hostName` registered under a *different catalog* (`contexts/tools/domain/marketplace-source-conflict.ts`).
+- `MarketplaceSyncSettingsUseCase.registerMarketplace` reads `known_marketplaces.json` first (`contexts/host-registration/contract/host-marketplace-registry.ts`, through `realpath`).
+- Refuses only a `hostName` registered under a *different catalog* (`contexts/host-registration/contract/marketplace-source-conflict.ts`).
 - Identity: declared name plus plugin set, from each side's `marketplace.json`. Never a path, never the version.
 - A version bump under the same name and plugins is the host repointing to a newer build: no conflict.
 - The same catalog from a differently resolved path: no conflict. Two projects auto-registering `aidd-framework` from their own builds measure exactly that; `pnpm smoke`'s shared-`$HOME` pattern surfaces it.

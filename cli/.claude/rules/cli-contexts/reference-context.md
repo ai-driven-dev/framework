@@ -11,7 +11,7 @@ Status: provisional: adopted for the second pilot only. The verdict of the `auth
 
 ## 1. Purpose and status
 
-- The shape the auth pilot produced, meant to become the strict reference for a context in the target shape once revised. `src/contexts/auth/` is the one context that follows it; every other context keeps the old-layout rules (`0-hexagonal.md`, `0-contexts.md`) and migrates on no page until the revision lands.
+- The shape the auth pilot produced, meant to become the strict reference for a context in the target shape once revised. `src/contexts/auth/` and `src/contexts/host-registration/` follow it; every other context keeps the old-layout rules (`0-hexagonal.md`, `0-contexts.md`) and migrates on no page until the revision lands.
 - A deviation is either a written exception in section 9 or a change to this page, in the PR that needs it. Nothing else.
 - An exception is a deviation from a cited line of the target documents (`aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/target/`) that a context needs and that survives its migration. A deviation forced by settling an ambiguity counts as that ambiguity, not twice.
 - An ambiguity removed counts only when it cites two lines that conflict (target documents, code map, code or landed memory) and the choice is made with evidence.
@@ -167,6 +167,9 @@ Written rules no tool checks: the glossary, a kit imported by its own context on
 | E8 | `ports/` in a migrated context, `domain/ports/` in the others | `target/05-distribution-auth-update.md:118`, `target/code-map/src-runtime-kernel-presentation-distribution.md:3` | one context per PR | the last context migrates |
 | E9 | auth keeps its own permission code | `target/05-distribution-auth-update.md:213,351` | the private-storage port is telemetry's (`auth -> telemetry`), has no read and no delete, and grants a directory, where auth grants the file | private storage moves to `shared/` with read and delete |
 | M1 | `shared/ports/http-get.ts` has one importing context, distribution | `target/00-overview.md:69` | created by foundations; auth receives `GitHubAdapter`, it does not import `HttpGet` | `update` migrates |
+| E10 | `framework -> host-registration` in `ALLOWED` | `target/00-overview.md:43-52`, `target/02-host-registration-and-recipes.md` | doctor and sync registration still live in framework and ask `contract/` for the pure rules | framework becomes orchestration and its doctor and sync registration move into host-registration commands |
+| E11 | `contract/` holds published pure rules over its own types, and imports no sibling folder | `target/02-host-registration-and-recipes.md` | an outside caller needs them before its commands move in, and a rules port would grow exact constructor baselines | the framework split moves doctor and sync registration into host-registration commands |
+| E-T7 | the native section types stay in `tools` as data | `target/02-host-registration-and-recipes.md` section 6 | profiles declare `nativeActivation` and `marketplaceRegistration`; the types move with the profiles | profiles move to composition |
 | E-T4 | `tools/domain/formats/toml.ts` imports `smol-toml`, the only domain file that does | a domain imports no package (`aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-tools-clean.md` sections 0 F6, 2, 8) | TOML parsing and stringifying is the format `tools` writes; one wrapper keeps the package behind one file and `biome.json` denies it everywhere else in the domain | a `TomlCodec` port with an infrastructure adapter replaces the wrapper |
 
 ### Ambiguities removed

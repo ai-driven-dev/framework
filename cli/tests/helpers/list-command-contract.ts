@@ -1,5 +1,5 @@
 import { marketplaceListContract } from "../../src/composition/host-registration.js";
-import type { NativeMarketplaceSourceListContract } from "../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type { NativeMarketplaceSourceListContract } from "../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import { nativeActivationOf } from "../../src/contexts/tools/domain/registry.js";
 import type { AiToolId } from "../../src/kernel/tool.js";
 

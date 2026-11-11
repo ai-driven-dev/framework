@@ -10,6 +10,20 @@
       "mutate": "src/contexts/auth/**/*.ts",
       "break": 97
     },
+    "host-registration-domain": {
+      "mutate": [
+        "src/contexts/host-registration/contract/**/*.ts",
+        "src/contexts/host-registration/domain/**/*.ts"
+      ],
+      "break": 1
+    },
+    "host-registration-adapters": {
+      "mutate": [
+        "src/contexts/host-registration/infrastructure/**/*.ts",
+        "src/contexts/host-registration/application/**/*.ts"
+      ],
+      "break": 1
+    },
     "tools": {
       "mutate": [
         "src/contexts/tools/**/*.ts",

@@ -11,12 +11,12 @@ import type { PluginSource } from "../../../../../src/kernel/source.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const SHARED_SETTINGS = resolve(PROJECT_ROOT, ".claude/settings.json");
@@ -45,13 +45,13 @@ interface SyncSetup {
   readonly crashOnAddMarketplace?: boolean;
   /** Refs that fail to enable — a recoverable, best-effort `NativePluginCliError`. */
   readonly failOnPlugins?: readonly string[];
-  readonly activator?: FakeNativePluginActivator;
+  readonly activator?: FakeHostActions;
   /** Explicitly prove the catalogue is already AIDD-owned before testing exact host refresh. */
   readonly ownedCatalog?: true;
   readonly marketplaceSource?: (name: string) => PluginSource;
 }
 
-class ActivatorFailingAtUpgrade extends FakeNativePluginActivator {
+class ActivatorFailingAtUpgrade extends FakeHostActions {
   constructor(private readonly failure: Error) {
     super({ available: true });
   }
@@ -77,7 +77,7 @@ function readableClaudePluginRegistry() {
   return new Map([
     [
       "claude" as const,
-      new FakeHostPluginRegistryReader({
+      new FakeHostPluginRegistry({
         location: "/home/.claude/plugins/installed_plugins.json",
         refs: new Map(),
       }),
@@ -85,11 +85,11 @@ function readableClaudePluginRegistry() {
   ]);
 }
 
-function freshClaudeSource(activator: FakeNativePluginActivator, name = "aidd-framework") {
+function freshClaudeSource(activator: FakeHostActions, name = "aidd-framework") {
   return new Map([
     [
       "claude" as const,
-      new FakeNativeMarketplaceSourceReader(
+      new FakeHostMarketplaceSources(
         activator,
         "registry",
         (path) => (path === "/built/claude" ? name : undefined),
@@ -138,7 +138,7 @@ async function sync(setup: SyncSetup = {}) {
 
   const activator =
     setup.activator ??
-    new FakeNativePluginActivator({
+    new FakeHostActions({
       available: setup.available ?? true,
       enablesPlugins: setup.enablesPlugins ?? false,
       crashOnAddMarketplace: setup.crashOnAddMarketplace ?? false,
@@ -187,7 +187,7 @@ async function sync(setup: SyncSetup = {}) {
     new Map([
       [
         "claude",
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "registry",
           (path) =>
@@ -409,8 +409,8 @@ describe("toolIds narrows which tool's CLI is driven", () => {
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const claudeActivator = new FakeNativePluginActivator({ available: true });
-    const codexActivator = new FakeNativePluginActivator({ available: true });
+    const claudeActivator = new FakeHostActions({ available: true });
+    const codexActivator = new FakeHostActions({ available: true });
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
       manifestRepo,
@@ -458,8 +458,8 @@ describe("toolIds narrows which tool's CLI is driven", () => {
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const claudeActivator = new FakeNativePluginActivator({ available: true });
-    const codexActivator = new FakeNativePluginActivator({ available: true });
+    const claudeActivator = new FakeHostActions({ available: true });
+    const codexActivator = new FakeHostActions({ available: true });
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
       new InMemoryManifestRepository(manifest),
@@ -587,7 +587,7 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const useCase = new MarketplaceSyncSettingsUseCase(
       fs,
       new InMemoryManifestRepository(manifest),

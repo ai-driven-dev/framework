@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   hostExecutableLookup,
   resolveExecutableOnPath,
-} from "../../src/contexts/tools/infrastructure/executable-on-path.js";
+} from "../../src/contexts/host-registration/infrastructure/executable-on-path.js";
 import { git } from "./git-sandbox.js";
 import { runInProcess } from "./in-process-cli.js";
 import { createTelemetrySandbox } from "./telemetry-sandbox.js";

@@ -19,17 +19,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/capabilities/settings-capability.ts",
     "src/contexts/tools/domain/capabilities/config-refs.ts",
     "src/contexts/tools/domain/formats/opencode-mcp-merge.ts",
-    // ports a caller wires a concrete adapter into, or whose type it must accept
-    "src/contexts/tools/domain/ports/native-plugin-activator.ts",
-    // Native host mutations need a current source witness, not only a past manifest claim.
-    "src/contexts/tools/domain/ports/native-marketplace-source-reader.ts",
-    "src/contexts/tools/domain/ports/host-plugin-registry-reader.ts",
-    // What a host's registry says about an installed plugin: `doctor` needs the comparison.
-    "src/contexts/tools/domain/host-plugin-registration.ts",
-    "src/contexts/tools/domain/ports/host-marketplace-registry-reader.ts",
-    // Whether a name a host's registry holds points at a different source: the sync-time
-    // guard and `doctor`'s conflict check share the comparison.
-    "src/contexts/tools/domain/marketplace-source-conflict.ts",
     // what a tool answers from the project's files: which tool's files are present, and which
     // file its MCP config goes in
     "src/contexts/tools/application/detect-tool-signals.ts",

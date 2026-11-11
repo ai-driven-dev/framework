@@ -21,10 +21,10 @@ import type { AiToolId, ToolId } from "../../../kernel/tool.js";
 import { isAiToolId } from "../../../kernel/tool.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../distribution/domain/ports/marketplace-registry.js";
-import type { HostMarketplaceRegistryReader } from "../../tools/domain/ports/host-marketplace-registry-reader.js";
-import type { HostPluginRegistryReader } from "../../tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../tools/domain/ports/native-plugin-activator.js";
+import type { HostActions } from "../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "../../host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../host-registration/contract/host-plugin-registry.js";
 import {
   machineLocalFilesOf,
   nativeActivationOf,
@@ -125,7 +125,7 @@ export class CleanUseCase {
     private readonly logger: Logger,
     private readonly gitignoreUseCase: GitignoreUseCase,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator> = new Map(),
+    private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
     /** Resolves a registered marketplace's own scope, needed to undo a native registration at
      * the same scope it was added at. */
     private readonly marketplaceRegistry?: MarketplaceRegistry,
@@ -135,7 +135,7 @@ export class CleanUseCase {
      * proves its leftover safe to remove by its own emptiness instead of a registry read. */
     private readonly hostMarketplaceRegistries: ReadonlyMap<
       AiToolId,
-      HostMarketplaceRegistryReader
+      HostMarketplaceRegistry
     > = new Map(),
     /** The one resolver for the OS home directory this use case ever calls. `purgeNativeCaches`
      * composes its cache root from it and `filesSafeToDelete` its user-scope containment
@@ -148,12 +148,9 @@ export class CleanUseCase {
     /** Host plugin registry readers keyed by `AiToolId`, consulted before uninstalling a ref so
      * the scope asked for is the one the host actually registered it at, never a guess. Absent
      * falls back to the manifest's own recorded scope. */
-    private readonly hostPluginRegistries: ReadonlyMap<
-      AiToolId,
-      HostPluginRegistryReader
-    > = new Map(),
+    private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
     private readonly userManifestRepo?: ManifestRepository,
-    private readonly nativeSources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
+    private readonly nativeSources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
   async execute(options: CleanOptions): Promise<CleanResult> {
@@ -385,7 +382,7 @@ export class CleanUseCase {
   // catalog does not declare, a supported capability — passing `alias` to a host-facing call
   // would ask it to remove a name it never held.
   private async undoMarketplaceRegistration(
-    activator: NativePluginActivator,
+    activator: HostActions,
     binary: string,
     alias: string,
     hostName: string,
@@ -536,7 +533,7 @@ export class CleanUseCase {
    * one succeeds; best-effort throughout — a ref the host will not forget is named, not thrown.
    */
   private async uninstallPluginRef(
-    activator: NativePluginActivator,
+    activator: HostActions,
     binary: string,
     toolId: ToolId,
     ref: string,

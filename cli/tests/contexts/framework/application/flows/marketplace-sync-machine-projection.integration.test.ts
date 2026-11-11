@@ -3,30 +3,30 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSource } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 describe("native plugin ownership follows the host's activation scope", () => {
   const freshNativeSources = (
     toolId: "claude" | "codex",
-    activator: FakeNativePluginActivator,
+    activator: FakeHostActions,
     identities: ReadonlyMap<string, string>,
     initial: ReadonlyMap<string, NativeMarketplaceSource> = new Map()
   ) =>
     new Map([
       [
         toolId,
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           toolId === "claude" ? "registry" : "effective-list",
           (path) => identities.get(path),
@@ -38,7 +38,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
     new Map([
       [
         toolId,
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: `/home/${toolId}/plugins/installed_plugins.json`,
           refs: new Map(),
         }),
@@ -48,7 +48,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
     new Map([
       [
         "claude" as const,
-        new FakeHostMarketplaceRegistryReader({
+        new FakeHostMarketplaceRegistry({
           location: "/home/.claude/plugins/known_marketplaces.json",
           entries: new Map(),
         }),
@@ -58,7 +58,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
     new Map([
       [
         "claude" as const,
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "/home/.claude/plugins/installed_plugins.json",
           refs: new Map(),
         }),
@@ -125,7 +125,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
           addedAt: "2026-09-15T00:00:00Z",
         })
       );
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const fs = new InMemoryFileAdapter({
         "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
           name: hostName,
@@ -146,7 +146,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
           : new Map([
               [
                 "claude",
-                new FakeHostMarketplaceRegistryReader({
+                new FakeHostMarketplaceRegistry({
                   location: "/home/.claude/plugins/known_marketplaces.json",
                   entries: new Map([
                     [hostName, "/built/claude"],
@@ -164,7 +164,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
           : new Map([
               [
                 "claude",
-                new FakeHostPluginRegistryReader({
+                new FakeHostPluginRegistry({
                   location: "/home/.claude/plugins/installed_plugins.json",
                   refs: new Map([
                     [ref, { enabled: true, scope: "project" }],
@@ -240,7 +240,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const fs = new InMemoryFileAdapter({
       "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
         name: "real-catalog",
@@ -317,7 +317,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         plugins: [],
       }),
     });
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const sync = new MarketplaceSyncSettingsUseCase(
       fs,
       projectRepo,
@@ -430,7 +430,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const fs = new InMemoryFileAdapter({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
@@ -533,7 +533,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         plugins: [{ name: "plugin-b" }],
       }),
     });
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const sync = new MarketplaceSyncSettingsUseCase(
       fs,
       projectRepo,
@@ -619,7 +619,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const activator = new FakeNativePluginActivator(failure);
+    const activator = new FakeHostActions(failure);
     const fs = new InMemoryFileAdapter({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
@@ -689,7 +689,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const fs = new InMemoryFileAdapter({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
@@ -697,7 +697,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         plugins: [{ name: "test-plugin" }],
       }),
     });
-    const hostReader: HostPluginRegistryReader = {
+    const hostReader: HostPluginRegistry = {
       read: async () => {
         throw new Error("host plugin registry unreadable");
       },
@@ -767,7 +767,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const fs = new InMemoryFileAdapter({
       "/built/codex/.agents/plugins/marketplace.json": JSON.stringify({
         name: "real-catalog",
@@ -775,7 +775,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         plugins: [{ name: "test-plugin" }],
       }),
     });
-    const hostReader: HostPluginRegistryReader = {
+    const hostReader: HostPluginRegistry = {
       read: async () => ({
         location: "/host/registry",
         refs: new Map([[requestedRef, { enabled: true }]]),

@@ -124,6 +124,9 @@ export const ALLOWED = new Set([
   // from the host of the doctor and setup scenarios.
   "distribution->auth",
   "framework->auth",
+  // The pure rules `contract/` publishes over its own types (reference-context.md, E10 and E11),
+  // until doctor and sync registration move into host-registration commands.
+  "framework->host-registration",
 ]);
 
 /**
@@ -132,13 +135,15 @@ export const ALLOWED = new Set([
  * keep the three folders below to themselves and the composition root. The list is data for
  * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
  */
-export const HELD_BY_BIOME: readonly string[] = ["auth"];
+export const HELD_BY_BIOME: readonly string[] = ["auth", "host-registration"];
 
 const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
 
 /** The groups that forbid a held context's interior to an importer that may reach the rest. */
 export function interiorGroupsOf(context: string): string[] {
-  return INTERIOR_FOLDERS.map((folder) => `**/${context}/${folder}/**`);
+  return INTERIOR_FOLDERS.filter((folder) =>
+    existsSync(join(SRC, "contexts", context, folder))
+  ).map((folder) => `**/${context}/${folder}/**`);
 }
 
 /**

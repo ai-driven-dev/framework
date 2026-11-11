@@ -8,18 +8,18 @@ import {
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import { answeredRegistry } from "../../../tools/domain/host-plugin-registration.js";
-import type { MarketplaceSettings } from "../../../tools/domain/marketplace-settings.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
+import type {
+  HostPluginRegistry,
+  HostPluginRegistryReading,
+} from "../../../host-registration/contract/host-plugin-registry.js";
+import { answeredRegistry } from "../../../host-registration/contract/host-registration-answers.js";
 import {
   describePluginDiff,
   pluginSetDifference,
-} from "../../../tools/domain/marketplace-source-conflict.js";
-import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
-import type {
-  HostPluginRegistryReader,
-  HostPluginRegistryReading,
-} from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
+} from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { MarketplaceSettings } from "../../../tools/domain/marketplace-settings.js";
 import { nativeActivationOf, resolveNativePlugins } from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -62,15 +62,15 @@ export class DoctorRegistrationUseCase {
     private readonly fs: FileReader,
     private readonly registry: MarketplaceRegistry,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator> = new Map(),
+    private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
     /** Host plugin registry readers keyed by `AiToolId`, one per tool whose own CLI
      * activates plugins. */
-    private readonly hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistryReader> = new Map(),
+    private readonly hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
     /** Host marketplace registry readers keyed by `AiToolId`. Only a tool whose profile declares
      * `NativeActivation.marketplaceRegistry` is ever looked up here. */
     private readonly hostMarketplaceRegistries: ReadonlyMap<
       AiToolId,
-      HostMarketplaceRegistryReader
+      HostMarketplaceRegistry
     > = new Map(),
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceUseCase`'s
      * own `userCacheRoot` — needed to recompute the same path that use case would build, without

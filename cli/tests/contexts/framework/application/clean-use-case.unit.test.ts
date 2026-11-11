@@ -9,28 +9,28 @@ import { GitignoreUseCase } from "../../../../src/contexts/framework/application
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
+import type { HostActions } from "../../../../src/contexts/host-registration/contract/host-actions.js";
+import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { pluginScriptDir } from "../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
-import type { HostPluginRegistryReader } from "../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../../src/contexts/tools/domain/ports/native-plugin-activator.js";
 import { CURSOR_HOOKS } from "../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { FileHash, InstallationFile } from "../../../../src/kernel/file.js";
 import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { FakeHostPluginRegistryReader } from "../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { RecordingPrompter } from "../../../helpers/ports/recording-prompter.js";
+import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const md5 = (content: string): string => createHash("md5").update(content, "utf-8").digest("hex");
 
 /** Test-double host catalogues, deliberately seeded without consulting the manifest claim. */
-function nativeSourcesOnHost(): ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> {
-  const codexLike: NativeMarketplaceSourceReader = {
+function nativeSourcesOnHost(): ReadonlyMap<AiToolId, HostMarketplaceSources> {
+  const codexLike: HostMarketplaceSources = {
     read: async () => ({
       location: "fixture native host catalogue",
       entries: new Map(
@@ -46,7 +46,7 @@ function nativeSourcesOnHost(): ReadonlyMap<AiToolId, NativeMarketplaceSourceRea
       ),
     }),
   };
-  const claude: NativeMarketplaceSourceReader = {
+  const claude: HostMarketplaceSources = {
     read: async () => ({
       location: "fixture Claude host registry",
       entries: new Map([
@@ -63,8 +63,8 @@ function nativeSourcesOnHost(): ReadonlyMap<AiToolId, NativeMarketplaceSourceRea
 }
 
 /** Independently parsed test registry: no foreign refs unless a test seeds them explicitly. */
-function nativeRefsOnHost(): ReadonlyMap<AiToolId, HostPluginRegistryReader> {
-  const empty = new FakeHostPluginRegistryReader({
+function nativeRefsOnHost(): ReadonlyMap<AiToolId, HostPluginRegistry> {
+  const empty = new FakeHostPluginRegistry({
     location: "fixture native plugin registry",
     refs: new Map(),
   });
@@ -403,11 +403,11 @@ describe("clean", () => {
     /** Explicit host ref evidence for Claude positives, separate from the AIDD manifest. */
     function claudeRefOnHost(
       scope?: "project" | "user"
-    ): ReadonlyMap<AiToolId, HostPluginRegistryReader> {
+    ): ReadonlyMap<AiToolId, HostPluginRegistry> {
       return new Map([
         [
           "claude",
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: "fixture Claude installed-plugin registry",
             refs: new Map([
               [REF, scope === undefined ? { enabled: true } : { enabled: true, scope }],
@@ -476,7 +476,7 @@ describe("clean", () => {
             addedAt: "2026-01-01T00:00:00.000Z",
           })
         );
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const logger = new CapturingLogger();
         const useCase = new CleanWithKnownHostSource(
           fs,
@@ -533,9 +533,9 @@ describe("clean", () => {
           });
           const machineRepo = new InMemoryManifestRepository(machine, "/fake-home");
           const projectRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-          const activator = new FakeNativePluginActivator({ available: true });
+          const activator = new FakeHostActions({ available: true });
           const logger = new CapturingLogger();
-          const hostRefs = new FakeHostPluginRegistryReader({
+          const hostRefs = new FakeHostPluginRegistry({
             location: "Codex machine refs",
             refs: new Map([
               [REF, { enabled: true }],
@@ -585,7 +585,7 @@ describe("clean", () => {
             machine.setNativeRegistrations("codex", machineRegistrations);
           const fs = new InMemoryFileAdapter();
           const logger = new CapturingLogger();
-          const activator = new FakeNativePluginActivator({ available: true });
+          const activator = new FakeHostActions({ available: true });
           const useCase = new CleanWithKnownHostSource(
             fs,
             new InMemoryManifestRepository(seedManifestWithNativeRegistrations(), PROJECT_ROOT),
@@ -637,8 +637,8 @@ describe("clean", () => {
         async ({ entries, reason }) => {
           const fs = new InMemoryFileAdapter();
           const logger = new CapturingLogger();
-          const activator = new FakeNativePluginActivator({ available: true });
-          const source: NativeMarketplaceSourceReader = {
+          const activator = new FakeHostActions({ available: true });
+          const source: HostMarketplaceSources = {
             read: async () => ({ location: "Claude source fixture", entries }),
           };
           const useCase = new CleanWithKnownHostSource(
@@ -676,7 +676,7 @@ describe("clean", () => {
         });
         const fs = new InMemoryFileAdapter();
         const logger = new CapturingLogger();
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const useCase = new CleanWithKnownHostSource(
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
@@ -708,7 +708,7 @@ describe("clean", () => {
             pluginRefs: [extraRef],
             pluginClaims: claimed ? [{ ref: extraRef, dependents: ["/other-project"] }] : [],
           });
-          const hostRefs = new FakeHostPluginRegistryReader({
+          const hostRefs = new FakeHostPluginRegistry({
             location: "Claude refs fixture",
             refs: new Map([
               [REF, { enabled: true, scope: "project" }],
@@ -716,7 +716,7 @@ describe("clean", () => {
             ]),
           });
           const logger = new CapturingLogger();
-          const activator = new FakeNativePluginActivator({ available: true });
+          const activator = new FakeHostActions({ available: true });
           const useCase = new CleanWithKnownHostSource(
             fs,
             new InMemoryManifestRepository(seedClaudeNativeRegistrations(), PROJECT_ROOT),
@@ -773,8 +773,8 @@ describe("clean", () => {
       const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
       await references.addReference("1.0.0", PROJECT_ROOT);
       await references.addReference("1.0.0", "/other-project");
-      const activator = new FakeNativePluginActivator({ available: true });
-      const sourceReader: NativeMarketplaceSourceReader = {
+      const activator = new FakeHostActions({ available: true });
+      const sourceReader: HostMarketplaceSources = {
         read: async () => ({
           location: "fake codex host",
           entries: new Map([
@@ -842,8 +842,8 @@ describe("clean", () => {
       const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
       await references.addReference("1.0.0", PROJECT_ROOT);
       await references.addReference("1.0.0", "/other-project");
-      const activator = new FakeNativePluginActivator({ available: true });
-      const hostRefs = new FakeHostPluginRegistryReader({
+      const activator = new FakeHostActions({ available: true });
+      const hostRefs = new FakeHostPluginRegistry({
         location: "fake codex plugins",
         refs: new Map([
           [REF, { enabled: true }],
@@ -879,7 +879,7 @@ describe("clean", () => {
       const manifest = seedManifestWithNativeRegistrations();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
@@ -900,7 +900,7 @@ describe("clean", () => {
       const manifest = seedManifestWithNativeRegistrations();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
       registry.save(
         PROJECT_ROOT,
@@ -993,7 +993,7 @@ describe("clean", () => {
         const manifest = seedClaudeManifest("project");
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({
+        const activator = new FakeHostActions({
           available: true,
           installedAtScope: new Map([[CLAUDE_REF, "user"]]),
         });
@@ -1016,14 +1016,14 @@ describe("clean", () => {
         const manifest = seedClaudeManifest("project");
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({
+        const activator = new FakeHostActions({
           available: true,
           installedAtScope: new Map([[CLAUDE_REF, "user"]]),
         });
-        const hostPluginRegistries = new Map<AiToolId, FakeHostPluginRegistryReader>([
+        const hostPluginRegistries = new Map<AiToolId, FakeHostPluginRegistry>([
           [
             "claude",
-            new FakeHostPluginRegistryReader({
+            new FakeHostPluginRegistry({
               location: "/registry",
               refs: new Map([[CLAUDE_REF, { enabled: true, scope: "user" }]]),
             }),
@@ -1065,7 +1065,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1130,7 +1130,7 @@ describe("clean", () => {
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
           gitignore,
-          new Map([[BINARY, new FakeNativePluginActivator({ available: true })]]),
+          new Map([[BINARY, new FakeHostActions({ available: true })]]),
           registry,
           undefined,
           new Map(),
@@ -1165,7 +1165,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1206,7 +1206,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1251,7 +1251,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1291,7 +1291,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1334,7 +1334,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1373,7 +1373,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1420,7 +1420,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1461,7 +1461,7 @@ describe("clean", () => {
         const manifest = seedManifestWithNativeRegistrations();
         const fs = new InMemoryFileAdapter();
         const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1502,7 +1502,7 @@ describe("clean", () => {
       const manifest = seedManifestWithNativeRegistrations();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-      const activator = new FakeNativePluginActivator({ available: false });
+      const activator = new FakeHostActions({ available: false });
       const logger = new CapturingLogger();
       const useCase = new CleanWithKnownHostSource(
         fs,
@@ -1590,7 +1590,7 @@ describe("clean", () => {
       const manifest = seedManifestWithNativeRegistrations();
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
@@ -1639,7 +1639,7 @@ describe("clean", () => {
       });
       const fs = new InMemoryFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const registry = new InMemoryMarketplaceRegistry();
       registry.save(
         PROJECT_ROOT,
@@ -1679,9 +1679,9 @@ describe("clean", () => {
         manifest: Manifest;
         fs: InMemoryFileAdapter;
         logger: CapturingLogger;
-        activators: ReadonlyMap<string, NativePluginActivator>;
+        activators: ReadonlyMap<string, HostActions>;
         registry: InMemoryMarketplaceRegistry | undefined;
-        hostPluginRegistries?: ReadonlyMap<AiToolId, HostPluginRegistryReader>;
+        hostPluginRegistries?: ReadonlyMap<AiToolId, HostPluginRegistry>;
       }): CleanWithKnownHostSource {
         return new CleanWithKnownHostSource(
           deps.fs,
@@ -1721,7 +1721,7 @@ describe("clean", () => {
         const fs = new InMemoryFileAdapter();
         fs.setFile(join(CODEX_CACHE, MARKETPLACE, "leftover.json"), "{}");
         const logger = new CapturingLogger();
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,
@@ -1754,7 +1754,7 @@ describe("clean", () => {
       it("leaves a registration in place when no marketplace registry is wired in at all", async () => {
         const fs = new InMemoryFileAdapter();
         const logger = new CapturingLogger();
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const useCase = buildUseCase({
           manifest: seedManifestWithNativeRegistrations(),
           fs,
@@ -1777,7 +1777,7 @@ describe("clean", () => {
       it("names a refused marketplace removal by the host's own words", async () => {
         const fs = new InMemoryFileAdapter();
         const logger = new CapturingLogger();
-        const activator = new FakeNativePluginActivator({ available: true, throwOnRemove: true });
+        const activator = new FakeHostActions({ available: true, throwOnRemove: true });
         const useCase = buildUseCase({
           manifest: seedManifestWithNativeRegistrations(),
           fs,
@@ -1799,7 +1799,7 @@ describe("clean", () => {
       it("names a refused plugin uninstall by the host's own words, after trying both scopes", async () => {
         const fs = new InMemoryFileAdapter();
         const logger = new CapturingLogger();
-        const activator = new FakeNativePluginActivator({
+        const activator = new FakeHostActions({
           available: true,
           failOnUninstall: [REF],
         });
@@ -1879,7 +1879,7 @@ describe("clean", () => {
           manifest: seedRegistrations("copilot", "copilot"),
           fs,
           logger,
-          activators: new Map([["copilot", new FakeNativePluginActivator({ available: true })]]),
+          activators: new Map([["copilot", new FakeHostActions({ available: true })]]),
           registry: seedSharedRegistry(),
         });
 
@@ -1897,7 +1897,7 @@ describe("clean", () => {
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
         await references.addReference("1.0.0", PROJECT_ROOT);
         await references.addReference("1.0.0", "/other-project");
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const useCase = new CleanWithKnownHostSource(
           fs,
           new InMemoryManifestRepository(seedRegistrations("copilot", "copilot"), PROJECT_ROOT),
@@ -1933,7 +1933,7 @@ describe("clean", () => {
           marketplaces: manifest.getNativeRegistrations("copilot")?.marketplaces ?? [],
           pluginRefs: [`demo@${MARKETPLACE}`],
         });
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const useCase = new CleanWithKnownHostSource(
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
@@ -1968,11 +1968,11 @@ describe("clean", () => {
           marketplaces: manifest.getNativeRegistrations("codex")?.marketplaces ?? [],
           pluginRefs: [`demo@${MARKETPLACE}`],
         });
-        const activator = new FakeNativePluginActivator({ available: true });
-        const hostRefs = new Map<AiToolId, HostPluginRegistryReader>([
+        const activator = new FakeHostActions({ available: true });
+        const hostRefs = new Map<AiToolId, HostPluginRegistry>([
           [
             "codex",
-            new FakeHostPluginRegistryReader({
+            new FakeHostPluginRegistry({
               location: "Codex user-global registry",
               refs: new Map([[`demo@${MARKETPLACE}`, { enabled: true }]]),
             }),
@@ -2006,7 +2006,7 @@ describe("clean", () => {
           manifest: seedRegistrations("cursor", "cursor"),
           fs,
           logger,
-          activators: new Map([["cursor", new FakeNativePluginActivator({ available: true })]]),
+          activators: new Map([["cursor", new FakeHostActions({ available: true })]]),
           registry: seedSharedRegistry(),
         });
 
@@ -2025,7 +2025,7 @@ describe("clean", () => {
           manifest: seedRegistrations("codex", BINARY),
           fs,
           logger,
-          activators: new Map([[BINARY, new FakeNativePluginActivator({ available: true })]]),
+          activators: new Map([[BINARY, new FakeHostActions({ available: true })]]),
           registry: seedSharedRegistry(),
         });
 
@@ -2164,7 +2164,7 @@ describe("clean", () => {
 
       async function uninstallScopesFor(manifest: Manifest): Promise<readonly string[]> {
         const fs = new InMemoryFileAdapter();
-        const activator = new FakeNativePluginActivator({
+        const activator = new FakeHostActions({
           available: true,
           installedAtScope: new Map([[CLAUDE_REF, "user"]]),
         });
@@ -2460,7 +2460,7 @@ describe("clean", () => {
         );
       }
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const useCase = new CleanWithKnownHostSource(
         fs,
         manifestRepo,
@@ -2535,7 +2535,7 @@ describe("clean", () => {
     const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
     await references.addReference("1.0.0", PROJECT_ROOT);
     await references.addReference("1.0.0", "/other-project");
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const useCase = new CleanWithKnownHostSource(
       fs,
       new InMemoryManifestRepository(manifest, PROJECT_ROOT),
@@ -3065,7 +3065,7 @@ function previewOf(tools: ReadonlyArray<readonly [ToolId, number]>) {
   };
 }
 
-class CrashingUninstallActivator implements NativePluginActivator {
+class CrashingUninstallActivator implements HostActions {
   isAvailable(): boolean {
     return true;
   }
@@ -3086,7 +3086,7 @@ class CrashingUninstallActivator implements NativePluginActivator {
 
 /** Records `uninstallPlugin`/`removeMarketplace` calls in the order they happen, so a test
  * can assert one came before the other. */
-class OrderRecordingActivator implements NativePluginActivator {
+class OrderRecordingActivator implements HostActions {
   constructor(private readonly calls: string[]) {}
   isAvailable(): boolean {
     return true;
@@ -3110,7 +3110,7 @@ class OrderRecordingActivator implements NativePluginActivator {
 
 /** Runs `onRemoveMarketplace` at the exact moment `removeMarketplace` is called, so a test
  * can prove native undo happens before the built tree it depends on is deleted. */
-class AssertingActivator implements NativePluginActivator {
+class AssertingActivator implements HostActions {
   constructor(private readonly onRemoveMarketplace: () => void | Promise<void>) {}
   isAvailable(): boolean {
     return true;

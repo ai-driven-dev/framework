@@ -39,10 +39,10 @@ export type MarketplaceSourcesDeclaration =
 /**
  * A tool that writes its own marketplace registration, through its own CLI: driving the
  * command is preferred to writing the file, so the tool owns its own configuration.
- * `binary` keys the matching `NativePluginActivator`.
+ * `binary` keys the matching `HostActions`.
  */
 export interface NativeActivationSpec {
-  /** Names the host's executable and keys the matching `NativePluginActivator`. Refused when empty. */
+  /** Names the host's executable and keys the matching `HostActions`. Refused when empty. */
   binary: string;
   /** One mapping serves add and remove: a remove omitting the scope the add used drops
    * Claude's declaration from every scope at once. A project-scoped marketplace maps to

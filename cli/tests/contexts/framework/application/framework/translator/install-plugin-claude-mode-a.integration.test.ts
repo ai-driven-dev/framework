@@ -8,12 +8,12 @@ import { PluginDistribution } from "../../../../../../src/contexts/translate/dom
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -23,7 +23,7 @@ function syncWithProvenFreshHost(
   manifestRepo: InMemoryManifestRepository,
   registry: InMemoryMarketplaceRegistry,
   hasher: DeterministicHasher,
-  activator: FakeNativePluginActivator
+  activator: FakeHostActions
 ): MarketplaceSyncSettingsUseCase {
   return new MarketplaceSyncSettingsUseCase(
     fs,
@@ -38,14 +38,12 @@ function syncWithProvenFreshHost(
     undefined,
     undefined,
     undefined,
-    new Map([
-      ["claude", new FakeHostPluginRegistryReader({ location: "fake claude", refs: new Map() })],
-    ]),
+    new Map([["claude", new FakeHostPluginRegistry({ location: "fake claude", refs: new Map() })]]),
     undefined,
     new Map([
       [
         "claude",
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "registry",
           (path) => (path === "/built/claude" ? MARKETPLACE_NAME : undefined),
@@ -89,7 +87,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
     manifest.addTool("claude", "test", []);
 
@@ -158,7 +156,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
     manifest.addTool("claude", "test", []);
 

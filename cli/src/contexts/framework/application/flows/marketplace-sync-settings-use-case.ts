@@ -24,19 +24,19 @@ import {
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import type { MarketplaceSettings } from "../../../tools/domain/marketplace-settings.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
+import type {
+  HostMarketplaceSources,
+  NativeMarketplaceSource,
+} from "../../../host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
 import {
   describePluginDiff,
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
-} from "../../../tools/domain/marketplace-source-conflict.js";
-import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
-import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type {
-  NativeMarketplaceSource,
-  NativeMarketplaceSourceReader,
-} from "../../../tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
+} from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { MarketplaceSettings } from "../../../tools/domain/marketplace-settings.js";
 import {
   hostRefInUse,
   nativeActivationOf,
@@ -164,14 +164,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     /** Native plugin CLI activators, keyed by the `binary` each profile declares. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator>,
+    private readonly activators: ReadonlyMap<string, HostActions>,
     private readonly ensureBuilt: EnsureBuiltMarketplace,
     /** Readers of a host's own marketplace registry, keyed by `AiToolId` — only a tool whose
      * profile declares `NativeActivation.marketplaceRegistry` is ever looked up here, so a tool
      * absent from this map still syncs. */
     private readonly hostMarketplaceRegistries: ReadonlyMap<
       AiToolId,
-      HostMarketplaceRegistryReader
+      HostMarketplaceRegistry
     > = new Map(),
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceUseCase`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
@@ -182,12 +182,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly marketplaceRegisterFrameworkUseCase?: MarketplaceRegisterFramework,
     private readonly userSourceReferences?: UserSourceReferences,
     private readonly currentVersionProvider?: VersionReader,
-    private readonly hostPluginRegistries: ReadonlyMap<
-      AiToolId,
-      HostPluginRegistryReader
-    > = new Map(),
+    private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
     private readonly userManifestRepo?: ManifestRepository,
-    private readonly nativeSources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
+    private readonly nativeSources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -538,7 +535,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
    * bug in the activator, which propagates. */
   private async activateTool(
     toolId: ToolId,
-    activator: NativePluginActivator,
+    activator: HostActions,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
@@ -868,7 +865,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   // Returns the host's own catalog name, never this project's local alias: a catalog this
   // project just built and cannot read back is not registered at all (see the throw below).
   private async registerMarketplace(
-    activator: NativePluginActivator,
+    activator: HostActions,
     toolId: ToolId,
     marketplace: Marketplace,
     projectRoot: string,
@@ -1121,7 +1118,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   // `hostName`, never the project's alias, names every host-facing call.
   private async reclaimOrReport(
     toolId: ToolId,
-    activator: NativePluginActivator,
+    activator: HostActions,
     marketplace: Marketplace,
     hostName: string,
     builtDir: string,

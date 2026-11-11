@@ -15,12 +15,12 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -41,18 +41,18 @@ function seedFrameworkCatalog(fs: InMemoryFileAdapter): void {
   );
 }
 
-function freshHostProof(activator: FakeNativePluginActivator) {
+function freshHostProof(activator: FakeHostActions) {
   return {
     pluginRegistries: new Map([
       [
         "claude" as const,
-        new FakeHostPluginRegistryReader({ location: "/host/plugins.json", refs: new Map() }),
+        new FakeHostPluginRegistry({ location: "/host/plugins.json", refs: new Map() }),
       ],
     ]),
     sources: new Map([
       [
         "claude" as const,
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "registry",
           (path) => (path === "/built/claude" ? FRAMEWORK_MARKETPLACE_NAME : undefined),
@@ -84,7 +84,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       () => "/fake-home/.config/aidd"
     );
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -125,7 +125,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       () => "/fake-home/.config/aidd"
     );
     const logger = new CapturingLogger();
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -211,7 +211,7 @@ describe("the shared source's own reference, recorded by sync", () => {
         return { registered: true, scope: "user" as const };
       },
     };
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -327,7 +327,7 @@ describe("a project with no manifest to sync", () => {
   it("returns the empty result and drives no tool when there is no manifest", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const useCase = new MarketplaceSyncSettingsUseCase(
       new InMemoryFileAdapter({}, new DeterministicHasher()),
       new InMemoryManifestRepository(),
@@ -353,7 +353,7 @@ describe("a project with no manifest to sync", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", new FakeNativePluginActivator({ available: true })]]),
+      new Map([["claude", new FakeHostActions({ available: true })]]),
       fakeEnsureBuiltMarketplace()
     );
 

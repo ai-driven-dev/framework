@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { resolveUninstallScopeOrder } from "../../../../../src/contexts/framework/application/shared/resolve-uninstall-scope.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const REF = "aidd-telemetry@aidd-framework";
 const PROJECT_ROOT = "/test-project";
 
 function readerAnswering(
   entries: ReadonlyMap<string, { enabled: boolean; scope?: "project" | "user" }>
-): HostPluginRegistryReader {
+): HostPluginRegistry {
   return { read: async () => ({ location: "/registry", refs: entries }) };
 }
 
@@ -44,7 +44,7 @@ describe("resolveUninstallScopeOrder", () => {
   });
 
   it("falls back when the host's registry could not be read at all", async () => {
-    const reader = new FakeHostPluginRegistryReader({
+    const reader = new FakeHostPluginRegistry({
       location: "/registry",
       unreadable: "not valid JSON",
     });

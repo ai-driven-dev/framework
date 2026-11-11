@@ -12,26 +12,26 @@ import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/appli
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { nativeActivationOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 
 for (const [toolId, catalogPath] of [
   ["codex", ".agents/plugins/marketplace.json"],
   ["copilot", ".plugin/marketplace.json"],
 ] as const) {
   const effectiveSource = (hostName: string, source: string) =>
-    new Map<AiToolId, NativeMarketplaceSourceReader>([
+    new Map<AiToolId, HostMarketplaceSources>([
       [
         toolId,
         {
@@ -74,9 +74,9 @@ for (const [toolId, catalogPath] of [
         [`/built/${toolId}/${catalogPath}`]: JSON.stringify({ name: "real-catalog", plugins: [] }),
       });
       const registry = new InMemoryMarketplaceRegistry();
-      const failing = new FakeNativePluginActivator({ available: true, failOnUninstall: [ref] });
+      const failing = new FakeHostActions({ available: true, failOnUninstall: [ref] });
       const sources = effectiveSource("real-catalog", `/built/${toolId}`);
-      const hostPlugins = new Map<AiToolId, HostPluginRegistryReader>([
+      const hostPlugins = new Map<AiToolId, HostPluginRegistry>([
         [
           toolId,
           {
@@ -121,7 +121,7 @@ for (const [toolId, catalogPath] of [
       expect(repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
       ]);
-      const working = new FakeNativePluginActivator({ available: true });
+      const working = new FakeHostActions({ available: true });
       const finish = new CleanUserScopeUseCase(
         fs,
         repo,
@@ -195,10 +195,10 @@ for (const [toolId, catalogPath] of [
         pluginClaims: [],
       });
       const user = new InMemoryManifestRepository(machine);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const sources = effectiveSource(hostName, builtDir);
       let enabled = false;
-      const hostReader: HostPluginRegistryReader = {
+      const hostReader: HostPluginRegistry = {
         read: async () => ({
           location: "/host/registry",
           refs: new Map(enabled ? [[ref, { enabled: true, scope: "user" as const }]] : []),
@@ -264,7 +264,7 @@ for (const [toolId, catalogPath] of [
           })
         ).toEqual([ref]);
         expect(activator.updatedPlugins).toEqual([ref]);
-        const failed = new FakeNativePluginActivator({ available: true, failOnUpdate: [ref] });
+        const failed = new FakeHostActions({ available: true, failOnUpdate: [ref] });
         const failingUpdate = new UserPluginUpdateUseCase(
           user,
           new UserPluginFileUpdater(
@@ -336,7 +336,7 @@ for (const [toolId, catalogPath] of [
         registry,
         new DeterministicHasher(),
         new CapturingLogger(),
-        new Map([[toolId, new FakeNativePluginActivator({ available: true })]]),
+        new Map([[toolId, new FakeHostActions({ available: true })]]),
         fakeEnsureBuiltMarketplace(() => builtDir),
         new Map(),
         () => "/built",

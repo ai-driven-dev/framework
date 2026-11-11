@@ -4,12 +4,12 @@ import {
   isDriftFound,
 } from "../../../../../src/contexts/framework/application/shared/host-marketplace-source-conflict.js";
 import { userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
 import {
   errnoError,
   FaultingFileAdapter,
 } from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 
 const NAME = "aidd-framework";
 const LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -31,7 +31,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
       NAME,
       "claude"
     );
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const reader = new FakeHostMarketplaceRegistry({
       location: LOCATION,
       entries: new Map([[NAME, registeredSource]]),
     });
@@ -64,7 +64,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
     const registeredSource = userBuiltMarketplaceDir(userCacheRoot, "2.0.0", NAME, "claude");
     const fs = new FaultingFileAdapter();
     fs.failOn("realpath", registeredSource, errnoError("ENOENT"));
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const reader = new FakeHostMarketplaceRegistry({
       location: LOCATION,
       entries: new Map([[NAME, registeredSource]]),
     });
@@ -96,7 +96,7 @@ describe("hostMarketplaceSourceConflict — without a drift context", () => {
         plugins: [{ name: "aidd-dev" }],
       }),
     });
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const reader = new FakeHostMarketplaceRegistry({
       location: LOCATION,
       entries: new Map([[NAME, "/registered"]]),
     });

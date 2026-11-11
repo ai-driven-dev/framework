@@ -6,14 +6,14 @@ import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/appli
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/framework/application/shared/user-scope-plugin-files.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSource } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
@@ -60,14 +60,14 @@ for (const toolId of ["codex", "copilot"] as const) {
       });
       const repo = new InMemoryManifestRepository(machine);
       const fs = new InMemoryFileAdapter();
-      const activator = new FakeNativePluginActivator({
+      const activator = new FakeHostActions({
         available: options.available ?? true,
         failOnUninstall: options.failOnUninstall ? [REF] : [],
       });
       const hostRefs =
         options.hostRefs ??
         new Map(refs.map((ref) => [ref, { enabled: true, scope: "user" as const }]));
-      const reader: HostPluginRegistryReader = {
+      const reader: HostPluginRegistry = {
         read: async () =>
           options.hostRegistryUnreadable
             ? { location: "/host/registry", unreadable: "invalid host registry" }

@@ -4,11 +4,11 @@ import {
   inspectNativeMarketplaceSource,
 } from "../../../../../src/contexts/framework/application/ownership/native-marketplace-source-proof.js";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
 import type {
+  HostMarketplaceSources,
   NativeMarketplaceSource,
-  NativeMarketplaceSourceReader,
-} from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+} from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 
 const SOURCE: NativeMarketplaceSource = {
   kind: "effective-list",
@@ -24,7 +24,7 @@ const claim: NativeMarketplaceRegistration = {
 
 function reader(
   entries?: ReadonlyMap<string, NativeMarketplaceSource | null>
-): NativeMarketplaceSourceReader {
+): HostMarketplaceSources {
   return { read: async () => ({ location: "codex marketplace list --json", entries }) };
 }
 
@@ -48,7 +48,7 @@ describe("current native marketplace source proof", () => {
   it.each([new Error("source permission denied"), "source permission denied"])(
     "reports host source read failures as unproven without throwing",
     async (error) => {
-      const sourceReader: NativeMarketplaceSourceReader = {
+      const sourceReader: HostMarketplaceSources = {
         read: async () => {
           throw error;
         },
@@ -82,7 +82,7 @@ describe("current native marketplace source proof", () => {
 
   it("refuses foreign same-catalogue refs even when a canonical owned ref is enabled", async () => {
     let requestedRoot = "";
-    const host: HostPluginRegistryReader = {
+    const host: HostPluginRegistry = {
       read: async (projectRoot) => {
         requestedRoot = projectRoot;
         return {
