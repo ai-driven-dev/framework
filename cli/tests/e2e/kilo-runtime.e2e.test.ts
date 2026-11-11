@@ -10,6 +10,14 @@ import { KILO_BIN, KILO_ENV, KILO_SHELL } from "./helpers/kilo-cli.js";
 import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js";
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
+// Windows CI has measured ~53s for skill discovery and ~48s for the MCP fixture's
+// agent discovery. It reaches the model turn at ~117s, leaving no room in Vitest's
+// 120s default budget for the 60s model-turn limit and final assertions/cleanup.
+// 300s gives those measured phases room while retaining bounded child processes.
+const KILO_RUNTIME_TIMEOUT_MS = process.platform === "win32" ? 300_000 : 120_000;
+const KILO_DISCOVERY_TIMEOUT_MS = 90_000;
+const KILO_QUICK_COMMAND_TIMEOUT_MS = 30_000;
+const KILO_CLEANUP_TIMEOUT_MS = 10_000;
 const phase = (name: string) =>
   process.stderr.write(`[kilo-runtime] ${new Date().toISOString()} ${name}\n`);
 
@@ -139,7 +147,9 @@ async function stopKilo(child: ReturnType<typeof spawn>): Promise<void> {
   else exited.resolve();
   if (KILO_SHELL && process.platform === "win32" && child.pid !== undefined) {
     try {
-      await execFileAsync("taskkill", ["/pid", String(child.pid), "/t", "/f"]);
+      await execFileAsync("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
+        timeout: KILO_CLEANUP_TIMEOUT_MS,
+      });
     } catch (error) {
       const message = String(error);
       if (
@@ -241,13 +251,18 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         ).filter(([key]) => allowed.has(key))
       );
       phase("Kilo CLI: version");
-      const version = await execFileAsync(KILO_BIN, ["--version"], { env, shell: KILO_SHELL });
+      const version = await execFileAsync(KILO_BIN, ["--version"], {
+        env,
+        shell: KILO_SHELL,
+        timeout: KILO_QUICK_COMMAND_TIMEOUT_MS,
+      });
       expect(version.stdout.trim()).toBe("7.7.5");
       phase("Kilo CLI: debug skill");
       const skills = await execFileAsync(KILO_BIN, ["debug", "skill"], {
         cwd: generatedProject,
         env,
         shell: KILO_SHELL,
+        timeout: KILO_DISCOVERY_TIMEOUT_MS,
         maxBuffer: 8 * 1024 * 1024,
       });
       const discoveredSkills = JSON.parse(skills.stdout) as Array<{ location?: string }>;
@@ -267,6 +282,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         cwd: generatedProject,
         env,
         shell: KILO_SHELL,
+        timeout: KILO_DISCOVERY_TIMEOUT_MS,
         maxBuffer: 8 * 1024 * 1024,
       });
       for (const role of ["explorer", "executor", "validator", "reviewer"]) {
@@ -297,6 +313,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         cwd: mcpProject,
         env,
         shell: KILO_SHELL,
+        timeout: KILO_DISCOVERY_TIMEOUT_MS,
         maxBuffer: 8 * 1024 * 1024,
       });
       expect(fixtureAgents.stdout).toContain("aidd-test-code-reviewer");
@@ -305,6 +322,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         cwd: mcpProject,
         env,
         shell: KILO_SHELL,
+        timeout: KILO_DISCOVERY_TIMEOUT_MS,
         maxBuffer: 8 * 1024 * 1024,
       });
       expect(mcp.stdout).toContain("aidd-test-aidd-test-server");
@@ -489,5 +507,5 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         }
       }
     }
-  }, 120000);
+  }, KILO_RUNTIME_TIMEOUT_MS);
 });
