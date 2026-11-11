@@ -13,7 +13,7 @@ Approved candidates with planned paths, or confirmed sources, operation and dest
 ## Process
 
 1. Confirm the operation and [destination](../references/rule-publication.md).
-   - Detect Kilo from `.kilo/`, root `kilo.json` or `kilo.jsonc`, `.kilo/kilo.json` or `.kilo/kilo.jsonc`, or legacy `.kilocode/`. `AGENTS.md`, `opencode.json`, and `opencode.jsonc` alone are not Kilo signals; legacy detection never changes canonical `.kilo/` output.
+   - Detect Kilo from `.kilo/`, root `kilo.json` or `kilo.jsonc`, `.kilo/kilo.json` or `.kilo/kilo.jsonc`, or legacy `.kilocode/`. AIDD does not infer Kilo from shared `AGENTS.md`, `opencode.json`, or `opencode.jsonc` alone; legacy detection never changes canonical `.kilo/` output.
    - Inspect all project Kilo config candidates. If several exist without unique ownership of the exact rule path, present them and require a user choice. A Kilo rule with `paths` is unsupported and must be refused before any write.
    - Hosts: reuse the existing rule's hosts, else ask. Missing hosts: detect, propose installation, await selection before drafting.
 2. Frame the topic.

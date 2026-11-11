@@ -23,7 +23,7 @@ In-context decisions, nothing written yet:
 1. **Gate.** Run the asset-access precheck ([tool-paths.md](../references/tool-paths.md)).
 2. **Tools.** Detect the installed tools and confirm which to target ([tool-paths.md](../references/tool-paths.md)). Skip a tool that does not support hooks, with its reason.
    - For Kilo, return sourced JavaScript/TypeScript plugin guidance only. Do not produce a declarative hook or implement a plugin runtime.
-   - Detect Kilo from `.kilo/`, root `kilo.json` or `kilo.jsonc`, `.kilo/kilo.json` or `.kilo/kilo.jsonc`, or legacy `.kilocode/`; `AGENTS.md`, `opencode.json`, and `opencode.jsonc` alone do not identify Kilo.
+   - Detect Kilo from `.kilo/`, root `kilo.json` or `kilo.jsonc`, `.kilo/kilo.json` or `.kilo/kilo.jsonc`, or legacy `.kilocode/`; AIDD does not infer Kilo from shared `AGENTS.md`, `opencode.json`, or `opencode.jsonc` alone.
 3. **Moment.** Pick the narrowest lifecycle moment that fits ([hook-authoring.md](../references/hook-authoring.md)).
    - Confirm each target tool exposes that moment ([tool-paths.md](../references/tool-paths.md)). Skip a tool that lacks it, with its reason.
 4. **Intent.** Ask what the hook should do when it fires, offering only what the moment and each confirmed tool support ([hook-authoring.md](../references/hook-authoring.md), [tool-paths.md](../references/tool-paths.md)): inform the model, block before a tool runs, require a fix after a write, keep the turn going at Stop, or side effect only. Where a tool cannot do it, say so and what it does instead. The user's answer decides.

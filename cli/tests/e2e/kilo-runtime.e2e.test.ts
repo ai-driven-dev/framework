@@ -2,45 +2,14 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
-import { delimiter, join } from "node:path";
+import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { KILO_BIN, KILO_SHELL } from "./helpers/kilo-cli.js";
 import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js";
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
-const KILO_PREFIX = join(
-  process.env.APPDATA ?? join(process.env.USERPROFILE ?? "", "AppData", "Roaming"),
-  "npm",
-  "node_modules",
-  "@kilocode",
-  "cli"
-);
-const KILO_BIN =
-  process.platform !== "win32"
-    ? resolveKiloBin()
-    : ([
-        join(KILO_PREFIX, "node_modules", "@kilocode", "cli-windows-x64", "bin", "kilo.exe"),
-        join(
-          KILO_PREFIX,
-          "node_modules",
-          "@kilocode",
-          "cli-windows-x64-baseline",
-          "bin",
-          "kilo.exe"
-        ),
-        join(KILO_PREFIX, "node_modules", "@kilocode", "cli-windows-arm64", "bin", "kilo.exe"),
-      ].find((path) => existsSync(path)) ?? join(process.env.APPDATA ?? "", "npm", "kilo.cmd"));
-const KILO_SHELL = KILO_BIN.endsWith(".cmd");
-
-function resolveKiloBin(): string {
-  for (const directory of (process.env.PATH ?? "").split(delimiter)) {
-    if (directory === "") continue;
-    const candidate = join(directory, "kilo");
-    if (existsSync(candidate)) return candidate;
-  }
-  return "kilo";
-}
 
 function deferred<T>(): {
   promise: Promise<T>;
@@ -226,6 +195,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         "HOME",
         "USERPROFILE",
         "APPDATA",
+        "LOCALAPPDATA",
         "XDG_CONFIG_HOME",
         "XDG_CACHE_HOME",
         "XDG_DATA_HOME",
@@ -250,6 +220,10 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
             XDG_CACHE_HOME: join(fakeHome, ".cache"),
             XDG_DATA_HOME: join(fakeHome, ".local", "share"),
             XDG_STATE_HOME: join(fakeHome, ".local", "state"),
+            XDG_CONFIG_HOME: join(fakeHome, ".config"),
+            APPDATA: join(fakeHome, "AppData", "Roaming"),
+            LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
+            USERPROFILE: fakeHome,
             KILO_SERVER_PASSWORD: "",
           })
         ).filter(([key]) => allowed.has(key))

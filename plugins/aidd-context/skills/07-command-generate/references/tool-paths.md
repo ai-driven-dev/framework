@@ -42,7 +42,7 @@ For Kilo, use documented frontmatter only; omit Claude-only fields. Source: [wor
 | `.github/copilot-instructions.md` | GitHub Copilot |
 | `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | Kilo |
 
-`.kilocode/` is legacy detection only; new output uses `.kilo/commands/`. `AGENTS.md` and `opencode.json[c]` alone do not detect Kilo. Source: [Kilo settings](https://kilo.ai/docs/getting-started/settings), verified 2026-09-25.
+`.kilocode/` is legacy detection only; new output uses `.kilo/commands/`. AIDD does not infer Kilo from `AGENTS.md` or `opencode.json[c]` alone, though Kilo may read legacy OpenCode-named config for compatibility. Source: [Kilo settings](https://kilo.ai/docs/getting-started/settings), verified 2026-09-25.
 
 ## Write targets
 

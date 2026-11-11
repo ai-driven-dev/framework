@@ -64,7 +64,7 @@ Resolve shared paths from declared tools or the AIDD manifest; otherwise confirm
 | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
 | `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | Kilo |
 
-For Kilo, `.kilocode/` detects legacy projects only; new output uses `.kilo/`. `AGENTS.md` and `opencode.json[c]` alone do not detect Kilo. The filename and optional fields follow the [custom subagent contract](https://kilo.ai/docs/customize/custom-subagents), verified 2026-09-25.
+For Kilo, `.kilocode/` detects legacy projects only; new output uses `.kilo/`. AIDD does not infer Kilo from `AGENTS.md` or `opencode.json[c]` alone, though Kilo may read legacy OpenCode-named config for compatibility. The filename and optional fields follow the [custom subagent contract](https://kilo.ai/docs/customize/custom-subagents), verified 2026-09-25.
 
 ## Write targets
 

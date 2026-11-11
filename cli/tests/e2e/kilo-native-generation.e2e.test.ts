@@ -3,6 +3,7 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { KILO_BIN, KILO_SHELL } from "./helpers/kilo-cli.js";
 import {
   type KiloChatRequest,
   type KiloChatTool,
@@ -180,6 +181,9 @@ describeNative("E2E: saved native generation in Kilo", () => {
       const env = {
         ...process.env,
         HOME: fakeHome,
+        USERPROFILE: fakeHome,
+        APPDATA: join(fakeHome, "AppData", "Roaming"),
+        LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
         XDG_CONFIG_HOME: join(xdg, "config"),
         XDG_DATA_HOME: join(xdg, "data"),
         XDG_STATE_HOME: join(xdg, "state"),
@@ -212,11 +216,12 @@ describeNative("E2E: saved native generation in Kilo", () => {
       model = localModelProvider;
 
       const kilo = async (directory: string, ...args: string[]) => {
-        const result = await execFileAsync("kilo", args, {
+        const result = await execFileAsync(KILO_BIN, args, {
           cwd: directory,
           env,
           timeout: 30000,
           maxBuffer: 8 * 1024 * 1024,
+          shell: KILO_SHELL,
         });
         return result.stdout;
       };
@@ -266,7 +271,7 @@ describeNative("E2E: saved native generation in Kilo", () => {
           XDG_CACHE_HOME: join(scenarioXdg, "cache"),
         };
         const result = await execFileAsync(
-          "kilo",
+          KILO_BIN,
           [
             "run",
             "--pure",
@@ -284,6 +289,7 @@ describeNative("E2E: saved native generation in Kilo", () => {
             env: scenarioEnv,
             timeout: 30000,
             maxBuffer: 8 * 1024 * 1024,
+            shell: KILO_SHELL,
           }
         );
         const expected = scenario.expected;
@@ -328,6 +334,9 @@ describeNative("E2E: saved native generation in Kilo", () => {
       const env = {
         ...process.env,
         HOME: fakeHome,
+        USERPROFILE: fakeHome,
+        APPDATA: join(fakeHome, "AppData", "Roaming"),
+        LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
         XDG_CONFIG_HOME: join(xdg, "config"),
         XDG_DATA_HOME: join(xdg, "data"),
         XDG_STATE_HOME: join(xdg, "state"),
@@ -340,11 +349,12 @@ describeNative("E2E: saved native generation in Kilo", () => {
         await mkdir(join(xdg, name), { recursive: true });
       }
       const kilo = async (...args: string[]) => {
-        const result = await execFileAsync("kilo", args, {
+        const result = await execFileAsync(KILO_BIN, args, {
           cwd: projectDir,
           env,
           timeout: 30000,
           maxBuffer: 8 * 1024 * 1024,
+          shell: KILO_SHELL,
         });
         return result.stdout;
       };
@@ -566,6 +576,18 @@ describeNative("E2E: saved native generation in Kilo", () => {
       expect(
         negativeModel.replies.map((reply) => ("toolCall" in reply ? reply.toolCall.name : "final"))
       ).toEqual(["skill", "final"]);
+      env.KILO_DISABLE_EXTERNAL_SKILLS = "false";
+      await cp(skill, join(projectDir, ".agents", "skills", "verify-payload"), { recursive: true });
+      const portableCatalog = JSON.parse(await kilo("debug", "skill", "--pure")) as Array<{
+        name: string;
+        location?: string;
+      }>;
+      expect(portableCatalog.filter((entry) => entry.name === "verify-payload")).toHaveLength(1);
+      expect(
+        portableCatalog
+          .find((entry) => entry.name === "verify-payload")
+          ?.location?.replaceAll("\\", "/")
+      ).toContain(".agents/skills/verify-payload/SKILL.md");
       expect(new URL(positiveModel.url).hostname).toBe("127.0.0.1");
       expect(new URL(negativeModel.url).hostname).toBe("127.0.0.1");
     } finally {
@@ -589,6 +611,9 @@ describeNative("E2E: saved native generation in Kilo", () => {
       const env = {
         ...process.env,
         HOME: fakeHome,
+        USERPROFILE: fakeHome,
+        APPDATA: join(fakeHome, "AppData", "Roaming"),
+        LOCALAPPDATA: join(fakeHome, "AppData", "Local"),
         XDG_CONFIG_HOME: join(xdg, "config"),
         XDG_DATA_HOME: join(xdg, "data"),
         XDG_STATE_HOME: join(xdg, "state"),
@@ -598,11 +623,12 @@ describeNative("E2E: saved native generation in Kilo", () => {
         await mkdir(join(xdg, name), { recursive: true });
       }
       const kilo = async (...args: string[]) => {
-        const result = await execFileAsync("kilo", args, {
+        const result = await execFileAsync(KILO_BIN, args, {
           cwd: projectDir,
           env,
           timeout: 30000,
           maxBuffer: 8 * 1024 * 1024,
+          shell: KILO_SHELL,
         });
         return result.stdout;
       };
@@ -650,6 +676,11 @@ describeNative("E2E: saved native generation in Kilo", () => {
       expect(config.agent?.["verify-agent"]?.prompt).toContain("agent-payload.txt");
       expect(config.command?.["verify-workflow"]?.agent).toBe("verify-agent");
       expect(config.command?.["verify-workflow"]?.template).toContain("verify-agent");
+      expect(config.command?.["verify-workflow"]?.template).toContain(
+        ".kilo/commands/assets/workflow-payload.txt"
+      );
+      const agent = await kilo("debug", "agent", "verify-agent", "--pure");
+      expect(agent).toContain("agent-payload.txt");
       const catalog = JSON.parse(await kilo("debug", "skill", "--pure")) as Array<{
         name: string;
         location?: string;
