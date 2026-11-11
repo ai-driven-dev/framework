@@ -151,6 +151,9 @@ function cubicBezierProblem(value) {
 function fontFamilyProblem(value) {
   const valid = typeof value === "string" || (Array.isArray(value) && value.length > 0 && value.every((name) => typeof name === "string"));
   if (!valid) return bad("fontFamily is a name or a list of names", "write a name, or a list of names");
+  // The stylesheet quotes a name itself: a name already quoted comes out doubled, and CSS drops the stack.
+  const quoted = [value].flat().find((name) => /["']/.test(name));
+  if (quoted !== undefined) return bad(`fontFamily ${JSON.stringify(quoted)} carries its own quotes, which CSS doubles`, `write it bare, as ${JSON.stringify(quoted.replace(/["']/g, ""))}`);
   // A name holding commas is a stack written as one string: CSS quotes it and finds no such family.
   const joined = [value].flat().find((name) => name.includes(","));
   if (joined === undefined) return null;

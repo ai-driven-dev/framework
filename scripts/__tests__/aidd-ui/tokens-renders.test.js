@@ -135,6 +135,7 @@ describe("aidd-ui tokens and renders", () => {
       [{ $type: "fontWeight", $value: ["bold"] }, 'fontWeight ["bold"] must be 1 to 1000 or a keyword'],
       [{ $type: "cubicBezier", $value: [1.5, 0, 0.5, 1] }, "cubicBezier needs four numbers, x in 0..1"],
       [{ $type: "fontFamily", $value: "Nunito Sans, sans-serif" }, 'fontFamily "Nunito Sans, sans-serif" is one name, which CSS finds nowhere'],
+      [{ $type: "fontFamily", $value: ["system-ui", '"Segoe UI"'] }, 'fontFamily "\\"Segoe UI\\"" carries its own quotes, which CSS doubles'],
     ];
     for (const [token, message] of cases) {
       it(`names ${message}`, () => {
@@ -1014,6 +1015,7 @@ const FIXES = [
   "T4 | misc.x: components must be three numbers or \"none\" | \"misc.x\" | give three numbers, or \"none\"",
   "T4 | misc.x: cubicBezier needs four numbers, x in 0..1 | \"misc.x\" | give four numbers, the two x ones from 0 to 1",
   "T4 | misc.x: fontFamily \"Nunito Sans, sans-serif\" is one name, which CSS finds nowhere | \"misc.x\" | write it as the list [\"Nunito Sans\",\"sans-serif\"]",
+  "T4 | misc.x: fontFamily \"\\\"Segoe UI\\\"\" carries its own quotes, which CSS doubles | \"misc.x\" | write it bare, as \"Segoe UI\"",
   "T4 | misc.x: fontWeight \"semibold\" must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
   "T4 | misc.x: fontWeight 1200 must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
   "T4 | misc.x: fontWeight [\"bold\"] must be 1 to 1000 or a keyword | \"misc.x\" | use a number from 1 to 1000, or a weight keyword",
