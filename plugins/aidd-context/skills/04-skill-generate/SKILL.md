@@ -1,26 +1,30 @@
 ---
 name: 04-skill-generate
-description: Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.
-argument-hint: create | modify
+description: Generates a skill across the host AI tools, when the user wants to create, scaffold or refactor one.
+argument-hint: request
 ---
 
 # Skill Generate
 
 ```mermaid
 flowchart LR
-  new([create]) --> scope["actions/01-scope.md"]
+  entry([request]) -->|"new skill"| scope["actions/01-scope.md"]
+  entry -->|"skill folder exists"| plan
   scope --> plan["actions/02-plan.md"] --> write["actions/03-write.md"] --> validate["actions/04-validate.md"]
-  edit([modify]) --> plan
+  scope <-->|"question or frame to confirm"| user((user answers))
+  plan <-->|"table to confirm"| user
+  plan -->|"nothing to change"| unchanged((unchanged))
   validate -->|"fix a breach or failed trial"| validate
-  validate -->|"trial needs approval"| user((user answers)) --> validate
+  validate <-->|"trial approval or breach outside the plan"| user
   validate -->|"trial passed"| done((validated))
   validate -->|"declined, unavailable or already delegated"| unverified((runtime unverified))
-  validate -->|"unresolved breach or failure"| blocked((blocked))
+  validate -->|"fix declined or cannot be completed"| blocked((blocked))
+  scope & plan & write & validate -->|"cited reference unreadable"| stopped((stopped))
+  write -->|"path outside the workspace"| stopped
 ```
 
 ## Transversal rules
 
-- **Default to `create`**; follow `modify` when asked.
-- **If a cited reference cannot be read**, stop and report the missing file.
-- **Confirm every target and name** with the user.
-- **Announce intended writes** before editing.
+- If a cited reference cannot be read, stop and report the missing file.
+- Confirm every target and name with the user.
+- Announce intended writes before editing.

@@ -6,25 +6,20 @@ argument-hint: event | action
 
 # Hook Generate
 
-Builds one hook: an entry merged into the chosen scope for each supported tool, plus the backing script.
+```mermaid
+flowchart LR
+  event([event]) --> capture["actions/01-capture-hook.md"]
+  action([action]) --> capture
+  capture -->|"a cited file cannot be read"| missing((asset missing))
+  capture -->|"every target tool skipped"| notool((no tool left))
+  capture -->|"scope or tool needs an answer"| user((user answers)) --> capture
+  capture --> write["actions/02-write-hook.md"] --> validate["actions/03-validate.md"]
+  validate -->|"a check fails"| validate
+  validate -->|"a failure cannot be resolved"| invalid((write target invalid))
+  validate -->|"every check passes"| done((hook written))
+```
 
-## Actions
+## Transversal rules
 
-| #   | Action         | Role                                              | Input             |
-| --- | -------------- | ------------------------------------------------- | ----------------- |
-| 01  | `capture-hook` | Clarify the moment, intent, action, matcher, scope, tools | user request      |
-| 02  | `write-hook`   | Merge the entry per tool, write the script         | the captured spec |
-| 03  | `validate`     | Check the file, the merge, and the moment fit      | files written     |
-
-Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
-Before running an action, read its file in `actions/`, not only the table or assets.
-
-## References
-
-- `references/hook-authoring.md`: the contract (R1-R7), the lifecycle moments, the intent options, and the handler, matcher, and exit-code model.
-- `references/tool-paths.md`: per-tool support, moment-to-event names, file formats, scopes, and write targets.
-
-## Assets
-
-- `assets/hook-template.json`: the entry scaffold.
-- `assets/hook-script-template.sh`: the backing-script scaffold.
+- If a cited reference cannot be read, stop and report that the plugin is not installed in this host.
+- Write every file in English, unless the user asks otherwise.

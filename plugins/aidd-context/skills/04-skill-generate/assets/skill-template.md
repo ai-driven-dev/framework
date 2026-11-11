@@ -1,6 +1,6 @@
 ---
 name: <skill-name>
-description: <what it produces>. Use when the user wants to <intents>. <Not for X when needed.>
+description: <One sentence: what it does, then when to use it.>
 argument-hint: <what the user brings: their cases, or the artifact consumed>
 ---
 
@@ -15,6 +15,6 @@ flowchart LR
 
 <Rules owned by no reference or single action, one per line.>
 
-- **<Important opening words>** <rest of the rule>
+- <One plain sentence.>
 
 > Fill every `<...>` and delete this line. An angle bracket left in the written file is a bug.

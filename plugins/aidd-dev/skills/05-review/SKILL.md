@@ -13,9 +13,13 @@ flowchart LR
   prepare["prepare<br>actions/01-prepare.md"] --> review["review<br>actions/02-review.md"]
   review --> conclude["conclude<br>actions/03-conclude.md"]
   prepare -->|"empty diff"| stop((stop))
-  conclude --> approve([approve])
-  conclude --> changes([changes-requested])
-  conclude --> blocked([blocked])
+  prepare -->|"axes named without a plan"| axes((user names a plan)) --> prepare
+  prepare -->|"work and axes settled"| review["actions/02-review.md"]
+  review --> conclude["actions/03-conclude.md"]
+  conclude -->|"no task folder"| keep((user chooses to keep the report)) --> conclude
+  conclude -->|"rubric: blocked"| blocked([blocked])
+  conclude -->|"rubric: changes-requested"| changes([changes-requested])
+  conclude -->|"rubric: approve"| approve([approve])
 ```
 
 Each box is a file: read it, then do what it says.
@@ -23,6 +27,5 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask or to give the final reply; otherwise call tools.
-- Read only: never run the app or its checks.
-- Change nothing but the report: no code, no test, no config.
-- Judge this work alone, never an earlier round.
+- Read only: leave the app and its checks unrun, and change nothing but the report.
+- Judge this work alone, and no earlier round.

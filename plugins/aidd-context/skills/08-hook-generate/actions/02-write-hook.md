@@ -1,28 +1,28 @@
 # 02 - Write hook
 
-Render the entry for each confirmed tool, merge it into the chosen scope, and write the backing script.
+Write the hook's entry for each confirmed tool, merged into the chosen scope, and its backing script.
 
 ## Input
 
-From 01: the moment, intent, action, script need, matcher, scope, confirmed tools, and write mode.
-
-## Output
-
-The updated target file per tool, any script written, and the list of paths touched.
+From 01: the moment, script, matcher, scope, confirmed tools, and write mode.
 
 ## Process
 
-1. **Script.** If the action needs a backing script ([hook-authoring.md](../references/hook-authoring.md)): copy [hook-script-template.sh](../assets/hook-script-template.sh), fill the logic, place it in the scope's script directory ([tool-paths.md](../references/tool-paths.md)), and make it executable. One script can back every tool.
-2. **Entry.** Per confirmed tool, fill [hook-template.json](../assets/hook-template.json) from [tool-paths.md](../references/tool-paths.md), using that tool's shape and stripping the scaffold.
-   - Wire the intent with the tool's mechanism ([tool-paths.md](../references/tool-paths.md)); for a tool where it is unsupported, wire what 01 stated it does instead.
-   - Point the handler at the script by absolute path or an approved `${VAR}`.
-   - For each Claude Code or Codex handler, add a concise, nonempty `statusMessage` describing its action. Codex also uses it to identify the hook during review. Do not add this field to other tool formats without confirmed support.
-3. **Merge.** For each tool, read the target file and append the entry to the moment's list under the right key for the scope ([tool-paths.md](../references/tool-paths.md)). Preserve every sibling, never overwrite.
-4. **Validate.** Run the merge check and write-target validation ([tool-paths.md](../references/tool-paths.md)).
+1. Write the backing script, so the entry only wires it.
+   - Copy [hook-script-template.sh](../assets/hook-script-template.sh), fill the logic, and remove its placeholder logic and example comments.
+   - Set the exit code and stdout the way each target tool reads them, per [hook-handlers.md](../references/hook-handlers.md).
+   - Place it where [hook-paths.md](../references/hook-paths.md) says, and make it executable.
+   - One script can back every tool.
+2. Build the entry per confirmed tool in that tool's shape from [hook-shapes.md](../references/hook-shapes.md).
+   - [hook-template.json](../assets/hook-template.json) is the Claude Code shape only.
+   - Replace each `<...>` slot with the event name, the matcher and the handler command, and drop the matcher line for a match-all hook.
+   - Point the handler at the script in a form `hook-paths.md` allows.
+3. Write each target file the scope names in [hook-scopes.md](../references/hook-scopes.md).
+   - Missing: create it holding the entry.
+   - Existing: read it, append the entry to the moment's list, and keep every other entry.
+   - A Codex `config.toml`: merge into its `[hooks]` table the same way.
+4. Read [validate](03-validate.md).
 
-## Test
+## Output
 
-- Each target file is valid after the merge.
-- The new entry is present in each, and every prior sibling survives.
-- A script-backed handler's script exists at its path and is executable.
-- Each new Claude Code or Codex handler has a nonempty, action-specific `statusMessage`.
+The updated target file per tool, the script written, and the list of paths touched.

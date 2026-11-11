@@ -29,7 +29,7 @@ Score: {{met}}/{{total}} met, {{n}} unmet, {{n}} unverified at runtime, {{n}} ou
 - {{the doubt}} — {{what would settle it}}
 
 <!--
-- Append one round per pass, never rewrite an earlier one.
+- Append one round per pass; earlier rounds stay as written.
 - Replace every `{{...}}` and delete every comment.
 - Leave out what has nothing to hold.
 -->

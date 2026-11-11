@@ -37,13 +37,13 @@ describe("a review appends a round and scores the whole plan", () => {
   it("the round is written once, at the end, and an earlier one is never judged", () => {
     assert.doesNotMatch(read("actions/01-prepare.md"), /template|`review\.md`/u);
     assert.doesNotMatch(read("actions/02-review.md"), /template|`review\.md`/u);
-    assert.match(read("SKILL.md"), /^- Judge this work alone, never an earlier round\.$/mu);
+    assert.match(read("SKILL.md"), /Judge this work alone, and no earlier round\./u);
     assert.match(template(), /\{\{the count of round headings, this one included\}\}/u);
-    assert.match(template(), /Append one round per pass, never rewrite an earlier one/u);
+    assert.match(template(), /Append one round per pass; earlier rounds stay as written/u);
   });
 
   it("the round goes to the folder named, else the plan's, and alone the reply can hold it", () => {
-    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\. Neither: ask whether to keep it in a file/u);
+    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's; with neither, ask whether to keep it in a file:\n {3}- yes/u);
     assert.match(read("actions/03-conclude.md"), /no: the reply holds it/u);
   });
 
@@ -158,9 +158,12 @@ describe("a review appends a round and scores the whole plan", () => {
     for (const outcome of ["approve", "changes", "blocked"]) assert.match(flow, new RegExp(`${outcome}\\(\\[`, "u"));
   });
 
+  it("the router names each verdict on its own edge", () => {
+    for (const verdict of ["blocked", "changes-requested", "approve"]) assert.match(read("SKILL.md"), new RegExp(`conclude -->\\|"rubric: ${verdict}"\\|`, "u"), verdict);
+  });
+
   it("a review reads the code and never runs or fixes it", () => {
-    assert.match(read("SKILL.md"), /^- Read only: never run the app or its checks\.$/mu);
-    assert.match(read("SKILL.md"), /^- Change nothing but the report: no code, no test, no config\.$/mu);
-    assert.match(read("SKILL.md"), /Not for fixing what the review finds/u);
+    assert.match(read("SKILL.md"), /Read only: leave the app and its checks unrun, and change nothing but the report\./u);
+    assert.match(read("SKILL.md"), /^description: .*read-only/mu);
   });
 });
