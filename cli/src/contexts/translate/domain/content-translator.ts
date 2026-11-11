@@ -118,11 +118,10 @@ export class PluginContentTranslator {
     skipped: ReadonlySkipList;
     notices: ReadonlyNoticeList;
   } {
-    const pluginsDir = tool.section("plugins").projectPluginsDir();
-    if (pluginsDir === null) {
+    const pluginRoot = tool.section("plugins").pluginOutputDir(dist.manifest.name);
+    if (pluginRoot === null) {
       return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
     }
-    const pluginRoot = `${pluginsDir}${dist.manifest.name}/`;
     const { files, componentPaths } = this.buildNativeFiles(dist, tool, pluginRoot);
     const notices = this.collectHooksTrustNotices(dist, tool);
     return { files, componentPaths, skipped: [], notices };

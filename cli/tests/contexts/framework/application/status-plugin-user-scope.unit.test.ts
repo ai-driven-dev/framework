@@ -59,7 +59,7 @@ const noopHasher: Hasher = {
 
 describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
   describe("when cursor plugin file has drifted (base-relative key)", () => {
-    it("resolves absolute path from homedir via resolvePluginsBaseDir before checking disk", async () => {
+    it("resolves absolute path from homedir via userPluginsBaseDir before checking disk", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const checkedPaths: string[] = [];
       const fs: FileReader = {

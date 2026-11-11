@@ -7,8 +7,8 @@
  * Two doors lead to the capability from outside the tools context: the section a profile
  * answers (`tool.section("plugins")`) and the catalog resolver (`resolvePluginsCapability(id)`).
  * Both are watched for a property read or a destructuring. A capability held in a variable and
- * read from there is out of this test's sight; the private modifier on the fields is what
- * stops that one.
+ * read from there is out of this test's sight; a `#` field is what stops that one, where the
+ * compiler refuses a cast or an element access that the `private` keyword lets through.
  */
 import { readdirSync } from "node:fs";
 import { join, sep } from "node:path";
@@ -31,7 +31,9 @@ const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
 
 const CLASS_BLOCK = /^(?:export )?(?:abstract )?class (\w+)[^{]*\{([\s\S]*?)\n\}/gm;
 const PUBLIC_FIELD =
-  /^ {2}(?!private |protected |static |constructor|abstract |override |async |get |set )(?:public )?(?:readonly )?(\w+)[?!]?\s*[:=]/gm;
+  /^ {2}(?!static |constructor|abstract |override |async |get |set )(?:(?:public|private|protected) )?(?:readonly )?(\w+)[?!]?\s*[:=]/gm;
+/** A parameter property cannot be a `#` field, so it is refused outright. */
+const PARAMETER_PROPERTY = /constructor\([^)]*\b(?:public|private|protected|readonly)\s+(\w+)/g;
 
 function testFiles(): string[] {
   return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, encoding: "utf8" })
@@ -63,6 +65,9 @@ function readableFields(): string[] {
       for (const field of (block[2] as string).matchAll(PUBLIC_FIELD)) {
         fields.push(`${file} :: ${block[1]}.${field[1]}`);
       }
+      for (const prop of (block[2] as string).matchAll(PARAMETER_PROPERTY)) {
+        fields.push(`${file} :: ${block[1]}.${prop[1]}`);
+      }
     }
   }
   return fields.sort();
@@ -75,6 +80,19 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
   it("no plugins class leaves a field readable", () => {
     expect(readableFields()).toEqual([]);
+  });
+
+  it("sees a keyword-private field and a parameter property, and clears a # field", () => {
+    const planted = [
+      "class A {",
+      "  private readonly secret: string;",
+      "  readonly #hidden: string;",
+      "  constructor(private readonly leaked: string) {}",
+      "}",
+    ].join("\n");
+    const block = [...planted.matchAll(CLASS_BLOCK)][0]?.[2] as string;
+    expect([...block.matchAll(PUBLIC_FIELD)].map((m) => m[1])).toEqual(["secret"]);
+    expect([...block.matchAll(PARAMETER_PROPERTY)].map((m) => m[1])).toEqual(["leaked"]);
   });
 
   it("sees a read and a destructuring where one is written", () => {

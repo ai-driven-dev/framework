@@ -12,7 +12,7 @@ describe("opencode plugins", () => {
     });
 
     it("pluginsDir is null", () => {
-      expect(opencode.section("plugins").projectPluginsDir()).toBeNull();
+      expect(opencode.section("plugins").pluginOutputDir("x")).toBeNull();
     });
 
     it("pluginOutputDir returns null", () => {

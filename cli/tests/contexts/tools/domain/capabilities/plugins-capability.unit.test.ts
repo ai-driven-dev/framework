@@ -35,7 +35,7 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes pluginsDir", () => {
-      expect(cap.projectPluginsDir()).toBe(".claude/plugins/");
+      expect(cap.pluginOutputDir("x")).toBe(".claude/plugins/x/");
     });
 
     it("exposes pluginManifestRelativePath", () => {
@@ -68,7 +68,7 @@ describe("PluginsCapability", () => {
     });
 
     it("pluginsDir is null", () => {
-      expect(cap.projectPluginsDir()).toBeNull();
+      expect(cap.pluginOutputDir("x")).toBeNull();
     });
 
     it("pluginManifestRelativePath is null", () => {
@@ -143,7 +143,7 @@ describe("PluginsCapability", () => {
     });
 
     it("pluginsDir is null", () => {
-      expect(cap.projectPluginsDir()).toBeNull();
+      expect(cap.pluginOutputDir("x")).toBeNull();
     });
 
     it("pluginManifestRelativePath is null", () => {
@@ -174,10 +174,8 @@ describe("PluginsCapability", () => {
       expect(cap.requiresUserScope()).toBe(true);
     });
 
-    it("resolvePluginsBaseDir returns homedir-based path", () => {
-      expect(cap.resolvePluginsBaseDir("/proj", "/home/user")).toBe(
-        "/home/user/.cursor/plugins/local"
-      );
+    it("userPluginsBaseDir returns homedir-based path", () => {
+      expect(cap.userPluginsBaseDir("/home/user")).toBe("/home/user/.cursor/plugins/local");
     });
   });
 
@@ -192,10 +190,6 @@ describe("PluginsCapability", () => {
 
     it("exposes installScope as project", () => {
       expect(cap.requiresUserScope()).toBe(false);
-    });
-
-    it("resolvePluginsBaseDir returns projectRoot", () => {
-      expect(cap.resolvePluginsBaseDir("/my-project", "/home/user")).toBe("/my-project");
     });
   });
 
@@ -284,20 +278,19 @@ describe("PluginsCapability base directory resolution", () => {
     pluginManifestRelativePath: null,
   };
 
-  it("stays in the project when the scope is project, even with a user directory declared", () => {
+  it("answers a declared user directory even when the scope is project", () => {
     const cap = new PluginsCapability({
       ...native,
       userPluginsDir: (home) => `${home}/.x/plugins`,
     });
 
-    expect(cap.resolvePluginsBaseDir("/repo", "/home/me")).toBe("/repo");
+    expect(cap.requiresUserScope()).toBe(false);
     expect(cap.userPluginsBaseDir("/home/me")).toBe("/home/me/.x/plugins");
   });
 
-  it("stays in the project for a capability declaring no user directory at all", () => {
+  it("answers no user directory for a capability declaring none", () => {
     const cap = new PluginsCapability(native);
 
-    expect(cap.resolvePluginsBaseDir("/repo", "/home/me")).toBe("/repo");
     expect(cap.userPluginsBaseDir("/home/me")).toBeNull();
   });
 

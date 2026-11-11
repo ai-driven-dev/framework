@@ -197,105 +197,97 @@ function deliveryFor(params: PluginsParams): PluginDelivery {
  * of it is readable from outside.
  */
 export class PluginsCapability implements PluginDelivery {
-  private readonly delivery: PluginDelivery;
+  readonly #delivery: PluginDelivery;
 
   constructor(params: PluginsParams) {
-    this.delivery = deliveryFor(params);
+    this.#delivery = deliveryFor(params);
   }
 
   buildMode(): "marketplace" | "flat" {
-    return this.delivery.buildMode();
+    return this.#delivery.buildMode();
   }
 
   translatesAsMarketplace(): boolean {
-    return this.delivery.translatesAsMarketplace();
+    return this.#delivery.translatesAsMarketplace();
   }
 
   isNative(): boolean {
-    return this.delivery.isNative();
+    return this.#delivery.isNative();
   }
 
   requiresUserScope(): boolean {
-    return this.delivery.requiresUserScope();
+    return this.#delivery.requiresUserScope();
   }
 
   deliversHooksToProject(): boolean {
-    return this.delivery.deliversHooksToProject();
-  }
-
-  projectPluginsDir(): string | null {
-    return this.delivery.projectPluginsDir();
+    return this.#delivery.deliversHooksToProject();
   }
 
   manifestPath(): string | null {
-    return this.delivery.manifestPath();
+    return this.#delivery.manifestPath();
   }
 
   rootToken(): string | null {
-    return this.delivery.rootToken();
+    return this.#delivery.rootToken();
   }
 
   hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null } {
-    return this.delivery.hooksAcceptance();
+    return this.#delivery.hooksAcceptance();
   }
 
   trustNotice(): string | null {
-    return this.delivery.trustNotice();
+    return this.#delivery.trustNotice();
   }
 
   flatLayout(): FlatLayout {
-    return this.delivery.flatLayout();
+    return this.#delivery.flatLayout();
   }
 
   activation(): NativeActivation | null {
-    return this.delivery.activation();
+    return this.#delivery.activation();
   }
 
   marketplaceRegistration(): MarketplaceRegistration | null {
-    return this.delivery.marketplaceRegistration();
+    return this.#delivery.marketplaceRegistration();
   }
 
   enablementIsMachineGlobal(): boolean {
-    return this.delivery.enablementIsMachineGlobal();
+    return this.#delivery.enablementIsMachineGlobal();
   }
 
   supportsUserScopeActivation(): boolean {
-    return this.delivery.supportsUserScopeActivation();
+    return this.#delivery.supportsUserScopeActivation();
   }
 
   copiesFilesGlobally(): boolean {
-    return this.delivery.copiesFilesGlobally();
+    return this.#delivery.copiesFilesGlobally();
   }
 
   globalFiles(): GlobalFiles | null {
-    return this.delivery.globalFiles();
+    return this.#delivery.globalFiles();
   }
 
   projectHooksDelivery(): ProjectHooksPlacement | null {
-    return this.delivery.projectHooksDelivery();
+    return this.#delivery.projectHooksDelivery();
   }
 
   mcpFile(): { accepts: boolean; relativePath: string } {
-    return this.delivery.mcpFile();
+    return this.#delivery.mcpFile();
   }
 
   hooksFilePath(): string {
-    return this.delivery.hooksFilePath();
+    return this.#delivery.hooksFilePath();
   }
 
   hookScript(pluginPath: string, content: string): string {
-    return this.delivery.hookScript(pluginPath, content);
+    return this.#delivery.hookScript(pluginPath, content);
   }
 
   pluginOutputDir(pluginName: string): string | null {
-    return this.delivery.pluginOutputDir(pluginName);
-  }
-
-  resolvePluginsBaseDir(projectRoot: string, homedir: string): string {
-    return this.delivery.resolvePluginsBaseDir(projectRoot, homedir);
+    return this.#delivery.pluginOutputDir(pluginName);
   }
 
   userPluginsBaseDir(homedir: string): string | null {
-    return this.delivery.userPluginsBaseDir(homedir);
+    return this.#delivery.userPluginsBaseDir(homedir);
   }
 }

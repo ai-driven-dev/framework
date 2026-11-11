@@ -369,7 +369,7 @@ describe("cross-format matrix (source × target)", () => {
         it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
           const dist = makeSourceDist(source);
           const files = translator.translate(dist, target.tool);
-          const expected = `${target.tool.section("plugins").projectPluginsDir()}sample-plugin/${target.manifestExpected}`;
+          const expected = `${target.tool.section("plugins").pluginOutputDir("sample-plugin")}${target.manifestExpected}`;
           expect(files.map((f) => f.relativePath)).toContain(expected);
         });
       }

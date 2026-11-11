@@ -15,25 +15,25 @@ import {
 
 /** A tool that loads a plugin's skills, agents and hooks from its own workspace directory. */
 export class FlatPlugins extends PluginDeliveryBase {
-  private readonly acceptance: { accepts: boolean; unsupportedReason: string | null };
-  private readonly layout: FlatLayout;
-  private readonly delivered: HookScript;
-  private readonly projectHooks: ProjectHooksPlacement | null;
+  readonly #acceptance: { accepts: boolean; unsupportedReason: string | null };
+  readonly #layout: FlatLayout;
+  readonly #delivered: HookScript;
+  readonly #projectHooks: ProjectHooksPlacement | null;
 
   constructor(params: FlatParams) {
     super(params.globalFiles ?? null);
     const skillLayout: FlatSkillLayout = params.flatSkillLayout ?? "nested";
     if (!params.acceptsHooks) {
-      this.acceptance = { accepts: false, unsupportedReason: params.hooksUnsupportedReason };
-      this.layout = layoutOf(skillLayout, params.flatNamespacePrefix, null, null, null);
-      this.delivered = AS_SHIPPED;
-      this.projectHooks = null;
+      this.#acceptance = { accepts: false, unsupportedReason: params.hooksUnsupportedReason };
+      this.#layout = layoutOf(skillLayout, params.flatNamespacePrefix, null, null, null);
+      this.#delivered = AS_SHIPPED;
+      this.#projectHooks = null;
       return;
     }
-    this.acceptance = { accepts: true, unsupportedReason: null };
-    this.delivered = params.hookScript ?? AS_SHIPPED;
-    this.projectHooks = resolveProjectHooks(params, this.delivered);
-    this.layout = layoutOf(
+    this.#acceptance = { accepts: true, unsupportedReason: null };
+    this.#delivered = params.hookScript ?? AS_SHIPPED;
+    this.#projectHooks = resolveProjectHooks(params, this.#delivered);
+    this.#layout = layoutOf(
       skillLayout,
       params.flatNamespacePrefix,
       params.flatHooksDir,
@@ -46,16 +46,16 @@ export class FlatPlugins extends PluginDeliveryBase {
     return "flat";
   }
   hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null } {
-    return this.acceptance;
+    return this.#acceptance;
   }
   override flatLayout(): FlatLayout {
-    return this.layout;
+    return this.#layout;
   }
   override projectHooksDelivery(): ProjectHooksPlacement | null {
-    return this.projectHooks;
+    return this.#projectHooks;
   }
   override hookScript(pluginPath: string, content: string): string {
-    return this.delivered(pluginPath, content);
+    return this.#delivered(pluginPath, content);
   }
 }
 

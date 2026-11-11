@@ -9,7 +9,7 @@ describe("cursor plugins", () => {
     });
 
     it("pluginsDir is empty string (base-relative path prefix)", () => {
-      expect(cursor.section("plugins").projectPluginsDir()).toBe("");
+      expect(cursor.section("plugins").pluginOutputDir("x")).toBe("x/");
     });
 
     it("pluginManifestRelativePath is null (no manifest file written into plugin dir)", () => {
@@ -32,8 +32,8 @@ describe("cursor plugins", () => {
       expect(cursor.section("plugins").marketplaceRegistration()).toBeNull();
     });
 
-    it("resolvePluginsBaseDir returns ~/.cursor/plugins/local resolved from given homedir", () => {
-      const result = cursor.section("plugins").resolvePluginsBaseDir("/proj", "/home/user");
+    it("userPluginsBaseDir returns ~/.cursor/plugins/local resolved from given homedir", () => {
+      const result = cursor.section("plugins").userPluginsBaseDir("/home/user");
       expect(result).toBe(join("/home/user", ".cursor", "plugins", "local"));
     });
   });

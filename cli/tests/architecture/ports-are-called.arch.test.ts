@@ -108,12 +108,6 @@ const CAPABILITY_BASELINE: readonly {
     reason: "called only by tests; MCP config merges through the file adapter's strategy",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/plugins-capability.ts",
-    className: "PluginsCapability",
-    methods: ["pluginOutputDir", "resolvePluginsBaseDir"],
-    reason: "called only by profile tests",
-  },
-  {
     file: "src/contexts/tools/domain/capabilities/rules-capability.ts",
     className: "RulesCapability",
     methods: ["accepts", "equals"],

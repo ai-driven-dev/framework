@@ -8,7 +8,7 @@ describe("copilot plugins", () => {
     });
 
     it("uses .github/plugins/ as plugins directory", () => {
-      expect(copilot.section("plugins").projectPluginsDir()).toBe(".github/plugins/");
+      expect(copilot.section("plugins").pluginOutputDir("x")).toBe(".github/plugins/x/");
     });
 
     it("uses plugin.json as plugin manifest path", () => {

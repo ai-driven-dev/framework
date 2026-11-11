@@ -9,7 +9,7 @@ describe("claude plugins", () => {
     });
 
     it("uses .claude/plugins/ as plugins directory", () => {
-      expect(claude.section("plugins").projectPluginsDir()).toBe(".claude/plugins/");
+      expect(claude.section("plugins").pluginOutputDir("x")).toBe(".claude/plugins/x/");
     });
 
     it("uses plugin.json as plugin manifest path", () => {

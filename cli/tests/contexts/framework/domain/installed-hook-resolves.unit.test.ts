@@ -64,7 +64,7 @@ function commandTargets(manifest: string, tool: AiTool<HasPlugins>): string[] {
 
 function installed(tool: AiTool<HasPlugins>): { paths: string[]; manifest: string } {
   const { files } = translator.translateWithComponentPaths(distribution(), tool);
-  const root = `${tool.section("plugins").projectPluginsDir()}${PLUGIN}/`;
+  const root = tool.section("plugins").pluginOutputDir(PLUGIN) ?? "";
   return {
     paths: files.map((file) => file.relativePath.replace(root, "")),
     manifest: files.find((file) => file.relativePath.endsWith("hooks.json"))?.content ?? "",

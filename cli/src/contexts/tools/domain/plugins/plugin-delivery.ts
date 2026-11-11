@@ -54,7 +54,6 @@ export interface PluginDelivery {
   isNative(): boolean;
   requiresUserScope(): boolean;
   deliversHooksToProject(): boolean;
-  projectPluginsDir(): string | null;
   manifestPath(): string | null;
   rootToken(): string | null;
   /** Whether a delivered hook runs on this tool, and why not when it does not. */
@@ -79,7 +78,6 @@ export interface PluginDelivery {
    * the plugin ships, every other script as shipped. */
   hookScript(pluginPath: string, content: string): string;
   pluginOutputDir(pluginName: string): string | null;
-  resolvePluginsBaseDir(projectRoot: string, homedir: string): string;
   /** The absolute user-scope plugins directory this tool declares, or `null`. Read
    * independently of the tool's own scope: a caller resolving a *recorded* scope still needs
    * the directory that scope means. */
@@ -88,7 +86,11 @@ export interface PluginDelivery {
 
 /** The answers a tool gives when it does nothing special; each variant overrides what it does. */
 export abstract class PluginDeliveryBase implements PluginDelivery {
-  constructor(private readonly machineFiles: GlobalFiles | null) {}
+  readonly #machineFiles: GlobalFiles | null;
+
+  constructor(machineFiles: GlobalFiles | null) {
+    this.#machineFiles = machineFiles;
+  }
 
   abstract hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null };
 
@@ -106,9 +108,6 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
   }
   deliversHooksToProject(): boolean {
     return this.projectHooksDelivery() !== null;
-  }
-  projectPluginsDir(): string | null {
-    return null;
   }
   manifestPath(): string | null {
     return null;
@@ -132,13 +131,13 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
     return this.activation()?.scopeArgs === undefined;
   }
   supportsUserScopeActivation(): boolean {
-    return this.activation() !== null || this.requiresUserScope() || this.machineFiles !== null;
+    return this.activation() !== null || this.requiresUserScope() || this.#machineFiles !== null;
   }
   copiesFilesGlobally(): boolean {
-    return this.requiresUserScope() || this.machineFiles !== null;
+    return this.requiresUserScope() || this.#machineFiles !== null;
   }
   globalFiles(): GlobalFiles | null {
-    return this.machineFiles;
+    return this.#machineFiles;
   }
   projectHooksDelivery(): ProjectHooksPlacement | null {
     return null;
@@ -155,11 +154,8 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
   pluginOutputDir(_pluginName: string): string | null {
     return null;
   }
-  resolvePluginsBaseDir(projectRoot: string, _homedir: string): string {
-    return projectRoot;
-  }
   userPluginsBaseDir(homedir: string): string | null {
-    return this.machineFiles?.dir(homedir) ?? null;
+    return this.#machineFiles?.dir(homedir) ?? null;
   }
 }
 
