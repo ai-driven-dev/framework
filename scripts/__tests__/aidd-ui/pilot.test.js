@@ -471,10 +471,10 @@ describe("aidd-ui pilot chain", () => {
 });
 
 describe("aidd-ui pilot review request", () => {
-  it("pastes an ok verdict for every state, with no comment and no capture, in both pilots", () => {
+  it("pastes the home page's All OK for every record listed, with no comment and no capture, in both pilots", () => {
     for (const pilot of ["blank", "real"]) {
       const words = REQUESTS[pilot].review;
-      assert.ok(words.includes("`ok`") && words.includes("no comment"), pilot);
+      assert.ok(words.includes("pasted from the home page: All OK for every record listed") && words.includes("no comment"), pilot);
       assert.equal(/capture/.test(words.replace("no capture", "")), false, pilot);
     }
   });

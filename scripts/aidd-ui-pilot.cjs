@@ -227,7 +227,7 @@ const NON_INTERACTIVE = (part) =>
   `You run non-interactively: whenever the skill would ask the user, take the answer given, or the most reasonable one, state each choice in your final reply, and go on; write no file the skill does not name; the user agrees with what you propose. Never install anything, never run the project's own scripts or package manager; read its files only, and run only node with the aidd-ui engine. Task folder: aidd_docs/tasks/${part}.`;
 
 // The person's paste, stated outright: the pilot cannot answer. A screen coded at its version is refused by the publication for want of a capture, which is expected: no capture is asked.
-const REVIEW = "Review the proposed records. My verdicts, pasted: every state of each record with states and a render is `ok`, no comment, no capture. Language: the one in memory, else en.";
+const REVIEW = "Review the proposed records. My verdicts, pasted from the home page: All OK for every record listed, no comment, no capture. Language: the one in memory, else en.";
 
 const REQUESTS = {
   blank: {

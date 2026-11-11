@@ -265,6 +265,68 @@ describe("aidd-ui showcase", () => {
     });
   });
 
+  describe("the home page batch", () => {
+    const LISTABLE = { button: ["default", "hover", "focus", "disabled"], "search-field": ["default", "hover", "focus", "disabled"], dialog: ["default", "hover", "focus", "disabled"], "old-button": ["default"], "search-flow": ["default", "empty"] };
+    const okRows = (...ids) => ids.flatMap((id) => LISTABLE[id].map((state) => [id, state, id === "old-button" ? "2" : "1", "ok", ""]));
+    const batchOf = (html) => [...html.matchAll(/<li data-record="([^"]+)" data-version="(\d+)" data-states="([^"]*)">/g)].map((match) => ({ record: match[1], version: match[2], states: JSON.parse(match[3].replaceAll("&quot;", '"')) }));
+
+    it("lists a record whose states are not all ok, checked, with only its states still to judge", () => {
+      verdicts(["button", "default", "1", "ok", ""]);
+      const index = pagesOf()["index.html"];
+      const entries = batchOf(index);
+      assert.deepEqual(entries.map((entry) => entry.record), ["button", "dialog", "old-button", "search-field", "search-flow"]);
+      assert.deepEqual(entries[0], { record: "button", version: "1", states: ["hover", "focus", "disabled"] });
+      assert.match(index, /<section class="batch" data-records="5">/);
+      assert.equal(index.match(/<input type="checkbox" checked>/g).length, 5);
+      assert.equal(index.match(/id="copy-all"/g).length, 1);
+    });
+
+    it("leaves out a record whose states are all ok", () => {
+      verdicts(...okRows("button"));
+      assert.ok(!batchOf(pagesOf()["index.html"]).some((entry) => entry.record === "button"));
+    });
+
+    it("leaves out a record with a state to revise at its version, which is judged on its own page", () => {
+      verdicts(["button", "hover", "1", "revise", "too pale"]);
+      assert.ok(!batchOf(pagesOf()["index.html"]).some((entry) => entry.record === "button"));
+    });
+
+    it("lists a record whose ok is of an older version only, with every state", () => {
+      verdicts(["button", "default", "0", "ok", ""]);
+      assert.deepEqual(batchOf(pagesOf()["index.html"]).find((entry) => entry.record === "button").states, ["default", "hover", "focus", "disabled"]);
+    });
+
+    it("leaves out a screen whose code is at its version", () => {
+      verdicts();
+      assert.ok(!batchOf(pagesOf()["index.html"]).some((entry) => entry.record === "home"));
+    });
+
+    it("holds no batch and no script when nothing is left to judge", () => {
+      verdicts(...okRows("button", "search-field", "dialog", "old-button", "search-flow"));
+      const index = pagesOf()["index.html"];
+      assert.doesNotMatch(index, /class="batch"|id="copy-all"|<script>/);
+    });
+
+    it("writes the labels in the language, the stored verdict staying ok", () => {
+      const index = pagesOf({ lang: "fr" })["index.html"];
+      assert.match(index, /id="copy-all"[^>]*>Tout OK, copier</);
+      assert.match(index, /<h2>Encore à juger<\/h2>/);
+      assert.match(index, /Décochez une fiche pour la juger sur sa page\./);
+    });
+
+    it("writes the same page twice, the records in the order of their ids", () => {
+      assert.equal(pagesOf()["index.html"], pagesOf()["index.html"]);
+    });
+
+    it("carries a script that compiles, on the home page and on a record's page", () => {
+      for (const name of ["index.html", "button.html"]) {
+        const script = pagesOf()[name].match(/<script>([\s\S]*)<\/script>/)[1];
+        assert.doesNotThrow(() => new Function(script), name);
+      }
+      assert.match(pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1], /verdict: "ok"/);
+    });
+  });
+
   describe("the language", () => {
     it("labels the verdicts OK and Revise in English, by default", () => {
       const article = articleOf(pagesOf()["home.html"], "default");

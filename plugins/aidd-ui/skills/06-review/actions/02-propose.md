@@ -9,7 +9,9 @@ The records to review, and the captures to save.
 ## Process
 
 1. Write the showcase per [engine](../references/engine.md), in the project memory's language.
-2. Give the user the page of each record.
+2. Give the home page first, then each record's page.
+   - The home page copies each record listed as OK.
+   - A record to revise is judged on its own page.
    - A coded screen shows its captures beside each render.
    - Name each missing capture.
 3. Ask them to review each state.

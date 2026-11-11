@@ -45,6 +45,9 @@ const LABELS = {
     capture: "Capture of {state}",
     copy: "Copy the review",
     copied: "Copied",
+    batch: "Still to review",
+    batchHint: "Uncheck a record to review it on its page.",
+    allOk: "All OK, copy",
     blocked: "Write what should change on each state to revise.",
     theme: "Theme",
     platform: "Platform",
@@ -78,6 +81,9 @@ const LABELS = {
     capture: "Capture de {state}",
     copy: "Copier la revue",
     copied: "Copié",
+    batch: "Encore à juger",
+    batchHint: "Décochez une fiche pour la juger sur sa page.",
+    allOk: "Tout OK, copier",
     blocked: "Écrivez ce qu'il faut changer sur chaque état à revoir.",
     theme: "Thème",
     platform: "Plateforme",
@@ -131,11 +137,33 @@ nav a[aria-current="page"] { font-weight: 600; color: var(--text); }
 .choose { display: flex; gap: 8px; }
 .verdict[aria-pressed="true"] { background: var(--sel); border-color: var(--sel-line); }
 .outdated, .said, .count { margin: 0; color: var(--muted); }
+.batch { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.batch h2, .batch p { margin: 0; }
+.batch ul { list-style: none; margin: 0; padding: 0; }
 textarea.out { width: 100%; min-height: 8rem; font: 12px ui-monospace, monospace; }
 textarea.comment { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
 `;
 
-const SCRIPT = `
+/** The delivery of a copy, shared by the pages that hand a review back: the clipboard, else a text area to copy from. */
+const DELIVER = `
+function shown(button, content) {
+  const area = document.querySelector("textarea.out") || button.insertAdjacentElement("afterend", document.createElement("textarea"));
+  area.className = "out";
+  area.readOnly = true;
+  area.value = content;
+  area.focus();
+  area.select();
+}
+function deliver(button, content) {
+  Promise.resolve().then(() => navigator.clipboard.writeText(content)).then(() => {
+    const label = button.textContent;
+    button.textContent = button.dataset.copied;
+    setTimeout(() => { button.textContent = label; }, 1500);
+  }, () => shown(button, content));
+}
+`;
+
+const SCRIPT = `${DELIVER}
 const frames = () => [...document.querySelectorAll(".render iframe")];
 const combination = (name) => {
   const pick = {};
@@ -191,23 +219,25 @@ review.querySelectorAll("article.state").forEach((article) => {
   }));
   field.addEventListener("input", refresh);
 });
-function shown(content) {
-  const area = review.querySelector("textarea.out") || copy.insertAdjacentElement("afterend", document.createElement("textarea"));
-  area.className = "out";
-  area.readOnly = true;
-  area.value = content;
-  area.focus();
-  area.select();
-}
 copy.addEventListener("click", () => {
   if (blocked()) return;
   const body = { record: review.dataset.record, version: Number(review.dataset.version), verdicts: chosen() };
   const content = "\`\`\`json\\n" + JSON.stringify(body, null, 2) + "\\n\`\`\`\\n";
-  Promise.resolve().then(() => navigator.clipboard.writeText(content)).then(() => {
-    const label = copy.textContent;
-    copy.textContent = copy.dataset.copied;
-    setTimeout(() => { copy.textContent = label; }, 1500);
-  }, () => shown(content));
+  deliver(copy, content);
+});
+refresh();
+`;
+
+/** The script of the home page: the records still checked are handed back as OK in one copy. */
+const HOME_SCRIPT = `${DELIVER}
+const batch = document.querySelector(".batch");
+const copy = document.getElementById("copy-all");
+const checked = () => [...batch.querySelectorAll("li[data-record]")].filter((item) => item.querySelector("input").checked);
+const refresh = () => { copy.disabled = checked().length === 0; };
+batch.querySelectorAll("input").forEach((box) => box.addEventListener("change", refresh));
+copy.addEventListener("click", () => {
+  const body = checked().map((item) => ({ record: item.dataset.record, version: Number(item.dataset.version), verdicts: JSON.parse(item.dataset.states).map((state) => ({ state, verdict: "ok", comment: "" })) }));
+  deliver(copy, "\`\`\`json\\n" + JSON.stringify(body, null, 2) + "\\n\`\`\`\\n");
 });
 refresh();
 `;
@@ -328,13 +358,25 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
   ].join("\n");
 }
 
+/** The records of the home page's batch, by id: reviewable, not coded, no state to revise, at least one state not ok. */
+function batchOf({ project, records, rows, labels }) {
+  const entries = records.filter((record) => hasRender(project, record) && !isCoded(record)).sort(byRecordId).flatMap((record) => {
+    const verdicts = list(fm(record).states).map((state) => ({ state, current: verdictOf(rows, record, state).current }));
+    const left = verdicts.filter(({ current }) => current !== "ok").map(({ state }) => state);
+    return left.length && !verdicts.some(({ current }) => current === "revise") ? [{ record, left }] : [];
+  });
+  if (!entries.length) return "";
+  const item = ({ record, left }) => `<li data-record="${escaped(fm(record).id)}" data-version="${escaped(String(fm(record).version))}" data-states="${escaped(JSON.stringify(left))}"><label><input type="checkbox" checked> ${link(fm(record).id, false)}</label></li>`;
+  return `<section class="batch" data-records="${entries.length}"><h2>${labels.batch}</h2><p>${labels.batchHint}</p><ul>${entries.map(item).join("")}</ul><button type="button" id="copy-all" data-copied="${escaped(labels.copied)}">${labels.allOk}</button></section>`;
+}
+
 /** The record as text under its title, without its front matter: the chips above show it. */
 function specOf(project, record) {
   const lines = (text(project, record.file) ?? "").split(LINE_BREAK);
   return documentOf(lines.slice(frontMatterEnd(lines) + 1).join(LINE_BREAK));
 }
 
-const pageOf = (title, lang, navigation, body, script) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${STYLE}${LAYOUT}</style>`, "</head>", "<body>", '<div class="shell">', navigation, "<main>", body, "</main>", "</div>", ...(script ? [`<script>${SCRIPT}</script>`] : []), "</body>", "</html>", ""].join("\n");
+const pageOf = (title, lang, navigation, body, script) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${STYLE}${LAYOUT}</style>`, "</head>", "<body>", '<div class="shell">', navigation, "<main>", body, "</main>", "</div>", ...(script ? [`<script>${script}</script>`] : []), "</body>", "</html>", ""].join("\n");
 
 /** The pages of the showcase by file name: `index.html` and one page per record that is not a review.
  * `problems` are the engine's, `tokens` the stylesheet text or null, `captures` the png paths beside
@@ -346,7 +388,8 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
   const ids = new Set(records.map((record) => fm(record).id));
   const rows = verdictRows(placed(project));
   const system = project.records.find((record) => fm(record).kind === "system");
-  const pages = { "index.html": pageOf(labels.title, language, navigationOf(records, labels, null), `<h1>${labels.title}</h1><p>${labels.pick}</p>`, false) };
+  const batch = batchOf({ project, records, rows, labels });
+  const pages = { "index.html": pageOf(labels.title, language, navigationOf(records, labels, null), `<h1>${labels.title}</h1><p>${labels.pick}</p>${batch}`, batch ? HOME_SCRIPT : "") };
   for (const record of records) {
     const id = fm(record).id;
     const uses = [...new Set(cited(record))].filter((each) => each !== id && ids.has(each)).sort(byCode);
@@ -361,7 +404,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
       checksOf(problems, record, labels),
       specOf(project, record),
     ].filter(Boolean).join("\n");
-    pages[`${id}.html`] = pageOf(id, language, navigationOf(records, labels, id), body, reviewed);
+    pages[`${id}.html`] = pageOf(id, language, navigationOf(records, labels, id), body, reviewed ? SCRIPT : "");
   }
   return pages;
 }
