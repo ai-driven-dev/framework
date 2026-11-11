@@ -198,6 +198,12 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const total = `${items.length} ${items.length === 1 ? "change" : "changes"}`;
   const current = items.length === 0 && fromTemplates.length === 0 && questions.length === 0;
   const title = current ? `Memory plan: ${total}, the bank is current` : since === null ? `Memory plan: ${total}` : `Memory plan: ${total} since ${since[1]} (${since[3]}, ${since[4]})`;
+  const gone = items.filter((item) => item.kind === "delete" || (item.kind === "change" && shownVerb(item) === "change"));
+  const goneLine = (item) => {
+    const quoted = quotedLine(item.entries[0].fact, bank(item.file));
+    return `  ${item.n}. ${item.file}: ${quoted === null ? item.entries[0].fact : `"${quoted}"`}`;
+  };
+  const going = gone.length > 0 ? [["Lines that will disappear", ...gone.map(goneLine)]] : [];
   const asked = questions.length > 0 ? [["Questions", ...questions.map(({ id, fact }) => `  ${id}  ${fact}`)]] : [];
   const wire = ["Tools to wire", `  ${tools.map((tool) => `[${ticked.includes(tool) ? "x" : " "}] ${tool}`).join("  ")}`];
   const answer = `Say ok, or "not <n>" or "not <n>-<m>" with the numbers in the details${questions.length > 0 ? `, or "${questions[0].id}: …"` : ""}.`;
@@ -205,7 +211,7 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const relative = (file) => path.relative(root, file).split(path.sep).join("/");
   const summary = current
     ? [[title], wire]
-    : [[title, ...(counts.length > 1 || fromTemplates.length > 0 ? [`  ${counts.join(" · ")}`] : [])], ...asked, wire, [`Details: ${relative(detailFile)}`], [answer]];
+    : [[title, ...(counts.length > 1 || fromTemplates.length > 0 ? [`  ${counts.join(" · ")}`] : [])], ...going, ...asked, wire, [`Details: ${relative(detailFile)}`], [answer]];
   const listed = [
     ...items.flatMap((item) => detailLines(item, bank, root, width)),
     ...fromTemplates.map((name) => `  ${" ".repeat(width + 2)}write   ${name} (new): from its template, always written`),
