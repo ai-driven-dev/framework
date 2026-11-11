@@ -170,21 +170,11 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     if (profile.buildContracts?.marketplace === undefined) return;
     expect(profile.distributionProbes?.marketplace?.length ?? 0).toBeGreaterThan(0);
   }),
-  aiCheck("drives native activation where it declares marketplace settings", (profile) => {
-    const plugins = capability(profile, "plugins", PluginsCapability);
-    if (plugins?.marketplaceSettings == null) return;
-    expect(plugins.nativeActivation).not.toBeNull();
-  }),
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {
     const plugins = capability(profile, "plugins", PluginsCapability);
     const flat = profile.buildContracts?.flat?.();
     if (plugins?.mode !== "flat" || flat === undefined) return;
     expect(flat.artifacts.hooks.supported).toBe(plugins.acceptsHooks);
-  }),
-  aiCheck("declares a plugin root token exactly in native mode", (profile) => {
-    const plugins = capability(profile, "plugins", PluginsCapability);
-    if (plugins === undefined) return;
-    expect(plugins.pluginRootToken !== null).toBe(plugins.mode === "native");
   }),
   aiCheck("names a variable, never a path", (profile) => {
     const token = capability(profile, "plugins", PluginsCapability)?.pluginRootToken;

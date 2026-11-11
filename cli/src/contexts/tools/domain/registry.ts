@@ -14,14 +14,13 @@ import {
 } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type {
-  EnvironmentReader,
   GlobalFiles,
   HookScript,
-  NativeActivation,
   PluginsCapability,
   ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
+import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
 
 /** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by

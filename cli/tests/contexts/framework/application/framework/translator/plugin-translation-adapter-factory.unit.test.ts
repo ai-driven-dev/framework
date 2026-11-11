@@ -33,11 +33,13 @@ describe("resolveTranslator", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "native",
+        pluginRootToken: "$X_PLUGIN_ROOT",
         acceptsHooks: true,
         pluginsDir: ".claude/plugins/",
         pluginManifestRelativePath: "plugin.json",
         translationMode: "marketplace",
         marketplaceSettings: MARKETPLACE_SETTINGS,
+        nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
       });
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeInstanceOf(ModeAMarketplaceTranslator);
@@ -50,6 +52,7 @@ describe("resolveTranslator", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "native",
+        pluginRootToken: "$X_PLUGIN_ROOT",
         acceptsHooks: true,
         pluginsDir: "",
         pluginManifestRelativePath: null,
@@ -94,6 +97,7 @@ describe("resolveTranslator", () => {
       const deps = buildDeps();
       const plugins = new PluginsCapability({
         mode: "native",
+        pluginRootToken: "$X_PLUGIN_ROOT",
         acceptsHooks: true,
         pluginsDir: ".custom/plugins/",
         pluginManifestRelativePath: "plugin.json",

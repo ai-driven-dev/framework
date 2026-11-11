@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type {
   GlobalFiles,
-  NativeActivation,
   PluginsCapability,
   ProjectHooksFormat,
 } from "../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { hasRules } from "../../../src/contexts/tools/domain/contracts.js";
 import type { MarketplaceSettings } from "../../../src/contexts/tools/domain/marketplace-settings.js";
+import type { NativeActivation } from "../../../src/contexts/tools/domain/plugins/native-activation.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import {
   copiesPluginFilesGlobally,

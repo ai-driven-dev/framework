@@ -1,3 +1,5 @@
+import { CapabilityConfigError } from "../../../../kernel/errors.js";
+
 export class HooksCapability {
   readonly consumes: readonly string[];
 
@@ -9,6 +11,14 @@ export class HooksCapability {
       consumes?: readonly string[];
     }
   ) {
+    if (/^([/\\]|[A-Za-z]:)/.test(params.outputPath)) {
+      throw new CapabilityConfigError(`hooks outputPath "${params.outputPath}" must be relative.`);
+    }
+    if (params.outputPath.split(/[/\\]/).includes("..")) {
+      throw new CapabilityConfigError(
+        `hooks outputPath "${params.outputPath}" must stay in the project.`
+      );
+    }
     this.consumes = params.consumes ?? [];
   }
 

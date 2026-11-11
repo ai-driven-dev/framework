@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { NativeActivation } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { MarketplaceSettings } from "../../../../src/contexts/tools/domain/marketplace-settings.js";
+import type { NativeActivation } from "../../../../src/contexts/tools/domain/plugins/native-activation.js";
 import {
   assertToolIdsMatchCategory,
   toolIdsForCategory,
@@ -23,7 +23,7 @@ import {
 const NO_ENV = () => undefined;
 
 function activation(extra: Partial<NativeActivation> = {}): NativeActivation {
-  return { binary: "codex", ...extra };
+  return { binary: "codex", enableVerb: "add", disableVerb: "remove", ...extra };
 }
 
 function settingsAt(path: string | null): MarketplaceSettings {
@@ -133,7 +133,9 @@ describe("what a profile's plugins capability says about activation", () => {
     const local = (path: string | null) =>
       aCatalog(
         aProfile("cursor")
-          .withPlugins(nativePlugins({ marketplaceSettings: settingsAt(path) }))
+          .withPlugins(
+            nativePlugins({ marketplaceSettings: settingsAt(path), nativeActivation: activation() })
+          )
           .build()
       ).machineLocalFilesOf("cursor");
 

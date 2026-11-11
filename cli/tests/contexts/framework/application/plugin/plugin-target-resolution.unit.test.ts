@@ -26,6 +26,7 @@ const FLAT_PLUGINS = new PluginsCapability({
 });
 const NATIVE_PLUGINS = new PluginsCapability({
   mode: "native",
+  pluginRootToken: "$X_PLUGIN_ROOT",
   pluginsDir: ".x/plugins/",
   pluginManifestRelativePath: null,
   acceptsHooks: false,

@@ -49,6 +49,7 @@ src/
 │   │   │   ├── formats/
 │   │   │   ├── hooks/
 │   │   │   ├── models/
+│   │   │   ├── plugins/
 │   │   │   ├── ports/
 │   │   │   ├── profile/
 │   │   │   └── profiles/    # one directory per tool

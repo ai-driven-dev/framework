@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { PluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 
 const projectHooksFormat: ProjectHooksFormat = {
   merge: () => ({ content: "", warnings: [] }),
@@ -22,6 +23,7 @@ describe("PluginsCapability", () => {
   describe("native mode", () => {
     const cap = new PluginsCapability({
       mode: "native",
+      pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
       pluginsDir: ".claude/plugins/",
       pluginManifestRelativePath: ".claude-plugin/plugin.json",
@@ -157,6 +159,7 @@ describe("PluginsCapability", () => {
   describe("user scope (native mode)", () => {
     const cap = new PluginsCapability({
       mode: "native",
+      pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
       pluginsDir: "",
       pluginManifestRelativePath: null,
@@ -178,6 +181,7 @@ describe("PluginsCapability", () => {
   describe("project scope (default)", () => {
     const cap = new PluginsCapability({
       mode: "native",
+      pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
       pluginsDir: ".claude/plugins/",
       pluginManifestRelativePath: "plugin.json",
@@ -198,6 +202,7 @@ describe("PluginsCapability", () => {
         () =>
           new PluginsCapability({
             mode: "native",
+            pluginRootToken: "$X_PLUGIN_ROOT",
             acceptsHooks: true,
             pluginsDir: "",
             pluginManifestRelativePath: null,
@@ -212,11 +217,13 @@ describe("PluginsCapability", () => {
       it("exposes translationMode as marketplace", () => {
         const cap = new PluginsCapability({
           mode: "native",
+          pluginRootToken: "$X_PLUGIN_ROOT",
           acceptsHooks: true,
           pluginsDir: ".claude/plugins/",
           pluginManifestRelativePath: "plugin.json",
           translationMode: "marketplace",
           marketplaceSettings: MARKETPLACE_SETTINGS,
+          nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
         });
         expect(cap.translationMode).toBe("marketplace");
       });
@@ -226,6 +233,7 @@ describe("PluginsCapability", () => {
       it("exposes translationMode as null (neutral native)", () => {
         const cap = new PluginsCapability({
           mode: "native",
+          pluginRootToken: "$X_PLUGIN_ROOT",
           acceptsHooks: true,
           pluginsDir: ".claude/plugins/",
           pluginManifestRelativePath: "plugin.json",
@@ -261,6 +269,7 @@ describe("PluginsCapability", () => {
 describe("PluginsCapability base directory resolution", () => {
   const native = {
     mode: "native" as const,
+    pluginRootToken: "$X_PLUGIN_ROOT",
     acceptsHooks: true as const,
     pluginsDir: ".x/plugins/",
     pluginManifestRelativePath: null,
@@ -339,6 +348,7 @@ describe("PluginsCapability defaults each mode falls back to", () => {
   it("delivers no mcp and lands hooks in the plugin unless a native tool says otherwise", () => {
     const cap = new PluginsCapability({
       mode: "native",
+      pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
       pluginsDir: ".x/plugins/",
       pluginManifestRelativePath: null,
@@ -365,6 +375,39 @@ describe("PluginsCapability defaults each mode falls back to", () => {
       false,
       false,
       "plugin",
+    ]);
+  });
+});
+
+describe("PluginsCapability native construction", () => {
+  const native = {
+    mode: "native" as const,
+    acceptsHooks: true as const,
+    pluginsDir: ".x/plugins/",
+    pluginManifestRelativePath: "plugin.json",
+    pluginRootToken: "$X_PLUGIN_ROOT",
+  };
+
+  it("refuses a native mode that names no plugin root token", () => {
+    const { pluginRootToken: _omitted, ...withoutToken } = native;
+    expect(() => new PluginsCapability(withoutToken)).toThrow("pluginRootToken");
+  });
+
+  it("refuses marketplace settings its tool has no native activation to drive", () => {
+    expect(
+      () => new PluginsCapability({ ...native, marketplaceSettings: MARKETPLACE_SETTINGS })
+    ).toThrow(CapabilityConfigError);
+  });
+
+  it("keeps marketplace settings next to the activation that drives them", () => {
+    const cap = new PluginsCapability({
+      ...native,
+      marketplaceSettings: MARKETPLACE_SETTINGS,
+      nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
+    });
+    expect([cap.marketplaceSettings?.settingsPath, cap.nativeActivation?.binary]).toEqual([
+      ".claude/settings.json",
+      "claude",
     ]);
   });
 });

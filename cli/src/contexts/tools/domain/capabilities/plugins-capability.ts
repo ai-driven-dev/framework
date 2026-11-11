@@ -2,6 +2,8 @@ import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
+import { MarketplaceRegistration } from "../plugins/marketplace-registration.js";
+import { NativeActivation, type NativeActivationSpec } from "../plugins/native-activation.js";
 
 export type PluginsMode = "native" | "flat" | "unsupported";
 
@@ -40,68 +42,6 @@ export interface ProjectHooksFormat {
   /** The directory holding one plugin's copied scripts, which nothing else writes to. */
   scriptDir(pluginName: string): string;
 }
-
-/**
- * A tool that writes its own marketplace registration, through its own CLI: driving the
- * command is preferred to writing the file, so the tool owns its own configuration.
- * `binary` keys the matching `NativePluginActivator`.
- */
-export interface NativeActivation {
-  binary: "claude" | "codex" | "copilot";
-  /** One mapping serves add and remove: a remove omitting the scope the add used drops
-   * Claude's declaration from every scope at once. A project-scoped marketplace maps to
-   * Claude's *local* scope — the registration names an absolute path, wrong for everyone
-   * else in the shared project settings. Omit where the registry has no scopes. */
-  scopeArgs?: Readonly<Record<"project" | "user", readonly string[]>>;
-  /** Scope arguments `plugin marketplace remove` takes at user scope instead of
-   * `scopeArgs.user` when no project uses the marketplace, run from the home directory.
-   * Measured on Claude 2.1.318: `remove --scope user` drops the settings declaration and keeps
-   * the registration and a project's install; a remove naming no scope deletes the registration
-   * and uninstalls that project's plugins too, with their saved options. */
-  userRemoveArgs?: readonly string[];
-  /** The host keeps an uninstalled plugin's ref, disabled, so a disabled ref cannot be told
-   * from one the person disabled and is not taken for a plugin in use. */
-  uninstallLeavesRefDisabled?: boolean;
-  /** Arguments that make `plugin marketplace remove` succeed with plugins installed from it.
-   * Permits reclaiming a name, so declare it only alongside `sourceCheckVerb`. */
-  forceRemoveArgs?: readonly string[];
-  /** Verb after `plugin marketplace` whose exit code separates a registration whose source
-   * is gone from one that resolves. Measured: copilot's `update` discriminates, while
-   * codex's `upgrade` refuses every local marketplace and Claude's reports success on a
-   * path that does not exist. */
-  sourceCheckVerb?: string;
-  /** Verb this CLI uses to re-index its marketplaces, after `plugin marketplace`. Omit when
-   * plugins are not enabled through the CLI. */
-  upgradeVerb?: string;
-  /** Exact host command for updating one installed plugin ref. Copilot declares `update`; Codex does not. */
-  updateVerb?: string;
-  /** Verb this CLI uses to enable a plugin, after `plugin`. Omit when the tool loads plugins
-   * from a project file this CLI writes. */
-  enableVerb?: string;
-  /** How the tool spells removing a plugin it installed: `remove` for codex, `uninstall` for
-   * claude and copilot. Absent where this CLI enables plugins through a file it writes. */
-  disableVerb?: string;
-  /** Arguments every `plugin <verb> <ref>` call carries, after the reference. Claude needs
-   * `--yes` on install and uninstall alike: a headless stdin can answer no prompt. */
-  pluginArgs?: readonly string[];
-  /** Root of this tool's own marketplace registry, given a homedir — a root, not a
-   * per-marketplace path. Declared for Claude alone, which derives a registration's name
-   * from the source's own catalog and silently repoints a same-named entry from a different
-   * source; its absence is what keeps the guard reading it claude-only. */
-  marketplaceRegistry?: (homedir: string) => string;
-  /** Root of this tool's own plugin cache, given a homedir. Declared only where the host's
-   * own CLI leaves something behind after `clean` drove its uninstall and remove: claude
-   * keeps the whole built tree, marked `.orphaned_at`; codex the empty `cache/<hostName>/`
-   * shell. `clean` reads this declaration alone and invents no path for a tool that omits
-   * it, and never removes without `realpath` containment against this root. */
-  pluginCacheDir?: (homedir: string) => string;
-  /** This tool's own user-scope settings file, never written by aidd and read by a
-   * diagnostic alone. Declared only for a tool that also declares `NativeActivation`. */
-  userSettingsPath?: (homedir: string, env: EnvironmentReader) => string;
-}
-
-/** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
-export type EnvironmentReader = (name: string) => string | undefined;
 
 /** A hook lands in the plugin's own dir, or merged into the project hooks file measured to fire. */
 export interface ProjectHooksDelivery {
@@ -168,7 +108,7 @@ export interface NativePluginsParams extends ProjectHooksDelivery {
   hookScript?: HookScript;
   marketplaceSettings?: MarketplaceSettings;
   /** Enables native CLI-driven plugin activation. See {@link NativeActivation}. */
-  nativeActivation?: NativeActivation;
+  nativeActivation?: NativeActivationSpec;
   /** Pass `"marketplace"` alongside `marketplaceSettings` for Mode A routing. Defaults to
    * `null`, neutral native, where no translation strategy applies. */
   translationMode?: PluginTranslationMode;
@@ -276,7 +216,7 @@ export class PluginsCapability {
   /** A delivered hook script as this tool runs it: the tool's host adapter in place of the one
    * the plugin ships, every other script as shipped. */
   readonly hookScript: HookScript;
-  readonly marketplaceSettings: MarketplaceSettings | null;
+  readonly marketplaceSettings: MarketplaceRegistration | null;
   readonly nativeActivation: NativeActivation | null;
   readonly translationMode: PluginTranslationMode | null;
   readonly installScope: "project" | "user";
@@ -292,6 +232,7 @@ export class PluginsCapability {
     this.installScope = PluginsCapability.resolveInstallScope(params);
     PluginsCapability.validateUserScope(params);
     PluginsCapability.validateProjectHooks(params);
+    PluginsCapability.validateRootToken(params);
     if (params.mode === "native") {
       this.pluginsDir = params.pluginsDir;
       this.pluginManifestRelativePath = params.pluginManifestRelativePath;
@@ -311,8 +252,14 @@ export class PluginsCapability {
       this.flatHooksBridge = null;
       this.flatSkillLayout = "nested";
       this.hookScript = params.hookScript ?? AS_SHIPPED;
-      this.marketplaceSettings = params.marketplaceSettings ?? null;
-      this.nativeActivation = params.nativeActivation ?? null;
+      this.nativeActivation =
+        params.nativeActivation === undefined
+          ? null
+          : new NativeActivation(params.nativeActivation);
+      this.marketplaceSettings =
+        params.marketplaceSettings === undefined
+          ? null
+          : new MarketplaceRegistration(params.marketplaceSettings, this.nativeActivation);
       this._userPluginsDir = params.userPluginsDir;
     } else if (params.mode === "flat") {
       this.pluginsDir = null;
@@ -403,6 +350,12 @@ export class PluginsCapability {
       throw new CapabilityConfigError(
         "installScope 'user' requires a userPluginsDir resolver function."
       );
+    }
+  }
+
+  private static validateRootToken(params: PluginsParams): void {
+    if (params.mode === "native" && params.pluginRootToken === undefined) {
+      throw new CapabilityConfigError("native mode requires a pluginRootToken.");
     }
   }
 

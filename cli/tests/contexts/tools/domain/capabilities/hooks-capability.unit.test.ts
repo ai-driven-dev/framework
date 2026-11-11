@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HooksCapability } from "../../../../../src/contexts/tools/domain/capabilities/hooks-capability.js";
+import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 
 describe("HooksCapability", () => {
   const params = { outputPath: ".codex/hooks.json" };
@@ -86,5 +87,27 @@ describe("HooksCapability declarations", () => {
         new HooksCapability({ outputPath: "h.json", mergeStrategy: "none", entrySection: "b" })
       )
     ).toBe(false);
+  });
+});
+
+describe("HooksCapability output path", () => {
+  it.each(["/etc/hooks.json", "C:\\hooks.json", "\\hooks.json"])(
+    "refuses the absolute path %s",
+    (outputPath) => {
+      expect(() => new HooksCapability({ outputPath })).toThrow(CapabilityConfigError);
+    }
+  );
+
+  it.each(["../hooks.json", "a/../hooks.json", "a\\..\\hooks.json"])(
+    "refuses %s, which leaves the project",
+    (outputPath) => {
+      expect(() => new HooksCapability({ outputPath })).toThrow(CapabilityConfigError);
+    }
+  );
+
+  it("keeps a name that merely holds two dots", () => {
+    expect(new HooksCapability({ outputPath: ".tool/a..b.json" }).buildOutputPath()).toBe(
+      ".tool/a..b.json"
+    );
   });
 });

@@ -654,6 +654,7 @@ describe("a plugin's mcp declaration", () => {
         ...claude.capabilities,
         plugins: new PluginsCapability({
           mode: "native",
+          pluginRootToken: "$X_PLUGIN_ROOT",
           pluginsDir: ".claude/plugins/",
           pluginManifestRelativePath: null,
           acceptsHooks: true,
