@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { aValidFileSubject, BROKEN_FILE_SUBJECTS } from "../../testing/broken-file-subjects.js";
+import {
+  aHooklessFileSubject,
+  aValidFileSubject,
+  BROKEN_FILE_SUBJECTS,
+} from "../../testing/broken-file-subjects.js";
 import { aValidProfile, BROKEN_PROFILES } from "../../testing/broken-profiles.js";
 import { PROFILE_CHECKS, registeredIdsMatchKernel } from "../../testing/profile-conformance.js";
 import { PROFILE_FILE_CHECKS } from "../../testing/profile-file-conformance.js";
@@ -50,6 +54,12 @@ describe("the profile file checks", () => {
   it("all hold for a valid profile", () => {
     for (const check of PROFILE_FILE_CHECKS) {
       expect(() => check.holds(aValidFileSubject()), check.title).not.toThrow();
+    }
+  });
+
+  it("all hold for a profile with no hooks.ts", () => {
+    for (const check of PROFILE_FILE_CHECKS) {
+      expect(() => check.holds(aHooklessFileSubject()), check.title).not.toThrow();
     }
   });
 

@@ -31,6 +31,12 @@ export function aValidFileSubject(): FileConformanceSubject {
   return subject();
 }
 
+/** A profile that refuses hooks and has no `hooks.ts`: the absence the checks must admit. */
+export function aHooklessFileSubject(): FileConformanceSubject {
+  const profile = aProfile().build();
+  return subject({ profile, registration: [profile], hooksModule: null, payloadFixtures: [] });
+}
+
 function withBridge(generate: () => string | null): FileConformanceSubject {
   const profile = aProfile()
     .withPlugins(
