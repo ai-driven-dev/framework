@@ -117,6 +117,7 @@ export type HooksInvariant =
   | "loader-with-file"
   | "path-outside-directory"
   | "root-token-without-file"
+  | "file-without-root-token"
   | "adapter-not-stamped";
 
 export class InvalidHooksDescriptorError extends Error {
