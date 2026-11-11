@@ -13,7 +13,6 @@ The list below is refreshed automatically by the memory hook. Do not edit it by 
 
 <!-- files:start -->
 - [architecture.md](architecture.md)
-- [auth.md](auth.md)
 - [cli.md](cli.md)
 - [codebase-map.md](codebase-map.md)
 - [coding-assertions.md](coding-assertions.md)
@@ -26,6 +25,7 @@ The list below is refreshed automatically by the memory hook. Do not edit it by 
 
 Read on demand:
 
+- [internal/auth.md](internal/auth.md)
 - [internal/smoke-real.md](internal/smoke-real.md)
 - [internal/decisions/clean-drives-the-host-cli.md](internal/decisions/clean-drives-the-host-cli.md)
 - [internal/decisions/framework-source-is-machine-scope.md](internal/decisions/framework-source-is-machine-scope.md)

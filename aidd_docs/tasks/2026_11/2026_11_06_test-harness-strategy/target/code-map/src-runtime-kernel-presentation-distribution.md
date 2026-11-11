@@ -12,7 +12,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/runtime/wiring/distribution.ts` | `src/composition/distribution.ts` | move | |
 | `src/runtime/wiring/tools.ts` | `src/composition/tool-profiles/registry.ts` | move | proposal: the single registration list, no import side effect |
 | - | `src/composition/shared.ts` | add | files, hashing, HTTP, forge adapter, logger, version, home |
-| - | `src/composition/auth.ts` | add | builds the auth commands and the `TokenProvider` |
+| - | `src/composition/auth.ts` | add | done (auth pilot): `wireAuth` builds the three commands and the `TokenProvider`; called by `runtime/wiring/framework.ts` until the root moves (M5) |
 | - | `src/composition/update.ts` | add | builds only the update graph, for the notice hooks |
 | - | `src/composition/tool-profiles/*` | add | one file per tool; owned by the tools mapping |
 | `src/runtime/user-config-dir.ts` | `src/shared/domain/user-config-dir.ts; src/composition/user-config-dir.ts` | split | pure `userConfigDirOf(env, home)` to shared, env and home wrapper to composition |
@@ -29,19 +29,19 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/runtime/platform/platform-adapter.ts` | `src/shared/infrastructure/platform-adapter.ts` | move | |
 | `src/runtime/project-root/project-root.ts` | `src/presentation/project-root.ts` | move | reads `PWD`, single presentation importer |
 | `src/runtime/prompter/prompter-adapter.ts` | `src/presentation/terminal/prompter-adapter.ts` | move | implements the `orchestration` prompt port |
-| `src/runtime/auth/auth.ts` | `src/contexts/auth/domain/credential.ts` | rename | |
-| `src/runtime/auth/auth-login-use-case.ts` | `src/contexts/auth/application/auth-login.ts` | rename | command, no `UseCase` suffix |
-| `src/runtime/auth/auth-logout-use-case.ts` | `src/contexts/auth/application/auth-logout.ts` | rename | command |
-| `src/runtime/auth/auth-status-use-case.ts` | `src/contexts/auth/application/auth-status.ts` | rename | command |
-| `src/runtime/auth/auth-provider-adapter.ts` | `src/contexts/auth/domain/credential-session.ts` | rename | logic moves up to the domain, no adapter left |
-| `src/runtime/auth/auth-reader-adapter.ts` | `src/contexts/auth/domain/credential-resolver.ts` | rename | resolution order written once; `resolveContext` deleted (no caller) |
-| `src/runtime/auth/auth-storage.ts` | `src/contexts/auth/infrastructure/credential-file-store-adapter.ts` | rename | permissions delegated to the shared private-storage adapter |
-| `src/runtime/auth/gh-cli-adapter.ts` | `src/contexts/auth/infrastructure/gh-cli-adapter.ts` | move | |
-| `src/runtime/auth/gh-token-adapter.ts` | `src/shared/infrastructure/github-adapter.ts` | merge | becomes the `IdentityVerifier` part of the single GitHub adapter |
-| `src/runtime/auth/ports/credential-store.ts` | `src/contexts/auth/ports/credential-store.ts` | move | |
-| `src/runtime/auth/ports/credential-file-store.ts` | `src/contexts/auth/ports/credential-file-store.ts` | move | |
-| `src/runtime/auth/ports/oauth-provider.ts` | `src/contexts/auth/ports/oauth-provider.ts` | move | holds three provider ports |
-| `src/runtime/auth/ports/token-provider.ts` | `src/contexts/auth/contract/token-provider.ts` | move | published to distribution and update |
+| `src/runtime/auth/auth.ts` | `src/contexts/auth/contract/credential.ts; src/contexts/auth/domain/credential-record.ts` | split | done (auth pilot): the types presentation reads in `contract/`, the aggregate `CredentialRecord` and its rules in `domain/` |
+| `src/runtime/auth/auth-login-use-case.ts` | `src/contexts/auth/application/log-in.ts` | rename | done (auth pilot): command `LogIn`, verb-first (A4) |
+| `src/runtime/auth/auth-logout-use-case.ts` | `src/contexts/auth/application/log-out.ts` | rename | done (auth pilot): command `LogOut` |
+| `src/runtime/auth/auth-status-use-case.ts` | `src/contexts/auth/application/check-status.ts` | rename | done (auth pilot): command `CheckStatus` |
+| `src/runtime/auth/auth-provider-adapter.ts` | `-` | delete | done (auth pilot): its three methods became the three commands, its rules the aggregate's; no `credential-session.ts` (A3) |
+| `src/runtime/auth/auth-reader-adapter.ts` | `src/contexts/auth/domain/credential-sources.ts; src/contexts/auth/application/cached-token-provider.ts` | split | done (auth pilot): the one source order and its two stop rules in the domain, memo and logs in `application/` (E5); `resolveContext` deleted |
+| `src/runtime/auth/auth-storage.ts` | `src/contexts/auth/infrastructure/credential-record-file-adapter.ts` | rename | done (auth pilot): level-keyed, created `0600`; permissions stay here, shared private storage not adopted (E9) |
+| `src/runtime/auth/gh-cli-adapter.ts` | `src/contexts/auth/infrastructure/gh-cli-adapter.ts` | move | done (auth pilot): `resolve` renamed `read` |
+| `src/runtime/auth/gh-token-adapter.ts` | `src/shared/infrastructure/github-adapter.ts` | merge | done (auth pilot) (foundations, then `apiBase` in the pilot): the `IdentityVerifier` of auth by shape |
+| `src/runtime/auth/ports/credential-store.ts` | `-` | delete | done (auth pilot): its result types are the commands' own |
+| `src/runtime/auth/ports/credential-file-store.ts` | `src/contexts/auth/ports/credential-record-repository.ts` | rename | done (auth pilot): the level-keyed repository of the aggregate |
+| `src/runtime/auth/ports/oauth-provider.ts` | `src/contexts/auth/ports/external-token-source.ts; src/contexts/auth/ports/cli-auth-provider.ts; src/contexts/auth/ports/identity-verifier.ts` | split | done (auth pilot): one interface per file |
+| `src/runtime/auth/ports/token-provider.ts` | `src/contexts/auth/contract/token-provider.ts` | move | done (auth pilot): published to distribution, framework and self-update |
 | `src/runtime/self-update/self-update-use-case.ts` | `src/contexts/update/domain/update-decision.ts; src/contexts/update/application/self-update.ts` | split | pure decision extracted, command renamed |
 | `src/runtime/self-update/check-update-use-case.ts` | `src/contexts/update/application/print-update-notice.ts; src/contexts/update/application/refresh-update-check.ts; src/contexts/update/infrastructure/update-check-cache-adapter.ts` | split | cache path becomes an adapter |
 | `src/runtime/self-update/self-updater.ts` | `src/contexts/update/ports/cli-release-source.ts; src/contexts/update/ports/cli-installer.ts` | split | one port per responsibility |
@@ -50,7 +50,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/runtime/self-update/latest-release-resolver.ts` | `src/shared/ports/release-lister.ts; src/shared/ports/repository-reader.ts` | split | `listRootReleases` and `isRepoPublic` go to forge ports; `resolveLatest` deleted |
 | `src/runtime/self-update/github-release-resolver-adapter.ts` | `src/shared/infrastructure/github-adapter.ts` | merge | the `ReleaseLister` part of the single GitHub adapter |
 | - | `src/shared/infrastructure/github-adapter.ts` | add | one adapter for `RepositoryReader`, `ReleaseLister`, `IdentityVerifier`; sole owner of the API URL |
-| - | `src/contexts/auth/ports/identity-verifier.ts` | add | token check; a port with a single consuming context belongs to it; the shared GitHub adapter satisfies it by shape, wired in `composition` |
+| - | `src/contexts/auth/ports/identity-verifier.ts` | add | done (auth pilot): token check; the shared GitHub adapter satisfies it by shape, wired in `composition` |
 | - | `src/shared/ports/http-get.ts` | add | port for the shared HTTP client |
 | `src/kernel/describe-error.ts` | `src/shared/domain/describe-error.ts` | move | |
 | `src/kernel/errors.ts` | `src/shared/domain/errors.ts; src/presentation/errors/error-messages.ts` | split | typed catalogue stays; text naming a command or flag moves to the message table |
@@ -75,7 +75,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/kernel/reading/plain-object.ts` | `src/shared/domain/reading/plain-object.ts` | move | may be duplicated instead |
 | `src/kernel/reading/text-file.ts` | `src/contexts/telemetry/infrastructure/text-file.ts` | move | telemetry only, uses `node:fs`; proposal: file location inside infrastructure |
 | `src/kernel/reading/home-dir.ts` | - | delete | composition resolves the home once and injects it |
-| `src/presentation/commands/auth.ts` | `src/presentation/commands/auth.ts` | keep | receives commands from the container, no `new` |
+| `src/presentation/commands/auth.ts` | `src/presentation/commands/auth.ts` | keep | done (auth pilot): receives the commands from `createDeps`, no `new` (M4 until `cli.ts` hands the container) |
 | `src/presentation/commands/clean.ts` | `src/presentation/commands/clean.ts` | keep | thin |
 | `src/presentation/commands/doctor.ts` | `src/presentation/commands/doctor.ts` | keep | `healthy` decision moves into the doctor scenario |
 | `src/presentation/commands/framework.ts` | `src/presentation/commands/framework.ts; src/presentation/commands/recipes.ts` | split | `validate-recipes` moves to recipes, CLI name unchanged |

@@ -77,6 +77,25 @@ describe("the guard itself", () => {
     expect(forbiddenEdges([permitted], ALLOWED)).toEqual([]);
   });
 
+  it("reports a planted tools to auth crossing and clears the two edges into auth", () => {
+    const auth = "src/contexts/auth/contract/token-provider.ts";
+    const planted = edgeBetween("src/contexts/tools/domain/registry.ts", auth);
+    const distribution = edgeBetween(
+      "src/contexts/distribution/infrastructure/plugin-fetcher-adapter.ts",
+      auth
+    );
+    const framework = edgeBetween(
+      "src/contexts/framework/application/doctor/doctor-layout-use-case.ts",
+      auth
+    );
+    const leaving = edgeBetween(auth, "src/contexts/distribution/domain/marketplace.ts");
+
+    expect(forbiddenEdges([planted, distribution, framework, leaving], ALLOWED)).toEqual([
+      "tools->auth",
+      "auth->distribution",
+    ]);
+  });
+
   it("names shared apart from every context, and counts no context among its files", () => {
     expect(contextOf("src/shared/ports/http-get.ts")).toBe("shared");
     expect(contextOf("src/shared/infrastructure/http-client.ts")).toBe("shared");
@@ -101,5 +120,26 @@ describe("the guard itself", () => {
         ALLOWED
       )
     ).toEqual(["shared->tools"]);
+  });
+
+  it("names the composition apart from every context, reports a context reaching it and clears it reaching a context", () => {
+    const composition = "src/composition/auth.ts";
+    expect(contextOf(composition)).toBe("composition");
+    expect(isContext("composition")).toBe(false);
+
+    const reaching = isCrossing(
+      contextOf("src/contexts/tools/domain/registry.ts"),
+      contextOf(composition)
+    );
+    const reached = isCrossing(
+      contextOf(composition),
+      contextOf("src/contexts/tools/domain/registry.ts")
+    );
+
+    expect(reaching, "only the composition root imports the composition").toBe(true);
+    expect(reached, "the composition wires any context").toBe(false);
+    expect(
+      forbiddenEdges([edgeBetween("src/contexts/tools/domain/registry.ts", composition)], ALLOWED)
+    ).toEqual(["tools->composition"]);
   });
 });

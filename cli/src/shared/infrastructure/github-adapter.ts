@@ -2,10 +2,13 @@ import { AuthenticationError } from "../../kernel/errors.js";
 import type { HttpGet } from "../ports/http-get.js";
 
 export class GitHubAdapter {
-  constructor(private readonly http: HttpGet) {}
+  constructor(
+    private readonly http: HttpGet,
+    private readonly apiBase = "https://api.github.com"
+  ) {}
 
   async verifyToken(token: string): Promise<string> {
-    const response = await this.http.get("https://api.github.com/user", { token }).catch(() => {
+    const response = await this.http.get(`${this.apiBase}/user`, { token }).catch(() => {
       // HTTP errors may carry request credentials; expose only the authentication failure.
       throw new AuthenticationError("GitHub API");
     });

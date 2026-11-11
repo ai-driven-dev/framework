@@ -25,12 +25,16 @@ flowchart LR
     Framework --> Translate
     Framework --> Distribution
     Framework --> Tools
+    Framework --> Auth["auth"]
+    Distribution --> Auth
     Translate --> Tools
     Distribution --> Kernel["kernel"]
     Distribution --> Shared["shared"]
     Framework --> Shared
     Framework --> Kernel
     Tools --> Kernel
+    Auth --> Kernel
+    Auth --> Shared
     Translate --> Kernel
 ```
 

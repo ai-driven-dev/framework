@@ -1,5 +1,5 @@
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { TokenProvider } from "../../../../runtime/auth/ports/token-provider.js";
+import type { TokenProvider } from "../../../auth/contract/token-provider.js";
 import { getAllRegisteredTools, hasToolSignals } from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";

@@ -8,13 +8,19 @@ import {
   ALLOWED,
   baselineLayers,
   contextNames,
+  HELD_BY_BIOME,
+  interiorGroupsOf,
   matchesGlob,
   read,
   sourceFiles,
 } from "./helpers.js";
 
-type Layer = "domain" | "application" | "infrastructure";
+type Layer = "domain" | "application" | "infrastructure" | "ports" | "contract";
+/** Every context has these three. */
 const LAYERS: readonly Layer[] = ["domain", "application", "infrastructure"];
+/** A migrated context also has these, and is held to them wherever the folder exists: a
+ * `contract/` folder with no override of its own is a folder nothing restricts. */
+const OPTIONAL_LAYERS: readonly Layer[] = ["ports", "contract"];
 
 interface BiomeOverride {
   readonly includes?: readonly string[];
@@ -65,13 +71,18 @@ function genericLayerTargets(layer: Layer): ReadonlySet<string> {
   if (layer === "domain") {
     return new Set(["application", "infrastructure", "presentation", "runtime"]);
   }
+  if (layer === "ports") return genericLayerTargets("domain");
+  if (layer === "contract") {
+    return new Set(["domain", "application", "infrastructure", "ports", "presentation", "runtime"]);
+  }
   if (layer === "application") return new Set(["infrastructure"]);
   return new Set(["**/shared/infrastructure/**"]);
 }
 
 /**
- * The layer-intrinsic direction, union every context and presentation/runtime this context may
- * not reach, minus what `ALLOWED` admits and minus the debt `BASELINE` carries at this layer.
+ * The layer-intrinsic direction, union every context, presentation, runtime and the composition
+ * this context may not reach, minus what `ALLOWED` admits and minus the debt `BASELINE`
+ * carries at this layer.
  */
 function expectedForbidden(
   context: string,
@@ -81,13 +92,30 @@ function expectedForbidden(
 ): Set<string> {
   const forbidden = new Set(genericLayerTargets(layer));
   const others = contexts.filter((name) => name !== context);
-  for (const target of [...others, "presentation", "runtime"]) {
+  for (const target of [...others, "presentation", "runtime", "composition"]) {
     const edge = `${context}->${target}`;
     if (ALLOWED.has(edge)) continue;
     if (baselineLayerMap.get(edge)?.has(layer)) continue;
     forbidden.add(target);
   }
   return forbidden;
+}
+
+/**
+ * The folder groups a context's overrides carry for each held context it may import: the
+ * edge is admitted, so only the contract and the commands are open to it.
+ */
+function interiorGroupsFor(context: string): string[] {
+  return HELD_BY_BIOME.filter(
+    (held) => held !== context && ALLOWED.has(`${context}->${held}`)
+  ).flatMap(interiorGroupsOf);
+}
+
+function layersOf(context: string, files: readonly string[]): Layer[] {
+  const optional = OPTIONAL_LAYERS.filter((layer) =>
+    files.some((file) => file.startsWith(`src/contexts/${context}/${layer}/`))
+  );
+  return [...LAYERS, ...optional];
 }
 
 function contextLayerIncludes(context: string, layer: Layer): string {
@@ -129,7 +157,11 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
     ).toEqual([]);
   });
 
-  it.each(contexts.flatMap((context) => LAYERS.map((layer) => ({ context, layer }))))(
+  it.each(
+    contexts.flatMap((context) =>
+      layersOf(context, sourceFiles()).map((layer) => ({ context, layer }))
+    )
+  )(
     "$context/$layer forbids exactly what context-graph.arch.test.ts forbids",
     ({ context, layer }) => {
       const includesGlob = contextLayerIncludes(context, layer);
@@ -142,12 +174,13 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
         groups.filter((pattern) => !extra.has(pattern)).map((pattern) => tokenOf(pattern))
       );
       const expected = expectedForbidden(context, layer, contexts, baselineLayerMap);
+      for (const group of interiorGroupsFor(context)) expected.add(group);
 
       expect([...actual].sort()).toEqual([...expected].sort());
     }
   );
 
-  it("kernel forbids every context layer, shared, presentation and runtime, unconditionally", () => {
+  it("kernel forbids every context layer, shared, presentation, runtime and the composition, unconditionally", () => {
     const override = overrides.find((candidate) =>
       candidate.includes?.includes("src/kernel/**/*.ts")
     );
@@ -155,26 +188,42 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
 
     const groups = (restrictedImportGroups(override as BiomeOverride) ?? []).map(tokenOf);
     expect(new Set(groups)).toEqual(
-      new Set(["domain", "application", "infrastructure", "shared", "presentation", "runtime"])
+      new Set([
+        "domain",
+        "application",
+        "infrastructure",
+        "shared",
+        "presentation",
+        "runtime",
+        "composition",
+      ])
     );
   });
 
   it.each([
     {
       includes: "src/shared/ports/**/*.ts",
-      forbids: ["contexts", "presentation", "runtime", "infrastructure"],
+      forbids: ["contexts", "presentation", "runtime", "infrastructure", "composition"],
     },
     {
       includes: "src/shared/infrastructure/**/*.ts",
-      forbids: ["contexts", "presentation", "runtime"],
+      forbids: ["contexts", "presentation", "runtime", "composition"],
     },
     {
       includes: "src/presentation/**/*.ts",
-      forbids: ["**/shared/infrastructure/**"],
+      forbids: [
+        "**/shared/infrastructure/**",
+        "composition",
+        ...HELD_BY_BIOME.flatMap(interiorGroupsOf),
+      ],
     },
     {
       includes: "src/runtime/**/*.ts",
-      forbids: ["**/shared/infrastructure/**"],
+      forbids: [
+        "**/shared/infrastructure/**",
+        "composition",
+        ...HELD_BY_BIOME.flatMap(interiorGroupsOf),
+      ],
     },
   ])("$includes forbids exactly its groups", ({ includes, forbids }) => {
     const override = overrides.find((candidate) => candidate.includes?.includes(includes));
@@ -215,6 +264,43 @@ describe("the guard itself", () => {
       expectedForbidden("framework", "domain", twoContexts, noBaseline).has("tools"),
       "framework->tools is one"
     ).toBe(false);
+  });
+
+  it("holds a ports folder to what the domain is held to, and a contract folder to no sibling", () => {
+    const none = new Map<string, ReadonlySet<string>>();
+    const forbidden = (layer: Layer) => expectedForbidden("auth", layer, ["auth", "tools"], none);
+
+    expect([...forbidden("ports")].sort()).toEqual([...forbidden("domain")].sort());
+    expect(forbidden("contract").has("domain")).toBe(true);
+    expect(forbidden("contract").has("ports")).toBe(true);
+    expect(forbidden("domain").has("ports")).toBe(false);
+  });
+
+  it("asks an importer of a held context for the interior groups, and no other context", () => {
+    expect(interiorGroupsFor("distribution")).toEqual(interiorGroupsOf("auth"));
+    expect(interiorGroupsFor("framework")).toEqual(interiorGroupsOf("auth"));
+    expect(
+      interiorGroupsFor("tools"),
+      "tools->auth is no edge: `**/auth/**` already forbids it"
+    ).toEqual([]);
+    expect(interiorGroupsFor("auth"), "a context keeps its own interior").toEqual([]);
+    expect(interiorGroupsOf("auth")).toEqual([
+      "**/auth/domain/**",
+      "**/auth/ports/**",
+      "**/auth/infrastructure/**",
+    ]);
+  });
+
+  it("lists a ports or contract folder only where it exists", () => {
+    const files = ["src/contexts/auth/contract/x.ts", "src/contexts/tools/domain/y.ts"];
+
+    expect(layersOf("auth", files)).toEqual([
+      "domain",
+      "application",
+      "infrastructure",
+      "contract",
+    ]);
+    expect(layersOf("tools", files)).toEqual(["domain", "application", "infrastructure"]);
   });
 
   it("drops a target the baseline already carries at that layer, and keeps it at another", () => {

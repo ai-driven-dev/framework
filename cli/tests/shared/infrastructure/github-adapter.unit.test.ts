@@ -31,6 +31,14 @@ describe("GitHubAdapter", () => {
     expect(client.calls[0]?.options?.token === "ghp_x").toBe(true);
   });
 
+  it("asks the base it was given", async () => {
+    const client = http({ login: "octocat" });
+
+    await new GitHubAdapter(client, "http://127.0.0.1:9").verifyToken("ghp_x");
+
+    expect(client.calls.map((call) => call.url)).toEqual(["http://127.0.0.1:9/user"]);
+  });
+
   it("refuses an answer carrying no login", async () => {
     await expect(new GitHubAdapter(http({ id: 1 })).verifyToken("ghp_x")).rejects.toThrow(
       new AuthenticationError("GitHub API")

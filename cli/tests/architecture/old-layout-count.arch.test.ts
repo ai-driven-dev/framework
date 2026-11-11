@@ -10,7 +10,7 @@ import { sourceFiles } from "./helpers.js";
 
 /** Source files under each folder that is still counted. Lower a value when files leave. */
 const COMMITTED_COUNTS: Readonly<Record<string, number>> = {
-  "src/runtime/": 37,
+  "src/runtime/": 25,
   "src/contexts/framework/": 126,
 };
 
@@ -71,6 +71,7 @@ function pathSetVerdicts(found: readonly string[], committed: readonly string[])
 /** The top-level entries of `src/`. A file moved to any other one escapes the counts above. */
 const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([
   "cli.ts",
+  "composition",
   "contexts",
   "kernel",
   "presentation",
@@ -126,8 +127,17 @@ describe("the guard itself", () => {
   });
 
   it("reports a file in a top-level src/ area that is not a known one", () => {
-    expect(unknownAreaVerdicts(["src/foo/x.ts", "src/cli.ts", "src/runtime/a.ts"])).toEqual([
+    expect(
+      unknownAreaVerdicts([
+        "src/foo/x.ts",
+        "src/cli.ts",
+        "src/runtime/a.ts",
+        "src/composition/auth.ts",
+        "src/elsewhere/auth.ts",
+      ])
+    ).toEqual([
       "src/foo/x.ts sits in an unknown top-level area: nothing new enters outside the known ones",
+      "src/elsewhere/auth.ts sits in an unknown top-level area: nothing new enters outside the known ones",
     ]);
   });
 

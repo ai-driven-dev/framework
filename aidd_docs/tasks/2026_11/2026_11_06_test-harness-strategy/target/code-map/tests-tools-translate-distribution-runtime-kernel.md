@@ -137,19 +137,19 @@ Profile test merge: the 45 per-tool parallel files split by the document 04 esti
 | - | `tests/shared/infrastructure/github-forge.contract.test.ts` | add | one suite per forge port, fake and real adapter; replaces the raw fetcher vi.fn assumption |
 | `tests/runtime/assets/asset-loader.unit.test.ts` | `tests/shared/infrastructure/asset-loader.unit.test.ts` | move | document 03 leaves the config assets split open |
 | `tests/runtime/assets/asset-loader-schemas.unit.test.ts` | `tests/shared/infrastructure/asset-loader-schemas.unit.test.ts` | move | same |
-| `tests/runtime/auth/auth-login-use-case.unit.test.ts` | `tests/contexts/auth/application/auth-login.unit.test.ts` | rename | command test |
-| `tests/runtime/auth/auth-logout-use-case.integration.test.ts` | `tests/contexts/auth/application/auth-logout.integration.test.ts` | rename |  |
-| `tests/runtime/auth/auth-status-use-case.unit.test.ts` | `tests/contexts/auth/application/auth-status.unit.test.ts` | rename | command test |
-| `tests/runtime/auth/auth-provider-adapter.unit.test.ts` | `tests/contexts/auth/domain/credential-session.unit.test.ts` | rename | logic moves up to the domain |
-| `tests/runtime/auth/auth-reader-branches.unit.test.ts` | `tests/contexts/auth/domain/credential-resolver.unit.test.ts` | rename | resolution order written once |
-| `tests/runtime/auth/auth-reader.integration.test.ts` | `tests/contexts/auth/domain/credential-resolver.integration.test.ts` | rename | proposal: could fold into the unit file under the relevance rule |
-| `tests/runtime/auth/auth-storage.integration.test.ts` | `tests/contexts/auth/infrastructure/credential-file-store-adapter.integration.test.ts` | rename | permissions go through shared private storage |
-| `tests/runtime/auth/auth-storage-shape.integration.test.ts` | `tests/contexts/auth/infrastructure/credential-file-store-adapter-shape.integration.test.ts` | rename |  |
-| `tests/runtime/auth/gh-cli-adapter.integration.test.ts` | `tests/contexts/auth/infrastructure/gh-cli-adapter.integration.test.ts` | move |  |
-| `tests/runtime/auth/gh-cli-verify.integration.test.ts` | `tests/contexts/auth/infrastructure/gh-cli-adapter-verify.integration.test.ts` | rename | proposal: verify cases stay with the gh adapter |
-| `tests/runtime/auth/gh-token-adapter.unit.test.ts` | `tests/shared/infrastructure/github-identity-verifier.unit.test.ts` | rename | becomes the identity verifier of the shared GitHub adapter |
-| - | `tests/contexts/auth/infrastructure/credential-store.contract.test.ts` | add | fake and real store, file mode read back |
-| - | `tests/contexts/auth/infrastructure/gh-cli.contract.test.ts` | add | fake gh executable on the path |
+| `tests/runtime/auth/auth-login-use-case.unit.test.ts` | `-` | delete | done (auth pilot): deleted with the pass-through; held by `tests/contexts/auth/application/log-in.unit.test.ts` |
+| `tests/runtime/auth/auth-logout-use-case.integration.test.ts` | `tests/contexts/auth/application/log-out.unit.test.ts` | rename | done (auth pilot): one level down, over the kit |
+| `tests/runtime/auth/auth-status-use-case.unit.test.ts` | `-` | delete | done (auth pilot): deleted with the pass-through; held by `tests/contexts/auth/application/check-status.unit.test.ts` |
+| `tests/runtime/auth/auth-provider-adapter.unit.test.ts` | `tests/contexts/auth/application/log-in.unit.test.ts; tests/contexts/auth/application/check-status.unit.test.ts` | split | done (auth pilot): by command |
+| `tests/runtime/auth/auth-reader-branches.unit.test.ts` | `tests/contexts/auth/domain/credential-sources.unit.test.ts; tests/contexts/auth/application/cached-token-provider.unit.test.ts` | split | done (auth pilot) |
+| `tests/runtime/auth/auth-reader.integration.test.ts` | `tests/contexts/auth/domain/credential-sources.unit.test.ts; tests/contexts/auth/application/cached-token-provider.unit.test.ts` | merge | done (auth pilot): folded into the unit files under the relevance rule |
+| `tests/runtime/auth/auth-storage.integration.test.ts` | `tests/contexts/auth/infrastructure/credential-record-file-adapter.integration.test.ts; tests/contexts/auth/ports/credential-record-repository.contract.test.ts` | split | done (auth pilot): port cases to the contract, file cases to the adapter |
+| `tests/runtime/auth/auth-storage-shape.integration.test.ts` | `tests/contexts/auth/domain/credential-record.unit.test.ts` | merge | done (auth pilot): the shapes became the parse table; the file deleted by proof |
+| `tests/runtime/auth/gh-cli-adapter.integration.test.ts` | `tests/contexts/auth/infrastructure/gh-cli-adapter.integration.test.ts` | move | done (auth pilot) |
+| `tests/runtime/auth/gh-cli-verify.integration.test.ts` | `tests/contexts/auth/infrastructure/gh-cli-adapter.integration.test.ts` | merge | done (auth pilot): verify cases stay with the gh adapter, in one file |
+| `tests/runtime/auth/gh-token-adapter.unit.test.ts` | `tests/shared/infrastructure/github-adapter.unit.test.ts` | rename | done (auth pilot) (foundations): the `/user` translation of the shared GitHub adapter |
+| - | `tests/contexts/auth/ports/credential-record-repository.contract.test.ts` | add | done (auth pilot): fake and file adapter; the file mode is the adapter test's (A8) |
+| - | `tests/contexts/auth/ports/cli-auth-provider.contract.test.ts` | add | done (auth pilot): fake gh executable as the whole `PATH`, POSIX only (E2) |
 | `tests/runtime/filesystem/file-adapter.integration.test.ts` | `tests/shared/infrastructure/file-adapter.integration.test.ts` | move | relevance rule against the file port contract suite |
 | `tests/runtime/filesystem/file-adapter-edges.integration.test.ts` | `tests/shared/infrastructure/file-adapter-edges.integration.test.ts` | move | same |
 | `tests/runtime/filesystem/atomic-write.integration.test.ts` | `tests/shared/infrastructure/atomic-write.integration.test.ts` | move |  |

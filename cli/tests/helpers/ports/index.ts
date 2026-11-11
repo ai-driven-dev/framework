@@ -1,7 +1,6 @@
 export { CapturingLogger } from "./capturing-logger.js";
 export { CheckboxRecordingPrompter } from "./checkbox-recording-prompter.js";
 export { DeterministicHasher } from "./deterministic-hasher.js";
-export { FakeAuthReader } from "./fake-auth-reader.js";
 export { FakeCurrentVersion } from "./fake-current-version.js";
 export { FakeNativePluginActivator } from "./fake-native-plugin-activator.js";
 export { darwinPlatform, FakePlatform, linuxPlatform, win32Platform } from "./fake-platform.js";

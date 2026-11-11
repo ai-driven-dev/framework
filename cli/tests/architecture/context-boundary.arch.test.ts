@@ -4,7 +4,7 @@
  * The list is the fence, not a description of what happens to be used.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, importersByFile, sourceFiles } from "./helpers.js";
+import { expectRatchet, HELD_BY_BIOME, importersByFile, sourceFiles } from "./helpers.js";
 
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
@@ -163,10 +163,11 @@ function contextOf(file: string): string | null {
 /**
  * The composition root wires every context by construction — a profile registers itself
  * through a side-effect import, an adapter must be named to be instantiated — so the whole
- * `runtime/wiring/` directory is exempt rather than a caller this rule tries to catch.
+ * `runtime/wiring/` directory, and `composition/` beside it, are exempt rather than callers
+ * this rule tries to catch.
  */
 function isCompositionRoot(file: string): boolean {
-  return file.startsWith("src/runtime/wiring/");
+  return file.startsWith("src/runtime/wiring/") || file.startsWith("src/composition/");
 }
 
 function reachesIntoInterior(
@@ -201,6 +202,27 @@ const BASELINE = [
   "src/contexts/framework/application/install/content/install-skills-use-case.ts -> src/contexts/tools/domain/capabilities/skills-capability.ts",
 ];
 
+/**
+ * What a context publishes in `contract/` exists for a reader outside it: another context,
+ * `presentation/`, `orchestration/` or a runtime service. The composition root does not
+ * count, it wires everything. A contract file nobody outside reads is an interior file in the
+ * wrong folder, or a surface nobody asked for.
+ */
+function orphanContractFiles(
+  files: readonly string[],
+  importers: ReadonlyMap<string, ReadonlySet<string>>
+): string[] {
+  return files
+    .filter((file) => /^src\/contexts\/[^/]+\/contract\//.test(file))
+    .filter((file) => {
+      const owner = contextOf(file);
+      return ![...(importers.get(file) ?? [])].some(
+        (importer) => !isCompositionRoot(importer) && contextOf(importer) !== owner
+      );
+    })
+    .sort();
+}
+
 describe("nothing imports a context's interior", () => {
   it("every cross-context import targets a declared public module", () => {
     const violations = reachesIntoInterior(sourceFiles(), importersByFile(), PUBLIC_MODULES);
@@ -210,8 +232,8 @@ describe("nothing imports a context's interior", () => {
     expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
   });
 
-  it("declares a public surface for every context on disk", () => {
-    const declared = Object.keys(PUBLIC_MODULES).sort();
+  it("declares a public surface for every context on disk, or leaves it to Biome", () => {
+    const declared = [...Object.keys(PUBLIC_MODULES), ...HELD_BY_BIOME].sort();
 
     expect(
       contextsOnDisk(sourceFiles()),
@@ -220,7 +242,50 @@ describe("nothing imports a context's interior", () => {
   });
 });
 
+describe("a contract file is read from outside its context", () => {
+  it("every file under a context's contract/ has an importer outside the context and the composition root", () => {
+    const files = sourceFiles();
+
+    expect(
+      files.filter((file) => /^src\/contexts\/[^/]+\/contract\//.test(file)).length,
+      "no contract file found: the scope of this rule is stale"
+    ).toBeGreaterThan(0);
+    expect(
+      orphanContractFiles(files, importersByFile()),
+      "a contract file only its own context or the composition root imports"
+    ).toEqual([]);
+  });
+});
+
 describe("the guard itself", () => {
+  it("holds a context in one mechanism only", () => {
+    expect(
+      HELD_BY_BIOME.filter((held) => held in PUBLIC_MODULES),
+      "a context in both lists is checked twice and by two different rules"
+    ).toEqual([]);
+  });
+
+  it("names a contract file only its context or the composition root imports, and clears one read from outside", () => {
+    const files = [
+      "src/contexts/acme/contract/orphan.ts",
+      "src/contexts/acme/contract/wired.ts",
+      "src/contexts/acme/contract/shown.ts",
+      "src/contexts/acme/contract/shared.ts",
+      "src/contexts/acme/domain/inner.ts",
+    ];
+    const importers = new Map([
+      ["src/contexts/acme/contract/orphan.ts", new Set(["src/contexts/acme/application/use.ts"])],
+      ["src/contexts/acme/contract/wired.ts", new Set(["src/runtime/wiring/framework.ts"])],
+      ["src/contexts/acme/contract/shown.ts", new Set(["src/presentation/display/x.ts"])],
+      ["src/contexts/acme/contract/shared.ts", new Set(["src/contexts/other/domain/y.ts"])],
+    ]);
+
+    expect(orphanContractFiles(files, importers)).toEqual([
+      "src/contexts/acme/contract/orphan.ts",
+      "src/contexts/acme/contract/wired.ts",
+    ]);
+  });
+
   it("skips a context silently when it has no declaration, which is why the check above exists", () => {
     const files = ["src/contexts/ghost/domain/inner.ts"];
     const importers = new Map([

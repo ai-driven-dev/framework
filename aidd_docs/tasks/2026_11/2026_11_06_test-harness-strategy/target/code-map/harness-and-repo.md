@@ -58,9 +58,9 @@ Scope: `cli/` root configuration and tooling, `cli/scripts`, `cli/.claude`, `cli
 | `cli/.claude/rules/01-standards/1-conventions.md` | `.claude/rules/cli-architecture.md; .claude/rules/cli-tests.md` | split | module shape and command naming go to architecture; test tiers, titles, size caps go to tests |
 | `cli/.claude/rules/01-standards/1-type-honesty.md` | `.claude/rules/cli-type-honesty.md` | move | proposal: rule kept as is (guarded by the kept type-honesty script); only its `paths:` form changes |
 | `cli/.claude/rules/03-frameworks-and-libraries/3-cli-process.md` | `.claude/rules/cli-architecture.md` | merge | proposal: presentation edge and process exit rule; the `process.exit` guard stays a Biome plugin |
-| `cli/.claude/rules/07-quality/7-auth.md` | `.claude/rules/cli-contexts/auth.md` | move | becomes the `auth` context page, first of the 10 context rules |
+| `cli/.claude/rules/07-quality/7-auth.md` | `.claude/rules/cli-contexts/auth.md` | move | done (auth pilot): the `auth` context page, first of the 10 context rules |
 | `-` | `.claude/rules/cli-contexts/*.md` | add | one page per context (tools, translate, installation, machine-claims, host-registration, distribution, auth, update, telemetry, recipes): reason to change, ports, suppliers; each lands with its context |
-| `-` | `.claude/rules/cli-contexts/reference-context.md` | add | proposal: location chosen so it loads with any context edit; extracted from the `auth` pilot (layout, command, kit and contract-suite templates, naming, exceptions) |
+| `-` | `.claude/rules/cli-contexts/reference-context.md` | add | done (auth pilot): extracted from the `auth` pilot (layout, command, domain, kit and contract-suite templates, naming, rules, exceptions, test challenge pass) |
 | `-` | `.claude/rules/cli-tests.md` | add | tests grid (8 points), naming, one subject per file, relevance rule; `paths: cli/tests/**` |
 | `-` | `.claude/rules/plugin-skills.md` | add | skills grid (7 points), conventions R1 to R19 as a pointer to the existing reference; `paths: plugins/*/skills/**` |
 | `cli/.claude/skills/tools/*` | `cli/.claude/skills/tools/*` | keep | task skill; paths updated to `composition/tool-profiles/` |
@@ -77,7 +77,7 @@ Scope: `cli/` root configuration and tooling, `cli/scripts`, `cli/.claude`, `cli
 | `cli/aidd_docs/memory/deployment.md` | `cli/aidd_docs/memory/internal/deployment.md` | move | on demand, process context |
 | `cli/aidd_docs/memory/ecosystem.md` | `cli/aidd_docs/memory/internal/ecosystem.md` | move | on demand, process context |
 | `cli/aidd_docs/memory/cli.md` | `cli/aidd_docs/memory/internal/cli.md` | move | on demand, same cut as the root bank |
-| `cli/aidd_docs/memory/auth.md` | `cli/aidd_docs/memory/internal/auth.md` | move | proposal: context detail, on demand; duplicates the `auth` context rule page, merge at the pilot |
+| `cli/aidd_docs/memory/auth.md` | `cli/aidd_docs/memory/internal/auth.md` | move | done (auth pilot): context detail, on demand; the rule page points to it, the source order described there once |
 | `cli/aidd_docs/memory/telemetry.md` | `cli/aidd_docs/memory/internal/telemetry.md` | move | proposal: context detail, on demand |
 | `cli/aidd_docs/memory/README.md` | `cli/aidd_docs/memory/README.md` | keep | file list refreshed by the memory hook |
 | `cli/aidd_docs/memory/internal/*` | `cli/aidd_docs/memory/internal/*` | keep | smoke-real note and decisions stay |

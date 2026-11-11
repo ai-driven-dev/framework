@@ -120,7 +120,26 @@ export const ALLOWED = new Set([
   "framework->tools",
   "framework->distribution",
   "translate->tools",
+  // The token a fetch carries (`contract/token-provider.ts`), until each of the two splits
+  // from the host of the doctor and setup scenarios.
+  "distribution->auth",
+  "framework->auth",
 ]);
+
+/**
+ * The contexts whose interior is held by Biome's folder groups instead of the public-surface
+ * list in `context-boundary.arch.test.ts`: they publish `contract/` and `application/` and
+ * keep the three folders below to themselves and the composition root. The list is data for
+ * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
+ */
+export const HELD_BY_BIOME: readonly string[] = ["auth"];
+
+const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
+
+/** The groups that forbid a held context's interior to an importer that may reach the rest. */
+export function interiorGroupsOf(context: string): string[] {
+  return INTERIOR_FOLDERS.map((folder) => `**/${context}/${folder}/**`);
+}
 
 /**
  * Edges the chain forbids and the tree still has. The list may only shrink, and each entry
@@ -136,14 +155,14 @@ export const BASELINE: readonly {
   { edge: "distribution->framework", imports: 1, files: 1 },
   // The http client, the git token injection, the user-config directory and `atomicWriteFile`
   // are concrete: a real dependency on runtime, resolved by inverting them into ports.
-  { edge: "distribution->runtime", imports: 5, files: 3 },
+  { edge: "distribution->runtime", imports: 3, files: 2 },
   // Three framework orchestrators still name the prompt classes they are handed, type-only.
   // Inverting them into a port is a design change, so the edge is measured rather than moved.
   { edge: "framework->presentation", imports: 4, files: 3 },
   // Token provider, platform and latest-release resolver: interfaces a context may depend on,
   // sitting in the wrong place — a port two contexts need belongs in the kernel. Nothing
   // concrete crosses here.
-  { edge: "framework->runtime", imports: 8, files: 7 },
+  { edge: "framework->runtime", imports: 6, files: 6 },
 ];
 
 export function contextOf(file: string): string {
@@ -153,11 +172,13 @@ export function contextOf(file: string): string {
   if (file.startsWith("src/shared/")) return "shared";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/runtime/")) return "runtime";
+  if (file.startsWith("src/composition/")) return "composition";
   return "outside";
 }
 
-/** A layer a context may not depend on: the arrows run towards the kernel, never back. */
-export const BELOW_NOTHING = new Set(["presentation", "runtime"]);
+/** A layer a context may not depend on: the arrows run towards the kernel, never back. The
+ * composition wires every context and is imported by the composition root alone. */
+export const BELOW_NOTHING = new Set(["presentation", "runtime", "composition"]);
 
 export function isContext(name: string): boolean {
   return !BELOW_NOTHING.has(name) && !["kernel", "shared", "outside"].includes(name);
@@ -167,12 +188,13 @@ interface Crossing {
   readonly file: string;
   readonly from: string;
   readonly to: string;
-  /** `domain`, `application` or `infrastructure` — null when `file` is not itself under a
-   * context's own layer split (kernel, shared, presentation, runtime). */
-  readonly layer: "domain" | "application" | "infrastructure" | null;
+  /** `domain`, `application`, `infrastructure`, or a migrated context's `ports` or `contract`
+   * or null when `file` is not itself under a context's own layer split (kernel, shared,
+   * presentation, runtime). */
+  readonly layer: "domain" | "application" | "infrastructure" | "ports" | "contract" | null;
 }
 
-const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure)\//;
+const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure|ports|contract)\//;
 
 /** Whether an import from one layer to another is an edge worth naming. Presentation and
  * runtime may reach down, so only the reverse is one. */

@@ -67,6 +67,7 @@
     "install:local": "pnpm run pack:local && npm install -g ./dist/ai-driven-dev-cli-$(node -p \"require('./package.json').version\").tgz --force",
     "test:mutation": "node scripts/run-mutation.mjs",
     "test:mutation:kernel": "node scripts/run-mutation.mjs kernel",
+    "test:mutation:auth": "node scripts/run-mutation.mjs auth",
     "test:mutation:tools": "node scripts/run-mutation.mjs tools",
     "test:mutation:tools-antigravity": "node scripts/run-mutation.mjs tools-antigravity",
     "test:mutation:tools-claude": "node scripts/run-mutation.mjs tools-claude",

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
 import type { MarketplaceRefresh } from "../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFramework } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
 import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
@@ -17,7 +18,6 @@ import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.
 import { CatalogFetchAuthError } from "../../../../src/kernel/errors.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import type { TokenProvider } from "../../../../src/runtime/auth/ports/token-provider.js";
 import type { LatestReleaseResolver } from "../../../../src/runtime/self-update/latest-release-resolver.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";

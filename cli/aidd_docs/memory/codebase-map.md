@@ -4,7 +4,14 @@ Where things live. The architecture rules carry no paths on purpose, so this is 
 
 ```txt
 src/
+├── composition/    # one wiring module per migrated context, composed by the root until it moves here
 ├── contexts/    # bounded contexts — no barrel, nothing reaches inside another
+│   ├── auth/    # the one GitHub token: where it is read, stored and checked
+│   │   ├── application/
+│   │   ├── contract/
+│   │   ├── domain/
+│   │   ├── infrastructure/
+│   │   └── ports/
 │   ├── distribution/    # where content comes from and how it is fetched
 │   │   ├── application/
 │   │   ├── domain/
@@ -100,8 +107,6 @@ src/
 │   └── prompts/    # asking the user; the decision stays in the context
 └── runtime/    # technical services that are not a context
     ├── assets/
-    ├── auth/
-    │   └── ports/
     ├── filesystem/
     ├── git/
     ├── platform/
@@ -113,11 +118,12 @@ src/
 
 ## Areas
 
+- `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it.
 - `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
-- `src/contexts/`: the five bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
+- `src/contexts/`: the six bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
-- `src/runtime/`: services that are not a context — git, auth, assets, filesystem, self-update — and the wiring that composes everything.
+- `src/runtime/`: services that are not a context — git, assets, filesystem, self-update — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
 - `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.
@@ -136,6 +142,7 @@ src/
 | a use case | the context whose concept it serves. There is no landing zone: one that fits nowhere means the contexts are wrong |
 | a tool | one profile directory under `contexts/tools/domain/profiles/` |
 | a transform shared by two profiles | `contexts/tools/domain/formats/`; used by one, that profile's own directory |
-| a port used by one context | that context's `domain/ports/`, adapter in its `infrastructure/` |
+| a port used by one context | that context's `domain/ports/` (`ports/` in a migrated context), adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |
 | a runtime service | `runtime/<service>/`, wired from `runtime/wiring/` |
+| a migrated context's wiring | `composition/<context>.ts`, called by `runtime/wiring/framework.ts` |

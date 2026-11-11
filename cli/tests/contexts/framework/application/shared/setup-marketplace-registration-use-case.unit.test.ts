@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
 import type { MarketplaceRefresh } from "../../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFramework } from "../../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
 import { MarketplaceSourceMode } from "../../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
@@ -9,7 +10,6 @@ import { SetupFlow } from "../../../../../src/contexts/framework/domain/setup-fl
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import { CatalogFetchAuthError } from "../../../../../src/kernel/errors.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
-import type { TokenProvider } from "../../../../../src/runtime/auth/ports/token-provider.js";
 import type { LatestReleaseResolver } from "../../../../../src/runtime/self-update/latest-release-resolver.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";

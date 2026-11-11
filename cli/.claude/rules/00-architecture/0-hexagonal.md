@@ -24,7 +24,7 @@ Which context owns a concept is `0-contexts.md`.
 
 ## Ports and adapters
 
-- One context: `domain/ports/`. Two: `shared/ports/`.
+- One context: `domain/ports/`, or `ports/` beside `domain/` in a migrated context (`reference-context.md`). Two: `shared/ports/`.
 - Name an adapter `*Adapter`, in `infrastructure/`; `shared/infrastructure/` for a shared port.
 - An adapter does I/O and format translation only.
 - Inject through the constructor, typed as the port.

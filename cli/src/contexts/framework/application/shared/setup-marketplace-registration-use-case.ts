@@ -3,9 +3,9 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { PluginSource } from "../../../../kernel/source.js";
-import type { TokenProvider } from "../../../../runtime/auth/ports/token-provider.js";
 import type { LatestReleaseResolver } from "../../../../runtime/self-update/latest-release-resolver.js";
 import type { Environment } from "../../../../shared/ports/environment.js";
+import type { TokenProvider } from "../../../auth/contract/token-provider.js";
 import type { MarketplaceRefresh } from "../../../distribution/application/marketplace-refresh-use-case.js";
 import type {
   MarketplaceRegisterFramework,

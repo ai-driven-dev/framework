@@ -125,4 +125,41 @@ describe("FileAdapter, at the edges", () => {
       }
     );
   });
+
+  describe("isExecutable()", () => {
+    it.skipIf(process.platform === "win32")(
+      "tells a file its owner may run from one it may not, and from one that is absent",
+      async () => {
+        const runnable = join(tempDir, "runnable");
+        const plain = join(tempDir, "plain");
+        await writeFile(runnable, "#!/bin/sh\n");
+        await writeFile(plain, "#!/bin/sh\n");
+        await chmod(runnable, 0o755);
+        await chmod(plain, 0o644);
+
+        expect(await fs.isExecutable(runnable)).toBe(true);
+        expect(await fs.isExecutable(plain)).toBe(false);
+        expect(await fs.isExecutable(join(tempDir, "absent"))).toBe(false);
+      }
+    );
+  });
+
+  describe("mergeJsonFile()", () => {
+    it("merges the incoming keys into the file on disk, the framework's value winning a conflict", async () => {
+      const path = join(tempDir, "nested", "settings.json");
+      await fs.writeFile(path, JSON.stringify({ kept: "user", shared: "user" }));
+
+      await fs.mergeJsonFile(
+        path,
+        JSON.stringify({ added: "framework", shared: "framework" }),
+        "framework-prime"
+      );
+
+      expect(JSON.parse(await readFile(path, "utf-8"))).toStrictEqual({
+        kept: "user",
+        shared: "framework",
+        added: "framework",
+      });
+    });
+  });
 });
