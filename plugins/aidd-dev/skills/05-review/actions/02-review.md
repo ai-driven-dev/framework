@@ -4,7 +4,7 @@ Review the diff.
 
 ## Input
 
-The diff, the need and the axes.
+The diff, the need, the axes, and the plan, criteria, task folder or evidence if any.
 
 ## Process
 
@@ -18,4 +18,4 @@ The diff, the need and the axes.
 
 ## Output
 
-The findings, the limits and the criteria.
+The findings, the assumptions, the limits and the criteria, with the diff, the axes and the task folder if any.

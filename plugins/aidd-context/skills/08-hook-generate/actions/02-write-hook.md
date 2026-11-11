@@ -4,7 +4,7 @@ Write the hook's entry for each confirmed tool, merged into the chosen scope, an
 
 ## Input
 
-From 01: the moment, script, matcher, scope, confirmed tools, and write mode.
+From 01: the moment, script, matcher, scope with its plugin or file, confirmed tools, and write mode.
 
 ## Process
 
