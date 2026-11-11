@@ -75,14 +75,14 @@ function goneLines(previous, bankDir, approvals) {
   // Both sides: a move approved and not made yet still names its old path on disk.
   const now = moved(markdownUnder(bankDir).map((file) => fs.readFileSync(path.join(bankDir, file), "utf8")).join("\n"));
   const held = tally(now.split("\n").map(collapse));
-  const before = previous.flatMap(({ file, text }) =>
-    moved(text)
-      .split("\n")
-      .map(collapse)
-      // A heading holds no fact: one left empty by approved removals is no loss.
-      .filter((line) => line !== "" && !line.startsWith("#"))
-      .map((line) => ({ file, line })),
-  );
+  const SEPARATOR = /^\|[\s|:-]+\|$/u;
+  // A heading or a table header holds no fact: one left empty by approved removals is no loss.
+  const before = previous.flatMap(({ file, text }) => {
+    const lines = moved(text).split("\n").map(collapse);
+    return lines
+      .filter((line, at) => line !== "" && !line.startsWith("#") && !SEPARATOR.test(line) && !SEPARATOR.test(lines[at + 1] ?? ""))
+      .map((line) => ({ file, line }));
+  });
   const changed = before.filter(({ line }) => {
     if ((held.get(line) ?? 0) === 0) return true;
     held.set(line, held.get(line) - 1);

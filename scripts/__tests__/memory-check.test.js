@@ -665,10 +665,11 @@ test("report, lost lines: a line moved within its file or to another bank file i
   assert.equal(twice.run.stdout, "vcs.md: - duplicate\n");
 });
 
-test("report, lost lines: a heading left empty by approved removals is not a lost fact", () => {
-  const before = { "vcs.md": "# V\n\n## Conventions\n\n- release pipeline\n" };
+test("report, lost lines: a heading or a table header left empty by approved removals is not a lost fact", () => {
+  const before = { "vcs.md": "# V\n\n## Conventions\n\n- release pipeline\n\n| Change | Deployment |\n| --- | --- |\n| release pipeline | staging |\n" };
   const after = { "vcs.md": "# V\n" };
-  assert.equal(lostLines(before, after, [approve("- release pipeline")]).run.stdout, "");
+  const approvals = [approve("- release pipeline"), dline("D2", "vcs.md > Setup", 'remove "| release pipeline | staging |"', "yes")];
+  assert.equal(lostLines(before, after, approvals).run.stdout, "");
 });
 
 // A real bank wraps its prose at a fixed width: a line is a piece of a sentence, and an approved
