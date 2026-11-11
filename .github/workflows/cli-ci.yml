@@ -357,6 +357,45 @@ jobs:
       # Inference uses a deterministic loopback endpoint; no provider account is needed.
       - name: Install Kilo Code CLI
         run: npm install -g @kilocode/cli@7.7.5
+      - name: Diagnose Kilo installation (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host '--- kilo command resolution ---'
+          where.exe kilo 2>$null
+          if ($LASTEXITCODE -ne 0) { Write-Host 'where.exe found no kilo command' }
+          Get-Command kilo -All -ErrorAction SilentlyContinue |
+            Select-Object Name, Source, CommandType | Format-List
+          Write-Host '--- npm global roots ---'
+          $globalRoot = (npm root -g).Trim()
+          npm prefix -g
+          Write-Host "npm root -g: $globalRoot"
+          Write-Host '--- allowlisted path environment ---'
+          foreach ($name in @('APPDATA', 'USERPROFILE', 'NPM_CONFIG_PREFIX')) {
+            $value = [Environment]::GetEnvironmentVariable($name)
+            if ($value) { Write-Host "$name=$value" }
+          }
+          Write-Host '--- @kilocode package files ---'
+          $scope = Join-Path $globalRoot '@kilocode'
+          if (Test-Path $scope) {
+            Get-ChildItem $scope -Directory -Recurse | Where-Object {
+              $_.Name -eq 'cli' -or $_.Name -like 'cli-windows-*'
+            } | ForEach-Object { Write-Host "package: $($_.FullName)" }
+            Get-ChildItem $scope -Filter kilo.exe -File -Recurse | ForEach-Object {
+              Write-Host "binary: $($_.FullName)"
+              $wasm = Join-Path $_.DirectoryName 'tree-sitter\tree-sitter.wasm'
+              Write-Host "Tree-sitter WASM: $wasm exists=$(Test-Path $wasm)"
+            }
+          } else {
+            Write-Host "Missing npm scope directory: $scope"
+          }
+          Write-Host '--- command shim ---'
+          $shim = Get-Command kilo -All -ErrorAction SilentlyContinue |
+            Where-Object { $_.Source -like '*.cmd' } | Select-Object -First 1
+          if ($shim) {
+            Write-Host "shim: $($shim.Source)"
+            Get-Content $shim.Source
+          }
       - run: cd cli && pnpm test:e2e:kilo
       - run: cd cli && pnpm test:e2e:kilo:native
 

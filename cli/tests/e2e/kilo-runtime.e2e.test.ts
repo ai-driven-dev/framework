@@ -10,6 +10,8 @@ import { KILO_BIN, KILO_ENV, KILO_SHELL } from "./helpers/kilo-cli.js";
 import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js";
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
+const phase = (name: string) =>
+  process.stderr.write(`[kilo-runtime] ${new Date().toISOString()} ${name}\n`);
 
 function deferred<T>(): {
   promise: Promise<T>;
@@ -34,6 +36,7 @@ async function markerContent(path: string): Promise<string> {
 }
 
 async function localModel() {
+  phase("local model: creating server");
   const requests: Array<{ messages: Array<{ role: string; content: unknown }> }> = [];
   let readSent = false;
   const server = createServer((request, response) => {
@@ -81,6 +84,7 @@ async function localModel() {
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
   if (address === null || typeof address === "string") throw new Error("Missing model port");
+  phase("local model: listening");
   return { server, requests, url: `http://127.0.0.1:${address.port}/v1` };
 }
 
@@ -94,6 +98,7 @@ function alive(pid: number): boolean {
 }
 
 async function startKilo(directory: string, env: NodeJS.ProcessEnv) {
+  phase("Kilo server: spawning");
   const child = spawn(KILO_BIN, ["serve", "--hostname", "127.0.0.1", "--port", "0"], {
     cwd: directory,
     env,
@@ -117,6 +122,7 @@ async function startKilo(directory: string, env: NodeJS.ProcessEnv) {
   const timer = setTimeout(() => output.reject(new Error(`Kilo did not start:\n${text}`)), 15000);
   try {
     const port = await output.promise;
+    phase(`Kilo server: listening on port ${port}`);
     return { child, port };
   } catch (error) {
     await stopKilo(child);
@@ -159,11 +165,14 @@ async function stopKilo(child: ReturnType<typeof spawn>): Promise<void> {
 
 describeKiloRuntime("E2E: real Kilo runtime", () => {
   it("runs memory and declared hooks exactly once through a real local read-tool turn", async () => {
+    phase("test: creating temporary environment");
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("kilo-runtime");
     let child: ReturnType<typeof spawn> | undefined;
     let kiloUrl: string | undefined;
+    phase("test: creating local model");
     const model = await localModel();
     try {
+      phase("build: primary generated project");
       const generatedProject = join(tempDir, "generated");
       await mkdir(generatedProject, { recursive: true });
       const config = {
@@ -186,6 +195,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         projectDir,
         fakeHome
       );
+      phase("build: primary generated project complete");
       expect(build.exitCode, build.stderr).toBe(0);
       expect(JSON.parse(await readFile(configPath, "utf8"))).toMatchObject(config);
 
@@ -230,8 +240,10 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
           })
         ).filter(([key]) => allowed.has(key))
       );
+      phase("Kilo CLI: version");
       const version = await execFileAsync(KILO_BIN, ["--version"], { env, shell: KILO_SHELL });
       expect(version.stdout.trim()).toBe("7.7.5");
+      phase("Kilo CLI: debug skill");
       const skills = await execFileAsync(KILO_BIN, ["debug", "skill"], {
         cwd: generatedProject,
         env,
@@ -250,6 +262,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         ).length
       ).toBe(generatedSkillFiles);
 
+      phase("Kilo CLI: agent list (generated project)");
       const agents = await execFileAsync(KILO_BIN, ["agent", "list"], {
         cwd: generatedProject,
         env,
@@ -262,6 +275,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
 
       const mcpProject = join(tempDir, "generated-mcp");
       await mkdir(mcpProject, { recursive: true });
+      phase("build: MCP fixture");
       const mcpBuild = await runCli(
         [
           "translate",
@@ -276,7 +290,9 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         projectDir,
         fakeHome
       );
+      phase("build: MCP fixture complete");
       expect(mcpBuild.exitCode, mcpBuild.stderr).toBe(0);
+      phase("Kilo CLI: agent list (MCP fixture)");
       const fixtureAgents = await execFileAsync(KILO_BIN, ["agent", "list"], {
         cwd: mcpProject,
         env,
@@ -284,6 +300,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         maxBuffer: 8 * 1024 * 1024,
       });
       expect(fixtureAgents.stdout).toContain("aidd-test-code-reviewer");
+      phase("Kilo CLI: mcp list");
       const mcp = await execFileAsync(KILO_BIN, ["mcp", "list"], {
         cwd: mcpProject,
         env,
@@ -343,6 +360,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
           },
         })
       );
+      phase("build: hook proof project");
       const proofBuild = await runCli(
         ["translate", proofSource, "--to", "kilo", "--as", "flat", "--out", generatedProject],
         projectDir,
@@ -358,9 +376,11 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
       );
 
       const deliveredConfig = await readFile(configPath, "utf8");
+      phase("Kilo server: startup");
       const started = await startKilo(generatedProject, env);
       child = started.child;
       kiloUrl = `http://127.0.0.1:${started.port}`;
+      phase("Kilo runtime: local model turn and hooks");
       const run = await execFileAsync(
         KILO_BIN,
         [
@@ -385,6 +405,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         }
       );
       expect(run.stdout).toContain("KILO_LOCAL_READ_CONFIRMED");
+      phase("Kilo runtime: checking model payload and generated memory");
       expect(model.requests.flatMap((request) => request.messages)).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -406,6 +427,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         })
         .toBe(3);
       await stopKilo(child);
+      phase("Kilo server: stopped; validating events and hook processes");
       child = undefined;
       const events = (await readFile(eventPath, "utf8"))
         .trim()
@@ -449,6 +471,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
       for (const call of calls) await expect.poll(() => alive(call.pid)).toBe(false);
       expect(await readFile(configPath, "utf8")).toBe(deliveredConfig);
     } finally {
+      phase("cleanup: stopping processes and closing local model");
       try {
         if (child) await stopKilo(child);
         if (kiloUrl)
@@ -462,6 +485,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
           expect(model.server.listening).toBe(false);
         } finally {
           await cleanup();
+          phase("cleanup: temporary environment removed");
         }
       }
     }
