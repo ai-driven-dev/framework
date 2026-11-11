@@ -502,6 +502,16 @@ Acceptance: Appendix B and the verdict filled; `git status --short` shows the pl
 
 Filled in phases 2, 6 and 7: one row per test before and after (file and title, behaviour pinned, pre-filter flags, verdict, target, proof), then the counts per bucket.
 
+Phase 2 characterization proofs (slice plus new files, run through the sandbox):
+
+| Test | Break applied | What went red |
+| --- | --- | --- |
+| C1 `tests/runtime/wiring/registered-tools.integration.test.ts`, registration order of the real composition (integration: it imports `runtime/wiring/framework.ts`, the composition, like `create-deps.integration.test.ts`) | swap the antigravity and claude side-effect imports in `runtime/wiring/framework.ts` | only C1 (1 failed, 610 passed) |
+| C2 `tests/runtime/assets/asset-loader-config-assets.unit.test.ts`, config assets per tool through the wired `BundledAssetProviderAdapter` (unit: no fs, no process) | `antigravity: { "settings.json": claudeSettings }` in `CONFIG_ASSETS` | only C2, its antigravity case (1 failed, 7 passed in the file; no other slice file red) |
+| C3 set of registered tools equals `AI_TOOL_IDS` plus `IDE_TOOL_IDS` | `IDE_TOOL_IDS = []` in `kernel/tool.ts`: C3 red together with 3 tests of `tool-config.unit.test.ts` (4 failed). Deleting the vscode import in `framework.ts`: nothing red, vscode still registers through another import | dropped: another test goes red for the kernel-side break and no registry-side break was found that C3 alone catches (relevance rule); not written |
+
+Slice plus kept new files: 610 tests in 78 files (601 baseline, 1 for C1, 8 for C2).
+
 ## Appendix B: after measures
 
 Filled in phase 11, one row per line of "Before and after", with the command output that gives it.
