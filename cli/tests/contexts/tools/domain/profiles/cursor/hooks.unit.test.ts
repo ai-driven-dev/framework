@@ -14,7 +14,7 @@ function flatFile() {
 }
 
 function projectFormat() {
-  const format = cursor.capabilities.plugins.projectHooksDelivery()?.format;
+  const format = cursor.section("plugins").projectHooksDelivery()?.format;
   if (format === undefined) throw new Error("no project hooks");
   return format;
 }

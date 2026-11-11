@@ -16,15 +16,15 @@ export interface ContentSectionCapability {
 }
 
 /**
- * Per-section behaviour no uniform signature can express. `key` also drives which capability is
- * read off `toolConfig.capabilities`, keeping K, Cap and the toolConfig type correlated through
- * generics instead of an `as` cast at the call site.
+ * Per-section behaviour no uniform signature can express. `capabilityOf` names the section this
+ * descriptor reads, keeping K, Cap and the toolConfig type correlated through generics instead of
+ * an `as` cast at the call site.
  */
 export interface ContentSectionDescriptor<
   K extends UserFileSection,
   Cap extends ContentSectionCapability,
 > {
-  readonly key: K;
+  capabilityOf(tool: AiTool<Record<K, Cap>>): Cap;
   acceptsFileName(cap: Cap, fileName: string): boolean;
   convertFrontmatter(
     cap: Cap,
@@ -53,7 +53,7 @@ export class InstallContentSectionUseCase<
 
   execute(options: InstallContentSectionOptions<K, Cap>): InstallationFile[] {
     const { toolConfig, section, contentFiles } = options;
-    const cap = toolConfig.capabilities[this.descriptor.key];
+    const cap = this.descriptor.capabilityOf(toolConfig);
     const results: InstallationFile[] = [];
     for (const [filePath, rawContent] of contentFiles) {
       const file = this.processFile(filePath, rawContent, section, cap, toolConfig);

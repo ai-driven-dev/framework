@@ -57,7 +57,7 @@ describe("defineAiTool", () => {
       }),
     });
 
-    expect(tool.capabilities.commands.buildInstallPath("run.claude.md")).toBe(".x/commands/run.md");
+    expect(tool.section("commands").buildInstallPath("run.claude.md")).toBe(".x/commands/run.md");
   });
 
   it("answers a declared section, and null for one it does not declare", () => {
@@ -67,11 +67,11 @@ describe("defineAiTool", () => {
     expect(tool.section("mcp")).toBeNull();
   });
 
-  it("answers from the capabilities of a copy that replaces them", () => {
-    const tool = defineAiTool({ ...aiSpec, capabilities: () => ({ settings }) });
-    const copy: AiTool = { ...tool, capabilities: {} };
+  it("answers from its own sections once detached from the profile", () => {
+    const { section } = defineAiTool({ ...aiSpec, capabilities: () => ({ settings }) });
 
-    expect(copy.section("settings")).toBeNull();
+    expect(section("settings")).toBe(settings);
+    expect(section("mcp")).toBeNull();
   });
 
   it("refuses an id no AI tool carries", () => {
@@ -113,7 +113,7 @@ describe("defineAiTool", () => {
   });
 
   it("is the only way to a branded profile", () => {
-    const literal: AiTool = { ...defineAiTool(aiSpec), capabilities: {} };
+    const literal: AiTool = { ...defineAiTool(aiSpec), section: () => null };
 
     // @ts-expect-error a literal profile lacks the brand, so it cannot sit in the registration list
     const branded: ProfileBrand = literal;

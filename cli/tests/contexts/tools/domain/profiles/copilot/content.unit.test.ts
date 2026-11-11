@@ -144,7 +144,7 @@ describe("a reference to another framework file, installed for Copilot", () => {
 
   describe("capabilities.plugins", () => {
     it("declares where copilot's own user-scope settings file lives, for --scope user", () => {
-      const activation = copilot.capabilities.plugins.activation();
+      const activation = copilot.section("plugins").activation();
       expect(activation?.userSettingsPath?.("/home/tester", () => undefined)).toBe(
         join("/home/tester", ".copilot", "settings.json")
       );

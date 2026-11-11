@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasRules } from "../../../../../../src/contexts/tools/domain/contracts.js";
+import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domain/profile/profile-sections.js";
 import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
@@ -23,14 +24,14 @@ describe("antigravity", () => {
   });
 
   it("accepts the skills it installed and no other host's", () => {
-    expect(antigravity.capabilities.skills.accepts(".agents/skills/aidd-01-plan/SKILL.md")).toBe(
+    expect(antigravity.section("skills").accepts(".agents/skills/aidd-01-plan/SKILL.md")).toBe(
       true
     );
-    expect(antigravity.capabilities.skills.accepts(".kilo/skills/x/SKILL.md")).toBe(false);
+    expect(antigravity.section("skills").accepts(".kilo/skills/x/SKILL.md")).toBe(false);
   });
 
   it("is a flat host merging plugin hooks into .agents/hooks.json, scripts under .agents/hooks/", () => {
-    const plugins = antigravity.capabilities.plugins;
+    const plugins = antigravity.section("plugins");
     expect({
       mode: plugins.buildMode(),
       flatLayout: plugins.flatLayout(),
@@ -48,10 +49,13 @@ describe("antigravity", () => {
       deliversHooksToProject: true,
       projectHooksRelativePath: ".agents/hooks.json",
     });
-    expect(antigravity.capabilities.plugins.projectHooksDelivery()?.format.merge).toBe(
+    expect(antigravity.section("plugins").projectHooksDelivery()?.format.merge).toBe(
       mergeAntigravityHooks
     );
-    expect(Object.keys(antigravity.capabilities).sort()).toEqual(["plugins", "skills"]);
+    expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
+      "plugins",
+      "skills",
+    ]);
   });
 });
 

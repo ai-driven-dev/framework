@@ -24,7 +24,7 @@ export type ProfileSectionKey = keyof ProfileSections;
 /** What a declared section is: the type under `key`, without the `undefined` of an absent one. */
 export type ProfileSection<K extends ProfileSectionKey> = NonNullable<ProfileSections[K]>;
 
-const SECTION_KEYS: readonly string[] = [
+export const PROFILE_SECTION_KEYS: readonly ProfileSectionKey[] = [
   "agents",
   "skills",
   "commands",
@@ -33,8 +33,8 @@ const SECTION_KEYS: readonly string[] = [
   "hooks",
   "plugins",
   "settings",
-] satisfies ProfileSectionKey[];
+];
 
 export function isProfileSectionKey(name: string): name is ProfileSectionKey {
-  return SECTION_KEYS.includes(name);
+  return PROFILE_SECTION_KEYS.some((key) => key === name);
 }

@@ -78,13 +78,12 @@ function bind(directory: string, toolSuffix: string): BoundTool {
   };
 }
 
-/** Reads the section off the profile it is called on, so a copy that replaces `capabilities`
- * answers with its own. */
-function sectionOfProfile<K extends ProfileSectionKey>(
-  this: { readonly capabilities: ProfileSections },
-  key: K
-): ProfileSection<K> | null {
-  return this.capabilities[key] ?? null;
+/** Answers from the sections captured at construction, so the method survives being detached
+ * and no caller reads the record itself. */
+function sectionReader(
+  sections: ProfileSections
+): <K extends ProfileSectionKey>(key: K) => ProfileSection<K> | null {
+  return (key) => sections[key] ?? null;
 }
 
 function aiToolId(id: string): AiToolId {
@@ -111,7 +110,7 @@ export function defineAiTool<C extends ProfileSections>(
   refuseDirectory(toolId, spec.directory);
   new ToolSuffix(spec.toolSuffix);
   const contracts = spec.buildContracts;
-  if (contracts?.marketplace === undefined && contracts?.flat === undefined) {
+  if (contracts.marketplace === undefined && contracts.flat === undefined) {
     throw new InvalidToolProfileError(
       toolId,
       "no-build-contract",
@@ -120,12 +119,11 @@ export function defineAiTool<C extends ProfileSections>(
   }
   const capabilities = declare(bind(spec.directory, spec.toolSuffix));
   refuseUnknownSections(toolId, capabilities);
-  const profile: AiTool<C> = {
+  const profile = {
     ...fields,
     kind: "ai",
     toolId,
-    capabilities,
-    section: sectionOfProfile,
+    section: sectionReader(capabilities),
   };
   return profile as AiTool<C> & ProfileBrand;
 }
@@ -138,12 +136,11 @@ export function defineIdeTool<C extends ProfileSections>(
   refuseDirectory(toolId, spec.directory);
   const capabilities = declare();
   refuseUnknownSections(toolId, capabilities);
-  const profile: IdeToolConfig<C> = {
+  const profile = {
     ...fields,
     kind: "ide",
     toolId,
-    capabilities,
-    section: sectionOfProfile,
+    section: sectionReader(capabilities),
   };
   return profile as IdeToolConfig<C> & ProfileBrand;
 }

@@ -6,8 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
-const format = antigravity.capabilities.plugins.projectHooksDelivery()
-  ?.format as ProjectHooksFormat;
+const format = antigravity.section("plugins").projectHooksDelivery()?.format as ProjectHooksFormat;
 
 describe("Antigravity hook response", () => {
   let root: string;

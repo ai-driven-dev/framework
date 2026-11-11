@@ -9,7 +9,7 @@ import {
 } from "./install-content-section-use-case.js";
 
 const skillsDescriptor: ContentSectionDescriptor<"skills", SkillsCapability> = {
-  key: "skills",
+  capabilityOf: (tool) => tool.section("skills"),
   acceptsFileName: (cap, fileName) => cap.acceptsFileName(fileName),
   convertFrontmatter: (cap, frontmatter) => cap.convertFrontmatter(frontmatter),
 };

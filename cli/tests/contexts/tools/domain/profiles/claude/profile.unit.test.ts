@@ -60,7 +60,7 @@ describe("claude build and conversion tables", () => {
       "a description that opts out of always-apply": { description: "d" },
     })
   )("converts %s", (_case, frontmatter, expected) => {
-    expect(claude.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+    expect(claude.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });
 
@@ -85,7 +85,7 @@ describe("claude as the registry answers for it", () => {
   });
 
   it("installs its rules into .claude/rules/ as markdown", () => {
-    expect(claude.capabilities.rules.installedLocation()).toEqual({
+    expect(claude.section("rules").installedLocation()).toEqual({
       directory: ".claude/rules/",
       extension: ".md",
     });

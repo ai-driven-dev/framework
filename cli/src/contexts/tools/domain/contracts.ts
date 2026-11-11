@@ -31,6 +31,11 @@ export interface HasPlugins {
   readonly plugins: PluginsCapability;
 }
 
+/** The section keys a tool's own type declares, so asking for one needs no `null` check. */
+type DeclaredKey<C extends ProfileSections> = {
+  [K in ProfileSectionKey]-?: undefined extends C[K] ? never : K;
+}[ProfileSectionKey];
+
 export interface AiTool<C extends ProfileSections = ProfileSections> {
   readonly kind: "ai";
   readonly toolId: AiToolId;
@@ -40,13 +45,12 @@ export interface AiTool<C extends ProfileSections = ProfileSections> {
   readonly directory: string;
   readonly toolSuffix: string;
   readonly signalDir: string | null;
-  readonly capabilities: C;
   readonly configOutputPaths?: Readonly<Record<string, string>>;
   /** Bundled runtime modules required by plugins, owned by the tool rather than one plugin. */
   readonly pluginRuntimeFiles?: Readonly<Record<string, string>>;
   /** The tool's framework-build contracts, one per supported build mode, so the build registry
    * is derived from the registered tools instead of a hand-kept list of tool/mode pairs. */
-  readonly buildContracts?: {
+  readonly buildContracts: {
     readonly marketplace?: () => ToolBuildContract;
     readonly flat?: () => ToolBuildContract;
   };
@@ -59,7 +63,9 @@ export interface AiTool<C extends ProfileSections = ProfileSections> {
     readonly marketplace?: readonly string[];
   };
   rewriteContent(content: string): string;
-  /** The section declared under `key`, or `null` when the tool declares none. */
+  /** The section declared under `key`, or `null` when the tool declares none. A key the tool's
+   * own type declares answers without `null`. */
+  section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
 }
 
@@ -68,7 +74,7 @@ export interface IdeToolConfig<C extends ProfileSections = ProfileSections> {
   readonly toolId: IdeToolId;
   readonly directory: string;
   readonly signalDir: string | null;
-  readonly capabilities: C;
+  section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
 }
 

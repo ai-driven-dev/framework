@@ -4,19 +4,19 @@ import { codex } from "../../../../../../src/contexts/tools/domain/profiles/code
 describe("codex mcp", () => {
   describe("capabilities.mcp", () => {
     it("outputs to .codex/config.toml", () => {
-      expect(codex.capabilities.mcp.params.outputPath).toBe(".codex/config.toml");
+      expect(codex.section("mcp").params.outputPath).toBe(".codex/config.toml");
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.capabilities.mcp.params.mergeStrategy ?? "user-prime").toBe("user-prime");
+      expect(codex.section("mcp").params.mergeStrategy ?? "user-prime").toBe("user-prime");
     });
 
     it("uses mcp_servers as entry section", () => {
-      expect(codex.capabilities.mcp.params.entrySection).toBe("mcp_servers");
+      expect(codex.section("mcp").params.entrySection).toBe("mcp_servers");
     });
 
     it("writes its config in TOML", () => {
-      expect(codex.capabilities.mcp.params.format).toBe("toml");
+      expect(codex.section("mcp").params.format).toBe("toml");
     });
   });
 });

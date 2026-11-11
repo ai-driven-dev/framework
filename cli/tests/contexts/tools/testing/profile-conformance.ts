@@ -11,6 +11,7 @@ import { McpCapability } from "../../../../src/contexts/tools/domain/capabilitie
 import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { RulesCapability } from "../../../../src/contexts/tools/domain/capabilities/rules-capability.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
+import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile/profile-sections.js";
 import { isAiTool, type ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
 
@@ -32,11 +33,8 @@ export function capability<T>(
   key: string,
   type: abstract new (...args: never[]) => T
 ): T | undefined {
-  const capabilities = profile.capabilities;
-  if (typeof capabilities !== "object" || capabilities === null || !(key in capabilities)) {
-    return undefined;
-  }
-  const value: unknown = Reflect.get(capabilities, key);
+  if (!isProfileSectionKey(key)) return undefined;
+  const value: unknown = profile.section(key);
   return value instanceof type ? value : undefined;
 }
 

@@ -4,8 +4,8 @@
  * hold only what their own way needs. A field read from outside re-couples a caller to a
  * variant's shape, and the shape is free to change.
  *
- * Two doors lead to the capability from outside the tools context: the typed section
- * (`tool.capabilities.plugins`) and the catalog resolver (`resolvePluginsCapability(id)`).
+ * Two doors lead to the capability from outside the tools context: the section a profile
+ * answers (`tool.section("plugins")`) and the catalog resolver (`resolvePluginsCapability(id)`).
  * Both are watched for a property read or a destructuring. A capability held in a variable and
  * read from there is out of this test's sight; the private modifier on the fields is what
  * stops that one.
@@ -25,7 +25,7 @@ const PLUGINS_FILES = [
   "src/contexts/tools/domain/plugins/unsupported-plugins.ts",
 ];
 
-const DOORS = String.raw`(?:capabilities\.plugins|resolvePluginsCapability\([^)]*\)|PluginsCapability\))`;
+const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|PluginsCapability\))`;
 const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(\w+)\b(?!\s*\()`, "g");
 const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
 
@@ -79,14 +79,19 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
   it("sees a read and a destructuring where one is written", () => {
     const written = [
-      "const a = tool.capabilities.plugins.acceptsMcp;",
-      "const { hookScript } = tool.capabilities.plugins;",
+      'const a = tool.section("plugins").acceptsMcp;',
+      'const b = tool.section("plugins")?.acceptsMcp;',
+      'const { hookScript } = tool.section("plugins");',
+      "const c = catalog.resolvePluginsCapability(id).acceptsMcp;",
     ];
     const found = written.map((line) => [...line.matchAll(FIELD_READ)].length);
     const destructured = written.map((line) => [...line.matchAll(DESTRUCTURING)].length);
     expect([found, destructured]).toEqual([
-      [1, 0],
-      [0, 1],
+      [1, 1, 0, 1],
+      [0, 0, 1, 0],
     ]);
+
+    const asked = 'const d = tool.section("plugins").buildMode();';
+    expect([...asked.matchAll(FIELD_READ)]).toHaveLength(0);
   });
 });

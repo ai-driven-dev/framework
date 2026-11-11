@@ -20,8 +20,7 @@ const CONTRACTS: ReadonlyArray<[AiToolId, () => { pluginRootToken?: string | nul
 ];
 
 function pluginsOf(tool: AiToolId): PluginsCapability | undefined {
-  const capabilities = getAiToolConfig(tool).capabilities as { plugins?: PluginsCapability };
-  return capabilities.plugins;
+  return getAiToolConfig(tool).section("plugins") ?? undefined;
 }
 
 describe("the route that builds a marketplace bundle", () => {

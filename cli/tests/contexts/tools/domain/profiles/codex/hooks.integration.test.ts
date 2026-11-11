@@ -8,19 +8,19 @@ import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
 describe("codex hooks", () => {
   describe("capabilities.hooks", () => {
     it("outputs to .codex/hooks.json", () => {
-      expect(codex.capabilities.hooks.buildOutputPath()).toBe(".codex/hooks.json");
+      expect(codex.section("hooks").buildOutputPath()).toBe(".codex/hooks.json");
     });
 
     it("consumes the codex-hooks config name", () => {
-      expect(codex.capabilities.hooks.consumes).toContain("codex-hooks");
+      expect(codex.section("hooks").consumes).toContain("codex-hooks");
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.capabilities.hooks.getMergeStrategy()).toBe("user-prime");
+      expect(codex.section("hooks").getMergeStrategy()).toBe("user-prime");
     });
 
     it("uses SessionStart as entry section", () => {
-      expect(codex.capabilities.hooks.getEntrySection()).toBe("SessionStart");
+      expect(codex.section("hooks").getEntrySection()).toBe("SessionStart");
     });
   });
 });

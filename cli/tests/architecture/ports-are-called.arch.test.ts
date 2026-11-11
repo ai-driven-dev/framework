@@ -148,7 +148,7 @@ function namesCapability(receiver: string, key: string): boolean {
 /**
  * A method is called through `this.m(` in its class's own file, or `<receiver>.m(` elsewhere
  * whose receiver names the capability, or whose receiver is a call to a `…Capability`
- * resolver (`resolvePluginsCapability(id)?.m(`). A getter is read without the parentheses; a
+ * resolver (`resolvePluginsCapability(id)?.m(`) or to `section` with its key (`tool.section("rules").m(`). A getter is read without the parentheses; a
  * static is called on the class itself.
  */
 function uncalledCapabilityMethods(
@@ -173,7 +173,12 @@ function uncalledCapabilityMethods(
             if (caller === file && receiver === "this") return true;
             if (caller === file) return false;
             if (isStatic) return receiver === className;
-            if (match[2] !== undefined) return /Capability$/.test(receiver);
+            if (match[2] !== undefined) {
+              return (
+                /Capability$/.test(receiver) ||
+                (receiver === "section" && match[2] === `("${key}")`)
+              );
+            }
             return namesCapability(receiver, key);
           })
         );

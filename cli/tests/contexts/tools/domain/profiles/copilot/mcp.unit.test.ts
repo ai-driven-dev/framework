@@ -4,13 +4,13 @@ import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/co
 describe("copilot mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps mcp to .vscode/mcp.json", () => {
-      expect(copilot.capabilities.mcp.params.outputPath).toBe(".vscode/mcp.json");
+      expect(copilot.section("mcp").params.outputPath).toBe(".vscode/mcp.json");
     });
   });
 
   describe("capabilities.mcp.params.transformContent()", () => {
     const transform = (content: string): string | undefined =>
-      copilot.capabilities.mcp.params.transformContent?.(content);
+      copilot.section("mcp").params.transformContent?.(content);
 
     it("renames mcpServers to the servers key VS Code reads, keeping every other key", () => {
       const content = JSON.stringify({ mcpServers: { ctx: { command: "node" } }, inputs: [] });

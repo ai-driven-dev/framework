@@ -34,7 +34,7 @@ const OPEN = "<!-- aidd_project_memory:start -->";
 const CLOSE = "<!-- aidd_project_memory:end -->";
 const LINK = "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)";
 
-const plugins = antigravity.capabilities.plugins;
+const plugins = antigravity.section("plugins");
 
 function filesUnder(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })

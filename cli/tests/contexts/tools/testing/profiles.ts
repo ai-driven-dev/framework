@@ -6,13 +6,17 @@ import {
   PluginsCapability,
   type ProjectHooksFormat,
 } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
 import {
   defineAiTool,
   defineIdeTool,
   type ProfileBrand,
 } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
-import { ToolCatalog, type ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
+import {
+  type BuiltToolConfig,
+  ToolCatalog,
+} from "../../../../src/contexts/tools/domain/registry.js";
 import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
@@ -20,6 +24,7 @@ export type KitCapabilities = {
   readonly plugins?: PluginsCapability;
   readonly mcp?: McpCapability;
   readonly commands?: CommandsCapability;
+  readonly settings?: SettingsCapability | SettingsCapability[];
 };
 
 type Contracts = NonNullable<AiTool<KitCapabilities>["buildContracts"]>;
@@ -85,6 +90,7 @@ export function nativePlugins(extra: Partial<NativePluginsParams> = {}): Plugins
 
 export class ProfileBuilder {
   private directory = ".fake/";
+  // Neither `.md` nor a real tool's own suffix, so a kit file is never mistaken for a built one.
   private toolSuffix = ".fake.md";
   private signalDir: string | null = null;
   private capabilities: KitCapabilities = { plugins: flatPlugins("refuses") };
@@ -117,6 +123,11 @@ export class ProfileBuilder {
 
   withCommands(commands: CommandsCapability): this {
     this.capabilities = { ...this.capabilities, commands };
+    return this;
+  }
+
+  withSettings(settings: SettingsCapability | SettingsCapability[]): this {
+    this.capabilities = { ...this.capabilities, settings };
     return this;
   }
 
@@ -169,7 +180,7 @@ export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig & Prof
   });
 }
 
-export function aCatalog(...profiles: readonly ToolConfig[]): ToolCatalog {
+export function aCatalog(...profiles: readonly BuiltToolConfig[]): ToolCatalog {
   return new ToolCatalog(profiles);
 }
 
@@ -177,12 +188,8 @@ export type InstallKind = "skills" | "agents" | "commands" | "rules";
 type Installs = { buildInstallPath(fileName: string): string | null };
 
 /** Where a profile installs one built file of a kind, or null when it installs none. */
-export function installPathOf(
-  profile: { readonly capabilities: { readonly [K in InstallKind]?: Installs } },
-  kind: InstallKind,
-  fileName: string
-): string | null {
-  const capability = profile.capabilities[kind];
-  if (capability === undefined) throw new Error(`profile has no ${kind}`);
+export function installPathOf(profile: AiTool, kind: InstallKind, fileName: string): string | null {
+  const capability: Installs | null = profile.section(kind);
+  if (capability === null) throw new Error(`profile has no ${kind}`);
   return capability.buildInstallPath(fileName);
 }

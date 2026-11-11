@@ -23,11 +23,8 @@ import type {
 import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
-import {
-  isProfileSectionKey,
-  type ProfileSection,
-  type ProfileSectionKey,
-} from "./profile/profile-sections.js";
+import type { ProfileBrand } from "./profile/define-tool.js";
+import { isProfileSectionKey } from "./profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
 
 /** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by
@@ -37,13 +34,8 @@ export type FrameworkBuildMode = "marketplace" | "flat";
 
 export type ToolConfig = AiTool | IdeToolConfig;
 
-/** The section a tool declares under `key`, or `null` when it declares none. */
-export function sectionOf<K extends ProfileSectionKey>(
-  tool: ToolConfig,
-  key: K
-): ProfileSection<K> | null {
-  return tool.section(key);
-}
+/** A profile only the factory could have produced. */
+export type BuiltToolConfig = ToolConfig & ProfileBrand;
 
 /** Whether a tool declares the section a framework content section is named after; a name that is no
  * section key is declared by no tool. */
@@ -80,16 +72,16 @@ export function assertToolIdsMatchCategory(toolIds: ToolId[], category: ToolCate
 }
 
 export class ToolCatalog {
-  private readonly byId = new Map<ToolId, ToolConfig>();
+  private readonly byId = new Map<ToolId, BuiltToolConfig>();
 
-  constructor(profiles: readonly ToolConfig[]) {
+  constructor(profiles: readonly BuiltToolConfig[]) {
     for (const profile of profiles) {
       if (this.byId.has(profile.toolId)) throw new DuplicateToolIdError(profile.toolId);
       this.byId.set(profile.toolId, profile);
     }
   }
 
-  replacing(profile: ToolConfig): ToolCatalog {
+  replacing(profile: BuiltToolConfig): ToolCatalog {
     this.getToolConfig(profile.toolId);
     return new ToolCatalog(
       [...this.byId.values()].map((existing) =>
@@ -98,7 +90,7 @@ export class ToolCatalog {
     );
   }
 
-  getToolConfig(toolId: ToolId): ToolConfig {
+  getToolConfig(toolId: ToolId): BuiltToolConfig {
     const config = this.byId.get(toolId);
     if (!config) throw new UnregisteredToolError(toolId);
     return config;
@@ -202,7 +194,7 @@ export class ToolCatalog {
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
     const toolConfig = this.getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return null;
-    return sectionOf(toolConfig, "plugins");
+    return toolConfig.section("plugins");
   }
 }
 
@@ -210,11 +202,11 @@ let catalog = new ToolCatalog(REGISTERED_PROFILES);
 
 /** Test override only: replaces the profile of that id. Goes when consumers receive a
  * ToolCatalog. */
-export function registerTool(config: ToolConfig): void {
+export function registerTool(config: BuiltToolConfig): void {
   catalog = catalog.replacing(config);
 }
 
-export function getToolConfig(toolId: ToolId): ToolConfig {
+export function getToolConfig(toolId: ToolId): BuiltToolConfig {
   return catalog.getToolConfig(toolId);
 }
 

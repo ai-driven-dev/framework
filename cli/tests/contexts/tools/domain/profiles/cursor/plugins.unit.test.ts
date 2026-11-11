@@ -5,35 +5,35 @@ import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cur
 describe("cursor plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(cursor.capabilities.plugins.isNative()).toBe(true);
+      expect(cursor.section("plugins").isNative()).toBe(true);
     });
 
     it("pluginsDir is empty string (base-relative path prefix)", () => {
-      expect(cursor.capabilities.plugins.projectPluginsDir()).toBe("");
+      expect(cursor.section("plugins").projectPluginsDir()).toBe("");
     });
 
     it("pluginManifestRelativePath is null (no manifest file written into plugin dir)", () => {
-      expect(cursor.capabilities.plugins.manifestPath()).toBeNull();
+      expect(cursor.section("plugins").manifestPath()).toBeNull();
     });
 
     it("installScope is user", () => {
-      expect(cursor.capabilities.plugins.requiresUserScope()).toBe(true);
+      expect(cursor.section("plugins").requiresUserScope()).toBe(true);
     });
 
     it("acceptsHooks is true (Cursor auto-discovers hooks.json at plugin root)", () => {
-      expect(cursor.capabilities.plugins.hooksAcceptance().accepts).toBe(true);
+      expect(cursor.section("plugins").hooksAcceptance().accepts).toBe(true);
     });
 
     it("acceptsMcp is true (Cursor auto-discovers mcp.json at plugin root)", () => {
-      expect(cursor.capabilities.plugins.mcpFile().accepts).toBe(true);
+      expect(cursor.section("plugins").mcpFile().accepts).toBe(true);
     });
 
     it("marketplaceSettings is null", () => {
-      expect(cursor.capabilities.plugins.marketplaceRegistration()).toBeNull();
+      expect(cursor.section("plugins").marketplaceRegistration()).toBeNull();
     });
 
     it("resolvePluginsBaseDir returns ~/.cursor/plugins/local resolved from given homedir", () => {
-      const result = cursor.capabilities.plugins.resolvePluginsBaseDir("/proj", "/home/user");
+      const result = cursor.section("plugins").resolvePluginsBaseDir("/proj", "/home/user");
       expect(result).toBe(join("/home/user", ".cursor", "plugins", "local"));
     });
   });

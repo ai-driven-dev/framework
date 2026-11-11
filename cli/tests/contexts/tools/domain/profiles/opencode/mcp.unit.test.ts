@@ -18,33 +18,33 @@ function _makeFs(existingPaths: string[]): FileReader {
 describe("opencode mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps both opencode and mcp config names to opencode.json", () => {
-      expect(opencode.capabilities.mcp.params.outputPath).toBe("opencode.json");
-      expect(opencode.capabilities.mcp.consumes).toContain("opencode");
-      expect(opencode.capabilities.mcp.consumes).toContain("mcp");
+      expect(opencode.section("mcp").params.outputPath).toBe("opencode.json");
+      expect(opencode.section("mcp").consumes).toContain("opencode");
+      expect(opencode.section("mcp").consumes).toContain("mcp");
     });
 
     it("does not consume unknown config names", () => {
-      expect(opencode.capabilities.mcp.consumes).not.toContain("unknown");
+      expect(opencode.section("mcp").consumes).not.toContain("unknown");
     });
 
     it("uses framework-prime merge strategy", () => {
-      expect(opencode.capabilities.mcp.params.mergeStrategy).toBe("framework-prime");
+      expect(opencode.section("mcp").params.mergeStrategy).toBe("framework-prime");
     });
 
     it("writes its config as JSON, under the mcp key", () => {
-      const { format, entrySection } = opencode.capabilities.mcp.params;
+      const { format, entrySection } = opencode.section("mcp").params;
       expect({ format, entrySection }).toStrictEqual({ format: "json", entrySection: "mcp" });
     });
   });
 
   describe("capabilities.mcp.transform() (MCP transform)", () => {
     it("is defined on the OpenCode mcp capability", () => {
-      expect(opencode.capabilities.mcp.params.transformContent).toBeDefined();
+      expect(opencode.section("mcp").params.transformContent).toBeDefined();
     });
 
     const transform = (configName: string, content: string): string => {
       if (configName !== "mcp") return content;
-      const fn = opencode.capabilities.mcp.params.transformContent;
+      const fn = opencode.section("mcp").params.transformContent;
       if (!fn) throw new Error("transformContent not defined");
       return fn(content);
     };

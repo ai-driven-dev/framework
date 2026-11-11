@@ -7,6 +7,7 @@ import type {
 import { hasRules } from "../../../src/contexts/tools/domain/contracts.js";
 import type { MarketplaceSettings } from "../../../src/contexts/tools/domain/marketplace-settings.js";
 import type { NativeActivation } from "../../../src/contexts/tools/domain/plugins/native-activation.js";
+import { PROFILE_SECTION_KEYS } from "../../../src/contexts/tools/domain/profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import {
   copiesPluginFilesGlobally,
@@ -218,14 +219,13 @@ function toolAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
       registry: registryAnswer(catalog, config),
     };
   }
-  const capabilities = config.capabilities as object;
   return {
     kind: config.kind,
     displayName: config.displayName,
     directory: config.directory,
     toolSuffix: config.toolSuffix,
     signalDir: config.signalDir,
-    sectionKeys: Object.keys(capabilities).sort(),
+    sectionKeys: PROFILE_SECTION_KEYS.filter((key) => config.section(key) !== null).sort(),
     configOutputPaths: config.configOutputPaths ?? null,
     pluginRuntimeFileKeys: Object.keys(config.pluginRuntimeFiles ?? {}).sort(),
     distributionProbes: config.distributionProbes ?? null,
@@ -233,7 +233,7 @@ function toolAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
       "See .claude/skills/x and CLAUDE.md for the Claude flow."
     ),
     rulesInstalledLocation: hasRules(config)
-      ? config.capabilities.rules.installedLocation()
+      ? config.section("rules").installedLocation()
       : "no rules section",
     plugins: pluginsAnswer(catalog.resolvePluginsCapability(config.toolId), config.directory),
     registry: registryAnswer(catalog, config),

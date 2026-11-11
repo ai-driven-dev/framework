@@ -15,7 +15,7 @@ import { FileHash } from "../../../../src/kernel/file.js";
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
 
-const SOURCE_TOKEN = claude.capabilities.plugins.rootToken() ?? "";
+const SOURCE_TOKEN = claude.section("plugins").rootToken() ?? "";
 const HOOK_COMMAND = `node ${SOURCE_TOKEN}/hooks/journal.cjs session-start`;
 const SCRIPT = `#!/usr/bin/env node\n// carries ${SOURCE_TOKEN} in a comment\n`;
 const HOOKS_JSON = JSON.stringify({
@@ -64,8 +64,8 @@ describe("installing a plugin that ships hooks", () => {
     for (const tool of HOOK_HOSTS) {
       const manifest = contentEndingWith(installedFor(tool), "hooks.json") ?? "";
 
-      expect(manifest, tool.toolId).toContain(tool.capabilities.plugins.rootToken());
-      if (tool.capabilities.plugins.rootToken() === SOURCE_TOKEN) continue;
+      expect(manifest, tool.toolId).toContain(tool.section("plugins").rootToken());
+      if (tool.section("plugins").rootToken() === SOURCE_TOKEN) continue;
       expect(manifest, tool.toolId).not.toContain(SOURCE_TOKEN);
     }
   });
@@ -84,13 +84,13 @@ describe("installing a plugin that ships hooks", () => {
     for (const tool of HOOK_HOSTS) {
       const served = contentEndingWith(
         installedFor(tool),
-        tool.capabilities.plugins.mcpFile().relativePath
+        tool.section("plugins").mcpFile().relativePath
       );
 
       // A tool that delivered no mcp file would pass the assertion below by never
       // reaching it, which is the failure shape this whole file exists to catch.
       expect(served, `${tool.toolId} installed no mcp file to check`).toBeDefined();
-      expect(served, tool.toolId).toContain(tool.capabilities.plugins.rootToken());
+      expect(served, tool.toolId).toContain(tool.section("plugins").rootToken());
     }
   });
 
@@ -98,7 +98,7 @@ describe("installing a plugin that ships hooks", () => {
     const result = installedFor(opencode);
 
     expect(result.skipped).toEqual([]);
-    const flatHooksDir = opencode.capabilities.plugins.flatLayout().hooksDir ?? "";
+    const flatHooksDir = opencode.section("plugins").flatLayout().hooksDir ?? "";
     expect(contentEndingWith(result, "journal.cjs")).toBe(SCRIPT);
     expect(result.files.some((file) => file.relativePath === `${flatHooksDir}hooks.json`)).toBe(
       false
@@ -109,7 +109,7 @@ describe("installing a plugin that ships hooks", () => {
 describe("what a tool says about the hooks it runs", () => {
   it("never leaves its answer to a default", () => {
     for (const tool of [...HOOK_HOSTS, opencode]) {
-      const { accepts, unsupportedReason } = tool.capabilities.plugins.hooksAcceptance();
+      const { accepts, unsupportedReason } = tool.section("plugins").hooksAcceptance();
 
       expect(accepts === (unsupportedReason === null), tool.toolId).toBe(true);
     }

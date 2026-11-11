@@ -17,6 +17,7 @@ import {
 } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../src/kernel/markdown.js";
+import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
@@ -368,7 +369,7 @@ describe("cross-format matrix (source × target)", () => {
         it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
           const dist = makeSourceDist(source);
           const files = translator.translate(dist, target.tool);
-          const expected = `${target.tool.capabilities.plugins.projectPluginsDir()}sample-plugin/${target.manifestExpected}`;
+          const expected = `${target.tool.section("plugins").projectPluginsDir()}sample-plugin/${target.manifestExpected}`;
           expect(files.map((f) => f.relativePath)).toContain(expected);
         });
       }
@@ -585,24 +586,20 @@ describe("a flat target that rewrites what it hosts", () => {
 });
 
 describe("a flat target whose loader is triggered by a generated bridge", () => {
-  const bridged = {
-    ...opencode,
-    capabilities: {
-      ...opencode.capabilities,
-      plugins: new PluginsCapability({
-        mode: "flat",
-        flatNamespacePrefix: "aidd-",
-        acceptsHooks: true,
-        flatHooksDir: ".stub/hooks/",
-        flatHooksBridge: {
-          generate: (raw: string, plugin: string) =>
-            raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
-          path: (plugin: string) => `.stub/plugin/${plugin}.js`,
-          skipIfSourceHas: "own-plugin.js",
-        },
-      }),
-    },
-  };
+  const bridged = withSections(opencode, {
+    plugins: new PluginsCapability({
+      mode: "flat",
+      flatNamespacePrefix: "aidd-",
+      acceptsHooks: true,
+      flatHooksDir: ".stub/hooks/",
+      flatHooksBridge: {
+        generate: (raw: string, plugin: string) =>
+          raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
+        path: (plugin: string) => `.stub/plugin/${plugin}.js`,
+        skipIfSourceHas: "own-plugin.js",
+      },
+    }),
+  });
 
   it("generates the bridge from the plugin's own hooks manifest", () => {
     expect(treeOf(bridged, hooksDist())).toEqual({
@@ -648,20 +645,16 @@ describe("a plugin's mcp declaration", () => {
   });
 
   it("is dropped by a target that hosts none", () => {
-    const refusingMcp = {
-      ...claude,
-      capabilities: {
-        ...claude.capabilities,
-        plugins: new PluginsCapability({
-          mode: "native",
-          pluginRootToken: "$X_PLUGIN_ROOT",
-          pluginsDir: ".claude/plugins/",
-          pluginManifestRelativePath: null,
-          acceptsHooks: true,
-          acceptsMcp: false,
-        }),
-      },
-    };
+    const refusingMcp = withSections(claude, {
+      plugins: new PluginsCapability({
+        mode: "native",
+        pluginRootToken: "$X_PLUGIN_ROOT",
+        pluginsDir: ".claude/plugins/",
+        pluginManifestRelativePath: null,
+        acceptsHooks: true,
+        acceptsMcp: false,
+      }),
+    });
     const mcp = [makeFile(".mcp.json", mcpJsonContent)];
     expect(treeOf(refusingMcp, distOf([...mcp], { mcp }))).toEqual({});
   });
@@ -687,7 +680,7 @@ describe("what a person still has to do before a hook runs", () => {
         pluginName: "sample-plugin",
         component: "hooks",
         toolId: "codex",
-        message: codex.capabilities.plugins.trustNotice(),
+        message: codex.section("plugins").trustNotice(),
       },
     ]);
   });
@@ -702,18 +695,14 @@ describe("what a person still has to do before a hook runs", () => {
 });
 
 describe("a target that runs no hook a plugin ships", () => {
-  const refusingHooks = {
-    ...opencode,
-    capabilities: {
-      ...opencode.capabilities,
-      plugins: new PluginsCapability({
-        mode: "flat",
-        flatNamespacePrefix: "aidd-",
-        acceptsHooks: false,
-        hooksUnsupportedReason: "OpenCode runs no hook a plugin ships.",
-      }),
-    },
-  };
+  const refusingHooks = withSections(opencode, {
+    plugins: new PluginsCapability({
+      mode: "flat",
+      flatNamespacePrefix: "aidd-",
+      acceptsHooks: false,
+      hooksUnsupportedReason: "OpenCode runs no hook a plugin ships.",
+    }),
+  });
 
   it("records the refusal against the plugin and the target", () => {
     expect(translator.translateWithComponentPaths(hooksDist(), refusingHooks).skipped).toEqual([
@@ -778,16 +767,12 @@ describe("a target that hosts no plugin", () => {
   });
 
   it("produces nothing for a tool declaring plugins unsupported", () => {
-    const unsupported = {
-      ...claude,
-      capabilities: {
-        ...claude.capabilities,
-        plugins: new PluginsCapability({
-          mode: "unsupported",
-          hooksUnsupportedReason: "Claude hosts no plugin here.",
-        }),
-      },
-    };
+    const unsupported = withSections(claude, {
+      plugins: new PluginsCapability({
+        mode: "unsupported",
+        hooksUnsupportedReason: "Claude hosts no plugin here.",
+      }),
+    });
     expect(translator.translateWithComponentPaths(makeDist(), unsupported)).toEqual(emptyResult);
   });
 });

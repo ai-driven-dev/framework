@@ -23,7 +23,7 @@ function _makeFs(existingPaths: string[]): FileReader {
 describe("kilo", () => {
   it("turns agents into Kilo subagents without copying host-specific metadata", () => {
     expect(
-      kilo.capabilities.agents.convertFrontmatter({
+      kilo.section("agents").convertFrontmatter({
         name: "reviewer",
         description: "Review code",
         tools: ["Read"],
@@ -33,15 +33,17 @@ describe("kilo", () => {
 
   it("preserves skill metadata", () => {
     const metadata = { name: "plan", description: "Plan work", license: "MIT" };
-    expect(kilo.capabilities.skills.convertFrontmatter(metadata)).toEqual(metadata);
+    expect(kilo.section("skills").convertFrontmatter(metadata)).toEqual(metadata);
   });
 
   it("namespaces commands by phase and omits argument hints unsupported by Kilo", () => {
     expect(
-      kilo.capabilities.commands.convertFrontmatter(
-        { name: "greet", description: "Greet someone", "argument-hint": "<name>" },
-        "01-plan/greet.md"
-      )
+      kilo
+        .section("commands")
+        .convertFrontmatter(
+          { name: "greet", description: "Greet someone", "argument-hint": "<name>" },
+          "01-plan/greet.md"
+        )
     ).toEqual({ name: "aidd:01:greet", description: "Greet someone" });
   });
 
@@ -59,13 +61,13 @@ describe("kilo", () => {
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    const plugins = kilo.capabilities.plugins;
+    const plugins = kilo.section("plugins");
     expect([
       plugins.buildMode(),
       plugins.hooksAcceptance().accepts,
       plugins.flatLayout().hooksDir,
     ]).toStrictEqual(["flat", true, ".kilo/hooks/"]);
-    expect(kilo.capabilities.plugins.flatLayout().hooksBridge?.path("aidd-context")).toBe(
+    expect(kilo.section("plugins").flatLayout().hooksBridge?.path("aidd-context")).toBe(
       ".kilo/plugin/aidd-context-hooks.js"
     );
     expect(
@@ -97,7 +99,7 @@ describe("kilo build and conversion tables", () => {
       "a description that opts out of always-apply": { description: "d" },
     })
   )("converts %s", (_case, frontmatter, expected) => {
-    expect(kilo.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+    expect(kilo.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });
 
@@ -111,7 +113,7 @@ describe("kilo as the registry answers for it", () => {
   });
 
   it("installs its rules into .kilo/rules/ as markdown", () => {
-    expect(kilo.capabilities.rules.installedLocation()).toEqual({
+    expect(kilo.section("rules").installedLocation()).toEqual({
       directory: ".kilo/rules/",
       extension: ".md",
     });

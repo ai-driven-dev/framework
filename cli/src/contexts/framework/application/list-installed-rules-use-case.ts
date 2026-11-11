@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { posixRelative } from "../../../kernel/paths.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
-import { hasRules } from "../../tools/domain/contracts.js";
 import { getToolConfig, isAiTool } from "../../tools/domain/registry.js";
 import type { InstalledRule } from "../domain/installed-rule.js";
 import { toInstalledRule } from "../domain/installed-rule.js";
@@ -20,8 +19,8 @@ export interface ListInstalledRulesResult {
  * mean there is nothing to scan, and neither is a directory guessed here. */
 function locationOf(toolId: AiToolId): { directory: string; extension: string } | undefined {
   const tool = getToolConfig(toolId);
-  if (!isAiTool(tool) || !hasRules(tool)) return undefined;
-  return tool.capabilities.rules.installedLocation() ?? undefined;
+  if (!isAiTool(tool)) return undefined;
+  return tool.section("rules")?.installedLocation() ?? undefined;
 }
 
 /** `/`-separated whatever the platform hands back, because the path is data a caller reads

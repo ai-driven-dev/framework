@@ -56,7 +56,7 @@ describe("codex as the registry answers for it", () => {
   });
 
   it("installs its rules into .codex/rules/ as markdown", () => {
-    expect(codex.capabilities.rules.installedLocation()).toEqual({
+    expect(codex.section("rules").installedLocation()).toEqual({
       directory: ".codex/rules/",
       extension: ".md",
     });

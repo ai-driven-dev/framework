@@ -16,7 +16,7 @@ import type {
   ReadonlyNoticeList,
 } from "../../tools/domain/models/plugin-install-notice.js";
 import type { ToolConfig } from "../../tools/domain/registry.js";
-import { isAiTool, sectionOf } from "../../tools/domain/registry.js";
+import { isAiTool } from "../../tools/domain/registry.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
 import type { PluginComponentFile, PluginDistribution } from "./plugin-distribution.js";
 import type { PluginTranslationSkip, ReadonlySkipList } from "./plugin-translation-skip.js";
@@ -79,7 +79,7 @@ export class PluginContentTranslator {
   } {
     const tool = asPluginTool(toolConfig);
     if (tool === null) return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
-    const plugins = tool.capabilities.plugins;
+    const plugins = tool.section("plugins");
     if (plugins.isNative()) return this.translateNativeWithPaths(dist, tool);
     if (plugins.buildMode() === "flat") {
       const { files, skipped } = this.translateFlat(dist, tool);
@@ -94,7 +94,7 @@ export class PluginContentTranslator {
   ): Array<{ plugin: string; path: string }> {
     const tool = asPluginTool(toolConfig);
     if (tool === null) return [];
-    if (tool.capabilities.plugins.buildMode() !== "flat") return [];
+    if (tool.section("plugins").buildMode() !== "flat") return [];
     const seen = new Map<string, string>();
     const collisions: Array<{ plugin: string; path: string }> = [];
     for (const dist of dists) {
@@ -118,7 +118,7 @@ export class PluginContentTranslator {
     skipped: ReadonlySkipList;
     notices: ReadonlyNoticeList;
   } {
-    const pluginsDir = tool.capabilities.plugins.projectPluginsDir();
+    const pluginsDir = tool.section("plugins").projectPluginsDir();
     if (pluginsDir === null) {
       return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
     }
@@ -162,7 +162,7 @@ export class PluginContentTranslator {
     pluginRoot: string,
     result: InstallationFile[]
   ): void {
-    const manifestPath = tool.capabilities.plugins.manifestPath();
+    const manifestPath = tool.section("plugins").manifestPath();
     if (manifestPath === null) return;
     const sourceManifest = findSourceManifestContent(dist);
     if (sourceManifest === null) return;
@@ -176,7 +176,7 @@ export class PluginContentTranslator {
     tool: AiTool<HasPlugins>
   ): ReadonlyNoticeList {
     if (dist.components.hooks.length === 0) return [];
-    const hooksTrustNotice = tool.capabilities.plugins.trustNotice();
+    const hooksTrustNotice = tool.section("plugins").trustNotice();
     if (hooksTrustNotice === null) return [];
     const entry: PluginInstallNotice = {
       pluginName: dist.manifest.name,
@@ -190,7 +190,7 @@ export class PluginContentTranslator {
   /** A plugin is authored with one spelling of the plugin root and the installer translates
    * it into the one this tool expands. A file carried verbatim keeps its own bytes. */
   private rewritePluginRoot(content: string, tool: AiTool<HasPlugins>): string {
-    const pluginRootToken = tool.capabilities.plugins.rootToken();
+    const pluginRootToken = tool.section("plugins").rootToken();
     if (pluginRootToken === null) return content;
     return rewritePluginRootToken(content, pluginRootToken);
   }
@@ -200,7 +200,7 @@ export class PluginContentTranslator {
     tool: AiTool<HasPlugins>
   ): TranslatedFile | null {
     if (PLUGIN_MANIFEST_PATHS.includes(file.relativePath)) return null;
-    const cap = tool.capabilities.plugins;
+    const cap = tool.section("plugins");
     if (file.relativePath === ".mcp.json") {
       const mcp = cap.mcpFile();
       return mcp.accepts ? { relativePath: mcp.relativePath, content: file.content } : null;
@@ -229,16 +229,16 @@ export class PluginContentTranslator {
   ): TranslatedFile | null {
     const top = file.relativePath.split("/")[0];
     if (top === "commands" && hasCommands(tool)) {
-      return translateMarkdown(file, "commands/", tool.directory, tool.capabilities.commands);
+      return translateMarkdown(file, "commands/", tool.directory, tool.section("commands"));
     }
     if (top === "agents" && hasAgents(tool)) {
-      return translateMarkdown(file, "agents/", tool.directory, tool.capabilities.agents);
+      return translateMarkdown(file, "agents/", tool.directory, tool.section("agents"));
     }
     if (top === "rules" && hasRules(tool)) {
-      return translateMarkdown(file, "rules/", tool.directory, tool.capabilities.rules);
+      return translateMarkdown(file, "rules/", tool.directory, tool.section("rules"));
     }
     if (top === "skills" && hasSkills(tool)) {
-      return translateSkill(file, tool.capabilities.skills);
+      return translateSkill(file, tool.section("skills"));
     }
     return null;
   }
@@ -247,7 +247,7 @@ export class PluginContentTranslator {
     dist: PluginDistribution,
     tool: AiTool<HasPlugins>
   ): { files: InstallationFile[]; skipped: ReadonlySkipList } {
-    const { namespacePrefix: flatNamespacePrefix } = tool.capabilities.plugins.flatLayout();
+    const { namespacePrefix: flatNamespacePrefix } = tool.section("plugins").flatLayout();
     if (flatNamespacePrefix === null) return { files: [], skipped: [] };
     const result: InstallationFile[] = [];
     for (const file of hasCommands(tool) ? dist.components.commands : []) {
@@ -268,7 +268,7 @@ export class PluginContentTranslator {
   // it is never delivered here. Everything else under hooks/ is carried verbatim, namespaced per
   // plugin — unless it is that loader's own plugin module, delivered flat and renamed instead.
   private flatHooksFiles(dist: PluginDistribution, tool: AiTool<HasPlugins>): InstallationFile[] {
-    const plugins = tool.capabilities.plugins;
+    const plugins = tool.section("plugins");
     const {
       hooksDir: flatHooksDir,
       hooksLoaderEntry: flatHooksLoaderEntry,
@@ -315,8 +315,9 @@ export class PluginContentTranslator {
 
   private collectHooksSkips(dist: PluginDistribution, tool: AiTool<HasPlugins>): ReadonlySkipList {
     if (dist.components.hooks.length === 0) return [];
-    const { accepts, unsupportedReason: hooksUnsupportedReason } =
-      tool.capabilities.plugins.hooksAcceptance();
+    const { accepts, unsupportedReason: hooksUnsupportedReason } = tool
+      .section("plugins")
+      .hooksAcceptance();
     if (accepts || hooksUnsupportedReason === null) return [];
     const entry: PluginTranslationSkip = {
       pluginName: dist.manifest.name,
@@ -370,7 +371,7 @@ export class PluginContentTranslator {
       }
     }
     const singleLevel =
-      section === "skills" && tool.capabilities.plugins.flatLayout().skillLayout === "single-level";
+      section === "skills" && tool.section("plugins").flatLayout().skillLayout === "single-level";
     const path = singleLevel
       ? `${tool.directory}skills/${pluginName}-${fileName}`
       : `${tool.directory}${section}/${pluginName}/${fileName}`;
@@ -393,23 +394,23 @@ function asPluginTool(config: ToolConfig): AiTool<HasPlugins> | null {
 }
 
 function hasPlugins(tool: AiTool): tool is AiTool<HasPlugins> {
-  return sectionOf(tool, "plugins") !== null;
+  return tool.section("plugins") !== null;
 }
 
 function hasCommands(tool: AiTool<HasPlugins>): tool is AiTool<HasPlugins & HasCommands> {
-  return sectionOf(tool, "commands") !== null;
+  return tool.section("commands") !== null;
 }
 
 function hasAgents(tool: AiTool<HasPlugins>): tool is AiTool<HasPlugins & HasAgents> {
-  return sectionOf(tool, "agents") !== null;
+  return tool.section("agents") !== null;
 }
 
 function hasSkills(tool: AiTool<HasPlugins>): tool is AiTool<HasPlugins & HasSkills> {
-  return sectionOf(tool, "skills") !== null;
+  return tool.section("skills") !== null;
 }
 
 function sectionPresent(tool: AiTool<HasPlugins>, section: "agents" | "rules" | "skills"): boolean {
-  return sectionOf(tool, section) !== null;
+  return tool.section(section) !== null;
 }
 
 /** Prose is translated; anything else a plugin ships is an artefact, carried byte for byte. The

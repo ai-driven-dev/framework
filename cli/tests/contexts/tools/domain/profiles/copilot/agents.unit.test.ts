@@ -28,7 +28,7 @@ describe("copilot agents", () => {
 
   it("keeps an explicit opt-out of the repository instructions", () => {
     expect(
-      copilot.capabilities.agents.convertFrontmatter({
+      copilot.section("agents").convertFrontmatter({
         name: "reviewer",
         "include-custom-instructions": false,
       })
