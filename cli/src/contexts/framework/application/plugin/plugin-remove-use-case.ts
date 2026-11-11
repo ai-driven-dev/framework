@@ -13,7 +13,6 @@ import type { MarketplaceScope } from "../../../../kernel/scope.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import type { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
 import type {
   HostPluginRegistryReader,
@@ -22,8 +21,6 @@ import type {
 import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import {
-  getToolConfig,
-  isAiTool,
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
   resolvePluginsCapability,

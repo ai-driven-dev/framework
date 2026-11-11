@@ -6,22 +6,13 @@ import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { flatGlobalFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSkills,
-} from "../../contracts.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
-  stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
@@ -30,8 +21,7 @@ import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.js";
 
 const TOOL_SUFFIX = ".kilo.md";
 
-export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasPlugins> = {
-  kind: "ai",
+export const kilo = defineAiTool({
   toolId: "kilo",
   distributionProbes: { marketplace: ["kilo.json"] },
   directory: KILO_DIRECTORY,
@@ -41,32 +31,30 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
   configOutputPaths: { "kilo.json": ".kilo/kilo.jsonc" },
   buildContracts: { flat: buildKiloFlatContract },
 
-  capabilities: {
+  capabilities: ({ directory, toolSuffix, installUnder }) => ({
     agents: new AgentsCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+      directory,
+      toolSuffix,
       format: "markdown",
       frontmatter: kiloAgentFrontmatter,
     }),
     skills: new SkillsCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) =>
-        `${KILO_DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      directory,
+      toolSuffix,
+      buildInstallPath: installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
     commands: new CommandsCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+      directory,
+      toolSuffix,
       buildInstallPath: (fileName) => buildAiddCommandFilePath(KILO_DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) =>
         convertCommandFrontmatterNoHint(fm, relativeFileName),
     }),
     rules: new RulesCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) =>
-        `${KILO_DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      directory,
+      toolSuffix,
+      buildInstallPath: installUnder("rules/"),
       convertFrontmatter: (fm) =>
         fm.alwaysApply === false && fm.description !== undefined
           ? { description: fm.description }
@@ -90,7 +78,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       },
       ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return content.replace(
@@ -98,4 +86,4 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       "$1.kilo/commands/aidd/$2/$3"
     );
   },
-};
+});

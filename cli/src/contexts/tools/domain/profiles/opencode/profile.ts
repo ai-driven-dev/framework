@@ -7,22 +7,13 @@ import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSkills,
-} from "../../contracts.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
-  stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
@@ -32,10 +23,7 @@ import { OPENCODE_DIRECTORY, opencodeGlobalFilePath } from "./opencode-paths.js"
 const DIRECTORY = OPENCODE_DIRECTORY;
 const TOOL_SUFFIX = ".opencode.md";
 
-export const opencode: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasPlugins
-> = {
-  kind: "ai",
+export const opencode = defineAiTool({
   toolId: "opencode",
   distributionProbes: {
     marketplace: ["opencode.json"],
@@ -48,31 +36,30 @@ export const opencode: AiTool<
   pluginRuntimeFiles: { [OPENCODE_HOOKS.bridgeRuntime.asset]: OPENCODE_HOOKS.bridgeRuntime.path },
   buildContracts: { flat: buildOpencodeFlatContract },
 
-  capabilities: {
+  capabilities: ({ directory, toolSuffix, installUnder }) => ({
     agents: new AgentsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+      directory,
+      toolSuffix,
       format: "markdown",
       frontmatter: opencodeAgentFrontmatter,
     }),
     skills: new SkillsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) =>
-        `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      directory,
+      toolSuffix,
+      buildInstallPath: installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
     commands: new CommandsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+      directory,
+      toolSuffix,
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) =>
         convertCommandFrontmatterNoHint(fm, relativeFileName),
     }),
     rules: new RulesCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      directory,
+      toolSuffix,
+      buildInstallPath: installUnder("rules/"),
       convertFrontmatter: (fm) => {
         if (fm.alwaysApply === false && fm.description !== undefined) {
           return { description: fm.description };
@@ -106,7 +93,7 @@ export const opencode: AiTool<
       },
       ...flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge),
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return content.replace(
@@ -114,4 +101,4 @@ export const opencode: AiTool<
       "$1.opencode/commands/aidd/$2/$3"
     );
   },
-};
+});

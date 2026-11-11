@@ -1,7 +1,7 @@
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type { AiTool, HasPlugins, HasSkills } from "../../contracts.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import {
   antigravityHookEntries,
   antigravityHooksScriptDir,
@@ -26,8 +26,7 @@ function skillName(fileName: string): string {
     : base.replace(/\.md$/, "");
 }
 
-export const antigravity: AiTool<HasSkills & HasPlugins> = {
-  kind: "ai",
+export const antigravity = defineAiTool({
   toolId: "antigravity",
   directory: ANTIGRAVITY_DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
@@ -35,9 +34,9 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
   signalDir: null,
   buildContracts: { flat: buildAntigravityFlatContract },
 
-  capabilities: {
+  capabilities: ({ toolSuffix }) => ({
     skills: new SkillsCapability({
-      toolSuffix: TOOL_SUFFIX,
+      toolSuffix,
       prefix: SKILLS_PREFIX,
       buildInstallPath: (fileName) =>
         `${ANTIGRAVITY_DIRECTORY}skills/${SKILLS_PREFIX}${skillName(fileName)}/SKILL.md`,
@@ -57,9 +56,9 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
         scriptDir: antigravityHooksScriptDir,
       }),
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return content;
   },
-};
+});

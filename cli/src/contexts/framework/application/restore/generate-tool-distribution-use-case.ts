@@ -11,12 +11,7 @@ import type {
   HasRules,
   HasSkills,
 } from "../../../tools/domain/contracts.js";
-import {
-  isAiTool,
-  isCapabilitySectionKey,
-  sectionOf,
-  type ToolConfig,
-} from "../../../tools/domain/registry.js";
+import { declaresSection, isAiTool, type ToolConfig } from "../../../tools/domain/registry.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import { extractConfigCapabilities } from "../../domain/config-capability.js";
 import { InstallAgentsUseCase } from "../install/content/install-agents-use-case.js";
@@ -65,7 +60,7 @@ export class GenerateToolDistributionUseCase {
   }
 
   private async generateAiToolFiles(
-    config: AiTool<unknown>,
+    config: AiTool,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     projectRoot: string
@@ -84,7 +79,7 @@ export class GenerateToolDistributionUseCase {
     return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...outputPathFiles]);
   }
 
-  private buildConfigOutputPathFiles(config: AiTool<unknown>): InstallationFile[] {
+  private buildConfigOutputPathFiles(config: AiTool): InstallationFile[] {
     if (this.assetProvider === undefined) return [];
     const outputPaths = { ...config.configOutputPaths, ...config.pluginRuntimeFiles };
     const files: InstallationFile[] = [];
@@ -103,22 +98,20 @@ export class GenerateToolDistributionUseCase {
   }
 
   private generateCapabilitySectionFiles(
-    config: AiTool<unknown>,
+    config: AiTool,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
     const results: InstallationFile[] = [];
     for (const section of descriptor.contentSections) {
-      if (!isCapabilitySectionKey(section.name) || sectionOf(config, section.name) === null) {
-        continue;
-      }
+      if (!declaresSection(config, section.name)) continue;
       results.push(...this.generateSectionFiles(config, section, contentFiles));
     }
     return results;
   }
 
   private generateSectionFiles(
-    config: AiTool<unknown>,
+    config: AiTool,
     section: ContentSection,
     contentFiles: Map<string, string>
   ): InstallationFile[] {

@@ -392,7 +392,7 @@ function asPluginTool(config: ToolConfig): AiTool<HasPlugins> | null {
   return config;
 }
 
-function hasPlugins(tool: AiTool<unknown>): tool is AiTool<HasPlugins> {
+function hasPlugins(tool: AiTool): tool is AiTool<HasPlugins> {
   return sectionOf(tool, "plugins") !== null;
 }
 

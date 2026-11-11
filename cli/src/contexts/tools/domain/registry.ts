@@ -13,21 +13,21 @@ import {
   type ToolId,
 } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
-import type { AgentsCapability } from "./capabilities/agents-capability.js";
-import type { CommandsCapability } from "./capabilities/commands-capability.js";
-import type { HooksCapability } from "./capabilities/hooks-capability.js";
-import { McpCapability } from "./capabilities/mcp-capability.js";
+import type { McpCapability } from "./capabilities/mcp-capability.js";
 import type {
   GlobalFiles,
   HookScript,
   PluginsCapability,
   ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
-import type { RulesCapability } from "./capabilities/rules-capability.js";
-import { SettingsCapability } from "./capabilities/settings-capability.js";
-import type { SkillsCapability } from "./capabilities/skills-capability.js";
+import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
+import {
+  isProfileSectionKey,
+  type ProfileSection,
+  type ProfileSectionKey,
+} from "./profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
 
 /** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by
@@ -35,48 +35,23 @@ import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
  * tool knowledge. */
 export type FrameworkBuildMode = "marketplace" | "flat";
 
-export type ToolConfig = AiTool<unknown> | IdeToolConfig;
-
-/** What a tool can declare, by the key it declares it under. */
-interface CapabilitySections {
-  agents: AgentsCapability;
-  skills: SkillsCapability;
-  commands: CommandsCapability;
-  rules: RulesCapability;
-  mcp: McpCapability;
-  hooks: HooksCapability;
-  plugins: PluginsCapability;
-  settings: SettingsCapability | SettingsCapability[];
-}
-
-type CapabilitySectionKey = keyof CapabilitySections;
-
-const CAPABILITY_SECTION_KEYS: readonly string[] = [
-  "agents",
-  "skills",
-  "commands",
-  "rules",
-  "mcp",
-  "hooks",
-  "plugins",
-  "settings",
-] satisfies CapabilitySectionKey[];
-
-export function isCapabilitySectionKey(name: string): name is CapabilitySectionKey {
-  return CAPABILITY_SECTION_KEYS.includes(name);
-}
+export type ToolConfig = AiTool | IdeToolConfig;
 
 /** The section a tool declares under `key`, or `null` when it declares none. */
-export function sectionOf<K extends CapabilitySectionKey>(
-  tool: AiTool<unknown>,
+export function sectionOf<K extends ProfileSectionKey>(
+  tool: ToolConfig,
   key: K
-): CapabilitySections[K] | null {
-  const declared = tool.capabilities;
-  if (typeof declared !== "object" || declared === null) return null;
-  return (declared as Partial<CapabilitySections>)[key] ?? null;
+): ProfileSection<K> | null {
+  return tool.section(key);
 }
 
-export function isAiTool(config: ToolConfig): config is AiTool<unknown> {
+/** Whether a tool declares the section a framework content section is named after; a name that is no
+ * section key is declared by no tool. */
+export function declaresSection(tool: ToolConfig, name: string): boolean {
+  return isProfileSectionKey(name) && tool.section(name) !== null;
+}
+
+export function isAiTool(config: ToolConfig): config is AiTool {
   return config.kind === "ai";
 }
 
@@ -129,7 +104,7 @@ export class ToolCatalog {
     return config;
   }
 
-  getAiToolConfig(toolId: AiToolId): AiTool<unknown> {
+  getAiToolConfig(toolId: AiToolId): AiTool {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) throw new UnregisteredToolError(toolId);
     return config;
@@ -213,16 +188,15 @@ export class ToolCatalog {
   mcpCapabilityOf(toolId: ToolId): McpCapability | null {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return null;
-    const mcp = sectionOf(config, "mcp");
-    return mcp instanceof McpCapability ? mcp : null;
+    return config.section("mcp");
   }
 
   settingsCapabilitiesOf(toolId: ToolId): readonly SettingsCapability[] {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return [];
-    const raw = sectionOf(config, "settings");
-    const declared = Array.isArray(raw) ? raw : raw !== null ? [raw] : [];
-    return declared.filter((c): c is SettingsCapability => c instanceof SettingsCapability);
+    const declared = config.section("settings");
+    if (declared === null) return [];
+    return Array.isArray(declared) ? declared : [declared];
   }
 
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
@@ -244,7 +218,7 @@ export function getToolConfig(toolId: ToolId): ToolConfig {
   return catalog.getToolConfig(toolId);
 }
 
-export function getAiToolConfig(toolId: AiToolId): AiTool<unknown> {
+export function getAiToolConfig(toolId: AiToolId): AiTool {
   return catalog.getAiToolConfig(toolId);
 }
 

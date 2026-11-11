@@ -28,7 +28,7 @@ export interface ConformanceCheck<S> {
 
 /** The only place a capability is read from a profile whose capabilities are `unknown`. */
 export function capability<T>(
-  profile: AiTool<unknown>,
+  profile: AiTool,
   key: string,
   type: abstract new (...args: never[]) => T
 ): T | undefined {
@@ -51,7 +51,7 @@ const SAMPLE_PATHS: Readonly<Record<string, string>> = {
 
 const PLUGIN_ROOT_TOKEN = /^\$\{[A-Z_]+\}$/u;
 
-function contractsOf(profile: AiTool<unknown>): ToolBuildContract[] {
+function contractsOf(profile: AiTool): ToolBuildContract[] {
   const { marketplace, flat } = profile.buildContracts ?? {};
   return [marketplace?.(), flat?.()].filter((contract) => contract !== undefined);
 }
@@ -66,7 +66,7 @@ function supportedArtifacts(
 
 function aiCheck(
   title: string,
-  holds: (profile: AiTool<unknown>, subject: ConformanceSubject) => void
+  holds: (profile: AiTool, subject: ConformanceSubject) => void
 ): ConformanceCheck<ConformanceSubject> {
   return {
     title,
@@ -80,7 +80,7 @@ function expectRelative(path: string, what: string): void {
   expect(isAbsolute(path) || path.split("/").includes(".."), `${what}: ${path}`).toBe(false);
 }
 
-function installedPaths(profile: AiTool<unknown>): string[] {
+function installedPaths(profile: AiTool): string[] {
   return [
     capability(profile, "commands", CommandsCapability)?.buildInstallPath(SAMPLE_PATHS.commands),
     capability(profile, "rules", RulesCapability)?.buildInstallPath(SAMPLE_PATHS.rules),
@@ -99,7 +99,7 @@ function flatPathsUnderDirectory(contract: ToolBuildContract): string[] {
 
 const NUMBERED_COMMAND = "04_code/implement.md";
 
-function expectNumberedCommandsRouted(profile: AiTool<unknown>): void {
+function expectNumberedCommandsRouted(profile: AiTool): void {
   const commands = capability(profile, "commands", CommandsCapability);
   const routed = `${profile.directory}commands/aidd/04/implement.md`;
   if (commands?.buildInstallPath(NUMBERED_COMMAND) !== routed) return;

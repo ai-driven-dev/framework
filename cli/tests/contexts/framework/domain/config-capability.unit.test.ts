@@ -3,10 +3,8 @@ import { extractConfigCapabilities } from "../../../../src/contexts/framework/do
 import { HooksCapability } from "../../../../src/contexts/tools/domain/capabilities/hooks-capability.js";
 import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
-import type {
-  HasSettings,
-  IdeToolConfig,
-} from "../../../../src/contexts/tools/domain/contracts.js";
+import type { IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
+import { defineIdeTool } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { stubAiTool } from "../../../helpers/ports/stub-ai-tool.js";
 
 const mcp = new McpCapability({ outputPath: ".mcp.json", format: "json" });
@@ -20,14 +18,13 @@ const extensions = new SettingsCapability({
   mergeStrategy: "user-prime",
 });
 
-function ideTool(declared: SettingsCapability | SettingsCapability[]): IdeToolConfig & HasSettings {
-  return {
-    kind: "ide",
+function ideTool(declared: SettingsCapability | SettingsCapability[]): IdeToolConfig {
+  return defineIdeTool({
     toolId: "vscode",
     directory: ".vscode/",
     signalDir: null,
-    settings: declared,
-  };
+    capabilities: () => ({ settings: declared }),
+  });
 }
 
 describe("extractConfigCapabilities — the config files a tool declares", () => {
@@ -58,11 +55,7 @@ describe("extractConfigCapabilities — the config files a tool declares", () =>
     });
 
     it("lists nothing for a tool declaring no config capability", () => {
-      expect(extractConfigCapabilities(stubAiTool("claude", { rules: {} }))).toStrictEqual([]);
-    });
-
-    it("lists nothing for a tool whose capabilities are absent altogether", () => {
-      expect(extractConfigCapabilities(stubAiTool("claude", null))).toStrictEqual([]);
+      expect(extractConfigCapabilities(stubAiTool("claude", {}))).toStrictEqual([]);
     });
   });
 });

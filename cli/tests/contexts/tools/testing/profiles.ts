@@ -7,6 +7,11 @@ import {
   type ProjectHooksFormat,
 } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
+import {
+  defineAiTool,
+  defineIdeTool,
+  type ProfileBrand,
+} from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { ToolCatalog, type ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
 
@@ -80,10 +85,10 @@ export function nativePlugins(extra: Partial<NativePluginsParams> = {}): Plugins
 
 export class ProfileBuilder {
   private directory = ".fake/";
-  private toolSuffix = ".md";
+  private toolSuffix = ".fake.md";
   private signalDir: string | null = null;
   private capabilities: KitCapabilities = { plugins: flatPlugins("refuses") };
-  private contracts: Contracts | undefined = { flat: () => anEmptyContract() };
+  private contracts: Contracts = { flat: () => anEmptyContract() };
   private probes: Probes | undefined;
 
   constructor(private readonly toolId: AiToolId) {}
@@ -120,11 +125,6 @@ export class ProfileBuilder {
     return this;
   }
 
-  withoutBuildContracts(): this {
-    this.contracts = undefined;
-    return this;
-  }
-
   withMarketplaceProbe(paths: readonly string[]): this {
     this.probes = { ...this.probes, marketplace: paths };
     return this;
@@ -140,20 +140,19 @@ export class ProfileBuilder {
     return this;
   }
 
-  build(): AiTool<KitCapabilities> {
+  build(): AiTool<KitCapabilities> & ProfileBrand {
     const { directory, toolSuffix, signalDir, capabilities } = this;
-    return {
-      kind: "ai",
+    return defineAiTool({
       toolId: this.toolId,
       displayName: "Fake",
       directory,
       toolSuffix,
       signalDir,
-      capabilities,
-      ...(this.contracts === undefined ? {} : { buildContracts: this.contracts }),
+      capabilities: () => capabilities,
+      buildContracts: this.contracts,
       ...(this.probes === undefined ? {} : { distributionProbes: this.probes }),
       rewriteContent: (content) => content,
-    };
+    });
   }
 }
 
@@ -161,8 +160,13 @@ export function aProfile(toolId: AiToolId = "claude"): ProfileBuilder {
   return new ProfileBuilder(toolId);
 }
 
-export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig {
-  return { kind: "ide", toolId, directory: ".fake-ide/", signalDir: null };
+export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig & ProfileBrand {
+  return defineIdeTool({
+    toolId,
+    directory: ".fake-ide/",
+    signalDir: null,
+    capabilities: () => ({}),
+  });
 }
 
 export function aCatalog(...profiles: readonly ToolConfig[]): ToolCatalog {

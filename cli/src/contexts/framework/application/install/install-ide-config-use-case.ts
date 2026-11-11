@@ -72,8 +72,8 @@ export class InstallIdeConfigUseCase {
     options: InstallIdeConfigOptions
   ): Promise<{ regularFiles: InstallationFile[]; mergeFiles: InstallationFile[] }> {
     const toolConfig = getToolConfig(options.toolId);
-    if (!("settings" in toolConfig)) return { regularFiles: [], mergeFiles: [] };
-    const raw = toolConfig.settings as SettingsCapability | SettingsCapability[];
+    const raw = toolConfig.section("settings");
+    if (raw === null) return { regularFiles: [], mergeFiles: [] };
     const capabilities = Array.isArray(raw) ? raw : [raw];
     const regularFiles: InstallationFile[] = [];
     const mergeFiles: InstallationFile[] = [];

@@ -130,6 +130,24 @@ export class InvalidHooksDescriptorError extends Error {
   }
 }
 
+export type ProfileInvariant =
+  | "unknown-tool-id"
+  | "directory-not-relative"
+  | "directory-without-trailing-slash"
+  | "no-build-contract"
+  | "unknown-section";
+
+export class InvalidToolProfileError extends Error {
+  constructor(
+    readonly toolId: string,
+    readonly invariant: ProfileInvariant,
+    detail: string
+  ) {
+    super(`The profile of '${toolId}' breaks '${invariant}': ${detail}`);
+    this.name = "InvalidToolProfileError";
+  }
+}
+
 export class ToolNotInManifestError extends Error {
   constructor(toolId: string) {
     super(`Tool '${toolId}' is not installed in the manifest.`);

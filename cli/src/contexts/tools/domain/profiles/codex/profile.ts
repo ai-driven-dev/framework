@@ -6,22 +6,9 @@ import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasHooks,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSkills,
-} from "../../contracts.js";
-import {
-  buildAiddCommandFilePath,
-  convertCommandFrontmatter,
-  stripToolSuffix,
-} from "../../formats/command.js";
+import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
@@ -62,10 +49,7 @@ function buildCodexSkillFilePath(fileName: string): string {
   return `${AGENTS_SKILLS_PREFIX}aidd-${skillNameFromPath(fileName)}/SKILL.md`;
 }
 
-export const codex: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasHooks & HasPlugins
-> = {
-  kind: "ai",
+export const codex = defineAiTool({
   toolId: "codex",
   distributionProbes: {
     manifest: [".codex-plugin/plugin.json"],
@@ -78,10 +62,10 @@ export const codex: AiTool<
   configOutputPaths: { "config.toml": ".codex/config.toml" },
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
-  capabilities: {
+  capabilities: ({ directory, toolSuffix, installUnder }) => ({
     agents: new AgentsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+      directory,
+      toolSuffix,
       format: "toml",
       frontmatter: codexAgentFrontmatter,
       serialize: codexAgentToml,
@@ -92,15 +76,15 @@ export const codex: AiTool<
       convertFrontmatter: stripCodexSkillFrontmatter,
     }),
     commands: new CommandsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+      directory,
+      toolSuffix,
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
     rules: new RulesCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+      directory,
+      toolSuffix,
+      buildInstallPath: installUnder("rules/"),
       convertFrontmatter: (fm) => fm,
     }),
     mcp: new McpCapability({
@@ -137,9 +121,9 @@ export const codex: AiTool<
         userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
       },
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return rewriteCodexContent(content);
   },
-};
+});
