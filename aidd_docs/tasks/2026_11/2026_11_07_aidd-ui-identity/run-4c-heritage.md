@@ -4,7 +4,7 @@ Evidence for [the plan](4c-heritage/plan.md): one pilot pass, the checks on its 
 
 ## Suites
 
-- Wrapped scripts suite: 1754 pass, 0 fail, 0 skipped.
+- Wrapped scripts suite: 1755 pass, 0 fail, 0 skipped.
 - `pnpm exec lefthook run pre-commit`: green on both commits.
 
 ## Pilot
@@ -57,7 +57,14 @@ The server and generated folders are out. Two remain, as a finding, with no reru
 - `src/modules/common`: 363 C3. Domain and persistence code, not UI.
 - `src/routes/api`: 41 C3. Server routes under a UI folder.
 
-Server files also remain beside UI files: 162 `*.server.ts` under `src/features` and `src/routes`, plus schema and model files. `ignore` matches a folder prefix, so it cannot leave them out. The done-when "no server C3" is not met.
+Server files also remained beside UI files, where a folder prefix cannot reach them. `ignore` now also takes `*.suffix`, matched on the end of a file name. On a copy of this run's output, `ignore: [*.server.ts]` gives:
+
+| | C3 | of them `*.server.ts` |
+| --- | --- | --- |
+| As the pilot wrote it | 1694 | 271 |
+| With `*.server.ts` | 1423 | 0 |
+
+Schema and model files beside UI files remain. The done-when "no server C3" is met for `*.server.ts` only.
 
 ## Mutations
 
@@ -82,6 +89,7 @@ Each guard broken once, its own test red, then restored. The `FIXES` ledger test
 | State not shielded | state colours shielded again | reads a state's colour on the background of the pair that targets its element |
 | Attribute filter | attribute names ignored | restricts an attribute filter to the elements carrying that attribute |
 | Unreadable background | walk not stopped | stops at a background it cannot read |
+| Suffix ignore | `*.suffix` read as a prefix | skips a file whose name ends as an ignore entry written *.suffix |
 
 ## Limits
 

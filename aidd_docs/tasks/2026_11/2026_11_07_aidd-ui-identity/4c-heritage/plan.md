@@ -171,5 +171,5 @@ Fichier : `03-foundations/references/extraction.md`. Aucune ligne ajoutée ; une
 - Une couleur héritée d'un ancêtre n'est pas vérifiée.
 - Un fond en image, dégradé ou `color-mix()` arrête la remontée, non vérifié.
 - V12 garde son appariement par composé : `.a .b` vise encore `.a`.
-- `ignore` est un préfixe : chaque dossier de logique s'y nomme.
+- `ignore` lit un préfixe de dossier ou un suffixe `*.x`, aucun autre motif.
 - Kairos n'est pas rejoué : son bruit C3 reste non mesuré après.

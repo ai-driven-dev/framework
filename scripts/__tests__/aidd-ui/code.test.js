@@ -156,6 +156,13 @@ describe("aidd-ui code link", () => {
       assert.deepEqual(problems(), ["src/ui/Orphan.tsx: no record links it and no ignore covers it"]);
     });
 
+    it("skips a file whose name ends as an ignore entry written *.suffix", () => {
+      edit(tmp, SYSTEM, "ignore: [src/ui/vendor]", "ignore: [src/ui/vendor, *.server.ts]");
+      put(tmp, "src/ui/mail.server.ts", "export const send = () => null;\n");
+      put(tmp, "src/ui/server.ts", "export const serve = () => null;\n");
+      assert.deepEqual(problems(), ["src/ui/server.ts: no record links it and no ignore covers it"]);
+    });
+
     it("covers a folder named after the linked file: its styles, hooks and tests", () => {
       put(tmp, "src/ui/search-field/search-field.component.tsx", "export function SearchField() {}\n");
       put(tmp, "src/ui/search-field/search-field-filter.ts", "export const filter = () => null;\n");

@@ -14,5 +14,5 @@ When several design systems coexist, ask which is the norm. Follow that one.
 | theme switched by `[data-theme]` | in `themes`, the one `:root` holds first |
 | what `extract` leaves: a component-scoped property, a script-written one, `color-scheme` | nothing: named to the user |
 | media query matching no breakpoint | a `## Breakpoints` row of `system.md`, settled, then `extract --force` |
-| file no record links (C3): server, generated, domain, state, not a component | `ignore`, its narrowest folder; its colour literals named to the user |
+| file no record links (C3): server, generated, domain, state, not a component | `ignore`: narrowest folder, or `*.suffix` beside UI; literals named to the user |
 | colour literal in UI code | debt recorded by `bump --created system`. Never `ignore`. A literal never decides a root |
