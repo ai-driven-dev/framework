@@ -48,6 +48,7 @@
     "test:e2e": "vitest run --project=e2e",
     "test:foreign-clock": "node scripts/test-foreign-clock.mjs",
     "test:e2e:kilo": "KILO_RUNTIME_SMOKE=1 vitest run --project=e2e tests/e2e/kilo-runtime.e2e.test.ts",
+    "test:e2e:kilo:native": "KILO_NATIVE_GENERATION=1 vitest run --project=e2e tests/e2e/kilo-native-generation.e2e.test.ts",
     "test:coverage": "vitest run --coverage",
     "test:kanban": "pnpm --dir ../kanban test",
     "test:watch": "vitest",

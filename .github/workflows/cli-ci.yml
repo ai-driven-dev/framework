@@ -350,6 +350,7 @@ jobs:
       - name: Install Kilo Code CLI
         run: npm install -g @kilocode/cli@7.7.5
       - run: cd cli && pnpm test:e2e:kilo
+      - run: cd cli && pnpm test:e2e:kilo:native
 
   cli-build:
     name: cli / Build & Bundle Budget
