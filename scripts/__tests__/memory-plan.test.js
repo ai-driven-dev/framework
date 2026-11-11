@@ -53,7 +53,8 @@ const PLAN = [
   "  [x] claude  [ ] codex  [ ] cursor  [ ] opencode  [ ] antigravity  [ ] copilot",
   "",
   `Details: ${SHEET.replace("facts.md", "plan.md")}`,
-  'Does this look right? Say ok, or what to change, for example "not 5", "not 2-4" or "Q1: …".',
+  "",
+  'Say ok, or "not <n>" or "not <n>-<m>" with the numbers in the details, or "Q1: …".',
   "",
 ].join("\n");
 
@@ -147,7 +148,7 @@ test("plan: a setup has no Since line, an empty section is left out, and no ques
     assert.doesNotMatch(out, /Changes since/u);
     assert.doesNotMatch(out, /Will add|Will change|Will delete|Questions|none/u);
     assert.match(out, /^ {2}\[ \] claude {2}\[ \] codex/mu, "no tool given ticks none");
-    assert.match(out, /^Does this look right\? Say ok, or what to change, for example "not 1"\.$/mu);
+    assert.match(out, /^Say ok, or "not <n>" or "not <n>-<m>" with the numbers in the details\.$/mu);
     assert.match(out, /^Memory plan: 1 change$/mu);
     assert.match(detailOf(root), /^ {2}1\. write {3}testing\.md \(new\): Run$/mu);
   }, setup, {});

@@ -180,12 +180,10 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const title = since === null ? `Memory plan: ${total}` : `Memory plan: ${total} since ${since[1]} (${since[3]}, ${since[4]})`;
   const asked = questions.length > 0 ? [["Questions", ...questions.map(({ id, fact }) => `  ${id}  ${fact}`)]] : [];
   const wire = ["Tools to wire", `  ${tools.map((tool) => `[${ticked.includes(tool) ? "x" : " "}] ${tool}`).join("  ")}`];
-  const n = items.length;
-  const examples = [`"not ${Math.max(n, 1)}"`, ...(n >= 4 ? [`"not 2-${n - 1}"`] : []), ...(questions.length > 0 ? [`"${questions[0].id}: …"`] : [])];
-  const example = examples.length > 1 ? `${examples.slice(0, -1).join(", ")} or ${examples.at(-1)}` : examples[0];
+  const answer = `Say ok, or "not <n>" or "not <n>-<m>" with the numbers in the details${questions.length > 0 ? `, or "${questions[0].id}: …"` : ""}.`;
   const detailFile = path.join(path.dirname(path.resolve(sheetFile)), "plan.md");
   const relative = (file) => path.relative(root, file).split(path.sep).join("/");
-  const summary = [[title, ...(counts.length > 1 || fromTemplates.length > 0 ? [`  ${counts.join(" · ")}`] : [])], ...asked, wire, [`Details: ${relative(detailFile)}`, `Does this look right? Say ok, or what to change, for example ${example}.`]];
+  const summary = [[title, ...(counts.length > 1 || fromTemplates.length > 0 ? [`  ${counts.join(" · ")}`] : [])], ...asked, wire, [`Details: ${relative(detailFile)}`], [answer]];
   const listed = [
     ...items.flatMap((item) => detailLines(item, bank, root, width)),
     ...fromTemplates.map((name) => `  ${" ".repeat(width + 2)}write   ${name} (new): from its template, always written`),
