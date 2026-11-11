@@ -29,7 +29,7 @@ import {
   pluginScriptDir,
   pluginScriptPath,
   unmergeHooks,
-} from "./hooks-merge.js";
+} from "../hooks/hooks-merge.js";
 import { PLUGIN_ROOT_TOKEN } from "./plugin-root-token.js";
 
 /** The events a plugin's hooks may name, whichever tool runs them. */

@@ -16,7 +16,7 @@ import {
   type BridgeHookCall,
   bridgeHookCalls,
   type PluginHooksShape,
-} from "../formats/plugin-hooks-shape.js";
+} from "./plugin-hooks-shape.js";
 
 export interface BridgeHookTable {
   readonly sessionStart: readonly BridgeHookCall[];
