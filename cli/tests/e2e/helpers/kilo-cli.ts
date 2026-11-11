@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import { delimiter, dirname, join, win32 } from "node:path";
+import { delimiter, posix, win32 } from "node:path";
 
 const WINDOWS_KILO_PACKAGES = [
   "cli-windows-x64-baseline",
@@ -41,7 +41,7 @@ export function resolveKiloBin(
   const pathDelimiter = platform === process.platform ? delimiter : ":";
   for (const directory of (env.PATH ?? "").split(pathDelimiter)) {
     if (directory === "") continue;
-    const candidate = join(directory, "kilo");
+    const candidate = posix.join(directory, "kilo");
     if (pathExists(candidate)) return candidate;
   }
   return "kilo";
@@ -49,8 +49,10 @@ export function resolveKiloBin(
 
 export const KILO_BIN = resolveKiloBin();
 export const KILO_SHELL = KILO_BIN.endsWith(".cmd");
-const kiloTreeSitterDir = KILO_BIN.endsWith(".exe") ? join(dirname(KILO_BIN), "tree-sitter") : "";
+const kiloTreeSitterDir = KILO_BIN.endsWith(".exe")
+  ? win32.join(win32.dirname(KILO_BIN), "tree-sitter")
+  : "";
 export const KILO_ENV: Record<string, string> =
-  kiloTreeSitterDir !== "" && existsSync(join(kiloTreeSitterDir, "tree-sitter.wasm"))
+  kiloTreeSitterDir !== "" && existsSync(win32.join(kiloTreeSitterDir, "tree-sitter.wasm"))
     ? { KILO_TREE_SITTER_WASM_DIR: kiloTreeSitterDir }
     : {};
