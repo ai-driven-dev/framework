@@ -26,7 +26,7 @@ const MEMORY_DIR = `${DOCS_DIR}/${MEMORY_SUBDIR}`;
 const ON_DEMAND_DIRS = ["internal", "external"];
 const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
 
-// The files the skill writes whatever the scan finds: the `Always` rows of its capability table.
+// The `Always` rows of the skill's capability table.
 const ALWAYS_WRITTEN = Object.freeze([
   "project-brief.md",
   "architecture.md",
@@ -37,8 +37,7 @@ const ALWAYS_WRITTEN = Object.freeze([
   "ecosystem.md",
 ]);
 
-// The files a capability row produces: the table of the skill's `references/capabilities.md`,
-// held equal to it by a test.
+// The capability table of `references/capabilities.md`; a test holds them equal.
 const CONDITIONAL_FILES = Object.freeze([
   "backlog.md",
   "deployment.md",
@@ -56,11 +55,10 @@ const CONDITIONAL_FILES = Object.freeze([
 ]);
 const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
 
-// The names an older bank holds for an always-written file: the table's Accepted names of the
-// Always rows, held equal to it by a test. The check counts such a file as the row's own.
+// Accepted names of the Always rows; a test holds them equal to the table.
 const ACCEPTED_ALWAYS = Object.freeze({ "ecosystem.md": ["integration.md"] });
 
-// A shell write carries no file list: a bank file changed this recently is the command's.
+// A shell write names no file: a bank file changed this recently is its.
 const SHELL_WINDOW_MS = 2000;
 
 const EXIT_OK = 0;
@@ -70,7 +68,7 @@ function toPosix(file) {
   return file.split(path.sep).join("/");
 }
 
-/** What `read` returns, or `fallback` when its path does not exist. A real error still throws. */
+/** `fallback` when the path does not exist; any other error throws. */
 function unlessMissing(read, fallback) {
   try {
     return read();
@@ -83,12 +81,11 @@ function unlessMissing(read, fallback) {
 const entriesOf = (dir) => unlessMissing(() => fs.readdirSync(dir, { withFileTypes: true }), []);
 const readTextOrNull = (file) => unlessMissing(() => fs.readFileSync(file, "utf8"), null);
 
-/** A bank file's path below the bank, segment by segment. */
 function partsOf(file) {
   return file.slice(MEMORY_DIR.length + 1).split("/");
 }
 
-/** The always-loaded files directly under the bank, project-relative. */
+/** The bank's root files: the ones every session loads. */
 function rootFiles(root) {
   return entriesOf(path.join(root, MEMORY_DIR))
     .filter((entry) => entry.isFile() && entry.name.endsWith(".md") && !EXCLUDED_FILES.has(entry.name))
@@ -96,7 +93,7 @@ function rootFiles(root) {
     .sort();
 }
 
-/** Every file under the bank, project-relative, links not followed. */
+/** Every bank file, links not followed. */
 function bankFiles(root) {
   const found = [];
   const walk = (relative) => {
@@ -110,8 +107,7 @@ function bankFiles(root) {
   return found.sort();
 }
 
-/** Where a project-relative file sits: the bank's root, a read-on-demand folder, elsewhere in
- * the bank, or outside it. */
+/** The bank's root, an on-demand folder, elsewhere in the bank, or outside. */
 function placeOf(file) {
   if (!file.startsWith(`${MEMORY_DIR}/`)) return "outside";
   const parts = partsOf(file);
@@ -119,12 +115,11 @@ function placeOf(file) {
   return ON_DEMAND_DIRS.includes(parts[0]) ? "on-demand" : "misplaced";
 }
 
-/** Each rule's findings. A rule that throws is no finding: it drops out, noted in `failures`. */
+/** A rule that throws drops out, noted in `failures`. */
 function runRules(rules, context, failures) {
   const found = [];
   for (const rule of rules) {
     try {
-      // The rule table states each rule's severity, whatever the check wrote.
       found.push(...rule.check(context).map((finding) => ({ ...finding, severity: rule.severity })));
     } catch (error) {
       failures.push(`rule ${rule.id} failed: ${error.message}`);
@@ -137,7 +132,7 @@ function bySeverity(a, b) {
   return Number(b.severity === ERROR) - Number(a.severity === ERROR);
 }
 
-/** The rule findings of one bank root file; nothing for any other file, or one gone. */
+/** Nothing for a file outside the bank's root, or gone. */
 function lintFile(root, file, rules = RULES, failures = []) {
   const relative = toPosix(path.isAbsolute(file) ? path.relative(root, file) : file);
   const files = rootFiles(root);
@@ -160,10 +155,7 @@ function warning(file, rule, message, fix) {
   return { file, rule, severity: WARNING, message, fix };
 }
 
-/**
- * What the bank's layout proposes, as warnings: a row's file below the bank's root, a folder of
- * the team's own. Only markdown is read, and a folder is one finding however many files it holds.
- */
+/** Layout warnings; a folder is one finding however many files it holds. */
 function structureFindings(root) {
   const found = [];
   const folders = new Set();
@@ -185,7 +177,7 @@ function structureFindings(root) {
   return found;
 }
 
-/** The words a session loads whole, from the bank's root files, the ones `sync` imports; null with none. */
+/** Words of the root files every session loads; null with none. */
 function sessionLoad(root) {
   const files = rootFiles(root);
   if (files.length === 0) return null;
@@ -203,14 +195,13 @@ function missing(file, excerpt, fix) {
   return { file, rule: "missing", severity: ERROR, message: excerpt, excerpt, fix };
 }
 
-/** The always-written files the bank lacks, an accepted name counting as the file. */
+/** An accepted name counts as the file. */
 function absentAlways(root) {
   const present = new Set(rootFiles(root));
   const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => present.has(`${MEMORY_DIR}/${held}`));
   return ALWAYS_WRITTEN.filter((name) => !holds(name));
 }
 
-/** The bank's absence, or the always-written files it lacks, as errors. */
 function missingFindings(root) {
   if (!fs.existsSync(path.join(root, MEMORY_DIR))) {
     return [missing(MEMORY_DIR, "no memory bank under the root", "write it with the project memory skill")];
@@ -219,11 +210,7 @@ function missingFindings(root) {
   return absent.length === 0 ? [] : [missing(MEMORY_DIR, absent.join(", "), "write each from its template")];
 }
 
-/**
- * The lines a write the event describes is proven to have changed, as the file now stands, and
- * whether a finding stands on them. Null when they are unknown: a write that only removed lines,
- * or a file gone.
- */
+/** Lines the write is proven to have changed; null when unknown: only removals, or gone. */
 function provenLines(root, file, { written, replaced }) {
   const changed = changedLines(written, replaced);
   const text = changed === null ? null : readTextOrNull(path.join(root, file));
@@ -232,19 +219,12 @@ function provenLines(root, file, { written, replaced }) {
   return { touched, holds: (finding) => reachesTouched(finding, touched) && producedBy(finding, changed) };
 }
 
-/**
- * The findings of the files a write reached, sorted into the formatter's three lists. A file whose
- * event says what this write put in it reports the findings on the lines it added or changed, one
- * by one. A file whose changed lines are unknown, a shell write, an edit that says nothing of its
- * text or one that only removed lines, may hold standing errors: they print grouped and only
- * inform. A missing file and the bank's layout are check's, never a write's.
- */
+/** A write answers for the lines it changed; unknown lines show standing errors, grouped. */
 function findingsOf(root, described, undescribed) {
   const found = { errors: [], reached: [], warnings: [] };
   const report = (file, write) => {
     if (placeOf(file) !== "root") return;
     const proven = write === undefined ? null : provenLines(root, file, write);
-    // A write that added or changed no line produced nothing to answer for.
     if (proven !== null && proven.touched.size === 0) return;
     for (const finding of lintFile(root, file)) {
       if (proven !== null && finding.line !== undefined && !proven.holds(finding)) continue;
@@ -257,7 +237,7 @@ function findingsOf(root, described, undescribed) {
   return found;
 }
 
-/** The path with every link resolved; a path that does not exist yet resolves through its nearest folder that does. */
+/** Links resolved; a missing path resolves through its nearest existing folder. */
 function realish(file) {
   try {
     return fs.realpathSync(file);
@@ -267,11 +247,7 @@ function realish(file) {
   }
 }
 
-/**
- * The project a written file belongs to, from the file's own real path: the nearest folder above
- * it holding `aidd_docs/memory`, never the working folder. Null for a file outside a docs folder
- * or with no bank above it.
- */
+/** The nearest folder above the file's real path holding a bank, never the working one. */
 function projectOf(file) {
   if (!file.split(/[\\/]/u).includes(DOCS_DIR)) return null;
   const real = realish(file);
@@ -281,18 +257,13 @@ function projectOf(file) {
   }
 }
 
-/** The bank files a shell write just changed. */
 function shellReached(root, command) {
   if (!isShellWrite(command)) return [];
   const now = Date.now();
   return bankFiles(root).filter((file) => now - fs.statSync(path.join(root, file)).mtimeMs <= SHELL_WINDOW_MS);
 }
 
-/**
- * The projects a write reached: each written file under the project holding it, described when
- * the event says what the write put in it. A shell command naming the docs folder reaches the
- * working folder's project, with the bank files it just changed when it matches a write form.
- */
+/** Each written file under its project; a shell command naming the docs folder reaches ours. */
 function reachedProjects(event) {
   const projects = new Map();
   const of = (root) => projects.get(root) ?? projects.set(root, { described: [], undescribed: [] }).get(root);
@@ -303,7 +274,7 @@ function reachedProjects(event) {
     if (typeof file.written === "string") of(root).described.push({ file: relative, written: file.written, replaced: file.replaced });
     else of(root).undescribed.push(relative);
   }
-  // Owner scope: a command naming no file under the docs folder reads nothing of the project.
+  // A command naming no docs file reads nothing.
   if (typeof event.command === "string" && /aidd_docs[/\\]/u.test(event.command)) {
     const cwd = realish(path.resolve(event.cwd));
     of(cwd).undescribed.push(...shellReached(cwd, event.command));
@@ -311,20 +282,18 @@ function reachedProjects(event) {
   return projects;
 }
 
-/** The bank's own project for a session's folder, or null when it holds no bank. */
 function sessionProject(cwd) {
   const root = realish(path.resolve(cwd));
   return fs.existsSync(path.join(root, MEMORY_DIR)) ? root : null;
 }
 
-/** A project's file named from the session's project when that one holds it, else from its own. */
+/** Named from the session's project when it holds the file. */
 function shownFile(own, root, file) {
   if (own === null) return file;
   const relative = path.relative(own, path.join(root, file));
   return toPosix(relative.startsWith("..") || path.isAbsolute(relative) ? file : relative);
 }
 
-/** Informs on the findings a write produced in the banks it reached. */
 function afterWrite(host, event) {
   const projects = reachedProjects(event);
   if (projects.size === 0) return;
@@ -347,11 +316,7 @@ function hook() {
   else if (event.event === "PostToolUse") afterWrite(host, event);
 }
 
-/**
- * The whole bank, or the named files: rule findings and, for the whole bank, the bank's
- * absence, the always-written files it lacks and its layout's warnings. A named file that does
- * not exist is an error. The root and the files resolve through their links.
- */
+/** The whole bank adds absence, missing always files and layout; a missing named file errs. */
 function check(root, files = []) {
   const absolute = realish(path.resolve(root));
   const named = files.map((file) => toPosix(path.relative(absolute, realish(path.resolve(absolute, file)))));
@@ -365,39 +330,36 @@ function check(root, files = []) {
   if (named.length === 0) found.push(...missingFindings(absolute), ...structureFindings(absolute), ...loadFindings(absolute));
   const errors = found.filter((finding) => finding.severity === ERROR);
   const warnings = found.filter((finding) => finding.severity !== ERROR);
-  // The cap on warnings binds the hook's answer to a model; a check prints every one.
+  // Only the hook caps warnings; check prints them all.
   const text = formatFindings(PLUGIN, { errors, warnings }, { warningsCap: Infinity });
   return { errors, warnings, text, failures: [...new Set(failures)] };
 }
 
 // ---- sync ----------------------------------------------------------------------------------
 
-// Comment markers, not a bare tag: a bare tag opens an HTML block running to the next blank
-// line, and a context loader skips an @import inside one, so the memory never loads.
+// Comment markers: a bare tag opens an HTML block, and a loader skips an @import inside one.
 const BLOCK_OPEN = "<!-- aidd_project_memory:start -->";
 const BLOCK_CLOSE = "<!-- aidd_project_memory:end -->";
 
-// A block written with these is rewritten on the next run: unmigrated, it stops matching and
-// the file is skipped with no output at all.
+// Legacy markers, rewritten on the next run.
 const LEGACY_BLOCK_OPEN = "<aidd_project_memory>";
 const LEGACY_BLOCK_CLOSE = "</aidd_project_memory>";
 const ON_DEMAND_NOTE = "<!-- read on demand, not auto-loaded -->";
 const OWNED_NOTE = "<!-- folders other plugins own, read on demand -->";
 
-// The list between these markers is refreshed; the rest of the file is hand-written.
+// Only the list between these markers is refreshed.
 const MEMORY_README = "README.md";
 const TOC_OPEN = "<!-- files:start -->";
 const TOC_CLOSE = "<!-- files:end -->";
 const TOC_LOOSE = /^<!--\s*files:(?:start|end)\s*-->$/u;
 
-// Only Claude Code resolves the `@` import form, so AGENTS.md takes a markdown link, where an
-// `@` line would be inert text loading nothing.
+// Only Claude Code resolves `@` imports; AGENTS.md takes a markdown link.
 const TARGET_FILES = [
   { path: "CLAUDE.md", syntax: "at" },
   { path: "AGENTS.md", syntax: "link" },
 ];
 
-// Copilot reads AGENTS.md; its own file carries this line instead of a second copy of the block.
+// Copilot reads AGENTS.md; its own file only points there.
 const COPILOT_FILE = ".github/copilot-instructions.md";
 const COPILOT_POINTER = "Project memory: [AGENTS.md](../AGENTS.md).";
 
@@ -421,8 +383,7 @@ function onDemandFiles(root) {
   });
 }
 
-/** The folders of the docs folder other than the bank, by convention: a folder present is
- * listed, whichever plugin wrote it. */
+/** Docs folders other than the bank, listed whichever plugin wrote them. */
 function ownedFolders(root) {
   return entriesOf(path.join(root, DOCS_DIR))
     .filter((entry) => entry.isDirectory() && entry.name !== MEMORY_SUBDIR)
@@ -434,8 +395,7 @@ function buildReference(syntax, file, prefix) {
   return syntax === "link" ? `[${file}](${prefix}${file})` : `@${file}`;
 }
 
-/** The lines between the markers: a blank line on each side, so a context loader treating any `<`
- * line as an HTML block running to the next blank line would not swallow the imports. */
+/** Blank lines around the imports, so no loader swallows them as an HTML block. */
 function buildBlockLines({ rooted, onDemand, owned }, syntax, prefix = "") {
   const lines = rooted.map((file) => buildReference(syntax, file, prefix));
   if (onDemand.length > 0) lines.push("", ON_DEMAND_NOTE, ...onDemand.map((file) => `- ${file}`));
@@ -444,15 +404,13 @@ function buildBlockLines({ rooted, onDemand, owned }, syntax, prefix = "") {
   return lines.length === 0 ? [] : ["", ...lines, ""];
 }
 
-// A line the generator wrote once and no longer writes is its own to rewrite only when it is a bare
-// path to something gone. Any other line, even one shaped like a generated line, is a team's.
+// A line the generator no longer writes is its to rewrite only as a bare path to what is gone.
 const BARE_PATHS = [
   /^@(aidd_docs\/memory\/\S+)$/u,
   /^\[[^\]]+\]\((?:\.\.\/)*(aidd_docs\/memory\/[^\s)]+)\)$/u,
   /^- (aidd_docs\/\S+)$/u,
 ];
 
-/** Whether a block line is the generator's: blank, a note, a line it writes now, or a bare path to what is gone. */
 function isGeneratedLine(line, written, root) {
   if (line === "" || line === ON_DEMAND_NOTE || line === OWNED_NOTE || written.has(line)) return true;
   for (const shape of BARE_PATHS) {
@@ -462,12 +420,7 @@ function isGeneratedLine(line, written, root) {
   return false;
 }
 
-/**
- * The block between a marker pair, read with the shared fence reader: markers each own their line
- * outside any code fence, so a quoted marker never cuts the prose around it. `loose` matches every
- * spelling of a marker, so a variant is known as malformed. The status is `none` when no marker
- * stands outside a fence, `ok` with the lines of one well-formed pair, or `broken` with why.
- */
+/** Markers own their line outside fences; status `none`, `ok` with lines, or `broken` with why. */
 function findBlock(content, open, close, loose) {
   const outside = markdownLines(content).filter(({ kind }) => kind !== "fence");
   const at = (match) => outside.filter(({ source }) => match(source.trim())).map(({ number }) => number - 1);
@@ -493,7 +446,7 @@ function migrateLegacyMarkers(content, found) {
   return lines.join("\n");
 }
 
-/** Why a file's block cannot be filled, or null. A marker left in a fence is a block nobody can fill. */
+/** A marker left in a fence is a block nobody can fill. */
 function blockProblem(content, found, legacy) {
   if (found.status === "broken") return found.reason;
   if (found.status === "ok" || legacy.status === "ok") return null;
@@ -502,14 +455,13 @@ function blockProblem(content, found, legacy) {
   return quoted ? "has its project memory markers inside a code fence" : null;
 }
 
-/** The block's lines when something a generator never wrote stands in it, or null. */
+/** A block line no generator wrote, or null. */
 function foreignLine(lines, found, inner, root) {
   const written = new Set(inner);
   const block = lines.slice(found.openLine + 1, found.closeLine).map((line) => line.trim());
   return block.find((line) => !isGeneratedLine(line, written, root)) ?? null;
 }
 
-/** The content with the lines between the markers replaced, in the file's own line ending. */
 function spliceBlock(content, found, inner) {
   const lines = content.split("\n");
   const ending = lines[found.openLine].endsWith("\r") ? "\r" : "";
@@ -528,8 +480,7 @@ function buildToc({ rooted, onDemand }) {
   return lines;
 }
 
-// No tool named means every target present, which is what the session start wants; tools
-// named means only theirs.
+// No tool named: every target present, as the session start wants.
 function resolveTargets(tools) {
   if (tools.length === 0) return TARGET_FILES;
   const unknown = tools.filter((tool) => !Object.hasOwn(TOOL_FILES, tool));
@@ -540,11 +491,7 @@ function resolveTargets(tools) {
   return TARGET_FILES.filter((target) => wanted.has(target.path));
 }
 
-/**
- * The targets that exist, under their real path: two names for one file are the same file, filled
- * the same way. The `@` import form goes to a file Claude Code loads under the name CLAUDE.md, the
- * link form to any other. The link prefix climbs from the real file back to the root.
- */
+/** Two names for one file are one target; CLAUDE.md takes `@` imports, any other a link. */
 function existingTargets(root, targets) {
   const claude = realish(path.join(root, "CLAUDE.md"));
   return targets
@@ -556,18 +503,12 @@ function existingTargets(root, targets) {
     });
 }
 
-/** Whether a code fence is still open after the content's last line. */
 function endsInFence(content) {
   const lines = markdownLines(`${content}\nx`);
   return lines[lines.length - 1].kind === "fence";
 }
 
-/**
- * The new text of one context file, or the reason it is left as it is. A file holding no block
- * gains one after its last line when `add` is set, and `added` says so; every byte above it stays.
- * Without `add`, `missing` says it holds none.
- * `outside` marks a file reached through a link leaving the project, never given a block.
- */
+/** With `add`, a file holding no block gains one at its end; every byte above it stays. */
 function filledBlock(original, inner, root, { add = false, outside = false } = {}) {
   const current = findBlock(original, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
@@ -581,8 +522,7 @@ function filledBlock(original, inner, root, { add = false, outside = false } = {
     const gap = original === "" ? "" : original.endsWith(ending) ? ending : ending + ending;
     return { text: original + gap + [BLOCK_OPEN, ...inner, BLOCK_CLOSE, ""].join(ending), added: true };
   }
-  // Compared against what is on disk, not against the migrated text: an unchanged memory
-  // list would otherwise skip the write and leave the old markers in place forever.
+  // Compared with the disk, so a legacy marker is rewritten even when the list is unchanged.
   const migrated = migrateLegacyMarkers(original, legacy);
   const found = findBlock(migrated, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   if (found.status !== "ok") return { problem: "has a duplicated project memory marker" };
@@ -591,10 +531,7 @@ function filledBlock(original, inner, root, { add = false, outside = false } = {
   return { text: spliceBlock(migrated, found, inner) };
 }
 
-/**
- * The copilot file with the pointer line in place of an old block, or appended when `create` and
- * no block stands, or as it is. `problem` and `held` mean the same as for a filled block.
- */
+/** The pointer line replaces an old block, or is appended when `create`. */
 function pointedText(original, oldBlock, root, create) {
   const current = findBlock(original, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
@@ -623,14 +560,7 @@ function tryWrite(file, text, shown, failed) {
   }
 }
 
-/**
- * Fills the memory block of each context file that holds one, adds it with `add` to a named tool's
- * file holding none, and fills the memory README's list when it opts in with its own markers.
- * Stages nothing. A file it cannot write is skipped and named; a block it cannot fill (an unpaired,
- * duplicated or malformed marker, markers in a fence, a line it would not write, a link leaving
- * the project, a file ending in an open fence) is left as it is and reported. Returns the files it
- * changed, the unfilled ones at fault, the ones holding a foreign line and the ones unwritable.
- */
+/** Stages nothing. A block it cannot fill is left as it is and reported, never forced. */
 function sync(root, tools = [], { quiet = false, add = false } = {}) {
   const absolute = realish(path.resolve(root));
   const result = { changed: [], unpaired: [], held: [], failed: [] };
@@ -694,11 +624,11 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
   return result;
 }
 
-/** Computes the lost lines itself, so a skipped step still shows them. Limit: numbered against HEAD. */
+/** Computes the lost lines itself, so a skipped step still shows them. */
 function report(sheetFile) {
-  const plan = require("./lib/dialogue.cjs");
+  const { rootOf } = require("./lib/plan.cjs");
   const guard = require("./lib/bank-guard.cjs");
-  const root = plan.rootOf(sheetFile);
+  const root = rootOf(sheetFile);
   const approvals = require("./lib/fact-sheet.cjs").approvedRemovals(sheetFile);
   const bankDir = path.join(root, MEMORY_DIR);
   let previous = null;
@@ -720,7 +650,7 @@ function report(sheetFile) {
     const text = readTextOrNull(path.join(root, file));
     return text !== null && findBlock(text, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER).status === "ok";
   });
-  return plan.renderReport(sheetFile, { previous, gone, why, written, wired, load: sessionLoad(root) });
+  return require("./lib/report.cjs").renderReport(sheetFile, { previous, gone, why, written, wired, load: sessionLoad(root) });
 }
 
 function main(argv) {
@@ -729,7 +659,7 @@ function main(argv) {
     try {
       hook();
     } catch {
-      // A broken check never blocks a write, and a session start never fails over the bank.
+      // A broken check never blocks a write or a session start.
     }
     return EXIT_OK;
   }
@@ -737,7 +667,7 @@ function main(argv) {
     const [root = process.cwd(), ...files] = args;
     const { errors, text, failures } = check(root, files);
     if (text !== "") process.stdout.write(`${text}\n`);
-    // A rule that failed is no finding, and a check that could not run its rules never passes.
+    // A check whose rules could not run never passes.
     for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
     return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
@@ -757,7 +687,7 @@ function main(argv) {
     }
   }
   if (command === "plan" || command === "answer") {
-    const plan = require("./lib/dialogue.cjs");
+    const plan = require("./lib/plan.cjs");
     const [sheetFile, ...rest] = args;
     if (sheetFile === undefined) {
       process.stderr.write(`usage: memory.cjs ${command} <sheet> ${command === "plan" ? "[--tools <tool,...>]" : "<reply>"}\n`);
@@ -800,7 +730,7 @@ function main(argv) {
     }
   }
   if (command === "sync") {
-    // Every other command takes the root as `.`: a path here is that habit, not a tool.
+    // Other commands take `.` as root: a path here is that habit, not a tool.
     const given = args.find((arg) => /[./\\]/u.test(arg));
     if (given !== undefined) {
       process.stderr.write(`memory: sync takes tool names, run it from the project root (got "${given}")\n`);
@@ -809,7 +739,7 @@ function main(argv) {
     const tools = args.filter((arg) => arg !== "--add").map((arg) => arg.toLowerCase());
     try {
       const { unpaired, held, failed } = sync(process.cwd(), tools, { add: args.includes("--add") });
-      // Only when tools were named: an unnamed run must never fail over a file the user has yet to repair.
+      // An unnamed run never fails over a file the user has yet to repair.
       return unpaired.length + held.length + failed.length > 0 && tools.length > 0 ? EXIT_ERRORS : EXIT_OK;
     } catch (error) {
       if (!(error instanceof UnknownToolError)) throw error;

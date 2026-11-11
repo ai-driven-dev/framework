@@ -21,8 +21,7 @@ const STRUCTURAL_LINE = /^(?:\||#|>|[-*+]\s|\d+[.)]\s)/u;
 const LIST_ITEM = /^(?:[-*+]\s|\d+[.)]\s)/u;
 const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
 
-// Only a date is flagged: it is exact in every language. A count or a time word needs judgment
-// (a count that goes stale or a business constant), so the reader rules own those.
+// Only a date: exact in every language. A count or time word needs judgment, left to the reader.
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
 
 const TEMPLATE_SLOT = /\{\{[^{}\n]*\}\}/gu;
@@ -35,16 +34,12 @@ const LIST_OR_QUOTE_MARKER = /^\s*(?:[>*+-]\s+|\d+[.)]\s+)/u;
 const SENTENCE_END = /(?<=[.!?])\s+/u;
 const SENTENCE_LAST_WORD = /[.!?]["'”’)\]`*_]*$/u;
 
-/**
- * One finding. `offending` is the whole text it stands on, and its cut form is the `excerpt`
- * unless one is given.
- */
+/** `offending` is the whole text; its cut form is the `excerpt` unless one is given. */
 function problem({ offending, excerpt: shown, ...finding }) {
   const cut = shown ?? (offending === undefined ? undefined : excerpt(offending));
   return { ...finding, ...(cut === undefined ? {} : { excerpt: cut }), ...(offending === undefined ? {} : { offending }) };
 }
 
-/** A quoted excerpt of the offending text, cut so one line stays short. */
 function excerpt(text) {
   return text.length > EXCERPT_LIMIT ? `${text.slice(0, EXCERPT_LIMIT - 1)}…` : text;
 }
@@ -57,12 +52,7 @@ function isListItem(line) {
   return LIST_ITEM.test(line);
 }
 
-/**
- * The paragraphs of a file: the lines of prose that run together once rendered, each as
- * `{ number, text }`. A table, a heading, a quote, a list item and the lines continuing it, a fence,
- * a comment, indented code and front matter are not prose. A line ending in a hard break ends its
- * paragraph, so a stack of labelled lines is one unit each.
- */
+/** Prose paragraphs as `{ number, text }`; tables, headings, lists, fences, comments are not. */
 function paragraphs(text) {
   const found = [];
   let current = [];
@@ -99,7 +89,6 @@ function paragraphs(text) {
   return found;
 }
 
-/** The sentences of a paragraph, each as its words and the lines it starts and ends on. */
 function sentencesIn(paragraph) {
   const found = [];
   let current = [];
@@ -140,8 +129,7 @@ function volatileFacts({ file, text }) {
   return found;
 }
 
-/** The templates folder of the skill held by a `skills` folder: the skill's own name, a plugin
- * prefix on it (`aidd-context-02-project-memory`), or a folder named for the plugin around it. */
+/** The skill's own name, a plugin prefix on it, or a folder named for the plugin around it. */
 function templatesIn(skills) {
   for (const entry of namesIn(skills)) {
     for (const skill of [path.join(skills, entry), path.join(skills, entry, SKILL)]) {
@@ -153,11 +141,7 @@ function templatesIn(skills) {
   return null;
 }
 
-/**
- * The skill's templates folder, found from the hooks folder this library sits in: beside it in the
- * plugin tree, in the tool's own folder in a flat build, under the project's `.agents` for a flat
- * Codex build, or in the skill that carries its own copy of the hooks.
- */
+/** Beside the hooks, in the tool's folder, under `.agents` for Codex, or in the skill's copy. */
 function templatesFolder() {
   const hooks = path.resolve(__dirname, "..");
   const above = (levels, ...rest) => path.join(hooks, ...Array(levels).fill(".."), ...rest);
@@ -170,7 +154,6 @@ function templatesFolder() {
   );
 }
 
-/** Every `{{…}}` slot of the template named `name`, wherever it sits under the templates folder. */
 function templateSlots(name, folder) {
   if (folder === null) return [];
   const slots = new Set();
@@ -182,11 +165,7 @@ function templateSlots(name, folder) {
   return [...slots];
 }
 
-/**
- * A slot copied from the template of the same name and left unfilled, fences included. Only an
- * exact slot of that template counts, so a `{{` of GitHub Actions, Helm or Vue, TODO and TBD are
- * never flagged. Limit: with no templates folder next to the library, nothing is found.
- */
+/** Only an exact slot of the same template counts. Limit: no templates folder, nothing found. */
 function unfilledSlots({ file, text, templates = templatesFolder() }) {
   const slots = templateSlots(path.posix.basename(file), templates);
   const fix = "fill it from the code";
@@ -201,7 +180,6 @@ function unfilledSlots({ file, text, templates = templatesFolder() }) {
   return found;
 }
 
-/** The dead-path rule every plugin applies to its own files, from the shared hook library. */
 function deadReferences({ file, text, root }) {
   const fix = "fix the path; keep the fact";
   return deadPaths(text, root, path.dirname(path.join(root, file))).map(({ line, path: dead }) =>
@@ -248,10 +226,7 @@ function normalise(piece) {
     .replace(/[.!?]+$/u, "");
 }
 
-/**
- * Copied from `scripts/check-doc-duplication.js`: a line break ends a sentence as surely as a
- * period, and tables and headings are skipped. Returns each sentence with its first line.
- */
+/** Copied from `scripts/check-doc-duplication.js`: a line break ends a sentence too. */
 function sentencesOf(text) {
   const found = new Map();
   for (const { number, text: line } of proseLines(text)) {
@@ -293,7 +268,7 @@ const RULES = Object.freeze([
   { id: "M7", severity: WARNING, check: repeatedSentences },
 ]);
 
-// The limits the rules enforce, by rule id: the table in `memory-rules.md` states the same ones.
+// By rule id; the table in `memory-rules.md` states the same ones.
 const LIMITS = Object.freeze({ M1: PROSE_WORD_LIMIT, M5: ITEM_WORD_LIMIT, M6: FILE_WORD_LIMIT, M7: SENTENCE_WORD_FLOOR });
 
 module.exports = { ERROR, WARNING, RULES, LIMITS, wordsIn };

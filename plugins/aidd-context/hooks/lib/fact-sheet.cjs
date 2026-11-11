@@ -14,7 +14,7 @@ const MAX_QUESTIONS = 8;
 const MIN_FIELDS = 4;
 const MAX_FIELDS = 5;
 
-/** The lines under a block: `{ line, fields }` for a bullet, `{ line, stray }` for one of another shape. */
+/** `{ line, fields }` for a bullet, `{ line, stray }` for any other shape. */
 function factLines(text) {
   const found = [];
   let inBlock = false;
@@ -27,7 +27,6 @@ function factLines(text) {
   return found;
 }
 
-/** Why a line cannot be read, or null. */
 function shapeProblem({ fields, stray }) {
   if (stray !== undefined) return `shape: "${stray.slice(0, 40)}" is not a "- " bullet`;
   const [id, target, fact, source] = fields;
@@ -39,10 +38,9 @@ function shapeProblem({ fields, stray }) {
   return null;
 }
 
-/** The source as a path, without the backticks a model puts around it. */
+/** Without the backticks a model puts around it. */
 const plainSource = (source) => source.replace(/^`+|`+$/gu, "");
 
-/** One message per line that breaks the grammar or cites a source absent from, or outside, the root; empty when the sheet is sound. */
 function checkSheet(sheetFile, root) {
   const name = path.basename(sheetFile);
   const lines = factLines(fs.readFileSync(sheetFile, "utf8"));
@@ -69,7 +67,7 @@ function checkSheet(sheetFile, root) {
   return problems;
 }
 
-/** The collapsed fact of each `D` line starting `remove` or `replace` whose answer starts with `yes`. */
+/** Facts of `D` lines that `remove` or `replace`, answered yes. */
 function approvedRemovals(sheetFile) {
   return factLines(fs.readFileSync(sheetFile, "utf8"))
     .filter(({ fields }) => fields && /^D\d+$/u.test(fields[0]) && /^(?:remove|replace)\b/iu.test(fields[2]) && /^yes\b/iu.test(fields[4] ?? ""))

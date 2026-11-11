@@ -17,10 +17,9 @@ const nulList = (text) => text.split("\0").filter((name) => name !== "");
 const audit = (reason) => `Since: no history, full review\nreason: ${reason.replace(/\s+/gu, " ").trim().slice(0, 300)}\n`;
 const usage = (message) => Object.assign(new Error(message), { usage: true });
 
-/** Words of a line that can be a path: the characters a path holds, a leading `./` dropped. */
 const tokensOf = (line) => line.split(/[^\p{L}\p{N}_@+./-]+/u).map((token) => token.replace(/^\.\//u, "").replace(/[.,:;]+$/u, "")).filter((token) => token !== "");
 
-/** The base `{ sha, subject, time }`, or `{ reason }` when the refresh has none. */
+/** `{ sha, subject, time }`, or `{ reason }` when the refresh has none. */
 function baseOf(root, bank, since) {
   if (!succeeds(root, ["rev-parse", "--git-dir"])) return { reason: "no repository" };
   if (!succeeds(root, ["rev-parse", "--verify", "-q", "HEAD"])) return { reason: "no commit" };
@@ -38,20 +37,19 @@ function baseOf(root, bank, since) {
     sha = git(root, ["rev-list", "-1", "HEAD", "--", bank]).trim();
     if (sha === "") return shallow ? missing : { reason: "bank never committed" };
   }
-  // In a shallow history the oldest commit shows every file as added: it says nothing of the bank.
+  // In a shallow history the oldest commit shows every file as added.
   if (shallow && git(root, ["rev-list", "--parents", "-n", "1", sha]).trim().split(" ").length === 1) return missing;
   const [subject, time] = git(root, ["log", "-1", "--no-show-signature", "--format=%s%x00%ct", sha]).trim().split("\0");
   return { sha, subject, time: Number(time) };
 }
 
-/** The files changed since `sha` under `root`, uncommitted and untracked ones included, the bank excluded. */
+/** Uncommitted and untracked files included, the bank excluded. */
 function changedSince(root, sha, bank) {
   const tracked = nulList(git(root, ["diff", "--name-only", "-z", "--no-renames", "--relative", sha]));
   const untracked = nulList(git(root, ["ls-files", "-z", "--others", "--exclude-standard"]));
   return [...new Set([...tracked, ...untracked])].filter((file) => !file.startsWith(`${bank}/`)).sort();
 }
 
-/** Each directory above a changed file, with its count and its first files. */
 function directoriesOf(changed) {
   const found = new Map();
   for (const file of changed) {
@@ -67,7 +65,7 @@ function directoriesOf(changed) {
   return found;
 }
 
-/** Each memory line citing a changed file, or a directory above one, as `file:line cites path: text`. */
+/** As `file:line cites path: text`. */
 function citingLines(root, bank, changed) {
   const files = new Set(changed);
   const dirs = directoriesOf(changed);
@@ -88,13 +86,12 @@ function citingLines(root, bank, changed) {
   return found;
 }
 
-/** The group of a file: its top-level directory, or its first two levels when `deep`. */
 const groupOf = (file, deep) => {
   const parts = file.split("/").slice(0, -1);
   return parts.length === 0 ? ROOT_GROUP : `${parts.slice(0, deep ? 2 : 1).join("/")}/`;
 };
 
-/** The changed files as `group (count)` lines, a top-level directory holding over half split by its second level. */
+/** A top-level directory holding over half the changes is split by its second level. */
 function groups(changed) {
   const top = new Map();
   for (const file of changed) top.set(groupOf(file, false), (top.get(groupOf(file, false)) ?? 0) + 1);
@@ -110,7 +107,7 @@ function groups(changed) {
 
 const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
-/** The age of a commit time, in git's units, in English whatever the locale. */
+/** In English whatever the locale. */
 function age(time, now = Date.now() / 1000) {
   const seconds = Math.max(0, Math.round(now - time));
   const minutes = Math.round(seconds / 60);
@@ -127,7 +124,6 @@ function age(time, now = Date.now() / 1000) {
 
 const section = (title, items, total = items.length) => `${title} (${total}):\n${items.map((item) => `- ${item}`).join("\n")}${items.length > 0 ? "\n" : ""}`;
 
-/** The text `changes` prints for `root`; `bank` is the bank's path below it. */
 function changes(root, bank, since) {
   try {
     const base = baseOf(root, bank, since);

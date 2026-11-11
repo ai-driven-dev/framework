@@ -13,7 +13,7 @@ const MAX_FILE_BYTES = 16 * 1024 * 1024;
 const collapse = (line) => line.trim().replace(/\s+/gu, " ");
 const unmarked = (line) => line.replace(/^(?:[-*+]|\d+[.)])\s+/u, "");
 
-/** Git as the user's repository sees it, whatever a hook exported into this process. */
+/** GIT_* stripped: whatever a hook exported, git sees the user's repository. */
 function git(root, args) {
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
   try {
@@ -32,10 +32,7 @@ const succeeds = (root, args) => {
   }
 };
 
-/**
- * The committed markdown files of `bank` as `{ file, text }`, `file` relative to the bank. Null
- * without a repository, a commit or a committed bank; any other git failure throws.
- */
+/** Null without a repository, a commit or a committed bank; any other git failure throws. */
 function previousBank(root, bank) {
   if (!succeeds(root, ["rev-parse", "--git-dir"]) || !succeeds(root, ["rev-parse", "--verify", "-q", "HEAD"])) return null;
   const names = git(root, ["ls-tree", "-r", "-z", "--name-only", "HEAD", "--", bank]).split("\0").filter((name) => name.endsWith(".md"));
@@ -52,7 +49,7 @@ function markdownUnder(dir, relative = "") {
   });
 }
 
-/** Every line of `previous` that the bank under `bankDir` lost, as `file: line`, unless an approval, a collapsed fact, quotes it, its list marker optional. */
+/** Counted by occurrence; an approval quoting the line, list marker optional, keeps it out. */
 function goneLines(previous, bankDir, approvals) {
   const held = new Map();
   for (const file of markdownUnder(bankDir)) {
