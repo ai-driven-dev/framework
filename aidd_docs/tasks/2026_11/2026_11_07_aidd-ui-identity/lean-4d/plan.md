@@ -1,6 +1,6 @@
 ---
 objective: "Après 4d, les six skills et leur moteur repassent en lean. Cinq défauts vus au pilote 4d sont corrigés, chacun par un test écrit d'abord : lien `code` des écrans, nom et statut de la revue, mesures du pilote, « Tout OK » sur l'accueil."
-status: approved
+status: done
 ---
 
 # Plan : passe lean après 4d, et correctifs du pilote
