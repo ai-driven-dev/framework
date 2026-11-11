@@ -164,7 +164,7 @@ export class ToolCatalog {
   }
 
   globalFilesOf(toolId: ToolId): GlobalFiles | null {
-    return this.resolvePluginsCapability(toolId)?.globalFilesOrNull() ?? null;
+    return this.resolvePluginsCapability(toolId)?.globalFiles() ?? null;
   }
 
   buildContractFor(
@@ -194,7 +194,7 @@ export class ToolCatalog {
   }
 
   projectHooksFileOf(toolId: ToolId): string | undefined {
-    return this.resolvePluginsCapability(toolId)?.projectHooksRelativePath ?? undefined;
+    return this.resolvePluginsCapability(toolId)?.projectHooksDelivery()?.relativePath;
   }
 
   projectHooksDeliveryOf(toolId: ToolId): {

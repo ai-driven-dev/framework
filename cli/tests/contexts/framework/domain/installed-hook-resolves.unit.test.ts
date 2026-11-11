@@ -23,7 +23,7 @@ const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
 
 const PLUGIN = "aidd-telemetry";
-const SOURCE_TOKEN = claude.capabilities.plugins.pluginRootToken ?? "";
+const SOURCE_TOKEN = claude.capabilities.plugins.rootToken() ?? "";
 const SCRIPTS = ["hooks/journal.cjs", "hooks/lib/record.cjs"];
 const HOOKS_JSON = JSON.stringify({
   hooks: {
@@ -55,7 +55,7 @@ function distribution(): PluginDistribution {
 /** Every path a hook command names, as the tool would resolve it: its own plugin-root
  * variable and a leading `./` both mean the plugin's own directory. */
 function commandTargets(manifest: string, tool: AiTool<HasPlugins>): string[] {
-  const token = tool.capabilities.plugins.pluginRootToken ?? "";
+  const token = tool.capabilities.plugins.rootToken() ?? "";
   return [...manifest.matchAll(/"command":\s*"([^"]+)"/gu)]
     .flatMap((match) => (match[1] ?? "").split(" "))
     .filter((word) => word.includes("/") && !word.startsWith("-"))
@@ -64,7 +64,7 @@ function commandTargets(manifest: string, tool: AiTool<HasPlugins>): string[] {
 
 function installed(tool: AiTool<HasPlugins>): { paths: string[]; manifest: string } {
   const { files } = translator.translateWithComponentPaths(distribution(), tool);
-  const root = `${tool.capabilities.plugins.pluginsDir}${PLUGIN}/`;
+  const root = `${tool.capabilities.plugins.projectPluginsDir()}${PLUGIN}/`;
   return {
     paths: files.map((file) => file.relativePath.replace(root, "")),
     manifest: files.find((file) => file.relativePath.endsWith("hooks.json"))?.content ?? "",
@@ -93,7 +93,7 @@ describe("a hook that was installed", () => {
     for (const tool of HOOK_HOSTS) {
       const { manifest } = installed(tool);
       expect(commandTargets(manifest, tool), tool.toolId).not.toHaveLength(0);
-      if (tool.capabilities.plugins.pluginRootToken === SOURCE_TOKEN) continue;
+      if (tool.capabilities.plugins.rootToken() === SOURCE_TOKEN) continue;
 
       expect(manifest, tool.toolId).not.toContain(SOURCE_TOKEN);
     }
@@ -133,8 +133,10 @@ describe("the two ways a plugin gets installed", () => {
       const { files, skipped } = translator.translateWithComponentPaths(distribution(), tool);
       const carriesHooks = files.some((file) => file.relativePath.endsWith(".cjs"));
 
-      expect(carriesHooks, tool.toolId).toBe(tool.capabilities.plugins.acceptsHooks);
-      expect(skipped.length > 0, tool.toolId).toBe(!tool.capabilities.plugins.acceptsHooks);
+      expect(carriesHooks, tool.toolId).toBe(tool.capabilities.plugins.hooksAcceptance().accepts);
+      expect(skipped.length > 0, tool.toolId).toBe(
+        !tool.capabilities.plugins.hooksAcceptance().accepts
+      );
     }
   });
 });

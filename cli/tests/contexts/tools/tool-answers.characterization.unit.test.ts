@@ -28,6 +28,7 @@ import {
 } from "../../../src/contexts/tools/domain/registry.js";
 import type { FlatHooksLoaderEntry } from "../../../src/kernel/materialization/flat-paths.js";
 import type { PluginSource } from "../../../src/kernel/source.js";
+import { pluginModeOf } from "./testing/plugin-mode.js";
 
 const HOME = "/fake/home";
 const PROJECT = "/fake/project";
@@ -121,33 +122,37 @@ function loaderEntryAnswer(entry: FlatHooksLoaderEntry | null): unknown {
 
 function pluginsAnswer(plugins: PluginsCapability | null, directory: string): unknown {
   if (plugins === null) return null;
-  const bridge = plugins.flatHooksBridge;
+  const layout = plugins.flatLayout();
+  const bridge = layout.hooksBridge;
+  const acceptance = plugins.hooksAcceptance();
+  const mcp = plugins.mcpFile();
+  const delivery = plugins.projectHooksDelivery();
   return {
-    mode: plugins.mode,
-    installScope: plugins.installScope,
-    hooksDestination: plugins.hooksDestination,
-    pluginsDir: plugins.pluginsDir,
+    mode: pluginModeOf(plugins),
+    installScope: plugins.requiresUserScope() ? "user" : "project",
+    hooksDestination: plugins.deliversHooksToProject() ? "project" : "plugin",
+    pluginsDir: plugins.projectPluginsDir(),
     resolvePluginsBaseDir: plugins.resolvePluginsBaseDir(PROJECT, HOME),
     userPluginsBaseDir: plugins.userPluginsBaseDir(HOME),
     pluginOutputDir: plugins.pluginOutputDir(PLUGIN),
-    pluginManifestRelativePath: plugins.pluginManifestRelativePath,
-    pluginRootToken: plugins.pluginRootToken,
-    acceptsHooks: plugins.acceptsHooks,
-    hooksUnsupportedReason: plugins.hooksUnsupportedReason,
-    hooksTrustNotice: plugins.hooksTrustNotice,
-    acceptsMcp: plugins.acceptsMcp,
-    mcpRelativePath: plugins.mcpRelativePath,
-    hooksRelativePath: plugins.hooksRelativePath,
-    projectHooksRelativePath: plugins.projectHooksRelativePath,
-    projectHooksFormat: projectHooksFormatAnswer(plugins.projectHooksFormat),
+    pluginManifestRelativePath: plugins.manifestPath(),
+    pluginRootToken: plugins.rootToken(),
+    acceptsHooks: acceptance.accepts,
+    hooksUnsupportedReason: acceptance.unsupportedReason,
+    hooksTrustNotice: plugins.trustNotice(),
+    acceptsMcp: mcp.accepts,
+    mcpRelativePath: mcp.relativePath,
+    hooksRelativePath: plugins.hooksFilePath(),
+    projectHooksRelativePath: delivery?.relativePath ?? null,
+    projectHooksFormat: projectHooksFormatAnswer(delivery?.format ?? null),
     hookScript: {
       script: plugins.hookScript("hooks/run.js", "console.log(1);"),
       hooksJson: plugins.hookScript("hooks/hooks.json", HOOKS_JSON),
     },
-    flatNamespacePrefix: plugins.flatNamespacePrefix,
-    flatSkillLayout: plugins.flatSkillLayout,
-    flatHooksDir: plugins.flatHooksDir,
-    flatHooksLoaderEntry: loaderEntryAnswer(plugins.flatHooksLoaderEntry),
+    flatNamespacePrefix: layout.namespacePrefix,
+    flatSkillLayout: layout.skillLayout,
+    flatHooksDir: layout.hooksDir,
+    flatHooksLoaderEntry: loaderEntryAnswer(layout.hooksLoaderEntry),
     flatHooksBridge:
       bridge === null
         ? null
@@ -157,11 +162,16 @@ function pluginsAnswer(plugins: PluginsCapability | null, directory: string): un
             generatedFromNothing: bridge.generate('{"hooks":{}}', PLUGIN),
             generatedFromPreToolUse: bridge.generate(HOOKS_JSON, PLUGIN),
           },
-    translationMode: plugins.translationMode,
-    nativeActivation: activationAnswer(plugins.nativeActivation),
-    marketplaceSettings: marketplaceSettingsAnswer(plugins.marketplaceSettings),
-    globalFiles: globalFilesAnswer(plugins.globalFiles, directory),
+    translationMode: translationModeOf(plugins),
+    nativeActivation: activationAnswer(plugins.activation()),
+    marketplaceSettings: marketplaceSettingsAnswer(plugins.marketplaceRegistration()),
+    globalFiles: globalFilesAnswer(plugins.globalFiles(), directory),
   };
+}
+
+function translationModeOf(plugins: PluginsCapability): "flat" | "marketplace" | null {
+  if (plugins.buildMode() === "flat") return "flat";
+  return plugins.translatesAsMarketplace() ? "marketplace" : null;
 }
 
 function registryAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
@@ -242,69 +252,35 @@ describe("what every registered tool answers to the contexts that read it", () =
     );
   });
 
-  it("answers through the capability's methods what its fields and the registry answer", () => {
+  it("answers through the capability's methods what the registry answers", () => {
     const catalog = new ToolCatalog(REGISTERED_PROFILES);
     for (const config of REGISTERED_PROFILES.filter(isAiTool)) {
       const plugins = catalog.resolvePluginsCapability(config.toolId);
       if (plugins === null) continue;
       const id = config.toolId;
-      const layout = plugins.flatLayout();
-      const acceptance = plugins.hooksAcceptance();
       const delivery = plugins.projectHooksDelivery();
       const registryDelivery = projectHooksDeliveryOf(id);
 
       expect(
         {
           buildMode: plugins.buildMode(),
-          isNative: plugins.isNative(),
-          requiresUserScope: plugins.requiresUserScope(),
-          deliversHooksToProject: plugins.deliversHooksToProject(),
-          projectPluginsDir: plugins.projectPluginsDir(),
-          manifestPath: plugins.manifestPath(),
-          rootToken: plugins.rootToken(),
-          accepts: acceptance.accepts,
-          unsupportedReason: acceptance.unsupportedReason,
-          trustNotice: plugins.trustNotice(),
-          flatSkillLayout: layout.skillLayout,
-          flatNamespacePrefix: layout.namespacePrefix,
-          flatHooksDir: layout.hooksDir,
-          flatHooksLoaderEntry: loaderEntryAnswer(layout.hooksLoaderEntry),
-          flatHooksBridge: layout.hooksBridge === plugins.flatHooksBridge,
           activation: activationAnswer(plugins.activation()),
-          marketplaceRegistration: marketplaceSettingsAnswer(plugins.marketplaceRegistration()),
           enablementIsMachineGlobal: plugins.enablementIsMachineGlobal(),
           supportsUserScopeActivation: plugins.supportsUserScopeActivation(),
           copiesFilesGlobally: plugins.copiesFilesGlobally(),
-          globalFiles: globalFilesAnswer(plugins.globalFilesOrNull(), config.directory),
+          globalFiles: globalFilesAnswer(plugins.globalFiles(), config.directory),
           projectHooksDelivery: delivery === null ? null : delivery.relativePath,
-          projectHooksFormat: delivery?.format === plugins.projectHooksFormat,
           projectHooksScript: delivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
         },
         id
       ).toEqual({
         buildMode: frameworkBuildModeFor(id),
-        isNative: plugins.mode === "native",
-        requiresUserScope: plugins.installScope === "user",
-        deliversHooksToProject: plugins.hooksDestination === "project",
-        projectPluginsDir: plugins.pluginsDir,
-        manifestPath: plugins.pluginManifestRelativePath,
-        rootToken: plugins.pluginRootToken,
-        accepts: plugins.acceptsHooks,
-        unsupportedReason: plugins.hooksUnsupportedReason,
-        trustNotice: plugins.hooksTrustNotice,
-        flatSkillLayout: plugins.flatSkillLayout,
-        flatNamespacePrefix: plugins.flatNamespacePrefix,
-        flatHooksDir: plugins.flatHooksDir,
-        flatHooksLoaderEntry: loaderEntryAnswer(plugins.flatHooksLoaderEntry),
-        flatHooksBridge: true,
         activation: activationAnswer(nativeActivationOf(id) ?? null),
-        marketplaceRegistration: marketplaceSettingsAnswer(plugins.marketplaceSettings),
         enablementIsMachineGlobal: pluginEnablementIsMachineGlobal(id),
         supportsUserScopeActivation: supportsUserScopeActivation(id),
         copiesFilesGlobally: copiesPluginFilesGlobally(id),
         globalFiles: globalFilesAnswer(globalFilesOf(id), config.directory),
         projectHooksDelivery: registryDelivery === null ? null : projectHooksFileOf(id),
-        projectHooksFormat: registryDelivery !== null,
         projectHooksScript: registryDelivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
       });
     }

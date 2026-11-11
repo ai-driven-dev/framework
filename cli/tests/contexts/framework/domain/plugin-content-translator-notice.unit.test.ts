@@ -39,7 +39,7 @@ describe("PluginContentTranslator hook trust notice", () => {
       pluginName: "test-plugin",
       component: "hooks",
       toolId: "codex",
-      message: codex.capabilities.plugins.hooksTrustNotice,
+      message: codex.capabilities.plugins.trustNotice(),
     });
   });
 

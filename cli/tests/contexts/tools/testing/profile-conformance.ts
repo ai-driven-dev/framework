@@ -173,11 +173,11 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {
     const plugins = capability(profile, "plugins", PluginsCapability);
     const flat = profile.buildContracts?.flat?.();
-    if (plugins?.mode !== "flat" || flat === undefined) return;
-    expect(flat.artifacts.hooks.supported).toBe(plugins.acceptsHooks);
+    if (plugins?.buildMode() !== "flat" || flat === undefined) return;
+    expect(flat.artifacts.hooks.supported).toBe(plugins.hooksAcceptance().accepts);
   }),
   aiCheck("names a variable, never a path", (profile) => {
-    const token = capability(profile, "plugins", PluginsCapability)?.pluginRootToken;
+    const token = capability(profile, "plugins", PluginsCapability)?.rootToken();
     if (token === null || token === undefined) return;
     expect(token).toMatch(PLUGIN_ROOT_TOKEN);
   }),
@@ -185,7 +185,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     const plugins = capability(profile, "plugins", PluginsCapability);
     const marketplace = profile.buildContracts?.marketplace?.();
     if (plugins === undefined || marketplace === undefined) return;
-    expect(marketplace.pluginRootToken ?? null).toBe(plugins.pluginRootToken);
+    expect(marketplace.pluginRootToken ?? null).toBe(plugins.rootToken());
   }),
   aiCheck("writes no token into a flat build", (profile) => {
     const flat = profile.buildContracts?.flat?.();

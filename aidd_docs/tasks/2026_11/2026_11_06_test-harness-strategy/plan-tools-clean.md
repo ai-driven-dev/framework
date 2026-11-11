@@ -216,7 +216,7 @@ Mutation: default keeps per-profile scopes, merges the rest plus vscode into `to
 | M-T1 | kept | `AiToolId` in `kernel/tool.ts` |
 | E-T4 | added | `domain/formats/toml.ts` imports `smol-toml` |
 | E-T5 | added | kilo and opencode bridge shared in `domain/hooks/event-bridge.ts` |
-| E-T6 | added, temporary | fields and methods coexist P5a to P5d |
+| E-T6 | removed | fields and methods coexisted P5a to P5d; the fields are now private |
 
 ## 9. Risks and decisions
 

@@ -4,15 +4,15 @@ import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/co
 describe("copilot plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(copilot.capabilities.plugins.mode).toBe("native");
+      expect(copilot.capabilities.plugins.isNative()).toBe(true);
     });
 
     it("uses .github/plugins/ as plugins directory", () => {
-      expect(copilot.capabilities.plugins.pluginsDir).toBe(".github/plugins/");
+      expect(copilot.capabilities.plugins.projectPluginsDir()).toBe(".github/plugins/");
     });
 
     it("uses plugin.json as plugin manifest path", () => {
-      expect(copilot.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
+      expect(copilot.capabilities.plugins.manifestPath()).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {
@@ -23,7 +23,7 @@ describe("copilot plugins", () => {
   });
 
   describe("capabilities.plugins.marketplaceSettings", () => {
-    const ms = copilot.capabilities.plugins.marketplaceSettings;
+    const ms = copilot.capabilities.plugins.marketplaceRegistration();
 
     it("has marketplaceSettings configured", () => {
       expect(ms).not.toBeNull();

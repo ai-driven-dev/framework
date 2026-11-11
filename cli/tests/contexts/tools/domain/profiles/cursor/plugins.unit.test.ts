@@ -5,31 +5,31 @@ import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cur
 describe("cursor plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(cursor.capabilities.plugins.mode).toBe("native");
+      expect(cursor.capabilities.plugins.isNative()).toBe(true);
     });
 
     it("pluginsDir is empty string (base-relative path prefix)", () => {
-      expect(cursor.capabilities.plugins.pluginsDir).toBe("");
+      expect(cursor.capabilities.plugins.projectPluginsDir()).toBe("");
     });
 
     it("pluginManifestRelativePath is null (no manifest file written into plugin dir)", () => {
-      expect(cursor.capabilities.plugins.pluginManifestRelativePath).toBeNull();
+      expect(cursor.capabilities.plugins.manifestPath()).toBeNull();
     });
 
     it("installScope is user", () => {
-      expect(cursor.capabilities.plugins.installScope).toBe("user");
+      expect(cursor.capabilities.plugins.requiresUserScope()).toBe(true);
     });
 
     it("acceptsHooks is true (Cursor auto-discovers hooks.json at plugin root)", () => {
-      expect(cursor.capabilities.plugins.acceptsHooks).toBe(true);
+      expect(cursor.capabilities.plugins.hooksAcceptance().accepts).toBe(true);
     });
 
     it("acceptsMcp is true (Cursor auto-discovers mcp.json at plugin root)", () => {
-      expect(cursor.capabilities.plugins.acceptsMcp).toBe(true);
+      expect(cursor.capabilities.plugins.mcpFile().accepts).toBe(true);
     });
 
     it("marketplaceSettings is null", () => {
-      expect(cursor.capabilities.plugins.marketplaceSettings).toBeNull();
+      expect(cursor.capabilities.plugins.marketplaceRegistration()).toBeNull();
     });
 
     it("resolvePluginsBaseDir returns ~/.cursor/plugins/local resolved from given homedir", () => {

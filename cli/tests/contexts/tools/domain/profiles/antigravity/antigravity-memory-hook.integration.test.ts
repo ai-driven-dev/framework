@@ -56,8 +56,8 @@ describe("the memory hook under Antigravity", () => {
 
   /** Installs the plugin's hooks as `plugin install` does, and returns its SessionStart command. */
   function install(): string {
-    const format = plugins.projectHooksFormat;
-    if (format === null) throw new Error("antigravity declares no project hooks format");
+    const format = plugins.projectHooksDelivery()?.format;
+    if (format === undefined) throw new Error("antigravity declares no project hooks format");
     for (const source of filesUnder(PLUGIN_HOOKS)) {
       const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;
       if (pluginPath === "hooks/hooks.json") continue;

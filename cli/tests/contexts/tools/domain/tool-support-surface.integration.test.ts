@@ -13,6 +13,7 @@ import {
 } from "../../../../src/contexts/tools/domain/registry.js";
 import { AI_TOOL_IDS } from "../../../../src/kernel/tool.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
+import { pluginModeOf } from "../testing/plugin-mode.js";
 
 const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-support/surface.json");
 
@@ -45,6 +46,7 @@ function supportOf(surface: Surface, contract: ArtifactContract): Support {
 function capture(): ToolSupport[] {
   return AI_TOOL_IDS.map((id) => {
     const tool = getAiToolConfig(id);
+    const plugins = resolvePluginsCapability(id);
     const builds: ToolSupport["builds"] = {};
     for (const mode of ["marketplace", "flat"] as const) {
       const contract = buildContractFor(id, mode)?.();
@@ -57,7 +59,7 @@ function capture(): ToolSupport[] {
       id,
       name: tool.displayName,
       directory: tool.directory,
-      pluginMode: resolvePluginsCapability(id)?.mode ?? null,
+      pluginMode: plugins === null ? null : pluginModeOf(plugins),
       nativeCli: nativeActivationOf(id)?.binary ?? null,
       builds,
     };

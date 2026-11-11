@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { PluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
+import { pluginModeOf } from "../../testing/plugin-mode.js";
 
 const projectHooksFormat: ProjectHooksFormat = {
   merge: () => ({ content: "", warnings: [] }),
@@ -30,19 +31,19 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes mode as native", () => {
-      expect(cap.mode).toBe("native");
+      expect(pluginModeOf(cap)).toBe("native");
     });
 
     it("exposes pluginsDir", () => {
-      expect(cap.pluginsDir).toBe(".claude/plugins/");
+      expect(cap.projectPluginsDir()).toBe(".claude/plugins/");
     });
 
     it("exposes pluginManifestRelativePath", () => {
-      expect(cap.pluginManifestRelativePath).toBe(".claude-plugin/plugin.json");
+      expect(cap.manifestPath()).toBe(".claude-plugin/plugin.json");
     });
 
     it("flatNamespacePrefix is null", () => {
-      expect(cap.flatNamespacePrefix).toBeNull();
+      expect(cap.flatLayout().namespacePrefix).toBeNull();
     });
 
     it("pluginOutputDir returns the plugin subdirectory", () => {
@@ -59,19 +60,19 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes mode as flat", () => {
-      expect(cap.mode).toBe("flat");
+      expect(pluginModeOf(cap)).toBe("flat");
     });
 
     it("exposes flatNamespacePrefix", () => {
-      expect(cap.flatNamespacePrefix).toBe("aidd-");
+      expect(cap.flatLayout().namespacePrefix).toBe("aidd-");
     });
 
     it("pluginsDir is null", () => {
-      expect(cap.pluginsDir).toBeNull();
+      expect(cap.projectPluginsDir()).toBeNull();
     });
 
     it("pluginManifestRelativePath is null", () => {
-      expect(cap.pluginManifestRelativePath).toBeNull();
+      expect(cap.manifestPath()).toBeNull();
     });
 
     it("pluginOutputDir returns null", () => {
@@ -79,11 +80,13 @@ describe("PluginsCapability", () => {
     });
 
     it("flatHooksDir is null", () => {
-      expect(cap.flatHooksDir).toBeNull();
+      expect(cap.flatLayout().hooksDir).toBeNull();
     });
 
     it("exposes hooksUnsupportedReason", () => {
-      expect(cap.hooksUnsupportedReason).toBe("a test double that hosts no plugin directory");
+      expect(cap.hooksAcceptance().unsupportedReason).toBe(
+        "a test double that hosts no plugin directory"
+      );
     });
   });
 
@@ -96,19 +99,19 @@ describe("PluginsCapability", () => {
     });
 
     it("acceptsHooks is true", () => {
-      expect(cap.acceptsHooks).toBe(true);
+      expect(cap.hooksAcceptance().accepts).toBe(true);
     });
 
     it("exposes flatHooksDir", () => {
-      expect(cap.flatHooksDir).toBe(".test-tool/plugin/");
+      expect(cap.flatLayout().hooksDir).toBe(".test-tool/plugin/");
     });
 
     it("hooksUnsupportedReason is null", () => {
-      expect(cap.hooksUnsupportedReason).toBeNull();
+      expect(cap.hooksAcceptance().unsupportedReason).toBeNull();
     });
 
     it("flatHooksLoaderEntry is null when not declared", () => {
-      expect(cap.flatHooksLoaderEntry).toBeNull();
+      expect(cap.flatLayout().hooksLoaderEntry).toBeNull();
     });
   });
 
@@ -122,7 +125,7 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes flatHooksLoaderEntry", () => {
-      expect(cap.flatHooksLoaderEntry).toEqual({
+      expect(cap.flatLayout().hooksLoaderEntry).toEqual({
         dir: ".test-tool/plugin/",
         baseName: "test-tool-plugin.js",
       });
@@ -136,19 +139,19 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes mode as unsupported", () => {
-      expect(cap.mode).toBe("unsupported");
+      expect(pluginModeOf(cap)).toBe("unsupported");
     });
 
     it("pluginsDir is null", () => {
-      expect(cap.pluginsDir).toBeNull();
+      expect(cap.projectPluginsDir()).toBeNull();
     });
 
     it("pluginManifestRelativePath is null", () => {
-      expect(cap.pluginManifestRelativePath).toBeNull();
+      expect(cap.manifestPath()).toBeNull();
     });
 
     it("flatNamespacePrefix is null", () => {
-      expect(cap.flatNamespacePrefix).toBeNull();
+      expect(cap.flatLayout().namespacePrefix).toBeNull();
     });
 
     it("pluginOutputDir returns null", () => {
@@ -168,7 +171,7 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes installScope as user", () => {
-      expect(cap.installScope).toBe("user");
+      expect(cap.requiresUserScope()).toBe(true);
     });
 
     it("resolvePluginsBaseDir returns homedir-based path", () => {
@@ -188,7 +191,7 @@ describe("PluginsCapability", () => {
     });
 
     it("exposes installScope as project", () => {
-      expect(cap.installScope).toBe("project");
+      expect(cap.requiresUserScope()).toBe(false);
     });
 
     it("resolvePluginsBaseDir returns projectRoot", () => {
@@ -225,12 +228,12 @@ describe("PluginsCapability", () => {
           marketplaceSettings: MARKETPLACE_SETTINGS,
           nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
         });
-        expect(cap.translationMode).toBe("marketplace");
+        expect(cap.translatesAsMarketplace()).toBe(true);
       });
     });
 
     describe("native without translationMode", () => {
-      it("exposes translationMode as null (neutral native)", () => {
+      it("builds as a marketplace without declaring it (neutral native)", () => {
         const cap = new PluginsCapability({
           mode: "native",
           pluginRootToken: "$X_PLUGIN_ROOT",
@@ -238,29 +241,35 @@ describe("PluginsCapability", () => {
           pluginsDir: ".claude/plugins/",
           pluginManifestRelativePath: "plugin.json",
         });
-        expect(cap.translationMode).toBeNull();
+        expect([cap.translatesAsMarketplace(), cap.buildMode()]).toStrictEqual([
+          false,
+          "marketplace",
+        ]);
       });
     });
 
     describe("flat mode", () => {
-      it("exposes translationMode as flat automatically", () => {
+      it("builds flat automatically", () => {
         const cap = new PluginsCapability({
           mode: "flat",
           acceptsHooks: false,
           hooksUnsupportedReason: "a test double that hosts no plugin directory",
           flatNamespacePrefix: "aidd-",
         });
-        expect(cap.translationMode).toBe("flat");
+        expect([cap.translatesAsMarketplace(), cap.buildMode()]).toStrictEqual([false, "flat"]);
       });
     });
 
     describe("unsupported mode", () => {
-      it("exposes translationMode as null", () => {
+      it("does not build as a marketplace", () => {
         const cap = new PluginsCapability({
           mode: "unsupported",
           hooksUnsupportedReason: "a test double that hosts no plugin directory",
         });
-        expect(cap.translationMode).toBeNull();
+        expect([cap.translatesAsMarketplace(), cap.buildMode()]).toStrictEqual([
+          false,
+          "marketplace",
+        ]);
       });
     });
   });
@@ -338,9 +347,9 @@ describe("PluginsCapability base directory resolution", () => {
       projectHooksFormat: projectHooksFormat,
     });
 
-    expect(cap.hooksDestination).toBe("project");
-    expect(cap.projectHooksRelativePath).toBe(".x/hooks.json");
-    expect(cap.projectHooksFormat).toBe(projectHooksFormat);
+    expect(cap.deliversHooksToProject()).toBe(true);
+    expect(cap.projectHooksDelivery()?.relativePath).toBe(".x/hooks.json");
+    expect(cap.projectHooksDelivery()?.format).toBe(projectHooksFormat);
   });
 });
 
@@ -354,7 +363,7 @@ describe("PluginsCapability defaults each mode falls back to", () => {
       pluginManifestRelativePath: null,
     });
 
-    expect([cap.acceptsMcp, cap.hooksDestination]).toStrictEqual([false, "plugin"]);
+    expect([cap.mcpFile().accepts, cap.deliversHooksToProject()]).toStrictEqual([false, false]);
   });
 
   it("fixes the same two answers for a flat tool", () => {
@@ -365,17 +374,17 @@ describe("PluginsCapability defaults each mode falls back to", () => {
       flatNamespacePrefix: "aidd-",
     });
 
-    expect([cap.acceptsMcp, cap.hooksDestination]).toStrictEqual([false, "plugin"]);
+    expect([cap.mcpFile().accepts, cap.deliversHooksToProject()]).toStrictEqual([false, false]);
   });
 
   it("accepts neither hooks nor mcp for a tool hosting no plugin at all", () => {
     const cap = new PluginsCapability({ mode: "unsupported", hooksUnsupportedReason: "none" });
 
-    expect([cap.acceptsHooks, cap.acceptsMcp, cap.hooksDestination]).toStrictEqual([
-      false,
-      false,
-      "plugin",
-    ]);
+    expect([
+      cap.hooksAcceptance().accepts,
+      cap.mcpFile().accepts,
+      cap.deliversHooksToProject(),
+    ]).toStrictEqual([false, false, false]);
   });
 });
 
@@ -405,7 +414,7 @@ describe("PluginsCapability native construction", () => {
       marketplaceSettings: MARKETPLACE_SETTINGS,
       nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
     });
-    expect([cap.marketplaceSettings?.settingsPath, cap.nativeActivation?.binary]).toEqual([
+    expect([cap.marketplaceRegistration()?.settingsPath, cap.activation()?.binary]).toEqual([
       ".claude/settings.json",
       "claude",
     ]);

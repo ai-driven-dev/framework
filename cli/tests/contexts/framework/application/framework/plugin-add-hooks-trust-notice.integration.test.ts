@@ -45,7 +45,7 @@ describe("PluginAddUseCase hook trust notice", () => {
 
     expect(logger.infoMessages).toHaveLength(1);
     expect(logger.infoMessages[0]).toBe(
-      `Plugin "sample-plugin" (codex): ${codex.capabilities.plugins.hooksTrustNotice}`
+      `Plugin "sample-plugin" (codex): ${codex.capabilities.plugins.trustNotice()}`
     );
     expect(logger.warnMessages).toEqual([]);
   });

@@ -59,27 +59,27 @@ describe("kilo", () => {
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    expect(kilo.capabilities.plugins).toMatchObject({
-      mode: "flat",
-      acceptsHooks: true,
-      flatHooksDir: ".kilo/hooks/",
-    });
-    expect(kilo.capabilities.plugins.flatHooksBridge?.path("aidd-context")).toBe(
+    const plugins = kilo.capabilities.plugins;
+    expect([
+      plugins.buildMode(),
+      plugins.hooksAcceptance().accepts,
+      plugins.flatLayout().hooksDir,
+    ]).toStrictEqual(["flat", true, ".kilo/hooks/"]);
+    expect(kilo.capabilities.plugins.flatLayout().hooksBridge?.path("aidd-context")).toBe(
       ".kilo/plugin/aidd-context-hooks.js"
     );
-    const plugins = kilo.capabilities.plugins;
     expect(
       flatHooksPathWithLoaderEntry(
-        plugins.flatHooksDir ?? "",
-        plugins.flatHooksLoaderEntry,
+        plugins.flatLayout().hooksDir ?? "",
+        plugins.flatLayout().hooksLoaderEntry,
         "aidd-context",
         "hooks/kilo-plugin.js"
       )
     ).toBe(".kilo/plugin/aidd-context.js");
     expect(
       flatHooksPathWithLoaderEntry(
-        plugins.flatHooksDir ?? "",
-        plugins.flatHooksLoaderEntry,
+        plugins.flatLayout().hooksDir ?? "",
+        plugins.flatLayout().hooksLoaderEntry,
         "aidd-context",
         "hooks/capture.cjs"
       )

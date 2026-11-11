@@ -1,19 +1,19 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
-import { MarketplaceRegistration } from "../plugins/marketplace-registration.js";
-import { NativeActivation, type NativeActivationSpec } from "../plugins/native-activation.js";
-
-export type PluginsMode = "native" | "flat" | "unsupported";
+import { FlatPlugins } from "../plugins/flat-plugins.js";
+import type { MarketplaceRegistration } from "../plugins/marketplace-registration.js";
+import type { NativeActivation, NativeActivationSpec } from "../plugins/native-activation.js";
+import { NativePlugins } from "../plugins/native-plugins.js";
+import type {
+  FlatLayout,
+  PluginDelivery,
+  ProjectHooksPlacement,
+} from "../plugins/plugin-delivery.js";
+import { UnsupportedPlugins } from "../plugins/unsupported-plugins.js";
 
 /** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
 export type HookScript = (pluginPath: string, content: string) => string;
-
-const AS_SHIPPED: HookScript = (_pluginPath, content) => content;
-
-const DEFAULT_MCP_PATH = ".mcp.json";
-const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 
 /** One entry a plugin contributed to a project hooks file, as that file holds it. */
 export type ProjectHookEntry = { command: string; [key: string]: unknown };
@@ -179,305 +179,123 @@ export type HooksSupport =
   | { acceptsHooks: true; hooksTrustNotice?: string }
   | { acceptsHooks: false; hooksUnsupportedReason: string };
 
-type PluginsParams = (
-  | (NativePluginsParams & HooksSupport)
-  | FlatPluginsParams
-  | UnsupportedPluginsParams
-) &
-  GlobalFilesParams;
+export type NativeParams = NativePluginsParams & HooksSupport & GlobalFilesParams;
+export type FlatParams = FlatPluginsParams & GlobalFilesParams;
+export type UnsupportedParams = UnsupportedPluginsParams & GlobalFilesParams;
 
-export class PluginsCapability {
-  readonly mode: PluginsMode;
-  readonly pluginsDir: string | null;
-  readonly pluginManifestRelativePath: string | null;
-  readonly flatNamespacePrefix: string | null;
-  readonly acceptsHooks: boolean;
-  /** Why no hook is delivered, or `null` when they are. */
-  readonly hooksUnsupportedReason: string | null;
-  /** What still has to happen before a delivered hook actually runs, or `null` when nothing
-   * does. See {@link HooksSupport}. */
-  readonly hooksTrustNotice: string | null;
-  readonly pluginRootToken: string | null;
-  readonly acceptsMcp: boolean;
-  readonly mcpRelativePath: string;
-  readonly hooksRelativePath: string;
-  readonly hooksDestination: "plugin" | "project";
-  /** Relative to the project root, or `null` when `hooksDestination` is `"plugin"`. */
-  readonly projectHooksRelativePath: string | null;
-  readonly projectHooksFormat: ProjectHooksFormat | null;
-  /** Where a flat-mode hook lands, relative to the project root, or `null` when this
-   * capability accepts no hooks. */
-  readonly flatHooksDir: string | null;
-  /** See {@link FlatHooksSupport.flatHooksLoaderEntry}. */
-  readonly flatHooksLoaderEntry: FlatHooksLoaderEntry | null;
-  /** See {@link FlatHooksBridge}, or `null` when this capability declares none. */
-  readonly flatHooksBridge: FlatHooksBridge | null;
-  readonly flatSkillLayout: FlatSkillLayout;
-  /** A delivered hook script as this tool runs it: the tool's host adapter in place of the one
-   * the plugin ships, every other script as shipped. */
-  readonly hookScript: HookScript;
-  readonly marketplaceSettings: MarketplaceRegistration | null;
-  readonly nativeActivation: NativeActivation | null;
-  readonly translationMode: PluginTranslationMode | null;
-  readonly installScope: "project" | "user";
-  /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
-  readonly globalFiles: GlobalFiles | null;
+type PluginsParams = NativeParams | FlatParams | UnsupportedParams;
 
-  private readonly _userPluginsDir?: (homedir: string) => string;
+function deliveryFor(params: PluginsParams): PluginDelivery {
+  if (params.mode === "native") return new NativePlugins(params);
+  if (params.mode === "flat") return new FlatPlugins(params);
+  return new UnsupportedPlugins(params);
+}
+
+/**
+ * How a tool takes plugins, declared once by its profile and read through answers: the
+ * declaration picks the variant (native, flat, unsupported) that holds the data, and no field
+ * of it is readable from outside.
+ */
+export class PluginsCapability implements PluginDelivery {
+  private readonly delivery: PluginDelivery;
 
   constructor(params: PluginsParams) {
-    this.mode = params.mode;
-    this.globalFiles = params.globalFiles ?? null;
-    this.translationMode = PluginsCapability.resolveTranslationMode(params);
-    this.installScope = PluginsCapability.resolveInstallScope(params);
-    PluginsCapability.validateUserScope(params);
-    PluginsCapability.validateProjectHooks(params);
-    PluginsCapability.validateRootToken(params);
-    if (params.mode === "native") {
-      this.pluginsDir = params.pluginsDir;
-      this.pluginManifestRelativePath = params.pluginManifestRelativePath;
-      this.flatNamespacePrefix = null;
-      this.acceptsHooks = params.acceptsHooks;
-      this.hooksUnsupportedReason = params.acceptsHooks ? null : params.hooksUnsupportedReason;
-      this.hooksTrustNotice = params.acceptsHooks ? (params.hooksTrustNotice ?? null) : null;
-      this.pluginRootToken = params.pluginRootToken ?? null;
-      this.acceptsMcp = params.acceptsMcp ?? false;
-      this.mcpRelativePath = params.mcpRelativePath ?? DEFAULT_MCP_PATH;
-      this.hooksRelativePath = params.hooksRelativePath ?? DEFAULT_HOOKS_PATH;
-      this.hooksDestination = params.hooksDestination ?? "plugin";
-      this.projectHooksRelativePath = params.projectHooksRelativePath ?? null;
-      this.projectHooksFormat = params.projectHooksFormat ?? null;
-      this.flatHooksDir = null;
-      this.flatHooksLoaderEntry = null;
-      this.flatHooksBridge = null;
-      this.flatSkillLayout = "nested";
-      this.hookScript = params.hookScript ?? AS_SHIPPED;
-      this.nativeActivation =
-        params.nativeActivation === undefined
-          ? null
-          : new NativeActivation(params.nativeActivation);
-      this.marketplaceSettings =
-        params.marketplaceSettings === undefined
-          ? null
-          : new MarketplaceRegistration(params.marketplaceSettings, this.nativeActivation);
-      this._userPluginsDir = params.userPluginsDir;
-    } else if (params.mode === "flat") {
-      this.pluginsDir = null;
-      this.pluginManifestRelativePath = null;
-      this.flatNamespacePrefix = params.flatNamespacePrefix;
-      this.acceptsHooks = params.acceptsHooks;
-      this.hooksUnsupportedReason = params.acceptsHooks ? null : params.hooksUnsupportedReason;
-      this.flatHooksDir = params.acceptsHooks ? params.flatHooksDir : null;
-      this.flatHooksLoaderEntry = params.acceptsHooks
-        ? (params.flatHooksLoaderEntry ?? null)
-        : null;
-      this.flatHooksBridge = params.acceptsHooks ? (params.flatHooksBridge ?? null) : null;
-      this.flatSkillLayout = params.flatSkillLayout ?? "nested";
-      this.hookScript = params.acceptsHooks ? (params.hookScript ?? AS_SHIPPED) : AS_SHIPPED;
-      this.hooksTrustNotice = null;
-      this.pluginRootToken = null;
-      this.acceptsMcp = false;
-      this.mcpRelativePath = DEFAULT_MCP_PATH;
-      this.hooksRelativePath = DEFAULT_HOOKS_PATH;
-      this.hooksDestination = params.acceptsHooks
-        ? (params.hooksDestination ?? "plugin")
-        : "plugin";
-      this.projectHooksRelativePath = params.acceptsHooks
-        ? (params.projectHooksRelativePath ?? null)
-        : null;
-      this.projectHooksFormat = params.acceptsHooks ? (params.projectHooksFormat ?? null) : null;
-      this.marketplaceSettings = null;
-      this.nativeActivation = null;
-      this._userPluginsDir = undefined;
-    } else {
-      this.pluginsDir = null;
-      this.pluginManifestRelativePath = null;
-      this.flatNamespacePrefix = null;
-      this.acceptsHooks = false;
-      this.hooksUnsupportedReason = params.hooksUnsupportedReason;
-      this.flatHooksDir = null;
-      this.flatHooksLoaderEntry = null;
-      this.flatHooksBridge = null;
-      this.flatSkillLayout = "nested";
-      this.hookScript = AS_SHIPPED;
-      this.hooksTrustNotice = null;
-      this.pluginRootToken = null;
-      this.acceptsMcp = false;
-      this.mcpRelativePath = DEFAULT_MCP_PATH;
-      this.hooksRelativePath = DEFAULT_HOOKS_PATH;
-      this.hooksDestination = "plugin";
-      this.projectHooksRelativePath = null;
-      this.projectHooksFormat = null;
-      this.marketplaceSettings = null;
-      this.nativeActivation = null;
-      this._userPluginsDir = undefined;
-    }
+    this.delivery = deliveryFor(params);
   }
 
-  resolvePluginsBaseDir(projectRoot: string, homedir: string): string {
-    if (this.installScope === "user" && this._userPluginsDir !== undefined) {
-      return this._userPluginsDir(homedir);
-    }
-    return projectRoot;
-  }
-
-  /** The absolute user-scope plugins directory this capability declares, or `null`. Read
-   * independently of this capability's own `installScope`: a caller resolving a *recorded*
-   * scope still needs the directory that scope means. */
-  userPluginsBaseDir(homedir: string): string | null {
-    return this._userPluginsDir?.(homedir) ?? this.globalFiles?.dir(homedir) ?? null;
-  }
-
-  /** Whether this tool is built as a marketplace dist or a flat workspace inject. */
   buildMode(): "marketplace" | "flat" {
-    return this.mode === "flat" ? "flat" : "marketplace";
+    return this.delivery.buildMode();
   }
 
-  /** Whether the tool declares a marketplace dist as its translation, as a neutral native does not. */
   translatesAsMarketplace(): boolean {
-    return this.translationMode === "marketplace";
+    return this.delivery.translatesAsMarketplace();
   }
 
   isNative(): boolean {
-    return this.mode === "native";
+    return this.delivery.isNative();
   }
 
   requiresUserScope(): boolean {
-    return this.installScope === "user";
+    return this.delivery.requiresUserScope();
   }
 
   deliversHooksToProject(): boolean {
-    return this.hooksDestination === "project";
+    return this.delivery.deliversHooksToProject();
   }
 
   projectPluginsDir(): string | null {
-    return this.pluginsDir;
+    return this.delivery.projectPluginsDir();
   }
 
   manifestPath(): string | null {
-    return this.pluginManifestRelativePath;
+    return this.delivery.manifestPath();
   }
 
   rootToken(): string | null {
-    return this.pluginRootToken;
+    return this.delivery.rootToken();
   }
 
-  /** Whether a delivered hook runs on this tool, and why not when it does not. */
   hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null } {
-    return { accepts: this.acceptsHooks, unsupportedReason: this.hooksUnsupportedReason };
+    return this.delivery.hooksAcceptance();
   }
 
   trustNotice(): string | null {
-    return this.hooksTrustNotice;
+    return this.delivery.trustNotice();
   }
 
-  /** Where a flat-mode plugin lands and how its hooks are loaded; each part is `null` or
-   * `"nested"` when the mode has none. */
-  flatLayout(): {
-    skillLayout: FlatSkillLayout;
-    namespacePrefix: string | null;
-    hooksDir: string | null;
-    hooksLoaderEntry: FlatHooksLoaderEntry | null;
-    hooksBridge: FlatHooksBridge | null;
-  } {
-    return {
-      skillLayout: this.flatSkillLayout,
-      namespacePrefix: this.flatNamespacePrefix,
-      hooksDir: this.flatHooksDir,
-      hooksLoaderEntry: this.flatHooksLoaderEntry,
-      hooksBridge: this.flatHooksBridge,
-    };
+  flatLayout(): FlatLayout {
+    return this.delivery.flatLayout();
   }
 
   activation(): NativeActivation | null {
-    return this.nativeActivation;
+    return this.delivery.activation();
   }
 
   marketplaceRegistration(): MarketplaceRegistration | null {
-    return this.marketplaceSettings;
+    return this.delivery.marketplaceRegistration();
   }
 
-  /** Whether enabling a plugin applies to the whole machine, the host taking no scope. */
   enablementIsMachineGlobal(): boolean {
-    return this.nativeActivation?.scopeArgs === undefined;
+    return this.delivery.enablementIsMachineGlobal();
   }
 
   supportsUserScopeActivation(): boolean {
-    return (
-      this.nativeActivation !== null || this.installScope === "user" || this.globalFiles !== null
-    );
+    return this.delivery.supportsUserScopeActivation();
   }
 
   copiesFilesGlobally(): boolean {
-    return this.installScope === "user" || this.globalFiles !== null;
+    return this.delivery.copiesFilesGlobally();
   }
 
-  /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
-  globalFilesOrNull(): GlobalFiles | null {
-    return this.globalFiles;
+  globalFiles(): GlobalFiles | null {
+    return this.delivery.globalFiles();
   }
 
-  /** Where a hook lands in the project and how, or `null` when it lands in the plugin. */
-  projectHooksDelivery(): {
-    relativePath: string;
-    format: ProjectHooksFormat;
-    hookScript: HookScript;
-  } | null {
-    if (this.hooksDestination !== "project") return null;
-    if (this.projectHooksRelativePath === null || this.projectHooksFormat === null) return null;
-    return {
-      relativePath: this.projectHooksRelativePath,
-      format: this.projectHooksFormat,
-      hookScript: this.hookScript,
-    };
+  projectHooksDelivery(): ProjectHooksPlacement | null {
+    return this.delivery.projectHooksDelivery();
+  }
+
+  mcpFile(): { accepts: boolean; relativePath: string } {
+    return this.delivery.mcpFile();
+  }
+
+  hooksFilePath(): string {
+    return this.delivery.hooksFilePath();
+  }
+
+  hookScript(pluginPath: string, content: string): string {
+    return this.delivery.hookScript(pluginPath, content);
   }
 
   pluginOutputDir(pluginName: string): string | null {
-    if (this.mode !== "native" || this.pluginsDir === null) return null;
-    return `${this.pluginsDir}${pluginName}/`;
+    return this.delivery.pluginOutputDir(pluginName);
   }
 
-  private static resolveTranslationMode(params: PluginsParams): PluginTranslationMode | null {
-    if (params.mode === "native") return params.translationMode ?? null;
-    if (params.mode === "flat") return "flat";
-    return null;
+  resolvePluginsBaseDir(projectRoot: string, homedir: string): string {
+    return this.delivery.resolvePluginsBaseDir(projectRoot, homedir);
   }
 
-  private static resolveInstallScope(params: PluginsParams): "project" | "user" {
-    if (params.mode === "native") return params.installScope ?? "project";
-    return "project";
-  }
-
-  private static validateUserScope(params: PluginsParams): void {
-    if (params.mode !== "native") return;
-    if (params.installScope === "user" && params.userPluginsDir === undefined) {
-      throw new CapabilityConfigError(
-        "installScope 'user' requires a userPluginsDir resolver function."
-      );
-    }
-  }
-
-  private static validateRootToken(params: PluginsParams): void {
-    if (params.mode === "native" && params.pluginRootToken === undefined) {
-      throw new CapabilityConfigError("native mode requires a pluginRootToken.");
-    }
-  }
-
-  private static validateProjectHooks(params: PluginsParams): void {
-    if (params.mode === "unsupported" || !params.acceptsHooks) return;
-    if (params.hooksDestination !== "project") {
-      if (params.projectHooksFormat !== undefined) {
-        throw new CapabilityConfigError("projectHooksFormat requires hooksDestination 'project'.");
-      }
-      return;
-    }
-    if (params.projectHooksRelativePath === undefined) {
-      throw new CapabilityConfigError(
-        "hooksDestination 'project' requires a projectHooksRelativePath."
-      );
-    }
-    if (params.projectHooksFormat === undefined) {
-      throw new CapabilityConfigError("hooksDestination 'project' requires a projectHooksFormat.");
-    }
+  userPluginsBaseDir(homedir: string): string | null {
+    return this.delivery.userPluginsBaseDir(homedir);
   }
 }

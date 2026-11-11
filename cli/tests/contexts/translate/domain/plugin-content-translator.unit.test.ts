@@ -368,7 +368,7 @@ describe("cross-format matrix (source × target)", () => {
         it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
           const dist = makeSourceDist(source);
           const files = translator.translate(dist, target.tool);
-          const expected = `${target.tool.capabilities.plugins.pluginsDir}sample-plugin/${target.manifestExpected}`;
+          const expected = `${target.tool.capabilities.plugins.projectPluginsDir()}sample-plugin/${target.manifestExpected}`;
           expect(files.map((f) => f.relativePath)).toContain(expected);
         });
       }
@@ -687,7 +687,7 @@ describe("what a person still has to do before a hook runs", () => {
         pluginName: "sample-plugin",
         component: "hooks",
         toolId: "codex",
-        message: codex.capabilities.plugins.hooksTrustNotice,
+        message: codex.capabilities.plugins.trustNotice(),
       },
     ]);
   });

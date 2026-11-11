@@ -202,17 +202,18 @@ export class PluginContentTranslator {
     if (PLUGIN_MANIFEST_PATHS.includes(file.relativePath)) return null;
     const cap = tool.capabilities.plugins;
     if (file.relativePath === ".mcp.json") {
-      return cap.acceptsMcp ? { relativePath: cap.mcpRelativePath, content: file.content } : null;
+      const mcp = cap.mcpFile();
+      return mcp.accepts ? { relativePath: mcp.relativePath, content: file.content } : null;
     }
     if (file.relativePath.split("/")[0] === PLUGIN_HOOKS_DIR) {
       if (!cap.hooksAcceptance().accepts) return null;
       if (file.relativePath === `${PLUGIN_HOOKS_DIR}/hooks.json`) {
-        return { relativePath: cap.hooksRelativePath, content: file.content };
+        return { relativePath: cap.hooksFilePath(), content: file.content };
       }
       // Everything under `hooks/` but its own manifest is a script the host runs. It goes beside
       // the manifest, and where the manifest sits at the plugin root it keeps its own directory
       // — a script at the root would leave the command naming `hooks/` pointing at nothing.
-      const manifestDir = parentDirOf(cap.hooksRelativePath) || PLUGIN_HOOKS_DIR;
+      const manifestDir = parentDirOf(cap.hooksFilePath()) || PLUGIN_HOOKS_DIR;
       return {
         relativePath: `${manifestDir}/${pathBelow(PLUGIN_HOOKS_DIR, file.relativePath)}`,
         content: cap.hookScript(file.relativePath, file.content),
@@ -273,7 +274,6 @@ export class PluginContentTranslator {
       hooksLoaderEntry: flatHooksLoaderEntry,
       hooksBridge: flatHooksBridge,
     } = plugins.flatLayout();
-    const { hookScript } = plugins;
     if (flatHooksDir === null) return [];
     const scripts = dist.components.hooks
       .filter((file) => file.relativePath !== `${PLUGIN_HOOKS_DIR}/hooks.json`)
@@ -285,7 +285,7 @@ export class PluginContentTranslator {
             dist.manifest.name,
             file.relativePath
           ),
-          hookScript(file.relativePath, file.content)
+          plugins.hookScript(file.relativePath, file.content)
         )
       );
     const bridge = this.flatHooksBridgeFile(dist, flatHooksBridge);

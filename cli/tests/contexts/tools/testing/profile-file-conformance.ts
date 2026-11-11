@@ -109,7 +109,9 @@ function aiFileCheck(
 
 function acceptsHooks(subject: FileConformanceSubject): boolean {
   if (!isAiTool(subject.profile)) return false;
-  return capability(subject.profile, "plugins", PluginsCapability)?.acceptsHooks === true;
+  return (
+    capability(subject.profile, "plugins", PluginsCapability)?.hooksAcceptance().accepts === true
+  );
 }
 
 export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubject>[] = [
@@ -148,7 +150,8 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
   }),
   aiFileCheck("generates a bridge for exactly the events it relays through one", (subject) => {
     if (!isAiTool(subject.profile)) return;
-    const bridge = capability(subject.profile, "plugins", PluginsCapability)?.flatHooksBridge;
+    const bridge = capability(subject.profile, "plugins", PluginsCapability)?.flatLayout()
+      .hooksBridge;
     const declared = declaredHooks(subject);
     if (bridge == null || declared === undefined) return;
     const generated = CANONICAL_HOOK_EVENTS.filter(

@@ -7,7 +7,7 @@ import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contex
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";
 import type { PluginTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
-import { getToolConfig, isAiTool } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { projectHooksFileOf } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import type { AiToolId } from "../../../../../../src/kernel/tool.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
@@ -172,10 +172,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
   // Read from cursor.ts's own declaration, never hard-coded: both translators regressing to
   // plugin scope together would still pass a route-against-route comparison.
   function declaredHooksDestination(toolId: AiToolId): "plugin" | "project" {
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) throw new Error(`${toolId} is not an AI tool`);
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    return (caps.plugins as { hooksDestination: "plugin" | "project" }).hooksDestination;
+    return projectHooksFileOf(toolId) === undefined ? "plugin" : "project";
   }
 
   it("both routes write to the destination cursor.ts declares — a plugin.hooksDestination change breaks this", async () => {

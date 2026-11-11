@@ -29,12 +29,12 @@ describe("the route that builds a marketplace bundle", () => {
   // would be silent on the side nobody looks at.
   it("substitutes the token the tool itself declared", () => {
     for (const [tool, buildContract] of CONTRACTS) {
-      expect(buildContract().pluginRootToken, tool).toBe(pluginsOf(tool)?.pluginRootToken);
+      expect(buildContract().pluginRootToken, tool).toBe(pluginsOf(tool)?.rootToken());
     }
   });
 
   it("leaves a command alone for the tool whose variable is the one authors write", () => {
-    const authored = `node ${pluginsOf("claude")?.pluginRootToken}/hooks/journal.cjs`;
+    const authored = `node ${pluginsOf("claude")?.rootToken()}/hooks/journal.cjs`;
 
     const token = buildClaudeContract().pluginRootToken;
 
