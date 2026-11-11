@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
 import { KILO_BIN, KILO_ENV, KILO_SHELL } from "./helpers/kilo-cli.js";
@@ -581,7 +581,9 @@ describeNative("E2E: saved native generation in Kilo", () => {
       await configureModel(positiveModel.url);
       const filesBeforeRun = (await readdir(projectDir, { recursive: true, withFileTypes: true }))
         .filter((entry) => entry.isFile())
-        .map((entry) => join(relative(projectDir, entry.parentPath), entry.name))
+        .map((entry) =>
+          join(relative(projectDir, entry.parentPath), entry.name).split(sep).join("/")
+        )
         .sort();
       expect(filesBeforeRun).toEqual(
         [
