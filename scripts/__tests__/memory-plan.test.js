@@ -266,14 +266,6 @@ test("plan and answer share one numbering: not N reaches exactly the sheet lines
 // report: the closing message, from the same numbering, with the lines the write lost computed by
 // the engine itself, so a model that skips a step still shows the person what left the memory.
 
-const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
-
-function git(root, ...args) {
-  const run = spawnSync("git", ["-C", root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "maintenance.auto=false", "-c", "gc.auto=0", ...args], { encoding: "utf8", env: cleanEnv() });
-  assert.equal(run.status, 0, run.stderr);
-  return run.stdout.trim();
-}
-
 /** Every file under `root`, `.git` included, as name and content: what report must leave as it found it. */
 function treeState(root, relative = "") {
   return fs.readdirSync(path.join(root, relative), { withFileTypes: true }).flatMap((entry) => {
@@ -288,15 +280,11 @@ const WRITTEN = {
   "codebase-map.md": "# Codebase Map\n\n## Packages\n\n- Four workspace packages in total.\n- `tools/performance`: the Lighthouse runner\n\n## Entry points\n\n- The server and cron doors.\n",
 };
 
-/** A repository whose HEAD holds the FULL bank and the sheet, answered by `reply` when given, then `written` over the bank and the claude block synced. */
-function written(fn, { reply = "not 3", bank = WRITTEN, repo = true } = {}) {
+/** The FULL bank and the sheet, `plan` run on them (the snapshot), answered by `reply` when given, then `bank` written over the bank and the claude block synced. */
+function written(fn, { reply = "not 3", bank = WRITTEN, planned = true, sheet = REFRESH } = {}) {
   withProject((root) => {
     fs.writeFileSync(path.join(root, "CLAUDE.md"), "# Project\n");
-    if (repo) {
-      git(root, "init", "-q");
-      git(root, "add", "-A");
-      git(root, "commit", "-q", "-m", "bank");
-    }
+    if (planned) assert.equal(engine(root, "plan", SHEET).status, 0);
     if (reply !== null) assert.equal(engine(root, "answer", SHEET, reply).status, 0);
     for (const [name, text] of Object.entries(bank)) {
       fs.mkdirSync(path.dirname(path.join(root, "aidd_docs/memory", name)), { recursive: true });
@@ -304,7 +292,7 @@ function written(fn, { reply = "not 3", bank = WRITTEN, repo = true } = {}) {
     }
     assert.equal(engine(root, "sync", "--add", "claude").status, 0);
     return fn(root);
-  }, REFRESH, FULL);
+  }, sheet, FULL);
 }
 
 const REPORT = [
@@ -365,27 +353,31 @@ test("report: a sheet never answered applies no approval, so a removed line is l
   }, { reply: null });
 });
 
-test("report: without a repository nothing is compared, and every bank file counts as written", () => {
+test("report: with no git the plan's snapshot is the baseline, and with no snapshot nothing is called ready", () => {
   written((root) => {
     const out = engine(root, "report", SHEET).stdout;
     assert.match(out, /^Memory ready\n/u);
-    assert.doesNotMatch(out, /Lines lost|lost/u);
-    assert.match(out, /^ {2}aidd_docs\/memory: architecture\.md, codebase-map\.md, coding-assertions\.md, ecosystem\.md, project-brief\.md, testing\.md, vcs\.md$/mu);
-  }, { repo: false });
-});
-
-test("report: a git failure in a repository says the losses were not checked, and a missing sheet is a clean error", () => {
-  written((root) => {
+    assert.match(out, /^ {2}aidd_docs\/memory: codebase-map\.md, testing\.md$/mu);
     const missing = engine(root, "report", "aidd_docs/tasks/absent.md");
     assert.equal(missing.status, 1);
     assert.match(missing.stderr, /absent\.md not read/u);
-    const tree = git(root, "rev-parse", "HEAD:aidd_docs/memory");
-    const object = path.join(root, ".git/objects", tree.slice(0, 2), tree.slice(2));
-    fs.chmodSync(object, 0o600);
-    fs.rmSync(object);
-    const out = engine(root, "report", SHEET).stdout;
-    assert.match(out, /^Memory written, lost lines not checked\n\nLines lost\n {2}not checked: git /u);
   });
+  written((root) => assert.match(engine(root, "report", SHEET).stdout, /^Memory written, lost lines not checked\n\nLines lost\n {2}not checked: no plan snapshot/u), { planned: false });
+});
+
+// The plan numbered testing.md as a new file; it exists on disk by the report, and the number must not move.
+test("report: items keep the plan's numbers once the bank holds the files, and an item the write did not match the answer is said so", () => {
+  written((root) => {
+    const out = engine(root, "report", SHEET).stdout;
+    assert.match(out, /^ {2}1\. testing\.md: you declined, but the bank shows it applied$/mu, "the number moved, or a declined file written is a silent Written");
+    assert.doesNotMatch(out, /^ {2}1\. testing\.md {3}Run, Tools$/mu);
+  }, { reply: "not 1" });
+  const unapplied = { ...WRITTEN, "codebase-map.md": WRITTEN["codebase-map.md"].replace("Four workspace", "Three workspace") };
+  written((root) => {
+    const out = engine(root, "report", SHEET).stdout;
+    assert.match(out, /^ {2}4\. codebase-map\.md: approved, but the bank does not show it applied$/mu);
+    assert.doesNotMatch(out, /^ {2}4\. codebase-map\.md: "Three workspace/mu, "an unapplied replace is listed as changed");
+  }, { reply: "ok", bank: unapplied });
 });
 
 test("report: a folder of more than three written files reads as one entry", () => {

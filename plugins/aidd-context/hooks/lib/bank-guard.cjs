@@ -1,7 +1,7 @@
 "use strict";
 /**
- * The lines a write lost from the bank as committed at HEAD, unless an approval quotes them. HEAD
- * only: an uncommitted edit is not seen. Reads git, writes nothing. Node built-ins only.
+ * The lines a write lost from the bank the plan snapshotted, unless an approval quotes them, and
+ * the git helpers `changes` reads with. Writes nothing. Node built-ins only.
  */
 
 const { execFileSync } = require("node:child_process");
@@ -9,6 +9,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const MAX_FILE_BYTES = 16 * 1024 * 1024;
+// Written beside the sheet by `plan`; `changes` never lists it.
+const SNAPSHOT = "bank-snapshot.json";
 
 const collapse = (line) => line.trim().replace(/\s+/gu, " ");
 const unmarked = (line) => line.replace(/^(?:[-*+]|\d+[.)])\s+/u, "");
@@ -32,14 +34,6 @@ const succeeds = (root, args) => {
   }
 };
 
-/** Null without a repository, a commit or a committed bank; any other git failure throws. */
-function previousBank(root, bank) {
-  if (!succeeds(root, ["rev-parse", "--git-dir"]) || !succeeds(root, ["rev-parse", "--verify", "-q", "HEAD"])) return null;
-  const names = git(root, ["ls-tree", "-r", "-z", "--name-only", "HEAD", "--", bank]).split("\0").filter((name) => name.endsWith(".md"));
-  if (names.length === 0) return null;
-  return names.map((name) => ({ file: name.slice(bank.length + 1), text: git(root, ["show", `HEAD:./${name}`]) }));
-}
-
 function markdownUnder(dir, relative = "") {
   if (!fs.existsSync(path.join(dir, relative))) return [];
   return fs.readdirSync(path.join(dir, relative), { withFileTypes: true }).flatMap((entry) => {
@@ -62,7 +56,7 @@ const tokensOf = (text) =>
 const tally = (tokens) => tokens.reduce((counts, token) => counts.set(token, (counts.get(token) ?? 0) + 1), new Map());
 
 /**
- * The previous bank's lines whose facts the working bank lost, as `file: line`. A line held
+ * The snapshot's lines whose facts the working bank lost, as `file: line`. A line held
  * whole, or quoted by an approval, is kept. Any other is lost when a word it carries is held
  * fewer times than before, across the whole bank: one hard word, two words, or every word it
  * had. An approved `move <from> to <to>` rewrites the paths first. Limit: a line with no long
@@ -101,4 +95,4 @@ function goneLines(previous, bankDir, approvals) {
     .map(({ file, line }) => `${file}: ${line}`);
 }
 
-module.exports = { previousBank, goneLines, git, succeeds, markdownUnder, collapse, unmarked };
+module.exports = { SNAPSHOT, goneLines, git, succeeds, markdownUnder, collapse, unmarked };

@@ -27,18 +27,6 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
-            "timeout": 5,
-            "statusMessage": "AIDD Context: check memory lines before finishing"
-          }
-        ]
-      }
     ]
   }
 }

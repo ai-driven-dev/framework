@@ -551,7 +551,7 @@ test("the engine's row files are the capability table's, and it holds no table o
   assert.deepEqual(require(ENGINE).ACCEPTED_ALWAYS, acceptedOfAlways);
 });
 
-// report's lost lines: what a write lost without approval, against the bank at HEAD
+// report's lost lines: what a write lost without approval, against the bank the plan snapshotted
 
 function engine(...args) {
   return spawnSync("node", [ENGINE, ...args], { encoding: "utf8" });
@@ -579,20 +579,19 @@ const BEFORE = "# V\n\n## Setup\n\n- keep one\n- release pipeline\n- keep two\n\
 const dline = (id, target, fact, answer) => `- ${id} | ${target} | ${fact} | aidd_docs/memory/vcs.md | ${answer}`;
 const approve = (line) => dline("D1", "vcs.md > Setup", `remove "${line}": stale`, "yes");
 
-/** A temp repository whose HEAD commits `committed` (bank-relative names), then `working` written over it (null deletes). */
-function repo(committed, working = {}) {
+const SHEET_FILE = "aidd_docs/tasks/t/facts.md";
+
+/** A project, no git, whose bank `committed` (bank-relative names) is what `plan` snapshots, then `working` written over it (null deletes). */
+function planned(committed, working = {}) {
   const root = project(committed);
-  git(root, "init", "-q");
-  git(root, "add", "-A");
-  git(root, "commit", "-q", "-m", "bank");
+  write(root, SHEET_FILE, sheet());
+  assert.equal(engine("plan", path.join(root, SHEET_FILE)).status, 0);
   for (const [name, text] of Object.entries(working)) {
     if (text === null) fs.rmSync(path.join(root, MEMORY, name));
     else write(root, `${MEMORY}/${name}`, text);
   }
   return root;
 }
-
-const SHEET_FILE = "aidd_docs/tasks/t/facts.md";
 
 /** The lines a report lists lost, one `file: line` each, and status 1 when it lists any. */
 function lostOf(run) {
@@ -603,7 +602,7 @@ function lostOf(run) {
 
 /** What `report` lists lost for a bank committed as `committed` and now `working`, against a sheet of `sheetLines`; the tree must be left untouched. */
 function lostLines(committed, working, sheetLines = []) {
-  const root = repo(committed, working);
+  const root = planned(committed, working);
   const sheetFile = path.join(root, SHEET_FILE);
   write(root, SHEET_FILE, sheet(...sheetLines));
   const before = treeState(root);
@@ -706,50 +705,21 @@ test("report, lost lines: a file with a non-ASCII name is guarded, and a file de
   assert.equal(gone.run.stdout, "internal/x.md: - maintained\n");
 });
 
-test("report, lost lines: no repository, or a bank never committed, lists nothing lost", () => {
-  const plain = project({ "vcs.md": BEFORE });
-  const fresh = project({ "vcs.md": BEFORE });
-  git(fresh, "init", "-q");
-  try {
-    for (const root of [plain, fresh]) {
-      write(root, SHEET_FILE, sheet());
-      const run = engine("report", path.join(root, SHEET_FILE));
-      assert.equal(run.status, 0);
-      assert.match(run.stdout, /^Memory ready\n/u);
-      assert.doesNotMatch(run.stdout, /Lines lost/u);
-    }
-  } finally {
-    fs.rmSync(plain, { recursive: true, force: true });
-    fs.rmSync(fresh, { recursive: true, force: true });
-  }
-});
-
-test("report, lost lines: a git failure in a repository says the losses were not checked, with its reason, and a missing sheet is a clean error", () => {
-  const root = repo({ "vcs.md": BEFORE }, LOSS);
+test("report, lost lines: with no git history the loss is still listed, and with no plan snapshot it says not checked, and a missing sheet is a clean error", () => {
+  const lost = lostLines({ "vcs.md": BEFORE }, LOSS);
+  assert.equal(lost.run.status, 1);
+  assert.equal(lost.run.stdout, "vcs.md: - release pipeline\n");
+  const root = project({ "vcs.md": BEFORE });
   write(root, SHEET_FILE, sheet());
   try {
+    const run = engine("report", path.join(root, SHEET_FILE));
+    assert.equal(run.status, 0);
+    assert.match(run.stdout, /^Memory written, lost lines not checked\n\nLines lost\n {2}not checked: no plan snapshot/u);
+    assert.doesNotMatch(run.stdout, /Memory ready/u);
     const missing = engine("report", path.join(root, "aidd_docs/tasks/t/absent.md"));
     assert.equal(missing.status, 1);
     assert.match(missing.stderr, /absent\.md not read/u);
     assert.doesNotMatch(missing.stderr, /\n\s+at /u);
-    const tree = git(root, "rev-parse", `HEAD:${MEMORY}`);
-    const object = path.join(root, ".git/objects", tree.slice(0, 2), tree.slice(2));
-    fs.chmodSync(object, 0o600);
-    fs.rmSync(object);
-    const broken = engine("report", path.join(root, SHEET_FILE));
-    assert.equal(broken.status, 0);
-    assert.match(broken.stdout, /^Memory written, lost lines not checked\n\nLines lost\n {2}not checked: git /u);
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("report, lost lines: reads the repository of the root even when a hook exported GIT_DIR", () => {
-  const root = repo({ "vcs.md": BEFORE }, LOSS);
-  write(root, SHEET_FILE, sheet());
-  try {
-    const run = lostOf(spawnSync("node", [ENGINE, "report", path.join(root, SHEET_FILE)], { encoding: "utf8", env: { ...process.env, GIT_DIR: path.join(os.tmpdir(), "no-such-git-dir") } }));
-    assert.equal(run.stdout, "vcs.md: - release pipeline\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -841,6 +811,20 @@ test("changes: uncommitted and untracked files are changed files, and the bank's
     assert.match(run.stdout, /^- app\/a\.ts$/mu);
     assert.match(run.stdout, /^- app\/untracked\.ts$/mu);
     assert.match(run.stdout, /^changed \(2\):$/mu, "the bank's own edit is counted");
+  } finally {
+    cleanup(root);
+  }
+});
+
+test("changes: the plan's bank snapshot, untracked in a run folder, is no changed file", () => {
+  const root = history((dir) => {
+    write(dir, "app/untracked.ts", "u\n");
+    write(dir, "aidd_docs/tasks/t/bank-snapshot.json", "{}");
+  });
+  try {
+    const out = changes(root).stdout;
+    assert.match(out, /^changed \(1\):\n- app\/untracked\.ts$/mu);
+    assert.doesNotMatch(out, /bank-snapshot/u);
   } finally {
     cleanup(root);
   }

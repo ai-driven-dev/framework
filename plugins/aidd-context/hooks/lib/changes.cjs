@@ -7,7 +7,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { git, succeeds, markdownUnder } = require("./bank-guard.cjs");
+const { git, succeeds, markdownUnder, SNAPSHOT } = require("./bank-guard.cjs");
 
 const MAX_LISTED = 50;
 const MAX_NAMED = 3;
@@ -43,11 +43,12 @@ function baseOf(root, bank, since) {
   return { sha, subject, time: Number(time) };
 }
 
-/** Uncommitted and untracked files included, the bank excluded. */
+/** Uncommitted and untracked files included, the bank and the plan's snapshot excluded. */
 function changedSince(root, sha, bank) {
   const tracked = nulList(git(root, ["diff", "--name-only", "-z", "--no-renames", "--relative", sha]));
   const untracked = nulList(git(root, ["ls-files", "-z", "--others", "--exclude-standard"]));
-  return [...new Set([...tracked, ...untracked])].filter((file) => !file.startsWith(`${bank}/`)).sort();
+  const snapshot = (file) => file.startsWith("aidd_docs/tasks/") && file.endsWith(`/${SNAPSHOT}`);
+  return [...new Set([...tracked, ...untracked])].filter((file) => !file.startsWith(`${bank}/`) && !snapshot(file)).sort();
 }
 
 function directoriesOf(changed) {

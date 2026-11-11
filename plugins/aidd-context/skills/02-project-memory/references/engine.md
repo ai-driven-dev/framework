@@ -8,7 +8,7 @@
 | `node memory.cjs check . aidd_docs/memory/<file>.md` | per file | checks that file |
 | `node memory.cjs check .` | whole bank | checks the whole bank |
 | `node memory.cjs changes .` | refresh, before the review | prints the `Since` line, the memory lines citing a changed file or directory, the changed files by directory; `--since <ref>` names an older base |
-| `node memory.cjs plan <sheet> --tools <tool,...>` | before the answer | checks the sheet, writes the whole plan to `plan.md` beside it, then prints one line per item to send as it is; exits 1 naming each bad sheet line |
+| `node memory.cjs plan <sheet> --tools <tool,...>` | before the answer | checks the sheet, writes the whole plan to `plan.md` and a snapshot of the bank beside it, then prints one line per item to send as it is; exits 1 naming each bad sheet line |
 | `node memory.cjs answer <sheet> "<reply>"` | after the answer | marks each item's sheet lines yes or no for ok, no, not <n> or a range; any other reply exits 1 and changes nothing |
-| `node memory.cjs report <sheet>` | after the sync | prints the closing message to send as it is: each line gone from the bank as committed, HEAD only, unless a `D` line answered yes quotes it, first; then what was written, changed and left out, by the plan's numbers |
+| `node memory.cjs report <sheet>` | after the sync | prints the closing message to send as it is: each line gone from the bank since the plan's snapshot, unless a `D` line answered yes quotes it, first, or says none was checked; then what was written, changed and left out, by the plan's numbers, each seen on disk |
 | `node memory.cjs sync [--add] <tool>...` | after the write | tool names only, no root; fills each named tool's block, or with none every block already there; `--add` appends the block to a picked tool's file holding none; stop on a non-zero exit |

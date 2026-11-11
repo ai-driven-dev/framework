@@ -3,7 +3,7 @@
 /**
  * The memory bank's engine, one subcommand per moment of the skill; usage at the end of `main`.
  * The hook never blocks and reads its event only through `lib/host.cjs`; `check` is the one strict
- * gate. `changes`, `report` and the turn end read git, never write it. Node built-ins only.
+ * gate. `changes` reads git, never writes it. Node built-ins only.
  */
 
 const fs = require("node:fs");
@@ -309,37 +309,6 @@ function hook() {
   if (event === undefined) return;
   if (event.event === "SessionStart") sync(event.cwd, [], { quiet: true });
   else if (event.event === "PostToolUse") afterWrite(host, event);
-  else if (event.event === "Stop") atTurnEnd(host, event);
-}
-
-/** Every fact sheet under the docs folder's tasks. */
-function sheetsOf(dir) {
-  return entriesOf(dir).flatMap((entry) => {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return sheetsOf(full);
-    return entry.name === "facts.md" ? [full] : [];
-  });
-}
-
-const LOST_SHOWN = 10;
-
-/** The bank lines a turn lost against HEAD, whatever wrote them; reads git, only to read. */
-function atTurnEnd(host, event) {
-  const root = sessionProject(event.cwd);
-  if (root === null) return;
-  const guard = require("./lib/bank-guard.cjs");
-  // A git failure throws to `main`, which keeps a turn end silent.
-  if (guard.git(root, ["status", "--porcelain", "--", MEMORY_DIR]).trim() === "") return;
-  const previous = guard.previousBank(root, MEMORY_DIR);
-  if (previous === null) return;
-  const { approvedRemovals } = require("./lib/fact-sheet.cjs");
-  const approvals = sheetsOf(path.join(root, DOCS_DIR, "tasks")).flatMap(approvedRemovals);
-  const gone = guard.goneLines(previous, path.join(root, MEMORY_DIR), approvals);
-  if (gone.length === 0) return;
-  const more = gone.length > LOST_SHOWN ? [`- and ${gone.length - LOST_SHOWN} more`] : [];
-  const lines = gone.slice(0, LOST_SHOWN).map((line) => `- ${MEMORY_DIR}/${line}`);
-  const head = `${PLUGIN}: ${gone.length} memory ${gone.length === 1 ? "line" : "lines"} lost since the last commit, approved by no sheet line:`;
-  host.answer({ level: 2, text: [head, ...lines, ...more, "Tell the person before you finish. Restore a line only if they ask."].join("\n") });
 }
 
 /** The whole bank adds absence, missing always files and layout; a missing named file errs. */
@@ -650,23 +619,15 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
   return result;
 }
 
-/** Computes the lost lines itself, so a skipped step still shows them. */
+/** Computes the lost lines itself against the plan's snapshot, so a skipped step still shows them. */
 function report(sheetFile) {
-  const { rootOf } = require("./lib/plan.cjs");
-  const guard = require("./lib/bank-guard.cjs");
-  const root = rootOf(sheetFile);
+  const plan = require("./lib/plan.cjs");
+  const root = plan.rootOf(sheetFile);
   const approvals = require("./lib/fact-sheet.cjs").approvedRemovals(sheetFile);
   const bankDir = path.join(root, MEMORY_DIR);
-  let previous = null;
-  let gone = [];
-  let why;
-  try {
-    previous = guard.previousBank(root, MEMORY_DIR);
-    if (previous !== null) gone = guard.goneLines(previous, bankDir, approvals);
-  } catch (error) {
-    gone = null;
-    why = error.message;
-  }
+  const previous = plan.readSnapshot(sheetFile);
+  const guard = require("./lib/bank-guard.cjs");
+  const gone = previous === null ? null : guard.goneLines(previous, bankDir, approvals);
   const written = guard
     .markdownUnder(bankDir)
     .map((file) => file.split(path.sep).join("/"))
@@ -676,7 +637,7 @@ function report(sheetFile) {
     const text = readTextOrNull(path.join(root, file));
     return text !== null && findBlock(text, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER).status === "ok";
   });
-  return require("./lib/report.cjs").renderReport(sheetFile, { previous, gone, why, written, wired, load: sessionLoad(root) });
+  return require("./lib/report.cjs").renderReport(sheetFile, { previous, gone, why: "no plan snapshot, run plan before the write", written, wired, load: sessionLoad(root), root });
 }
 
 /** Writes `memory: <message>` to stderr and returns the error exit. */
@@ -734,6 +695,7 @@ function runPlan([sheetFile, ...rest]) {
     if (unknown !== undefined) return fail(`unknown tool "${unknown}"`);
     const { summary, detail, detailFile } = plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked, absentAlways(root));
     fs.writeFileSync(detailFile, detail);
+    plan.writeSnapshot(sheetFile, root);
     process.stdout.write(summary);
     return EXIT_OK;
   } catch (error) {

@@ -1,13 +1,14 @@
 "use strict";
 /**
- * The plan the person reads and the answer that marks the sheet, from one numbering. Writes only
- * the sheet. Node built-ins only.
+ * The plan the person reads and the answer that marks the sheet, from one numbering, and the
+ * bank snapshot the report compares against. Writes only the sheet and that snapshot. Node
+ * built-ins only.
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
 const { factLines } = require("./fact-sheet.cjs");
-const { collapse, unmarked } = require("./bank-guard.cjs");
+const { collapse, unmarked, markdownUnder, SNAPSHOT } = require("./bank-guard.cjs");
 
 const MEMORY = path.join("aidd_docs", "memory");
 const DECISION = /^(remove|replace|move)\b/iu;
@@ -47,6 +48,24 @@ const diskBank = (root) => (file) => {
     return null;
   }
 };
+
+const snapshotFile = (sheetFile) => path.join(path.dirname(path.resolve(sheetFile)), SNAPSHOT);
+
+/** The bank as it stands, beside the sheet: what the report counts lost and applied against. */
+function writeSnapshot(sheetFile, root) {
+  const dir = path.join(root, MEMORY);
+  const files = markdownUnder(dir).map((file) => [file.split(path.sep).join("/"), fs.readFileSync(path.join(dir, file), "utf8")]);
+  fs.writeFileSync(snapshotFile(sheetFile), JSON.stringify(Object.fromEntries(files)));
+}
+
+/** `{ file, text }` per bank file at the plan, or null when no plan snapshotted this sheet's run. */
+function readSnapshot(sheetFile) {
+  try {
+    return Object.entries(JSON.parse(fs.readFileSync(snapshotFile(sheetFile), "utf8"))).map(([file, text]) => ({ file, text }));
+  } catch {
+    return null;
+  }
+}
 
 /** The longest whole bank line the fact quotes, list marker optional, or null. */
 function quotedLine(fact, lines) {
@@ -232,4 +251,4 @@ function answerSheet(sheetFile, root, reply) {
   return [...printed, ...clauses.map((clause) => `left to you: ${clause}`)].join("\n");
 }
 
-module.exports = { rootOf, entriesOf, itemsOf, itemLines, quoteProblems, renderPlan, answerSheet, ReplyError, MEMORY, linesOf };
+module.exports = { rootOf, entriesOf, itemsOf, itemLines, quotedLine, diskBank, quoteProblems, renderPlan, answerSheet, writeSnapshot, readSnapshot, ReplyError, MEMORY, linesOf };

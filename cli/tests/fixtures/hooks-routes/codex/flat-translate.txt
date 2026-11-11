@@ -54,18 +54,6 @@ hooks = true
         ]
       }
     ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./.codex/hooks/aidd-context/memory.cjs hook",
-            "timeout": 5,
-            "statusMessage": "AIDD Context: check memory lines before finishing"
-          }
-        ]
-      }
-    ],
     "UserPromptSubmit": [
       {
         "hooks": [

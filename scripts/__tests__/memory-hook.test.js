@@ -569,11 +569,11 @@ test("the entry and its libraries require only the built-ins the contract allows
   }
 });
 
-test("hooks.json runs the one entry, within 5 s, at session start, after a write and at the turn end, and its matcher names only the tools an adapter reads", () => {
+test("hooks.json runs the one entry, within 5 s, at session start, and after a write, and its matcher names only the tools an adapter reads", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
   const command = "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook";
-  assert.deepEqual(Object.keys(hooks).sort(), ["PostToolUse", "SessionStart", "Stop"]);
-  for (const event of ["SessionStart", "PostToolUse", "Stop"]) {
+  assert.deepEqual(Object.keys(hooks).sort(), ["PostToolUse", "SessionStart"]);
+  for (const event of ["SessionStart", "PostToolUse"]) {
     assert.equal(hooks[event][0].hooks[0].command, command, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
   }
@@ -589,30 +589,9 @@ test("a Cursor Delete of a bank file answers nothing: a missing file is check's,
   assert.deepEqual(run("cursor", payload), { status: 0, stdout: "", stderr: "" });
 });
 
-// ---- a format finding never reaches a turn end: the write informed it
-
-const STOP = { claude: "claude-Stop.json", codex: "codex-Stop.json", copilot: "copilot-Stop.json", cursor: "cursor-stop.json" };
-
-/** What `host` sends at its turn's end. The bridged hosts mirror their bridge: `session.idle`
- * becomes a Stop for the session's folder. */
-function stopPayload(host, root) {
-  if (!BRIDGED.has(host)) return captured(STOP[host], 0, root);
-  const { properties } = captured(`${host}-session.idle.json`, 0, root);
-  return { hook_event_name: "Stop", session_id: properties.sessionID, cwd: root, stop_hook_active: false };
-}
-
 const SLOT_LINE = `Branch ${SLOT} here.`;
 const ASKED = `aidd-context: 1 error, 0 warnings\n${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`;
 const VCS = `${MEMORY}/vcs.md`;
-
-for (const host of EDITS_SAY_WHAT) {
-  test(`${host}: a Stop after an edit leaving a slot answers nothing: the edit informed, nothing blocks`, () => {
-    const root = project({ [VCS]: `# VCS\n\n${SLOT_LINE}\n` });
-    const tmp = tempDir("memory-hook-session-");
-    assert.equal(answerOf(run(host, editPayload(host, root, VCS, SLOT_LINE), { tmp }).stdout).text, ASKED);
-    assert.deepEqual(run(host, stopPayload(host, root), { tmp }), { status: 0, stdout: "", stderr: "" });
-  });
-}
 
 /** A Claude Write over an existing file: the captured create sample, its response the update of `before`. */
 function overwritePayload(root, file, before) {
@@ -651,55 +630,4 @@ test("a slot written in a sub-project bank is named from the project root the se
   const root = project({ ...sub, [`cli/${VCS}`]: `# VCS\n\n${SLOT_LINE}\n` });
   const answer = answerOf(run("claude", editPayload("claude", root, `cli/${VCS}`, SLOT_LINE)).stdout);
   assert.equal(answer.text, ASKED.replace(VCS, `cli/${VCS}`));
-});
-
-// ---- the turn end: the memory lines lost against HEAD, whatever tool wrote them
-
-/** The text a host's turn-end answer carries, or null when it answers nothing. */
-function continuedWith(stdout) {
-  if (stdout === "") return null;
-  const out = JSON.parse(stdout);
-  return out.reason ?? out.followup_message ?? null;
-}
-
-const LOST_BANK = { [VCS]: "# VCS\n\n- keep\n- release pipeline\n" };
-
-/** A repository whose HEAD holds the bank, then `working` written over it. */
-function committed(working, files = LOST_BANK) {
-  const root = project(files);
-  const git = (...args) => spawnSync("git", args, { cwd: root, env: ENV, encoding: "utf8" });
-  git("init", "-q");
-  git("add", "-A");
-  git("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-qm", "init");
-  for (const [name, text] of Object.entries(working)) fs.writeFileSync(path.join(root, name), text);
-  return root;
-}
-
-for (const host of HOSTS) {
-  test(`${host}: a turn end after a memory line was lost, by any tool, asks the model once to tell the person, restoring only on request`, () => {
-    const root = committed({ [VCS]: "# VCS\n\n- keep\n" });
-    const { status, stdout, stderr } = run(host, stopPayload(host, root));
-    assert.deepEqual({ status, stderr }, { status: 0, stderr: "" });
-    const text = continuedWith(stdout);
-    assert.match(text ?? "", /^aidd-context: 1 memory line lost/u, stdout);
-    assert.match(text, /^- aidd_docs\/memory\/vcs\.md: - release pipeline$/mu);
-    assert.match(text, /Restore a line only if they ask\.$/u, "the model is pushed to undo a removal the person asked for");
-  });
-}
-
-test("a turn end answers nothing when the turn is already a continuation, the bank unchanged, or the loss approved", () => {
-  const lost = committed({ [VCS]: "# VCS\n\n- keep\n" });
-  assert.equal(run("claude", { ...stopPayload("claude", lost), stop_hook_active: true }).stdout, "", "continued twice");
-  assert.equal(run("claude", stopPayload("claude", committed({}))).stdout, "", "an unchanged bank");
-  const sheet = "aidd_docs/tasks/t/facts.md";
-  fs.mkdirSync(path.join(lost, path.dirname(sheet)), { recursive: true });
-  fs.writeFileSync(path.join(lost, sheet), '## Inferred\n\n- D1 | vcs.md > Setup | remove "- release pipeline": stale | aidd_docs/memory/vcs.md | yes\n');
-  assert.equal(run("claude", stopPayload("claude", lost)).stdout, "", "an approved removal");
-});
-
-test("a turn end answers nothing without a repository, and stays silent on a git failure", () => {
-  assert.deepEqual(run("claude", stopPayload("claude", project(LOST_BANK))), { status: 0, stdout: "", stderr: "" });
-  const root = committed({ [VCS]: "# VCS\n\n- keep\n" });
-  fs.rmSync(path.join(root, ".git/HEAD"));
-  assert.deepEqual(run("claude", stopPayload("claude", root)), { status: 0, stdout: "", stderr: "" });
 });
