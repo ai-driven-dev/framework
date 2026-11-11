@@ -31,6 +31,11 @@ const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\
 const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(?!kind\b)(\w+)\b(?!\s*\()`, "g");
 const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
 
+/** A capability's declared parameters, read from a section or from a variable named for one. */
+const PARAMS_READ =
+  /(?:section\([^)]*\)|\b(?:mcp|hooks|settings|agents|skills|commands|rules|capability|cap)(?:Capability)?)\??\.params\b/g;
+const CAPABILITY_FILES_DIR = "src/contexts/tools/domain/capabilities";
+
 const CLASS_BLOCK = /^(?:export )?(?:abstract )?class (\w+)[^{]*\{([\s\S]*?)\n\}/gm;
 const PUBLIC_FIELD =
   /^ {2}(?!static |constructor|abstract |override |async |get |set )(?:(?:public|private|protected) )?(?:readonly )?(\w+)[?!]?\s*[:=]/gm;
@@ -75,6 +80,33 @@ function readableFields(): string[] {
   return fields.sort();
 }
 
+/** Where code outside the tools context reads the declared parameters of a section. */
+function paramsReadsOutsideTools(files: readonly string[]): string[] {
+  const reads: string[] = [];
+  for (const file of files.filter((path) => !TOOLS_CONTEXT.test(path))) {
+    for (const _match of read(file).matchAll(PARAMS_READ)) reads.push(`${file} :: reads .params`);
+  }
+  return reads.sort();
+}
+
+/** The capability classes that leave their parameters readable. */
+function readableParams(): string[] {
+  const leaks: string[] = [];
+  for (const entry of readdirSync(join(CLI_ROOT, CAPABILITY_FILES_DIR))) {
+    if (!entry.endsWith("-capability.ts")) continue;
+    const file = `${CAPABILITY_FILES_DIR}/${entry}`;
+    for (const block of read(file).matchAll(CLASS_BLOCK)) {
+      for (const field of (block[2] as string).matchAll(PUBLIC_FIELD)) {
+        if (field[1] === "params") leaks.push(`${file} :: ${block[1]}.params`);
+      }
+      for (const prop of (block[2] as string).matchAll(PARAMETER_PROPERTY)) {
+        if (prop[1] === "params") leaks.push(`${file} :: ${block[1]}.params`);
+      }
+    }
+  }
+  return leaks.sort();
+}
+
 describe("a tool's plugin delivery is asked, never read", () => {
   it("no code outside the tools context reads a field of a plugins capability", () => {
     expect(readsOutsideTools([...sourceFiles(), ...testFiles()])).toEqual([]);
@@ -116,5 +148,28 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
     const narrowed = 'if (tool.section("plugins").kind === "flat") return;';
     expect([...narrowed.matchAll(FIELD_READ)]).toHaveLength(0);
+  });
+
+  it("no code outside the tools context reads a section's parameters", () => {
+    expect(paramsReadsOutsideTools([...sourceFiles(), ...testFiles()])).toEqual([]);
+  });
+
+  it("no capability class leaves its parameters readable", () => {
+    expect(readableParams()).toEqual([]);
+  });
+
+  it("sees a parameters read on a section or a capability variable, and clears a named answer", () => {
+    const written = [
+      'const a = tool.section("mcp").params.outputPath;',
+      "const b = mcp.params.format;",
+      "const c = capability?.params.mergeStrategy;",
+      'const d = tool.section("mcp").outputPath();',
+    ];
+    expect(written.map((line) => [...line.matchAll(PARAMS_READ)].length)).toEqual([1, 1, 1, 0]);
+
+    const leaky =
+      "class A {\n  constructor(readonly params: string) {}\n  readonly params2 = 1;\n}";
+    const block = [...leaky.matchAll(CLASS_BLOCK)][0]?.[2] as string;
+    expect([...block.matchAll(PARAMETER_PROPERTY)].map((m) => m[1])).toEqual(["params"]);
   });
 });

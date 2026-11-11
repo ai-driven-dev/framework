@@ -11,7 +11,7 @@ export async function resolveMcpOutputPath(
   projectRoot: string
 ): Promise<string> {
   const candidates = mcp.outputPathCandidates();
-  if (candidates === null) return mcp.params.outputPath;
+  if (candidates === null) return mcp.outputPath();
   for (const tier of candidates.tiers) {
     const present: string[] = [];
     for (const candidate of tier) {

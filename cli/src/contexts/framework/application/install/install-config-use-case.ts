@@ -129,9 +129,6 @@ export class InstallConfigUseCase {
   }
 
   private getCapabilityMergeStrategy(capability: ConfigCapability): MergeStrategy {
-    if (capability instanceof McpCapability) {
-      return capability.params.mergeStrategy ?? "user-prime";
-    }
     return capability.getMergeStrategy();
   }
 }

@@ -55,10 +55,7 @@ describe("defineAiTool", () => {
     });
 
     expect(tool.section("commands").buildInstallPath("run.claude.md")).toBe(".x/commands/run.md");
-    expect(tool.section("commands").params).toMatchObject({
-      directory: ".x/",
-      toolSuffix: ".claude.md",
-    });
+    expect(tool.section("commands").buildOutputPath("run")).toBe(".x/commands/run.claude.md");
   });
 
   it("answers a declared section, and null for one it does not declare", () => {

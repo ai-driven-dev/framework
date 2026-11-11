@@ -4,14 +4,11 @@ import { claude } from "../../../../../../src/contexts/tools/domain/profiles/cla
 describe("claude mcp", () => {
   describe("capabilities.mcp", () => {
     it("outputs to .mcp.json", () => {
-      expect(claude.section("mcp").params.outputPath).toBe(".mcp.json");
+      expect(claude.section("mcp").outputPath()).toBe(".mcp.json");
     });
 
     it("writes its servers as JSON under `mcpServers`", () => {
-      expect(claude.section("mcp").params).toMatchObject({
-        format: "json",
-        entrySection: "mcpServers",
-      });
+      expect(claude.section("mcp").format()).toBe("json");
     });
 
     it("does not consume unknown config names", () => {
@@ -19,7 +16,7 @@ describe("claude mcp", () => {
     });
 
     it("mcp config preserves user customizations during update", () => {
-      expect(claude.section("mcp").params.mergeStrategy ?? "user-prime").toBe("user-prime");
+      expect(claude.section("mcp").getMergeStrategy()).toBe("user-prime");
     });
   });
 });

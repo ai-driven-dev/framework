@@ -58,9 +58,7 @@ export class InstallIdeToolUseCase {
     manifest: Manifest
   ): Promise<void> {
     const toMerge = settingsCapabilitiesOf(aiId).filter(
-      (c) =>
-        (c.staticContent !== undefined || c.staticContentAssetFile !== undefined) &&
-        c.requiresTool === ideId
+      (c) => c.hasStaticContent() && c.requiresTool === ideId
     );
     if (toMerge.length === 0) return;
     const existingEntries = [...manifest.getMergeFiles(aiId)];

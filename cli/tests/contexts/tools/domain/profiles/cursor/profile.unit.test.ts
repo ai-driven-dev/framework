@@ -24,15 +24,12 @@ describe("cursor declarations the rest of the CLI reads", () => {
   });
 
   it("writes agents as markdown", () => {
-    expect(cursor.section("agents").params.format).toBe("markdown");
+    expect(cursor.section("agents").serialize({ name: "a" }, "body")).toMatch(/^---\n/);
   });
 
   it("writes its MCP servers as JSON under `mcpServers`, in .cursor/mcp.json", () => {
-    expect(cursor.section("mcp").params).toMatchObject({
-      outputPath: ".cursor/mcp.json",
-      format: "json",
-      entrySection: "mcpServers",
-    });
+    const mcp = cursor.section("mcp");
+    expect([mcp.outputPath(), mcp.format()]).toStrictEqual([".cursor/mcp.json", "json"]);
     expect(cursor.section("mcp").consumes).toStrictEqual([CONFIG_MCP]);
   });
 

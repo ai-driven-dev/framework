@@ -110,9 +110,9 @@ export class InstallRuntimeConfigUseCase {
       const mcp = mcpCapabilityOf(options.toolId);
       if (
         mcp !== null &&
-        mcp.params.outputPath === fileName &&
-        mcp.params.format === "json" &&
-        mcp.params.mergeStrategy === "framework-prime"
+        mcp.outputPath() === fileName &&
+        mcp.format() === "json" &&
+        mcp.getMergeStrategy() === "framework-prime"
       ) {
         content = buildOpencodeFlatConfig(
           content,
@@ -138,7 +138,7 @@ export class InstallRuntimeConfigUseCase {
     options: InstallRuntimeConfigOptions
   ): Promise<string> {
     const mcp = mcpCapabilityOf(toolConfig.toolId);
-    if (mcp === null || mcp.params.outputPath !== fileName) return outputPath;
+    if (mcp === null || mcp.outputPath() !== fileName) return outputPath;
     return resolveMcpOutputPath(this.fs, mcp, options.projectRoot);
   }
 
@@ -168,9 +168,7 @@ export class InstallRuntimeConfigUseCase {
     options: InstallRuntimeConfigOptions
   ): InstallationFile | null {
     if (!(cap instanceof SettingsCapability)) return null;
-    const hasStaticForm =
-      cap.staticContent !== undefined || cap.staticContentAssetFile !== undefined;
-    if (!hasStaticForm) return null;
+    if (!cap.hasStaticContent()) return null;
     if (cap.requiresTool && !options.manifest.hasTool(cap.requiresTool)) return null;
     const content = this.resolveStaticContent(cap, options.toolId);
     return new InstallationFile({

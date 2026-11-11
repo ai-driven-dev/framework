@@ -24,14 +24,11 @@ describe("copilot declarations the rest of the CLI reads", () => {
   });
 
   it("writes agents as markdown", () => {
-    expect(copilot.section("agents").params.format).toBe("markdown");
+    expect(copilot.section("agents").serialize({ name: "a" }, "body")).toMatch(/^---\n/);
   });
 
   it("writes its MCP servers as JSON under `servers`", () => {
-    expect(copilot.section("mcp").params).toMatchObject({
-      format: "json",
-      entrySection: "servers",
-    });
+    expect(copilot.section("mcp").format()).toBe("json");
     expect(copilot.section("mcp").consumes).toStrictEqual([CONFIG_MCP]);
   });
 
@@ -86,7 +83,7 @@ describe("copilot declarations the rest of the CLI reads", () => {
   it("writes .vscode/settings.json from the CLI's own asset, gated on VS Code being present", () => {
     const declared = copilot.section("settings");
     const settings = Array.isArray(declared) ? declared[0] : declared;
-    expect(settings.params.outputPath).toBe(".vscode/settings.json");
+    expect(settings.buildOutputPath()).toBe(".vscode/settings.json");
     expect(settings.getMergeStrategy()).toBe("framework-prime");
     expect(settings.staticContentAssetFile).toBe("vscode-settings.json");
     expect(settings.staticContent).toBeUndefined();

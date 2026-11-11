@@ -23,44 +23,46 @@ function toTomlBasename(toolSuffix: string, fileName: string): string {
   return `${basename}.toml`;
 }
 
+type AgentsCapabilityParams = {
+  directory: string;
+  toolSuffix: string;
+  format: "markdown" | "toml";
+  /** The host's own agent frontmatter, shared with its built distributions. */
+  frontmatter: AgentFrontmatter;
+  userFileExt?: string;
+  /** How frontmatter strings are quoted; `double` for readers that keep single quotes. */
+  quote?: "single" | "double";
+  /** Writes the agent file when the host's format is not markdown frontmatter. */
+  serialize?: (frontmatter: Record<string, unknown>, body: string) => string;
+  buildInstallPath?: (fileName: string) => string | null;
+};
+
 export class AgentsCapability {
+  readonly #params: AgentsCapabilityParams;
   private readonly suffix: ToolSuffix;
   private readonly foreignSuffixes: ForeignSuffixFilter;
 
-  constructor(
-    readonly params: {
-      directory: string;
-      toolSuffix: string;
-      format: "markdown" | "toml";
-      /** The host's own agent frontmatter, shared with its built distributions. */
-      frontmatter: AgentFrontmatter;
-      userFileExt?: string;
-      /** How frontmatter strings are quoted; `double` for readers that keep single quotes. */
-      quote?: "single" | "double";
-      /** Writes the agent file when the host's format is not markdown frontmatter. */
-      serialize?: (frontmatter: Record<string, unknown>, body: string) => string;
-      buildInstallPath?: (fileName: string) => string | null;
-    }
-  ) {
+  constructor(params: AgentsCapabilityParams) {
+    this.#params = params;
     this.suffix = new ToolSuffix(params.toolSuffix);
     this.foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildOutputPath(agentName: string): string {
-    return `${this.params.directory}agents/${agentName}${this.params.toolSuffix}`;
+    return `${this.#params.directory}agents/${agentName}${this.#params.toolSuffix}`;
   }
 
   buildInstallPath(relativeFileName: string): string | null {
-    if (this.params.buildInstallPath) return this.params.buildInstallPath(relativeFileName);
+    if (this.#params.buildInstallPath) return this.#params.buildInstallPath(relativeFileName);
     const basename = relativeFileName.split("/").at(-1) ?? relativeFileName;
-    if (this.params.format === "toml") {
-      return `${this.params.directory}agents/${toTomlBasename(this.params.toolSuffix, basename)}`;
+    if (this.#params.format === "toml") {
+      return `${this.#params.directory}agents/${toTomlBasename(this.#params.toolSuffix, basename)}`;
     }
-    return this.suffix.strip(`${this.params.directory}agents/${basename}`);
+    return this.suffix.strip(`${this.#params.directory}agents/${basename}`);
   }
 
   accepts(relativePath: string): boolean {
-    return relativePath.startsWith(this.params.directory);
+    return relativePath.startsWith(this.#params.directory);
   }
 
   acceptsFileName(fileName: string): boolean {
@@ -68,12 +70,12 @@ export class AgentsCapability {
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {
-    return this.params.frontmatter({ ...fm, name: agentNameFromFrontmatter(fm, fileName) });
+    return this.#params.frontmatter({ ...fm, name: agentNameFromFrontmatter(fm, fileName) });
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
-    if (this.params.serialize) return this.params.serialize(frontmatter, body);
-    return serializeFrontmatter(frontmatter, body, this.params.quote);
+    if (this.#params.serialize) return this.#params.serialize(frontmatter, body);
+    return serializeFrontmatter(frontmatter, body, this.#params.quote);
   }
 
   deserialize(content: string): { frontmatter: Record<string, unknown>; body: string } {
@@ -82,10 +84,10 @@ export class AgentsCapability {
 
   equals(other: AgentsCapability): boolean {
     return (
-      this.params.directory === other.params.directory &&
-      this.params.toolSuffix === other.params.toolSuffix &&
-      this.params.format === other.params.format &&
-      this.params.userFileExt === other.params.userFileExt
+      this.#params.directory === other.#params.directory &&
+      this.#params.toolSuffix === other.#params.toolSuffix &&
+      this.#params.format === other.#params.format &&
+      this.#params.userFileExt === other.#params.userFileExt
     );
   }
 }

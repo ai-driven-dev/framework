@@ -1,23 +1,25 @@
 import { serializeFrontmatter } from "../../../../kernel/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
+type RulesCapabilityParams = {
+  directory: string;
+  toolSuffix: string;
+  inputSuffix?: string;
+  buildInstallPath: (fileName: string) => string | null;
+  convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
+};
+
 export class RulesCapability {
+  readonly #params: RulesCapabilityParams;
   private readonly foreignSuffixes: ForeignSuffixFilter;
 
-  constructor(
-    readonly params: {
-      directory: string;
-      toolSuffix: string;
-      inputSuffix?: string;
-      buildInstallPath: (fileName: string) => string | null;
-      convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
-    }
-  ) {
+  constructor(params: RulesCapabilityParams) {
+    this.#params = params;
     this.foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
   }
 
   buildOutputPath(ruleName: string): string {
-    return `${this.params.directory}rules/${ruleName}${this.params.toolSuffix}`;
+    return `${this.#params.directory}rules/${ruleName}${this.#params.toolSuffix}`;
   }
 
   /** A name no rule of a reader's own will ever carry, asked of `buildInstallPath` only so its
@@ -32,7 +34,7 @@ export class RulesCapability {
    * installs nothing for the name asked about, or answers a path whose stem it rewrote past
    * recognition; neither is a guess. */
   installedLocation(): { readonly directory: string; readonly extension: string } | null {
-    const suffix = this.params.inputSuffix ?? this.params.toolSuffix;
+    const suffix = this.#params.inputSuffix ?? this.#params.toolSuffix;
     const installed = this.buildInstallPath(`${RulesCapability.PROBE_STEM}${suffix}`);
     if (installed === null) return null;
     const lastSlash = installed.lastIndexOf("/");
@@ -46,11 +48,11 @@ export class RulesCapability {
   }
 
   buildInstallPath(fileName: string): string | null {
-    return this.params.buildInstallPath(fileName);
+    return this.#params.buildInstallPath(fileName);
   }
 
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown> {
-    return this.params.convertFrontmatter(fm);
+    return this.#params.convertFrontmatter(fm);
   }
 
   acceptsFileName(fileName: string): boolean {
@@ -62,13 +64,13 @@ export class RulesCapability {
   }
 
   accepts(relativePath: string): boolean {
-    return relativePath.startsWith(this.params.directory);
+    return relativePath.startsWith(this.#params.directory);
   }
 
   equals(other: RulesCapability): boolean {
     return (
-      this.params.directory === other.params.directory &&
-      this.params.toolSuffix === other.params.toolSuffix
+      this.#params.directory === other.#params.directory &&
+      this.#params.toolSuffix === other.#params.toolSuffix
     );
   }
 }
