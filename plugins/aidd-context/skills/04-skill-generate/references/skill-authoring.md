@@ -39,7 +39,7 @@ The constraints every generated skill satisfies. `skill-generate` obeys them too
 | R13 | A check ends in a step: validate, fix, repeat until it passes, linking the check or naming the steps that hold it. | A check with no loop is only advice. |
 | R13 | The final step reads the next action file, as a link. A terminal action has none. | The chain of actions has no gap. |
 | R14 | `## Output` is the done condition and the action's check: what exists when the action is finished. Add a check step only when the action changes files or state. | The next action needs a clear start state. |
-| R14 | An action consumes only an artifact its own `## Input` or the previous action's `## Output` carries. | A step reading what no earlier part supplies has no source. |
+| R14 | `## Input` names what the action uses; `## Output` names only what it produces. Neither carries items through for a later action. | Carried items lengthen every action and repeat the one before. |
 | R15 | `## Rules` holds whole-action constraints, one per line. Move rules shared by actions to the router's transversal rules. | A constraint repeated in each action gets edited in one and not the others. |
 | R16 | An action stays under 100 lines. | Past that length an action holds several jobs. |
 
@@ -74,7 +74,7 @@ The constraints every generated skill satisfies. `skill-generate` obeys them too
 | R22 | An asset is the home of an output's shape, a reference of the judgment on choosing and filling it. Neither restates the other. | A shape held in both drifts. |
 | R22 | Before adding or changing an instruction, check the whole skill for overlap or conflict, and resolve it by revising the owning rule. | A parallel rule contradicts the first. |
 | R23 | In each authoring file, the first citation of another file, in a step, output or rule, is a relative Markdown link, `[name](path)`, not backticks, except sibling references under R17. | The first mention lets the reader open the file. |
-| R23 | For repeat mentions within that file, use the filename in backticks when unambiguous. Otherwise retain the link. | Repeated links add noise. |
+| R23 | For repeat mentions within that file, name the file by its role (the template, the rubric). | Repeated links and filenames add noise. |
 | R23 | Place citations in the sentence, step, output or rule using them, not on standalone lines. | A citation outside its use is easy to skip. |
 | R23 | Avoid unresolved `@` includes. | An include that does not resolve loads nothing. |
 | R24 | One artifact per file, an artifact being a unit a path can need on its own (a table, a template, a script). Split artifacts only when a path needs one without the other. | A file with two artifacts loads both for either. |

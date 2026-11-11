@@ -89,7 +89,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [axis-functional.md](skills/05-review/references/axis-functional.md) | - |
 | `references` | [axis-relevancy.md](skills/05-review/references/axis-relevancy.md) | - |
 | `references` | [rubric.md](skills/05-review/references/rubric.md) | - |
-| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews a diff read-only into one verdict naming each defect and its fix, when the user wants a change checked before shipping.` |
+| `-` | [SKILL.md](skills/05-review/SKILL.md) | `Reviews work and says whether it is ready, naming each defect with its fix. Use when the user wants a change or diff reviewed. Not for fixing what the review finds, and not for auditing a whole codebase.` |
 
 #### `skills/06-test`
 
