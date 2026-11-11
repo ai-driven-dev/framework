@@ -135,12 +135,13 @@ describe("a tool's plugin delivery is asked, never read", () => {
       'const b = tool.section("plugins")?.acceptsMcp;',
       'const { hookScript } = tool.section("plugins");',
       "const c = catalog.resolvePluginsCapability(id).acceptsMcp;",
+      "const e = (x as PluginsCapability).acceptsMcp;",
     ];
     const found = written.map((line) => [...line.matchAll(FIELD_READ)].length);
     const destructured = written.map((line) => [...line.matchAll(DESTRUCTURING)].length);
     expect([found, destructured]).toEqual([
-      [1, 1, 0, 1],
-      [0, 0, 1, 0],
+      [1, 1, 0, 1, 1],
+      [0, 0, 1, 0, 0],
     ]);
 
     const asked = 'const d = tool.section("plugins").buildMode();';

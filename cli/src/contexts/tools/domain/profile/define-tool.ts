@@ -41,7 +41,7 @@ export interface BoundTool {
 
 type AiToolFields = Omit<
   AiTool<ProfileSections>,
-  "kind" | "toolId" | "capabilities" | "section" | "configCapabilities"
+  "kind" | "toolId" | "section" | "configCapabilities"
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {

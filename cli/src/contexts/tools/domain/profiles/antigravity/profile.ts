@@ -1,4 +1,3 @@
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
@@ -34,9 +33,8 @@ export const antigravity = defineAiTool({
   signalDir: null,
   buildContracts: { flat: buildAntigravityFlatContract },
 
-  capabilities: () => ({
-    skills: new SkillsCapability({
-      toolSuffix: TOOL_SUFFIX,
+  capabilities: (bound) => ({
+    skills: bound.skills({
       prefix: SKILLS_PREFIX,
       buildInstallPath: (fileName) =>
         `${ANTIGRAVITY_DIRECTORY}skills/${SKILLS_PREFIX}${skillName(fileName)}/SKILL.md`,

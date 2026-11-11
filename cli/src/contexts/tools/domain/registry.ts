@@ -136,7 +136,7 @@ export class ToolCatalog {
   ): (() => ToolBuildContract) | undefined {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return undefined;
-    return config.buildContracts?.[mode];
+    return config.buildContracts[mode];
   }
 
   userMachineLocalFilesOf(
