@@ -578,4 +578,4 @@ function pageOf({ id, variants, tokens, themes }) {
   ].join("\n");
 }
 
-module.exports = { pageOf, feedbackOf, copiedOf, STYLE, escaped, documentOf, inlined };
+module.exports = { pageOf, feedbackOf, copiedOf, STYLE, escaped, documentOf, inlined, STYLESHEET_LINK };

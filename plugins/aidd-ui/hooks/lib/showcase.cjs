@@ -8,12 +8,16 @@ const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
 const { text } = require("./project.cjs");
-const { STYLE, escaped, documentOf, inlined } = require("./page.cjs");
+const { STYLE, escaped, documentOf, inlined, STYLESHEET_LINK } = require("./page.cjs");
+const { catalog, resolvedValues, TYPES } = require("./tokens.cjs");
 
 const DEFAULT_LANGUAGE = "en";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
 const SYSTEM_KINDS = ["brand", "system"];
 const LEVELS = ["asset", ...COMPONENT_KINDS];
+const BASE_CONTEXT = ""; // the key of `resolvedValues` for the base
+const UNTYPED = "css"; // the section of the tokens that hold raw CSS and no `$type`
+const SAMPLE = "Aa";
 const GROUPS = ["system", "components", "journeys", "templates", "pages"];
 
 /** The words of the page chrome, one table per language: the same keys in each. */
@@ -53,6 +57,7 @@ const LABELS = {
     platform: "Platform",
     sides: "Side by side",
     combination: "Combination",
+    tokens: "Tokens",
   },
   fr: {
     title: "Vitrine du système de design",
@@ -89,6 +94,7 @@ const LABELS = {
     platform: "Plateforme",
     sides: "Côte à côte",
     combination: "Combinaison",
+    tokens: "Tokens",
   },
 };
 
@@ -122,8 +128,8 @@ nav a[aria-current="page"] { font-weight: 600; color: var(--text); }
 .links ul { display: flex; gap: 12px; flex-wrap: wrap; }
 .checks li { padding: 2px 0; }
 .review { display: flex; flex-direction: column; gap: 16px; }
-.review .bar-top, .review .toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.review fieldset { border: 0; display: flex; gap: 8px; align-items: center; padding: 0; margin: 0; }
+.review .bar-top, .review .toolbar, .gallery .toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.review fieldset, .gallery fieldset { border: 0; display: flex; gap: 8px; align-items: center; padding: 0; margin: 0; }
 .state { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 .state h3 { margin: 0; font-size: 13px; }
 .state[data-current="ok"] { border-color: var(--keep-dot); }
@@ -355,6 +361,43 @@ function stateOf({ record, state, verdict, render, tokens, captures, labels, pla
   ].filter(Boolean).join("\n");
 }
 
+const GALLERY_STYLE = `
+body { margin: 0; padding: 16px; font-size: 13px; }
+h2 { font-size: 15px; margin: 0 0 8px; }
+h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.6; margin: 16px 0 4px; }
+ul { list-style: none; margin: 0; padding: 0; }
+li { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(6rem, 1fr) 2fr; gap: 12px; align-items: center; padding: 4px 0; border-bottom: 1px solid #8884; }
+code, .value { overflow-wrap: anywhere; }
+.value { opacity: 0.7; }
+.swatch { display: block; inline-size: 48px; block-size: 24px; border-radius: 4px; border: 1px solid #8886; }
+.bar { display: block; block-size: 12px; background: #888; border-radius: 2px; }
+`;
+
+/** What shows a token in the gallery: a swatch, a bar, a sample of text, or nothing beside its value. */
+function specimenOf({ type, property }) {
+  const use = `var(${escaped(property)})`;
+  if (type === "color") return `<i class="swatch" style="background: ${use}"></i>`;
+  if (type === "dimension") return `<i class="bar" style="inline-size: min(${use}, 100%)"></i>`;
+  if (type === "fontFamily") return `<span style="font-family: ${use}">${SAMPLE}</span>`;
+  if (type === "fontWeight") return `<span style="font-weight: ${use}">${SAMPLE}</span>`;
+  return "";
+}
+
+/** The gallery of the system page: every token by type in a frame that holds the stylesheet, with the
+ * value it has in the base context. Nothing without a stylesheet. */
+function galleryOf({ project, system, tokens, labels, language }) {
+  const entries = tokens === null ? [] : catalog(project);
+  if (!entries.length) return "";
+  const values = resolvedValues(project).get(BASE_CONTEXT) ?? new Map();
+  const row = (entry) => `<li data-token="${escaped(entry.name)}"><code>${escaped(entry.name)}</code><span class="value">${escaped(values.get(entry.name) ?? "")}</span><span class="specimen">${specimenOf(entry)}</span></li>`;
+  const sections = [...TYPES, UNTYPED].flatMap((type) => {
+    const own = entries.filter((entry) => (entry.type ?? UNTYPED) === type);
+    return own.length ? [`<section data-type="${type}"><h3>${type}</h3><ul>${own.map(row).join("")}</ul></section>`] : [];
+  });
+  const doc = ["<!doctype html>", `<html lang="${language}">`, "<head>", '<meta charset="utf-8">', STYLESHEET_LINK, `<style>${GALLERY_STYLE}</style>`, "</head>", "<body>", `<h2>${labels.tokens}</h2>`, ...sections, "</body>", "</html>"].join("\n");
+  return `<section class="gallery">${toolbarOf(system, labels)}<div class="pair"><div class="render"><iframe data-combo="a"${platformOf(system)} title="${escaped(labels.tokens)}" srcdoc="${escaped(inlined(doc, tokens))}"></iframe></div></div></section>`;
+}
+
 /** The `data-platform` attribute of a frame: the first platform the system declares, none without one. */
 const platformOf = (system) => (system && list(fm(system).platforms).length ? ` data-platform="${escaped(list(fm(system).platforms)[0])}"` : "");
 
@@ -415,6 +458,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
       `<div class="chips">${chipsOf(record)}</div>`,
       linksOf("uses", labels.uses, uses),
       linksOf("used-by", labels.usedBy, usedBy),
+      id === SYSTEM_ID ? galleryOf({ project, system, tokens, labels, language }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
       checksOf(problems, record, labels),
       specOf(project, record),

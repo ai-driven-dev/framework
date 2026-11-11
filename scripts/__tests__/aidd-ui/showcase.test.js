@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, record } = require("../fixtures/aidd-ui/project.js");
+const { UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
@@ -122,6 +122,57 @@ describe("aidd-ui showcase", () => {
       assert.match(html, /\.render iframe\[data-platform="mobile"\] \{ flex: 0 0 390px; inline-size: 390px; \}/);
       assert.doesNotMatch(html, /\[data-platform="web"\] \{/);
       assert.ok(!html.includes("height: 320px"));
+    });
+  });
+
+  describe("the token gallery", () => {
+    const sheet = () => read(`${UI}/tokens.css`);
+    const systemPage = (options = {}) => pagesOf({ tokens: sheet(), ...options })["system.html"];
+    const unescaped = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+    const frameOf = (html) => unescaped(html.match(/<iframe [^>]*srcdoc="([^"]*)"/)[1]);
+    const typesIn = (frame) => [...frame.matchAll(/<section data-type="([^"]+)"/g)].map((match) => match[1]);
+    const rowOf = (frame, name) => frame.match(new RegExp(`<li data-token="${name.replaceAll(".", "\\.")}">[\\s\\S]*?</li>`))[0];
+
+    it("shows one row per token, in a frame, with its value in the base context", () => {
+      const frame = frameOf(systemPage());
+      assert.equal([...frame.matchAll(/<li data-token="/g)].length, 8);
+      assert.ok(rowOf(frame, "space.md").includes("1rem"));
+      assert.ok(!rowOf(frame, "space.md").includes("1.5rem"));
+      assert.ok(frame.includes("--space-md: 1rem"));
+    });
+
+    it("sections the tokens by type in the order of the types", () => {
+      assert.deepEqual(typesIn(frameOf(systemPage())), ["color", "dimension", "fontFamily", "fontWeight", "duration"]);
+    });
+
+    it("gives a color a swatch, a dimension a bar capped to the frame, a font its sample", () => {
+      const frame = frameOf(systemPage());
+      assert.ok(rowOf(frame, "color.brand.primary").includes("background: var(--color-brand-primary)"));
+      assert.ok(rowOf(frame, "space.md").includes("inline-size: min(var(--space-md), 100%)"));
+      assert.match(rowOf(frame, "font.body"), /font-family: var\(--font-body\)[^>]*>Aa</);
+      assert.match(rowOf(frame, "font.weight.bold"), /font-weight: var\(--font-weight-bold\)[^>]*>Aa</);
+    });
+
+    it("shows a token with raw CSS and no type under css, last, by its value alone", () => {
+      editTokens(tmp, (tree) => (tree.misc = { ring: { $extensions: { "dev.ai-driven.css": "0 0 0 2px red" } } }));
+      const frame = frameOf(systemPage());
+      assert.equal(typesIn(frame).at(-1), "css");
+      assert.ok(frame.match(/<section data-type="css">[\s\S]*?<\/section>/)[0].includes("misc.ring"));
+      assert.ok(rowOf(frame, "misc.ring").includes("0 0 0 2px red"));
+    });
+
+    it("holds the label, the theme and platform bar, and a frame marked with the platform", () => {
+      const html = systemPage();
+      assert.ok(frameOf(html).includes(">Tokens<"));
+      assert.match(html, /<div class="toolbar">/);
+      assert.match(html.match(/<iframe [^>]*>/)[0], /data-platform="web"/);
+      assert.ok(frameOf(html).includes(":where(html) { font-family: system-ui, sans-serif; }"));
+    });
+
+    it("shows no gallery without a stylesheet", () => {
+      const html = systemPage({ tokens: null });
+      assert.ok(!html.includes("<iframe"));
+      assert.ok(!html.includes('class="toolbar"'));
     });
   });
 

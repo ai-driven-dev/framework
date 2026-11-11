@@ -555,4 +555,4 @@ function resolvedValues(project) {
  * itself when it names none. */
 const tokenNameOf = (project, ref) => namesByProperty(read(project)).get(ref) ?? ref;
 
-module.exports = { check, blockers, generate, catalog, citations, resolvedValues, tokenNameOf, cssNames, cssFileOf };
+module.exports = { check, blockers, generate, catalog, citations, resolvedValues, TYPES, tokenNameOf, cssNames, cssFileOf };
