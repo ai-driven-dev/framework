@@ -10,8 +10,7 @@ import {
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
-import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
-import { transformMcpToOpencode } from "../opencode/build.js";
+import { buildOpencodeFlatConfig, toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
@@ -54,7 +53,7 @@ function collectKiloMcp(
   for (const plugin of builtPlugins) {
     const raw = pluginMcp.get(plugin);
     if (raw === undefined) continue;
-    const transformed = JSON.parse(transformMcpToOpencode(raw)) as {
+    const transformed = JSON.parse(toTypedMcpSection(raw)) as {
       mcp?: Record<string, unknown>;
     };
     for (const [key, value] of Object.entries(transformed.mcp ?? {})) {

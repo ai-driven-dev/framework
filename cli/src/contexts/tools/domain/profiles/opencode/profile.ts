@@ -22,7 +22,8 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
+import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
@@ -84,7 +85,7 @@ export const opencode: AiTool<
       format: "json",
       entrySection: "mcp",
       mergeStrategy: "framework-prime",
-      transformContent: transformMcpToOpencode,
+      transformContent: toTypedMcpSection,
       consumes: [CONFIG_MCP, CONFIG_OPENCODE],
       outputPathCandidates: {
         tiers: [["opencode.json", "opencode.jsonc"]],

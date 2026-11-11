@@ -3,10 +3,8 @@ import type {
   ConfigArtifact,
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/domain/build-contract.js";
-import {
-  buildOpencodeFlatContract,
-  transformMcpToOpencode,
-} from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
+import { toTypedMcpSection } from "../../../../../../src/contexts/tools/domain/formats/opencode-mcp-merge.js";
+import { buildOpencodeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
@@ -49,9 +47,9 @@ function emit(input: {
   });
 }
 
-describe("transformMcpToOpencode()", () => {
+describe("toTypedMcpSection()", () => {
   it("turns a command server into a local one, its arguments folded into the command line", () => {
-    const converted = transformMcpToOpencode(
+    const converted = toTypedMcpSection(
       JSON.stringify({
         mcpServers: { context: { command: "npx", args: ["-y", "server"], env: { KEY: "v" } } },
       })
@@ -70,7 +68,7 @@ describe("transformMcpToOpencode()", () => {
   });
 
   it("turns a url server into a remote one, and a disabled server into a disabled one", () => {
-    const converted = transformMcpToOpencode(
+    const converted = toTypedMcpSection(
       JSON.stringify({ mcpServers: { hosted: { url: "https://example.test", disabled: true } } })
     );
 
@@ -80,19 +78,19 @@ describe("transformMcpToOpencode()", () => {
   });
 
   it("refuses a server that names neither a command nor a url", () => {
-    expect(() => transformMcpToOpencode(JSON.stringify({ mcpServers: { broken: {} } }))).toThrow(
+    expect(() => toTypedMcpSection(JSON.stringify({ mcpServers: { broken: {} } }))).toThrow(
       /broken/
     );
   });
 
   it("refuses a config that is not a JSON object", () => {
-    expect(() => transformMcpToOpencode("[]")).toThrow("MCP config must be a JSON object");
-    expect(() => transformMcpToOpencode("{ not json")).toThrow(/Cannot parse MCP config/);
+    expect(() => toTypedMcpSection("[]")).toThrow("MCP config must be a JSON object");
+    expect(() => toTypedMcpSection("{ not json")).toThrow(/Cannot parse MCP config/);
   });
 
   it("refuses a config that is null or a bare value", () => {
-    expect(() => transformMcpToOpencode("null")).toThrow("MCP config must be a JSON object");
-    expect(() => transformMcpToOpencode("42")).toThrow("MCP config must be a JSON object");
+    expect(() => toTypedMcpSection("null")).toThrow("MCP config must be a JSON object");
+    expect(() => toTypedMcpSection("42")).toThrow("MCP config must be a JSON object");
   });
 });
 

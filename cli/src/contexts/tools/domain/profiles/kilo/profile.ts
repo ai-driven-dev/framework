@@ -21,7 +21,7 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { transformMcpToOpencode } from "../opencode/build.js";
+import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
@@ -77,7 +77,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       format: "json",
       entrySection: "mcp",
       mergeStrategy: "framework-prime",
-      transformContent: transformMcpToOpencode,
+      transformContent: toTypedMcpSection,
       consumes: [CONFIG_MCP],
       outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
     }),
