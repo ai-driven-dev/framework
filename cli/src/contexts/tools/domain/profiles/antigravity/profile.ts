@@ -34,9 +34,9 @@ export const antigravity = defineAiTool({
   signalDir: null,
   buildContracts: { flat: buildAntigravityFlatContract },
 
-  capabilities: ({ toolSuffix }) => ({
+  capabilities: () => ({
     skills: new SkillsCapability({
-      toolSuffix,
+      toolSuffix: TOOL_SUFFIX,
       prefix: SKILLS_PREFIX,
       buildInstallPath: (fileName) =>
         `${ANTIGRAVITY_DIRECTORY}skills/${SKILLS_PREFIX}${skillName(fileName)}/SKILL.md`,

@@ -1,10 +1,7 @@
 import { join } from "node:path";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
@@ -62,10 +59,8 @@ export const codex = defineAiTool({
   configOutputPaths: { "config.toml": ".codex/config.toml" },
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
-  capabilities: ({ directory, toolSuffix, installUnder }) => ({
-    agents: new AgentsCapability({
-      directory,
-      toolSuffix,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "toml",
       frontmatter: codexAgentFrontmatter,
       serialize: codexAgentToml,
@@ -75,16 +70,12 @@ export const codex = defineAiTool({
       buildInstallPath: buildCodexSkillFilePath,
       convertFrontmatter: stripCodexSkillFrontmatter,
     }),
-    commands: new CommandsCapability({
-      directory,
-      toolSuffix,
+    commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("rules/"),
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => fm,
     }),
     mcp: new McpCapability({

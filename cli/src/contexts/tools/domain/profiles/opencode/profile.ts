@@ -1,12 +1,8 @@
 import { join } from "node:path";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP, CONFIG_OPENCODE } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -36,30 +32,22 @@ export const opencode = defineAiTool({
   pluginRuntimeFiles: { [OPENCODE_HOOKS.bridgeRuntime.asset]: OPENCODE_HOOKS.bridgeRuntime.path },
   buildContracts: { flat: buildOpencodeFlatContract },
 
-  capabilities: ({ directory, toolSuffix, installUnder }) => ({
-    agents: new AgentsCapability({
-      directory,
-      toolSuffix,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "markdown",
       frontmatter: opencodeAgentFrontmatter,
     }),
-    skills: new SkillsCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("skills/"),
+    skills: bound.skills({
+      buildInstallPath: bound.installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
-    commands: new CommandsCapability({
-      directory,
-      toolSuffix,
+    commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) =>
         convertCommandFrontmatterNoHint(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("rules/"),
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => {
         if (fm.alwaysApply === false && fm.description !== undefined) {
           return { description: fm.description };

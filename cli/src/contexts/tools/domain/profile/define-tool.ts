@@ -6,8 +6,11 @@ import {
   IDE_TOOL_IDS,
   type IdeToolId,
 } from "../../../../kernel/tool.js";
+import { AgentsCapability } from "../capabilities/agents-capability.js";
+import { CommandsCapability } from "../capabilities/commands-capability.js";
+import { RulesCapability } from "../capabilities/rules-capability.js";
+import { SkillsCapability } from "../capabilities/skills-capability.js";
 import type { AiTool, IdeToolConfig } from "../contracts.js";
-import { stripToolSuffix } from "../formats/command.js";
 import {
   isProfileSectionKey,
   type ProfileSection,
@@ -22,12 +25,18 @@ export declare class ProfileBrand {
   private readonly profileBrand: true;
 }
 
-/** The directory and suffix a profile states once, handed to its sections. */
+type Unbound<P> = Omit<P, "directory" | "toolSuffix">;
+type ParamsOf<T extends new (params: never) => unknown> = ConstructorParameters<T>[0];
+
+/** The directory and suffix a profile states once. Its section builders carry both, so a
+ * profile never repeats them. */
 export interface BoundTool {
-  readonly directory: string;
-  readonly toolSuffix: string;
   /** Where a built file lands: `<directory><subdirectory><name without the tool suffix>`. */
   installUnder(subdirectory: string): (fileName: string) => string;
+  agents(params: Unbound<ParamsOf<typeof AgentsCapability>>): AgentsCapability;
+  skills(params: Unbound<ParamsOf<typeof SkillsCapability>>): SkillsCapability;
+  commands(params: Unbound<ParamsOf<typeof CommandsCapability>>): CommandsCapability;
+  rules(params: Unbound<ParamsOf<typeof RulesCapability>>): RulesCapability;
 }
 
 type AiToolFields = Omit<AiTool<ProfileSections>, "kind" | "toolId" | "capabilities" | "section">;
@@ -69,12 +78,15 @@ function refuseUnknownSections(toolId: string, sections: ProfileSections): void 
   }
 }
 
-function bind(directory: string, toolSuffix: string): BoundTool {
+function bind(directory: string, suffix: ToolSuffix): BoundTool {
+  const toolSuffix = suffix.value;
   return {
-    directory,
-    toolSuffix,
     installUnder: (subdirectory) => (fileName) =>
-      `${directory}${subdirectory}${stripToolSuffix(toolSuffix, fileName)}`,
+      `${directory}${subdirectory}${suffix.strip(fileName)}`,
+    agents: (params) => new AgentsCapability({ directory, toolSuffix, ...params }),
+    skills: (params) => new SkillsCapability({ directory, toolSuffix, ...params }),
+    commands: (params) => new CommandsCapability({ directory, toolSuffix, ...params }),
+    rules: (params) => new RulesCapability({ directory, toolSuffix, ...params }),
   };
 }
 
@@ -108,7 +120,7 @@ export function defineAiTool<C extends ProfileSections>(
   const { toolId: id, capabilities: declare, ...fields } = spec;
   const toolId = aiToolId(id);
   refuseDirectory(toolId, spec.directory);
-  new ToolSuffix(spec.toolSuffix);
+  const suffix = new ToolSuffix(spec.toolSuffix);
   const contracts = spec.buildContracts;
   if (contracts.marketplace === undefined && contracts.flat === undefined) {
     throw new InvalidToolProfileError(
@@ -117,7 +129,7 @@ export function defineAiTool<C extends ProfileSections>(
       "an AI tool declares a marketplace or a flat build contract."
     );
   }
-  const capabilities = declare(bind(spec.directory, spec.toolSuffix));
+  const capabilities = declare(bind(spec.directory, suffix));
   refuseUnknownSections(toolId, capabilities);
   const profile = {
     ...fields,

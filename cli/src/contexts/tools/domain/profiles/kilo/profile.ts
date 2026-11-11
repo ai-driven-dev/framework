@@ -1,11 +1,7 @@
 import { join } from "node:path";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { flatGlobalFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -31,30 +27,22 @@ export const kilo = defineAiTool({
   configOutputPaths: { "kilo.json": ".kilo/kilo.jsonc" },
   buildContracts: { flat: buildKiloFlatContract },
 
-  capabilities: ({ directory, toolSuffix, installUnder }) => ({
-    agents: new AgentsCapability({
-      directory,
-      toolSuffix,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "markdown",
       frontmatter: kiloAgentFrontmatter,
     }),
-    skills: new SkillsCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("skills/"),
+    skills: bound.skills({
+      buildInstallPath: bound.installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
-    commands: new CommandsCapability({
-      directory,
-      toolSuffix,
+    commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(KILO_DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) =>
         convertCommandFrontmatterNoHint(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("rules/"),
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) =>
         fm.alwaysApply === false && fm.description !== undefined
           ? { description: fm.description }

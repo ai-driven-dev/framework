@@ -1,12 +1,8 @@
 import { join } from "node:path";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import { convertCommandFrontmatter, stripToolSuffix } from "../../formats/command.js";
+import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
@@ -35,22 +31,16 @@ export const claude = defineAiTool({
   configOutputPaths: { "settings.json": ".claude/settings.json" },
   buildContracts: { marketplace: buildClaudeContract, flat: buildClaudeFlatContract },
 
-  capabilities: ({ directory, toolSuffix, installUnder }) => ({
-    agents: new AgentsCapability({
-      directory,
-      toolSuffix,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "markdown",
       frontmatter: claudeAgentFrontmatter,
     }),
-    skills: new SkillsCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("skills/"),
+    skills: bound.skills({
+      buildInstallPath: bound.installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
-    commands: new CommandsCapability({
-      directory,
-      toolSuffix,
+    commands: bound.commands({
       buildInstallPath: (fileName) => {
         const slashIdx = fileName.indexOf("/");
         if (slashIdx !== -1) {
@@ -59,14 +49,12 @@ export const claude = defineAiTool({
           const phase = phaseDir.match(/^(\d+)/)?.[1];
           if (phase) return `${commandsDir(phase)}${rest}`;
         }
-        return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
+        return bound.installUnder("commands/")(fileName);
       },
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("rules/"),
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => {
         if ("paths" in fm) {
           const paths = fm.paths;

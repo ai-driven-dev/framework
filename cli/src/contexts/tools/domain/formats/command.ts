@@ -1,13 +1,5 @@
 export type UserFileSection = "agents" | "commands" | "rules" | "skills";
 
-export function stripToolSuffix(suffix: string, fileName: string): string {
-  const basename = fileName.split("/").at(-1) ?? fileName;
-  if (!basename.endsWith(suffix)) return fileName;
-  const dir = fileName.slice(0, fileName.length - basename.length);
-  const stripped = `${basename.slice(0, -suffix.length)}.md`;
-  return `${dir}${stripped}`;
-}
-
 function buildCommandName(fm: Record<string, unknown>, relativeFileName: string): string {
   const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
   const baseName = String(fm.name ?? "");

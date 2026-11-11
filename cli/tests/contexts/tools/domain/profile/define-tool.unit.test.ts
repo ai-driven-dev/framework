@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { CommandsCapability } from "../../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/contracts.js";
 import {
@@ -44,20 +43,22 @@ function refusalOf(build: () => unknown): InvalidToolProfileError {
 }
 
 describe("defineAiTool", () => {
-  it("hands every section the directory, the suffix and a path builder", () => {
+  it("builds a section with the directory and the suffix the profile stated once", () => {
     const tool = defineAiTool({
       ...aiSpec,
-      capabilities: ({ directory, toolSuffix, installUnder }) => ({
-        commands: new CommandsCapability({
-          directory,
-          toolSuffix,
-          buildInstallPath: installUnder("commands/"),
+      capabilities: (bound) => ({
+        commands: bound.commands({
+          buildInstallPath: bound.installUnder("commands/"),
           convertFrontmatter: (frontmatter) => frontmatter,
         }),
       }),
     });
 
     expect(tool.section("commands").buildInstallPath("run.claude.md")).toBe(".x/commands/run.md");
+    expect(tool.section("commands").params).toMatchObject({
+      directory: ".x/",
+      toolSuffix: ".claude.md",
+    });
   });
 
   it("answers a declared section, and null for one it does not declare", () => {

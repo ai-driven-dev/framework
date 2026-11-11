@@ -1,16 +1,8 @@
 import { join } from "node:path";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import {
-  buildAiddCommandFilePath,
-  convertCommandFrontmatter,
-  stripToolSuffix,
-} from "../../formats/command.js";
+import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
@@ -39,32 +31,26 @@ export const cursor = defineAiTool({
   configOutputPaths: { "settings.json": ".cursor/settings.json" },
   buildContracts: { marketplace: buildCursorContract, flat: buildCursorFlatContract },
 
-  capabilities: ({ directory, toolSuffix, installUnder }) => ({
-    agents: new AgentsCapability({
-      directory,
-      toolSuffix,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "markdown",
       frontmatter: cursorAgentFrontmatter,
       // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
       quote: "double",
     }),
-    skills: new SkillsCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: installUnder("skills/"),
+    skills: bound.skills({
+      buildInstallPath: bound.installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
-    commands: new CommandsCapability({
-      directory,
-      toolSuffix,
+    commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory,
-      toolSuffix,
-      buildInstallPath: (fileName) =>
-        `${DIRECTORY}rules/${toMdc(stripToolSuffix(TOOL_SUFFIX, fileName))}`,
+    rules: bound.rules({
+      buildInstallPath: (fileName) => {
+        const stripped = bound.installUnder("rules/")(fileName);
+        return toMdc(stripped);
+      },
       convertFrontmatter: (fm) => {
         const { paths, globs, description } = fm;
         const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
