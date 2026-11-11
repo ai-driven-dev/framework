@@ -25,9 +25,23 @@
 
 | Goal | Run |
 | --- | --- |
-| Give the AI a memory of the project | `/aidd-context:02-project-memory setup` |
+| Give the AI a memory of the project, or refresh it | `/aidd-context:02-project-memory` |
 
-What it creates: [Concepts](CONCEPTS.md#project-memory).
+| Case | What happens |
+| --- | --- |
+| No bank yet | sets one up: shows its plan, writes once you answer |
+| A bank exists | reviews every line against the code, shows the changes, writes only what you approve |
+| You answer no | nothing is written, no tool is wired |
+| Files every project gets | `project-brief.md`, `architecture.md`, `codebase-map.md`, `coding-assertions.md`, `testing.md`, `vcs.md`, `ecosystem.md` |
+| Other files | one per capability the scan finds, such as `api.md` or `database.md` |
+| `aidd_docs/README.md` | written when absent: what the AI knows and produces |
+| Tools | each tool you tick gets the memory block in its context file; a refresh shows the wired ones ticked, and ticking another wires it |
+| A file in the wrong place | offered a move to the bank root |
+| A file under an older name, such as a separate design or infrastructure file | kept, and reviewed as its capability's file |
+| A file you added yourself | left alone |
+| Questions you leave unanswered | dropped: nothing is left for the team to fill in |
+| Known limit | with a small model, a large bank may not get a full line-by-line review: use a medium model |
+| More | [Concepts](CONCEPTS.md#project-memory) |
 
 ## 3. Harness engineering
 
@@ -288,8 +302,7 @@ flowchart TD
 
 | Goal | Run |
 | --- | --- |
-| Refresh the project memory | `/aidd-context:02-project-memory refresh` |
-| Wire the memory into another tool | `/aidd-context:02-project-memory rewire` |
+| Refresh the project memory: see [Memory](#2-memory) | `/aidd-context:02-project-memory` |
 | Update the plugins | [Install guide](INSTALL.md#update) |
 
 Every skill is described in the [catalog](CATALOG.md).

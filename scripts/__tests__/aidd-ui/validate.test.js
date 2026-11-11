@@ -1105,3 +1105,92 @@ describe("aidd-ui validator entries", () => {
     });
   });
 });
+
+// Every host reaches the engine through its own adapter, so each is dropped in as the plugin's
+// lib/host.cjs and fed that host's recorded payload shape (fixtures/hook-payloads), with the same
+// colour literal added to a design-system project's code.
+describe("aidd-ui on every host adapter", () => {
+  const RUNTIME = path.resolve(__dirname, "../../../cli/assets/hooks-runtime");
+  const PAYLOADS = path.resolve(__dirname, "../fixtures/hook-payloads");
+  const FILE = "src/ui/Button.tsx";
+  const LITERAL = 'const style = "color: #ff0000";';
+  const FINDING = `${FILE}:4 C4 `;
+  const sample = (name, pick = () => true) => JSON.parse(fs.readFileSync(path.join(PAYLOADS, `${name}.json`), "utf8")).samples.map((s) => s.payload).find(pick);
+  const patch = `*** Begin Patch\n*** Update File: ${FILE}\n@@\n+${LITERAL}\n*** End Patch`;
+
+  // Per host: the adapter asset, the session's start and stop, and the write as that host sends it.
+  // `holds` is whether Stop holds the turn on that write: a whole-file write that does not say what it replaced holds nothing.
+  const HOSTS = [
+    {
+      name: "claude", adapter: "host-claude.cjs", holds: true,
+      start: () => ({ ...sample("claude-SessionStart"), cwd: tmp, session_id: sid }),
+      write: (before, after) => ({ ...sample("claude-PostToolUse", (p) => p.tool_name === "Write"), cwd: tmp, session_id: sid, tool_input: { file_path: path.join(tmp, FILE), content: after }, tool_response: { type: "update", originalFile: before } }),
+      stop: () => ({ ...sample("claude-Stop"), cwd: tmp, session_id: sid, stop_hook_active: false }),
+    },
+    {
+      name: "cursor", adapter: "host-cursor.cjs", holds: false,
+      start: () => ({ ...sample("cursor-sessionStart"), session_id: sid, conversation_id: sid, workspace_roots: [tmp] }),
+      write: (_before, after) => ({ ...sample("cursor-postToolUse", (p) => p.tool_name === "Write"), session_id: sid, conversation_id: sid, workspace_roots: [tmp], tool_input: { file_path: path.join(tmp, FILE), content: after } }),
+      stop: () => ({ ...sample("cursor-stop"), session_id: sid, conversation_id: sid, workspace_roots: [tmp] }),
+    },
+    {
+      name: "codex", adapter: "host-codex.cjs", holds: true,
+      start: () => ({ ...sample("codex-SessionStart"), cwd: tmp, session_id: sid }),
+      write: () => ({ ...sample("codex-PostToolUse", (p) => p.tool_name === "apply_patch"), cwd: tmp, session_id: sid, tool_input: { command: patch } }),
+      stop: () => ({ ...sample("codex-Stop"), cwd: tmp, session_id: sid, stop_hook_active: false }),
+    },
+    {
+      name: "copilot", adapter: "host-copilot.cjs", holds: true,
+      start: () => ({ ...sample("copilot-SessionStart"), cwd: tmp, session_id: sid }),
+      write: () => ({ ...sample("copilot-PostToolUse", (p) => p.tool_name === "Edit"), cwd: tmp, session_id: sid, tool_input: `${patch}\n` }),
+      stop: () => ({ ...sample("copilot-Stop"), cwd: tmp, session_id: sid, stop_hook_active: false }),
+    },
+    // OpenCode and Kilo send no stdin: their generated bridge builds this payload from the plugin hook's arguments.
+    ...["opencode", "kilo"].map((name) => ({
+      name, adapter: "host-bridge.cjs", holds: true,
+      start: () => ({ hook_event_name: "SessionStart", session_id: sid, cwd: tmp }),
+      write: () => ({ hook_event_name: "PostToolUse", session_id: sid, cwd: tmp, tool_name: "apply_patch", tool_input: { patchText: patch } }),
+      stop: () => ({ hook_event_name: "Stop", session_id: sid, cwd: tmp }),
+    })),
+  ];
+
+  for (const host of HOSTS) {
+    describe(host.name, () => {
+      let hooks;
+      /** The plugin's hooks with this host's adapter as lib/host.cjs, run on one payload. */
+      const run = (payload) => {
+        const result = spawnSync(process.execPath, [path.join(hooks, "aidd-ui.cjs"), "hook"], { input: JSON.stringify(payload), encoding: "utf8", cwd: tmp });
+        return { code: result.status, out: result.stdout, err: result.stderr };
+      };
+
+      beforeEach(() => {
+        hooks = path.join(tmp, "..", `${path.basename(tmp)}-hooks`);
+        fs.cpSync(HOOKS, hooks, { recursive: true });
+        fs.copyFileSync(path.join(RUNTIME, host.adapter), path.join(hooks, "lib", "host.cjs"));
+      });
+
+      afterEach(() => {
+        fs.rmSync(hooks, { recursive: true, force: true });
+      });
+
+      it("names the colour literal a write added", () => {
+        run(host.start());
+        const before = fs.readFileSync(path.join(tmp, FILE), "utf8");
+        fs.appendFileSync(path.join(tmp, FILE), `${LITERAL}\n`);
+        const answered = run(host.write(before, fs.readFileSync(path.join(tmp, FILE), "utf8")));
+        assert.equal(answered.err, "");
+        assert.ok(answered.out.includes(FINDING), answered.out);
+      });
+
+      it(host.holds ? "holds the turn on that literal at Stop" : "leaves the turn alone at Stop, the write not saying what it replaced", () => {
+        run(host.start());
+        const before = fs.readFileSync(path.join(tmp, FILE), "utf8");
+        fs.appendFileSync(path.join(tmp, FILE), `${LITERAL}\n`);
+        run(host.write(before, fs.readFileSync(path.join(tmp, FILE), "utf8")));
+        const stopped = run(host.stop());
+        if (host.holds) assert.ok(stopped.out.includes(FINDING), stopped.out);
+        else assert.equal(stopped.out, "");
+      });
+    });
+  }
+});

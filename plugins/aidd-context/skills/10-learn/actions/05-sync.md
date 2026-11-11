@@ -13,7 +13,7 @@ Each memory block lists the current memory files, and the memory index is refres
 ## Process
 
 1. **Resolve.** Resolve hook arguments with [sync arguments](../references/sync-arguments.md).
-2. **Run.** Find and run `update_memory.js <args>`.
+2. **Run.** Find and run `memory.cjs sync <args>`.
 3. **Stop.** Stop on failure and print the error.
 4. **Review.** Apply [review protocol](../references/review-protocol.md) to the updated context files.
 5. **Report.** Report the updated files and the review verdict.

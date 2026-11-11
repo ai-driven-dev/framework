@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/00-init`](#skills00-init)
   - [`skills/01-usage`](#skills01-usage)
@@ -24,7 +25,29 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
+| [catch-up.cjs](hooks/catch-up.cjs) |
 | [hooks.json](hooks/hooks.json) |
+| [prompt-gate.cjs](hooks/prompt-gate.cjs) |
+| [session-start.cjs](hooks/session-start.cjs) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [aidd.cjs](hooks/lib/aidd.cjs) |
+| [binding.cjs](hooks/lib/binding.cjs) |
+| [claude-only.cjs](hooks/lib/claude-only.cjs) |
+| [codex-session-file.cjs](hooks/lib/codex-session-file.cjs) |
+| [consent.cjs](hooks/lib/consent.cjs) |
+| [context.cjs](hooks/lib/context.cjs) |
+| [declaration.cjs](hooks/lib/declaration.cjs) |
+| [git.cjs](hooks/lib/git.cjs) |
+| [hook-io.cjs](hooks/lib/hook-io.cjs) |
+| [jsonl.cjs](hooks/lib/jsonl.cjs) |
+| [lookup.cjs](hooks/lib/lookup.cjs) |
+| [presence.cjs](hooks/lib/presence.cjs) |
+| [telemetry-dir.cjs](hooks/lib/telemetry-dir.cjs) |
+| [tool.cjs](hooks/lib/tool.cjs) |
 
 ### `skills`
 

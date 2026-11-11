@@ -11,6 +11,7 @@ A free-form request to add a hook.
 In-context decisions, nothing written yet:
 
 - the lifecycle moment the hook targets
+- the intent: inform, block before a tool, require a fix, keep the turn going, or side effect only, per tool
 - the action it runs, and whether it needs a backing script
 - the matcher, or none for every occurrence
 - the scope to install into
@@ -23,15 +24,17 @@ In-context decisions, nothing written yet:
 2. **Tools.** Detect the installed tools and confirm which to target ([tool-paths.md](../references/tool-paths.md)). Skip a tool that does not support hooks, with its reason.
 3. **Moment.** Pick the narrowest lifecycle moment that fits ([hook-authoring.md](../references/hook-authoring.md)).
    - Confirm each target tool exposes that moment ([tool-paths.md](../references/tool-paths.md)). Skip a tool that lacks it, with its reason.
-4. **Action.** Decide what runs at the moment, and whether it needs a backing script ([hook-authoring.md](../references/hook-authoring.md)).
-5. **Matcher.** Set a matcher only when the moment must be filtered. Prefer a precise filter ([hook-authoring.md](../references/hook-authoring.md)).
-6. **Scope.** Ask the user where to install: a single agent or skill component, the shared project, the project local-only, or the user's global config. Offer only the scopes the target tools support ([tool-paths.md](../references/tool-paths.md)).
+4. **Intent.** Ask what the hook should do when it fires, offering only what the moment and each confirmed tool support ([hook-authoring.md](../references/hook-authoring.md), [tool-paths.md](../references/tool-paths.md)): inform the model, block before a tool runs, require a fix after a write, keep the turn going at Stop, or side effect only. Where a tool cannot do it, say so and what it does instead. The user's answer decides.
+5. **Action.** Decide what runs at the moment, and whether it needs a backing script ([hook-authoring.md](../references/hook-authoring.md)).
+6. **Matcher.** Set a matcher only when the moment must be filtered. Prefer a precise filter ([hook-authoring.md](../references/hook-authoring.md)).
+7. **Scope.** Ask the user where to install: a single agent or skill component, the shared project, the project local-only, or the user's global config. Offer only the scopes the target tools support ([tool-paths.md](../references/tool-paths.md)).
    - For a component scope, name the exact skill or agent file, and confirm the moment fits a component-scoped hook ([tool-paths.md](../references/tool-paths.md)).
    - State the resolved file and confirm. Never pick silently.
-7. **Write mode.** Host project, or a plugin source. For a plugin source, name the plugin.
+8. **Write mode.** Host project, or a plugin source. For a plugin source, name the plugin.
 
 ## Test
 
+- The intent is asked, never assumed.
 - Every decision is stated and confirmed in writing.
 - The resolved scope and file are named before any write.
 - Each tool was confirmed to support the moment, or skipped with its reason.

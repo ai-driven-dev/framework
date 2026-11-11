@@ -20,19 +20,14 @@ import {
   convertCommandFrontmatterNoHint,
   stripToolSuffix,
 } from "../../formats/command.js";
+import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
 import { buildKiloFlatContract } from "./build.js";
+import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import {
-  KILO_DIRECTORY,
-  KILO_HOOKS_DIR,
-  KILO_PLUGIN_DIR,
-  KILO_PLUGIN_ENTRY_BASENAME,
-  makeKiloHooksBridgePath,
-  resolveKiloConfigPath,
-} from "./kilo-paths.js";
+import { KILO_DIRECTORY, resolveKiloConfigPath } from "./kilo-paths.js";
 
 const TOOL_SUFFIX = ".kilo.md";
 
@@ -94,14 +89,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
         dir: (homedir) => join(homedir, ".config", "kilo"),
         map: flatGlobalFilePath(KILO_DIRECTORY),
       },
-      acceptsHooks: true,
-      flatHooksDir: KILO_HOOKS_DIR,
-      flatHooksLoaderEntry: { dir: KILO_PLUGIN_DIR, baseName: KILO_PLUGIN_ENTRY_BASENAME },
-      flatHooksBridge: {
-        generate: generateKiloHooksBridge,
-        path: makeKiloHooksBridgePath,
-        skipIfSourceHas: KILO_PLUGIN_ENTRY_BASENAME,
-      },
+      ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
   },
 

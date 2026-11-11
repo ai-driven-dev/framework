@@ -29,7 +29,7 @@ function pluginFile(relativePath: string): string {
   return readFileSync(join(REPOSITORY_ROOT, "plugins", "aidd-context", relativePath), "utf8");
 }
 
-const ARTEFACTS = ["hooks/update_memory.js"] as const;
+const ARTEFACTS = ["hooks/memory.cjs"] as const;
 
 describe("a plugin's executable files survive being installed", () => {
   for (const relativePath of ARTEFACTS) {
@@ -52,7 +52,7 @@ describe("a plugin's executable files survive being installed", () => {
  * actually put it there, unchanged". The path is the fixture; the content is real bytes. */
 describe("installing the plugin carries a skill's own script, on every tool", () => {
   const SCRIPT = "skills/02-project-memory/scripts/example.cjs";
-  const SCRIPT_CONTENT = pluginFile("hooks/update_memory.js");
+  const SCRIPT_CONTENT = pluginFile("hooks/memory.cjs");
   const translator = new PluginContentTranslator({ hash: () => new FileHash("a".repeat(32)) });
 
   function distributionOf(): PluginDistribution {
@@ -65,7 +65,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
     ];
     const hooks = [
       { relativePath: "hooks/hooks.json", content: pluginFile("hooks/hooks.json") },
-      { relativePath: "hooks/update_memory.js", content: pluginFile("hooks/update_memory.js") },
+      { relativePath: "hooks/memory.cjs", content: pluginFile("hooks/memory.cjs") },
     ];
     return new PluginDistribution({
       manifest: { name: "aidd-context", version: "0.1.0" },

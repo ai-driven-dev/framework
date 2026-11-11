@@ -38,8 +38,14 @@ aidd_docs/
 | `memory/internal/` | When a task needs it |
 | `memory/external/` | When you ask |
 
-- Every project gets a brief, the architecture, a codebase map, coding assertions, testing and version control.
-- Other files appear when needed: backlog, deployment, API, database.
+- Every project gets a brief, the architecture, a codebase map, coding assertions, testing, version control and its outside services.
+- Other files appear when found in the project: backlog, deployment, api, cli, package, auth, database, data, messaging, realtime, ui, mobile, desktop.
+- A file you already keep in `memory/` is yours: the skill never rewrites or removes it.
+
+### How it stays correct
+
+- At each write, a hook checks the format of the file written and tells the AI what to fix. It checks lines, not sections, and never blocks a write.
+- A refresh runs the same rules over the whole bank, and a model judges only the content.
 
 ### How it reaches your AI
 
