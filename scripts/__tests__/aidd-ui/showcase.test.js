@@ -101,6 +101,30 @@ describe("aidd-ui showcase", () => {
     });
   });
 
+  describe("the frame of a platform", () => {
+    const withPlatforms = (platforms) => put(tmp, `${UI}/system.md`, read(`${UI}/system.md`).replace(/platforms: \[[^\]]*\]/, `platforms: ${platforms}`));
+    const platformsOf = (html) => [...html.matchAll(/<iframe [^>]*>/g)].map((match) => match[0].match(/data-platform="([^"]*)"/)?.[1]);
+
+    it("marks each frame with the first platform the system declares", () => {
+      withPlatforms("[mobile]");
+      assert.deepEqual(platformsOf(pagesOf()["home.html"]), ["mobile", "mobile", "mobile", "mobile"]);
+      withPlatforms("[web, mobile]");
+      assert.deepEqual(platformsOf(pagesOf()["home.html"]), ["web", "web", "web", "web"]);
+    });
+
+    it("marks no frame when the system declares no platform", () => {
+      withPlatforms("[]");
+      assert.deepEqual(platformsOf(pagesOf()["home.html"]), [undefined, undefined, undefined, undefined]);
+    });
+
+    it("gives a mobile frame a phone's width and leaves the others fluid", () => {
+      const html = pagesOf()["home.html"];
+      assert.match(html, /\.render iframe\[data-platform="mobile"\] \{ flex: 0 0 390px; inline-size: 390px; \}/);
+      assert.doesNotMatch(html, /\[data-platform="web"\] \{/);
+      assert.ok(!html.includes("height: 320px"));
+    });
+  });
+
   describe("the system font floor", () => {
     const FLOOR = ":where(html) { font-family: system-ui, sans-serif; }";
 
@@ -330,11 +354,14 @@ describe("aidd-ui showcase", () => {
       assert.equal(pagesOf()["index.html"], pagesOf()["index.html"]);
     });
 
-    it("carries a script that compiles, on the home page and on a record's page", () => {
-      for (const name of ["index.html", "button.html"]) {
+    it("carries a script that compiles, on the home page, on the system page and on a record's page", () => {
+      for (const name of ["index.html", "system.html", "button.html"]) {
         const script = pagesOf()[name].match(/<script>([\s\S]*)<\/script>/)[1];
         assert.doesNotThrow(() => new Function(script), name);
       }
+      const scriptOf = (name) => pagesOf()[name].match(/<script>([\s\S]*)<\/script>/)[1];
+      assert.ok(!scriptOf("system.html").includes('document.querySelector(".review")'));
+      assert.ok(scriptOf("button.html").includes('document.querySelector(".review")'));
       assert.match(pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1], /verdict: "ok"/);
     });
   });

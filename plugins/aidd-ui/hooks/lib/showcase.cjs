@@ -3,7 +3,7 @@
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
 const { list, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS } = require("./model.cjs");
+const { placed, fm, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS, SYSTEM_ID } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
@@ -130,7 +130,8 @@ nav a[aria-current="page"] { font-weight: 600; color: var(--text); }
 .state[data-current="revise"] { border-color: var(--revise-dot); }
 .pair { display: flex; gap: 12px; flex-wrap: wrap; }
 .render { display: flex; gap: 12px; flex: 1 1 24rem; min-width: 0; }
-.render iframe { flex: 1; min-width: 0; width: 100%; height: 320px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.render iframe { flex: 1; min-width: 0; width: 100%; min-block-size: 120px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.render iframe[data-platform="mobile"] { flex: 0 0 390px; inline-size: 390px; }
 .capture { flex: 1 1 24rem; margin: 0; min-width: 0; }
 .capture img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
 .capture.missing { display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line); border-radius: 6px; color: var(--muted); padding: 12px; }
@@ -163,7 +164,8 @@ function deliver(button, content) {
 }
 `;
 
-const SCRIPT = `${DELIVER}
+/** The script of a page that shows frames: the theme and platform dressing, the twin beside, the height of the content. */
+const FRAMES = `
 const frames = () => [...document.querySelectorAll(".render iframe")];
 const combination = (name) => {
   const pick = {};
@@ -175,6 +177,12 @@ function dress(frame) {
   if (!root) return;
   const pick = combination(frame.dataset.combo);
   for (const axis in pick) root.dataset[axis] = pick[axis];
+  if (pick.platform) frame.dataset.platform = pick.platform;
+  fit(frame);
+}
+function fit(frame) {
+  frame.style.height = "";
+  frame.style.height = frame.contentDocument.documentElement.scrollHeight + "px";
 }
 function watch(frame) {
   frame.addEventListener("load", () => dress(frame));
@@ -199,6 +207,10 @@ if (sides) sides.addEventListener("click", () => {
   }
   frames().forEach(dress);
 });
+`;
+
+/** The script of a page that hands a review back: a verdict by state, then one copy. */
+const REVIEW = `${DELIVER}
 const review = document.querySelector(".review");
 const copy = document.getElementById("copy");
 const note = document.getElementById("note");
@@ -327,7 +339,7 @@ function toolbarOf(system, labels) {
 }
 
 /** One state of a record: its render, the capture beside it for a coded screen, and the two choices. */
-function stateOf({ record, state, verdict, render, tokens, captures, labels }) {
+function stateOf({ record, state, verdict, render, tokens, captures, labels, platform }) {
   const { id, version } = fm(record);
   const file = `${record.folder}/${id}.${state}@${version}.png`;
   const capture = !isCoded(record) ? "" : captures.has(file) ? `<figure class="capture" data-file="${escaped(file)}"><img src="../${escaped(file)}" alt="${escaped(filled(labels.capture, { state }))}"></figure>` : `<div class="capture missing" data-file="${escaped(file)}">${escaped(filled(labels.noCapture, { path: file }))}</div>`;
@@ -336,12 +348,15 @@ function stateOf({ record, state, verdict, render, tokens, captures, labels }) {
     `<h3>${escaped(state)}</h3>`,
     verdict.outdated === null ? "" : `<p class="outdated" data-version="${escaped(verdict.outdated)}">${escaped(filled(labels.outdated, { version: verdict.outdated }))}</p>`,
     verdict.comment ? `<p class="said">${escaped(verdict.comment)}</p>` : "",
-    `<div class="pair"><div class="render"><iframe data-combo="a" title="${escaped(`${id} ${state}`)}" srcdoc="${escaped(stateDocument(render, tokens, state))}"></iframe></div>${capture}</div>`,
+    `<div class="pair"><div class="render"><iframe data-combo="a"${platform} title="${escaped(`${id} ${state}`)}" srcdoc="${escaped(stateDocument(render, tokens, state))}"></iframe></div>${capture}</div>`,
     `<div class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></div>`,
     `<textarea class="comment" rows="2" hidden placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}"></textarea>`,
     "</article>",
   ].filter(Boolean).join("\n");
 }
+
+/** The `data-platform` attribute of a frame: the first platform the system declares, none without one. */
+const platformOf = (system) => (system && list(fm(system).platforms).length ? ` data-platform="${escaped(list(fm(system).platforms)[0])}"` : "");
 
 /** The review of a record: each state, the ones still to review first, and the one copy. */
 function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
@@ -353,7 +368,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
     `<section class="review" data-record="${escaped(fm(record).id)}" data-version="${escaped(String(fm(record).version))}">`,
     `<div class="bar-top"><h2>${labels.review}</h2><p class="count" data-ok="${ok}" data-total="${states.length}">${filled(labels.count, { ok, total: states.length })}</p><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button><span id="note" role="status"></span></div>`,
     toolbarOf(system, labels),
-    ...ordered.map(({ state, verdict }) => stateOf({ record, state, verdict, render, tokens, captures, labels })),
+    ...ordered.map(({ state, verdict }) => stateOf({ record, state, verdict, render, tokens, captures, labels, platform: platformOf(system) })),
     "</section>",
   ].join("\n");
 }
@@ -404,7 +419,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
       checksOf(problems, record, labels),
       specOf(project, record),
     ].filter(Boolean).join("\n");
-    pages[`${id}.html`] = pageOf(id, language, navigationOf(records, labels, id), body, reviewed ? SCRIPT : "");
+    pages[`${id}.html`] = pageOf(id, language, navigationOf(records, labels, id), body, reviewed ? FRAMES + REVIEW : id === SYSTEM_ID ? FRAMES : "");
   }
   return pages;
 }
