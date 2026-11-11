@@ -17,7 +17,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/capabilities/mcp-capability.ts",
     "src/contexts/tools/domain/mcp-launch-command.ts",
     "src/contexts/tools/domain/capabilities/settings-capability.ts",
-    "src/contexts/tools/domain/capabilities/hooks-capability.ts",
     "src/contexts/tools/domain/capabilities/config-refs.ts",
     "src/contexts/tools/domain/formats/opencode-mcp-merge.ts",
     // ports a caller wires a concrete adapter into, or whose type it must accept
@@ -103,14 +102,10 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // Measured with the composition root excluded: the adapter is wired from `runtime/wiring/`
   // alone, so it stays internal.
   telemetry: [
-    // the common record every tool's reader produces, and the fold that makes it countable once
+    // the common record every tool's reader produces
     "src/contexts/telemetry/domain/usage-record.ts",
-    "src/contexts/telemetry/domain/usage-fold.ts",
-    // where a transcript root is, and where a read of one stopped
+    // where a transcript root is
     "src/contexts/telemetry/domain/claude-projects-root.ts",
-    "src/contexts/telemetry/domain/transcript-position.ts",
-    // the port its callers hold, so they can be given an implementation
-    "src/contexts/telemetry/domain/ports/transcript-source.ts",
     // the operation another layer asks for, one per tool, and Claude's format it is given
     "src/contexts/telemetry/application/read-usage-use-case.ts",
     "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts",
@@ -225,6 +220,25 @@ function orphanContractFiles(
     .sort();
 }
 
+/**
+ * A public module exists for a reader outside its context; the composition root counts, since
+ * wiring an adapter or a port is what most of them are for. An entry nobody outside imports is
+ * a stale fence (the file moved or went private), and a fence nobody reads guards nothing.
+ */
+function staleEntries(
+  publicModules: Readonly<Record<string, readonly string[]>>,
+  importers: ReadonlyMap<string, ReadonlySet<string>>
+): string[] {
+  return Object.entries(publicModules)
+    .flatMap(([owner, entries]) =>
+      entries.filter(
+        (entry) =>
+          ![...(importers.get(entry) ?? [])].some((importer) => contextOf(importer) !== owner)
+      )
+    )
+    .sort();
+}
+
 describe("nothing imports a context's interior", () => {
   it("every cross-context import targets a declared public module", () => {
     const violations = reachesIntoInterior(sourceFiles(), importersByFile(), PUBLIC_MODULES);
@@ -241,6 +255,15 @@ describe("nothing imports a context's interior", () => {
       contextsOnDisk(sourceFiles()),
       "a context with no entry above is skipped entirely by the rule, not held by it"
     ).toEqual(declared);
+  });
+});
+
+describe("a public module is read from outside its context", () => {
+  it("every PUBLIC_MODULES entry has an importer outside its context", () => {
+    expect(
+      staleEntries(PUBLIC_MODULES, importersByFile()),
+      "a declared public module nobody outside imports: remove it from PUBLIC_MODULES"
+    ).toEqual([]);
   });
 });
 
@@ -285,6 +308,27 @@ describe("the guard itself", () => {
     expect(orphanContractFiles(files, importers)).toEqual([
       "src/contexts/acme/contract/orphan.ts",
       "src/contexts/acme/contract/wired.ts",
+    ]);
+  });
+
+  it("names a public module only its own context imports, and clears one read from outside", () => {
+    const importers = new Map([
+      ["src/contexts/acme/domain/stale.ts", new Set(["src/contexts/acme/application/use.ts"])],
+      ["src/contexts/acme/domain/wired.ts", new Set(["src/runtime/wiring/framework.ts"])],
+      ["src/contexts/acme/domain/shown.ts", new Set(["src/presentation/commands/x.ts"])],
+    ]);
+    const publicModules = {
+      acme: [
+        "src/contexts/acme/domain/stale.ts",
+        "src/contexts/acme/domain/gone.ts",
+        "src/contexts/acme/domain/wired.ts",
+        "src/contexts/acme/domain/shown.ts",
+      ],
+    };
+
+    expect(staleEntries(publicModules, importers)).toEqual([
+      "src/contexts/acme/domain/gone.ts",
+      "src/contexts/acme/domain/stale.ts",
     ]);
   });
 
