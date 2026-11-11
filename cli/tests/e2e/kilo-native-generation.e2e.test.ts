@@ -3,7 +3,7 @@ import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { KILO_BIN, KILO_SHELL } from "./helpers/kilo-cli.js";
+import { KILO_BIN, KILO_ENV, KILO_SHELL } from "./helpers/kilo-cli.js";
 import {
   type KiloChatRequest,
   type KiloChatTool,
@@ -143,6 +143,7 @@ describeNative("E2E: saved native generation in Kilo", () => {
       const xdg = join(fakeHome, ".xdg");
       const env = {
         ...process.env,
+        ...KILO_ENV,
         HOME: fakeHome,
         USERPROFILE: fakeHome,
         APPDATA: join(fakeHome, "AppData", "Roaming"),
@@ -272,6 +273,7 @@ describeNative("E2E: saved native generation in Kilo", () => {
       const xdg = join(tempDir, "xdg");
       const env = {
         ...process.env,
+        ...KILO_ENV,
         HOME: fakeHome,
         USERPROFILE: fakeHome,
         APPDATA: join(fakeHome, "AppData", "Roaming"),
@@ -425,6 +427,7 @@ describeNative("E2E: saved native generation in Kilo", () => {
       const xdg = join(tempDir, "xdg");
       const env = {
         ...process.env,
+        ...KILO_ENV,
         HOME: fakeHome,
         USERPROFILE: fakeHome,
         APPDATA: join(fakeHome, "AppData", "Roaming"),
@@ -702,6 +705,7 @@ describeNative("E2E: saved native generation in Kilo", () => {
       const xdg = join(tempDir, "xdg");
       const env = {
         ...process.env,
+        ...KILO_ENV,
         HOME: fakeHome,
         USERPROFILE: fakeHome,
         APPDATA: join(fakeHome, "AppData", "Roaming"),

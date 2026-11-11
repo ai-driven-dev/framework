@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
-import { KILO_BIN, KILO_SHELL } from "./helpers/kilo-cli.js";
+import { KILO_BIN, KILO_ENV, KILO_SHELL } from "./helpers/kilo-cli.js";
 import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js";
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
@@ -213,10 +213,12 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
         "LC_ALL",
         "TZ",
         "KILO_SERVER_PASSWORD",
+        "KILO_TREE_SITTER_WASM_DIR",
       ]);
       const env = Object.fromEntries(
         Object.entries(
           sandboxedEnv(fakeHome, {
+            ...KILO_ENV,
             XDG_CACHE_HOME: join(fakeHome, ".cache"),
             XDG_DATA_HOME: join(fakeHome, ".local", "share"),
             XDG_STATE_HOME: join(fakeHome, ".local", "state"),

@@ -1,39 +1,43 @@
 import { existsSync } from "node:fs";
-import { delimiter, join } from "node:path";
+import { homedir } from "node:os";
+import { delimiter, dirname, join, win32 } from "node:path";
 
-const KILO_PREFIX = join(
-  process.env.APPDATA ?? join(process.env.USERPROFILE ?? "", "AppData", "Roaming"),
-  "npm",
-  "node_modules",
-  "@kilocode",
-  "cli"
-);
+const WINDOWS_KILO_PACKAGES = [
+  "cli-windows-x64-baseline",
+  "cli-windows-x64",
+  "cli-windows-arm64",
+] as const;
 
-function resolveKiloBin(): string {
-  if (process.platform === "win32") {
-    return (
-      [
-        join(KILO_PREFIX, "node_modules", "@kilocode", "cli-windows-x64", "bin", "kilo.exe"),
-        join(
-          KILO_PREFIX,
-          "node_modules",
-          "@kilocode",
-          "cli-windows-x64-baseline",
-          "bin",
-          "kilo.exe"
-        ),
-        join(KILO_PREFIX, "node_modules", "@kilocode", "cli-windows-arm64", "bin", "kilo.exe"),
-      ].find((path) => existsSync(path)) ?? join(process.env.APPDATA ?? "", "npm", "kilo.cmd")
-    );
+export function resolveKiloBin(
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+  pathExists: (path: string) => boolean = existsSync
+): string {
+  if (platform === "win32") {
+    const path = win32;
+    const appData = env.APPDATA ?? path.join(env.USERPROFILE ?? homedir(), "AppData", "Roaming");
+    const globalModules = path.join(appData, "npm", "node_modules");
+    const cliModules = path.join(globalModules, "@kilocode", "cli", "node_modules");
+    const candidates = WINDOWS_KILO_PACKAGES.flatMap((name) => [
+      path.join(globalModules, "@kilocode", name, "bin", "kilo.exe"),
+      path.join(cliModules, "@kilocode", name, "bin", "kilo.exe"),
+    ]);
+    return candidates.find(pathExists) ?? path.join(appData, "npm", "kilo.cmd");
   }
 
-  for (const directory of (process.env.PATH ?? "").split(delimiter)) {
+  const pathDelimiter = platform === process.platform ? delimiter : ":";
+  for (const directory of (env.PATH ?? "").split(pathDelimiter)) {
     if (directory === "") continue;
     const candidate = join(directory, "kilo");
-    if (existsSync(candidate)) return candidate;
+    if (pathExists(candidate)) return candidate;
   }
   return "kilo";
 }
 
 export const KILO_BIN = resolveKiloBin();
 export const KILO_SHELL = KILO_BIN.endsWith(".cmd");
+const kiloTreeSitterDir = KILO_BIN.endsWith(".exe") ? join(dirname(KILO_BIN), "tree-sitter") : "";
+export const KILO_ENV: Record<string, string> =
+  kiloTreeSitterDir !== "" && existsSync(join(kiloTreeSitterDir, "tree-sitter.wasm"))
+    ? { KILO_TREE_SITTER_WASM_DIR: kiloTreeSitterDir }
+    : {};
