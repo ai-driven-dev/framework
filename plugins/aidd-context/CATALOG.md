@@ -136,6 +136,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [rule-discovery.md](skills/05-rule-generate/references/rule-discovery.md) | - |
 | `references` | [rule-publication.md](skills/05-rule-generate/references/rule-publication.md) | - |
+| `scripts` | [kilo-config.cjs](skills/05-rule-generate/scripts/kilo-config.cjs) | - |
 | `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
 | `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
 

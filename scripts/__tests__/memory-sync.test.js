@@ -169,6 +169,20 @@ test("antigravity refreshes AGENTS.md, the context file agy reads", () => {
   assert.match(result.content, /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
 });
 
+test("Kilo wires its shared AGENTS.md target without replacing user content and is repeatable", () => {
+  const root = sandbox({ "AGENTS.md": TEAM });
+  try {
+    assert.equal(sync(root, "--add", "kilo").status, 0);
+    const once = read(root, "AGENTS.md");
+    assert.ok(once.startsWith(TEAM), "user-authored bytes remain before the managed block");
+    assert.match(once, /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
+    assert.equal(sync(root, "kilo").status, 0);
+    assert.equal(read(root, "AGENTS.md"), once);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("a new-marker pair quoted in prose above the block does not hijack the splice", () => {
   const quote = `Upgrade note: the block now uses \`${OPEN}\` and \`${CLOSE}\`.`;
   const result = run({ context: `${quote}\n\n${OPEN}\n${CLOSE}\n` });

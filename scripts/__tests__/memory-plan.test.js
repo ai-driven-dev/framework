@@ -50,7 +50,7 @@ const PLAN = [
   "  Q1  Which gate runs before a push?",
   "",
   "Tools to wire",
-  "  [x] claude  [ ] codex  [ ] cursor  [ ] opencode  [ ] antigravity  [ ] copilot",
+  "  [x] claude  [ ] codex  [ ] cursor  [ ] opencode  [ ] kilo  [ ] antigravity  [ ] copilot",
   "",
   `Details: ${SHEET.replace("facts.md", "plan.md")}`,
   "",

@@ -12,6 +12,7 @@ For shared `.agents/` paths, resolve the host from declared tools or the AIDD ma
 | codex    | `.codex/`                                                                            | `AGENTS.md`                        |
 | cursor   | `.cursor/` or `.cursorrules`                                                         | `AGENTS.md`                        |
 | opencode | `.opencode/`                                                                         | `AGENTS.md`                        |
+| kilo     | `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | `AGENTS.md`                 |
 | antigravity | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json`                       | `AGENTS.md`                        |
 | copilot  | `.github/copilot-instructions.md` or `.github/{instructions,agents,skills,prompts}/` | `AGENTS.md`                        |
 
@@ -19,3 +20,5 @@ For shared `.agents/` paths, resolve the host from declared tools or the AIDD ma
 - No tool detected at all: the row reads `none yet`, uncrossed. The memory row's `❌` already carries the gap.
 - A used tool whose file lacks the block is not wired, and needs wiring.
 - Missing memory is a foundation status, not a tool row (see `zones.md`).
+
+Treat `.kilocode/` as legacy detection only; new Kilo artifacts use `.kilo/`. `AGENTS.md` and `opencode.json[c]` alone do not detect Kilo. Sources: [Kilo settings](https://kilo.ai/docs/getting-started/settings), [AGENTS.md](https://kilo.ai/docs/customize/agents-md), and [legacy fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md), verified 2026-09-25.
