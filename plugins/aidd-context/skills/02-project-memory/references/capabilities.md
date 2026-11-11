@@ -46,7 +46,7 @@
 | Case | Do |
 | --- | --- |
 | Which files | each file the sheet names plus every absent always file, minus a capability answered no, against [memory-rules](memory-rules.md) |
-| Absent file | fill its template with the sheet's lines, dropping an empty section, unless a misplaced file covers its capability |
+| Absent file | fill its template with the sheet's lines, dropping an empty section, unless the team keeps that file in `internal/` or `external/`: write into it there, create no second |
 | A capability whose Accepted names file exists | write into that file, create no second |
 | Existing file | apply the sheet's lines only |
 | A line answered no | skip it |

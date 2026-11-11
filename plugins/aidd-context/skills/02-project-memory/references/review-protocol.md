@@ -39,4 +39,5 @@
 | Any structure finding | taken from that run; judge none of your own |
 | A root file no row produces | the team's: keep it |
 | A root file in a row's Accepted names column | that row's file: offer nothing on it |
-| A file a row produces in `internal/` or a subfolder, or a folder under `memory/` other than `internal/` and `external/` | misplaced: report it as `move <path> to <path>` and move nothing |
+| A file a row produces in `internal/` or `external/` | the team's choice to read it on demand: keep it there |
+| A folder under `memory/` other than `internal/` and `external/` | no loading rule reaches it: report it as `move <path> to <path>` and move nothing |

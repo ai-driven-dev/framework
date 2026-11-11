@@ -161,13 +161,7 @@ function structureFindings(root) {
   const folders = new Set();
   for (const file of bankFiles(root)) {
     const parts = partsOf(file);
-    const name = parts[parts.length - 1];
-    const [top] = parts;
-    if (parts.length > 1 && !ON_DEMAND_DIRS.includes(top)) folders.add(top);
-    if (!name.endsWith(".md") || EXCLUDED_FILES.has(name)) continue;
-    if (parts.length > 1 && top !== "external" && ROW_FILES.includes(name)) {
-      found.push(warning(file, "placement", `${name} belongs at the bank's root`, `move it to ${MEMORY_DIR}/${name}`));
-    }
+    if (parts.length > 1 && !ON_DEMAND_DIRS.includes(parts[0])) folders.add(parts[0]);
   }
   for (const folder of [...folders].sort()) {
     const owner = `the ${DOCS_DIR}/ folder of the plugin that owns it`;
@@ -195,10 +189,11 @@ function missing(file, excerpt, fix) {
   return { file, rule: "missing", severity: ERROR, message: excerpt, excerpt, fix };
 }
 
-/** An accepted name counts as the file. */
+/** An accepted name counts as the file, and so does one the team keeps in an on-demand folder. */
 function absentAlways(root) {
-  const present = new Set(rootFiles(root));
-  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => present.has(`${MEMORY_DIR}/${held}`));
+  const present = new Set(bankFiles(root));
+  const places = (name) => [`${MEMORY_DIR}/${name}`, ...ON_DEMAND_DIRS.map((dir) => `${MEMORY_DIR}/${dir}/${name}`)];
+  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => places(held).some((place) => present.has(place)));
   return ALWAYS_WRITTEN.filter((name) => !holds(name));
 }
 

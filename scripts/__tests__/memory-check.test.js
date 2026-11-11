@@ -425,18 +425,29 @@ test("check: an always file under an accepted name of its row is not missing", (
   }
 });
 
-test("check: a row's file below the root and a team folder are warnings and exit 0", () => {
+// Where a file sits is the team's choice: the root loads every session, internal/ and external/ on demand.
+test("check: a row's file in internal/ is the team's choice, a folder outside every loading rule is a warning", () => {
   const root = fullBank({ "internal/auth.md": "# A\n", "kpi/q.md": "# K\n", "assets/diagram.png": "x" });
   try {
     const run = check(root);
     assert.equal(run.status, 0);
     assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
-      "aidd-context: 0 errors, 4 warnings",
-      "aidd_docs/memory/internal/auth.md placement warning auth.md belongs at the bank's root => move it to aidd_docs/memory/auth.md",
+      "aidd-context: 0 errors, 3 warnings",
       "aidd_docs/memory/assets/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/assets/ to aidd_docs/memory/internal/assets/, or to the aidd_docs/ folder of the plugin that owns it",
       "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
       "aidd_docs/memory load warning every session loads 21 words, markup included, from 7 files => move what a session rarely needs to internal/ or external/",
     ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check: an always-written file the team keeps in internal/ or external/ is present", () => {
+  const root = fullBank({ "internal/testing.md": "# T\n" });
+  try {
+    fs.rmSync(path.join(root, MEMORY, "testing.md"));
+    const run = check(root);
+    assert.doesNotMatch(run.stdout, /testing\.md/u, run.stdout);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
