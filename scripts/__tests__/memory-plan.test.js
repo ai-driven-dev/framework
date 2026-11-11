@@ -47,22 +47,11 @@ const PLAN = [
   "",
   "Changes since the last memory update (4b9499c, 10 seconds ago): 1 commit, 8 files",
   "",
-  "Will write",
-  "  1. testing.md   Run, Tools",
-  "",
-  "Will add",
-  "  2. codebase-map.md, Packages",
-  "     + `tools/performance`: the Lighthouse runner",
-  "",
-  "Will change",
-  '  3. architecture.md: "- TypeScript everywhere. `backend/`: Express on Node."',
-  '     → "- TypeScript everywhere. `backend/`: Hono on Node."',
-  '  4. codebase-map.md: "Three workspace packages in total."',
-  '     → "Four workspace packages in total."',
-  "",
-  "Will delete",
-  '  5. codebase-map.md: "- `legacy/` holds the old door."',
-  "     why: the folder is gone",
+  "  1. write   testing.md (new): Run, Tools",
+  "  2. add     codebase-map.md, Packages: `tools/performance`: the Lighthouse runner",
+  '  3. change  architecture.md: "- TypeScript everywhere. `backend/`: Express on Node."',
+  '  4. change  codebase-map.md: "Three workspace packages in total."',
+  '  5. remove  codebase-map.md: "- `legacy/` holds the old door."',
   "",
   "Questions",
   "  Q1  Which gate runs before a push?",
@@ -70,9 +59,8 @@ const PLAN = [
   "Tools to wire",
   "  [x] claude  [ ] codex  [ ] cursor  [ ] opencode  [ ] antigravity  [ ] copilot",
   "",
-  'Does this look right? Say ok, or what to change, for example "not 5" or "Q1: …".',
-  "",
-  `Sheet: ${SHEET}`,
+  `Details: ${SHEET.replace("facts.md", "plan.md")}`,
+  'Does this look right? Say ok, or what to change, for example "not 5", "not 2-4" or "Q1: …".',
   "",
 ].join("\n");
 
@@ -110,6 +98,43 @@ test("plan: prints the sheet as the person reads it, in fixed order and numberin
     assert.equal(run.stderr, "");
     assert.equal(run.status, 0);
     assert.equal(run.stdout, PLAN);
+    const detail = fs.readFileSync(path.join(root, SHEET.replace("facts.md", "plan.md")), "utf8");
+    assert.match(detail, /^ {5}→ "- TypeScript everywhere\. `backend\/`: Hono on Node\."$/mu, "the detail drops the new text");
+    assert.match(detail, /^ {5}at aidd_docs\/memory\/architecture\.md:5$/mu, "the detail has no link to the line it changes");
+    assert.match(detail, /^ {5}at aidd_docs\/memory\/codebase-map\.md:10$/mu);
+    assert.match(detail, /^ {5}why: the folder is gone$/mu);
+  }, REFRESH, FULL);
+});
+
+// A short label per item: the chat shows what changes, the detail file shows it whole.
+test("plan: a long quoted line is cut in the summary and kept whole in the detail", () => {
+  const long = `- ${"word ".repeat(30).trim()}.`;
+  const sheet = REFRESH.replace('remove "- `legacy/` holds the old door."', `remove "${long}"`);
+  withProject((root) => {
+    const run = engine(root, "plan", SHEET);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    const line = run.stdout.split("\n").find((one) => one.startsWith("  5. remove"));
+    assert.ok(line.length <= 100 && line.endsWith('…"'), line);
+    assert.ok(fs.readFileSync(path.join(root, SHEET.replace("facts.md", "plan.md")), "utf8").includes(long));
+  }, sheet, { ...FULL, "codebase-map.md": FULL["codebase-map.md"].replace("- `legacy/` holds the old door.", long) });
+});
+
+test("plan: a move reads as from → to, and two-digit numbers keep the columns aligned", () => {
+  const moves = [...Array(10)].map((_, index) => `- D${index + 10} | codebase-map.md > Entry points | move aidd_docs/memory/k${index} to aidd_docs/memory/internal/k${index} | package.json |`);
+  const sheet = REFRESH.replace("\n## Unknown", `${moves.join("\n")}\n\n## Unknown`);
+  withProject((root) => {
+    const out = engine(root, "plan", SHEET).stdout;
+    assert.match(out, /^ {2}5\. {2}move {4}aidd_docs\/memory\/k0 → aidd_docs\/memory\/internal\/k0$/mu, out);
+    assert.match(out, /^ {2}14\. move {4}aidd_docs\/memory\/k9 → /mu);
+  }, sheet, FULL);
+});
+
+test("answer: a range declines every item in it", () => {
+  withProject((root) => {
+    assert.equal(engine(root, "answer", SHEET, "not 2-4").status, 0);
+    const text = sheetOf(root);
+    assert.deepEqual(["R2", "R1", "D1", "D2", "D3"].map((id) => answerOf(text, id)), ["yes", "no", "no", "no", "yes"]);
+    assert.equal(engine(root, "answer", SHEET, "not 4-9").status, 1, "a range past the last item");
   }, REFRESH, FULL);
 });
 
@@ -121,6 +146,7 @@ test("plan: a setup has no Since line, an empty section is left out, and no ques
     assert.doesNotMatch(out, /Will add|Will change|Will delete|Questions|none/u);
     assert.match(out, /^ {2}\[ \] claude {2}\[ \] codex/mu, "no tool given ticks none");
     assert.match(out, /^Does this look right\? Say ok, or what to change, for example "not 1"\.$/mu);
+    assert.match(out, /^ {2}1\. write {3}testing\.md \(new\): Run$/mu);
   }, setup, {});
 });
 
@@ -128,8 +154,8 @@ test("plan: a setup has no Since line, an empty section is left out, and no ques
 test("plan: an absent always file is listed under Will write with no number, an accepted name counts as present", () => {
   withProject((root) => {
     const out = engine(root, "plan", SHEET).stdout;
-    for (const name of ["project-brief.md", "vcs.md"]) assert.match(out, new RegExp(`^ {2}${name.replace(".", "\\.")} {3}from its template, always written$`, "mu"), name);
-    assert.doesNotMatch(out, /^ {2}(?:architecture|codebase-map|testing)\.md {3}from its template/mu, "a present file or a sheet item is listed again");
+    for (const name of ["project-brief.md", "vcs.md"]) assert.match(out, new RegExp(`^ {5}write {3}${name.replace(".", "\\.")} \\(new\\): from its template, always written$`, "mu"), name);
+    assert.doesNotMatch(out, /^ {5}write {3}(?:architecture|codebase-map|testing)\.md \(new\): from its template/mu, "a present file or a sheet item is listed again");
     assert.doesNotMatch(out, /ecosystem\.md/u, "an accepted name does not count as the always file");
     assert.deepEqual([...out.matchAll(/^ {2}(\d+)\. /gmu)].map((match) => match[1]), ["1", "2", "3", "4", "5"], "an always file took a number");
   }, REFRESH, { ...BANK, "coding-assertions.md": "# Coding Assertions\n", "integration.md": "# Integration\n" });

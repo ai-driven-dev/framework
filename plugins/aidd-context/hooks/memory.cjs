@@ -737,7 +737,9 @@ function runPlan([sheetFile, ...rest]) {
     const ticked = flag < 0 ? [] : (rest[flag + 1] ?? "").split(",").map((tool) => tool.trim().toLowerCase()).filter(Boolean);
     const unknown = ticked.find((tool) => !(tool in TOOL_FILES));
     if (unknown !== undefined) return fail(`unknown tool "${unknown}"`);
-    process.stdout.write(plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked, absentAlways(root)));
+    const { summary, detail, detailFile } = plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked, absentAlways(root));
+    fs.writeFileSync(detailFile, detail);
+    process.stdout.write(summary);
     return EXIT_OK;
   } catch (error) {
     return fail(notRead(sheetFile, error));
