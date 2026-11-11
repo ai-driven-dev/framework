@@ -8,9 +8,9 @@ describe("copilot mcp", () => {
     });
   });
 
-  describe("capabilities.mcp.transformContent()", () => {
+  describe("capabilities.mcp.transform()", () => {
     const transform = (content: string): string | undefined =>
-      copilot.section("mcp").transformContent(content);
+      copilot.section("mcp").transform(content);
 
     it("renames mcpServers to the servers key VS Code reads, keeping every other key", () => {
       const content = JSON.stringify({ mcpServers: { ctx: { command: "node" } }, inputs: [] });

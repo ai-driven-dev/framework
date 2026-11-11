@@ -161,7 +161,7 @@ describe("SettingsCapability", () => {
     });
   });
 
-  describe("buildOutputPath", () => {
+  describe("outputPath", () => {
     it("returns the configured output path", () => {
       const cap = new SettingsCapability({
         outputPath: ".vscode/settings.json",

@@ -208,7 +208,6 @@ export const copilot = defineAiTool({
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
       format: "markdown",
-      userFileExt: EXT_AGENT,
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       frontmatter: copilotAgentFrontmatter,
     }),

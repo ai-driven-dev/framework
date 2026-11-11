@@ -29,7 +29,6 @@ type AgentsCapabilityParams = {
   format: "markdown" | "toml";
   /** The host's own agent frontmatter, shared with its built distributions. */
   frontmatter: AgentFrontmatter;
-  userFileExt?: string;
   /** How frontmatter strings are quoted; `double` for readers that keep single quotes. */
   quote?: "single" | "double";
   /** Writes the agent file when the host's format is not markdown frontmatter. */
@@ -82,8 +81,7 @@ export class AgentsCapability {
     return (
       this.#params.directory === other.#params.directory &&
       this.#params.toolSuffix === other.#params.toolSuffix &&
-      this.#params.format === other.#params.format &&
-      this.#params.userFileExt === other.#params.userFileExt
+      this.#params.format === other.#params.format
     );
   }
 }

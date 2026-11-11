@@ -7,7 +7,7 @@ const AGENTS_SKILLS_PREFIX = ".agents/skills/";
 type SkillsCapabilityParams = {
   directory?: string;
   toolSuffix?: string;
-  prefix?: string;
+  agentsSkillsDirectory?: boolean;
   buildInstallPath: (fileName: string) => string | null;
   convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
 };
@@ -18,8 +18,10 @@ export class SkillsCapability {
 
   constructor(params: SkillsCapabilityParams) {
     this.#params = params;
-    if (!params.prefix && !params.directory) {
-      throw new CapabilityConfigError("SkillsCapability requires either prefix or directory");
+    if (!params.agentsSkillsDirectory && !params.directory) {
+      throw new CapabilityConfigError(
+        "SkillsCapability requires either agentsSkillsDirectory or directory"
+      );
     }
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix ?? "");
   }
@@ -41,7 +43,7 @@ export class SkillsCapability {
   }
 
   accepts(relativePath: string): boolean {
-    if (this.#params.prefix !== undefined) {
+    if (this.#params.agentsSkillsDirectory) {
       return relativePath.startsWith(AGENTS_SKILLS_PREFIX);
     }
     return relativePath.startsWith(this.#params.directory ?? "");
@@ -51,7 +53,7 @@ export class SkillsCapability {
     return (
       this.#params.directory === other.#params.directory &&
       this.#params.toolSuffix === other.#params.toolSuffix &&
-      this.#params.prefix === other.#params.prefix
+      this.#params.agentsSkillsDirectory === other.#params.agentsSkillsDirectory
     );
   }
 }

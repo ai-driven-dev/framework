@@ -29,7 +29,10 @@ describe("copilot declarations the rest of the CLI reads", () => {
   });
 
   it("writes its MCP servers as JSON under `servers`", () => {
-    expect(copilot.section("mcp").format()).toBe("json");
+    const written = copilot
+      .section("mcp")
+      .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+    expect(() => JSON.parse(written)).not.toThrow();
     expect(copilot.section("mcp").consumes(CONFIG_MCP)).toBe(true);
   });
 

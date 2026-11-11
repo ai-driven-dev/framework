@@ -8,7 +8,10 @@ describe("claude mcp", () => {
     });
 
     it("writes its servers as JSON under `mcpServers`", () => {
-      expect(claude.section("mcp").format()).toBe("json");
+      const written = claude
+        .section("mcp")
+        .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+      expect(() => JSON.parse(written)).not.toThrow();
     });
 
     it("does not consume unknown config names", () => {

@@ -183,12 +183,4 @@ describe("AgentsCapability equality", () => {
       new AgentsCapability(base).equals(new AgentsCapability({ ...base, toolSuffix: ".x.md" }))
     ).toBe(false);
   });
-
-  it("differs on the user file extension", () => {
-    expect(
-      new AgentsCapability({ ...base, userFileExt: ".md" }).equals(
-        new AgentsCapability({ ...base, userFileExt: ".toml" })
-      )
-    ).toBe(false);
-  });
 });

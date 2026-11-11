@@ -28,20 +28,20 @@ describe("SkillsCapability", () => {
     });
   });
 
-  describe("accepts (prefix/codex mode)", () => {
+  describe("accepts (agents skills directory mode)", () => {
     it("returns true when path starts with .agents/skills/", () => {
-      const cap = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
+      const cap = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
       expect(cap.accepts(".agents/skills/aidd-foo/SKILL.md")).toBe(true);
     });
 
     it("returns false when path does not start with .agents/skills/", () => {
-      const cap = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
+      const cap = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
       expect(cap.accepts(".claude/skills/foo.md")).toBe(false);
     });
   });
 
   describe("constructor validation", () => {
-    it("throws when neither prefix nor directory is provided", () => {
+    it("throws when neither agentsSkillsDirectory nor directory is provided", () => {
       expect(() => new SkillsCapability({ ...stubCallbacks })).toThrow();
     });
   });
@@ -75,9 +75,9 @@ describe("SkillsCapability", () => {
       expect(a.equals(b)).toBe(false);
     });
 
-    it("returns false when prefix differs", () => {
-      const a = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
-      const b = new SkillsCapability({ prefix: "other-", ...stubCallbacks });
+    it("returns false when one is the agents skills directory and the other is not", () => {
+      const a = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
+      const b = new SkillsCapability({ directory: ".agents/", ...stubCallbacks });
       expect(a.equals(b)).toBe(false);
     });
   });

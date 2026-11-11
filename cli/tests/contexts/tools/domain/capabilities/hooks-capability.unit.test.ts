@@ -5,7 +5,7 @@ import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 describe("HooksCapability", () => {
   const params = { outputPath: ".codex/hooks.json" };
 
-  describe("buildOutputPath", () => {
+  describe("outputPath", () => {
     it("returns the configured output path", () => {
       const cap = new HooksCapability(params);
       expect(cap.outputPath()).toBe(".codex/hooks.json");

@@ -34,10 +34,6 @@ export class McpCapability {
     return this.#params.outputPath;
   }
 
-  format(): "json" | "toml" {
-    return this.#params.format;
-  }
-
   mergeStrategy(): "user-prime" | "framework-prime" | "none" {
     return this.#params.mergeStrategy ?? "user-prime";
   }
@@ -56,13 +52,11 @@ export class McpCapability {
     );
   }
 
-  /** The tool's own rewrite of the server entries, before any format conversion; unchanged when it has none. */
-  transformContent(mcpJson: string): string {
-    return this.#params.transformContent ? this.#params.transformContent(mcpJson) : mcpJson;
-  }
-
+  /** The tool's own rewrite of the server entries, then the conversion to its file format. */
   transform(mcpJson: string): string {
-    const afterTransform = this.transformContent(mcpJson);
+    const afterTransform = this.#params.transformContent
+      ? this.#params.transformContent(mcpJson)
+      : mcpJson;
     if (this.#params.format === "toml") {
       return mcpJsonToToml(afterTransform);
     }

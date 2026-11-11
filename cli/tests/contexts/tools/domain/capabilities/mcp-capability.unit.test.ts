@@ -14,7 +14,7 @@ const existingJson = JSON.stringify({
 });
 
 describe("McpCapability", () => {
-  describe("buildOutputPath / accepts", () => {
+  describe("outputPath / accepts", () => {
     it("accepts the exact output path", () => {
       const cap = new McpCapability({ outputPath: ".claude/mcp.json", format: "json" });
       expect(cap.accepts(".claude/mcp.json")).toBe(true);

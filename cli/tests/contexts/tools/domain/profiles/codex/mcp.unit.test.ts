@@ -12,7 +12,11 @@ describe("codex mcp", () => {
     });
 
     it("writes its config in TOML", () => {
-      expect(codex.section("mcp").format()).toBe("toml");
+      const written = codex
+        .section("mcp")
+        .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+      expect(() => JSON.parse(written)).toThrow();
+      expect(written).toContain("mcp_servers.a");
     });
   });
 });

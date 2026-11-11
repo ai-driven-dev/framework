@@ -66,7 +66,7 @@ export const codex = defineAiTool({
       serialize: codexAgentToml,
     }),
     skills: new SkillsCapability({
-      prefix: "aidd-",
+      agentsSkillsDirectory: true,
       buildInstallPath: buildCodexSkillFilePath,
       convertFrontmatter: stripCodexSkillFrontmatter,
     }),

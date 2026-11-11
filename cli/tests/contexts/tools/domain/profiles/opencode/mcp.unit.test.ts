@@ -32,19 +32,22 @@ describe("opencode mcp", () => {
     });
 
     it("writes its config as JSON", () => {
-      expect(opencode.section("mcp").format()).toBe("json");
+      const written = opencode
+        .section("mcp")
+        .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+      expect(() => JSON.parse(written)).not.toThrow();
     });
   });
 
   describe("capabilities.mcp.transform() (MCP transform)", () => {
     it("rewrites the servers the OpenCode mcp capability is given", () => {
       const input = JSON.stringify({ mcpServers: { a: { command: "node" } } });
-      expect(opencode.section("mcp").transformContent(input)).not.toBe(input);
+      expect(opencode.section("mcp").transform(input)).not.toBe(input);
     });
 
     const transform = (configName: string, content: string): string => {
       if (configName !== "mcp") return content;
-      return opencode.section("mcp").transformContent(content);
+      return opencode.section("mcp").transform(content);
     };
 
     it("transforms mcpServers to OpenCode mcp format with env", () => {
