@@ -33,7 +33,7 @@ node "$installed_rule_script" --project "$project_root" --tools "$confirmed_ids"
 - `--delete category/slug` replaces `--input`: one source, all recorded publications; reports `files`.
 - `--plan` on any of the three: runs every refusal, writes nothing, reports `{"dryRun":true,"files":[...]}` with the exact paths a real run touches.
 - `--check --publish`: writes nothing, reports `{"drift":[...]}`, exits non-zero while a publication differs from its canonical source.
-- Kilo config updates preserve existing text and instruction order, refuse malformed or unsafe candidates before writing, and stage the rule, source, and config together with best-effort rollback on covered write failures.
+- Kilo config updates preserve existing text and instruction order, refuse malformed or unsafe candidates before writing, and stage the rule, source, and config together with best-effort rollback on covered write failures. This is not crash-recoverable or atomic across files, and concurrent writers are not serialized; rollback covers caught failures only.
 - Plugin: `plugins/<plugin>/rules/<category>/<slug>.md`; YAML `paths` for scope, or no frontmatter. No writer, project metadata or host fan-out.
 - Physical deduplication does not ensure unique host context; local 32 KiB passes do not ensure the total instruction budget.
 - Kilo sources: [settings](https://kilo.ai/docs/getting-started/settings), [custom rules](https://kilo.ai/docs/customize/custom-rules), and [legacy fallback](https://github.com/Kilo-Org/kilocode/blob/main/packages/opencode/src/kilocode/skills/kilo-config.md), verified 2026-09-25.
