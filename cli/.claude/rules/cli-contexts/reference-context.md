@@ -7,7 +7,7 @@ paths:
 
 # Reference context
 
-Status: provisional: adopted for the second pilot only. The verdict of the `auth` run stays no-go, unchanged, as measured: its tests grew (2,093 lines against 1,786, with the three new contract suites) and adding a credential source touched as many code files (4 against 4) and as many documents (2) once the debts were paid. The user revised criterion 1 after seeing that result, to count behaviour tests apart from the per-context kit and the contract suites (both reported separately every time): 1,522 lines against 1,744 for auth, the like-for-like baseline being the 12 test files before the pilot, helpers apart. Because the change was made after the result, on the same context, it is validated on a second pilot, on a profile-heavy context chosen by its own plan, before stage C. Until then this page is not the reference other contexts follow. This page states the auth result as it is, every line checked against the code. The measures and the verdict are in `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-pilot-auth.md`, Appendix B, "Verdict" and "After the verdict".
+Status: provisional: adopted for the second pilot only. The verdict of the `auth` run stays no-go, unchanged, as measured: its tests grew (2,093 lines against 1,786, with the three new contract suites) and adding a credential source touched as many code files (4 against 4) and as many documents (2) once the debts were paid. The user revised criterion 1 after seeing that result, to count behaviour tests apart from the per-context kit and the contract suites (both reported separately every time): 1,522 lines against 1,744 for auth, the like-for-like baseline being the 12 test files before the pilot, helpers apart. Because the change was made after the result, on the same context, it is validated on a second pilot, on a profile-heavy context chosen by its own plan, before stage C. Until then this page is not the reference other contexts follow. The second pilot (`tools`) was no-go on its cost of adding a tool: 12 files outside the profile against 7. This page carries the rules that run revealed missing (sections 6, 7, 9 and 10), and the pilot re-runs against them; the measures are in `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-second-pilot.md`. This page states the auth result as it is, every line checked against the code. The measures and the verdict are in `aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-pilot-auth.md`, Appendix B, "Verdict" and "After the verdict".
 
 ## 1. Purpose and status
 
@@ -96,6 +96,7 @@ Provisional until `installation` and its `Manifest` aggregate migrate: auth's ag
 - `tests/contexts/<ctx>/testing/`, one subject per file: auth's holds record builders (`credential-records.ts`), one fake per port (`in-memory-credential-record-repository.ts`, `fake-identity-verifier.ts`, `fake-cli-auth-provider.ts`), the command builders (`auth-builders.ts`) and the three contract suites.
 - A fake keeps what the port keeps, no more: the in-memory repository keeps records, never text, because the port has no operation that writes an unreadable file.
 - A builder gives a neutral double for every dependency, `with*` for what a test overrides, and `build()` (`aLogOut().withRecords(records).build()`).
+- A fact about one member of a registered set (one tool) is a row in that member's own test, or a conformance check over a value the member declares; a shared test never holds a row naming one member. Prefer the conformance check when the expected value is the declaration itself, since a row would restate it.
 - A kit is never imported by another context's tests. A written rule: no tool checks it yet. `knip` reports an unused kit export, since the kit is outside `tests/helpers/**`.
 
 ## 7. Contract-suite template
@@ -104,7 +105,8 @@ Provisional until `installation` and its `Manifest` aggregate migrate: auth's ag
 - Only cases the port itself can drive. How an adapter words what its system said is the adapter's translation, tested in the adapter's own test (`tests/shared/infrastructure/github-adapter.unit.test.ts`, `tests/contexts/auth/infrastructure/gh-cli-adapter.integration.test.ts`).
 - A case red on the real adapter is a wrong case; red on the fake, a divergence fixed in the fake. Auth's suites carry no expected-failure option: none was needed. `tests/helpers/ports/file-port-contract.ts` keeps one for its case C19, which is that suite's own debt.
 - The real arm runs where it can; one a platform cannot run is skipped with `describe.skipIf` and its reason (exception E2: the `gh` arm on POSIX only).
-- Each suite is seen red once on each arm against a broken subject before it is kept.
+- Each suite is seen red once on each arm against a broken subject before it is kept. How that proof is kept (a kept broken subject, or a planted break recorded in the plan) is open until the second pilot's re-run is decided.
+- A test that covers every member of a registered set iterates the registration list and filters on what each member declares. It never names a member and never types a table by the member id; a partial table is paired with "every other registered member answers none".
 
 ## 8. Naming, tests and mutation
 
@@ -149,6 +151,9 @@ Auth's pass is Appendix A of `aidd_docs/tasks/2026_11/2026_11_06_test-harness-st
 | Constructor cap 5 | `orchestrator-deps.arch.test.ts` | "flags a constructor past the limit and clears one sitting at the limit" |
 | Code size | not in force here, see section 8 | the code-size branch's own `code-size.arch.test.ts` |
 
+- A string or list that enumerates a registered set (help text included) derives from the registration list, and registration order is the order shown; the frozen bytes are held by the help golden, never regenerated for the change.
+- A capability a member lacks is declared by the absence of its file; a rule that forbids a fact outside one file admits that declared absence.
+
 Written rules no tool checks: the glossary, a kit imported by its own context only, one subject per test file, the test challenge pass.
 
 ### Exceptions
@@ -187,10 +192,10 @@ Not exceptions of the model: each vanishes when the old layout moves in stage C,
 
 ## 10. Checklist for a context's migration PR
 
-- Behaviour frozen first by characterization tests, each seen red; move before rename, rename before logic change.
+- Behaviour frozen first by characterization tests, each seen red; move before rename, rename before logic change. A characterization test that hand-lists what the move derives is derived or retired in the commit that lands the move.
 - Files that name paths: `old-layout-count.arch.test.ts` counts, `mutation-scopes.json` and its `package.json` script, `vitest.config.ts` coverage excludes, `scripts/sweep-stale-test-dirs.cjs` prefixes, `aidd_docs/memory/codebase-map.md` and `codebase-map.arch.test.ts`.
 - `ALLOWED` and `BASELINE` (`tests/architecture/helpers.ts`), the context in `HELD_BY_BIOME` and out of `PUBLIC_MODULES`, its `biome.json` overrides.
 - The context's mutation scope and floor.
 - Memory and rules move with the code: a `cli-contexts/<ctx>.md` rule page (reason to change, ports, suppliers), the detail in `aidd_docs/memory/internal/<ctx>.md`, the `glossary.md`.
 - The test challenge pass and its table (section 8).
-- Each new rule with a planted tree that proves it bites.
+- Each new rule with a planted tree that proves it bites, including the declared absence of what it forbids.
