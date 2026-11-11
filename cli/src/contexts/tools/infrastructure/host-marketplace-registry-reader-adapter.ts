@@ -7,7 +7,7 @@ import type {
 
 /**
  * Reads a host's own marketplace registry: a JSON object keyed by marketplace name. Of the
- * entry a real `claude plugin marketplace add` writes, `installLocation` is the field that
+ * entry a host's own `marketplace add` writes, `installLocation` is the field that
  * decides what the name currently resolves to — `source.path` is only what the CLI was
  * pointed at. The file is the declaration's, never repeated as a literal here.
  */

@@ -72,7 +72,7 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | `domain/formats/` | agent-format, command, mcp-format, opencode-mcp-merge, vscode-mcp-merge, portable-agent, plugin-root-token, mcp-launch-command, `toml.ts`, `base64.ts` |
 | `domain/profiles/<id>/` | per tool, minus `native-marketplace-source.ts`; `registered-profiles.ts` at `profiles/` |
 | `application/` | `detect-tool-signals.ts`, `resolve-mcp-output-path.ts` |
-| `ports/` | empty after the moves: native ports to host-registration (D2); `file-merger`, `schema-validator` to `shared/ports` |
+| `ports/` | empty after the moves: native ports to host-registration (D2); `file-merger` to `shared/ports`, `schema-validator` to `translate/domain/ports` |
 | `infrastructure/` | empty after host-registration leaves |
 
 ## 2. Ports and adapters
@@ -87,11 +87,11 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | Native host CLIs and registries | `domain/ports`, `infrastructure/` | `host-registration` (D2) |
 | `FileMerger` | `domain/ports` | `shared/ports/file-merger.ts` |
 | `SchemaValidator` | `domain/ports` | `translate/domain/ports/schema-validator.ts` |
+| Hooks host adapters (`.cjs`) | E-T3 `EVENTS` tables | unchanged (D6) |
 
 Deviation from §1.4 and the line above, decided at P8.
 - `SchemaValidator` has one consumer, translate; codebase-map places a port used by one context in its own `ports/`, so it does not go to `shared/ports`.
 - `FileMerger` goes to `shared/ports` while its only consumer is framework, whose `domain/ports` is blocked: `old-layout-count` holds `src/contexts/framework/` at 125, so one more file there is red. Limit: single consumer, an adapter in `runtime/filesystem/`.
-| Hooks host adapters (`.cjs`) | E-T3 `EVENTS` tables | unchanged (D6) |
 
 ## 3. Public surface: answers, not fields
 
@@ -203,7 +203,7 @@ Order: P0; P1 to P3 in any order; P4; P5a to P5d; P6; P7; P8 and P9.
 | Characterization | P0 table, kept as the regression net |
 | Conformance | `tests/testing/profile-conformance.ts` walks `REGISTERED_PROFILES`; adds the new refusals |
 | Integration | the 4 `hooks-*.integration` files, unchanged |
-| Contract suites | none left in tools after P7 and P8; native-port suites move with host-registration; `FileMerger`, `SchemaValidator` to `shared` |
+| Contract suites | none left in tools after P7 and P8; native-port suites move with host-registration; `FileMerger` to `shared`, `SchemaValidator` to `translate` |
 | Architecture | no plugins field reads, no cross-profile import, no deep import, purity by Biome |
 | Goldens and e2e | byte-identical, never regenerated |
 

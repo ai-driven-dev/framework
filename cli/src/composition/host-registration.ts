@@ -64,7 +64,7 @@ export function marketplaceListContract(
 
 export interface HostRegistrationDeps {
   /** Keyed by the binary each activation declares. */
-  hostActions: Map<string, NativePluginActivator>;
+  hostActions: ReadonlyMap<string, NativePluginActivator>;
   pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistryReader>;
   marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistryReader>;
   marketplaceSources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader>;
@@ -87,13 +87,14 @@ export function wireHostRegistration(home: string = resolveHomeDir()): HostRegis
         id,
         PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.location(home))
       );
-    const registry =
-      marketplaceRegistry === undefined
-        ? undefined
-        : MARKETPLACE_READERS[marketplaceRegistry.layout](marketplaceRegistry.location(home));
-    if (registry !== undefined) marketplaceRegistries.set(id, registry);
-    if (sources?.from === "marketplace-registry" && registry !== undefined)
-      marketplaceSources.set(id, new HostRegistryMarketplaceSourceReaderAdapter(registry));
+    if (marketplaceRegistry !== undefined) {
+      const registry = MARKETPLACE_READERS[marketplaceRegistry.layout](
+        marketplaceRegistry.location(home)
+      );
+      marketplaceRegistries.set(id, registry);
+      if (sources?.from === "marketplace-registry")
+        marketplaceSources.set(id, new HostRegistryMarketplaceSourceReaderAdapter(registry));
+    }
     if (sources?.from === "list-command") {
       marketplaceSources.set(
         id,

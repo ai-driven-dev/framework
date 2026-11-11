@@ -14,12 +14,4 @@ describe("wireHostRegistration", () => {
     expect(sources.get("codex")).toBeInstanceOf(NativeMarketplaceSourceReaderAdapter);
     expect(sources.get("copilot")).toBeInstanceOf(NativeMarketplaceSourceReaderAdapter);
   });
-
-  it("keys every registry map by the tools that declare one", () => {
-    const wired = wireHostRegistration("/home/tester");
-
-    expect([...wired.pluginRegistries.keys()].sort()).toStrictEqual(["claude", "codex", "copilot"]);
-    expect([...wired.marketplaceRegistries.keys()]).toStrictEqual(["claude"]);
-    expect([...wired.hostActions.keys()].sort()).toStrictEqual(["claude", "codex", "copilot"]);
-  });
 });

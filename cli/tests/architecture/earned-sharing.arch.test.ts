@@ -93,7 +93,7 @@ describe("the guard itself", () => {
     expect(areaOf("src/presentation/commands/doctor.ts")).toBe("commands");
     expect(areaOf("src/presentation/display/a.ts")).toBe("presentation");
     expect(areaOf("src/kernel/tool.ts")).toBe("kernel");
-    expect(areaOf("src/runtime/wiring/tools.ts"), "wired, not needed twice").toBe(
+    expect(areaOf("src/runtime/wiring/telemetry.ts"), "wired, not needed twice").toBe(
       "composition-root"
     );
     expect(areaOf("src/composition/auth.ts"), "the composition of a migrated context").toBe(

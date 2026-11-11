@@ -83,8 +83,8 @@ export interface NativeActivationSpec {
    * `doctor` to compare what the host loads with what a manifest claims. Omit for a tool whose
    * registry was never measured; it is then reported unanswerable rather than assumed to agree. */
   pluginRegistry?: HostRegistryDeclaration<PluginRegistryLayout>;
-  /** Root of this tool's own marketplace registry, given a homedir — a root, not a
-   * per-marketplace path. Declared for Claude alone, which derives a registration's name
+  /** This tool's own marketplace registry: where it lives given a homedir, and the layout
+   * it is read as. Declared for Claude alone, which derives a registration's name
    * from the source's own catalog and silently repoints a same-named entry from a different
    * source; its absence is what keeps the guard reading it claude-only. */
   marketplaceRegistry?: HostRegistryDeclaration<MarketplaceRegistryLayout>;

@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
+import { wireHostRegistration } from "../../composition/host-registration.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.js";
@@ -101,7 +102,6 @@ import { SelfUpdaterAdapter } from "../self-update/self-updater-adapter.js";
 import { userConfigDir } from "../user-config-dir.js";
 import { wireDistribution } from "./distribution.js";
 import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
-import { wireTools } from "./tools.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 
 interface GlobalOptions {
@@ -226,7 +226,7 @@ export async function createDeps(
     marketplaceRegistries: hostMarketplaceRegistries,
     marketplaceSources: nativeSources,
     pluginRegistries: hostPluginRegistries,
-  } = wireTools();
+  } = wireHostRegistration();
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const userSourceReferences = new UserSourceReferencesAdapter(fs, userConfigDir);

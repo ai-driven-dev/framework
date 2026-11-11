@@ -26,7 +26,7 @@ function failedRead(location: string, error: unknown): HostPluginRegistryReading
  * registered-but-off an ordinary state, not a TOML-only one.
  */
 /**
- * Claude Code's own registry: a JSON document whose `plugins` object is keyed by the same
+ * A host registry kept as a JSON document whose `plugins` object is keyed by the same
  * `<plugin>@<marketplace>` ref `enabledPlugins` uses, each key holding one entry per scope the
  * ref was installed at. Presence is not the whole answer — an entry installed at a project
  * scope also carries `projectPath`, which is what tells one project's ref from a machine-wide
@@ -62,7 +62,7 @@ export class PluginEntriesByScopeReader implements HostPluginRegistryReader {
 }
 
 /**
- * Codex's own registry, line-scanned rather than parsed: the file carries arbitrary nested
+ * A host registry of TOML tables, line-scanned rather than parsed: the file carries arbitrary nested
  * tables and multi-line values this adapter has no business understanding, and most of it is
  * `[projects."<absolute path>"]` tables a diagnostic must not pull into a terminal. Only
  * `[plugins."<ref>"]` and the `enabled` key under it are read, and a `false` there is carried
@@ -72,7 +72,7 @@ export class PluginEntriesByScopeReader implements HostPluginRegistryReader {
 export class TomlPluginTablesReader implements HostPluginRegistryReader {
   constructor(private readonly path: string) {}
 
-  // `projectRoot` is unused: Codex's plugin tables carry `enabled` and nothing else — no path,
+  // `projectRoot` is unused: these plugin tables carry `enabled` and nothing else — no path,
   // no scope — so its registry answers for the machine and cannot answer for one project.
   async read(_projectRoot: string): Promise<HostPluginRegistryReading> {
     let content: string;
@@ -86,9 +86,9 @@ export class TomlPluginTablesReader implements HostPluginRegistryReader {
 }
 
 /**
- * Copilot's own registry: `enabledPlugins` in `~/.copilot/settings.json`, keyed on the same
+ * A host registry kept as an `enabledPlugins` map in a settings file, keyed on the same
  * `<plugin>@<marketplace>` ref as every other host and carrying a boolean. No project binding,
- * so like Codex it answers for the machine and cannot answer for one project.
+ * so like the TOML layout it answers for the machine and cannot answer for one project.
  */
 export class EnabledPluginsMapReader implements HostPluginRegistryReader {
   constructor(private readonly path: string) {}
@@ -103,7 +103,7 @@ export class EnabledPluginsMapReader implements HostPluginRegistryReader {
     try {
       const parsed = JSON.parse(content) as { enabledPlugins?: Record<string, unknown> };
       const enabled = parsed.enabledPlugins;
-      // Absent is a real answer here, unlike a file that would not open: Copilot writes the
+      // Absent is a real answer here, unlike a file that would not open: the host writes the
       // key on its first install, so a settings file without one carries no plugin.
       if (enabled === undefined) return { location: this.path, refs: new Map() };
       return {
@@ -127,7 +127,7 @@ const TOML_MULTILINE_DELIMITER = /"""|'''/gu;
  * cannot tell a fake header from a real one. Skipping them leaves exactly one real header,
  * which TOML's own prohibition on defining a table twice then guarantees.
  *
- * Absent `enabled` reads as enabled: Codex writes the key on every table it creates, so
+ * Absent `enabled` reads as enabled: the host writes the key on every table it creates, so
  * between "the host listed this plugin" and "listed it and said nothing", the listing is the
  * fact.
  */
@@ -177,7 +177,7 @@ function enabledInTableBody(lines: readonly (string | null)[], from: number): bo
 }
 
 /** One installed-plugin entry, narrowed to the two fields that decide whether a ref counts for
- * the project being diagnosed. Everything else Claude records there describes what was
+ * the project being diagnosed. Everything else the host records there describes what was
  * installed, never where it applies. */
 interface ScopedEntry {
   readonly scope?: string;
