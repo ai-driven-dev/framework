@@ -8,8 +8,8 @@ The skill written by write.
 
 ## Process
 
-1. Review each file against [review-protocol.md](../references/review-protocol.md).
-2. Apply confirmed fixes and repeat step 1 until no breach remains.
+1. Validate each file per [review-protocol.md](../references/review-protocol.md), fix each breach, and repeat until it passes.
+   - **Modify:** every item the plan lists to preserve still holds, else restore it.
    - **Unresolved breach:** report the blocker and stop if a fix is outside the approved scope or cannot be completed.
 3. Propose a concrete trial per [runtime-validation.md](../references/runtime-validation.md), then wait for the user's approval.
    - **Already running in a subagent:** return the proposal to the caller without spawning, with runtime unverified.
