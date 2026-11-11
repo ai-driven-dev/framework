@@ -12,8 +12,9 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | GitHub Copilot | `.github/agents/<name>.agent.md` | markdown + frontmatter |
 | Codex CLI      | `.codex/agents/<name>.toml`      | TOML (converted)       |
 | Antigravity CLI | `.agents/agents/<name>/agent.md` | markdown + frontmatter |
+| Kilo           | `.kilo/agents/<name>.md`         | markdown + frontmatter |
 
-Agents are supported on all six tools.
+Kilo sources agents from `.kilo/agents/`; the filename defines the name. Source: [custom subagents](https://kilo.ai/docs/customize/custom-subagents), verified 2026-09-25.
 
 User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
 
@@ -31,6 +32,9 @@ The canonical agent carries `name` and `description` and no tool list: every hos
 | GitHub Copilot | `name`, `description`, optional `model`, `reasoningEffort`, `include-custom-instructions` |
 | Codex CLI      | `name`, `description`, optional `model`, `model_reasoning_effort` |
 | Antigravity CLI | `name`, `description`, `model: inherit` |
+| Kilo           | `description`, `mode: subagent`, optional requested `model`, `temperature`, `permission` |
+
+Do not emit Claude `name` for Kilo. Emit `mode: subagent`; include optional fields only when requested. Kilo's singular `permission` field maps requested tools or patterns to `allow`, `ask`, or `deny`.
 
 Write OpenCode agents for V2 only: V2 still loads V1 definitions, and treats their `tools` and `permission` fields as legacy.
 
@@ -58,6 +62,9 @@ Resolve shared paths from declared tools or the AIDD manifest; otherwise confirm
 | `.github/copilot-instructions.md` | GitHub Copilot                        |
 | `AGENTS.md`                       | Cursor, OpenCode, Codex or Antigravity (confirm host) |
 | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | Antigravity CLI |
+| `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | Kilo |
+
+For Kilo, `.kilocode/` detects legacy projects only; new output uses `.kilo/`. `AGENTS.md` and `opencode.json[c]` alone do not detect Kilo. The filename and optional fields follow the [custom subagent contract](https://kilo.ai/docs/customize/custom-subagents), verified 2026-09-25.
 
 ## Write targets
 

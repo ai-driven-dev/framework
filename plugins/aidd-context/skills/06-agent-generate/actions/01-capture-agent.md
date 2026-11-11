@@ -18,7 +18,7 @@ In-context: the role and its system prompt, the chosen name, an optional user-sp
 4. **Name.** Propose three short, catchy names that fit the purpose, and have the user pick one.
 5. **Score.** Rate the agent 1-10 on clarity and completeness. If it scores under 8, revise and score again.
 6. **Mode.** Ask where the agent goes:
-   - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose them, and confirm which to target.
+   - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose them, and confirm which to target. For Kilo, propose `.kilo/agents/<name>.md`, use filename identity and `mode: subagent`, and capture only requested `model`, `temperature`, and `permission`.
    - **Plugin source**: confirm or create `plugins/<plugin>/agents/`.
 
 ## Test

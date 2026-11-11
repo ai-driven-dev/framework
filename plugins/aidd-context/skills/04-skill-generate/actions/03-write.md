@@ -19,7 +19,7 @@ The skill tree at the target, and the list of files written.
 3. **Actions.** Fill [action-template.md](../assets/action-template.md) per row against [skill-authoring.md](../references/skill-authoring.md), its test copied from the plan.
    - Modify: revise a changed action in place. Leave an untouched one alone.
 4. **Hint.** Set `argument-hint` per [skill-authoring.md](../references/skill-authoring.md).
-5. **Place.** Write once per confirmed target, using [tool-write.md](../references/tool-write.md).
+5. **Place.** Write once per confirmed target, using [tool-write.md](../references/tool-write.md). For Kilo, use the native path unless the user explicitly chose the portable shared path; never duplicate one skill in both.
 6. **Check.** Confirm every written path is relative, inside the workspace, outside the plugin install directory, and under the chosen target. Else stop and report it.
 
 ## Test

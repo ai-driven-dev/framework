@@ -8,6 +8,7 @@ The fields a scoped skill must define.
 - flow: visible user journey.
 - mode: optional, `auto` or `interactive`.
 - target: detected tool, plugin source, or dedicated tool.
+- Kilo placement: native `.kilo/skills/` by default; portable `.agents/skills/` only after explicit user choice.
 
 Modes:
 

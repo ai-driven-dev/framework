@@ -13,7 +13,7 @@ One command file per supported confirmed tool, the list of files written, and an
 ## Process
 
 1. **Build.** Copy [command-template.md](../assets/command-template.md) into one canonical command: single objective, under ten steps, no Role section. Strip the scaffold (comments + `<...>`).
-2. **Frontmatter.** Set the fields per tool from [tool-paths.md](../references/tool-paths.md). Drop a field a tool does not support.
+2. **Frontmatter.** Set only the fields per tool from [tool-paths.md](../references/tool-paths.md). Drop a field a tool does not support. Kilo uses the flat native commands directory and documented fields only.
 3. **Render.** Per the write mode ([tool-paths.md](../references/tool-paths.md)):
    - **Host**: for each supported confirmed tool, write to its path at the chosen location. Skip an unsupported tool, carrying its reason forward.
    - **Plugin source**: write one canonical `.md` command. No per-tool fan-out.

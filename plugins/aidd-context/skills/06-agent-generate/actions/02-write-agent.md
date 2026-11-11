@@ -13,7 +13,7 @@ One agent file per confirmed tool, and the list of files written.
 ## Process
 
 1. **Build.** Copy [agent-template.md](../assets/agent-template.md) into one canonical agent. Strip the scaffold (comments + `<...>`).
-2. **Frontmatter.** Apply the per-tool frontmatter from [tool-paths.md](../references/tool-paths.md). Plugin source: keep the canonical frontmatter.
+2. **Frontmatter.** Apply the per-tool frontmatter from [tool-paths.md](../references/tool-paths.md). For Kilo, use filename identity, `description`, `mode: subagent`, and requested optional fields only. Plugin source: keep the canonical frontmatter.
 3. **Convert.** Apply any per-tool structural conversion listed in [tool-paths.md](../references/tool-paths.md). Plugin source skips conversion.
 4. **Render.** Write to the chosen [write target](../references/tool-paths.md#write-targets).
 5. **Validate.** Run the write-target validation ([tool-paths.md](../references/tool-paths.md)).
