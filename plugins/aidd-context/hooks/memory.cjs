@@ -10,19 +10,12 @@
  *   an error remains. With no file it checks the whole bank, and a missing always-written file
  *   is an error; so is a root with no bank, or a named file that does not exist. A misplaced file
  *   and a team folder are warnings, and so is the count of words the root files load in every session.
- * - `vanished [root] [--sheet <facts>]`: a write's loss list, read-only. Prints each line of the
- *   bank as committed at HEAD that the working bank lost, unless a `remove` or `replace` `D` line
- *   answered yes quotes it, and exits 1 when it prints any. Limit: HEAD only, so an uncommitted
- *   edit made since is not seen. Without a repository or a committed bank it says so and exits 0;
- *   any other git failure exits 1. The hook never runs it.
  * - `changes [root] [--since <ref>]`: where a refresh looks first, read-only. Prints one `Since`
  *   line (the base, the last commit that touched the bank or the reference named, its age, the
  *   commits and files changed since), the memory lines citing a file changed since it or a
  *   directory above one, and the changed files, uncommitted ones included, listed or counted by
  *   directory. Any git failure prints a full review and its reason, exit 0; only a --since naming
  *   no commit exits 1. The hook never runs it.
- * - `facts <sheet> [root]`: the skill's fact sheet before a write. Exits 1 naming each line whose
- *   shape breaks the grammar or whose source is absent from the root. The hook never runs it.
  * - `plan <sheet> [--tools <tool,...>]`: the plan the person reads, from the sheet, the tools given ticked.
  *   Exits 1 printing each line whose shape breaks the grammar, whose source is absent, or whose
  *   `remove` or `replace` quotes no whole line of its bank file; it prints no plan then.
@@ -30,7 +23,8 @@
  *   not <n> and all but <n>, and names the `tools:` and `Q<n>:` clauses it leaves to the model. Any
  *   other reply exits 1 and changes nothing. It writes only the sheet.
  * - `report <sheet>`: the closing message, read-only, from the sheet's answers and the plan's
- *   numbers. It computes the lines the write lost as `vanished` does and puts them first, under a
+ *   numbers. It computes the lines the write lost, against the bank committed at HEAD, unless a `remove`
+ *   or `replace` `D` line answered yes quotes them, and puts them first, under a
  *   title that says so, then the bank files that differ from HEAD and the context files holding a
  *   block. Limit: items are numbered against HEAD, so a bank file left uncommitted before the plan can
  *   shift its numbers. Exits 1 only when the sheet cannot be read.
@@ -40,7 +34,7 @@
  *   without it, and at a session start, a file holding none is left as it is.
  *
  * The hook reads its event and answers only through `lib/host.cjs`. Node built-ins only: the hook
- * starts no other program; `vanished`, `report` and `changes` alone read git, and only to read.
+ * starts no other program; `report` and `changes` alone read git, and only to read.
  */
 
 const fs = require("node:fs");
@@ -782,26 +776,6 @@ function main(argv) {
     for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
     return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
-  if (command === "vanished") {
-    const flag = args.indexOf("--sheet");
-    const sheetFile = flag < 0 ? undefined : args[flag + 1];
-    const [root = process.cwd()] = args.filter((_, at) => flag < 0 || (at !== flag && at !== flag + 1));
-    const guard = require("./lib/bank-guard.cjs");
-    try {
-      const approvals = sheetFile === undefined ? [] : require("./lib/fact-sheet.cjs").approvedRemovals(sheetFile);
-      const previous = guard.previousBank(root, MEMORY_DIR);
-      if (previous === null) {
-        process.stdout.write("memory: no previous state of the bank to compare\n");
-        return EXIT_OK;
-      }
-      const gone = guard.goneLines(previous, path.join(root, MEMORY_DIR), approvals);
-      if (gone.length > 0) process.stdout.write(`${gone.join("\n")}\n`);
-      return gone.length > 0 ? EXIT_ERRORS : EXIT_OK;
-    } catch (error) {
-      process.stderr.write(`memory: ${error.code === "ENOENT" ? `${sheetFile} not read (ENOENT)` : error.message}\n`);
-      return EXIT_ERRORS;
-    }
-  }
   if (command === "changes") {
     const flag = args.indexOf("--since");
     const since = flag < 0 ? undefined : args[flag + 1];
@@ -816,22 +790,6 @@ function main(argv) {
       process.stderr.write(`memory: ${error.message}\n`);
       return EXIT_ERRORS;
     }
-  }
-  if (command === "facts") {
-    const [sheetFile, root = process.cwd()] = args;
-    if (sheetFile === undefined) {
-      process.stderr.write("usage: memory.cjs facts <sheet> [root]\n");
-      return EXIT_ERRORS;
-    }
-    let problems;
-    try {
-      problems = require("./lib/fact-sheet.cjs").checkSheet(sheetFile, root);
-    } catch (error) {
-      process.stderr.write(`memory: ${sheetFile} not read (${error.code ?? error.message})\n`);
-      return EXIT_ERRORS;
-    }
-    if (problems.length > 0) process.stdout.write(`${problems.join("\n")}\n`);
-    return problems.length > 0 ? EXIT_ERRORS : EXIT_OK;
   }
   if (command === "plan" || command === "answer") {
     const plan = require("./lib/plan.cjs");
@@ -894,7 +852,7 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | plan <sheet> [--tools <tool,...>] | answer <sheet> <reply> | report <sheet> | sync [--add] [tool...]\n");
+  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | changes [root] [--since <ref>] | plan <sheet> [--tools <tool,...>] | answer <sheet> <reply> | report <sheet> | sync [--add] [tool...]\n");
   return EXIT_ERRORS;
 }
 

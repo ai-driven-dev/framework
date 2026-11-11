@@ -540,7 +540,7 @@ test("the engine's row files are the capability table's, and it holds no table o
   assert.deepEqual(require(ENGINE).ACCEPTED_ALWAYS, acceptedOfAlways);
 });
 
-// vanished: a read-only list of the lines a write lost without approval, against the bank at HEAD
+// report's lost lines: what a write lost without approval, against the bank at HEAD
 
 function engine(...args) {
   return spawnSync("node", [ENGINE, ...args], { encoding: "utf8" });
@@ -581,17 +581,25 @@ function repo(committed, working = {}) {
   return root;
 }
 
-/** What `vanished` prints for a bank committed as `committed` and now `working`, against a sheet of `sheetLines`; the tree must be left untouched. */
-function vanished(committed, working, sheetLines = []) {
+const SHEET_FILE = "aidd_docs/tasks/t/facts.md";
+
+/** The lines a report lists lost, one `file: line` each, and status 1 when it lists any. */
+function lostOf(run) {
+  const block = run.stdout.match(/^Lines lost\n {2}No item[^\n]*\n((?: {2}[^\n]*\n?)*)/mu)?.[1] ?? "";
+  const stdout = block.replace(/^ {2}/gmu, "");
+  return { ...run, status: run.status !== 0 ? run.status : stdout === "" ? 0 : 1, stdout };
+}
+
+/** What `report` lists lost for a bank committed as `committed` and now `working`, against a sheet of `sheetLines`; the tree must be left untouched. */
+function lostLines(committed, working, sheetLines = []) {
   const root = repo(committed, working);
-  const sheetFile = path.join(root, "task/facts.md");
-  write(root, "task/facts.md", sheet(...sheetLines));
+  const sheetFile = path.join(root, SHEET_FILE);
+  write(root, SHEET_FILE, sheet(...sheetLines));
   const before = treeState(root);
   try {
-    const run = engine("vanished", root, "--sheet", sheetFile);
-    const facts = engine("facts", sheetFile, root);
-    assert.deepEqual(treeState(root), before, "vanished or facts wrote to the tree");
-    return { run, facts };
+    const run = lostOf(engine("report", sheetFile));
+    assert.deepEqual(treeState(root), before, "report wrote to the tree");
+    return { run };
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -599,70 +607,71 @@ function vanished(committed, working, sheetLines = []) {
 
 const LOSS = { "vcs.md": BEFORE.replace("- lose me\n", "") };
 
-test("vanished: a line gone with no D line answered yes is listed with exit 1, and nothing in the tree changes", () => {
+test("report, lost lines: a line gone with no D line answered yes is listed with exit 1, and nothing in the tree changes", () => {
   for (const answer of ["", "no"]) {
-    const { run } = vanished({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'remove "- lose me"', answer)]);
+    const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'remove "- lose me"', answer)]);
     assert.equal(run.status, 1, `answer "${answer}"`);
     assert.equal(run.stdout, "vcs.md: - lose me\n");
   }
-  assert.equal(vanished({ "vcs.md": BEFORE }, LOSS).run.status, 1);
+  assert.equal(lostLines({ "vcs.md": BEFORE }, LOSS).run.status, 1);
 });
 
-test("vanished: a line quoted by a remove or replace D line answered yes is not listed, exit 0", () => {
+test("report, lost lines: a line quoted by a remove or replace D line answered yes is not listed, exit 0", () => {
   for (const verb of ['remove "- lose me"', 'replace "- lose me" with "- another"']) {
-    const { run, facts } = vanished({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", verb, "yes")]);
+    const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", verb, "yes")]);
     assert.equal(run.status, 0, verb);
     assert.equal(run.stdout, "");
-    assert.equal(facts.status, 0);
   }
 });
 
 // A model quotes a list line without its marker as often as with it.
-test("vanished: an approval may quote a list line without its marker", () => {
-  const { run } = vanished({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'replace "lose me" with "found"', "yes")]);
+test("report, lost lines: an approval may quote a list line without its marker", () => {
+  const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'replace "lose me" with "found"', "yes")]);
   assert.equal(run.stdout, "");
   assert.equal(run.status, 0);
 });
 
-test("vanished: an approval covers the line it quotes and no other", () => {
+test("report, lost lines: an approval covers the line it quotes and no other", () => {
   const two = { "vcs.md": BEFORE.replace("- lose me\n", "").replace("- run it\n", "") };
-  const { run } = vanished({ "vcs.md": BEFORE }, two, [approve("- lose me")]);
+  const { run } = lostLines({ "vcs.md": BEFORE }, two, [approve("- lose me")]);
   assert.equal(run.stdout, "vcs.md: - run it\n");
 });
 
-test("vanished: the approval needs a D id, a remove or replace verb and an answer starting with yes", () => {
-  const listed = (line) => vanished({ "vcs.md": BEFORE }, LOSS, [line]).run.stdout;
+test("report, lost lines: the approval needs a D id, a remove or replace verb and an answer starting with yes", () => {
+  const listed = (line) => lostLines({ "vcs.md": BEFORE }, LOSS, [line]).run.stdout;
   assert.match(listed(dline("D1", "vcs.md > Setup", 'add "- lose me"', "yes")), /lose me/u, "not a removal");
   assert.match(listed(dline("R1", "vcs.md > Setup", 'remove "- lose me"', "yes")), /lose me/u, "not a D line");
   assert.match(listed(dline("D1", "vcs.md > Setup", "remove the lose me line", "yes")), /lose me/u, "the line is not quoted");
   assert.equal(listed(dline("D1", "vcs.md > Setup", 'remove "- lose me"', "Yes, drop it")), "");
 });
 
-test("vanished: a line moved within its file or to another bank file is not listed, a duplicate copy gone is", () => {
+test("report, lost lines: a line moved within its file or to another bank file is not listed, a duplicate copy gone is", () => {
   const moved = BEFORE.replace("- lose me\n", "").replace("- run it\n", "- run it\n- lose me\n");
-  assert.equal(vanished({ "vcs.md": BEFORE }, { "vcs.md": moved }).run.stdout, "");
-  assert.equal(vanished({ "vcs.md": BEFORE }, { ...LOSS, "internal/other.md": "- lose me\n" }).run.stdout, "");
-  const twice = vanished({ "vcs.md": "- dup\n- dup\n" }, { "vcs.md": "- dup\n" });
+  assert.equal(lostLines({ "vcs.md": BEFORE }, { "vcs.md": moved }).run.stdout, "");
+  assert.equal(lostLines({ "vcs.md": BEFORE }, { ...LOSS, "internal/other.md": "- lose me\n" }).run.stdout, "");
+  const twice = lostLines({ "vcs.md": "- dup\n- dup\n" }, { "vcs.md": "- dup\n" });
   assert.equal(twice.run.status, 1);
   assert.equal(twice.run.stdout, "vcs.md: - dup\n");
 });
 
-test("vanished: a file with a non-ASCII name is guarded, and a file deleted from the working tree is listed whole", () => {
-  assert.equal(vanished({ "décisions.md": "- kept\n- lost\n" }, { "décisions.md": "- kept\n" }).run.stdout, "décisions.md: - lost\n");
-  const gone = vanished({ "internal/x.md": "- kept\n" }, { "internal/x.md": null });
+test("report, lost lines: a file with a non-ASCII name is guarded, and a file deleted from the working tree is listed whole", () => {
+  assert.equal(lostLines({ "décisions.md": "- kept\n- lost\n" }, { "décisions.md": "- kept\n" }).run.stdout, "décisions.md: - lost\n");
+  const gone = lostLines({ "internal/x.md": "- kept\n" }, { "internal/x.md": null });
   assert.equal(gone.run.status, 1);
   assert.equal(gone.run.stdout, "internal/x.md: - kept\n");
 });
 
-test("vanished: no repository, or a bank never committed, prints one line and exits 0", () => {
+test("report, lost lines: no repository, or a bank never committed, lists nothing lost", () => {
   const plain = project({ "vcs.md": BEFORE });
   const fresh = project({ "vcs.md": BEFORE });
   git(fresh, "init", "-q");
   try {
     for (const root of [plain, fresh]) {
-      const run = engine("vanished", root);
+      write(root, SHEET_FILE, sheet());
+      const run = engine("report", path.join(root, SHEET_FILE));
       assert.equal(run.status, 0);
-      assert.equal(run.stdout, "memory: no previous state of the bank to compare\n");
+      assert.match(run.stdout, /^Memory ready\n/u);
+      assert.doesNotMatch(run.stdout, /Lines lost/u);
     }
   } finally {
     fs.rmSync(plain, { recursive: true, force: true });
@@ -670,10 +679,11 @@ test("vanished: no repository, or a bank never committed, prints one line and ex
   }
 });
 
-test("vanished: a git failure in a repository fails closed with its reason, and a missing sheet is a clean error", () => {
+test("report, lost lines: a git failure in a repository says the losses were not checked, with its reason, and a missing sheet is a clean error", () => {
   const root = repo({ "vcs.md": BEFORE }, LOSS);
+  write(root, SHEET_FILE, sheet());
   try {
-    const missing = engine("vanished", root, "--sheet", path.join(root, "absent.md"));
+    const missing = engine("report", path.join(root, "aidd_docs/tasks/t/absent.md"));
     assert.equal(missing.status, 1);
     assert.match(missing.stderr, /absent\.md not read/u);
     assert.doesNotMatch(missing.stderr, /\n\s+at /u);
@@ -681,19 +691,19 @@ test("vanished: a git failure in a repository fails closed with its reason, and 
     const object = path.join(root, ".git/objects", tree.slice(0, 2), tree.slice(2));
     fs.chmodSync(object, 0o600);
     fs.rmSync(object);
-    const broken = engine("vanished", root);
-    assert.equal(broken.status, 1);
-    assert.equal(broken.stdout, "");
-    assert.match(broken.stderr, /memory: git/u);
+    const broken = engine("report", path.join(root, SHEET_FILE));
+    assert.equal(broken.status, 0);
+    assert.match(broken.stdout, /^Memory written, lost lines not checked\n\nLines lost\n {2}not checked: git /u);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test("vanished: reads the repository of the root even when a hook exported GIT_DIR", () => {
+test("report, lost lines: reads the repository of the root even when a hook exported GIT_DIR", () => {
   const root = repo({ "vcs.md": BEFORE }, LOSS);
+  write(root, SHEET_FILE, sheet());
   try {
-    const run = spawnSync("node", [ENGINE, "vanished", root], { encoding: "utf8", env: { ...process.env, GIT_DIR: path.join(os.tmpdir(), "no-such-git-dir") } });
+    const run = lostOf(spawnSync("node", [ENGINE, "report", path.join(root, SHEET_FILE)], { encoding: "utf8", env: { ...process.env, GIT_DIR: path.join(os.tmpdir(), "no-such-git-dir") } }));
     assert.equal(run.stdout, "vcs.md: - lose me\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -1052,33 +1062,33 @@ test("changes: a root below the repository's top lists only its own files, relat
   }
 });
 
-// facts: a sheet that cites nothing real must not reach the write
+// plan's sheet check: a sheet that cites nothing real must not reach the person
 
 const SHEET_HEAD = "# Facts: setup\n\n- Scope: setup\n- Capabilities: C1 api\n\n";
 const sheet = (...lines) => `${SHEET_HEAD}## Read\n\n${lines.join("\n")}\n`;
 const GOOD = "- R1 | architecture.md > Stack | Node ESM | package.json | ok";
 
 function factsRun(text, files = { "package.json": "{}\n" }) {
-  const root = project({}, { ...files, "task/facts.md": text });
+  const root = project({}, { ...files, [SHEET_FILE]: text });
   try {
-    return engine("facts", path.join(root, "task/facts.md"), root);
+    return engine("plan", path.join(root, SHEET_FILE));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 }
 
-test("facts: a well-formed sheet whose sources exist exits 0 and a missing answer is allowed", () => {
+test("plan, sheet check: a well-formed sheet whose sources exist exits 0 and a missing answer is allowed", () => {
   assert.equal(factsRun(sheet(GOOD, "- Q1 | project-brief.md > Out of scope | what it will not do | README.md |"), { "package.json": "{}\n", "README.md": "#\n" }).status, 0);
 });
 
-test("facts: a source that does not exist exits 1 and names the line and the path", () => {
+test("plan, sheet check: a source that does not exist exits 1 and names the line and the path", () => {
   const run = factsRun(sheet(GOOD, "- D2 | testing.md > Run | pnpm test | scripts/absent.js | ok"));
   assert.equal(run.status, 1);
   assert.match(run.stdout, /facts\.md:9 D2.*scripts\/absent\.js/u);
   assert.doesNotMatch(run.stdout, /R1/u);
 });
 
-test("facts: a line that breaks the grammar exits 1 and names it", () => {
+test("plan, sheet check: a line that breaks the grammar exits 1 and names it", () => {
   for (const bad of ["- R2 | architecture.md > Stack | only three fields", "- X9 | architecture.md > Stack | fact | package.json | ok", "- R2 | architecture.md | fact | package.json | ok"]) {
     const run = factsRun(sheet(GOOD, bad));
     assert.equal(run.status, 1, bad);
@@ -1086,32 +1096,32 @@ test("facts: a line that breaks the grammar exits 1 and names it", () => {
   }
 });
 
-test("facts: a sheet with no fact line exits 1, a header bullet is no fact line", () => {
+test("plan, sheet check: a sheet with no fact line exits 1, a header bullet is no fact line", () => {
   const run = factsRun(`${SHEET_HEAD}## Read\n\nNothing to add.\n`);
   assert.equal(run.status, 1);
   assert.match(run.stdout, /no fact line/u);
   assert.equal(factsRun(sheet(GOOD)).stdout.includes("Scope"), false);
 });
 
-test("facts: an unreadable sheet is a usage error", () => {
-  const run = engine("facts", "/nonexistent/facts.md");
+test("plan, sheet check: an unreadable sheet is a usage error", () => {
+  const run = engine("plan", "/nonexistent/facts.md");
   assert.equal(run.status, 1);
   assert.match(run.stderr, /facts\.md/u);
 });
 
-test("facts: no sheet named is a usage error", () => {
-  const run = engine("facts");
+test("plan, sheet check: no sheet named is a usage error", () => {
+  const run = engine("plan");
   assert.equal(run.status, 1);
-  assert.match(run.stderr, /usage: memory\.cjs facts/u);
+  assert.match(run.stderr, /usage: memory\.cjs plan/u);
 });
 
-test("facts: a Q line may cite no source, any other line may not", () => {
+test("plan, sheet check: a Q line may cite no source, any other line may not", () => {
   assert.equal(factsRun(sheet(GOOD, "- Q1 | project-brief.md > Out of scope | what it will not do | | ")).status, 0);
   assert.equal(factsRun(sheet(GOOD, "- R2 | project-brief.md > Purpose | a fact | | ")).status, 1);
 });
 
 // The template says a Q may cite none, and a model writes that word.
-test("facts: a Q line may cite the word none, any other line citing it is a missing source", () => {
+test("plan, sheet check: a Q line may cite the word none, any other line citing it is a missing source", () => {
   assert.equal(factsRun(sheet(GOOD, "- Q1 | project-brief.md > Users | who reads it | none |")).status, 0);
   const other = factsRun(sheet(GOOD, "- R2 | project-brief.md > Purpose | a fact | none |"));
   assert.equal(other.status, 1);
@@ -1119,14 +1129,14 @@ test("facts: a Q line may cite the word none, any other line citing it is a miss
 });
 
 // Nothing reads a convention set aside for a rule, so the sheet has no block for one.
-test("facts: a T line is no fact id, and every line names a memory file", () => {
+test("plan, sheet check: a T line is no fact id, and every line names a memory file", () => {
   const ruled = factsRun(sheet(GOOD, "- T1 | testing.md > Run | wrap every adapter call | package.json |"));
   assert.equal(ruled.status, 1);
   assert.match(ruled.stdout, /id "T1" is not R, D or Q/u);
   assert.equal(factsRun(sheet(GOOD, "- R2 | error handling | a fact | package.json |")).status, 1);
 });
 
-test("facts: a | in a fact is named, and a bullet of another shape inside a block is a shape problem", () => {
+test("plan, sheet check: a | in a fact is named, and a bullet of another shape inside a block is a shape problem", () => {
   const split = factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json | ok"));
   assert.equal(split.status, 1);
   assert.match(split.stdout, /R2.*a `\|` in a fact/u);
@@ -1137,11 +1147,11 @@ test("facts: a | in a fact is named, and a bullet of another shape inside a bloc
   }
 });
 
-test("facts: an absolute source is outside the root even when it names a file inside it", () => {
+test("plan, sheet check: an absolute source is outside the root even when it names a file inside it", () => {
   const root = project({}, { "package.json": "{}\n" });
-  write(root, "task/facts.md", sheet(`- R1 | architecture.md > Stack | Node | ${path.join(root, "package.json")} |`));
+  write(root, SHEET_FILE, sheet(`- R1 | architecture.md > Stack | Node | ${path.join(root, "package.json")} |`));
   try {
-    const run = engine("facts", path.join(root, "task/facts.md"), root);
+    const run = engine("plan", path.join(root, SHEET_FILE));
     assert.equal(run.status, 1);
     assert.match(run.stdout, /outside the root/u);
   } finally {
@@ -1149,7 +1159,7 @@ test("facts: an absolute source is outside the root even when it names a file in
   }
 });
 
-test("facts: a backticked source counts, a source outside the root does not", () => {
+test("plan, sheet check: a backticked source counts, a source outside the root does not", () => {
   assert.equal(factsRun(sheet("- R1 | architecture.md > Stack | Node | `package.json` |")).status, 0);
   for (const outside of ["../package.json", path.join(os.tmpdir(), "x")]) {
     const run = factsRun(sheet(GOOD, `- R2 | architecture.md > Stack | Node | ${outside} |`));
@@ -1158,13 +1168,13 @@ test("facts: a backticked source counts, a source outside the root does not", ()
   }
 });
 
-test("facts: a target carrying the bank's folder is rejected, bank-relative names only", () => {
+test("plan, sheet check: a target carrying the bank's folder is rejected, bank-relative names only", () => {
   const run = factsRun(sheet(GOOD, "- R2 | aidd_docs/memory/testing.md > Run | a fact | package.json |"));
   assert.equal(run.status, 1);
   assert.match(run.stdout, /bank-relative/u);
 });
 
-test("facts: any line holding a | inside a block is a fact candidate, whatever its bullet", () => {
+test("plan, sheet check: any line holding a | inside a block is a fact candidate, whatever its bullet", () => {
   for (const bad of ["+ R2 | testing.md > Run | fact | package.json |", "1. R2 | testing.md > Run | fact | package.json |", "R2 | testing.md > Run | fact | package.json |"]) {
     const run = factsRun(sheet(GOOD, bad));
     assert.equal(run.status, 1, bad);
@@ -1172,7 +1182,7 @@ test("facts: any line holding a | inside a block is a fact candidate, whatever i
   }
 });
 
-test("facts: an id is used once, and more than eight Q lines are listed", () => {
+test("plan, sheet check: an id is used once, and more than eight Q lines are listed", () => {
   const twice = factsRun(sheet(GOOD, GOOD));
   assert.equal(twice.status, 1);
   assert.match(twice.stdout, /R1.*already used/u);
