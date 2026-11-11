@@ -85,6 +85,13 @@ describe("aidd-ui showcase", () => {
       assert.match(pages["home.html"], /<span class="chip" data-status="validated">/);
     });
 
+    it("titles a page with its record's heading and shows the id as a chip", () => {
+      const home = pagesOf()["home.html"];
+      assert.deepEqual(home.match(/<h1[ >][^<]*<\/h1>/g), ["<h1>Home</h1>"]);
+      assert.match(home, /<span class="chip" data-key="id"><span class="key">id<\/span>home<\/span>/);
+      assert.match(home, /<title>Home<\/title>/);
+    });
+
     it("shows the code links and the route of a screen as chips", () => {
       const home = pagesOf()["home.html"];
       assert.match(home, /<span class="chip" data-key="route"><span class="key">route<\/span>\/<\/span>/);

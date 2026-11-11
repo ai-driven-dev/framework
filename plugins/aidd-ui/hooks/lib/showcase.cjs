@@ -305,10 +305,11 @@ function navigationOf(records, labels, current) {
 
 const chipOf = (key, value) => `<span class="chip" data-key="${key}"><span class="key">${key}</span>${escaped(String(value))}</span>`;
 
-/** The chips under the title of a record: its status, kind, version, route and code links. */
+/** The chips under the title of a record: its id, status, kind, version, route and code links. */
 function chipsOf(record) {
-  const { status, kind, version, route } = fm(record);
+  const { id, status, kind, version, route } = fm(record);
   return [
+    chipOf("id", id),
     ...(status === undefined ? [] : [`<span class="chip" data-status="${escaped(status)}">${escaped(status)}</span>`]),
     chipOf("kind", kind),
     ...(version === undefined ? [] : [chipOf("version", version)]),
@@ -428,10 +429,22 @@ function batchOf({ project, records, rows, labels }) {
   return `<section class="batch" data-records="${entries.length}"><h2>${labels.batch}</h2><p>${labels.batchHint}</p><ul>${entries.map(item).join("")}</ul><button type="button" id="copy-all" data-copied="${escaped(labels.copied)}">${labels.allOk}</button></section>`;
 }
 
-/** The record as text under its title, without its front matter: the chips above show it. */
-function specOf(project, record) {
+const TITLE_LINE = /^# +(.+?)\s*$/;
+
+/** The record's text without its front matter, as lines. */
+function bodyLines(project, record) {
   const lines = (text(project, record.file) ?? "").split(LINE_BREAK);
-  return documentOf(lines.slice(frontMatterEnd(lines) + 1).join(LINE_BREAK));
+  return lines.slice(frontMatterEnd(lines) + 1);
+}
+
+/** The first `# ` heading of a record's text, else its id. */
+const titleOf = (project, record) => bodyLines(project, record).map((line) => TITLE_LINE.exec(line)?.[1]).find(Boolean) ?? fm(record).id;
+
+/** The record as text under its title, without its front matter and its title, which the page heading shows. */
+function specOf(project, record) {
+  const lines = bodyLines(project, record);
+  const at = lines.findIndex((line) => TITLE_LINE.test(line));
+  return documentOf((at === -1 ? lines : lines.filter((_, index) => index !== at)).join(LINE_BREAK));
 }
 
 const pageOf = (title, lang, navigation, body, script) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${STYLE}${LAYOUT}</style>`, "</head>", "<body>", '<div class="shell">', navigation, "<main>", body, "</main>", "</div>", ...(script ? [`<script>${script}</script>`] : []), "</body>", "</html>", ""].join("\n");
@@ -453,8 +466,9 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
     const uses = [...new Set(cited(record))].filter((each) => each !== id && ids.has(each)).sort(byCode);
     const usedBy = records.filter((other) => fm(other).id !== id && cited(other).includes(id)).map((other) => fm(other).id).sort(byCode);
     const reviewed = hasRender(project, record);
+    const title = titleOf(project, record);
     const body = [
-      `<h1>${escaped(id)}</h1>`,
+      `<h1>${escaped(title)}</h1>`,
       `<div class="chips">${chipsOf(record)}</div>`,
       linksOf("uses", labels.uses, uses),
       linksOf("used-by", labels.usedBy, usedBy),
@@ -463,7 +477,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
       checksOf(problems, record, labels),
       specOf(project, record),
     ].filter(Boolean).join("\n");
-    pages[`${id}.html`] = pageOf(id, language, navigationOf(records, labels, id), body, reviewed ? FRAMES + REVIEW : id === SYSTEM_ID ? FRAMES : "");
+    pages[`${id}.html`] = pageOf(title, language, navigationOf(records, labels, id), body, reviewed ? FRAMES + REVIEW : id === SYSTEM_ID ? FRAMES : "");
   }
   return pages;
 }
