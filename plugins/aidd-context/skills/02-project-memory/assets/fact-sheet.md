@@ -1,4 +1,4 @@
-<!-- Path: `aidd_docs/tasks/{{yyyy_mm}}/{{yyyy_mm_dd}}_memory-{{scope}}/facts.md`, the scope being setup or refresh. Replace every `{{...}}` and delete every comment; never add, rename, or reorder a block. One fact per line under a block: `- <id> | <file> > <section> | <fact> | <source> | <answer>`. No `|` in a fact. The source is one existing plain path, no backticks, line number or glob; a removal cites the memory file; a `Q` may cite none. Leave the answer empty. -->
+<!-- Path: `aidd_docs/tasks/{{yyyy_mm}}/{{yyyy_mm_dd}}_memory-{{scope}}/facts.md`, the scope being setup or refresh. Replace every `{{...}}` and delete every comment; never add, rename, or reorder a block. One fact per line under a block: `- <id> | <file> > <section> | <fact> | <source> | <answer>`. A fact may quote a table row, its `|` kept; then keep the answer slot, even empty. The source is one existing plain path, no backticks, line number or glob; a removal cites the memory file; a `Q` may cite none. Leave the answer empty. -->
 
 # Facts: {{scope}}
 

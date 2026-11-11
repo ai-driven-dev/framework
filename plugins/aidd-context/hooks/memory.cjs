@@ -161,13 +161,7 @@ function structureFindings(root) {
   const folders = new Set();
   for (const file of bankFiles(root)) {
     const parts = partsOf(file);
-    const name = parts[parts.length - 1];
-    const [top] = parts;
-    if (parts.length > 1 && !ON_DEMAND_DIRS.includes(top)) folders.add(top);
-    if (!name.endsWith(".md") || EXCLUDED_FILES.has(name)) continue;
-    if (parts.length > 1 && top !== "external" && ROW_FILES.includes(name)) {
-      found.push(warning(file, "placement", `${name} belongs at the bank's root`, `move it to ${MEMORY_DIR}/${name}`));
-    }
+    if (parts.length > 1 && !ON_DEMAND_DIRS.includes(parts[0])) folders.add(parts[0]);
   }
   for (const folder of [...folders].sort()) {
     const owner = `the ${DOCS_DIR}/ folder of the plugin that owns it`;
@@ -195,10 +189,11 @@ function missing(file, excerpt, fix) {
   return { file, rule: "missing", severity: ERROR, message: excerpt, excerpt, fix };
 }
 
-/** An accepted name counts as the file. */
+/** An accepted name counts as the file, and so does one the team keeps in an on-demand folder. */
 function absentAlways(root) {
-  const present = new Set(rootFiles(root));
-  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => present.has(`${MEMORY_DIR}/${held}`));
+  const present = new Set(bankFiles(root));
+  const places = (name) => [`${MEMORY_DIR}/${name}`, ...ON_DEMAND_DIRS.map((dir) => `${MEMORY_DIR}/${dir}/${name}`)];
+  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => places(held).some((place) => present.has(place)));
   return ALWAYS_WRITTEN.filter((name) => !holds(name));
 }
 
@@ -684,101 +679,122 @@ function report(sheetFile) {
   return require("./lib/report.cjs").renderReport(sheetFile, { previous, gone, why, written, wired, load: sessionLoad(root) });
 }
 
-function main(argv) {
-  const [command, ...args] = argv;
-  if (command === "hook") {
-    try {
-      hook();
-    } catch {
-      // A broken check never blocks a write or a session start.
-    }
+/** Writes `memory: <message>` to stderr and returns the error exit. */
+function fail(message) {
+  process.stderr.write(`memory: ${message}\n`);
+  return EXIT_ERRORS;
+}
+
+const notRead = (sheetFile, error) => `${sheetFile} not read (${error.code ?? error.message})`;
+
+function runHook() {
+  try {
+    hook();
+  } catch {
+    // A broken check never blocks a write or a session start.
+  }
+  return EXIT_OK;
+}
+
+function runCheck([root = process.cwd(), ...files]) {
+  const { errors, text, failures } = check(root, files);
+  if (text !== "") process.stdout.write(`${text}\n`);
+  // A check whose rules could not run never passes.
+  for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
+  return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
+}
+
+function runChanges(args) {
+  const flag = args.indexOf("--since");
+  const since = flag < 0 ? undefined : args[flag + 1];
+  const rest = args.filter((_, at) => flag < 0 || (at !== flag && at !== flag + 1));
+  if (flag >= 0 && since === undefined) return fail("--since needs a reference");
+  if (rest.length > 1 || rest.some((arg) => arg.startsWith("-"))) return fail(`usage: memory.cjs ${COMMANDS.changes.usage}`);
+  try {
+    process.stdout.write(require("./lib/changes.cjs").changes(rest[0] ?? process.cwd(), MEMORY_DIR, since));
     return EXIT_OK;
+  } catch (error) {
+    return fail(error.message);
   }
-  if (command === "check") {
-    const [root = process.cwd(), ...files] = args;
-    const { errors, text, failures } = check(root, files);
-    if (text !== "") process.stdout.write(`${text}\n`);
-    // A check whose rules could not run never passes.
-    for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
-    return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
+}
+
+function runPlan([sheetFile, ...rest]) {
+  if (sheetFile === undefined) return usageOf("plan");
+  const plan = require("./lib/plan.cjs");
+  const root = plan.rootOf(sheetFile);
+  try {
+    const problems = [...require("./lib/fact-sheet.cjs").checkSheet(sheetFile, root), ...plan.quoteProblems(sheetFile, root)];
+    if (problems.length > 0) {
+      process.stdout.write(`${problems.join("\n")}\n`);
+      return EXIT_ERRORS;
+    }
+    const flag = rest.indexOf("--tools");
+    const ticked = flag < 0 ? [] : (rest[flag + 1] ?? "").split(",").map((tool) => tool.trim().toLowerCase()).filter(Boolean);
+    const unknown = ticked.find((tool) => !(tool in TOOL_FILES));
+    if (unknown !== undefined) return fail(`unknown tool "${unknown}"`);
+    const { summary, detail, detailFile } = plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked, absentAlways(root));
+    fs.writeFileSync(detailFile, detail);
+    process.stdout.write(summary);
+    return EXIT_OK;
+  } catch (error) {
+    return fail(notRead(sheetFile, error));
   }
-  if (command === "changes") {
-    const flag = args.indexOf("--since");
-    const since = flag < 0 ? undefined : args[flag + 1];
-    const rest = args.filter((_, at) => flag < 0 || (at !== flag && at !== flag + 1));
-    const [root = process.cwd()] = rest;
-    try {
-      if (flag >= 0 && since === undefined) throw new Error("--since needs a reference");
-      if (rest.length > 1 || rest.some((arg) => arg.startsWith("-"))) throw new Error("usage: memory.cjs changes [root] [--since <ref>]");
-      process.stdout.write(require("./lib/changes.cjs").changes(root, MEMORY_DIR, since));
-      return EXIT_OK;
-    } catch (error) {
-      process.stderr.write(`memory: ${error.message}\n`);
-      return EXIT_ERRORS;
-    }
+}
+
+function runAnswer([sheetFile, ...reply]) {
+  if (sheetFile === undefined) return usageOf("answer");
+  const plan = require("./lib/plan.cjs");
+  try {
+    process.stdout.write(`${plan.answerSheet(sheetFile, plan.rootOf(sheetFile), reply.join(" "))}\n`);
+    return EXIT_OK;
+  } catch (error) {
+    return fail(error instanceof plan.ReplyError ? error.message : notRead(sheetFile, error));
   }
-  if (command === "plan" || command === "answer") {
-    const plan = require("./lib/plan.cjs");
-    const [sheetFile, ...rest] = args;
-    if (sheetFile === undefined) {
-      process.stderr.write(`usage: memory.cjs ${command} <sheet> ${command === "plan" ? "[--tools <tool,...>]" : "<reply>"}\n`);
-      return EXIT_ERRORS;
-    }
-    const root = plan.rootOf(sheetFile);
-    try {
-      if (command === "answer") {
-        process.stdout.write(`${plan.answerSheet(sheetFile, root, rest.join(" "))}\n`);
-        return EXIT_OK;
-      }
-      const problems = [...require("./lib/fact-sheet.cjs").checkSheet(sheetFile, root), ...plan.quoteProblems(sheetFile, root)];
-      if (problems.length > 0) {
-        process.stdout.write(`${problems.join("\n")}\n`);
-        return EXIT_ERRORS;
-      }
-      const flag = rest.indexOf("--tools");
-      const ticked = flag < 0 ? [] : (rest[flag + 1] ?? "").split(",").map((tool) => tool.trim().toLowerCase()).filter(Boolean);
-      const unknown = ticked.find((tool) => !(tool in TOOL_FILES));
-      if (unknown !== undefined) throw new UnknownToolError(`unknown tool "${unknown}"`);
-      process.stdout.write(plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked, absentAlways(root)));
-      return EXIT_OK;
-    } catch (error) {
-      process.stderr.write(`memory: ${error instanceof plan.ReplyError || error instanceof UnknownToolError ? error.message : `${sheetFile} not read (${error.code ?? error.message})`}\n`);
-      return EXIT_ERRORS;
-    }
+}
+
+function runReport([sheetFile]) {
+  if (sheetFile === undefined) return usageOf("report");
+  try {
+    process.stdout.write(report(sheetFile));
+    return EXIT_OK;
+  } catch (error) {
+    return fail(notRead(sheetFile, error));
   }
-  if (command === "report") {
-    const [sheetFile] = args;
-    if (sheetFile === undefined) {
-      process.stderr.write("usage: memory.cjs report <sheet>\n");
-      return EXIT_ERRORS;
-    }
-    try {
-      process.stdout.write(report(sheetFile));
-      return EXIT_OK;
-    } catch (error) {
-      process.stderr.write(`memory: ${sheetFile} not read (${error.code ?? error.message})\n`);
-      return EXIT_ERRORS;
-    }
+}
+
+function runSync(args) {
+  // Other commands take `.` as root: a path here is that habit, not a tool.
+  const given = args.find((arg) => /[./\\]/u.test(arg));
+  if (given !== undefined) return fail(`sync takes tool names, run it from the project root (got "${given}")`);
+  const tools = args.filter((arg) => arg !== "--add").map((arg) => arg.toLowerCase());
+  try {
+    const { unpaired, held, failed } = sync(process.cwd(), tools, { add: args.includes("--add") });
+    // An unnamed run never fails over a file the user has yet to repair.
+    return unpaired.length + held.length + failed.length > 0 && tools.length > 0 ? EXIT_ERRORS : EXIT_OK;
+  } catch (error) {
+    if (!(error instanceof UnknownToolError)) throw error;
+    return fail(error.message);
   }
-  if (command === "sync") {
-    // Other commands take `.` as root: a path here is that habit, not a tool.
-    const given = args.find((arg) => /[./\\]/u.test(arg));
-    if (given !== undefined) {
-      process.stderr.write(`memory: sync takes tool names, run it from the project root (got "${given}")\n`);
-      return EXIT_ERRORS;
-    }
-    const tools = args.filter((arg) => arg !== "--add").map((arg) => arg.toLowerCase());
-    try {
-      const { unpaired, held, failed } = sync(process.cwd(), tools, { add: args.includes("--add") });
-      // An unnamed run never fails over a file the user has yet to repair.
-      return unpaired.length + held.length + failed.length > 0 && tools.length > 0 ? EXIT_ERRORS : EXIT_OK;
-    } catch (error) {
-      if (!(error instanceof UnknownToolError)) throw error;
-      process.stderr.write(`memory: ${error.message}\n`);
-      return EXIT_ERRORS;
-    }
-  }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | changes [root] [--since <ref>] | plan <sheet> [--tools <tool,...>] | answer <sheet> <reply> | report <sheet> | sync [--add] [tool...]\n");
+}
+
+const COMMANDS = {
+  hook: { run: runHook, usage: "hook" },
+  check: { run: runCheck, usage: "check [root] [file...]" },
+  changes: { run: runChanges, usage: "changes [root] [--since <ref>]" },
+  plan: { run: runPlan, usage: "plan <sheet> [--tools <tool,...>]" },
+  answer: { run: runAnswer, usage: "answer <sheet> <reply>" },
+  report: { run: runReport, usage: "report <sheet>" },
+  sync: { run: runSync, usage: "sync [--add] [tool...]" },
+};
+
+function usageOf(command) {
+  process.stderr.write(`usage: memory.cjs ${COMMANDS[command].usage}\n`);
+  return EXIT_ERRORS;
+}
+
+function main([command, ...args]) {
+  if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command].run(args);
+  process.stderr.write(`usage: memory.cjs ${Object.values(COMMANDS).map(({ usage }) => usage).join(" | ")}\n`);
   return EXIT_ERRORS;
 }
 
