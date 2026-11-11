@@ -19,6 +19,7 @@ import { dirname, join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+import { flatOf } from "../../../testing/plugin-mode.js";
 
 const PLUGIN = "aidd-context";
 const PLUGIN_HOOKS = join(REPOSITORY_ROOT, "plugins", PLUGIN, "hooks");
@@ -34,7 +35,7 @@ const OPEN = "<!-- aidd_project_memory:start -->";
 const CLOSE = "<!-- aidd_project_memory:end -->";
 const LINK = "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)";
 
-const plugins = antigravity.section("plugins");
+const plugins = flatOf(antigravity.section("plugins"));
 
 function filesUnder(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })

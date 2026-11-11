@@ -23,7 +23,6 @@ import type { NativePluginActivator } from "../../../tools/domain/ports/native-p
 import {
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
-  resolvePluginsCapability,
 } from "../../../tools/domain/registry.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -145,7 +144,7 @@ export class PluginRemoveUseCase {
     projectRoot: string,
     registrations: NativeRegistrations | undefined
   ): Promise<void> {
-    const activation = resolvePluginsCapability(toolId)?.activation();
+    const activation = nativeActivationOf(toolId);
     if (activation == null || plugin.marketplace === undefined) return;
     const activator = this.activators.get(activation.binary);
     if (activator === undefined || !activator.isAvailable()) return;
@@ -372,7 +371,7 @@ export class PluginRemoveUseCase {
     projectRoot: string,
     registrations: NativeRegistrations | undefined
   ): Promise<boolean | undefined> {
-    const nativeActivation = resolvePluginsCapability(toolId)?.activation();
+    const nativeActivation = nativeActivationOf(toolId);
     if (nativeActivation == null || plugin.marketplace === undefined) return undefined;
     const activator = this.activators.get(nativeActivation.binary);
     if (activator === undefined) return undefined;

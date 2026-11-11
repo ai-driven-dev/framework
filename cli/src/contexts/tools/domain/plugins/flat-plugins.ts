@@ -47,10 +47,10 @@ export class FlatPlugins extends PluginDeliveryBase {
   flatLayout(): FlatLayout {
     return this.#layout;
   }
-  override projectHooksDelivery(): ProjectHooksPlacement | null {
+  projectHooksDelivery(): ProjectHooksPlacement | null {
     return this.#projectHooks;
   }
-  override hookScript(pluginPath: string, content: string): string {
+  hookScript(pluginPath: string, content: string): string {
     return this.#delivered(pluginPath, content);
   }
 }

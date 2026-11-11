@@ -15,6 +15,9 @@ function deliveryFor(params: PluginsParams): PluginsCapability {
  */
 export type PluginsCapability = NativePlugins | FlatPlugins | UnsupportedPlugins;
 
+/** The variant of a plugin capability that installs natively. */
+export type NativePluginsCapability = Extract<PluginsCapability, { kind: "native" }>;
+
 export function pluginsCapability(params: PluginsParams): PluginsCapability {
   return deliveryFor(params);
 }

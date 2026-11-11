@@ -131,6 +131,7 @@ const NO_FLAT_LAYOUT = {
   hooksBridge: null,
 } as const;
 const NO_MCP_FILE = { accepts: false, relativePath: ".mcp.json" } as const;
+const SCRIPT = "console.log(1);";
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 
 function pluginsAnswer(plugins: PluginsCapability | null, directory: string): unknown {
@@ -138,29 +139,33 @@ function pluginsAnswer(plugins: PluginsCapability | null, directory: string): un
   const layout = plugins.kind === "flat" ? plugins.flatLayout() : NO_FLAT_LAYOUT;
   const bridge = layout.hooksBridge;
   const acceptance = plugins.hooksAcceptance();
-  const mcp = plugins.kind === "native" ? plugins.mcpFile() : NO_MCP_FILE;
+  const native = plugins.kind === "native" ? plugins : null;
+  const mcp = native === null ? NO_MCP_FILE : native.mcpFile();
   const delivery = plugins.projectHooksDelivery();
+  const delivers = plugins.kind !== "unsupported";
+  const userScope = native?.requiresUserScope() === true;
+  const outputDir = native?.pluginOutputDir(PLUGIN) ?? null;
   return {
     mode: pluginModeOf(plugins),
-    installScope: plugins.requiresUserScope() ? "user" : "project",
+    installScope: userScope ? "user" : "project",
     hooksDestination: plugins.deliversHooksToProject() ? "project" : "plugin",
-    pluginsDir: plugins.pluginOutputDir(PLUGIN)?.slice(0, -`${PLUGIN}/`.length) ?? null,
-    resolvePluginsBaseDir: plugins.requiresUserScope() ? plugins.userPluginsBaseDir(HOME) : PROJECT,
+    pluginsDir: outputDir?.slice(0, -`${PLUGIN}/`.length) ?? null,
+    resolvePluginsBaseDir: userScope ? plugins.userPluginsBaseDir(HOME) : PROJECT,
     userPluginsBaseDir: plugins.userPluginsBaseDir(HOME),
-    pluginOutputDir: plugins.pluginOutputDir(PLUGIN),
-    pluginManifestRelativePath: plugins.manifestPath(),
-    pluginRootToken: plugins.rootToken(),
+    pluginOutputDir: outputDir,
+    pluginManifestRelativePath: native?.manifestPath() ?? null,
+    pluginRootToken: native?.rootToken() ?? null,
     acceptsHooks: acceptance.accepts,
     hooksUnsupportedReason: acceptance.accepts ? null : acceptance.reason,
-    hooksTrustNotice: plugins.trustNotice(),
+    hooksTrustNotice: native?.trustNotice() ?? null,
     acceptsMcp: mcp.accepts,
     mcpRelativePath: mcp.relativePath,
     hooksRelativePath: plugins.kind === "native" ? plugins.hooksFilePath() : DEFAULT_HOOKS_PATH,
     projectHooksRelativePath: delivery?.relativePath ?? null,
     projectHooksFormat: projectHooksFormatAnswer(delivery?.format ?? null),
     hookScript: {
-      script: plugins.hookScript("hooks/run.js", "console.log(1);"),
-      hooksJson: plugins.hookScript("hooks/hooks.json", HOOKS_JSON),
+      script: delivers ? plugins.hookScript("hooks/run.js", SCRIPT) : SCRIPT,
+      hooksJson: delivers ? plugins.hookScript("hooks/hooks.json", HOOKS_JSON) : HOOKS_JSON,
     },
     flatNamespacePrefix: layout.namespacePrefix,
     flatSkillLayout: layout.skillLayout,
@@ -176,15 +181,15 @@ function pluginsAnswer(plugins: PluginsCapability | null, directory: string): un
             generatedFromPreToolUse: bridge.generate(HOOKS_JSON, PLUGIN),
           },
     translationMode: translationModeOf(plugins),
-    nativeActivation: activationAnswer(plugins.activation()),
-    marketplaceSettings: marketplaceSettingsAnswer(plugins.marketplaceRegistration()),
+    nativeActivation: activationAnswer(native?.activation() ?? null),
+    marketplaceSettings: marketplaceSettingsAnswer(native?.marketplaceRegistration() ?? null),
     globalFiles: globalFilesAnswer(plugins.globalFiles(), directory),
   };
 }
 
 function translationModeOf(plugins: PluginsCapability): "flat" | "marketplace" | null {
   if (plugins.kind === "flat") return "flat";
-  return plugins.translatesAsMarketplace() ? "marketplace" : null;
+  return plugins.kind === "native" && plugins.translatesAsMarketplace() ? "marketplace" : null;
 }
 
 function registryAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
@@ -270,14 +275,15 @@ describe("what every registered tool answers to the contexts that read it", () =
       const plugins = catalog.resolvePluginsCapability(config.toolId);
       if (plugins === null) continue;
       const id = config.toolId;
+      const native = plugins.kind === "native" ? plugins : null;
       const delivery = plugins.projectHooksDelivery();
       const registryDelivery = projectHooksDeliveryOf(id);
 
       expect(
         {
           buildMode: plugins.kind === "flat" ? "flat" : "marketplace",
-          activation: activationAnswer(plugins.activation()),
-          enablementIsMachineGlobal: plugins.enablementIsMachineGlobal(),
+          activation: activationAnswer(native?.activation() ?? null),
+          enablementIsMachineGlobal: native?.enablementIsMachineGlobal() ?? true,
           supportsUserScopeActivation: plugins.supportsUserScopeActivation(),
           copiesFilesGlobally: plugins.copiesFilesGlobally(),
           globalFiles: globalFilesAnswer(plugins.globalFiles(), config.directory),

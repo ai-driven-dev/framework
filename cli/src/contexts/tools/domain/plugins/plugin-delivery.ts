@@ -1,7 +1,5 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
-import type { MarketplaceRegistration } from "./marketplace-registration.js";
-import type { NativeActivation } from "./native-activation.js";
 import type {
   FlatHooksBridge,
   FlatSkillLayout,
@@ -48,50 +46,19 @@ export abstract class PluginDeliveryBase {
   abstract get kind(): "native" | "flat" | "unsupported";
   abstract hooksAcceptance(): HooksAcceptance;
 
-  translatesAsMarketplace(): boolean {
-    return false;
-  }
-  requiresUserScope(): boolean {
-    return false;
-  }
+  abstract projectHooksDelivery(): ProjectHooksPlacement | null;
+
   deliversHooksToProject(): boolean {
     return this.projectHooksDelivery() !== null;
   }
-  manifestPath(): string | null {
-    return null;
-  }
-  rootToken(): string | null {
-    return null;
-  }
-  trustNotice(): string | null {
-    return null;
-  }
-  activation(): NativeActivation | null {
-    return null;
-  }
-  marketplaceRegistration(): MarketplaceRegistration | null {
-    return null;
-  }
-  enablementIsMachineGlobal(): boolean {
-    return this.activation()?.scopeArgs === undefined;
-  }
   supportsUserScopeActivation(): boolean {
-    return this.activation() !== null || this.requiresUserScope() || this.#machineFiles !== null;
+    return this.#machineFiles !== null;
   }
   copiesFilesGlobally(): boolean {
-    return this.requiresUserScope() || this.#machineFiles !== null;
+    return this.#machineFiles !== null;
   }
   globalFiles(): GlobalFiles | null {
     return this.#machineFiles;
-  }
-  projectHooksDelivery(): ProjectHooksPlacement | null {
-    return null;
-  }
-  hookScript(_pluginPath: string, content: string): string {
-    return content;
-  }
-  pluginOutputDir(_pluginName: string): string | null {
-    return null;
   }
   userPluginsBaseDir(homedir: string): string | null {
     return this.#machineFiles?.dir(homedir) ?? null;

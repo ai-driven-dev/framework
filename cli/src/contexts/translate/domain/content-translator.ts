@@ -121,11 +121,8 @@ export class PluginContentTranslator {
     notices: ReadonlyNoticeList;
   } {
     const pluginRoot = plugins.pluginOutputDir(dist.manifest.name);
-    if (pluginRoot === null) {
-      return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
-    }
     const { files, componentPaths } = this.buildNativeFiles(dist, tool, plugins, pluginRoot);
-    const notices = this.collectHooksTrustNotices(dist, tool);
+    const notices = this.collectHooksTrustNotices(dist, tool, plugins);
     return { files, componentPaths, skipped: [], notices };
   }
 
@@ -149,22 +146,24 @@ export class PluginContentTranslator {
       // name one, in JSON. Gating it on prose left every tool but Claude installing a hook that
       // points at a variable its own runtime never expands.
       const content =
-        translated.verbatim === true ? rewritten : this.rewritePluginRoot(rewritten, tool);
+        translated.verbatim === true
+          ? rewritten
+          : rewritePluginRootToken(rewritten, plugins.rootToken());
       const installedPath = `${pluginRoot}${translated.relativePath}`;
       result.push(this.makeFile(installedPath, content));
       if (isComponentFile(file.relativePath)) componentPaths.set(installedPath, file.relativePath);
     }
-    this.appendManifestFile(dist, tool, pluginRoot, result);
+    this.appendManifestFile(dist, plugins, pluginRoot, result);
     return { files: result, componentPaths };
   }
 
   private appendManifestFile(
     dist: PluginDistribution,
-    tool: AiTool<HasPlugins>,
+    plugins: NativeDelivery,
     pluginRoot: string,
     result: InstallationFile[]
   ): void {
-    const manifestPath = tool.section("plugins").manifestPath();
+    const manifestPath = plugins.manifestPath();
     if (manifestPath === null) return;
     const sourceManifest = findSourceManifestContent(dist);
     if (sourceManifest === null) return;
@@ -175,10 +174,11 @@ export class PluginContentTranslator {
   // before it runs, and only applies when this plugin actually ships one.
   private collectHooksTrustNotices(
     dist: PluginDistribution,
-    tool: AiTool<HasPlugins>
+    tool: AiTool<HasPlugins>,
+    plugins: NativeDelivery
   ): ReadonlyNoticeList {
     if (dist.components.hooks.length === 0) return [];
-    const hooksTrustNotice = tool.section("plugins").trustNotice();
+    const hooksTrustNotice = plugins.trustNotice();
     if (hooksTrustNotice === null) return [];
     const entry: PluginInstallNotice = {
       pluginName: dist.manifest.name,
@@ -187,14 +187,6 @@ export class PluginContentTranslator {
       message: hooksTrustNotice,
     };
     return [entry];
-  }
-
-  /** A plugin is authored with one spelling of the plugin root and the installer translates
-   * it into the one this tool expands. A file carried verbatim keeps its own bytes. */
-  private rewritePluginRoot(content: string, tool: AiTool<HasPlugins>): string {
-    const pluginRootToken = tool.section("plugins").rootToken();
-    if (pluginRootToken === null) return content;
-    return rewritePluginRootToken(content, pluginRootToken);
   }
 
   private translateFile(

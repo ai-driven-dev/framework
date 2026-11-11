@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { nativeOf } from "../../../testing/plugin-mode.js";
 
 describe("copilot plugins", () => {
   describe("capabilities.plugins", () => {
@@ -8,22 +9,22 @@ describe("copilot plugins", () => {
     });
 
     it("uses .github/plugins/ as plugins directory", () => {
-      expect(copilot.section("plugins").pluginOutputDir("x")).toBe(".github/plugins/x/");
+      expect(nativeOf(copilot.section("plugins")).pluginOutputDir("x")).toBe(".github/plugins/x/");
     });
 
     it("uses plugin.json as plugin manifest path", () => {
-      expect(copilot.section("plugins").manifestPath()).toBe("plugin.json");
+      expect(nativeOf(copilot.section("plugins")).manifestPath()).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {
-      expect(copilot.section("plugins").pluginOutputDir("my-plugin")).toBe(
+      expect(nativeOf(copilot.section("plugins")).pluginOutputDir("my-plugin")).toBe(
         ".github/plugins/my-plugin/"
       );
     });
   });
 
   describe("capabilities.plugins.marketplaceSettings", () => {
-    const ms = copilot.section("plugins").marketplaceRegistration();
+    const ms = nativeOf(copilot.section("plugins")).marketplaceRegistration();
 
     it("has marketplaceSettings configured", () => {
       expect(ms).not.toBeNull();

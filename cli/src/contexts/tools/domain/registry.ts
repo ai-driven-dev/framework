@@ -18,7 +18,7 @@ import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
 import type { GlobalFiles, HookScript, ProjectHooksFormat } from "./plugins/plugin-params.js";
-import type { PluginsCapability } from "./plugins/plugins-capability.js";
+import type { NativePluginsCapability, PluginsCapability } from "./plugins/plugins-capability.js";
 import type { ProfileBrand } from "./profile/define-tool.js";
 import { isProfileSectionKey } from "./profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
@@ -103,7 +103,7 @@ export class ToolCatalog {
   }
 
   nativeActivationOf(toolId: ToolId): NativeActivation | undefined {
-    return this.resolvePluginsCapability(toolId)?.activation() ?? undefined;
+    return this.resolveNativePlugins(toolId)?.activation() ?? undefined;
   }
 
   frameworkBuildModeFor(toolId: ToolId): FrameworkBuildMode {
@@ -111,7 +111,7 @@ export class ToolCatalog {
   }
 
   pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {
-    return this.resolvePluginsCapability(toolId)?.enablementIsMachineGlobal() ?? true;
+    return this.resolveNativePlugins(toolId)?.enablementIsMachineGlobal() ?? true;
   }
 
   supportsUserScopeActivation(toolId: ToolId): boolean {
@@ -149,9 +149,7 @@ export class ToolCatalog {
   }
 
   machineLocalFilesOf(toolId: ToolId): readonly string[] {
-    return (
-      this.resolvePluginsCapability(toolId)?.marketplaceRegistration()?.machineLocalFiles() ?? []
-    );
+    return this.resolveNativePlugins(toolId)?.marketplaceRegistration()?.machineLocalFiles() ?? [];
   }
 
   projectHooksFileOf(toolId: ToolId): string | undefined {
@@ -185,6 +183,11 @@ export class ToolCatalog {
     const toolConfig = this.getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return null;
     return toolConfig.section("plugins");
+  }
+
+  resolveNativePlugins(toolId: ToolId): NativePluginsCapability | null {
+    const plugins = this.resolvePluginsCapability(toolId);
+    return plugins?.kind === "native" ? plugins : null;
   }
 }
 
@@ -334,4 +337,10 @@ export function settingsCapabilitiesOf(toolId: AiToolId): readonly SettingsCapab
  * its callers: it reads nothing but this registry, and its callers span three of them. */
 export function resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
   return catalog.resolvePluginsCapability(toolId);
+}
+
+/** A tool's plugin capability when it installs natively, or `null`: the one place a caller
+ * wanting a native-only answer narrows on `kind`. */
+export function resolveNativePlugins(toolId: ToolId): NativePluginsCapability | null {
+  return catalog.resolveNativePlugins(toolId);
 }

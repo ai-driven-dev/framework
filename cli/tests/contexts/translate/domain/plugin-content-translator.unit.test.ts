@@ -18,6 +18,7 @@ import {
 import { FileHash } from "../../../../src/kernel/file.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../src/kernel/markdown.js";
 import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
+import { nativeOf } from "../../tools/testing/plugin-mode.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
@@ -369,7 +370,7 @@ describe("cross-format matrix (source × target)", () => {
         it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
           const dist = makeSourceDist(source);
           const files = translator.translate(dist, target.tool);
-          const expected = `${target.tool.section("plugins").pluginOutputDir("sample-plugin")}${target.manifestExpected}`;
+          const expected = `${nativeOf(target.tool.section("plugins")).pluginOutputDir("sample-plugin")}${target.manifestExpected}`;
           expect(files.map((f) => f.relativePath)).toContain(expected);
         });
       }
@@ -680,7 +681,7 @@ describe("what a person still has to do before a hook runs", () => {
         pluginName: "sample-plugin",
         component: "hooks",
         toolId: "codex",
-        message: codex.section("plugins").trustNotice(),
+        message: nativeOf(codex.section("plugins")).trustNotice(),
       },
     ]);
   });

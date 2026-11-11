@@ -172,4 +172,35 @@ describe("a tool's plugin delivery is asked, never read", () => {
     const block = [...leaky.matchAll(CLASS_BLOCK)][0]?.[2] as string;
     expect([...block.matchAll(PARAMETER_PROPERTY)].map((m) => m[1])).toEqual(["params"]);
   });
+
+  it("the shared base declares no answer only one way of taking plugins has", () => {
+    const base = read("src/contexts/tools/domain/plugins/plugin-delivery.ts");
+    expect(variantOnlyAnswersOn(base)).toEqual([]);
+  });
+
+  it("sees a variant-only answer declared on a base, and clears a shared one", () => {
+    const placeholder = "  manifestPath(): string | null {\n    return null;\n  }";
+    expect(variantOnlyAnswersOn(placeholder)).toEqual(["manifestPath"]);
+    expect(variantOnlyAnswersOn("  globalFiles(): GlobalFiles | null {")).toEqual([]);
+  });
 });
+
+/** Answers that belong to the native variant alone; the base holds none of them. */
+const NATIVE_ONLY = [
+  "translatesAsMarketplace",
+  "requiresUserScope",
+  "manifestPath",
+  "rootToken",
+  "trustNotice",
+  "activation",
+  "marketplaceRegistration",
+  "enablementIsMachineGlobal",
+  "pluginOutputDir",
+  "hookScript",
+];
+
+function variantOnlyAnswersOn(source: string): string[] {
+  return NATIVE_ONLY.filter((name) =>
+    new RegExp(String.raw`^  (?:abstract )?${name}\(`, "m").test(source)
+  );
+}

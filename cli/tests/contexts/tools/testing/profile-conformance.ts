@@ -174,14 +174,14 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(flat.artifacts.hooks.supported).toBe(plugins.hooksAcceptance().accepts);
   }),
   aiCheck("names a variable, never a path", (profile) => {
-    const token = profile.section("plugins")?.rootToken();
-    if (token === null || token === undefined) return;
-    expect(token).toMatch(PLUGIN_ROOT_TOKEN);
+    const plugins = profile.section("plugins");
+    if (plugins?.kind !== "native") return;
+    expect(plugins.rootToken()).toMatch(PLUGIN_ROOT_TOKEN);
   }),
   aiCheck("writes its own token into a marketplace build", (profile) => {
     const plugins = profile.section("plugins");
     const marketplace = profile.buildContracts?.marketplace?.();
-    if (plugins === null || marketplace === undefined) return;
+    if (plugins?.kind !== "native" || marketplace === undefined) return;
     expect(marketplace.pluginRootToken ?? null).toBe(plugins.rootToken());
   }),
   aiCheck("writes no token into a flat build", (profile) => {

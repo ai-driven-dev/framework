@@ -12,14 +12,6 @@ describe("opencode plugins", () => {
       expect(flatOf(opencode.section("plugins")).flatLayout().namespacePrefix).toBe("aidd-");
     });
 
-    it("pluginsDir is null", () => {
-      expect(opencode.section("plugins").pluginOutputDir("x")).toBeNull();
-    });
-
-    it("pluginOutputDir returns null", () => {
-      expect(opencode.section("plugins").pluginOutputDir("my-plugin")).toBeNull();
-    });
-
     it("namespaces a plugin's hook scripts under .opencode/hooks/", () => {
       expect(flatOf(opencode.section("plugins")).flatLayout().hooksDir).toBe(".opencode/hooks/");
     });

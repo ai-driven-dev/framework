@@ -11,6 +11,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { nativeOf } from "../../../tools/testing/plugin-mode.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -45,7 +46,7 @@ describe("PluginAddUseCase hook trust notice", () => {
 
     expect(logger.infoMessages).toHaveLength(1);
     expect(logger.infoMessages[0]).toBe(
-      `Plugin "sample-plugin" (codex): ${codex.section("plugins").trustNotice()}`
+      `Plugin "sample-plugin" (codex): ${nativeOf(codex.section("plugins")).trustNotice()}`
     );
     expect(logger.warnMessages).toEqual([]);
   });

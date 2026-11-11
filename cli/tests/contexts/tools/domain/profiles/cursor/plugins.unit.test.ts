@@ -10,15 +10,15 @@ describe("cursor plugins", () => {
     });
 
     it("pluginsDir is empty string (base-relative path prefix)", () => {
-      expect(cursor.section("plugins").pluginOutputDir("x")).toBe("x/");
+      expect(nativeOf(cursor.section("plugins")).pluginOutputDir("x")).toBe("x/");
     });
 
     it("pluginManifestRelativePath is null (no manifest file written into plugin dir)", () => {
-      expect(cursor.section("plugins").manifestPath()).toBeNull();
+      expect(nativeOf(cursor.section("plugins")).manifestPath()).toBeNull();
     });
 
     it("installScope is user", () => {
-      expect(cursor.section("plugins").requiresUserScope()).toBe(true);
+      expect(nativeOf(cursor.section("plugins")).requiresUserScope()).toBe(true);
     });
 
     it("acceptsHooks is true (Cursor auto-discovers hooks.json at plugin root)", () => {
@@ -30,7 +30,7 @@ describe("cursor plugins", () => {
     });
 
     it("marketplaceSettings is null", () => {
-      expect(cursor.section("plugins").marketplaceRegistration()).toBeNull();
+      expect(nativeOf(cursor.section("plugins")).marketplaceRegistration()).toBeNull();
     });
 
     it("userPluginsBaseDir returns ~/.cursor/plugins/local resolved from given homedir", () => {

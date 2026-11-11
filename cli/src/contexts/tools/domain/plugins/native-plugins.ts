@@ -68,31 +68,31 @@ export class NativePlugins extends PluginDeliveryBase {
   get kind(): "native" {
     return "native";
   }
-  override translatesAsMarketplace(): boolean {
+  translatesAsMarketplace(): boolean {
     return this.#translationMode === "marketplace";
   }
-  override requiresUserScope(): boolean {
+  requiresUserScope(): boolean {
     return this.#installScope === "user";
   }
-  override manifestPath(): string | null {
+  manifestPath(): string | null {
     return this.#manifestRelativePath;
   }
-  override rootToken(): string {
+  rootToken(): string {
     return this.#pluginRootToken;
   }
   hooksAcceptance(): HooksAcceptance {
     return this.#hooksSupport;
   }
-  override trustNotice(): string | null {
+  trustNotice(): string | null {
     return this.#hooksTrustNotice;
   }
-  override activation(): NativeActivation | null {
+  activation(): NativeActivation | null {
     return this.#nativeActivation;
   }
-  override marketplaceRegistration(): MarketplaceRegistration | null {
+  marketplaceRegistration(): MarketplaceRegistration | null {
     return this.#registration;
   }
-  override projectHooksDelivery(): ProjectHooksPlacement | null {
+  projectHooksDelivery(): ProjectHooksPlacement | null {
     return this.#projectHooks;
   }
   /** Whether the tool takes a plugin's MCP file, and where it lands in the plugin directory. */
@@ -103,11 +103,25 @@ export class NativePlugins extends PluginDeliveryBase {
   hooksFilePath(): string {
     return this.#hooksRelativePath;
   }
-  override hookScript(pluginPath: string, content: string): string {
+  hookScript(pluginPath: string, content: string): string {
     return this.#delivered(pluginPath, content);
   }
-  override pluginOutputDir(pluginName: string): string {
+  pluginOutputDir(pluginName: string): string {
     return `${this.#pluginsDir}${pluginName}/`;
+  }
+  override copiesFilesGlobally(): boolean {
+    return this.requiresUserScope() || super.copiesFilesGlobally();
+  }
+  override supportsUserScopeActivation(): boolean {
+    return (
+      this.#nativeActivation !== null ||
+      this.requiresUserScope() ||
+      super.supportsUserScopeActivation()
+    );
+  }
+  /** Whether enabling a plugin acts on the whole machine: the tool declares no scope arguments. */
+  enablementIsMachineGlobal(): boolean {
+    return this.#nativeActivation?.scopeArgs === undefined;
   }
   override userPluginsBaseDir(homedir: string): string | null {
     return this.#userPluginsDir?.(homedir) ?? super.userPluginsBaseDir(homedir);

@@ -16,7 +16,7 @@ import { flatOf, nativeOf } from "../../tools/testing/plugin-mode.js";
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
 
-const SOURCE_TOKEN = claude.section("plugins").rootToken() ?? "";
+const SOURCE_TOKEN = nativeOf(claude.section("plugins")).rootToken() ?? "";
 const HOOK_COMMAND = `node ${SOURCE_TOKEN}/hooks/journal.cjs session-start`;
 const SCRIPT = `#!/usr/bin/env node\n// carries ${SOURCE_TOKEN} in a comment\n`;
 const HOOKS_JSON = JSON.stringify({
@@ -65,8 +65,8 @@ describe("installing a plugin that ships hooks", () => {
     for (const tool of HOOK_HOSTS) {
       const manifest = contentEndingWith(installedFor(tool), "hooks.json") ?? "";
 
-      expect(manifest, tool.toolId).toContain(tool.section("plugins").rootToken());
-      if (tool.section("plugins").rootToken() === SOURCE_TOKEN) continue;
+      expect(manifest, tool.toolId).toContain(nativeOf(tool.section("plugins")).rootToken());
+      if (nativeOf(tool.section("plugins")).rootToken() === SOURCE_TOKEN) continue;
       expect(manifest, tool.toolId).not.toContain(SOURCE_TOKEN);
     }
   });
@@ -91,7 +91,7 @@ describe("installing a plugin that ships hooks", () => {
       // A tool that delivered no mcp file would pass the assertion below by never
       // reaching it, which is the failure shape this whole file exists to catch.
       expect(served, `${tool.toolId} installed no mcp file to check`).toBeDefined();
-      expect(served, tool.toolId).toContain(tool.section("plugins").rootToken());
+      expect(served, tool.toolId).toContain(nativeOf(tool.section("plugins")).rootToken());
     }
   });
 
