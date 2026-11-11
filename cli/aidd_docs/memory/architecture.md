@@ -27,6 +27,8 @@ flowchart LR
     Framework --> Tools
     Translate --> Tools
     Distribution --> Kernel["kernel"]
+    Distribution --> Shared["shared"]
+    Framework --> Shared
     Framework --> Kernel
     Tools --> Kernel
     Translate --> Kernel

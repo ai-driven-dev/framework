@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { HttpGet, HttpGetOptions } from "../../../src/runtime/http/http-client.js";
 import { GitHubReleaseResolverAdapter } from "../../../src/runtime/self-update/github-release-resolver-adapter.js";
+import type { HttpGet, HttpGetOptions } from "../../../src/shared/ports/http-get.js";
 
 function http(body: unknown): HttpGet & { calls: { url: string; options?: HttpGetOptions }[] } {
   const calls: { url: string; options?: HttpGetOptions }[] = [];

@@ -12,12 +12,14 @@ const FENCED_BLOCK = /```[\s\S]*?```/g;
 
 /**
  * A citation is rooted at the package (`src/…`, `tests/…`) or written relative to `src/`,
- * naming a top-level area directly (`kernel/…`, `contexts/…`). A bare `application/` or
- * `domain/` prefix is deliberately not matched: `application/json` is a media type and
- * `domain/ports` names a fragment, so a wider regex reports more noise than drift.
+ * naming a top-level area directly (`kernel/…`, `shared/…`, `contexts/…`). A bare
+ * `application/` or `domain/` prefix is deliberately not matched: `application/json` is a
+ * media type and `domain/ports` names a fragment, so a wider regex reports more noise than
+ * drift. A name that continues a longer path (`application/shared/x.ts`) is that path's own
+ * segment, not an area.
  */
 const CITED_PATH =
-  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+/g;
+  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
 
 /** `src/`-relative citations resolve under `src/`; rooted ones resolve as written. */
 function resolveCitation(cited: string): string {
@@ -118,5 +120,16 @@ describe("the guard itself", () => {
     expect(resolveCitation("kernel/gone.ts")).toBe("src/kernel/gone.ts");
     expect(exists(resolveCitation("kernel/gone.ts")), "and it is checked, not skipped").toBe(false);
     expect(exists(resolveCitation("kernel/errors.ts")), "a live one still passes").toBe(true);
+  });
+
+  it("reads a shared/ segment of a longer path as part of it, not as an area", () => {
+    expect(citedInProse("Through `application/shared/remove-project-hooks.ts`.")).toEqual([]);
+  });
+
+  it("checks a path under shared/ like one under kernel/", () => {
+    const cited = citedInProse("The port lives in `shared/gone.ts`.");
+
+    expect(cited).toEqual(["shared/gone.ts"]);
+    expect(exists(resolveCitation("shared/gone.ts"))).toBe(false);
   });
 });

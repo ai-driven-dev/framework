@@ -7,8 +7,8 @@ import {
   UpdateError,
 } from "../../kernel/errors.js";
 import type { Logger } from "../../kernel/ports/logger.js";
+import type { HttpGet } from "../../shared/ports/http-get.js";
 import type { TokenProvider } from "../auth/ports/token-provider.js";
-import type { HttpGet } from "../http/http-client.js";
 import type { CliRelease, SelfUpdater } from "./self-updater.js";
 
 // release-please tags this package per component: `cli-v<semver>`, never a bare `v<semver>`,

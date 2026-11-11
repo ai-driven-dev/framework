@@ -68,10 +68,8 @@ import { StatusUseCase } from "../../contexts/framework/application/status-use-c
 import { UninstallIdeUseCase } from "../../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../../contexts/framework/application/uninstall/uninstall-use-case.js";
-import type { Environment } from "../../contexts/framework/domain/ports/environment.js";
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
-import { EnvironmentAdapter } from "../../contexts/framework/infrastructure/environment-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
@@ -98,17 +96,19 @@ import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-ca
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
+import { GitHubAdapter } from "../../shared/infrastructure/github-adapter.js";
+import { HttpClient } from "../../shared/infrastructure/http-client.js";
+import type { Environment } from "../../shared/ports/environment.js";
 import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
 import { AuthProviderAdapter } from "../auth/auth-provider-adapter.js";
 import { AuthReaderAdapter } from "../auth/auth-reader-adapter.js";
 import { AuthStorage } from "../auth/auth-storage.js";
 import { GhCliAdapter } from "../auth/gh-cli-adapter.js";
-import { GhTokenAdapter } from "../auth/gh-token-adapter.js";
 import type { CredentialStore } from "../auth/ports/credential-store.js";
 import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
-import { HttpClient } from "../http/http-client.js";
 import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
 import { CheckUpdateUseCase } from "../self-update/check-update-use-case.js";
@@ -229,7 +229,7 @@ export async function createDeps(
   const credentialStore = new AuthProviderAdapter(
     authStorage,
     new Map([["gh", ghCliAdapter]]),
-    new GhTokenAdapter(http),
+    new GitHubAdapter(http),
     projectRoot
   );
   const cliUpdater = new SelfUpdaterAdapter(http, {

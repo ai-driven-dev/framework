@@ -1,4 +1,4 @@
-import type { Environment } from "../../../src/contexts/framework/domain/ports/environment.js";
+import type { Environment } from "../../../src/shared/ports/environment.js";
 
 export class InMemoryEnvironment implements Environment {
   private readonly values: Map<string, string>;

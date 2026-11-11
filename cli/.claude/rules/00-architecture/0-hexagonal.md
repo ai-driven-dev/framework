@@ -3,6 +3,7 @@ description: Apply inside a context; four layers, dependencies pointing inward, 
 paths:
   - "src/contexts/**/*.ts"
   - "src/runtime/**/*.ts"
+  - "src/shared/**/*.ts"
 ---
 
 # Layers Inside a Context
@@ -23,8 +24,8 @@ Which context owns a concept is `0-contexts.md`.
 
 ## Ports and adapters
 
-- One context: `domain/ports/`. Two: `kernel/ports/`.
-- Name an adapter `*Adapter`, in `infrastructure/`; `runtime/` for a kernel port.
+- One context: `domain/ports/`. Two: `shared/ports/`.
+- Name an adapter `*Adapter`, in `infrastructure/`; `shared/infrastructure/` for a shared port.
 - An adapter does I/O and format translation only.
 - Inject through the constructor, typed as the port.
 - One adapter, one port; `FileAdapter` is recorded debt.

@@ -7,21 +7,7 @@ import {
   HttpNotFoundError,
   HttpRedirectError,
 } from "../../kernel/errors.js";
-
-export interface HttpGetOptions {
-  token?: string;
-  accept?: string;
-}
-
-export interface HttpResponse {
-  body: Buffer | unknown;
-  statusCode: number;
-  contentType: string;
-}
-
-export interface HttpGet {
-  get(url: string, options?: HttpGetOptions): Promise<HttpResponse>;
-}
+import type { HttpGet, HttpGetOptions, HttpResponse } from "../ports/http-get.js";
 
 function collectBuffer(response: IncomingMessage): Promise<Buffer> {
   return new Promise((resolve, reject) => {

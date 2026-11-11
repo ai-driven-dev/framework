@@ -1,7 +1,7 @@
 import { AuthenticationError } from "../../kernel/errors.js";
-import type { HttpGet } from "../http/http-client.js";
-import type { TokenAuthProvider } from "./ports/oauth-provider.js";
-export class GhTokenAdapter implements TokenAuthProvider {
+import type { HttpGet } from "../ports/http-get.js";
+
+export class GitHubAdapter {
   constructor(private readonly http: HttpGet) {}
 
   async verifyToken(token: string): Promise<string> {

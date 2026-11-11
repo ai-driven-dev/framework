@@ -11,7 +11,7 @@ Organise by bounded context, never by layer.
 ## Chain
 
 - Allowed edges live in `tests/architecture/helpers.ts` (`ALLOWED`).
-- Arrows run one way, toward the kernel.
+- Arrows run one way, toward `shared/` and the kernel.
 - `presentation` and `runtime` depend on any context.
 - A context depending on either is `BASELINE` debt; it only shrinks.
 - `context-graph.arch.test.ts` fails any other edge.
@@ -19,10 +19,11 @@ Organise by bounded context, never by layer.
 
 ## Kernel
 
-- `kernel/` imports no context.
-- Keep only shared vocabulary: types, pure helpers, typed errors.
-- A port two contexts need lives in `kernel/ports/`.
-- A domain decision is never kernel material.
+- `kernel/` is the old home of the shared vocabulary: no new file enters it (`old-layout-count.arch.test.ts` holds its path set).
+- A new typed error still goes into its `errors.ts` until the kernel drains.
+- It imports no context and nothing from `shared/`.
+- A technology port two contexts need goes to `shared/ports/`, its adapter to `shared/infrastructure/`, which only the composition root imports.
+- A domain decision is never shared material.
 
 ## Interior
 

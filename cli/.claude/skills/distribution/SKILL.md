@@ -11,7 +11,7 @@ description: >
 
 # Distribution
 
-`distribution` is a leaf: it depends on `kernel` only, and knows no tool and no manifest. It
+`distribution` is a leaf: it depends on `kernel` and `shared/ports` only, and knows no tool and no manifest. It
 answers exactly one question — where does content come from, and how is it fetched — for
 whoever asks. `framework` is the only context that reaches it (`framework → distribution`); a
 plugin's own content and how it gets translated are someone else's job once it has arrived here.

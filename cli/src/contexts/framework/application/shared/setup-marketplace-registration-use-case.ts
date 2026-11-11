@@ -5,6 +5,7 @@ import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { PluginSource } from "../../../../kernel/source.js";
 import type { TokenProvider } from "../../../../runtime/auth/ports/token-provider.js";
 import type { LatestReleaseResolver } from "../../../../runtime/self-update/latest-release-resolver.js";
+import type { Environment } from "../../../../shared/ports/environment.js";
 import type { MarketplaceRefresh } from "../../../distribution/application/marketplace-refresh-use-case.js";
 import type {
   MarketplaceRegisterFramework,
@@ -12,7 +13,6 @@ import type {
 } from "../../../distribution/application/marketplace-register-framework-use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
-import type { Environment } from "../../domain/ports/environment.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import type { SetupFlow } from "../../domain/setup-flow.js";
 import type { SetupMarketplaceSourceUseCase } from "../setup/setup-marketplace-source-use-case.js";

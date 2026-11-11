@@ -86,10 +86,13 @@ src/
 │       ├── domain/
 │       │   └── formats/
 │       └── infrastructure/
-├── kernel/    # shared vocabulary — imports no context, carries no business logic
+├── kernel/    # old home of the shared vocabulary, receives no new file. Imports no context
 │   ├── materialization/    # where content lands and how its links follow
-│   ├── ports/    # a port two or more contexts both need
+│   ├── ports/
 │   └── reading/    # getting at a file's location and its content safely
+├── shared/    # technology ports and their adapters. Imports no context
+│   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
+│   └── ports/    # a technology port two or more contexts need
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
 │   ├── commands/    # one file per command, wiring only
 │   ├── display/    # rendering a result
@@ -101,7 +104,6 @@ src/
     │   └── ports/
     ├── filesystem/
     ├── git/
-    ├── http/
     ├── platform/
     ├── project-root/
     ├── prompter/
@@ -111,10 +113,11 @@ src/
 
 ## Areas
 
-- `src/kernel/`: what two or more contexts both speak. No context import, no business logic.
+- `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
+- `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
 - `src/contexts/`: the five bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
-- `src/runtime/`: services that are not a context — http, git, auth, assets, filesystem, self-update — and the wiring that composes everything.
+- `src/runtime/`: services that are not a context — git, auth, assets, filesystem, self-update — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
 - `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.
@@ -134,5 +137,5 @@ src/
 | a tool | one profile directory under `contexts/tools/domain/profiles/` |
 | a transform shared by two profiles | `contexts/tools/domain/formats/`; used by one, that profile's own directory |
 | a port used by one context | that context's `domain/ports/`, adapter in its `infrastructure/` |
-| a port used by two | `kernel/ports/`, adapter in `runtime/` |
+| a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |
 | a runtime service | `runtime/<service>/`, wired from `runtime/wiring/` |
