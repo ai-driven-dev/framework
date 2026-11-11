@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { antigravityProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
+import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
 describe("antigravity", () => {
@@ -37,8 +37,8 @@ describe("antigravity", () => {
       flatHooksDir: ".agents/hooks/",
       hooksDestination: "project",
       projectHooksRelativePath: ".agents/hooks.json",
-      projectHooksFormat: antigravityProjectHooksFormat,
     });
+    expect(antigravity.capabilities.plugins.projectHooksFormat?.merge).toBe(mergeAntigravityHooks);
     expect(Object.keys(antigravity.capabilities).sort()).toEqual(["plugins", "skills"]);
   });
 });

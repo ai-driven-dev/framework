@@ -3,7 +3,10 @@ import { dirname, join, posix } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { ProjectHookEntry, ProjectHooksFormat } from "../../../tools/domain/hooks-format.js";
+import type {
+  ProjectHookEntry,
+  ProjectHooksFormat,
+} from "../../../tools/domain/capabilities/plugins-capability.js";
 import { projectHooksDeliveryOf } from "../../../tools/domain/registry.js";
 import type {
   InstalledPlugin,

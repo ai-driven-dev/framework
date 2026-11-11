@@ -17,11 +17,12 @@ import type { ToolBuildContract } from "./build-contract.js";
 import type {
   EnvironmentReader,
   GlobalFiles,
+  HookScript,
   NativeActivation,
   PluginsCapability,
+  ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
-import type { ProjectHooksFormat } from "./hooks-format.js";
 
 /** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by
  * translate, because it is read off a tool's own plugins capability — a tool's build mode is
@@ -204,9 +205,12 @@ export function projectHooksFileOf(toolId: ToolId): string | undefined {
 }
 
 /** The project hooks file a tool merges plugin hooks into, or `null` when it has none. */
-export function projectHooksDeliveryOf(
-  toolId: ToolId
-): { relativePath: string; format: ProjectHooksFormat; toolName: string } | null {
+export function projectHooksDeliveryOf(toolId: ToolId): {
+  relativePath: string;
+  format: ProjectHooksFormat;
+  toolName: string;
+  hookScript: HookScript;
+} | null {
   const config = getToolConfig(toolId);
   if (!isAiTool(config)) return null;
   const cap = resolvePluginsCapability(toolId);
@@ -216,6 +220,7 @@ export function projectHooksDeliveryOf(
     relativePath: cap.projectHooksRelativePath,
     format: cap.projectHooksFormat,
     toolName: config.displayName,
+    hookScript: cap.hookScript,
   };
 }
 

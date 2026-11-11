@@ -38,7 +38,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/capabilities/plugins-capability.ts",
     "src/contexts/tools/domain/marketplace-settings.ts",
     "src/contexts/tools/domain/plugin-translation-mode.ts",
-    "src/contexts/tools/domain/hooks-format.ts",
     "src/contexts/tools/domain/models/plugin-install-notice.ts",
     // The variable each tool expands to an installed plugin's directory: a tool declares it,
     // translate substitutes it, the diagnostic looks for it in what was installed.

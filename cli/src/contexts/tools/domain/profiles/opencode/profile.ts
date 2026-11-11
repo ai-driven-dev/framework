@@ -21,20 +21,13 @@ import {
   convertCommandFrontmatterNoHint,
   stripToolSuffix,
 } from "../../formats/command.js";
+import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
+import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
-import {
-  makeOpencodeHooksBridgePath,
-  OPENCODE_DIRECTORY,
-  OPENCODE_EVENTS_ASSET,
-  OPENCODE_EVENTS_PATH,
-  OPENCODE_FLAT_HOOKS_DIR,
-  OPENCODE_HOOKS_DIR,
-  OPENCODE_PLUGIN_ENTRY_BASENAME,
-  opencodeGlobalFilePath,
-} from "./opencode-paths.js";
+import { OPENCODE_DIRECTORY, opencodeGlobalFilePath } from "./opencode-paths.js";
 
 const DIRECTORY = OPENCODE_DIRECTORY;
 const TOOL_SUFFIX = ".opencode.md";
@@ -52,7 +45,7 @@ export const opencode: AiTool<
   displayName: "OpenCode",
   signalDir: ".opencode/commands",
   configOutputPaths: { "opencode.json": "opencode.json" },
-  pluginRuntimeFiles: { [OPENCODE_EVENTS_ASSET]: OPENCODE_EVENTS_PATH },
+  pluginRuntimeFiles: { [OPENCODE_HOOKS.bridgeRuntime.asset]: OPENCODE_HOOKS.bridgeRuntime.path },
   buildContracts: { flat: buildOpencodeFlatContract },
 
   capabilities: {
@@ -111,17 +104,7 @@ export const opencode: AiTool<
         dir: (homedir) => join(homedir, ".config", "opencode"),
         map: opencodeGlobalFilePath,
       },
-      acceptsHooks: true,
-      flatHooksDir: OPENCODE_HOOKS_DIR,
-      flatHooksLoaderEntry: {
-        dir: OPENCODE_FLAT_HOOKS_DIR,
-        baseName: OPENCODE_PLUGIN_ENTRY_BASENAME,
-      },
-      flatHooksBridge: {
-        generate: generateOpencodeHooksBridge,
-        path: makeOpencodeHooksBridgePath,
-        skipIfSourceHas: OPENCODE_PLUGIN_ENTRY_BASENAME,
-      },
+      ...flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge),
     }),
   },
 

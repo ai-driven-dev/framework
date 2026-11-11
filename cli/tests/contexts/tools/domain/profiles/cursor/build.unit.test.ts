@@ -238,11 +238,11 @@ describe("buildCursorFlatContract()", () => {
     expect({
       declaration: hooks.path("aidd-dev", "hooks/aidd-dev.hooks.json"),
       script: hooks.path("aidd-dev", "hooks/journal.cjs"),
-      mergeDest: hooks.hooksMergeDest?.("/out"),
+      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
     }).toStrictEqual({
       declaration: ".cursor/hooks/aidd-dev.hooks.json",
       script: ".cursor/hooks/aidd-dev/journal.cjs",
-      mergeDest: "/out/.cursor/hooks.json",
+      file: [".cursor/hooks.json", true],
     });
   });
 

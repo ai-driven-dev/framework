@@ -151,8 +151,7 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
   { path: "src/contexts/tools/domain/formats/opencode-mcp-merge.ts", named: 4 },
   { path: "src/contexts/tools/domain/formats/plugin-root-token.ts", named: 2 },
   { path: "src/contexts/tools/domain/formats/vscode-mcp-merge.ts", named: 1 },
-  { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 3 },
-  { path: "src/contexts/translate/domain/formats/cursor-hooks.ts", named: 7 },
+  { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
   { path: "src/contexts/translate/domain/formats/plugin-root-token-rewrite.ts", named: 1 },
 ];
 

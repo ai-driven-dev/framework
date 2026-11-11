@@ -4,7 +4,7 @@
  * `CLAUDE.md` takes `@aidd_docs/…` imports, while `AGENTS.md` and the copilot instructions
  * take markdown links, where an `@` line is inert text that loads nothing and reports nothing.
  *
- * The expected form is read from `update_memory.js`'s own `TARGET_FILES`, never restated
+ * The expected form is read from `memory.cjs`'s own `TARGET_FILES`, never restated
  * here: a second copy of that table could disagree with the one that writes.
  */
 
@@ -12,7 +12,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
-const HOOK = path.join(ROOT, "plugins", "aidd-context", "hooks", "update_memory.js");
+const HOOK = path.join(ROOT, "plugins", "aidd-context", "hooks", "memory.cjs");
 
 const BLOCK_OPEN = "<!-- aidd_project_memory:start -->";
 const BLOCK_CLOSE = "<!-- aidd_project_memory:end -->";
@@ -46,7 +46,7 @@ function referenceForm(line) {
 }
 
 /** A file with no block, and one whose markers are unpaired, both yield nothing:
- * `update_memory.js` reports the unpaired case itself, and two voices for one fault
+ * `memory.cjs sync` reports the unpaired case itself, and two voices for one fault
  * help nobody. */
 function referenceFormProblems(content, expected) {
   const lines = content.split("\n");
