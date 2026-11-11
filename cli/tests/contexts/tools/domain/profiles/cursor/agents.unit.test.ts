@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import {
-  inMarketplace,
-  installed,
-  NAMED_AGENT,
-  UNNAMED_AGENT,
-} from "../../../testing/agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
 
 const PREFIXED = `---
 name: "aidd-dev-planner"
@@ -22,15 +17,6 @@ describe("cursor agents", () => {
 name: "planner"
 description: "Plans the work"
 model: "m[effort=high]"
----
-Plan before building.
-`);
-    });
-
-    it("names an unnamed plugin agent after its file", () => {
-      expect(installed(cursor, UNNAMED_AGENT)).toBe(`---
-name: "planner"
-description: "Plans the work"
 ---
 Plan before building.
 `);

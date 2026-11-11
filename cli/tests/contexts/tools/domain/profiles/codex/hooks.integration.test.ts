@@ -22,13 +22,6 @@ describe("codex hooks", () => {
     it("uses SessionStart as entry section", () => {
       expect(codex.capabilities.hooks.getEntrySection()).toBe("SessionStart");
     });
-
-    it("returns null entry section for unknown config names", () => {
-      const cap = [codex.capabilities.mcp, codex.capabilities.hooks].find((c) =>
-        c.consumes.includes("unknown")
-      );
-      expect(cap).toBeUndefined();
-    });
   });
 });
 

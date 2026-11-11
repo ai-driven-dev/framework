@@ -24,12 +24,11 @@ const CLAUDE_MARKETPLACE_SCHEMA_FILE = "claude-marketplace-manifest.json";
 const CODEX_MARKETPLACE_SCHEMA_FILE = "codex-marketplace-manifest.json";
 const CODEX_PLUGIN_MANIFEST_SCHEMA_FILE = "codex-plugin-manifest.json";
 
-const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset>>>> = {
+const CONFIG_ASSETS: Readonly<Partial<Record<ToolId, Readonly<Record<string, ConfigAsset>>>>> = {
   claude: { "settings.json": claudeSettings },
   cursor: { "settings.json": cursorSettings },
   copilot: { "vscode-settings.json": copilotVscodeSettings },
   kilo: { "kilo.json": kiloJson },
-  antigravity: {},
   opencode: { "opencode.json": opencodeJson, "opencode-events.js": opencodeEvents },
   codex: { "config.toml": codexConfigToml },
   vscode: {
@@ -51,7 +50,7 @@ export class BundledAssetProviderAdapter implements AssetProvider {
   private readonly schemaCache = new Map<SchemaName, object>();
 
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
-    const asset = CONFIG_ASSETS[toolId][fileName];
+    const asset = CONFIG_ASSETS[toolId]?.[fileName];
     if (asset === undefined) {
       throw new AssetNotFoundError(`${toolId}/${fileName}`);
     }

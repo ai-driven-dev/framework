@@ -7,6 +7,24 @@ import {
 } from "../../../../../src/contexts/tools/domain/formats/command.js";
 
 describe("stripToolSuffix", () => {
+  it("strips the suffix and replaces it with .md", () => {
+    expect(stripToolSuffix(".claude.md", "ide-mapping.claude.md")).toBe("ide-mapping.md");
+  });
+
+  it("returns the filename unchanged when the suffix does not match", () => {
+    expect(stripToolSuffix(".claude.md", "ide-mapping.cursor.md")).toBe("ide-mapping.cursor.md");
+  });
+
+  it("strips the suffix of a nested path", () => {
+    expect(stripToolSuffix(".claude.md", "04-tooling/ide-mapping.claude.md")).toBe(
+      "04-tooling/ide-mapping.md"
+    );
+  });
+
+  it("returns a file with no tool suffix unchanged", () => {
+    expect(stripToolSuffix(".claude.md", "generic.md")).toBe("generic.md");
+  });
+
   it("strips the suffix off the last segment of a deeply nested path only", () => {
     expect(stripToolSuffix(".claude.md", "a/b/c.claude.md")).toBe("a/b/c.md");
   });

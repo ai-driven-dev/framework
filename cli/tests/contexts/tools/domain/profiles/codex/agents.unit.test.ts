@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import {
-  inMarketplace,
-  installed,
-  NAMED_AGENT,
-  UNNAMED_AGENT,
-} from "../../../testing/agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
 
 const PREFIXED = `name = "aidd-dev-planner"
 description = "Plans the work"
@@ -21,13 +16,6 @@ describe("codex agents", () => {
 description = "Plans the work"
 model = "m"
 model_reasoning_effort = "high"
-developer_instructions = "Plan before building.\\n"
-`);
-    });
-
-    it("names an unnamed plugin agent after its file", () => {
-      expect(installed(codex, UNNAMED_AGENT)).toBe(`name = "planner"
-description = "Plans the work"
 developer_instructions = "Plan before building.\\n"
 `);
     });

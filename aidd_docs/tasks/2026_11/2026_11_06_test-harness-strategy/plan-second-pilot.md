@@ -102,7 +102,7 @@ Out, as scope limits and not exceptions (no line of these files changes):
 | The OpenCode V2 plugin API; the "changed files this turn" runtime helper (plugin side); the open event-relay changes | behaviour changes or a plugin-side concern, never inside a refactor (`target/00-overview.md:170`) | their own PRs |
 | Invariants I4, I5, I7, I8, I10 (`target/04-tools-and-translate.md:78-84`) | they need a translation output to check, which is the engine of form 1 | stage D; see A7 |
 | The 809-line `flat-build-strategy.integration.test.ts` (`test-file-size.arch.test.ts:28` BASELINE), under `tests/contexts/translate/` | `translate`'s own file; if phase 6's `HooksMergeRequest` edits it, the pilot must at least not grow it | `translate`'s own PR: about 9 cases go to the existing `.agent-path.integration` (127 lines) and `.plugin-root.integration` (122) split files |
-| The bug found while measuring: `SkillsCapability` in `prefix` mode hard-wires `.agents/skills/` in `accepts()` and `buildOutputPath()` (`skills-capability.ts`), true for antigravity only because its directory is `.agents/` | a behaviour change, never inside a refactor (`target/00-overview.md:170`) | its own `fix/` PR; conformance case K3 below would have caught it for a new tool |
+| The bug found while measuring: `SkillsCapability` in `prefix` mode hard-wires `.agents/skills/` in `accepts()` and `buildOutputPath()` (`skills-capability.ts`), true for antigravity only because its directory is `.agents/` | a behaviour change, never inside a refactor (`target/00-overview.md:170`) | its own `fix/` PR; conformance case K3 does not catch it: codex also installs skills to `.agents/skills/`, so the hard-wire holds there, and skills and mcp paths are outside K3 |
 
 ## Measured baseline
 
@@ -319,6 +319,8 @@ Definitions, the reference's own (`ref:15-17`), with one addition for a slice, f
 | A8 | `target/04-tools-and-translate.md:245,344`: reduce the `build.unit` tests to what the golden does not cover | `target/00-overview.md:134`, `ref:112`: a behaviour is tested at the lowest level that proves it | the lowest level (the overview wins): no unit case is deleted because the golden holds it; the golden is never the holder of an inverted proof |
 | A9 | `target/04-tools-and-translate.md:139,293`: one shared `event-bridge` | the landed `cli/aidd_docs/memory/architecture.md` (hooks bullet): one descriptor per tool, one host adapter per tool | one descriptor per tool now; merging the bridges is its own PR (scope limit) |
 | A10 | the design bar of this plan: `node:path` only | `ref:79` (reference section 4): `node:path` and `node:crypto` | the reference wins |
+| A11 | K3 above: every path a profile computes for a sample plugin tree stays under `directory` | codex installs skills to `.agents/skills/`, outside `.codex/`; mcp files sit outside the directory for several tools | K3 narrowed to commands, rules, agents and flat hooks under `directory`, and every supported artefact path relative; skills and mcp paths are not asserted |
+| A12 | K8 above: `onMultipleCandidates` behaviour fixed for zero, one or several config candidates | `onMultipleCandidates` and `configCandidates` exist only in `target/04-tools-and-translate.md:63,83`, nowhere in `src/` | K8 dropped: no code for an input never observed, stated as a limit |
 
 ### Migration state
 
@@ -430,7 +432,7 @@ Acceptance: `pnpm typecheck`, the slice command green, same count.
 
 Files: `testing/profile-conformance.ts`, `testing/profiles.ts`, `domain/profiles/profile-conformance.unit.test.ts`, `domain/catalog.unit.test.ts`, `domain/formats/command.unit.test.ts`, `contexts/translate/domain/{build-target,plugin-format}.unit.test.ts`, the 8 `profiles/<tool>/profile.unit.test.ts`, the 44 parallel files, the 5 hooks files, the 8 root files, `asset-loader.ts`, `golden/framework-build-golden.golden.test.ts` (`FLAT_TARGETS` and the cell-count strings derived from the catalog), `contexts/framework/application/uninstall-use-case.unit.test.ts` (the error string built from `AI_TOOL_IDS`).
 
-1. Opus decides the content of K1 to K12 and of the kit's broken-profile and broken-descriptor builders (the design decision of this phase); sonnet writes them, each case seen red against its broken value. Opus decides K9 to K12 and `CANONICAL_HOOK_EVENTS` from the peer hooks map, [hooks-host-map.md](hooks-host-map.md), kept beside this plan as input. Declared events are those observed fired, not documented-only: SubagentStop is declared for Codex alone among Claude, Codex and Copilot; agy declares no UserPrompt and no SessionEnd.
+1. Opus decides the content of K1 to K12 and of the kit's broken-profile and broken-descriptor builders (the design decision of this phase); sonnet writes them, each case seen red against its broken value. Opus decides K9 to K12 and `CANONICAL_HOOK_EVENTS` from the peer hooks map, [hooks-host-map.md](hooks-host-map.md), kept beside this plan as input. Declared events are those observed fired, not documented-only: SubagentStop is declared for Codex and Copilot, as the host map says; agy declares no UserPrompt and no SessionEnd.
 2. The loop over `REGISTERED_PROFILES`; `registry-conformance` split by its row.
 3. The 34 small and 10 longer parallel files and the 5 hooks files read case by case (A6); every move written in Appendix A with its proof.
 4. The catalog test over synthetic profiles; `asset-loader.ts` partial map (C2 green).
@@ -497,7 +499,7 @@ Acceptance: Appendix B and the verdict filled; `git status --short` shows the pl
 - Merging the per-profile scopes makes `tools` the longest scope in CI, which is why it was split (`mutation-scopes.json` `$comment`); phase 8 shards it and reports the widest leg. Every scope a change touches still gates per PR today (`ref:134`).
 - The planning times ran under concurrent load; only phase 1's quiet runs compare with phase 11's.
 - The measuring run's headline count (38) and its named list (40) disagree; the named list is used and phase 1 re-counts.
-- Found while measuring, out of scope: the `SkillsCapability` prefix-mode path hard-wire; and `framework-build-golden.golden.test.ts` carries a stale "9-cell" comment beside its "11 cells".
+- Found while measuring, out of scope: the `SkillsCapability` prefix-mode path hard-wire. The golden test's stale "9-cell" comment is gone: its cell counts derive from the matrix.
 
 ## Appendix A: traceability
 
@@ -513,6 +515,29 @@ Phase 2 characterization proofs (slice plus new files, run through the sandbox):
 | C3 set of registered tools equals `AI_TOOL_IDS` plus `IDE_TOOL_IDS` | `IDE_TOOL_IDS = []` in `kernel/tool.ts`: C3 red together with 3 tests of `tool-config.unit.test.ts` (4 failed). Deleting the vscode import in `framework.ts`: nothing red, vscode still registers through another import | dropped: another test goes red for the kernel-side break and no registry-side break was found that C3 alone catches (relevance rule); not written |
 
 Slice plus kept new files: 610 tests in 78 files (601 baseline, 1 for C1, 8 for C2).
+
+Phase 6 proofs (file and title, verdict, target, proof). Every proof: break by hand, the named target goes red, revert.
+
+| File | Title | Verdict | Target | Proof |
+| --- | --- | --- | --- | --- |
+| hooks-descriptor-contract.integration | has a descriptor exactly when it runs hooks | moved | profile-conformance-files "has a hooks descriptor exactly when it runs hooks" | added profiles/vscode/hooks.ts (export {}) -> target red (and "reads at least one" red), reverted |
+| hooks-descriptor-contract.integration | descriptor exported under the tool's name | moved | profile-conformance-files "exports its descriptor under the tool's name" | renamed CODEX_HOOKS to CODEX_HOOK in codex hooks/profile/build -> target red, reverted |
+| hooks-descriptor-contract.integration | comes with a captured payload | moved, tightened to one per relayed event | profile-conformance-files "comes with one captured payload per event it relays" | moved fixtures codex-Stop.json away -> target red, restored |
+| hooks-descriptor-contract.integration | reads at least one tool that runs hooks and one that runs none | kept | profile-conformance-files same title | ghost vscode/hooks.ts -> red |
+| hooks-descriptor invariants (new) | 7 builders | added | hooks-descriptor-invariants.unit | each refuse() in declareHooks voided one by one -> exactly its case(s) red, restored |
+| profile checks (new, 16+6) | each check | added | profile-conformance-proof.unit | no-op'd holds of 3 profile checks and 1 file check -> that check's "fails its own broken profile" red, restored |
+| registry-conformance.unit (25 cases) | each case | moved to `PROFILE_CHECKS` or `catalog.unit` / `catalog-registered.unit` | the check or catalog case of the same name | uniqueness, directory, probe, token, suffix, hooks support, mcp, plugins each broken in the registered profile or a kit profile: that check red, not another; the kilo and opencode marketplace probe row goes red when either drops its probe |
+| registry.unit (9) | each case | moved | `catalog.unit` | duplicate check, replacing unknown, replacing swap, copy of `getAllRegisteredTools`, `hasToolSignals` guard: each mutation reds its case |
+| tool-config.unit (14) | each case; line 26 | moved; line 26 deleted | `catalog.unit`; line 26 by the swap proof | swapping two registered profiles turns other cases red |
+| host-ref-in-use.unit, plugin-enablement-is-machine-global.unit, build-hooks-support-declaration.unit | each case | moved | `catalog-registered.unit` rows and `profile-conformance` "lets its flat build carry hooks exactly when it accepts them" | `hostRefInUse`, enablement and build mode mutations red the named rows |
+| plugin-root-token-declaration.unit | declaration cases (4) | moved | `PROFILE_CHECKS` "declares a plugin root token exactly in native mode", "names a variable, never a path", "writes its own token into a marketplace build", "writes no token into a flat build" | claude `pluginRootToken` removed from `build.ts`: those checks red; the marketplace-route describe (2 cases) stays |
+| claude, codex, copilot, cursor `agents.unit` | names an unnamed plugin agent after its file (4) | deleted | `agents-capability.unit` "names an agent after its file when the frontmatter declares none" | `agents-capability.ts` `name: agentNameFromFrontmatter(fm, fileName)` replaced by `fm`: all 4 copies red, then after deletion the target stays red |
+| claude, copilot, cursor, opencode `plugins.unit` | has a plugins capability (4) | deleted | `PROFILE_CHECKS` "declares a plugins capability" | `plugins:` key renamed in each `profile.ts`: copy red and the check red for that tool |
+| claude, codex, copilot `mcp.unit` | consumes the mcp config name (3) | deleted | `PROFILE_CHECKS` "feeds its mcp file from the mcp config" | `consumes: [CONFIG_MCP]` emptied in each `profile.ts`: the check red for that tool |
+| claude `content.unit` | routes a numbered command folder under commands/aidd/<phase>/ | deleted, the check tightened to `toBe` | `PROFILE_CHECKS` "routes a numbered command and its references to the same folder" | the `@` prefix dropped in `rewriteContent`: the old `toContain` stayed green, the `toBe` form goes red; digit separator broken: red |
+| codex `hooks.integration` | returns null entry section for unknown config names | deleted | same file "uses SessionStart as entry section" | `getEntrySection` returning "x": the unknown-name case stays green, the target red |
+| uninstall-use-case.unit | refuses to remove nothing | rewritten, tool list derived from `VALID_TOOL_IDS` | itself | message list reversed in the source: red |
+| framework-build-golden.golden | matrix covers every tool | first half deleted (tautological once the matrix derives from `AI_TOOL_IDS`); the stored-cell half stays | the same test | cells keyed by id, `stored[key]` missing-cell assertion kept |
 
 ## Appendix B: after measures
 

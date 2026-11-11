@@ -109,6 +109,25 @@ export class DuplicateToolIdError extends Error {
   }
 }
 
+export type HooksInvariant =
+  | "unknown-event"
+  | "project-without-file"
+  | "loader-with-file"
+  | "path-outside-directory"
+  | "root-token-without-file"
+  | "adapter-not-stamped";
+
+export class InvalidHooksDescriptorError extends Error {
+  constructor(
+    readonly toolId: string,
+    readonly invariant: HooksInvariant,
+    detail: string
+  ) {
+    super(`The hooks descriptor of '${toolId}' breaks '${invariant}': ${detail}`);
+    this.name = "InvalidHooksDescriptorError";
+  }
+}
+
 export class ToolNotInManifestError extends Error {
   constructor(toolId: string) {
     super(`Tool '${toolId}' is not installed in the manifest.`);

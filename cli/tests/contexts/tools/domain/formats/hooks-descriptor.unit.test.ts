@@ -109,6 +109,7 @@ describe("a flat build's hooks artifact", () => {
         {
           file: FLAT_FILE,
           eventMap: { Start: ["start"] },
+          undeclaredEvents: "skipped",
           flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
         },
         { tool: "cursor" }
@@ -309,6 +310,7 @@ describe("a tool's plugins capability, as far as hooks go", () => {
       rootToken: ROOT,
       file: FLAT_FILE,
       eventMap: { Start: ["start"] },
+      undeclaredEvents: "skipped",
       project: {
         pluginFile: "hooks.json",
         sharedFile: ".tool/hooks.json",

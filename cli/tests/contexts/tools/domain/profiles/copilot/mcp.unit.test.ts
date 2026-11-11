@@ -6,10 +6,6 @@ describe("copilot mcp", () => {
     it("maps mcp to .vscode/mcp.json", () => {
       expect(copilot.capabilities.mcp.params.outputPath).toBe(".vscode/mcp.json");
     });
-
-    it("consumes the mcp config name", () => {
-      expect(copilot.capabilities.mcp.consumes).toContain("mcp");
-    });
   });
 
   describe("capabilities.mcp.params.transformContent()", () => {

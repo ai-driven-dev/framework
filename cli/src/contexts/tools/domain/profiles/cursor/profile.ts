@@ -23,9 +23,10 @@ import {
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
+import { CURSOR_DIRECTORY } from "./cursor-paths.js";
 import { CURSOR_HOOKS } from "./hooks.js";
 
-const DIRECTORY = ".cursor/";
+const DIRECTORY = CURSOR_DIRECTORY;
 const TOOL_SUFFIX = ".cursor.md";
 const MDC_EXT = ".mdc";
 

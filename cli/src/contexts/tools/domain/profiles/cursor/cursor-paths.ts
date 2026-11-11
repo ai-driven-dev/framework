@@ -2,6 +2,8 @@
  * equivalents even where the literal values coincide: a change to either side must not
  * collapse them. */
 
+export const CURSOR_DIRECTORY = ".cursor/";
+
 export const OUTPUT_CURSOR_MANIFEST_RELATIVE = ".cursor-plugin/plugin.json";
 
 export const OUTPUT_CURSOR_MARKETPLACE_RELATIVE = ".cursor-plugin/marketplace.json";

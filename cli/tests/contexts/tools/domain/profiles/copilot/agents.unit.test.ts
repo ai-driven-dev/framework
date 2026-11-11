@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import {
-  inMarketplace,
-  installed,
-  NAMED_AGENT,
-  UNNAMED_AGENT,
-} from "../../../testing/agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
 
 const NATIVE = `---
 name: 'planner'
@@ -21,16 +16,6 @@ describe("copilot agents", () => {
   describe("name resolution", () => {
     it("installs a plugin agent under its declared name, with the repository instructions", () => {
       expect(installed(copilot, NAMED_AGENT)).toBe(NATIVE);
-    });
-
-    it("names an unnamed plugin agent after its file", () => {
-      expect(installed(copilot, UNNAMED_AGENT)).toBe(`---
-name: 'planner'
-description: 'Plans the work'
-include-custom-instructions: true
----
-Plan before building.
-`);
     });
 
     it("keeps the declared name inside the plugin of a marketplace build", () => {

@@ -20,9 +20,10 @@ import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
+import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
 import { CLAUDE_HOOKS } from "./hooks.js";
 
-const DIRECTORY = ".claude/";
+const DIRECTORY = CLAUDE_DIRECTORY;
 const TOOL_SUFFIX = ".claude.md";
 
 function commandsDir(phase: string): string {

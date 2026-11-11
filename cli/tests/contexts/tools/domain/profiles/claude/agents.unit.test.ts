@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import {
-  inMarketplace,
-  installed,
-  NAMED_AGENT,
-  UNNAMED_AGENT,
-} from "../../../testing/agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
 
 describe("claude agents", () => {
   describe("name resolution", () => {
@@ -15,15 +10,6 @@ name: 'planner'
 description: 'Plans the work'
 model: 'm'
 effort: 'high'
----
-Plan before building.
-`);
-    });
-
-    it("names an unnamed plugin agent after its file", () => {
-      expect(installed(claude, UNNAMED_AGENT)).toBe(`---
-name: 'planner'
-description: 'Plans the work'
 ---
 Plan before building.
 `);

@@ -213,9 +213,9 @@ describe("the guard itself", () => {
 
   it("runs the scopes a change touches, through source or mirrored tests, and all of them for the harness or a helper", () => {
     expect(scopesToRun(["cli/src/kernel/paths.ts"], scopes)).toEqual(["kernel"]);
-    expect(
-      scopesToRun(["cli/tests/contexts/tools/domain/registry-conformance.unit.test.ts"], scopes)
-    ).toEqual(["tools"]);
+    expect(scopesToRun(["cli/tests/contexts/tools/domain/catalog.unit.test.ts"], scopes)).toEqual([
+      "tools",
+    ]);
     expect(scopesToRun(["README.md"], scopes)).toEqual([]);
     expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], scopes)).toEqual([
       "kernel",

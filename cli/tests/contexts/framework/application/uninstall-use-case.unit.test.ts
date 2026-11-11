@@ -8,7 +8,7 @@ import {
   NoManifestError,
   ToolNotInstalledError,
 } from "../../../../src/kernel/errors.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+import { type ToolId, VALID_TOOL_IDS } from "../../../../src/kernel/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -178,7 +178,7 @@ describe("uninstall — refusals", () => {
       })
     ).rejects.toThrow(
       new InputRequiredError(
-        "At least one tool ID is required. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode"
+        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
       )
     );
   });
