@@ -10,8 +10,9 @@
 | `tokens` | the semantic tokens its render uses, never a primitive |
 | `breakpoints` | each one `system.md` declares that the screen adapts to |
 | `route` | the path it answers |
-| `code` | the route's file, as `path#Export@version`, at the screen's version |
-| route file | search it before writing: the route mirrors the file path |
+| `code` | the route's file, as `path#Export@version`. Only when the app shows it today |
+| new or redesigned screen | no `code`: the app does not show it yet |
+| route file | file router: search it, the route mirrors the path. Else ask |
 | folder in parentheses | a group: the route leaves it out |
 | re-export | `export { default } from …` counts: link `path#default@version` |
 | no file found | only after that search: leave `code` out, say why |

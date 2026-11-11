@@ -291,7 +291,7 @@ function checksOf(problems, record, labels) {
   return `<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
 }
 
-/** The document of one state of a render: the tokens inline, every other state hidden. */
+/** The document of one state of a render: the tokens inline, every other state hidden. A render without `</head>` keeps every state visible in each frame: a known limit. */
 function stateDocument(render, tokens, state) {
   const hide = `<style>[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }</style>`;
   const doc = render.replaceAll(STYLESHEET_LINK, () => (tokens === null ? "" : `<style>\n${tokens}</style>`));
