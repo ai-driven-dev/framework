@@ -49,25 +49,54 @@ function markdownUnder(dir, relative = "") {
   });
 }
 
-/** Counted by occurrence; an approval quoting the line, list marker optional, keeps it out. */
+// A word counts when it carries a fact: a code span, a number, a path, or a long word. A
+// rewording changes short words; losing a fact drops one of these.
+const TOKEN = /`[^`\n]+`|[\p{L}\p{N}_][\p{L}\p{N}_./$-]*/gu;
+const LONG_WORD = 6;
+const isHard = (token) => token.startsWith("`") || /\p{N}/u.test(token) || /[/.]\p{L}/u.test(token);
+const tokensOf = (text) =>
+  (text.match(TOKEN) ?? [])
+    .map((token) => token.replace(/[.,;:]+$/u, "").toLowerCase())
+    .filter((token) => isHard(token) || (token.match(/\p{L}/gu) ?? []).length >= LONG_WORD);
+
+const tally = (tokens) => tokens.reduce((counts, token) => counts.set(token, (counts.get(token) ?? 0) + 1), new Map());
+
+/**
+ * The previous bank's lines whose facts the working bank lost, as `file: line`. A line held
+ * whole, or quoted by an approval, is kept. Any other is lost when a word it carries is held
+ * fewer times than before, across the whole bank: one hard word, two words, or every word it
+ * had. An approved `move <from> to <to>` rewrites the paths first. Limit: a line with no long
+ * word, number, path or code is never listed.
+ */
 function goneLines(previous, bankDir, approvals) {
-  const held = new Map();
-  for (const file of markdownUnder(bankDir)) {
-    for (const raw of fs.readFileSync(path.join(bankDir, file), "utf8").split("\n")) {
-      const line = collapse(raw);
-      held.set(line, (held.get(line) ?? 0) + 1);
-    }
-  }
-  const gone = [];
-  for (const { file, text } of previous) {
-    for (const raw of text.split("\n")) {
-      const line = collapse(raw);
-      if (line === "") continue;
-      if ((held.get(line) ?? 0) > 0) held.set(line, held.get(line) - 1);
-      else if (!approvals.some((fact) => fact.includes(line) || fact.includes(`"${unmarked(line)}"`))) gone.push(`${file}: ${line}`);
-    }
-  }
-  return gone;
+  const moves = approvals.map((fact) => fact.match(/^move\s+(\S+)\s+to\s+(\S+)/iu)).filter(Boolean);
+  const moved = (text) => moves.reduce((result, [, from, to]) => result.split(from).join(to), text);
+  const approved = (line) => approvals.some((fact) => fact.includes(line) || fact.includes(`"${unmarked(line)}"`));
+  const now = markdownUnder(bankDir).map((file) => fs.readFileSync(path.join(bankDir, file), "utf8")).join("\n");
+  const held = tally(now.split("\n").map(collapse));
+  const before = previous.flatMap(({ file, text }) =>
+    moved(text)
+      .split("\n")
+      .map(collapse)
+      .filter((line) => line !== "")
+      .map((line) => ({ file, line })),
+  );
+  const changed = before.filter(({ line }) => {
+    if ((held.get(line) ?? 0) === 0) return true;
+    held.set(line, held.get(line) - 1);
+    return false;
+  });
+  const kept = tally(tokensOf(now));
+  const had = tally(before.filter(({ line }) => !approved(line)).flatMap(({ line }) => tokensOf(line)));
+  const lost = new Set([...had].filter(([token, count]) => (kept.get(token) ?? 0) < count).map(([token]) => token));
+  return changed
+    .filter(({ line }) => !approved(line))
+    .filter(({ line }) => {
+      const words = tokensOf(line);
+      const gone = words.filter((token) => lost.has(token));
+      return gone.some(isHard) || gone.length >= 2 || (words.length > 0 && gone.length === words.length);
+    })
+    .map(({ file, line }) => `${file}: ${line}`);
 }
 
 module.exports = { previousBank, goneLines, git, succeeds, markdownUnder, collapse, unmarked };

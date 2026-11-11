@@ -662,7 +662,7 @@ function continuedWith(stdout) {
   return out.reason ?? out.followup_message ?? null;
 }
 
-const LOST_BANK = { [VCS]: "# VCS\n\n- keep\n- lose me\n" };
+const LOST_BANK = { [VCS]: "# VCS\n\n- keep\n- release pipeline\n" };
 
 /** A repository whose HEAD holds the bank, then `working` written over it. */
 function committed(working, files = LOST_BANK) {
@@ -682,7 +682,7 @@ for (const host of HOSTS) {
     assert.deepEqual({ status, stderr }, { status: 0, stderr: "" });
     const text = continuedWith(stdout);
     assert.match(text ?? "", /^aidd-context: 1 memory line lost/u, stdout);
-    assert.match(text, /^- aidd_docs\/memory\/vcs\.md: - lose me$/mu);
+    assert.match(text, /^- aidd_docs\/memory\/vcs\.md: - release pipeline$/mu);
     assert.match(text, /Restore a line only if they ask\.$/u, "the model is pushed to undo a removal the person asked for");
   });
 }
@@ -693,7 +693,7 @@ test("a turn end answers nothing when the turn is already a continuation, the ba
   assert.equal(run("claude", stopPayload("claude", committed({}))).stdout, "", "an unchanged bank");
   const sheet = "aidd_docs/tasks/t/facts.md";
   fs.mkdirSync(path.join(lost, path.dirname(sheet)), { recursive: true });
-  fs.writeFileSync(path.join(lost, sheet), '## Inferred\n\n- D1 | vcs.md > Setup | remove "- lose me": stale | aidd_docs/memory/vcs.md | yes\n');
+  fs.writeFileSync(path.join(lost, sheet), '## Inferred\n\n- D1 | vcs.md > Setup | remove "- release pipeline": stale | aidd_docs/memory/vcs.md | yes\n');
   assert.equal(run("claude", stopPayload("claude", lost)).stdout, "", "an approved removal");
 });
 

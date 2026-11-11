@@ -67,10 +67,10 @@ function checkSheet(sheetFile, root) {
   return problems;
 }
 
-/** Facts of `D` lines that `remove` or `replace`, answered yes. */
+/** Facts of `D` lines that `remove`, `replace` or `move`, answered yes. */
 function approvedRemovals(sheetFile) {
   return factLines(fs.readFileSync(sheetFile, "utf8"))
-    .filter(({ fields }) => fields && /^D\d+$/u.test(fields[0]) && /^(?:remove|replace)\b/iu.test(fields[2]) && /^yes\b/iu.test(fields[4] ?? ""))
+    .filter(({ fields }) => fields && /^D\d+$/u.test(fields[0]) && /^(?:remove|replace|move)\b/iu.test(fields[2]) && /^yes\b/iu.test(fields[4] ?? ""))
     .map(({ fields }) => fields[2].trim().replace(/\s+/gu, " "));
 }
 
