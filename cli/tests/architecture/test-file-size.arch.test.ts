@@ -25,7 +25,7 @@ const BASELINE: readonly string[] = [
   "tests/contexts/framework/application/recipes/validate-recipes.integration.test.ts",
   "tests/contexts/telemetry/application/ingest-usage-use-case.unit.test.ts",
   "tests/contexts/telemetry/consent-scenarios.integration.test.ts",
-  "tests/contexts/translate/domain/plugin-content-translator.unit.test.ts",
+  "tests/contexts/translate/application/strategies/flat-build-strategy.integration.test.ts",
 ];
 
 /** Lines as `wc -l` counts them: one per newline character. */
