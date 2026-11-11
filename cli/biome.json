@@ -318,11 +318,8 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/host-registration/domain/**",
-                      "**/host-registration/infrastructure/**"
-                    ],
-                    "message": "host-registration publishes its contract and its pure rules only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -353,11 +350,8 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/host-registration/domain/**",
-                      "**/host-registration/infrastructure/**"
-                    ],
-                    "message": "host-registration publishes its contract and its pure rules only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1505,11 +1499,8 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/host-registration/domain/**",
-                      "**/host-registration/infrastructure/**"
-                    ],
-                    "message": "host-registration publishes its contract and its pure rules only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1544,11 +1535,8 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/host-registration/domain/**",
-                      "**/host-registration/infrastructure/**"
-                    ],
-                    "message": "host-registration publishes its contract and its pure rules only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1583,11 +1571,8 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": [
-                      "**/host-registration/domain/**",
-                      "**/host-registration/infrastructure/**"
-                    ],
-                    "message": "host-registration publishes its contract and its pure rules only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }

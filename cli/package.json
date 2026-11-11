@@ -68,7 +68,7 @@
     "test:mutation": "node scripts/run-mutation.mjs",
     "test:mutation:kernel": "node scripts/run-mutation.mjs kernel",
     "test:mutation:auth": "node scripts/run-mutation.mjs auth",
-    "test:mutation:host-registration-domain": "node scripts/run-mutation.mjs host-registration-domain",
+    "test:mutation:host-registration-rules": "node scripts/run-mutation.mjs host-registration-rules",
     "test:mutation:host-registration-adapters": "node scripts/run-mutation.mjs host-registration-adapters",
     "test:mutation:tools": "node scripts/run-mutation.mjs tools",
     "test:mutation:tools-antigravity": "node scripts/run-mutation.mjs tools-antigravity",

@@ -62,7 +62,6 @@ src/
 │   │           └── vscode/
 │   ├── host-registration/    # what a host's own registry says about plugins and marketplaces, and the driving of its CLI
 │   │   ├── contract/
-│   │   ├── domain/
 │   │   └── infrastructure/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/

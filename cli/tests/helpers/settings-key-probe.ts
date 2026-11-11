@@ -9,8 +9,14 @@ export function keyAskedOf(ask: (settings: Record<string, unknown>) => unknown):
     new Proxy<Record<string, unknown>>(
       {},
       {
-        has: (_target, key) => (note(key), false),
-        get: (_target, key) => (note(key), undefined),
+        has: (_target, key) => {
+          note(key);
+          return false;
+        },
+        get: (_target, key) => {
+          note(key);
+          return undefined;
+        },
       }
     )
   );
