@@ -11,7 +11,7 @@ Write the skill tree from the plan.
 
 1. Create what is missing of the shape in [skill-tree.md](../references/skill-tree.md).
 2. Write `SKILL.md` per [fill-norm.md](../references/fill-norm.md), adding the risk step to the frontmatter only when the plan records one.
-3. Write each action file, placing its success check in the process and its constraints in the rules.
+3. Write each action file, adding the check step when the plan lists one and its constraints in the rules.
 4. Write each reference, asset and script the plan lists, per `fill-norm.md`.
 5. Write once per confirmed target, using [tool-write.md](../references/tool-write.md).
 6. Check the tree against `skill-tree.md`, read back every written file against [skill-authoring.md](../references/skill-authoring.md), and remove remaining placeholders or scaffold instructions.
@@ -24,4 +24,4 @@ The skill tree at the target, and the list of files written.
 ## Rules
 
 - Write only relative paths inside the workspace, outside the plugin install directory, and under the chosen target; otherwise stop and report the path.
-- An existing target skill is edited in place: keep every item the plan lists to preserve, never rebuild from the plan. Without one, fill the templates ([skill-template.md](../assets/skill-template.md), [action-template.md](../assets/action-template.md)).
+- An existing target skill is edited in place: keep every item the plan lists to preserve and change only what the plan names. Without one, fill the templates ([skill-template.md](../assets/skill-template.md), [action-template.md](../assets/action-template.md)).

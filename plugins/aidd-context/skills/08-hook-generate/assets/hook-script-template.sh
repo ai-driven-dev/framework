@@ -12,3 +12,5 @@ input="$(cat)"
 
 # Signal the result the way the target tool reads it: an exit code, and stdout where the tool honors it.
 exit 0
+
+# Replace the placeholder logic, then delete the example comments and this note.

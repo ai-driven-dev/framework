@@ -1,6 +1,6 @@
 ---
 name: 08-hook-generate
-description: Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create, scaffold or refactor one.
+description: Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create or scaffold one.
 argument-hint: event | action
 ---
 
@@ -10,12 +10,12 @@ argument-hint: event | action
 flowchart LR
   event([event]) --> capture["actions/01-capture-hook.md"]
   action([action]) --> capture
-  capture -->|"a cited file cannot be read"| missing((asset missing))
+  capture & write & validate -->|"a cited reference cannot be read"| missing((plugin not installed))
   capture -->|"every target tool skipped"| notool((no tool left))
-  capture -->|"scope or tool needs an answer"| user((user answers)) --> capture
+  capture -->|"a target, scope or decision to confirm"| user((user answers)) --> capture
   capture --> write["actions/02-write-hook.md"] --> validate["actions/03-validate.md"]
   validate -->|"a check fails"| validate
-  validate -->|"a failure cannot be resolved"| invalid((write target invalid))
+  validate -->|"a fix outside the confirmed scope or not completable"| invalid((write target invalid))
   validate -->|"every check passes"| done((hook written))
 ```
 

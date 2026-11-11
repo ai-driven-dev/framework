@@ -2,7 +2,7 @@
 name: <skill-name>
 description: <One sentence: what it does, then when to use it.>
 argument-hint: <what the user brings: their cases, or the artifact consumed>
-<OPTIONAL. The plan's accepted risk step, `disable-model-invocation: true` or a `hooks:` block. Omit otherwise.>
+<The plan's accepted risk step, `disable-model-invocation: true` or a `hooks:` block.>
 ---
 
 # <Skill Name>
@@ -14,8 +14,8 @@ flowchart LR
 
 ## Transversal rules
 
-<OPTIONAL. Rules owned by no reference or single action, one per line. Omit the section when none.>
+<Rules owned by no reference or single action, one per line.>
 
 - <One plain sentence.>
 
-> Fill every `<...>` and delete this line. An angle bracket left in the written file is a bug.
+> Fill every `<...>` and delete this line. Omit the risk step line and Transversal rules when empty. An angle bracket left in the written file is a bug.

@@ -2,9 +2,9 @@
   "hooks": {
     "<EventName>": [
       {
-        "matcher": "<pattern, or drop this line for match-all>",
+        "matcher": "<matcher>",
         "hooks": [
-          { "type": "command", "command": "<absolute path or ${VAR} to the script>" }
+          { "type": "command", "command": "<handler command>" }
         ]
       }
     ]
