@@ -2,7 +2,6 @@ import { InstallationFile } from "../../../kernel/file.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../kernel/markdown.js";
 import { flatHooksPathWithLoaderEntry } from "../../../kernel/materialization/flat-paths.js";
 import type { Hasher } from "../../../kernel/ports/hasher.js";
-import type { FlatHooksBridge } from "../../tools/domain/capabilities/plugins-capability.js";
 import type {
   AiTool,
   HasAgents,
@@ -15,6 +14,7 @@ import type {
   PluginInstallNotice,
   ReadonlyNoticeList,
 } from "../../tools/domain/models/plugin-install-notice.js";
+import type { FlatHooksBridge } from "../../tools/domain/plugins/plugin-params.js";
 import type { ToolConfig } from "../../tools/domain/registry.js";
 import { isAiTool } from "../../tools/domain/registry.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";

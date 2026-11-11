@@ -1,5 +1,4 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
-import type { HookScript, NativeParams } from "../capabilities/plugins-capability.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 import { MarketplaceRegistration } from "./marketplace-registration.js";
 import { NativeActivation } from "./native-activation.js";
@@ -9,6 +8,7 @@ import {
   type ProjectHooksPlacement,
   resolveProjectHooks,
 } from "./plugin-delivery.js";
+import type { HookScript, NativeParams } from "./plugin-params.js";
 
 const DEFAULT_MCP_PATH = ".mcp.json";
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";

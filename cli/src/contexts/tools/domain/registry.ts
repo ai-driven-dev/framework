@@ -14,15 +14,11 @@ import {
 } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { McpCapability } from "./capabilities/mcp-capability.js";
-import type {
-  GlobalFiles,
-  HookScript,
-  PluginsCapability,
-  ProjectHooksFormat,
-} from "./capabilities/plugins-capability.js";
 import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
+import type { GlobalFiles, HookScript, ProjectHooksFormat } from "./plugins/plugin-params.js";
+import type { PluginsCapability } from "./plugins/plugins-capability.js";
 import type { ProfileBrand } from "./profile/define-tool.js";
 import { isProfileSectionKey } from "./profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";

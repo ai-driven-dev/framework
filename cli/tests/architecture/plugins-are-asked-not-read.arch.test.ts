@@ -18,7 +18,8 @@ import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
 const TOOLS_CONTEXT = /^(src|tests)\/contexts\/tools\//;
 
 const PLUGINS_FILES = [
-  "src/contexts/tools/domain/capabilities/plugins-capability.ts",
+  "src/contexts/tools/domain/plugins/plugins-capability.ts",
+  "src/contexts/tools/domain/plugins/plugin-params.ts",
   "src/contexts/tools/domain/plugins/plugin-delivery.ts",
   "src/contexts/tools/domain/plugins/native-plugins.ts",
   "src/contexts/tools/domain/plugins/flat-plugins.ts",

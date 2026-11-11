@@ -2,13 +2,13 @@ import { join } from "node:path";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";

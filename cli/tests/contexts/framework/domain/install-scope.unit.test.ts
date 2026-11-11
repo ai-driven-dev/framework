@@ -5,7 +5,7 @@ import {
   isInstallScope,
   parseInstallScope,
 } from "../../../../src/contexts/framework/domain/install-scope.js";
-import { pluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { getToolConfig, registerTool } from "../../../../src/contexts/tools/domain/registry.js";
 import { InvalidPluginScopeError } from "../../../../src/kernel/errors.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";

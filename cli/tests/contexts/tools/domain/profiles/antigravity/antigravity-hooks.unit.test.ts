@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
 const format = antigravity.section("plugins").projectHooksDelivery()?.format as ProjectHooksFormat;

@@ -1,5 +1,7 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import type { MarketplaceRegistration } from "./marketplace-registration.js";
+import type { NativeActivation } from "./native-activation.js";
 import type {
   FlatHooksBridge,
   FlatSkillLayout,
@@ -7,9 +9,7 @@ import type {
   HookScript,
   ProjectHooksDelivery,
   ProjectHooksFormat,
-} from "../capabilities/plugins-capability.js";
-import type { MarketplaceRegistration } from "./marketplace-registration.js";
-import type { NativeActivation } from "./native-activation.js";
+} from "./plugin-params.js";
 
 /** Where a flat-mode plugin lands and how its hooks are loaded; each part is `null` or
  * `"nested"` when the mode has none. */

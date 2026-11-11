@@ -1,11 +1,7 @@
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
-import { FlatPlugins } from "../plugins/flat-plugins.js";
-import type { NativeActivation, NativeActivationSpec } from "../plugins/native-activation.js";
-import { NativePlugins } from "../plugins/native-plugins.js";
-import type { PluginDelivery } from "../plugins/plugin-delivery.js";
-import { UnsupportedPlugins } from "../plugins/unsupported-plugins.js";
+import type { NativeActivationSpec } from "./native-activation.js";
 
 /** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
 export type HookScript = (pluginPath: string, content: string) => string;
@@ -99,10 +95,10 @@ export interface NativePluginsParams extends ProjectHooksDelivery {
   /** The variable this tool expands to the installed plugin's directory, as written in a
    * hook or MCP command. Absent means nothing is substituted. */
   pluginRootToken?: string;
-  /** See {@link PluginsCapability.hookScript}. */
+  /** See {@link PluginDelivery.hookScript}. */
   hookScript?: HookScript;
   marketplaceSettings?: MarketplaceSettings;
-  /** Enables native CLI-driven plugin activation. See {@link NativeActivation}. */
+  /** Enables native CLI-driven plugin activation. See {@link NativeActivationSpec}. */
   nativeActivation?: NativeActivationSpec;
   /** Pass `"marketplace"` alongside `marketplaceSettings` for Mode A routing. Defaults to
    * `null`, neutral native, where no translation strategy applies. */
@@ -143,7 +139,7 @@ export type FlatHooksSupport =
       /** See {@link FlatHooksBridge}. Omit when this loader triggers a plugin's hooks some
        * other way. */
       flatHooksBridge?: FlatHooksBridge;
-      /** See {@link PluginsCapability.hookScript}. */
+      /** See {@link PluginDelivery.hookScript}. */
       hookScript?: HookScript;
     } & ProjectHooksDelivery)
   | { acceptsHooks: false; hooksUnsupportedReason: string };
@@ -178,20 +174,4 @@ export type NativeParams = NativePluginsParams & HooksSupport & GlobalFilesParam
 export type FlatParams = FlatPluginsParams & GlobalFilesParams;
 export type UnsupportedParams = UnsupportedPluginsParams & GlobalFilesParams;
 
-type PluginsParams = NativeParams | FlatParams | UnsupportedParams;
-
-function deliveryFor(params: PluginsParams): PluginDelivery {
-  if (params.mode === "native") return new NativePlugins(params);
-  if (params.mode === "flat") return new FlatPlugins(params);
-  return new UnsupportedPlugins(params);
-}
-
-/**
- * How a tool takes plugins, declared once by its profile: the declaration picks the variant
- * (native, flat, unsupported) that holds the data, and no field of it is readable from outside.
- */
-export type PluginsCapability = PluginDelivery;
-
-export function pluginsCapability(params: PluginsParams): PluginsCapability {
-  return deliveryFor(params);
-}
+export type PluginsParams = NativeParams | FlatParams | UnsupportedParams;

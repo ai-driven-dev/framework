@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { PluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { buildClaudeContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexContract } from "../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
-import { pluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import { pluginsCapability } from "../../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 import { pluginModeOf } from "../../testing/plugin-mode.js";
 

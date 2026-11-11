@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { pluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { parseToml } from "../../../../src/contexts/tools/domain/formats/toml.js";
+import { pluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";

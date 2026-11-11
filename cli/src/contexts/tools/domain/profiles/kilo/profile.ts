@@ -1,13 +1,14 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { flatGlobalFilePath, pluginsCapability } from "../../capabilities/plugins-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { flatGlobalFilePath } from "../../plugins/plugin-params.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";

@@ -1,14 +1,16 @@
 import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
 import type { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import {
-  type NativePluginsParams,
-  type PluginsCapability,
-  type ProjectHooksFormat,
-  pluginsCapability,
-} from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
+import type {
+  NativePluginsParams,
+  ProjectHooksFormat,
+} from "../../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import {
+  type PluginsCapability,
+  pluginsCapability,
+} from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import {
   defineAiTool,
   defineIdeTool,

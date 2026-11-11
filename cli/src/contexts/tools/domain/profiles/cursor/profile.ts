@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";

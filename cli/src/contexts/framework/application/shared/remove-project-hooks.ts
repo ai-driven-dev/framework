@@ -6,7 +6,7 @@ import type { AiToolId } from "../../../../kernel/tool.js";
 import type {
   ProjectHookEntry,
   ProjectHooksFormat,
-} from "../../../tools/domain/capabilities/plugins-capability.js";
+} from "../../../tools/domain/plugins/plugin-params.js";
 import { projectHooksDeliveryOf } from "../../../tools/domain/registry.js";
 import type {
   InstalledPlugin,

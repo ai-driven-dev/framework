@@ -3,8 +3,8 @@
  * even where the literal values coincide: a change to either side must not collapse them.
  */
 
-import type { GlobalPlugin } from "../../capabilities/plugins-capability.js";
 import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import type { GlobalPlugin } from "../../plugins/plugin-params.js";
 
 export const CODEX_DIRECTORY = ".codex/";
 

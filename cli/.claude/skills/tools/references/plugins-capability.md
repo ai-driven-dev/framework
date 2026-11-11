@@ -1,6 +1,6 @@
 # Reference: PluginsCapability
 
-The params are declared and documented in `contexts/tools/domain/capabilities/plugins-capability.ts`.
+The params are declared and documented in `contexts/tools/domain/plugins/plugin-params.ts`.
 Read them there — this page carries only the decisions a field list cannot state, and a copied
 list would age at every field.
 

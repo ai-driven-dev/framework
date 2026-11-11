@@ -1,6 +1,6 @@
-import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import {
   antigravityHookEntries,

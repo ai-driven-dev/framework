@@ -1,5 +1,5 @@
-import type { UnsupportedParams } from "../capabilities/plugins-capability.js";
 import { PluginDeliveryBase } from "./plugin-delivery.js";
+import type { UnsupportedParams } from "./plugin-params.js";
 
 /** A tool that takes no plugin: it states why its hooks cannot be delivered. */
 export class UnsupportedPlugins extends PluginDeliveryBase {
