@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { inMarketplace, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+import {
+  inMarketplace,
+  installed,
+  NAMED_AGENT,
+  UNNAMED_AGENT,
+} from "../../../testing/agent-fixture.js";
 
 describe("claude agents", () => {
   describe("name resolution", () => {

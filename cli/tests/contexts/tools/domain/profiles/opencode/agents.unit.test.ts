@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+import { installed, NAMED_AGENT, UNNAMED_AGENT } from "../../../testing/agent-fixture.js";
 
 const NATIVE = `---
 description: 'Plans the work'

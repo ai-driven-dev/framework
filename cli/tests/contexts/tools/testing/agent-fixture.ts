@@ -1,4 +1,4 @@
-import type { AiTool, HasAgents } from "../../../../../src/contexts/tools/domain/contracts.js";
+import type { AiTool, HasAgents } from "../../../../src/contexts/tools/domain/contracts.js";
 
 /** A Claude-format agent carrying every key a host may translate. */
 export const NAMED_AGENT = `---
