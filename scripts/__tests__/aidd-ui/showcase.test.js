@@ -101,6 +101,18 @@ describe("aidd-ui showcase", () => {
     });
   });
 
+  describe("the system font floor", () => {
+    const FLOOR = ":where(html) { font-family: system-ui, sans-serif; }";
+
+    it("opens each state frame with the floor, before the render's own rules, with or without tokens", () => {
+      for (const tokens of [":root { --space-md: 1rem; }\n", null]) {
+        const frames = [...pagesOf({ tokens })["home.html"].matchAll(/srcdoc="([^"]*)"/g)].map((match) => match[1]);
+        assert.equal(frames.length, 4);
+        for (const frame of frames) assert.ok(frame.includes(FLOOR) && frame.indexOf(FLOOR) < frame.indexOf(".ui {"), frame);
+      }
+    });
+  });
+
   describe("the command", () => {
     it("writes the pages and a gitignore that leaves them out, then lists them", () => {
       const run = written();

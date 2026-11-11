@@ -4,6 +4,7 @@ const { createHash } = require("node:crypto");
 const STATE_ATTRIBUTE = /data-state="([^"]+)"/g;
 const HTML_FILE = /\.html$/;
 const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">'; // how a render loads the tokens
+const FONT_FLOOR = ":where(html) { font-family: system-ui, sans-serif; }"; // no specificity: any font a render sets wins
 const VERDICTS = [["keep", "Keep", "✓"], ["revise", "Revise", "↻"], ["discard", "Discard", "✕"]];
 const SHORTCUTS = [["K", "Keep the variant"], ["R", "Revise the variant"], ["D", "Discard the variant"], ["←→", "Previous or next variant"], ["C", "Copy the feedback"], ["\\", "Focus the canvas"], ["?", "Show or hide this sheet"], ["Esc", "Close this sheet"]];
 const LEGEND = [["keep", "Keep"], ["revise", "Revise"], ["discard", "Discard"], ["", "Undecided"]];
@@ -470,6 +471,9 @@ function documentOf(text) {
   return `<article class="doc">${html.join("\n")}</article>`;
 }
 
+/** `doc` with its stylesheet link replaced by the system font floor, then the tokens when there are any. */
+const inlined = (doc, tokens) => doc.replaceAll(STYLESHEET_LINK, () => `<style>\n${FONT_FLOOR}\n${tokens ?? ""}</style>`);
+
 /** One variant on the canvas: a window holding its name and verdict, then what it ships for each view. A
  * markdown file is a document, an html file a frame; a view with nothing says so. */
 function frameOf({ name, files }, tokens, first, view) {
@@ -480,7 +484,7 @@ function frameOf({ name, files }, tokens, first, view) {
     return own.map(({ path, text }) => {
       const caption = own.length > 1 ? `<p class="path">${escaped(path)}</p>` : "";
       if (!isScreen) return `${mark}${caption}<div class="page">${documentOf(text)}</div></div>`;
-      const doc = text.replaceAll(STYLESHEET_LINK, tokens === null ? "" : `<style>\n${tokens}</style>`);
+      const doc = inlined(text, tokens);
       return `${mark}${caption}<div class="shot"><iframe title="${escaped(`${name} ${path}`)}" srcdoc="${escaped(doc)}"></iframe></div></div>`;
     }).join("\n");
   });
@@ -574,4 +578,4 @@ function pageOf({ id, variants, tokens, themes }) {
   ].join("\n");
 }
 
-module.exports = { pageOf, feedbackOf, copiedOf, STYLE, escaped, documentOf, STYLESHEET_LINK };
+module.exports = { pageOf, feedbackOf, copiedOf, STYLE, escaped, documentOf, inlined };

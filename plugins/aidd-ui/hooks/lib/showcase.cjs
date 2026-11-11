@@ -8,7 +8,7 @@ const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
 const { text } = require("./project.cjs");
-const { STYLE, escaped, documentOf, STYLESHEET_LINK } = require("./page.cjs");
+const { STYLE, escaped, documentOf, inlined } = require("./page.cjs");
 
 const DEFAULT_LANGUAGE = "en";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
@@ -312,7 +312,7 @@ function checksOf(problems, record, labels) {
 /** The document of one state of a render: the tokens inline, every other state hidden. A render without `</head>` keeps every state visible in each frame: a known limit. */
 function stateDocument(render, tokens, state) {
   const hide = `<style>[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }</style>`;
-  const doc = render.replaceAll(STYLESHEET_LINK, () => (tokens === null ? "" : `<style>\n${tokens}</style>`));
+  const doc = inlined(render, tokens);
   return doc.replace(/<\/head>/i, () => `${hide}</head>`);
 }
 

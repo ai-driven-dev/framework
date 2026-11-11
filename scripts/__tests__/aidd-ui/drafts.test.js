@@ -240,6 +240,15 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(themes, ["light", "dark"]);
     });
 
+    it("opens each render frame with the system font floor, before the render's own rules", () => {
+      componentSet();
+      compare("button");
+      const floor = ":where(html) { font-family: system-ui, sans-serif; }";
+      const frames = [...read(`${DRAFTS}/button/compare.html`).matchAll(/srcdoc="([^"]*)"/g)].map((match) => match[1]);
+      assert.ok(frames.length > 0);
+      for (const frame of frames) assert.ok(frame.includes(floor) && frame.indexOf(floor) < frame.indexOf(".ui {"), frame);
+    });
+
     it("lists no theme without a design system file", () => {
       fs.rmSync(path.join(tmp, PATHS.SYSTEM));
       writeSet("brand");
