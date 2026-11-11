@@ -183,26 +183,6 @@ describe("buildOpencodeFlatContract()", () => {
     });
   });
 
-  it("nests a plugin's whole skills tree under its own folder, and renames the skill itself", () => {
-    const skills = supported(buildOpencodeFlatContract().artifacts.skills);
-
-    expect({
-      path: skills.path("aidd-dev", "skills/01-plan/SKILL.md"),
-      rewriteSkillName: skills.rewriteSkillName,
-    }).toStrictEqual({
-      path: ".opencode/skills/aidd-dev/01-plan/SKILL.md",
-      rewriteSkillName: true,
-    });
-  });
-
-  it("prefixes a flat agent's file with the plugin name and keeps it markdown", () => {
-    const agents = supported(buildOpencodeFlatContract().artifacts.agents);
-
-    expect(agents.path("aidd-dev", "agents/planner.md")).toBe(
-      ".opencode/agents/aidd-dev-planner.md"
-    );
-  });
-
   it("declares an agent a subagent, leaves its ID to the file name, and points its references at their flat destinations", () => {
     const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
 

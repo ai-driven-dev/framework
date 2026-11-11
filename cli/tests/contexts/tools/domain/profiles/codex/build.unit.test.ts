@@ -5,12 +5,7 @@ import {
   buildCodexFlatContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import {
-  PLUGIN_TREE_SOURCES,
-  pluginTreeSourcesOf,
-  sourceOf,
-  supported,
-} from "../../../testing/build-artifacts.js";
+import { sourceOf, supported } from "../../../testing/build-artifacts.js";
 
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
@@ -111,10 +106,6 @@ describe("buildCodexContract()", () => {
     });
   });
 
-  it("sources skills, agents, mcp and hooks from the plugin tree, and neither rules nor commands", () => {
-    expect(pluginTreeSourcesOf(buildCodexContract().artifacts)).toStrictEqual(PLUGIN_TREE_SOURCES);
-  });
-
   it("stages an agent as TOML beside the plugin tree and leaves every other artifact where it was", () => {
     const { artifacts } = buildCodexContract();
 
@@ -129,14 +120,6 @@ describe("buildCodexContract()", () => {
       mcp: ".mcp.json",
       hook: "hooks/journal.cjs",
     });
-  });
-
-  it("changes only the trailing .md of a staged agent's name to .toml", () => {
-    const agents = supported(buildCodexContract().artifacts.agents);
-
-    expect(agents.path("aidd-dev", "agents/notes.md-helper.md")).toBe(
-      "codex-agents/notes.md-helper.toml"
-    );
   });
 
   it("keeps only the three frontmatter fields Codex reads in a skill", () => {
@@ -224,34 +207,6 @@ describe("buildCodexFlatContract()", () => {
       rules: { supported: false },
       commands: { supported: false },
     });
-  });
-
-  it("prefixes a flat skill's own folder with the plugin name, and renames the skill itself", () => {
-    const skills = supported(buildCodexFlatContract().artifacts.skills);
-
-    expect({
-      path: skills.path("aidd-dev", "skills/01-plan/SKILL.md"),
-      rewriteSkillName: skills.rewriteSkillName,
-    }).toStrictEqual({
-      path: ".agents/skills/aidd-dev-01-plan/SKILL.md",
-      rewriteSkillName: true,
-    });
-  });
-
-  it("prefixes a flat agent's TOML with the plugin name, in Codex's own agents directory", () => {
-    const agents = supported(buildCodexFlatContract().artifacts.agents);
-
-    expect(agents.path("aidd-dev", "agents/planner.md")).toBe(
-      ".codex/agents/aidd-dev-planner.toml"
-    );
-  });
-
-  it("changes only the trailing .md of a flat agent's name to .toml", () => {
-    const agents = supported(buildCodexFlatContract().artifacts.agents);
-
-    expect(agents.path("aidd-dev", "agents/notes.md-helper.md")).toBe(
-      ".codex/agents/aidd-dev-notes.md-helper.toml"
-    );
   });
 
   it("nests a plugin's hook scripts under its own folder and merges its declaration into .codex/hooks.json", () => {

@@ -26,12 +26,18 @@ function withArtifacts(overrides: Partial<ReturnType<typeof anEmptyContract>["ar
   return anEmptyContract({ artifacts: { ...anEmptyContract().artifacts, ...overrides } });
 }
 
-function numberedCommands(install: string | null): CommandsCapability {
+function numberedCommands(
+  install: string | null,
+  convertFrontmatter: CommandsCapability["convertFrontmatter"] = ({ name, description }, file) => ({
+    name: `aidd:${file.slice(0, 2)}:${name}`,
+    description,
+  })
+): CommandsCapability {
   return new CommandsCapability({
     directory: ".fake/",
     toolSuffix: ".md",
     buildInstallPath: () => install,
-    convertFrontmatter: (fm) => fm,
+    convertFrontmatter,
   });
 }
 
@@ -151,5 +157,9 @@ export const BROKEN_PROFILES: readonly { title: string; subject: () => Conforman
     title: "routes a numbered command and its references to the same folder",
     subject: () =>
       alone(aProfile().withCommands(numberedCommands(".fake/commands/aidd/04/implement.md"))),
+  },
+  {
+    title: "names a numbered command after its phase and keeps only what it reads",
+    subject: () => alone(aProfile().withCommands(numberedCommands(null, (fm) => fm))),
   },
 ];

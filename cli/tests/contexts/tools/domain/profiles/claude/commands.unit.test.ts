@@ -3,12 +3,6 @@ import { claude } from "../../../../../../src/contexts/tools/domain/profiles/cla
 
 describe("claude commands", () => {
   describe("capabilities.commands.convertFrontmatter()", () => {
-    it("prefixes name with aidd:{phase}:", () => {
-      const fm = { name: "implement", description: "Implement a plan" };
-      const result = claude.capabilities.commands?.convertFrontmatter(fm, "04_code/implement.md");
-      expect(result).toEqual({ name: "aidd:04:implement", description: "Implement a plan" });
-    });
-
     it("preserves argument-hint when present", () => {
       const fm = { name: "implement", description: "Implement a plan", "argument-hint": "task" };
       const result = claude.capabilities.commands?.convertFrontmatter(fm, "04_code/implement.md");

@@ -85,7 +85,6 @@ export class ProfileBuilder {
   private capabilities: KitCapabilities = { plugins: flatPlugins("refuses") };
   private contracts: Contracts | undefined = { flat: () => anEmptyContract() };
   private probes: Probes | undefined;
-  private rewrite: (content: string) => string = (content) => content;
 
   constructor(private readonly toolId: AiToolId) {}
 
@@ -116,11 +115,6 @@ export class ProfileBuilder {
     return this;
   }
 
-  withRewriteContent(rewrite: (content: string) => string): this {
-    this.rewrite = rewrite;
-    return this;
-  }
-
   withBuildContract(mode: "marketplace" | "flat", contract: ToolBuildContract): this {
     this.contracts = { ...this.contracts, [mode]: () => contract };
     return this;
@@ -147,7 +141,7 @@ export class ProfileBuilder {
   }
 
   build(): AiTool<KitCapabilities> {
-    const { directory, toolSuffix, signalDir, capabilities, rewrite } = this;
+    const { directory, toolSuffix, signalDir, capabilities } = this;
     return {
       kind: "ai",
       toolId: this.toolId,
@@ -158,7 +152,7 @@ export class ProfileBuilder {
       capabilities,
       ...(this.contracts === undefined ? {} : { buildContracts: this.contracts }),
       ...(this.probes === undefined ? {} : { distributionProbes: this.probes }),
-      rewriteContent: rewrite,
+      rewriteContent: (content) => content,
     };
   }
 }

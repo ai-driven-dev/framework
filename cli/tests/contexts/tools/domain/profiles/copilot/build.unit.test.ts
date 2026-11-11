@@ -5,13 +5,7 @@ import {
 } from "../../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { parseFrontmatter } from "../../../../../../src/kernel/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import {
-  PLUGIN_RELATIVE_PATHS,
-  PLUGIN_TREE_SOURCES,
-  pluginRelativePathsOf,
-  pluginTreeSourcesOf,
-  supported,
-} from "../../../testing/build-artifacts.js";
+import { supported } from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -71,18 +65,6 @@ describe("buildCopilotMarketplaceContract()", () => {
       hooks: "./hooks/hooks.json",
       mcpServers: "./.mcp.json",
     });
-  });
-
-  it("sources skills, agents, mcp and hooks from the plugin tree, and neither rules nor commands", () => {
-    expect(pluginTreeSourcesOf(buildCopilotMarketplaceContract().artifacts)).toStrictEqual(
-      PLUGIN_TREE_SOURCES
-    );
-  });
-
-  it("keeps every artifact at the plugin-relative path it came from", () => {
-    expect(pluginRelativePathsOf(buildCopilotMarketplaceContract().artifacts)).toStrictEqual(
-      PLUGIN_RELATIVE_PATHS
-    );
   });
 
   it("keeps what Copilot reads of an agent and links its plugin-root references from agents/", () => {
@@ -159,32 +141,6 @@ describe("buildCopilotMarketplaceContract()", () => {
 });
 
 describe("buildCopilotFlatContract()", () => {
-  it("sources the same trees as the plugin contract, and neither rules nor commands", () => {
-    expect(pluginTreeSourcesOf(buildCopilotFlatContract().artifacts)).toStrictEqual(
-      PLUGIN_TREE_SOURCES
-    );
-  });
-
-  it("prefixes a flat skill's own folder with the plugin name, and renames the skill itself", () => {
-    const skills = supported(buildCopilotFlatContract().artifacts.skills);
-
-    expect({
-      path: skills.path("aidd-dev", "skills/01-plan/SKILL.md"),
-      rewriteSkillName: skills.rewriteSkillName,
-    }).toStrictEqual({
-      path: ".github/skills/aidd-dev-01-plan/SKILL.md",
-      rewriteSkillName: true,
-    });
-  });
-
-  it("gives a flat agent the plugin prefix and the .agent.md extension Copilot discovers", () => {
-    const agents = supported(buildCopilotFlatContract().artifacts.agents);
-
-    expect(agents.path("aidd-dev", "agents/planner.md")).toBe(
-      ".github/agents/aidd-dev-planner.agent.md"
-    );
-  });
-
   it("lands a plugin's hooks declaration beside the other hooks and its scripts under the plugin's own folder", () => {
     const hooks = supported(buildCopilotFlatContract().artifacts.hooks);
 

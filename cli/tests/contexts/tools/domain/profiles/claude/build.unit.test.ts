@@ -3,14 +3,7 @@ import {
   buildClaudeContract,
   buildClaudeFlatContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import {
-  PLUGIN_RELATIVE_PATHS,
-  PLUGIN_TREE_SOURCES,
-  pluginRelativePathsOf,
-  pluginTreeSourcesOf,
-  supported,
-} from "../../../testing/build-artifacts.js";
+import { supported } from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -68,16 +61,6 @@ describe("buildClaudeContract()", () => {
     });
   });
 
-  it("sources skills, agents, mcp and hooks from the plugin tree, and neither rules nor commands", () => {
-    expect(pluginTreeSourcesOf(buildClaudeContract().artifacts)).toStrictEqual(PLUGIN_TREE_SOURCES);
-  });
-
-  it("keeps every artifact at the plugin-relative path it came from", () => {
-    expect(pluginRelativePathsOf(buildClaudeContract().artifacts)).toStrictEqual(
-      PLUGIN_RELATIVE_PATHS
-    );
-  });
-
   it("keeps an agent's whole frontmatter and links its plugin-root references from agents/", () => {
     const transform = supported(buildClaudeContract().artifacts.agents).transform;
 
@@ -95,83 +78,9 @@ describe("buildClaudeContract()", () => {
       ].join("\n")
     );
   });
-
-  it("builds the catalog Claude reads, at .claude-plugin/marketplace.json", async () => {
-    const built = await buildClaudeContract().buildMarketplaceCatalog?.(
-      {
-        name: "aidd",
-        version: "1.0.0",
-        description: "AI Driven Dev",
-        owner: { name: "AIDD" },
-        plugins: [],
-      },
-      [{ name: "aidd-dev", source: "./plugins/aidd-dev" }],
-      new InMemoryFileAdapter()
-    );
-
-    expect(built).toStrictEqual({
-      catalog: {
-        name: "aidd",
-        version: "1.0.0",
-        description: "AI Driven Dev",
-        owner: { name: "AIDD" },
-        plugins: [{ name: "aidd-dev", source: "./plugins/aidd-dev" }],
-      },
-      schemaName: "claude-marketplace",
-      destRelPath: ".claude-plugin/marketplace.json",
-    });
-  });
-
-  it("builds a catalog entry from the plugin manifest already written to the output tree", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/out/plugins/aidd-dev/.claude-plugin/plugin.json": JSON.stringify({
-        version: "1.2.3",
-        description: "Development loop",
-      }),
-    });
-
-    const entry = await buildClaudeContract().buildMarketplaceEntry?.(
-      "aidd-dev",
-      "/src/plugins/aidd-dev",
-      "/out",
-      undefined,
-      fs
-    );
-
-    expect(entry).toStrictEqual({
-      name: "aidd-dev",
-      source: "./plugins/aidd-dev",
-      description: "Development loop",
-      version: "1.2.3",
-    });
-  });
 });
 
 describe("buildClaudeFlatContract()", () => {
-  it("sources the same trees as the plugin contract, and neither rules nor commands", () => {
-    expect(pluginTreeSourcesOf(buildClaudeFlatContract().artifacts)).toStrictEqual(
-      PLUGIN_TREE_SOURCES
-    );
-  });
-
-  it("prefixes a flat skill's own folder with the plugin name, and renames the skill itself", () => {
-    const skills = supported(buildClaudeFlatContract().artifacts.skills);
-
-    expect({
-      path: skills.path("aidd-dev", "skills/01-plan/SKILL.md"),
-      rewriteSkillName: skills.rewriteSkillName,
-    }).toStrictEqual({
-      path: ".claude/skills/aidd-dev-01-plan/SKILL.md",
-      rewriteSkillName: true,
-    });
-  });
-
-  it("prefixes a flat agent's file with the plugin name and keeps it markdown", () => {
-    const agents = supported(buildClaudeFlatContract().artifacts.agents);
-
-    expect(agents.path("aidd-dev", "agents/planner.md")).toBe(".claude/agents/aidd-dev-planner.md");
-  });
-
   it("lands a plugin's hooks declaration beside Claude's hooks and its scripts under the plugin's own folder", () => {
     const hooks = supported(buildClaudeFlatContract().artifacts.hooks);
 

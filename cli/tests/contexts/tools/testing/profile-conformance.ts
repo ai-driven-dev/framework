@@ -213,6 +213,14 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   aiCheck("routes a numbered command and its references to the same folder", (profile) => {
     expectNumberedCommandsRouted(profile);
   }),
+  aiCheck("names a numbered command after its phase and keeps only what it reads", (profile) => {
+    const commands = capability(profile, "commands", CommandsCapability);
+    if (commands === undefined) return;
+    const source = { name: "implement", description: "Implement a plan", model: "sonnet" };
+    const converted = commands.convertFrontmatter(source, NUMBERED_COMMAND);
+    expect(converted).toMatchObject({ name: "aidd:04:implement", description: "Implement a plan" });
+    expect(converted).not.toHaveProperty("model");
+  }),
 ];
 
 /** The kernel's ids and the registration's agree, in both directions. */

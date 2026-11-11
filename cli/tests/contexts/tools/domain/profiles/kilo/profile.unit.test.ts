@@ -6,6 +6,7 @@ import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
 function makeFs(existingPaths: string[]): FileReader {
@@ -44,21 +45,6 @@ describe("kilo", () => {
         "01-plan/greet.md"
       )
     ).toEqual({ name: "aidd:01:greet", description: "Greet someone" });
-  });
-
-  it("retains descriptions only for opt-in rules", () => {
-    expect(
-      kilo.capabilities.rules.convertFrontmatter({
-        alwaysApply: false,
-        description: "Use for TypeScript",
-        globs: "*.ts",
-      })
-    ).toEqual({ description: "Use for TypeScript" });
-    expect(
-      kilo.capabilities.rules.convertFrontmatter({ alwaysApply: true, description: "Always" })
-    ).toEqual({});
-    expect(kilo.capabilities.rules.convertFrontmatter({ description: "Default" })).toEqual({});
-    expect(kilo.capabilities.rules.convertFrontmatter({ alwaysApply: false })).toEqual({});
   });
 
   it("detects installed AIDD commands in Kilo's command directory", async () => {
@@ -132,5 +118,19 @@ describe("kilo", () => {
         "hooks/capture.cjs"
       )
     ).toBe(".kilo/hooks/aidd-context/capture.cjs");
+  });
+});
+
+describe("kilo build and conversion tables", () => {
+  it.each(
+    rulesRows({
+      ...WRITES_NOTHING,
+      "a paths list": {},
+      "globs that apply on request": { description: "d" },
+      "paths beside a description": { description: "d" },
+      "a description that opts out of always-apply": { description: "d" },
+    })
+  )("converts %s", (_case, frontmatter, expected) => {
+    expect(kilo.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });

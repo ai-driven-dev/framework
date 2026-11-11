@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { nativeActivationOf } from "../../../../../../src/contexts/tools/domain/registry.js";
+import {
+  flatPathsOf,
+  pluginTreeShapeOf,
+  rulesRows,
+  SHIPPED_AS_IS,
+  WRITES_NOTHING,
+} from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
 describe("copilot declarations the rest of the CLI reads", () => {
@@ -83,5 +90,32 @@ describe("copilot declarations the rest of the CLI reads", () => {
     expect(settings.staticContent).toBeUndefined();
     expect(settings.consumes).toHaveLength(0);
     expect(settings.requiresTool).toBe("vscode");
+  });
+});
+
+describe("copilot build and conversion tables", () => {
+  it("places a flat skill and agent under its plugin's name", () => {
+    expect(flatPathsOf(copilot)).toStrictEqual({
+      skill: ".github/skills/aidd-dev-01-plan/SKILL.md",
+      renamesSkill: true,
+      agent: ".github/agents/aidd-dev-planner.agent.md",
+      innerMdAgent: ".github/agents/aidd-dev-notes.md-helper.agent.md",
+    });
+  });
+
+  it("ships the plugin tree as it is", () => {
+    expect(pluginTreeShapeOf(copilot)).toStrictEqual(SHIPPED_AS_IS);
+  });
+
+  it.each(
+    rulesRows({
+      ...WRITES_NOTHING,
+      "a paths list": { applyTo: "a,b" },
+      "globs that apply on request": { applyTo: "a" },
+      "paths beside a description": { applyTo: "a" },
+      "a description that opts out of always-apply": { description: "d" },
+    })
+  )("converts %s", (_case, frontmatter, expected) => {
+    expect(copilot.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });
