@@ -12,6 +12,7 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import type { PluginPresence, ToolBuildContract } from "../../build-contract.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
+import { parseToml, stringifyToml } from "../../formats/toml.js";
 import { buildCodexMarketplace, buildCodexMarketplaceEntry } from "../../marketplace-catalog.js";
 import { codexAgentMarkdownToToml } from "./codex-agent-toml.js";
 import {
@@ -20,7 +21,6 @@ import {
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.js";
 import { CODEX_HOOKS } from "./hooks.js";
-import { parseToml, stringifyToml } from "./toml.js";
 
 type TomlRecord = Record<string, unknown>;
 

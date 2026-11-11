@@ -142,7 +142,8 @@ describe("biome carries the exit and default-export rules", () => {
     const carrier = (config.overrides ?? []).find(
       (o) =>
         o.linter?.rules?.style?.noRestrictedImports?.options?.paths !== undefined &&
-        !PURE_FOLDERS.some((folder) => folder === o.includes?.[0])
+        !PURE_FOLDERS.some((folder) => folder === o.includes?.[0]) &&
+        o.includes?.[0]?.startsWith("tests/")
     );
 
     expect(carrier?.includes, "no override denies fs and child_process to a unit test").toEqual([
@@ -358,6 +359,20 @@ describe("the guard itself", () => {
     ]) {
       writeFileSync(join(planted, file), readsEnv);
     }
+    mkdirSync(join(planted, "src/contexts/tools/domain/formats"), { recursive: true });
+    mkdirSync(join(planted, "src/contexts/tools/domain/profiles/codex"), { recursive: true });
+    const readsToml = 'import { parse } from "smol-toml";\nexport const read = parse;\n';
+    writeFileSync(join(planted, "src/contexts/tools/domain/formats/toml.ts"), readsToml);
+    writeFileSync(join(planted, "src/contexts/tools/domain/formats/mcp-format.ts"), readsToml);
+    writeFileSync(join(planted, "src/contexts/tools/domain/profiles/codex/toml.ts"), readsToml);
+    writeFileSync(
+      join(planted, "src/contexts/tools/domain/profiles/encodes.ts"),
+      'export const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");\n'
+    );
+    writeFileSync(
+      join(planted, "src/contexts/framework/domain/encodes.ts"),
+      'export const encode = (s: string): string => Buffer.from(s, "utf8").toString("base64");\n'
+    );
   });
 
   afterAll(() => {
@@ -451,6 +466,26 @@ describe("the guard itself", () => {
         `src/runtime/wiring/reaches-auth-${folder}.ts:${rule}`
       );
     }
+  });
+
+  it("flags Buffer in the tools domain only, and smol-toml everywhere in it but formats/toml.ts", () => {
+    const findings = biomeFindings(planted);
+
+    expect(findings, findings.join(", ")).toContain(
+      "src/contexts/tools/domain/profiles/encodes.ts:lint/style/noRestrictedGlobals"
+    );
+    expect(
+      findings.filter((f) => f.startsWith("src/contexts/framework/domain/encodes.ts"))
+    ).toEqual([]);
+    for (const file of [
+      "src/contexts/tools/domain/formats/mcp-format.ts",
+      "src/contexts/tools/domain/profiles/codex/toml.ts",
+    ]) {
+      expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
+    }
+    expect(findings).not.toContain(
+      "src/contexts/tools/domain/formats/toml.ts:lint/style/noRestrictedImports"
+    );
   });
 
   it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { parseToml } from "../../../../../../src/contexts/tools/domain/formats/toml.js";
 import { codexAgentMarkdownToToml } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex-agent-toml.js";
-import { parseToml } from "../../../../../../src/contexts/tools/domain/profiles/codex/toml.js";
 
 describe("codexAgentMarkdownToToml()", () => {
   describe("name resolution", () => {

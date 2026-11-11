@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseToml } from "../../../src/contexts/tools/domain/profiles/codex/toml.js";
+import { parseToml } from "../../../src/contexts/tools/domain/formats/toml.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 
 const provider = new BundledAssetProviderAdapter();

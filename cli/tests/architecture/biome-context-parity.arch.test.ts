@@ -127,7 +127,12 @@ function filesMatchedTwice(
   includes: readonly (readonly string[])[]
 ): string[] {
   return files.filter(
-    (file) => includes.filter((globs) => globs.some((glob) => matchesGlob(glob, file))).length > 1
+    (file) =>
+      includes.filter(
+        (globs) =>
+          globs.some((glob) => !glob.startsWith("!") && matchesGlob(glob, file)) &&
+          !globs.some((glob) => glob.startsWith("!") && matchesGlob(glob.slice(1), file))
+      ).length > 1
   );
 }
 

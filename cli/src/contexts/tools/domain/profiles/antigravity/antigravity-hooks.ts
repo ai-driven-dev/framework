@@ -1,6 +1,7 @@
 import { genericFlatHooksScriptPath } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewritePluginRootInJson } from "../../../../../kernel/materialization/plugin-root-path-rewrite.js";
 import type { ProjectHookEntry } from "../../capabilities/plugins-capability.js";
+import { toBase64 } from "../../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../../formats/hooks-descriptor.js";
 import { ANTIGRAVITY_HOOKS } from "./hooks.js";
 
@@ -28,7 +29,7 @@ export function antigravityHooksScriptPath(pluginName: string, hooksRelativePath
 function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
   const handler: ProjectHookEntry = {
     type: "command",
-    command: `node -e "${JSON_RESPONSE}" ${Buffer.from(hook.command).toString("base64")}`,
+    command: `node -e "${JSON_RESPONSE}" ${toBase64(hook.command)}`,
   };
   if (hook.timeout !== undefined) handler.timeout = hook.timeout;
   return handler;

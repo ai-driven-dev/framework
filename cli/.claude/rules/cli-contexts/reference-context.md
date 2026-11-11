@@ -167,6 +167,7 @@ Written rules no tool checks: the glossary, a kit imported by its own context on
 | E8 | `ports/` in a migrated context, `domain/ports/` in the others | `target/05-distribution-auth-update.md:118`, `target/code-map/src-runtime-kernel-presentation-distribution.md:3` | one context per PR | the last context migrates |
 | E9 | auth keeps its own permission code | `target/05-distribution-auth-update.md:213,351` | the private-storage port is telemetry's (`auth -> telemetry`), has no read and no delete, and grants a directory, where auth grants the file | private storage moves to `shared/` with read and delete |
 | M1 | `shared/ports/http-get.ts` has one importing context, distribution | `target/00-overview.md:69` | created by foundations; auth receives `GitHubAdapter`, it does not import `HttpGet` | `update` migrates |
+| E-T4 | `tools/domain/formats/toml.ts` imports `smol-toml`, the only domain file that does | a domain imports no package (`aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-tools-clean.md` sections 0 F6, 2, 8) | TOML parsing and stringifying is the format `tools` writes; one wrapper keeps the package behind one file and `biome.json` denies it everywhere else in the domain | a `TomlCodec` port with an infrastructure adapter replaces the wrapper |
 
 ### Ambiguities removed
 
