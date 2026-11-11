@@ -146,15 +146,14 @@ describe("AgentsCapability file acceptance", () => {
     format: "markdown",
     frontmatter: identity,
   });
-  const suffixes = [".claude.md", ".cursor.md", ".codex.md"];
 
   it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap.acceptsFileName("planner.claude.md", suffixes)).toBe(true);
-    expect(cap.acceptsFileName("planner.md", suffixes)).toBe(true);
+    expect(cap.acceptsFileName("planner.claude.md")).toBe(true);
+    expect(cap.acceptsFileName("planner.md")).toBe(true);
   });
 
   it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap.acceptsFileName("a/b/planner.cursor.md", suffixes)).toBe(false);
+    expect(cap.acceptsFileName("a/b/planner.cursor.md")).toBe(false);
   });
 });
 

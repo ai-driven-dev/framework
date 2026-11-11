@@ -1,5 +1,7 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
 import type { AgentFrontmatter } from "../formats/agent-format.js";
+import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
+import { ToolSuffix } from "../profile/tool-suffix.js";
 
 function agentNameFromFrontmatter(
   fm: Record<string, unknown>,
@@ -8,15 +10,6 @@ function agentNameFromFrontmatter(
   const base = fileName?.split("/").at(-1);
   const name = fm.name ?? base?.replace(/\.md$/, "");
   return typeof name === "string" ? name : undefined;
-}
-
-function stripSuffix(toolSuffix: string, fileName: string): string {
-  const basename = fileName.split("/").at(-1) ?? fileName;
-  const dir = fileName.slice(0, fileName.length - basename.length);
-  if (basename.endsWith(toolSuffix)) {
-    return `${dir}${basename.slice(0, -toolSuffix.length)}.md`;
-  }
-  return fileName;
 }
 
 function toTomlBasename(toolSuffix: string, fileName: string): string {
@@ -31,6 +24,9 @@ function toTomlBasename(toolSuffix: string, fileName: string): string {
 }
 
 export class AgentsCapability {
+  private readonly suffix: ToolSuffix;
+  private readonly foreignSuffixes: ForeignSuffixFilter;
+
   constructor(
     readonly params: {
       directory: string;
@@ -45,7 +41,10 @@ export class AgentsCapability {
       serialize?: (frontmatter: Record<string, unknown>, body: string) => string;
       buildInstallPath?: (fileName: string) => string | null;
     }
-  ) {}
+  ) {
+    this.suffix = new ToolSuffix(params.toolSuffix);
+    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
+  }
 
   buildOutputPath(agentName: string): string {
     return `${this.params.directory}agents/${agentName}${this.params.toolSuffix}`;
@@ -57,17 +56,15 @@ export class AgentsCapability {
     if (this.params.format === "toml") {
       return `${this.params.directory}agents/${toTomlBasename(this.params.toolSuffix, basename)}`;
     }
-    return stripSuffix(this.params.toolSuffix, `${this.params.directory}agents/${basename}`);
+    return this.suffix.strip(`${this.params.directory}agents/${basename}`);
   }
 
   accepts(relativePath: string): boolean {
     return relativePath.startsWith(this.params.directory);
   }
 
-  acceptsFileName(fileName: string, allToolSuffixes: readonly string[]): boolean {
-    const basename = fileName.split("/").at(-1) ?? fileName;
-    const otherSuffixes = allToolSuffixes.filter((s) => s !== this.params.toolSuffix);
-    return !otherSuffixes.some((s) => basename.endsWith(s));
+  acceptsFileName(fileName: string): boolean {
+    return this.foreignSuffixes.accepts(fileName);
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {

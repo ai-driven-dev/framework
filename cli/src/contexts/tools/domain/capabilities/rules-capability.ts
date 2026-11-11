@@ -1,9 +1,9 @@
 import { serializeFrontmatter } from "../../../../kernel/markdown.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-
-const ALL_TOOL_SUFFIXES: readonly string[] = AI_TOOL_IDS.map((id) => `.${id}.md`);
+import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 export class RulesCapability {
+  private readonly foreignSuffixes: ForeignSuffixFilter;
+
   constructor(
     readonly params: {
       directory: string;
@@ -12,7 +12,9 @@ export class RulesCapability {
       buildInstallPath: (fileName: string) => string | null;
       convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
     }
-  ) {}
+  ) {
+    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
+  }
 
   buildOutputPath(ruleName: string): string {
     return `${this.params.directory}rules/${ruleName}${this.params.toolSuffix}`;
@@ -52,10 +54,7 @@ export class RulesCapability {
   }
 
   acceptsFileName(fileName: string): boolean {
-    const basename = fileName.split("/").at(-1) ?? fileName;
-    const effectiveSuffix = this.params.inputSuffix ?? this.params.toolSuffix;
-    const otherSuffixes = ALL_TOOL_SUFFIXES.filter((s) => s !== effectiveSuffix);
-    return !otherSuffixes.some((s) => basename.endsWith(s));
+    return this.foreignSuffixes.accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

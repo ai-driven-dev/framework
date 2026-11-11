@@ -1,9 +1,9 @@
 import { serializeFrontmatter } from "../../../../kernel/markdown.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-
-const ALL_TOOL_SUFFIXES: readonly string[] = AI_TOOL_IDS.map((id) => `.${id}.md`);
+import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 export class CommandsCapability {
+  private readonly foreignSuffixes: ForeignSuffixFilter;
+
   constructor(
     readonly params: {
       directory: string;
@@ -14,7 +14,9 @@ export class CommandsCapability {
         relativeFileName: string
       ) => Record<string, unknown>;
     }
-  ) {}
+  ) {
+    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
+  }
 
   buildOutputPath(commandName: string): string {
     return `${this.params.directory}commands/${commandName}${this.params.toolSuffix}`;
@@ -32,9 +34,7 @@ export class CommandsCapability {
   }
 
   acceptsFileName(fileName: string): boolean {
-    const basename = fileName.split("/").at(-1) ?? fileName;
-    const otherSuffixes = ALL_TOOL_SUFFIXES.filter((s) => s !== this.params.toolSuffix);
-    return !otherSuffixes.some((s) => basename.endsWith(s));
+    return this.foreignSuffixes.accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

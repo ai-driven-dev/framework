@@ -10,8 +10,7 @@ import {
 
 const agentsDescriptor: ContentSectionDescriptor<"agents", AgentsCapability> = {
   key: "agents",
-  acceptsFileName: (cap, fileName, allToolSuffixes) =>
-    cap.acceptsFileName(fileName, allToolSuffixes),
+  acceptsFileName: (cap, fileName) => cap.acceptsFileName(fileName),
   convertFrontmatter: (cap, frontmatter, relativeFileName) =>
     cap.convertFrontmatter(frontmatter, relativeFileName),
 };

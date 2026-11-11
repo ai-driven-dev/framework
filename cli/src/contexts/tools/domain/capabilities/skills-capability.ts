@@ -1,11 +1,12 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import { serializeFrontmatter } from "../../../../kernel/markdown.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
+import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 const AGENTS_SKILLS_PREFIX = ".agents/skills/";
-const ALL_TOOL_SUFFIXES: readonly string[] = AI_TOOL_IDS.map((id) => `.${id}.md`);
 
 export class SkillsCapability {
+  private readonly foreignSuffixes: ForeignSuffixFilter;
+
   constructor(
     readonly params: {
       directory?: string;
@@ -18,6 +19,7 @@ export class SkillsCapability {
     if (!params.prefix && !params.directory) {
       throw new CapabilityConfigError("SkillsCapability requires either prefix or directory");
     }
+    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix ?? "");
   }
 
   buildOutputPath(skillName: string): string {
@@ -36,10 +38,7 @@ export class SkillsCapability {
   }
 
   acceptsFileName(fileName: string): boolean {
-    const basename = fileName.split("/").at(-1) ?? fileName;
-    const toolSuffix = this.params.toolSuffix ?? "";
-    const otherSuffixes = ALL_TOOL_SUFFIXES.filter((s) => s !== toolSuffix);
-    return !otherSuffixes.some((s) => basename.endsWith(s));
+    return this.foreignSuffixes.accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

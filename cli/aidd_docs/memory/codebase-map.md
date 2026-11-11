@@ -50,6 +50,7 @@ src/
 │   │   │   ├── hooks/
 │   │   │   ├── models/
 │   │   │   ├── ports/
+│   │   │   ├── profile/
 │   │   │   └── profiles/    # one directory per tool
 │   │   │       ├── antigravity/
 │   │   │       ├── claude/
