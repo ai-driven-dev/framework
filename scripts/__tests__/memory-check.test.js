@@ -664,6 +664,16 @@ test("report, lost lines: a line moved within its file or to another bank file i
   assert.equal(twice.run.stdout, "vcs.md: - duplicate\n");
 });
 
+test("report, lost lines: an approved move out of the bank loses nothing, one inside it still lists a line gone", () => {
+  const kpi = { "vcs.md": BEFORE, "design/tokens.md": "# Tokens\n\n- release pipeline colors\n- deployment checklist spacing\n" };
+  const without = { "vcs.md": BEFORE, "design/tokens.md": null };
+  const out = dline("D1", "design/tokens.md > Tokens", "move aidd_docs/memory/design/ to aidd_docs/ui/", "yes");
+  assert.equal(lostLines(kpi, without, [out]).run.stdout, "");
+  assert.match(lostLines(kpi, without).run.stdout, /design\/tokens\.md: - release pipeline colors/u, "no approval, listed");
+  const inside = dline("D1", "design/tokens.md > Tokens", "move aidd_docs/memory/design/ to aidd_docs/memory/internal/design/", "yes");
+  assert.match(lostLines(kpi, without, [inside]).run.stdout, /release pipeline colors/u, "a move inside the bank keeps its lines to find");
+});
+
 test("report, lost lines: a heading or a table header left empty by approved removals is not a lost fact", () => {
   const before = { "vcs.md": "# V\n\n## Conventions\n\n- release pipeline\n\n| Change | Deployment |\n| --- | --- |\n| release pipeline | staging |\n" };
   const after = { "vcs.md": "# V\n" };

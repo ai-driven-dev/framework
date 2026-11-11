@@ -10,6 +10,7 @@ const path = require("node:path");
 
 const MAX_FILE_BYTES = 16 * 1024 * 1024;
 // Written beside the sheet by `plan`; `changes` never lists it.
+const BANK = "aidd_docs/memory/";
 const SNAPSHOT = "bank-snapshot.json";
 
 const collapse = (line) => line.trim().replace(/\s+/gu, " ");
@@ -59,19 +60,22 @@ const tally = (tokens) => tokens.reduce((counts, token) => counts.set(token, (co
  * The snapshot's lines whose facts the working bank lost, as `file: line`. A line held
  * whole, or quoted by an approval, is kept. Any other is lost when a word it carries is held
  * fewer times than before, across the whole bank: one hard word, two words, or every word it
- * had. An approved `move <from> to <to>` rewrites the paths first. Limit: a line with no long
+ * had. An approved `move <from> to <to>` rewrites the paths first, and one whose destination
+ * leaves the bank takes its source's files out of the count. Limit: a line with no long
  * word, number, path or code is never listed.
  */
 function goneLines(previous, bankDir, approvals) {
   const moves = approvals.map((fact) => fact.match(/^move\s+(\S+)\s+to\s+(\S+)/iu)).filter(Boolean);
   const moved = (text) => moves.reduce((result, [, from, to]) => result.split(from).join(to), text);
+  const leaving = moves.filter(([, , to]) => !to.startsWith(BANK)).map(([, from]) => from);
+  const left = (file) => leaving.some((from) => `${BANK}${file}`.startsWith(from));
   const approved = (line) => approvals.some((fact) => fact.includes(line) || fact.includes(`"${unmarked(line)}"`));
   // Both sides: a move approved and not made yet still names its old path on disk.
   const now = moved(markdownUnder(bankDir).map((file) => fs.readFileSync(path.join(bankDir, file), "utf8")).join("\n"));
   const held = tally(now.split("\n").map(collapse));
   const SEPARATOR = /^\|[\s|:-]+\|$/u;
   // A heading or a table header holds no fact: one left empty by approved removals is no loss.
-  const before = previous.flatMap(({ file, text }) => {
+  const before = previous.filter(({ file }) => !left(file)).flatMap(({ file, text }) => {
     const lines = moved(text).split("\n").map(collapse);
     return lines
       .filter((line, at) => line !== "" && !line.startsWith("#") && !SEPARATOR.test(line) && !SEPARATOR.test(lines[at + 1] ?? ""))
