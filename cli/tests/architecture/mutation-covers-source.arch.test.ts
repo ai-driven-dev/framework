@@ -211,18 +211,77 @@ describe("the guard itself", () => {
     expect(scoreOf({ files: {} })).toBe(0);
   });
 
-  it("runs the scopes a change touches, through source or mirrored tests, and all of them for the harness or a helper", () => {
+  it("runs the scopes a change touches, through source or mirrored tests, and all of them for the harness", () => {
     expect(scopesToRun(["cli/src/kernel/paths.ts"], scopes)).toEqual(["kernel"]);
     expect(
       scopesToRun(["cli/tests/contexts/tools/domain/registry-conformance.unit.test.ts"], scopes)
     ).toEqual(["tools"]);
     expect(scopesToRun(["README.md"], scopes)).toEqual([]);
-    expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], scopes)).toEqual([
-      "kernel",
-      "tools",
-    ]);
     expect(scopesToRun([HARNESS[0]], scopes)).toEqual(["kernel", "tools"]);
     expect(scopesToRun([], scopes, { all: true })).toEqual(["kernel", "tools"]);
+  });
+
+  const withCanary = {
+    ...scopes,
+    canary: { mutate: "tests/fixtures/stryker-canary/**/*.ts", break: 100 },
+  };
+
+  it.each(["cli/scripts/mutation-scopes-to-run.mjs", "cli/tests/helpers/repository-root.ts"])(
+    "runs no scope of its own for %s, a tooling change",
+    (file) => {
+      expect(scopesToRun([file], withCanary)).toEqual([]);
+    }
+  );
+
+  it.each([
+    "cli/pnpm-lock.yaml",
+    "cli/package.json",
+    "cli/pnpm-workspace.yaml",
+    "cli/patches/@stryker-mutator__vitest-runner@10.0.0.patch",
+    ".github/workflows/cli-ci.yml",
+  ])("runs the canary scope only for %s, a dependency or workflow change", (file) => {
+    expect(scopesToRun([file], withCanary)).toEqual(["canary"]);
+  });
+
+  it("runs no scope for a dependency or workflow change when no canary scope is declared", () => {
+    expect(scopesToRun(["cli/pnpm-lock.yaml"], scopes)).toEqual([]);
+    expect(scopesToRun([".github/workflows/cli-ci.yml"], scopes)).toEqual([]);
+  });
+
+  it("a tooling change beside a source change runs that source's scope only", () => {
+    expect(scopesToRun(["cli/pnpm-lock.yaml", "cli/src/kernel/paths.ts"], scopes)).toEqual([
+      "kernel",
+    ]);
+    expect(
+      scopesToRun(["cli/scripts/mutation-scopes-to-run.mjs", "cli/src/kernel/paths.ts"], withCanary)
+    ).toEqual(["kernel"]);
+  });
+
+  it("a dependency change beside a source change adds the canary to that source's scope", () => {
+    expect(scopesToRun(["cli/pnpm-lock.yaml", "cli/src/kernel/paths.ts"], withCanary)).toEqual([
+      "kernel",
+      "canary",
+    ]);
+  });
+
+  it("declares the canary scope the dependency rule relies on", () => {
+    expect(Object.keys(declaration().scopes)).toContain("canary");
+  });
+
+  // Limit: a helper reached only through another helper's import is not seen; none exists today.
+  it("every helper the mutation config loads reshapes every scope", () => {
+    const config = read("vitest.mutation.config.ts");
+    const files = [...config.matchAll(/["']\.\/tests\/helpers\/([\w./-]+?)\.(?:js|ts)["']/g)].map(
+      (match) => `cli/tests/helpers/${match[1]}.ts`
+    );
+    expect(files.length, "a helper specifier the matcher cannot see").toBe(
+      config.split("tests/helpers/").length - 1
+    );
+    expect(new Set(files).size).toBeGreaterThanOrEqual(4);
+    for (const file of new Set(files)) {
+      expect(HARNESS, `${file} is loaded by the mutation config`).toContain(file);
+      expect(scopesToRun([file], scopes)).toEqual(["kernel", "tools"]);
+    }
   });
 
   it("names every harness file the tree holds, so a renamed one cannot silently stop counting", () => {
