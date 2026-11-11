@@ -596,3 +596,33 @@ The pilot fails its review, whatever its measures, if any of these holds:
 - A dependency pointing inward from the domain: profiles and capabilities import no infrastructure, no `node:*` beyond `node:path` and `node:crypto` (the reference's section 4, line 79), no third-party package.
 
 Phases 3 and 6 end with an opus design review against this bar before the phase is committed; phase 11's final review re-checks it on the whole slice.
+
+## Red proofs
+
+| Check | Break | Red line |
+| --- | --- | --- |
+| is registered once, under its own id | profile listed twice in the registration | `expected [ { kind: 'ai', …(8) }, …(1) ] to have a length of 1 but got 2` |
+| has a well-formed shape | toolSuffix `md` without the dot | `expected false to be true // Object.is equality` |
+| keeps a relative directory ending in a slash | directory `/abs/` | `expected false to be true // Object.is equality` |
+| computes every path relative, and keeps commands, rules, agents and flat hooks under its directory | command install path `../escape.md` | `installed path: ../escape.md: expected true to be false // Object.is equality` |
+| builds neither rules nor commands from the plugin tree | flat contract supports rules from the tree | `expected true to be false // Object.is equality` |
+| gives every supported artifact a non-empty path | skills path returns an empty string | `skills: expected '' not to be '' // Object.is equality` |
+| is reachable by at least one build | no build contract | `expected 0 to be greater than 0` |
+| is probed where it publishes a marketplace | marketplace contract, no probe | `expected 0 to be greater than 0` |
+| drives native activation where it declares marketplace settings | native plugins with marketplace settings | `expected null not to be null` |
+| lets its flat build carry hooks exactly when it accepts them | accepts hooks, flat build without them | `expected false to be true // Object.is equality` |
+| declares a plugin root token exactly in native mode | native mode, no root token | `expected false to be true // Object.is equality` |
+| names a variable, never a path | token `$PLUGIN_ROOT` | `expected '$PLUGIN_ROOT' to match /^\$\{[A-Z_]+\}$/u` |
+| writes its own token into a marketplace build | marketplace build writes `${OTHER}` | `expected '${OTHER}' to be '${FAKE_PLUGIN_ROOT}' // Object.is equality` |
+| writes no token into a flat build | flat build writes a token | `expected '${FAKE_PLUGIN_ROOT}' to be undefined` |
+| declares a plugins capability | plugins capability removed | `expected undefined to be defined` |
+| feeds its mcp file from the mcp config | mcp output with no mcp config | `expected [] to include 'mcp'` |
+| routes a numbered command and its references to the same folder | command folder `aidd/04` against reference folder `04_code` | `claude: .fake/commands/04_code/implement.md: expected '.fake/commands/04_code/implement.md' to be '.fake/commands/aidd/04/implement.md' // Object.is equality` |
+| names a numbered command after its phase and keeps only what it reads | frontmatter passed through unconverted | `expected { name: 'implement', …(2) } to match object { name: 'aidd:04:implement', …(1) }` |
+| sits in a profile folder the registration lists, and every folder is registered | folder `ghost` on disk, unregistered | `expected [ 'claude' ] to include 'ghost'` |
+| has a hooks descriptor exactly when it runs hooks | hooks accepted, no `hooks.ts` | `expected false to be true // Object.is equality` |
+| exports its descriptor under the tool's name | export named `OTHER_HOOKS` | `CLAUDE_HOOKS: expected undefined to be defined` |
+| relays only events its descriptor declares | adapter relays `Stop`, undeclared | `Stop relayed, never declared: expected undefined to be defined` |
+| generates a bridge for exactly the events it relays through one | bridge relay, generator returns null | `expected [] to deeply equal [ 'SessionStart' ]` |
+| comes with one captured payload per event it relays | no payload fixtures | `claude: no payload for SessionStart: expected false to be true // Object.is equality` |
+| `registeredIdsMatchKernel` | kernel ids missing from the list | throws |

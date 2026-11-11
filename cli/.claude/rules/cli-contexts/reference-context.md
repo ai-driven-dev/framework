@@ -105,7 +105,7 @@ Provisional until `installation` and its `Manifest` aggregate migrate: auth's ag
 - Only cases the port itself can drive. How an adapter words what its system said is the adapter's translation, tested in the adapter's own test (`tests/shared/infrastructure/github-adapter.unit.test.ts`, `tests/contexts/auth/infrastructure/gh-cli-adapter.integration.test.ts`).
 - A case red on the real adapter is a wrong case; red on the fake, a divergence fixed in the fake. Auth's suites carry no expected-failure option: none was needed. `tests/helpers/ports/file-port-contract.ts` keeps one for its case C19, which is that suite's own debt.
 - The real arm runs where it can; one a platform cannot run is skipped with `describe.skipIf` and its reason (exception E2: the `gh` arm on POSIX only).
-- Each suite is seen red once on each arm against a broken subject before it is kept. How the proof is kept: open.
+- Each suite is seen red once on each arm against a broken subject before it is kept. Seen red once against a planted break, recorded in the plan; no broken subject kept. A change to a check re-plants its break in its PR.
 - A test over every tool walks `REGISTERED_PROFILES`: no tool id, no `Record<ToolId, ...>`.
 
 ## 8. Naming, tests and mutation
