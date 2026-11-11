@@ -22,11 +22,13 @@ type McpCapabilityParams = {
 
 export class McpCapability {
   readonly #params: McpCapabilityParams;
-  readonly consumes: readonly string[];
 
   constructor(params: McpCapabilityParams) {
     this.#params = params;
-    this.consumes = params.consumes ?? [];
+  }
+
+  consumes(configName: string): boolean {
+    return this.#params.consumes?.includes(configName) ?? false;
   }
 
   outputPath(): string {
@@ -39,6 +41,20 @@ export class McpCapability {
 
   getMergeStrategy(): "user-prime" | "framework-prime" | "none" {
     return this.#params.mergeStrategy ?? "user-prime";
+  }
+
+  isFrameworkPrime(): boolean {
+    return this.getMergeStrategy() === "framework-prime";
+  }
+
+  /** Whether `fileName` is the JSON file this tool shares with a person, the framework's half of
+   * it written over theirs. */
+  isFrameworkPrimeJson(fileName: string): boolean {
+    return (
+      this.#params.outputPath === fileName &&
+      this.#params.format === "json" &&
+      this.isFrameworkPrime()
+    );
   }
 
   /** The tool's own rewrite of the server entries, before any format conversion; unchanged when it has none. */

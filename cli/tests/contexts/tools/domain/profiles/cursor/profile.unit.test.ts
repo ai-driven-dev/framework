@@ -30,7 +30,7 @@ describe("cursor declarations the rest of the CLI reads", () => {
   it("writes its MCP servers as JSON under `mcpServers`, in .cursor/mcp.json", () => {
     const mcp = cursor.section("mcp");
     expect([mcp.outputPath(), mcp.format()]).toStrictEqual([".cursor/mcp.json", "json"]);
-    expect(cursor.section("mcp").consumes).toStrictEqual([CONFIG_MCP]);
+    expect(cursor.section("mcp").consumes(CONFIG_MCP)).toBe(true);
   });
 
   it.each<[InstallKind, string, string | null]>([

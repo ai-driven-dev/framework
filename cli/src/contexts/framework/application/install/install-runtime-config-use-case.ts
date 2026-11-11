@@ -108,12 +108,7 @@ export class InstallRuntimeConfigUseCase {
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       if (await this.isUserOwned(resolvedPath, options)) continue;
       const mcp = mcpCapabilityOf(options.toolId);
-      if (
-        mcp !== null &&
-        mcp.outputPath() === fileName &&
-        mcp.format() === "json" &&
-        mcp.getMergeStrategy() === "framework-prime"
-      ) {
+      if (mcp?.isFrameworkPrimeJson(fileName)) {
         content = buildOpencodeFlatConfig(
           content,
           await this.readExistingConfig(resolvedPath, options.projectRoot),
@@ -168,21 +163,18 @@ export class InstallRuntimeConfigUseCase {
     options: InstallRuntimeConfigOptions
   ): InstallationFile | null {
     if (!(cap instanceof SettingsCapability)) return null;
-    if (!cap.hasStaticContent()) return null;
-    if (cap.requiresTool && !options.manifest.hasTool(cap.requiresTool)) return null;
-    const content = this.resolveStaticContent(cap, options.toolId);
+    const requiredTool = cap.requiredTool();
+    if (requiredTool !== null && !options.manifest.hasTool(requiredTool)) return null;
+    const content = cap.resolveStaticContent((fileName) =>
+      this.assets.loadConfigAsset(options.toolId, fileName)
+    );
+    if (content === null) return null;
     return new InstallationFile({
       relativePath: cap.buildOutputPath(),
       content,
       hash: this.hasher.hash(content),
       mergeStrategy: cap.getMergeStrategy(),
     });
-  }
-
-  private resolveStaticContent(cap: SettingsCapability, toolId: AiToolId): string {
-    if (cap.staticContent !== undefined) return cap.staticContent;
-    const asset = this.assets.loadConfigAsset(toolId, cap.staticContentAssetFile as string);
-    return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
   }
 
   private async isUserOwned(

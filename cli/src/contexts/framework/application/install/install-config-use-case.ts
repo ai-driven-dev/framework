@@ -1,5 +1,4 @@
 import { InstallationFile } from "../../../../kernel/file.js";
-import type { MergeStrategy } from "../../../../kernel/merge.js";
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
@@ -33,7 +32,7 @@ export class InstallConfigUseCase {
     const win32Transform = transformMcpForPlatform(platform.current());
     const results: InstallationFile[] = [];
     for (const ref of configRefs) {
-      const capability = capabilities.find((c) => c.consumes.includes(ref.name));
+      const capability = capabilities.find((c) => c.consumes(ref.name));
       if (capability === undefined) continue;
       const file = await this.processRef(
         ref,
@@ -68,7 +67,7 @@ export class InstallConfigUseCase {
       relativePath: outputPath,
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: this.getCapabilityMergeStrategy(capability),
+      mergeStrategy: capability.getMergeStrategy(),
       frameworkPath: ref.path,
     });
   }
@@ -78,7 +77,12 @@ export class InstallConfigUseCase {
     projectRoot: string,
     options: InstallConfigOptions
   ): Promise<InstallationFile | null> {
-    const content = this.resolveStaticContent(capability, options);
+    const { assetProvider, toolId } = options;
+    const content = capability.resolveStaticContent(
+      assetProvider === undefined || toolId === undefined
+        ? undefined
+        : (fileName) => assetProvider.loadConfigAsset(toolId, fileName)
+    );
     if (content === null) return null;
     const outputPath = await this.resolveCapabilityOutputPath(capability, projectRoot);
     if (outputPath === null) return null;
@@ -88,22 +92,6 @@ export class InstallConfigUseCase {
       hash: this.hasher.hash(content),
       mergeStrategy: capability.getMergeStrategy(),
     });
-  }
-
-  private resolveStaticContent(
-    capability: SettingsCapability,
-    options: InstallConfigOptions
-  ): string | null {
-    if (capability.staticContent !== undefined) return capability.staticContent;
-    if (capability.staticContentAssetFile !== undefined) {
-      if (options.assetProvider === undefined || options.toolId === undefined) return null;
-      const asset = options.assetProvider.loadConfigAsset(
-        options.toolId,
-        capability.staticContentAssetFile
-      );
-      return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-    }
-    return null;
   }
 
   private async resolveCapabilityOutputPath(
@@ -124,11 +112,7 @@ export class InstallConfigUseCase {
   ): string {
     const toolContent =
       capability instanceof McpCapability ? capability.transform(rawContent) : rawContent;
-    const isMcp = capability.consumes.includes(CONFIG_MCP) && configName === CONFIG_MCP;
+    const isMcp = capability.consumes(CONFIG_MCP) && configName === CONFIG_MCP;
     return isMcp && win32Transform ? win32Transform(toolContent) : toolContent;
-  }
-
-  private getCapabilityMergeStrategy(capability: ConfigCapability): MergeStrategy {
-    return capability.getMergeStrategy();
   }
 }

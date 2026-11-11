@@ -9,7 +9,6 @@ type HooksCapabilityParams = {
 
 export class HooksCapability {
   readonly #params: HooksCapabilityParams;
-  readonly consumes: readonly string[];
 
   constructor(params: HooksCapabilityParams) {
     this.#params = params;
@@ -21,7 +20,10 @@ export class HooksCapability {
         `hooks outputPath "${params.outputPath}" must stay in the project.`
       );
     }
-    this.consumes = params.consumes ?? [];
+  }
+
+  consumes(configName: string): boolean {
+    return this.#params.consumes?.includes(configName) ?? false;
   }
 
   buildOutputPath(): string {

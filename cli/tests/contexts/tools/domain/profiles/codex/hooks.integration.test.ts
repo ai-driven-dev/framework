@@ -12,7 +12,7 @@ describe("codex hooks", () => {
     });
 
     it("consumes the codex-hooks config name", () => {
-      expect(codex.section("hooks").consumes).toContain("codex-hooks");
+      expect(codex.section("hooks").consumes("codex-hooks")).toBe(true);
     });
 
     it("uses user-prime merge strategy", () => {

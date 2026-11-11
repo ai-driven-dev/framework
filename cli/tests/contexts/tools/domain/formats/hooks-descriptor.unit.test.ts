@@ -274,7 +274,7 @@ describe("the hooks file the framework install writes", () => {
     expect(capability.buildOutputPath()).toBe(".tool/hooks.json");
     expect(capability.getMergeStrategy()).toBe("none");
     expect(capability.getEntrySection()).toBe("Start");
-    expect(capability.consumes).toStrictEqual(["tool-hooks"]);
+    expect(capability.consumes("tool-hooks")).toBe(true);
   });
 });
 

@@ -4,7 +4,7 @@ import { vscode } from "../../../../../../src/contexts/tools/domain/profiles/vsc
 describe("vscode profile", () => {
   const declared = vscode.section("settings");
   const settings = Array.isArray(declared) ? declared : [declared];
-  const consuming = (name: string) => settings.find((s) => s.consumes.includes(name));
+  const consuming = (name: string) => settings.find((s) => s.consumes(name));
 
   it.each([
     ["vscodeExtensions", ".vscode/extensions.json", "user-prime"],

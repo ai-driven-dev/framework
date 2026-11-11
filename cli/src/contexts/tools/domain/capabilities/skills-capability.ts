@@ -14,14 +14,14 @@ type SkillsCapabilityParams = {
 
 export class SkillsCapability {
   readonly #params: SkillsCapabilityParams;
-  private readonly foreignSuffixes: ForeignSuffixFilter;
+  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: SkillsCapabilityParams) {
     this.#params = params;
     if (!params.prefix && !params.directory) {
       throw new CapabilityConfigError("SkillsCapability requires either prefix or directory");
     }
-    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix ?? "");
+    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix ?? "");
   }
 
   buildOutputPath(skillName: string): string {
@@ -40,7 +40,7 @@ export class SkillsCapability {
   }
 
   acceptsFileName(fileName: string): boolean {
-    return this.foreignSuffixes.accepts(fileName);
+    return this.#foreignSuffixes.accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

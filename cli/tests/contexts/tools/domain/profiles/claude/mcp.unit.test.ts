@@ -12,7 +12,7 @@ describe("claude mcp", () => {
     });
 
     it("does not consume unknown config names", () => {
-      expect(claude.section("mcp").consumes).not.toContain("vscodeDir");
+      expect(claude.section("mcp").consumes("vscodeDir")).toBe(false);
     });
 
     it("mcp config preserves user customizations during update", () => {

@@ -195,7 +195,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   aiCheck("feeds its mcp file from the mcp config", (profile) => {
     const mcp = capability(profile, "mcp", McpCapability);
     if (mcp === undefined) return;
-    expect(mcp.consumes).toContain(CONFIG_MCP);
+    expect(mcp.consumes(CONFIG_MCP)).toBe(true);
   }),
   aiCheck("routes a numbered command and its references to the same folder", (profile) => {
     expectNumberedCommandsRouted(profile);

@@ -11,11 +11,11 @@ type RulesCapabilityParams = {
 
 export class RulesCapability {
   readonly #params: RulesCapabilityParams;
-  private readonly foreignSuffixes: ForeignSuffixFilter;
+  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: RulesCapabilityParams) {
     this.#params = params;
-    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
+    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
   }
 
   buildOutputPath(ruleName: string): string {
@@ -25,7 +25,7 @@ export class RulesCapability {
   /** A name no rule of a reader's own will ever carry, asked of `buildInstallPath` only so its
    * answer can be read back. Long on purpose: it reaches no output and no disk, and a short one
    * could collide with a real rule name. */
-  private static readonly PROBE_STEM = "aidd-installed-location-probe";
+  static readonly #PROBE_STEM = "aidd-installed-location-probe";
 
   /** Where an installed rule of this tool lives, and what it is called at the end, asked of the
    * installer rather than restated beside it: `buildOutputPath` answers where the framework's
@@ -35,15 +35,15 @@ export class RulesCapability {
    * recognition; neither is a guess. */
   installedLocation(): { readonly directory: string; readonly extension: string } | null {
     const suffix = this.#params.inputSuffix ?? this.#params.toolSuffix;
-    const installed = this.buildInstallPath(`${RulesCapability.PROBE_STEM}${suffix}`);
+    const installed = this.buildInstallPath(`${RulesCapability.#PROBE_STEM}${suffix}`);
     if (installed === null) return null;
     const lastSlash = installed.lastIndexOf("/");
     const basename = installed.slice(lastSlash + 1);
-    const stemAt = basename.indexOf(RulesCapability.PROBE_STEM);
+    const stemAt = basename.indexOf(RulesCapability.#PROBE_STEM);
     if (stemAt === -1) return null;
     return {
       directory: installed.slice(0, lastSlash + 1),
-      extension: basename.slice(stemAt + RulesCapability.PROBE_STEM.length),
+      extension: basename.slice(stemAt + RulesCapability.#PROBE_STEM.length),
     };
   }
 
@@ -56,7 +56,7 @@ export class RulesCapability {
   }
 
   acceptsFileName(fileName: string): boolean {
-    return this.foreignSuffixes.accepts(fileName);
+    return this.#foreignSuffixes.accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

@@ -57,9 +57,7 @@ export class InstallIdeToolUseCase {
     projectRoot: string,
     manifest: Manifest
   ): Promise<void> {
-    const toMerge = settingsCapabilitiesOf(aiId).filter(
-      (c) => c.hasStaticContent() && c.requiresTool === ideId
-    );
+    const toMerge = settingsCapabilitiesOf(aiId).filter((c) => c.requiredTool() === ideId);
     if (toMerge.length === 0) return;
     const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
@@ -96,11 +94,11 @@ export class InstallIdeToolUseCase {
   }
 
   private resolveCapabilityContent(cap: SettingsCapability, aiId: AiToolId): string {
-    if (cap.staticContent !== undefined) return cap.staticContent;
-    if (cap.staticContentAssetFile !== undefined && this.assetProvider !== undefined) {
-      const asset = this.assetProvider.loadConfigAsset(aiId, cap.staticContentAssetFile);
-      return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-    }
-    return "{}";
+    const provider = this.assetProvider;
+    return (
+      cap.resolveStaticContent(
+        provider === undefined ? undefined : (fileName) => provider.loadConfigAsset(aiId, fileName)
+      ) ?? "{}"
+    );
   }
 }

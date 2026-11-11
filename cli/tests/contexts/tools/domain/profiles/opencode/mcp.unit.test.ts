@@ -19,12 +19,12 @@ describe("opencode mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps both opencode and mcp config names to opencode.json", () => {
       expect(opencode.section("mcp").outputPath()).toBe("opencode.json");
-      expect(opencode.section("mcp").consumes).toContain("opencode");
-      expect(opencode.section("mcp").consumes).toContain("mcp");
+      expect(opencode.section("mcp").consumes("opencode")).toBe(true);
+      expect(opencode.section("mcp").consumes("mcp")).toBe(true);
     });
 
     it("does not consume unknown config names", () => {
-      expect(opencode.section("mcp").consumes).not.toContain("unknown");
+      expect(opencode.section("mcp").consumes("unknown")).toBe(false);
     });
 
     it("uses framework-prime merge strategy", () => {

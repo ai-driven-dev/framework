@@ -41,10 +41,10 @@ describe("HooksCapability", () => {
 
 describe("HooksCapability declarations", () => {
   it("consumes nothing unless told otherwise", () => {
-    expect(new HooksCapability({ outputPath: "h.json" }).consumes).toStrictEqual([]);
+    expect(new HooksCapability({ outputPath: "h.json" }).consumes("tool-hooks")).toBe(false);
     expect(
-      new HooksCapability({ outputPath: "h.json", consumes: ["hooks"] }).consumes
-    ).toStrictEqual(["hooks"]);
+      new HooksCapability({ outputPath: "h.json", consumes: ["hooks"] }).consumes("hooks")
+    ).toBe(true);
   });
 
   it("lets the user's file win unless the tool declares otherwise", () => {

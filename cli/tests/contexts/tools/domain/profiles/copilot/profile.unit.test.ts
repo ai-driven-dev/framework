@@ -30,7 +30,7 @@ describe("copilot declarations the rest of the CLI reads", () => {
 
   it("writes its MCP servers as JSON under `servers`", () => {
     expect(copilot.section("mcp").format()).toBe("json");
-    expect(copilot.section("mcp").consumes).toStrictEqual([CONFIG_MCP]);
+    expect(copilot.section("mcp").consumes(CONFIG_MCP)).toBe(true);
   });
 
   it("translates plugins for its own marketplace", () => {
@@ -86,10 +86,15 @@ describe("copilot declarations the rest of the CLI reads", () => {
     const settings = Array.isArray(declared) ? declared[0] : declared;
     expect(settings.buildOutputPath()).toBe(".vscode/settings.json");
     expect(settings.getMergeStrategy()).toBe("framework-prime");
-    expect(settings.staticContentAssetFile).toBe("vscode-settings.json");
-    expect(settings.staticContent).toBeUndefined();
-    expect(settings.consumes).toHaveLength(0);
-    expect(settings.requiresTool).toBe("vscode");
+    const loaded: string[] = [];
+    expect(
+      settings.resolveStaticContent((name) => {
+        loaded.push(name);
+        return "{}";
+      })
+    ).toBe("{}");
+    expect(loaded).toStrictEqual(["vscode-settings.json"]);
+    expect(settings.requiredTool()).toBe("vscode");
   });
 });
 

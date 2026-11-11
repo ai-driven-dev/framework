@@ -4,9 +4,9 @@
  * hold only what their own way needs. A field read from outside re-couples a caller to a
  * variant's shape, and the shape is free to change.
  *
- * Two doors lead to the capability from outside the tools context: the section a profile
- * answers (`tool.section("plugins")`) and the catalog resolver (`resolvePluginsCapability(id)`).
- * Both are watched for a property read or a destructuring. A capability held in a variable and
+ * Three doors lead to the capability from outside the tools context: the section a profile
+ * answers (`tool.section("plugins")`), the catalog resolver (`resolvePluginsCapability(id)`) and
+ * the native narrowing (`resolveNativePlugins(id)`). All are watched for a property read or a destructuring. A capability held in a variable and
  * read from there is out of this test's sight; a `#` field is what stops that one, where the
  * compiler refuses a cast or an element access that the `private` keyword lets through.
  */
@@ -17,30 +17,28 @@ import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
 
 const TOOLS_CONTEXT = /^(src|tests)\/contexts\/tools\//;
 
-const PLUGINS_FILES = [
-  "src/contexts/tools/domain/plugins/plugins-capability.ts",
-  "src/contexts/tools/domain/plugins/plugin-params.ts",
-  "src/contexts/tools/domain/plugins/plugin-delivery.ts",
-  "src/contexts/tools/domain/plugins/native-plugins.ts",
-  "src/contexts/tools/domain/plugins/flat-plugins.ts",
-  "src/contexts/tools/domain/plugins/unsupported-plugins.ts",
+const ANSWERING_DIRS = [
+  "src/contexts/tools/domain/capabilities",
+  "src/contexts/tools/domain/plugins",
+];
+/** Declarations a profile hands over as data, whose fields are read as they are written. */
+const DATA_DECLARATIONS = [
+  "src/contexts/tools/domain/plugins/native-activation.ts",
+  "src/contexts/tools/domain/plugins/marketplace-registration.ts",
 ];
 
-const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|PluginsCapability\))`;
+const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\))`;
 /** `kind` is the one read allowed: the discriminant a caller narrows the variant on. */
 const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(?!kind\b)(\w+)\b(?!\s*\()`, "g");
 const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
-
-/** A capability's declared parameters, read from a section or from a variable named for one. */
-const PARAMS_READ =
-  /(?:section\([^)]*\)|\b(?:mcp|hooks|settings|agents|skills|commands|rules|capability|cap)(?:Capability)?)\??\.params\b/g;
-const CAPABILITY_FILES_DIR = "src/contexts/tools/domain/capabilities";
 
 const CLASS_BLOCK = /^(?:export )?(?:abstract )?class (\w+)[^{]*\{([\s\S]*?)\n\}/gm;
 const PUBLIC_FIELD =
   /^ {2}(?!static |constructor|abstract |override |async |get |set )(?:(?:public|private|protected) )?(?:readonly )?(\w+)[?!]?\s*[:=]/gm;
 /** A parameter property cannot be a `#` field, so it is refused outright. */
 const PARAMETER_PROPERTY = /constructor\([^)]*\b(?:public|private|protected|readonly)\s+(\w+)/g;
+/** A getter that only hands back a stored value is a field read renamed. */
+const STORED_VALUE_GETTER = /^ {2}get (\w+)\(\)[^{]*\{\s*return this\.#?[\w.]+;\s*\}/gm;
 
 function testFiles(): string[] {
   return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, encoding: "utf8" })
@@ -64,47 +62,31 @@ function readsOutsideTools(files: readonly string[]): string[] {
   return reads.sort();
 }
 
-/** The fields a plugins class leaves readable: each is a read a caller can make. */
-function readableFields(): string[] {
+function answeringFiles(): string[] {
+  return ANSWERING_DIRS.flatMap((dir) =>
+    readdirSync(join(CLI_ROOT, dir))
+      .filter((entry) => entry.endsWith(".ts"))
+      .map((entry) => `${dir}/${entry}`)
+  ).filter((file) => !DATA_DECLARATIONS.includes(file));
+}
+
+/** What a class leaves readable in one source: each entry is a read a caller can make. */
+function readableIn(file: string, source: string): string[] {
   const fields: string[] = [];
-  for (const file of PLUGINS_FILES) {
-    for (const block of read(file).matchAll(CLASS_BLOCK)) {
-      for (const field of (block[2] as string).matchAll(PUBLIC_FIELD)) {
-        fields.push(`${file} :: ${block[1]}.${field[1]}`);
-      }
-      for (const prop of (block[2] as string).matchAll(PARAMETER_PROPERTY)) {
-        fields.push(`${file} :: ${block[1]}.${prop[1]}`);
-      }
+  for (const block of source.matchAll(CLASS_BLOCK)) {
+    const body = block[2] as string;
+    for (const pattern of [PUBLIC_FIELD, PARAMETER_PROPERTY, STORED_VALUE_GETTER]) {
+      for (const field of body.matchAll(pattern)) fields.push(`${file} :: ${block[1]}.${field[1]}`);
     }
   }
-  return fields.sort();
+  return fields;
 }
 
-/** Where code outside the tools context reads the declared parameters of a section. */
-function paramsReadsOutsideTools(files: readonly string[]): string[] {
-  const reads: string[] = [];
-  for (const file of files.filter((path) => !TOOLS_CONTEXT.test(path))) {
-    for (const _match of read(file).matchAll(PARAMS_READ)) reads.push(`${file} :: reads .params`);
-  }
-  return reads.sort();
-}
-
-/** The capability classes that leave their parameters readable. */
-function readableParams(): string[] {
-  const leaks: string[] = [];
-  for (const entry of readdirSync(join(CLI_ROOT, CAPABILITY_FILES_DIR))) {
-    if (!entry.endsWith("-capability.ts")) continue;
-    const file = `${CAPABILITY_FILES_DIR}/${entry}`;
-    for (const block of read(file).matchAll(CLASS_BLOCK)) {
-      for (const field of (block[2] as string).matchAll(PUBLIC_FIELD)) {
-        if (field[1] === "params") leaks.push(`${file} :: ${block[1]}.params`);
-      }
-      for (const prop of (block[2] as string).matchAll(PARAMETER_PROPERTY)) {
-        if (prop[1] === "params") leaks.push(`${file} :: ${block[1]}.params`);
-      }
-    }
-  }
-  return leaks.sort();
+/** Every stored value a capability or plugins class lets a caller read instead of asking. */
+function readableFields(): string[] {
+  return answeringFiles()
+    .flatMap((file) => readableIn(file, read(file)))
+    .sort();
 }
 
 describe("a tool's plugin delivery is asked, never read", () => {
@@ -112,21 +94,41 @@ describe("a tool's plugin delivery is asked, never read", () => {
     expect(readsOutsideTools([...sourceFiles(), ...testFiles()])).toEqual([]);
   });
 
-  it("no plugins class leaves a field readable", () => {
+  it("no capability or plugins class leaves a stored value readable", () => {
     expect(readableFields()).toEqual([]);
   });
 
-  it("sees a keyword-private field and a parameter property, and clears a # field", () => {
+  it("sees a public field, a keyword-private one, a parameter property and a stored-value getter, and clears a # field", () => {
     const planted = [
       "class A {",
+      "  readonly open: string;",
       "  private readonly secret: string;",
       "  readonly #hidden: string;",
       "  constructor(private readonly leaked: string) {}",
+      "  get echoed(): string {",
+      "    return this.#hidden;",
+      "  }",
+      "  get kind(): string {",
+      '    return "a";',
+      "  }",
+      "  ask(): string {",
+      "    return this.#hidden;",
+      "  }",
       "}",
     ].join("\n");
-    const block = [...planted.matchAll(CLASS_BLOCK)][0]?.[2] as string;
-    expect([...block.matchAll(PUBLIC_FIELD)].map((m) => m[1])).toEqual(["secret"]);
-    expect([...block.matchAll(PARAMETER_PROPERTY)].map((m) => m[1])).toEqual(["leaked"]);
+    expect(readableIn("a.ts", planted)).toEqual([
+      "a.ts :: A.open",
+      "a.ts :: A.secret",
+      "a.ts :: A.leaked",
+      "a.ts :: A.echoed",
+    ]);
+  });
+
+  it("reads every capability and plugins file, and none of the data declarations", () => {
+    const files = answeringFiles();
+    expect(files).toContain("src/contexts/tools/domain/capabilities/settings-capability.ts");
+    expect(files).toContain("src/contexts/tools/domain/plugins/native-plugins.ts");
+    for (const declaration of DATA_DECLARATIONS) expect(files).not.toContain(declaration);
   });
 
   it("sees a read and a destructuring where one is written", () => {
@@ -136,12 +138,13 @@ describe("a tool's plugin delivery is asked, never read", () => {
       'const { hookScript } = tool.section("plugins");',
       "const c = catalog.resolvePluginsCapability(id).acceptsMcp;",
       "const e = (x as PluginsCapability).acceptsMcp;",
+      "const f = catalog.resolveNativePlugins(id).hookScript;",
     ];
     const found = written.map((line) => [...line.matchAll(FIELD_READ)].length);
     const destructured = written.map((line) => [...line.matchAll(DESTRUCTURING)].length);
     expect([found, destructured]).toEqual([
-      [1, 1, 0, 1, 1],
-      [0, 0, 1, 0, 0],
+      [1, 1, 0, 1, 1, 1],
+      [0, 0, 1, 0, 0, 0],
     ]);
 
     const asked = 'const d = tool.section("plugins").buildMode();';
@@ -149,29 +152,6 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
     const narrowed = 'if (tool.section("plugins").kind === "flat") return;';
     expect([...narrowed.matchAll(FIELD_READ)]).toHaveLength(0);
-  });
-
-  it("no code outside the tools context reads a section's parameters", () => {
-    expect(paramsReadsOutsideTools([...sourceFiles(), ...testFiles()])).toEqual([]);
-  });
-
-  it("no capability class leaves its parameters readable", () => {
-    expect(readableParams()).toEqual([]);
-  });
-
-  it("sees a parameters read on a section or a capability variable, and clears a named answer", () => {
-    const written = [
-      'const a = tool.section("mcp").params.outputPath;',
-      "const b = mcp.params.format;",
-      "const c = capability?.params.mergeStrategy;",
-      'const d = tool.section("mcp").outputPath();',
-    ];
-    expect(written.map((line) => [...line.matchAll(PARAMS_READ)].length)).toEqual([1, 1, 1, 0]);
-
-    const leaky =
-      "class A {\n  constructor(readonly params: string) {}\n  readonly params2 = 1;\n}";
-    const block = [...leaky.matchAll(CLASS_BLOCK)][0]?.[2] as string;
-    expect([...block.matchAll(PARAMETER_PROPERTY)].map((m) => m[1])).toEqual(["params"]);
   });
 
   it("the shared base declares no answer only one way of taking plugins has", () => {
@@ -186,8 +166,8 @@ describe("a tool's plugin delivery is asked, never read", () => {
   });
 });
 
-/** Answers that belong to the native variant alone; the base holds none of them. */
-const NATIVE_ONLY = [
+/** Answers that belong to one variant alone; the base holds none of them. */
+const VARIANT_ONLY = [
   "translatesAsMarketplace",
   "requiresUserScope",
   "manifestPath",
@@ -201,7 +181,7 @@ const NATIVE_ONLY = [
 ];
 
 function variantOnlyAnswersOn(source: string): string[] {
-  return NATIVE_ONLY.filter((name) =>
+  return VARIANT_ONLY.filter((name) =>
     new RegExp(String.raw`^  (?:abstract )?${name}\(`, "m").test(source)
   );
 }

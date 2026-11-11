@@ -39,13 +39,13 @@ type AgentsCapabilityParams = {
 
 export class AgentsCapability {
   readonly #params: AgentsCapabilityParams;
-  private readonly suffix: ToolSuffix;
-  private readonly foreignSuffixes: ForeignSuffixFilter;
+  readonly #suffix: ToolSuffix;
+  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: AgentsCapabilityParams) {
     this.#params = params;
-    this.suffix = new ToolSuffix(params.toolSuffix);
-    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
+    this.#suffix = new ToolSuffix(params.toolSuffix);
+    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildOutputPath(agentName: string): string {
@@ -58,7 +58,7 @@ export class AgentsCapability {
     if (this.#params.format === "toml") {
       return `${this.#params.directory}agents/${toTomlBasename(this.#params.toolSuffix, basename)}`;
     }
-    return this.suffix.strip(`${this.#params.directory}agents/${basename}`);
+    return this.#suffix.strip(`${this.#params.directory}agents/${basename}`);
   }
 
   accepts(relativePath: string): boolean {
@@ -66,7 +66,7 @@ export class AgentsCapability {
   }
 
   acceptsFileName(fileName: string): boolean {
-    return this.foreignSuffixes.accepts(fileName);
+    return this.#foreignSuffixes.accepts(fileName);
   }
 
   convertFrontmatter(fm: Record<string, unknown>, fileName?: string): Record<string, unknown> {

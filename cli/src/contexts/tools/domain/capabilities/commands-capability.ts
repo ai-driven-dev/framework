@@ -13,11 +13,11 @@ type CommandsCapabilityParams = {
 
 export class CommandsCapability {
   readonly #params: CommandsCapabilityParams;
-  private readonly foreignSuffixes: ForeignSuffixFilter;
+  readonly #foreignSuffixes: ForeignSuffixFilter;
 
   constructor(params: CommandsCapabilityParams) {
     this.#params = params;
-    this.foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
+    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildOutputPath(commandName: string): string {
@@ -36,7 +36,7 @@ export class CommandsCapability {
   }
 
   acceptsFileName(fileName: string): boolean {
-    return this.foreignSuffixes.accepts(fileName);
+    return this.#foreignSuffixes.accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {

@@ -94,12 +94,14 @@ describe("McpCapability", () => {
 
 describe("McpCapability declarations", () => {
   it("consumes nothing unless told otherwise", () => {
-    expect(new McpCapability({ outputPath: ".mcp.json", format: "json" }).consumes).toStrictEqual(
-      []
+    expect(new McpCapability({ outputPath: ".mcp.json", format: "json" }).consumes("mcp")).toBe(
+      false
     );
     expect(
-      new McpCapability({ outputPath: ".mcp.json", format: "json", consumes: ["mcp"] }).consumes
-    ).toStrictEqual(["mcp"]);
+      new McpCapability({ outputPath: ".mcp.json", format: "json", consumes: ["mcp"] }).consumes(
+        "mcp"
+      )
+    ).toBe(true);
   });
 
   it("is not equal to a capability that differs in entrySection or mergeStrategy alone", () => {
@@ -116,6 +118,31 @@ describe("McpCapability declarations", () => {
     ).toBe(false);
     expect(
       cap.equals(new McpCapability({ ...base, entrySection: "mcp", mergeStrategy: "none" }))
+    ).toBe(false);
+  });
+});
+
+describe("McpCapability isFrameworkPrimeJson", () => {
+  const json = { outputPath: "opencode.json", format: "json" as const };
+  const prime = { ...json, mergeStrategy: "framework-prime" as const };
+
+  it("names the one JSON file whose framework half is written over the person's", () => {
+    const cap = new McpCapability(prime);
+    expect(cap.isFrameworkPrimeJson("opencode.json")).toBe(true);
+    expect(cap.isFrameworkPrimeJson("other.json")).toBe(false);
+  });
+
+  it("refuses a file merged the other way", () => {
+    expect(
+      new McpCapability({ ...json, mergeStrategy: "user-prime" }).isFrameworkPrimeJson(
+        "opencode.json"
+      )
+    ).toBe(false);
+  });
+
+  it("refuses a file that is not JSON", () => {
+    expect(
+      new McpCapability({ ...prime, format: "toml" }).isFrameworkPrimeJson("opencode.json")
     ).toBe(false);
   });
 });

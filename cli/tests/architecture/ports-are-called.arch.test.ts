@@ -104,7 +104,7 @@ const CAPABILITY_BASELINE: readonly {
   {
     file: "src/contexts/tools/domain/capabilities/mcp-capability.ts",
     className: "McpCapability",
-    methods: ["accepts", "equals", "merge"],
+    methods: ["accepts", "equals", "format", "merge"],
     reason: "called only by tests; MCP config merges through the file adapter's strategy",
   },
   {
