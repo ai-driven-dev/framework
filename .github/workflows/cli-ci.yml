@@ -282,8 +282,34 @@ jobs:
       # few times a day ("Hash Sum mismatch") and fails the whole update; expect comes from ubuntu.
       - name: Install expect (TTY persona tests)
         run: |
+          set -u
           sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends expect
+          max_attempts=3
+          for attempt in $(seq 1 "$max_attempts"); do
+            if output="$(
+              {
+                sudo apt-get -o Acquire::Retries=2 update &&
+                  sudo apt-get -o Acquire::Retries=2 install -y --no-install-recommends expect
+              } 2>&1
+            )"; then
+              printf '%s\n' "$output"
+              exit 0
+            else
+              status=$?
+              printf '%s\n' "$output"
+              if ! grep -Eqi 'Temporary failure resolving|Could not resolve|Could not connect|Connection timed out|Network is unreachable|Hash Sum mismatch' <<< "$output"; then
+                echo "::error::Installing expect failed with a non-transient APT error (exit $status)."
+                exit "$status"
+              fi
+              if [[ "$attempt" -eq "$max_attempts" ]]; then
+                echo "::error::Installing expect failed after $max_attempts attempts (exit $status)."
+                exit "$status"
+              fi
+              delay=$((attempt * 5))
+              echo "Transient APT network/index error on attempt $attempt/$max_attempts; retrying in ${delay}s."
+              sleep "$delay"
+            fi
+          done
       - name: Install pnpm
         run: corepack enable
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
