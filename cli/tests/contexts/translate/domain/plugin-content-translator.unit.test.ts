@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { parseToml } from "../../../../src/contexts/tools/domain/formats/toml.js";
 import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
@@ -587,7 +587,7 @@ describe("a flat target that rewrites what it hosts", () => {
 
 describe("a flat target whose loader is triggered by a generated bridge", () => {
   const bridged = withSections(opencode, {
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       acceptsHooks: true,
@@ -646,7 +646,7 @@ describe("a plugin's mcp declaration", () => {
 
   it("is dropped by a target that hosts none", () => {
     const refusingMcp = withSections(claude, {
-      plugins: new PluginsCapability({
+      plugins: pluginsCapability({
         mode: "native",
         pluginRootToken: "$X_PLUGIN_ROOT",
         pluginsDir: ".claude/plugins/",
@@ -696,7 +696,7 @@ describe("what a person still has to do before a hook runs", () => {
 
 describe("a target that runs no hook a plugin ships", () => {
   const refusingHooks = withSections(opencode, {
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       acceptsHooks: false,
@@ -768,7 +768,7 @@ describe("a target that hosts no plugin", () => {
 
   it("produces nothing for a tool declaring plugins unsupported", () => {
     const unsupported = withSections(claude, {
-      plugins: new PluginsCapability({
+      plugins: pluginsCapability({
         mode: "unsupported",
         hooksUnsupportedReason: "Claude hosts no plugin here.",
       }),

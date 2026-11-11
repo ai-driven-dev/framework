@@ -5,7 +5,7 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
@@ -256,7 +256,7 @@ export const copilot = defineAiTool({
         requiresTool: "vscode",
       }),
     ],
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".github/plugins/",
       pluginManifestRelativePath: "plugin.json",

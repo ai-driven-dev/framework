@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
 import { defineAiTool } from "../../profile/define-tool.js";
@@ -75,7 +75,7 @@ export const cursor = defineAiTool({
       entrySection: "mcpServers",
       consumes: [CONFIG_MCP],
     }),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "native",
       // Empty so the translator computes pluginRoot as `<pluginName>/`, giving base-relative
       // keys such as "aidd-context/commands/foo.md".

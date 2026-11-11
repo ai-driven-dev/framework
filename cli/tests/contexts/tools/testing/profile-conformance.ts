@@ -8,7 +8,6 @@ import { AgentsCapability } from "../../../../src/contexts/tools/domain/capabili
 import { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../../../src/contexts/tools/domain/capabilities/config-refs.js";
 import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { RulesCapability } from "../../../../src/contexts/tools/domain/capabilities/rules-capability.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile/profile-sections.js";
@@ -161,7 +160,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     }
   }),
   aiCheck("is reachable by at least one build", (profile) => {
-    if (capability(profile, "plugins", PluginsCapability) === undefined) return;
+    if (profile.section("plugins") === null) return;
     expect(Object.keys(profile.buildContracts ?? {}).length).toBeGreaterThan(0);
   }),
   aiCheck("is probed where it publishes a marketplace", (profile) => {
@@ -169,20 +168,20 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(profile.distributionProbes?.marketplace?.length ?? 0).toBeGreaterThan(0);
   }),
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {
-    const plugins = capability(profile, "plugins", PluginsCapability);
+    const plugins = profile.section("plugins");
     const flat = profile.buildContracts?.flat?.();
     if (plugins?.buildMode() !== "flat" || flat === undefined) return;
     expect(flat.artifacts.hooks.supported).toBe(plugins.hooksAcceptance().accepts);
   }),
   aiCheck("names a variable, never a path", (profile) => {
-    const token = capability(profile, "plugins", PluginsCapability)?.rootToken();
+    const token = profile.section("plugins")?.rootToken();
     if (token === null || token === undefined) return;
     expect(token).toMatch(PLUGIN_ROOT_TOKEN);
   }),
   aiCheck("writes its own token into a marketplace build", (profile) => {
-    const plugins = capability(profile, "plugins", PluginsCapability);
+    const plugins = profile.section("plugins");
     const marketplace = profile.buildContracts?.marketplace?.();
-    if (plugins === undefined || marketplace === undefined) return;
+    if (plugins === null || marketplace === undefined) return;
     expect(marketplace.pluginRootToken ?? null).toBe(plugins.rootToken());
   }),
   aiCheck("writes no token into a flat build", (profile) => {
@@ -191,7 +190,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(flat.pluginRootToken).toBeUndefined();
   }),
   aiCheck("declares a plugins capability", (profile) => {
-    expect(capability(profile, "plugins", PluginsCapability)).toBeDefined();
+    expect(profile.section("plugins")).not.toBeNull();
   }),
   aiCheck("feeds its mcp file from the mcp config", (profile) => {
     const mcp = capability(profile, "mcp", McpCapability);

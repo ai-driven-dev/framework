@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -72,7 +72,7 @@ export const opencode = defineAiTool({
     }),
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
     // only npm package names — no source or version a marketplace entry could express.
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       globalFiles: {

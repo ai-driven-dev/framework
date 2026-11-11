@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { flatGlobalFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { flatGlobalFilePath, pluginsCapability } from "../../capabilities/plugins-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -57,7 +57,7 @@ export const kilo = defineAiTool({
       consumes: [CONFIG_MCP],
       outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
     }),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       globalFiles: {

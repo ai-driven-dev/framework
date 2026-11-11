@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
-import { PluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 import { pluginModeOf } from "../../testing/plugin-mode.js";
 
@@ -22,7 +22,7 @@ const MARKETPLACE_SETTINGS = {
 
 describe("PluginsCapability", () => {
   describe("native mode", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "native",
       pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
@@ -52,7 +52,7 @@ describe("PluginsCapability", () => {
   });
 
   describe("flat mode, hooks unsupported", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "flat",
       acceptsHooks: false,
       hooksUnsupportedReason: "a test double that hosts no plugin directory",
@@ -91,7 +91,7 @@ describe("PluginsCapability", () => {
   });
 
   describe("flat mode, hooks accepted", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "flat",
       acceptsHooks: true,
       flatHooksDir: ".test-tool/plugin/",
@@ -116,7 +116,7 @@ describe("PluginsCapability", () => {
   });
 
   describe("flat mode, hooks accepted, with a loader entry", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "flat",
       acceptsHooks: true,
       flatHooksDir: ".test-tool/hooks/",
@@ -133,7 +133,7 @@ describe("PluginsCapability", () => {
   });
 
   describe("unsupported mode", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "unsupported",
       hooksUnsupportedReason: "a test double that hosts no plugin directory",
     });
@@ -160,7 +160,7 @@ describe("PluginsCapability", () => {
   });
 
   describe("user scope (native mode)", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "native",
       pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
@@ -180,7 +180,7 @@ describe("PluginsCapability", () => {
   });
 
   describe("project scope (default)", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "native",
       pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
@@ -195,16 +195,15 @@ describe("PluginsCapability", () => {
 
   describe("user scope without userPluginsDir resolver", () => {
     it("throws CapabilityConfigError", () => {
-      expect(
-        () =>
-          new PluginsCapability({
-            mode: "native",
-            pluginRootToken: "$X_PLUGIN_ROOT",
-            acceptsHooks: true,
-            pluginsDir: "",
-            pluginManifestRelativePath: null,
-            installScope: "user",
-          })
+      expect(() =>
+        pluginsCapability({
+          mode: "native",
+          pluginRootToken: "$X_PLUGIN_ROOT",
+          acceptsHooks: true,
+          pluginsDir: "",
+          pluginManifestRelativePath: null,
+          installScope: "user",
+        })
       ).toThrow("installScope 'user' requires a userPluginsDir resolver function.");
     });
   });
@@ -212,7 +211,7 @@ describe("PluginsCapability", () => {
   describe("translationMode", () => {
     describe("native with marketplaceSettings and translationMode marketplace", () => {
       it("exposes translationMode as marketplace", () => {
-        const cap = new PluginsCapability({
+        const cap = pluginsCapability({
           mode: "native",
           pluginRootToken: "$X_PLUGIN_ROOT",
           acceptsHooks: true,
@@ -228,7 +227,7 @@ describe("PluginsCapability", () => {
 
     describe("native without translationMode", () => {
       it("builds as a marketplace without declaring it (neutral native)", () => {
-        const cap = new PluginsCapability({
+        const cap = pluginsCapability({
           mode: "native",
           pluginRootToken: "$X_PLUGIN_ROOT",
           acceptsHooks: true,
@@ -244,7 +243,7 @@ describe("PluginsCapability", () => {
 
     describe("flat mode", () => {
       it("builds flat automatically", () => {
-        const cap = new PluginsCapability({
+        const cap = pluginsCapability({
           mode: "flat",
           acceptsHooks: false,
           hooksUnsupportedReason: "a test double that hosts no plugin directory",
@@ -256,7 +255,7 @@ describe("PluginsCapability", () => {
 
     describe("unsupported mode", () => {
       it("does not build as a marketplace", () => {
-        const cap = new PluginsCapability({
+        const cap = pluginsCapability({
           mode: "unsupported",
           hooksUnsupportedReason: "a test double that hosts no plugin directory",
         });
@@ -279,7 +278,7 @@ describe("PluginsCapability base directory resolution", () => {
   };
 
   it("answers a declared user directory even when the scope is project", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       ...native,
       userPluginsDir: (home) => `${home}/.x/plugins`,
     });
@@ -289,15 +288,15 @@ describe("PluginsCapability base directory resolution", () => {
   });
 
   it("answers no user directory for a capability declaring none", () => {
-    const cap = new PluginsCapability(native);
+    const cap = pluginsCapability(native);
 
     expect(cap.userPluginsBaseDir("/home/me")).toBeNull();
   });
 
   it("names a plugin's own directory under the plugins directory in native mode only", () => {
-    expect(new PluginsCapability(native).pluginOutputDir("p")).toBe(".x/plugins/p/");
+    expect(pluginsCapability(native).pluginOutputDir("p")).toBe(".x/plugins/p/");
     expect(
-      new PluginsCapability({
+      pluginsCapability({
         mode: "flat",
         acceptsHooks: true,
         flatHooksDir: ".x/hooks/",
@@ -307,30 +306,29 @@ describe("PluginsCapability base directory resolution", () => {
   });
 
   it("refuses a project hooks destination that names no project hooks file", () => {
-    expect(() => new PluginsCapability({ ...native, hooksDestination: "project" })).toThrow(
+    expect(() => pluginsCapability({ ...native, hooksDestination: "project" })).toThrow(
       "hooksDestination 'project' requires a projectHooksRelativePath."
     );
   });
 
   it("refuses a project hooks destination that declares no file format", () => {
-    expect(
-      () =>
-        new PluginsCapability({
-          ...native,
-          hooksDestination: "project",
-          projectHooksRelativePath: ".x/hooks.json",
-        })
+    expect(() =>
+      pluginsCapability({
+        ...native,
+        hooksDestination: "project",
+        projectHooksRelativePath: ".x/hooks.json",
+      })
     ).toThrow("hooksDestination 'project' requires a projectHooksFormat.");
   });
 
   it("refuses a project hooks format without a project hooks destination", () => {
-    expect(
-      () => new PluginsCapability({ ...native, projectHooksFormat: projectHooksFormat })
-    ).toThrow("projectHooksFormat requires hooksDestination 'project'.");
+    expect(() => pluginsCapability({ ...native, projectHooksFormat: projectHooksFormat })).toThrow(
+      "projectHooksFormat requires hooksDestination 'project'."
+    );
   });
 
   it("lets a flat capability merge its hooks into a project hooks file", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "flat",
       acceptsHooks: true,
       flatHooksDir: ".x/hooks/",
@@ -348,7 +346,7 @@ describe("PluginsCapability base directory resolution", () => {
 
 describe("PluginsCapability defaults each mode falls back to", () => {
   it("delivers no mcp and lands hooks in the plugin unless a native tool says otherwise", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "native",
       pluginRootToken: "$X_PLUGIN_ROOT",
       acceptsHooks: true,
@@ -360,7 +358,7 @@ describe("PluginsCapability defaults each mode falls back to", () => {
   });
 
   it("fixes the same two answers for a flat tool", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       mode: "flat",
       acceptsHooks: true,
       flatHooksDir: ".x/hooks/",
@@ -371,7 +369,7 @@ describe("PluginsCapability defaults each mode falls back to", () => {
   });
 
   it("accepts neither hooks nor mcp for a tool hosting no plugin at all", () => {
-    const cap = new PluginsCapability({ mode: "unsupported", hooksUnsupportedReason: "none" });
+    const cap = pluginsCapability({ mode: "unsupported", hooksUnsupportedReason: "none" });
 
     expect([
       cap.hooksAcceptance().accepts,
@@ -392,17 +390,17 @@ describe("PluginsCapability native construction", () => {
 
   it("refuses a native mode that names no plugin root token", () => {
     const { pluginRootToken: _omitted, ...withoutToken } = native;
-    expect(() => new PluginsCapability(withoutToken)).toThrow("pluginRootToken");
+    expect(() => pluginsCapability(withoutToken)).toThrow("pluginRootToken");
   });
 
   it("refuses marketplace settings its tool has no native activation to drive", () => {
-    expect(
-      () => new PluginsCapability({ ...native, marketplaceSettings: MARKETPLACE_SETTINGS })
+    expect(() =>
+      pluginsCapability({ ...native, marketplaceSettings: MARKETPLACE_SETTINGS })
     ).toThrow(CapabilityConfigError);
   });
 
   it("keeps marketplace settings next to the activation that drives them", () => {
-    const cap = new PluginsCapability({
+    const cap = pluginsCapability({
       ...native,
       marketplaceSettings: MARKETPLACE_SETTINGS,
       nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
@@ -77,7 +77,7 @@ export const claude = defineAiTool({
       entrySection: "mcpServers",
       consumes: [CONFIG_MCP],
     }),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".claude/plugins/",
       pluginManifestRelativePath: "plugin.json",

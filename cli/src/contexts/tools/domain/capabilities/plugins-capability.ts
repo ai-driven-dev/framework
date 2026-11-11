@@ -2,14 +2,9 @@ import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/fl
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 import { FlatPlugins } from "../plugins/flat-plugins.js";
-import type { MarketplaceRegistration } from "../plugins/marketplace-registration.js";
 import type { NativeActivation, NativeActivationSpec } from "../plugins/native-activation.js";
 import { NativePlugins } from "../plugins/native-plugins.js";
-import type {
-  FlatLayout,
-  PluginDelivery,
-  ProjectHooksPlacement,
-} from "../plugins/plugin-delivery.js";
+import type { PluginDelivery } from "../plugins/plugin-delivery.js";
 import { UnsupportedPlugins } from "../plugins/unsupported-plugins.js";
 
 /** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
@@ -192,102 +187,11 @@ function deliveryFor(params: PluginsParams): PluginDelivery {
 }
 
 /**
- * How a tool takes plugins, declared once by its profile and read through answers: the
- * declaration picks the variant (native, flat, unsupported) that holds the data, and no field
- * of it is readable from outside.
+ * How a tool takes plugins, declared once by its profile: the declaration picks the variant
+ * (native, flat, unsupported) that holds the data, and no field of it is readable from outside.
  */
-export class PluginsCapability implements PluginDelivery {
-  readonly #delivery: PluginDelivery;
+export type PluginsCapability = PluginDelivery;
 
-  constructor(params: PluginsParams) {
-    this.#delivery = deliveryFor(params);
-  }
-
-  buildMode(): "marketplace" | "flat" {
-    return this.#delivery.buildMode();
-  }
-
-  translatesAsMarketplace(): boolean {
-    return this.#delivery.translatesAsMarketplace();
-  }
-
-  isNative(): boolean {
-    return this.#delivery.isNative();
-  }
-
-  requiresUserScope(): boolean {
-    return this.#delivery.requiresUserScope();
-  }
-
-  deliversHooksToProject(): boolean {
-    return this.#delivery.deliversHooksToProject();
-  }
-
-  manifestPath(): string | null {
-    return this.#delivery.manifestPath();
-  }
-
-  rootToken(): string | null {
-    return this.#delivery.rootToken();
-  }
-
-  hooksAcceptance(): { accepts: boolean; unsupportedReason: string | null } {
-    return this.#delivery.hooksAcceptance();
-  }
-
-  trustNotice(): string | null {
-    return this.#delivery.trustNotice();
-  }
-
-  flatLayout(): FlatLayout {
-    return this.#delivery.flatLayout();
-  }
-
-  activation(): NativeActivation | null {
-    return this.#delivery.activation();
-  }
-
-  marketplaceRegistration(): MarketplaceRegistration | null {
-    return this.#delivery.marketplaceRegistration();
-  }
-
-  enablementIsMachineGlobal(): boolean {
-    return this.#delivery.enablementIsMachineGlobal();
-  }
-
-  supportsUserScopeActivation(): boolean {
-    return this.#delivery.supportsUserScopeActivation();
-  }
-
-  copiesFilesGlobally(): boolean {
-    return this.#delivery.copiesFilesGlobally();
-  }
-
-  globalFiles(): GlobalFiles | null {
-    return this.#delivery.globalFiles();
-  }
-
-  projectHooksDelivery(): ProjectHooksPlacement | null {
-    return this.#delivery.projectHooksDelivery();
-  }
-
-  mcpFile(): { accepts: boolean; relativePath: string } {
-    return this.#delivery.mcpFile();
-  }
-
-  hooksFilePath(): string {
-    return this.#delivery.hooksFilePath();
-  }
-
-  hookScript(pluginPath: string, content: string): string {
-    return this.#delivery.hookScript(pluginPath, content);
-  }
-
-  pluginOutputDir(pluginName: string): string | null {
-    return this.#delivery.pluginOutputDir(pluginName);
-  }
-
-  userPluginsBaseDir(homedir: string): string | null {
-    return this.#delivery.userPluginsBaseDir(homedir);
-  }
+export function pluginsCapability(params: PluginsParams): PluginsCapability {
+  return deliveryFor(params);
 }

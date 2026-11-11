@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { resolveTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator-factory.js";
-import { PluginsCapability } from "../../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
@@ -31,7 +31,7 @@ describe("resolveTranslator", () => {
   describe("when translationMode is marketplace", () => {
     it("returns ModeAMarketplaceTranslator", () => {
       const deps = buildDeps();
-      const plugins = new PluginsCapability({
+      const plugins = pluginsCapability({
         mode: "native",
         pluginRootToken: "$X_PLUGIN_ROOT",
         acceptsHooks: true,
@@ -50,7 +50,7 @@ describe("resolveTranslator", () => {
   describe("when installScope is user", () => {
     it("returns BuiltTreeMaterializationTranslator", () => {
       const deps = buildDeps();
-      const plugins = new PluginsCapability({
+      const plugins = pluginsCapability({
         mode: "native",
         pluginRootToken: "$X_PLUGIN_ROOT",
         acceptsHooks: true,
@@ -68,7 +68,7 @@ describe("resolveTranslator", () => {
   describe("when translationMode is flat", () => {
     it("returns BuiltTreeMaterializationTranslator", () => {
       const deps = buildDeps();
-      const plugins = new PluginsCapability({
+      const plugins = pluginsCapability({
         mode: "flat",
         acceptsHooks: false,
         hooksUnsupportedReason: "a test double that hosts no plugin directory",
@@ -83,7 +83,7 @@ describe("resolveTranslator", () => {
   describe("when translationMode is null (unsupported)", () => {
     it("returns null", () => {
       const deps = buildDeps();
-      const plugins = new PluginsCapability({
+      const plugins = pluginsCapability({
         mode: "unsupported",
         hooksUnsupportedReason: "a test double that hosts no plugin directory",
       });
@@ -95,7 +95,7 @@ describe("resolveTranslator", () => {
   describe("when translationMode is null (native without marketplace)", () => {
     it("returns null (neutral native, no translation strategy applies)", () => {
       const deps = buildDeps();
-      const plugins = new PluginsCapability({
+      const plugins = pluginsCapability({
         mode: "native",
         pluginRootToken: "$X_PLUGIN_ROOT",
         acceptsHooks: true,

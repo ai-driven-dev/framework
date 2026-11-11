@@ -3,8 +3,9 @@ import type { CommandsCapability } from "../../../../src/contexts/tools/domain/c
 import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import {
   type NativePluginsParams,
-  PluginsCapability,
+  type PluginsCapability,
   type ProjectHooksFormat,
+  pluginsCapability,
 } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
@@ -62,13 +63,13 @@ export const PROJECT_HOOKS_FORMAT: ProjectHooksFormat = {
 /** A flat plugins capability that runs the hooks a plugin ships, or says it does not. */
 export function flatPlugins(hooks: "accepts" | "refuses"): PluginsCapability {
   return hooks === "accepts"
-    ? new PluginsCapability({
+    ? pluginsCapability({
         mode: "flat",
         flatNamespacePrefix: "fake-",
         acceptsHooks: true,
         flatHooksDir: ".fake/hooks/",
       })
-    : new PluginsCapability({
+    : pluginsCapability({
         mode: "flat",
         flatNamespacePrefix: "fake-",
         acceptsHooks: false,
@@ -77,7 +78,7 @@ export function flatPlugins(hooks: "accepts" | "refuses"): PluginsCapability {
 }
 
 export function nativePlugins(extra: Partial<NativePluginsParams> = {}): PluginsCapability {
-  return new PluginsCapability({
+  return pluginsCapability({
     mode: "native",
     acceptsHooks: true,
     pluginsDir: ".fake/plugins/",

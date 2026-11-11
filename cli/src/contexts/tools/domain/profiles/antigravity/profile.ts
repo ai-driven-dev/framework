@@ -1,4 +1,4 @@
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
 import { defineAiTool } from "../../profile/define-tool.js";
@@ -42,7 +42,7 @@ export const antigravity = defineAiTool({
         `${ANTIGRAVITY_DIRECTORY}skills/${SKILLS_PREFIX}${skillName(fileName)}/SKILL.md`,
       convertFrontmatter: (fm) => fm,
     }),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       flatSkillLayout: "single-level",

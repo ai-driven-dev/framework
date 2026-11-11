@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { pluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
@@ -86,7 +86,7 @@ export const codex = defineAiTool({
       consumes: [CONFIG_MCP],
     }),
     hooks: hooksConfigCapability(CODEX_HOOKS),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
