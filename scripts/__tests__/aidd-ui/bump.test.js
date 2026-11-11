@@ -89,6 +89,9 @@ describe("aidd-ui bump", () => {
 
     it("raises again an element this task raised and the user then validated, so its sealed version is never edited", () => {
       change("color.action.default");
+      const review = `${UI}/reviews/first-pass.md`;
+      edit(tmp, review, "screens: [home]", "screens: [home, button]");
+      edit(tmp, review, "| home | error | 1 | pending | |", `| home | error | 1 | pending | |\n${["default", "hover", "focus", "disabled"].map((state) => `| button | ${state} | 2 | ok | |`).join("\n")}`);
       assert.equal(engine("publish", "--root", tmp, "button").status, 0);
       const again = bump("--task", TASK, "--change", "darker still", "button");
       assert.ok(again.report.changed.includes(`${UI}/components/button.md`));

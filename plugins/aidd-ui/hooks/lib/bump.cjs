@@ -2,14 +2,14 @@
 // removal of a record, a publication of the system, and the validation of an element.
 const fs = require("node:fs");
 const path = require("node:path");
-const { list, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, byId, isSystem, isElement, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
+const { list, table, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { placed, byId, isSystem, fm, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
 const { Refusal, required, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
 const { colourDebt } = require("./code.cjs");
 const { jsonText } = require("./resolver.cjs");
-const { fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks } = require("./history.cjs");
+const { isReviewed, fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks } = require("./history.cjs");
 
 const ROW_START = "|";
 const COLUMNS = ["Id", "Version", "Change", "Breaking", "Task", "Fingerprint"];
@@ -19,7 +19,9 @@ const FIRST_VERSION = "1";
 const FIRST_SYSTEM_VERSION = "1.0.0";
 const CREATED = "created";
 const PUBLISHED = "published";
-const VERDICTS_HEADING = "## Verdicts";
+const VERDICTS_SECTION = "Verdicts";
+const VERDICTS_HEADING = `## ${VERDICTS_SECTION}`;
+const OK = "ok";
 const ALREADY_RAISED = "already raised for this task";
 const CARRIAGE_RETURN = "\r";
 const CELL_BREAKERS = /[|\r\n]/;
@@ -203,20 +205,31 @@ function publish(root, { breaking }) {
   return { version, tasks };
 }
 
-/** Validates each element `ids` names: sets its status to validated and writes its fingerprint in
- * the row of its current version. Returns `{validated}`, each `{id, version, fingerprint}`; a
+/** The first state of `record` no review holds an ok verdict for at its current version, `""` for a record without states with no ok verdict at all, or null. */
+function unreviewedState(project, record) {
+  const { id, version, states } = fm(record);
+  const verdicts = placed(project).filter((each) => fm(each).kind === "review").flatMap((each) => table(each.sections[VERDICTS_SECTION]));
+  const ok = (state) => verdicts.some((row) => row.Screen === id && row.Version === version && row.Verdict === OK && (state === undefined || row.State === state));
+  if (!list(states).length) return ok() ? null : "";
+  return list(states).find((state) => !ok(state)) ?? null;
+}
+
+/** Validates each element or wireframe `ids` names, each with an ok verdict at its current version
+ * for every state: sets its status to validated and writes its fingerprint in the row of its current version. Returns `{validated}`, each `{id, version, fingerprint}`; a
  * refusal is thrown before any file is written. */
 function validate(root, ids) {
   const project = required(root);
   const index = byId(project);
   const chosen = [...new Set(ids)].map((id) => {
     const record = index.get(id);
-    if (!record || !isElement(record)) throw new Refusal(`no element named "${id}"`);
+    if (!record || !isReviewed(record)) throw new Refusal(`no element named "${id}"`);
     if (fm(record).status === STATUS_DEPRECATED) throw new Refusal(`"${id}" is deprecated, nothing to validate`);
     const row = currentRow(project, record);
     if (!row) throw new Refusal(`"${id}" has no history row at its version ${fm(record).version}`);
     // A sealed version is never sealed again: an edit since would pass H8 without a raise.
     if (row.Fingerprint) throw new Refusal(`"${id}" version ${fm(record).version} is already validated, raise its version with bump to change it`);
+    const state = unreviewedState(project, record);
+    if (state !== null) throw new Refusal(`"${id}" has no ok verdict${state ? ` for state ${state}` : ""} at version ${fm(record).version}, review it first`);
     return record;
   });
   const files = editing(root);

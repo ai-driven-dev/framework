@@ -98,6 +98,7 @@ const HELP = {
       "The version is also major with `--breaking` for tokens alone.",
       "Otherwise the version is minor.",
       "With ids, it sets each element `validated`.",
+      "It needs an `ok` verdict for each state at the current version.",
       "It writes its fingerprint in its version's `history.md` row.",
       "It refuses a deprecated id, or one that is no element.",
       "It refuses an id with no row at its version.",

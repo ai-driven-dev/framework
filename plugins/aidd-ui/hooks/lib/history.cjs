@@ -16,8 +16,11 @@ const VALIDATED = "validated";
 const HELD_STATUSES = [VALIDATED, STATUS_DEPRECATED]; // a proposed element is still being designed
 const UNVERSIONED_KEYS = ["status", "code"]; // a review, a code catch-up: no new version
 const FINGERPRINT_LENGTH = 12;
+const WIREFRAME = "wireframe";
 const REMOVED = "removed"; // the Change of the row that takes an id out of the design system
 
+/** What a review judges, and a history rule holds once validated: an element or a wireframe. */
+const isReviewed = (record) => isElement(record) || fm(record).kind === WIREFRAME;
 const rowsOf = (project, id) => project.history.filter((row) => row.Id === id);
 const inHistory = (message, fix, excerpt) => problem({ file: HISTORY_FILE }, message, fix, excerpt);
 /** A system row's Task cell: the tasks one publication lists, comma-separated. */
@@ -117,7 +120,7 @@ function taskProblems(project) {
 
 function deprecationProblems(project) {
   return versioned(project)
-    .filter((record) => isElement(record) && fm(record).status === STATUS_DEPRECATED)
+    .filter((record) => isReviewed(record) && fm(record).status === STATUS_DEPRECATED)
     .filter((record) => {
       const last = byVersion(rowsOf(project, fm(record).id), false).at(-1);
       return last && last.row.Breaking !== BREAKING;
@@ -147,6 +150,8 @@ function sheetOf(project) {
 /** What an element is as validated, hashed: its record without the unversioned keys, its render
  * when there is one, an asset's file bytes when it has one, then each token it uses with its
  * resolved value in every context of tokens.css, one `token TAB context TAB value` line each, sorted.
+ * A wireframe holds no tokens: bump raises it only when named, never for a token its components use,
+ * so a token changed under it would break H8 with no raise to clear it.
  * Each part is its label, a NUL, its content and a NUL. The first 12 hex characters of the sha256. */
 function fingerprint(project, record) {
   const hash = crypto.createHash("sha256");
@@ -156,7 +161,7 @@ function fingerprint(project, record) {
   if (project.renders.includes(render)) part("render", text(project, render) ?? "");
   const asset = fm(record).kind === "asset" && typeof fm(record).file === "string" ? nodePath.join(project.root, nodePath.dirname(record.file), fm(record).file) : null;
   if (asset && fs.existsSync(asset)) part("asset", fs.readFileSync(asset));
-  const tokens = tokensUsedBy(byId(project), record);
+  const tokens = fm(record).kind === WIREFRAME ? [] : tokensUsedBy(byId(project), record);
   const lines = [...sheetOf(project)].flatMap(([key, values]) =>
     tokens.flatMap((token) => {
       const value = resolved(values, customProperty(token));
@@ -174,7 +179,7 @@ const currentRow = (project, record) => project.history.find((row) => row.Id ===
  * one only when that row carries one. A proposed or draft element is still being designed. */
 function fingerprintProblems(project) {
   return placed(project)
-    .filter((record) => isElement(record) && HELD_STATUSES.includes(fm(record).status))
+    .filter((record) => isReviewed(record) && HELD_STATUSES.includes(fm(record).status))
     .flatMap((record) => {
       const row = currentRow(project, record);
       if (!row) return []; // H1 and H3 name it
@@ -220,4 +225,4 @@ const RULES = {
 /** Every broken history rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks };
+module.exports = { check, isReviewed, fingerprint, currentRow, TASKS_DIR, REMOVED, VALIDATED, byVersion, rowsOf, taskList, brokenTasks };
