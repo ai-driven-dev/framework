@@ -523,6 +523,21 @@ describe("aidd-ui engine step table", () => {
   });
 });
 
+describe("aidd-ui revise comments as change requests", () => {
+  const read = (folder, file) => fs.readFileSync(path.join(SKILL(folder), file), "utf8");
+
+  it("gives screens a change case, raised by a bump with the change", () => {
+    assert.ok(read("05-screens", "references/cases.md").split("\n").some((line) => line.startsWith("| change |") && line.includes("`revise`")));
+    assert.ok(read("05-screens", "references/engine.md").includes("`node <engine> bump --task <task folder> --change"));
+  });
+
+  it("has journeys and components read a revise as a change case", () => {
+    for (const folder of ["01-journeys", "04-components"]) {
+      assert.ok(read(folder, "references/cases.md").split("\n").some((line) => line.startsWith("| change |") && line.includes("`revise`")), folder);
+    }
+  });
+});
+
 describe("aidd-ui system answers", () => {
   const foundations = (file) => fs.readFileSync(path.join(SKILL("03-foundations"), file), "utf8");
 

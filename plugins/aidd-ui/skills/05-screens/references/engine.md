@@ -14,6 +14,7 @@
 | propose 4, compare the set | `node <engine> compare <set>` |
 | choose 4, keep the chosen variant | `node <engine> keep <set> <variant>` |
 | conclude 1, record what this run created | `node <engine> bump --task <task folder> --created <id>…` |
+| conclude 1, raise a screen sent back | `node <engine> bump --task <task folder> --change "<one line>" <id>…` |
 | conclude 2 and 4, validate | `node <engine> validate` |
 | conclude 5, write the showcase | `node <engine> showcase --lang <code>` |
 

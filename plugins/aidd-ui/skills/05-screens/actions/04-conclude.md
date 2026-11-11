@@ -9,6 +9,7 @@ The screens kept.
 ## Process
 
 1. Record in the history each screen kept, per [engine](../references/engine.md).
+   - A screen sent back is raised, not recorded.
 2. Validate per [engine](../references/engine.md).
 3. Fix each error line under `aidd_docs/ui/` as its `=> fix` says.
 4. Validate again per [engine](../references/engine.md), and repeat until only these remain:

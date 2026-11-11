@@ -14,6 +14,7 @@ The request.
 4. Take the task folder the user named, else ask.
    - It need not exist: only `history.md` rows cite it.
 5. For a change only:
+   - A `revise` comment in a review is the request.
    - If vague, ask which element changes, and how.
    - Measure what it reaches per [engine](../references/engine.md), and show the report.
    - Wait for the user's agreement. If refused, stop.

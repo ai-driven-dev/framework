@@ -19,6 +19,7 @@ The request.
    - Code: deduce each from its routes and screens.
    - Scratch: ask which journeys, and the steps of each.
    - Change: name what is added or changed, and how.
+   - A `revise` comment in a review is the request.
    - Show them and wait for the user's agreement. If refused, stop.
 6. Read [write](02-write.md).
 

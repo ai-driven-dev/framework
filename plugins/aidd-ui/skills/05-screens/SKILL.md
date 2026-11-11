@@ -14,6 +14,7 @@ flowchart LR
   choose -->|"no variant stands out"| propose
   choose -->|"a wireframe is left"| propose
   choose --> conclude["conclude<br>actions/04-conclude.md"]
+  prepare -->|"a review sent a screen back"| conclude
   prepare -->|"a decision blocks"| user((user answers))
   propose -->|"a decision blocks"| user
   choose -->|"give the page, wait"| user
