@@ -145,11 +145,21 @@ function locate(root, file, quoted) {
   }
 }
 
-function detailLines(item, bank, root) {
-  const lines = itemLines(item, bank);
-  if (item.kind !== "change" && item.kind !== "delete") return lines;
-  const where = locate(root, item.file, quotedLine(item.entries[0].fact, bank(item.file)));
-  return where === null ? lines : [...lines, `     at ${where}`];
+/** The item's line as the summary would cut it, then each sheet line whole, and where it sits. */
+function detailLines(item, bank, root, width) {
+  const lines = [summaryLine(item, bank, width)];
+  const [first] = item.entries;
+  if (item.kind === "add") lines.push(...item.entries.map(({ fact }) => `     + ${fact}`));
+  if (item.kind === "change" || item.kind === "delete") {
+    const quoted = quotedLine(first.fact, bank(first.file));
+    if (quoted !== null) {
+      lines.push(`     "${quoted}"`);
+      lines.push(item.kind === "change" ? `     → ${after(first, quoted, /^[\s:,;]*(?:(?:with|by|into|to)\b|→|->|=>)?\s*/iu)}` : `     why: ${after(first, quoted, /^[\s:,;.-]*/u) || first.source}`);
+      const where = locate(root, item.file, quoted);
+      if (where !== null) lines.push(`     at ${where}`);
+    }
+  }
+  return lines;
 }
 
 function renderPlan(sheetFile, root, tools, ticked, always = []) {
@@ -158,10 +168,16 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const items = itemsOf(text, bank);
   const questions = entriesOf(text).filter(({ id }) => id[0] === "Q");
   const since = text.match(SINCE);
-  const head = since === null ? [] : [[`Changes since the last memory update (${since[1]}, ${since[2]}): ${since[3]}, ${since[4]}`]];
-  const unlisted = always
-    .filter((name) => !items.some((item) => item.kind === "write" && item.file === name))
-    .map((name) => `  ${" ".repeat(String(items.length).length + 2)}write   ${name} (new): from its template, always written`);
+  const width = String(items.length).length;
+  const fromTemplates = always.filter((name) => !items.some((item) => item.kind === "write" && item.file === name));
+  const verbs = items.map(shownVerb);
+  const counts = ["write", "add", "change", "move", "remove"]
+    .map((verb) => [verb, verbs.filter((one) => one === verb).length])
+    .filter(([, count]) => count > 0)
+    .map(([verb, count]) => `${count} ${verb}`);
+  if (fromTemplates.length > 0) counts.push(`${fromTemplates.length} from templates`);
+  const total = `${items.length} ${items.length === 1 ? "change" : "changes"}`;
+  const title = since === null ? `Memory plan: ${total}` : `Memory plan: ${total} since ${since[1]} (${since[3]}, ${since[4]})`;
   const asked = questions.length > 0 ? [["Questions", ...questions.map(({ id, fact }) => `  ${id}  ${fact}`)]] : [];
   const wire = ["Tools to wire", `  ${tools.map((tool) => `[${ticked.includes(tool) ? "x" : " "}] ${tool}`).join("  ")}`];
   const n = items.length;
@@ -169,14 +185,12 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const example = examples.length > 1 ? `${examples.slice(0, -1).join(", ")} or ${examples.at(-1)}` : examples[0];
   const detailFile = path.join(path.dirname(path.resolve(sheetFile)), "plan.md");
   const relative = (file) => path.relative(root, file).split(path.sep).join("/");
-  const listed = [...items.map((item) => summaryLine(item, bank, String(items.length).length)), ...unlisted];
-  const summary = [["Memory plan"], ...head, ...(listed.length > 0 ? [listed] : []), ...asked, wire, [`Details: ${relative(detailFile)}`, `Does this look right? Say ok, or what to change, for example ${example}.`]];
-  const sections = ORDER.flatMap((kind) => {
-    const own = items.filter((item) => item.kind === kind).flatMap((item) => detailLines(item, bank, root));
-    if (kind === "write") own.push(...unlisted.map((line) => `  ${line.trim().replace(/^write\s+/u, "")}`));
-    return own.length > 0 ? [[TITLES[kind], ...own]] : [];
-  });
-  const detail = [["Memory plan"], ...head, ...sections, ...asked, [`Sheet: ${relative(path.resolve(sheetFile))}`]];
+  const summary = [[title, ...(counts.length > 1 || fromTemplates.length > 0 ? [`  ${counts.join(" · ")}`] : [])], ...asked, wire, [`Details: ${relative(detailFile)}`, `Does this look right? Say ok, or what to change, for example ${example}.`]];
+  const listed = [
+    ...items.flatMap((item) => detailLines(item, bank, root, width)),
+    ...fromTemplates.map((name) => `  ${" ".repeat(width + 2)}write   ${name} (new): from its template, always written`),
+  ];
+  const detail = [[title], ...(listed.length > 0 ? [listed] : []), ...asked, [`Sheet: ${relative(path.resolve(sheetFile))}`]];
   const join = (blocks) => `${blocks.map((block) => block.join("\n")).join("\n\n")}\n`;
   return { summary: join(summary), detail: join(detail), detailFile };
 }
