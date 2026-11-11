@@ -1,6 +1,6 @@
 # Hook moments
 
-Which lifecycle moments exist, and the event name each tool gives them. A `-` means the tool has no mapped event for the moment. Confirm in the tool's docs listed in `hook-support` before treating it as absent.
+Which lifecycle moments exist, and each tool's event name for them. A `-` means no mapped event. Confirm it in the docs `hook-support` lists before treating it as absent.
 
 | Moment | Fires when | Claude Code | Codex CLI | Cursor | GitHub Copilot | Antigravity CLI |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -1,6 +1,6 @@
 # Fill norm
 
-How to fill each file kind. Four questions, asked in this order. The constraints themselves live in `skill-authoring.md`; "Always true" lists the ids that apply to a kind.
+How to fill each file kind, by four questions in order. The rules live in `skill-authoring.md`.
 
 | Question | Asks |
 | --- | --- |
@@ -9,30 +9,35 @@ How to fill each file kind. Four questions, asked in this order. The constraints
 | Fill | what goes in, and what stays out |
 | Always true | the rule ids the finished file satisfies |
 
-"Do in order" is for writing a file. A validation checks "Fill" and "Always true".
+Writing follows "Do in order". Validation checks "Fill" and "Always true".
 
 ## Every file kind
 
 | Question | Answer |
 | --- | --- |
-| Always true | R5, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31, besides the ids of its own kind below |
+| Always true | R5, R22 to R31, plus the ids of its kind |
 
 ## SKILL.md
 
 | Question | Answer |
 | --- | --- |
-| Do in order | Write the description from the frame's purpose. Draw the diagram from the plan's rows and their branches and outcomes. Add the transversal rules. |
-| Consult | the confirmed frame (an existing skill has none: its input is the skill read in place), the plan table, `naming.md` |
-| Fill | the description says what then when; the diagram holds every path the plan names, per R9; rules cover only what no action owns |
+| Do in order | Write the description. Draw the diagram from the plan. Add the transversal rules. |
+| Consult | the frame or the existing skill, the plan, `naming.md` |
+| Fill | the description says what, then when |
+| Fill | the diagram holds every path of the plan |
+| Fill | rules state the skill's own behavior that no action owns |
+| Fill | rules exclude this generator's rules, authoring rules, and rules a reference holds |
 | Always true | R1, R2, R3, R4, R6, R7, R8, R9, R10, R11 |
 
 ## Action
 
 | Question | Answer |
 | --- | --- |
-| Do in order | State the result in one sentence. List the input. Write the steps. Add a check step that loops until it passes only when R14 asks for one. Name the next action in the last step. State the output. |
+| Do in order | State the result. List the input. Write the steps, a check step if R14 asks, then the read-next step. State the output. |
 | Consult | the plan row, the references the steps cite |
-| Fill | one sentence per step; a judgment call or a fact the step looks up (a path, a format, a per-tool value) lives in a reference the step cites; a constraint goes in Rules or the router |
+| Fill | one sentence per step |
+| Fill | a judgment or a looked-up fact (path, format, per-tool value) goes in a cited reference |
+| Fill | a constraint goes in Rules or the router |
 | Always true | R12, R13, R14, R15, R16 |
 
 ## Reference
@@ -50,20 +55,22 @@ How to fill each file kind. Four questions, asked in this order. The constraints
 | --- | --- |
 | Do in order | Copy the output shape. Mark each slot. Add the fill note last. |
 | Consult | the action that fills it |
-| Fill | slots only, each the name of its value, plus the single note on what to remove, placed per R20 |
+| Fill | slots named by their value, plus one removal note per R20 |
 | Always true | R20 |
 
 ## Dropped facts
 
-Where a fact of an existing skill goes when the lean rules leave it no home. The plan lists each drop, and each fact the lean form adds (a fix loop, a terminal, a read-next step), for the user to confirm.
+Where an existing skill's fact goes when the lean rules leave it no home. The plan lists each drop and each addition for the user to confirm.
 
 | Fact | Goes to |
 | --- | --- |
-| A "Not for" exclusion in the old description | `## Transversal rules` when it changes behavior, else dropped |
+| A "Not for" clause in the description | a transversal rule if it changes behavior, else dropped |
 | What R7 removes from the router | dropped, not moved |
-| A `## Test` section (R12) | folded into `## Output`, or dropped when Output states it |
+| A `## Test` section (R12) | dropped if Output or a check step holds it, else one clause of Output |
 | A bold label (R31) | the plain sentence, label dropped |
-| A procedure in a reference (R18) | an action step, the reference keeps judgment |
+| A procedure in a reference (R18) | an action step |
+| A per-tool fact in an action step | the reference the step cites |
+| A fill note inside a slot (R20) | the asset's note, or the filling action for JSON |
 
 ## Script
 
