@@ -45,13 +45,16 @@ Une personne qui conçoit l'UI avec une IA choisit entre des variantes qu'elle v
 
 ### 4d : review et publication
 
-- La page de review est statique : verdict par écran, par état et par version, confronté à la capture de l'app réelle une fois l'écran codé (décision 4) ; elle produit la fiche review.
-- `publish` couvre écrans et wireframes.
+- La page de review est la vitrine (4e) : verdict par fiche, par état et par version, copié vers l'IA, qui écrit la fiche review.
+- Les verdicts sont stockés `ok` et `revise`, un commentaire exigé sur `revise`. La page les affiche dans la langue de la personne, lue dans sa mémoire (`en` par défaut, `fr`).
+- La capture de l'app réelle s'enregistre en `screens/<id>.<état>@<version>.png`, à côté de la fiche. PNG seul, sans axe plateforme. aidd-ui ne lance jamais l'app.
+- `publish` couvre écrans et wireframes. Il exige la capture d'un état seulement quand le lien `code` de l'écran est à la version de la fiche.
 - La review couvre aussi les composants, comme le décide le contrat d'ensemble.
 
 ### 4e : vitrine
 
 - Le moteur génère la vitrine par `showcase`, lancée en fin de chaque skill : accueil, une page par fiche, navigation dans l'ordre du chemin, wireframes et écrans rangés sous templates et pages, liens « utilise » et « utilisé par ».
+- Elle porte la revue : chaque page d'élément, de wireframe ou d'écran, sans page à part.
 - Elle partage le socle de la page de comparaison, et tient les décisions 4 du contrat : bascule thème et plateforme, deux combinaisons côte à côte, habillage neutre, `proposed` marqué.
 - Deux générations sur les mêmes fiches donnent le même résultat.
 - En 4e, un 80/20 suffit. Une passe produit l'affine après la passe lean.
