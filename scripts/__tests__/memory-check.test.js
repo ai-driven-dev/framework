@@ -665,6 +665,12 @@ test("report, lost lines: a line moved within its file or to another bank file i
   assert.equal(twice.run.stdout, "vcs.md: - duplicate\n");
 });
 
+test("report, lost lines: a heading left empty by approved removals is not a lost fact", () => {
+  const before = { "vcs.md": "# V\n\n## Conventions\n\n- release pipeline\n" };
+  const after = { "vcs.md": "# V\n" };
+  assert.equal(lostLines(before, after, [approve("- release pipeline")]).run.stdout, "");
+});
+
 // A real bank wraps its prose at a fixed width: a line is a piece of a sentence, and an approved
 // rewrite turns it into a list. What counts is a word the bank no longer holds, not a line.
 const WRAPPED = "# T\n\nThe checks run before every release, and the pipeline keeps 14\ntables under review. Failures block the deployment.\n";
@@ -1174,10 +1180,9 @@ test("plan, sheet check: a T line is no fact id, and every line names a memory f
   assert.equal(factsRun(sheet(GOOD, "- R2 | error handling | a fact | package.json |")).status, 1);
 });
 
-test("plan, sheet check: a | in a fact is named, and a bullet of another shape inside a block is a shape problem", () => {
-  const split = factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json | ok"));
-  assert.equal(split.status, 1);
-  assert.match(split.stdout, /R2.*a `\|` in a fact/u);
+// A memory is mostly tables: a fact quotes a row whole, its pipes kept, read from both ends of the line.
+test("plan, sheet check: a | in a fact is part of it, and a bullet of another shape inside a block is a shape problem", () => {
+  assert.equal(factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json | ok")).status, 0, "a fact holding a pipe");
   for (const bad of ["* R2 | testing.md > Run | fact | package.json |", "  - R2 | testing.md > Run | fact | package.json |", "| R2 | testing.md > Run | fact | package.json |"]) {
     const run = factsRun(sheet(GOOD, bad));
     assert.equal(run.status, 1, bad);

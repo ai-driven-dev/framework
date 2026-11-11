@@ -334,7 +334,7 @@ test("report: a line the write lost with no approved item heads the message, und
   const lossy = { ...WRITTEN, "codebase-map.md": WRITTEN["codebase-map.md"].replace("\n## Entry points\n\n- The server and cron doors.\n", "") };
   written((root) => {
     const out = engine(root, "report", SHEET).stdout;
-    assert.match(out, /^Memory written, 2 lines lost\n\nLines lost\n {2}No item you approved removes these lines\. Restore them before you commit\.\n {2}codebase-map\.md: ## Entry points\n {2}codebase-map\.md: - The server and cron doors\.\n\nWritten\n/u);
+    assert.match(out, /^Memory written, 1 line lost\n\nLines lost\n {2}No item you approved removes these lines\. Restore them before you commit\.\n {2}codebase-map\.md: - The server and cron doors\.\n\nWritten\n/u, "a heading is listed as a lost fact");
     assert.doesNotMatch(out, /Memory ready/u);
   }, { bank: lossy });
 });
@@ -379,4 +379,16 @@ test("report: a folder of more than three written files reads as one entry", () 
   written((root) => {
     assert.match(engine(root, "report", SHEET).stdout, /^ {2}aidd_docs\/memory: codebase-map\.md, internal\/kpi\/ \(4 files\), internal\/kpi\/probes\/github\.md, testing\.md$/mu);
   }, { bank: { ...WRITTEN, ...moved } });
+});
+
+test("plan and answer: a table row quoted whole, pipes and all, is an item the reply marks", () => {
+  const table = "# Testing\n\n## Run\n\n| Command | Runs |\n| --- | --- |\n| `make fuzz` | the fuzzer |\n";
+  const sheet = REFRESH.replace('- D3 | codebase-map.md > Entry points | remove "- `legacy/` holds the old door.": the folder is gone | package.json |', '- D3 | testing.md > Run | remove "| `make fuzz` | the fuzzer |": the target is gone | package.json |');
+  withProject((root) => {
+    const run = engine(root, "plan", SHEET);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.match(detailOf(root), /remove {2}testing\.md: "\| `make fuzz` \| the fuzzer \|"/u);
+    assert.equal(engine(root, "answer", SHEET, "ok").status, 0);
+    assert.match(sheetOf(root), /^- D3 \| testing\.md > Run \| remove "\| `make fuzz` \| the fuzzer \|": the target is gone \| package\.json \| yes$/mu);
+  }, sheet, { ...FULL, "testing.md": table });
 });

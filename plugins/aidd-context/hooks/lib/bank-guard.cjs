@@ -79,7 +79,8 @@ function goneLines(previous, bankDir, approvals) {
     moved(text)
       .split("\n")
       .map(collapse)
-      .filter((line) => line !== "")
+      // A heading holds no fact: one left empty by approved removals is no loss.
+      .filter((line) => line !== "" && !line.startsWith("#"))
       .map((line) => ({ file, line })),
   );
   const changed = before.filter(({ line }) => {
