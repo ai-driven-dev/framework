@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { globalFilesOf } from "../../../../../../src/contexts/tools/domain/registry.js";
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };

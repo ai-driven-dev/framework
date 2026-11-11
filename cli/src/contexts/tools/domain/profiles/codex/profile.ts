@@ -22,7 +22,6 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
@@ -144,5 +143,3 @@ export const codex: AiTool<
     return rewriteCodexContent(content);
   },
 };
-
-registerTool(codex);

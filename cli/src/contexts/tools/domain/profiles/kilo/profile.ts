@@ -21,7 +21,6 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
@@ -100,5 +99,3 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
     );
   },
 };
-
-registerTool(kilo);

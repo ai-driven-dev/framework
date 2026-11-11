@@ -1,19 +1,12 @@
 import { describe, expect, it } from "vitest";
+import type { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { buildClaudeContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexContract } from "../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildCursorContract } from "../../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { getAiToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { rewritePluginRootToken } from "../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../../src/kernel/tool.js";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import type { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
-import { getAiToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 
 /** A hook whose command names a variable the host does not expand installs cleanly, runs on
  * every event, and silently does nothing, so the variable each tool expands is declared beside

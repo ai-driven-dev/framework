@@ -1,4 +1,3 @@
-import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";

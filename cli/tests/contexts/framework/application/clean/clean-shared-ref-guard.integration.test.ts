@@ -1,8 +1,5 @@
 /** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs` — codex,
  * copilot), a ref is left enabled while another project still references its shared source. */
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { describe, expect, it } from "vitest";
 import {
   FRAMEWORK_MARKETPLACE_NAME,

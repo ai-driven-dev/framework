@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { opencodeGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-paths.js";
 import { globalFilesOf } from "../../../../../../src/contexts/tools/domain/registry.js";
 

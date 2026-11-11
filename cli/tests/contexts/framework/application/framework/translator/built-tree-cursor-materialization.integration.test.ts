@@ -1,4 +1,3 @@
-import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";

@@ -1,10 +1,4 @@
 import { describe, expect, it } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { InitUseCase } from "../../../../src/contexts/framework/application/init-use-case.js";
 import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";

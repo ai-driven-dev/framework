@@ -22,7 +22,6 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
@@ -115,5 +114,3 @@ export const opencode: AiTool<
     );
   },
 };
-
-registerTool(opencode);

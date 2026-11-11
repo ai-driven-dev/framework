@@ -1,6 +1,5 @@
 /** A marketplace-sourced Cursor install must deliver hooks where a local-source one does:
  * a built tree's plugin-scoped `hooks/hooks.json` lands in a directory Cursor never reads. */
-import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";

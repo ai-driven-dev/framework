@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { hostRefInUse } from "../../../../src/contexts/tools/domain/registry.js";
 
 describe("hostRefInUse — whether a ref the host lists is a plugin in use", () => {

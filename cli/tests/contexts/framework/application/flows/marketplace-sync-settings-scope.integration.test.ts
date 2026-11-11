@@ -1,5 +1,4 @@
 import { resolve } from "node:path";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";

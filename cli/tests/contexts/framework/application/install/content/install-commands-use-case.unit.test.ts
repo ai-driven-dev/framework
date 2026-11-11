@@ -1,6 +1,3 @@
-// Register the claude and copilot tools so their capabilities are accessible
-import "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { describe, expect, it } from "vitest";
 import { InstallCommandsUseCase } from "../../../../../../src/contexts/framework/application/install/content/install-commands-use-case.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";

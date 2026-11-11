@@ -2,7 +2,6 @@
  * A narrowed run's outcome carries only the marketplace it touched, so replacing
  * `nativeRegistrations` wholesale would erase every other marketplace's record.
  */
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";

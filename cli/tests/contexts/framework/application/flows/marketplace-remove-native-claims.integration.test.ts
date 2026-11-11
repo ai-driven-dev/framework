@@ -1,8 +1,6 @@
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";

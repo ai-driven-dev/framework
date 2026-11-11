@@ -1,13 +1,3 @@
-// Registers every tool profile as a side effect, so the registry `nativeActivationOf`
-// reads is populated regardless of which other wiring module gets imported first.
-import "../../contexts/tools/domain/profiles/antigravity/profile.js";
-import "../../contexts/tools/domain/profiles/claude/profile.js";
-import "../../contexts/tools/domain/profiles/codex/profile.js";
-import "../../contexts/tools/domain/profiles/copilot/profile.js";
-import "../../contexts/tools/domain/profiles/cursor/profile.js";
-import "../../contexts/tools/domain/profiles/kilo/profile.js";
-import "../../contexts/tools/domain/profiles/opencode/profile.js";
-import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import type { HostMarketplaceRegistryReader } from "../../contexts/tools/domain/ports/host-marketplace-registry-reader.js";
 import type { NativePluginActivator } from "../../contexts/tools/domain/ports/native-plugin-activator.js";
 import { nativeActivationOf } from "../../contexts/tools/domain/registry.js";

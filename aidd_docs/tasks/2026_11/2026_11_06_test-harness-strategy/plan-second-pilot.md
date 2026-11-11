@@ -487,6 +487,7 @@ Acceptance: Appendix B and the verdict filled; `git status --short` shows the pl
 | Profiles and the registration list stay in `contexts/tools` (A1) | the overview defers `composition/tool-profiles/` to stage D, and placing it there needs the catalog injected into 141 importers |
 | The catalog is built, not injected (E-T1) | eager registration was probed: 3 failures in 7,058 tests, against an injection that rewrites 55 `src` files |
 | Criterion 1 carries C1b, total lines not up | moving cases into the conformance suite would meet C1 by reclassification alone |
+| `ToolCatalog` takes its profiles in its constructor, no `createToolCatalog` | the constructor already refuses a duplicate id; a factory would remove nothing |
 | The help strings stay written out | no existing order reproduces them, and help text is frozen surface |
 
 ## Risks, limits and open questions
@@ -507,6 +508,7 @@ Phase 2 characterization proofs (slice plus new files, run through the sandbox):
 | Test | Break applied | What went red |
 | --- | --- | --- |
 | C1 `tests/runtime/wiring/registered-tools.integration.test.ts`, registration order of the real composition (integration: it imports `runtime/wiring/framework.ts`, the composition, like `create-deps.integration.test.ts`) | swap the antigravity and claude side-effect imports in `runtime/wiring/framework.ts` | only C1 (1 failed, 610 passed) |
+| C1, after phase 3 (the order now lives in `profiles/registered-profiles.ts`) | swap the antigravity and claude lines of `REGISTERED_PROFILES` | only C1 (1 failed, 177 passed, over the slice list plus `tests/runtime`, `tests/contexts/tools`, `tests/architecture`) |
 | C2 `tests/runtime/assets/asset-loader-config-assets.unit.test.ts`, config assets per tool through the wired `BundledAssetProviderAdapter` (unit: no fs, no process) | `antigravity: { "settings.json": claudeSettings }` in `CONFIG_ASSETS` | only C2, its antigravity case (1 failed, 7 passed in the file; no other slice file red) |
 | C3 set of registered tools equals `AI_TOOL_IDS` plus `IDE_TOOL_IDS` | `IDE_TOOL_IDS = []` in `kernel/tool.ts`: C3 red together with 3 tests of `tool-config.unit.test.ts` (4 failed). Deleting the vscode import in `framework.ts`: nothing red, vscode still registers through another import | dropped: another test goes red for the kernel-side break and no registry-side break was found that C3 alone catches (relevance rule); not written |
 

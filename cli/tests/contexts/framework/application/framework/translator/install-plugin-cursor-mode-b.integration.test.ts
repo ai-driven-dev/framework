@@ -1,4 +1,3 @@
-import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";

@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { registerTool } from "../../../../src/contexts/tools/domain/registry.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import {
   InvalidPluginModeConfigError,
   InvalidSetupToolIdError,

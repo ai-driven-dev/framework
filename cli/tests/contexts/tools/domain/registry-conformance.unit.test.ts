@@ -1,15 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-// Side-effect imports: registering every shipped tool is what makes this suite meaningful.
-// A tool missing here would silently escape conformance, so the list must stay complete.
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
 import { hasRules } from "../../../../src/contexts/tools/domain/contracts.js";

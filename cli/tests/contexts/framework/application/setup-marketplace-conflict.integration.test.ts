@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import type { MarketplaceRefresh } from "../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFramework } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";

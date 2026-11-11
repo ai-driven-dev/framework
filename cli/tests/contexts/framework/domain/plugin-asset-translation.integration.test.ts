@@ -1,14 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
@@ -20,6 +12,7 @@ import { PluginContentTranslator } from "../../../../src/contexts/translate/doma
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
 import { AI_TOOL_IDS } from "../../../../src/kernel/tool.js";
+import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 
 /**
  * Prose — a skill, an agent, a rule — is translated: frontmatter converted, paths rewritten.

@@ -1,14 +1,4 @@
 import { stat } from "node:fs/promises";
-// `FRAMEWORK_BUILD_REGISTRY` is built at module load from the tool registry, so this module
-// registers the profiles itself rather than rely on import order elsewhere.
-import "../../contexts/tools/domain/profiles/antigravity/profile.js";
-import "../../contexts/tools/domain/profiles/claude/profile.js";
-import "../../contexts/tools/domain/profiles/codex/profile.js";
-import "../../contexts/tools/domain/profiles/copilot/profile.js";
-import "../../contexts/tools/domain/profiles/cursor/profile.js";
-import "../../contexts/tools/domain/profiles/kilo/profile.js";
-import "../../contexts/tools/domain/profiles/opencode/profile.js";
-import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolBuildContract } from "../../contexts/tools/domain/build-contract.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import { buildContractFor } from "../../contexts/tools/domain/registry.js";

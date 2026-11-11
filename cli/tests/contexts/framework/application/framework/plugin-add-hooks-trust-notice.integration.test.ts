@@ -1,11 +1,9 @@
-import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 /** A hook a native tool delivers is not a skip but a component with a precondition: Codex
  * gates every hook behind a per-hook trust grant it can decline in silence. */
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";

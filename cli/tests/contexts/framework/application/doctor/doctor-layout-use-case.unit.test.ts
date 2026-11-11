@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
 import { DoctorLayoutUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";

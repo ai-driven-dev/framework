@@ -5,7 +5,6 @@ import {
 } from "../../capabilities/config-refs.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";
 import type { HasSettings, IdeToolConfig } from "../../contracts.js";
-import { registerTool } from "../../registry.js";
 
 const DIRECTORY = ".vscode/";
 
@@ -33,5 +32,3 @@ export const vscodeToolConfig: IdeToolConfig & HasSettings = {
     }),
   ],
 };
-
-registerTool(vscodeToolConfig);

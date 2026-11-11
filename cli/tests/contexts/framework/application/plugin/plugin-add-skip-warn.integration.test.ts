@@ -1,10 +1,9 @@
-import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 /** Every registered tool now runs what a plugin's `hooks/` ships, so no live fixture reaches
  * `collectHooksSkips`'s non-empty branch; the warn format is pinned tool-agnostically below. */
-import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import type { ReadonlySkipList } from "../../../../../src/contexts/translate/domain/plugin-translation-skip.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";

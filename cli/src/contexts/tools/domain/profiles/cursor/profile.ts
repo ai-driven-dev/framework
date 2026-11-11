@@ -21,7 +21,6 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import { CURSOR_HOOKS } from "./hooks.js";
@@ -125,5 +124,3 @@ export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
     },
   };
-
-registerTool(cursor);

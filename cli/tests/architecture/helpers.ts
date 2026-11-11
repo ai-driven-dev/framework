@@ -61,7 +61,7 @@ export function resolveImportTarget(file: string, specifier: string): string {
   ).replace(/\.js$/, ".ts");
 }
 
-/** Side-effect imports (`import "./x.js"`) count: that is how tools register themselves. */
+/** Side-effect imports (`import "./x.js"`) count: a module that runs on import is a dependency. */
 export function importersByFile(): Map<string, Set<string>> {
   const files = sourceFiles();
   const known = new Set(files);

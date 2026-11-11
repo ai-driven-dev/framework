@@ -1,9 +1,6 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,

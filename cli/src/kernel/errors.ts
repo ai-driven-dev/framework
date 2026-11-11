@@ -102,6 +102,13 @@ export class UnregisteredToolError extends Error {
   }
 }
 
+export class DuplicateToolIdError extends Error {
+  constructor(toolId: string) {
+    super(`Tool '${toolId}' is registered twice.`);
+    this.name = "DuplicateToolIdError";
+  }
+}
+
 export class ToolNotInManifestError extends Error {
   constructor(toolId: string) {
     super(`Tool '${toolId}' is not installed in the manifest.`);

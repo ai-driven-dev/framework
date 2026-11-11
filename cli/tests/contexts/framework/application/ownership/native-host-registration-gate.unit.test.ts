@@ -1,5 +1,3 @@
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { describe, expect, it } from "vitest";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
 import type { NativeRegistrations } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";

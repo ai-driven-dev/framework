@@ -13,8 +13,10 @@ import {
   projectHooksFileOf,
   registerTool,
   supportsUserScopeActivation,
+  ToolCatalog,
   userMachineLocalFilesOf,
 } from "../../../../src/contexts/tools/domain/registry.js";
+import { DuplicateToolIdError, UnregisteredToolError } from "../../../../src/kernel/errors.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
 
@@ -168,5 +170,19 @@ describe("what a tool's plugin capability declares about activation", () => {
     expect(userMachineLocalFilesOf("cursor", "/home/me", () => undefined)).toStrictEqual([
       "/home/me/settings.json",
     ]);
+  });
+});
+
+describe("a catalog built from a list of profiles", () => {
+  it("refuses two profiles declaring the same id", () => {
+    expect(
+      () => new ToolCatalog([stubTool("cursor", {}, null), stubTool("cursor", {}, null)])
+    ).toThrow(DuplicateToolIdError);
+  });
+
+  it("refuses to replace the profile of an id it does not hold", () => {
+    const catalog = new ToolCatalog([stubTool("cursor", {}, null)]);
+
+    expect(() => catalog.replacing(stubTool("claude", {}, null))).toThrow(UnregisteredToolError);
   });
 });

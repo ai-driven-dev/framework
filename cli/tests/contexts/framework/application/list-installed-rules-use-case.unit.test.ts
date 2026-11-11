@@ -1,14 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-// Side-effect imports: this use case asks the registry which tools have rules at all, so a
-// tool that never registered is a tool it silently cannot see.
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { ListInstalledRulesUseCase } from "../../../../src/contexts/framework/application/list-installed-rules-use-case.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
 

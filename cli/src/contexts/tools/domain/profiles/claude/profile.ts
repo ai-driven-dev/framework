@@ -18,7 +18,6 @@ import type {
 import { convertCommandFrontmatter, stripToolSuffix } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
-import { registerTool } from "../../registry.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
 import { CLAUDE_HOOKS } from "./hooks.js";
@@ -156,5 +155,3 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
       );
     },
   };
-
-registerTool(claude);

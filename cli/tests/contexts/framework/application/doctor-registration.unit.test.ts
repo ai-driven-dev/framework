@@ -3,15 +3,11 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import type {
   HostPluginRegistryReader,
   HostPluginRegistryReading,
 } from "../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
 import { FakeHostPluginRegistryReader } from "../../../helpers/ports/fake-host-plugin-registry-reader.js";
 import { FakeNativePluginActivator } from "../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";

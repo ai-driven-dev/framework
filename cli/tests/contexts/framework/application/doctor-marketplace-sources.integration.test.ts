@@ -1,7 +1,5 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
