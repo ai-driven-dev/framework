@@ -54,16 +54,4 @@ describe("cursor rules", () => {
       });
     });
   });
-
-  describe("capabilities.rules.buildInstallPath()", () => {
-    it("builds path for rules section with .mdc extension", () => {
-      const path = cursor.capabilities.rules?.buildInstallPath("01-standards/naming.md");
-      expect(path).toBe(".cursor/rules/01-standards/naming.mdc");
-    });
-
-    it("leaves a rule already written in Cursor's own extension untouched", () => {
-      const path = cursor.capabilities.rules?.buildInstallPath("01-standards/naming.mdc");
-      expect(path).toBe(".cursor/rules/01-standards/naming.mdc");
-    });
-  });
 });

@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type {
-  ArtifactContract,
-  ArtifactSource,
   ConfigArtifact,
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/domain/build-contract.js";
@@ -9,6 +7,7 @@ import {
   buildOpencodeFlatContract,
   transformMcpToOpencode,
 } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
+import { sourceOf, supported } from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -23,15 +22,6 @@ const AGENT_SOURCE = [
   `Run @${ROOT}/hooks/journal.cjs`,
   "",
 ].join("\n");
-
-function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
-  if (!artifact.supported) throw new Error("artifact is declared unsupported");
-  return artifact;
-}
-
-function sourceOf(artifact: ArtifactContract): ArtifactSource | null {
-  return artifact.supported ? artifact.source : null;
-}
 
 function configArtifactOf(): ConfigArtifact {
   const step = buildOpencodeFlatContract().configArtifact;

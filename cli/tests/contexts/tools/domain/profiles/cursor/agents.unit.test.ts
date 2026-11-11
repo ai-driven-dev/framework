@@ -29,11 +29,4 @@ Plan before building.
       });
     });
   });
-
-  describe("capabilities.agents.buildInstallPath()", () => {
-    it("keeps .md extension for agents", () => {
-      const path = cursor.capabilities.agents.buildInstallPath("code-reviewer.md");
-      expect(path).toBe(".cursor/agents/code-reviewer.md");
-    });
-  });
 });

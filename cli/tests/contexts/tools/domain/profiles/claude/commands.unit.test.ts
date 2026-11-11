@@ -19,18 +19,4 @@ describe("claude commands", () => {
       });
     });
   });
-
-  describe("capabilities.commands.buildInstallPath()", () => {
-    it("builds commands path with aidd brand prefix and phase number", () => {
-      const path = claude.capabilities.commands?.buildInstallPath("04_code/implement.md");
-      expect(path).toBe(".claude/commands/aidd/04/implement.md");
-    });
-
-    it("handles two-digit phase in commands", () => {
-      const path = claude.capabilities.commands?.buildInstallPath(
-        "02_context/create_user_stories.md"
-      );
-      expect(path).toBe(".claude/commands/aidd/02/create_user_stories.md");
-    });
-  });
 });

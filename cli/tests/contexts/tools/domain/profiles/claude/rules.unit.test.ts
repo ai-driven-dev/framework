@@ -43,11 +43,4 @@ describe("claude rules", () => {
       expect(result).toStrictEqual({});
     });
   });
-
-  describe("capabilities.rules.buildInstallPath()", () => {
-    it("builds path for rules section with subdirectory", () => {
-      const path = claude.capabilities.rules?.buildInstallPath("01-standards/naming.md");
-      expect(path).toBe(".claude/rules/01-standards/naming.md");
-    });
-  });
 });

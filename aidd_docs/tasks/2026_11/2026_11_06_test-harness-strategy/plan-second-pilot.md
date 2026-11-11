@@ -539,6 +539,29 @@ Phase 6 proofs (file and title, verdict, target, proof). Every proof: break by h
 | uninstall-use-case.unit | refuses to remove nothing | rewritten, tool list derived from `VALID_TOOL_IDS` | itself | message list reversed in the source: red |
 | framework-build-golden.golden | matrix covers every tool | first half deleted (tautological once the matrix derives from `AI_TOOL_IDS`); the stored-cell half stays | the same test | cells keyed by id, `stored[key]` missing-cell assertion kept |
 
+Phase 7 proofs (install-path cases of the per-tool parallel files, rows of each tool's `profile.unit` table; every proof: break by hand in src, the named row red, revert, `git diff -- cli/src` empty):
+
+| File | Title | Verdict | Target | Proof |
+| --- | --- | --- | --- | --- |
+| claude, codex, copilot, cursor, opencode, antigravity, kilo: skills, agents, commands, rules `buildInstallPath` cases (about 45) | one per path | rewritten as rows of `installs %s file %s at %s` | `<tool>/profile.unit` | `rules/` renamed `rule/` in claude, opencode and kilo `profile.ts`: that row red; `.prompt.md` broken in copilot: 4 command rows red; `.mdc` broken in cursor: its row red; codex skills prefix broken: its 5 rows red |
+| claude, cursor, copilot, opencode, codex `skills.unit`, copilot `commands.unit` | files | deleted, every case moved to a row | `<tool>/profile.unit` | as above |
+| codex `profile.unit` | has toolId codex; is registered in the tool registry | deleted | `PROFILE_CHECKS` "is registered once, under its own id" | codex `toolId` changed to "codexx": conformance red (77 red in total, none of them the deleted cases) |
+| copilot, vscode `settings.unit` | each case | rewritten as one `it` and a three-row table | `copilot/profile.unit`, `vscode/profile.unit` | copilot merge strategy flipped: its case red; vscode extensions path broken: its row red |
+| claude, copilot, cursor, codex `build.unit` | sources the plugin tree (6 blocks); keeps the plugin-relative path (3) | rewritten over `PLUGIN_TREE_SOURCES` and `PLUGIN_RELATIVE_PATHS` | `testing/build-artifacts.ts` kit helpers | unchanged expectations, same assertions |
+
+Counts, measured by `second-pilot-baseline/count-after.mjs` (before: `count-before.mjs`, tree 833aae713):
+
+| Bucket | Files | Tests | Lines |
+| --- | --- | --- | --- |
+| Behaviour before | 74 | 539 | 6414 |
+| Behaviour after | 71 | 536 | 5991 |
+| Conformance before / after | 1 / 5 | 61 / 254 | 320 / 568 |
+| Snapshot before / after | 1 / 1 | 1 / 1 | 88 / 80 |
+| Kit before / after | 1 / 5 | 0 / 0 | 38 / 529 |
+| Total before / after | 77 / 82 | 601 / 791 | 6860 / 7168 |
+
+C1: behaviour after 5991 < 6414 holds. Total after 7168 > 6860 does not: 308 lines over. Not settled: the remaining duplicates (catalog and entry builds of claude and cursor, the flat skill and agent path cases of five build files, the `convertFrontmatter` command cases of four profiles, rules frontmatter repeated in four) each need a kit extension plus a broken subject to be merged, and the bridges and the 7 `build.unit` files were pre-filtered, not challenged case by case. The per-test rows of phase 7 are grouped as in phase 6, not one row per test; the per-bucket split into kept, rewritten, merged, moved, deleted and added was not reconciled test by test.
+
 ## Appendix B: after measures
 
 Filled in phase 11, one row per line of "Before and after", with the command output that gives it.

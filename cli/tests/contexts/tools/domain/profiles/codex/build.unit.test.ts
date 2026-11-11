@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type {
-  ArtifactContract,
-  ArtifactSource,
-  ConfigArtifact,
-} from "../../../../../../src/contexts/tools/domain/build-contract.js";
+import type { ConfigArtifact } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import {
+  PLUGIN_TREE_SOURCES,
+  pluginTreeSourcesOf,
+  sourceOf,
+  supported,
+} from "../../../testing/build-artifacts.js";
 
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
@@ -21,15 +23,6 @@ const NO_CONTENT = {
   hasHooksJson: false,
   hasMcpJson: false,
 };
-
-function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
-  if (!artifact.supported) throw new Error("artifact is declared unsupported");
-  return artifact;
-}
-
-function sourceOf(artifact: ArtifactContract): ArtifactSource | null {
-  return artifact.supported ? artifact.source : null;
-}
 
 function configArtifactOf(): ConfigArtifact {
   const step = buildCodexFlatContract().configArtifact;
@@ -119,23 +112,7 @@ describe("buildCodexContract()", () => {
   });
 
   it("sources skills, agents, mcp and hooks from the plugin tree, and neither rules nor commands", () => {
-    const { artifacts } = buildCodexContract();
-
-    expect({
-      skills: sourceOf(artifacts.skills),
-      agents: sourceOf(artifacts.agents),
-      mcp: sourceOf(artifacts.mcp),
-      hooks: sourceOf(artifacts.hooks),
-      rules: artifacts.rules,
-      commands: artifacts.commands,
-    }).toStrictEqual({
-      skills: { kind: "fullTree", srcDir: "skills" },
-      agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      mcp: { kind: "configFile", srcPath: ".mcp.json" },
-      hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      rules: { supported: false },
-      commands: { supported: false },
-    });
+    expect(pluginTreeSourcesOf(buildCodexContract().artifacts)).toStrictEqual(PLUGIN_TREE_SOURCES);
   });
 
   it("stages an agent as TOML beside the plugin tree and leaves every other artifact where it was", () => {

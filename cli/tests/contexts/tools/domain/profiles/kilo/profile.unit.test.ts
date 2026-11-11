@@ -6,6 +6,7 @@ import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
 function makeFs(existingPaths: string[]): FileReader {
   return {
@@ -71,20 +72,17 @@ describe("kilo", () => {
     ]);
   });
 
-  it("declares a flat build with Kilo's agents and skills paths", () => {
+  it("declares a flat build", () => {
     expect(kilo.buildContracts?.flat).toBeDefined();
-    expect(kilo.capabilities.agents.buildInstallPath("reviewer.kilo.md")).toBe(
-      ".kilo/agents/reviewer.md"
-    );
-    expect(kilo.capabilities.skills.buildInstallPath("01-plan/SKILL.kilo.md")).toBe(
-      ".kilo/skills/01-plan/SKILL.md"
-    );
-    expect(kilo.capabilities.commands.buildInstallPath("01-plan/greet.md")).toBe(
-      ".kilo/commands/aidd/01/greet.md"
-    );
-    expect(kilo.capabilities.rules.buildInstallPath("standards.kilo.md")).toBe(
-      ".kilo/rules/standards.md"
-    );
+  });
+
+  it.each<[InstallKind, string, string]>([
+    ["agents", "reviewer.kilo.md", ".kilo/agents/reviewer.md"],
+    ["skills", "01-plan/SKILL.kilo.md", ".kilo/skills/01-plan/SKILL.md"],
+    ["commands", "01-plan/greet.md", ".kilo/commands/aidd/01/greet.md"],
+    ["rules", "standards.kilo.md", ".kilo/rules/standards.md"],
+  ])("installs %s file %s at %s", (kind, built, path) => {
+    expect(installPathOf(kilo, kind, built)).toBe(path);
   });
 
   it("prefers project-local JSONC and reuses an existing Kilo config", async () => {

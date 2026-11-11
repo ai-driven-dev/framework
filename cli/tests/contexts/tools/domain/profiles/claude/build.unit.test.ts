@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
-import type {
-  ArtifactContract,
-  ArtifactSource,
-} from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   buildClaudeContract,
   buildClaudeFlatContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import {
+  PLUGIN_RELATIVE_PATHS,
+  PLUGIN_TREE_SOURCES,
+  pluginRelativePathsOf,
+  pluginTreeSourcesOf,
+  supported,
+} from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -27,15 +30,6 @@ const AGENT_SOURCE = [
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
 });
-
-function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
-  if (!artifact.supported) throw new Error("artifact is declared unsupported");
-  return artifact;
-}
-
-function sourceOf(artifact: ArtifactContract): ArtifactSource | null {
-  return artifact.supported ? artifact.source : null;
-}
 
 describe("buildClaudeContract()", () => {
   it("declares Claude's own plugin manifest path, schema and root token", () => {
@@ -75,39 +69,13 @@ describe("buildClaudeContract()", () => {
   });
 
   it("sources skills, agents, mcp and hooks from the plugin tree, and neither rules nor commands", () => {
-    const { artifacts } = buildClaudeContract();
-
-    expect({
-      skills: sourceOf(artifacts.skills),
-      agents: sourceOf(artifacts.agents),
-      mcp: sourceOf(artifacts.mcp),
-      hooks: sourceOf(artifacts.hooks),
-      rules: artifacts.rules,
-      commands: artifacts.commands,
-    }).toStrictEqual({
-      skills: { kind: "fullTree", srcDir: "skills" },
-      agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      mcp: { kind: "configFile", srcPath: ".mcp.json" },
-      hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      rules: { supported: false },
-      commands: { supported: false },
-    });
+    expect(pluginTreeSourcesOf(buildClaudeContract().artifacts)).toStrictEqual(PLUGIN_TREE_SOURCES);
   });
 
   it("keeps every artifact at the plugin-relative path it came from", () => {
-    const { artifacts } = buildClaudeContract();
-
-    expect({
-      skill: supported(artifacts.skills).path("aidd-dev", "skills/01-plan/SKILL.md"),
-      agent: supported(artifacts.agents).path("aidd-dev", "agents/planner.md"),
-      mcp: supported(artifacts.mcp).path("aidd-dev", ".mcp.json"),
-      hook: supported(artifacts.hooks).path("aidd-dev", "hooks/journal.cjs"),
-    }).toStrictEqual({
-      skill: "skills/01-plan/SKILL.md",
-      agent: "agents/planner.md",
-      mcp: ".mcp.json",
-      hook: "hooks/journal.cjs",
-    });
+    expect(pluginRelativePathsOf(buildClaudeContract().artifacts)).toStrictEqual(
+      PLUGIN_RELATIVE_PATHS
+    );
   });
 
   it("keeps an agent's whole frontmatter and links its plugin-root references from agents/", () => {
@@ -181,23 +149,9 @@ describe("buildClaudeContract()", () => {
 
 describe("buildClaudeFlatContract()", () => {
   it("sources the same trees as the plugin contract, and neither rules nor commands", () => {
-    const { artifacts } = buildClaudeFlatContract();
-
-    expect({
-      skills: sourceOf(artifacts.skills),
-      agents: sourceOf(artifacts.agents),
-      mcp: sourceOf(artifacts.mcp),
-      hooks: sourceOf(artifacts.hooks),
-      rules: artifacts.rules,
-      commands: artifacts.commands,
-    }).toStrictEqual({
-      skills: { kind: "fullTree", srcDir: "skills" },
-      agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      mcp: { kind: "configFile", srcPath: ".mcp.json" },
-      hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      rules: { supported: false },
-      commands: { supported: false },
-    });
+    expect(pluginTreeSourcesOf(buildClaudeFlatContract().artifacts)).toStrictEqual(
+      PLUGIN_TREE_SOURCES
+    );
   });
 
   it("prefixes a flat skill's own folder with the plugin name, and renames the skill itself", () => {

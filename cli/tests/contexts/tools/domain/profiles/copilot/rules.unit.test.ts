@@ -22,39 +22,6 @@ describe("copilot rules", () => {
     });
   });
 
-  describe("capabilities.rules.buildInstallPath()", () => {
-    it("flattens rules: prefixes with category number, strips file numeric prefix", () => {
-      const path = copilot.capabilities.rules?.buildInstallPath("01-standards/1-mermaid.md");
-      expect(path).toBe(".github/instructions/01-mermaid.instructions.md");
-    });
-
-    it("flattens rules: no numeric prefix in filename — unchanged", () => {
-      const path = copilot.capabilities.rules?.buildInstallPath("01-standards/naming.md");
-      expect(path).toBe(".github/instructions/01-naming.instructions.md");
-    });
-
-    it("strips a numeric prefix of several digits from a rule's file name", () => {
-      const path = copilot.capabilities.rules?.buildInstallPath("01-standards/10-mermaid.md");
-      expect(path).toBe(".github/instructions/01-mermaid.instructions.md");
-    });
-
-    it("keeps a number inside a rule's file name, stripping only a leading one", () => {
-      const path = copilot.capabilities.rules?.buildInstallPath("01-standards/naming-2-rules.md");
-      expect(path).toBe(".github/instructions/01-naming-2-rules.instructions.md");
-    });
-
-    it("flattens rules: strips .copilot tool suffix from filename", () => {
-      const path = copilot.capabilities.rules?.buildInstallPath(
-        "04-tooling/ide-mapping.copilot.md"
-      );
-      expect(path).toBe(".github/instructions/04-ide-mapping.instructions.md");
-    });
-
-    it("returns null for .gitkeep files", () => {
-      expect(copilot.capabilities.rules?.buildInstallPath("00-architecture/.gitkeep")).toBeNull();
-    });
-  });
-
   describe("capabilities.rules.convertFrontmatter() — alwaysApply", () => {
     it("returns empty frontmatter when alwaysApply is false without patterns and no description", () => {
       expect(copilot.capabilities.rules?.convertFrontmatter({ alwaysApply: false })).toEqual({});

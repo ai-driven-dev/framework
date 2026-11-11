@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
-import type {
-  ArtifactContract,
-  ArtifactSource,
-} from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   buildCursorContract,
   buildCursorFlatContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { parseFrontmatter } from "../../../../../../src/kernel/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import {
+  PLUGIN_RELATIVE_PATHS,
+  PLUGIN_TREE_SOURCES,
+  pluginRelativePathsOf,
+  pluginTreeSourcesOf,
+  supported,
+} from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -25,15 +28,6 @@ const AGENT_SOURCE = [
   `Run @${ROOT}/hooks/journal.cjs`,
   "",
 ].join("\n");
-
-function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
-  if (!artifact.supported) throw new Error("artifact is declared unsupported");
-  return artifact;
-}
-
-function sourceOf(artifact: ArtifactContract): ArtifactSource | null {
-  return artifact.supported ? artifact.source : null;
-}
 
 describe("buildCursorContract()", () => {
   it("gives same-named plugin roles distinct native identities", () => {
@@ -89,39 +83,13 @@ describe("buildCursorContract()", () => {
   });
 
   it("sources skills, agents, mcp and hooks from the plugin tree, and neither rules nor commands", () => {
-    const { artifacts } = buildCursorContract();
-
-    expect({
-      skills: sourceOf(artifacts.skills),
-      agents: sourceOf(artifacts.agents),
-      mcp: sourceOf(artifacts.mcp),
-      hooks: sourceOf(artifacts.hooks),
-      rules: artifacts.rules,
-      commands: artifacts.commands,
-    }).toStrictEqual({
-      skills: { kind: "fullTree", srcDir: "skills" },
-      agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      mcp: { kind: "configFile", srcPath: ".mcp.json" },
-      hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      rules: { supported: false },
-      commands: { supported: false },
-    });
+    expect(pluginTreeSourcesOf(buildCursorContract().artifacts)).toStrictEqual(PLUGIN_TREE_SOURCES);
   });
 
   it("keeps every artifact at the plugin-relative path it came from", () => {
-    const { artifacts } = buildCursorContract();
-
-    expect({
-      skill: supported(artifacts.skills).path("aidd-dev", "skills/01-plan/SKILL.md"),
-      agent: supported(artifacts.agents).path("aidd-dev", "agents/planner.md"),
-      mcp: supported(artifacts.mcp).path("aidd-dev", ".mcp.json"),
-      hook: supported(artifacts.hooks).path("aidd-dev", "hooks/journal.cjs"),
-    }).toStrictEqual({
-      skill: "skills/01-plan/SKILL.md",
-      agent: "agents/planner.md",
-      mcp: ".mcp.json",
-      hook: "hooks/journal.cjs",
-    });
+    expect(pluginRelativePathsOf(buildCursorContract().artifacts)).toStrictEqual(
+      PLUGIN_RELATIVE_PATHS
+    );
   });
 
   it("keeps an agent's supported frontmatter and links its plugin-root references from agents/", () => {
@@ -195,23 +163,9 @@ describe("buildCursorContract()", () => {
 
 describe("buildCursorFlatContract()", () => {
   it("sources the same trees as the plugin contract, and neither rules nor commands", () => {
-    const { artifacts } = buildCursorFlatContract();
-
-    expect({
-      skills: sourceOf(artifacts.skills),
-      agents: sourceOf(artifacts.agents),
-      mcp: sourceOf(artifacts.mcp),
-      hooks: sourceOf(artifacts.hooks),
-      rules: artifacts.rules,
-      commands: artifacts.commands,
-    }).toStrictEqual({
-      skills: { kind: "fullTree", srcDir: "skills" },
-      agents: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-      mcp: { kind: "configFile", srcPath: ".mcp.json" },
-      hooks: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-      rules: { supported: false },
-      commands: { supported: false },
-    });
+    expect(pluginTreeSourcesOf(buildCursorFlatContract().artifacts)).toStrictEqual(
+      PLUGIN_TREE_SOURCES
+    );
   });
 
   it("prefixes a flat skill's own folder with the plugin name, and renames the skill itself", () => {

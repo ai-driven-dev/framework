@@ -1,16 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type {
-  ArtifactContract,
   ConfigArtifact,
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { KiloDualConfigError } from "../../../../../../src/kernel/errors.js";
-
-function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
-  if (!artifact.supported) throw new Error("artifact is declared unsupported");
-  return artifact;
-}
+import { supported } from "../../../testing/build-artifacts.js";
 
 function configArtifactOf(): ConfigArtifact {
   const step = buildKiloFlatContract().configArtifact;

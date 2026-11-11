@@ -27,11 +27,4 @@ developer_instructions = "Plan before building.\\n"
       });
     });
   });
-
-  describe("capabilities.agents.buildInstallPath()", () => {
-    it("builds .toml path under .codex/agents/", () => {
-      const path = codex.capabilities.agents.buildInstallPath("alexia.md");
-      expect(path).toBe(".codex/agents/alexia.toml");
-    });
-  });
 });

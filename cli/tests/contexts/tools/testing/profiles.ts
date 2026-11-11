@@ -174,3 +174,17 @@ export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig {
 export function aCatalog(...profiles: readonly ToolConfig[]): ToolCatalog {
   return new ToolCatalog(profiles);
 }
+
+export type InstallKind = "skills" | "agents" | "commands" | "rules";
+type Installs = { buildInstallPath(fileName: string): string | null };
+
+/** Where a profile installs one built file of a kind, or null when it installs none. */
+export function installPathOf(
+  profile: { readonly capabilities: { readonly [K in InstallKind]?: Installs } },
+  kind: InstallKind,
+  fileName: string
+): string | null {
+  const capability = profile.capabilities[kind];
+  if (capability === undefined) throw new Error(`profile has no ${kind}`);
+  return capability.buildInstallPath(fileName);
+}

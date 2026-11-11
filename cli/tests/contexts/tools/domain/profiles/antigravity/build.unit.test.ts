@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import { buildAntigravityFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/build.js";
-
-function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
-  if (!artifact.supported) throw new Error("artifact is declared unsupported");
-  return artifact;
-}
+import { supported } from "../../../testing/build-artifacts.js";
 
 describe("buildAntigravityFlatContract", () => {
   it("sits a skill one level under .agents/skills, the plugin hyphenated onto its name", () => {

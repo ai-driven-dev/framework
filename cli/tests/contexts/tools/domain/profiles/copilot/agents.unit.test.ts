@@ -34,25 +34,4 @@ describe("copilot agents", () => {
       })
     ).toHaveProperty("include-custom-instructions", false);
   });
-
-  describe("capabilities.agents.buildInstallPath()", () => {
-    it("adds .agent.md extension", () => {
-      const path = copilot.capabilities.agents.buildInstallPath("code-reviewer.md");
-      expect(path).toBe(".github/agents/code-reviewer.agent.md");
-    });
-
-    it("returns null for .gitkeep files", () => {
-      expect(copilot.capabilities.agents.buildInstallPath(".gitkeep")).toBeNull();
-    });
-
-    it("names a nested agent after its own file, not the folders above it", () => {
-      const path = copilot.capabilities.agents.buildInstallPath("team/sub/code-reviewer.md");
-      expect(path).toBe(".github/agents/code-reviewer.agent.md");
-    });
-
-    it("keeps a file that is not markdown under its own name", () => {
-      const path = copilot.capabilities.agents.buildInstallPath("helper.txt");
-      expect(path).toBe(".github/agents/helper.txt");
-    });
-  });
 });

@@ -22,11 +22,4 @@ Plan before building.
       });
     });
   });
-
-  describe("capabilities.agents.buildInstallPath()", () => {
-    it("builds path for agents section", () => {
-      const path = claude.capabilities.agents.buildInstallPath("code-reviewer.md");
-      expect(path).toBe(".claude/agents/code-reviewer.md");
-    });
-  });
 });
