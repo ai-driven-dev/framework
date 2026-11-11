@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, makeTmp, removeTmp, filesUnder, writeProject, edit, put } = require("../fixtures/aidd-ui/project.js");
-const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, wireframesWithoutScreen, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep } = require("../../aidd-ui-pilot.cjs");
+const { copyProject, snapshot, changedOutsideUi, verdict, stepsWithoutWireframe, wireframesWithoutScreen, publishedOf, codedOf, unreachedOf, stableOf, datedReviews, regenerate, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, stepBreaks, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep } = require("../../aidd-ui-pilot.cjs");
 
 // The pilot's checks hold without AI: they read files, run the engine, and compare trees.
 
@@ -182,14 +182,92 @@ describe("aidd-ui pilot wireframes without a screen", () => {
   });
 });
 
+const SEEN = { published: { validated: 4, total: 6 }, coded: { coded: 1, total: 1 }, unreached: [], stable: true, dated: [] };
+const SEEN_LINE = "published 4/6 coded 1/1 showcase reachable stable review ids clean";
+
 describe("aidd-ui pilot report line", () => {
-  it("says the errors, the warnings, the wireframes, the code and the steps in one line", () => {
-    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], unscreened: [], changed: [], broken: [] }), "blank errors none warnings none wireframes all screens all code untouched steps ok");
-    assert.equal(reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], unscreened: ["a"], changed: ["a"], broken: ["x", "y", "z"] }), "kairos errors C6 warnings C3,R18 wireframes missing 2 screens missing 1 code changed 1 steps broken 3");
+  it("says the errors, the warnings, the wireframes, the code, the steps, the publication and the showcase in one line", () => {
+    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: [], unscreened: [], changed: [], broken: [], ...SEEN }), `blank errors none warnings none wireframes all screens all code untouched steps ok ${SEEN_LINE}`);
+    assert.equal(
+      reportLine("kairos", { errors: ["C6"], warnings: ["C3", "R18"], missing: [1, 2], unscreened: ["a"], changed: ["a"], broken: ["x", "y", "z"], published: { validated: 0, total: 3 }, coded: { coded: 2, total: 5 }, unreached: ["a.html", "b.html"], stable: false, dated: ["review-2026-11-10"] }),
+      "kairos errors C6 warnings C3,R18 wireframes missing 2 screens missing 1 code changed 1 steps broken 3 published 0/3 coded 2/5 showcase unreached 2 unstable review ids dated 1"
+    );
   });
 
   it("says no journey when there is no step to judge", () => {
-    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: null, unscreened: null, changed: [], broken: [] }), "blank errors none warnings none wireframes no journey screens no wireframe code untouched steps ok");
+    assert.equal(reportLine("blank", { errors: [], warnings: [], missing: null, unscreened: null, changed: [], broken: [], ...SEEN }), `blank errors none warnings none wireframes no journey screens no wireframe code untouched steps ok ${SEEN_LINE}`);
+  });
+});
+
+describe("aidd-ui pilot publication, code links and review ids", () => {
+  beforeEach(() => writeProject(copy));
+
+  it("counts the validated records among the reviewable ones that hold states", () => {
+    assert.deepEqual(publishedOf(copy), { validated: 4, total: 6 });
+    edit(copy, `${UI}/components/button.md`, "status: validated", "status: proposed");
+    assert.deepEqual(publishedOf(copy), { validated: 3, total: 6 });
+  });
+
+  it("counts no record when nothing loads", () => {
+    fs.rmSync(path.join(copy, UI), { recursive: true });
+    assert.deepEqual(publishedOf(copy), { validated: 0, total: 0 });
+  });
+
+  it("counts the screens with a route that hold a code link", () => {
+    assert.deepEqual(codedOf(copy), { coded: 1, total: 1 });
+    edit(copy, `${UI}/screens/home.md`, "code: src/ui/HomePage.tsx#HomePage@1\n", "");
+    assert.deepEqual(codedOf(copy), { coded: 0, total: 1 });
+    edit(copy, `${UI}/screens/home.md`, "route: /\n", "");
+    assert.deepEqual(codedOf(copy), { coded: 0, total: 0 });
+  });
+
+  it("names a review id that holds a date", () => {
+    assert.deepEqual(datedReviews(copy), []);
+    edit(copy, `${UI}/reviews/first-pass.md`, "id: first-pass", "id: review-2026-11-10");
+    assert.deepEqual(datedReviews(copy), ["review-2026-11-10"]);
+  });
+});
+
+describe("aidd-ui pilot showcase reach and stability", () => {
+  const index = `${UI}/showcase/index.html`;
+  beforeEach(() => {
+    writeProject(copy);
+    regenerate(copy);
+  });
+
+  it("lists no page when the index reaches each one", () => {
+    assert.deepEqual(unreachedOf(copy), []);
+  });
+
+  it("names a page the index no longer links", () => {
+    edit(copy, index, 'href="home.html"', 'href="elsewhere.html"');
+    assert.deepEqual(unreachedOf(copy), ["home.html"]);
+  });
+
+  it("names the index when there is no showcase", () => {
+    fs.rmSync(path.join(copy, UI, "showcase"), { recursive: true });
+    assert.deepEqual(unreachedOf(copy), ["index.html"]);
+  });
+
+  it("is stable when two generations write the same pages", () => {
+    assert.equal(stableOf(copy), true);
+  });
+
+  it("is unstable when two generations write different content", () => {
+    let count = 0;
+    const run = (root) => {
+      fs.mkdirSync(path.join(root, UI, "showcase"), { recursive: true });
+      fs.writeFileSync(path.join(root, index), `run ${(count += 1)}\n`);
+    };
+    assert.equal(stableOf(copy, run), false);
+  });
+
+  it("generates in the language of the existing index", () => {
+    const seen = [];
+    stableOf(copy, (_, lang) => seen.push(lang));
+    regenerate(copy, "fr");
+    stableOf(copy, (_, lang) => seen.push(lang));
+    assert.deepEqual(seen, ["en", "en", "fr", "fr"]);
   });
 });
 
@@ -332,7 +410,7 @@ describe("aidd-ui pilot chain run", () => {
 
   it("exits 0 and says steps ok when each step wrote its own files and the engine's", () => {
     const { code, logs } = run();
-    assert.deepEqual([code, logs.at(-1).endsWith("wireframes all screens all code untouched steps ok")], [0, true], logs.join("|"));
+    assert.deepEqual([code, logs.at(-1).includes("wireframes all screens all code untouched steps ok")], [0, true], logs.join("|"));
   });
 
   it("exits 0 when every step also wrote the showcase", () => {
@@ -342,7 +420,7 @@ describe("aidd-ui pilot chain run", () => {
       fs.writeFileSync(path.join(cwd, UI, "showcase/index.html"), `${skill}\n`);
     };
     const { code, logs } = run(Object.fromEntries(CHAIN.map(([skill]) => [skill, withShowcase(skill)])));
-    assert.deepEqual([code, logs.at(-1).endsWith("steps ok")], [0, true], logs.join("|"));
+    assert.deepEqual([code, logs.at(-1).includes("steps ok")], [0, true], logs.join("|"));
   });
 
   it("exits 1 when a step before the review rewrote a record of a later skill", () => {
@@ -354,7 +432,7 @@ describe("aidd-ui pilot chain run", () => {
   it("exits 1, naming the step and the path, when a step wrote outside its set", () => {
     const { code, logs } = run({ "02-brand": (cwd, laid) => { laid(cwd); copyFromFull(cwd, `${UI}/system.md`); } });
     assert.equal(code, 1);
-    assert.ok(logs.some((line) => line.endsWith("steps broken 1")), logs.join("|"));
+    assert.ok(logs.some((line) => line.includes("steps broken 1 ")), logs.join("|"));
     assert.ok(logs.includes("02-brand wrote aidd_docs/ui/system.md"), logs.join("|"));
   });
 

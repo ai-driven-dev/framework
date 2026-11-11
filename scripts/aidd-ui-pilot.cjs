@@ -22,8 +22,8 @@
  * Usage: node scripts/aidd-ui-pilot.cjs --gouvernail <checkout> --kairos <checkout> [--only blank|gouvernail|kairos]
  *
  * Exit codes:
- *   0  no pilot has an error, every step has its wireframe, the code is untouched and each step stayed in its files
- *   1  any error, a missing wireframe, changed code, or a step outside its files
+ *   0  no pilot has an error, every step has its wireframe, the code is untouched, each step stayed in its files, the showcase is reachable and stable, and no review id holds a date
+ *   1  any error, a missing wireframe, changed code, a step outside its files, an unreached or unstable showcase, or a dated review id
  *   2  a step could not run
  */
 const { spawnSync } = require("node:child_process");
@@ -37,6 +37,7 @@ const ENGINE = path.join(PLUGIN, "hooks", "aidd-ui.cjs");
 const { load } = require(path.join(PLUGIN, "hooks", "lib", "project.cjs"));
 const { table } = require(path.join(PLUGIN, "hooks", "lib", "markdown.cjs"));
 const { STEPS_SECTION } = require(path.join(PLUGIN, "hooks", "lib", "model.cjs"));
+const { isReviewed } = require(path.join(PLUGIN, "hooks", "lib", "history.cjs"));
 
 const UI_DIR = "aidd_docs/ui";
 const GIT_DIR = ".git";
@@ -159,14 +160,66 @@ function wireframesWithoutScreen(root) {
   return wireframes.length ? wireframes.filter((id) => !dressed.has(id)) : null;
 }
 
+const kindsOf = (project, kind) => project.records.filter((record) => record.frontMatter.kind === kind);
+const SHOWCASE_PATH = path.join(UI_DIR, "showcase");
+const DATED = /\d{4}-\d{2}-\d{2}|\d{8}/;
+
+/** How many of the reviewable records that hold states are validated, `{ validated, total }`; zero when nothing loads. */
+function publishedOf(root) {
+  const project = load(root);
+  const held = project === null ? [] : project.records.filter((record) => isReviewed(record) && (record.frontMatter.states ?? []).length);
+  return { validated: held.filter((record) => record.frontMatter.status === "validated").length, total: held.length };
+}
+
+/** How many screens with a route hold a `code` link, `{ coded, total }`; zero when nothing loads. */
+function codedOf(root) {
+  const project = load(root);
+  const routed = project === null ? [] : kindsOf(project, "screen").filter((record) => record.frontMatter.route);
+  return { coded: routed.filter((record) => (record.frontMatter.code ?? []).length).length, total: routed.length };
+}
+
+/** The ids of the reviews named with a date. */
+function datedReviews(root) {
+  const project = load(root);
+  return project === null ? [] : kindsOf(project, "review").map((record) => record.frontMatter.id).filter((id) => DATED.test(id));
+}
+
+/** The pages under `showcase/` the index does not link, sorted; the index itself when there is no showcase. */
+function unreachedOf(root) {
+  const dir = path.join(root, SHOWCASE_PATH);
+  if (!fs.existsSync(dir)) return ["index.html"];
+  const pages = fs.readdirSync(dir).filter((name) => name.endsWith(".html") && name !== "index.html");
+  const index = fs.existsSync(path.join(dir, "index.html")) ? fs.readFileSync(path.join(dir, "index.html"), "utf8") : "";
+  const linked = new Set([...index.matchAll(/href="([^"#]+\.html)"/g)].map((match) => match[1]));
+  return pages.filter((name) => !linked.has(name)).sort();
+}
+
+/** Writes the showcase of `root` with the engine, in `lang`. */
+function regenerate(root, lang = "en") {
+  const run = spawnSync(process.execPath, [ENGINE, "showcase", "--root", root, "--lang", lang], { encoding: "utf8" });
+  if (run.status !== 0) throw new Error(`showcase failed in the copy: ${run.stdout}${run.stderr}`);
+}
+
+/** Whether two generations, in the language of the index already written, leave the same pages. `run` is how one is made. */
+function stableOf(root, run = regenerate) {
+  const index = path.join(root, SHOWCASE_PATH, "index.html");
+  const lang = (fs.existsSync(index) && fs.readFileSync(index, "utf8").match(/<html lang="([^"]*)"/)?.[1]) || "en";
+  run(root, lang);
+  const first = snapshot(path.join(root, SHOWCASE_PATH));
+  run(root, lang);
+  return JSON.stringify(snapshot(path.join(root, SHOWCASE_PATH))) === JSON.stringify(first);
+}
+
 /** One pilot's result on one line. */
-function reportLine(pilot, { errors, warnings, missing, unscreened, changed, broken }) {
+function reportLine(pilot, { errors, warnings, missing, unscreened, changed, broken, published, coded, unreached, stable, dated }) {
   const ids = (list) => (list.length ? list.join(",") : "none");
   const wireframes = missing === null ? "no journey" : missing.length ? `missing ${missing.length}` : "all";
   const screens = unscreened === null ? "no wireframe" : unscreened.length ? `missing ${unscreened.length}` : "all";
   const code = changed.length ? `changed ${changed.length}` : "untouched";
   const steps = broken.length ? `broken ${broken.length}` : "ok";
-  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} screens ${screens} code ${code} steps ${steps}`;
+  const reach = unreached.length ? `unreached ${unreached.length}` : "reachable";
+  const reviews = dated.length ? `dated ${dated.length}` : "clean";
+  return `${pilot} errors ${ids(errors)} warnings ${ids(warnings)} wireframes ${wireframes} screens ${screens} code ${code} steps ${steps} published ${published.validated}/${published.total} coded ${coded.coded}/${coded.total} showcase ${reach} ${stable ? "stable" : "unstable"} review ids ${reviews}`;
 }
 
 // What each pilot asks, one part per skill of the chain.
@@ -296,10 +349,10 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
         broken.push(...stepBreaks(skill, last, now));
         last = now;
       }
-      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), unscreened: wireframesWithoutScreen(dir), changed: changedOutsideUi(before, last), broken };
+      const result = { ...verdict(dir), missing: stepsWithoutWireframe(dir), unscreened: wireframesWithoutScreen(dir), changed: changedOutsideUi(before, last), broken, stable: stableOf(dir), published: publishedOf(dir), coded: codedOf(dir), unreached: unreachedOf(dir), dated: datedReviews(dir) };
       console.log(reportLine(pilot, result));
       for (const line of broken) console.log(line);
-      if (result.errors.length || result.missing === null || result.missing.length || result.unscreened === null || result.unscreened.length || result.changed.length || broken.length) worst = 1;
+      if (result.errors.length || result.missing === null || result.missing.length || result.unscreened === null || result.unscreened.length || result.changed.length || broken.length || !result.stable || result.unreached.length || result.dated.length) worst = 1;
     }
     return worst;
   } catch (error) {
@@ -310,4 +363,4 @@ function main(argv = process.argv.slice(2), steps = { copyProject, runStep }) {
 
 if (require.main === module) process.exit(main());
 
-module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, wireframesWithoutScreen, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };
+module.exports = { copyProject, snapshot, changedOutsideUi, stepBreaks, verdict, stepsWithoutWireframe, wireframesWithoutScreen, publishedOf, codedOf, unreachedOf, stableOf, datedReviews, regenerate, reportLine, requestOf, CHAIN, REQUESTS, OWNED, ENGINE_FILES, chatsOf, pilotsOf, main, stepArgs, traceOf, runStep };
