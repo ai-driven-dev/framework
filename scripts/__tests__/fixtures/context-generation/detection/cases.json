@@ -8,5 +8,8 @@
   { "name": "shared AGENTS alone", "project": "agents-only", "kilo": false },
   { "name": "OpenCode JSON alone", "project": "opencode-json", "kilo": false },
   { "name": "OpenCode JSONC alone", "project": "opencode-jsonc", "kilo": false },
+  { "name": "OpenCode JSON with shared AGENTS.md", "project": "opencode-json-agents", "kilo": false, "signals": ["opencode.json", "AGENTS.md"] },
+  { "name": "OpenCode JSONC with shared AGENTS.md", "project": "opencode-jsonc-agents", "kilo": false, "signals": ["opencode.jsonc", "AGENTS.md"] },
+  { "name": "OpenCode JSON with a real Kilo signal", "project": "opencode-plus-kilo", "kilo": true, "tools": ["opencode", "kilo"], "signals": ["opencode.json", ".kilo/"] },
   { "name": "multiple tools share memory", "project": "multi-tool", "kilo": true, "tools": ["kilo", "codex", "opencode", "cursor"] }
 ]
