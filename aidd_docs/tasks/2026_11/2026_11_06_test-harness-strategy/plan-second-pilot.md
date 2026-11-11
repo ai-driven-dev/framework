@@ -108,6 +108,31 @@ Out, as scope limits and not exceptions (no line of these files changes):
 
 Measured during planning, as a planning figure. Phase 1 writes `$B/baseline.txt` (every row of this table) and `$B/zeta-before.txt`, then `$B/thresholds.txt` computed by the formulas in "Before and after, and go or no-go". The SHA-256 of all three is pasted into this section in the phase 1 commit. No later phase re-measures the before side. A different figure found later is reported as a finding and does not replace a number.
 
+Phase 1 capture, frozen:
+
+```text
+53f0a26a05e1e90ed5270364d443e065800905051d30724ef0d243e1c3ea99df  baseline.txt
+7b7642a0abb6100d0f8f5266e6ba2e0ba68ceae97bf61260dc5af5ed0801dd34  zeta-before.txt
+3eb383928e0af3ffa42e962166ceb173b011bb8da509b397df5f31d78d61eae3  thresholds.txt
+```
+
+| Gate input | Phase 1 value |
+| --- | --- |
+| B1 behaviour test lines | 6,414 |
+| T1 total test lines | 6,860 |
+| B2 files outside the profile to add `zeta` | 25 (8 code, 17 test) |
+| R import-only test files | 7 |
+| D1 docs | 5 |
+| C2(b) ceiling, B2 minus R | 18 |
+| C3 before | 3 exceptions, 10 ambiguities |
+
+Findings of phase 1, reported and not replacing a number:
+
+- `tools` mutation scores 93.9 against its declared floor of 94 on the tree before the pilot; phase 8 sets the merged floor.
+- Step 9's grep misses `hooks-descriptor-contract.integration.test.ts`, which builds the profile path with `join`; `$B/profile-dynamic-files.txt` lists it.
+- The `zeta` copy needed two helpers in `hooks-descriptor.ts` (`noHooksSupport`, `noHooksArtifact`), an edit of `flat-build-strategy.agent-path.integration.test.ts`, and 7 generated fixtures; all counted in B2 or reported apart.
+- Not re-measured, planning figures stand as reported-only rows: CI mutation job-seconds and the eager-registration probe.
+
 | Measure | Value | Command |
 | --- | --- | --- |
 | Slice source | 41 profile files, 3,176 lines (7 `profiles/<tool>/hooks.ts` added, 4 `hooks-format.ts` deleted); `registry.ts` 235; `contracts.ts` 87 and `build-contract.ts` 182 (read, not changed); `kernel/tool.ts` 41; `asset-loader.ts` 82; 24 profile import lines in the 3 wiring files | `find ... \| xargs wc -l` |
