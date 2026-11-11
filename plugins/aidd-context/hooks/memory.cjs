@@ -29,13 +29,18 @@
  * - `answer <sheet> <reply>`: marks yes or no on each line behind each numbered item, for ok, no,
  *   not <n> and all but <n>, and names the `tools:` and `Q<n>:` clauses it leaves to the model. Any
  *   other reply exits 1 and changes nothing. It writes only the sheet.
+ * - `report <sheet>`: the closing message, read-only, from the sheet's answers and the plan's
+ *   numbers. It computes the lines the write lost as `vanished` does and puts them first, under a
+ *   title that says so, then the bank files that differ from HEAD and the context files holding a
+ *   block. Limit: items are numbered against HEAD, so a bank file left uncommitted before the plan can
+ *   shift its numbers. Exits 1 only when the sheet cannot be read.
  * - `sync [--add] [tool...]`: fills the memory block of each context file present, or only those
  *   of the tools named, from the current folder. With `--add`, a named tool's file holding no
  *   block gains one at its end, unless it links outside the project or ends inside a code fence;
  *   without it, and at a session start, a file holding none is left as it is.
  *
  * The hook reads its event and answers only through `lib/host.cjs`. Node built-ins only: the hook
- * starts no other program; `vanished` and `changes` alone read git, and only to read.
+ * starts no other program; `vanished`, `report` and `changes` alone read git, and only to read.
  */
 
 const fs = require("node:fs");
@@ -217,12 +222,17 @@ function structureFindings(root) {
   return found;
 }
 
-/** The words a session loads whole: the bank's root files, the ones `sync` imports. */
-function loadFindings(root) {
+/** The words a session loads whole, from the bank's root files, the ones `sync` imports; null with none. */
+function sessionLoad(root) {
   const files = rootFiles(root);
-  if (files.length === 0) return [];
-  const words = files.reduce((total, file) => total + wordsIn(readTextOrNull(path.join(root, file)) ?? "").length, 0);
-  const message = `every session loads ${words} words, markup included, from ${files.length} ${files.length === 1 ? "file" : "files"}`;
+  if (files.length === 0) return null;
+  return { words: files.reduce((total, file) => total + wordsIn(readTextOrNull(path.join(root, file)) ?? "").length, 0), files: files.length };
+}
+
+function loadFindings(root) {
+  const load = sessionLoad(root);
+  if (load === null) return [];
+  const message = `every session loads ${load.words} words, markup included, from ${load.files} ${load.files === 1 ? "file" : "files"}`;
   return [warning(MEMORY_DIR, "load", message, "move what a session rarely needs to internal/ or external/")];
 }
 
@@ -721,6 +731,39 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
   return result;
 }
 
+/**
+ * The closing message for a sheet, read-only. The lines lost are computed here, against the bank
+ * committed at HEAD, so a write that skipped its own guard still shows them; a git failure says
+ * they were not checked. The files written are the bank files that differ from HEAD.
+ */
+function report(sheetFile) {
+  const plan = require("./lib/plan.cjs");
+  const guard = require("./lib/bank-guard.cjs");
+  const root = plan.rootOf(sheetFile);
+  const approvals = require("./lib/fact-sheet.cjs").approvedRemovals(sheetFile);
+  const bankDir = path.join(root, MEMORY_DIR);
+  let previous = null;
+  let gone = [];
+  let why;
+  try {
+    previous = guard.previousBank(root, MEMORY_DIR);
+    if (previous !== null) gone = guard.goneLines(previous, bankDir, approvals);
+  } catch (error) {
+    gone = null;
+    why = error.message;
+  }
+  const written = guard
+    .markdownUnder(bankDir)
+    .map((file) => file.split(path.sep).join("/"))
+    .filter((file) => previous?.find((one) => one.file === file)?.text !== fs.readFileSync(path.join(bankDir, file), "utf8"))
+    .sort();
+  const wired = TARGET_FILES.map((target) => target.path).filter((file) => {
+    const text = readTextOrNull(path.join(root, file));
+    return text !== null && findBlock(text, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER).status === "ok";
+  });
+  return plan.renderReport(sheetFile, { previous, gone, why, written, wired, load: sessionLoad(root) });
+}
+
 function main(argv) {
   const [command, ...args] = argv;
   if (command === "hook") {
@@ -819,6 +862,20 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
+  if (command === "report") {
+    const [sheetFile] = args;
+    if (sheetFile === undefined) {
+      process.stderr.write("usage: memory.cjs report <sheet>\n");
+      return EXIT_ERRORS;
+    }
+    try {
+      process.stdout.write(report(sheetFile));
+      return EXIT_OK;
+    } catch (error) {
+      process.stderr.write(`memory: ${sheetFile} not read (${error.code ?? error.message})\n`);
+      return EXIT_ERRORS;
+    }
+  }
   if (command === "sync") {
     // Every other command takes the root as `.`: a path here is that habit, not a tool.
     const given = args.find((arg) => /[./\\]/u.test(arg));
@@ -837,7 +894,7 @@ function main(argv) {
       return EXIT_ERRORS;
     }
   }
-  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | plan <sheet> [--tools <tool,...>] | answer <sheet> <reply> | sync [--add] [tool...]\n");
+  process.stderr.write("usage: memory.cjs hook | check [root] [file...] | vanished [root] [--sheet <facts>] | changes [root] [--since <ref>] | facts <sheet> [root] | plan <sheet> [--tools <tool,...>] | answer <sheet> <reply> | report <sheet> | sync [--add] [tool...]\n");
   return EXIT_ERRORS;
 }
 

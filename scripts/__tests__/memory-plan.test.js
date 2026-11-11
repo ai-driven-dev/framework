@@ -216,3 +216,125 @@ test("plan and answer share one numbering: not N reaches exactly the sheet lines
     }
   }, REFRESH, FULL);
 });
+
+// report: the closing message, from the same numbering, with the lines the write lost computed by
+// the engine itself, so a model that skips a step still shows the person what left the memory.
+
+const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_")));
+
+function git(root, ...args) {
+  const run = spawnSync("git", ["-C", root, "-c", "user.name=t", "-c", "user.email=t@t", "-c", "maintenance.auto=false", "-c", "gc.auto=0", ...args], { encoding: "utf8", env: cleanEnv() });
+  assert.equal(run.status, 0, run.stderr);
+  return run.stdout.trim();
+}
+
+/** Every file under `root`, `.git` included, as name and content: what report must leave as it found it. */
+function treeState(root, relative = "") {
+  return fs.readdirSync(path.join(root, relative), { withFileTypes: true }).flatMap((entry) => {
+    const next = path.join(relative, entry.name);
+    return entry.isDirectory() ? treeState(root, next) : [`${next} ${fs.readFileSync(path.join(root, next), "base64")}`];
+  });
+}
+
+// The write a model makes for "not 3": item 3 (D1) left as it is, the rest applied.
+const WRITTEN = {
+  "testing.md": "# Testing\n\n## Run\n\n- `pnpm test` runs the unit layer\n\n## Tools\n\n- vitest\n",
+  "codebase-map.md": "# Codebase Map\n\n## Packages\n\n- Four workspace packages in total.\n- `tools/performance`: the Lighthouse runner\n\n## Entry points\n\n- The server and cron doors.\n",
+};
+
+/** A repository whose HEAD holds the FULL bank and the sheet, answered by `reply` when given, then `written` over the bank and the claude block synced. */
+function written(fn, { reply = "not 3", bank = WRITTEN, repo = true } = {}) {
+  withProject((root) => {
+    fs.writeFileSync(path.join(root, "CLAUDE.md"), "# Project\n");
+    if (repo) {
+      git(root, "init", "-q");
+      git(root, "add", "-A");
+      git(root, "commit", "-q", "-m", "bank");
+    }
+    if (reply !== null) assert.equal(engine(root, "answer", SHEET, reply).status, 0);
+    for (const [name, text] of Object.entries(bank)) fs.writeFileSync(path.join(root, "aidd_docs/memory", name), text);
+    assert.equal(engine(root, "sync", "--add", "claude").status, 0);
+    return fn(root);
+  }, REFRESH, FULL);
+}
+
+const REPORT = [
+  "Memory ready",
+  "",
+  "Written",
+  "  aidd_docs/memory: codebase-map.md, testing.md",
+  "  CLAUDE.md: memory block",
+  "",
+  "Changed",
+  "  1. testing.md   Run, Tools",
+  "  2. codebase-map.md, Packages",
+  "     + `tools/performance`: the Lighthouse runner",
+  '  4. codebase-map.md: "Three workspace packages in total."',
+  '     → "Four workspace packages in total."',
+  '  5. codebase-map.md: "- `legacy/` holds the old door."',
+  "     why: the folder is gone",
+  "",
+  "Left out",
+  "  3. architecture.md: you declined",
+  "  Q1  Which gate runs before a push?: unanswered. Tell me the answer any time and I add it to testing.md.",
+  "",
+  "Heads-up",
+  "  Every session loads WORDS words from 7 files.",
+  "",
+].join("\n");
+
+const words = (text) => text.replace(/loads \d+ words/u, "loads WORDS words");
+
+test("report: prints the closing message with the plan's numbers, what the write touched and the session load, and writes nothing", () => {
+  written((root) => {
+    const before = treeState(root);
+    const run = engine(root, "report", SHEET);
+    assert.equal(run.stderr, "");
+    assert.equal(run.status, 0);
+    assert.equal(words(run.stdout), REPORT);
+    assert.deepEqual(treeState(root), before, "report wrote to the tree");
+  });
+});
+
+test("report: a line the write lost with no approved item heads the message, under a title that says so", () => {
+  const lossy = { ...WRITTEN, "codebase-map.md": WRITTEN["codebase-map.md"].replace("\n## Entry points\n\n- The server and cron doors.\n", "") };
+  written((root) => {
+    const out = engine(root, "report", SHEET).stdout;
+    assert.match(out, /^Memory written, 2 lines lost\n\nLines lost\n {2}No item you approved removes these lines\. Restore them before you commit\.\n {2}codebase-map\.md: ## Entry points\n {2}codebase-map\.md: - The server and cron doors\.\n\nWritten\n/u);
+    assert.doesNotMatch(out, /Memory ready/u);
+  }, { bank: lossy });
+});
+
+test("report: a sheet never answered applies no approval, so each removed line is lost and each item has no answer recorded", () => {
+  written((root) => {
+    const out = engine(root, "report", SHEET).stdout;
+    assert.match(out, /^Memory written, 2 lines lost$/mu);
+    assert.match(out, /^ {2}codebase-map\.md: - Three workspace packages in total\.$/mu);
+    assert.match(out, /^ {2}codebase-map\.md: - `legacy\/` holds the old door\.$/mu);
+    assert.doesNotMatch(out, /^Changed$/mu, "an unanswered item is reported applied");
+    for (const n of ["1", "2", "3", "4", "5"]) assert.match(out, new RegExp(`^ {2}${n}\\. \\S+\\.md: no answer recorded$`, "mu"), n);
+  }, { reply: null });
+});
+
+test("report: without a repository nothing is compared, and every bank file counts as written", () => {
+  written((root) => {
+    const out = engine(root, "report", SHEET).stdout;
+    assert.match(out, /^Memory ready\n/u);
+    assert.doesNotMatch(out, /Lines lost|lost/u);
+    assert.match(out, /^ {2}aidd_docs\/memory: architecture\.md, codebase-map\.md, coding-assertions\.md, ecosystem\.md, project-brief\.md, testing\.md, vcs\.md$/mu);
+  }, { repo: false });
+});
+
+test("report: a git failure in a repository says the losses were not checked, and a missing sheet is a clean error", () => {
+  written((root) => {
+    const missing = engine(root, "report", "aidd_docs/tasks/absent.md");
+    assert.equal(missing.status, 1);
+    assert.match(missing.stderr, /absent\.md not read/u);
+    const tree = git(root, "rev-parse", "HEAD:aidd_docs/memory");
+    const object = path.join(root, ".git/objects", tree.slice(0, 2), tree.slice(2));
+    fs.chmodSync(object, 0o600);
+    fs.rmSync(object);
+    const out = engine(root, "report", SHEET).stdout;
+    assert.match(out, /^Memory written, lost lines not checked\n\nLines lost\n {2}not checked: git /u);
+  });
+});

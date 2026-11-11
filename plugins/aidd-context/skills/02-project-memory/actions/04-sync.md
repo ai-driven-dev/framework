@@ -12,8 +12,8 @@ The memory bank in `aidd_docs/memory/`.
 2. Take the picks per [tools](../references/tools.md).
 3. Create each picked tool's absent context file, per [tools](../references/tools.md).
 4. On a refresh, run [`sync`](../references/engine.md) with `--add` and each tool the answer adds, then always with no tool name; on a setup, run it with `--add` and the picked tools, per [tools](../references/tools.md).
-5. Offer in the report to reconcile a picked tool's context file whose AIDD structure differs, per [tools](../references/tools.md).
-6. Reply with the [report message](../assets/report-message.md), with what `vanished` listed.
+5. Offer after the report to reconcile a picked tool's context file whose AIDD structure differs, per [tools](../references/tools.md).
+6. Run [`report`](../references/engine.md) with the sheet and send its output as it is, in plain chat text, nothing before it; after it, only the offer of step 5, if any.
 
 ## Output
 

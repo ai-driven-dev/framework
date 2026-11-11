@@ -35,20 +35,28 @@ function entriesOf(text) {
   return factLines(text)
     .filter(({ fields }) => fields !== undefined)
     .map(({ line, fields }) => {
-      const [id, target, fact, source] = fields;
+      const [id, target, fact, source, answer = ""] = fields;
       const [file, section = ""] = target.split(" > ");
-      return { line, id, target, file: file.trim(), section: section.trim(), fact, source };
+      return { line, id, target, file: file.trim(), section: section.trim(), fact, source, answer };
     });
 }
 
-/** The bank file's lines, collapsed, or null when the file does not exist yet. */
-function bankLines(root, file) {
+const linesOf = (text) => text.split("\n").map(collapse).filter(Boolean);
+
+/** The bank on disk: a file's lines, collapsed, or null when the file does not exist yet. */
+const diskBank = (root) => (file) => {
   try {
-    return fs.readFileSync(path.join(root, MEMORY, file), "utf8").split("\n").map(collapse).filter(Boolean);
+    return linesOf(fs.readFileSync(path.join(root, MEMORY, file), "utf8"));
   } catch {
     return null;
   }
-}
+};
+
+/** The bank as committed, `{ file, text }` each, read the same way: what the plan was drawn against. */
+const committedBank = (previous) => (file) => {
+  const found = (previous ?? []).find((one) => one.file === file);
+  return found === undefined ? null : linesOf(found.text);
+};
 
 /** The whole bank line a fact quotes between double quotes, with or without its list marker; the longest fit, or null. */
 function quotedLine(fact, lines) {
@@ -64,8 +72,8 @@ function quotedLine(fact, lines) {
 
 const verbOf = (entry) => (entry.id[0] === "D" ? entry.fact.match(DECISION)?.[1].toLowerCase() : undefined);
 
-/** Every item, numbered from 1 in the fixed order, with the sheet lines behind it. */
-function itemsOf(text, root) {
+/** Every item, numbered from 1 in the fixed order, with the sheet lines behind it, drawn against `bank`. */
+function itemsOf(text, bank) {
   const items = [];
   const group = (kind, key, entry) => {
     let item = items.find((one) => one.kind === kind && one.key === key);
@@ -76,7 +84,7 @@ function itemsOf(text, root) {
     const verb = verbOf(entry);
     if (verb === "remove") group("delete", entry.id, entry);
     else if (verb !== undefined) group("change", entry.id, entry);
-    else if (bankLines(root, entry.file) === null) group("write", entry.file, entry);
+    else if (bank(entry.file) === null) group("write", entry.file, entry);
     else group("add", `${entry.file} > ${entry.section}`, entry);
   }
   return ORDER.flatMap((kind) => items.filter((item) => item.kind === kind)).map((item, index) => ({ ...item, n: index + 1 }));
@@ -89,7 +97,7 @@ function quoteProblems(sheetFile, root) {
   for (const entry of entriesOf(fs.readFileSync(sheetFile, "utf8"))) {
     const verb = verbOf(entry);
     if (verb !== "remove" && verb !== "replace") continue;
-    const lines = bankLines(root, entry.file);
+    const lines = diskBank(root)(entry.file);
     if (quotedLine(entry.fact, lines) !== null) continue;
     const fragment = entry.fact.match(/"([^"]+)"/u)?.[1];
     const whole = fragment === undefined ? undefined : (lines ?? []).find((line) => line.includes(collapse(fragment)));
@@ -105,11 +113,11 @@ function after(entry, quoted, joiner) {
   return text.slice(text.indexOf(`"${quoted}"`) + quoted.length + 2).replace(joiner, "").trim();
 }
 
-function itemLines(item, root) {
+function itemLines(item, bank) {
   const [first] = item.entries;
   if (item.kind === "write") return [`  ${item.n}. ${item.file}   ${[...new Set(item.entries.map(({ section }) => section))].join(", ")}`];
   if (item.kind === "add") return [`  ${item.n}. ${item.file}, ${item.section}`, ...item.entries.map(({ fact }) => `     + ${fact}`)];
-  const quoted = quotedLine(first.fact, bankLines(root, first.file));
+  const quoted = quotedLine(first.fact, bank(first.file));
   if (quoted === null) return [`  ${item.n}. ${item.file}: ${first.fact}`];
   if (item.kind === "change") return [`  ${item.n}. ${item.file}: "${quoted}"`, `     → ${after(first, quoted, /^[\s:,;]*(?:(?:with|by|into|to)\b|→|->|=>)?\s*/iu)}`];
   return [`  ${item.n}. ${item.file}: "${quoted}"`, `     why: ${after(first, quoted, /^[\s:,;.-]*/u) || first.source}`];
@@ -120,14 +128,15 @@ const TITLES = { write: "Will write", add: "Will add", change: "Will change", de
 /** The plan as the person reads it: plain text, sections in order, an empty one left out. */
 function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const text = fs.readFileSync(sheetFile, "utf8");
-  const items = itemsOf(text, root);
+  const bank = diskBank(root);
+  const items = itemsOf(text, bank);
   const questions = entriesOf(text).filter(({ id }) => id[0] === "Q");
   const blocks = [["Memory plan"]];
   const since = text.match(SINCE);
   if (since !== null) blocks.push([`Changes since the last memory update (${since[1]}, ${since[2]}): ${since[3]}, ${since[4]}`]);
   const unlisted = always.filter((name) => !items.some((item) => item.kind === "write" && item.file === name));
   for (const kind of ORDER) {
-    const own = items.filter((item) => item.kind === kind).flatMap((item) => itemLines(item, root));
+    const own = items.filter((item) => item.kind === kind).flatMap((item) => itemLines(item, bank));
     if (kind === "write") own.push(...unlisted.map((name) => `  ${name}   from its template, always written`));
     if (own.length > 0) blocks.push([TITLES[kind], ...own]);
   }
@@ -157,14 +166,15 @@ function answerSheet(sheetFile, root, reply) {
   const decision = head.trim().replace(/[.,;!\s]+$/u, "").toLowerCase();
   const clauses = rest.map((clause) => clause.trim().replace(/[.,;\s]+$/u, ""));
   const text = fs.readFileSync(sheetFile, "utf8");
-  const items = itemsOf(text, root);
+  const bank = diskBank(root);
+  const items = itemsOf(text, bank);
   const no = new Set(declined(decision, items.length));
   const lines = text.split("\n");
   const printed = [];
   for (const item of items) {
     const value = no.has(item.n) ? "no" : "yes";
     for (const { line, id, target, fact, source } of item.entries) lines[line - 1] = `- ${id} | ${target} | ${fact} | ${source} | ${value}`;
-    const quoted = item.kind === "change" || item.kind === "delete" ? quotedLine(item.entries[0].fact, bankLines(root, item.file)) : null;
+    const quoted = item.kind === "change" || item.kind === "delete" ? quotedLine(item.entries[0].fact, bank(item.file)) : null;
     const label = quoted !== null ? `${item.file} "${quoted}"` : item.kind === "add" ? `${item.file}, ${item.section}` : item.file;
     printed.push(`${item.n} ${value}: ${label}`);
   }
@@ -172,4 +182,35 @@ function answerSheet(sheetFile, root, reply) {
   return [...printed, ...clauses.map((clause) => `left to you: ${clause}`)].join("\n");
 }
 
-module.exports = { rootOf, itemsOf, quoteProblems, renderPlan, answerSheet, ReplyError };
+const answerOf = (item) => item.entries[0].answer.toLowerCase();
+
+/**
+ * The closing message: the lines lost first, under a title that says so, then the files the write
+ * touched, the items applied as the plan showed them, the items and questions left out, and the
+ * session load. Items are drawn against the committed bank, as the plan was before the write.
+ * `gone` is null when the losses could not be checked, with `why`.
+ */
+function renderReport(sheetFile, { previous, gone, why, written, wired, load }) {
+  const text = fs.readFileSync(sheetFile, "utf8");
+  const bank = committedBank(previous);
+  const items = itemsOf(text, bank);
+  const questions = entriesOf(text).filter(({ id, answer }) => id[0] === "Q" && answer === "");
+  const lost = gone ?? [];
+  const title = gone === null ? "Memory written, lost lines not checked" : lost.length > 0 ? `Memory written, ${lost.length} ${lost.length === 1 ? "line" : "lines"} lost` : "Memory ready";
+  const blocks = [[title]];
+  if (gone === null) blocks.push(["Lines lost", `  not checked: ${why}`]);
+  else if (lost.length > 0) blocks.push(["Lines lost", "  No item you approved removes these lines. Restore them before you commit.", ...lost.map((line) => `  ${line}`)]);
+  const touched = [...(written.length > 0 ? [`  ${MEMORY.split(path.sep).join("/")}: ${written.join(", ")}`] : []), ...wired.map((file) => `  ${file}: memory block`)];
+  if (touched.length > 0) blocks.push(["Written", ...touched]);
+  const applied = items.filter((item) => answerOf(item).startsWith("yes")).flatMap((item) => itemLines(item, bank));
+  if (applied.length > 0) blocks.push(["Changed", ...applied]);
+  const left = [
+    ...items.filter((item) => !answerOf(item).startsWith("yes")).map((item) => `  ${item.n}. ${item.file}: ${answerOf(item).startsWith("no") ? "you declined" : "no answer recorded"}`),
+    ...questions.map(({ id, file, fact }) => `  ${id}  ${fact}: unanswered. Tell me the answer any time and I add it to ${file}.`),
+  ];
+  if (left.length > 0) blocks.push(["Left out", ...left]);
+  if (load !== null) blocks.push(["Heads-up", `  Every session loads ${load.words} words from ${load.files} ${load.files === 1 ? "file" : "files"}.`]);
+  return `${blocks.map((block) => block.join("\n")).join("\n\n")}\n`;
+}
+
+module.exports = { rootOf, itemsOf, quoteProblems, renderPlan, answerSheet, renderReport, diskBank, ReplyError };

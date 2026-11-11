@@ -89,11 +89,6 @@ test("capabilities.md holds one row per file, and every memory template belongs 
   for (const template of templates) assert.ok(named.includes(template), `${template} belongs to no capability row`);
 });
 
-/** A message asset as it is sent: the template without its help comments. */
-function messageOf(file) {
-  return skillText(file).replace(/<!--[\s\S]*?-->\n*/gu, "");
-}
-
 function skillText(file) {
   return fs.readFileSync(path.join(SKILL, file), "utf8");
 }
@@ -235,19 +230,19 @@ test("write ends on the engine, writes only the root, and holds back a capabilit
   assert.doesNotMatch(write, /each found capability|guidance comment|every selected row exists/u, "a stale instruction is left");
 });
 
-test("write ends on the engine's guard, which lists what the sheet did not approve, and keeps no copy of the bank", () => {
+test("write hands over to the sync, and the sync ends on the engine's report, which lists what the sheet did not approve; no copy of the bank", () => {
   const steps = skillText("actions/02-write.md").match(/^\d+\. .*$/gmu);
   assert.doesNotMatch(skillText("actions/02-write.md") + skillText("SKILL.md"), /scratch|copy it/u, "a bank copy or a scratch folder is left");
   assert.match(steps[5], /fix each error on the lines you wrote, check each warning against the code and keep a true line/u, "the lint step does not say what to do with a warning");
   assert.match(skillText("actions/01-scan.md"), /reading-sources\.md#filling-the-sheet/u, "scan does not point to the collecting rules");
-  assert.match(steps.at(-2), /`vanished`/u, "no step runs the guard before the sync");
-  assert.match(steps.at(-2), /change nothing/u);
+  assert.doesNotMatch(skillText("actions/02-write.md"), /`vanished`|`report`/u, "write runs a guard or replies before the sync");
   assert.match(steps.at(-1), /Go on to \[sync\]/u);
-  assert.doesNotMatch(steps.at(-1), /report message/u, "write replies before the sync runs");
   const syncSteps = skillText("actions/04-sync.md").match(/^\d+\. .*$/gmu);
-  assert.match(syncSteps.at(-1), /Reply with the \[report message\]\(\.\.\/assets\/report-message\.md\), with what `vanished` listed/u, "the last step to run does not reply through the report message");
-  assert.match(skillText("SKILL.md"), /sync -->\|"reply: assets\/report-message\.md"\| done/u, "the router ends without the report");
-  assert.match(skillText("references/engine.md"), /memory\.cjs vanished \. --sheet/u);
+  assert.match(syncSteps.at(-1), /Run \[`report`\]\(\.\.\/references\/engine\.md\) with the sheet and send its output as it is, in plain chat text, nothing before it; after it, only the offer of step 5, if any/u, "the last step to run does not send the engine's report");
+  assert.match(syncSteps.at(-2), /^5\. Offer after the report to reconcile/u, "the reconcile offer moved");
+  assert.match(skillText("SKILL.md"), /sync -->\|"reply: the report"\| done/u, "the router ends without the report");
+  assert.equal(fs.existsSync(path.join(SKILL, "assets/report-message.md")), false, "the report has a second format beside the engine's");
+  assert.match(skillText("references/engine.md"), /`node memory\.cjs report <sheet>`/u);
   assert.match(skillText("references/engine.md"), /HEAD only/u, "the guard hides that uncommitted edits are not seen");
   assert.doesNotMatch(actionsText(), /memory\.cjs lines/u);
 });
@@ -425,10 +420,10 @@ test("sync adds a missing block itself on a pick, so the skill only creates an a
   assert.match(engine, /`node memory\.cjs sync \[--add\] <tool>\.\.\.` \| [^|]+ \| tool names only, no root; [^\n]*`--add` appends the block to a picked tool's file holding none/u);
   const sync = skillText("actions/04-sync.md");
   assert.match(sync, /^3\. Create each picked tool's absent context file, per \[tools\]/mu);
-  assert.match(sync, /^5\. Offer in the report to reconcile a picked tool's context file whose AIDD structure differs, per \[tools\]/mu, "a differing file stops before the picked tool is wired");
+  assert.match(sync, /^5\. Offer after the report to reconcile a picked tool's context file whose AIDD structure differs, per \[tools\]/mu, "a differing file stops before the picked tool is wired");
   assert.match(sync, /on a setup, run it with `--add` and the picked tools, per \[tools\]/mu);
   assert.doesNotMatch(sync, /carries the block, per/u, "the skill still makes the model write the block");
-  assert.match(skillText("references/tools.md"), /^\| Its AIDD structure differs \| a picked tool still gets its block with `--add`; offer to reconcile the rest in the report, applying only what the user approves \|$/mu, "a picked tool waits on a reconcile");
+  assert.match(skillText("references/tools.md"), /^\| Its AIDD structure differs \| a picked tool still gets its block with `--add`; offer to reconcile the rest after the report, applying only what the user approves \|$/mu, "a picked tool waits on a reconcile");
   assert.match(skillText("../10-learn/references/sync-arguments.md"), /^\| Argument \| Refreshes \|$/mu, "10-learn's bare sync no longer only refreshes");
 });
 
@@ -488,25 +483,6 @@ test("write sends the plan the engine prints, as it is, and hands the reply to t
   assert.match(engine, /`node memory\.cjs answer <sheet> "<reply>"`/u);
   assert.doesNotMatch(engine, /memory\.cjs facts/u, "two commands check the sheet");
   assert.doesNotMatch(skillText("actions/02-write.md"), /`facts`/u, "the sheet is checked twice");
-});
-
-test("the report message is airy and keeps what was written, changed, left out and warned", () => {
-  const report = skillText("assets/report-message.md");
-  const sample = messageOf("assets/report-message.md");
-  assert.ok(report.startsWith("<!--") && report.includes("{{") && !report.includes("```"), "the message is not the template itself");
-  const order = [/^Written$/mu, /^Changed$/mu, /^Left out$/mu, /^Heads-up$/mu].map((pattern) => sample.search(pattern));
-  assert.ok(order.every((index) => index >= 0), `a part of the message is missing: ${order}`);
-  assert.deepEqual([...order].sort((a, b) => a - b), order, "the parts are out of order");
-  assert.match(report, /plain chat text, not in a code fence/u);
-  assert.match(report, /Stop after the message/u);
-  assert.match(report, /Never name the engine's commands, their exit codes or the warning count/u);
-  assert.match(report, /At most one line per changed file/u);
-  assert.match(report, /At most one line per left-out item/u);
-  assert.match(report, /At most one heads-up/u);
-  assert.match(sample, /^ {2}Q\{\{n\}\} .*unanswered\. .*any time/mu, "an unanswered question shows no way to add it later");
-  assert.doesNotMatch(sample, /\b[RDT]\{\{n\}\}/u, "a sheet id reaches the person");
-  assert.match(sample, /^ {2}\{\{n\}\}\. \S+\.md: /mu, "a change does not carry the plan's number");
-  assert.match(sample, /^ {2}\{\{context file\}\}: memory block refreshed$/mu, "a context file the sync rewrote is not reported");
 });
 
 test("the tools are asked once, with the sheet: a setup takes the picks, a refresh adds them to the wired ones; nothing asks the tools alone", () => {

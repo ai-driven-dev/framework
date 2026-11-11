@@ -12,16 +12,16 @@ argument-hint: setup | refresh
 flowchart LR
   request((request)) -->|"no bank: set up"| scan["scan<br>actions/01-scan.md<br>script: memory.cjs changes"]
   request -->|"a bank: refresh"| scan
-  scan -->|"setup"| write["write<br>actions/02-write.md<br>script: memory.cjs plan, answer, check, vanished"]
+  scan -->|"setup"| write["write<br>actions/02-write.md<br>script: memory.cjs plan, answer, check"]
   scan -->|"refresh"| check["check<br>actions/03-check.md<br>script: memory.cjs check"]
   scan -->|"nothing to remember"| done((done))
   check -->|"findings in the sheet"| write
   write -->|"show the sheet"| user((user answers))
   user -->|"sheet answered"| write
   write --> sync
-  sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync"] -->|"offer to reconcile"| user
+  sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync, report"] -->|"offer to reconcile"| user
   user -->|"reconcile answered"| sync
-  sync -->|"reply: assets/report-message.md"| done
+  sync -->|"reply: the report"| done
 ```
 
 - Each box: read its action file, then follow it.
