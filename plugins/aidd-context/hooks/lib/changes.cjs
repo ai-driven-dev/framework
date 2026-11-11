@@ -1,16 +1,8 @@
 "use strict";
 /**
  * Where a refresh looks first: the files changed since the bank was last written, and the memory
- * lines that cite one or a directory above one. It orders the review and limits none of it. The
- * first line says since when, for information: the base, the last commit that touched the bank or
- * the reference the person named, its age, and the commits and files changed since. Reads git with
- * no shell, GIT_* stripped, and never writes. It never blocks: no repository, no commit, a bank
- * never committed, a base missing from a shallow history or any other git failure is a full review,
- * with its reason. Only a --since naming no commit is an error. No list of file names or stacks:
- * relevance comes from what the bank itself cites.
- *
- * Limits: a cited path holding a space is never matched; a word with no slash is prose, and a
- * top-level directory is too broad to name; a changed file no memory line cites is only counted. Node built-ins only.
+ * lines citing one. Orders the review, limits none of it; any git failure means a full review.
+ * Limits: a cited path holding a space is never matched. Node built-ins only.
  */
 
 const fs = require("node:fs");

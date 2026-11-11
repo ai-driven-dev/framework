@@ -1,15 +1,13 @@
 "use strict";
 /**
- * The plan the person reads and the answer that marks the sheet, from one numbering. Items run in
- * a fixed order: a new file (one item for all its lines), lines added to an existing file (one item
- * per file and section), then each `D` line that replaces, moves or removes. A question keeps its
- * sheet id and is never an item; an absent always file is listed with no number, as nothing declines it. `answer` reads only a closed set of replies and writes only the
- * sheet's answer field: the bank is never written here. Node built-ins only.
+ * What the person reads around a write and what they answer, from one numbering: the plan, the
+ * answer that marks the sheet, and the report. Writes only the sheet. Node built-ins only.
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
 const { factLines } = require("./fact-sheet.cjs");
+const { collapse, unmarked } = require("./bank-guard.cjs");
 
 const MEMORY = path.join("aidd_docs", "memory");
 const DECISION = /^(remove|replace|move)\b/iu;
@@ -19,12 +17,9 @@ const ALL = /^(?:ok|okay|yes|all good|looks good|lgtm)$/u;
 const BUT = /^(?:(?:ok|yes)[,\s]+)?(?:not|all but|except)\s+(\d+(?:\s*(?:,|and)\s*\d+)*)$/u;
 const CLAUSE = /(?=\btools:|\bQ\d+:)/iu;
 
-const collapse = (line) => line.trim().replace(/\s+/gu, " ");
-const unmarked = (line) => line.replace(/^(?:[-*+]|\d+[.)])\s+/u, "");
-
 class ReplyError extends Error {}
 
-/** The project a sheet belongs to: the folder above its `aidd_docs`, else the working folder. */
+/** The folder above the sheet's `aidd_docs`, else the working folder. */
 function rootOf(sheetFile) {
   const parts = path.resolve(sheetFile).split(path.sep);
   const at = parts.lastIndexOf("aidd_docs");
@@ -43,7 +38,6 @@ function entriesOf(text) {
 
 const linesOf = (text) => text.split("\n").map(collapse).filter(Boolean);
 
-/** The bank on disk: a file's lines, collapsed, or null when the file does not exist yet. */
 const diskBank = (root) => (file) => {
   try {
     return linesOf(fs.readFileSync(path.join(root, MEMORY, file), "utf8"));
@@ -52,13 +46,13 @@ const diskBank = (root) => (file) => {
   }
 };
 
-/** The bank as committed, `{ file, text }` each, read the same way: what the plan was drawn against. */
+/** The bank at HEAD: what the plan was numbered against. */
 const committedBank = (previous) => (file) => {
   const found = (previous ?? []).find((one) => one.file === file);
   return found === undefined ? null : linesOf(found.text);
 };
 
-/** The whole bank line a fact quotes between double quotes, with or without its list marker; the longest fit, or null. */
+/** The longest whole bank line the fact quotes, list marker optional, or null. */
 function quotedLine(fact, lines) {
   const text = collapse(fact);
   let best = null;
@@ -72,7 +66,7 @@ function quotedLine(fact, lines) {
 
 const verbOf = (entry) => (entry.id[0] === "D" ? entry.fact.match(DECISION)?.[1].toLowerCase() : undefined);
 
-/** Every item, numbered from 1 in the fixed order, with the sheet lines behind it, drawn against `bank`. */
+/** Items numbered from 1: new files, then additions, changes, deletions. A `Q` line is never one. */
 function itemsOf(text, bank) {
   const items = [];
   const group = (kind, key, entry) => {
@@ -90,7 +84,6 @@ function itemsOf(text, bank) {
   return ORDER.flatMap((kind) => items.filter((item) => item.kind === kind)).map((item, index) => ({ ...item, n: index + 1 }));
 }
 
-/** One message per `remove` or `replace` line that quotes no whole line of its bank file. */
 function quoteProblems(sheetFile, root) {
   const name = path.basename(sheetFile);
   const problems = [];
@@ -107,7 +100,6 @@ function quoteProblems(sheetFile, root) {
   return problems;
 }
 
-/** What the fact says after the line it quotes, its leading joiner dropped. */
 function after(entry, quoted, joiner) {
   const text = collapse(entry.fact);
   return text.slice(text.indexOf(`"${quoted}"`) + quoted.length + 2).replace(joiner, "").trim();
@@ -125,7 +117,6 @@ function itemLines(item, bank) {
 
 const TITLES = { write: "Will write", add: "Will add", change: "Will change", delete: "Will delete" };
 
-/** The plan as the person reads it: plain text, sections in order, an empty one left out. */
 function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const text = fs.readFileSync(sheetFile, "utf8");
   const bank = diskBank(root);
@@ -148,7 +139,6 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   return `${blocks.map((block) => block.join("\n")).join("\n\n")}\n`;
 }
 
-/** The item numbers a reply declines, or a ReplyError when the reply is not one of the closed forms. */
 function declined(decision, count) {
   if (ALL.test(decision)) return [];
   if (decision === "no") return Array.from({ length: count }, (_, index) => index + 1);
@@ -160,7 +150,7 @@ function declined(decision, count) {
   return numbers;
 }
 
-/** Writes yes or no into every line of every item, per the reply; returns what it printed. Writes nothing on a ReplyError. */
+/** Marks each item's lines yes or no; writes nothing on a ReplyError. */
 function answerSheet(sheetFile, root, reply) {
   const [head, ...rest] = reply.split(CLAUSE);
   const decision = head.trim().replace(/[.,;!\s]+$/u, "").toLowerCase();
@@ -184,12 +174,7 @@ function answerSheet(sheetFile, root, reply) {
 
 const answerOf = (item) => item.entries[0].answer.toLowerCase();
 
-/**
- * The closing message: the lines lost first, under a title that says so, then the files the write
- * touched, the items applied as the plan showed them, the items and questions left out, and the
- * session load. Items are drawn against the committed bank, as the plan was before the write.
- * `gone` is null when the losses could not be checked, with `why`.
- */
+/** Lines lost first, under a title that says so. `gone` is null when they could not be checked. */
 function renderReport(sheetFile, { previous, gone, why, written, wired, load }) {
   const text = fs.readFileSync(sheetFile, "utf8");
   const bank = committedBank(previous);
@@ -213,4 +198,4 @@ function renderReport(sheetFile, { previous, gone, why, written, wired, load }) 
   return `${blocks.map((block) => block.join("\n")).join("\n\n")}\n`;
 }
 
-module.exports = { rootOf, itemsOf, quoteProblems, renderPlan, answerSheet, renderReport, diskBank, ReplyError };
+module.exports = { rootOf, quoteProblems, renderPlan, answerSheet, renderReport, ReplyError };

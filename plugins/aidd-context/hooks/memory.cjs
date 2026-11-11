@@ -1,40 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 /**
- * The memory bank's one entry, one subcommand per moment:
- *
- * - `hook`: run by the host. At SessionStart it syncs the memory block in silence; after a write
- *   it informs on the findings that write produced in the memory files it reached. It never
- *   blocks: `check` is the one strict gate, run by the skill when it writes the bank.
- * - `check [root] [file...]`: the bank's findings by hand, from a skill or in CI. Exits 1 when
- *   an error remains. With no file it checks the whole bank, and a missing always-written file
- *   is an error; so is a root with no bank, or a named file that does not exist. A misplaced file
- *   and a team folder are warnings, and so is the count of words the root files load in every session.
- * - `changes [root] [--since <ref>]`: where a refresh looks first, read-only. Prints one `Since`
- *   line (the base, the last commit that touched the bank or the reference named, its age, the
- *   commits and files changed since), the memory lines citing a file changed since it or a
- *   directory above one, and the changed files, uncommitted ones included, listed or counted by
- *   directory. Any git failure prints a full review and its reason, exit 0; only a --since naming
- *   no commit exits 1. The hook never runs it.
- * - `plan <sheet> [--tools <tool,...>]`: the plan the person reads, from the sheet, the tools given ticked.
- *   Exits 1 printing each line whose shape breaks the grammar, whose source is absent, or whose
- *   `remove` or `replace` quotes no whole line of its bank file; it prints no plan then.
- * - `answer <sheet> <reply>`: marks yes or no on each line behind each numbered item, for ok, no,
- *   not <n> and all but <n>, and names the `tools:` and `Q<n>:` clauses it leaves to the model. Any
- *   other reply exits 1 and changes nothing. It writes only the sheet.
- * - `report <sheet>`: the closing message, read-only, from the sheet's answers and the plan's
- *   numbers. It computes the lines the write lost, against the bank committed at HEAD, unless a `remove`
- *   or `replace` `D` line answered yes quotes them, and puts them first, under a
- *   title that says so, then the bank files that differ from HEAD and the context files holding a
- *   block. Limit: items are numbered against HEAD, so a bank file left uncommitted before the plan can
- *   shift its numbers. Exits 1 only when the sheet cannot be read.
- * - `sync [--add] [tool...]`: fills the memory block of each context file present, or only those
- *   of the tools named, from the current folder. With `--add`, a named tool's file holding no
- *   block gains one at its end, unless it links outside the project or ends inside a code fence;
- *   without it, and at a session start, a file holding none is left as it is.
- *
- * The hook reads its event and answers only through `lib/host.cjs`. Node built-ins only: the hook
- * starts no other program; `report` and `changes` alone read git, and only to read.
+ * The memory bank's engine, one subcommand per moment of the skill; usage at the end of `main`.
+ * The hook never blocks and reads its event only through `lib/host.cjs`; `check` is the one strict
+ * gate. Only `changes` and `report` read git, and never write it. Node built-ins only.
  */
 
 const fs = require("node:fs");
@@ -725,13 +694,9 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
   return result;
 }
 
-/**
- * The closing message for a sheet, read-only. The lines lost are computed here, against the bank
- * committed at HEAD, so a write that skipped its own guard still shows them; a git failure says
- * they were not checked. The files written are the bank files that differ from HEAD.
- */
+/** Computes the lost lines itself, so a skipped step still shows them. Limit: numbered against HEAD. */
 function report(sheetFile) {
-  const plan = require("./lib/plan.cjs");
+  const plan = require("./lib/dialogue.cjs");
   const guard = require("./lib/bank-guard.cjs");
   const root = plan.rootOf(sheetFile);
   const approvals = require("./lib/fact-sheet.cjs").approvedRemovals(sheetFile);
@@ -792,7 +757,7 @@ function main(argv) {
     }
   }
   if (command === "plan" || command === "answer") {
-    const plan = require("./lib/plan.cjs");
+    const plan = require("./lib/dialogue.cjs");
     const [sheetFile, ...rest] = args;
     if (sheetFile === undefined) {
       process.stderr.write(`usage: memory.cjs ${command} <sheet> ${command === "plan" ? "[--tools <tool,...>]" : "<reply>"}\n`);

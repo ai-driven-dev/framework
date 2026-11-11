@@ -1,14 +1,7 @@
 "use strict";
 /**
- * The fact sheet's grammar, its check and the approvals it carries. A fact line sits under one of
- * the sheet's blocks:
- *
- *   - <id> | <file> > <section> | <fact> | <source> | <answer>
- *
- * The answer may be left out, and a `Q` line may cite no source, or `none`. Every line names a file and
- * section, bank-relative. A fact holds no `|`. Prose outside a
- * block is never read; inside one, any line holding a `|` is a fact line, and a wrong one is a
- * problem. An id is used once and at most eight lines are `Q`. Node built-ins only.
+ * The fact sheet's grammar and check: `- <id> | <file> > <section> | <fact> | <source> | <answer>`
+ * under a Read, Inferred or Unknown block. Node built-ins only.
  */
 
 const fs = require("node:fs");

@@ -1,9 +1,7 @@
 "use strict";
 /**
- * The bank's read-only guard through a write. The previous state of the bank is its committed
- * version at HEAD, read through git with no shell: uncommitted edits made since are not seen. A
- * line of it that the working bank no longer holds anywhere, counted by occurrence, is gone, and
- * is allowed only when an approval quotes it. Reads only: it never writes a file. Node built-ins only.
+ * The lines a write lost from the bank as committed at HEAD, unless an approval quotes them. HEAD
+ * only: an uncommitted edit is not seen. Reads git, writes nothing. Node built-ins only.
  */
 
 const { execFileSync } = require("node:child_process");
@@ -75,4 +73,4 @@ function goneLines(previous, bankDir, approvals) {
   return gone;
 }
 
-module.exports = { previousBank, goneLines, git, succeeds, markdownUnder };
+module.exports = { previousBank, goneLines, git, succeeds, markdownUnder, collapse, unmarked };

@@ -1,13 +1,6 @@
 /**
- * The format rules of a memory file, as functions of its text and of what the project and the
- * rest of the bank hold. The engine reads the bank and passes the other files in the context;
- * M4 reads the disk through the shared hook library, under the project root it is given, and M3
- * reads the skill's templates.
- *
- * Each rule takes `{ file, text, root, others }` and returns problems:
- * `{ file, line, rule, severity, message, fix }`, plus the offending `excerpt` when there is one
- * and `endLine` when the problem spans several lines. `message` says what is wrong and `fix` what
- * to do, apart, as the findings formatter prints them.
+ * The format rules of a memory file. Each takes `{ file, text, root, others }` and returns
+ * `{ file, line, rule, severity, message, fix }` problems, `excerpt` and `endLine` when known.
  */
 
 const fs = require("node:fs");
