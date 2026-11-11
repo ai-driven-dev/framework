@@ -662,6 +662,10 @@ function runPlan([sheetFile, ...rest]) {
   const plan = require("./lib/plan.cjs");
   const root = plan.rootOf(sheetFile);
   try {
+    if (plan.isAnswered(sheetFile)) {
+      process.stdout.write(`${path.basename(sheetFile)} is answered: write the bank from it, plan nothing again\n`);
+      return EXIT_ERRORS;
+    }
     const problems = [...require("./lib/fact-sheet.cjs").checkSheet(sheetFile, root), ...plan.quoteProblems(sheetFile, root)];
     if (problems.length > 0) {
       process.stdout.write(`${problems.join("\n")}\n`);

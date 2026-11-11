@@ -1105,7 +1105,7 @@ test("changes: a root below the repository's top lists only its own files, relat
 
 const SHEET_HEAD = "# Facts: setup\n\n- Scope: setup\n- Capabilities: C1 api\n\n";
 const sheet = (...lines) => `${SHEET_HEAD}## Read\n\n${lines.join("\n")}\n`;
-const GOOD = "- R1 | architecture.md > Stack | Node ESM | package.json | ok";
+const GOOD = "- R1 | architecture.md > Stack | Node ESM | package.json |";
 
 function factsRun(text, files = { "package.json": "{}\n" }) {
   const root = project({}, { ...files, [SHEET_FILE]: text });
@@ -1121,14 +1121,14 @@ test("plan, sheet check: a well-formed sheet whose sources exist exits 0 and a m
 });
 
 test("plan, sheet check: a source that does not exist exits 1 and names the line and the path", () => {
-  const run = factsRun(sheet(GOOD, "- D2 | testing.md > Run | pnpm test | scripts/absent.js | ok"));
+  const run = factsRun(sheet(GOOD, "- D2 | testing.md > Run | pnpm test | scripts/absent.js |"));
   assert.equal(run.status, 1);
   assert.match(run.stdout, /facts\.md:9 D2.*scripts\/absent\.js/u);
   assert.doesNotMatch(run.stdout, /R1/u);
 });
 
 test("plan, sheet check: a line that breaks the grammar exits 1 and names it", () => {
-  for (const bad of ["- R2 | architecture.md > Stack | only three fields", "- X9 | architecture.md > Stack | fact | package.json | ok", "- R2 | architecture.md | fact | package.json | ok"]) {
+  for (const bad of ["- R2 | architecture.md > Stack | only three fields", "- X9 | architecture.md > Stack | fact | package.json |", "- R2 | architecture.md | fact | package.json |"]) {
     const run = factsRun(sheet(GOOD, bad));
     assert.equal(run.status, 1, bad);
     assert.match(run.stdout, /facts\.md:9 .*shape/u, bad);
@@ -1177,7 +1177,7 @@ test("plan, sheet check: a T line is no fact id, and every line names a memory f
 
 // A memory is mostly tables: a fact quotes a row whole, its pipes kept, read from both ends of the line.
 test("plan, sheet check: a | in a fact is part of it, and a bullet of another shape inside a block is a shape problem", () => {
-  assert.equal(factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json | ok")).status, 0, "a fact holding a pipe");
+  assert.equal(factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json |")).status, 0, "a fact holding a pipe");
   for (const bad of ["* R2 | testing.md > Run | fact | package.json |", "  - R2 | testing.md > Run | fact | package.json |", "| R2 | testing.md > Run | fact | package.json |"]) {
     const run = factsRun(sheet(GOOD, bad));
     assert.equal(run.status, 1, bad);

@@ -351,13 +351,16 @@ test("report: a line the write lost with no approved item heads the message, und
   }, { bank: lossy });
 });
 
-test("report: a plan run again after the answer keeps the first snapshot, so the write's loss still shows", () => {
-  const lossy = { "codebase-map.md": BANK["codebase-map.md"].replace("- The server and cron doors.\n", "") };
-  assert.notEqual(lossy["codebase-map.md"], BANK["codebase-map.md"]);
+// After the answer, the person approved these lines: a new plan would ask again over a sheet they never saw.
+test("plan: a sheet already answered is not planned again, exit 1 naming the write, plan.md and the snapshot untouched", () => {
   written((root) => {
-    assert.equal(engine(root, "plan", SHEET).status, 0, "the rerun must pass for this case to bite");
-    assert.match(engine(root, "report", SHEET).stdout, /^Memory written, 1 line lost\n/u);
-  }, { bank: lossy, reply: "no" });
+    const beside = (name) => path.join(root, path.dirname(SHEET), name);
+    const before = ["plan.md", "bank-snapshot.json"].map((name) => fs.readFileSync(beside(name), "utf8"));
+    const run = engine(root, "plan", SHEET);
+    assert.equal(run.status, 1);
+    assert.match(run.stdout, /^facts\.md is answered: write the bank from it, plan nothing again$/mu);
+    assert.deepEqual(["plan.md", "bank-snapshot.json"].map((name) => fs.readFileSync(beside(name), "utf8")), before);
+  }, { bank: WRITTEN, reply: "no" });
 });
 
 // Limit: a replacement that changes only a short word (three to four) keeps every fact word and is not listed.
