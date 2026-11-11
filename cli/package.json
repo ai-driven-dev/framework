@@ -44,6 +44,7 @@
     "test": "vitest run",
     "test:arch": "vitest run --project=architecture",
     "test:unit": "vitest run --project=unit",
+    "test:contract": "vitest run --project=contract",
     "test:integration": "vitest run --project=integration",
     "test:e2e": "vitest run --project=e2e",
     "test:golden": "vitest run --project=golden",

@@ -301,3 +301,69 @@ describe("assertUserScopeWriteBoundary", () => {
     ).rejects.toThrow(/directory is not safely inside/);
   });
 });
+
+describe("user-scope boundaries on a filesystem that rejects a missing path", () => {
+  const file = (relativePath: string) =>
+    new InstallationFile({
+      relativePath,
+      content: "new bytes",
+      hash: new FileHash("a".repeat(32)),
+    });
+  const strict = (seed: Record<string, string> = {}) =>
+    new InMemoryFileAdapter(seed).rejectMissingRealpath();
+
+  it("deletes nothing, silently, when the user-scope directory does not exist", async () => {
+    const logger = new CapturingLogger();
+
+    const safe = await userScopeFilesSafeToDelete(
+      strict(),
+      logger,
+      plugin({ "aidd-test/a.md": HASH }),
+      "cursor",
+      HOME
+    );
+
+    expect([...safe]).toStrictEqual([]);
+    expect(logger.warnMessages).toStrictEqual([]);
+  });
+
+  it("names and leaves in place a recorded file that no longer exists", async () => {
+    const logger = new CapturingLogger();
+    const fs = strict({ [join(BOUNDARY, "aidd-test", "a.md")]: CONTENT });
+
+    const safe = await userScopeFilesSafeToDelete(
+      fs,
+      logger,
+      plugin({ "aidd-test/gone.md": HASH, "aidd-test/a.md": HASH }),
+      "cursor",
+      HOME
+    );
+
+    expect([...safe]).toStrictEqual([["aidd-test/a.md", HASH]]);
+    expect(logger.warnMessages).toStrictEqual([
+      `cursor: 'aidd-test' file 'aidd-test/gone.md' does not resolve inside ${BOUNDARY}; left in place.`,
+    ]);
+  });
+
+  it("refuses an update when the plugin directory does not exist", async () => {
+    const fs = strict({ [join(BOUNDARY, "other", "f")]: "x" });
+
+    await expect(
+      assertUserScopeWriteBoundary(fs, "cursor", "aidd-test", [file("aidd-test/a.md")], HOME)
+    ).rejects.toThrow(/directory is not safely inside/);
+  });
+
+  it("allows missing nested parents once the plugin directory resolves", async () => {
+    const fs = strict({ [join(BOUNDARY, "aidd-test", "keep")]: "x" });
+
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        "cursor",
+        "aidd-test",
+        [file("aidd-test/skills/new/a.md")],
+        HOME
+      )
+    ).resolves.toBeUndefined();
+  });
+});

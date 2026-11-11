@@ -880,6 +880,7 @@ describe("clean purges a host's own plugin cache", () => {
     // No reader registered for codex — its profile declares `pluginCacheDir` alone, no
     // `marketplaceRegistry`, so `purgeOneMarketplaceCache` proves emptiness instead.
     const fs = new RecordingFileAdapter();
+    await fs.createDirectory(join(CODEX_CACHE_ROOT, MARKETPLACE));
     const activator = new FakeNativePluginActivator({ available: true });
     const useCase = buildUseCase({
       fs,

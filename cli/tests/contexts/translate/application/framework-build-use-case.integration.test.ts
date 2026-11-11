@@ -617,9 +617,7 @@ describe("what a build reports having written", () => {
   it("reports no skipped section for a plugin shipping neither commands nor rules", async () => {
     const fs = await makeSeededFs();
     for (const section of ["commands", "rules"]) {
-      for (const path of fs.listUnder(`${SOURCE_DIR}/plugins/aidd-test/${section}`)) {
-        fs.deleteFile(path);
-      }
+      await fs.deleteDirectory(`${SOURCE_DIR}/plugins/aidd-test/${section}`);
     }
     const logger = new CapturingLogger();
     const v = makeValidator();

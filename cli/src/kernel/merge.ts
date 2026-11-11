@@ -1,4 +1,7 @@
+import { JsonParseError } from "./errors.js";
 import type { FileHash } from "./file.js";
+import type { FileReader } from "./ports/file-reader.js";
+import type { FileWriter } from "./ports/file-writer.js";
 import type { Hasher } from "./ports/hasher.js";
 import { stripJsonComments } from "./reading/jsonc.js";
 
@@ -85,4 +88,87 @@ export function isMergeContentEmpty(content: string, sectionKey: string | null):
   } catch {
     return false;
   }
+}
+
+export async function mergeIntoJsonFile(
+  files: FileReader & FileWriter,
+  path: string,
+  content: string,
+  strategy: MergeStrategy
+): Promise<void> {
+  let existing: Record<string, unknown> = {};
+
+  try {
+    const raw = await files.readFile(path);
+    existing = JSON.parse(stripJsonComments(raw)) as Record<string, unknown>;
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== "ENOENT") {
+      throw new JsonParseError(path, (err as Error).message);
+    }
+  }
+
+  const incoming = JSON.parse(stripJsonComments(content)) as Record<string, unknown>;
+
+  if (isPerKeyMergeStrategy(strategy)) {
+    await files.writeFile(path, JSON.stringify(mergePerKey(existing, incoming, strategy), null, 2));
+    return;
+  }
+
+  const merged =
+    strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
+  await files.writeFile(path, JSON.stringify(merged, null, 2));
+}
+
+// Intentionally shallow: a nested object is replaced wholesale, never merged into.
+function mergePerKey(
+  existing: Record<string, unknown>,
+  incoming: Record<string, unknown>,
+  strategy: PerKeyMergeStrategy
+): Record<string, unknown> {
+  const allKeys = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
+  const result: Record<string, unknown> = {};
+  for (const key of allKeys) {
+    const isFrameworkPrime = strategy.frameworkOverrideKeys.includes(key);
+    const effectiveStrategy = isFrameworkPrime ? "framework-prime" : strategy.default;
+    if (effectiveStrategy === "framework-prime") {
+      result[key] = key in incoming ? incoming[key] : existing[key];
+    } else {
+      result[key] = key in existing ? existing[key] : incoming[key];
+    }
+  }
+  return result;
+}
+
+const PROTOTYPE_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function deepMerge(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...target };
+
+  for (const [key, value] of Object.entries(source)) {
+    if (PROTOTYPE_POLLUTION_KEYS.has(key)) continue;
+    const existing = result[key];
+
+    if (Array.isArray(value) && Array.isArray(existing)) {
+      // A JSON-serialized key, so objects deduplicate as well as primitives.
+      const combined = [...existing, ...value];
+      result[key] = [...new Map(combined.map((v) => [JSON.stringify(v), v])).values()];
+    } else if (isPlainObject(value) && isPlainObject(existing)) {
+      result[key] = deepMerge(
+        existing as Record<string, unknown>,
+        value as Record<string, unknown>
+      );
+    } else {
+      result[key] = value;
+    }
+  }
+
+  return result;
+}
+
+function isPlainObject(value: unknown): boolean {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }

@@ -1,76 +1,74 @@
 import { createHash } from "node:crypto";
-import { resolve } from "node:path";
+import { join, posix, resolve } from "node:path";
 import type { FileMerger } from "../../../src/contexts/tools/domain/ports/file-merger.js";
 import { FileHash } from "../../../src/kernel/file.js";
-import {
-  isPerKeyMergeStrategy,
-  type MergeStrategy,
-  type PerKeyMergeStrategy,
-} from "../../../src/kernel/merge.js";
+import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/kernel/merge.js";
 import type { FileReader } from "../../../src/kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../src/kernel/ports/file-writer.js";
 import type { Hasher } from "../../../src/kernel/ports/hasher.js";
-import { stripJsonComments } from "../../../src/kernel/reading/jsonc.js";
 
 export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
-  /** Executable when `chmodExecutable` was called for it, absent otherwise — the two states
-   * `delegateState` tells apart, without a filesystem. */
-  private readonly executable = new Set<string>();
-
-  /** Normalized like every other reader here: an un-normalized key would answer for a path
-   * `fileExists` disagrees with. */
-  async isExecutable(path: string): Promise<boolean> {
-    const key = norm(path);
-    return this.files.has(key) && this.executable.has(key);
+  /** No file here has a mode: none is ever executable, and no product code asks. */
+  async isExecutable(_path: string): Promise<boolean> {
+    return false;
   }
 
   private readonly files = new Map<string, string>();
+  /** Directories that exist: every ancestor of a file, plus what `createDirectory` made.
+   * Deleting a file leaves them, as on a real filesystem. */
+  private readonly directories = new Set<string>();
   private readonly hasher: Hasher;
   /** Path → what it resolves to, for a test proving `realpath`-based containment
    * without a real filesystem — see `setSymlink`. */
   private readonly symlinks = new Map<string, string>();
+  /** Off by default: see `rejectMissingRealpath`. */
+  private missingRealpathRejects = false;
 
   constructor(seed: Record<string, string> = {}, hasher?: Hasher) {
     this.hasher = hasher ?? new DefaultHasher();
     for (const [path, content] of Object.entries(seed)) {
-      this.files.set(norm(path), content);
+      this.setFile(path, content);
     }
   }
 
   async writeFile(path: string, content: string): Promise<void> {
-    this.files.set(norm(path), content);
+    this.setFile(path, content);
   }
 
   async deleteFile(path: string): Promise<void> {
     this.files.delete(norm(path));
-    // Or a delete-then-rewrite reports the mode the deleted file had.
-    this.executable.delete(norm(path));
   }
 
-  async createDirectory(_path: string): Promise<void> {
-    // No-op: directories are implicit in path prefixes
+  async createDirectory(path: string): Promise<void> {
+    const key = dirKey(path);
+    this.directories.add(key);
+    this.registerAncestors(key);
   }
 
-  async deleteEmptyDirectories(_path: string): Promise<void> {
-    // No-op: directories are implicit
+  /** Climbs from `path` while the directory is known and holds nothing, as the real adapter. */
+  async deleteEmptyDirectories(path: string): Promise<void> {
+    let current = dirKey(path);
+    while (this.directories.has(current) && !this.holdsAnything(current)) {
+      this.directories.delete(current);
+      const parent = posix.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
   }
 
   async readFile(path: string): Promise<string> {
     const normalizedPath = norm(path);
     const content = this.files.get(normalizedPath);
     if (content === undefined) {
-      const err = Object.assign(
-        new Error(`ENOENT: no such file or directory, open '${normalizedPath}'`),
-        { code: "ENOENT" }
-      );
-      throw err;
+      throw enoent("open", normalizedPath);
     }
     return content;
   }
 
   /** Relative paths, recursive, the shape `FileAdapter` returns. */
   async listDirectory(dirPath: string): Promise<string[]> {
-    const normalizedDir = norm(dirPath);
+    const normalizedDir = dirKey(dirPath);
+    if (!this.directories.has(normalizedDir)) throw enoent("scandir", normalizedDir);
     const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;
     const result: string[] = [];
     for (const key of this.files.keys()) {
@@ -83,13 +81,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
 
   async fileExists(path: string): Promise<boolean> {
     const normalizedPath = norm(path);
-    if (this.files.has(normalizedPath)) return true;
-    // Also return true if the path is a virtual directory (has children)
-    const prefix = normalizedPath.endsWith("/") ? normalizedPath : `${normalizedPath}/`;
-    for (const key of this.files.keys()) {
-      if (key.startsWith(prefix)) return true;
-    }
-    return false;
+    return this.files.has(normalizedPath) || this.directories.has(dirKey(path));
   }
 
   async readFileHash(path: string): Promise<FileHash> {
@@ -109,8 +101,23 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
         }
       }
     }
-    if (bestMatch === undefined) return norm(path);
-    return bestMatch.target + key.slice(bestMatch.link.length);
+    // `posix.normalize`, not `resolve`: a virtual `/project/file` stays drive-free on Windows.
+    const resolved =
+      bestMatch === undefined
+        ? posix.normalize(norm(path))
+        : bestMatch.target + key.slice(bestMatch.link.length);
+    if (this.missingRealpathRejects && !(await this.existsIgnoringDrive(resolved))) {
+      throw enoent("realpath", norm(path));
+    }
+    return resolved;
+  }
+
+  /** Opt-in: `realpath` of a path that is neither a file nor a known directory rejects with
+   * `ENOENT`, as the real adapter does. Off by default, where it answers the path: the importers
+   * that never seed their project roots rely on that until each context's kit seeds them. */
+  rejectMissingRealpath(): this {
+    this.missingRealpathRejects = true;
+    return this;
   }
 
   /** Test-only: declares that `path` is a symlink resolving to `target`, so a test can
@@ -120,39 +127,20 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   }
 
   async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
-    const normalizedPath = norm(path);
-    let existing: Record<string, unknown> = {};
-
-    const existingRaw = this.files.get(normalizedPath);
-    if (existingRaw !== undefined) {
-      try {
-        existing = JSON.parse(stripJsonComments(existingRaw)) as Record<string, unknown>;
-      } catch {
-        // File exists but is not valid JSON — overwrite
-      }
-    }
-
-    const incoming = JSON.parse(stripJsonComments(content)) as Record<string, unknown>;
-
-    if (isPerKeyMergeStrategy(strategy)) {
-      this.files.set(
-        normalizedPath,
-        JSON.stringify(mergePerKey(existing, incoming, strategy), null, 2)
-      );
-      return;
-    }
-
-    const merged =
-      strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
-    this.files.set(normalizedPath, JSON.stringify(merged, null, 2));
+    return mergeIntoJsonFile(this, path, content, strategy);
   }
 
   async deleteDirectory(dirPath: string): Promise<void> {
-    const normalizedDir = norm(dirPath);
+    const normalizedDir = dirKey(dirPath);
     const prefix = normalizedDir.endsWith("/") ? normalizedDir : `${normalizedDir}/`;
     for (const key of [...this.files.keys()]) {
       if (key.startsWith(prefix) || key === normalizedDir) {
         this.files.delete(key);
+      }
+    }
+    for (const dir of [...this.directories]) {
+      if (dir.startsWith(prefix) || dir === normalizedDir) {
+        this.directories.delete(dir);
       }
     }
   }
@@ -163,14 +151,40 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
     const result: string[] = [];
     for (const key of this.files.keys()) {
       if (key.startsWith(prefix)) {
-        result.push(key);
+        result.push(join(dirPath, key.slice(prefix.length)));
       }
     }
     return result;
   }
 
   setFile(path: string, content: string): void {
-    this.files.set(norm(path), content);
+    const key = norm(path);
+    this.files.set(key, content);
+    this.registerAncestors(key);
+  }
+
+  /** On Windows, product code resolves a virtual `/project` to `D:\project` (the working drive)
+   * before asking `realpath`; the tree was seeded drive-free, so a drive-qualified path also
+   * matches its drive-free spelling. */
+  private async existsIgnoringDrive(path: string): Promise<boolean> {
+    return (await this.fileExists(path)) || (await this.fileExists(path.replace(DRIVE_PREFIX, "")));
+  }
+
+  private registerAncestors(key: string): void {
+    let parent = posix.dirname(key);
+    while (parent !== "." && !this.directories.has(parent)) {
+      this.directories.add(parent);
+      const next = posix.dirname(parent);
+      if (next === parent) break;
+      parent = next;
+    }
+  }
+
+  private holdsAnything(dir: string): boolean {
+    const prefix = dir.endsWith("/") ? dir : `${dir}/`;
+    for (const key of this.files.keys()) if (key.startsWith(prefix)) return true;
+    for (const other of this.directories) if (other.startsWith(prefix)) return true;
+    return false;
   }
 
   getFile(path: string): string | undefined {
@@ -194,8 +208,23 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
 
 // A real Windows filesystem accepts "/" and "\" as equivalent; this Map<path, content>
 // double does not unless every path put through it is normalized to one spelling first.
+const DRIVE_PREFIX = /^[A-Za-z]:(?=\/)/;
+
 function norm(path: string): string {
   return path.replaceAll("\\", "/");
+}
+
+// The real adapter's `stat` and `readdir` accept a trailing separator on a directory, and
+// callers spell directories that way (`status-use-case.ts` joins a tool directory ending in "/").
+function dirKey(path: string): string {
+  const key = norm(path);
+  return key.length > 1 && key.endsWith("/") ? key.replace(/\/+$/, "") || "/" : key;
+}
+
+function enoent(syscall: string, path: string): Error {
+  return Object.assign(new Error(`ENOENT: no such file or directory, ${syscall} '${path}'`), {
+    code: "ENOENT",
+  });
 }
 
 class DefaultHasher implements Hasher {
@@ -203,45 +232,4 @@ class DefaultHasher implements Hasher {
     const hex = createHash("md5").update(content, "utf-8").digest("hex");
     return new FileHash(hex);
   }
-}
-
-function mergePerKey(
-  existing: Record<string, unknown>,
-  incoming: Record<string, unknown>,
-  strategy: PerKeyMergeStrategy
-): Record<string, unknown> {
-  const allKeys = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
-  const result: Record<string, unknown> = {};
-  for (const key of allKeys) {
-    const isFrameworkPrime = strategy.frameworkOverrideKeys.includes(key);
-    const effectiveStrategy = isFrameworkPrime ? "framework-prime" : strategy.default;
-    if (effectiveStrategy === "framework-prime") {
-      result[key] = key in incoming ? incoming[key] : existing[key];
-    } else {
-      result[key] = key in existing ? existing[key] : incoming[key];
-    }
-  }
-  return result;
-}
-
-function deepMerge(
-  base: Record<string, unknown>,
-  overlay: Record<string, unknown>
-): Record<string, unknown> {
-  const result = { ...base };
-  for (const [key, value] of Object.entries(overlay)) {
-    if (isPlainObject(value) && isPlainObject(result[key])) {
-      result[key] = deepMerge(
-        result[key] as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-
-function isPlainObject(value: unknown): boolean {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
 }

@@ -79,6 +79,17 @@ export default defineConfig({
         extends: false,
         plugins: [textLoader(TEXT_EXTENSIONS)],
         test: {
+          name: "contract",
+          include: ["tests/**/*.contract.test.ts"],
+          globals: false,
+          environment: "node",
+          globalSetup: ["./tests/helpers/throwaway-profile.ts"],
+        },
+      },
+      {
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
           name: "integration",
           include: ["tests/**/*.integration.test.ts"],
           exclude: [...configDefaults.exclude, ...IN_PROCESS_CLI_TESTS],

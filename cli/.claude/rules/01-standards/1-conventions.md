@@ -26,7 +26,7 @@ paths:
 
 ## Tests
 
-- The extension declares the tier: `*.unit.test.ts`, `*.integration.test.ts`, `*.e2e.test.ts`, `*.golden.test.ts`, `*.arch.test.ts`.
+- The extension declares the tier: `*.unit.test.ts`, `*.contract.test.ts`, `*.integration.test.ts`, `*.e2e.test.ts`, `*.golden.test.ts`, `*.arch.test.ts`.
 - An `*.arch.test.ts` outside `tests/architecture/` runs nowhere.
 - `tests/` mirrors `src/`.
 

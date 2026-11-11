@@ -42,6 +42,7 @@ describe("resolveCacheCandidate", () => {
 describe("purgeCacheIfEmptyAndConfirmed", () => {
   it("purges an empty, confirmed cache and says so", async () => {
     const fs = new InMemoryFileAdapter();
+    await fs.createDirectory(CANDIDATE);
     const logger = new CapturingLogger();
 
     await purgeCacheIfEmptyAndConfirmed(fs, logger, CANDIDATE, true, LABEL);
@@ -67,5 +68,37 @@ describe("purgeCacheIfEmptyAndConfirmed", () => {
     await expect(
       purgeCacheIfEmptyAndConfirmed(fs, new CapturingLogger(), CANDIDATE, true, LABEL)
     ).rejects.toThrow("EACCES: planted by the test");
+  });
+});
+
+describe("resolveCacheCandidate on a filesystem that rejects a missing path", () => {
+  it("answers nothing, silently, when the cache root does not exist", async () => {
+    const fs = new InMemoryFileAdapter().rejectMissingRealpath();
+    const logger = new CapturingLogger();
+
+    const candidate = await resolveCacheCandidate(fs, logger, CACHE_ROOT, "mkt", LABEL);
+
+    expect(candidate).toBeNull();
+    expect(logger.allMessages).toStrictEqual([]);
+  });
+
+  it("answers nothing, silently, when only the candidate is missing", async () => {
+    const fs = new InMemoryFileAdapter({
+      [join(CACHE_ROOT, "other", "f")]: "x",
+    }).rejectMissingRealpath();
+    const logger = new CapturingLogger();
+
+    const candidate = await resolveCacheCandidate(fs, logger, CACHE_ROOT, "mkt", LABEL);
+
+    expect(candidate).toBeNull();
+    expect(logger.allMessages).toStrictEqual([]);
+  });
+
+  it("answers the candidate when it exists inside the root", async () => {
+    const fs = new InMemoryFileAdapter({ [join(CANDIDATE, "f")]: "x" }).rejectMissingRealpath();
+
+    expect(await resolveCacheCandidate(fs, new CapturingLogger(), CACHE_ROOT, "mkt", LABEL)).toBe(
+      CANDIDATE
+    );
   });
 });

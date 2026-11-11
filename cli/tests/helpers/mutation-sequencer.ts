@@ -2,7 +2,7 @@ import { statSync } from "node:fs";
 import { BaseSequencer, type TestSpecification } from "vitest/node";
 
 /** The projects a mutation run uses, cheapest first. */
-const PROJECT_ORDER = ["unit", "integration"];
+const PROJECT_ORDER = ["unit", "contract", "integration"];
 
 type Ordered = Pick<TestSpecification, "moduleId"> & {
   readonly project: Pick<TestSpecification["project"], "name">;
@@ -14,7 +14,7 @@ function rankOf(project: string): number {
 }
 
 /**
- * The order a mutant runs its covering test files in: unit before integration, then the
+ * The order a mutant runs its covering test files in: unit, then contract, then integration, then the
  * smallest file first, then by path.
  *
  * Stryker stops a mutant at its first failing test, so what a mutant costs is the time spent
