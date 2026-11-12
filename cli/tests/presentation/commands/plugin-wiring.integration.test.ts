@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const pluginRemove = vi.fn();
 const pluginList = vi.fn();
@@ -74,7 +75,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerPluginCommand(program);
+  registerPluginCommand(program, catalogOf());
   await program.parseAsync(["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -170,6 +171,7 @@ describe("aidd plugin install", () => {
     expect(pluginInstall).toHaveBeenCalledWith({
       pluginArg: "aidd-dev",
       toolIds: "all",
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       interactive: false,
       fromMarketplace: undefined,
@@ -348,7 +350,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
 describe("aidd plugin — the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
-    registerPluginCommand(program);
+    registerPluginCommand(program, catalogOf());
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");
     return plugin;

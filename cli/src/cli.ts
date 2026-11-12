@@ -36,7 +36,7 @@ program
 registerSetupCommand(program, tools);
 registerFrameworkCommand(program, tools);
 registerTranslateCommand(program, tools);
-registerPluginCommand(program);
+registerPluginCommand(program, tools);
 registerMarketplaceCommand(program);
 registerAuthCommand(program);
 registerSyncCommand(program);

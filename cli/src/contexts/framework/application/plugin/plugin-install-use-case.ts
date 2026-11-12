@@ -9,6 +9,8 @@ import {
 import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
 import type { PluginPick } from "../../../../presentation/prompts/plugin-pick-use-case.js";
 import type { MarketplaceTrustStore } from "../../../distribution/domain/ports/marketplace-trust-store.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import {
   assertToolSupportsScope,
   getToolSupportedScope,
@@ -18,11 +20,11 @@ import { parsePluginSpec } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginAdd } from "./plugin-add-use-case.js";
 import type { PluginInstallFromMarketplace } from "./plugin-install-from-marketplace-use-case.js";
-import { requiresUserScope } from "./plugin-target-resolution.js";
 
 export interface PluginInstallOptions {
   pluginArg: string | undefined;
   toolIds: AiToolId[] | "all";
+  tools: readonly ToolProfile[];
   projectRoot: string;
   interactive: boolean;
   fromMarketplace?: string;
@@ -46,16 +48,25 @@ export class PluginInstallUseCase {
   ) {}
 
   async execute(options: PluginInstallOptions): Promise<PluginInstallResult> {
-    if (options.scope !== undefined) await this.validateScope(options.toolIds, options.scope);
+    if (options.scope !== undefined) {
+      await this.validateScope(options.toolIds, options.scope, options.tools);
+    }
     if (options.pluginArg === undefined) return this.executeNoArg(options);
     if (this.isSourceArg(options.pluginArg)) return this.executeLocalSource(options);
     return this.executeMarketplace(options);
   }
 
-  private async validateScope(toolIds: AiToolId[] | "all", scope: InstallScope): Promise<void> {
+  private async validateScope(
+    toolIds: AiToolId[] | "all",
+    scope: InstallScope,
+    tools: readonly ToolProfile[]
+  ): Promise<void> {
     const targets = await this.resolveTargetTools(toolIds);
-    for (const toolId of targets)
-      assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope(toolId)));
+    for (const toolId of targets) {
+      const plugins = aiProfileOf(tools, toolId).plugins();
+      const requiresUserScope = plugins?.kind === "native" && plugins.requiresUserScope();
+      assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope));
+    }
   }
 
   private async resolveTargetTools(toolIds: AiToolId[] | "all"): Promise<readonly AiToolId[]> {

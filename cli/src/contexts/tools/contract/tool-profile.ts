@@ -44,6 +44,8 @@ export interface FlatLayout {
 /** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */
 export interface NativePluginAnswers extends PluginDelivery {
   readonly kind: "native";
+  /** Whether a plugin installed fresh lands at user scope, the only scope this tool takes. */
+  requiresUserScope(): boolean;
   hooksAcceptance(): HooksAcceptance;
   /** The directory a plugin's files land in. */
   pluginOutputDir(pluginName: string): string;

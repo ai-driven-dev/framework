@@ -129,6 +129,7 @@ async function installPlugin(project: string, toolId: AiToolId, plugin: string):
   await d.pluginInstallUseCase.execute({
     pluginArg: join(REPOSITORY_ROOT, "plugins", plugin),
     toolIds: [toolId],
+    tools: catalogOf().sortedById(),
     projectRoot: project,
     interactive: false,
     yes: true,

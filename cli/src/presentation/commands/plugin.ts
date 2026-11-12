@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { assertValidAiToolId, parseToolOption } from "../../kernel/tool.js";
 import { createDeps, createMenuDeps } from "../../runtime/wiring/framework.js";
 import {
@@ -14,7 +15,7 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 import { syncNativeActivation } from "./sync-native-activation.js";
 
-export function registerPluginCommand(program: Command): void {
+export function registerPluginCommand(program: Command, catalog: ToolCatalog): void {
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
 
   plugin.action(async () => {
@@ -105,6 +106,7 @@ export function registerPluginCommand(program: Command): void {
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
             toolIds: parseToolOption(cmdOptions.tool),
+            tools: catalog.sortedById(),
             projectRoot,
             interactive: process.stdout.isTTY,
             fromMarketplace: cmdOptions.from,
