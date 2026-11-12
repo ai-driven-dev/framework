@@ -341,6 +341,20 @@ test("Stop lints only the files that changed or are new, and answers lint alone 
   assert.deepEqual(stopped(root, tmp).reason.split("\n"), ["aidd-context: 1 error, 0 warnings", `${VCS}:6 M3 "${SHOWN}" => fill it from the code`]);
 });
 
+test("Stop leaves out a finding on a line the turn did not write, so the team's own lines draw no lint", () => {
+  const long = `- ${Array(40).fill("word").join(" ")}.`;
+  const { root, tmp } = started({ [VCS]: `${BANK}${long}\n` });
+  write(root, VCS, `${BANK}${long}\n- One short new line.\n`);
+  assert.equal(stopped(root, tmp), null);
+});
+
+test("Stop reports a finding on a line the turn wrote, in a file it changed", () => {
+  const long = `- ${Array(40).fill("word").join(" ")}.`;
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, `${BANK}${long}\n`);
+  assert.match(stopped(root, tmp).reason, /^aidd-context: 0 errors, 1 warning\naidd_docs\/memory\/vcs\.md:\d+ M5 warning /u);
+});
+
 test("Stop lints a new bank file", () => {
   const { root, tmp } = started();
   write(root, `${MEMORY}/api.md`, `# API\n\n- Use ${slotOf("api.md")} here.\n`);

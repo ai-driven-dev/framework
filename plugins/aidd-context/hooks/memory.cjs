@@ -266,11 +266,15 @@ function lostText(lost) {
   ].join("\n");
 }
 
-/** Lint of the files that changed or are new since the snapshot. */
+/** Lint of the lines written since the snapshot: a line the file already held is the team's. */
 function changedFindings(root, before, now) {
   const found = Object.keys(now)
     .filter((file) => before[file] !== now[file])
-    .flatMap((file) => lintFile(root, file));
+    .flatMap((file) => {
+      const held = new Set((before[file] ?? "").split(/\r?\n/u).map((line) => line.trim()));
+      const lines = now[file].split(/\r?\n/u);
+      return lintFile(root, file).filter((finding) => !held.has((lines[finding.line - 1] ?? "").trim()));
+    });
   return formatFindings(PLUGIN, { errors: found.filter((finding) => finding.severity === ERROR), warnings: found.filter((finding) => finding.severity !== ERROR) });
 }
 
