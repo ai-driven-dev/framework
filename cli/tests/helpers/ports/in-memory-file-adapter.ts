@@ -17,6 +17,8 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
    * `delegateState` tells apart, without a filesystem. */
   private readonly executable = new Set<string>();
 
+  async assertWritableDirectory(_path: string): Promise<void> {}
+
   /** Normalized like every other reader here: an un-normalized key would answer for a path
    * `fileExists` disagrees with. */
   async isExecutable(path: string): Promise<boolean> {

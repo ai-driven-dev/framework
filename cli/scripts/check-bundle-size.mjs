@@ -57,19 +57,11 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // (+2.1 KB over its 718.1 KB hooks build); 0.3% measured headroom.
 // 747 KB: 732.4 KB, the machine-wide install of `setup --global` (+12.2 KB over the 720.2 KB
 // above); 2.0% measured headroom.
-// Maintenance branch before integration with Antigravity:
-// 734 KB: 718.8 KB, the machine-wide install of `setup --global` (+8.0 KB over 710.8 KB);
-// 2.1% measured headroom.
-// 730 KB: 721.5 KB, maintenance release upgrades and session notifications; 1.2% headroom.
-// 770 KB: 755.6 KB, global ownership, maintenance launchers and Kilo TUI; 1.9% headroom.
-// 793 KB: 777.5 KB, pinned machine releases and recoverable file updates; 2.0% headroom.
-// 796 KB: 794.9 KB, shared Claude update preview and source revalidation; 0.1% headroom.
-// 798 KB: 797.3 KB, release titles and recorded global installations; 0.1% headroom.
-// 801 KB: 799.4 KB, authenticated Git clones without credentials in remotes or logs; 0.2% headroom.
-// 826 KB: 810.3 KB, combined Antigravity support and maintenance; 1.9% measured headroom.
-// 826 KB: 811.3 KB, project hook directory permission preflight; 1.8% measured headroom.
-// 826 KB: 811.4 KB, handling a hook closing stdin after success; 1.8% measured headroom.
-// 826 KB: 811.7 KB, safe headless hook failure diagnostics; 1.7% measured headroom.
+// 772 KB: 756.0 KB, the seven host adapters shipped as product, inlined as text, Antigravity's
+// among them (+23.6 KB over the 732.4 KB above); 2.1% measured headroom.
+// 826 KB: maintenance release upgrades and recoverable global copies (811.7 KB before host adapter integration).
+// 850 KB: 840.0 KB, maintenance with next's shared host adapters and prepared release snapshots;
+// 1.2% measured headroom, with no added runtime dependency.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

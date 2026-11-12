@@ -1,0 +1,78 @@
+{
+  "host": "copilot",
+  "event": "PostToolUse",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_name": "Edit",
+        "tool_input": "*** Begin Patch\n*** Add File: notes.md\n+hello.\n*** End Patch\n",
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "Added 1 file(s): /Users/user/project/notes.md"
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_name": "Bash",
+        "tool_input": {
+          "command": "echo hi",
+          "description": "Run requested echo command"
+        },
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "hi\n<shellId: 0 completed with exit code 0>"
+        }
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_name": "Edit",
+        "tool_input": "*** Begin Patch\n*** Add File: notes.md\n+hello.\n*** End Patch\n",
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "Added 1 file(s): /Users/user/project/notes.md"
+        }
+      },
+      "hookAnswer": {
+        "decision": "block",
+        "reason": "Hook feedback: PTUTOKEN-7Q2X"
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "hook_event_name": "PostToolUse",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "tool_name": "Read",
+        "tool_input": {
+          "path": "/Users/user/project/notes.md"
+        },
+        "tool_result": {
+          "result_type": "success",
+          "text_result_for_llm": "hello.\n"
+        }
+      },
+      "hookAnswer": null
+    }
+  ]
+}

@@ -8,22 +8,27 @@ Dans un projet, un dev qui conçoit l'UI avec une IA obtient un design system ve
 
 ### Arborescence
 
-Tout le design system vit dans `aidd_docs/ui/`, un fichier par élément, rien à côté du code.
+Tout le design system vit dans `aidd_docs/ui/`, un fichier par élément, rien à côté du code. C'est la norme du projet, quelles que soient ses plateformes et ses technos : un design system déjà présent dans le code sert de matière à l'extraction, puis n'est plus qu'une implémentation confrontée à la norme, jamais une seconde source.
 
 ```txt
 aidd_docs/ui/
 ├── system.md                 racine du design system
 ├── brand.md                  identité de marque
 ├── tokens.json               tokens du thème de base, format W3C DTCG 2025.10
-├── tokens.resolver.json      thèmes, module Resolver de DTCG 2025.10
+├── tokens.resolver.json      thèmes, plateformes et breakpoints, module Resolver de DTCG 2025.10, écrit par le moteur
 ├── themes/<thème>.json       valeurs qui changent pour un thème
+├── breakpoints/<nom>.json    valeurs qui changent à un breakpoint
+├── history.md                historique de tout, écrit par le moteur, jamais à la main
+├── platforms/<nom>.json      valeurs qui changent pour une plateforme
 ├── tokens.css                généré depuis les tokens, jamais écrit à la main
 ├── assets/<id>.md            icône, image, illustration, avec son fichier à côté
-├── components/<id>.md        atome, molécule ou composition
+├── components/<id>.md        atome, molécule ou organisme
 ├── components/<id>.html      rendu du composant, toutes variantes et tous états
 ├── screens/<id>.md           écran
 ├── screens/<id>.html         maquette de l'écran, tous ses états dans un seul fichier
 ├── journeys/<id>.md          parcours utilisateur
+├── wireframes/<id>.md        wireframe d'un écran : zones, composants attendus, états
+├── wireframes/<id>.html      sa structure, tous ses états, sans aucun style
 ├── reviews/<id>.md           verdicts d'une review du design system
 └── showcase/                 vitrine générée, jamais écrite à la main, ignorée par git
 ```
@@ -32,48 +37,49 @@ Le contrat UI d'une feature, `ui.md`, vit dans le dossier de sa tâche, à côt�
 
 ### Fiches
 
-Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`, `status`, `version`.
+Chaque fiche porte en tête : `id` (égal au nom du fichier, unique), `kind`. Les éléments, les parcours, les wireframes et les reviews portent en plus `status` et `version` ; `system.md` et `brand.md` n'ont ni l'un ni l'autre.
 
 | Fiche | Contient en plus |
 | --- | --- |
-| `system.md` | version du format des fiches, version du design system, plateformes, breakpoints, thèmes, langues et sens d'écriture, groupes de tokens primitifs, dossiers UI du code, fichier où le code consomme les tokens, chemins ignorés, librairies de composants utilisées ; règles transverses s'il y en a |
-| `brand.md` | projet, utilisateurs, domaine, plateformes, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
+| `system.md` | version du format des fiches, plateformes, breakpoints (le tableau `## Breakpoints`, seule source), thèmes, langues (`ar`, `he`, `fa` et `ur` s'écrivent de droite à gauche, ce qui donne le sens d'écriture), groupes de tokens primitifs, dossiers UI du code, chacun rattaché à une plateforme, fichier(s) où le code consomme les tokens, chemins ignorés ; règles transverses s'il y en a |
+| `brand.md` | projet, utilisateurs, domaine, personnalité et ton, charte imposée s'il y en a une, références et anti-références ; glossaire (mot à employer, mots interdits) s'il y en a un |
 | asset | type (icône, image, illustration), fichier, texte alternatif attendu |
-| atome, molécule, composition | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il est interactif ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, lien vers le code |
-| écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, lien vers le code |
-| parcours | persona, étapes ordonnées, chaque étape un écran et l'action qui mène à la suivante |
+| atome, molécule, organisme | quand l'utiliser et quand ne pas l'utiliser, éléments utilisés, tokens sémantiques utilisés, variantes, états (au moins défaut ; focus quand il prend le focus, et alors une section clavier ; survol, désactivé, chargement ou erreur quand ils existent), comportement clavier et rôle accessible, plateformes où il existe (toutes par défaut), un lien vers le code par plateforme |
+| écran | éléments utilisés, tokens sémantiques utilisés, états (au moins défaut, vide, chargement, erreur, sans droits quand ils existent), breakpoints couverts, route ou fichier réel, plateformes où il existe, un lien vers le code par plateforme |
+| parcours | persona, nommé et décrit, étapes ordonnées, chaque étape un écran ou son wireframe et l'action qui mène à la suivante |
+| wireframe | composants attendus, existants ou non, états (au moins défaut), zones nommées ; aucune plateforme |
 | review | écrans revus, verdict OK ou pas OK par écran, par état et par version revue, commentaire, écrans restants |
 
 ### Cycle de vie
 
 Deux axes, jamais mêlés : où en est le design, et quelle version le code implémente.
 
-- `status` dit le design : `proposé` (créé, pas encore validé), `validé` (rendu approuvé en review), `déprécié` (ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas).
-- `implemented-version` dit le code : la version de l'élément que le code implémente. Le code est à jour quand elle égale `version`, en retard quand elle est plus petite, absente tant que rien n'est codé.
-- Le lien vers le code est obligatoire dès qu'`implemented-version` existe, sauf pour une molécule ou une composition implémentée par ce qu'elle utilise : chaque élément utilisé, hors assets, est implémenté.
-- Modifier un élément implémenté monte sa `version` et le repasse à `proposé` ; son `implemented-version` ne bouge pas, et le retard reste visible jusqu'à ce que la feature fasse suivre le code.
+- `status` dit le design : `proposed` (créé, pas encore validé), `validated` (rendu approuvé en review), `deprecated` (ne doit plus être utilisé, nomme son remplaçant ou dit pourquoi il n'en a pas).
+- Chaque lien vers le code porte la version de l'élément que ce code implémente. Une plateforme est à jour quand elle égale `version`, en retard quand elle est plus petite ; un élément sans lien n'est codé nulle part, sauf une molécule ou un organisme implémenté par ce qu'elle utilise.
+- Modifier un élément implémenté monte sa `version` et le repasse à `proposed` ; les versions de ses liens ne bougent pas, et le retard de chaque plateforme reste visible jusqu'à ce que la feature fasse suivre son code.
 - Un élément non déprécié n'utilise jamais un élément déprécié.
 
 ### Lien avec le code
 
-- Un élément correspond à un seul fichier d'entrée, identifié par son chemin et le nom du composant exporté. Quand ce fichier est dans un dossier qui porte son nom, le lien couvre tout le dossier (styles, hooks, tests) ; sinon, seulement les fichiers de même nom.
+- Un élément a au plus un fichier d'entrée par plateforme, identifié par son chemin, le nom exporté quand sa techno en a un, et la version qu'il implémente. La plateforme d'un lien est celle du dossier UI qui le contient, et figure parmi celles de l'élément. Quand ce fichier est dans un dossier qui porte son nom, le lien couvre tout le dossier (styles, hooks, tests) ; sinon, seulement les fichiers de même nom.
 - Un élément utilise des éléments de son niveau ou d'un niveau inférieur, jamais lui-même.
 - Un composant de librairie est lié à son paquet et à son nom exporté.
 - Chaque fichier sous un dossier UI déclaré est lié à une fiche ou couvert par un chemin ignoré.
-- Les usages se lisent dans les fiches : un token mène aux composants qui le déclarent, un composant aux compositions et écrans qui l'utilisent, un écran aux parcours, chaque élément à son fichier de code. Le rapport d'impact suit ce chemin.
+- Les usages se lisent dans les fiches : un token mène aux composants qui le déclarent, un composant aux organismes et écrans qui l'utilisent, un écran aux parcours, chaque élément à son fichier de code. Le rapport d'impact suit ce chemin.
 
 ### Versions et historique
 
-- Chaque élément a une version entière et un historique : une ligne par version, avec le changement, s'il est cassant, et la tâche qui l'a fait.
+- Chaque élément a une version entière, la seule chose d'historique que sa fiche porte. Un seul fichier, `aidd_docs/ui/history.md`, tient l'historique de tout : un tableau `Id | Version | Change | Breaking | Task`, une ligne par version de chaque fiche, avec le changement, s'il est cassant, et la tâche qui l'a fait. Le moteur l'écrit : `bump` ajoute la ligne de chaque version qu'il monte, `bump --created` écrit la première ligne (version 1, `created`) des fiches qu'on lui nomme, `1.0.0` pour `system` ; l'IA n'y touche jamais.
 - Une tâche se nomme par le chemin de son dossier, `aidd_docs/tasks/…` : historiques, `ui.md` et plan se rejoignent sur cette valeur.
 - Est cassant : retirer une variante, un état ou une propriété, renommer ou supprimer un token, déprécier un élément.
-- Le design system a sa propre version dans `system.md`, qui ne bouge qu'à une publication : une ligne liste les tâches publiées ; elle est cassante, et monte la majeure, quand une de ces tâches a cassé un élément ou quand elle le dit elle-même, pour un changement de tokens seuls ; sinon elle monte la mineure. Une tâche pas encore publiée n'est pas une erreur, et deux features parallèles sur des éléments distincts n'entrent jamais en conflit.
-- Deux lignes d'historique qui revendiquent la même version d'un élément sont signalées, pour que la personne tranche, comme un conflit git.
+- Le design system a sa propre version, celle de la dernière ligne d'id `system` de `history.md`, qui ne bouge qu'à une publication, ligne que la sous-commande `publish` écrit en listant les tâches pas encore publiées ; elle est cassante, et monte la majeure, quand une de ces tâches a cassé un élément ou quand elle le dit elle-même, pour un changement de tokens seuls ; sinon elle monte la mineure. Une tâche pas encore publiée n'est pas une erreur, et deux features parallèles sur des éléments distincts n'entrent jamais en conflit.
+- Deux lignes de `history.md` qui revendiquent la même version d'une même fiche sont signalées, pour que la personne tranche, comme un conflit git.
 - `system.md` porte la version du format des fiches ; une version que le validateur ne connaît pas donne un seul message, jamais une avalanche.
 
 ### Changements
 
-- Un changement produit d'abord un rapport d'impact : éléments, écrans, parcours et fichiers de code touchés.
+- Un changement produit d'abord un rapport d'impact : éléments, écrans, parcours et fichiers de code touchés, et les tokens de même valeur sans alias.
+- Le moteur applique ensuite les versions et l'historique de ce que le rapport atteint, par la sous-commande `bump` : l'IA n'y décide que le texte du changement et s'il est cassant.
 - Après validation, les rendus HTML touchés sont régénérés, revus si leur aspect change, puis versions et historiques sont mis à jour.
 - Le code suit dans la feature qui porte le changement, jamais en dehors.
 
@@ -87,11 +93,14 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 ### Rendus
 
 - Écrans et composants sont rendus en HTML avec les vrais tokens, sans valeur en dur.
-- Les tokens ont deux niveaux : les primitifs (la palette) et les sémantiques, qui pointent vers eux. Un composant ou un écran n'utilise que des sémantiques, et son rendu n'emploie que les tokens que sa fiche déclare : le rapport d'impact n'en oublie aucun.
-- Les tokens sont la seule source ; aidd-ui génère `aidd_docs/ui/tokens.css` et n'écrit jamais dans le code. `system.md` nomme le fichier où le code consomme les tokens ; la feature le fait suivre, l'audit compare les deux.
-- Les thèmes suivent le module Resolver de DTCG : `tokens.json` porte le premier thème déclaré, la base ; chaque autre thème a son fichier, qui ne redéfinit que des tokens de la base, avec le même type. Un rendu montre un thème sous `[data-theme]`, avec les mêmes noms de variables.
+- Une valeur de token propre à une plateforme est un contexte `platform` du Resolver, comme un thème ou un breakpoint.
+- Les tokens ont deux niveaux : les primitifs (la palette) et les sémantiques, qui pointent vers eux. Un composant ou un écran n'utilise que des sémantiques, et son rendu n'emploie que les tokens que sa fiche déclare et ceux des éléments qu'il utilise : le rapport d'impact, qui suit `uses`, n'en oublie aucun.
+- Les tokens sont la seule source ; aidd-ui génère `aidd_docs/ui/tokens.css` et n'écrit jamais dans le code. `system.md` nomme le ou les fichier(s) où le code consomme les tokens ; la feature les fait suivre, l'audit compare les deux.
+- Les thèmes suivent le module Resolver de DTCG : `tokens.json` porte le premier thème déclaré, la base ; chaque autre thème a son fichier, qui ne redéfinit que des tokens de la base, avec le même type. Un rendu pose `data-theme` et `data-platform` sur `<html>` seul, avec les mêmes noms de variables : un autre thème ou une autre plateforme est un autre document, ou la bascule de cet attribut, jamais une région imbriquée.
+- Une valeur qui dépend de la largeur suit le même module : `tokens.json` porte le breakpoint de départ, contexte par défaut et vide ; chaque autre breakpoint a son fichier, qui ne redéfinit que des tokens de la base avec le même type, et sa media query telle quelle, la colonne `Query` de son tableau dans `system.md`, que le moteur place dans une extension du modificateur : le moteur écrit le Resolver depuis `system.md` et les fichiers de contexte, jamais l'IA. `tokens.css` la porte dans un bloc `@media` après les thèmes. Quand plusieurs modificateurs (thème, plateforme, breakpoint) redéfinissent le même token, l'ordre du `resolutionOrder` du Resolver décide : le dernier l'emporte. `tokens.css` résout chaque combinaison par cet ordre, tout sur l'élément racine, et n'écrit que ce que les blocs précédents ne donnent pas déjà à cette racine.
 - Une valeur que DTCG ne sait pas porter (`color-mix()`, `%`, `em`) est gardée en CSS brut dans une extension du token ; les `var()` qu'elle cite sont des tokens existants et comptent comme des dépendances.
 - Un écran montre tous ses états dans un seul fichier, avec un sélecteur d'état.
+- Une variante est une valeur nue, montrée par `data-variant`, ou `axe=valeur` pour une propriété qui varie seule (`size=sm`), montrée par `data-<axe>` ; `state`, `variant` et `theme` ne sont jamais des axes.
 - La vitrine est générée sans IA, à partir des fiches et de gabarits fixes : identique à chaque génération, elle montre chaque élément, ses variantes, ses états, ses usages et son lien vers le réel.
 - La vitrine affiche la version validée d'un écran et un lien vers le réel.
 
@@ -104,8 +113,8 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 ### i18n et accessibilité
 
-- `system.md` déclare les langues et les sens d'écriture.
-- Les rendus utilisent des propriétés logiques plutôt que physiques quand un sens droite-gauche est déclaré, et aucune largeur fixe sur du texte.
+- `system.md` déclare les langues, dont se déduit le sens d'écriture.
+- Les rendus utilisent des propriétés logiques plutôt que physiques quand une langue déclarée s'écrit de droite à gauche, et aucune largeur fixe sur du texte.
 - Dates et nombres suivent la langue.
 - Base d'accessibilité : WCAG 2.2 AA, mobile d'abord, texte qui suit la taille choisie par la personne, aucun comportement qui n'existe qu'au survol sur écran tactile.
 
@@ -115,14 +124,16 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
   - format de chaque fiche et du fichier de tokens ;
   - éléments utilisés et alias de tokens qui existent ;
   - cycle de vie respecté ;
-  - liens vers le code valides, couverture des dossiers UI ;
-  - aucune valeur en dur dans les rendus, aucune couleur en dur dans le code ;
+  - liens vers le code valides et cohérents avec leurs plateformes, couverture des dossiers UI ;
+  - aucune valeur en dur dans les rendus, aucune couleur en dur dans le code au-delà de sa dette, quelle que soit sa techno (documents, données et images exclus) : `aidd_docs/ui/code-debt.json`, écrit à la création du système, compte chaque couleur de chaque fichier ; avertissement tant qu'un fichier n'en tient pas plus que ce compte, erreur au-delà, et erreur pour toute couleur sans ce fichier ;
+  - les fichiers de tokens du code (`code-tokens`) donnent à chaque token la valeur du design system, dans chaque thème, plateforme et point de rupture qu'ils portent : un changement de token signale ainsi chaque fichier du code resté sur l'ancienne valeur, et une valeur changée à la main dans le code est signalée de même ;
   - aucun token primitif dans un composant ;
   - versions en double dans un historique ;
-  - propriétés physiques quand un sens droite-gauche est déclaré.
-- Chaque problème porte sa règle et sa gravité. Une erreur bloque la fin du tour ; un avertissement informe sans bloquer : fichier de code sans fiche, trait fin en px. Après une écriture, l'IA voit les problèmes des fichiers écrits et de ceux qui en dépendent (le rendu de l'élément écrit, les fiches qui le citent), ou tous quand elle a écrit un fichier partagé (tokens, thèmes, `system.md`), et le nombre des autres erreurs ; en fin de tour, toutes les erreurs ; la sortie du hook est plafonnée, la commande à la main montre tout.
+  - propriétés physiques quand une langue déclarée s'écrit de droite à gauche.
+- Chaque problème porte sa règle, sa gravité et son correctif. Une ligne d'en-tête compte les erreurs puis les avertissements (`aidd-ui: <n> errors, <m> warnings`), suivie d'une ligne par erreur, `<fichier>[:<ligne>] <règle> ["<extrait>"] => <correctif>` (`:<ligne>` seulement quand il a une ligne, l'extrait seulement quand le problème cite un texte, le correctif disant l'action qui l'efface et nommant la commande du moteur quand le moteur écrit), puis d'une ligne par avertissement, `<fichier>[:<ligne>] <règle> warning <message> => <correctif>`. Le hook ne retient jamais la personne pour une erreur que le tour n'a pas produite ; un avertissement informe toujours : fichier de code sans fiche, couleur en dur comptée dans la dette, trait fin en px. Le hook donne le même texte court sur chaque outil, sans phrase d'introduction, et rien quand il n'y a rien à dire. Après une écriture, l'IA voit ce que l'écriture a produit : les erreurs des lignes qu'elle a ajoutées ou changées dans les fichiers écrits, une ligne chacune, puis leurs avertissements, au plus dix ; quand ces lignes sont inconnues (l'outil ne dit pas le texte écrit, ou l'écriture n'a fait qu'enlever des lignes), les erreurs du fichier écrit sont groupées sous son nom. Suivent, groupées par règle, correctif et dossier en une ligne `<règle> ×<n> in <dossier>/* ["<extrait>"] => <correctif>` quand plusieurs se ressemblent, les erreurs nouvelles des autres fichiers (le rendu de l'élément écrit, les fiches qui citent un fichier supprimé), chacune dite une fois par tour : leur correctif est ailleurs, elles informent seulement. Nouvelle veut dire absente de la référence, les erreurs que le projet portait au début de la session ou à la fin du tour précédent, comptées par fichier, règle et extrait ; sans référence, rien d'un autre fichier. En fin de tour, le hook demande une fois de corriger les seules erreurs posées sur les lignes que le tour a changées, en net (une ligne changée puis remise ne compte pas), au-delà de ce que la référence compte ; une écriture du fichier entier qui ne dit pas ce qu'elle remplace ne prouve rien sans référence. Une erreur sans ligne (section manquante, tokens) n'est jamais demandée en fin de tour : la commande à la main la tient. La fin de tour reprend ensuite les erreurs présentes comme référence, si bien qu'une erreur demandée l'est une seule fois. Au début de session, rien ne s'affiche : le hook note la référence et efface l'état de plus d'un jour. Une commande shell qui lance une commande du moteur qui écrit (`tokens`, `extract`, `bump`, `publish` sans identifiant), ou qui nomme `aidd_docs/ui/` et y écrit, dit ce qu'elle a laissé de nouveau ; `validate`, `impact` et `publish` avec des identifiants ne font que lire. La commande à la main montre tout, sans groupe ni plafond.
 - Une règle qui plante devient un problème qui la nomme, jamais un silence.
 - Un seul moteur porte la lecture des fiches, la vérification et, plus tard, le graphe, la génération des tokens, la vitrine et la page de review ; chaque skill l'appelle par sous-commande.
+- Le moteur écrit aussi les fichiers de tokens depuis le code que `system.md` désigne, par la sous-commande `extract`, et liste ce qu'il laisse sans le deviner.
 - L'IA juge le sens : le code fait-il ce que disent `ui.md` et les fiches ?
 - L'audit UI constate et ne corrige rien : élément sans code, code sans élément, écart entre le validé et le réel, doublons proches, valeurs en dur autres que les couleurs dans le code, écart entre `tokens.json` et les tokens du code, mots interdits par le glossaire, textes trop longs dans la langue la plus longue, accessibilité.
 
@@ -133,12 +144,10 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 
 ## Non-goals
 
-- Plusieurs design systems dans un projet, ou une app web et une app mobile avec deux systèmes.
+- Plusieurs design systems concurrents dans un projet : la personne choisit celui qui fait foi, les autres ne sont pas suivis.
 - Synchronisation dans les deux sens avec Figma ou Claude Design, et import de maquettes existantes.
 - Retour à une version précédente du design system.
 - Travail à plusieurs, et parcours pour un designer qui ne code pas.
-- Rendu du réel hors web.
-- Détection des valeurs en dur dans du code non web.
 
 ## Done-when
 
@@ -150,21 +159,25 @@ Deux axes, jamais mêlés : où en est le design, et quelle version le code impl
 - Chaque règle de vérification a un cas qui la fait échouer.
 - Sur Gouvernail et Kairos, le design system est extrait du code existant.
 
-## Open Questions
-
-- TBD: quel projet pilote pour le cas vierge, sachant que Gouvernail et Kairos, pilotes du cas existant, ont déjà une identité ? Gouvernail a déjà ses propres contrôles de tokens et aucune couleur en dur : il éprouve l'extraction facile, pas le cas d'une app qui dérive.
-
 ## Décisions pour les PR suivantes
 
 | PR | Décision |
 | --- | --- |
-| 2 | Un élément modifié sans montée de version se détecte en comparant à la version committée ; le moteur expose le graphe d'usages en JSON pour le rapport d'impact. |
-| 2 | Le flux de changement vit dans `01-system` : il régénère les rendus touchés, écrans compris, par une sous-commande du moteur, puis s'arrête et dit qu'une review est attendue, sans nommer le skill qui la conduit. |
-| 2 | Un composant Vue ou Svelte, qui n'a pas de nom exporté, se lie par son seul chemin, quand l'extraction en rencontre un. |
-| 3 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
-| 4 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
-| 5 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
-| 5 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |
+| 2 | Réalisé : la règle H8 compare un élément validé à l'empreinte que `publish <id>` écrit dans la ligne de sa version de `history.md` : sa fiche sans `status` ni `code`, son rendu, les octets du fichier d'un asset, et la valeur résolue de chaque token qu'il utilise dans chaque contexte de `tokens.css`. Un élément validé sans empreinte est une erreur ; un élément déprécié n'est tenu qu'à une empreinte écrite, un élément proposé à aucune. Aucune règle ne lit git. La sous-commande `impact` imprime le graphe d'usages en JSON (tokens, éléments, écrans, parcours, rendus, fichiers de code). |
+| 2 | Réalisé : le flux de changement vit dans `01-system`. Un rendu charge `../tokens.css` au lieu de porter les valeurs ; la sous-commande `tokens` régénère ce seul fichier, et le skill réécrit le balisage des rendus touchés, écrans compris, d'après le rapport d'impact. Il s'arrête en disant qu'une review est attendue, sans nommer le skill qui la conduit. |
+| 2 | Réalisé : `#Export` est facultatif pour toute techno, un composant Vue, Svelte ou Astro se lie par son chemin et sa version, sans cas particulier. Les couleurs d'un fichier sans lecteur propre sont cherchées dans ses chaînes, et une couleur écrite en nombres dans son code : un type de couleur (`Color`, `UIColor`) ou le `#colorLiteral` de Swift appelé avec un nombre en premier, nommé ou non, ou une propriété de couleur valant un nombre hexadécimal. Une ressource XML, comme le `colors.xml` d'Android, est lue en entier. Une constante de palette (`Colors.blue`) est un nom, comme un token : seule la résolution du nom l'en distinguerait, elle n'est pas trouvée. |
+| 3 | Le pilote du cas vierge est une app de respiration, web et mobile : elle éprouve les tokens de mouvement et de durée, la réduction des animations, des états riches et un thème sombre, qu'aucun pilote existant ne porte. Gouvernail a déjà ses propres contrôles de tokens et aucune couleur en dur : il éprouve l'extraction facile, pas le cas d'une app qui dérive. |
+| 4 | La page de review est un fichier statique : elle produit la fiche review à enregistrer, sans serveur. |
+| 4 | La vitrine bascule thème et plateforme sur son `<html>` par un sélecteur, et compare deux combinaisons dans deux cadres côte à côte ; son propre habillage est neutre, seuls les rendus portent les tokens du projet. |
+| 4 | La review couvre aussi les composants, pour qu'un composant puisse passer à validé. |
+| 4 | La review confronte le rendu à une capture de l'app réelle par état et par plateforme, posée à côté de la fiche avec la version qu'elle montre ; aidd-ui ne lance jamais l'app. La capture est exigée une fois l'écran codé. |
+| 4 | Un écran sans wireframe est un avertissement, qui propose d'en déduire un depuis l'écran ; jamais une erreur, un écran se dessinant sans parcours. |
+| 4 | `publish`, H6 et H8 couvrent les wireframes, validés par la même review que les écrans. |
+| 4 | Ce qui n'est pas encore validé se voit : la vitrine marque `proposed` chaque fiche qui l'est, wireframe, composant ou écran, et la page de review les liste ; une extraction depuis le code laisse tout `proposed`, l'existant n'étant jamais validé d'office. |
+| 4 | La vitrine est le point d'entrée de tout ce que l'UI génère, à la manière de Storybook : une page d'accueil et une page par fiche, sous une navigation commune groupée dans l'ordre du chemin (marque et tokens, composants par niveau, parcours, wireframes, écrans) ; chaque page relie ce qu'elle utilise et ce qui l'utilise, d'après l'impact, et la review cite la page d'un élément. Une page unique deviendrait illisible passé quelques dizaines de fiches. |
+| 5 | `ui.md` cite les éléments par `id@version`, pour que la vérification d'après code voie ce qui a bougé pendant la feature. |
+| 6 | `system.md` nomme le catalogue de traductions pour les textes trop longs ; l'audit d'une app existante part d'une base d'écarts acceptés, sinon il noie la personne. |
+| 6 | Tailwind et Storybook restent hors détection ; l'audit les nomme comme limites quand il les trouve. |
 
 ## Context
 

@@ -16,7 +16,7 @@ import { isFrameworkPrimeFlatMcp } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
 import { assertProjectPathWithinRoot } from "./project-path-boundary.js";
-import { planKiloTuiInstall, planKiloTuiRemoval } from "./tui/kilo-tui-config.js";
+import { planTuiInstall, planTuiRemoval } from "./tui/tui-config.js";
 import { detachUserPlugin } from "./user-plugin-ownership.js";
 
 export async function assertProjectTuiUnchanged(
@@ -29,10 +29,16 @@ export async function assertProjectTuiUnchanged(
   const tui = resolvePluginsCapability(toolId)?.startupTui;
   if (tui?.plugin !== plugin.name || plugin.scope !== "project")
     throw new Error(`${toolId}: cannot locate the owned TUI configuration.`);
-  await planKiloTuiInstall(fs, join(projectRoot, tui.directory), projectRoot, plugin.tuiPlugin);
+  await planTuiInstall(
+    fs,
+    join(projectRoot, tui.directory),
+    projectRoot,
+    tui.module,
+    plugin.tuiPlugin
+  );
 }
 
-export async function planProjectKiloTuiRemoval(
+export async function planProjectTuiRemoval(
   fs: FileReader,
   plugin: InstalledPlugin,
   toolId: AiToolId,
@@ -41,16 +47,22 @@ export async function planProjectKiloTuiRemoval(
   const tui = resolvePluginsCapability(toolId)?.startupTui;
   if (tui?.plugin !== plugin.name || plugin.scope !== "project" || plugin.tuiPlugin === undefined)
     return undefined;
-  return planKiloTuiRemoval(fs, join(projectRoot, tui.directory), projectRoot, plugin.tuiPlugin);
+  return planTuiRemoval(
+    fs,
+    join(projectRoot, tui.directory),
+    projectRoot,
+    tui.module,
+    plugin.tuiPlugin
+  );
 }
 
-export async function removeProjectKiloTui(
+export async function removeProjectTui(
   fs: FileReader & FileWriter,
   plugin: InstalledPlugin,
   toolId: AiToolId,
   projectRoot: string
 ): Promise<boolean> {
-  const plan = await planProjectKiloTuiRemoval(fs, plugin, toolId, projectRoot);
+  const plan = await planProjectTuiRemoval(fs, plugin, toolId, projectRoot);
   if (plan === undefined) return false;
   await fs.writeFile(plan.path, plan.content);
   return true;
@@ -102,7 +114,7 @@ export class ProjectPluginCleanup {
   ): Promise<void> {
     await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
     await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
-    await planProjectKiloTuiRemoval(this.fs, plugin, toolId, projectRoot);
+    await planProjectTuiRemoval(this.fs, plugin, toolId, projectRoot);
   }
 
   async removeLocalIntegration(
@@ -111,7 +123,7 @@ export class ProjectPluginCleanup {
     projectRoot: string
   ): Promise<void> {
     const mcpUpdate = await planProjectMcpRemoval(this.fs, plugin, toolId, projectRoot);
-    await removeProjectKiloTui(this.fs, plugin, toolId, projectRoot);
+    await removeProjectTui(this.fs, plugin, toolId, projectRoot);
     await removeProjectHooks(this.fs, plugin, toolId, projectRoot);
     if (mcpUpdate !== undefined) {
       await assertProjectPathWithinRoot(this.fs, projectRoot, mcpUpdate.output);

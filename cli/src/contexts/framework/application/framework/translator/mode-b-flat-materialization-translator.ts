@@ -18,11 +18,11 @@ import type { ReadonlySkipList } from "../../../../translate/domain/plugin-trans
 import type { Manifest } from "../../../domain/manifest.js";
 import {
   InstalledPlugin,
-  type KiloTuiProvenance,
   type PluginScope,
   type ProjectHooksProvenance,
+  type TuiPluginProvenance,
 } from "../../../domain/plugins/installed-plugin.js";
-import { planKiloTuiInstall } from "../../ownership/tui/kilo-tui-config.js";
+import { planTuiInstall } from "../../ownership/tui/tui-config.js";
 import { isPluginFileAtDesiredState } from "../../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
@@ -61,17 +61,23 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     userScopeDirTaken = false,
     previousProjectHooks?: ProjectHooksProvenance,
     hooksGuard: ProjectHooksGuard = {},
-    previousTui?: KiloTuiProvenance
+    previousTui?: TuiPluginProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
     const tui = resolvePluginsCapability(toolId)?.startupTui;
-    const isKiloTui = tui?.plugin === dist.manifest.name && !userScopeDirTaken;
+    const hasTuiEntry = tui?.plugin === dist.manifest.name && !userScopeDirTaken;
     previousTui ??= manifest
       .getPlugins(toolId)
       .find((p) => p.name === dist.manifest.name)?.tuiPlugin;
-    if (isKiloTui)
-      await planKiloTuiInstall(this.fs, join(projectRoot, tui.directory), projectRoot, previousTui);
+    if (hasTuiEntry)
+      await planTuiInstall(
+        this.fs,
+        join(projectRoot, tui.directory),
+        projectRoot,
+        tui.module,
+        previousTui
+      );
     const mcp = await materializeFlatMcp(
       this.fs,
       this.hasher,
@@ -104,11 +110,12 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       ctx.scope,
       manifest
     );
-    if (isKiloTui) {
-      const plan = await planKiloTuiInstall(
+    if (hasTuiEntry) {
+      const plan = await planTuiInstall(
         this.fs,
         join(projectRoot, tui.directory),
         projectRoot,
+        tui.module,
         previousTui
       );
       if (

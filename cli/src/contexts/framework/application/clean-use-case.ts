@@ -48,8 +48,8 @@ import {
 } from "./ownership/native-plugin-ownership.js";
 import {
   assertProjectMcpEntriesRemovable,
-  planProjectKiloTuiRemoval,
-  removeProjectKiloTui,
+  planProjectTuiRemoval,
+  removeProjectTui,
 } from "./ownership/project-plugin-cleanup.js";
 import { detachUserPlugin } from "./ownership/user-plugin-ownership.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
@@ -180,7 +180,7 @@ export class CleanUseCase {
           });
         }
         await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, options.projectRoot);
-        await planProjectKiloTuiRemoval(this.fs, plugin, toolId, options.projectRoot);
+        await planProjectTuiRemoval(this.fs, plugin, toolId, options.projectRoot);
       }
     }
     // Read the other projects before host cleanup, but keep this project's claim until every
@@ -702,7 +702,7 @@ export class CleanUseCase {
       count += await this.removeProjectHooksForTool(manifest, toolId, projectRoot, hooksGuard);
       if (isAiToolId(toolId)) {
         for (const plugin of manifest.getPlugins(toolId)) {
-          if (await removeProjectKiloTui(this.fs, plugin, toolId, projectRoot)) count++;
+          if (await removeProjectTui(this.fs, plugin, toolId, projectRoot)) count++;
         }
       }
     }

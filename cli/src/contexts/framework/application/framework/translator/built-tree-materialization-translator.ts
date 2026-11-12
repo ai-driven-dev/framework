@@ -23,10 +23,10 @@ import type { ReadonlySkipList } from "../../../../translate/domain/plugin-trans
 import type { Manifest } from "../../../domain/manifest.js";
 import {
   InstalledPlugin,
-  type KiloTuiProvenance,
   type ProjectHooksProvenance,
+  type TuiPluginProvenance,
 } from "../../../domain/plugins/installed-plugin.js";
-import { planKiloTuiInstall } from "../../ownership/tui/kilo-tui-config.js";
+import { planTuiInstall } from "../../ownership/tui/tui-config.js";
 import { isPluginFileAtDesiredState } from "../../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
@@ -63,7 +63,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     userScopeDirTaken = false,
     previousProjectHooks?: ProjectHooksProvenance,
     hooksGuard: ProjectHooksGuard = {},
-    previousTui?: KiloTuiProvenance
+    previousTui?: TuiPluginProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const resolved =
       marketplace === undefined ? null : await this.findMarketplace(marketplace, projectRoot);
@@ -83,12 +83,18 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       );
     }
     const tui = resolvePluginsCapability(toolId)?.startupTui;
-    const isKiloTui = tui?.plugin === dist.manifest.name && !userScopeDirTaken;
+    const hasTuiEntry = tui?.plugin === dist.manifest.name && !userScopeDirTaken;
     previousTui ??= manifest
       .getPlugins(toolId)
       .find((p) => p.name === dist.manifest.name)?.tuiPlugin;
-    if (isKiloTui)
-      await planKiloTuiInstall(this.fs, join(projectRoot, tui.directory), projectRoot, previousTui);
+    if (hasTuiEntry)
+      await planTuiInstall(
+        this.fs,
+        join(projectRoot, tui.directory),
+        projectRoot,
+        tui.module,
+        previousTui
+      );
     const mode = frameworkBuildModeFor(toolId);
     const { builtDir } = await this.ensureBuilt.execute({
       projectRoot,
@@ -133,11 +139,12 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const owned = userScopeDirTaken ? [] : files;
     const written = await this.writeChangedFiles(owned, baseDir);
     let tuiPlugin = previousTui;
-    if (isKiloTui) {
-      const plan = await planKiloTuiInstall(
+    if (hasTuiEntry) {
+      const plan = await planTuiInstall(
         this.fs,
         join(projectRoot, tui.directory),
         projectRoot,
+        tui.module,
         previousTui
       );
       if (

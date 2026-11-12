@@ -7,7 +7,6 @@ import {
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginSource } from "../../../../src/kernel/source.js";
-import type { AiToolId } from "../../../../src/kernel/tool.js";
 
 function fixture() {
   const source = { kind: "github" as const, repo: "ai-driven-dev/framework", ref: "v5.12.0" };
@@ -77,19 +76,16 @@ function fixture() {
     name === "aidd-context" ? "2.10.0" : "2.8.0"
   );
   const install = vi.fn(
-    async (options: { pluginName: string; toolIds: string[]; version: string }) => {
-      const id = options.toolIds[0] as "opencode" | "kilo";
+    async (options: { pluginName: string; toolId: string; targetVersion?: string }) => {
+      const id = options.toolId as "opencode" | "kilo";
       const previous = manifest.getPlugins(id).find((plugin) => plugin.name === options.pluginName);
       if (!previous) throw new Error("Missing installed plugin");
       const data = previous.toJSON();
       data.source.ref = "v5.13.0";
-      data.version = options.version;
+      data.version = options.targetVersion ?? "unknown";
       manifest.removePlugin(id, previous.name);
       manifest.addPlugin(id, InstalledPlugin.fromJSON(data));
     }
-  );
-  const preflight = vi.fn(
-    async (): Promise<{ impact: []; shared: boolean; tool?: AiToolId } | undefined> => undefined
   );
   const verifyImpact = vi.fn(async () => {});
   const sync = vi.fn(
@@ -98,6 +94,12 @@ function fixture() {
       binaryMissing: { toolId: string; binary: string }[];
       warnings: string[];
     }> => ({ errors: [], binaryMissing: [], warnings: [] })
+  );
+  const prepared = { impact: [], shared: false, install, sync, verifyImpact };
+  const preflight = vi.fn(
+    async (): Promise<
+      import("../../../../src/contexts/framework/application/release/framework-release-plan.js").FrameworkReleasePlan
+    > => prepared
   );
   const uc = new UpgradeFrameworkUseCase({
     listMarketplaces: list,
@@ -108,9 +110,6 @@ function fixture() {
     resolveTarget: resolve,
     readTargetVersion,
     preflight,
-    verifyImpact,
-    install,
-    sync,
   });
   return {
     uc,
@@ -124,6 +123,7 @@ function fixture() {
     readTargetVersion,
     install,
     preflight,
+    prepared,
     verifyImpact,
     sync,
   };
@@ -132,6 +132,73 @@ function fixture() {
 const accept = async () => true;
 
 describe("upgrade framework", () => {
+  it.each([
+    ["local source", { source: { kind: "local", path: "/another/framework" } }],
+    ["release", { source: { kind: "github", repo: "ai-driven-dev/framework", ref: "v5.99.0" } }],
+    [
+      "commit pin",
+      {
+        source: {
+          kind: "github",
+          repo: "ai-driven-dev/framework",
+          ref: "v5.12.0",
+          sha: "b".repeat(40),
+        },
+      },
+    ],
+    ["scope", { scope: "project" }],
+    ["removal", null],
+  ] as const)(
+    "refuses a marketplace %s change during confirmation before writing",
+    async (_change, patch) => {
+      const f = fixture();
+      const before = f.manifest.toJSON();
+      const changed = patch ? [Marketplace.fromJSON({ ...f.original.toJSON(), ...patch })] : [];
+      await expect(
+        f.uc.execute({
+          projectRoot: "/project",
+          release: "v5.13.0",
+          allowShared: true,
+          confirm: async () => {
+            f.list.mockResolvedValue(changed);
+            return true;
+          },
+        })
+      ).rejects.toThrow(/marketplace.*changed after the preview/i);
+      expect(f.saveMarketplace).not.toHaveBeenCalled();
+      expect(f.install).not.toHaveBeenCalled();
+      expect(f.sync).not.toHaveBeenCalled();
+      expect(f.manifest.toJSON()).toEqual(before);
+    }
+  );
+
+  it("does not reuse the old commit pin when selecting a newer release", async () => {
+    const f = fixture();
+    const pinned = Marketplace.fromJSON({
+      ...f.original.toJSON(),
+      source: {
+        kind: "github",
+        repo: "ai-driven-dev/framework",
+        ref: "v5.12.0",
+        sha: "a".repeat(40),
+      },
+    });
+    f.list.mockResolvedValue([pinned]);
+    await f.uc.execute({
+      projectRoot: "/project",
+      release: "v5.13.0",
+      allowShared: true,
+      confirm: async () => false,
+    });
+    expect(f.resolve).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: { kind: "github", repo: "ai-driven-dev/framework", ref: "v5.13.0" },
+      }),
+      "/project"
+    );
+    expect(f.saveMarketplace).not.toHaveBeenCalled();
+  });
+
   it("recognizes a global legacy plugin only from its exact official source", async () => {
     const f = fixture();
     const machine = Manifest.create();
@@ -247,7 +314,7 @@ describe("upgrade framework", () => {
     const f = fixture();
     f.manifest.addTool("claude", "5.6.0", []);
     f.manifest.addPlugin("claude", f.manifest.getPlugins("opencode")[0]);
-    f.preflight.mockResolvedValueOnce({ impact: [], shared: false, tool: "claude" });
+    f.preflight.mockResolvedValueOnce({ ...f.prepared, tool: "claude" });
     f.verifyImpact
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error("Claude installations changed"));
@@ -384,10 +451,12 @@ describe("upgrade framework", () => {
     expect(f.saveMarketplace).toHaveBeenCalledOnce();
     expect(f.saveMarketplace.mock.calls[0][1].version).toBe("5.13.0");
     expect(f.preflight).toHaveBeenCalledOnce();
-    expect(f.install.mock.calls.map(([options]) => [options.pluginName, options.toolIds])).toEqual([
-      ["aidd-context", ["opencode"]],
-      ["aidd-dev", ["kilo"]],
-    ]);
+    expect(f.install.mock.calls.map(([options]) => [options.pluginName, [options.toolId]])).toEqual(
+      [
+        ["aidd-context", ["opencode"]],
+        ["aidd-dev", ["kilo"]],
+      ]
+    );
     expect(f.sync).toHaveBeenCalledOnce();
     expect(result.updated).toEqual(["opencode:aidd-context", "kilo:aidd-dev"]);
   });

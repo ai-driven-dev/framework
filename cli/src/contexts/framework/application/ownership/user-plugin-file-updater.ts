@@ -6,7 +6,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
-import { compareSemver, isSemver } from "../../../../kernel/semver.js";
+import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import {
   frameworkBuildModeFor,
@@ -17,6 +17,7 @@ import {
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
+import { isOfficialReleasePluginSource } from "../../domain/plugins/plugin-source-resolver.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
@@ -35,7 +36,7 @@ import type {
   PinnedUserFramework,
   PinnedUserFrameworkResult,
 } from "./release/pinned-user-framework.js";
-import { planKiloTuiInstall } from "./tui/kilo-tui-config.js";
+import { planTuiInstall } from "./tui/tui-config.js";
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
@@ -84,11 +85,7 @@ export class UserPluginFileUpdater {
     const builder = session ?? this.builtDeps?.pinnedFramework;
     const pinned =
       prepared ??
-      (source.kind === "git-subdir" &&
-      source.url === "https://github.com/ai-driven-dev/framework.git" &&
-      source.path === `plugins/${plugin.name}` &&
-      source.ref?.startsWith("v") &&
-      isSemver(source.ref) &&
+      (isOfficialReleasePluginSource(source, plugin.name) &&
       frameworkBuildModeFor(toolId) === "flat" &&
       globalFilesOf(toolId) !== null &&
       builder !== undefined
@@ -103,17 +100,17 @@ export class UserPluginFileUpdater {
       : await this.materializeFiles(dist, toolId, plugin, cacheRoot);
     const home = (this.builtDeps?.homedir ?? nodeHomedir)();
     const tui = resolvePluginsCapability(toolId)?.startupTui;
-    const isKiloMaintenance = tui?.plugin === plugin.name;
+    const usesStartupTui = tui?.plugin === plugin.name;
     const hasTui = files.some((file) => file.relativePath === tui?.module);
     const baseDir = resolveBaseDirFromRecord("user", toolId, projectRoot, () => home);
-    if (isKiloMaintenance && plugin.tuiPlugin !== undefined && !hasTui) {
+    if (usesStartupTui && plugin.tuiPlugin !== undefined && !hasTui) {
       throw new Error(
         "Kilo TUI: the new plugin no longer contains the owned TUI module; update refused."
       );
     }
     const tuiPlan =
-      isKiloMaintenance && hasTui
-        ? await planKiloTuiInstall(this.fs, baseDir, home, plugin.tuiPlugin)
+      usesStartupTui && hasTui
+        ? await planTuiInstall(this.fs, baseDir, home, tui.module, plugin.tuiPlugin)
         : undefined;
     const oldSafe = await this.inspectOwnedFiles(
       plugin,
@@ -167,7 +164,13 @@ export class UserPluginFileUpdater {
     const tuiPlan =
       plan.next.tuiPlugin === undefined
         ? undefined
-        : await planKiloTuiInstall(this.fs, plan.baseDir, plan.home, plan.plugin.tuiPlugin);
+        : await planTuiInstall(
+            this.fs,
+            plan.baseDir,
+            plan.home,
+            plan.next.tuiPlugin.entry.slice(2),
+            plan.plugin.tuiPlugin
+          );
     if (tuiPlan !== undefined && tuiPlan.provenance.config !== plan.next.tuiPlugin?.config) {
       throw new Error("Kilo TUI: configuration changed since planning; update refused.");
     }
@@ -179,10 +182,11 @@ export class UserPluginFileUpdater {
       this.fs
     );
     if (tuiPlan !== undefined) {
-      const current = await planKiloTuiInstall(
+      const current = await planTuiInstall(
         this.fs,
         plan.baseDir,
         plan.home,
+        tuiPlan.provenance.entry.slice(2),
         plan.plugin.tuiPlugin
       );
       if (current.provenance.config !== plan.next.tuiPlugin?.config) {

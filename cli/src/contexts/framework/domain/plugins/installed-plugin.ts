@@ -41,9 +41,9 @@ export type ComponentPathMap = BrandedMap<"ComponentPathMap">;
 /** MCP server name → MD5 hash of the contributed server JSON (OpenCode merge tracking). */
 export type McpDigestMap = BrandedMap<"McpDigestMap">;
 
-export interface KiloTuiProvenance {
+export interface TuiPluginProvenance {
   readonly config: "tui.json" | "tui.jsonc";
-  readonly entry: "./hooks/aidd-maintenance/kilo-tui.js";
+  readonly entry: string;
 }
 
 /** Exact merged Cursor hook commands and copied project scripts recorded at install. */
@@ -81,7 +81,7 @@ export interface PluginEntryData {
   componentPaths?: Record<string, string>;
   mcpEntries?: Record<string, string>;
   projectHooks?: ProjectHooksEntryData;
-  tuiPlugin?: KiloTuiProvenance;
+  tuiPlugin?: TuiPluginProvenance;
   marketplace?: string;
   /** Canonical project roots using machine-owned user-scope files. Only the user manifest owns this list. */
   dependents?: string[];
@@ -97,7 +97,7 @@ export class InstalledPlugin {
   readonly componentPaths: ComponentPathMap;
   readonly mcpEntries: McpDigestMap;
   readonly projectHooks?: ProjectHooksProvenance;
-  readonly tuiPlugin?: KiloTuiProvenance;
+  readonly tuiPlugin?: TuiPluginProvenance;
   readonly marketplace?: string;
   readonly dependents: readonly string[];
 
@@ -111,7 +111,7 @@ export class InstalledPlugin {
     componentPaths: ComponentPathMap;
     mcpEntries: McpDigestMap;
     projectHooks?: ProjectHooksProvenance;
-    tuiPlugin?: KiloTuiProvenance;
+    tuiPlugin?: TuiPluginProvenance;
     marketplace?: string;
     dependents: readonly string[];
   }) {
@@ -301,7 +301,7 @@ export class InstalledPlugin {
     return this.files.has(relPath);
   }
 
-  withTuiPlugin(provenance: KiloTuiProvenance | undefined): InstalledPlugin {
+  withTuiPlugin(provenance: TuiPluginProvenance | undefined): InstalledPlugin {
     return InstalledPlugin.fromJSON({ ...this.toJSON(), tuiPlugin: provenance });
   }
 

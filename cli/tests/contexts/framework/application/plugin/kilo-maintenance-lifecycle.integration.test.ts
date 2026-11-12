@@ -154,9 +154,16 @@ describe("maintenance TUI project lifecycle", () => {
         localPath: "/release",
       }),
       readTargetVersion: async () => "1.0.1",
-      preflight: async () => assertProjectTuiUnchanged(deps.fs, plugin, "kilo", root),
-      install,
-      sync: async () => ({ warnings: [], errors: [], binaryMissing: [] }),
+      preflight: async () => {
+        await assertProjectTuiUnchanged(deps.fs, plugin, "kilo", root);
+        return {
+          impact: [],
+          shared: false,
+          verifyImpact: async () => {},
+          install,
+          sync: async () => ({ warnings: [], errors: [], binaryMissing: [] }),
+        };
+      },
     });
     await expect(
       upgrade.execute({

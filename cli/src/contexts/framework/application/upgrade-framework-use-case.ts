@@ -1,14 +1,18 @@
 import { compareSemver, isSemver } from "../../../kernel/semver.js";
-import type { PluginSource, PluginSourceGitSubdir } from "../../../kernel/source.js";
+import type { PluginSource } from "../../../kernel/source.js";
 import { type AiToolId, isAiToolId } from "../../../kernel/tool.js";
 import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../../distribution/domain/marketplace.js";
 import type { Manifest } from "../domain/manifest.js";
-import { resolvePluginSourceFromMarketplace } from "../domain/plugins/plugin-source-resolver.js";
-
-export interface FrameworkUpgradeTarget {
-  readonly toolId: AiToolId;
-  readonly pluginName: string;
-}
+import {
+  isOfficialReleasePluginSource,
+  resolvePluginSourceFromMarketplace,
+} from "../domain/plugins/plugin-source-resolver.js";
+import type {
+  FrameworkReleaseInput,
+  FrameworkReleasePlan,
+  FrameworkUpgradeTarget,
+  NativeReleaseInstallation,
+} from "./release/framework-release-plan.js";
 
 interface FrameworkUpgradePreviewTarget extends FrameworkUpgradeTarget {
   readonly currentRef: string;
@@ -30,13 +34,7 @@ export interface FrameworkUpgradePreview {
     source: PluginSource;
   }[];
   readonly shared: boolean;
-  readonly impact: readonly ClaudeInstallation[];
-}
-
-export interface ClaudeInstallation {
-  readonly ref: string;
-  readonly scope: "local" | "project" | "user";
-  readonly projectPath?: string;
+  readonly impact: readonly NativeReleaseInstallation[];
 }
 
 interface UpgradeDeps {
@@ -56,44 +54,7 @@ interface UpgradeDeps {
     localPath: string;
   }>;
   readTargetVersion(localPath: string, pluginName: string): Promise<string>;
-  preflight(
-    manifest: Manifest,
-    projectRoot: string,
-    targets: readonly FrameworkUpgradeTarget[],
-    marketplace: Marketplace,
-    localPath: string
-  ): Promise<void | {
-    impact: readonly ClaudeInstallation[];
-    shared: boolean;
-    source?: string;
-    tool?: AiToolId;
-  }>;
-  verifyImpact?(
-    projectRoot: string,
-    impact: readonly ClaudeInstallation[],
-    source?: string
-  ): Promise<void>;
-  install(options: {
-    pluginName: string;
-    version: string;
-    expectedSource: PluginSourceGitSubdir;
-    toolIds: AiToolId[];
-    projectRoot: string;
-    fromMarketplace: string;
-    interactive: boolean;
-    autoSelect: boolean;
-    replace: boolean;
-  }): Promise<void>;
-  sync(
-    projectRoot: string,
-    toolIds: readonly AiToolId[],
-    targets: readonly FrameworkUpgradeTarget[],
-    approvedRefs: readonly string[]
-  ): Promise<{
-    warnings: readonly string[];
-    errors: readonly { scope: string; message: string }[];
-    binaryMissing: readonly { toolId: string; binary: string }[];
-  }>;
+  preflight(input: FrameworkReleaseInput): Promise<FrameworkReleasePlan>;
 }
 
 export interface FrameworkUpgradeOptions {
@@ -117,6 +78,7 @@ export class UpgradeFrameworkUseCase {
       (m) => m.name === FRAMEWORK_MARKETPLACE_NAME
     );
     if (!marketplace) throw new Error("The AIDD marketplace is not registered for this project.");
+    const reviewedSource = JSON.stringify(marketplace.source);
     if (
       marketplace.source.kind !== "github" ||
       marketplace.source.repo !== "ai-driven-dev/framework"
@@ -126,7 +88,7 @@ export class UpgradeFrameworkUseCase {
       );
     }
     const currentRef = marketplace.source.ref;
-    if (!currentRef || !currentRef.startsWith("v") || !isSemver(currentRef)) {
+    if (!currentRef?.startsWith("v") || !isSemver(currentRef)) {
       throw new Error(
         "The AIDD marketplace source is a branch or unversioned; its release cannot be upgraded automatically."
       );
@@ -149,14 +111,7 @@ export class UpgradeFrameworkUseCase {
           continue;
         }
         const source = plugin.source;
-        if (
-          source.kind !== "git-subdir" ||
-          source.url !== "https://github.com/ai-driven-dev/framework.git" ||
-          source.path !== `plugins/${plugin.name}` ||
-          !source.ref ||
-          !source.ref.startsWith("v") ||
-          !isSemver(source.ref)
-        ) {
+        if (!isOfficialReleasePluginSource(source, plugin.name)) {
           throw new Error(
             `Cannot upgrade ${id}:${plugin.name}: its source is not a versioned official AIDD plugin.`
           );
@@ -183,13 +138,13 @@ export class UpgradeFrameworkUseCase {
       throw new Error(`Release ${release} is not available from the configured source.`);
     const nextData = marketplace.toJSON();
     nextData.source = { ...marketplace.source, ref: release };
+    if (release !== currentRef) delete nextData.source.sha;
     delete nextData.version;
     delete nextData.lastFetched;
     const next = Marketplace.fromJSON(nextData);
     const { catalog, localPath } = await this.deps.resolveTarget(next, projectRoot);
     if (
-      !catalog ||
-      !catalog.version ||
+      !catalog?.version ||
       !isSemver(catalog.version) ||
       compareSemver(catalog.version, release) !== 0
     ) {
@@ -209,12 +164,7 @@ export class UpgradeFrameworkUseCase {
       const entry = catalog.plugins.find((plugin) => plugin.name === target.pluginName);
       if (!entry) throw new Error(`Cannot verify source of ${target.pluginName}.`);
       const resolved = resolvePluginSourceFromMarketplace(entry.source, next, localPath);
-      if (
-        resolved.kind !== "git-subdir" ||
-        resolved.url !== "https://github.com/ai-driven-dev/framework.git" ||
-        resolved.path !== `plugins/${target.pluginName}` ||
-        resolved.ref !== release
-      )
+      if (!isOfficialReleasePluginSource(resolved, target.pluginName) || resolved.ref !== release)
         throw new Error(`Cannot verify source of ${target.pluginName} in ${release}.`);
       let targetVersion = versions.get(target.pluginName);
       if (targetVersion === undefined) {
@@ -234,7 +184,14 @@ export class UpgradeFrameworkUseCase {
         );
       previewTargets.push({ ...target, targetVersion });
     }
-    const preflight = await this.deps.preflight(manifest, projectRoot, targets, next, localPath);
+    const preflight = await this.deps.preflight({
+      manifest,
+      projectRoot,
+      targets: previewTargets,
+      marketplace: next,
+      localPath,
+      catalog,
+    });
     const userManifest = await this.deps.loadUserManifest?.();
     const globalPlugins = (userManifest?.getInstalledToolIds() ?? []).flatMap((toolId) =>
       !isAiToolId(toolId)
@@ -262,8 +219,8 @@ export class UpgradeFrameworkUseCase {
           (entry) => entry.toolId === ref.toolId && entry.pluginName === ref.pluginName
         )
     ).length;
-    const impact = preflight?.impact ?? [];
-    const shared = marketplace.scope === "user" || preflight?.shared === true;
+    const impact = preflight.impact;
+    const shared = marketplace.scope === "user" || preflight.shared;
     if (
       !(await confirm({
         currentRef,
@@ -284,35 +241,29 @@ export class UpgradeFrameworkUseCase {
         "The AIDD marketplace is shared with other projects; pass --allow-shared after reviewing the impact."
       );
     }
-    await this.deps.verifyImpact?.(projectRoot, impact, preflight?.source);
+    await preflight.verifyImpact();
+    const currentMarketplace = (await this.deps.listMarketplaces(projectRoot)).find(
+      (entry) => entry.name === FRAMEWORK_MARKETPLACE_NAME
+    );
+    if (
+      !currentMarketplace ||
+      currentMarketplace.scope !== marketplace.scope ||
+      JSON.stringify(currentMarketplace.source) !== reviewedSource
+    )
+      throw new Error("The AIDD marketplace changed after the preview; review the update again.");
     nextData.version = catalog.version;
     await this.deps.saveMarketplace(projectRoot, Marketplace.fromJSON(nextData));
     const updated: string[] = [];
     let nativeChecked = false;
     try {
       for (const target of previewTargets) {
-        if (target.toolId === preflight?.tool && !nativeChecked) {
-          await this.deps.verifyImpact?.(projectRoot, impact, preflight?.source);
+        if (target.toolId === preflight.tool && !nativeChecked) {
+          await preflight.verifyImpact();
           nativeChecked = true;
         }
         if (target.targetVersion === undefined)
           throw new Error(`Cannot verify ${target.pluginName} version.`);
-        await this.deps.install({
-          pluginName: target.pluginName,
-          version: target.targetVersion,
-          expectedSource: {
-            kind: "git-subdir",
-            url: "https://github.com/ai-driven-dev/framework.git",
-            path: `plugins/${target.pluginName}`,
-            ref: release,
-          },
-          toolIds: [target.toolId],
-          projectRoot,
-          fromMarketplace: FRAMEWORK_MARKETPLACE_NAME,
-          interactive: false,
-          autoSelect: true,
-          replace: true,
-        });
+        await preflight.install(target);
         const installed = (await this.deps.loadManifest())
           ?.getPlugins(target.toolId)
           .find((plugin) => plugin.name === target.pluginName);
@@ -332,12 +283,7 @@ export class UpgradeFrameworkUseCase {
         }
         updated.push(`${target.toolId}:${target.pluginName}`);
       }
-      const activation = await this.deps.sync(
-        projectRoot,
-        [...new Set(targets.map((target) => target.toolId))],
-        targets,
-        [...new Set(impact.map((entry) => entry.ref))]
-      );
+      const activation = await preflight.sync();
       if (
         activation.errors.length ||
         activation.binaryMissing.length ||

@@ -42,7 +42,9 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/update_memory.js` |
+| `SessionStart` | `hooks/memory.cjs` |
+| `PostToolUse` | `hooks/memory.cjs` |
+| `Stop` | `hooks/memory.cjs` |
 
 <!--extras-aidd-context:end-->
 
@@ -130,11 +132,14 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 🎨 aidd-ui
 
-🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently a smoke-test only.
+🚧 **Alpha, not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently maps journeys and wireframes, and lays and changes the brand, tokens and components.
 
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
-| `01-hello` | Smoke-test that confirms the plugin loads | `01-greet` |
+| `01-journeys` | Write a persona's journeys and the wireframe of each screen they cross | `01-prepare`, `02-write`, `03-conclude` |
+| `02-brand` | Write a project's brand, from its code or from scratch, or evolve it, by comparing directions | `01-prepare`, `02-propose`, `03-choose`, `04-conclude` |
+| `03-foundations` | Lay the system and tokens, from nothing or from the code, and carry a token change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
+| `04-components` | Write components and assets, from nothing or from the code, and carry a component change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
 
 <!--extras-aidd-ui:start-->
 
@@ -142,9 +147,9 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/ui-hook.cjs` |
-| `PostToolUse` | `hooks/ui-hook.cjs` |
-| `Stop` | `hooks/ui-hook.cjs` |
+| `SessionStart` | `hooks/aidd-ui.cjs` |
+| `PostToolUse` | `hooks/aidd-ui.cjs` |
+| `Stop` | `hooks/aidd-ui.cjs` |
 
 <!--extras-aidd-ui:end-->
 

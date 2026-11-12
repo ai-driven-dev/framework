@@ -1,6 +1,21 @@
 import { isAbsolute, relative } from "node:path";
+import { isSemver } from "../../../../kernel/semver.js";
 import type { PluginSource, PluginSourceGitSubdir } from "../../../../kernel/source.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
+
+export function isOfficialReleasePluginSource(
+  source: PluginSource,
+  pluginName: string
+): source is PluginSourceGitSubdir & { readonly ref: string } {
+  return (
+    source.kind === "git-subdir" &&
+    source.url === "https://github.com/ai-driven-dev/framework.git" &&
+    source.path === `plugins/${pluginName}` &&
+    source.ref?.startsWith("v") === true &&
+    isSemver(source.ref)
+  );
+}
+
 export function resolvePluginSourceFromMarketplace(
   entrySource: PluginSource,
   marketplace: Marketplace,

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { opencodeGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-paths.js";
+import { opencodeGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
 import { globalFilesOf } from "../../../../../../src/contexts/tools/domain/registry.js";
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };
@@ -15,6 +15,14 @@ describe("opencodeGlobalFilePath — what a machine-scope install copies into Op
     ],
     [".opencode/plugins/aidd-maintenance-tui/server.js", "plugins/aidd-maintenance-tui/server.js"],
     [".opencode/plugins/aidd-maintenance-tui/tui.js", "plugins/aidd-maintenance-tui/tui.js"],
+    [
+      ".opencode/hooks/aidd-maintenance/lib/releases.cjs",
+      "hooks/aidd-maintenance/lib/releases.cjs",
+    ],
+    [
+      ".opencode/hooks/aidd-maintenance/update-native.cjs",
+      "hooks/aidd-maintenance/update-native.cjs",
+    ],
   ])("installs maintenance's own startup file %s machine-wide", (built, expected) => {
     expect(opencodeGlobalFilePath(built, MAINTENANCE)).toBe(expected);
     expect(opencodeGlobalFilePath(built, AIDD_DEV)).toBeNull();

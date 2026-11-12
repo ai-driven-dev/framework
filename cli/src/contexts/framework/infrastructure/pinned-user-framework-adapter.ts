@@ -18,7 +18,10 @@ import type {
 } from "../application/ownership/release/pinned-user-framework.js";
 import type { FrameworkBuildFor } from "../application/shared/ensure-built-marketplace-use-case.js";
 import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
-import { resolvePluginSourceFromMarketplace } from "../domain/plugins/plugin-source-resolver.js";
+import {
+  isOfficialReleasePluginSource,
+  resolvePluginSourceFromMarketplace,
+} from "../domain/plugins/plugin-source-resolver.js";
 import type { PluginDistributionReader } from "../domain/ports/plugin-distribution-reader.js";
 
 const execFile = promisify(execFileCallback);
@@ -116,12 +119,7 @@ export class PinnedUserFrameworkAdapter implements PinnedUserFramework {
       addedAt: "1970-01-01T00:00:00.000Z",
     });
     const resolved = resolvePluginSourceFromMarketplace(entry.source, marketplace, checkout);
-    if (
-      resolved.kind !== "git-subdir" ||
-      resolved.url !== "https://github.com/ai-driven-dev/framework.git" ||
-      resolved.path !== `plugins/${pluginName}` ||
-      resolved.ref !== ref
-    )
+    if (!isOfficialReleasePluginSource(resolved, pluginName) || resolved.ref !== ref)
       throw new Error(`Release ${ref} has an unverified source for '${pluginName}'.`);
     const dist = await this.plugins.read(join(checkout, "plugins", pluginName));
     if (

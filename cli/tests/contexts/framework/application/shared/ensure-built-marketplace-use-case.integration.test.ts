@@ -614,7 +614,6 @@ describe("force behavior at the cache-rebuild path", () => {
       const assetProvider = stubAssetProvider();
       const strategy = new FlatBuildStrategy(
         memFs,
-        validator,
         assetProvider,
         buildCopilotFlatContract(),
         true, // force:true — mirrors deps.ts wiring for every *:flat target

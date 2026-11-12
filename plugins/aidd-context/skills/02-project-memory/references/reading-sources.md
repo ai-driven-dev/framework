@@ -1,45 +1,35 @@
 # Reading sources
 
-What the scan reads to understand the project, and what survives the reading. Read widely, keep
-little: `memory-rules.md` wants a small file, and most of what a repository shows is re-derivable by
-opening it again.
-
 ## Read in this order
 
-| Source                                       | Answers                                      |
-| -------------------------------------------- | -------------------------------------------- |
-| the manifest, and a lockfile beside it        | the stack, the workspaces, the published name |
-| the root README, then any `docs/`             | what it does, for whom, its domain words      |
-| the top-level directories                     | the shape, and which areas own what           |
-| the entry points the manifest declares        | where execution starts                        |
-| every file under the VCS platform's own directory | how it ships, and what runs on its own schedule |
-| the test configuration and one test file      | the layers, the tools, the conventions        |
-| the code, area by area                        | what the writing above got wrong              |
+| Order | Source | Answers |
+| --- | --- | --- |
+| 1 | the manifests, the workspace file and a lockfile | the stack, the packages by name, the published name |
+| 2 | the root README, then any `docs/` | what it does, for whom, its domain words |
+| 3 | the top-level directories | the shape, who owns what |
+| 4 | the entry points the manifests declare | where execution starts |
+| 5 | every file under the VCS platform's own directory | how it ships, what runs on a schedule |
+| 6 | what runs before a commit or a push, and the task commands | the gate commands |
+| 7 | the commit message rules, the contribution guide, and the AI instructions and rules the project holds outside the memory and its synced block | the allowed commit types, which conventions a rule already covers |
+| 8 | the test configuration, one test file | the layers, the tools, the conventions |
+| 9 | the code, area by area | what the docs above got wrong |
 
-Stop at the first source that answers a question. Read the code last: it is the most expensive and
-the least quotable, and it exists to correct the others, not to be summarised.
+## Reading rules
 
-## Keep or drop
+| Case | Do |
+| --- | --- |
+| A fact read | kept only if the reader rules of [memory-rules](memory-rules.md) keep it |
+| A command or a convention | take it from the file that defines it, as an `R` line; prose that names one is checked against that file |
+| The root README | read it whole, and the other docs a section needs |
+| The code | read it last: it corrects the others and is never summarised |
+| A monorepo | read every workspace, never the root manifest alone |
+| A directory whose name repeats across areas | read it once |
+| A dependency directory, a build output, or a path the VCS ignores | read nothing under it |
 
-This table judges what the reading yields, never what a memory file already holds. A line the user
-wrote stays whatever the verdicts below say.
+## Filling the sheet
 
-| Signal                                                        | Verdict |
-| ------------------------------------------------------------- | ------- |
-| a decision, and the constraint behind it                      | keep    |
-| a convention the files repeat without stating                 | keep    |
-| a gotcha, a trap, a thing that surprises a newcomer           | keep    |
-| the stack, and how the main parts fit                         | keep    |
-| the domain words a contributor must know to read the code     | keep    |
-| a fact one open file re-derives                               | drop    |
-| a file tree, a schema, a dependency list                      | drop    |
-| a version number                                              | drop    |
-| anything true of every project built this way                 | drop    |
-| a work item, a live value, a technical id                     | drop    |
-| a plan, a wish, a thing not shipped                           | drop    |
-
-## Depth
-
-- Every workspace of a monorepo, never the root manifest alone.
-- A directory whose name repeats across areas is read once, not per area.
-- Nothing under a dependency directory, a build output, or a path the VCS ignores.
+| Slot | Fill |
+| --- | --- |
+| One the bank answers | skip it |
+| Any other | every fact the sources state for it, one line each: each gate, decision, gotcha, rule and release step |
+| The brief's `Users`, `Main journey` and `Business rules` | only what the repository states, else a `Q` line, never invented; a setup collects them, a refresh never adds them |

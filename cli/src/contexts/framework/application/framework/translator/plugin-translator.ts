@@ -29,6 +29,6 @@ export interface PluginTranslator {
     userScopeDirTaken?: boolean,
     previousProjectHooks?: ProjectHooksProvenance,
     hooksGuard?: ProjectHooksGuard,
-    previousTui?: import("../../../domain/plugins/installed-plugin.js").KiloTuiProvenance
+    previousTui?: import("../../../domain/plugins/installed-plugin.js").TuiPluginProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }>;
 }

@@ -9,6 +9,8 @@ export interface FileReader {
   fileExists(path: string): Promise<boolean>;
   /** Whether a directory entry exists, including a dangling symbolic link; required for restoration. */
   entryExists?(path: string): Promise<boolean>;
+  /** Reject a directory the current process cannot write before an update changes ownership. */
+  assertWritableDirectory?(path: string): Promise<void>;
   readFileHash(path: string): Promise<FileHash>;
   listFilesRecursive(dirPath: string): Promise<string[]>;
 

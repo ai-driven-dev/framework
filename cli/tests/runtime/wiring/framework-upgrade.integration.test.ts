@@ -8,12 +8,13 @@ import { ResolveMarketplaceUseCase } from "../../../src/contexts/distribution/ap
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceRegistryAdapter } from "../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
 import { PluginFetcherAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { PluginInstallFromMarketplaceUseCase } from "../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
+import { PluginAddUseCase } from "../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { EnsureBuiltMarketplaceUseCase } from "../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { recordedProjectHookEntries } from "../../../src/contexts/framework/application/shared/remove-project-hooks.js";
 import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import { antigravityProjectHooksFormat } from "../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
+import { projectHooksDeliveryOf } from "../../../src/contexts/tools/domain/registry.js";
+import { NativePluginCliAdapter } from "../../../src/contexts/tools/infrastructure/native-plugin-cli-adapter.js";
 import { FileHash, InstallationFile } from "../../../src/kernel/file.js";
 import { FileAdapter } from "../../../src/runtime/filesystem/file-adapter.js";
 import { CurrentVersionAdapter } from "../../../src/runtime/self-update/current-version-adapter.js";
@@ -43,6 +44,22 @@ describe("framework release update wiring", () => {
     const pluginManifest = join(root, "plugins/aidd-context/.claude-plugin/plugin.json");
     await mkdir(dirname(pluginManifest), { recursive: true });
     await writeFile(pluginManifest, JSON.stringify({ name: "aidd-context", version: "2.10.0" }));
+    await mkdir(join(root, ".claude-plugin"), { recursive: true });
+    await writeFile(
+      join(root, ".claude-plugin/marketplace.json"),
+      JSON.stringify({
+        name: "aidd-framework",
+        version: "5.13.0",
+        plugins: [
+          {
+            name: "aidd-context",
+            source: "./plugins/aidd-context",
+            description: "Context skills",
+            strict: true,
+          },
+        ],
+      })
+    );
     vi.spyOn(GitHubReleaseResolverAdapter.prototype, "resolvePublishedRelease").mockResolvedValue({
       title: "Release title",
     });
@@ -143,7 +160,7 @@ describe("framework release update wiring", () => {
       await mkdir(dirname(untouched), { recursive: true });
       await writeFile(untouched, "user settings");
       const install = vi
-        .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+        .spyOn(PluginAddUseCase.prototype, "execute")
         .mockRejectedValue(new Error("installation must not start"));
 
       await expect(
@@ -235,7 +252,7 @@ describe("framework release update wiring", () => {
       const beforeMarketplace = await readFile(marketplace, "utf8");
       const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
       const install = vi
-        .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+        .spyOn(PluginAddUseCase.prototype, "execute")
         .mockRejectedValue(new Error("installation must not start"));
 
       await expect(
@@ -310,7 +327,7 @@ describe("framework release update wiring", () => {
       })
     );
     const install = vi
-      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .spyOn(PluginAddUseCase.prototype, "execute")
       .mockRejectedValue(new Error("installation reached"));
     await expect(
       deps.upgradeFrameworkUseCase.execute({
@@ -383,7 +400,7 @@ describe("framework release update wiring", () => {
     const beforeMarketplace = await readFile(marketplace, "utf8");
     const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
     const install = vi
-      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .spyOn(PluginAddUseCase.prototype, "execute")
       .mockRejectedValue(new Error("installation must not start"));
     await expect(
       deps.upgradeFrameworkUseCase.execute({
@@ -392,7 +409,7 @@ describe("framework release update wiring", () => {
         allowShared: true,
         confirm,
       })
-    ).rejects.toThrow(/Cannot verify Claude marketplace identity/);
+    ).rejects.toThrow(/Cannot verify .* marketplace identity/);
     expect(confirm).not.toHaveBeenCalled();
     expect(install).not.toHaveBeenCalled();
     expect(await readFile(marketplace, "utf8")).toBe(beforeMarketplace);
@@ -474,7 +491,7 @@ describe("framework release update wiring", () => {
     const before = await readFile(registry, "utf8");
     const beforeManifest = JSON.stringify((await deps.manifestRepo.load())?.toJSON());
     const install = vi
-      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .spyOn(PluginAddUseCase.prototype, "execute")
       .mockRejectedValue(new Error("installation must not start"));
     await expect(
       deps.upgradeFrameworkUseCase.execute({
@@ -554,7 +571,7 @@ describe("framework release update wiring", () => {
         allowShared: true,
         confirm,
       })
-    ).rejects.toThrow(/Cannot verify Claude marketplace source/);
+    ).rejects.toThrow(/Cannot verify .* marketplace source/);
     expect(confirm).not.toHaveBeenCalled();
     expect(await readFile(registry, "utf8")).toBe(before);
   });
@@ -589,7 +606,7 @@ describe("framework release update wiring", () => {
     const marketplace = join(root, ".aidd/marketplaces.json");
     const before = await readFile(marketplace, "utf8");
     const install = vi
-      .spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute")
+      .spyOn(PluginAddUseCase.prototype, "execute")
       .mockRejectedValue(new Error("installation must not start"));
     await expect(
       deps.upgradeFrameworkUseCase.execute({
@@ -762,6 +779,39 @@ describe("framework release update wiring", () => {
     expect((await deps.manifestRepo.load())?.getPlugins("opencode")).toHaveLength(0);
   });
 
+  it("refuses an installation changed during confirmation before moving the marketplace", async () => {
+    await fixtureDistribution();
+    const deps = await seed("opencode");
+    const registry = join(root, ".aidd/marketplaces.json");
+    const before = await readFile(registry, "utf8");
+    await expect(
+      deps.upgradeFrameworkUseCase.execute({
+        projectRoot: root,
+        release: "v5.13.0",
+        allowShared: false,
+        confirm: async () => {
+          const manifest = await deps.manifestRepo.load();
+          const plugin = manifest?.getPlugins("opencode")[0];
+          if (!manifest || !plugin) throw new Error("missing plugin");
+          manifest.updatePlugin(
+            "opencode",
+            InstalledPlugin.fromJSON({
+              ...plugin.toJSON(),
+              source: { kind: "local", path: "/other-source" },
+            })
+          );
+          await deps.manifestRepo.save(manifest);
+          return true;
+        },
+      })
+    ).rejects.toThrow(/changed after the preview/);
+    expect(await readFile(registry, "utf8")).toBe(before);
+    expect((await deps.manifestRepo.load())?.getPlugins("opencode")[0]?.source).toEqual({
+      kind: "local",
+      path: "/other-source",
+    });
+  });
+
   it("refuses an edited shared OpenCode MCP contribution before changing the source", async () => {
     const edited = JSON.stringify({ mcp: { mine: { type: "remote" } } });
     const file = join(root, "opencode.json");
@@ -932,17 +982,7 @@ describe("framework release update wiring", () => {
   it("does not report an update when an installer fails to record the requested release", async () => {
     await fixtureDistribution();
     const deps = await seed("opencode");
-    const [marketplace] = await new MarketplaceRegistryAdapter().list(root);
-    if (!marketplace) throw new Error("missing marketplace");
-    vi.spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute").mockResolvedValue({
-      marketplace,
-      entry: {
-        name: "aidd-context",
-        source: { kind: "local", path: "plugins/aidd-context" },
-        recommended: false,
-        strict: true,
-      },
-    });
+    vi.spyOn(PluginAddUseCase.prototype, "execute").mockResolvedValue();
     await expect(
       deps.upgradeFrameworkUseCase.execute({
         projectRoot: root,
@@ -963,22 +1003,9 @@ describe("framework release update wiring", () => {
     await mkdir(dirname(oldPath), { recursive: true });
     await writeFile(oldPath, "still-owned content");
     const deps = await seed("opencode", { files: { [oldRel]: hash("still-owned content") } });
-    const [marketplace] = await new MarketplaceRegistryAdapter().list(root);
-    if (!marketplace) throw new Error("missing marketplace");
-    vi.spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute").mockImplementation(
-      async () => {
-        await deps.manifestRepo.delete();
-        return {
-          marketplace,
-          entry: {
-            name: "aidd-context",
-            source: { kind: "local", path: "plugins/aidd-context" },
-            recommended: false,
-            strict: true,
-          },
-        };
-      }
-    );
+    vi.spyOn(PluginAddUseCase.prototype, "execute").mockImplementation(async () => {
+      await deps.manifestRepo.delete();
+    });
     await expect(
       deps.upgradeFrameworkUseCase.execute({
         projectRoot: root,
@@ -1041,30 +1068,17 @@ describe("framework release update wiring", () => {
       await mkdir(dirname(oldPath), { recursive: true });
       await writeFile(oldPath, "still-owned content");
       const deps = await seed("opencode", { files: { [oldRel]: hash("still-owned content") } });
-      const [marketplace] = await new MarketplaceRegistryAdapter().list(root);
-      if (!marketplace) throw new Error("missing marketplace");
-      vi.spyOn(PluginInstallFromMarketplaceUseCase.prototype, "execute").mockImplementation(
-        async () => {
-          const manifest = await deps.manifestRepo.load();
-          if (!manifest) throw new Error("missing manifest");
-          const [old] = manifest.getPlugins("opencode");
-          if (!old) throw new Error("missing plugin");
-          manifest.updatePlugin(
-            "opencode",
-            InstalledPlugin.fromJSON({ ...old.toJSON(), version, source, files: {} })
-          );
-          await deps.manifestRepo.save(manifest);
-          return {
-            marketplace,
-            entry: {
-              name: "aidd-context",
-              source: { kind: "local", path: "plugins/aidd-context" },
-              recommended: false,
-              strict: true,
-            },
-          };
-        }
-      );
+      vi.spyOn(PluginAddUseCase.prototype, "execute").mockImplementation(async () => {
+        const manifest = await deps.manifestRepo.load();
+        if (!manifest) throw new Error("missing manifest");
+        const [old] = manifest.getPlugins("opencode");
+        if (!old) throw new Error("missing plugin");
+        manifest.updatePlugin(
+          "opencode",
+          InstalledPlugin.fromJSON({ ...old.toJSON(), version, source, files: {} })
+        );
+        await deps.manifestRepo.save(manifest);
+      });
       await expect(
         deps.upgradeFrameworkUseCase.execute({
           projectRoot: root,
@@ -1076,6 +1090,80 @@ describe("framework release update wiring", () => {
       expect(await readFile(oldPath, "utf8")).toBe("still-owned content");
     }
   );
+
+  it("activates a native release from the prepared build without network or rebuilding after approval", async () => {
+    const deps = await seed("claude");
+    const ref = "aidd-context@aidd-framework";
+    const registry = join(root, "home/.claude/plugins/installed_plugins.json");
+    await writeFile(
+      registry,
+      JSON.stringify({ plugins: { [ref]: [{ scope: "local", projectPath: root }] } })
+    );
+    const build = vi.spyOn(EnsureBuiltMarketplaceUseCase.prototype, "execute");
+    const fetch = vi
+      .spyOn(PluginFetcherAdapter.prototype, "fetch")
+      .mockRejectedValue(new Error("unexpected network"));
+    vi.spyOn(NativePluginCliAdapter.prototype, "isAvailable").mockReturnValue(true);
+    vi.spyOn(NativePluginCliAdapter.prototype, "enablesPlugins").mockReturnValue(true);
+    vi.spyOn(NativePluginCliAdapter.prototype, "registrationState").mockReturnValue("live");
+    vi.spyOn(NativePluginCliAdapter.prototype, "addMarketplace").mockImplementation(() => {});
+    vi.spyOn(NativePluginCliAdapter.prototype, "removeMarketplace").mockImplementation(() => {
+      throw new Error("unexpected removal");
+    });
+    vi.spyOn(NativePluginCliAdapter.prototype, "upgradeMarketplaces").mockImplementation(() => {});
+    vi.spyOn(NativePluginCliAdapter.prototype, "enablePlugin").mockImplementation(() => {});
+    const refresh = vi
+      .spyOn(NativePluginCliAdapter.prototype, "refreshReleasePlugin")
+      .mockImplementation(() => {});
+    const result = await deps.upgradeFrameworkUseCase.execute({
+      projectRoot: root,
+      release: "v5.13.0",
+      allowShared: false,
+      confirm: async () => {
+        await rm(join(root, "plugins"), { recursive: true });
+        build.mockRejectedValue(new Error("must not rebuild after confirmation"));
+        return true;
+      },
+    });
+    expect(result.updated).toEqual(["claude:aidd-context"]);
+    expect(refresh).toHaveBeenCalledExactlyOnceWith(ref, "project", root);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(build).toHaveBeenCalledOnce();
+    const installed = JSON.parse(
+      await readFile(
+        join(
+          root,
+          ".aidd/cache/built/aidd-framework/claude/plugins/aidd-context/.claude-plugin/plugin.json"
+        ),
+        "utf8"
+      )
+    );
+    expect(installed.version).toBe("2.10.0");
+  });
+
+  it("applies the prepared release even if its source and build cache change during confirmation", async () => {
+    const { rel, updated } = await fixtureDistribution();
+    const deps = await seed("opencode");
+    const fetch = vi.mocked(PluginFetcherAdapter.prototype.fetch);
+    const build = vi.mocked(EnsureBuiltMarketplaceUseCase.prototype.execute);
+    const result = await deps.upgradeFrameworkUseCase.execute({
+      projectRoot: root,
+      release: "v5.13.0",
+      allowShared: false,
+      confirm: async () => {
+        // Both inputs were reviewed already. Applying must consume the snapshot, not reread them.
+        await writeFile(join(root, "built", rel), "changed after preview");
+        await rm(join(root, "plugins"), { recursive: true });
+        fetch.mockRejectedValue(new Error("network unavailable after confirmation"));
+        build.mockRejectedValue(new Error("must not rebuild after confirmation"));
+        return true;
+      },
+    });
+    expect(result.updated).toEqual(["opencode:aidd-context"]);
+    expect(await readFile(join(root, rel), "utf8")).toBe(updated);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(build).toHaveBeenCalledOnce();
+  });
 
   it("updates only the recorded tool and its existing tracked file", async () => {
     const { rel, updated } = await fixtureDistribution();
@@ -1292,6 +1380,8 @@ describe("framework release update wiring", () => {
     }
     const sharedHooks = join(root, ".agents/hooks.json");
     await mkdir(dirname(sharedHooks), { recursive: true });
+    const antigravityProjectHooksFormat = projectHooksDeliveryOf("antigravity")?.format;
+    if (!antigravityProjectHooksFormat) throw new Error("Missing Antigravity hooks delivery");
     const sharedContent = antigravityProjectHooksFormat.merge(
       JSON.stringify({ user: { SessionStart: [{ command: "echo user" }] } }),
       hooksJson,

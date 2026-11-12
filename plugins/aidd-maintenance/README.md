@@ -11,13 +11,15 @@ Use the update skill to inspect project and global installations, choose a relea
 | Tool | AIDD native marketplace | Startup evidence |
 | --- | --- | --- |
 | Claude Code 2.1.318 | Yes | Message shown at startup |
-| Codex 0.166.0 | Yes | Message shown after the first prompt; not in `exec --json` |
+| Codex 0.167.2 | Yes | Message shown after the first prompt; not in `exec --json` |
 | Cursor Agent | Yes | Display unverified: test account reached its usage limit |
 | GitHub Copilot CLI | Yes | Message shown in TUI; the binary reports 1.0.98 and the interface 1.0.105 |
 | OpenCode 2.2.5 | No | Toast at TUI launch and resume; `aidd run` also shows a headless notice |
 | Kilo Code 7.8.18 | No | Toast at TUI launch and resume; `aidd run` also shows a headless notice |
 
-After inventory and confirmation, the skill can update CLI-managed project installations and global OpenCode/Kilo installations pinned to an official release. Cursor's CLI-managed installation is user-scoped: changing its pinned source is not yet supported. Direct native updates depend on the host's marketplace commands; a catalogue refresh alone does not verify installed plugins.
+After inventory and confirmation, the skill can update CLI-managed project installations and global OpenCode/Kilo installations pinned to an official release. Project updates install the content prepared for review without fetching or building it again after confirmation. Cursor's CLI-managed installation is user-scoped: changing its pinned source is not yet supported.
+
+For direct Claude, Codex and Copilot installations, bundled scripts inspect the native inventory, preview an official release, then run the host's update commands after approval. They verify installed plugin versions and preserve activation states. A changed source, inventory or target invalidates approval. Unsupported configurations stop before writing; a failed host command reports partial completion. Supported scopes and configuration limits are in [native updates](skills/01-update/references/native-commands.md).
 
 The headless launcher writes the notice to stderr and passes the arguments and stdout to the real tool. It refuses remote servers and ambiguous project/global or overridden configurations. Direct `opencode run` and `kilo run` do not show the notice.
 

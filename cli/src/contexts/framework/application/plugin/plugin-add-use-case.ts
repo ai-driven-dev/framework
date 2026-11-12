@@ -23,8 +23,8 @@ import type { ReadonlySkipList } from "../../../translate/domain/plugin-translat
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
-  type KiloTuiProvenance,
   type ProjectHooksProvenance,
+  type TuiPluginProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
@@ -66,7 +66,7 @@ export class PluginAddUseCase implements PluginAdd {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly manifestRepo: ManifestRepository,
-    private readonly distributionLoader: PluginDistributionLoader,
+    private readonly distributionLoader: Pick<PluginDistributionLoader, "load">,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry,
@@ -282,11 +282,11 @@ export class PluginAddUseCase implements PluginAdd {
   ): {
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>;
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>;
-    prevTuiMap: Map<AiToolId, KiloTuiProvenance>;
+    prevTuiMap: Map<AiToolId, TuiPluginProvenance>;
   } {
     const prevMcpMap = this.collectPreviousMcpEntries(pluginName, toolIds, manifest);
     const prevHooksMap = new Map<AiToolId, ProjectHooksProvenance>();
-    const prevTuiMap = new Map<AiToolId, KiloTuiProvenance>();
+    const prevTuiMap = new Map<AiToolId, TuiPluginProvenance>();
     for (const toolId of toolIds) {
       const projectHooks = manifest
         .getPlugins(toolId)
@@ -312,7 +312,7 @@ export class PluginAddUseCase implements PluginAdd {
     marketplace: string | undefined,
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>,
-    prevTuiMap: Map<AiToolId, KiloTuiProvenance>,
+    prevTuiMap: Map<AiToolId, TuiPluginProvenance>,
     machine: Manifest
   ): Promise<void> {
     const allSkipped: ReadonlySkipList[] = [];
@@ -448,7 +448,7 @@ export class PluginAddUseCase implements PluginAdd {
     previousMcpEntries: ReadonlyMap<string, string>,
     userScopeDirTaken: boolean,
     previousProjectHooks?: ProjectHooksProvenance,
-    previousTui?: KiloTuiProvenance
+    previousTui?: TuiPluginProvenance
   ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return { skipped: [], notices: [] };

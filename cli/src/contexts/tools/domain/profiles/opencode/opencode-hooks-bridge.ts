@@ -19,69 +19,26 @@
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
  */
 
-interface ParsedHookCall {
-  readonly script: string;
-  readonly args: readonly string[];
-}
-
-interface ParsedPostToolUseCall extends ParsedHookCall {
-  readonly matcher?: string;
-}
+import {
+  type BridgeHookCall,
+  bridgeHookCalls,
+  type PluginHooksShape,
+} from "../../formats/plugin-hooks-shape.js";
 
 interface OpencodeHookTable {
-  readonly sessionStart: readonly ParsedHookCall[];
-  readonly stop: readonly ParsedHookCall[];
-  readonly postToolUse: readonly ParsedPostToolUseCall[];
-}
-
-interface ClaudeHookItem {
-  readonly type?: string;
-  readonly command?: string;
-}
-
-interface ClaudeMatcherGroup {
-  readonly matcher?: string;
-  readonly hooks?: readonly ClaudeHookItem[];
-}
-
-interface ClaudeHooksShape {
-  readonly hooks?: Record<string, readonly ClaudeMatcherGroup[]>;
-}
-
-// Read replayable commands from the canonical Claude-format manifest.
-const COMMAND_PATTERN =
-  /^node\s+(?:"\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/([^"]+)"|\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/(\S+))(.*)$/;
-
-function parseCommand(command: string | undefined): ParsedHookCall | null {
-  if (typeof command !== "string") return null;
-  const match = COMMAND_PATTERN.exec(command.trim());
-  if (!match) return null;
-  const [, quotedScript, bareScript, rest] = match;
-  const script = quotedScript ?? bareScript;
-  const args = rest.trim().length > 0 ? rest.trim().split(/\s+/) : [];
-  return { script, args };
-}
-
-function parseGroups(groups: readonly ClaudeMatcherGroup[] | undefined): ParsedPostToolUseCall[] {
-  const calls: ParsedPostToolUseCall[] = [];
-  for (const group of groups ?? []) {
-    for (const item of group.hooks ?? []) {
-      const parsed = parseCommand(item.command);
-      if (parsed === null) continue;
-      calls.push(group.matcher ? { ...parsed, matcher: group.matcher } : parsed);
-    }
-  }
-  return calls;
+  readonly sessionStart: readonly BridgeHookCall[];
+  readonly stop: readonly BridgeHookCall[];
+  readonly postToolUse: readonly BridgeHookCall[];
 }
 
 /** Read source hooks; the generated bridge resolves scripts beside itself. */
 export function parseHooksJsonForBridge(rawHooksJson: string): OpencodeHookTable {
-  const parsed = JSON.parse(rawHooksJson) as ClaudeHooksShape;
+  const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
   const hooks = parsed.hooks ?? {};
   return {
-    sessionStart: parseGroups(hooks.SessionStart),
-    stop: parseGroups(hooks.Stop),
-    postToolUse: parseGroups(hooks.PostToolUse),
+    sessionStart: bridgeHookCalls(hooks.SessionStart),
+    stop: bridgeHookCalls(hooks.Stop),
+    postToolUse: bridgeHookCalls(hooks.PostToolUse),
   };
 }
 
@@ -96,7 +53,7 @@ function toIdentifier(plugin: string): string {
   return `${pascal}Hooks`;
 }
 
-function callTableLiteral(calls: readonly ParsedHookCall[]): string {
+function callTableLiteral(calls: readonly BridgeHookCall[]): string {
   return JSON.stringify(calls);
 }
 

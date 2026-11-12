@@ -44,6 +44,8 @@ Each tool exposes more moments than these. For the full list, read the tool's do
 
 A Claude `settings.json` and a plugin or standalone `hooks/hooks.json` both wrap the event map under a top-level `hooks` key, so the file is `{ "hooks": { "<Event>": [ ... ] } }`. A Codex `config.toml` uses a `[hooks]` table instead.
 
+Set `statusMessage` on each Claude Code or Codex handler. It describes the action while the hook runs, and Codex uses it as the review-list title. Use a concise, specific message. This field is not documented for Cursor or Copilot hooks; omit it from their own formats unless confirmed. Sources: [Claude Code hooks](https://code.claude.com/docs/en/hooks), [Codex hooks](https://learn.chatgpt.com/docs/hooks), [Cursor hooks](https://cursor.com/docs/hooks), [Copilot hooks](https://docs.github.com/en/copilot/reference/hooks-reference).
+
 ## Scopes per tool
 
 Ask the user which scope, then write the matching file. A `-` means the tool has no such scope.
@@ -65,11 +67,25 @@ A component-scoped hook runs only while that component (the skill or agent) is a
 
 The shared `command` handler: a script the tool runs at the moment. It reads the event JSON on stdin, then signals back.
 
-- **Claude / Codex / Copilot.** Exit `0` is success (stdout may carry a JSON object or, on some moments, context). Exit `2` blocks on a moment that honors it (stderr surfaces to the model). Any other code is a non-blocking error. After a tool, the model reads context only from stdout, and each host reads a different key: Claude Code and Codex read `{ "hookSpecificOutput": { "hookEventName": "PostToolUse", "additionalContext": "..." } }`, Copilot CLI reads a top-level `{ "additionalContext": "..." }`. Codex fails the hook on any other key, so a hook meant for every tool writes the one each host reads, chosen by the payload (Copilot's carries `tool_result`).
-- **Cursor.** Exit `0` success, exit `2` blocks (same as `permission: "deny"`), any other code fails open. Set `failClosed: true` on the entry to make a crash block instead. Gating moments return `{ "permission": "allow" | "deny" | "ask" }` on stdout.
+- **Claude / Codex / Copilot.** Exit `0` is success (stdout may carry a JSON object or, on some moments, context). On exit `2`, stderr surfaces to the model. Any other code is a non-blocking error. Codex fails the hook on any key it does not read, so a hook meant for every tool writes the key each host reads (see the table), chosen by the payload (Copilot's carries `tool_result`).
+- **Cursor.** Exit `0` is success, any other code except `2` fails open. Set `failClosed: true` on the entry to make a crash block instead. Gating moments may also return `{ "permission": "allow" | "ask" }` on stdout.
 - **Antigravity.** JSON stdin: `conversationId`, `workspacePaths`; tool events: `toolCall.{name,args}`. JSON stdout: `PreToolUse` returns `decision` (`allow`, `deny`, `ask`) with optional `reason`; `Stop` resumes with `decision: continue` and `reason`; `PostToolUse` returns `{}`; `SessionStart` returns `{}` with optional `injectSteps`. Adapt the scaffold's exit-2 comment.
 
 Per-tool stdout schemas and which moments can block live in each tool's docs (linked above). Codex also has a `notify` mechanism (user scope only, single turn-complete event, JSON on argv not stdin) for a simple turn-complete notification.
+
+## Intent mechanism per tool
+
+| Intent | Claude Code | Codex CLI | Cursor | GitHub Copilot |
+| ------ | ----------- | --------- | ------ | -------------- |
+| inform the model | stdout `{ "hookSpecificOutput": { "hookEventName": "<Event>", "additionalContext": "..." } }` | same | stdout `{ "additional_context": "..." }` | stdout `{ "additionalContext": "..." }` |
+| block before a tool runs | exit `2` | exit `2` | `{ "permission": "deny" }` or exit `2` | exit `2` |
+| require a fix after a write | stdout `{ "decision": "block", "reason": "..." }` | same | not supported on Cursor; it informs instead | same as Claude |
+| keep the turn going at Stop | stdout `{ "decision": "block", "reason": "..." }` | same | stdout `{ "followup_message": "..." }`, unverified in headless mode | same as Claude |
+| side effect only | exit `0`, no stdout | same | same | same |
+
+OpenCode: this skill generates no hook for it (see the skip reason above), so no intent is offered there.
+
+A Stop hook that continues the turn checks the host's continuation flag first, so it asks only once: `stop_hook_active` on Claude, Codex and Copilot, `loop_count` on Cursor.
 
 ## Path placeholders in handlers
 

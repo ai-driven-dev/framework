@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/01-update`](#skills01-update)
 
@@ -27,6 +28,17 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | [kilo-tui.js](hooks/kilo-tui.js) |
 | [opencode-server.js](hooks/opencode-server.js) |
 | [opencode-tui.js](hooks/opencode-tui.js) |
+| [session-start.cjs](hooks/session-start.cjs) |
+| [update-native.cjs](hooks/update-native.cjs) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [inventory.cjs](hooks/lib/inventory.cjs) |
+| [native-config.cjs](hooks/lib/native-config.cjs) |
+| [releases.cjs](hooks/lib/releases.cjs) |
+| [versions.cjs](hooks/lib/versions.cjs) |
 
 ### `skills`
 

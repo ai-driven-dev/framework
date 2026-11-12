@@ -23,7 +23,7 @@ flowchart LR
     Editor["AI coding tool"] -->|invokes| Surfaces
 ```
 
-`cli/` and `kanban/` are self-contained projects with their own lockfiles, not pnpm workspace members — `pnpm-workspace.yaml` declares no `packages:` list on purpose, because membership would change how their dependencies resolve. Each installs on its own, and both are type-checked, linted and tested by this repository's CI. Only `cli/` is published.
+`cli/` and `kanban/` are self-contained projects with their own lockfiles, not pnpm workspace members. `pnpm-workspace.yaml` declares no `packages:` list on purpose, because membership would change how their dependencies resolve. Each installs on its own, and both are type-checked, linted and tested by this repository's CI. Only `cli/` is published.
 
 ## Key decisions
 

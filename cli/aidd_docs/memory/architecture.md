@@ -44,6 +44,7 @@ flowchart LR
 - Plugin enablement carries its own scope to the host CLI: [`plugin-enablement-carries-its-scope.md`](internal/decisions/plugin-enablement-carries-its-scope.md).
 - A launcher runs an external binary, never embeds it. `kanban` broke this and was unwired.
 - `clean` drives the host's own CLI and deletes under `$HOME` only inside a declared, `realpath`-contained root: [`clean-drives-the-host-cli.md`](internal/decisions/clean-drives-the-host-cli.md).
+- Hooks are one descriptor per tool (`profiles/<tool>/hooks.ts`), one merge engine (`formats/hooks-merge.ts`) and one host adapter per tool placed at build time (`assets/hooks-runtime/`); adding a tool is a descriptor and a payload fixture.
 - A marketplace's identity is its declared name plus plugin set, never a path or version: [`marketplace-identity-is-name-plus-plugins.md`](internal/decisions/marketplace-identity-is-name-plus-plugins.md).
 
 ## Gotchas

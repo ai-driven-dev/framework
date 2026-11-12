@@ -1,0 +1,236 @@
+second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
+
+## project/.cursor/hooks.json
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
+      },
+      {
+        "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
+        "timeout": 10
+      },
+      {
+        "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
+        "timeout": 120
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "timeout": 5
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
+        "timeout": 30
+      }
+    ]
+  }
+}
+
+
+## project/.cursor/hooks/aidd-context/lib/bank-guard.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/lib/changes.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/lib/common-rules.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/lib/fact-sheet.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/lib/host.cjs
+script, identical to the host adapter host-cursor.cjs
+
+## project/.cursor/hooks/aidd-context/lib/memory-rules.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/lib/plan.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/lib/report.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-context/memory.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/catch-up.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/aidd.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/binding.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/claude-only.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/consent.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/context.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/declaration.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/git.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/hook-io.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/jsonl.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/lookup.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/presence.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/lib/tool.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/prompt-gate.cjs
+script, identical to the plugin source
+
+## project/.cursor/hooks/aidd-telemetry/session-start.cjs
+script, identical to the plugin source
+
+## project/.cursor/settings.json
+{
+  "cursor.cpp.enabledFor": [
+    "*"
+  ],
+  "cursor.chat.smoothStreaming": true
+}
+
+# recorded
+project cursor aidd-context scope=user: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    },
+    {
+      "event": "postToolUse",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "611f6b7425abbbd527553aa9f0326016"
+    },
+    {
+      "event": "stop",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    },
+    {
+      "event": "sessionEnd",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    }
+  ],
+  "scripts": {}
+}
+  dependents []
+project cursor aidd-telemetry scope=user: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
+      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+    },
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
+      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
+    },
+    {
+      "event": "beforeSubmitPrompt",
+      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
+      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+    }
+  ],
+  "scripts": {}
+}
+  dependents []
+project cursor nativeRegistrations pluginRefs null
+machine cursor aidd-context scope=user: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    },
+    {
+      "event": "postToolUse",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "611f6b7425abbbd527553aa9f0326016"
+    },
+    {
+      "event": "stop",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    },
+    {
+      "event": "sessionEnd",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    }
+  ],
+  "scripts": {}
+}
+  dependents ["<root>/project"]
+machine cursor aidd-telemetry scope=user: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
+      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+    },
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
+      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
+    },
+    {
+      "event": "beforeSubmitPrompt",
+      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
+      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+    }
+  ],
+  "scripts": {}
+}
+  dependents ["<root>/project"]
+machine cursor nativeRegistrations pluginRefs null

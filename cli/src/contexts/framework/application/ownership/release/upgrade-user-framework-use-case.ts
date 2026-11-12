@@ -5,6 +5,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../distribution/domain/mark
 import { frameworkBuildModeFor, globalFilesOf } from "../../../../tools/domain/registry.js";
 import { Manifest } from "../../../domain/manifest.js";
 import { InstalledPlugin } from "../../../domain/plugins/installed-plugin.js";
+import { isOfficialReleasePluginSource } from "../../../domain/plugins/plugin-source-resolver.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
 import type { UserPluginFileUpdater } from "../user-plugin-file-updater.js";
 import type { PinnedUserFramework } from "./pinned-user-framework.js";
@@ -108,14 +109,7 @@ export class UpgradeUserFrameworkUseCase {
         throw new Error(
           `${toolId}:${plugin.name}: machine ownership includes unsupported contributions; update refused.`
         );
-      if (
-        source.kind !== "git-subdir" ||
-        source.url !== "https://github.com/ai-driven-dev/framework.git" ||
-        source.path !== `plugins/${plugin.name}` ||
-        !source.ref ||
-        !source.ref.startsWith("v") ||
-        !isSemver(source.ref)
-      )
+      if (!isOfficialReleasePluginSource(source, plugin.name))
         throw new Error(
           `${toolId}:${plugin.name}: current source is not a pinned official release.`
         );

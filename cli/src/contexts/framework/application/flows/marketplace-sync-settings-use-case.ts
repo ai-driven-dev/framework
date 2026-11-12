@@ -55,7 +55,10 @@ import {
   inspectNativeMarketplaceSource,
   sameNativeMarketplaceSource,
 } from "../ownership/native-marketplace-source-proof.js";
-import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
+import type {
+  EnsureBuiltMarketplace,
+  EnsureBuiltMarketplaceResult,
+} from "../shared/ensure-built-marketplace-use-case.js";
 import {
   hostMarketplaceSourceConflict,
   isDriftFound,
@@ -106,6 +109,8 @@ export interface MarketplaceSyncSettingsOptions {
   refreshOwnedPlugins?: readonly { toolId: AiToolId; pluginName: string }[];
   /** Claude refs shown in the approved release preview; never ownership claims. */
   approvedRefs?: readonly string[];
+  /** Exact builds already approved for this release; no resolution or rebuild during activation. */
+  preparedBuilds?: ReadonlyMap<FrameworkBuildTarget, EnsureBuiltMarketplaceResult>;
 }
 
 interface ActivationOutcome {
@@ -234,7 +239,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
             ?.declarativePluginActivationRequiresNativeProof === true
         )
           continue;
-        if (await this.syncTool(toolId, projectRoot, manifest, marketplaces)) anyToolUpdated = true;
+        if (
+          await this.syncTool(toolId, projectRoot, manifest, marketplaces, options.preparedBuilds)
+        )
+          anyToolUpdated = true;
       }
     }
     if (anyToolUpdated) await manifestRepo.save(manifest);
@@ -246,7 +254,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       scope,
       options.enablePlugins ?? [],
       options.refreshOwnedPlugins ?? [],
-      options.approvedRefs ?? []
+      options.approvedRefs ?? [],
+      options.preparedBuilds
     );
     let declarativeChanged = false;
     if (scope === "project") {
@@ -443,7 +452,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     scope: MarketplaceScope,
     enablePlugins: readonly string[],
     refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[],
-    approvedRefs: readonly string[]
+    approvedRefs: readonly string[],
+    preparedBuilds?: ReadonlyMap<FrameworkBuildTarget, EnsureBuiltMarketplaceResult>
   ): Promise<ActivationRun> {
     const outcomes = new Map<ToolId, ActivationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -473,7 +483,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
           scope,
           enablePlugins,
           refreshOwnedPlugins,
-          nativeActivationOf(toolId)?.releaseUpdateVerb ? approvedRefs : []
+          nativeActivationOf(toolId)?.releaseUpdateVerb ? approvedRefs : [],
+          preparedBuilds
         );
         outcomes.set(toolId, outcome);
       } catch (error) {
@@ -584,7 +595,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     scope: MarketplaceScope,
     enablePlugins: readonly string[],
     refreshOwnedPlugins: readonly { toolId: AiToolId; pluginName: string }[],
-    approvedRefs: readonly string[]
+    approvedRefs: readonly string[],
+    preparedBuilds?: ReadonlyMap<FrameworkBuildTarget, EnsureBuiltMarketplaceResult>
   ): Promise<ActivationOutcome> {
     // Every known marketplace, never only the ones a plugin points at: declaring a marketplace
     // and installing a plugin from it are two acts. Measured against the real `claude` binary —
@@ -608,7 +620,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         projectRoot,
         warnings,
         catalogClaims,
-        approvedRefs
+        approvedRefs,
+        preparedBuilds
       );
       if (registration.outcome === "build-failed") buildFailed = true;
       if (registration.addedThisRun === true) addedHostNames.add(registration.hostName);
@@ -1008,7 +1021,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     warnings: string[],
     freshClaims: readonly NativeMarketplaceRegistration[],
-    approvedRefs: readonly string[]
+    approvedRefs: readonly string[],
+    preparedBuilds?: ReadonlyMap<FrameworkBuildTarget, EnsureBuiltMarketplaceResult>
   ): Promise<{
     hostName: string;
     outcome: "registered" | "refused" | "build-failed";
@@ -1018,7 +1032,12 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     refreshable?: boolean;
     provenance?: NativeMarketplaceSource;
   }> {
-    const builtDir = await this.buildForTool(toolId, marketplace, projectRoot, warnings);
+    const builtDir =
+      preparedBuilds === undefined
+        ? await this.buildForTool(toolId, marketplace, projectRoot, warnings)
+        : preparedBuilds.get(toolId as FrameworkBuildTarget)?.builtDir;
+    if (builtDir === undefined)
+      throw new Error(`No approved marketplace build exists for ${toolId}.`);
     if (builtDir === null)
       return { hostName: marketplace.name, outcome: "build-failed", claimable: false };
     const requestedIdentity = await readMarketplaceCatalogIdentity(this.fs, toolId, builtDir);
@@ -1397,11 +1416,19 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     projectRoot: string,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[]
+    marketplaces: readonly Marketplace[],
+    preparedBuilds?: ReadonlyMap<FrameworkBuildTarget, EnsureBuiltMarketplaceResult>
   ): Promise<boolean> {
     const marketplaceSettings = resolvePluginsCapability(toolId)?.marketplaceSettings;
     if (marketplaceSettings == null) return false;
-    return this.syncToolSettings(toolId, projectRoot, manifest, marketplaces, marketplaceSettings);
+    return this.syncToolSettings(
+      toolId,
+      projectRoot,
+      manifest,
+      marketplaces,
+      marketplaceSettings,
+      preparedBuilds
+    );
   }
 
   private async syncToolSettings(
@@ -1409,14 +1436,16 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    settings: MarketplaceSettings
+    settings: MarketplaceSettings,
+    preparedBuilds?: ReadonlyMap<FrameworkBuildTarget, EnsureBuiltMarketplaceResult>
   ): Promise<boolean> {
     const marketplaceChanged = await this.syncMarketplacesFile(
       toolId,
       projectRoot,
       manifest,
       settings,
-      marketplaces
+      marketplaces,
+      preparedBuilds
     );
     const pluginsChanged =
       settings.enabledPluginsKey != null
@@ -1433,11 +1462,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     manifest: Manifest,
     settings: MarketplaceSettings,
-    marketplaces: readonly Marketplace[]
+    marketplaces: readonly Marketplace[],
+    preparedBuilds?: ReadonlyMap<FrameworkBuildTarget, EnsureBuiltMarketplaceResult>
   ): Promise<boolean> {
     // Building the tree is this CLI's job whoever registers it: a tool that is not installed
     // today may be tomorrow, and the tree is what any registration points at.
-    await this.buildAllForTool(toolId, marketplaces, projectRoot);
+    if (preparedBuilds === undefined) await this.buildAllForTool(toolId, marketplaces, projectRoot);
+    else if (!preparedBuilds.has(toolId as FrameworkBuildTarget))
+      throw new Error(`No approved marketplace build exists for ${toolId}.`);
     return this.evictMarketplacesFromSharedFile(toolId, projectRoot, manifest, settings);
   }
 

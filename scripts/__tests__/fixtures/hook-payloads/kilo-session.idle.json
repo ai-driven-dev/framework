@@ -1,0 +1,36 @@
+{
+  "host": "kilo",
+  "event": "session.idle",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "id": "evt_1a9d268f8002tYOyQaKPj75Xzs",
+        "type": "session.idle",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "id": "evt_1a9d2a151002yyEpQ5eDRJ58Ta",
+        "type": "session.idle",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "id": "evt_1a9d2a786002vKx9shgDlXOjWG",
+        "type": "session.idle",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        }
+      }
+    }
+  ]
+}
