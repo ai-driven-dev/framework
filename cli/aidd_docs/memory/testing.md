@@ -8,7 +8,7 @@ How this package is tested: the layers, the tools, the conventions.
 
 - A test pins one behaviour a caller or a user can observe, once, at the lowest level that proves it.
 - A behaviour proven at one level is not proven again at another.
-- Tested: domain rules and decisions, parsing at a boundary, every error a user can reach, every command's exit code.
+- Tested: domain rules and decisions, parsing at a boundary, every error a user can reach.
 - Not tested: wiring, delegation, getters, re-exports, static declarations (a tool profile's data), and states the types already forbid.
 - A test that would only restate the implementation is not written.
 
@@ -16,10 +16,10 @@ How this package is tested: the layers, the tools, the conventions.
 
 | Level | Holds | Count |
 | --- | --- | --- |
-| unit | product code with in-memory doubles; no disk, process or network | one per rule or decision, cases in a table |
+| unit | the bulk of the suite: domain rules, use cases and commands with in-memory doubles; no disk, process or network | one per rule, decision or error, cases in a table |
 | contract | one suite per port, run on the double and the real adapter | one per port |
-| integration | a real adapter, or a use case composed in process | one nominal case plus one per failure family, per use case |
-| e2e | the built binary | one per command plus one per failure family |
+| integration | an adapter against the system it talks to: file system, git, a host CLI, the network | the cases that system can produce |
+| e2e | the built binary over a main user journey | the main journeys only, never every case |
 | golden | full output bytes | help text and generated distributions only |
 | arch | rules about `src/` structure | one per rule |
 
