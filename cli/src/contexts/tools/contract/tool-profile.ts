@@ -261,8 +261,8 @@ export interface AiToolProfile {
   configFiles(): Readonly<Record<string, string>>;
   /** The runtime modules its plugins need, by asset name. */
   runtimeFiles(): Readonly<Record<string, string>>;
-  /** The config files this tool ships bundled, one declaration each; none when it ships none. */
-  configAssets(): readonly ShippedConfig[];
+  /** The one shipped config of that name, or undefined when the tool ships none by it. */
+  configAsset(name: string): ShippedConfig | undefined;
   /** The mcp file the tool declares, or null. */
   mcpConfig(): McpConfigAnswers | null;
   /** The mcp file of a tool that merges plugin MCP entries into one shared file it owns the
@@ -295,8 +295,8 @@ export interface IdeToolProfile {
   readonly directory: string;
   /** The settings files the tool declares, none when it declares none. */
   settingsFiles(): readonly SettingsFileAnswers[];
-  /** The config files this tool ships bundled, one declaration each; none when it ships none. */
-  configAssets(): readonly ShippedConfig[];
+  /** The one shipped config of that name, or undefined when the tool ships none by it. */
+  configAsset(name: string): ShippedConfig | undefined;
   /** The config files an install writes: each settings file. */
   configWrites(): readonly ConfigWrite[];
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */

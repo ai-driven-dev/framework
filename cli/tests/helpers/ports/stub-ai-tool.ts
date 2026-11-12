@@ -31,14 +31,7 @@ export function withSections(
   base: AiTool,
   replacing: { readonly [K in ProfileSectionKey]?: ProfileSection<K> | null }
 ): AiTool & ProfileBrand {
-  const {
-    kind: _kind,
-    section: _section,
-    configWrites: _configWrites,
-    configAssets,
-    toolId,
-    ...fields
-  } = base;
+  const { kind: _kind, section: _section, configWrites: _configWrites, toolId, ...fields } = base;
   const kept = Object.fromEntries(
     PROFILE_SECTION_KEYS.map((key) => [key, base.section(key)] as const).filter(
       ([, section]) => section !== null
@@ -50,7 +43,8 @@ export function withSections(
   return defineAiTool({
     ...fields,
     toolId,
-    configAssets: configAssets(),
+    // The files an install writes; a settings section's own file goes with the sections replaced.
+    configAssets: Object.keys(base.configFiles()).flatMap((name) => base.configAsset(name) ?? []),
     capabilities: () => merged,
   });
 }

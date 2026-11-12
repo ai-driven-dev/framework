@@ -21,19 +21,6 @@ const EVERY_NAME = [...new Set(REGISTERED_PROFILES.flatMap((p) => shippedBy(p.to
 
 describe("config assets per tool", () => {
   it.each(REGISTERED_PROFILES.map((profile) => profile.toolId))(
-    "%s declares exactly the config assets bundled for it",
-    (toolId) => {
-      expect(
-        catalog
-          .profile(toolId)
-          .configAssets()
-          .map((asset) => asset.name)
-          .sort()
-      ).toEqual(shippedBy(toolId).sort());
-    }
-  );
-
-  it.each(REGISTERED_PROFILES.map((profile) => profile.toolId))(
     "the provider yields what %s declares and refuses the rest",
     (toolId) => {
       const own = shippedBy(toolId);
@@ -47,10 +34,7 @@ describe("config assets per tool", () => {
 
   it("serves the asset the profile declares, by identity", () => {
     expect(provider.loadConfigAsset("claude", "settings.json")).toBe(
-      catalog
-        .profile("claude")
-        .configAssets()
-        .find((asset) => asset.name === "settings.json")?.content
+      catalog.profile("claude").configAsset("settings.json")?.content
     );
   });
 });

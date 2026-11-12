@@ -26,10 +26,7 @@ export class BundledAssetProviderAdapter implements AssetProvider {
   constructor(private readonly tools: ToolCatalog) {}
 
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
-    const shipped = this.tools
-      .profile(toolId)
-      .configAssets()
-      .find((a) => a.name === fileName);
+    const shipped = this.tools.profile(toolId).configAsset(fileName);
     if (shipped === undefined) {
       throw new AssetNotFoundError(`${toolId}/${fileName}`);
     }

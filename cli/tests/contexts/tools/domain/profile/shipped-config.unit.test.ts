@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defineAiTool } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
-import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { vscode } from "../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { anEmptyContract } from "../../testing/profiles.js";
 
 const aiSpec = {
@@ -22,6 +21,9 @@ describe("a profile's shipped config", () => {
   it("is declared once per file, with its content and its destination", () => {
     const tool = defineAiTool({
       ...aiSpec,
+      capabilities: () => ({
+        config: [new ConfigSection({ outputPath: ".x/section.json", mergeStrategy: "none" })],
+      }),
       configAssets: [
         { ...settings, delivery: "install" },
         { ...runtime, delivery: "runtime" },
@@ -34,11 +36,9 @@ describe("a profile's shipped config", () => {
       ],
     });
 
-    expect(tool.configAssets().map((asset) => asset.name)).toEqual([
-      "settings.json",
-      "bridge.js",
-      "section.json",
-    ]);
+    expect(
+      ["settings.json", "bridge.js", "section.json"].map((name) => tool.configAsset(name)?.name)
+    ).toEqual(["settings.json", "bridge.js", "section.json"]);
     expect(tool.configFiles()).toStrictEqual({
       "settings.json": ".x/settings.json",
       "bridge.js": ".x/bridge.js",
@@ -55,12 +55,17 @@ describe("a profile's shipped config", () => {
   });
 });
 
-describe("a file delivered by a settings section", () => {
-  it.each([copilot, vscode])("lands where $toolId's section writes it", (tool) => {
-    const written = tool.settingsFiles().map((section) => section.outputPath());
-    const sectionOwned = tool.configAssets().filter((asset) => asset.delivery === "section");
+describe("a profile's shipped config, asked by name", () => {
+  it("answers the one file of that name, and nothing for a name it does not ship", () => {
+    const tool = defineAiTool({
+      ...aiSpec,
+      configAssets: [
+        { ...settings, delivery: "install" },
+        { ...runtime, delivery: "runtime" },
+      ],
+    });
 
-    expect(sectionOwned.length).toBeGreaterThan(0);
-    for (const asset of sectionOwned) expect(written).toContain(asset.destination);
+    expect(tool.configAsset("bridge.js")).toStrictEqual({ ...runtime, delivery: "runtime" });
+    expect(tool.configAsset("absent.json")).toBeUndefined();
   });
 });

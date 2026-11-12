@@ -163,6 +163,37 @@ describe("defineAiTool", () => {
     ).toBe("unknown-section");
   });
 
+  it("refuses shipped config repeating a name", () => {
+    const shipped = (destination: string) => ({
+      name: "settings.json",
+      content: {},
+      destination,
+      delivery: "install" as const,
+    });
+
+    const refusal = refusalOf(() =>
+      defineAiTool({ ...aiSpec, configAssets: [shipped(".x/a.json"), shipped(".x/b.json")] })
+    );
+
+    expect(refusal.invariant).toBe("shipped-config-disagrees");
+    expect(refusal.message).toContain("settings.json");
+  });
+
+  it("refuses a section's shipped config landing elsewhere than the section writes it", () => {
+    const shipped = (destination: string) => [
+      { name: "settings.json", content: {}, destination, delivery: "section" as const },
+    ];
+    const build = (destination: string) =>
+      defineAiTool({
+        ...aiSpec,
+        configAssets: shipped(destination),
+        capabilities: () => ({ config: [settings] }),
+      });
+
+    expect(refusalOf(() => build(".x/elsewhere.json")).invariant).toBe("shipped-config-disagrees");
+    expect(build(".x/settings.json").configAsset("settings.json")).toBeDefined();
+  });
+
   it("is the only way to a branded profile", () => {
     const literal: AiTool = { ...defineAiTool(aiSpec), section: () => null };
 
@@ -198,6 +229,37 @@ describe("defineIdeTool", () => {
     expect(
       refusalOf(() => defineIdeTool({ ...ideSpec, capabilities: () => sections })).invariant
     ).toBe("unknown-section");
+  });
+
+  it("refuses shipped config repeating a name", () => {
+    const shipped = (destination: string) => ({
+      name: "settings.json",
+      content: {},
+      destination,
+      delivery: "install" as const,
+    });
+
+    const refusal = refusalOf(() =>
+      defineIdeTool({ ...ideSpec, configAssets: [shipped(".x/a.json"), shipped(".x/b.json")] })
+    );
+
+    expect(refusal.invariant).toBe("shipped-config-disagrees");
+    expect(refusal.message).toContain("settings.json");
+  });
+
+  it("refuses a section's shipped config landing elsewhere than the section writes it", () => {
+    const shipped = (destination: string) => [
+      { name: "settings.json", content: {}, destination, delivery: "section" as const },
+    ];
+    const build = (destination: string) =>
+      defineIdeTool({
+        ...ideSpec,
+        configAssets: shipped(destination),
+        capabilities: () => ({ config: [settings] }),
+      });
+
+    expect(refusalOf(() => build(".x/elsewhere.json")).invariant).toBe("shipped-config-disagrees");
+    expect(build(".x/settings.json").configAsset("settings.json")).toBeDefined();
   });
 });
 

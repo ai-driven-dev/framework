@@ -71,7 +71,7 @@ type AiToolFields = Omit<
   | "skillsSection"
   | "configFiles"
   | "runtimeFiles"
-  | "configAssets"
+  | "configAsset"
   | "mcpConfig"
   | "flatPluginMcp"
   | "settingsFiles"
@@ -234,6 +234,40 @@ function marketplaceOf(sections: ProfileSections): MarketplaceRegistration | und
   return sections.layout?.mode === "native" ? sections.layout.marketplace : undefined;
 }
 
+/** A shipped file is one name and one place, and a section's file is where that section writes it:
+ * a name declared twice, or a section file elsewhere than its section, answers two ways. */
+function refuseDisagreeingShippedConfig(
+  toolId: string,
+  assets: readonly ShippedConfig[] | undefined,
+  sections: ProfileSections
+): void {
+  const written = settingsOf(sections).map((section) => section.outputPath());
+  const seen = new Set<string>();
+  for (const asset of assets ?? []) {
+    if (seen.has(asset.name)) {
+      refuseShipped(toolId, `'${asset.name}' is shipped twice.`);
+    }
+    seen.add(asset.name);
+    if (asset.delivery === "section" && !written.includes(asset.destination)) {
+      refuseShipped(
+        toolId,
+        `'${asset.name}' lands at ${asset.destination}, which no settings section writes.`
+      );
+    }
+  }
+}
+
+function refuseShipped(toolId: string, detail: string): never {
+  throw new InvalidToolProfileError(toolId, "shipped-config-disagrees", detail);
+}
+
+function configAssetNamed(
+  assets: readonly ShippedConfig[] | undefined,
+  name: string
+): ShippedConfig | undefined {
+  return assets?.find((asset) => asset.name === name);
+}
+
 function destinationsOf(
   assets: readonly ShippedConfig[] | undefined,
   delivery: ShippedConfig["delivery"]
@@ -263,6 +297,7 @@ export function defineAiTool<C extends ProfileSections>(
   const capabilities = declare(bind(spec.directory, suffix));
   refuseUnknownSections(toolId, capabilities);
   refuseDisagreeingPlugin(toolId, capabilities);
+  refuseDisagreeingShippedConfig(toolId, spec.configAssets, capabilities);
   const plugins = pluginsOf(capabilities);
   const profile = {
     ...fields,
@@ -291,7 +326,7 @@ export function defineAiTool<C extends ProfileSections>(
       ...destinationsOf(spec.configAssets, "runtime"),
     }),
     runtimeFiles: () => destinationsOf(spec.configAssets, "runtime"),
-    configAssets: (): readonly ShippedConfig[] => spec.configAssets ?? [],
+    configAsset: (name: string) => configAssetNamed(spec.configAssets, name),
     mcpConfig: () => capabilities.mcp?.config ?? null,
     flatPluginMcp: () =>
       capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
@@ -324,6 +359,7 @@ export function defineIdeTool<C extends ProfileSections>(
   refuseDirectory(toolId, spec.directory);
   const capabilities = declare();
   refuseUnknownSections(toolId, capabilities);
+  refuseDisagreeingShippedConfig(toolId, spec.configAssets, capabilities);
   const profile = {
     ...fields,
     kind: "ide",
@@ -331,7 +367,7 @@ export function defineIdeTool<C extends ProfileSections>(
     section: sectionReader(capabilities),
     configWrites: () => settingsWrites(capabilities),
     settingsFiles: () => settingsOf(capabilities),
-    configAssets: (): readonly ShippedConfig[] => spec.configAssets ?? [],
+    configAsset: (name: string) => configAssetNamed(spec.configAssets, name),
     signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
     machineLocalFiles: (): readonly string[] => [],
   };

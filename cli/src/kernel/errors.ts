@@ -137,7 +137,8 @@ export type ProfileInvariant =
   | "directory-without-trailing-slash"
   | "no-build-contract"
   | "unknown-section"
-  | "plugin-sections-disagree";
+  | "plugin-sections-disagree"
+  | "shipped-config-disagrees";
 
 export class InvalidToolProfileError extends Error {
   constructor(
