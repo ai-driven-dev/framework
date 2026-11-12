@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { generateKiloHooksBridge } from "../../../../../src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.js";
 import { generateOpencodeHooksBridge } from "../../../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
 
@@ -351,9 +351,18 @@ describe("the bridge generated with OpenCode's parameters", () => {
     const { directory, tool } = await open(HOSTS[0] as Host, hooksJson);
 
     const answered = await Promise.race([tool("hang"), delay(8000, "still waiting")]);
+    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
+    // A failing run must not leave the hung script behind.
+    onTestFinished(() => {
+      try {
+        process.kill(pid, "SIGKILL");
+      } catch (error) {
+        // ESRCH: already gone, which is the passing case.
+        if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+      }
+    });
 
     expect(answered).toBe("done");
-    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
     await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
   }, 15_000);
 });
