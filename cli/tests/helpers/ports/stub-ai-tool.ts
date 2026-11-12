@@ -1,14 +1,14 @@
-import type { AiTool } from "../../../src/contexts/tools/domain/contracts.js";
 import {
   defineAiTool,
   type ProfileBrand,
 } from "../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { AiTool } from "../../../src/contexts/tools/domain/profile.js";
 import {
   PROFILE_SECTION_KEYS,
   type ProfileSection,
   type ProfileSectionKey,
   type ProfileSections,
-} from "../../../src/contexts/tools/domain/profile/profile-sections.js";
+} from "../../../src/contexts/tools/domain/profile.js";
 import type { AiToolId } from "../../../src/kernel/tool.js";
 import { anEmptyContract } from "../../contexts/tools/testing/profiles.js";
 

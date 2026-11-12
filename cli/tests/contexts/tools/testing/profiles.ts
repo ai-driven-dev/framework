@@ -3,7 +3,6 @@ import type { ProjectHooksFormat } from "../../../../src/contexts/tools/contract
 import type { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
-import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
 import type { NativePluginsParams } from "../../../../src/contexts/tools/domain/plugins/plugin-params.js";
 import {
   type PluginsCapability,
@@ -13,6 +12,7 @@ import {
   defineAiTool,
   type ProfileBrand,
 } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */

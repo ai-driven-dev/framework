@@ -9,8 +9,8 @@ import { AgentsCapability } from "../../../../src/contexts/tools/domain/capabili
 import { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { RulesCapability } from "../../../../src/contexts/tools/domain/capabilities/rules-capability.js";
-import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
-import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile/profile-sections.js";
+import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
+import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */

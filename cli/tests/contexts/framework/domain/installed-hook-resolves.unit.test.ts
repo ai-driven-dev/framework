@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AiTool, HasPlugins } from "../../../../src/contexts/tools/domain/contracts.js";
+import type { AiTool, HasPlugins } from "../../../../src/contexts/tools/domain/profile.js";
 import { buildClaudeContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { buildCodexContract } from "../../../../src/contexts/tools/domain/profiles/codex/build.js";

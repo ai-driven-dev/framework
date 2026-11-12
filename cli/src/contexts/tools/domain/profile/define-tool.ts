@@ -18,15 +18,15 @@ import { AgentsCapability } from "../capabilities/agents-capability.js";
 import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
 import { SkillsCapability } from "../capabilities/skills-capability.js";
-import type { AiTool, IdeToolConfig } from "../contracts.js";
 import { flatInstallPath, ownsFlatPath } from "../plugins/flat-install-paths.js";
 import type { NativeActivation } from "../plugins/native-activation.js";
+import type { AiTool, IdeToolConfig } from "../profile.js";
 import {
   isProfileSectionKey,
   type ProfileSection,
   type ProfileSectionKey,
   type ProfileSections,
-} from "./profile-sections.js";
+} from "../profile.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
 /** Only `defineAiTool` and `defineIdeTool` can produce one: an object literal lacks the private

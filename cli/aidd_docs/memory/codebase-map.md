@@ -52,6 +52,7 @@ src/
 │   │       ├── formats/
 │   │       ├── hooks/
 │   │       ├── plugins/
+│   │       ├── profile.ts    # the sections a profile declares and the shape a defined tool has
 │   │       ├── profile/
 │   │       └── profiles/    # one directory per tool
 │   │           ├── antigravity/

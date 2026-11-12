@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { HooksCapability } from "../../../../../src/contexts/tools/domain/capabilities/hooks-capability.js";
 import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
-import type { IdeToolConfig } from "../../../../../src/contexts/tools/domain/contracts.js";
 import { defineIdeTool } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { IdeToolConfig } from "../../../../../src/contexts/tools/domain/profile.js";
 import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
 
 const mcp = new McpCapability({ outputPath: ".mcp.json", format: "json" });

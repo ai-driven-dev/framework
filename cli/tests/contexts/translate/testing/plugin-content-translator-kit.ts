@@ -1,4 +1,4 @@
-import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
+import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import {
   type PluginComponentFile,

@@ -5,8 +5,8 @@ import type {
   AiToolProfile,
   ToolProfile,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
 import type { BuiltToolConfig } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
+import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
 import { REGISTERED_PROFILES } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../../../../src/kernel/errors.js";
 import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";

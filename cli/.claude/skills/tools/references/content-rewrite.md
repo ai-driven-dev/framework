@@ -6,7 +6,7 @@
 rewriteContent(content: string): string;
 ```
 
-One direction, one argument. A tool profile declares it in `contexts/tools/domain/contracts.ts`
+One direction, one argument. A tool profile declares it in `contexts/tools/domain/profile.ts`
 and implements it in `contexts/tools/domain/profiles/<tool>/profile.ts`. It is called on the
 install path (`contexts/framework/application/install/content/install-content-section-use-case.ts`)
 and on the translate path (`contexts/translate/domain/content-translator.ts`) — every file that reaches a tool's tree
