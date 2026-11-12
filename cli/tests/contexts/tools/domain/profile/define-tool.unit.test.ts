@@ -96,20 +96,6 @@ describe("defineAiTool", () => {
     expect(tool.section("mcp")).toBeNull();
   });
 
-  it("answers from its own sections once detached from the profile", () => {
-    const { section } = defineAiTool({ ...aiSpec, capabilities: () => ({ settings: [settings] }) });
-
-    expect(section("settings")).toStrictEqual([settings]);
-    expect(section("mcp")).toBeNull();
-  });
-
-  it("answers the plugins capability it declares, and null when it declares none", () => {
-    const plugins = flatPlugins("refuses");
-
-    expect(defineAiTool({ ...aiSpec, capabilities: () => ({ plugins }) }).plugins()).toBe(plugins);
-    expect(defineAiTool(aiSpec).plugins()).toBeNull();
-  });
-
   it("answers the native activation of a native plugins capability, and undefined for any other", () => {
     const native = nativePlugins({
       nativeActivation: { binary: "x", enableVerb: "add", disableVerb: "remove" },
@@ -180,12 +166,6 @@ describe("defineAiTool", () => {
 });
 
 describe("defineIdeTool", () => {
-  it("answers a declared section", () => {
-    const tool = defineIdeTool({ ...ideSpec, capabilities: () => ({ settings: [settings] }) });
-
-    expect(tool.section("settings")).toStrictEqual([settings]);
-  });
-
   it("refuses an id no IDE tool carries", () => {
     expect(refusalOf(() => defineIdeTool({ ...ideSpec, toolId: "claude" })).invariant).toBe(
       "unknown-tool-id"

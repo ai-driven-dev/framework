@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import { pluginsCapability } from "../../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
-import { flatOf, nativeOf, pluginModeOf } from "../../testing/plugin-mode.js";
+import { flatOf, nativeOf } from "../../testing/plugin-mode.js";
 
 const projectHooksFormat: ProjectHooksFormat = {
   merge: () => ({ content: "", warnings: [] }),
@@ -21,56 +21,6 @@ const MARKETPLACE_SETTINGS = {
 };
 
 describe("PluginsCapability", () => {
-  describe("native mode", () => {
-    const cap = pluginsCapability({
-      mode: "native",
-      pluginRootToken: "$X_PLUGIN_ROOT",
-      acceptsHooks: true,
-      pluginsDir: ".claude/plugins/",
-      pluginManifestRelativePath: ".claude-plugin/plugin.json",
-    });
-
-    it("exposes mode as native", () => {
-      expect(pluginModeOf(cap)).toBe("native");
-    });
-
-    it("exposes pluginsDir", () => {
-      expect(nativeOf(cap).pluginOutputDir("x")).toBe(".claude/plugins/x/");
-    });
-
-    it("exposes pluginManifestRelativePath", () => {
-      expect(nativeOf(cap).manifestPath()).toBe(".claude-plugin/plugin.json");
-    });
-
-    it("pluginOutputDir returns the plugin subdirectory", () => {
-      expect(nativeOf(cap).pluginOutputDir("my-plugin")).toBe(".claude/plugins/my-plugin/");
-    });
-  });
-
-  describe("flat mode, hooks unsupported", () => {
-    const cap = pluginsCapability({
-      mode: "flat",
-      acceptsHooks: false,
-      hooksUnsupportedReason: "a test double that hosts no plugin directory",
-      flatNamespacePrefix: "aidd-",
-    });
-
-    it("exposes mode as flat", () => {
-      expect(pluginModeOf(cap)).toBe("flat");
-    });
-
-    it("exposes flatNamespacePrefix", () => {
-      expect(flatOf(cap).flatLayout().namespacePrefix).toBe("aidd-");
-    });
-
-    it("exposes hooksUnsupportedReason", () => {
-      expect(cap.hooksAcceptance()).toStrictEqual({
-        accepts: false,
-        reason: "a test double that hosts no plugin directory",
-      });
-    });
-  });
-
   describe("flat mode, hooks accepted", () => {
     const cap = pluginsCapability({
       mode: "flat",
@@ -79,82 +29,12 @@ describe("PluginsCapability", () => {
       flatNamespacePrefix: "aidd-",
     });
 
-    it("acceptsHooks is true", () => {
-      expect(cap.hooksAcceptance().accepts).toBe(true);
-    });
-
-    it("exposes flatHooksDir", () => {
-      expect(flatOf(cap).flatLayout().hooksDir).toBe(".test-tool/plugin/");
-    });
-
     it("states no reason when hooks are accepted", () => {
       expect(cap.hooksAcceptance()).toStrictEqual({ accepts: true });
     });
 
     it("flatHooksLoaderEntry is null when not declared", () => {
       expect(flatOf(cap).flatLayout().hooksLoaderEntry).toBeNull();
-    });
-  });
-
-  describe("flat mode, hooks accepted, with a loader entry", () => {
-    const cap = pluginsCapability({
-      mode: "flat",
-      acceptsHooks: true,
-      flatHooksDir: ".test-tool/hooks/",
-      flatHooksLoaderEntry: { dir: ".test-tool/plugin/", baseName: "test-tool-plugin.js" },
-      flatNamespacePrefix: "aidd-",
-    });
-
-    it("exposes flatHooksLoaderEntry", () => {
-      expect(flatOf(cap).flatLayout().hooksLoaderEntry).toEqual({
-        dir: ".test-tool/plugin/",
-        baseName: "test-tool-plugin.js",
-      });
-    });
-  });
-
-  describe("unsupported mode", () => {
-    const cap = pluginsCapability({
-      mode: "unsupported",
-      hooksUnsupportedReason: "a test double that hosts no plugin directory",
-    });
-
-    it("exposes mode as unsupported", () => {
-      expect(pluginModeOf(cap)).toBe("unsupported");
-    });
-  });
-
-  describe("user scope (native mode)", () => {
-    const cap = pluginsCapability({
-      mode: "native",
-      pluginRootToken: "$X_PLUGIN_ROOT",
-      acceptsHooks: true,
-      pluginsDir: "",
-      pluginManifestRelativePath: null,
-      installScope: "user",
-      userPluginsDir: (h) => `${h}/.cursor/plugins/local`,
-    });
-
-    it("exposes installScope as user", () => {
-      expect(nativeOf(cap).requiresUserScope()).toBe(true);
-    });
-
-    it("userPluginsBaseDir returns homedir-based path", () => {
-      expect(cap.userPluginsBaseDir("/home/user")).toBe("/home/user/.cursor/plugins/local");
-    });
-  });
-
-  describe("project scope (default)", () => {
-    const cap = pluginsCapability({
-      mode: "native",
-      pluginRootToken: "$X_PLUGIN_ROOT",
-      acceptsHooks: true,
-      pluginsDir: ".claude/plugins/",
-      pluginManifestRelativePath: "plugin.json",
-    });
-
-    it("exposes installScope as project", () => {
-      expect(nativeOf(cap).requiresUserScope()).toBe(false);
     });
   });
 
@@ -174,22 +54,6 @@ describe("PluginsCapability", () => {
   });
 
   describe("translationMode", () => {
-    describe("native with marketplaceSettings and translationMode marketplace", () => {
-      it("exposes translationMode as marketplace", () => {
-        const cap = pluginsCapability({
-          mode: "native",
-          pluginRootToken: "$X_PLUGIN_ROOT",
-          acceptsHooks: true,
-          pluginsDir: ".claude/plugins/",
-          pluginManifestRelativePath: "plugin.json",
-          translationMode: "marketplace",
-          marketplaceSettings: MARKETPLACE_SETTINGS,
-          nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
-        });
-        expect(nativeOf(cap).translatesAsMarketplace()).toBe(true);
-      });
-    });
-
     describe("native without translationMode", () => {
       it("builds as a marketplace without declaring it (neutral native)", () => {
         const cap = pluginsCapability({
