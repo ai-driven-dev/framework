@@ -96,12 +96,6 @@ const SECTION_BASELINE: readonly {
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/sections/hooks-section.ts",
-    className: "HooksSection",
-    methods: ["accepts", "equals"],
-    reason: "called only by tests",
-  },
-  {
     file: "src/contexts/tools/domain/sections/mcp-section.ts",
     className: "McpSection",
     methods: ["accepts", "equals", "merge"],

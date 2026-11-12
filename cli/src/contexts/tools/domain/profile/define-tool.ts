@@ -142,9 +142,9 @@ function sectionReader(
 function aiConfigWrites(sections: ProfileSections): readonly ConfigWrite[] {
   return [
     ...(sections.mcp === undefined ? [] : [{ kind: "mcp" as const, capability: sections.mcp }]),
-    ...(sections.hooks === undefined
+    ...(sections.hooks?.config === undefined
       ? []
-      : [{ kind: "hooks" as const, capability: sections.hooks }]),
+      : [{ kind: "hooks" as const, capability: sections.hooks.config }]),
     ...settingsWrites(sections),
   ];
 }

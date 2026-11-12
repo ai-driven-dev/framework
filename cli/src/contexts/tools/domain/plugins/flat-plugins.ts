@@ -7,10 +7,10 @@ import type { FlatLayout, FlatSkillLayout, HooksAcceptance } from "../../contrac
 import type { HookScript } from "../../contract/tool-vocabulary.js";
 import {
   AS_SHIPPED,
-  PluginDeliveryBase,
   type ProjectHooksPlacement,
   resolveProjectHooks,
-} from "./plugin-delivery.js";
+} from "../sections/hooks-section.js";
+import { PluginDeliveryBase } from "./plugin-delivery.js";
 import type { FlatParams } from "./plugin-params.js";
 
 /** A tool that loads a plugin's skills, agents and hooks from its own workspace directory. */

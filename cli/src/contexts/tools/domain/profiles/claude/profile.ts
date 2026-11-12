@@ -3,6 +3,7 @@ import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
+import { nativeHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { McpSection } from "../../sections/mcp-section.js";
@@ -17,6 +18,8 @@ const TOOL_SUFFIX = ".claude.md";
 function commandsDir(phase: string): string {
   return `${DIRECTORY}commands/aidd/${phase}/`;
 }
+
+const hooksSupport = nativeHooksSupport(CLAUDE_HOOKS);
 
 export const claude = defineAiTool({
   toolId: "claude",
@@ -76,11 +79,13 @@ export const claude = defineAiTool({
       format: "json",
       consumes: [CONFIG_MCP],
     }),
+    hooks: { delivery: hooksSupport.delivery },
     plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".claude/plugins/",
       pluginManifestRelativePath: "plugin.json",
-      ...nativeHooksSupport(CLAUDE_HOOKS),
+      ...nativeHooksParams(hooksSupport.delivery),
+      pluginRootToken: hooksSupport.rootToken,
       acceptsMcp: true,
       translationMode: "marketplace",
       // Claude registers its own marketplaces and enables its own plugins, both driven here.

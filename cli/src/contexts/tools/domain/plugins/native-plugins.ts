@@ -5,10 +5,10 @@ import { MarketplaceRegistration } from "../native-registration/marketplace-regi
 import { NativeActivation } from "../native-registration/native-activation.js";
 import {
   AS_SHIPPED,
-  PluginDeliveryBase,
   type ProjectHooksPlacement,
   resolveProjectHooks,
-} from "./plugin-delivery.js";
+} from "../sections/hooks-section.js";
+import { PluginDeliveryBase } from "./plugin-delivery.js";
 import type { NativeParams } from "./plugin-params.js";
 
 const DEFAULT_MCP_PATH = ".mcp.json";

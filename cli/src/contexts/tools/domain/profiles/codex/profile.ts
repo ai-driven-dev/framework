@@ -2,7 +2,8 @@ import { join } from "node:path";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { codexAgentFrontmatter, codexAgentToml } from "../../behaviours/codex-agent-toml.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
-import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { nativeHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { McpSection } from "../../sections/mcp-section.js";
@@ -45,6 +46,8 @@ function buildCodexSkillFilePath(fileName: string): string {
   return `${AGENTS_SKILLS_PREFIX}aidd-${skillNameFromPath(fileName)}/SKILL.md`;
 }
 
+const hooksSupport = nativeHooksSupport(CODEX_HOOKS);
+
 export const codex = defineAiTool({
   toolId: "codex",
   distributionProbes: {
@@ -83,7 +86,7 @@ export const codex = defineAiTool({
       mergeFn: mergeCodexConfigToml,
       consumes: [CONFIG_MCP],
     }),
-    hooks: hooksConfigCapability(CODEX_HOOKS),
+    hooks: { config: hooksConfigPart(CODEX_HOOKS), delivery: hooksSupport.delivery },
     plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".codex/plugins/",
@@ -93,7 +96,8 @@ export const codex = defineAiTool({
       translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a
       // project-local settings file is inert, so the `codex` CLI is driven directly instead.
-      ...nativeHooksSupport(CODEX_HOOKS),
+      ...nativeHooksParams(hooksSupport.delivery),
+      pluginRootToken: hooksSupport.rootToken,
       nativeActivation: {
         binary: "codex",
         upgradeVerb: "upgrade",

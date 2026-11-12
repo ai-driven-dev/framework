@@ -1,4 +1,5 @@
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
+import { flatHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import {
@@ -25,6 +26,19 @@ function skillName(fileName: string): string {
     : base.replace(/\.md$/, "");
 }
 
+const hooksDelivery = flatProjectHooksDelivery(
+  flatHooksSupport(ANTIGRAVITY_HOOKS),
+  ANTIGRAVITY_HOOKS.flat,
+  {
+    merge: mergeAntigravityHooks,
+    unmerge: unmergeAntigravityHooks,
+    contributedEntries: antigravityHookEntries,
+    isEmpty: isAntigravityHooksFileEmpty,
+    scriptPath: antigravityHooksScriptPath,
+    scriptDir: antigravityHooksScriptDir,
+  }
+);
+
 export const antigravity = defineAiTool({
   toolId: "antigravity",
   directory: ANTIGRAVITY_DIRECTORY,
@@ -40,19 +54,12 @@ export const antigravity = defineAiTool({
         `${bound.installUnder(`skills/${SKILLS_PREFIX}`)(skillName(fileName))}/SKILL.md`,
       convertFrontmatter: (fm) => fm,
     }),
+    hooks: { delivery: hooksDelivery },
     plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       flatSkillLayout: "single-level",
-      ...flatHooksSupport(ANTIGRAVITY_HOOKS),
-      ...flatProjectHooksDelivery(ANTIGRAVITY_HOOKS.flat, {
-        merge: mergeAntigravityHooks,
-        unmerge: unmergeAntigravityHooks,
-        contributedEntries: antigravityHookEntries,
-        isEmpty: isAntigravityHooksFileEmpty,
-        scriptPath: antigravityHooksScriptPath,
-        scriptDir: antigravityHooksScriptDir,
-      }),
+      ...flatHooksParams(hooksDelivery),
     }),
   }),
 

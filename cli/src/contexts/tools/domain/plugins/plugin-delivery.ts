@@ -1,20 +1,6 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { HooksAcceptance, PluginDelivery } from "../../contract/tool-profile.js";
-import type {
-  GlobalFiles,
-  HookScript,
-  ProjectHooksFormat,
-} from "../../contract/tool-vocabulary.js";
-import type { ProjectHooksDelivery } from "./plugin-params.js";
-
-/** Where a hook lands in the project and how, with the script as this tool runs it. */
-export interface ProjectHooksPlacement {
-  relativePath: string;
-  format: ProjectHooksFormat;
-  hookScript: HookScript;
-}
-
-export const AS_SHIPPED: HookScript = (_pluginPath, content) => content;
+import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
+import type { ProjectHooksPlacement } from "../sections/hooks-section.js";
 
 /**
  * What a tool answers about how a plugin is delivered, as every way a tool takes plugins
@@ -54,33 +40,4 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
   userPluginsBaseDir(homedir: string): string | null {
     return this.#machineFiles?.dir(homedir) ?? null;
   }
-}
-
-/**
- * The project hooks file this tool delivers to, or `null` when a hook lands in the plugin's own
- * directory. A project destination without its file path and format is refused here.
- */
-export function resolveProjectHooks(
-  delivery: ProjectHooksDelivery,
-  hookScript: HookScript
-): ProjectHooksPlacement | null {
-  if (delivery.hooksDestination !== "project") {
-    if (delivery.projectHooksFormat !== undefined) {
-      throw new CapabilityConfigError("projectHooksFormat requires hooksDestination 'project'.");
-    }
-    return null;
-  }
-  if (delivery.projectHooksRelativePath === undefined) {
-    throw new CapabilityConfigError(
-      "hooksDestination 'project' requires a projectHooksRelativePath."
-    );
-  }
-  if (delivery.projectHooksFormat === undefined) {
-    throw new CapabilityConfigError("hooksDestination 'project' requires a projectHooksFormat.");
-  }
-  return {
-    relativePath: delivery.projectHooksRelativePath,
-    format: delivery.projectHooksFormat,
-    hookScript,
-  };
 }

@@ -55,6 +55,7 @@ describe("antigravity", () => {
       mergeAntigravityHooks
     );
     expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
+      "hooks",
       "plugins",
       "skills",
     ]);

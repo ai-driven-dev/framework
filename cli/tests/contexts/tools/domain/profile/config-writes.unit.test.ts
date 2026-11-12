@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { defineIdeTool } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { IdeToolConfig } from "../../../../../src/contexts/tools/domain/profile.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { HooksSection } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
+import { HooksConfigPart } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
 import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
 
 const mcp = new McpSection({ outputPath: ".mcp.json", format: "json" });
-const hooks = new HooksSection({ outputPath: ".claude/settings.json" });
+const hooks = new HooksConfigPart({ outputPath: ".claude/settings.json" });
+const hooksSection = { config: hooks, delivery: { kind: "plugin-file" } } as const;
 const settings = new ConfigSection({
   outputPath: ".claude/settings.json",
   mergeStrategy: "none",
@@ -44,7 +45,7 @@ describe("configWrites, the config files a tool writes in the order they claim a
 
   describe("an AI tool", () => {
     it("lists mcp, hooks and settings in that order", () => {
-      const tool = stubAiTool("claude", { mcp, hooks, config: [settings] });
+      const tool = stubAiTool("claude", { mcp, hooks: hooksSection, config: [settings] });
 
       expect(tool.configWrites()).toStrictEqual([
         { kind: "mcp", capability: mcp },
@@ -60,6 +61,12 @@ describe("configWrites, the config files a tool writes in the order they claim a
         { kind: "settings", capability: extensions },
         { kind: "settings", capability: settings },
       ]);
+    });
+
+    it("adds no write for a hooks section that only carries a delivery", () => {
+      const tool = stubAiTool("claude", { hooks: { delivery: { kind: "plugin-file" } } });
+
+      expect(tool.configWrites()).toStrictEqual([]);
     });
 
     it("lists nothing for a tool declaring no config capability", () => {

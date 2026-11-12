@@ -5,6 +5,7 @@ import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
+import { nativeHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { AgentsSection } from "../../sections/agents-section.js";
@@ -186,6 +187,8 @@ function rewriteCopilotContent(content: string): string {
   );
 }
 
+const hooksSupport = nativeHooksSupport(COPILOT_HOOKS);
+
 export const copilot = defineAiTool({
   toolId: "copilot",
   distributionProbes: {
@@ -254,11 +257,13 @@ export const copilot = defineAiTool({
         requiresTool: "vscode",
       }),
     ],
+    hooks: { delivery: hooksSupport.delivery },
     plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".github/plugins/",
       pluginManifestRelativePath: "plugin.json",
-      ...nativeHooksSupport(COPILOT_HOOKS),
+      ...nativeHooksParams(hooksSupport.delivery),
+      pluginRootToken: hooksSupport.rootToken,
       acceptsMcp: true,
       translationMode: "marketplace",
       // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name

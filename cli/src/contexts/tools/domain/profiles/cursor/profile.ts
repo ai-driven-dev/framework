@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
+import { nativeHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { McpSection } from "../../sections/mcp-section.js";
@@ -17,6 +18,9 @@ const MDC_EXT = ".mdc";
 function toMdc(fileName: string): string {
   return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
 }
+
+const hooksDelivery = projectHooksSupport(CURSOR_HOOKS);
+const CURSOR_ROOT_TOKEN = nativeHooksSupport(CURSOR_HOOKS).rootToken;
 
 export const cursor = defineAiTool({
   toolId: "cursor",
@@ -74,14 +78,15 @@ export const cursor = defineAiTool({
       format: "json",
       consumes: [CONFIG_MCP],
     }),
+    hooks: { delivery: hooksDelivery },
     plugins: pluginsCapability({
       mode: "native",
       // Empty so the translator computes pluginRoot as `<pluginName>/`, giving base-relative
       // keys such as "aidd-context/commands/foo.md".
       pluginsDir: "",
       pluginManifestRelativePath: null,
-      ...nativeHooksSupport(CURSOR_HOOKS),
-      ...projectHooksSupport(CURSOR_HOOKS),
+      ...nativeHooksParams(hooksDelivery),
+      pluginRootToken: CURSOR_ROOT_TOKEN,
       acceptsMcp: true,
       mcpRelativePath: "mcp.json",
       installScope: "user",

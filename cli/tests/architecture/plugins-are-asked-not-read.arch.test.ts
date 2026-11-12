@@ -63,9 +63,9 @@ const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
     "the composition root picks the source reader by the declared form, which carries its own list command and wording",
   "src/contexts/tools/domain/native-registration/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile":
     "the path that names the tracked file in the manifest, resolved against a project root and hashed by its caller",
-  "src/contexts/tools/domain/sections/hooks-section.ts :: HooksSection.outputPath":
+  "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.outputPath":
     "the declared destination, asked by the framework install use cases (config, runtime config) and written into the manifest",
-  "src/contexts/tools/domain/sections/hooks-section.ts :: HooksSection.mergeStrategy":
+  "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.mergeStrategy":
     "the declared way the hooks file is merged, recorded on each installed file by the framework install use cases",
   "src/contexts/tools/domain/sections/mcp-section.ts :: McpSection.outputPath":
     "the declared destination, asked by the framework install use cases (config, runtime config)",

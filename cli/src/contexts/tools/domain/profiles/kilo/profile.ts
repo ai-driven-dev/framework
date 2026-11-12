@@ -6,7 +6,7 @@ import {
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
-import { flatGlobalFilePath } from "../../plugins/plugin-params.js";
+import { flatGlobalFilePath, flatHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { McpSection } from "../../sections/mcp-section.js";
@@ -17,6 +17,8 @@ import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
 import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.js";
 
 const TOOL_SUFFIX = ".kilo.md";
+
+const hooksDelivery = flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge);
 
 export const kilo = defineAiTool({
   toolId: "kilo",
@@ -57,6 +59,7 @@ export const kilo = defineAiTool({
       consumes: [CONFIG_MCP],
       outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
     }),
+    hooks: { delivery: hooksDelivery },
     plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
@@ -64,7 +67,7 @@ export const kilo = defineAiTool({
         dir: (homedir) => join(homedir, ".config", "kilo"),
         map: flatGlobalFilePath(KILO_DIRECTORY),
       },
-      ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
+      ...flatHooksParams(hooksDelivery),
     }),
   }),
 

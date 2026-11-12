@@ -5,17 +5,17 @@ import type {
   GlobalFiles,
   HookScript,
   PluginTranslationMode,
-  ProjectHooksFormat,
 } from "../../contract/tool-vocabulary.js";
 import type { MarketplaceSettings } from "../native-registration/marketplace-settings.js";
 import type { NativeActivationSpec } from "../native-registration/native-activation.js";
-
-/** A hook lands in the plugin's own dir, or merged into the project hooks file measured to fire. */
-export interface ProjectHooksDelivery {
-  hooksDestination?: "plugin" | "project";
-  projectHooksRelativePath?: string;
-  projectHooksFormat?: ProjectHooksFormat;
-}
+import type {
+  BridgeDelivery,
+  HooksFlatPart,
+  NoDelivery,
+  PluginFileDelivery,
+  ProjectHooksDelivery,
+  ProjectMergeDelivery,
+} from "../sections/hooks-section.js";
 
 /**
  * The global-file mapping of a flat tool whose user configuration directory takes the same
@@ -111,3 +111,53 @@ export type FlatParams = FlatPluginsParams & GlobalFilesParams;
 export type UnsupportedParams = UnsupportedPluginsParams & GlobalFilesParams;
 
 export type PluginsParams = NativeParams | FlatParams | UnsupportedParams;
+
+type HooksParamsHead = {
+  acceptsHooks: true;
+  hooksTrustNotice?: string;
+  hookScript?: HookScript;
+};
+
+function refusal(delivery: NoDelivery): { acceptsHooks: false; hooksUnsupportedReason: string } {
+  return { acceptsHooks: false, hooksUnsupportedReason: delivery.reason };
+}
+
+/** A native tool's hooks delivery, as the plugin params still hold it. */
+export function nativeHooksParams(
+  delivery: PluginFileDelivery | ProjectMergeDelivery | NoDelivery
+): (HooksParamsHead & ProjectHooksDelivery & { hooksRelativePath?: string }) | HooksSupport {
+  if (delivery.kind === "none") return refusal(delivery);
+  return {
+    acceptsHooks: true,
+    ...(delivery.hookScript === undefined ? {} : { hookScript: delivery.hookScript }),
+    ...(delivery.trustNotice === undefined ? {} : { hooksTrustNotice: delivery.trustNotice }),
+    ...(delivery.kind === "project-merge" ? projectParams(delivery) : {}),
+  };
+}
+
+/** A flat tool's hooks delivery, as the plugin params still hold it. */
+export function flatHooksParams(
+  delivery: BridgeDelivery | (ProjectMergeDelivery & { flat: HooksFlatPart }) | NoDelivery
+): FlatHooksSupport {
+  if (delivery.kind === "none") return refusal(delivery);
+  const { flat } = delivery;
+  return {
+    acceptsHooks: true,
+    flatHooksDir: flat.dir,
+    ...(delivery.hookScript === undefined ? {} : { hookScript: delivery.hookScript }),
+    ...(flat.loaderEntry === undefined ? {} : { flatHooksLoaderEntry: flat.loaderEntry }),
+    ...(flat.bridge === undefined ? {} : { flatHooksBridge: flat.bridge }),
+    ...(delivery.kind === "project-merge" ? projectParams(delivery) : {}),
+  };
+}
+
+function projectParams(delivery: ProjectMergeDelivery): ProjectHooksDelivery & {
+  hooksRelativePath?: string;
+} {
+  return {
+    ...(delivery.pluginFile === undefined ? {} : { hooksRelativePath: delivery.pluginFile }),
+    hooksDestination: "project",
+    projectHooksRelativePath: delivery.project.relativePath,
+    projectHooksFormat: delivery.project.format,
+  };
+}
