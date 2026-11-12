@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>52 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>55 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -49,7 +49,8 @@ https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 <tr><td><b>GitHub Copilot</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
 <tr><td><b>OpenCode</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
 <tr><td><b>Kilo Code</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
-<tr><td><b>Codex</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr></tbody>
+<tr><td><b>Codex</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
+<tr><td><b>Antigravity CLI</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr></tbody>
 </table>
 
 <!--tools:end-->
@@ -67,7 +68,7 @@ npx @ai-driven-dev/cli@latest setup
 ```
 
 <p align="center">
-  <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the six recommended plugins into a new project" width="720" />
+  <img src="docs/assets/install-demo.svg" alt="Terminal recording: npx @ai-driven-dev/cli setup installs the recommended plugins into a new project" width="720" />
 </p>
 
 Marketplace, flat files, update, remove: [install guide](docs/INSTALL.md).
@@ -121,9 +122,8 @@ flowchart TD
 
 ## Plugins
 
-Install the stable ones.
-
-Beta, alpha and preview plugins are off the recommended path.
+- Stable: the recommended path.
+- Beta, alpha and preview: off it.
 
 <!--plugins:start-->
 
@@ -133,7 +133,7 @@ Beta, alpha and preview plugins are off the recommended path.
 <a href="plugins/aidd-context/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🧭 aidd-context</h3>
-14 skills · 1 hook<br />
+14 skills · 3 hooks<br />
 Project memory, context generation, learning
 </a>
 </td>
@@ -185,7 +185,7 @@ Feature flow, issue-to-PR automation, backlog
 <a href="plugins/aidd-ui/README.md">
 <img align="right" alt="alpha" src="https://img.shields.io/badge/alpha-cf222e?style=flat-square" />
 <h3>🎨 aidd-ui</h3>
-1 skill · 3 hooks<br />
+4 skills · 3 hooks<br />
 UI design system, checked on every write
 </a>
 </td>

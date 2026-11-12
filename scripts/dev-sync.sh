@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
-# (Re)install every plugin into Claude, Codex, OpenCode, Copilot and Cursor from THIS checkout.
-# Claude reads the raw repo, already native; the others install from a tree the aidd CLI
-# builds, so what runs locally matches what ships. Codex and OpenCode load no
-# agent from a plugin, so their built agents are copied to the user's agents directory.
+# (Re)install every plugin into Claude, Codex, OpenCode, Kilo, Copilot and Cursor from THIS
+# checkout, the way a user does: `aidd setup --global` with this checkout as the framework
+# source, so the reload exercises the shipped machine-wide install.
+# A managed OpenCode host delegates to its fixed-purpose reload helper instead.
 #
 # NOT live: the install copies built files, so an edit needs a re-run. Idempotent; a tool
-# whose CLI is absent is skipped, and the first run needs network. A managed OpenCode host
-# exposes `aidd-opencode-reload` instead, and that helper decides which checkout may load.
+# whose CLI is absent is skipped, and the first run needs network.
 #
 # Global rules: sync only the Agents section in the managed block, preserving personal
-# rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled.
+# rules. First OpenCode sync keeps its Claude personal-rule fallback unless disabled. Kilo
+# documents no global AGENTS.md, only its config's `instructions` key, so it gets none.
 # Paths honor native home/cache overrides; explicit task paths take precedence.
 # Sources:
 # https://developers.openai.com/codex/guides/agents-md
 # https://code.claude.com/docs/en/memory
 # OpenCode fallback and disable flags:
 # https://opencode.ai/docs/rules/#claude-code-compatibility
-# Cursor local plugins: real directories only; local imports must be allowed.
+# Cursor local plugins: local imports must be allowed.
 # https://cursor.com/docs/plugins#test-plugins-locally
 # Copilot native plugin list and install:
 # https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference
@@ -33,13 +33,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FW="${FW:-$(dirname "$SCRIPT_DIR")}"
 MKT="${MKT:-aidd-framework}"
 AIDD_CLI_VERSION="${AIDD_CLI_VERSION:-latest}"  # published fallback for sources without a built CLI
-BUILD="${BUILD:-$HOME/.cache/aidd-framework-dev}"  # per-tool native trees the marketplaces point at
-CODEX_CACHE="${CODEX_CACHE:-${CODEX_HOME:-$HOME/.codex}/plugins/cache}"
-CLAUDE_CACHE="${CLAUDE_CACHE:-${CLAUDE_CODE_PLUGIN_CACHE_DIR:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins}/cache}"
-CODEX_AGENTS="${CODEX_AGENTS:-${CODEX_HOME:-$HOME/.codex}/agents}"
-OPENCODE_SKILLS="${OPENCODE_SKILLS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/skills}"
-OPENCODE_AGENTS="${OPENCODE_AGENTS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/agents}"
-CURSOR_PLUGINS="${CURSOR_PLUGINS:-$HOME/.cursor/plugins/local}"
 CODEX_INSTRUCTIONS="${CODEX_INSTRUCTIONS:-${CODEX_HOME:-$HOME/.codex}/AGENTS.md}"
 CLAUDE_INSTRUCTIONS="${CLAUDE_INSTRUCTIONS:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md}"
 OPENCODE_INSTRUCTIONS="${OPENCODE_INSTRUCTIONS:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode/AGENTS.md}"
@@ -50,6 +43,7 @@ HAVE_CODEX=0;  command -v codex  >/dev/null 2>&1 && HAVE_CODEX=1
 HAVE_CLAUDE=0; command -v claude >/dev/null 2>&1 && HAVE_CLAUDE=1
 HAVE_OPENCODE=0; command -v opencode >/dev/null 2>&1 && HAVE_OPENCODE=1
 HAVE_MANAGED_OPENCODE=0; command -v aidd-opencode-reload >/dev/null 2>&1 && HAVE_MANAGED_OPENCODE=1
+HAVE_KILO=0; command -v kilo >/dev/null 2>&1 && HAVE_KILO=1
 HAVE_COPILOT=0; command -v copilot >/dev/null 2>&1 && HAVE_COPILOT=1
 HAVE_CURSOR=0
 if command -v cursor >/dev/null 2>&1 || command -v cursor-agent >/dev/null 2>&1; then
@@ -58,214 +52,92 @@ elif command -v agent >/dev/null 2>&1 && agent --help 2>/dev/null | grep 'Start 
   HAVE_CURSOR=1
 fi
 
-build_tool() {
-  local tool="$1"
-  rm -rf "$BUILD/$tool"; mkdir -p "$BUILD/$tool"
-  local mode=marketplace
-  [ "$tool" != opencode ] || mode=flat
-  if [ -f "$FW/cli/dist/cli.js" ]; then
-    node "$FW/cli/dist/cli.js" translate "$FW" \
-      --to "$tool" --out "$BUILD/$tool" --as "$mode" --force >/dev/null 2>&1
+aidd_cli() {
+  if [ -f "$FW/cli/package.json" ]; then
+    command -v pnpm >/dev/null 2>&1 || {
+      echo "pnpm is required to rebuild the checkout CLI; refusing to use a possibly stale dist." >&2
+      return 1
+    }
+    (cd "$FW/cli" && pnpm build >/dev/null) || {
+      echo "Could not build the checkout CLI; refusing to use a published fallback." >&2
+      return 1
+    }
+    if [ ! -f "$FW/cli/dist/cli.js" ]; then
+      echo "The checkout CLI build did not produce cli/dist/cli.js." >&2
+      return 1
+    fi
+    node "$FW/cli/dist/cli.js" "$@"
+  elif [ -f "$FW/cli/dist/cli.js" ]; then
+    node "$FW/cli/dist/cli.js" "$@"
   else
-    npx --yes "@ai-driven-dev/cli@${AIDD_CLI_VERSION}" translate "$FW" \
-      --to "$tool" --out "$BUILD/$tool" --as "$mode" --force >/dev/null 2>&1
+    npx --yes "@ai-driven-dev/cli@${AIDD_CLI_VERSION}" "$@"
   fi
 }
 
-validate_opencode_skills() {
-  # Check every expected nonempty skill before replacing plugin namespaces.
-  local name skill skill_name
-  for name in "$@"; do
-    for skill in "$FW/plugins/$name/skills/"*/SKILL.md; do
-      skill_name="$(basename "$(dirname "$skill")")"
-      if [ ! -s "$BUILD/opencode/.opencode/skills/$name/$skill_name/SKILL.md" ] &&
-         [ ! -s "$BUILD/opencode/.opencode/skills/$name-$skill_name/SKILL.md" ]; then
-        echo "no built OpenCode skill for $name-$skill_name (missing or empty SKILL.md)" >&2
-        return 1
-      fi
-    done
-  done
-}
-
-validate_native_plugins() {
-  local tool="$1" manifest="$2" name skill
-  for name in "${targets[@]}"; do
-    if [ ! -s "$BUILD/$tool/plugins/$name/$manifest" ]; then
-      echo "no built $tool manifest for $name" >&2; return 1
-    fi
-    for skill in "$FW/plugins/$name/skills/"*/SKILL.md; do
-      if [ ! -s "$BUILD/$tool/plugins/$name/skills/$(basename "$(dirname "$skill")")/SKILL.md" ]; then
-        echo "no built $tool skill for $name-$(basename "$(dirname "$skill")")" >&2; return 1
-      fi
-    done
-  done
-}
-
-sync_opencode_skills() {
-  # Accept nested and legacy flat builds; preserve personal and unselected plugin content.
-  local name source skill destination
-  local -a skills
-  mkdir -p "$OPENCODE_SKILLS"
-  source="$BUILD/opencode/.opencode/skills"
-  for name in "$@"; do
-    skills=("$source/$name/"*/ "$source/$name-"*/)
-    rm -rf -- "$OPENCODE_SKILLS/$name"
-    find "$OPENCODE_SKILLS" -mindepth 1 -maxdepth 1 -type d -name "$name-*" -exec rm -rf -- {} +
-    for skill in "${skills[@]}"; do
-      case "$skill" in
-        "$source/$name/"*) destination="$OPENCODE_SKILLS/$name/$(basename "$skill")" ;;
-        *) destination="$OPENCODE_SKILLS/$(basename "$skill")" ;;
-      esac
-      mkdir -p "$(dirname "$destination")"
-      cp -R "$skill" "$destination"
-    done
-  done
-}
-
-copy_agents() {
-  # Overwrite only the plugin's own agents; personal agents are left untouched.
-  local destination="$1" prefix="$2" agent
-  shift 2
-  for agent in "$@"; do
-    mkdir -p "$destination"
-    cp -f "$agent" "$destination/$prefix$(basename "$agent")"
-  done
-}
-
-register_marketplace() {
-  case "$1" in
-    # Codex needs the native .codex-plugin tree.
-    codex)
-      codex  plugin marketplace remove "$MKT" >/dev/null 2>&1 || true
-      codex  plugin marketplace add "$BUILD/codex"  >/dev/null 2>&1 ;;
-    # Claude installs the native repository. Scope every op to user: bare `marketplace remove` strips
-    # the declaration from EVERY scope, wiping the repo's own project-scoped config.
-    claude)
-      claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
-      claude plugin marketplace add "$FW" --scope user >/dev/null 2>&1 ;;
-    copilot)
-      local registered_source
-      registered_source="$(copilot plugin marketplace list --json | node -e '
-        const entries = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
-        if (!Array.isArray(entries)) throw new Error("Invalid Copilot marketplace list");
-        const entry = entries.find(item => item.name === process.argv[1]);
-        if (entry && typeof entry.source !== "string") throw new Error("Invalid Copilot marketplace source");
-        process.stdout.write(entry?.source ?? "");
-      ' "$MKT")" || return 1
-      case "$registered_source" in
-        "") copilot plugin marketplace add "$BUILD/copilot" >/dev/null ;;
-        "Local: $BUILD/copilot") copilot plugin marketplace update "$MKT" >/dev/null ;;
-        "Local: $FW")
-          # Native list also includes inherited Claude registrations, which remove cannot change.
-          local add_result
-          if add_result="$(copilot plugin marketplace add "$BUILD/copilot" 2>&1)"; then
-            return 0
-          fi
-          case "$add_result" in
-            *"already registered"*)
-              copilot plugin marketplace remove "$MKT" --force >/dev/null || return 1
-              copilot plugin marketplace add "$BUILD/copilot" >/dev/null ;;
-            *) printf '%s\n' "$add_result" >&2; return 1 ;;
-          esac ;;
-        *) echo "Refusing a different Copilot marketplace source for $MKT: $registered_source" >&2; return 1 ;;
-      esac ;;
-  esac
-}
-
-sync_one() {
-  local name="$1"
-  [ -f "$FW/plugins/$name/.claude-plugin/plugin.json" ] || { echo "skip $name (no plugin.json)"; return; }
-  printf '%-22s' "$name"
-
-  if [ "$HAVE_CODEX" = 1 ]; then
-    codex plugin remove "$name" >/dev/null 2>&1 || true
-    rm -rf "$CODEX_CACHE/$MKT/$name"
-    if codex plugin add "$name@$MKT" >/dev/null 2>&1; then
-      printf ' codex:ok'
-      copy_agents "$CODEX_AGENTS" "$name-" "$BUILD/codex/plugins/$name/codex-agents/"*.toml
-    else
-      printf ' codex:FAIL'
-      echo "Codex plugin install failed for $name; rerun codex plugin add $name@$MKT for details." >&2
+refresh_codex_plugins() {
+  [ "$HAVE_CODEX" = 1 ] || return 0
+  local installed ref name
+  installed="$(cd "$HOME" && codex plugin list --marketplace "$MKT" --json)" || {
+    echo "Could not read enabled Codex plugins after setup; Codex cache refresh was skipped." >&2
+    return 1
+  }
+  local enabled
+  enabled="$(printf '%s\n' "$installed" | node -e '
+    const data = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+    if (!Array.isArray(data.installed)) throw new Error("Codex plugin list has no installed array");
+    for (const plugin of data.installed) {
+      if (plugin.installed === true && plugin.enabled === true && typeof plugin.pluginId === "string")
+        process.stdout.write(`${plugin.pluginId}\n`);
+    }
+  ')" || {
+    echo "Could not parse enabled Codex plugins after setup; Codex cache refresh was skipped." >&2
+    return 1
+  }
+  while IFS= read -r ref; do
+    [ -n "$ref" ] || continue
+    name="${ref%@*}"
+    case " ${targets[*]} " in *" $name "*) ;; *) continue ;; esac
+    codex plugin add "$ref" >/dev/null || {
+      echo "Codex could not refresh enabled plugin $ref; host state may be partially updated." >&2
       return 1
-    fi
-  fi
-  if [ "$HAVE_CLAUDE" = 1 ]; then
-    rm -rf "$CLAUDE_CACHE/$MKT/$name"
-    if claude plugin install "$name@$MKT" --scope user >/dev/null 2>&1; then
-      printf ' claude:ok'
-    else
-      printf ' claude:FAIL'
-      echo "Claude plugin install failed for $name; rerun claude plugin install $name@$MKT --scope user for details." >&2
-      return 1
-    fi
-  fi
-  if [ "$HAVE_COPILOT" = 1 ]; then
-    if copilot plugin install "$name@$MKT" >/dev/null; then
-      printf ' copilot:ok'
-    else
-      echo "Copilot plugin install failed for $name" >&2; return 1
-    fi
-  fi
-  echo
+    }
+  done <<< "$enabled"
 }
 
-if [ "$HAVE_CODEX" = 0 ] && [ "$HAVE_CLAUDE" = 0 ] && [ "$HAVE_OPENCODE" = 0 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ] && [ "$HAVE_COPILOT" = 0 ] && [ "$HAVE_CURSOR" = 0 ]; then
+hosts=()
+[ "$HAVE_CLAUDE" = 0 ] || hosts+=(claude)
+[ "$HAVE_CODEX" = 0 ] || hosts+=(codex)
+[ "$HAVE_COPILOT" = 0 ] || hosts+=(copilot)
+[ "$HAVE_CURSOR" = 0 ] || hosts+=(cursor)
+[ "$HAVE_KILO" = 0 ] || hosts+=(kilo)
+[ "$HAVE_OPENCODE" = 0 ] || [ "$HAVE_MANAGED_OPENCODE" = 1 ] || hosts+=(opencode)
+if [ "${#hosts[@]}" -eq 0 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
   echo "No supported host installation found - nothing to install."; exit 0
 fi
 
 targets=()
-for d in "$FW"/plugins/*/; do targets+=("$(basename "$d")"); done
+for d in "$FW"/plugins/*/; do
+  [ -f "$d.claude-plugin/plugin.json" ] && targets+=("$(basename "$d")")
+done
 
-# Codex needs a native plugin build; register against it. Claude installs from the raw
-# repo (already native), so it only needs the marketplace registered - no build.
-if [ "$HAVE_CODEX" = 1 ]; then
-  printf '%-22s' "build codex"
-  build_tool codex || { echo "FAIL"; echo "codex build failed; rerun the translate command in scripts/dev-sync.sh without output redirection for details." >&2; exit 1; }
-  register_marketplace codex || { echo "FAIL"; echo "Codex marketplace registration failed for $BUILD/codex." >&2; exit 1; }
-  echo "ok"
-fi
-if [ "$HAVE_CLAUDE" = 1 ]; then
-  register_marketplace claude
-fi
-if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
-  printf '%-22s' "build opencode"
-  build_tool opencode && echo "ok" || { echo "FAIL"; echo "opencode build failed; rerun the translate command in scripts/dev-sync.sh without output redirection for details." >&2; exit 1; }
-fi
-if [ "$HAVE_CURSOR" = 1 ]; then
-  printf '%-22s' "build cursor"
-  build_tool cursor || { echo "FAIL"; echo "cursor build failed" >&2; exit 1; }
-  validate_native_plugins cursor .cursor-plugin/plugin.json || { echo "FAIL"; exit 1; }
-  echo "ok"
-fi
-if [ "$HAVE_COPILOT" = 1 ]; then
-  printf '%-22s' "build copilot"
-  build_tool copilot || { echo "FAIL"; echo "copilot build failed" >&2; exit 1; }
-  validate_native_plugins copilot .plugin/plugin.json || { echo "FAIL"; exit 1; }
-  register_marketplace copilot || { echo "FAIL"; echo "Copilot marketplace registration failed" >&2; exit 1; }
-  echo "ok"
-fi
-
-for t in "${targets[@]}"; do sync_one "$t"; done
-
-if [ "$HAVE_OPENCODE" = 1 ] && [ "$HAVE_MANAGED_OPENCODE" = 0 ]; then
-  printf '%-22s' "install opencode"
-  validate_opencode_skills "${targets[@]}" || { echo "FAIL"; exit 1; }
-  sync_opencode_skills "${targets[@]}"
-  for t in "${targets[@]}"; do copy_agents "$OPENCODE_AGENTS" "" "$BUILD/opencode/.opencode/agents/$t-"*.md; done
-  echo "skills:ok agents:ok"
-fi
 if [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
   printf '%-22s' "reload opencode"
   aidd-opencode-reload
 fi
-if [ "$HAVE_CURSOR" = 1 ]; then
-  printf '%-22s' "install cursor"
-  mkdir -p "$CURSOR_PLUGINS"
-  for t in "${targets[@]}"; do
-    rm -rf -- "$CURSOR_PLUGINS/$t"
-    cp -R "$BUILD/cursor/plugins/$t" "$CURSOR_PLUGINS/$t"
-  done
-  echo "plugins:ok (requires local plugin imports)"
+
+if [ "${#hosts[@]}" -gt 0 ]; then
+  printf '%-22s' "global install"
+  # From HOME, not this checkout: its own .claude/settings.json enables the plugins at project
+  # scope, which setup --global would otherwise refuse as refs it does not own.
+  output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
+    --plugins all --preserve-plugin-state --yes 2>&1)" || {
+    echo "FAIL"; printf '%s\n' "$output" >&2
+    echo "aidd setup --global failed for ${hosts[*]}; this script did not pre-remove plugin or marketplace state. File updates may be partial." >&2; exit 1
+  }
+  echo "ok ($(IFS=,; echo "${hosts[*]}"))"
+  # A warning leaves setup at exit 0: what it skipped must stay visible.
+  printf '%s\n' "$output" | sed 's/^/  /'
+  refresh_codex_plugins || { echo "FAIL"; exit 1; }
 fi
 
 instructions=()
@@ -276,13 +148,15 @@ if [ "$HAVE_OPENCODE" = 1 ] || [ "$HAVE_MANAGED_OPENCODE" = 1 ]; then
 fi
 [ "$HAVE_COPILOT" = 0 ] || instructions+=(copilot "$COPILOT_INSTRUCTIONS")
 [ "$HAVE_CURSOR" = 0 ] || instructions+=(cursor "$CURSOR_INSTRUCTIONS")
-printf '%-22s' "global instructions"
-# OpenCode uses this fixed Claude fallback, independent of Claude config overrides.
-instruction_fallback="$HOME/.claude/CLAUDE.md"
-case "${OPENCODE_DISABLE_CLAUDE_CODE:-}" in 1|true) instruction_fallback="" ;; esac
-case "${OPENCODE_DISABLE_CLAUDE_CODE_PROMPT:-}" in 1|true) instruction_fallback="" ;; esac
-node "$SCRIPT_DIR/sync-global-instructions.cjs" "$FW/AGENTS.md" "$instruction_fallback" "${instructions[@]}" ||
-  { echo "FAIL"; exit 1; }
-echo "ok (delegation guidance only)"
+if [ "${#instructions[@]}" -gt 0 ]; then
+  printf '%-22s' "global instructions"
+  # OpenCode uses this fixed Claude fallback, independent of Claude config overrides.
+  instruction_fallback="$HOME/.claude/CLAUDE.md"
+  case "${OPENCODE_DISABLE_CLAUDE_CODE:-}" in 1|true) instruction_fallback="" ;; esac
+  case "${OPENCODE_DISABLE_CLAUDE_CODE_PROMPT:-}" in 1|true) instruction_fallback="" ;; esac
+  node "$SCRIPT_DIR/sync-global-instructions.cjs" "$FW/AGENTS.md" "$instruction_fallback" "${instructions[@]}" ||
+    { echo "FAIL"; exit 1; }
+  echo "ok (delegation guidance only)"
+fi
 
 echo "Done. Restart hosts or reload their configuration for refreshed plugins and instructions."

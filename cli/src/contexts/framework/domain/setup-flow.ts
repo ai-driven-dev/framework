@@ -31,6 +31,8 @@ export interface SetupFlowParams {
    * the shared framework source and native activation machine-wide instead, writing
    * nothing under `projectRoot` — see `architecture.md`'s user-scope section. */
   scope?: SetupScope;
+  /** In machine-scope reloads, preserve existing native plugin enablement choices. */
+  preservePluginState?: boolean;
 }
 
 export class SetupFlow {
@@ -44,6 +46,7 @@ export class SetupFlow {
   readonly force: boolean;
   readonly registerDefaultMarketplace: boolean;
   readonly scope: SetupScope;
+  readonly preservePluginState: boolean;
 
   constructor(params: SetupFlowParams) {
     this.validateToolIds(params.aiTools ?? [], params.ideTools ?? []);
@@ -64,6 +67,7 @@ export class SetupFlow {
     this.force = params.force ?? false;
     this.registerDefaultMarketplace = params.registerDefaultMarketplace ?? true;
     this.scope = params.scope ?? "project";
+    this.preservePluginState = params.preservePluginState ?? false;
   }
 
   private validateToolIds(aiTools: readonly ToolId[], ideTools: readonly ToolId[]): void {
@@ -76,10 +80,10 @@ export class SetupFlow {
   }
 
   // `--scope user` writes nothing under `projectRoot`: an IDE tool's project-relative config has
-  // nowhere to land, an AI tool with neither native activation nor a user-scope install directory
-  // has nowhere to be registered, an empty `--ai` list registers the shared source for no tool at
-  // all, and no manifest entry exists yet to enable a plugin against. Each is refused rather than
-  // silently dropped.
+  // nowhere to land, an AI tool with neither native activation nor a user-scope directory has
+  // nowhere to be registered, an empty `--ai` list registers the shared source for no tool at
+  // all, and an interactive pick has no project to offer it in. Each is refused rather than
+  // silently dropped; named, recommended and all plugins install machine-wide.
   private validateScope(
     scope: SetupScope,
     aiTools: readonly ToolId[],
@@ -91,7 +95,7 @@ export class SetupFlow {
     if (aiTools.length === 0) throw new UserScopeNoToolsError();
     const unsupported = aiTools.filter((id) => !supportsUserScopeActivation(id));
     if (unsupported.length > 0) throw new UserScopeUnsupportedAiToolsError(unsupported);
-    if (pluginMode !== "none") throw new UserScopePluginModeError();
+    if (pluginMode === "interactive") throw new UserScopePluginModeError();
   }
 
   private validatePluginMode(mode: PluginInstallMode, names: readonly string[]): void {

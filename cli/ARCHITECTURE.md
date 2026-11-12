@@ -93,8 +93,8 @@ OpenCode needs JS adapters.
 
 | Owner | Owns |
 | --- | --- |
-| The CLI | The shared host protocol |
-| Plugins | The mapping of their own payloads |
+| The CLI | The shared host protocol and each host's payload mapping |
+| Plugins | Hooks that read the neutral event |
 
 - The helper is delivered once, outside plugin discovery.
 - It is tracked as a tool file, and backfilled only when missing.

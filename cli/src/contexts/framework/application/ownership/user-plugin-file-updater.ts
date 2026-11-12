@@ -1,20 +1,23 @@
 import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../kernel/file.js";
+import type { InstallationFile, UserFileOverrides } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { UserFileOverridesCapability } from "../../../tools/domain/capabilities/plugins-capability.js";
 import {
   frameworkBuildModeFor,
   getToolConfig,
+  globalFilesOf,
   resolvePluginsCapability,
 } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
+import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
@@ -27,7 +30,9 @@ import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
+  withoutMissingFiles,
 } from "../shared/user-scope-plugin-files.js";
+import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugin-files.js";
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
@@ -61,28 +66,43 @@ export class UserPluginFileUpdater {
     plugin: InstalledPlugin,
     toolId: AiToolId,
     projectRoot: string,
-    logger: Logger
+    logger: Logger,
+    rebuild = false
   ): Promise<PlannedUserPluginFileUpdate | null> {
     const dist = await this.loader.loadLatest(plugin, projectRoot);
-    if (compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
-    const { files, componentPaths } = await this.materializeFiles(
-      dist,
-      toolId,
-      plugin,
-      projectRoot
-    );
+    if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
+    const materialized = await this.materializeFiles(dist, toolId, plugin, projectRoot);
     const home = (this.builtDeps?.homedir ?? nodeHomedir)();
-    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, plugin, toolId, home);
-    if (oldSafe.size !== plugin.files.size) {
+    let files = materialized.files;
+    let pluginForSafety = plugin;
+    let userFileOverrides = plugin.userFileOverrides;
+    const overridesCapability = resolvePluginsCapability(toolId)?.userFileOverrides;
+    if (overridesCapability !== null && overridesCapability !== undefined) {
+      overridesCapability.validate(userFileOverrides, plugin.name);
+      await this.assertWritable(plugin, toolId, files, home);
+      const migration = await this.captureUserFileOverrides(
+        plugin,
+        toolId,
+        files,
+        home,
+        overridesCapability,
+        userFileOverrides
+      );
+      pluginForSafety = plugin.withFiles(migration.safeFileHashes);
+      userFileOverrides = migration.overrides;
+      files = overridesCapability.apply(files, userFileOverrides, this.hasher);
+    }
+    const present = await withoutMissingFiles(this.fs, pluginForSafety, toolId, home);
+    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, present, toolId, home);
+    if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
       );
     }
-    await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, files, home);
+    await this.assertWritable(pluginForSafety, toolId, files, home);
     const baseDir = resolveBaseDirFromRecord("user", toolId, projectRoot, () => home);
-    await this.assertNewFilesDoNotCollide(plugin, toolId, baseDir, files);
     return {
-      plugin,
+      plugin: pluginForSafety,
       toolId,
       home,
       baseDir,
@@ -93,33 +113,29 @@ export class UserPluginFileUpdater {
         plugin.source,
         files,
         "user",
-        componentPaths,
+        materialized.componentPaths,
         plugin.marketplace
-      ).withDependents(plugin.dependents),
+      )
+        .withDependents(plugin.dependents)
+        .withUserFileOverrides(userFileOverrides),
     };
   }
 
   async applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin> {
+    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.toolId, plan.home);
     const oldSafe = await userScopeFilesSafeToDelete(
       this.fs,
       logger,
-      plan.plugin,
+      present,
       plan.toolId,
       plan.home
     );
-    if (oldSafe.size !== plan.plugin.files.size || oldSafe.size !== plan.oldSafe.size) {
+    if (oldSafe.size !== present.files.size || oldSafe.size !== plan.oldSafe.size) {
       throw new Error(
         `${plan.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
       );
     }
-    await assertUserScopeWriteBoundary(
-      this.fs,
-      plan.toolId,
-      plan.plugin.name,
-      [...plan.files],
-      plan.home
-    );
-    await this.assertNewFilesDoNotCollide(plan.plugin, plan.toolId, plan.baseDir, plan.files);
+    await this.assertWritable(plan.plugin, plan.toolId, plan.files, plan.home);
     await writePluginFiles([...plan.files], plan.baseDir, this.fs);
     const newPaths = new Set(plan.files.map((file) => file.relativePath));
     await deleteOldFiles(
@@ -130,6 +146,28 @@ export class UserPluginFileUpdater {
     return plan.next;
   }
 
+  /** A tool's global files spread across its user directory; a user-scope plugin directory
+   * holds one plugin per subdirectory. Each layout has its own containment proof. */
+  private async assertWritable(
+    plugin: InstalledPlugin,
+    toolId: AiToolId,
+    files: readonly InstallationFile[],
+    home: string
+  ): Promise<void> {
+    if (globalFilesOf(toolId) !== null) {
+      await assertGlobalFilesWritable(this.fs, toolId, plugin, plugin.name, files, home);
+      return;
+    }
+    const baseDir = resolveBaseDirFromRecord("user", toolId, "", () => home);
+    // A first install owns no file yet, and a restore may have lost the directory: it is created
+    // so the containment proof has a real path to resolve. The name is one safe path segment.
+    if (PLUGIN_NAME_REGEX.test(plugin.name)) {
+      await this.fs.createDirectory(join(baseDir, plugin.name));
+    }
+    await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, [...files], home);
+    await this.assertNewFilesDoNotCollide(plugin, toolId, baseDir, files);
+  }
+
   private async assertNewFilesDoNotCollide(
     plugin: InstalledPlugin,
     toolId: AiToolId,
@@ -138,12 +176,77 @@ export class UserPluginFileUpdater {
   ): Promise<void> {
     for (const file of files) {
       if (plugin.files.has(file.relativePath)) continue;
-      if (await this.fs.fileExists(join(baseDir, file.relativePath))) {
-        throw new Error(
-          `${toolId}: '${plugin.name}' has untracked existing file '${file.relativePath}'; update refused without overwriting user content or changing its machine claim.`
-        );
+      const target = join(baseDir, file.relativePath);
+      if (!(await this.fs.fileExists(target))) continue;
+      throw new Error(
+        `${toolId}: '${plugin.name}' has untracked existing file '${file.relativePath}'; update refused without overwriting user content or changing its machine claim.`
+      );
+    }
+  }
+
+  private async captureUserFileOverrides(
+    plugin: InstalledPlugin,
+    toolId: AiToolId,
+    files: readonly InstallationFile[],
+    home: string,
+    capability: UserFileOverridesCapability,
+    existingOverrides: UserFileOverrides
+  ): Promise<{
+    overrides: UserFileOverrides;
+    safeFileHashes: ReadonlyMap<string, string>;
+  }> {
+    const safeFileHashes = new Map(plugin.files);
+    const distributedPaths = new Set(files.map((file) => file.relativePath));
+    const overrides: Record<string, Readonly<Record<string, string>>> = {};
+    for (const [path, settings] of Object.entries(existingOverrides)) {
+      if (capability.canPreserve(path, plugin.name) && distributedPaths.has(path)) {
+        overrides[path] = settings;
+      } else if (!distributedPaths.has(path)) {
+        // A removed customized file becomes user-owned. Leave it on disk and drop our claim.
+        safeFileHashes.delete(path);
       }
     }
+    const baseDir = globalFilesOf(toolId)?.dir(home);
+    if (baseDir === undefined) return { overrides, safeFileHashes };
+    const resolvedBoundary = await this.fs.realpath(baseDir);
+
+    for (const file of files) {
+      const path = file.relativePath;
+      if (!capability.canPreserve(path, plugin.name) || !plugin.files.has(path)) continue;
+      const previousHash = plugin.files.get(path);
+      if (previousHash === undefined) continue;
+      const target = join(baseDir, path);
+      if (!(await this.fs.fileExists(target))) continue;
+      const resolvedTarget = await this.fs.realpath(target);
+      if (!isStrictlyWithinUserScope(resolvedTarget, resolvedBoundary)) continue;
+      const currentHash = await this.fs.readFileHash(target);
+      if (currentHash.value === plugin.files.get(path)) {
+        // Exact owned bytes can prove a prior override was removed from the file.
+        const existing = existingOverrides[path];
+        if (existing !== undefined) {
+          const installed = await this.fs.readFile(target);
+          const currentOverride = capability.capture(
+            file.content,
+            installed,
+            previousHash,
+            this.hasher
+          );
+          if (
+            currentOverride !== null &&
+            JSON.stringify(currentOverride) !== JSON.stringify(existing)
+          )
+            delete overrides[path];
+        }
+        continue;
+      }
+      const installed = await this.fs.readFile(target);
+      const override = capability.capture(file.content, installed, previousHash, this.hasher);
+      if (override === null) continue;
+      if (Object.keys(override).length === 0) delete overrides[path];
+      else overrides[path] = override;
+      safeFileHashes.set(path, currentHash.value);
+    }
+    return { overrides, safeFileHashes };
   }
 
   private async materializeFiles(
@@ -165,12 +268,22 @@ export class UserPluginFileUpdater {
         target: toolId,
         mode: frameworkBuildModeFor(toolId),
       });
+      if (globalFilesOf(toolId) !== null) {
+        const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, toolId, dist);
+        return { files, componentPaths: new Map() };
+      }
       const built = await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, plugin.name);
       const files =
         resolvePluginsCapability(toolId)?.hooksDestination === "project"
           ? withoutHooksPrefix(built, plugin.name)
           : built;
       return { files, componentPaths: new Map() };
+    }
+    // Without the built tree, translation would write a project's layout in the user directory.
+    if (globalFilesOf(toolId) !== null) {
+      throw new Error(
+        `${toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
+      );
     }
     const toolConfig = getToolConfig(toolId);
     const forGlobalFiles =

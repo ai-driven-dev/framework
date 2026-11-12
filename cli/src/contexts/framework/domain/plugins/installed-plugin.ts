@@ -1,9 +1,10 @@
 import {
+  InvalidManifestDataError,
   InvalidPluginNameError,
   InvalidPluginVersionError,
   MalformedPluginScopeError,
 } from "../../../../kernel/errors.js";
-import type { InstallationFile } from "../../../../kernel/file.js";
+import type { InstallationFile, UserFileOverrides } from "../../../../kernel/file.js";
 import { isSemver } from "../../../../kernel/semver.js";
 import {
   type PluginSource,
@@ -79,6 +80,8 @@ export interface PluginEntryData {
   marketplace?: string;
   /** Canonical project roots using machine-owned user-scope files. Only the user manifest owns this list. */
   dependents?: string[];
+  /** User settings retained when regenerating owned files, keyed by plugin-relative file path. */
+  userFileOverrides?: UserFileOverrides;
 }
 
 export class InstalledPlugin {
@@ -93,6 +96,7 @@ export class InstalledPlugin {
   readonly projectHooks?: ProjectHooksProvenance;
   readonly marketplace?: string;
   readonly dependents: readonly string[];
+  readonly userFileOverrides: UserFileOverrides;
 
   private constructor(params: {
     name: string;
@@ -106,6 +110,7 @@ export class InstalledPlugin {
     projectHooks?: ProjectHooksProvenance;
     marketplace?: string;
     dependents: readonly string[];
+    userFileOverrides: UserFileOverrides;
   }) {
     this.name = params.name;
     this.source = params.source;
@@ -118,6 +123,7 @@ export class InstalledPlugin {
     this.projectHooks = params.projectHooks;
     this.marketplace = params.marketplace;
     this.dependents = params.dependents;
+    this.userFileOverrides = params.userFileOverrides;
   }
 
   static fromMetadata(
@@ -156,6 +162,7 @@ export class InstalledPlugin {
       projectHooks: plugin.projectHooks,
       marketplace: plugin.marketplace,
       dependents: plugin.dependents,
+      userFileOverrides: plugin.userFileOverrides,
     });
   }
 
@@ -175,6 +182,7 @@ export class InstalledPlugin {
       projectHooks,
       marketplace: plugin.marketplace,
       dependents: plugin.dependents,
+      userFileOverrides: plugin.userFileOverrides,
     });
   }
 
@@ -259,6 +267,7 @@ export class InstalledPlugin {
             },
       marketplace: data.marketplace,
       dependents: data.dependents ?? [],
+      userFileOverrides: parseUserFileOverrides(data.userFileOverrides, files),
     });
   }
 
@@ -281,6 +290,9 @@ export class InstalledPlugin {
     }
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
     if (this.dependents.length > 0) data.dependents = [...this.dependents];
+    if (Object.keys(this.userFileOverrides).length > 0) {
+      data.userFileOverrides = { ...this.userFileOverrides };
+    }
     return data;
   }
 
@@ -301,6 +313,7 @@ export class InstalledPlugin {
       projectHooks: this.projectHooks,
       marketplace: this.marketplace,
       dependents: this.dependents,
+      userFileOverrides: this.userFileOverrides,
     });
   }
 
@@ -317,6 +330,7 @@ export class InstalledPlugin {
       projectHooks: this.projectHooks,
       marketplace: this.marketplace,
       dependents: this.dependents,
+      userFileOverrides: this.userFileOverrides,
     });
   }
 
@@ -333,8 +347,63 @@ export class InstalledPlugin {
       projectHooks: this.projectHooks,
       marketplace: this.marketplace,
       dependents: [...new Set(dependents)],
+      userFileOverrides: this.userFileOverrides,
     });
   }
+
+  withUserFileOverrides(overrides: UserFileOverrides): InstalledPlugin {
+    return new InstalledPlugin({
+      name: this.name,
+      source: this.source,
+      version: this.version,
+      strict: this.strict,
+      files: this.files,
+      scope: this.scope,
+      componentPaths: this.componentPaths,
+      mcpEntries: this.mcpEntries,
+      projectHooks: this.projectHooks,
+      marketplace: this.marketplace,
+      dependents: this.dependents,
+      userFileOverrides: parseUserFileOverrides({ ...overrides }, this.files),
+    });
+  }
+}
+
+export function parseUserFileOverrides(
+  value: unknown,
+  trackedFiles: ReadonlyMap<string, string>
+): UserFileOverrides {
+  if (value === undefined) return {};
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    throw new InvalidManifestDataError("invalid user file overrides.");
+  }
+  for (const [path, settings] of Object.entries(value)) {
+    if (
+      path.startsWith("/") ||
+      path.includes("\\") ||
+      path.split("/").some((segment) => segment === "" || segment === "." || segment === "..") ||
+      !trackedFiles.has(path)
+    ) {
+      throw new InvalidManifestDataError(`invalid user file override path '${path}'.`);
+    }
+    if (settings === null || typeof settings !== "object" || Array.isArray(settings)) {
+      throw new InvalidManifestDataError(`invalid user file override for '${path}'.`);
+    }
+    const keys = Object.keys(settings);
+    if (
+      keys.length === 0 ||
+      keys.some((key) => key.trim().length === 0) ||
+      keys.some((key) => {
+        const value = (settings as Record<string, unknown>)[key];
+        return typeof value !== "string" || value.trim().length === 0;
+      })
+    ) {
+      throw new InvalidManifestDataError(`invalid user file override for '${path}'.`);
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(value).map(([path, settings]) => [path, { ...settings }])
+  );
 }
 
 function mapToRecord(map: ReadonlyMap<string, string>): Record<string, string> {

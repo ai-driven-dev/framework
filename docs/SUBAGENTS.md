@@ -38,14 +38,14 @@ sequenceDiagram
 
 ### Test the four agents
 
-Run this single prompt from the framework repository:
+Run this single prompt from the framework repository. The full test takes six runs and consumes more tokens than one pair.
 
 ```text
 Compare the same task in two isolated worktrees at the same commit:
 1. Main agent alone, without subagents.
 2. Main agent with explorer, executor, validator and reviewer, using gpt-6-luna at high effort when supported.
 
-Keep the main model and its effort identical. Use fresh sessions and run the worktrees sequentially.
+Keep the main model and its effort identical. Use fresh sessions and run the worktrees sequentially. Repeat for three pairs, alternate which variant runs first, and report medians and cache conditions.
 
 Task: Improve scripts/check-markdown-links.js so Markdown links with angle-bracket targets, such as [guide](<docs/my guide.md>), are checked correctly. Preserve the handling of HTML and existing links. Update the help text and add meaningful tests in scripts/__tests__/check-markdown-links.test.js.
 
@@ -117,14 +117,21 @@ sequenceDiagram
 
 Install the `aidd-orchestrator` plugin: `/plugin install aidd-orchestrator@aidd-framework` in Claude Code, or see [installation](INSTALL.md) for the other tools. The agents come with it, except as a Codex plugin (see [Limits](#-limits)); open a new session so the tool loads them.
 
+For every project on the machine at once:
+
+```bash
+aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins all
+aidd sync --global   # after a framework update
+```
+
 ## 🧠 Models
 
 The shipped agents do not pin a model. Hosts apply their defaults unless a model is configured for an agent; support varies by host.
 
 ## 🚧 Limits
 
-- **Tools:** availability and permissions depend on the host and agent configuration. An instruction alone is not a tool restriction.
-- **Codex:** a Codex plugin cannot carry agents, so only the flat distribution installs them, in `.codex/agents/`. Codex loads them only in a trusted project.
+- **Tools:** agents use tools available under their host permissions; prompt text alone does not restrict tools.
+- **Codex:** a Codex plugin cannot carry agents, so the flat distribution installs them in `.codex/agents/`. Codex loads them only in a trusted project; `aidd setup --global` installs them in `~/.codex/agents/` instead.
 - **Models:** OpenCode V1 reads the same file but not the `#<effort>` variant.
 - **Updates:** reinstalling replaces the agents still shipped; one removed from the plugin stays where a copy put it until you delete it.
 

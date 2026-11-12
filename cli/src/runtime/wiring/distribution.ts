@@ -20,6 +20,7 @@ import type { Hasher } from "../../kernel/ports/hasher.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { AuthReaderAdapter } from "../auth/auth-reader-adapter.js";
 import type { HttpClient } from "../http/http-client.js";
+import { userConfigDir } from "../user-config-dir.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter & FileMerger;
@@ -59,7 +60,8 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   );
   const resolveMarketplaceUseCase = new ResolveMarketplaceUseCase(
     fetchMarketplaceSource,
-    pluginCatalogRepository
+    pluginCatalogRepository,
+    userConfigDir
   );
   const marketplaceListUseCase = new MarketplaceListUseCase(
     marketplaceRegistry,

@@ -1,33 +1,40 @@
 ---
 name: 02-project-memory
-description: Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up or refresh project memory, or rewire it into a tool. Not for editing one existing memory file.
-argument-hint: setup | refresh | rewire
+description: Set up, refresh or update the project memory of its architecture, conventions and decisions, and wire it into your AI tools. Use for any request about the project memory, even a bare "check the project memory"; with no bank it sets one up, with a bank it refreshes it. Not for editing one existing memory file.
+argument-hint: setup | refresh
 ---
 
 # Project Memory
 
-```mermaid
-flowchart LR
-  new([no argument, or setup]) --> scan --> write --> sync --> wired([memory wired])
-  update([refresh]) --> scan --> check --> write
-  rewire([rewire]) --> sync
-  scan -.-> empty([nothing to remember])
-```
-
 ## Actions
 
-Run the flow above, reading only the next action file.
+```mermaid
+flowchart LR
+  request((request)) -->|"no bank: set up"| scan["scan<br>actions/01-scan.md<br>script: memory.cjs changes"]
+  request -->|"a bank: refresh"| scan
+  scan -->|"setup"| write["write<br>actions/02-write.md<br>script: memory.cjs plan, answer, check"]
+  scan -->|"refresh"| check["check<br>actions/03-check.md<br>script: memory.cjs check"]
+  scan -->|"nothing to remember"| done((done))
+  check -->|"findings in the sheet"| write
+  write --> plan["show plan"]
+  plan -->|"prior reply applies"| answer["run answer"]
+  plan -->|"defaults settle it"| write
+  plan -->|"material choice remains"| user((ask only that))
+  user -->|"reply"| answer
+  answer -->|"Q answered: promote and replan"| plan
+  answer -->|"otherwise"| write
+  write --> sync
+  sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync, report"] -->|"offer to reconcile"| user
+  user -->|"reconcile answered"| sync
+  sync -->|"reply: the report"| done
+```
 
-| Action | Does                            |
-| ------ | ------------------------------- |
-| scan   | read the project                |
-| write  | write the memory                |
-| check  | show what drifted, change nothing |
-| sync   | pick the tools, wire it in      |
+- Each box: read its action file, then follow it.
 
 ## Transversal rules
 
-- If a referenced file cannot be read, stop and say so. Never invent its content.
-- Reuse choices and authorization already given; ask only when missing information materially affects the result or scope.
-- Change an existing bank only within the authorized scope; preserve unrelated content.
-- End with a short report of what changed.
+- Speak only to ask or to give the final reply; otherwise call tools.
+- Reuse prior answers only for exact choices they cover; ask only about material choices still open. Showing the plan alone is not a request for approval.
+- For `remove`, `replace` or `move`, reuse prior approval only if it names that change. A general go-ahead before the plan is not approval; `ok` to the shown plan approves every listed item.
+- Edit no memory file outside write.
+- Run no version-control command: `changes` gives what changed.

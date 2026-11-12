@@ -5,9 +5,11 @@ import {
   type McpDigestMap,
   type PluginEntryData,
   parsePluginSpec,
+  parseUserFileOverrides,
 } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
+  InvalidManifestDataError,
   InvalidPluginNameError,
   InvalidPluginVersionError,
   MalformedPluginScopeError,
@@ -52,6 +54,59 @@ const makePluginData = (overrides: Partial<PluginEntryData> = {}): PluginEntryDa
 });
 
 describe("InstalledPlugin", () => {
+  it("round-trips user file overrides through the manifest", () => {
+    const data = makePluginData({
+      scope: "user",
+      files: {
+        "agents/my-plugin-executor.toml": "abc123",
+        ".claude/plugins/my-plugin/CLAUDE.md": "def456",
+      },
+      userFileOverrides: {
+        "agents/my-plugin-executor.toml": { model: "gpt-6-luna", model_reasoning_effort: "high" },
+      },
+    });
+    const plugin = InstalledPlugin.fromJSON(data);
+    expect(plugin.withVersion("2.0.0").toJSON().userFileOverrides).toEqual(data.userFileOverrides);
+  });
+
+  it("rejects unsafe user override paths", () => {
+    expect(() =>
+      InstalledPlugin.fromJSON(
+        makePluginData({
+          userFileOverrides: { "agents/../executor.toml": { model: "gpt-6-luna" } },
+        })
+      )
+    ).toThrow(InvalidManifestDataError);
+  });
+
+  it.each([null, [], "invalid", 3])("rejects malformed override containers: %s", (value) => {
+    expect(() =>
+      parseUserFileOverrides(value, new Map([["agents/my-plugin-executor.toml", "abc123"]]))
+    ).toThrow(InvalidManifestDataError);
+  });
+
+  it("rejects overrides for files the plugin does not own", () => {
+    expect(() =>
+      InstalledPlugin.fromJSON(
+        makePluginData({
+          userFileOverrides: { "agents/other-plugin-executor.toml": { model: "gpt-6-luna" } },
+        })
+      )
+    ).toThrow(InvalidManifestDataError);
+  });
+
+  it.each(["", "  "])("rejects blank Codex override values: %j", (value) => {
+    expect(() =>
+      InstalledPlugin.fromJSON(
+        makePluginData({
+          userFileOverrides: {
+            "agents/my-plugin-executor.toml": { model_reasoning_effort: value },
+          },
+        })
+      )
+    ).toThrow(InvalidManifestDataError);
+  });
+
   describe("fromJSON()", () => {
     it("creates a plugin from valid data", () => {
       const plugin = InstalledPlugin.fromJSON(makePluginData());

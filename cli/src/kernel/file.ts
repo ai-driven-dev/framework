@@ -1,6 +1,10 @@
 import { ManifestValidationError } from "./errors.js";
 import type { MergeStrategy } from "./merge.js";
 
+/** Per-file settings retained when regenerating managed user-scope files. */
+export type UserFileSettingOverrides = Readonly<Record<string, string>>;
+export type UserFileOverrides = Readonly<Record<string, UserFileSettingOverrides>>;
+
 // Kernel vocabulary because `removeRedundantGitkeeps` below reasons about it independently
 // of any context's directory conventions.
 export const GITKEEP_FILE = ".gitkeep";

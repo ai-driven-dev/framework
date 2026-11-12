@@ -127,6 +127,13 @@ describe("the generated bridge's own mapping, called directly (no spawn)", () =>
     ]);
   });
 
+  it("an apply_patch reaches a hook matching Write or Edit, as Codex matches its own", async () => {
+    const { postToolUseCallsFor } = await importGeneratedModule();
+    const calls = postToolUseCallsFor({ tool: "apply_patch", args: { patchText: "" } }, "/p");
+
+    expect(calls).toMatchObject([{ script: "on-tool.js", payload: { tool_name: "apply_patch" } }]);
+  });
+
   it("a tool the matcher excludes produces no call", async () => {
     const { postToolUseCallsFor } = await importGeneratedModule();
 

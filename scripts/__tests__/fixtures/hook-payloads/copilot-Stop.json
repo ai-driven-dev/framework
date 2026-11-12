@@ -1,0 +1,48 @@
+{
+  "host": "copilot",
+  "event": "Stop",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "hook_event_name": "Stop",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "transcript_path": "/Users/user/.copilot/session-state/00000000-0000-4000-8000-000000000000/events.jsonl",
+        "stop_reason": "end_turn",
+        "stop_hook_active": false
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "hook_event_name": "Stop",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "transcript_path": "/Users/user/.copilot/session-state/00000000-0000-4000-8000-000000000000/events.jsonl",
+        "stop_reason": "end_turn",
+        "stop_hook_active": false
+      },
+      "hookAnswer": {
+        "decision": "block",
+        "reason": "Reply with only this exact token: STOPTOKEN-4K9M"
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "hook_event_name": "Stop",
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "timestamp": "1970-01-01T00:00:00.000Z",
+        "cwd": "/Users/user/project",
+        "transcript_path": "/Users/user/.copilot/session-state/00000000-0000-4000-8000-000000000000/events.jsonl",
+        "stop_reason": "end_turn",
+        "stop_hook_active": true
+      },
+      "hookAnswer": null
+    }
+  ]
+}

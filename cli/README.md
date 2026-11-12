@@ -4,7 +4,7 @@
 
 | | |
 | --- | --- |
-| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code |
+| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI |
 | IDE | VS Code |
 | Requires | Node.js 22.12 or later |
 | Requires for marketplace plugins | `git` |
@@ -25,13 +25,19 @@ Check: `aidd --version`.
 
 | Step | Run |
 | --- | --- |
-| Bootstrap the project | `aidd setup --ai claude --ide vscode --plugins recommended --yes` |
+| Bootstrap the project | `aidd setup --ide claude,vscode --plugins recommended --yes` |
 | Add a plugin | `aidd plugin install aidd-dev` |
 | Check the state | `aidd doctor` |
 | Restore owned files | `aidd sync` |
 | Update the CLI | `aidd update` |
 
 `setup` writes the manifest, the default marketplace, the tool configs and the plugins.
+`--global` installs for the machine instead, and writes nothing under the project.
+
+| Command | Lands in |
+| --- | --- |
+| `aidd setup --ide claude` | `.claude/` and `.aidd/` in this project |
+| `aidd setup --global --ide opencode --plugins all` | `~/.config/opencode/` and `~/.config/aidd/`, nothing in this project |
 
 ## Commands
 
@@ -101,31 +107,39 @@ Counts the tokens of Claude Code and Codex sessions, locally. Details: [FAQ](../
 
 ## Scope
 
-`setup`, `doctor`, `sync` and `clean` accept `--scope <project|user>`.
+`setup`, `doctor`, `sync` and `clean` accept `--global`, or its former spelling `--scope user`.
 
 | Scope | Acts on |
 | --- | --- |
-| `project` (default) | This project alone |
-| `user` | The machine: registers the framework source and supported tools, writes nothing under the project |
+| project (default) | This project alone |
+| `--global` | Every project on the machine; writes nothing under the project |
 
-`setup --scope user` needs:
+`setup --global` needs:
 
-- An explicit `--ai` list of supported tools (`--ai all` is refused).
-- `--plugins none`, or no `--plugins` in a scripted run.
-- No `--ide`.
+- An explicit `--ide` list of supported tools, no editor (`--ide all` is refused).
+- `--plugins all`, `recommended`, `none` or comma-separated names.
 
-| Tool | `setup --scope user` |
+| Tool | `setup --global --plugins …` |
 | --- | --- |
-| `claude`, `codex`, `copilot` | Registers the source and drives the tool's own CLI |
-| `cursor` | Records the source and tool only, no native activation |
-| `opencode`, `kilo` | Unsupported: use project scope |
+| `claude`, `copilot` | Registers the source and enables the plugins through the tool's own CLI |
+| `codex` | The same, plus the plugins' agents in `~/.codex/agents/` |
+| `opencode`, `kilo` | Copies the plugins' skills and agents into `~/.config/opencode/` or `~/.config/kilo/` |
+| `cursor` | Copies the plugins into `~/.cursor/plugins/local/`; Cursor must allow local plugin imports |
+
+Files without recorded AIDD ownership are refused even when their content matches. This includes
+copies from an older `make reload`, or files left by an interrupted install before ownership was
+saved. Move the named files aside, then rerun the original setup or reload command.
+
+Copilot needs a CLI whose `plugin marketplace list` accepts `--json` (verified with 1.0.98; 1.0.83 refuses it).
 
 Native activation needs the tool's executable on `PATH`.
 Without it, registration succeeds with a warning and activation stays unrun.
-Install it, then run `aidd sync --scope user`.
+Install it, then rerun the original `aidd setup --global` command with its `--ide` and `--plugins` selections.
 
 ```sh
-aidd setup --scope user --ai claude,codex,copilot --plugins none --yes
+aidd setup --global --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes
+aidd sync --global    # rebuild the copied files and refresh the hosts from the framework source
+aidd clean --global --force   # remove what --global installed and purge the shared source; without --force it previews or asks
 ```
 
 ## Authentication
@@ -169,6 +183,7 @@ The token resolves from the first hit:
 | `codex` | yes | yes | `.codex/` |
 | `opencode` | no | yes | `.opencode/` |
 | `kilo` | no | yes | `.kilo/` |
+| `antigravity` | no | yes | `.agents/` |
 
 ## Environment variables
 
@@ -200,7 +215,7 @@ Under `$AIDD_USER_CONFIG_DIR`, else `$XDG_CONFIG_HOME/aidd`, else `~/.config/aid
 | `auth.json` | The user-level credential |
 | `marketplaces.json` | The user-scope registry |
 | `references.json` | The projects claiming it |
-| `manifest.json` | What `--scope user` owns |
+| `manifest.json` | What `--global` owns |
 | `cache/built/<version>/` | One built tree per CLI version |
 
 ### Settings written per tool

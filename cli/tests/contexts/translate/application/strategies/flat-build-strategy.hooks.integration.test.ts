@@ -8,7 +8,6 @@ import { buildCursorFlatContract } from "../../../../../src/contexts/tools/domai
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
-import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -68,7 +67,6 @@ function makeStrategy(
 ): FrameworkBuildUseCase {
   const strategy = new FlatBuildStrategy(
     memFs,
-    new AjvSchemaValidatorAdapter(),
     makeAssetProvider(),
     contractFn(),
     false,
@@ -185,7 +183,6 @@ describe("cursor flat hooks", () => {
     const logger = new CapturingLogger();
     const strategy = new FlatBuildStrategy(
       memFs,
-      new AjvSchemaValidatorAdapter(),
       makeAssetProvider(),
       buildCursorFlatContract(),
       false,
@@ -315,7 +312,6 @@ describe("opencode flat hooks", () => {
   async function runOpencodeBuild(): Promise<void> {
     const strategy = new FlatBuildStrategy(
       memFs,
-      new AjvSchemaValidatorAdapter(),
       makeOpencodeAssetProvider(),
       buildOpencodeFlatContract(),
       false,

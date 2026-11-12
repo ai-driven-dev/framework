@@ -16,8 +16,11 @@ import {
 import type { ToolBuildContract } from "./build-contract.js";
 import type {
   EnvironmentReader,
+  GlobalFiles,
+  HookScript,
   NativeActivation,
   PluginsCapability,
+  ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 
@@ -117,13 +120,38 @@ export function pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {
   return nativeActivationOf(toolId)?.scopeArgs === undefined;
 }
 
-/** Whether `--scope user` has anywhere to point this tool: either it drives its own CLI
- * machine-wide, or it installs a plugin's files into a user-scope directory. `false` for a
- * tool declaring neither — opencode today, with no such directory and no CLI to drive. */
+/** Whether `--scope user` has anywhere to point this tool: it drives its own CLI machine-wide,
+ * installs a plugin's files into a user-scope directory, or copies global files into the
+ * user's configuration directory. `false` for a tool declaring none. */
 export function supportsUserScopeActivation(toolId: ToolId): boolean {
   const capability = resolvePluginsCapability(toolId);
   if (capability === null) return false;
-  return capability.nativeActivation !== null || capability.installScope === "user";
+  return (
+    capability.nativeActivation !== null ||
+    capability.installScope === "user" ||
+    capability.globalFiles !== null
+  );
+}
+
+/** Whether a ref the host's registry lists is a plugin in use: an enabled one always; a disabled
+ * one unless the host's uninstall itself leaves refs disabled, where the two cannot be told
+ * apart and the ref is taken for what an uninstall left behind. */
+export function hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
+  return enabled || nativeActivationOf(toolId)?.uninstallLeavesRefDisabled !== true;
+}
+
+/** Whether `setup --global` writes a plugin's files itself for this tool, into its user plugins
+ * directory or its user configuration directory, instead of only enabling the plugin through
+ * the tool's own CLI. */
+export function copiesPluginFilesGlobally(toolId: ToolId): boolean {
+  const capability = resolvePluginsCapability(toolId);
+  if (capability === null) return false;
+  return capability.installScope === "user" || capability.globalFiles !== null;
+}
+
+/** See {@link GlobalFiles}: `null` for a tool whose machine-scope install copies no file. */
+export function globalFilesOf(toolId: ToolId): GlobalFiles | null {
+  return resolvePluginsCapability(toolId)?.globalFiles ?? null;
 }
 
 /** The tool's declared build contract for one framework-build mode, or undefined when the tool
@@ -174,6 +202,26 @@ export function machineLocalFilesOf(toolId: ToolId): readonly string[] {
  */
 export function projectHooksFileOf(toolId: ToolId): string | undefined {
   return resolvePluginsCapability(toolId)?.projectHooksRelativePath ?? undefined;
+}
+
+/** The project hooks file a tool merges plugin hooks into, or `null` when it has none. */
+export function projectHooksDeliveryOf(toolId: ToolId): {
+  relativePath: string;
+  format: ProjectHooksFormat;
+  toolName: string;
+  hookScript: HookScript;
+} | null {
+  const config = getToolConfig(toolId);
+  if (!isAiTool(config)) return null;
+  const cap = resolvePluginsCapability(toolId);
+  if (cap === null || cap.hooksDestination !== "project") return null;
+  if (cap.projectHooksRelativePath === null || cap.projectHooksFormat === null) return null;
+  return {
+    relativePath: cap.projectHooksRelativePath,
+    format: cap.projectHooksFormat,
+    toolName: config.displayName,
+    hookScript: cap.hookScript,
+  };
 }
 
 /** A tool's plugin capability, or `null` when it declares none. Here rather than beside one of

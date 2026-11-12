@@ -1,0 +1,160 @@
+import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { describe, expect, it } from "vitest";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import type { HostPluginRegistryEntry } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
+import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
+import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
+import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
+import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+
+const REF = "test-plugin@aidd-framework";
+
+async function globalActivation(toolId: "claude" | "copilot") {
+  const refs = new Map<string, HostPluginRegistryEntry>();
+  let failNextEnable = false;
+  class StatefulActivator extends FakeNativePluginActivator {
+    override enablePlugin(ref: string, scope: MarketplaceScope = "project"): void {
+      if (failNextEnable) throw new NativePluginCliError("unexpected native enable failure");
+      super.enablePlugin(ref, scope);
+      refs.set(ref, { enabled: true, scope });
+    }
+  }
+  const activator = new StatefulActivator({ available: true });
+  const machine = Manifest.create();
+  machine.addTool(toolId, "1.0.0", []);
+  const userRepo = new InMemoryManifestRepository(machine);
+  const registry = new InMemoryMarketplaceRegistry();
+  await registry.save(
+    "/project",
+    Marketplace.create({
+      name: "aidd-framework",
+      source: { kind: "local", path: "/source" },
+      scope: "user",
+      addedAt: "2026-09-15T00:00:00Z",
+    })
+  );
+  const builtDir = `/built/${toolId}`;
+  const catalogDir = toolId === "claude" ? ".claude-plugin" : ".plugin";
+  const fs = new InMemoryFileAdapter({
+    [`${builtDir}/${catalogDir}/marketplace.json`]: JSON.stringify({
+      name: "aidd-framework",
+      plugins: [{ name: "test-plugin" }],
+    }),
+  });
+  const sync = new MarketplaceSyncSettingsUseCase(
+    fs,
+    new InMemoryManifestRepository(Manifest.create()),
+    registry,
+    new DeterministicHasher(),
+    new CapturingLogger(),
+    new Map([[toolId, activator]]),
+    fakeEnsureBuiltMarketplace(),
+    new Map([
+      [
+        "claude",
+        new FakeHostMarketplaceRegistryReader({ location: "catalogues", entries: new Map() }),
+      ],
+    ]),
+    () => "",
+    undefined,
+    undefined,
+    undefined,
+    new Map([[toolId, new FakeHostPluginRegistryReader({ location: "plugins", refs })]]),
+    userRepo,
+    new Map([
+      [
+        toolId,
+        new FakeNativeMarketplaceSourceReader(
+          activator,
+          toolId === "claude" ? "registry" : "effective-list",
+          (path) => (path === builtDir ? "aidd-framework" : undefined),
+          new Map()
+        ),
+      ],
+    ])
+  );
+  const options = { projectRoot: "/project", scope: "user" as const, manifestRepo: userRepo };
+  const setup = await sync.execute({ ...options, enablePlugins: ["test-plugin"] });
+  expect(setup.errors).toEqual([]);
+  expect(setup.warnings).toEqual([]);
+  expect(userRepo.getCurrent()?.getPlugins(toolId)).toEqual([]);
+  expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([REF]);
+  return {
+    refs,
+    activator,
+    userRepo,
+    sync,
+    options,
+    failNextEnable: () => (failNextEnable = true),
+  };
+}
+
+describe.each(["claude", "copilot"] as const)("global %s native plugins", (toolId) => {
+  it("reload leaves an explicitly disabled plugin disabled", async () => {
+    const { refs, activator, sync, options, userRepo } = await globalActivation(toolId);
+    refs.set(REF, { enabled: false, scope: "user" });
+
+    const result = await sync.execute({ ...options, preserveUserPluginState: true });
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+    expect(refs.get(REF)?.enabled).toBe(false);
+    expect(activator.enabledPluginScopes).toEqual(["user"]);
+    expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([REF]);
+  });
+
+  it("reports native activation failures as errors during reload", async () => {
+    const { refs, activator, sync, options, failNextEnable } = await globalActivation(toolId);
+    refs.delete(REF);
+    failNextEnable();
+
+    const result = await sync.execute({ ...options, preserveUserPluginState: true });
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]?.message).toContain("unexpected native enable failure");
+    expect(result.warnings).toEqual([]);
+    expect(activator.enabledPluginScopes).toEqual(["user"]);
+  });
+
+  it.each(["enabled", "missing", "disabled", "claims only"] as const)(
+    "sync retains and restores a successful selection when the ref is %s",
+    async (state) => {
+      const { refs, activator, userRepo, sync, options } = await globalActivation(toolId);
+      if (state === "missing") refs.delete(REF);
+      if (state === "disabled") refs.set(REF, { enabled: false, scope: "user" });
+      if (state === "claims only") {
+        const manifest = await userRepo.load();
+        const registrations = manifest?.getNativeRegistrations(toolId);
+        if (manifest === null || registrations === undefined)
+          throw new Error("missing setup record");
+        manifest.setNativeRegistrations(toolId, { ...registrations, pluginRefs: [] });
+        await userRepo.save(manifest);
+        refs.delete(REF);
+      }
+
+      const result = await sync.execute(options);
+
+      expect(result.errors).toEqual([]);
+      expect(result.warnings).toEqual([]);
+      expect(refs.get(REF)?.enabled).toBe(true);
+      expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([REF]);
+      expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
+        { ref: REF, dependents: [] },
+      ]);
+      expect(activator.enabledPluginScopes).toEqual(
+        state === "enabled" ? ["user"] : ["user", "user"]
+      );
+    }
+  );
+});

@@ -224,18 +224,25 @@ describe("buildClaudeFlatContract()", () => {
     expect({
       declaration: hooks.path("aidd-dev", "hooks/aidd-dev.hooks.json"),
       script: hooks.path("aidd-dev", "hooks/journal.cjs"),
-      mergeDest: hooks.hooksMergeDest?.("/out"),
+      file: [hooks.hooksFile?.path("aidd-dev"), hooks.hooksFile?.shared],
     }).toStrictEqual({
       declaration: ".claude/hooks/aidd-dev.hooks.json",
       script: ".claude/hooks/aidd-dev/journal.cjs",
-      mergeDest: "/out/.claude/settings.json",
+      file: [".claude/settings.json", true],
     });
   });
 
   it("appends a plugin's hooks to the settings file, leaving every other setting alone", () => {
     const hooks = supported(buildClaudeFlatContract().artifacts.hooks);
 
-    expect(hooks.hooksMerge?.(JSON.stringify({ model: "opus" }), HOOKS_JSON)).toStrictEqual({
+    expect(
+      hooks.hooksFile?.merge(
+        JSON.stringify({ model: "opus" }),
+        HOOKS_JSON,
+        "aidd-dev",
+        (path) => path
+      )
+    ).toStrictEqual({
       content: `${JSON.stringify(
         {
           model: "opus",
