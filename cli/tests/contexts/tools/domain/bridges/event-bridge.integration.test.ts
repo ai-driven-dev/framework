@@ -49,6 +49,8 @@ const SCRIPTS: Record<string, string> = {
 
 // A script that exits without ever reading its stdin.
 const DEAF = "process.exit(0);";
+// A script that never exits, and says who it is so the test can see it killed.
+const HANG = `require("node:fs").writeFileSync(require("node:path").resolve(__dirname, "../../hang.pid"), String(process.pid)); setInterval(() => {}, 1000);`;
 
 interface Server {
   event: (input: { event: unknown }) => Promise<void>;
@@ -126,6 +128,7 @@ async function open(
     await writeFile(join(directory, "hooks", "probe", name), `${RECORDING}\n${tail}\n});\n`);
   }
   await writeFile(join(directory, "hooks", "probe", "deaf.cjs"), DEAF);
+  await writeFile(join(directory, "hooks", "probe", "hang.cjs"), HANG);
   await writeFile(
     join(directory, "hooks", "opencode-events.js"),
     "export function setupOpencodeEvents(ctx, server) { return { ctx, server }; }\n"
@@ -325,4 +328,18 @@ describe("the bridge generated with OpenCode's parameters", () => {
     expect(descriptor.setup?.("ctx")).toEqual({ ctx: "ctx", server: descriptor.server });
     await vi.waitFor(async () => expect(await of("record.cjs")).toHaveLength(1), { timeout: 5000 });
   });
+
+  // Real time: a child process's timeout runs on the clock, so this case costs the bridge's 5 s.
+  it("stops a script that never exits and gives the tool's output back", async () => {
+    const hooksJson = JSON.stringify({
+      hooks: { PostToolUse: [{ matcher: "Hang", ...command("hang.cjs") }] },
+    });
+    const { directory, tool } = await open(HOSTS[0] as Host, hooksJson);
+
+    const answered = await Promise.race([tool("hang"), delay(8000, "still waiting")]);
+
+    expect(answered).toBe("done");
+    const pid = Number(await readFile(join(directory, "hang.pid"), "utf8"));
+    await vi.waitFor(() => expect(() => process.kill(pid, 0)).toThrow(), { timeout: 2000 });
+  }, 15_000);
 });
