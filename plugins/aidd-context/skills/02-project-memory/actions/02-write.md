@@ -19,11 +19,9 @@ The written bank.
 ## Rules
 
 - `aidd_docs/memory/` holds the [capability table](../references/capabilities.md)'s files and the team's own, kept as they are.
-- `internal/` and `external/` are read on demand.
 - Create `internal/decisions/` with the first decision record, not by scaffold.
 - Name no file whose capability was answered no.
 - Fill a created file's template with the list's lines, dropping an empty section and an unanswered question.
 - A file the team keeps in `internal/` or `external/`, or under an Accepted name, is written there.
-- Apply only the list's lines to an existing file.
 - Replace or remove a bank line only on a yes; a move out of the bank counts as a removal.
-- Treat an answer as autonomous only when the caller's instruction answers for the user.
+- A caller's instruction may answer for the person on an addition, never on a replace or a removal.

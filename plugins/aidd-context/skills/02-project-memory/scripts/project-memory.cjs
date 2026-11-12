@@ -2,7 +2,7 @@
 "use strict";
 
 // The skill's deterministic steps, run from the project root: what changed, the files from templates, the wiring.
-// It writes no memory fact: content is the model's, the block between the markers is the hook's.
+// It writes no memory fact, and nothing between the markers.
 
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
@@ -33,7 +33,7 @@ const TOOL_FILES = Object.freeze({
   copilot: "AGENTS.md",
 });
 
-// Spelled as the hook spells them; a test holds them equal.
+// Spelled as the turn-end check spells them; a test holds them equal.
 const BLOCK_OPEN = "<!-- aidd_project_memory:start -->";
 const BLOCK_CLOSE = "<!-- aidd_project_memory:end -->";
 const LEGACY_BLOCK_OPEN = "<aidd_project_memory>";
@@ -72,7 +72,9 @@ function changes(root) {
   else {
     lines.push(`bank commit: ${base}`);
     // Plumbing: porcelain `diff` refreshes the index even without optional locks; a touched file may be listed unchanged.
-    const files = (git(root, ["diff-index", "--name-only", "--no-renames", "--relative", base]) ?? "").split("\n").filter(Boolean);
+    const changed = git(root, ["diff-index", "--name-only", "--no-renames", "--relative", base]) ?? "";
+    const added = git(root, ["ls-files", "--others", "--exclude-standard"]) ?? "";
+    const files = `${changed}\n${added}`.split("\n").filter(Boolean);
     lines.push(files.length === 0 ? "changed since: nothing" : "changed since:", ...files.map((file) => `- ${file}`));
   }
   for (const folder of misplacedFolders(root)) lines.push(`misplaced folder: ${folder}`);
@@ -112,7 +114,7 @@ function wireContext(root, file) {
   const full = path.join(root, file);
   const text = readText(full);
   if (text === null) {
-    fs.writeFileSync(full, fs.readFileSync(path.join(TEMPLATES, "AGENTS.md"), "utf8"));
+    fs.writeFileSync(full, fs.readFileSync(path.join(TEMPLATES, "AGENTS.md"), "utf8").replace(/^# AGENTS\.md$/mu, `# ${file}`));
     return `${file}: created`;
   }
   if (MARKERS.some((marker) => text.includes(marker))) return `${file}: kept, it holds the markers`;

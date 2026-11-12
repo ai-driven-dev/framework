@@ -26,5 +26,5 @@ flowchart LR
 - Ask everything in one message, then wait; never ask twice.
 - Edit no memory file outside write.
 - When the skill's script exits 1, fix the call from what it prints; never do its work by hand.
-- When the turn-end check lists lost lines, show them to the person exactly as given, then restore each one they did not approve.
+- When the turn-end check lists lost lines, show them to the person exactly as given; restore one only if they ask.
 - Fix each error the turn-end check gives on a line you wrote; keep a warned line the code confirms.

@@ -8,7 +8,7 @@ The project root, and the bank when one exists.
 
 ## Process
 
-1. From the project root, run the skill's `scripts/project-memory.cjs changes` with node: the bank's last commit, the files changed since, each misplaced folder.
+1. From the project root, run the skill's `scripts/project-memory.cjs changes` with node: the bank's last commit, the files changed since, each misplaced folder. No bank commit means a setup, else a refresh.
 2. Read the project in the order of [reading sources](../references/reading-sources.md), the changed files first on a refresh.
 3. Find its [capabilities](../references/capabilities.md) and its [outside tools](../references/ecosystem-signals.md).
 4. On a refresh, review the bank per the [review protocol](../references/review-protocol.md).

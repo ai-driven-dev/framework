@@ -18,4 +18,4 @@ Each picked tool's context file, carrying the marker pair.
 
 ## Rules
 
-- Write nothing between the markers: the turn-end hook fills them.
+- Write nothing between the markers.

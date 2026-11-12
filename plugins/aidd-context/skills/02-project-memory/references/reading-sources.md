@@ -16,7 +16,6 @@
 
 - Take a command or convention from the file that defines it; check prose naming one against that file.
 - Read the root README whole, and the other docs a section needs.
-- Read the code last: it corrects the others and is never summarised.
 - In a monorepo, read every workspace, never the root manifest alone.
 - Read a directory name repeated across areas once.
 - Read nothing under a dependency directory, a build output, or a path the VCS ignores.
@@ -25,6 +24,5 @@
 ## Keeping facts
 
 - Skip a fact the bank already holds.
-- Keep every fact the sources state, one line each: each gate, decision, gotcha, rule and release step.
 - Take the brief's `Users`, `Main journey` and `Business rules` only from the repository, else ask, never invent.
 - A setup collects them; a refresh never adds them.

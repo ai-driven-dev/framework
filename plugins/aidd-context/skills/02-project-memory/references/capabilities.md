@@ -28,6 +28,5 @@
 | A template line in `{{…}}` | a question the writer answers; with no answer it is dropped |
 | A conditional row with no answer at all | writes no file; an always row is written whatever |
 
-- A row's template is the same-named file under `assets/templates/memory/`.
 - Detect from the table and a concrete repo fact, never the domain.
 - A file present means its capability held when the bank was written.

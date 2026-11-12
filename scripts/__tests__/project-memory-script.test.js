@@ -85,6 +85,18 @@ test("changes names the bank's last commit and lists only the files changed sinc
   });
 });
 
+test("changes lists a file added since the bank's commit and not yet committed, never an ignored one", () => {
+  within({ [`${MEMORY}/architecture.md`]: "# A\n", ".gitignore": "build/\n" }, (root) => {
+    git(root, "init", "-q");
+    commitAll(root, "bank");
+    write(root, "src/new.js", "x\n");
+    write(root, "build/out.js", "x\n");
+    const result = run(root, "changes");
+    assert.match(result.stdout, /^- src\/new\.js$/mu);
+    assert.doesNotMatch(result.stdout, /build/u);
+  });
+});
+
 test("changes names a folder misplaced in the bank, once however many files it holds", () => {
   within({ [`${MEMORY}/design/a.md`]: "# A\n", [`${MEMORY}/design/b.md`]: "# B\n", [`${MEMORY}/internal/c.md`]: "# C\n" }, (root) => {
     const result = run(root, "changes");
@@ -164,7 +176,7 @@ test("wire creates an absent context file from the template, which carries the m
   within({}, (root) => {
     const result = run(root, "wire", "claude");
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(read(root, "CLAUDE.md"), template("AGENTS.md"));
+    assert.equal(read(root, "CLAUDE.md"), template("AGENTS.md").replace(/^# AGENTS\.md$/mu, "# CLAUDE.md"));
     assert.equal(exists(root, "AGENTS.md"), false);
     assert.equal(exists(root, COPILOT), false, "copilot's file only when copilot is named");
   });
