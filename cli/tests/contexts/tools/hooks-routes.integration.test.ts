@@ -115,6 +115,7 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
   );
   await new InitUseCase(d.fs, d.manifestRepo).execute({ projectRoot: project });
   await d.installAiToolUseCase.execute({
+    tools: catalogOf().sortedById(),
     toolId,
     projectRoot: project,
     force: false,

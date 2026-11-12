@@ -4,7 +4,8 @@ import { InstallIdeToolUseCase } from "../../../../../src/contexts/framework/app
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { registerTool } from "../../../../../src/contexts/tools/domain/registry.js";
+import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
+import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/registry.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import {
   buildUnitDeps,
@@ -14,6 +15,13 @@ import {
 } from "../../../../helpers/ports/build-unit-deps.js";
 import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
+
+function toolsWithCursor(cursorProfile: BuiltToolConfig) {
+  return catalogOf(
+    REGISTERED_PROFILES.map((profile) => (profile.toolId === "cursor" ? cursorProfile : profile))
+  ).sortedById();
+}
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -40,6 +48,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -60,6 +69,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -81,6 +91,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -106,6 +117,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -124,6 +136,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -163,12 +176,14 @@ describe("InstallIdeToolUseCase", () => {
       requiresTool: "vscode",
     });
 
+    let cursorProfile: BuiltToolConfig = cursor;
+
     function registerCursorWith(settings: SettingsCapability[]): void {
-      registerTool(withSections(cursor, { settings }));
+      cursorProfile = withSections(cursor, { settings });
     }
 
     afterEach(() => {
-      registerTool(cursor);
+      cursorProfile = cursor;
     });
 
     async function withCursorRegistered(
@@ -186,6 +201,7 @@ describe("InstallIdeToolUseCase", () => {
       manifest: Manifest
     ) {
       return buildUseCase(deps).execute({
+        tools: toolsWithCursor(cursorProfile),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -257,6 +273,7 @@ describe("InstallIdeToolUseCase", () => {
       const assets = new StubAssetProvider({ "cursor/d.json": '{"d": 1}' });
 
       await buildUseCase(deps, assets).execute({
+        tools: toolsWithCursor(cursorProfile),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -274,6 +291,7 @@ describe("InstallIdeToolUseCase", () => {
       const manifest = await withCursorRegistered(deps);
 
       await buildUseCase(deps, null).execute({
+        tools: toolsWithCursor(cursorProfile),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,

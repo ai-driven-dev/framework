@@ -7,6 +7,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -26,7 +27,11 @@ describe("UpdateIdeToolsUseCase", () => {
       const updateOneTool = buildUpdateOneToolUseCase(deps);
       const useCase = buildUseCase(deps, updateOneTool);
 
-      const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_TTY });
+      const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+        ...NO_FORCE_TTY,
+      });
 
       expect(result.updatedTools).toHaveLength(0);
       expect(result.errors).toHaveLength(0);
@@ -43,6 +48,7 @@ describe("UpdateIdeToolsUseCase", () => {
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolArg: "vscode",
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
@@ -70,7 +76,11 @@ describe("UpdateIdeToolsUseCase", () => {
       );
 
       const useCase = buildUseCase(deps, updateOneTool);
-      const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_TTY });
+      const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+        ...NO_FORCE_TTY,
+      });
 
       expect(result.updatedTools).toHaveLength(0);
       expect(result.errors).toHaveLength(1);

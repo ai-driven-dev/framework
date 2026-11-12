@@ -1,6 +1,7 @@
 import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-paths.js";
-import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
-import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
+import type { MergeStrategy } from "../../../kernel/merge.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../../kernel/tool.js";
+import type { ConfigAsset, FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
@@ -87,6 +88,32 @@ export interface SkillsSectionAnswers {
   serialize(fm: Record<string, unknown>, body: string): string;
 }
 
+/** A tool's mcp file, as an install asks it. */
+export interface McpConfigAnswers {
+  /** The project-relative file the tool's mcp servers live in. */
+  outputPath(): string;
+  /** Whether the config asset named `fileName` is that file, merged over what a person keeps. */
+  isFrameworkPrimeJson(fileName: string): boolean;
+  /** The file a project already keeps its mcp servers in, `exists` asking the project. */
+  resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string>;
+  /** The tool's framework-owned config merged over what a person already keeps in the file. */
+  frameworkConfigOver(
+    baseConfig: string,
+    existing: string | null,
+    incoming: Record<string, unknown>
+  ): string;
+}
+
+/** A settings file a tool writes, as an install asks it. */
+export interface SettingsFileAnswers {
+  /** The tool that must be installed for this file to apply, or null. */
+  requiredTool(): ToolId | null;
+  outputPath(): string;
+  mergeStrategy(): MergeStrategy;
+  /** The file's fixed content, loaded through `loadAsset` when it lives in an asset. */
+  resolveStaticContent(loadAsset?: (fileName: string) => ConfigAsset): string | null;
+}
+
 /** An AI assistant, as an outside caller asks it. */
 export interface AiToolProfile {
   readonly kind: "ai";
@@ -114,12 +141,25 @@ export interface AiToolProfile {
   skillsSection(): SkillsSectionAnswers | null;
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
+  /** The config files an install writes, by asset name: the tool's own, then the runtime
+   * modules its plugins need. */
+  configFiles(): Readonly<Record<string, string>>;
+  /** The runtime modules its plugins need, by asset name. */
+  runtimeFiles(): Readonly<Record<string, string>>;
+  /** The mcp file the tool declares, or null. */
+  mcpConfig(): McpConfigAnswers | null;
+  /** The settings files the tool declares, none when it declares none. */
+  settingsFiles(): readonly SettingsFileAnswers[];
+  /** The files its marketplace registration keeps on this machine, none when it keeps none. */
+  machineLocalFiles(): readonly string[];
 }
 
 /** An editor, as an outside caller asks it. */
 export interface IdeToolProfile {
   readonly kind: "ide";
   readonly toolId: IdeToolId;
+  /** The settings files the tool declares, none when it declares none. */
+  settingsFiles(): readonly SettingsFileAnswers[];
 }
 
 export type ToolProfile = AiToolProfile | IdeToolProfile;

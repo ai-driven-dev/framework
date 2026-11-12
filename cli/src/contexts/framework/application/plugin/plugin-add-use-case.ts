@@ -281,7 +281,10 @@ export class PluginAddUseCase implements PluginAdd {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
-      await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
+      const runtimeProfile = getToolConfig(toolId);
+      if (runtimeProfile.kind === "ai") {
+        await this.pluginRuntime?.ensurePluginRuntimeFiles(runtimeProfile, projectRoot, manifest);
+      }
       const foreignDir = await this.userScopeDirNotInstalledHere(
         dist.manifest.name,
         toolId,

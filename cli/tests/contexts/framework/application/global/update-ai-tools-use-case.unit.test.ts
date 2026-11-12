@@ -10,6 +10,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -29,7 +30,11 @@ describe("UpdateAiToolsUseCase", () => {
       const updateOneTool = buildUpdateOneToolUseCase(deps);
       const useCase = buildUseCase(deps, updateOneTool);
 
-      const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_TTY });
+      const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+        ...NO_FORCE_TTY,
+      });
 
       expect(result.updatedTools).toHaveLength(0);
       expect(result.errors).toHaveLength(0);
@@ -44,7 +49,11 @@ describe("UpdateAiToolsUseCase", () => {
       await installTool(deps, PROJECT_ROOT, "vscode");
 
       const useCase = buildUseCase(deps, buildUpdateOneToolUseCase(deps));
-      const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_TTY });
+      const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+        ...NO_FORCE_TTY,
+      });
 
       expect(result.updatedTools.map((t) => t.toolId)).toStrictEqual(["claude"]);
       expect(result.errors).toStrictEqual([]);
@@ -62,6 +71,7 @@ describe("UpdateAiToolsUseCase", () => {
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolArg: "claude",
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
@@ -93,7 +103,11 @@ describe("UpdateAiToolsUseCase", () => {
       );
 
       const useCase = buildUseCase(deps, updateOneTool);
-      const result = await useCase.execute({ projectRoot: PROJECT_ROOT, ...NO_FORCE_TTY });
+      const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+        ...NO_FORCE_TTY,
+      });
 
       expect(result.updatedTools).toHaveLength(1);
       expect(result.updatedTools[0].toolId).toBe("claude");
@@ -144,7 +158,12 @@ describe("UpdateAiToolsUseCase", () => {
         }
       }
 
-      await useCase.execute({ projectRoot: PROJECT_ROOT, userForce: false, interactive: true });
+      await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+        userForce: false,
+        interactive: true,
+      });
 
       expect(resolveConflictBulkMock).toHaveBeenCalledTimes(1);
     });

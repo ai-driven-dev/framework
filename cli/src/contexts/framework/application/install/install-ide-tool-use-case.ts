@@ -7,8 +7,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, IdeToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import type { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
-import { settingsCapabilitiesOf } from "../../../tools/domain/registry.js";
+import type { SettingsFileAnswers, ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
@@ -23,6 +23,7 @@ export interface InstallIdeToolOptions {
   manifest: Manifest;
   force: boolean;
   version: string;
+  tools: readonly ToolProfile[];
 }
 
 export class InstallIdeToolUseCase {
@@ -38,16 +39,20 @@ export class InstallIdeToolUseCase {
   async execute(options: InstallIdeToolOptions): Promise<InstallIdeConfigResult> {
     const result = await this.installIdeConfigUseCase.execute(options);
     if (result.skipped) return result;
-    await this.propagateAiStaticSettings(options.toolId, options.projectRoot);
+    await this.propagateAiStaticSettings(options.toolId, options.projectRoot, options.tools);
     return result;
   }
 
-  private async propagateAiStaticSettings(ideId: IdeToolId, projectRoot: string): Promise<void> {
+  private async propagateAiStaticSettings(
+    ideId: IdeToolId,
+    projectRoot: string,
+    tools: readonly ToolProfile[]
+  ): Promise<void> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return;
     for (const aiId of AI_TOOL_IDS) {
       if (!manifest.hasTool(aiId)) continue;
-      await this.mergeAiToolSettings(aiId, ideId, projectRoot, manifest);
+      await this.mergeAiToolSettings(aiId, ideId, projectRoot, manifest, tools);
     }
   }
 
@@ -55,22 +60,26 @@ export class InstallIdeToolUseCase {
     aiId: AiToolId,
     ideId: IdeToolId,
     projectRoot: string,
-    manifest: Manifest
+    manifest: Manifest,
+    tools: readonly ToolProfile[]
   ): Promise<void> {
-    const toMerge = settingsCapabilitiesOf(aiId).filter((c) => c.requiredTool() === ideId);
+    const toMerge = aiProfileOf(tools, aiId)
+      .settingsFiles()
+      .filter((c) => c.requiredTool() === ideId);
     if (toMerge.length === 0) return;
     const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
-      await this.mergeAndTrack(cap, projectRoot, aiId, existingEntries, manifest);
+      await this.mergeAndTrack(cap, projectRoot, aiId, existingEntries, manifest, tools);
     }
   }
 
   private async mergeAndTrack(
-    cap: SettingsCapability,
+    cap: SettingsFileAnswers,
     projectRoot: string,
     aiId: AiToolId,
     existingEntries: MergeFileEntry[],
-    manifest: Manifest
+    manifest: Manifest,
+    tools: readonly ToolProfile[]
   ): Promise<void> {
     const fullPath = join(projectRoot, cap.outputPath());
     const content = this.resolveCapabilityContent(cap, aiId);
@@ -90,10 +99,11 @@ export class InstallIdeToolUseCase {
     await this.postInstallPipelineUseCase.execute({
       projectRoot,
       manifest,
+      tools,
     });
   }
 
-  private resolveCapabilityContent(cap: SettingsCapability, aiId: AiToolId): string {
+  private resolveCapabilityContent(cap: SettingsFileAnswers, aiId: AiToolId): string {
     const provider = this.assetProvider;
     return (
       cap.resolveStaticContent(

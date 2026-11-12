@@ -15,6 +15,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -74,7 +75,12 @@ describe("UpdateOneToolUseCase integration", () => {
         PROJECT_ROOT,
         "test",
         errors,
-        { userForce: false, interactive: false, bulkState: new BulkConflictState() }
+        {
+          tools: catalogOf().sortedById(),
+          userForce: false,
+          interactive: false,
+          bulkState: new BulkConflictState(),
+        }
       );
 
       expect(result).not.toBeNull();
@@ -98,6 +104,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
       const result = await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+        tools: catalogOf().sortedById(),
         userForce: true,
         interactive: false,
         bulkState: new BulkConflictState(),
@@ -126,6 +133,7 @@ describe("UpdateOneToolUseCase integration", () => {
 
       await expect(
         useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+          tools: catalogOf().sortedById(),
           userForce: false,
           interactive: false,
           bulkState: new BulkConflictState(),
@@ -157,7 +165,12 @@ describe("UpdateOneToolUseCase integration", () => {
         PROJECT_ROOT,
         "test",
         errors,
-        { userForce: false, interactive: false, bulkState: new BulkConflictState() }
+        {
+          tools: catalogOf().sortedById(),
+          userForce: false,
+          interactive: false,
+          bulkState: new BulkConflictState(),
+        }
       );
 
       expect(result).toBeNull();
@@ -182,7 +195,12 @@ describe("UpdateOneToolUseCase integration", () => {
         PROJECT_ROOT,
         "test",
         errors,
-        { userForce: false, interactive: false, bulkState: new BulkConflictState() }
+        {
+          tools: catalogOf().sortedById(),
+          userForce: false,
+          interactive: false,
+          bulkState: new BulkConflictState(),
+        }
       );
 
       expect(result).toBeNull();
@@ -203,7 +221,12 @@ describe("UpdateOneToolUseCase integration", () => {
         PROJECT_ROOT,
         "test",
         errors,
-        { userForce: false, interactive: false, bulkState: new BulkConflictState() }
+        {
+          tools: catalogOf().sortedById(),
+          userForce: false,
+          interactive: false,
+          bulkState: new BulkConflictState(),
+        }
       );
 
       expect(result).toBeNull();
@@ -227,6 +250,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
       await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+        tools: catalogOf().sortedById(),
         userForce: false,
         interactive: true,
         bulkState: new BulkConflictState(),
@@ -253,6 +277,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
       const result = await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+        tools: catalogOf().sortedById(),
         userForce: false,
         interactive: true,
         bulkState: new BulkConflictState(),

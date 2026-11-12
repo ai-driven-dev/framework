@@ -152,13 +152,7 @@ export class ToolCatalog {
   }
 }
 
-let catalog = new ToolCatalog(REGISTERED_PROFILES);
-
-/** Test override only: replaces the profile of that id. Goes when consumers receive a
- * ToolCatalog. */
-export function registerTool(config: BuiltToolConfig): void {
-  catalog = catalog.replacing(config);
-}
+const catalog = new ToolCatalog(REGISTERED_PROFILES);
 
 export function getToolConfig(toolId: ToolId): BuiltToolConfig {
   return catalog.getToolConfig(toolId);
@@ -287,11 +281,6 @@ export function projectHooksDeliveryOf(toolId: ToolId): {
 /** The tool's MCP capability, or `null` when it declares none or is not an AI tool. */
 export function mcpCapabilityOf(toolId: ToolId): McpCapability | null {
   return catalog.mcpCapabilityOf(toolId);
-}
-
-/** The settings capabilities a tool declares, whether one or several; empty for none. */
-export function settingsCapabilitiesOf(toolId: AiToolId): readonly SettingsCapability[] {
-  return catalog.settingsCapabilitiesOf(toolId);
 }
 
 /** A tool's plugin capability, or `null` when it declares none. Here rather than beside one of

@@ -5,6 +5,7 @@ import type { VersionReader } from "../../../kernel/ports/version-reader.js";
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { SetupPluginsPromptUseCase } from "../../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import type { SetupToolsPromptUseCase } from "../../../presentation/prompts/setup-tools-prompt-use-case.js";
+import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { ProjectContext } from "../domain/project-context.js";
 import type { SetupFlow } from "../domain/setup-flow.js";
@@ -52,7 +53,7 @@ export class SetupUseCase {
     private readonly setupMachineScopeUseCase?: SetupMachineScopeUseCase
   ) {}
 
-  async execute(flow: SetupFlow): Promise<SetupResult> {
+  async execute(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<SetupResult> {
     if (flow.scope === "user") return this.runMachineScope(flow);
     const context = await this.detectContext(flow);
     // Resolved before initManifest: a non-interactive run with no --source must reject
@@ -60,7 +61,7 @@ export class SetupUseCase {
     const source = await this.setupMarketplaceRegistration.resolveSourceIfNeeded(flow);
     const isNew = await this.initManifest(flow);
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
-    const install = await this.installTools(flow, context);
+    const install = await this.installTools(flow, context, tools);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
     const activation = await this.syncSettings(flow);
     return this.buildResult(isNew, install, activation, context);
@@ -94,7 +95,8 @@ export class SetupUseCase {
 
   private async installTools(
     flow: SetupFlow,
-    context: ProjectContext | undefined
+    context: ProjectContext | undefined,
+    tools: readonly ToolProfile[]
   ): Promise<SetupToolsResult> {
     const { aiTools, ideTools } = await this.resolveTools(flow, context);
     const version = this.currentVersionProvider.get();
@@ -104,6 +106,7 @@ export class SetupUseCase {
       ideTools,
       force: flow.force,
       version,
+      tools,
     });
   }
 

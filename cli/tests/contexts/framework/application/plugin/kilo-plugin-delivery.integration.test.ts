@@ -8,6 +8,7 @@ import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
@@ -35,6 +36,7 @@ async function existingProject(configPath: string) {
     ideTools: [],
     force: false,
     version: "test",
+    tools: catalogOf().sortedById(),
   };
   await setup.execute(setupOptions);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });

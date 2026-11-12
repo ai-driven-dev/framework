@@ -212,7 +212,7 @@ export function registerSetupCommand(program: Command, catalog: ToolCatalog): vo
           deps.setupToolsPromptUseCase,
           deps.projectContextDetector,
           deps.setupMachineScopeUseCase
-        ).execute(flow);
+        ).execute(flow, catalog.sortedById());
 
         if (interactive && result.context !== undefined) {
           printDetectedContext(output, result.context.describe());

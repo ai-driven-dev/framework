@@ -6,6 +6,7 @@ import {
   IDE_TOOL_IDS,
   type IdeToolId,
 } from "../../../../kernel/tool.js";
+import type { SettingsFileAnswers } from "../../contract/tool-profile.js";
 import { AgentsCapability } from "../capabilities/agents-capability.js";
 import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
@@ -50,6 +51,11 @@ type AiToolFields = Omit<
   | "nativeActivation"
   | "markdownSection"
   | "skillsSection"
+  | "configFiles"
+  | "runtimeFiles"
+  | "mcpConfig"
+  | "settingsFiles"
+  | "machineLocalFiles"
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
@@ -122,6 +128,17 @@ function nativeActivationOf(sections: ProfileSections): NativeActivation | undef
   return plugins?.kind === "native" ? (plugins.activation() ?? undefined) : undefined;
 }
 
+function settingsOf(sections: ProfileSections): readonly SettingsFileAnswers[] {
+  return sections.settings ?? [];
+}
+
+function machineLocalFilesOf(sections: ProfileSections): readonly string[] {
+  const plugins = sections.plugins;
+  return plugins?.kind === "native"
+    ? (plugins.marketplaceRegistration()?.machineLocalFiles() ?? [])
+    : [];
+}
+
 function aiToolId(id: string): AiToolId {
   const known = AI_TOOL_IDS.find((candidate) => candidate === id);
   if (known === undefined) {
@@ -165,6 +182,11 @@ export function defineAiTool<C extends ProfileSections>(
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
     skillsSection: () => capabilities.skills ?? null,
     nativeActivation: () => nativeActivationOf(capabilities),
+    configFiles: () => ({ ...fields.configOutputPaths, ...fields.pluginRuntimeFiles }),
+    runtimeFiles: () => ({ ...fields.pluginRuntimeFiles }),
+    mcpConfig: () => capabilities.mcp ?? null,
+    settingsFiles: () => settingsOf(capabilities),
+    machineLocalFiles: () => machineLocalFilesOf(capabilities),
   };
   return profile as AiTool<C> & ProfileBrand;
 }
@@ -183,6 +205,7 @@ export function defineIdeTool<C extends ProfileSections>(
     toolId,
     section: sectionReader(capabilities),
     configCapabilities: () => [...(capabilities.settings ?? [])],
+    settingsFiles: () => settingsOf(capabilities),
   };
   return profile as IdeToolConfig<C> & ProfileBrand;
 }

@@ -21,6 +21,7 @@ import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter
 import type { Platform } from "../../../../src/runtime/platform/platform.js";
 import { SilentPrompterAdapter } from "../../../../src/runtime/prompter/prompter-adapter.js";
 import { CurrentVersionAdapter } from "../../../../src/runtime/self-update/current-version-adapter.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
@@ -270,6 +271,7 @@ export async function installTool(
   const version = "test";
   if (isIdeToolId(toolId)) {
     return deps.installIdeConfigUseCase.execute({
+      tools: catalogOf().sortedById(),
       toolId,
       projectRoot,
       manifest,
@@ -278,6 +280,7 @@ export async function installTool(
     });
   }
   return deps.installRuntimeConfigUseCase.execute({
+    tools: catalogOf().sortedById(),
     toolId,
     projectRoot,
     manifest,

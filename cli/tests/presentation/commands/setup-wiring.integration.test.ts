@@ -5,6 +5,7 @@ import { wireTools } from "../../../src/composition/tools.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();
@@ -108,6 +109,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
       scope: "project",
     });
     expect(setupTools).toHaveBeenCalledWith({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       aiTools: ["claude"],
       ideTools: [],

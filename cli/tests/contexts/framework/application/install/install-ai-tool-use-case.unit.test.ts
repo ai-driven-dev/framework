@@ -9,6 +9,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -79,6 +80,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase } = buildUseCase(deps);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -99,6 +101,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase, syncSettingsMock } = buildUseCase(deps);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -123,6 +126,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase } = buildUseCase(deps);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -146,6 +150,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -174,6 +179,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: true,
@@ -193,6 +199,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -219,6 +226,7 @@ describe("InstallAiToolUseCase", () => {
 
       const { useCase, syncSettingsMock } = buildUseCase(deps);
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -250,6 +258,7 @@ describe("InstallAiToolUseCase", () => {
       );
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -267,6 +276,7 @@ describe("InstallAiToolUseCase", () => {
 
       const { useCase, pluginInstallMock, syncSettingsMock } = buildUseCase(deps);
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -291,6 +301,7 @@ describe("InstallAiToolUseCase", () => {
 
       const { useCase, pluginInstallMock } = buildUseCase(deps);
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -314,6 +325,7 @@ describe("InstallAiToolUseCase", () => {
 
       const { useCase, pluginInstallMock } = buildUseCase(deps);
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -332,6 +344,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase } = buildUseCase(deps);
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -356,6 +369,7 @@ describe("InstallAiToolUseCase", () => {
       const warnSpy = vi.spyOn(deps.logger, "warn");
       const { useCase, pluginInstallMock } = buildUseCase(deps);
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -379,6 +393,7 @@ describe("InstallAiToolUseCase", () => {
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,
@@ -407,6 +422,7 @@ describe("InstallAiToolUseCase", () => {
       });
 
       const result = await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolId: "opencode",
         projectRoot: PROJECT_ROOT,
         force: false,

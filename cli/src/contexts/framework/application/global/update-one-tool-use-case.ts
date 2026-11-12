@@ -4,6 +4,7 @@ import type { FileHash } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import { type AiToolId, type IdeToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import type { SyncConflictResolverUseCase } from "../../../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstallIdeConfigUseCase } from "../install/install-ide-config-use-case.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
@@ -21,6 +22,7 @@ export interface UpdateOneToolOptions {
   userForce: boolean;
   interactive: boolean;
   bulkState: BulkConflictState;
+  tools: readonly ToolProfile[];
 }
 
 export class UpdateOneToolUseCase {
@@ -47,7 +49,14 @@ export class UpdateOneToolUseCase {
     // InputRequiredError is the exception: it means a prompt is needed and the run
     // cannot proceed unattended, so it propagates and stops the batch.
     try {
-      return await this.runInstall(toolId, manifest, projectRoot, version, onBeforeWrite);
+      return await this.runInstall(
+        toolId,
+        manifest,
+        projectRoot,
+        version,
+        options.tools,
+        onBeforeWrite
+      );
     } catch (err) {
       if (err instanceof InputRequiredError) throw err;
       errors.push({ scope: toolId, message: err instanceof Error ? err.message : String(err) });
@@ -93,6 +102,7 @@ export class UpdateOneToolUseCase {
     manifest: Manifest,
     projectRoot: string,
     version: string,
+    tools: readonly ToolProfile[],
     onBeforeWriteRegularFile: (relativePath: string) => Promise<"write" | "skip">
   ): Promise<{ toolId: ToolId; fileCount: number } | null> {
     const result = isAiToolId(toolId)
@@ -102,6 +112,7 @@ export class UpdateOneToolUseCase {
           manifest,
           force: true,
           version,
+          tools,
           onBeforeWriteRegularFile,
         })
       : await this.installIdeConfigUseCase.execute({
@@ -110,6 +121,7 @@ export class UpdateOneToolUseCase {
           manifest,
           force: true,
           version,
+          tools,
           onBeforeWriteRegularFile,
         });
     if (result.skipped) return null;

@@ -1,5 +1,6 @@
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -19,6 +20,7 @@ export interface InstallAiToolOptions {
   force: boolean;
   version: string;
   propagatePlugins: boolean;
+  tools: readonly ToolProfile[];
 }
 
 export interface InstallAiToolResult {
@@ -40,7 +42,7 @@ export class InstallAiToolUseCase {
   ) {}
 
   async execute(options: InstallAiToolOptions): Promise<InstallAiToolResult> {
-    const { toolId, projectRoot, force, version, propagatePlugins } = options;
+    const { toolId, projectRoot, force, version, propagatePlugins, tools } = options;
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
     const runtimeResult = await this.installRuntimeConfig.execute({
       toolId,
@@ -48,6 +50,7 @@ export class InstallAiToolUseCase {
       manifest,
       force,
       version,
+      tools,
     });
     if (runtimeResult.skipped || !propagatePlugins) {
       return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };

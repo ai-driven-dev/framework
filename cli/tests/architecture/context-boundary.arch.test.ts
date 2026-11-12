@@ -12,6 +12,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // what the presentation asks of the registered tools: the catalog and a profile's answers
     "src/contexts/tools/contract/tool-catalog.ts",
     "src/contexts/tools/contract/tool-profile.ts",
+    "src/contexts/tools/contract/tool-profile-lookup.ts",
     // the tool contract and lookup surface
     "src/contexts/tools/domain/contracts.ts",
     "src/contexts/tools/domain/registry.ts",

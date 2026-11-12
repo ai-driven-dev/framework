@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
@@ -86,7 +87,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerFrameworkCommand(program);
+  registerFrameworkCommand(program, catalogOf());
   await program.parseAsync(["node", "aidd", "framework", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -100,6 +101,7 @@ describe("aidd framework install", () => {
       force: false,
       version: "5.2.2",
       propagatePlugins: true,
+      tools: catalogOf().sortedById(),
     });
     expect(installIdeTool).not.toHaveBeenCalled();
   });
@@ -157,6 +159,7 @@ describe("aidd framework install", () => {
   it("sends an IDE tool down its own install, with the manifest it loaded", async () => {
     expect(await run("install", "--tool", "vscode")).toEqual(["Installed vscode (2 files)"]);
     expect(installIdeTool).toHaveBeenCalledWith({
+      tools: catalogOf().sortedById(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest: expect.anything(),
@@ -244,11 +247,13 @@ describe("aidd framework update", () => {
 
     expect(await run("update")).toEqual(["Updated claude (5 files)", "Updated vscode (2 files)"]);
     expect(updateAiTools).toHaveBeenCalledWith({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
     });
     expect(updateIdeTools).toHaveBeenCalledWith({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
@@ -264,6 +269,7 @@ describe("aidd framework update", () => {
     await run("update", "--tool", "claude", "--force");
 
     expect(updateAiTools).toHaveBeenCalledWith({
+      tools: catalogOf().sortedById(),
       toolArg: "claude",
       projectRoot: PROJECT_ROOT,
       userForce: true,
@@ -276,6 +282,7 @@ describe("aidd framework update", () => {
     await run("update", "--tool", "vscode");
 
     expect(updateIdeTools).toHaveBeenCalledWith({
+      tools: catalogOf().sortedById(),
       toolArg: "vscode",
       projectRoot: PROJECT_ROOT,
       userForce: false,
@@ -389,7 +396,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 describe("aidd framework — the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
-    registerFrameworkCommand(program);
+    registerFrameworkCommand(program, catalogOf());
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");
     return framework;

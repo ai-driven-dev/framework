@@ -24,6 +24,7 @@ import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/s
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { SilentPrompterAdapter } from "../../../src/runtime/prompter/prompter-adapter.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
@@ -123,6 +124,7 @@ export async function installTool(
   const version = "test";
   if (isIdeToolId(toolId)) {
     return deps.installIdeConfigUseCase.execute({
+      tools: catalogOf().sortedById(),
       toolId,
       projectRoot,
       manifest,
@@ -131,6 +133,7 @@ export async function installTool(
     });
   }
   return deps.installRuntimeConfigUseCase.execute({
+    tools: catalogOf().sortedById(),
     toolId,
     projectRoot,
     manifest,

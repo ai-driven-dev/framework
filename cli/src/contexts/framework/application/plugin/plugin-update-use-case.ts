@@ -98,7 +98,10 @@ export class PluginUpdateUseCase {
     const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
     });
-    await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
+    const runtimeProfile = getToolConfig(toolId);
+    if (runtimeProfile.kind === "ai") {
+      await this.pluginRuntime?.ensurePluginRuntimeFiles(runtimeProfile, projectRoot, manifest);
+    }
     if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
     await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest);
     return true;

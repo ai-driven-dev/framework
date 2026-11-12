@@ -34,7 +34,7 @@ program
   .option("--verbose", "Show detailed diagnostic output", false);
 
 registerSetupCommand(program, tools);
-registerFrameworkCommand(program);
+registerFrameworkCommand(program, tools);
 registerTranslateCommand(program, tools);
 registerPluginCommand(program);
 registerMarketplaceCommand(program);
