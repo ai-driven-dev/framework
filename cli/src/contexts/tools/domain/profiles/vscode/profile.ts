@@ -2,7 +2,7 @@ import {
   CONFIG_VSCODE_EXTENSIONS,
   CONFIG_VSCODE_KEYBINDINGS,
   CONFIG_VSCODE_SETTINGS,
-} from "../../capabilities/config-refs.js";
+} from "../../../contract/config-refs.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";
 import { defineIdeTool } from "../../profile/define-tool.js";
 

@@ -1,4 +1,4 @@
-import type { IdeToolId } from "../../../../kernel/tool.js";
+import type { IdeToolId } from "../../../kernel/tool.js";
 
 /** Names a config artifact a tool's capability may declare in its `consumes` list. The framework
  * descriptor's own `configRefs` is keyed by these same names, so an artifact built there is

@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../kernel/tool.js";
 
 /** A component was delivered, not skipped, but runs only once a precondition outside the install
  * is met — unlike `PluginTranslationSkip`, which names a component never delivered at all. */

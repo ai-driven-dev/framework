@@ -17,7 +17,7 @@ import {
   CONFIG_VSCODE_KEYBINDINGS,
   CONFIG_VSCODE_SETTINGS,
   type ConfigRef,
-} from "../../../tools/domain/capabilities/config-refs.js";
+} from "../../../tools/contract/config-refs.js";
 import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

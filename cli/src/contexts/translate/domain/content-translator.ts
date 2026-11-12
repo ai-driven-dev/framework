@@ -4,6 +4,10 @@ import { flatHooksPathWithLoaderEntry } from "../../../kernel/materialization/fl
 import type { Hasher } from "../../../kernel/ports/hasher.js";
 import type { FlatHooksBridge } from "../../tools/contract/build-contract.js";
 import type {
+  PluginInstallNotice,
+  ReadonlyNoticeList,
+} from "../../tools/contract/plugin-install-notice.js";
+import type {
   AiToolProfile,
   FlatPluginAnswers,
   MarkdownSectionAnswers,
@@ -12,10 +16,6 @@ import type {
   SkillsSectionAnswers,
   ToolProfile,
 } from "../../tools/contract/tool-profile.js";
-import type {
-  PluginInstallNotice,
-  ReadonlyNoticeList,
-} from "../../tools/domain/models/plugin-install-notice.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
 import type { PluginComponentFile, PluginDistribution } from "./plugin-distribution.js";
 import type { PluginTranslationSkip, ReadonlySkipList } from "./plugin-translation-skip.js";

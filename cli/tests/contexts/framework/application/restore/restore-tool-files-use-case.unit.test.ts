@@ -8,7 +8,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import {
   CONFIG_VSCODE_EXTENSIONS,
   CONFIG_VSCODE_KEYBINDINGS,
-} from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
+} from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";

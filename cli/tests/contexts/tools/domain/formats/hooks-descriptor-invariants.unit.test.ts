@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { PLUGIN_ROOT_TOKEN } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import {
   CANONICAL_HOOK_EVENTS,
   declareHooks,
   type HookEventRoute,
   type HooksDeclaration,
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
-import { PLUGIN_ROOT_TOKEN } from "../../../../../src/contexts/tools/domain/formats/plugin-root-token.js";
 import type { HooksInvariant } from "../../../../../src/kernel/errors.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
 

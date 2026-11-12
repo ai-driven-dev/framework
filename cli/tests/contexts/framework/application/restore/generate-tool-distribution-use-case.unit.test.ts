@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/framework/application/restore/generate-tool-distribution-use-case.js";
-import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
+import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import {
   getToolConfig,
   isAiTool,

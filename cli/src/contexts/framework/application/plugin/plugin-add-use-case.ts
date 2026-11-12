@@ -15,7 +15,7 @@ import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { PluginSource } from "../../../../kernel/source.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import type { ReadonlyNoticeList } from "../../../tools/domain/models/plugin-install-notice.js";
+import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";

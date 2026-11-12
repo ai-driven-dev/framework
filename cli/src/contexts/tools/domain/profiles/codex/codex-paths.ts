@@ -3,7 +3,7 @@
  * even where the literal values coincide: a change to either side must not collapse them.
  */
 
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import type { GlobalPlugin } from "../../plugins/plugin-params.js";
 
 export const CODEX_DIRECTORY = ".codex/";

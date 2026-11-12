@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONFIG_MCP } from "../../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
+import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
 import {

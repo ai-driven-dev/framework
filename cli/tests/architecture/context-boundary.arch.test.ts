@@ -21,7 +21,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/capabilities/mcp-capability.ts",
     "src/contexts/tools/domain/mcp-launch-command.ts",
     "src/contexts/tools/domain/capabilities/settings-capability.ts",
-    "src/contexts/tools/domain/capabilities/config-refs.ts",
+    "src/contexts/tools/contract/config-refs.ts",
     // what a tool answers from the project's files: which tool's files are present
     "src/contexts/tools/application/detect-tool-signals.ts",
     // what a tool declares about plugins: installing is framework work
@@ -29,10 +29,10 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/plugins/plugin-params.ts",
     "src/contexts/tools/domain/plugins/marketplace-registration.ts",
     "src/contexts/tools/domain/plugin-translation-mode.ts",
-    "src/contexts/tools/domain/models/plugin-install-notice.ts",
+    "src/contexts/tools/contract/plugin-install-notice.ts",
     // The variable each tool expands to an installed plugin's directory: a tool declares it,
     // translate substitutes it, the diagnostic looks for it in what was installed.
-    "src/contexts/tools/domain/formats/plugin-root-token.ts",
+    "src/contexts/tools/contract/plugin-root-token.ts",
   ],
   translate: [
     // the canonical shapes framework produces and translate consumes

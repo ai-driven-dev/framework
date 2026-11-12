@@ -2,7 +2,7 @@
  * the profile and the flat-mode build helpers share one source without a cross-layer
  * dependency. */
 
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 
 export const COPILOT_WORKSPACE_DIR = ".github/";
 

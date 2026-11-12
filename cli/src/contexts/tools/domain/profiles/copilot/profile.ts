@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { GITKEEP_FILE } from "../../../../../kernel/file.js";
 import { DOCS_DIR } from "../../../../../kernel/paths.js";
+import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
-import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";

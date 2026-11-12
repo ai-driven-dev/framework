@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
-import { CONFIG_MCP, CONFIG_OPENCODE } from "../../capabilities/config-refs.js";
+import { CONFIG_MCP, CONFIG_OPENCODE } from "../../../contract/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import {
   buildAiddCommandFilePath,

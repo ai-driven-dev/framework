@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { CONFIG_MCP } from "../../capabilities/config-refs.js";
+import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import {
   buildAiddCommandFilePath,

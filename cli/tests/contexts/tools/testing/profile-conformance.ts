@@ -4,9 +4,9 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
+import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
 import { AgentsCapability } from "../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
 import { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
-import { CONFIG_MCP } from "../../../../src/contexts/tools/domain/capabilities/config-refs.js";
 import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { RulesCapability } from "../../../../src/contexts/tools/domain/capabilities/rules-capability.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";

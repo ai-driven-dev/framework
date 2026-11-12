@@ -1,4 +1,4 @@
-import type { ConfigRef } from "../../tools/domain/capabilities/config-refs.js";
+import type { ConfigRef } from "../../tools/contract/config-refs.js";
 
 export const FRAMEWORK_CONFIG_PREFIX = "config/";
 

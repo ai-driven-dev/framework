@@ -5,7 +5,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
-import { CONFIG_MCP, type ConfigRef } from "../../../tools/domain/capabilities/config-refs.js";
+import { CONFIG_MCP, type ConfigRef } from "../../../tools/contract/config-refs.js";
 import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import type { ConfigCapability } from "../../../tools/domain/contracts.js";

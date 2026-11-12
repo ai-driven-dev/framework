@@ -1,4 +1,4 @@
-import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../../tools/domain/formats/plugin-root-token.js";
+import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../../tools/contract/plugin-root-token.js";
 
 /**
  * Replaces every occurrence of the canonical `${CLAUDE_PLUGIN_ROOT}` source token with the one

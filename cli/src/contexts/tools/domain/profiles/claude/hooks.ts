@@ -1,7 +1,7 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-claude.cjs";
+import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import { declareHooks, ownNameEvents } from "../../formats/hooks-descriptor.js";
-import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
 import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
 
 export const CLAUDE_HOOKS = declareHooks("claude", CLAUDE_DIRECTORY, adapter, {

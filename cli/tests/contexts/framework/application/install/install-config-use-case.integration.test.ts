@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
-import { CONFIG_MCP } from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
+import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
