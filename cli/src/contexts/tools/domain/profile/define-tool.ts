@@ -6,7 +6,7 @@ import {
   IDE_TOOL_IDS,
   type IdeToolId,
 } from "../../../../kernel/tool.js";
-import type { SettingsFileAnswers } from "../../contract/tool-profile.js";
+import type { FrameworkBuildMode, SettingsFileAnswers } from "../../contract/tool-profile.js";
 import { AgentsCapability } from "../capabilities/agents-capability.js";
 import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
@@ -46,6 +46,7 @@ type AiToolFields = Omit<
   | "kind"
   | "toolId"
   | "section"
+  | "buildContract"
   | "configCapabilities"
   | "plugins"
   | "nativeActivation"
@@ -177,6 +178,7 @@ export function defineAiTool<C extends ProfileSections>(
     kind: "ai",
     toolId,
     section: sectionReader(capabilities),
+    buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
     configCapabilities: () => aiConfigCapabilities(capabilities),
     plugins: () => capabilities.plugins ?? null,
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,

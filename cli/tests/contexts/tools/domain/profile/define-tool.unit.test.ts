@@ -155,6 +155,14 @@ describe("defineAiTool", () => {
     );
   });
 
+  it("answers the build contract of a declared mode, and null for a mode it does not declare", () => {
+    const contract = anEmptyContract({ manifestFileRelative: "plugin.json" });
+    const tool = defineAiTool({ ...aiSpec, buildContracts: { flat: () => contract } });
+
+    expect(tool.buildContract("flat")).toBe(contract);
+    expect(tool.buildContract("marketplace")).toBeNull();
+  });
+
   it("refuses an AI tool declaring no build contract", () => {
     expect(refusalOf(() => defineAiTool({ ...aiSpec, buildContracts: {} })).invariant).toBe(
       "no-build-contract"

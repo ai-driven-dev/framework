@@ -122,17 +122,14 @@ export interface AiToolProfile {
   readonly toolId: AiToolId;
   /** Where a built file lands, relative to the project root, ending in a slash. */
   readonly directory: string;
-  /** The tool's framework-build contracts, one per supported build mode. */
-  readonly buildContracts: {
-    readonly marketplace?: () => ToolBuildContract;
-    readonly flat?: () => ToolBuildContract;
-  };
   /** Where this tool's plugin manifest and marketplace catalog sit inside a distribution it
    * produced. Order is irrelevant: the collected probes are sorted deepest first. */
   readonly distributionProbes?: {
     readonly manifest?: readonly string[];
     readonly marketplace?: readonly string[];
   };
+  /** The framework-build contract for `mode`, or null when the tool declares none for it. */
+  buildContract(mode: FrameworkBuildMode): ToolBuildContract | null;
   /** Rewrites source content to this tool's own conventions. */
   rewriteContent(content: string): string;
   /** The tool's plugin delivery, or null when it declares none. */

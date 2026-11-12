@@ -329,7 +329,7 @@ export class PluginContentTranslator {
     const fileName = file.relativePath.slice(sectionDir.length);
     if (!sectionDeclared(tool, section)) {
       const artifact =
-        section === "agents" ? tool.buildContracts.flat?.().artifacts.agents : undefined;
+        section === "agents" ? tool.buildContract("flat")?.artifacts.agents : undefined;
       if (!artifact?.supported || !isProse(file.relativePath)) return null;
       const content = tool.rewriteContent(file.content);
       return this.makeFile(
@@ -341,7 +341,7 @@ export class PluginContentTranslator {
     // flat file left a script intact only where a tool's own rewrite happened to spare it.
     const content = isProse(file.relativePath) ? tool.rewriteContent(file.content) : file.content;
     if (section === "agents") {
-      const artifact = tool.buildContracts.flat?.().artifacts.agents;
+      const artifact = tool.buildContract("flat")?.artifacts.agents;
       if (artifact?.supported) {
         return this.makeFile(
           artifact.path(pluginName, file.relativePath),

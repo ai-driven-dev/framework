@@ -24,7 +24,7 @@ export function buildTargetModesOf(
     const profile = profiles.find((candidate) => candidate.toolId === target);
     if (profile === undefined || profile.kind !== "ai") continue;
     for (const mode of BUILD_MODES) {
-      if (profile.buildContracts[mode] !== undefined) pairs.push({ target, mode });
+      if (profile.buildContract(mode) !== null) pairs.push({ target, mode });
     }
   }
   return pairs;

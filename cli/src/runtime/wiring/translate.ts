@@ -98,7 +98,7 @@ export function createFrameworkBuildUseCase(
   if (!isAiToolId(ctx.target) || !isBuildMode(ctx.mode)) return undefined;
   const profile = tools.profile(ctx.target);
   if (profile.kind !== "ai") return undefined;
-  const buildContract = profile.buildContracts[ctx.mode];
-  if (buildContract === undefined) return undefined;
-  return frameworkBuildFactoryFor(buildContract, ctx.mode)(deps, ctx);
+  const buildContract = profile.buildContract(ctx.mode);
+  if (buildContract === null) return undefined;
+  return frameworkBuildFactoryFor(() => buildContract, ctx.mode)(deps, ctx);
 }
