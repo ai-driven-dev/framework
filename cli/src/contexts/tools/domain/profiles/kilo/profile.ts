@@ -6,9 +6,8 @@ import {
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
-import { flatGlobalFilePath, flatHooksParams } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
@@ -62,14 +61,12 @@ export const kilo = defineAiTool({
       }),
     },
     hooks: { delivery: hooksDelivery },
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
+    layout: flatPlacement({
+      namespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "kilo"),
         map: flatGlobalFilePath(KILO_DIRECTORY),
       },
-      ...flatHooksParams(hooksDelivery),
     }),
   }),
 

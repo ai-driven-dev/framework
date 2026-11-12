@@ -11,9 +11,11 @@ import type {
   FlatInstallSection,
   FlatSkillLayout,
   FrameworkBuildMode,
+  PluginAnswers,
   SettingsFileAnswers,
 } from "../../contract/tool-profile.js";
 import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
+import type { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
 import type { NativeActivation } from "../native-registration/native-activation.js";
 import type { AiTool, IdeToolConfig } from "../profile.js";
 import {
@@ -27,6 +29,7 @@ import { CommandsSection } from "../sections/commands-section.js";
 import { RulesSection } from "../sections/rules-section.js";
 import { SkillsSection } from "../sections/skills-section.js";
 import { flatInstallPath, ownsFlatPath } from "./flat-install-paths.js";
+import { deliverySuits, pluginAnswers, projectPlacement } from "./plugin-answers.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
 /** Only `defineAiTool` and `defineIdeTool` can produce one: an object literal lacks the private
@@ -156,8 +159,7 @@ function settingsWrites(sections: ProfileSections): readonly ConfigWrite[] {
 }
 
 function nativeActivationOf(sections: ProfileSections): NativeActivation | undefined {
-  const plugins = sections.plugins;
-  return plugins?.kind === "native" ? (plugins.activation() ?? undefined) : undefined;
+  return sections.layout?.mode === "native" ? sections.layout.activation : undefined;
 }
 
 function settingsOf(sections: ProfileSections): readonly SettingsFileAnswers[] {
@@ -187,7 +189,44 @@ function ideToolId(id: string): IdeToolId {
 }
 
 function skillLayoutOf(sections: ProfileSections): FlatSkillLayout {
-  return sections.plugins?.kind === "flat" ? sections.plugins.flatLayout().skillLayout : "nested";
+  return sections.layout?.mode === "flat" ? sections.layout.skillLayout : "nested";
+}
+
+function refuse(toolId: string, detail: string): never {
+  throw new InvalidToolProfileError(toolId, "plugin-sections-disagree", detail);
+}
+
+/** A layout, its manifest and its hooks delivery are one declaration: they agree or no profile. */
+function refuseDisagreeingPlugin(toolId: string, sections: ProfileSections): void {
+  const { layout, manifest, hooks } = sections;
+  if (layout === undefined) {
+    if (manifest !== undefined) refuse(toolId, "a manifest needs a native layout.");
+    return;
+  }
+  if (layout.mode === "native" && manifest === undefined) {
+    refuse(toolId, "a native layout requires a manifest section.");
+  }
+  if (layout.mode !== "native" && manifest !== undefined) {
+    refuse(toolId, `a ${layout.mode} layout takes no manifest section.`);
+  }
+  if (hooks === undefined)
+    refuse(toolId, "a layout requires a hooks section to state its delivery.");
+  if (!deliverySuits(layout, hooks.delivery)) {
+    refuse(
+      toolId,
+      `hooks delivery '${hooks.delivery.kind}' does not suit a ${layout.mode} layout.`
+    );
+  }
+}
+
+function pluginsOf(sections: ProfileSections): PluginAnswers | null {
+  const { layout, hooks } = sections;
+  if (layout === undefined || hooks === undefined) return null;
+  return pluginAnswers(layout, sections.manifest ?? null, hooks, sections.mcp ?? null);
+}
+
+function marketplaceOf(sections: ProfileSections): MarketplaceRegistration | undefined {
+  return sections.layout?.mode === "native" ? sections.layout.marketplace : undefined;
 }
 
 export function defineAiTool<C extends ProfileSections>(
@@ -207,13 +246,15 @@ export function defineAiTool<C extends ProfileSections>(
   }
   const capabilities = declare(bind(spec.directory, suffix));
   refuseUnknownSections(toolId, capabilities);
+  refuseDisagreeingPlugin(toolId, capabilities);
+  const plugins = pluginsOf(capabilities);
   const profile = {
     ...fields,
     kind: "ai",
     toolId,
     section: sectionReader(capabilities),
     frameworkBuildMode: (): FrameworkBuildMode =>
-      capabilities.plugins?.kind === "flat" ? "flat" : "marketplace",
+      capabilities.layout?.mode === "flat" ? "flat" : "marketplace",
     buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
     distributionPaths: (kind: "manifest" | "marketplace") =>
       fields.distributionProbes?.[kind] ?? [],
@@ -222,8 +263,8 @@ export function defineAiTool<C extends ProfileSections>(
     ownsFlatPath: (relativePath: string, pluginName: string) =>
       ownsFlatPath(spec.directory, skillLayoutOf(capabilities), relativePath, pluginName),
     configWrites: () => aiConfigWrites(capabilities),
-    plugins: () => capabilities.plugins ?? null,
-    supportsUserScopeActivation: () => capabilities.plugins?.supportsUserScopeActivation() ?? false,
+    plugins: () => plugins,
+    supportsUserScopeActivation: () => plugins?.supportsUserScopeActivation() ?? false,
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
     skillsSection: () => capabilities.skills ?? null,
     nativeActivation: () => nativeActivationOf(capabilities),
@@ -234,29 +275,22 @@ export function defineAiTool<C extends ProfileSections>(
     mcpConfig: () => capabilities.mcp?.config ?? null,
     flatPluginMcp: () =>
       capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
-      capabilities.plugins?.kind === "flat"
+      capabilities.layout?.mode === "flat"
         ? capabilities.mcp.config
         : null,
     settingsFiles: () => settingsOf(capabilities),
-    marketplaceRegistration: () =>
-      capabilities.plugins?.kind === "native"
-        ? capabilities.plugins.marketplaceRegistration()
-        : null,
-    machineLocalFiles: () =>
-      capabilities.plugins?.kind === "native"
-        ? (capabilities.plugins.marketplaceRegistration()?.machineLocalFiles() ?? [])
-        : [],
+    marketplaceRegistration: () => marketplaceOf(capabilities) ?? null,
+    machineLocalFiles: () => marketplaceOf(capabilities)?.machineLocalFiles() ?? [],
     installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
     pluginEnablementIsMachineGlobal: () =>
-      capabilities.plugins?.kind === "native"
-        ? capabilities.plugins.enablementIsMachineGlobal()
+      capabilities.layout?.mode === "native"
+        ? capabilities.layout.activation?.scopesEnablement() !== true
         : true,
     signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
     projectHooksDelivery: () => {
-      const delivery = capabilities.plugins?.projectHooksDelivery();
-      return delivery === null || delivery === undefined
-        ? null
-        : { ...delivery, toolName: spec.displayName };
+      const placement =
+        capabilities.hooks === undefined ? null : projectPlacement(capabilities.hooks.delivery);
+      return placement === null ? null : { ...placement, toolName: spec.displayName };
     },
   };
   return profile as AiTool<C> & ProfileBrand;

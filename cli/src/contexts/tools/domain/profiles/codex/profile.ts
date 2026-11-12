@@ -3,9 +3,9 @@ import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { codexAgentFrontmatter, codexAgentToml } from "../../behaviours/codex-agent-toml.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { nativeHooksParams } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { nativeLayout } from "../../sections/layout-section.js";
+import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import {
   buildCodexContract,
@@ -92,17 +92,11 @@ export const codex = defineAiTool({
       plugin: PLUGIN_MCP,
     },
     hooks: { config: hooksConfigPart(CODEX_HOOKS), delivery: hooksSupport.delivery },
-    plugins: pluginsCapability({
-      mode: "native",
+    layout: nativeLayout({
       pluginsDir: ".codex/plugins/",
-      pluginManifestRelativePath: "plugin.json",
       globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
-      mcp: PLUGIN_MCP,
-      translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a
       // project-local settings file is inert, so the `codex` CLI is driven directly instead.
-      ...nativeHooksParams(hooksSupport.delivery),
-      pluginRootToken: hooksSupport.rootToken,
       nativeActivation: {
         binary: "codex",
         upgradeVerb: "upgrade",
@@ -133,6 +127,11 @@ export const codex = defineAiTool({
         // says — else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
         userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
       },
+    }),
+    manifest: manifestSection({
+      manifestRelativePath: "plugin.json",
+      translationMode: "marketplace",
+      pluginRootToken: hooksSupport.rootToken,
     }),
   }),
 

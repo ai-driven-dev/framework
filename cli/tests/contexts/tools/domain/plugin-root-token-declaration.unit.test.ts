@@ -11,7 +11,7 @@ import { nativeOf } from "../testing/plugin-mode.js";
 
 describe("the route that builds a marketplace bundle", () => {
   it("leaves a command alone for the tool whose variable is the one authors write", () => {
-    const claude = nativeOf(registeredAiConfig("claude").section("plugins") ?? undefined);
+    const claude = nativeOf(registeredAiConfig("claude").plugins());
     const authored = `node ${claude.rootToken()}/hooks/journal.cjs`;
 
     const token = buildClaudeContract().pluginRootToken;

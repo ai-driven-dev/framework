@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { nativeOf } from "../../../testing/plugin-mode.js";
 
 /** What a reference to another framework file becomes once installed for Copilot. No other gate
  * sees it: `translate` never calls `rewriteContent`, and the byte-frozen golden cell is claude,
@@ -145,7 +144,7 @@ describe("a reference to another framework file, installed for Copilot", () => {
 
   describe("capabilities.plugins", () => {
     it("declares where copilot's own user-scope settings file lives, for --scope user", () => {
-      const activation = nativeOf(copilot.section("plugins")).activation();
+      const activation = copilot.nativeActivation();
       expect(activation?.userSettingsFile("/home/tester", () => undefined)).toBe(
         join("/home/tester", ".copilot", "settings.json")
       );

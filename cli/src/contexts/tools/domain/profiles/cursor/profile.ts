@@ -2,9 +2,9 @@ import { join } from "node:path";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
-import { nativeHooksParams } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { nativeLayout } from "../../sections/layout-section.js";
+import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
@@ -84,17 +84,16 @@ export const cursor = defineAiTool({
       plugin: PLUGIN_MCP,
     },
     hooks: { delivery: hooksDelivery },
-    plugins: pluginsCapability({
-      mode: "native",
+    layout: nativeLayout({
       // Empty so the translator computes pluginRoot as `<pluginName>/`, giving base-relative
       // keys such as "aidd-context/commands/foo.md".
       pluginsDir: "",
-      pluginManifestRelativePath: null,
-      ...nativeHooksParams(hooksDelivery),
-      pluginRootToken: CURSOR_ROOT_TOKEN,
-      mcp: PLUGIN_MCP,
       installScope: "user",
       userPluginsDir: (h) => join(h, ".cursor", "plugins", "local"),
+    }),
+    manifest: manifestSection({
+      manifestRelativePath: null,
+      pluginRootToken: CURSOR_ROOT_TOKEN,
     }),
   }),
 

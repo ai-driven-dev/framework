@@ -5,12 +5,12 @@ import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
-import { nativeHooksParams } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { AgentsSection } from "../../sections/agents-section.js";
 import { CommandsSection } from "../../sections/commands-section.js";
 import { ConfigSection } from "../../sections/config-section.js";
+import { nativeLayout } from "../../sections/layout-section.js";
+import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { RulesSection } from "../../sections/rules-section.js";
 import { SkillsSection } from "../../sections/skills-section.js";
@@ -263,14 +263,8 @@ export const copilot = defineAiTool({
       }),
     ],
     hooks: { delivery: hooksSupport.delivery },
-    plugins: pluginsCapability({
-      mode: "native",
+    layout: nativeLayout({
       pluginsDir: ".github/plugins/",
-      pluginManifestRelativePath: "plugin.json",
-      ...nativeHooksParams(hooksSupport.delivery),
-      pluginRootToken: hooksSupport.rootToken,
-      mcp: PLUGIN_MCP,
-      translationMode: "marketplace",
       // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
       // must therefore never receive a declarative true entry before native source proof.
       // Its registry is global to the user and keyed by name, so a name held by a project that
@@ -319,6 +313,11 @@ export const copilot = defineAiTool({
         declarativePluginActivationRequiresNativeProof: true,
         toEntryKey: claudeStyleMarketplaceKey,
       },
+    }),
+    manifest: manifestSection({
+      manifestRelativePath: "plugin.json",
+      pluginRootToken: hooksSupport.rootToken,
+      translationMode: "marketplace",
     }),
   }),
 

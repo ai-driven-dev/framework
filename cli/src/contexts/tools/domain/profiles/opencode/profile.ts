@@ -7,9 +7,8 @@ import {
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
-import { flatHooksParams } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
@@ -77,14 +76,12 @@ export const opencode = defineAiTool({
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
     // only npm package names — no source or version a marketplace entry could express.
     hooks: { delivery: hooksDelivery },
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
+    layout: flatPlacement({
+      namespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "opencode"),
         map: opencodeGlobalFilePath,
       },
-      ...flatHooksParams(hooksDelivery),
     }),
   }),
 

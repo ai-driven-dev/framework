@@ -3,9 +3,9 @@ import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
-import { nativeHooksParams } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { nativeLayout } from "../../sections/layout-section.js";
+import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
@@ -85,14 +85,8 @@ export const claude = defineAiTool({
       plugin: PLUGIN_MCP,
     },
     hooks: { delivery: hooksSupport.delivery },
-    plugins: pluginsCapability({
-      mode: "native",
+    layout: nativeLayout({
       pluginsDir: ".claude/plugins/",
-      pluginManifestRelativePath: "plugin.json",
-      ...nativeHooksParams(hooksSupport.delivery),
-      pluginRootToken: hooksSupport.rootToken,
-      mcp: PLUGIN_MCP,
-      translationMode: "marketplace",
       // Claude registers its own marketplaces and enables its own plugins, both driven here.
       // At project scope the command rewrites `.claude/settings.json` after this CLI hashed
       // it — two writers, one recorder, and `status` reporting drift forever. `--scope local`
@@ -140,6 +134,11 @@ export const claude = defineAiTool({
         enabledPluginsKey: "enabledPlugins",
         toEntryKey: claudeStyleMarketplaceKey,
       },
+    }),
+    manifest: manifestSection({
+      manifestRelativePath: "plugin.json",
+      pluginRootToken: hooksSupport.rootToken,
+      translationMode: "marketplace",
     }),
   }),
 

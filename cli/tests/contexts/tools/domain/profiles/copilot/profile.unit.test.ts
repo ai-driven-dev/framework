@@ -33,7 +33,7 @@ describe("copilot declarations the rest of the CLI reads", () => {
   });
 
   it("translates plugins for its own marketplace", () => {
-    expect(nativeOf(copilot.section("plugins")).translatesAsMarketplace()).toBe(true);
+    expect(nativeOf(copilot.plugins()).translatesAsMarketplace()).toBe(true);
   });
 
   it("drives its own CLI with the verbs it answers to", () => {

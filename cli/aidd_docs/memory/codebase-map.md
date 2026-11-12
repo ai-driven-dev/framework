@@ -51,7 +51,6 @@ src/
 │   │       ├── formats/
 │   │       ├── hooks/
 │   │       ├── native-registration/    # the native host's plugin CLI and marketplace declarations, held as data
-│   │       ├── plugins/
 │   │       ├── profile.ts    # the sections a profile declares and the shape a defined tool has
 │   │       ├── profile/
 │   │       ├── profiles/    # one directory per tool

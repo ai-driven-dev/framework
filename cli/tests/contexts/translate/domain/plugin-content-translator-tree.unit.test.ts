@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { pluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
+import { flatPlugins } from "../../tools/testing/plugin-mode.js";
 import {
   CLAUDE_ROOT_TOKEN,
   CODEX_ROOT_TOKEN,
@@ -101,20 +101,24 @@ describe("a flat target that rewrites what it hosts", () => {
 });
 
 describe("a flat target whose loader is triggered by a generated bridge", () => {
-  const bridged = withSections(opencode, {
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
-      acceptsHooks: true,
-      flatHooksDir: ".stub/hooks/",
-      flatHooksBridge: {
-        generate: (raw: string, plugin: string) =>
-          raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
-        path: (plugin: string) => `.stub/plugin/${plugin}.js`,
-        skipIfSourceHas: "own-plugin.js",
+  const bridged = withSections(
+    opencode,
+    flatPlugins(
+      {
+        kind: "bridge",
+        flat: {
+          dir: ".stub/hooks/",
+          bridge: {
+            generate: (raw: string, plugin: string) =>
+              raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
+            path: (plugin: string) => `.stub/plugin/${plugin}.js`,
+            skipIfSourceHas: "own-plugin.js",
+          },
+        },
       },
-    }),
-  });
+      "aidd-"
+    )
+  );
 
   it("generates the bridge from the plugin's own hooks manifest", () => {
     expect(treeOf(bridged, hooksDist())).toEqual({

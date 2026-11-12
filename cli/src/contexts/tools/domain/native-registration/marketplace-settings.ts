@@ -1,7 +1,7 @@
 import type { MarketplaceSettingsInput } from "../../contract/tool-vocabulary.js";
 
 /** Where and how a tool records the marketplaces it knows about, for the tools whose settings
- * file this CLI writes itself. Kept apart from {@link PluginsCapability} because the two answer
+ * file this CLI writes itself. Kept apart from the plugin layout because the two answer
  * different questions: this one is read only by marketplace settings synchronisation. */
 export interface MarketplaceSettings {
   settingsPath: string;

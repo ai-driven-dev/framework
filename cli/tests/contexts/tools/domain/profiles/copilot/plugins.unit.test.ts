@@ -6,26 +6,26 @@ import { nativeOf } from "../../../testing/plugin-mode.js";
 describe("copilot plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(copilot.section("plugins").kind).toBe("native");
+      expect(copilot.plugins()?.kind).toBe("native");
     });
 
     it("uses .github/plugins/ as plugins directory", () => {
-      expect(nativeOf(copilot.section("plugins")).pluginOutputDir("x")).toBe(".github/plugins/x/");
+      expect(nativeOf(copilot.plugins()).pluginOutputDir("x")).toBe(".github/plugins/x/");
     });
 
     it("uses plugin.json as plugin manifest path", () => {
-      expect(nativeOf(copilot.section("plugins")).manifestPath()).toBe("plugin.json");
+      expect(nativeOf(copilot.plugins()).manifestPath()).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {
-      expect(nativeOf(copilot.section("plugins")).pluginOutputDir("my-plugin")).toBe(
+      expect(nativeOf(copilot.plugins()).pluginOutputDir("my-plugin")).toBe(
         ".github/plugins/my-plugin/"
       );
     });
   });
 
   describe("capabilities.plugins.marketplaceSettings", () => {
-    const ms = nativeOf(copilot.section("plugins")).marketplaceRegistration();
+    const ms = copilot.marketplaceRegistration();
 
     it("has marketplaceSettings configured", () => {
       expect(ms).not.toBeNull();

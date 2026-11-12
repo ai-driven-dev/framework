@@ -61,7 +61,7 @@ describe("kilo", () => {
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    const plugins = flatOf(kilo.section("plugins"));
+    const plugins = flatOf(kilo.plugins());
     expect([
       plugins.kind,
       plugins.hooksAcceptance().accepts,

@@ -10,10 +10,10 @@ The language of the `tools` context. A name in the code means what this page say
 | Registration list | The one list of profiles the catalog is built from; a new tool adds its line | `REGISTERED_PROFILES` |
 | Contract | The only folder another context or presentation imports from `tools`: the answers, the catalog and the build contract | `contract/` |
 | Section | One part a profile declares: agents, skills, commands, rules, mcp, hooks, plugins or config. A missing one is a missing declaration | `ProfileSections`, `domain/sections/` |
-| Plugin delivery | How a tool takes plugins, asked through methods. It comes in three kinds | `PluginDelivery`, `PluginDeliveryBase` |
-| Native delivery | The tool installs a plugin through its own plugin CLI | `NativePlugins`, `NativePluginAnswers` |
-| Flat delivery | The tool has the plugin's files injected into the project tree | `FlatPlugins`, `FlatPluginAnswers` |
-| Unsupported delivery | The tool takes no plugin | `UnsupportedPlugins`, `UnsupportedPluginAnswers` |
+| Plugin delivery | How a tool takes plugins, asked through methods. It comes in three kinds | `pluginAnswers`, `HooksDelivery` |
+| Native delivery | The tool installs a plugin through its own plugin CLI | `nativeLayout`, `NativePluginAnswers` |
+| Flat delivery | The tool has the plugin's files injected into the project tree | `flatPlacement`, `FlatPluginAnswers` |
+| Unsupported delivery | The tool takes no plugin | `LayoutSection` (mode unsupported), `UnsupportedPluginAnswers` |
 | Build contract | What `aidd translate` needs of a tool to build its distribution: one artifact-symmetric declaration per build mode, read by translate's two mode-generic strategies | `ToolBuildContract`, `contract/build-contract.ts` |
 | Flat layout | Where a flat plugin's files land and how its hooks are loaded | `FlatLayout`, `FlatSkillLayout` |
 | Native activation | What a tool's own plugin CLI declares about itself: its binary, where it keeps its registries and cache, its settings file | `NativeActivation`, `NativeActivationAnswers` |

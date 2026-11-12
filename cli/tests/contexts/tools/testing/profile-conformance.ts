@@ -155,7 +155,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     }
   }),
   aiCheck("is reachable by at least one build", (profile) => {
-    if (profile.section("plugins") === null) return;
+    if (profile.plugins() === null) return;
     expect(Object.keys(profile.buildContracts ?? {}).length).toBeGreaterThan(0);
   }),
   aiCheck("is probed where it publishes a marketplace", (profile) => {
@@ -163,18 +163,18 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(profile.distributionPaths("marketplace").length).toBeGreaterThan(0);
   }),
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {
-    const plugins = profile.section("plugins");
+    const plugins = profile.plugins();
     const flat = profile.buildContracts?.flat?.();
     if (plugins?.kind !== "flat" || flat === undefined) return;
     expect(flat.artifacts.hooks.supported).toBe(plugins.hooksAcceptance().accepts);
   }),
   aiCheck("names a variable, never a path", (profile) => {
-    const plugins = profile.section("plugins");
+    const plugins = profile.plugins();
     if (plugins?.kind !== "native") return;
     expect(plugins.rootToken()).toMatch(PLUGIN_ROOT_TOKEN);
   }),
   aiCheck("writes its own token into a marketplace build", (profile) => {
-    const plugins = profile.section("plugins");
+    const plugins = profile.plugins();
     const marketplace = profile.buildContracts?.marketplace?.();
     if (plugins?.kind !== "native" || marketplace === undefined) return;
     expect(marketplace.pluginRootToken ?? null).toBe(plugins.rootToken());
@@ -185,7 +185,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(flat.pluginRootToken).toBeUndefined();
   }),
   aiCheck("declares a plugins capability", (profile) => {
-    expect(profile.section("plugins")).not.toBeNull();
+    expect(profile.plugins()).not.toBeNull();
   }),
   aiCheck("feeds its mcp file from the mcp config", (profile) => {
     const config = profile.section("mcp")?.config;

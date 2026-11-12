@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { pluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
@@ -7,7 +6,12 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { parseFrontmatter } from "../../../../src/kernel/markdown.js";
 import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
-import { nativeOf } from "../../tools/testing/plugin-mode.js";
+import {
+  flatPlugins,
+  nativeOf,
+  nativePlugins,
+  unsupportedPlugins,
+} from "../../tools/testing/plugin-mode.js";
 import {
   distOf,
   hooksDist,
@@ -29,13 +33,12 @@ describe("a plugin's mcp declaration", () => {
 
   it("is dropped by a target that hosts none", () => {
     const refusingMcp = withSections(claude, {
-      plugins: pluginsCapability({
-        mode: "native",
+      ...nativePlugins({
         pluginRootToken: "$X_PLUGIN_ROOT",
         pluginsDir: ".claude/plugins/",
-        pluginManifestRelativePath: null,
-        acceptsHooks: true,
+        manifestRelativePath: null,
       }),
+      mcp: null,
     });
     const mcp = [makeFile(".mcp.json", mcpJsonContent)];
     expect(treeOf(refusingMcp, distOf([...mcp], { mcp }))).toEqual({});
@@ -62,7 +65,7 @@ describe("what a person still has to do before a hook runs", () => {
         pluginName: "sample-plugin",
         component: "hooks",
         toolId: "codex",
-        message: nativeOf(codex.section("plugins")).trustNotice(),
+        message: nativeOf(codex.plugins()).trustNotice(),
       },
     ]);
   });
@@ -77,14 +80,10 @@ describe("what a person still has to do before a hook runs", () => {
 });
 
 describe("a target that runs no hook a plugin ships", () => {
-  const refusingHooks = withSections(opencode, {
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
-      acceptsHooks: false,
-      hooksUnsupportedReason: "OpenCode runs no hook a plugin ships.",
-    }),
-  });
+  const refusingHooks = withSections(
+    opencode,
+    flatPlugins({ kind: "none", reason: "OpenCode runs no hook a plugin ships." }, "aidd-")
+  );
 
   it("records the refusal against the plugin and the target", () => {
     expect(translator.translateWithComponentPaths(hooksDist(), refusingHooks).skipped).toEqual([
@@ -149,12 +148,7 @@ describe("a target that hosts no plugin", () => {
   });
 
   it("produces nothing for a tool declaring plugins unsupported", () => {
-    const unsupported = withSections(claude, {
-      plugins: pluginsCapability({
-        mode: "unsupported",
-        hooksUnsupportedReason: "Claude hosts no plugin here.",
-      }),
-    });
+    const unsupported = withSections(claude, unsupportedPlugins("Claude hosts no plugin here."));
     expect(translator.translateWithComponentPaths(makeDist(), unsupported)).toEqual(emptyResult);
   });
 });

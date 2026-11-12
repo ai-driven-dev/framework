@@ -1,8 +1,11 @@
-# Reference: PluginsCapability
+# Reference: plugin sections
 
-The params are declared and documented in `contexts/tools/domain/plugins/plugin-params.ts`.
-Read them there — this page carries only the decisions a field list cannot state, and a copied
-list would age at every field.
+A tool says how it takes plugins with three sections: `layout` (where plugins land; a union on
+`mode`), `manifest` (native only) and `hooks` (how hooks are delivered). `profile/plugin-answers.ts`
+composes them into the answers a caller asks. `define-tool` refuses a profile whose three disagree.
+The params are declared and documented in `sections/layout-section.ts` and
+`sections/manifest-section.ts`. Read them there: this page carries only the decisions a field list
+cannot state, and a copied list would age at every field.
 
 ## Three modes
 
@@ -12,7 +15,7 @@ list would age at every field.
 | `"flat"` | the tool stores plugins as flat files under a name prefix |
 | `"unsupported"` | the tool has no plugin concept |
 
-## translationMode
+## translationMode (manifest section)
 
 - `"marketplace"` — register a plugin reference in the tool's native config; nothing is
   materialized on disk.
@@ -24,12 +27,12 @@ The profile only declares the mode. Routing on it at install time is `framework`
 predates the `translate` context and should not be confused with it). `translate` itself does the
 author-side `aidd translate` build, a different pipeline reading the same capability.
 
-## installScope
+## installScope (layout section)
 
 - `"project"` (the default) — plugins land relative to the project root.
 - `"user"` — relative to the user home directory; requires a `userPluginsDir` resolver.
 
-## nativeActivation
+## nativeActivation (layout section)
 
 Declaring it says the tool writes its own marketplace registration through its own CLI, and the
 marketplace sync stands back: `marketplaceSettings` still says *where* the file is, for the

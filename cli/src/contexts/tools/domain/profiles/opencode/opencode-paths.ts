@@ -2,7 +2,7 @@
  * contract can read the same values: the profile imports the contract, so the contract cannot
  * import the profile back. */
 
-import { flatGlobalFilePath } from "../../plugins/plugin-params.js";
+import { flatGlobalFilePath } from "../../sections/layout-section.js";
 
 export const OPENCODE_DIRECTORY = ".opencode/";
 

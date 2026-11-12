@@ -40,7 +40,7 @@ describe("PluginContentTranslator hook trust notice", () => {
       pluginName: "test-plugin",
       component: "hooks",
       toolId: "codex",
-      message: nativeOf(codex.section("plugins")).trustNotice(),
+      message: nativeOf(codex.plugins()).trustNotice(),
     });
   });
 

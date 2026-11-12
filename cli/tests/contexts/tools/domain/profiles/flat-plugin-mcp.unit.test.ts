@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { registeredAiConfig, registeredAiProfile } from "../../testing/catalog-of.js";
-import { aProfile, flatPlugins } from "../../testing/profiles.js";
+import { flatPlugins } from "../../testing/plugin-mode.js";
+import { aProfile } from "../../testing/profiles.js";
 
 describe("AiToolProfile.flatPluginMcp()", () => {
   it("answers the MCP capability of a flat tool merging framework-prime", () => {

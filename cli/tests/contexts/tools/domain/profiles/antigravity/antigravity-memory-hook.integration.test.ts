@@ -35,7 +35,7 @@ const OPEN = "<!-- aidd_project_memory:start -->";
 const CLOSE = "<!-- aidd_project_memory:end -->";
 const LINK = "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)";
 
-const plugins = flatOf(antigravity.section("plugins"));
+const plugins = flatOf(antigravity.plugins());
 
 function filesUnder(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })
@@ -57,7 +57,7 @@ describe("the memory hook under Antigravity", () => {
 
   /** Installs the plugin's hooks as `plugin install` does, and returns its SessionStart command. */
   function install(): string {
-    const format = plugins.projectHooksDelivery()?.format;
+    const format = antigravity.projectHooksDelivery()?.format;
     if (format === undefined) throw new Error("antigravity declares no project hooks format");
     for (const source of filesUnder(PLUGIN_HOOKS)) {
       const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;

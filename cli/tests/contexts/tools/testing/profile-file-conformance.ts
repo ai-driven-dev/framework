@@ -103,7 +103,7 @@ function aiFileCheck(
 
 function acceptsHooks(subject: FileConformanceSubject): boolean {
   if (subject.profile.kind !== "ai") return false;
-  return subject.profile.section("plugins")?.hooksAcceptance().accepts === true;
+  return subject.profile.plugins()?.hooksAcceptance().accepts === true;
 }
 
 export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubject>[] = [
@@ -142,7 +142,7 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
   }),
   aiFileCheck("generates a bridge for exactly the events it relays through one", (subject) => {
     if (subject.profile.kind !== "ai") return;
-    const plugins = subject.profile.section("plugins");
+    const plugins = subject.profile.plugins();
     const bridge = plugins?.kind === "flat" ? plugins.flatLayout().hooksBridge : undefined;
     const declared = declaredHooks(subject);
     if (bridge == null || declared === undefined) return;

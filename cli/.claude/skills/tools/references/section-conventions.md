@@ -1,6 +1,6 @@
 # Reference: Section Conventions
 
-A section is one part a profile declares (`ProfileSections` in `domain/profile.ts`: agents, skills, commands, rules, mcp, hooks, config; plugins are a union, see `plugins-capability.md`). Its class is internal to `tools`. A caller never imports one, guards its presence or reads its fields: it asks the profile a question, and the answer is a method of `contract/tool-profile.ts` (`markdownSection("rules")`, `mcpConfig()`, `settingsFiles()`). A new answer is a method there, implemented over the section.
+A section is one part a profile declares (`ProfileSections` in `domain/profile.ts`: agents, skills, commands, rules, mcp, hooks, layout, manifest, config; layout is a union, see `plugin-sections.md`). Its class is internal to `tools`. A caller never imports one, guards its presence or reads its fields: it asks the profile a question, and the answer is a method of `contract/tool-profile.ts` (`markdownSection("rules")`, `mcpConfig()`, `settingsFiles()`). A new answer is a method there, implemented over the section.
 
 ## Class shape
 

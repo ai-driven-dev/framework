@@ -1,12 +1,13 @@
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
-import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
+import type { AiToolProfile, IdeToolProfile, PluginAnswers } from "../contract/tool-profile.js";
 import type { NativeActivation } from "./native-registration/native-activation.js";
-import type { PluginsCapability } from "./plugins/plugins-capability.js";
 import type { AgentsSection } from "./sections/agents-section.js";
 import type { CommandsSection } from "./sections/commands-section.js";
 import type { ConfigSection } from "./sections/config-section.js";
 import type { HooksSection } from "./sections/hooks-section.js";
+import type { LayoutSection } from "./sections/layout-section.js";
+import type { ManifestSection } from "./sections/manifest-section.js";
 import type { McpSection } from "./sections/mcp-section.js";
 import type { RulesSection } from "./sections/rules-section.js";
 import type { SkillsSection } from "./sections/skills-section.js";
@@ -19,7 +20,8 @@ export interface ProfileSections {
   rules?: RulesSection;
   mcp?: McpSection;
   hooks?: HooksSection;
-  plugins?: PluginsCapability;
+  layout?: LayoutSection;
+  manifest?: ManifestSection;
   config?: ConfigSection[];
 }
 
@@ -35,7 +37,8 @@ export const PROFILE_SECTION_KEYS: readonly ProfileSectionKey[] = [
   "rules",
   "mcp",
   "hooks",
-  "plugins",
+  "layout",
+  "manifest",
   "config",
 ];
 
@@ -82,9 +85,10 @@ export interface AiTool<C extends ProfileSections = ProfileSections> extends AiT
    * own type declares answers without `null`. */
   section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
-  /** The plugins section the tool declares, or null. */
-  plugins(): PluginsCapability | null;
-  /** The native plugin CLI declaration of a native plugins capability, or undefined. */
+  /** How the tool takes plugins, composed from its layout, manifest, hooks and mcp sections, or
+   * null when it declares no layout. */
+  plugins(): PluginAnswers | null;
+  /** The native plugin CLI declaration of a native layout, or undefined. */
   nativeActivation(): NativeActivation | undefined;
 }
 

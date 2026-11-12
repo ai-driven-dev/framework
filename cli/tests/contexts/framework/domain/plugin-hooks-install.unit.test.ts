@@ -8,7 +8,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
-import { flatOf, nativeOf } from "../../tools/testing/plugin-mode.js";
+import { flatOf, hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */
@@ -16,14 +16,14 @@ import { flatOf, nativeOf } from "../../tools/testing/plugin-mode.js";
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
 
-const SOURCE_TOKEN = nativeOf(claude.section("plugins")).rootToken() ?? "";
+const SOURCE_TOKEN = nativeOf(claude.plugins()).rootToken() ?? "";
 const HOOK_COMMAND = `node ${SOURCE_TOKEN}/hooks/journal.cjs session-start`;
 const SCRIPT = `#!/usr/bin/env node\n// carries ${SOURCE_TOKEN} in a comment\n`;
 const HOOKS_JSON = JSON.stringify({
   hooks: { SessionStart: [{ hooks: [{ type: "command", command: HOOK_COMMAND }] }] },
 });
 
-const HOOK_HOSTS: ReadonlyArray<AiTool<WithSections<"plugins">>> = [claude, cursor, copilot, codex];
+const HOOK_HOSTS: ReadonlyArray<AiTool<WithSections<"layout">>> = [claude, cursor, copilot, codex];
 
 const MCP_JSON = JSON.stringify({
   mcpServers: { local: { command: `${SOURCE_TOKEN}/bin/server.js`, args: [] } },
@@ -43,7 +43,7 @@ function pluginWithHookAndScript(): PluginDistribution {
   });
 }
 
-function installedFor(tool: AiTool<WithSections<"plugins">>) {
+function installedFor(tool: AiTool<WithSections<"layout">>) {
   return translator.translateWithComponentPaths(pluginWithHookAndScript(), tool);
 }
 
@@ -65,8 +65,8 @@ describe("installing a plugin that ships hooks", () => {
     for (const tool of HOOK_HOSTS) {
       const manifest = contentEndingWith(installedFor(tool), "hooks.json") ?? "";
 
-      expect(manifest, tool.toolId).toContain(nativeOf(tool.section("plugins")).rootToken());
-      if (nativeOf(tool.section("plugins")).rootToken() === SOURCE_TOKEN) continue;
+      expect(manifest, tool.toolId).toContain(nativeOf(tool.plugins()).rootToken());
+      if (nativeOf(tool.plugins()).rootToken() === SOURCE_TOKEN) continue;
       expect(manifest, tool.toolId).not.toContain(SOURCE_TOKEN);
     }
   });
@@ -85,13 +85,13 @@ describe("installing a plugin that ships hooks", () => {
     for (const tool of HOOK_HOSTS) {
       const served = contentEndingWith(
         installedFor(tool),
-        nativeOf(tool.section("plugins")).mcpFile().relativePath
+        nativeOf(tool.plugins()).mcpFile().relativePath
       );
 
       // A tool that delivered no mcp file would pass the assertion below by never
       // reaching it, which is the failure shape this whole file exists to catch.
       expect(served, `${tool.toolId} installed no mcp file to check`).toBeDefined();
-      expect(served, tool.toolId).toContain(nativeOf(tool.section("plugins")).rootToken());
+      expect(served, tool.toolId).toContain(nativeOf(tool.plugins()).rootToken());
     }
   });
 
@@ -99,7 +99,7 @@ describe("installing a plugin that ships hooks", () => {
     const result = installedFor(opencode);
 
     expect(result.skipped).toEqual([]);
-    const flatHooksDir = flatOf(opencode.section("plugins")).flatLayout().hooksDir ?? "";
+    const flatHooksDir = flatOf(opencode.plugins()).flatLayout().hooksDir ?? "";
     expect(contentEndingWith(result, "journal.cjs")).toBe(SCRIPT);
     expect(result.files.some((file) => file.relativePath === `${flatHooksDir}hooks.json`)).toBe(
       false
@@ -110,7 +110,7 @@ describe("installing a plugin that ships hooks", () => {
 describe("what a tool says about the hooks it runs", () => {
   it("never leaves its answer to a default", () => {
     for (const tool of [...HOOK_HOSTS, opencode]) {
-      const acceptance = tool.section("plugins").hooksAcceptance();
+      const acceptance = hooksAcceptanceOf(tool);
 
       expect(acceptance.accepts || acceptance.reason.length > 0, tool.toolId).toBe(true);
     }

@@ -10,12 +10,12 @@ import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { InvalidToolProfileError } from "../../../../../src/kernel/errors.js";
 import {
-  anEmptyContract,
-  aProfile,
   flatPlugins,
   nativePlugins,
-  PROJECT_HOOKS_FORMAT,
-} from "../../testing/profiles.js";
+  type PluginSet,
+  sectionsOf,
+} from "../../testing/plugin-mode.js";
+import { anEmptyContract, aProfile, projectMergeDelivery } from "../../testing/profiles.js";
 
 const settings = new ConfigSection({
   outputPath: ".x/settings.json",
@@ -109,14 +109,14 @@ describe("defineAiTool", () => {
       nativeActivation: { binary: "x", enableVerb: "add", disableVerb: "remove" },
     });
 
-    const activated = defineAiTool({ ...aiSpec, capabilities: () => ({ plugins: native }) });
+    const activated = defineAiTool({ ...aiSpec, capabilities: () => sectionsOf(native) });
     const unactivated = defineAiTool({
       ...aiSpec,
-      capabilities: () => ({ plugins: nativePlugins() }),
+      capabilities: () => sectionsOf(nativePlugins()),
     });
     const flat = defineAiTool({
       ...aiSpec,
-      capabilities: () => ({ plugins: flatPlugins("refuses") }),
+      capabilities: () => sectionsOf(flatPlugins("refuses")),
     });
 
     expect(activated.nativeActivation()).toBeDefined();
@@ -227,7 +227,7 @@ describe("what a profile's plugins capability says about activation", () => {
   });
 
   it("supports a user scope through its own CLI, or a user-scope install directory, and not otherwise", () => {
-    const supports = (plugins: ReturnType<typeof nativePlugins>) =>
+    const supports = (plugins: PluginSet) =>
       aProfile("cursor").withPlugins(plugins).build().supportsUserScopeActivation();
 
     expect(supports(nativePlugins())).toBe(false);
@@ -239,9 +239,7 @@ describe("what a profile's plugins capability says about activation", () => {
 
   it("names the project hooks file only for a profile merging hooks into the project", () => {
     const merging = nativePlugins({
-      hooksDestination: "project",
-      projectHooksRelativePath: ".fake/hooks.json",
-      projectHooksFormat: PROJECT_HOOKS_FORMAT,
+      hooks: projectMergeDelivery(),
     });
 
     const named = aProfile("cursor").withPlugins(merging).build();
@@ -281,9 +279,7 @@ describe("what a profile's plugins capability says about activation", () => {
 
   it("keeps the project hooks file out of the machine-local files", () => {
     const merging = nativePlugins({
-      hooksDestination: "project",
-      projectHooksRelativePath: ".fake/hooks.json",
-      projectHooksFormat: PROJECT_HOOKS_FORMAT,
+      hooks: projectMergeDelivery(),
     });
 
     const profile = aProfile("cursor").withPlugins(merging).build();
@@ -343,5 +339,49 @@ describe("what a profile's plugins capability says about activation", () => {
 
     expect(claude.buildContract("flat")).not.toBeNull();
     expect(claude.buildContract("marketplace")).toBeNull();
+  });
+});
+
+describe("plugin sections that disagree", () => {
+  const refused = (sections: object) =>
+    refusalOf(() => defineAiTool({ ...aiSpec, capabilities: () => sections }));
+  const native = nativePlugins();
+  const flat = flatPlugins("refuses");
+
+  it("refuses a native layout without a manifest", () => {
+    const error = refused({ layout: native.layout, hooks: native.hooks });
+
+    expect([error.invariant, error.message]).toEqual([
+      "plugin-sections-disagree",
+      "The profile of 'claude' breaks 'plugin-sections-disagree': a native layout requires a manifest section.",
+    ]);
+  });
+
+  it("refuses a manifest beside a layout that is not native", () => {
+    const sections = sectionsOf(flat);
+
+    expect(refused({ ...sections, manifest: native.manifest }).message).toContain(
+      "a flat layout takes no manifest section."
+    );
+  });
+
+  it("refuses a manifest with no layout", () => {
+    expect(refused({ manifest: native.manifest }).message).toContain(
+      "a manifest needs a native layout."
+    );
+  });
+
+  it("refuses a layout with no hooks section to state its delivery", () => {
+    expect(refused({ layout: flat.layout }).message).toContain(
+      "a layout requires a hooks section to state its delivery."
+    );
+  });
+
+  it("refuses a hooks delivery its layout cannot take", () => {
+    const bridge = { delivery: { kind: "bridge", flat: { dir: ".x/hooks/" } } } as const;
+
+    expect(refused({ ...sectionsOf(native), hooks: bridge }).message).toContain(
+      "hooks delivery 'bridge' does not suit a native layout."
+    );
   });
 });

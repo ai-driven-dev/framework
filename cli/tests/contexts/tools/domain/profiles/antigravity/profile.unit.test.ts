@@ -33,13 +33,13 @@ describe("antigravity", () => {
   });
 
   it("is a flat host merging plugin hooks into .agents/hooks.json, scripts under .agents/hooks/", () => {
-    const plugins = flatOf(antigravity.section("plugins"));
+    const plugins = flatOf(antigravity.plugins());
     expect({
       mode: plugins.kind,
       flatLayout: plugins.flatLayout(),
       acceptsHooks: plugins.hooksAcceptance().accepts,
       deliversHooksToProject: plugins.deliversHooksToProject(),
-      projectHooksRelativePath: plugins.projectHooksDelivery()?.relativePath,
+      projectHooksRelativePath: antigravity.projectHooksDelivery()?.relativePath,
     }).toMatchObject({
       mode: "flat",
       flatLayout: {
@@ -51,12 +51,10 @@ describe("antigravity", () => {
       deliversHooksToProject: true,
       projectHooksRelativePath: ".agents/hooks.json",
     });
-    expect(antigravity.section("plugins").projectHooksDelivery()?.format.merge).toBe(
-      mergeAntigravityHooks
-    );
+    expect(antigravity.projectHooksDelivery()?.format.merge).toBe(mergeAntigravityHooks);
     expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
       "hooks",
-      "plugins",
+      "layout",
       "skills",
     ]);
   });

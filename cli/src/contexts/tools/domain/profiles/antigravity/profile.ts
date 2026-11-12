@@ -1,7 +1,6 @@
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
-import { flatHooksParams } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { flatPlacement } from "../../sections/layout-section.js";
 import {
   antigravityHookEntries,
   antigravityHooksScriptDir,
@@ -55,11 +54,9 @@ export const antigravity = defineAiTool({
       convertFrontmatter: (fm) => fm,
     }),
     hooks: { delivery: hooksDelivery },
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
-      flatSkillLayout: "single-level",
-      ...flatHooksParams(hooksDelivery),
+    layout: flatPlacement({
+      namespacePrefix: "aidd-",
+      skillLayout: "single-level",
     }),
   }),
 
