@@ -99,7 +99,12 @@ const HOSTS: readonly Host[] = [
 const created: string[] = [];
 afterEach(async () => {
   vi.restoreAllMocks();
-  await Promise.all(created.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+  // A generated bridge's load-time hook may still be writing when the test ends: ENOTEMPTY, observed.
+  await Promise.all(
+    created
+      .splice(0)
+      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }))
+  );
 });
 
 interface Call {
