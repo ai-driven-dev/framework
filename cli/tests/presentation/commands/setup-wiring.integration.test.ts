@@ -6,6 +6,7 @@ import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../../helpers/same-instance.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();
@@ -39,6 +40,7 @@ const { globalSetupHelp, registerSetupCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = wireTools();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -88,7 +90,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSetupCommand(program, wireTools());
+  registerSetupCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "setup", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -348,7 +350,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
       PROJECT_ROOT,
       { verbose: true },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
   });
 });
@@ -356,7 +358,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
 describe("aidd setup — the help surface", () => {
   function setupCommand(): Command {
     const program = new Command();
-    registerSetupCommand(program, wireTools());
+    registerSetupCommand(program, CATALOG);
     const setup = program.commands.find((command) => command.name() === "setup");
     if (setup === undefined) throw new Error("setup command was not registered");
     return setup;

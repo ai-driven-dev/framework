@@ -1,6 +1,5 @@
 // `marketplace add <name>` re-drives native activation narrowed to the marketplace it just
 // registered; `marketplace remove | refresh` deliberately keep the bare, unnarrowed call.
-
 import { Command } from "commander";
 import { describe, expect, it, vi } from "vitest";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";

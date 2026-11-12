@@ -175,7 +175,10 @@ interface Deps {
   telemetry: TelemetryDeps;
 }
 
-const _cache = new Map<string, Deps>();
+/** One graph per catalog, then per project root and token: two catalogs never share a graph. */
+const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
+/** What a caller that hands no catalog gets; built once so such callers still share one graph. */
+const DEFAULT_TOOLS = wireTools();
 
 export function createMenuDeps(projectRoot: string): {
   manifestRepo: ManifestRepository;
@@ -191,10 +194,12 @@ export async function createDeps(
   projectRoot: string,
   options: GlobalOptions,
   output?: CLIOutput,
-  tools: ToolCatalog = wireTools()
+  tools: ToolCatalog = DEFAULT_TOOLS
 ): Promise<Deps> {
   const cacheKey = `${projectRoot}\u0000${options.token ?? ""}`;
-  const cached = _cache.get(cacheKey);
+  const graphs = _cache.get(tools) ?? new Map<string, Deps>();
+  _cache.set(tools, graphs);
+  const cached = graphs.get(cacheKey);
   if (cached !== undefined) return cached;
   const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
@@ -633,6 +638,6 @@ export async function createDeps(
     checkUpdateUseCase,
     telemetry: wireTelemetry(homedir),
   };
-  _cache.set(cacheKey, deps);
+  graphs.set(cacheKey, deps);
   return deps;
 }

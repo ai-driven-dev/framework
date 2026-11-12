@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { userMachineLocalFilesOf } from "../../../src/contexts/tools/domain/registry.js";
+import { sameInstance } from "../../helpers/same-instance.js";
 
 const doctorAll = vi.fn();
 const statusAll = vi.fn();
@@ -29,6 +30,7 @@ const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerDoctorCommand } = await import("../../../src/presentation/commands/doctor.js");
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = wireTools();
 
 const HEALTHY_SCOPE = { toolHealth: [], issues: [] };
 
@@ -83,7 +85,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerDoctorCommand(program, wireTools());
+  registerDoctorCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "doctor", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -496,7 +498,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
       PROJECT_ROOT,
       { verbose: true },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
   });
 
@@ -516,7 +518,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
 describe("aidd doctor — the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
-    registerDoctorCommand(program, wireTools());
+    registerDoctorCommand(program, CATALOG);
     const doctor = program.commands.find((command) => command.name() === "doctor");
     if (doctor === undefined) throw new Error("doctor command was not registered");
     return doctor;

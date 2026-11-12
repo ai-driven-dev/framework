@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../../helpers/same-instance.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
@@ -36,6 +37,7 @@ const { registerFrameworkCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -87,7 +89,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerFrameworkCommand(program, catalogOf());
+  registerFrameworkCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "framework", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -377,7 +379,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
       PROJECT_ROOT,
       { verbose: false },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
   });
 
@@ -397,7 +399,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 describe("aidd framework — the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
-    registerFrameworkCommand(program, catalogOf());
+    registerFrameworkCommand(program, CATALOG);
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");
     return framework;

@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePluginSourceShorthand } from "../../../src/kernel/source.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../../helpers/same-instance.js";
 
 const marketplaceAdd = vi.fn();
 const marketplaceList = vi.fn();
@@ -38,6 +39,7 @@ const { registerMarketplaceCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -89,7 +91,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerMarketplaceCommand(program, catalogOf());
+  registerMarketplaceCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "marketplace", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -158,7 +160,7 @@ describe("aidd marketplace add", () => {
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
     expect(process.env.AIDD_TOKEN).not.toBe("ghp_x");
   });
@@ -208,7 +210,7 @@ it("hands no token when none was given", async () => {
     PROJECT_ROOT,
     { verbose: false, token: undefined },
     expect.anything(),
-    expect.anything()
+    sameInstance(CATALOG)
   );
 });
 
@@ -379,7 +381,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
       PROJECT_ROOT,
       { verbose: false },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
   });
 
@@ -399,7 +401,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
 describe("aidd marketplace — the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
-    registerMarketplaceCommand(program, catalogOf());
+    registerMarketplaceCommand(program, CATALOG);
     const marketplace = program.commands.find((command) => command.name() === "marketplace");
     if (marketplace === undefined) throw new Error("marketplace command was not registered");
     return marketplace;

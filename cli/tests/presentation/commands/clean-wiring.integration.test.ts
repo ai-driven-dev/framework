@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../../helpers/same-instance.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
@@ -17,6 +18,7 @@ const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerCleanCommand } = await import("../../../src/presentation/commands/clean.js");
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 const EMPTY_PREVIEW = {
   tools: [{ toolId: "claude", fileCount: 3 }],
@@ -66,7 +68,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerCleanCommand(program, catalogOf());
+  registerCleanCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -181,7 +183,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
       PROJECT_ROOT,
       { verbose: false },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
   });
 
@@ -201,7 +203,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
 describe("aidd clean — the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
-    registerCleanCommand(program, catalogOf());
+    registerCleanCommand(program, CATALOG);
     const clean = program.commands.find((command) => command.name() === "clean");
     if (clean === undefined) throw new Error("clean command was not registered");
     return clean;

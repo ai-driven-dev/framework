@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../../helpers/same-instance.js";
 
 const pluginRemove = vi.fn();
 const pluginList = vi.fn();
@@ -34,6 +35,7 @@ const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerPluginCommand } = await import("../../../src/presentation/commands/plugin.js");
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -75,7 +77,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerPluginCommand(program, catalogOf());
+  registerPluginCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -199,7 +201,7 @@ describe("aidd plugin install", () => {
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
     expect(pluginInstall.mock.calls[0][0]).not.toHaveProperty("token");
   });
@@ -344,7 +346,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
       PROJECT_ROOT,
       { verbose: false },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
   });
 });
@@ -352,7 +354,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
 describe("aidd plugin — the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
-    registerPluginCommand(program, catalogOf());
+    registerPluginCommand(program, CATALOG);
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");
     return plugin;

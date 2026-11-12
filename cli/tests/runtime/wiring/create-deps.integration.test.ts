@@ -47,6 +47,15 @@ describe("createDeps", () => {
     );
   });
 
+  it("builds a separate graph for another catalog, and reuses the one for the same catalog", async () => {
+    const first = catalogOf();
+
+    const graph = await createDeps(root, { verbose: false }, undefined, first);
+
+    expect(await createDeps(root, { verbose: false }, undefined, first)).toBe(graph);
+    expect(await createDeps(root, { verbose: false }, undefined, catalogOf())).not.toBe(graph);
+  });
+
   it("logs through the output it was handed", async () => {
     const output = new CLIOutput(false);
     const withOutput = await mkdtemp(join(tmpdir(), "aidd-create-deps-output-"));

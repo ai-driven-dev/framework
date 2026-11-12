@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../../helpers/same-instance.js";
 
 const restoreAll = vi.fn();
 const restoreOne = vi.fn();
@@ -28,6 +29,7 @@ const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 const NOTHING_RESTORED = {
   errors: [],
@@ -83,7 +85,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSyncCommand(program, catalogOf());
+  registerSyncCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "sync", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -334,7 +336,7 @@ describe("aidd sync — how it builds its graph", () => {
       PROJECT_ROOT,
       { verbose: true },
       expect.anything(),
-      expect.anything()
+      sameInstance(CATALOG)
     );
   });
 });
@@ -342,7 +344,7 @@ describe("aidd sync — how it builds its graph", () => {
 describe("aidd sync — the help surface", () => {
   function syncCommand(): Command {
     const program = new Command();
-    registerSyncCommand(program, catalogOf());
+    registerSyncCommand(program, CATALOG);
     const sync = program.commands.find((command) => command.name() === "sync");
     if (sync === undefined) throw new Error("sync command was not registered");
     return sync;
