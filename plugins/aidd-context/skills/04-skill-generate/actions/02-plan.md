@@ -8,7 +8,7 @@ The source: the confirmed frame, or the existing skill.
 
 ## Process
 
-1. List each file to write, with each breach of [skill-authoring.md](../references/skill-authoring.md) or [fill-norm.md](../references/fill-norm.md) it fixes.
+1. List each file to write, with each breach of [skill-authoring.md](../references/skill-authoring.md) it fixes.
    - Nothing to change: say so and stop.
 2. List as content to keep each rule, step, branch, wait, loop and stop the source holds, with its file.
 3. List each fact of the source the rules leave no home, and each addition beyond the source and the request.

@@ -9,7 +9,7 @@ The confirmed plan and target.
 ## Process
 
 1. Create the missing folders of [skill-tree.md](../references/skill-tree.md).
-2. Write each file the plan lists per [fill-norm.md](../references/fill-norm.md): edit it in place, or start a missing `SKILL.md` from [skill-template.md](../assets/skill-template.md) and a missing action from [action-template.md](../assets/action-template.md).
+2. Write each file the plan lists per [skill-authoring.md](../references/skill-authoring.md): edit it in place, or start a missing `SKILL.md` from [skill-template.md](../assets/skill-template.md) and a missing action from [action-template.md](../assets/action-template.md).
 3. Write once per confirmed target, per [tool-write.md](../references/tool-write.md).
 4. Read [validate](04-validate.md).
 

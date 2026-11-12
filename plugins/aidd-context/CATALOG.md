@@ -117,7 +117,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
 | `assets` | [scope-frame.md](skills/04-skill-generate/assets/scope-frame.md) | - |
 | `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<description>` |
-| `references` | [fill-norm.md](skills/04-skill-generate/references/fill-norm.md) | - |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
 | `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
