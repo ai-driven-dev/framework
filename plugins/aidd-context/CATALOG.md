@@ -44,14 +44,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
-| [bank-guard.cjs](hooks/lib/bank-guard.cjs) |
-| [changes.cjs](hooks/lib/changes.cjs) |
 | [common-rules.cjs](hooks/lib/common-rules.cjs) |
-| [fact-sheet.cjs](hooks/lib/fact-sheet.cjs) |
 | [host.cjs](hooks/lib/host.cjs) |
 | [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
-| [plan.cjs](hooks/lib/plan.cjs) |
-| [report.cjs](hooks/lib/report.cjs) |
 
 ### `skills`
 
@@ -86,19 +81,16 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-scan.md](skills/02-project-memory/actions/01-scan.md) | - |
+| `actions` | [01-read.md](skills/02-project-memory/actions/01-read.md) | - |
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
-| `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
-| `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [fact-sheet.md](skills/02-project-memory/assets/fact-sheet.md) | - |
+| `actions` | [03-wire.md](skills/02-project-memory/actions/03-wire.md) | - |
 | `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
-| `references` | [engine.md](skills/02-project-memory/references/engine.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or wire project memory into AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.` |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or wire the project memory of its architecture, conventions and decisions into your AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.` |
 
 #### `skills/03-context-generate`
 

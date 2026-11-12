@@ -1,5 +1,4 @@
 const assert = require("node:assert/strict");
-const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -79,82 +78,12 @@ test("capabilities.md holds one row per file, and every memory template belongs 
   for (const template of templates) assert.ok(named.includes(template), `${template} belongs to no capability row`);
 });
 
-function skillText(file) {
-  return fs.readFileSync(path.join(SKILL, file), "utf8");
-}
-
-const FIXTURES = path.resolve(__dirname, "../../cli/tests/fixtures/hooks-routes");
-const PLUGIN_HOOKS = /^(?:[^/]+\/)*plugins\/aidd-context\/hooks\/memory\.cjs$/u;
-const TOOL_HOOKS = /^(?:[^/]+\/)*\.[a-z]+\/hooks\/aidd-context\/memory\.cjs$/u;
-
-function section(text, heading) {
-  const start = text.indexOf(`## ${heading}`);
-  assert.ok(start >= 0, `no ${heading} section`);
-  const rest = text.slice(start + 3);
-  const end = rest.search(/\n## /u);
-  return end < 0 ? rest : rest.slice(0, end);
-}
-
-function engineSection() {
-  return skillText("references/engine.md");
-}
-
-test("the lint command the skill gives takes the root first, and exits 1 on a planted unfinished marker", () => {
-  const given = engineSection().match(/`node memory\.cjs check (\.) (aidd_docs\/memory\/<file>\.md)`/u);
-  assert.ok(given, "the engine reference gives no `node memory.cjs check . aidd_docs/memory/<file>.md`");
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "lint-command-"));
-  try {
-    fs.mkdirSync(path.join(root, "aidd_docs/memory"), { recursive: true });
-    const template = fs.readFileSync(path.join(SKILL, "assets/templates/memory/vcs.md"), "utf8");
-    fs.writeFileSync(path.join(root, "aidd_docs/memory/vcs.md"), `# VCS\n\n- ${template.match(/\{\{[^{}\n]*\}\}/u)[0]}\n`);
-    const run = (file) =>
-      spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs"), "check", given[1], file.replace("<file>", "vcs")], {
-        cwd: root,
-        encoding: "utf8",
-      });
-    const result = run(given[2]);
-    assert.equal(result.status, 1, `${result.stdout}${result.stderr}`);
-    assert.match(result.stdout, /M3/u);
-    // The mistake this guards: the file first reads as the root, finds nothing, and exits 0.
-    const swapped = spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs"), "check", "aidd_docs/memory/vcs.md"], { cwd: root, encoding: "utf8" });
-    assert.equal(swapped.status, 1, "the engine no longer passes silently on a file given as the root");
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
+test("no skill text names a script to run or a path outside the skill", () => {
+  const forbidden = /\bmemory\.cjs\b|`node [^`]*`|\$\{CLAUDE_[A-Z_]+\}|\]\(\.\.\/\.\.\/[^)]*\)/u;
+  for (const file of skillMarkdown()) {
+    const hit = fs.readFileSync(file, "utf8").match(forbidden);
+    assert.equal(hit, null, `${path.relative(SKILL, file)}: ${hit?.[0]}`);
   }
-});
-
-test("the Engine section matches the install layouts the hook fixtures show", () => {
-  const engine = engineSection();
-  const delivered = [];
-  for (const tool of fs.readdirSync(FIXTURES)) {
-    for (const scenario of fs.readdirSync(path.join(FIXTURES, tool))) {
-      const lines = fs.readFileSync(path.join(FIXTURES, tool, scenario), "utf8").split(/\r?\n/u);
-      for (const line of lines) {
-        if (!line.startsWith("## ") || !line.endsWith("memory.cjs")) continue;
-        const where = line.slice(3);
-        assert.ok(PLUGIN_HOOKS.test(where) || TOOL_HOOKS.test(where), `${tool}/${scenario}: ${where} fits no layout the Engine section states`);
-        delivered.push(`${tool}/${scenario}`);
-      }
-    }
-  }
-  assert.ok(delivered.length > 20, "the fixtures hold too few engine deliveries to compare");
-  // Kilo and OpenCode have no native build: every route of theirs that installs the plugin ships
-  // the engine and its libraries in the tool's folder.
-  for (const tool of ["kilo", "opencode"]) {
-    assert.match(fs.readFileSync(path.join(FIXTURES, tool, "native-build.txt"), "utf8"), /^route not supported by this tool$/mu, `${tool} now has a native build`);
-    for (const route of ["flat-translate", "plugin-install", "plugin-install-twice", "setup-plugins-reinstall"]) {
-      const shipped = fs.readFileSync(path.join(FIXTURES, tool, `${route}.txt`), "utf8");
-      for (const file of ["memory.cjs", "lib/common-rules.cjs", "lib/memory-rules.cjs", "lib/host.cjs"]) {
-        assert.match(shipped, new RegExp(`^## \\S+/\\.${tool}/hooks/aidd-context/${file.replace(".", "\\.")}$`, "mu"), `${tool}/${route} does not ship ${file}`);
-      }
-    }
-  }
-  assert.match(engine, /hooks\/aidd-context\//u, "no tool-folder layout");
-  assert.match(engine, /at the project root/u, "the tool-folder layout is not anchored at the project root, where a flat install puts the hooks apart from the skills");
-  assert.match(engine, /plugin's `hooks\/`/u, "no plugin layout");
-  assert.match(engine, /inside this skill/u, "no skill-own layout");
-  const order = ["plugin's `hooks/`", "hooks/aidd-context/", "inside this skill"].map((needle) => engine.indexOf(needle));
-  assert.deepEqual([...order].sort((a, b) => a - b), order, "the lookup order is not plugin, tool folder, skill");
 });
 
 const TABLE_FIRST_FILES = () => skillMarkdown().filter((file) => !path.relative(SKILL, file).startsWith("assets"));
@@ -230,12 +159,4 @@ test("a recall case seeds a repo and expects the facts the restored slots must p
   }
   // The narrowest-run slot accepts one test file or a changed-only run: expect the slot answered, not one answer.
   assert.ok(expected["aidd_docs/memory/testing.md"]?.includes("Narrowest run: `"), "the recall case does not expect the narrowest run answered");
-});
-
-// Every command the engine reference gives is one the engine runs.
-test("each engine command the skill names is one the engine accepts", () => {
-  const usage = spawnSync("node", [path.join(PLUGIN, "hooks/memory.cjs")], { encoding: "utf8" }).stderr;
-  const named = [...skillText("references/engine.md").matchAll(/`node memory\.cjs (\w+)/gu)].map((match) => match[1]);
-  assert.ok(named.length > 0, "the reference names no command");
-  for (const command of new Set(named)) assert.match(usage, new RegExp(`\\b${command}\\b`, "u"), command);
 });

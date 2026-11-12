@@ -14,7 +14,7 @@
 | SessionStart | sync the context-file blocks; snapshot the bank to `os.tmpdir()/aidd-context/<hash(project)>-<session>.json` |
 | Stop, once per turn | compare the whole bank with the snapshot; lint the changed files; list lines absent from every bank file, exact, capped at 15; sync; continue the turn once with that text, also shown to the person where the host allows; advance the snapshot |
 
-No snapshot or no session id: Stop says "lost lines not checked". `check` and `sync` stay as subcommands for CI and by hand.
+No session id: no snapshot, no check. No snapshot at Stop (the hook did not run at session start): Stop writes one and says nothing. `check` and `sync` stay as subcommands for CI and by hand.
 
 ## Removed
 

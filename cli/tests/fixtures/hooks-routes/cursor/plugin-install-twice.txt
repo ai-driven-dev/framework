@@ -18,10 +18,15 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
         "timeout": 120
       }
     ],
-    "postToolUse": [
+    "stop": [
       {
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
+        "timeout": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
         "timeout": 5
       }
     ],
@@ -35,28 +40,13 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
 }
 
 
-## project/.cursor/hooks/aidd-context/lib/bank-guard.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-context/lib/changes.cjs
-script, identical to the plugin source
-
 ## project/.cursor/hooks/aidd-context/lib/common-rules.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter host-cursor.cjs
 
 ## project/.cursor/hooks/aidd-context/lib/memory-rules.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-context/lib/plan.cjs
-script, identical to the plugin source
-
-## project/.cursor/hooks/aidd-context/lib/report.cjs
 script, identical to the plugin source
 
 ## project/.cursor/hooks/aidd-context/memory.cjs
@@ -131,9 +121,14 @@ project cursor aidd-context scope=user: 0 hook files
       "digest": "54f3c593a31decd059c8f9dcb3b20834"
     },
     {
-      "event": "postToolUse",
+      "event": "stop",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "611f6b7425abbbd527553aa9f0326016"
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    },
+    {
+      "event": "sessionEnd",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
     }
   ],
   "scripts": {}
@@ -171,9 +166,14 @@ machine cursor aidd-context scope=user: 0 hook files
       "digest": "54f3c593a31decd059c8f9dcb3b20834"
     },
     {
-      "event": "postToolUse",
+      "event": "stop",
       "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "611f6b7425abbbd527553aa9f0326016"
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+    },
+    {
+      "event": "sessionEnd",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+      "digest": "54f3c593a31decd059c8f9dcb3b20834"
     }
   ],
   "scripts": {}

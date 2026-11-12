@@ -1,25 +1,10 @@
-## project/.kilo/hooks/aidd-context/lib/bank-guard.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-context/lib/changes.cjs
-script, identical to the plugin source
-
 ## project/.kilo/hooks/aidd-context/lib/common-rules.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter for kilo
 
 ## project/.kilo/hooks/aidd-context/lib/memory-rules.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-context/lib/plan.cjs
-script, identical to the plugin source
-
-## project/.kilo/hooks/aidd-context/lib/report.cjs
 script, identical to the plugin source
 
 ## project/.kilo/hooks/aidd-context/memory.cjs
@@ -88,8 +73,8 @@ import { fileURLToPath } from "node:url";
 
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 const SESSION_START = [{"script":"memory.cjs","args":["hook"]}];
-const STOP = [];
-const POST_TOOL_USE = [{"script":"memory.cjs","args":["hook"],"matcher":"Write|Edit|Delete|Bash|Shell|bash|PowerShell|apply_patch"}];
+const STOP = [{"script":"memory.cjs","args":["hook"]}];
+const POST_TOOL_USE = [];
 
 function runHook(script, args, payload, directory) {
   const body = JSON.stringify(payload);
@@ -428,15 +413,10 @@ export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 
 
 # recorded
-project kilo aidd-context scope=project: 10 hook files
-  .kilo/hooks/aidd-context/lib/bank-guard.cjs
-  .kilo/hooks/aidd-context/lib/changes.cjs
+project kilo aidd-context scope=project: 5 hook files
   .kilo/hooks/aidd-context/lib/common-rules.cjs
-  .kilo/hooks/aidd-context/lib/fact-sheet.cjs
   .kilo/hooks/aidd-context/lib/host.cjs
   .kilo/hooks/aidd-context/lib/memory-rules.cjs
-  .kilo/hooks/aidd-context/lib/plan.cjs
-  .kilo/hooks/aidd-context/lib/report.cjs
   .kilo/hooks/aidd-context/memory.cjs
   .kilo/plugin/aidd-context-hooks.js
   projectHooks null

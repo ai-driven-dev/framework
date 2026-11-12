@@ -439,7 +439,7 @@
         "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. Run the engine's whole-bank check first and correct the facts it reports as stale. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
+    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. Correct the facts the code contradicts. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
     "expect": {
       "fileNotContains": {
         "aidd_docs/memory/architecture.md": [

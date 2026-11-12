@@ -12,15 +12,14 @@
         ]
       }
     ],
-    "PostToolUse": [
+    "Stop": [
       {
-        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
         "hooks": [
           {
             "type": "command",
             "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
             "timeout": 5,
-            "statusMessage": "AIDD Context: check memory file"
+            "statusMessage": "AIDD Context: check memory changes"
           }
         ]
       }

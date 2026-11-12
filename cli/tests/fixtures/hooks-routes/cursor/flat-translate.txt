@@ -16,10 +16,15 @@
         "timeout": 120
       }
     ],
-    "postToolUse": [
+    "stop": [
       {
         "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
+        "timeout": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
         "timeout": 5
       }
     ],
@@ -33,28 +38,13 @@
 }
 
 
-## out-flat/.cursor/hooks/aidd-context/lib/bank-guard.cjs
-script, identical to the plugin source
-
-## out-flat/.cursor/hooks/aidd-context/lib/changes.cjs
-script, identical to the plugin source
-
 ## out-flat/.cursor/hooks/aidd-context/lib/common-rules.cjs
-script, identical to the plugin source
-
-## out-flat/.cursor/hooks/aidd-context/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## out-flat/.cursor/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter host-cursor.cjs
 
 ## out-flat/.cursor/hooks/aidd-context/lib/memory-rules.cjs
-script, identical to the plugin source
-
-## out-flat/.cursor/hooks/aidd-context/lib/plan.cjs
-script, identical to the plugin source
-
-## out-flat/.cursor/hooks/aidd-context/lib/report.cjs
 script, identical to the plugin source
 
 ## out-flat/.cursor/hooks/aidd-context/memory.cjs

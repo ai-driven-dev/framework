@@ -14,7 +14,7 @@
 
 ## Reading rules
 
-- Take a command or convention from the file that defines it, as an `R` line; check prose naming one against that file.
+- Take a command or convention from the file that defines it; check prose naming one against that file.
 - Read the root README whole, and the other docs a section needs.
 - Read the code last: it corrects the others and is never summarised.
 - In a monorepo, read every workspace, never the root manifest alone.
@@ -22,9 +22,9 @@
 - Read nothing under a dependency directory, a build output, or a path the VCS ignores.
 - Keep a fact only if the reader rules of [memory-rules](memory-rules.md) keep it.
 
-## Filling the sheet
+## Keeping facts
 
-- Skip a slot the bank answers.
-- Fill any other with every fact the sources state, one line each: each gate, decision, gotcha, rule and release step.
-- Fill the brief's `Users`, `Main journey` and `Business rules` only from the repository, else a `Q` line, never invented.
+- Skip a fact the bank already holds.
+- Keep every fact the sources state, one line each: each gate, decision, gotcha, rule and release step.
+- Take the brief's `Users`, `Main journey` and `Business rules` only from the repository, else ask, never invent.
 - A setup collects them; a refresh never adds them.

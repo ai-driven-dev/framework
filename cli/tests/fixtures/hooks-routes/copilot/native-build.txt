@@ -18,15 +18,14 @@
         ]
       }
     ],
-    "PostToolUse": [
+    "Stop": [
       {
-        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
         "hooks": [
           {
             "type": "command",
             "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
             "timeout": 5,
-            "statusMessage": "AIDD Context: check memory file"
+            "statusMessage": "AIDD Context: check memory changes"
           }
         ]
       }
@@ -35,28 +34,13 @@
 }
 
 
-## out-marketplace/plugins/aidd-context/hooks/lib/bank-guard.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/lib/changes.cjs
-script, identical to the plugin source
-
 ## out-marketplace/plugins/aidd-context/hooks/lib/common-rules.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/lib/fact-sheet.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-copilot.cjs
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/lib/plan.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/lib/report.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-context/hooks/memory.cjs

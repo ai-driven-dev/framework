@@ -1,23 +1,17 @@
 #!/usr/bin/env node
 "use strict";
 /**
- * The memory bank's engine, one subcommand per moment of the skill; usage at the end of `main`.
- * The hook never blocks and reads its event only through `lib/host.cjs`; `check` is the one strict
- * gate. `changes` reads git, never writes it. Node built-ins only.
+ * The memory bank's engine: `hook` snapshots the bank at session start and checks it at the turn
+ * end, `check` is the one strict gate, `sync` keeps the context files' blocks true. The hook reads
+ * its event only through `lib/host.cjs` and never blocks a write. Node built-ins only.
  */
 
+const crypto = require("node:crypto");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { RULES, ERROR, WARNING, wordsIn } = require("./lib/memory-rules.cjs");
-const {
-  formatFindings,
-  isShellWrite,
-  markdownLines,
-  changedLines,
-  touchedLines,
-  reachesTouched,
-  producedBy,
-} = require("./lib/common-rules.cjs");
+const { formatFindings, markdownLines } = require("./lib/common-rules.cjs");
 
 const PLUGIN = "aidd-context";
 const DOCS_DIR = "aidd_docs";
@@ -58,8 +52,9 @@ const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
 // Accepted names of the Always rows; a test holds them equal to the table.
 const ACCEPTED_ALWAYS = Object.freeze({ "ecosystem.md": ["integration.md"] });
 
-// A shell write names no file: a bank file changed this recently is its.
-const SHELL_WINDOW_MS = 2000;
+const SNAPSHOT_DIR = "aidd-context";
+const SNAPSHOT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const LOST_LINES_CAP = 15;
 
 const EXIT_OK = 0;
 const EXIT_ERRORS = 1;
@@ -205,33 +200,6 @@ function missingFindings(root) {
   return absent.length === 0 ? [] : [missing(MEMORY_DIR, absent.join(", "), "write each from its template")];
 }
 
-/** Lines the write is proven to have changed; null when unknown: only removals, or gone. */
-function provenLines(root, file, { written, replaced }) {
-  const changed = changedLines(written, replaced);
-  const text = changed === null ? null : readTextOrNull(path.join(root, file));
-  if (text === null) return null;
-  const touched = touchedLines(text, changed);
-  return { touched, holds: (finding) => reachesTouched(finding, touched) && producedBy(finding, changed) };
-}
-
-/** A write answers for the lines it changed; unknown lines show standing errors, grouped. */
-function findingsOf(root, described, undescribed) {
-  const found = { errors: [], reached: [], warnings: [] };
-  const report = (file, write) => {
-    if (placeOf(file) !== "root") return;
-    const proven = write === undefined ? null : provenLines(root, file, write);
-    if (proven !== null && proven.touched.size === 0) return;
-    for (const finding of lintFile(root, file)) {
-      if (proven !== null && finding.line !== undefined && !proven.holds(finding)) continue;
-      if (finding.severity !== ERROR) found.warnings.push(finding);
-      else (proven === null ? found.reached : found.errors).push(finding);
-    }
-  };
-  for (const write of described) report(write.file, write);
-  for (const file of undescribed.filter((name) => !described.some((write) => write.file === name))) report(file, undefined);
-  return found;
-}
-
 /** Links resolved; a missing path resolves through its nearest existing folder. */
 function realish(file) {
   try {
@@ -242,73 +210,102 @@ function realish(file) {
   }
 }
 
-/** The nearest folder above the file's real path holding a bank, never the working one. */
-function projectOf(file) {
-  if (!file.split(/[\\/]/u).includes(DOCS_DIR)) return null;
-  const real = realish(file);
-  for (let dir = path.dirname(real); ; dir = path.dirname(dir)) {
-    if (fs.existsSync(path.join(dir, MEMORY_DIR)) && real.startsWith(path.join(dir, DOCS_DIR) + path.sep)) return dir;
-    if (dir === path.dirname(dir)) return null;
-  }
-}
-
-function shellReached(root, command) {
-  if (!isShellWrite(command)) return [];
-  const now = Date.now();
-  return bankFiles(root).filter((file) => now - fs.statSync(path.join(root, file)).mtimeMs <= SHELL_WINDOW_MS);
-}
-
-/** Each written file under its project; a shell command naming the docs folder reaches ours. */
-function reachedProjects(event) {
-  const projects = new Map();
-  const of = (root) => projects.get(root) ?? projects.set(root, { described: [], undescribed: [] }).get(root);
-  for (const file of event.files) {
-    const root = projectOf(file.path);
-    if (root === null) continue;
-    const relative = toPosix(path.relative(root, realish(file.path)));
-    if (typeof file.written === "string") of(root).described.push({ file: relative, written: file.written, replaced: file.replaced });
-    else of(root).undescribed.push(relative);
-  }
-  // A command naming no docs file reads nothing.
-  if (typeof event.command === "string" && /aidd_docs[/\\]/u.test(event.command)) {
-    const cwd = realish(path.resolve(event.cwd));
-    of(cwd).undescribed.push(...shellReached(cwd, event.command));
-  }
-  return projects;
-}
-
-function sessionProject(cwd) {
+/** The project's real root when it holds a bank, else null. */
+function projectRoot(cwd) {
   const root = realish(path.resolve(cwd));
   return fs.existsSync(path.join(root, MEMORY_DIR)) ? root : null;
 }
 
-/** Named from the session's project when it holds the file. */
-function shownFile(own, root, file) {
-  if (own === null) return file;
-  const relative = path.relative(own, path.join(root, file));
-  return toPosix(relative.startsWith("..") || path.isAbsolute(relative) ? file : relative);
+/** Every markdown file of the bank, bank-relative path to text. */
+function bankTexts(root) {
+  return Object.fromEntries(bankFiles(root).filter((file) => file.endsWith(".md")).map((file) => [file, readTextOrNull(path.join(root, file)) ?? ""]));
 }
 
-function afterWrite(host, event) {
-  const projects = reachedProjects(event);
-  if (projects.size === 0) return;
-  const own = sessionProject(event.cwd);
-  const all = { errors: [], reached: [], warnings: [] };
-  for (const [root, { described, undescribed }] of projects) {
-    const found = findingsOf(root, described, undescribed);
-    const shown = (finding) => ({ ...finding, file: shownFile(own, root, finding.file) });
-    for (const list of Object.keys(all)) all[list].push(...found[list].map(shown));
+function snapshotFile(root, sessionId) {
+  const project = crypto.createHash("sha1").update(root).digest("hex");
+  return path.join(os.tmpdir(), SNAPSHOT_DIR, `${project}-${sessionId.replace(/[^\w.-]/gu, "_")}.json`);
+}
+
+function writeSnapshot(file, texts) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(texts), "utf8");
+}
+
+function readSnapshot(file) {
+  const text = readTextOrNull(file);
+  return text === null ? null : JSON.parse(text);
+}
+
+function dropStaleSnapshots() {
+  const dir = path.join(os.tmpdir(), SNAPSHOT_DIR);
+  for (const entry of entriesOf(dir)) {
+    const file = path.join(dir, entry.name);
+    if (entry.isFile() && Date.now() - fs.statSync(file).mtimeMs > SNAPSHOT_MAX_AGE_MS) fs.rmSync(file, { force: true });
   }
-  const text = formatFindings(PLUGIN, all);
-  if (text !== "") host.answer({ level: 1, text });
+}
+
+/** Non-blank trimmed lines of the snapshot that no current file holds, in snapshot order, each once. */
+function lostLines(before, now) {
+  const kept = new Set(Object.values(now).flatMap((text) => text.split(/\r?\n/u).map((line) => line.trim())));
+  const lost = new Map();
+  for (const [file, text] of Object.entries(before)) {
+    for (const line of text.split(/\r?\n/u).map((one) => one.trim())) {
+      if (line !== "" && !kept.has(line) && !lost.has(line)) lost.set(line, file);
+    }
+  }
+  return [...lost].map(([line, file]) => ({ line, file }));
+}
+
+function lostText(lost) {
+  const listed = lost.slice(0, LOST_LINES_CAP).map(({ line, file }) => `${file}: "${line}"`);
+  if (lost.length > LOST_LINES_CAP) listed.push(`+${lost.length - LOST_LINES_CAP} more, see git diff ${MEMORY_DIR}`);
+  return [
+    `${PLUGIN}: ${lost.length} memory lines gone from the bank since the last check`,
+    ...listed,
+    "Show these lines to the person as they are, and restore any the person did not approve.",
+  ].join("\n");
+}
+
+/** Lint of the files that changed or are new since the snapshot. */
+function changedFindings(root, before, now) {
+  const found = Object.keys(now)
+    .filter((file) => before[file] !== now[file])
+    .flatMap((file) => lintFile(root, file));
+  return formatFindings(PLUGIN, { errors: found.filter((finding) => finding.severity === ERROR), warnings: found.filter((finding) => finding.severity !== ERROR) });
+}
+
+function atSessionStart(event) {
+  sync(event.cwd, [], { quiet: true });
+  if (event.sessionId === null) return;
+  const root = realish(path.resolve(event.cwd));
+  dropStaleSnapshots();
+  writeSnapshot(snapshotFile(root, event.sessionId), bankTexts(root));
+}
+
+function atTurnEnd(host, event) {
+  const root = projectRoot(event.cwd);
+  if (event.stopActive || root === null || event.sessionId === null) return;
+  const file = snapshotFile(root, event.sessionId);
+  const before = readSnapshot(file);
+  const now = bankTexts(root);
+  sync(root, [], { quiet: true });
+  if (before === null || JSON.stringify(before) === JSON.stringify(now)) {
+    if (before === null) writeSnapshot(file, now);
+    return;
+  }
+  const lost = lostLines(before, now);
+  const findings = changedFindings(root, before, now);
+  writeSnapshot(file, now);
+  const text = [lost.length > 0 ? lostText(lost) : "", findings].filter(Boolean).join("\n");
+  if (text !== "") host.answer({ level: 1, text, person: text });
 }
 
 function hook() {
   const host = require("./lib/host.cjs");
   const event = host.readEvent();
   if (event === undefined) return;
-  if (event.event === "SessionStart") sync(event.cwd, [], { quiet: true });
-  else if (event.event === "PostToolUse") afterWrite(host, event);
+  if (event.event === "SessionStart") atSessionStart(event);
+  else if (event.event === "Stop") atTurnEnd(host, event);
 }
 
 /** The whole bank adds absence, missing always files and layout; a missing named file errs. */
@@ -594,40 +591,17 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
   return result;
 }
 
-/** Computes the lost lines itself against the plan's snapshot, so a skipped step still shows them. */
-function report(sheetFile) {
-  const plan = require("./lib/plan.cjs");
-  const root = plan.rootOf(sheetFile);
-  const approvals = require("./lib/fact-sheet.cjs").approvedRemovals(sheetFile);
-  const bankDir = path.join(root, MEMORY_DIR);
-  const previous = plan.readSnapshot(sheetFile);
-  const guard = require("./lib/bank-guard.cjs");
-  const gone = previous === null ? null : guard.goneLines(previous, bankDir, approvals);
-  const written = guard
-    .markdownUnder(bankDir)
-    .map((file) => file.split(path.sep).join("/"))
-    .filter((file) => previous?.find((one) => one.file === file)?.text !== fs.readFileSync(path.join(bankDir, file), "utf8"))
-    .sort();
-  const wired = TARGET_FILES.map((target) => target.path).filter((file) => {
-    const text = readTextOrNull(path.join(root, file));
-    return text !== null && findBlock(text, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER).status === "ok";
-  });
-  return require("./lib/report.cjs").renderReport(sheetFile, { previous, gone, why: "no plan snapshot, run plan before the write", written, wired, load: sessionLoad(root), root });
-}
-
 /** Writes `memory: <message>` to stderr and returns the error exit. */
 function fail(message) {
   process.stderr.write(`memory: ${message}\n`);
   return EXIT_ERRORS;
 }
 
-const notRead = (sheetFile, error) => `${sheetFile} not read (${error.code ?? error.message})`;
-
 function runHook() {
   try {
     hook();
   } catch {
-    // A broken check never blocks a write or a session start.
+    // A broken check never blocks a turn end or a session start.
   }
   return EXIT_OK;
 }
@@ -638,74 +612,6 @@ function runCheck([root = process.cwd(), ...files]) {
   // A check whose rules could not run never passes.
   for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
   return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
-}
-
-function runChanges(args) {
-  const flag = args.indexOf("--since");
-  const since = flag < 0 ? undefined : args[flag + 1];
-  const rest = args.filter((_, at) => flag < 0 || (at !== flag && at !== flag + 1));
-  if (flag >= 0 && since === undefined) return fail("--since needs a reference");
-  if (rest.length > 1 || rest.some((arg) => arg.startsWith("-"))) return fail(`usage: memory.cjs ${COMMANDS.changes.usage}`);
-  try {
-    process.stdout.write(require("./lib/changes.cjs").changes(rest[0] ?? process.cwd(), MEMORY_DIR, since));
-    return EXIT_OK;
-  } catch (error) {
-    return fail(error.message);
-  }
-}
-
-/** On stderr, so the order never lands in the chat. A host merges both streams in arrival order: it names no position. */
-const sendAsIs = (then) => `Send this command's other lines as they are, in plain chat text, nothing before or after them, then ${then}.\n`;
-
-function runPlan([sheetFile, ...rest]) {
-  if (sheetFile === undefined) return usageOf("plan");
-  const plan = require("./lib/plan.cjs");
-  const root = plan.rootOf(sheetFile);
-  try {
-    if (plan.isAnswered(sheetFile)) {
-      process.stdout.write(`${path.basename(sheetFile)} is answered: write the bank from it, plan nothing again\n`);
-      return EXIT_ERRORS;
-    }
-    const problems = [...require("./lib/fact-sheet.cjs").checkSheet(sheetFile, root), ...plan.quoteProblems(sheetFile, root)];
-    if (problems.length > 0) {
-      process.stdout.write(`${problems.join("\n")}\n`);
-      return EXIT_ERRORS;
-    }
-    const flag = rest.indexOf("--tools");
-    const ticked = flag < 0 ? [] : (rest[flag + 1] ?? "").split(",").map((tool) => tool.trim().toLowerCase()).filter(Boolean);
-    const unknown = ticked.find((tool) => !(tool in TOOL_FILES));
-    if (unknown !== undefined) return fail(`unknown tool "${unknown}"`);
-    const { summary, detail, detailFile } = plan.renderPlan(sheetFile, root, Object.keys(TOOL_FILES), ticked, absentAlways(root));
-    fs.writeFileSync(detailFile, detail);
-    plan.writeSnapshot(sheetFile, root);
-    process.stdout.write(summary);
-    process.stderr.write(sendAsIs("wait for the reply"));
-    return EXIT_OK;
-  } catch (error) {
-    return fail(notRead(sheetFile, error));
-  }
-}
-
-function runAnswer([sheetFile, ...reply]) {
-  if (sheetFile === undefined) return usageOf("answer");
-  const plan = require("./lib/plan.cjs");
-  try {
-    process.stdout.write(`${plan.answerSheet(sheetFile, plan.rootOf(sheetFile), reply.join(" "))}\n`);
-    return EXIT_OK;
-  } catch (error) {
-    return fail(error instanceof plan.ReplyError ? error.message : notRead(sheetFile, error));
-  }
-}
-
-function runReport([sheetFile]) {
-  if (sheetFile === undefined) return usageOf("report");
-  try {
-    process.stdout.write(report(sheetFile));
-    process.stderr.write(sendAsIs("stop"));
-    return EXIT_OK;
-  } catch (error) {
-    return fail(notRead(sheetFile, error));
-  }
 }
 
 function runSync(args) {
@@ -726,17 +632,8 @@ function runSync(args) {
 const COMMANDS = {
   hook: { run: runHook, usage: "hook" },
   check: { run: runCheck, usage: "check [root] [file...]" },
-  changes: { run: runChanges, usage: "changes [root] [--since <ref>]" },
-  plan: { run: runPlan, usage: "plan <sheet> [--tools <tool,...>]" },
-  answer: { run: runAnswer, usage: "answer <sheet> <reply>" },
-  report: { run: runReport, usage: "report <sheet>" },
   sync: { run: runSync, usage: "sync [--add] [tool...]" },
 };
-
-function usageOf(command) {
-  process.stderr.write(`usage: memory.cjs ${COMMANDS[command].usage}\n`);
-  return EXIT_ERRORS;
-}
 
 function main([command, ...args]) {
   if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command].run(args);

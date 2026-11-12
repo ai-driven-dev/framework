@@ -1,6 +1,6 @@
 ---
 name: 02-project-memory
-description: Set up, refresh or wire project memory into AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.
+description: Set up, refresh or wire the project memory of its architecture, conventions and decisions into your AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.
 argument-hint: setup | refresh
 ---
 
@@ -10,26 +10,21 @@ argument-hint: setup | refresh
 
 ```mermaid
 flowchart LR
-  request((request)) -->|"no bank: set up"| scan["scan<br>actions/01-scan.md"]
-  request -->|"a bank: refresh"| scan
-  scan -->|"setup"| write["write<br>actions/02-write.md"]
-  scan -->|"refresh"| check["check<br>actions/03-check.md"]
-  scan -->|"nothing to remember"| done((done))
-  check -->|"findings in the sheet"| write
-  write -->|"show the plan"| user((user answers))
-  user -->|"plan answered"| write
-  write --> sync
-  sync["sync<br>actions/04-sync.md"] -->|"offer to reconcile"| user
-  user -->|"reconcile answered"| sync
-  sync -->|"reply: the report"| done
+  request((request)) --> read["read<br>actions/01-read.md"]
+  read -->|"nothing to change"| done((done))
+  read -->|"questions"| user((user answers))
+  user --> write
+  read -->|"no question"| write["write<br>actions/02-write.md"]
+  write --> wire["wire<br>actions/03-wire.md"]
+  wire --> done
 ```
 
 - Each box: read its action file, then follow it.
 
 ## Transversal rules
 
-- Speak only to ask or to give the final reply; otherwise call tools.
-- Send the `plan` and `report` output as it is, in plain chat text, nothing before it.
-- After the plan or a reconcile offer, wait.
+- A line already in the bank is the team's: quote it exactly and get a yes before you replace or remove it.
+- Ask everything in one message, then wait; never ask twice.
 - Edit no memory file outside write.
-- Run no version-control command: `changes` gives what changed.
+- When the turn-end check lists lost lines, show them to the person exactly as given, then restore each one they did not approve.
+- Fix each error the turn-end check gives on a line you wrote; keep a warned line the code confirms.

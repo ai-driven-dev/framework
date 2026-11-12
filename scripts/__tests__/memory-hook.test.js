@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -13,18 +14,17 @@ const PAYLOADS = path.join(__dirname, "fixtures/hook-payloads");
 const HOSTS = ["claude", "codex", "copilot", "cursor", "opencode", "kilo"];
 const MEMORY = "aidd_docs/memory";
 const SCRUBBED_PROJECT = "/Users/user/project";
-const SCRUBBED_FILE = "notes.md";
+const SESSION = "00000000-0000-4000-8000-000000000000";
 const ALWAYS = ["project-brief.md", "architecture.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
-const words = (count) => Array(count).fill("word").join(" ");
 const TEMPLATES = path.join(REPO, "plugins/aidd-context/skills/02-project-memory/assets/templates/memory");
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** A question of the template named `name`, as a project leaves it when it never answers it. */
 function slotOf(name, index = 0) {
   return [...fs.readFileSync(path.join(TEMPLATES, name), "utf8").matchAll(/\{\{[^{}\n]*\}\}/gu)][index][0];
 }
 const SLOT = slotOf("vcs.md", 2);
-const shown = (slot) => (slot.length > 40 ? `${slot.slice(0, 39)}…` : slot);
-const SHOWN = shown(SLOT);
+const SHOWN = SLOT.length > 40 ? `${SLOT.slice(0, 39)}…` : SLOT;
 
 // The project's own git must never be reached from a temp project, and a session's project dir never redirects one.
 const ENV = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("GIT_") && key !== "CLAUDE_PROJECT_DIR"));
@@ -42,6 +42,8 @@ function tempDir(prefix) {
   made.push(dir);
   return dir;
 }
+
+const BRIDGED = new Set(["opencode", "kilo"]);
 
 /** The plugin's hooks with one host's adapter where the build puts it, as each tool receives them. */
 const installed = new Map();
@@ -72,99 +74,41 @@ function project(files = {}, { always = ALWAYS } = {}) {
   return root;
 }
 
+function write(root, name, text) {
+  const full = path.join(root, name);
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, text);
+}
+
 function samples(file) {
   return JSON.parse(fs.readFileSync(path.join(PAYLOADS, file), "utf8")).samples;
 }
 
-/** A captured sample, the scrubbed project pointed at `root` and its written file at `file`. */
-function captured(file, index, root, written = SCRUBBED_FILE) {
-  // Replaced inside the JSON text, so each value goes in JSON-escaped: a Windows path's backslashes.
-  const inJson = (value) => JSON.stringify(value).slice(1, -1);
-  const text = JSON.stringify(samples(file)[index].payload)
-    .replaceAll(SCRUBBED_PROJECT, inJson(root))
-    .replaceAll(SCRUBBED_FILE, inJson(written));
+/** A captured sample, the scrubbed project pointed at `root`. */
+function captured(file, index, root) {
+  // Replaced inside the JSON text, so the value goes in JSON-escaped: a Windows path's backslashes.
+  const text = JSON.stringify(samples(file)[index].payload).replaceAll(SCRUBBED_PROJECT, JSON.stringify(root).slice(1, -1));
   return JSON.parse(text);
 }
 
-// OpenCode and Kilo send no stdin: their bridge runs the hook with a payload built from the
-// plugin's arguments. These mirror that mapping (`opencode-hooks-bridge.ts`, read through the
-// real bridge by the CLI's `hooks-runtime-bridges.integration.test.ts`).
-function bridgedToolCall(call, directory) {
-  const args = call.args;
-  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
-  return { hook_event_name: "PostToolUse", session_id: call.sessionID ?? null, cwd: directory, tool_name: call.tool, tool_input: toolInput };
-}
-
-function bridgedSessionStart(input) {
-  return { hook_event_name: "SessionStart", session_id: null, cwd: input.directory };
-}
-
-const BRIDGED = new Set(["opencode", "kilo"]);
-const POST_TOOL_USE = { claude: "claude-PostToolUse.json", codex: "codex-PostToolUse.json", copilot: "copilot-PostToolUse.json", cursor: "cursor-postToolUse.json" };
 const SESSION_START = { claude: "claude-SessionStart.json", codex: "codex-SessionStart.json", copilot: "copilot-SessionStart.json", cursor: "cursor-sessionStart.json" };
+const STOP = { claude: "claude-Stop.json", codex: "codex-Stop.json", copilot: "copilot-Stop.json", cursor: "cursor-stop.json" };
+const PAYLOAD_HOSTS = Object.keys(SESSION_START);
 
-/** A patch adding `text` to `file`, removing `replaced` first, as Codex and Copilot send one. */
-function patchOf(file, text, kind = "Add", replaced) {
-  const lines = (prefix, body) => (body === undefined || body === "" ? [] : body.replace(/\n$/u, "").split("\n").map((line) => `${prefix}${line}`));
-  const hunk = kind === "Update" ? ["@@"] : [];
-  return ["*** Begin Patch", `*** ${kind} File: ${file}`, ...hunk, ...lines("-", replaced), ...lines("+", text), "*** End Patch", ""].join("\n");
-}
-
-/**
- * What `host` sends after writing `text` at `file` in `root`: its first captured write sample,
- * carrying that text the way the host does. Codex and Copilot send a patch, the others the whole
- * file. With no text, the file's content on disk, or nothing when it is gone.
- */
-function writePayload(host, root, file, text) {
-  const body = text ?? (fs.existsSync(path.join(root, file)) ? fs.readFileSync(path.join(root, file), "utf8") : "");
-  if (BRIDGED.has(host)) {
-    const { call } = captured(`${host}-tool.execute.after.json`, 0, root, file);
-    call.args.content = body;
-    return bridgedToolCall(call, root);
-  }
-  const payload = captured(POST_TOOL_USE[host], 0, root, file);
-  if (host === "codex") payload.tool_input.command = patchOf(file, body);
-  else if (host === "copilot") payload.tool_input = patchOf(file, body);
-  else payload.tool_input.content = body;
-  return payload;
-}
-
-/** What `host` sends after an edit replacing `replaced` in `file` with `written`. */
-function editPayload(host, root, file, written, replaced = "Kept.") {
-  if (host === "codex" || host === "copilot") {
-    const patch = patchOf(file, written, "Update", replaced);
-    const payload = captured(POST_TOOL_USE[host], 0, root, file);
-    if (host === "codex") payload.tool_input.command = patch;
-    else payload.tool_input = patch;
-    return payload;
-  }
-  if (BRIDGED.has(host)) {
-    const { call } = captured(`${host}-tool.execute.after.json`, 0, root, file);
-    call.tool = "edit";
-    call.args = { filePath: call.args.filePath, oldString: replaced, newString: written };
-    return bridgedToolCall(call, root);
-  }
-  const payload = { ...captured(POST_TOOL_USE.claude, 0, root, file), tool_name: "Edit" };
-  payload.tool_input = { file_path: path.join(root, file), old_string: replaced, new_string: written };
-  return payload;
-}
-
-/** What `host` sends after a shell command: its captured shell sample, running `command`. */
-function shellPayload(host, root, command) {
-  const payload = BRIDGED.has(host)
-    ? bridgedToolCall(captured(`${host}-tool.execute.after.json`, 1, root).call, root)
-    : captured(POST_TOOL_USE[host], 1, root);
-  payload.tool_input.command = command;
-  return payload;
-}
-
+// OpenCode and Kilo send no stdin: their bridge runs the hook with a payload built from the
+// plugin's arguments (`opencode-hooks-bridge.ts`, read by the CLI's `hooks-runtime-bridges.integration.test.ts`).
 function sessionStartPayload(host, root) {
-  if (BRIDGED.has(host)) return bridgedSessionStart(captured(`${host}-server-init.json`, 0, root));
+  if (BRIDGED.has(host)) return { hook_event_name: "SessionStart", session_id: null, cwd: root };
   return captured(SESSION_START[host], 0, root);
 }
 
-/** A run's own system temp folder: every captured payload carries the same scrubbed session id,
- * so nothing a run leaves there may reach another. */
+function stopPayload(host, root, { active = false } = {}) {
+  const payload = captured(STOP[host], 0, root);
+  if (active) payload.stop_hook_active = true;
+  return payload;
+}
+
+/** A run's own system temp folder: nothing a run leaves there may reach another. */
 function run(host, payload, { cwd = os.tmpdir(), preload, tmp = tempDir("memory-hook-state-") } = {}) {
   const args = [...(preload ? ["--require", preload] : []), hookFor(host), "hook"];
   const result = spawnSync(process.execPath, args, {
@@ -176,57 +120,87 @@ function run(host, payload, { cwd = os.tmpdir(), preload, tmp = tempDir("memory-
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-/** The host's answer read back as a level and a text, by the key each adapter prints. */
-function answerOf(stdout) {
-  if (stdout === "") return null;
-  const out = JSON.parse(stdout);
-  if (out.decision === "block") return { level: 2, text: out.reason };
-  const text = out.hookSpecificOutput?.additionalContext ?? out.additionalContext ?? out.additional_context;
-  assert.equal(typeof text, "string", stdout);
-  return { level: 1, text };
+const snapshotDir = (tmp) => path.join(tmp, "aidd-context");
+const snapshotName = (root, session = SESSION) => `${crypto.createHash("sha1").update(fs.realpathSync(root)).digest("hex")}-${session}.json`;
+const snapshotPath = (tmp, root, session) => path.join(snapshotDir(tmp), snapshotName(root, session));
+const readSnapshot = (tmp, root) => JSON.parse(fs.readFileSync(snapshotPath(tmp, root), "utf8"));
+
+/** A claude session over `root`: its session start has run, so the bank is snapshotted. */
+function started(files, host = "claude") {
+  const root = project(files);
+  const tmp = tempDir("memory-hook-state-");
+  assert.deepEqual(run(host, sessionStartPayload(host, root), { tmp }), { status: 0, stdout: "", stderr: "" });
+  return { root, tmp };
 }
 
-// Hosts whose edit says what it wrote and what it replaced; Cursor sends an edit as a whole-file Write.
-const EDITS_SAY_WHAT = ["claude", "codex", "copilot", "opencode", "kilo"];
-
-/** Writes `text` at `file` in a full bank, then runs the host's write event for it. */
-function afterWrite(host, file, text, options) {
-  const root = project({ [file]: text }, options);
-  return { root, ...run(host, writePayload(host, root, file, text)) };
+/** The Stop answer of a claude session, parsed; null when it printed nothing. */
+function stopped(root, tmp, options) {
+  const result = run("claude", stopPayload("claude", root, options), { tmp });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout === "" ? null : JSON.parse(result.stdout);
 }
+
+const VCS = `${MEMORY}/vcs.md`;
+const GONE = (count) => `aidd-context: ${count} memory lines gone from the bank since the last check`;
+const SHOW_THEM = "Show these lines to the person as they are, and restore any the person did not approve.";
+
+// ---- SessionStart: the snapshot -------------------------------------------------------------
+
+test("a session start snapshots every markdown file of the bank, nested ones included, to the system temp folder", () => {
+  const files = { [VCS]: "# VCS\n\n- one\n", [`${MEMORY}/internal/notes.md`]: "# N\n\n- deep\n", [`${MEMORY}/external/x.txt`]: "not markdown\n" };
+  const { root, tmp } = started(files);
+  const expected = Object.fromEntries(
+    Object.entries({ ...Object.fromEntries(ALWAYS.map((name) => [`${MEMORY}/${name}`, "# T\n\nShort.\n"])), ...files })
+      .filter(([name]) => name.endsWith(".md"))
+      .sort(([a], [b]) => a.localeCompare(b))
+  );
+  assert.deepEqual(readSnapshot(tmp, root), expected);
+  assert.deepEqual(fs.readdirSync(snapshotDir(tmp)), [snapshotName(root)]);
+});
+
+test("a session start with no session id writes no snapshot", () => {
+  const root = project();
+  const tmp = tempDir("memory-hook-state-");
+  const payload = sessionStartPayload("claude", root);
+  delete payload.session_id;
+  assert.deepEqual(run("claude", payload, { tmp }), { status: 0, stdout: "", stderr: "" });
+  assert.equal(fs.existsSync(snapshotDir(tmp)), false);
+});
+
+test("a session start in a project with no bank snapshots an empty bank", () => {
+  const root = tempDir("memory-project-");
+  const tmp = tempDir("memory-hook-state-");
+  assert.deepEqual(run("claude", sessionStartPayload("claude", root), { tmp }), { status: 0, stdout: "", stderr: "" });
+  assert.deepEqual(readSnapshot(tmp, root), {});
+});
+
+test("a setup after a session start with no bank gets its lint and its sync at Stop, with no lost line", () => {
+  const root = tempDir("memory-project-");
+  const tmp = tempDir("memory-hook-state-");
+  write(root, "AGENTS.md", "# P\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n");
+  assert.deepEqual(run("claude", sessionStartPayload("claude", root), { tmp }), { status: 0, stdout: "", stderr: "" });
+  write(root, `${MEMORY}/api.md`, `# API\n\n- Use ${slotOf("api.md")} here.\n`);
+  assert.match(stopped(root, tmp).reason, /^aidd-context: 1 error, 0 warnings\naidd_docs\/memory\/api\.md:3 M3 /u);
+  assert.match(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), /^\[aidd_docs\/memory\/api\.md\]/mu);
+});
+
+test("a session start deletes snapshots older than 7 days and keeps the others", () => {
+  const root = project();
+  const tmp = tempDir("memory-hook-state-");
+  fs.mkdirSync(snapshotDir(tmp));
+  const stale = path.join(snapshotDir(tmp), "stale-session.json");
+  const recent = path.join(snapshotDir(tmp), "recent-session.json");
+  fs.writeFileSync(stale, "{}");
+  fs.writeFileSync(recent, "{}");
+  const old = new Date(Date.now() - 8 * DAY_MS);
+  const near = new Date(Date.now() - 6 * DAY_MS);
+  fs.utimesSync(stale, old, old);
+  fs.utimesSync(recent, near, near);
+  run("claude", sessionStartPayload("claude", root), { tmp });
+  assert.deepEqual(fs.readdirSync(snapshotDir(tmp)).sort(), ["recent-session.json", snapshotName(root)].sort());
+});
 
 for (const host of HOSTS) {
-  test(`${host}: a write leaving a template slot in vcs.md names line, rule, excerpt and fix, and informs`, () => {
-    const { status, stdout } = afterWrite(host, `${MEMORY}/vcs.md`, `# VCS\n\nBranch ${SLOT} here.\n`);
-    assert.equal(status, 0);
-    const answer = answerOf(stdout);
-    assert.equal(answer.level, 1, stdout);
-    assert.deepEqual(answer.text.split("\n"), ["aidd-context: 1 error, 0 warnings", `${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`]);
-  });
-
-  test(`${host}: a {{ that is no slot of the template, a TODO and a TBD answer nothing`, () => {
-    const text = "# VCS\n\n- Publish reads `${{ secrets.NPM_TOKEN }}`.\n- No TODO left in code.\n- TBD\n\n```yaml\ntoken: ${{ secrets.X }}\n```\n";
-    assert.equal(afterWrite(host, `${MEMORY}/vcs.md`, text).stdout, "");
-  });
-
-  test(`${host}: a 31-word prose line informs and never blocks`, () => {
-    const { stdout } = afterWrite(host, `${MEMORY}/vcs.md`, `# VCS\n\n${words(31)}\n`);
-    const answer = answerOf(stdout);
-    assert.equal(answer.level, 1, stdout);
-    assert.match(answer.text, new RegExp(`^${MEMORY}/vcs\\.md:3 M1 "31 words, over the recommended 25" => split it into a list or a table; keep every fact$`, "mu"));
-  });
-
-  // The bank's layout belongs to check, never to a write.
-  test(`${host}: a file written under memory/kpi/ answers nothing`, () => {
-    assert.equal(afterWrite(host, `${MEMORY}/kpi/x.md`, "# KPI\n\nShort.\n").stdout, "");
-  });
-
-  // A missing always-written file belongs to the bank, not to a write: only check names it.
-  test(`${host}: a write in the bank while architecture.md is missing answers nothing`, () => {
-    const always = ALWAYS.filter((name) => name !== "architecture.md");
-    assert.deepEqual(afterWrite(host, `${MEMORY}/vcs.md`, "# VCS\n\nShort.\n", { always }).stdout, "");
-  });
-
   test(`${host}: a session start lists the ui and pm folders in the block, stages nothing and prints nothing`, () => {
     const root = project({
       "aidd_docs/ui/x.md": "# UI\n",
@@ -247,21 +221,191 @@ for (const host of HOSTS) {
     }
     assert.equal(git("diff", "--cached", "--name-only").stdout, "", "the session start staged a file");
   });
+}
 
-  test(`${host}: a write outside aidd_docs/ exits before reading anything of the project`, () => {
-    const root = project({ "src/x.md": `# X\n\n${words(31)}\n` });
-    const read = touched(host, writePayload(host, root, "src/x.md"), root);
-    assert.deepEqual(read, { status: 0, stdout: "", paths: "" });
+// ---- Stop: lost lines, lint, sync -----------------------------------------------------------
+
+const BANK = "# VCS\n\n- keep one\n- release pipeline\n- keep two\n";
+
+test("Stop names a line gone from the bank, quoted exactly, and asks the model to show and restore", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, "# VCS\n\n- keep one\n- keep two\n");
+  assert.deepEqual(stopped(root, tmp), {
+    decision: "block",
+    reason: [GONE(1), `${VCS}: "- release pipeline"`, SHOW_THEM].join("\n"),
+    systemMessage: [GONE(1), `${VCS}: "- release pipeline"`, SHOW_THEM].join("\n"),
   });
+});
 
-  test(`${host}: a rule that throws answers nothing`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\nBranch ${SLOT} here.\n` });
-    const preload = path.join(tempDir("memory-hook-rule-throws-"), "throw.js");
-    const rules = path.join(path.dirname(hookFor(host)), "lib/memory-rules.cjs");
-    fs.writeFileSync(preload, `const { RULES } = require(${JSON.stringify(rules)});\nRULES.find((rule) => rule.id === "M3").check = () => { throw new Error("boom"); };\n`);
-    assert.deepEqual(run(host, writePayload(host, root, `${MEMORY}/vcs.md`), { preload }), { status: 0, stdout: "", stderr: "" });
+test("Stop: a line moved to another bank file is not lost", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, "# VCS\n\n- keep one\n- keep two\n");
+  write(root, `${MEMORY}/testing.md`, "# T\n\nShort.\n\n- release pipeline\n");
+  assert.equal(stopped(root, tmp), null);
+});
+
+test("Stop: a line only reindented, padded or moved within its file is not lost", () => {
+  const { root, tmp } = started({ [VCS]: "# VCS\n\n  - nested  \n- flat\n- last\n" });
+  write(root, VCS, "# VCS\n\n- last\n- nested\n\n  - flat  \n");
+  assert.equal(stopped(root, tmp), null);
+});
+
+test("Stop: a reworded line is reported as the old line lost", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, BANK.replace("- release pipeline", "- release pipelines"));
+  assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(1)}\\n${VCS}: "- release pipeline"\\n`, "u"));
+});
+
+test("Stop: a line of a deleted file is lost", () => {
+  const { root, tmp } = started({ [`${MEMORY}/internal/old.md`]: "# Old\n\n- only here\n" });
+  fs.rmSync(path.join(root, MEMORY, "internal/old.md"));
+  const text = stopped(root, tmp).reason;
+  assert.ok(text.includes(`${MEMORY}/internal/old.md: "- only here"`), text);
+});
+
+test("Stop: lost lines are listed in the snapshot's file order, each once", () => {
+  const { root, tmp } = started({ [VCS]: "# VCS\n\n- b\n- a\n- b\n", [`${MEMORY}/testing.md`]: "# T\n\n- c\n- a\n" });
+  write(root, VCS, "# VCS\n");
+  write(root, `${MEMORY}/testing.md`, "# T\n");
+  assert.deepEqual(stopped(root, tmp).reason.split("\n").slice(0, 4), [GONE(3), `${MEMORY}/testing.md: "- c"`, `${MEMORY}/testing.md: "- a"`, `${VCS}: "- b"`]);
+});
+
+test("Stop: more than 15 lost lines list 15 and point at git diff for the rest", () => {
+  const lines = Array.from({ length: 18 }, (_, at) => `- fact ${String(at).padStart(2, "0")}`);
+  const { root, tmp } = started({ [VCS]: `# VCS\n\n${lines.join("\n")}\n` });
+  write(root, VCS, "# VCS\n");
+  const text = stopped(root, tmp).reason.split("\n");
+  assert.equal(text[0], GONE(18));
+  assert.deepEqual(text.slice(1, 16), lines.slice(0, 15).map((line) => `${VCS}: "${line}"`));
+  assert.equal(text[16], "+3 more, see git diff aidd_docs/memory");
+  assert.equal(text[17], SHOW_THEM);
+});
+
+test("Stop: an unchanged bank answers nothing", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  assert.equal(stopped(root, tmp), null);
+});
+
+test("Stop: a continuation turn answers nothing and leaves the snapshot as it was", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  const before = fs.readFileSync(snapshotPath(tmp, root), "utf8");
+  write(root, VCS, "# VCS\n");
+  assert.equal(stopped(root, tmp, { active: true }), null);
+  assert.equal(fs.readFileSync(snapshotPath(tmp, root), "utf8"), before);
+});
+
+test("Stop with no snapshot answers nothing and writes one, so the next loss is reported", () => {
+  const root = project({ [VCS]: BANK });
+  const tmp = tempDir("memory-hook-state-");
+  write(root, VCS, "# VCS\n\n- keep one\n");
+  assert.equal(stopped(root, tmp), null);
+  assert.deepEqual(readSnapshot(tmp, root)[VCS], "# VCS\n\n- keep one\n");
+  write(root, VCS, "# VCS\n");
+  assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(1)}\\n`, "u"));
+});
+
+test("Stop with no session id answers nothing and writes no snapshot", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, "# VCS\n");
+  const payload = stopPayload("claude", root);
+  delete payload.session_id;
+  assert.deepEqual(run("claude", payload, { tmp }), { status: 0, stdout: "", stderr: "" });
+});
+
+test("Stop in a project with no bank answers nothing and writes no snapshot", () => {
+  const root = tempDir("memory-project-");
+  const tmp = tempDir("memory-hook-state-");
+  assert.equal(stopped(root, tmp), null);
+  assert.equal(fs.existsSync(snapshotDir(tmp)), false);
+});
+
+test("Stop advances the snapshot: the same loss is not reported twice", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, "# VCS\n\n- keep one\n- keep two\n");
+  assert.ok(stopped(root, tmp));
+  assert.equal(readSnapshot(tmp, root)[VCS], "# VCS\n\n- keep one\n- keep two\n");
+  assert.equal(stopped(root, tmp), null);
+});
+
+test("Stop advances the snapshot when only lint answers, and when nothing is lost", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, `${BANK}- Branch ${SLOT} here.\n`);
+  assert.ok(stopped(root, tmp));
+  assert.equal(readSnapshot(tmp, root)[VCS], `${BANK}- Branch ${SLOT} here.\n`);
+  assert.equal(stopped(root, tmp), null);
+});
+
+test("Stop lints only the files that changed or are new, and answers lint alone with no lost line", () => {
+  const { root, tmp } = started({ [`${MEMORY}/testing.md`]: `# T\n\n- Standing ${slotOf("testing.md")}\n` });
+  write(root, VCS, `${BANK}- Branch ${SLOT} here.\n`);
+  assert.deepEqual(stopped(root, tmp).reason.split("\n"), ["aidd-context: 1 error, 0 warnings", `${VCS}:6 M3 "${SHOWN}" => fill it from the code`]);
+});
+
+test("Stop lints a new bank file", () => {
+  const { root, tmp } = started();
+  write(root, `${MEMORY}/api.md`, `# API\n\n- Use ${slotOf("api.md")} here.\n`);
+  assert.match(stopped(root, tmp).reason, /^aidd-context: 1 error, 0 warnings\naidd_docs\/memory\/api\.md:3 M3 /u);
+});
+
+test("Stop puts lost lines first, then the instruction, then the lint findings, in one answer", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, `# VCS\n\n- keep one\n- keep two\n- Branch ${SLOT} here.\n`);
+  assert.deepEqual(stopped(root, tmp).reason.split("\n"), [
+    GONE(1),
+    `${VCS}: "- release pipeline"`,
+    SHOW_THEM,
+    "aidd-context: 1 error, 0 warnings",
+    `${VCS}:5 M3 "${SHOWN}" => fill it from the code`,
+  ]);
+});
+
+test("Stop with a file outside the bank's root files lints nothing for it", () => {
+  const { root, tmp } = started();
+  write(root, `${MEMORY}/internal/x.md`, `# X\n\n${Array(31).fill("word").join(" ")}\n`);
+  assert.equal(stopped(root, tmp), null);
+});
+
+test("Stop runs the sync: a new on-demand file reaches the context block, silently", () => {
+  const block = "# P\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n";
+  const { root, tmp } = started({ "AGENTS.md": block });
+  write(root, `${MEMORY}/internal/new.md`, "# New\n");
+  assert.equal(stopped(root, tmp), null);
+  assert.match(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), /^- aidd_docs\/memory\/internal\/new\.md$/mu);
+});
+
+test("Stop on an unchanged bank still fills a marker pair added to a context file, and answers nothing", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, "CLAUDE.md", "# P\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n");
+  assert.equal(stopped(root, tmp), null);
+  assert.match(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), /^@aidd_docs\/memory\/vcs\.md$/mu);
+});
+
+test("Stop runs the sync when a loss is also reported", () => {
+  const block = "# P\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n";
+  const { root, tmp } = started({ "AGENTS.md": block, [VCS]: BANK });
+  write(root, VCS, "# VCS\n");
+  assert.ok(stopped(root, tmp));
+  assert.match(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), /aidd_docs\/memory\/vcs\.md/u);
+});
+
+// ---- Stop: what the person sees -------------------------------------------------------------
+
+for (const host of PAYLOAD_HOSTS) {
+  test(`${host}: Stop continues the turn with the lost lines, and only the claude adapter prints them for the person`, () => {
+    const { root, tmp } = started({ [VCS]: BANK }, host);
+    write(root, VCS, "# VCS\n");
+    const result = run(host, stopPayload(host, root), { tmp });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /memory lines gone from the bank/u, `${host} printed ${result.stdout}`);
+    const out = JSON.parse(result.stdout);
+    if (host === "claude") assert.equal(out.systemMessage, out.reason);
+    else assert.ok(!result.stdout.includes("systemMessage"), result.stdout);
   });
+}
 
+// ---- robustness and contract ----------------------------------------------------------------
+
+for (const host of HOSTS) {
   test(`${host}: garbage, empty stdin and an unknown event answer nothing`, () => {
     for (const input of ["{nope", "", JSON.stringify({ hook_event_name: "Nope", cwd: os.tmpdir() })]) {
       assert.deepEqual(run(host, input), { status: 0, stdout: "", stderr: "" }, input);
@@ -269,289 +413,38 @@ for (const host of HOSTS) {
   });
 }
 
-// A preload that logs every path under the project the hook touches through fs.
-const SPY = `
-const fs = require("node:fs");
-for (const name of ["readFileSync", "readdirSync", "statSync", "existsSync", "lstatSync", "openSync", "realpathSync"]) {
-  const original = fs[name];
-  fs[name] = function (target, ...rest) {
-    if (typeof target === "string" && target.startsWith(process.env.SPY_ROOT)) fs.appendFileSync(process.env.SPY_LOG, target + "\\n");
-    return original.call(this, target, ...rest);
-  };
-}
-`;
-
-/** The project paths the hook touched for one payload. */
-function touched(host, payload, root) {
-  const dir = tempDir("memory-hook-spy-");
-  const spy = path.join(dir, "spy.js");
-  const log = path.join(dir, "log");
-  fs.writeFileSync(spy, SPY);
-  fs.writeFileSync(log, "");
-  const result = spawnSync(process.execPath, ["--require", spy, hookFor(host), "hook"], {
-    input: JSON.stringify(payload),
-    encoding: "utf8",
-    cwd: os.tmpdir(),
-    env: { ...ENV, SPY_LOG: log, SPY_ROOT: root, ...tempEnv(dir) },
-  });
-  return { status: result.status, stdout: result.stdout, paths: fs.readFileSync(log, "utf8").trim() };
-}
-
-test("the guard sees a read: a write in the bank does touch the project", () => {
-  const root = project();
-  assert.notEqual(touched("claude", writePayload("claude", root, `${MEMORY}/vcs.md`), root).paths, "");
-});
-
-test("a shell command not naming aidd_docs/ reads nothing of the project", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n` });
-  assert.deepEqual(touched("claude", shellPayload("claude", root, "ls src > out.txt"), root), { status: 0, stdout: "", paths: "" });
-});
-
-test("a shell command writing a bank file reaches that file", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nShipped 2026-01-02.\n" });
-  const { stdout } = run("claude", shellPayload("claude", root, `cat > ${MEMORY}/vcs.md <<EOF\nShipped 2026-01-02.\nEOF`));
-  assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 warning "2026-01-02" goes stale => check it against the code; keep it if true$/mu);
-});
-
-test("a Claude PowerShell redirect writing a bank file reaches that file", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nShipped 2026-01-02.\n" });
-  const payload = captured("claude-PostToolUse.json", 4, root);
-  payload.tool_input.command = `"Shipped 2026-01-02." > ${MEMORY}/vcs.md`;
-  const { stdout } = run("claude", payload);
-  assert.match(answerOf(stdout).text, /^aidd_docs\/memory\/vcs\.md:3 M2 warning "2026-01-02" goes stale => check it against the code; keep it if true$/mu);
-});
-
-// A shell write carries no touched lines: its findings inform, grouped, and never block.
-test("a shell write of two bank files informs, its errors grouped by rule and folder", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n`, [`${MEMORY}/testing.md`]: `# T\n\n${slotOf("testing.md")}\n` });
-  const { stdout } = run("claude", shellPayload("claude", root, `sed -i 's/x/y/' ${MEMORY}/vcs.md ${MEMORY}/testing.md`));
-  assert.deepEqual(answerOf(stdout), { level: 1, text: "aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/* => fill it from the code" });
-});
-
-test("a shell write of one bank file groups its errors under that file's name", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n\n${SLOT} again\n` });
-  const { stdout } = run("claude", shellPayload("claude", root, `sed -i 's/x/y/' ${MEMORY}/vcs.md`));
-  assert.deepEqual(answerOf(stdout), { level: 1, text: `aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "${SHOWN}" => fill it from the code` });
-});
-
-test("a shell read of a bank file just modified reports nothing", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n` });
-  assert.equal(run("claude", shellPayload("claude", root, `cat ${MEMORY}/vcs.md`)).stdout, "");
-});
-
-test("a shell write naming the bank skips a file it did not just change", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n` });
-  const old = new Date(Date.now() - 60_000);
-  for (const name of ALWAYS) fs.utimesSync(path.join(root, MEMORY, name), old, old);
-  assert.equal(run("claude", shellPayload("claude", root, `echo x > ${MEMORY}/other.txt.bak`)).stdout, "");
-});
-
-// Contract rule 3: only what this write produced. An edit or a patch says what it wrote, and
-// only errors on the lines that text now stands on are this write's.
-const STANDING = `# VCS\n\n${SLOT}\n\nShipped 2026-01-02.\n\nKept.\n`;
-
-for (const host of EDITS_SAY_WHAT) {
-  test(`${host}: an edit adding a clean line to a file holding standing errors answers nothing`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "Short and clean.") });
-    assert.deepEqual(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "Short and clean.")), { status: 0, stdout: "", stderr: "" });
-  });
-
-  test(`${host}: an edit reports its own new line only, at its level`, () => {
-    const written = `Owner ${SLOT} here.`;
-    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", written) });
-    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, written)).stdout), {
-      level: 1,
-      text: `aidd-context: 1 error, 0 warnings\n${MEMORY}/vcs.md:7 M3 "${SHOWN}" => fill it from the code`,
-    });
-  });
-
-  test(`${host}: an edit of several lines reports each line it wrote, and none it did not`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: STANDING.replace("Kept.", "One 2026-01-02.\n\nMiddle.\n\nTwo 2026-03-04.") });
-    const text = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "One 2026-01-02.\n\nMiddle.\n\nTwo 2026-03-04.")).stdout).text;
-    assert.deepEqual(text.split("\n").slice(1), [
-      `${MEMORY}/vcs.md:7 M2 warning "2026-01-02" goes stale => check it against the code; keep it if true`,
-      `${MEMORY}/vcs.md:11 M2 warning "2026-03-04" goes stale => check it against the code; keep it if true`,
-    ]);
-  });
-}
-
-for (const host of EDITS_SAY_WHAT) {
-  // A context line the edit repeats unchanged is no line it wrote, nor a written line equal to a
-  // part of a standing one: only whole lines the write added or changed are its own.
-  test(`${host}: a clean line written next to a standing slot line it only resembles answers nothing`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n- Branch from ${SLOT} later.\n- Branch\n` });
-    assert.deepEqual(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "- Branch", "- Kept")), { status: 0, stdout: "", stderr: "" });
-  });
-
-  test(`${host}: an edit repeating an unchanged slot line as context answers nothing`, () => {
-    const owner = `- Owner ${SLOT} here.`;
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${owner}\n- Short and clean.\n` });
-    const payload = editPayload(host, root, `${MEMORY}/vcs.md`, `${owner}\n- Short and clean.`, `${owner}\n- Kept.`);
-    assert.deepEqual(run(host, payload), { status: 0, stdout: "", stderr: "" });
-  });
-
-  // Counted as a multiset: a line written twice where it stood once is one more copy, a change.
-  test(`${host}: an edit adding a second copy of a line it replaced reports it`, () => {
-    const owner = `- Owner ${SLOT} here.`;
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${owner}\n${owner}\n` });
-    const payload = editPayload(host, root, `${MEMORY}/vcs.md`, `${owner}\n${owner}`, owner);
-    assert.equal(answerOf(run(host, payload).stdout).level, 1);
-  });
-
-  test(`${host}: two lines joined into one long line report it`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(16)} ${words(15)}\n` });
-    const answer = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, `${words(16)} ${words(15)}`, `${words(16)}\n${words(15)}`)).stdout);
-    assert.deepEqual(answer, { level: 1, text: `aidd-context: 1 error, 0 warnings\n${MEMORY}/vcs.md:3 M1 "31 words, over the recommended 25" => split it into a list or a table; keep every fact` });
-  });
-
-  // A write that removes lines and adds none can still leave a standing error exposed, a fence
-  // deleted around a long line: its lines are unknown, so the file's errors inform, grouped.
-  test(`${host}: an edit that only removes lines informs on the file's errors, grouped, and never blocks`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n\nOwner ${SLOT}\n` });
-    assert.deepEqual(answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, "", "```")).stdout), {
-      level: 1,
-      text: `aidd-context: 2 errors, 0 warnings\nM3 ×2 in aidd_docs/memory/vcs.md "${SHOWN}" => fill it from the code`,
-    });
-  });
-}
-
-for (const host of EDITS_SAY_WHAT) {
-  // The edit changed the whole line, though it wrote a part of it.
-  test(`${host}: an edit writing a slot inside a line reports that line`, () => {
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n- Use ${SLOT} for branches.\n` });
-    const answer = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, SLOT, "feat/")).stdout);
-    assert.deepEqual(answer.text.split("\n").slice(1), [`${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`]);
-  });
-}
-
-for (const host of EDITS_SAY_WHAT) {
-  // A sentence wrapped over two lines is one finding; an edit of its last line touches it.
-  test(`${host}: an edit of the last line of a wrapped long sentence reports the sentence`, () => {
-    const tail = Array(15).fill("tail").join(" ");
-    const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(15)}\n${tail}\n` });
-    const answer = answerOf(run(host, editPayload(host, root, `${MEMORY}/vcs.md`, tail, "short")).stdout);
-    assert.deepEqual(answer.text.split("\n").slice(1), [`${MEMORY}/vcs.md:3 M1 "30 words, over the recommended 25" => split it into a list or a table; keep every fact`]);
-  });
-}
-
-// Owner scope: a file another plugin owns is never read, whatever its content.
-test("a write under another plugin's folder of aidd_docs/ reads nothing of that file", () => {
-  const root = project({ "aidd_docs/ui/x.md": `# UI\n\n${words(31)}\n` });
-  const dir = tempDir("memory-hook-reads-");
-  const preload = path.join(dir, "reads.js");
-  const log = path.join(dir, "log");
-  fs.writeFileSync(log, "");
-  fs.writeFileSync(preload, `const fs = require("node:fs");\nconst read = fs.readFileSync;\nfs.readFileSync = function (file, ...rest) { if (typeof file === "string") fs.appendFileSync(process.env.READ_LOG, file + "\\n"); return read.call(this, file, ...rest); };\n`);
-  const payload = writePayload("claude", root, "aidd_docs/ui/x.md");
-  const result = spawnSync(process.execPath, ["--require", preload, hookFor("claude"), "hook"], { input: JSON.stringify(payload), encoding: "utf8", cwd: os.tmpdir(), env: { ...ENV, READ_LOG: log } });
-  assert.equal(result.stdout, "");
-  assert.doesNotMatch(fs.readFileSync(log, "utf8"), /ui\/x\.md/u);
-});
-
-// The project is the one holding the written file's bank, found from its real path.
-test("the project is found from the written file, whatever the working folder", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n- ${SLOT}\n`, "src/sub/keep.txt": "" });
-  const expected = `aidd-context: 1 error, 0 warnings\n${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`;
-  const from = (cwd) => {
-    const payload = writePayload("claude", root, `${MEMORY}/vcs.md`);
-    payload.cwd = cwd;
-    return answerOf(run("claude", payload).stdout)?.text;
-  };
-  assert.equal(from(path.join(root, "src/sub")), expected, "a working folder inside the project");
-  assert.equal(from(os.tmpdir()), expected, "a working folder elsewhere");
-  const alias = `${root}-alias`;
-  fs.symlinkSync(root, alias);
-  assert.equal(from(alias), expected, "a working folder reached through a link");
-});
-
-test("a bank nested in the project is the project of its own files", () => {
-  const nested = `packages/a/${MEMORY}/vcs.md`;
-  const root = project({ ...Object.fromEntries(ALWAYS.map((name) => [`packages/a/${MEMORY}/${name}`, "# T\n\nShort.\n"])), [nested]: `# VCS\n\n- ${SLOT}\n` });
-  const payload = writePayload("claude", root, nested);
-  assert.equal(answerOf(run("claude", payload).stdout).text.split("\n")[1], `packages/a/${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`);
-});
-
-test("a file written through a link is read under its real project", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n- ${SLOT}\n` });
-  const alias = `${root}-alias`;
-  fs.symlinkSync(root, alias);
-  const payload = writePayload("claude", root, `${MEMORY}/vcs.md`);
-  payload.tool_input.file_path = path.join(alias, MEMORY, "vcs.md");
-  assert.equal(answerOf(run("claude", payload).stdout).text.split("\n")[1], `${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`);
-});
-
-// Every line the written text matches counts as touched: an identical line elsewhere raises the
-// same findings, so the answer holds nothing this write did not also produce.
-test("a written line repeated elsewhere in the file reports each copy, with the same finding", () => {
-  const owner = `Owner ${SLOT}`;
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${owner}\n\nKept.\n\n${owner}\n` });
-  assert.deepEqual(answerOf(run("claude", editPayload("claude", root, `${MEMORY}/vcs.md`, owner)).stdout).text.split("\n").slice(1), [
-    `${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`,
-    `${MEMORY}/vcs.md:7 M3 "${SHOWN}" => fill it from the code`,
-  ]);
-});
-
-test("a Write covers the whole file: every error of it counts, and informs", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${words(26)}\n\n${SLOT}\n` });
-  const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
-  assert.equal(answer.level, 1);
-  assert.deepEqual(answer.text.split("\n").slice(1).map((line) => line.split(" ").slice(0, 2).join(" ")), [`${MEMORY}/vcs.md:3 M1`, `${MEMORY}/vcs.md:5 M3`]);
-});
-
-test("warnings are capped at ten, the count line keeping the total", () => {
-  const text = `# VCS\n\n${Array(12).fill(`- ${words(36)}`).join("\n")}\n`;
-  const { stdout } = afterWrite("claude", `${MEMORY}/vcs.md`, text);
-  const lines = answerOf(stdout).text.split("\n");
-  assert.equal(lines[0], "aidd-context: 0 errors, 13 warnings");
-  assert.equal(lines.length, 11);
-  assert.ok(lines.slice(1).every((line) => / M[56] warning /u.test(line)), lines.join("\n"));
-});
-
-test("a dead path in a written bank file informs", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: "# VCS\n\nSee `src/gone.cfg`.\n", "src/here.cfg": "" });
-  const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
-  assert.deepEqual(answer, { level: 1, text: 'aidd-context: 1 error, 0 warnings\naidd_docs/memory/vcs.md:3 M4 "src/gone.cfg" => fix the path; keep the fact' });
-});
-
-test("an M7 sentence written twice in the bank informs as a warning", () => {
-  const sentence = "the quick brown fox jumps over the lazy dog every single morning again";
-  const root = project({ [`${MEMORY}/testing.md`]: `# T\n\n${sentence}.\n`, [`${MEMORY}/vcs.md`]: `# VCS\n\n- ${sentence}\n` });
-  const answer = answerOf(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`)).stdout);
-  assert.equal(answer.level, 1);
-  assert.match(answer.text, /^aidd_docs\/memory\/vcs\.md:3 M7 warning a sentence also written in aidd_docs\/memory\/testing\.md => keep it in one home$/mu);
-});
-
-test("a clean memory file, a deleted one, README.md and internal/ files answer nothing", () => {
-  const root = project({ [`${MEMORY}/README.md`]: `${words(31)}\n`, [`${MEMORY}/internal/x.md`]: `${words(31)}\nTBD\n` });
-  for (const file of ["vcs.md", "gone.md", "README.md", "internal/x.md"]) {
-    assert.deepEqual(run("claude", writePayload("claude", root, `${MEMORY}/${file}`)), { status: 0, stdout: "", stderr: "" }, file);
-  }
-});
-
-test("a file another plugin owns under aidd_docs/ is never checked", () => {
-  const { stdout } = afterWrite("claude", "aidd_docs/ui/x.md", `# UI\n\n${words(31)}\nTBD\n`);
-  assert.equal(stdout, "");
-});
-
-test("the hook loads in a project whose package.json declares an ES module", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n`, "package.json": JSON.stringify({ type: "module" }) });
-  fs.cpSync(path.dirname(hookFor("claude")), path.join(root, "hooks"), { recursive: true });
-  fs.cpSync(TEMPLATES, path.join(root, "skills/02-project-memory/assets/templates/memory"), { recursive: true });
-  const result = spawnSync(process.execPath, [path.join(root, "hooks", ENTRY), "hook"], {
-    input: JSON.stringify(writePayload("claude", root, `${MEMORY}/vcs.md`)),
-    encoding: "utf8",
-    cwd: root,
-    env: ENV,
-  });
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(answerOf(result.stdout).text, /M3/u);
+test("a rule that throws drops out of Stop: the lost lines are still reported", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, `# VCS\n\n- keep one\n- Branch ${SLOT} here.\n`);
+  const preload = path.join(tempDir("memory-hook-rule-throws-"), "throw.js");
+  const rules = path.join(path.dirname(hookFor("claude")), "lib/memory-rules.cjs");
+  fs.writeFileSync(preload, `const { RULES } = require(${JSON.stringify(rules)});\nRULES.find((rule) => rule.id === "M3").check = () => { throw new Error("boom"); };\n`);
+  const result = run("claude", stopPayload("claude", root), { tmp, preload });
+  assert.equal(result.status, 0);
+  assert.match(JSON.parse(result.stdout).reason, new RegExp(`^${GONE(2)}\\n`, "u"));
+  assert.doesNotMatch(result.stdout, /M3/u);
 });
 
 test("an engine that throws answers nothing", () => {
-  const root = project({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${SLOT}\n` });
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, "# VCS\n");
   const preload = path.join(tempDir("memory-hook-throw-"), "throw.js");
   fs.writeFileSync(preload, 'const fs = require("node:fs");\nfs.readdirSync = () => { throw new Error("boom"); };\n');
-  assert.deepEqual(run("claude", writePayload("claude", root, `${MEMORY}/vcs.md`), { preload }), { status: 0, stdout: "", stderr: "" });
+  assert.deepEqual(run("claude", stopPayload("claude", root), { tmp, preload }), { status: 0, stdout: "", stderr: "" });
+});
+
+test("the hook loads in a project whose package.json declares an ES module", () => {
+  const root = project({ [VCS]: BANK, "package.json": JSON.stringify({ type: "module" }) });
+  fs.cpSync(path.dirname(hookFor("claude")), path.join(root, "hooks"), { recursive: true });
+  fs.cpSync(TEMPLATES, path.join(root, "skills/02-project-memory/assets/templates/memory"), { recursive: true });
+  const tmp = tempDir("memory-hook-state-");
+  const hook = (payload) =>
+    spawnSync(process.execPath, [path.join(root, "hooks", ENTRY), "hook"], { input: JSON.stringify(payload), encoding: "utf8", cwd: root, env: { ...ENV, ...tempEnv(tmp) } });
+  assert.equal(hook(sessionStartPayload("claude", root)).status, 0);
+  write(root, VCS, "# VCS\n");
+  const result = hook(stopPayload("claude", root));
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /memory lines gone/u);
 });
 
 test("the hook reads its event only through lib/host.cjs and never a host's payload", () => {
@@ -562,72 +455,29 @@ test("the hook reads its event only through lib/host.cjs and never a host's payl
   }
 });
 
-test("the entry and its libraries require only the built-ins the contract allows, node:fs, node:os and node:path, and their own modules", () => {
+test("the entry and its libraries require only the built-ins the contract allows and their own modules", () => {
   for (const file of [ENTRY, "lib/memory-rules.cjs", "lib/common-rules.cjs"]) {
     const required = [...fs.readFileSync(path.join(HOOKS, file), "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/gu)].map((m) => m[1]);
-    for (const name of required) assert.ok(["node:fs", "node:os", "node:path"].includes(name) || name.startsWith("./"), `${file} requires ${name}`);
+    for (const name of required) assert.ok(["node:crypto", "node:fs", "node:os", "node:path"].includes(name) || name.startsWith("./"), `${file} requires ${name}`);
   }
 });
 
-test("hooks.json runs the one entry, within 5 s, at session start, and after a write, and its matcher names only the tools an adapter reads", () => {
+test("hooks.json runs the one entry, within 5 s, at session start and at the turn end, and no longer after a write", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
   const command = "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook";
-  assert.deepEqual(Object.keys(hooks).sort(), ["PostToolUse", "SessionStart"]);
-  for (const event of ["SessionStart", "PostToolUse"]) {
+  assert.deepEqual(Object.keys(hooks).sort(), ["SessionStart", "Stop"]);
+  for (const event of ["SessionStart", "Stop"]) {
     assert.equal(hooks[event][0].hooks[0].command, command, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
   }
-  // Only the tools an adapter reads: MultiEdit is no Claude Code tool.
-  assert.deepEqual(hooks.PostToolUse[0].matcher.split("|").sort(), ["Bash", "Delete", "Edit", "PowerShell", "Shell", "Write", "bash"]);
+  assert.equal(hooks.Stop[0].hooks[0].statusMessage, "AIDD Context: check memory changes");
 });
 
-// Cursor filters postToolUse by matcher: a Delete reaches the hook only when the matcher names it.
-test("a Cursor Delete of a bank file answers nothing: a missing file is check's, never a write's", () => {
-  const root = project({});
-  const payload = captured("cursor-postToolUse.json", 5, root);
-  payload.tool_input.file_path = path.join(root, MEMORY, "old.md");
-  assert.deepEqual(run("cursor", payload), { status: 0, stdout: "", stderr: "" });
-});
-
-const SLOT_LINE = `Branch ${SLOT} here.`;
-const ASKED = `aidd-context: 1 error, 0 warnings\n${MEMORY}/vcs.md:3 M3 "${SHOWN}" => fill it from the code`;
-const VCS = `${MEMORY}/vcs.md`;
-
-/** A Claude Write over an existing file: the captured create sample, its response the update of `before`. */
-function overwritePayload(root, file, before) {
-  const payload = writePayload("claude", root, file);
-  payload.tool_response = { ...payload.tool_response, type: "update", originalFile: before };
-  return payload;
-}
-
-test("a Claude Write over an existing file reports only the line it changed", () => {
-  const before = `# VCS\n\n${SLOT}\n\nKept.\n`;
-  const after = before.replace("Kept.", words(31));
-  const root = project({ [VCS]: after });
-  const answer = answerOf(run("claude", overwritePayload(root, VCS, before)).stdout);
-  assert.deepEqual(answer.text.split("\n").slice(1).map((line) => line.split(" ").slice(0, 2).join(" ")), [`${VCS}:5 M1`]);
-});
-
-test("a Claude Write that changes nothing reports nothing, though the file holds a standing slot", () => {
-  const text = `# VCS\n\n${SLOT}\n\nKept.\n`;
-  const root = project({ [VCS]: text });
-  assert.deepEqual(run("claude", overwritePayload(root, VCS, text)), { status: 0, stdout: "", stderr: "" });
-});
-
-test("a shell write reports an error it reached once, as its own", () => {
-  const root = project({ [VCS]: `# VCS\n\n${SLOT_LINE}\n` });
-  assert.deepEqual(answerOf(run("claude", shellPayload("claude", root, `echo x > ${VCS}`)).stdout), { level: 1, text: ASKED });
-});
-
-// A fragment edit never reaches a standing slot that merely holds the same words.
-test("an edit writing a part of a standing slot answers nothing: the slot is not its own", () => {
-  const root = project({ [VCS]: `# VCS\n\n${SLOT_LINE}\n` });
-  assert.equal(run("claude", editPayload("claude", root, VCS, SLOT.slice(2, 14), "x")).stdout, "");
-});
-
-test("a slot written in a sub-project bank is named from the project root the session started in", () => {
-  const sub = Object.fromEntries(ALWAYS.map((name) => [`cli/${MEMORY}/${name}`, "# T\n\nShort.\n"]));
-  const root = project({ ...sub, [`cli/${VCS}`]: `# VCS\n\n${SLOT_LINE}\n` });
-  const answer = answerOf(run("claude", editPayload("claude", root, `cli/${VCS}`, SLOT_LINE)).stdout);
-  assert.equal(answer.text, ASKED.replace(VCS, `cli/${VCS}`));
+test("the engine keeps check, sync and hook and has dropped the plan, answer, report and changes commands and their libraries", () => {
+  for (const command of ["plan", "answer", "report", "changes"]) {
+    const result = spawnSync(process.execPath, [path.join(HOOKS, ENTRY), command], { encoding: "utf8" });
+    assert.match(result.stderr, /^usage: memory\.cjs hook \| check \[root\] \[file\.\.\.\] \| sync \[--add\] \[tool\.\.\.\]\n$/u, command);
+    assert.equal(result.status, 1, command);
+  }
+  for (const lib of ["plan", "fact-sheet", "report", "changes", "bank-guard"]) assert.equal(fs.existsSync(path.join(HOOKS, "lib", `${lib}.cjs`)), false, lib);
 });
