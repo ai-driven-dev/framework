@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import type { Prompter } from "../../../src/kernel/ports/prompter.js";
 import { InteractiveMenuUseCase } from "../../../src/presentation/prompts/menu-use-case.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { buildUnitDeps, initProject } from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -53,7 +54,11 @@ describe("interactive menu", () => {
         checkbox: vi.fn(),
       };
 
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
 
       expect(result.command).toEqual(["setup"]);
       expect(confirmMock).toHaveBeenCalledWith("AIDD not initialized. Run setup now?", true);
@@ -70,7 +75,11 @@ describe("interactive menu", () => {
         checkbox: vi.fn(),
       };
 
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
 
       expect(result.command).toEqual(["exit"]);
     });
@@ -86,7 +95,7 @@ describe("interactive menu", () => {
         select: selectMock,
         checkbox: vi.fn(),
       };
-      await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      await new InteractiveMenuUseCase(deps.manifestRepo, prompter, catalogOf()).execute();
       expect(selectMock).not.toHaveBeenCalled();
     });
   });
@@ -97,7 +106,7 @@ describe("interactive menu", () => {
       await initProject(deps, PROJECT_ROOT);
       const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
 
-      await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      await new InteractiveMenuUseCase(deps.manifestRepo, prompter, catalogOf()).execute();
 
       const values = (selectMock.mock.calls[0][1] as SelectChoice[]).map((c) => c.value);
       expect(values).toContain("inspect");
@@ -114,7 +123,7 @@ describe("interactive menu", () => {
       await initProject(deps, PROJECT_ROOT);
       const { prompter, selectMock } = makeQueuedPrompter(["exit"]);
 
-      await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      await new InteractiveMenuUseCase(deps.manifestRepo, prompter, catalogOf()).execute();
 
       const choices = selectMock.mock.calls[0][1] as Array<{ value: string; description?: string }>;
       const groupsWithDescription = choices.filter((c) => c.value !== "exit" && c.description);
@@ -125,7 +134,11 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       const { prompter } = makeQueuedPrompter(["inspect", "doctor"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
       expect(result.command).toEqual(["doctor"]);
     });
 
@@ -133,7 +146,11 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       const { prompter } = makeQueuedPrompter(["manage-tools", "framework-install"], ["claude"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
       expect(result.command).toEqual(["framework", "install", "--tool", "claude"]);
     });
 
@@ -141,7 +158,11 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       const { prompter } = makeQueuedPrompter(["maintain", "framework-update-maintain"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
       expect(result.command).toEqual(["framework", "update"]);
     });
 
@@ -149,7 +170,11 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       const { prompter } = makeQueuedPrompter(["system", "self-update"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
       expect(result.command).toEqual(["update"]);
     });
 
@@ -157,7 +182,11 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       const { prompter, selectMock } = makeQueuedPrompter(["inspect", "exit"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
       expect(result.command).toEqual(["exit"]);
       expect(selectMock).toHaveBeenCalledTimes(2);
     });
@@ -166,7 +195,11 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       const { prompter, selectMock } = makeQueuedPrompter(["inspect", "back", "exit"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
       expect(result.command).toEqual(["exit"]);
       expect(selectMock).toHaveBeenCalledTimes(3);
     });
@@ -188,7 +221,7 @@ describe("interactive menu", () => {
         select: selectMock,
         checkbox: vi.fn(),
       };
-      await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      await new InteractiveMenuUseCase(deps.manifestRepo, prompter, catalogOf()).execute();
       expect(allValues).not.toContain("adopt");
       expect(allValues).not.toContain("init");
     });
@@ -197,7 +230,11 @@ describe("interactive menu", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       const { prompter } = makeQueuedPrompter(["inspect", "doctor"]);
-      const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(
+        deps.manifestRepo,
+        prompter,
+        catalogOf()
+      ).execute();
       expect(result.command).toEqual(["doctor"]);
       expect("returnTo" in result).toBe(false);
     });
@@ -214,7 +251,7 @@ async function choicesAt(path: string[]): Promise<[string, unknown]> {
   await initProject(deps, PROJECT_ROOT);
   const { prompter, selectMock } = makeQueuedPrompter([...path, "exit"]);
 
-  await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+  await new InteractiveMenuUseCase(deps.manifestRepo, prompter, catalogOf()).execute();
 
   const call = selectMock.mock.calls[path.length];
   return [call[0] as string, call[1]];
@@ -439,7 +476,11 @@ describe("interactive menu — the command each pick hands over", () => {
     await initProject(deps, PROJECT_ROOT);
     const { prompter } = makeQueuedPrompter(path, input === undefined ? [] : [input]);
 
-    const result = await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+    const result = await new InteractiveMenuUseCase(
+      deps.manifestRepo,
+      prompter,
+      catalogOf()
+    ).execute();
 
     return result.command;
   }
@@ -541,7 +582,7 @@ describe("interactive menu — the command each pick hands over", () => {
     await initProject(deps, PROJECT_ROOT);
     const { prompter, inputMock } = makeQueuedPrompter(path, ["x"]);
 
-    await new InteractiveMenuUseCase(deps.manifestRepo, prompter).execute();
+    await new InteractiveMenuUseCase(deps.manifestRepo, prompter, catalogOf()).execute();
 
     expect(inputMock).toHaveBeenCalledWith(question);
   });

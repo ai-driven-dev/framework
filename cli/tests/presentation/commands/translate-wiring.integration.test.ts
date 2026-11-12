@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { isAiTool } from "../../../src/contexts/tools/domain/registry.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
@@ -55,7 +56,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTranslateCommand(program);
+  registerTranslateCommand(program, wireTools());
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -174,7 +175,7 @@ describe("aidd translate — what it refuses", () => {
 describe("aidd translate — the help surface", () => {
   function translateCommand(): Command {
     const program = new Command();
-    registerTranslateCommand(program);
+    registerTranslateCommand(program, wireTools());
     const translate = program.commands.find((command) => command.name() === "translate");
     if (translate === undefined) throw new Error("translate command was not registered");
     return translate;

@@ -22,7 +22,7 @@ const ANSWERING_DIRS = [
   "src/contexts/tools/domain/plugins",
 ];
 
-const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\))`;
+const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\)|\.plugins\(\)|\.nativePlugins\(\)|\.nativeActivation\(\))`;
 /** `kind` is the one read allowed: the discriminant a caller narrows the variant on. */
 const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(?!kind\b)(\w+)\b(?!\s*\()`, "g");
 const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
@@ -282,12 +282,16 @@ describe("a tool's plugin delivery is asked, never read", () => {
       "const c = catalog.resolvePluginsCapability(id).acceptsMcp;",
       "const e = (x as PluginsCapability).acceptsMcp;",
       "const f = catalog.resolveNativePlugins(id).hookScript;",
+      "const g = profile.plugins()?.hooksAcceptance;",
+      "const h = profile.nativePlugins()?.hookScript;",
+      "const i = profile.nativeActivation()?.cliShape;",
+      "const { hookScript: j } = profile.nativePlugins();",
     ];
     const found = written.map((line) => [...line.matchAll(FIELD_READ)].length);
     const destructured = written.map((line) => [...line.matchAll(DESTRUCTURING)].length);
     expect([found, destructured]).toEqual([
-      [1, 1, 0, 1, 1, 1],
-      [0, 0, 1, 0, 0, 0],
+      [1, 1, 0, 1, 1, 1, 1, 1, 1, 0],
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
     ]);
 
     const asked = 'const d = tool.section("plugins").buildMode();';
@@ -295,6 +299,13 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
     const narrowed = 'if (tool.section("plugins").kind === "flat") return;';
     expect([...narrowed.matchAll(FIELD_READ)]).toHaveLength(0);
+
+    const askedOfProfile = [
+      "const k = profile.plugins()?.buildMode();",
+      "const l = profile.nativeActivation()?.userSettingsFile(home, env);",
+      'if (profile.plugins()?.kind === "native") return;',
+    ];
+    for (const line of askedOfProfile) expect([...line.matchAll(FIELD_READ)]).toHaveLength(0);
   });
 
   it("the shared base declares no answer only one way of taking plugins has", () => {

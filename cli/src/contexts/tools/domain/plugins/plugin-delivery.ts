@@ -1,5 +1,6 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import type { PluginDelivery } from "../../contract/tool-profile.js";
 import type {
   FlatHooksBridge,
   FlatSkillLayout,
@@ -36,7 +37,7 @@ export type HooksAcceptance = { accepts: true } | { accepts: false; reason: stri
  * (native, flat, unsupported) answers it; an answer only one way has lives on that variant,
  * reached by narrowing on `kind`. Callers ask and never read a field.
  */
-export abstract class PluginDeliveryBase {
+export abstract class PluginDeliveryBase implements PluginDelivery {
   readonly #machineFiles: GlobalFiles | null;
 
   constructor(machineFiles: GlobalFiles | null) {

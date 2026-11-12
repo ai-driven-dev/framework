@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { userMachineLocalFilesOf } from "../../../src/contexts/tools/domain/registry.js";
 
 const doctorAll = vi.fn();
@@ -82,7 +83,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerDoctorCommand(program);
+  registerDoctorCommand(program, wireTools());
   await program.parseAsync(["node", "aidd", "doctor", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -514,7 +515,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
 describe("aidd doctor — the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
-    registerDoctorCommand(program);
+    registerDoctorCommand(program, wireTools());
     const doctor = program.commands.find((command) => command.name() === "doctor");
     if (doctor === undefined) throw new Error("doctor command was not registered");
     return doctor;

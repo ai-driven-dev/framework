@@ -44,6 +44,7 @@ src/
 │   │   └── infrastructure/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
+│   │   ├── contract/
 │   │   └── domain/
 │   │       ├── capabilities/
 │   │       ├── formats/

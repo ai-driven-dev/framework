@@ -1,7 +1,5 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
-
-/** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
-export type EnvironmentReader = (name: string) => string | undefined;
+import type { EnvironmentReader, NativeActivationAnswers } from "../../contract/tool-profile.js";
 
 /** How a host's own plugin registry is laid out. The names describe the file's shape, never
  * the tool that keeps it, so a second host with the same shape declares the same layout. */
@@ -124,7 +122,7 @@ export type NativeCliShape = Pick<
 >;
 
 /** A tool's native activation, asked and never read: every stored value sits behind an answer. */
-export class NativeActivation {
+export class NativeActivation implements NativeActivationAnswers {
   readonly #spec: NativeActivationSpec;
 
   constructor(spec: NativeActivationSpec) {

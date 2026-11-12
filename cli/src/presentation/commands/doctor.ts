@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import type { DoctorReport } from "../../contexts/framework/domain/doctor.js";
-import { userMachineLocalFilesOf } from "../../contexts/tools/domain/registry.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeFilterUnsupportedError } from "../../kernel/errors.js";
 import type { ToolCategory, ToolId } from "../../kernel/tool.js";
 import { isAiToolId } from "../../kernel/tool.js";
@@ -104,6 +104,7 @@ async function runScopedDoctor(
  * `doctorRegistrationUseCase` against the user manifest: registrations versus a host's own
  * registry file, the one check that is not project-file-shaped. */
 async function runUserScopeDoctor(
+  tools: ToolCatalog,
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
@@ -124,13 +125,17 @@ async function runUserScopeDoctor(
   printUserScopeTools(
     output,
     toolIds.map((id) => {
-      const settingsPaths = userMachineLocalFilesOf(id, deps.homedir(), (name) =>
-        deps.environment.get(name)
-      );
+      const profile = tools.profile(id);
+      const settingsFile =
+        profile.kind === "ai"
+          ? profile
+              .nativeActivation()
+              ?.userSettingsFile(deps.homedir(), (name) => deps.environment.get(name))
+          : undefined;
       return {
         toolId: id,
         version: manifest.getToolVersion(id) ?? "unknown",
-        settings: settingsPaths.length > 0 ? settingsPaths[0] : "no user-scope settings file",
+        settings: settingsFile ?? "no user-scope settings file",
       };
     })
   );
@@ -157,7 +162,7 @@ interface DoctorCmdOptions {
   global?: boolean;
 }
 
-export function registerDoctorCommand(program: Command): void {
+export function registerDoctorCommand(program: Command, tools: ToolCatalog): void {
   program
     .command("doctor")
     .description(
@@ -178,7 +183,7 @@ export function registerDoctorCommand(program: Command): void {
         const deps = await createDeps(projectRoot, { verbose }, output);
         const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
         if (scope === "user") {
-          await runUserScopeDoctor(deps, output, projectRoot, cmdOptions);
+          await runUserScopeDoctor(tools, deps, output, projectRoot, cmdOptions);
         } else if (cmdOptions.tool !== undefined) {
           await runScopedDoctor(
             deps,

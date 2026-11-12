@@ -7,7 +7,7 @@ import {
   type ProfileBrand,
 } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { InvalidToolProfileError } from "../../../../../src/kernel/errors.js";
-import { anEmptyContract } from "../../testing/profiles.js";
+import { anEmptyContract, flatPlugins, nativePlugins } from "../../testing/profiles.js";
 
 const settings = new SettingsCapability({
   outputPath: ".x/settings.json",
@@ -69,6 +69,34 @@ describe("defineAiTool", () => {
 
     expect(section("settings")).toStrictEqual([settings]);
     expect(section("mcp")).toBeNull();
+  });
+
+  it("answers the plugins capability it declares, and null when it declares none", () => {
+    const plugins = flatPlugins("refuses");
+
+    expect(defineAiTool({ ...aiSpec, capabilities: () => ({ plugins }) }).plugins()).toBe(plugins);
+    expect(defineAiTool(aiSpec).plugins()).toBeNull();
+  });
+
+  it("answers the native activation of a native plugins capability, and undefined for any other", () => {
+    const native = nativePlugins({
+      nativeActivation: { binary: "x", enableVerb: "add", disableVerb: "remove" },
+    });
+
+    const activated = defineAiTool({ ...aiSpec, capabilities: () => ({ plugins: native }) });
+    const unactivated = defineAiTool({
+      ...aiSpec,
+      capabilities: () => ({ plugins: nativePlugins() }),
+    });
+    const flat = defineAiTool({
+      ...aiSpec,
+      capabilities: () => ({ plugins: flatPlugins("refuses") }),
+    });
+
+    expect(activated.nativeActivation()).toBeDefined();
+    expect(unactivated.nativeActivation()).toBeUndefined();
+    expect(flat.nativeActivation()).toBeUndefined();
+    expect(defineAiTool(aiSpec).nativeActivation()).toBeUndefined();
   });
 
   it("refuses an id no AI tool carries", () => {

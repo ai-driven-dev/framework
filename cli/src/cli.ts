@@ -1,5 +1,6 @@
 import { platform } from "node:os";
 import { Command } from "commander";
+import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
 import { registerDoctorCommand } from "./presentation/commands/doctor.js";
@@ -22,6 +23,8 @@ function formatVersion(version: string): string {
 
 const currentVersion = new CurrentVersionAdapter().get();
 
+const tools = wireTools();
+
 const program = new Command();
 
 program
@@ -30,15 +33,15 @@ program
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
-registerSetupCommand(program);
+registerSetupCommand(program, tools);
 registerFrameworkCommand(program);
-registerTranslateCommand(program);
+registerTranslateCommand(program, tools);
 registerPluginCommand(program);
 registerMarketplaceCommand(program);
 registerAuthCommand(program);
 registerSyncCommand(program);
 registerUpdateCommand(program);
-registerDoctorCommand(program);
+registerDoctorCommand(program, tools);
 registerCleanCommand(program);
 registerTelemetryCommand(program);
 
@@ -111,7 +114,7 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop();
+  runMenuLoop(tools);
 } else {
   program.parse(process.argv);
 }

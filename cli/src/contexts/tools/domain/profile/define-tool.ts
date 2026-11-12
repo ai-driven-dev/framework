@@ -11,6 +11,7 @@ import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
 import { SkillsCapability } from "../capabilities/skills-capability.js";
 import type { AiTool, ConfigCapability, IdeToolConfig } from "../contracts.js";
+import type { NativeActivation } from "../plugins/native-activation.js";
 import {
   isProfileSectionKey,
   type ProfileSection,
@@ -41,7 +42,7 @@ export interface BoundTool {
 
 type AiToolFields = Omit<
   AiTool<ProfileSections>,
-  "kind" | "toolId" | "section" | "configCapabilities"
+  "kind" | "toolId" | "section" | "configCapabilities" | "plugins" | "nativeActivation"
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
@@ -109,6 +110,11 @@ function aiConfigCapabilities(sections: ProfileSections): ConfigCapability[] {
   ];
 }
 
+function nativeActivationOf(sections: ProfileSections): NativeActivation | undefined {
+  const plugins = sections.plugins;
+  return plugins?.kind === "native" ? (plugins.activation() ?? undefined) : undefined;
+}
+
 function aiToolId(id: string): AiToolId {
   const known = AI_TOOL_IDS.find((candidate) => candidate === id);
   if (known === undefined) {
@@ -148,6 +154,8 @@ export function defineAiTool<C extends ProfileSections>(
     toolId,
     section: sectionReader(capabilities),
     configCapabilities: () => aiConfigCapabilities(capabilities),
+    plugins: () => capabilities.plugins ?? null,
+    nativeActivation: () => nativeActivationOf(capabilities),
   };
   return profile as AiTool<C> & ProfileBrand;
 }

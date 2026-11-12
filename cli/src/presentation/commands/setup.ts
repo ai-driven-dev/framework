@@ -3,14 +3,9 @@ import { type Command, Option } from "commander";
 import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
-import {
-  assertToolIdsMatchCategory,
-  copiesPluginFilesGlobally,
-  getAllRegisteredTools,
-  nativeActivationOf,
-  resolvePluginsCapability,
-  supportsUserScopeActivation,
-} from "../../contexts/tools/domain/registry.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
+import { assertToolIdsMatchCategory } from "../../contexts/tools/domain/registry.js";
 import type { ToolId } from "../../kernel/tool.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
@@ -101,23 +96,32 @@ export function parsePluginsFlag(
 }
 
 /** What `--global` does for each registered tool, read from its profile. */
-export function globalSetupHelp(): string {
-  const tools = [...getAllRegisteredTools().keys()].filter(supportsUserScopeActivation).sort();
-  const native = tools.filter((id) => nativeActivationOf(id) !== undefined);
-  const copying = tools.filter(copiesPluginFilesGlobally);
-  const where = (id: ToolId) =>
-    resolvePluginsCapability(id)?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
+export function globalSetupHelp(catalog: ToolCatalog): string {
+  const global = catalog
+    .sortedById()
+    .filter((profile) => profile.kind === "ai" && profile.plugins()?.supportsUserScopeActivation());
+  const tools = global.map((profile) => profile.toolId);
+  const native = global.filter(
+    (profile) => profile.kind === "ai" && profile.nativeActivation() !== undefined
+  );
+  const copying = global.filter(
+    (profile) => profile.kind === "ai" && profile.plugins()?.copiesFilesGlobally()
+  );
+  const where = (profile: ToolProfile) =>
+    profile.kind === "ai"
+      ? profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/")
+      : undefined;
   return [
     "",
     "Global:",
     `  Pass --ide ${tools.join(",")} (one or more, no editor) and --plugins all, recommended, none or names.`,
-    `  ${native.join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
-    `  ${copying.map((id) => `${id} gets their files in ${where(id)}`).join(", ")}.`,
+    `  ${native.map((p) => p.toolId).join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
+    `  ${copying.map((p) => `${p.toolId} gets their files in ${where(p)}`).join(", ")}.`,
     "  `aidd sync --global` refreshes them from the framework source.",
   ].join("\n");
 }
 
-export function registerSetupCommand(program: Command): void {
+export function registerSetupCommand(program: Command, catalog: ToolCatalog): void {
   program
     .command("setup")
     .description(
@@ -143,7 +147,7 @@ export function registerSetupCommand(program: Command): void {
         "requirements below"
     )
     .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
-    .addHelpText("after", globalSetupHelp)
+    .addHelpText("after", () => globalSetupHelp(catalog))
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);

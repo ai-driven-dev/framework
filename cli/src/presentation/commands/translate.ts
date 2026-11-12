@@ -1,9 +1,7 @@
 import { resolve } from "node:path";
 import type { Command } from "commander";
-import {
-  type FrameworkBuildMode,
-  registeredToolIds,
-} from "../../contexts/tools/domain/registry.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { FrameworkBuildMode } from "../../contexts/tools/domain/registry.js";
 import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
@@ -66,14 +64,14 @@ interface TranslateCmdOptions {
   force?: boolean;
 }
 
-export function registerTranslateCommand(program: Command): void {
+export function registerTranslateCommand(program: Command, tools: ToolCatalog): void {
   program
     .command("translate")
     .description(
       "Convert an arbitrary source into a target-native plugin tree — records nothing (see `sync` for the manifest-driven, tracked version)"
     )
     .argument("<source>", "Path to the source framework directory")
-    .requiredOption("--to <target>", `Conversion target (${registeredToolIds("ai").join(", ")})`)
+    .requiredOption("--to <target>", `Conversion target (${tools.inHelpOrder("ai").join(", ")})`)
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--as <marketplace|flat>", "Output layout", "marketplace")
     .option("--force", "Overwrite existing files at canonical paths under --out")

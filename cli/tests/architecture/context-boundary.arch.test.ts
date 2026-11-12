@@ -9,6 +9,9 @@ import { expectRatchet, HELD_BY_BIOME, importersByFile, sourceFiles } from "./he
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   tools: [
+    // what the presentation asks of the registered tools: the catalog and a profile's answers
+    "src/contexts/tools/contract/tool-catalog.ts",
+    "src/contexts/tools/contract/tool-profile.ts",
     // the tool contract and lookup surface
     "src/contexts/tools/domain/contracts.ts",
     "src/contexts/tools/domain/registry.ts",

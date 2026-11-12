@@ -1,4 +1,5 @@
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
+import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { AgentsCapability } from "./capabilities/agents-capability.js";
 import type { CommandsCapability } from "./capabilities/commands-capability.js";
@@ -7,6 +8,7 @@ import type { McpCapability } from "./capabilities/mcp-capability.js";
 import type { RulesCapability } from "./capabilities/rules-capability.js";
 import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { SkillsCapability } from "./capabilities/skills-capability.js";
+import type { NativeActivation } from "./plugins/native-activation.js";
 import type { PluginsCapability } from "./plugins/plugins-capability.js";
 import type {
   ProfileSection,
@@ -41,7 +43,7 @@ type DeclaredKey<C extends ProfileSections> = {
   [K in ProfileSectionKey]-?: undefined extends C[K] ? never : K;
 }[ProfileSectionKey];
 
-export interface AiTool<C extends ProfileSections = ProfileSections> {
+export interface AiTool<C extends ProfileSections = ProfileSections> extends AiToolProfile {
   readonly kind: "ai";
   readonly toolId: AiToolId;
   /** How the vendor writes it. `toolId` is a key, not a name: nothing user-facing
@@ -74,9 +76,13 @@ export interface AiTool<C extends ProfileSections = ProfileSections> {
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
   /** The config files this tool writes: mcp, hooks, then each settings file. */
   configCapabilities(): ConfigCapability[];
+  /** The plugins section the tool declares, or null. */
+  plugins(): PluginsCapability | null;
+  /** The native plugin CLI declaration of a native plugins capability, or undefined. */
+  nativeActivation(): NativeActivation | undefined;
 }
 
-export interface IdeToolConfig<C extends ProfileSections = ProfileSections> {
+export interface IdeToolConfig<C extends ProfileSections = ProfileSections> extends IdeToolProfile {
   readonly kind: "ide";
   readonly toolId: IdeToolId;
   readonly directory: string;

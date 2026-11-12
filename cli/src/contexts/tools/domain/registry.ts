@@ -12,11 +12,12 @@ import {
   type ToolCategory,
   type ToolId,
 } from "../../../kernel/tool.js";
+import type { EnvironmentReader } from "../contract/tool-profile.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { McpCapability } from "./capabilities/mcp-capability.js";
 import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
-import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
+import type { NativeActivation } from "./plugins/native-activation.js";
 import type { GlobalFiles, HookScript, ProjectHooksFormat } from "./plugins/plugin-params.js";
 import type { NativePluginsCapability, PluginsCapability } from "./plugins/plugins-capability.js";
 import type { ProfileBrand } from "./profile/define-tool.js";
@@ -103,7 +104,8 @@ export class ToolCatalog {
   }
 
   nativeActivationOf(toolId: ToolId): NativeActivation | undefined {
-    return this.resolveNativePlugins(toolId)?.activation() ?? undefined;
+    const config = this.getToolConfig(toolId);
+    return isAiTool(config) ? config.nativeActivation() : undefined;
   }
 
   frameworkBuildModeFor(toolId: ToolId): FrameworkBuildMode {
@@ -182,7 +184,7 @@ export class ToolCatalog {
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
     const toolConfig = this.getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return null;
-    return toolConfig.section("plugins");
+    return toolConfig.plugins();
   }
 
   resolveNativePlugins(toolId: ToolId): NativePluginsCapability | null {
