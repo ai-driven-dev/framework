@@ -21,7 +21,6 @@ const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
 
 const SNAPSHOT_DIR = "aidd-context";
 const SNAPSHOT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-const LOST_LINES_CAP = 15;
 
 const EXIT_OK = 0;
 const EXIT_USAGE = 1;
@@ -194,12 +193,10 @@ function lostLines(before, now) {
 }
 
 function lostText(lost) {
-  const listed = lost.slice(0, LOST_LINES_CAP).map(({ line, file }) => `${file}: "${line}"`);
-  if (lost.length > LOST_LINES_CAP) listed.push(`+${lost.length - LOST_LINES_CAP} more, see git diff ${MEMORY_DIR}`);
   return [
     `${PLUGIN}: ${lost.length} memory lines gone from the bank since the last check`,
-    ...listed,
-    "Show these lines to the person as they are, and restore any the person did not approve.",
+    ...lost.map(({ line, file }) => `${file}: "${line}"`),
+    "Show these lines to the person as they are; restore one only if the person asks.",
   ].join("\n");
 }
 
@@ -223,7 +220,8 @@ function atSessionStart(event) {
   const file = snapshotFile(root, event.sessionId);
   if (file === null) return;
   dropStaleSnapshots(path.dirname(file));
-  writeSnapshot(file, bankTexts(root));
+  // A resume or a compact starts the same session again: its snapshot stays, so no loss is skipped.
+  if (readSnapshot(file) === null) writeSnapshot(file, bankTexts(root));
 }
 
 function atTurnEnd(host, event) {

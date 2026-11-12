@@ -11,8 +11,8 @@
 
 | Event | Does |
 | --- | --- |
-| SessionStart | sync the context-file blocks; snapshot the bank to `<git folder>/aidd-context/<hash(project)>-<session>.json`, private to the repository and never committed |
-| Stop, once per turn | compare the whole bank with the snapshot; lint the changed files; list lines absent from every bank file, exact, capped at 15; sync; continue the turn once with that text, also shown to the person where the host allows; advance the snapshot |
+| SessionStart | sync the context-file blocks; snapshot the bank to `<git folder>/aidd-context/<hash(project)>-<session>.json`, private to the repository and never committed, once per session |
+| Stop, once per turn | compare the whole bank with the snapshot; lint the changed files; list every line absent from every bank file, exact; sync; continue the turn once with that text, also shown to the person where the host allows; advance the snapshot |
 
 No session id, or no git repository: no snapshot, no check. No snapshot at Stop (the hook did not run at session start): Stop writes one and says nothing. `check` and `sync` stay as subcommands for CI and by hand.
 

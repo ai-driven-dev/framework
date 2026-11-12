@@ -154,7 +154,7 @@ function stopped(root, tmp, options) {
 
 const VCS = `${MEMORY}/vcs.md`;
 const GONE = (count) => `aidd-context: ${count} memory lines gone from the bank since the last check`;
-const SHOW_THEM = "Show these lines to the person as they are, and restore any the person did not approve.";
+const SHOW_THEM = "Show these lines to the person as they are; restore one only if the person asks.";
 
 // ---- SessionStart: the snapshot -------------------------------------------------------------
 
@@ -321,15 +321,18 @@ test("Stop: lost lines are listed in the snapshot's file order, each once", () =
   assert.deepEqual(stopped(root, tmp).reason.split("\n").slice(0, 4), [GONE(3), `${MEMORY}/testing.md: "- c"`, `${MEMORY}/testing.md: "- a"`, `${VCS}: "- b"`]);
 });
 
-test("Stop: more than 15 lost lines list 15 and point at git diff for the rest", () => {
-  const lines = Array.from({ length: 18 }, (_, at) => `- fact ${String(at).padStart(2, "0")}`);
+test("Stop lists every lost line, however many", () => {
+  const lines = Array.from({ length: 40 }, (_, at) => `- fact ${String(at).padStart(2, "0")}`);
   const { root, tmp } = started({ [VCS]: `# VCS\n\n${lines.join("\n")}\n` });
   write(root, VCS, "# VCS\n");
-  const text = stopped(root, tmp).reason.split("\n");
-  assert.equal(text[0], GONE(18));
-  assert.deepEqual(text.slice(1, 16), lines.slice(0, 15).map((line) => `${VCS}: "${line}"`));
-  assert.equal(text[16], "+3 more, see git diff aidd_docs/memory");
-  assert.equal(text[17], SHOW_THEM);
+  assert.deepEqual(stopped(root, tmp).reason.split("\n"), [GONE(40), ...lines.map((line) => `${VCS}: "${line}"`), SHOW_THEM]);
+});
+
+test("a second session start in the same session keeps the first snapshot, so a loss before it is still reported", () => {
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, "# VCS\n\n- keep one\n- keep two\n");
+  run("claude", sessionStartPayload("claude", root), { tmp });
+  assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(1)}\\n${VCS}: "- release pipeline"\\n`, "u"));
 });
 
 test("Stop: an unchanged bank answers nothing", () => {
