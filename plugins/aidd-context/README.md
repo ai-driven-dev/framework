@@ -18,6 +18,6 @@ Project knowledge: memory, context files and generators.
 | `SessionStart` | a session opens | refreshes the memory block of each context file, silently, so a new memory file is loaded |
 | `Stop` | the model ends its turn | if the bank changed since the last check, tells the model which memory lines are gone and what breaks a rule, and shows the person the same, once |
 
-All run `hooks/memory.cjs hook`. Every tool in [Compatibility](../../docs/COMPATIBILITY.md) with hooks receives them. A missing always-written file is not the hook's: `check`, run by the project memory skill, fails on it.
+`SessionStart` runs `hooks/memory.cjs load`, `Stop` runs `hooks/memory.cjs guard`. Every tool in [Compatibility](../../docs/COMPATIBILITY.md) with hooks receives them; Antigravity receives `SessionStart` only, so no lost line is reported there. A missing always-written file is the skill's: its script creates it from the template.
 
-Limit: a line counts as lost only when its trimmed text is absent from every bank file; a reworded line is reported, a moved one is not.
+Limit: a line counts as lost only when its trimmed text is absent from every bank file; a reworded line is reported, a moved one is not. The bank as the session found it is kept in the repository's git folder, so outside a git repository no lost line is reported.
