@@ -16,7 +16,7 @@ describe("cursor declarations the rest of the CLI reads", () => {
   });
 
   it("probes a marketplace catalog at .cursor-plugin/marketplace.json", () => {
-    expect(cursor.distributionProbes?.marketplace).toStrictEqual([
+    expect(cursor.distributionPaths("marketplace")).toStrictEqual([
       ".cursor-plugin/marketplace.json",
     ]);
   });

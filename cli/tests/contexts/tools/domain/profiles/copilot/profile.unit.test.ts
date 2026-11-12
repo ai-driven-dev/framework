@@ -13,7 +13,7 @@ import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
 describe("copilot declarations the rest of the CLI reads", () => {
   it("probes a plugin manifest in the three places Copilot reads one, in its order", () => {
-    expect(copilot.distributionProbes?.manifest).toStrictEqual([
+    expect(copilot.distributionPaths("manifest")).toStrictEqual([
       ".plugin/plugin.json",
       ".github/plugin/plugin.json",
       "plugin.json",

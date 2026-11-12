@@ -161,7 +161,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   }),
   aiCheck("is probed where it publishes a marketplace", (profile) => {
     if (profile.buildContracts?.marketplace === undefined) return;
-    expect(profile.distributionProbes?.marketplace?.length ?? 0).toBeGreaterThan(0);
+    expect(profile.distributionPaths("marketplace").length).toBeGreaterThan(0);
   }),
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {
     const plugins = profile.section("plugins");

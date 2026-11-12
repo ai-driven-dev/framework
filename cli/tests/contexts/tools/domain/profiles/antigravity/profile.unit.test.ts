@@ -11,7 +11,10 @@ describe("antigravity", () => {
     expect(antigravity.directory).toBe(".agents/");
     expect(antigravity.buildContracts?.flat).toBeDefined();
     expect(antigravity.buildContracts?.marketplace).toBeUndefined();
-    expect(antigravity.distributionProbes).toBeUndefined();
+    expect([
+      antigravity.distributionPaths("manifest"),
+      antigravity.distributionPaths("marketplace"),
+    ]).toStrictEqual([[], []]);
   });
 
   it.each<[string, string]>([

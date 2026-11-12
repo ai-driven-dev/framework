@@ -68,6 +68,7 @@ type AiToolFields = Omit<
   | "settingsFiles"
   | "projectHooksDelivery"
   | "frameworkBuildMode"
+  | "distributionPaths"
   | "marketplaceRegistration"
   | "installedRulesLocation"
   | "pluginEnablementIsMachineGlobal"
@@ -201,6 +202,8 @@ export function defineAiTool<C extends ProfileSections>(
     frameworkBuildMode: (): FrameworkBuildMode =>
       capabilities.plugins?.kind === "flat" ? "flat" : "marketplace",
     buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
+    distributionPaths: (kind: "manifest" | "marketplace") =>
+      fields.distributionProbes?.[kind] ?? [],
     configWrites: () => aiConfigWrites(capabilities),
     plugins: () => capabilities.plugins ?? null,
     supportsUserScopeActivation: () => capabilities.plugins?.supportsUserScopeActivation() ?? false,

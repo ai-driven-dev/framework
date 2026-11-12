@@ -36,7 +36,7 @@ export async function readMarketplaceCatalogIdentity(
  * `distributionProbes.marketplace`. */
 export function marketplaceCatalogProbePath(tool: ToolProfile, dir: string): string | undefined {
   if (tool.kind !== "ai") return undefined;
-  const catalogRelative = tool.distributionProbes?.marketplace?.[0];
+  const catalogRelative = tool.distributionPaths("marketplace")[0];
   return catalogRelative === undefined ? undefined : join(dir, catalogRelative);
 }
 

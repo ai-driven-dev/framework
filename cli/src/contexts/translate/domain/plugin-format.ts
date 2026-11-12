@@ -25,7 +25,7 @@ export function distributionProbesOf(
   for (const format of AI_TOOL_IDS) {
     const profile = profiles.find((candidate) => candidate.toolId === format);
     if (profile === undefined || profile.kind !== "ai") continue;
-    for (const relativePath of profile.distributionProbes?.[kind] ?? []) {
+    for (const relativePath of profile.distributionPaths(kind)) {
       probes.push({ format, relativePath });
     }
   }

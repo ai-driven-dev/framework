@@ -210,12 +210,10 @@ export interface AiToolProfile {
   readonly toolId: AiToolId;
   /** Where a built file lands, relative to the project root, ending in a slash. */
   readonly directory: string;
-  /** Where this tool's plugin manifest and marketplace catalog sit inside a distribution it
-   * produced. Order is irrelevant: the collected probes are sorted deepest first. */
-  readonly distributionProbes?: {
-    readonly manifest?: readonly string[];
-    readonly marketplace?: readonly string[];
-  };
+  /** Where its plugin manifest or marketplace catalog may sit inside a distribution it produced,
+   * relative to the distribution root, none when it declares none. Order is irrelevant: the
+   * collected probes are sorted deepest first. */
+  distributionPaths(kind: "manifest" | "marketplace"): readonly string[];
   /** Flat when its plugins are injected into the project tree, a marketplace otherwise. */
   frameworkBuildMode(): FrameworkBuildMode;
   /** The framework-build contract for `mode`, or null when the tool declares none for it. */
