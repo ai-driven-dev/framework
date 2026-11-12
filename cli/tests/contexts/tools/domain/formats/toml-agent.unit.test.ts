@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { codexAgentMarkdownToToml } from "../../../../../src/contexts/tools/domain/behaviours/codex-agent-toml.js";
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
+import { tomlAgentMarkdownToToml } from "../../../../../src/contexts/tools/domain/formats/toml-agent.js";
 
-describe("codexAgentMarkdownToToml()", () => {
+describe("tomlAgentMarkdownToToml()", () => {
   describe("name resolution", () => {
     it("prefixes the file's base name with the plugin, whatever the frontmatter name", () => {
       expect(
-        codexAgentMarkdownToToml(
+        tomlAgentMarkdownToToml(
           `---
 name: planner
 description: A planner.
@@ -24,7 +24,7 @@ developer_instructions = "Body.\\n"
 
     it("names an agent without frontmatter after its plugin and file, description empty", () => {
       expect(
-        codexAgentMarkdownToToml("No frontmatter here.", "aidd-dev", "implementer.md")
+        tomlAgentMarkdownToToml("No frontmatter here.", "aidd-dev", "implementer.md")
       ).toBe(`name = "aidd-dev-implementer"
 description = ""
 developer_instructions = "No frontmatter here."
@@ -35,7 +35,7 @@ developer_instructions = "No frontmatter here."
   describe("verbatim body preservation", () => {
     it("preserves @./ references untouched in developer_instructions", () => {
       const body = "See @./foo.md for details.";
-      const toml = codexAgentMarkdownToToml(
+      const toml = tomlAgentMarkdownToToml(
         `---\nname: agent\n---\n\n${body}`,
         "aidd-dev",
         "agent.md"
@@ -46,7 +46,7 @@ developer_instructions = "No frontmatter here."
 
     it("preserves @../ references untouched in developer_instructions", () => {
       const body = "See @../bar.md for details.";
-      const toml = codexAgentMarkdownToToml(
+      const toml = tomlAgentMarkdownToToml(
         `---\nname: agent\n---\n\n${body}`,
         "aidd-dev",
         "agent.md"
@@ -58,7 +58,7 @@ developer_instructions = "No frontmatter here."
     it("preserves @CLAUDE_PLUGIN_ROOT/ references untouched in developer_instructions", () => {
       // Use split literal to avoid biome noTemplateCurlyInString warning
       const claudeRootRef = "@$" + "{CLAUDE_PLUGIN_ROOT}/agents/planner.md";
-      const toml = codexAgentMarkdownToToml(
+      const toml = tomlAgentMarkdownToToml(
         `---\nname: agent\n---\n\n${claudeRootRef}`,
         "aidd-dev",
         "agent.md"
@@ -75,7 +75,7 @@ developer_instructions = "No frontmatter here."
       const claudeRootRef = "@$" + "{CLAUDE_PLUGIN_ROOT}/baz.md";
       const body = `@./foo.md\n@../bar.md\n${claudeRootRef}`;
       const content = `---\nname: agent\n---\n\n${body}`;
-      const toml = codexAgentMarkdownToToml(content, "aidd-dev", "agent.md");
+      const toml = tomlAgentMarkdownToToml(content, "aidd-dev", "agent.md");
       const parsed = parseToml(toml);
       const instr = parsed.developer_instructions as string;
       const claudeRoot = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -89,8 +89,8 @@ developer_instructions = "No frontmatter here."
     it("produces byte-identical output on two consecutive calls with identical input", () => {
       const content =
         "---\nname: planner\ndescription: A planner.\nmodel: opus\n---\n\nBody with code:\n```bash\necho hi\n```\n";
-      const first = codexAgentMarkdownToToml(content, "aidd-dev", "planner.md");
-      const second = codexAgentMarkdownToToml(content, "aidd-dev", "planner.md");
+      const first = tomlAgentMarkdownToToml(content, "aidd-dev", "planner.md");
+      const second = tomlAgentMarkdownToToml(content, "aidd-dev", "planner.md");
       expect(first).toBe(second);
     });
   });
@@ -99,7 +99,7 @@ developer_instructions = "No frontmatter here."
     it("produces valid TOML that parses successfully", () => {
       const content =
         "---\nname: implementer\ndescription: Implements code.\n---\n\n# Role\nYou implement code.";
-      const toml = codexAgentMarkdownToToml(content, "aidd-dev", "implementer.md");
+      const toml = tomlAgentMarkdownToToml(content, "aidd-dev", "implementer.md");
       expect(() => parseToml(toml)).not.toThrow();
     });
 
@@ -107,14 +107,14 @@ developer_instructions = "No frontmatter here."
       const body = '# Heading\n\n```yaml\nkey: "value"\n```\n\nSome text with backslash: \\.';
       // parseFrontmatter includes the blank separator line as leading \n in body
       const content = `---\nname: agent\ndescription: Complex agent.\n---\n${body}`;
-      const toml = codexAgentMarkdownToToml(content, "aidd-dev", "agent.md");
+      const toml = tomlAgentMarkdownToToml(content, "aidd-dev", "agent.md");
       const parsed = parseToml(toml);
       expect(parsed.developer_instructions).toBe(body);
     });
 
     it("round-trips name with quotes and special chars", () => {
       const content = "---\nname: 'my \"agent\"'\ndescription: Has quotes.\n---\n\nBody.";
-      const toml = codexAgentMarkdownToToml(content, "aidd-dev", "agent.md");
+      const toml = tomlAgentMarkdownToToml(content, "aidd-dev", "agent.md");
       const parsed = parseToml(toml);
       expect(typeof parsed.name).toBe("string");
     });
@@ -122,7 +122,7 @@ developer_instructions = "No frontmatter here."
 
   describe("empty frontmatter", () => {
     it("always emits description (defaults to empty string when absent)", () => {
-      const toml = codexAgentMarkdownToToml("No frontmatter.", "aidd-dev", "agent.md");
+      const toml = tomlAgentMarkdownToToml("No frontmatter.", "aidd-dev", "agent.md");
       const parsed = parseToml(toml);
       expect(parsed.developer_instructions).toBeDefined();
       // description is a required subagent key; always emitted even when absent in source.
@@ -134,7 +134,7 @@ developer_instructions = "No frontmatter here."
 describe("the name a Codex agent falls back to", () => {
   it("ignores an empty frontmatter name and names the agent after its plugin and file", () => {
     expect(
-      codexAgentMarkdownToToml(
+      tomlAgentMarkdownToToml(
         "---\nname: ''\ndescription: Plans\n---\nBody.\n",
         "aidd-dev",
         "planner.md"
@@ -146,7 +146,7 @@ describe("the name a Codex agent falls back to", () => {
 
   it("drops only the trailing .md from the file it names an agent after", () => {
     expect(
-      codexAgentMarkdownToToml(
+      tomlAgentMarkdownToToml(
         "---\ndescription: Plans\n---\nBody.\n",
         "aidd-dev",
         "notes.md-helper.md"

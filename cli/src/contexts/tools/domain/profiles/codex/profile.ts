@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
-import { codexAgentFrontmatter, codexAgentToml } from "../../behaviours/codex-agent-toml.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { tomlAgentFrontmatter, tomlAgentToml } from "../../formats/toml-agent.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
@@ -66,8 +66,8 @@ export const codex = defineAiTool({
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "toml",
-      frontmatter: codexAgentFrontmatter,
-      serialize: codexAgentToml,
+      frontmatter: tomlAgentFrontmatter,
+      serialize: tomlAgentToml,
     }),
     skills: bound.skills({
       agentsSkillsDirectory: true,

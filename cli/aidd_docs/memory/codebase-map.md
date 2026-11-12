@@ -46,7 +46,6 @@ src/
 │   │   ├── application/
 │   │   ├── contract/
 │   │   └── domain/
-│   │       ├── behaviours/    # the named behaviours a profile calls: what a tool does that data cannot say
 │   │       ├── bridges/    # the generated event modules of the hosts that read no hooks file
 │   │       ├── formats/
 │   │       ├── hooks/

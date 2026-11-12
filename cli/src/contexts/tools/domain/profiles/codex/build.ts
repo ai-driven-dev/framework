@@ -11,9 +11,9 @@ import {
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import type { PluginPresence, ToolBuildContract } from "../../../contract/build-contract.js";
-import { codexAgentMarkdownToToml } from "../../behaviours/codex-agent-toml.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { parseToml, stringifyToml } from "../../formats/toml.js";
+import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
 import { buildCodexMarketplace, buildCodexMarketplaceEntry } from "../../marketplace-catalog.js";
 import {
   OUTPUT_CODEX_AGENTS_DIR,
@@ -143,7 +143,7 @@ export function buildCodexContract(): ToolBuildContract {
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) =>
           `${OUTPUT_CODEX_AGENTS_DIR}/${rel.replace(/^agents\//, "").replace(/\.md$/, ".toml")}`,
-        transform: codexAgentMarkdownToToml,
+        transform: tomlAgentMarkdownToToml,
       },
       mcp: {
         supported: true,
@@ -221,7 +221,7 @@ export function buildCodexFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: codexFlatAgentPath,
-        transform: codexAgentMarkdownToToml,
+        transform: tomlAgentMarkdownToToml,
       },
       mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
       hooks: flatHooksArtifact(CODEX_HOOKS, { tool: "codex" }),
