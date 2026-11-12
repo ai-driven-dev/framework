@@ -1,5 +1,6 @@
 import { isAbsolute, join } from "node:path";
 import { InvalidToolProfileError } from "../../../../kernel/errors.js";
+import type { ConfigAsset } from "../../../../kernel/file.js";
 import {
   AI_TOOL_IDS,
   type AiToolId,
@@ -70,6 +71,7 @@ type AiToolFields = Omit<
   | "skillsSection"
   | "configFiles"
   | "runtimeFiles"
+  | "configAssets"
   | "mcpConfig"
   | "flatPluginMcp"
   | "settingsFiles"
@@ -87,11 +89,14 @@ type AiToolFields = Omit<
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
   readonly toolId: string;
+  /** The config files the tool ships, by asset name, each imported where it is declared. */
+  readonly configAssets?: Readonly<Record<string, ConfigAsset>>;
   readonly capabilities: (bound: BoundTool) => C;
 }
 
 export interface IdeToolSpec<C extends ProfileSections> {
   readonly toolId: string;
+  readonly configAssets?: Readonly<Record<string, ConfigAsset>>;
   readonly directory: string;
   readonly signalDir: string | null;
   readonly capabilities: () => C;
@@ -272,6 +277,7 @@ export function defineAiTool<C extends ProfileSections>(
       nativeActivationOf(capabilities)?.takesRefForInUse(enabled) ?? true,
     configFiles: () => ({ ...fields.configOutputPaths, ...fields.pluginRuntimeFiles }),
     runtimeFiles: () => ({ ...fields.pluginRuntimeFiles }),
+    configAssets: () => ({ ...spec.configAssets }),
     mcpConfig: () => capabilities.mcp?.config ?? null,
     flatPluginMcp: () =>
       capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
@@ -311,6 +317,7 @@ export function defineIdeTool<C extends ProfileSections>(
     section: sectionReader(capabilities),
     configWrites: () => settingsWrites(capabilities),
     settingsFiles: () => settingsOf(capabilities),
+    configAssets: () => ({ ...spec.configAssets }),
     signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
     machineLocalFiles: (): readonly string[] => [],
   };

@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { PluginPresence } from "../../../../src/contexts/tools/contract/build-contract.js";
 import {
-  buildClaudeStyleCatalogEntry,
-  buildClaudeStyleEntry,
-  buildClaudeStyleMarketplace,
-  buildCodexMarketplace,
-  buildCodexMarketplaceEntry,
+  buildSharedCatalogEntry,
+  buildSharedEntry,
+  buildSharedMarketplace,
   resolveDescription,
   resolveVersion,
-  synthesizeClaudeStyleManifest,
+  synthesizeSharedManifest,
 } from "../../../../src/contexts/tools/domain/marketplace-catalog.js";
 import { InvalidSourceMarketplaceError } from "../../../../src/kernel/errors.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
@@ -40,10 +38,10 @@ const BASE_SOURCE = {
   keywords: ["ai", "dev"],
 };
 
-describe("synthesizeClaudeStyleManifest", () => {
+describe("synthesizeSharedManifest", () => {
   describe("passthrough fields", () => {
     it("preserves name, description, version, author, homepage, repository, license, keywords", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, EMPTY_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, EMPTY_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -58,7 +56,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("omits fields absent from source", () => {
-      const result = synthesizeClaudeStyleManifest({ name: "test" }, EMPTY_PRESENCE, {
+      const result = synthesizeSharedManifest({ name: "test" }, EMPTY_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -70,7 +68,7 @@ describe("synthesizeClaudeStyleManifest", () => {
 
   describe("agents field", () => {
     it("includes agents as ./agents/*.md file paths when agentsField:true and agents present", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -82,7 +80,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("omits agents when agentsField:true but no agents present", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, EMPTY_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, EMPTY_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -90,7 +88,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("omits agents when agentsField:false even if hasAgents:true", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: false,
         hooksField: true,
       });
@@ -100,7 +98,7 @@ describe("synthesizeClaudeStyleManifest", () => {
 
   describe("conditional fields", () => {
     it("includes skills array when skillsList is non-empty", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -108,7 +106,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("omits skills when skillsList is empty", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, EMPTY_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, EMPTY_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -116,7 +114,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("includes hooks when hasHooksJson:true", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -124,7 +122,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("omits hooks when hasHooksJson:false", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, EMPTY_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, EMPTY_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -132,7 +130,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("omits hooks when the tool loads that path by convention and refuses a manifest naming it", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: false,
       });
@@ -141,7 +139,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("includes mcpServers when hasMcpJson:true", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -149,7 +147,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("omits mcpServers when hasMcpJson:false", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, EMPTY_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, EMPTY_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -159,7 +157,7 @@ describe("synthesizeClaudeStyleManifest", () => {
 
   describe("manifestDir variants", () => {
     it("accepts .cursor-plugin as manifestDir (field set unchanged)", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -172,7 +170,7 @@ describe("synthesizeClaudeStyleManifest", () => {
     });
 
     it("accepts .plugin as manifestDir (field set unchanged)", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -186,7 +184,7 @@ describe("synthesizeClaudeStyleManifest", () => {
 
   describe("key insertion order", () => {
     it("emits keys in deterministic order: name, description, version, author, ..., agents, skills, hooks, mcpServers", () => {
-      const result = synthesizeClaudeStyleManifest(BASE_SOURCE, FULL_PRESENCE, {
+      const result = synthesizeSharedManifest(BASE_SOURCE, FULL_PRESENCE, {
         agentsField: true,
         hooksField: true,
       });
@@ -203,13 +201,13 @@ describe("synthesizeClaudeStyleManifest", () => {
   });
 });
 
-describe("buildClaudeStyleMarketplace", () => {
+describe("buildSharedMarketplace", () => {
   const ENTRIES = [
     { name: "aidd-dev", source: "./plugins/aidd-dev", description: "Dev", version: "1.0.0" },
   ];
 
   it("emits name, plugins as required fields", () => {
-    const result = buildClaudeStyleMarketplace(
+    const result = buildSharedMarketplace(
       { name: "aidd-framework", owner: { name: "AIDD" } },
       ENTRIES
     );
@@ -218,7 +216,7 @@ describe("buildClaudeStyleMarketplace", () => {
   });
 
   it("includes version and description when present", () => {
-    const result = buildClaudeStyleMarketplace(
+    const result = buildSharedMarketplace(
       { name: "aidd-fw", version: "2.0.0", description: "Full", owner: { name: "X" } },
       ENTRIES
     );
@@ -227,21 +225,21 @@ describe("buildClaudeStyleMarketplace", () => {
   });
 
   it("omits version and description when absent", () => {
-    const result = buildClaudeStyleMarketplace({ name: "fw", owner: { name: "X" } }, ENTRIES);
+    const result = buildSharedMarketplace({ name: "fw", owner: { name: "X" } }, ENTRIES);
     expect(result.version).toBeUndefined();
     expect(result.description).toBeUndefined();
   });
 
   it("includes owner when present", () => {
     const owner = { name: "AIDD" };
-    const result = buildClaudeStyleMarketplace({ name: "fw", owner }, ENTRIES);
+    const result = buildSharedMarketplace({ name: "fw", owner }, ENTRIES);
     expect(result.owner).toEqual(owner);
   });
 });
 
-describe("buildClaudeStyleCatalogEntry", () => {
+describe("buildSharedCatalogEntry", () => {
   it("builds entry with name, source, description, version", () => {
-    const entry = buildClaudeStyleCatalogEntry("aidd-dev", "AI Dev plugin", "1.0.0", undefined);
+    const entry = buildSharedCatalogEntry("aidd-dev", "AI Dev plugin", "1.0.0", undefined);
     expect(entry.name).toBe("aidd-dev");
     expect(entry.source).toBe("./plugins/aidd-dev");
     expect(entry.description).toBe("AI Dev plugin");
@@ -249,7 +247,7 @@ describe("buildClaudeStyleCatalogEntry", () => {
   });
 
   it("passes strict through, and recommended under metadata, where Claude Code does not warn", () => {
-    const entry = buildClaudeStyleCatalogEntry("aidd-dev", "desc", "1.0.0", {
+    const entry = buildSharedCatalogEntry("aidd-dev", "desc", "1.0.0", {
       strict: true,
       metadata: { recommended: false },
     });
@@ -259,44 +257,44 @@ describe("buildClaudeStyleCatalogEntry", () => {
   });
 
   it("omits strict and metadata when absent", () => {
-    const entry = buildClaudeStyleCatalogEntry("aidd-dev", "desc", "1.0.0", undefined);
+    const entry = buildSharedCatalogEntry("aidd-dev", "desc", "1.0.0", undefined);
     expect(entry.strict).toBeUndefined();
     expect(entry.metadata).toBeUndefined();
   });
 
   it("only includes strict when it is boolean (not string/number)", () => {
-    const entry = buildClaudeStyleCatalogEntry("aidd-dev", "desc", "1.0.0", { strict: true });
+    const entry = buildSharedCatalogEntry("aidd-dev", "desc", "1.0.0", { strict: true });
     expect(typeof entry.strict).toBe("boolean");
   });
 });
 
-describe("synthesizeClaudeStyleManifest, field by field", () => {
+describe("synthesizeSharedManifest, field by field", () => {
   const opts = { agentsField: true, hooksField: true };
 
   it("writes no key at all for a source declaring nothing", () => {
-    expect(synthesizeClaudeStyleManifest({}, EMPTY_PRESENCE, opts)).toStrictEqual({});
+    expect(synthesizeSharedManifest({}, EMPTY_PRESENCE, opts)).toStrictEqual({});
   });
 
   it("keeps an author given as an object or a string, and drops one of any other type", () => {
-    expect(
-      synthesizeClaudeStyleManifest({ author: { name: "B" } }, EMPTY_PRESENCE, opts)
-    ).toStrictEqual({ author: { name: "B" } });
-    expect(synthesizeClaudeStyleManifest({ author: "B" }, EMPTY_PRESENCE, opts)).toStrictEqual({
+    expect(synthesizeSharedManifest({ author: { name: "B" } }, EMPTY_PRESENCE, opts)).toStrictEqual(
+      { author: { name: "B" } }
+    );
+    expect(synthesizeSharedManifest({ author: "B" }, EMPTY_PRESENCE, opts)).toStrictEqual({
       author: "B",
     });
-    expect(synthesizeClaudeStyleManifest({ author: 7 }, EMPTY_PRESENCE, opts)).toStrictEqual({});
+    expect(synthesizeSharedManifest({ author: 7 }, EMPTY_PRESENCE, opts)).toStrictEqual({});
   });
 
   it("drops a name, description or version that is not a string", () => {
     expect(
-      synthesizeClaudeStyleManifest({ name: 1, description: 2, version: 3 }, EMPTY_PRESENCE, opts)
+      synthesizeSharedManifest({ name: 1, description: 2, version: 3 }, EMPTY_PRESENCE, opts)
     ).toStrictEqual({});
   });
 });
 
-describe("buildClaudeStyleMarketplace, field by field", () => {
+describe("buildSharedMarketplace, field by field", () => {
   it("writes only the name and the plugins for a source declaring nothing else", () => {
-    expect(buildClaudeStyleMarketplace({ name: "m" }, [])).toStrictEqual({
+    expect(buildSharedMarketplace({ name: "m" }, [])).toStrictEqual({
       name: "m",
       plugins: [],
     });
@@ -359,45 +357,13 @@ describe("resolving a catalog entry's version and description", () => {
     });
 
     expect(
-      await buildClaudeStyleEntry("p", "/out", { strict: true }, ".claude-plugin/plugin.json", fs)
+      await buildSharedEntry("p", "/out", { strict: true }, ".claude-plugin/plugin.json", fs)
     ).toStrictEqual({
       name: "p",
       source: "./plugins/p",
       description: "built",
       version: "1.0.0",
       strict: true,
-    });
-  });
-});
-
-describe("a Codex marketplace catalog", () => {
-  it("falls back to the marketplace name as its display name", () => {
-    expect(buildCodexMarketplace({ name: "m" }, [])).toStrictEqual({
-      name: "m",
-      interface: { displayName: "m" },
-      plugins: [],
-    });
-    expect(buildCodexMarketplace({ name: "m", displayName: "Mine" }, []).interface).toStrictEqual({
-      displayName: "Mine",
-    });
-  });
-
-  it("defaults an entry's authentication and category, and takes a string override for each", () => {
-    expect(buildCodexMarketplaceEntry("p", undefined)).toStrictEqual({
-      name: "p",
-      source: { source: "local", path: "./plugins/p" },
-      policy: { installation: "AVAILABLE", authentication: "ON_USE" },
-      category: "Developer Tools",
-    });
-    expect(
-      buildCodexMarketplaceEntry("p", { authentication: "NEVER", category: "Testing" })
-    ).toMatchObject({
-      policy: { installation: "AVAILABLE", authentication: "NEVER" },
-      category: "Testing",
-    });
-    expect(buildCodexMarketplaceEntry("p", { authentication: 1, category: null })).toMatchObject({
-      policy: { authentication: "ON_USE" },
-      category: "Developer Tools",
     });
   });
 });

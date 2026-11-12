@@ -16,7 +16,7 @@ import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-
 import {
   resolveDescription,
   resolveVersion,
-  synthesizeClaudeStyleManifest,
+  synthesizeSharedManifest,
 } from "../../marketplace-catalog.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
@@ -43,7 +43,7 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
     pluginRootToken: COPILOT_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
-      synthesizeClaudeStyleManifest(source, presence, {
+      synthesizeSharedManifest(source, presence, {
         agentsField: true,
         hooksField: COPILOT_HOOKS.manifestNamesHooks,
       }),

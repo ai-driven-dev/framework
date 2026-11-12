@@ -14,7 +14,6 @@ import type { PluginPresence, ToolBuildContract } from "../../../contract/build-
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { parseToml, stringifyToml } from "../../formats/toml.js";
 import { tomlAgentMarkdownToToml } from "../../formats/toml-agent.js";
-import { buildCodexMarketplace, buildCodexMarketplaceEntry } from "../../marketplace-catalog.js";
 import {
   OUTPUT_CODEX_AGENTS_DIR,
   OUTPUT_CODEX_MANIFEST_RELATIVE,
@@ -241,5 +240,45 @@ export function buildCodexFlatContract(): ToolBuildContract {
         return [{ path: CODEX_FLAT_CONFIG, content: merged }];
       },
     },
+  };
+}
+
+// Codex-native marketplace catalog, for `codex plugin marketplace add`. Shape verified against
+// OpenAI's own published plugins marketplace and its plugin-build documentation.
+
+/** Default category when the source marketplace entry does not specify one. */
+const CODEX_DEFAULT_CATEGORY = "Developer Tools";
+/** Default per-plugin auth policy. AIDD plugins bundle skills/agents/hooks with no external
+ * OAuth, so auth is deferred to first use rather than forced at install. */
+const CODEX_DEFAULT_AUTHENTICATION = "ON_USE";
+const CODEX_INSTALLATION_AVAILABLE = "AVAILABLE";
+
+/** Build a Codex marketplace catalog. `displayName` falls back to the marketplace name when
+ * the source omits it. */
+export function buildCodexMarketplace(
+  source: { name: string; displayName?: string },
+  pluginEntries: readonly Record<string, unknown>[]
+): Record<string, unknown> {
+  const displayName = typeof source.displayName === "string" ? source.displayName : source.name;
+  return { name: source.name, interface: { displayName }, plugins: pluginEntries };
+}
+
+/** Build a single Codex marketplace entry. `installation`, `authentication` and `category` are
+ * required by the plugin-creator spec; the last two accept a source-entry override. */
+export function buildCodexMarketplaceEntry(
+  name: string,
+  srcEntry: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  const authentication =
+    typeof srcEntry?.authentication === "string"
+      ? srcEntry.authentication
+      : CODEX_DEFAULT_AUTHENTICATION;
+  const category =
+    typeof srcEntry?.category === "string" ? srcEntry.category : CODEX_DEFAULT_CATEGORY;
+  return {
+    name,
+    source: { source: "local", path: `./plugins/${name}` },
+    policy: { installation: CODEX_INSTALLATION_AVAILABLE, authentication },
+    category,
   };
 }

@@ -1,10 +1,13 @@
 import { join } from "node:path";
+import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vscode-settings.json" with {
+  type: "json",
+};
 import { GITKEEP_FILE } from "../../../../../kernel/file.js";
 import { DOCS_DIR } from "../../../../../kernel/paths.js";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
+import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { AgentsSection } from "../../sections/agents-section.js";
 import { CommandsSection } from "../../sections/commands-section.js";
@@ -203,6 +206,7 @@ export const copilot = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "GitHub Copilot",
   signalDir: ".github/prompts",
+  configAssets: { "vscode-settings.json": copilotVscodeSettings },
   buildContracts: {
     marketplace: buildCopilotMarketplaceContract,
     flat: buildCopilotFlatContract,
@@ -311,7 +315,7 @@ export const copilot = defineAiTool({
         marketplacesSettingsPath: null,
         enabledPluginsKey: "enabledPlugins",
         declarativePluginActivationRequiresNativeProof: true,
-        toEntryKey: claudeStyleMarketplaceKey,
+        toEntryKey: sharedMarketplaceKey,
       },
     }),
     manifest: manifestSection({

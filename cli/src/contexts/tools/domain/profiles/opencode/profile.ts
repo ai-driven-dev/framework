@@ -1,4 +1,8 @@
 import { join } from "node:path";
+import opencodeJson from "../../../../../../assets/configs/opencode/opencode.json" with {
+  type: "json",
+};
+import opencodeEvents from "../../../../../../assets/configs/opencode/opencode-events.js.txt";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE } from "../../../contract/config-refs.js";
 import {
@@ -31,6 +35,7 @@ export const opencode = defineAiTool({
   displayName: "OpenCode",
   signalDir: ".opencode/commands",
   configOutputPaths: { "opencode.json": "opencode.json" },
+  configAssets: { "opencode.json": opencodeJson, "opencode-events.js": opencodeEvents },
   pluginRuntimeFiles: { [OPENCODE_HOOKS.bridgeRuntime.asset]: OPENCODE_HOOKS.bridgeRuntime.path },
   buildContracts: { flat: buildOpencodeFlatContract },
 

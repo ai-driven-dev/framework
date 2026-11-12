@@ -1,8 +1,10 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-cursor.cjs";
-import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
 import { declareHooks } from "../../formats/hooks-descriptor.js";
 import { CURSOR_DIRECTORY } from "./cursor-paths.js";
+
+// Split literal to avoid biome's noTemplateCurlyInString warning.
+const CURSOR_PLUGIN_ROOT_TOKEN = "$" + "{CURSOR_PLUGIN_ROOT}";
 
 export const CURSOR_HOOKS = declareHooks("cursor", CURSOR_DIRECTORY, adapter, {
   undeclaredEvents: "skipped",

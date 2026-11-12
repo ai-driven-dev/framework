@@ -1,4 +1,7 @@
 import { join } from "node:path";
+import cursorSettings from "../../../../../../assets/configs/cursor/settings.json" with {
+  type: "json",
+};
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
@@ -35,6 +38,7 @@ export const cursor = defineAiTool({
   displayName: "Cursor",
   signalDir: ".cursor/commands",
   configOutputPaths: { "settings.json": ".cursor/settings.json" },
+  configAssets: { "settings.json": cursorSettings },
   buildContracts: { marketplace: buildCursorContract, flat: buildCursorFlatContract },
 
   capabilities: (bound) => ({

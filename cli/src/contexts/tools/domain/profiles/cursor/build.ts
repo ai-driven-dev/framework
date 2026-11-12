@@ -14,9 +14,9 @@ import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import {
-  buildClaudeStyleEntry,
-  buildClaudeStyleMarketplace,
-  synthesizeClaudeStyleManifest,
+  buildSharedEntry,
+  buildSharedMarketplace,
+  synthesizeSharedManifest,
 } from "../../marketplace-catalog.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import {
@@ -45,7 +45,7 @@ export function buildCursorContract(): ToolBuildContract {
     pluginRootToken: CURSOR_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
-      synthesizeClaudeStyleManifest(source, presence, {
+      synthesizeSharedManifest(source, presence, {
         agentsField: true,
         hooksField: CURSOR_HOOKS.manifestNamesHooks,
       }),
@@ -72,15 +72,15 @@ export function buildCursorContract(): ToolBuildContract {
       commands: { supported: false },
     },
     buildMarketplaceCatalog: async (source, entries, _fs) => ({
-      catalog: buildClaudeStyleMarketplace(
-        source as Parameters<typeof buildClaudeStyleMarketplace>[0],
+      catalog: buildSharedMarketplace(
+        source as Parameters<typeof buildSharedMarketplace>[0],
         entries
       ),
       schemaName: "claude-marketplace",
       destRelPath: marketplaceRelative,
     }),
     buildMarketplaceEntry: async (name, _src, outDir, srcEntry, fs) =>
-      buildClaudeStyleEntry(name, outDir, srcEntry, manifestRelative, fs),
+      buildSharedEntry(name, outDir, srcEntry, manifestRelative, fs),
   };
 }
 

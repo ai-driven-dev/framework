@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/framework/application/restore/generate-tool-distribution-use-case.js";
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
@@ -36,7 +37,7 @@ const contentFiles = new Map([
 ]);
 
 const hasher = new DeterministicHasher();
-const assets = new BundledAssetProviderAdapter();
+const assets = new BundledAssetProviderAdapter(wireTools());
 
 function generate(
   config: ToolProfile,

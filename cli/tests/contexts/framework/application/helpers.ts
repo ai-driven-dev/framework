@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { wireTools } from "../../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
@@ -202,7 +203,7 @@ export function buildDeps(projectRoot: string) {
   const fs = new FileAdapter(hasher);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const logger = new CLIOutput(false);
-  const assetProvider = new BundledAssetProviderAdapter();
+  const assetProvider = new BundledAssetProviderAdapter(wireTools());
   const pluginFetcher = new PluginFetcherAdapter(fs);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,

@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import { buildCursorContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
@@ -25,7 +26,7 @@ const CLAUDE_ROOT_VAR = "$" + "{CLAUDE_PLUGIN_ROOT}";
 const CURSOR_ROOT_VAR = "$" + "{CURSOR_PLUGIN_ROOT}";
 
 function makeBundledAssetProvider(): AssetProvider {
-  return new BundledAssetProviderAdapter();
+  return new BundledAssetProviderAdapter(wireTools());
 }
 
 function makeUseCase(
@@ -95,7 +96,7 @@ describe("CursorOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.cursor-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadSchema("plugin-manifest");
+      const schema = new BundledAssetProviderAdapter(wireTools()).loadSchema("plugin-manifest");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
   });
@@ -108,7 +109,7 @@ describe("CursorOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/.cursor-plugin/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadSchema("claude-marketplace");
+      const schema = new BundledAssetProviderAdapter(wireTools()).loadSchema("claude-marketplace");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
 

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 
@@ -14,7 +15,7 @@ describe("BundledAssetProviderAdapter.loadSchema", () => {
     ["codex-marketplace", "codex-marketplace-manifest.json"],
     ["codex-plugin-manifest", "codex-plugin-manifest.json"],
   ] as const)("reads %s from the bundled schema file %s", (name, file) => {
-    expect(new BundledAssetProviderAdapter().loadSchema(name)).toStrictEqual(
+    expect(new BundledAssetProviderAdapter(wireTools()).loadSchema(name)).toStrictEqual(
       JSON.parse(readFileSync(join(SCHEMAS, file), "utf8"))
     );
   });

@@ -19,7 +19,7 @@ type SrcEntry =
     }
   | undefined;
 
-export interface SynthesizeClaudeStyleManifestOpts {
+export interface SynthesizeSharedManifestOpts {
   /** When true, include `agents` as a list of `./agents/*.md` file paths if agents are present. */
   readonly agentsField: boolean;
   /**
@@ -33,10 +33,10 @@ export interface SynthesizeClaudeStyleManifestOpts {
 
 /** Synthesize a Claude-style plugin manifest, shared by the claude, cursor and copilot
  * strategies. Key insertion order is part of the output shape. */
-export function synthesizeClaudeStyleManifest(
+export function synthesizeSharedManifest(
   source: Record<string, unknown>,
   presence: PluginPresence,
-  opts: SynthesizeClaudeStyleManifestOpts
+  opts: SynthesizeSharedManifestOpts
 ): Record<string, unknown> {
   const manifest: Record<string, unknown> = {};
   if (typeof source.name === "string") manifest.name = source.name;
@@ -57,7 +57,7 @@ export function synthesizeClaudeStyleManifest(
   return manifest;
 }
 
-export function buildClaudeStyleMarketplace(
+export function buildSharedMarketplace(
   source: { name: string; version?: string; description?: string; owner?: unknown },
   pluginEntries: readonly Record<string, unknown>[]
 ): Record<string, unknown> {
@@ -69,7 +69,7 @@ export function buildClaudeStyleMarketplace(
   return obj;
 }
 
-export function buildClaudeStyleCatalogEntry(
+export function buildSharedCatalogEntry(
   name: string,
   description: string,
   version: string,
@@ -129,7 +129,7 @@ export async function resolveDescription(
 
 /** Resolve version and description, then shape the catalog entry — the marketplace-entry
  * builder claude and cursor both hand to `ToolBuildContract.buildMarketplaceEntry`. */
-export async function buildClaudeStyleEntry(
+export async function buildSharedEntry(
   name: string,
   outDir: string,
   srcEntry: SrcEntry,
@@ -139,50 +139,10 @@ export async function buildClaudeStyleEntry(
   const args = [fs, name, srcEntry, outDir, manifestRelative] as const;
   const version = await resolveVersion(...args);
   const description = await resolveDescription(...args);
-  return buildClaudeStyleCatalogEntry(
+  return buildSharedCatalogEntry(
     name,
     description,
     version,
     srcEntry as Record<string, unknown> | undefined
   );
-}
-
-// Codex-native marketplace catalog, for `codex plugin marketplace add`. Shape verified against
-// OpenAI's own published plugins marketplace and its plugin-build documentation.
-
-/** Default category when the source marketplace entry does not specify one. */
-const CODEX_DEFAULT_CATEGORY = "Developer Tools";
-/** Default per-plugin auth policy. AIDD plugins bundle skills/agents/hooks with no external
- * OAuth, so auth is deferred to first use rather than forced at install. */
-const CODEX_DEFAULT_AUTHENTICATION = "ON_USE";
-const CODEX_INSTALLATION_AVAILABLE = "AVAILABLE";
-
-/** Build a Codex marketplace catalog. `displayName` falls back to the marketplace name when
- * the source omits it. */
-export function buildCodexMarketplace(
-  source: { name: string; displayName?: string },
-  pluginEntries: readonly Record<string, unknown>[]
-): Record<string, unknown> {
-  const displayName = typeof source.displayName === "string" ? source.displayName : source.name;
-  return { name: source.name, interface: { displayName }, plugins: pluginEntries };
-}
-
-/** Build a single Codex marketplace entry. `installation`, `authentication` and `category` are
- * required by the plugin-creator spec; the last two accept a source-entry override. */
-export function buildCodexMarketplaceEntry(
-  name: string,
-  srcEntry: Record<string, unknown> | undefined
-): Record<string, unknown> {
-  const authentication =
-    typeof srcEntry?.authentication === "string"
-      ? srcEntry.authentication
-      : CODEX_DEFAULT_AUTHENTICATION;
-  const category =
-    typeof srcEntry?.category === "string" ? srcEntry.category : CODEX_DEFAULT_CATEGORY;
-  return {
-    name,
-    source: { source: "local", path: `./plugins/${name}` },
-    policy: { installation: CODEX_INSTALLATION_AVAILABLE, authentication },
-    category,
-  };
 }

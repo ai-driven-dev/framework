@@ -31,7 +31,14 @@ export function withSections(
   base: AiTool,
   replacing: { readonly [K in ProfileSectionKey]?: ProfileSection<K> | null }
 ): AiTool & ProfileBrand {
-  const { kind: _kind, section: _section, configWrites: _configWrites, toolId, ...fields } = base;
+  const {
+    kind: _kind,
+    section: _section,
+    configWrites: _configWrites,
+    configAssets,
+    toolId,
+    ...fields
+  } = base;
   const kept = Object.fromEntries(
     PROFILE_SECTION_KEYS.map((key) => [key, base.section(key)] as const).filter(
       ([, section]) => section !== null
@@ -40,5 +47,10 @@ export function withSections(
   const merged = Object.fromEntries(
     Object.entries({ ...kept, ...replacing }).filter(([, section]) => section !== null)
   );
-  return defineAiTool({ ...fields, toolId, capabilities: () => merged });
+  return defineAiTool({
+    ...fields,
+    toolId,
+    configAssets: configAssets(),
+    capabilities: () => merged,
+  });
 }

@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import codexConfigToml from "../../../../../../assets/configs/codex/config.toml";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
@@ -61,6 +62,7 @@ export const codex = defineAiTool({
   displayName: "Codex",
   signalDir: `${DIRECTORY}commands`,
   configOutputPaths: { "config.toml": ".codex/config.toml" },
+  configAssets: { "config.toml": codexConfigToml },
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
   capabilities: (bound) => ({

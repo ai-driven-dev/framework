@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
 import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
@@ -29,7 +30,7 @@ const CLAUDE_ROOT_VAR = "$" + "{CLAUDE_PLUGIN_ROOT}";
 const CODEX_ROOT_VAR = "$" + "{PLUGIN_ROOT}";
 
 function makeBundledAssetProvider(): AssetProvider {
-  return new BundledAssetProviderAdapter();
+  return new BundledAssetProviderAdapter(wireTools());
 }
 
 function makeUseCase(
@@ -136,7 +137,9 @@ describe("CodexOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.codex-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadSchema("codex-plugin-manifest");
+      const schema = new BundledAssetProviderAdapter(wireTools()).loadSchema(
+        "codex-plugin-manifest"
+      );
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
 
@@ -158,7 +161,7 @@ describe("CodexOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/.agents/plugins/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadSchema("codex-marketplace");
+      const schema = new BundledAssetProviderAdapter(wireTools()).loadSchema("codex-marketplace");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
 

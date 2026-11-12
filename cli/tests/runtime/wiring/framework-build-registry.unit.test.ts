@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
 import {
   buildTargetModesOf,
@@ -17,7 +18,7 @@ const ALL_MODES: readonly FrameworkBuildMode[] = ["marketplace", "flat"];
 function makeDeps() {
   return {
     fs: new InMemoryFileAdapter(),
-    assetProvider: new BundledAssetProviderAdapter(),
+    assetProvider: new BundledAssetProviderAdapter(wireTools()),
     logger: new CapturingLogger(),
   };
 }

@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/domain/build-target.js";
 import { FlatTargetExistsError } from "../../../../../src/kernel/errors.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
@@ -39,7 +40,7 @@ async function buildFlat(
     catalogOf(),
     {
       fs: new FileAdapter(new HasherAdapter(), logger),
-      assetProvider: new BundledAssetProviderAdapter(),
+      assetProvider: new BundledAssetProviderAdapter(wireTools()),
       logger,
     },
     { target, mode: "flat", outDir: out, force: options.force ?? false }

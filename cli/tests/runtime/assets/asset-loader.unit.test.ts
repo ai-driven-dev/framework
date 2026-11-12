@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { parseToml } from "../../../src/contexts/tools/domain/formats/toml.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 
-const provider = new BundledAssetProviderAdapter();
+const provider = new BundledAssetProviderAdapter(wireTools());
 
 describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
   describe("claude", () => {

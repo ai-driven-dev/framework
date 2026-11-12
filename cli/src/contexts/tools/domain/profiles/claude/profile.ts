@@ -1,8 +1,11 @@
 import { join } from "node:path";
+import claudeSettings from "../../../../../../assets/configs/claude/settings.json" with {
+  type: "json",
+};
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
+import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
@@ -34,6 +37,7 @@ export const claude = defineAiTool({
   displayName: "Claude Code",
   signalDir: ".claude/commands",
   configOutputPaths: { "settings.json": ".claude/settings.json" },
+  configAssets: { "settings.json": claudeSettings },
   buildContracts: { marketplace: buildClaudeContract, flat: buildClaudeFlatContract },
 
   capabilities: (bound) => ({
@@ -132,7 +136,7 @@ export const claude = defineAiTool({
         // is the file `claude plugin marketplace add --scope local` writes itself.
         marketplacesSettingsPath: ".claude/settings.local.json",
         enabledPluginsKey: "enabledPlugins",
-        toEntryKey: claudeStyleMarketplaceKey,
+        toEntryKey: sharedMarketplaceKey,
       },
     }),
     manifest: manifestSection({

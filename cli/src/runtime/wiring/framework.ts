@@ -299,7 +299,7 @@ export async function createDeps(
     marketplaceRegistry,
     resolveMarketplaceUseCase
   );
-  const assetProvider = new BundledAssetProviderAdapter();
+  const assetProvider = new BundledAssetProviderAdapter(tools);
   // `force: true` is safe here: `outDir` is always an aidd-owned disposable cache, never a
   // user-owned directory, so a collision only means a previous build's cache exists. Its
   // diagnostics drop to debug because this build runs behind almost every command, where

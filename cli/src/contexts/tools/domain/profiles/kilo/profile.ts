@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import kiloJson from "../../../../../../assets/configs/kilo/kilo.json" with { type: "json" };
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import {
   buildAiddCommandFilePath,
@@ -27,6 +28,7 @@ export const kilo = defineAiTool({
   displayName: "Kilo Code",
   signalDir: ".kilo/commands",
   configOutputPaths: { "kilo.json": ".kilo/kilo.jsonc" },
+  configAssets: { "kilo.json": kiloJson },
   buildContracts: { flat: buildKiloFlatContract },
 
   capabilities: (bound) => ({

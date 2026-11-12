@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { wireTools } from "../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { DoctorLayoutUseCase } from "../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
 import { DoctorMergeFilesUseCase } from "../../../src/contexts/framework/application/doctor/doctor-merge-files-use-case.js";
@@ -45,7 +46,7 @@ export async function buildUnitDeps(_projectRoot: string) {
   const manifestRepo = new InMemoryManifestRepository();
   const userManifestRepo = new InMemoryManifestRepository();
   const logger = new CLIOutput(false);
-  const assetProvider = new BundledAssetProviderAdapter();
+  const assetProvider = new BundledAssetProviderAdapter(wireTools());
   const pluginFetcher = new FixturePluginFetcher();
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,

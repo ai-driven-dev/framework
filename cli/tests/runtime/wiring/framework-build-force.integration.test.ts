@@ -2,6 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { FlatTargetExistsError } from "../../../src/kernel/errors.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import {
@@ -21,7 +22,7 @@ const STALE_CONTENT = "stale content from a previous build";
 function makeDeps(fs: InMemoryFileAdapter): FrameworkBuildDeps {
   return {
     fs,
-    assetProvider: new BundledAssetProviderAdapter(),
+    assetProvider: new BundledAssetProviderAdapter(wireTools()),
     logger: new CapturingLogger(),
   };
 }

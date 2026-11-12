@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
@@ -25,7 +26,7 @@ const OUT_DIR = resolve("/tmp/aidd-claude-test-out");
 const CLAUDE_ROOT_VAR = "$" + "{CLAUDE_PLUGIN_ROOT}";
 
 function makeBundledAssetProvider(): AssetProvider {
-  return new BundledAssetProviderAdapter();
+  return new BundledAssetProviderAdapter(wireTools());
 }
 
 function makeUseCase(
@@ -105,7 +106,7 @@ describe("ClaudeOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.claude-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadSchema("plugin-manifest");
+      const schema = new BundledAssetProviderAdapter(wireTools()).loadSchema("plugin-manifest");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
   });
@@ -118,7 +119,7 @@ describe("ClaudeOutputStrategy", () => {
       const raw = fs.getFile(`${OUT_DIR}/.claude-plugin/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
-      const schema = new BundledAssetProviderAdapter().loadSchema("claude-marketplace");
+      const schema = new BundledAssetProviderAdapter(wireTools()).loadSchema("claude-marketplace");
       expect(() => av.validate(schema, parsed)).not.toThrow();
     });
 

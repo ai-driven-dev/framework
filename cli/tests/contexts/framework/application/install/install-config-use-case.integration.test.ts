@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
@@ -74,7 +75,7 @@ describe("InstallConfigUseCase — staticContent", () => {
   it("copilot staticContent contains all required Copilot keys", async () => {
     const { useCase } = buildUseCase();
     const descriptor = emptyDescriptor();
-    const assetProvider = new BundledAssetProviderAdapter();
+    const assetProvider = new BundledAssetProviderAdapter(wireTools());
 
     const results = await useCase.execute({
       writes: copilot.configWrites(),
@@ -130,7 +131,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,
-      assetProvider: new BundledAssetProviderAdapter(),
+      assetProvider: new BundledAssetProviderAdapter(wireTools()),
       toolId: "copilot",
     });
 
@@ -168,7 +169,7 @@ describe("InstallConfigUseCase — staticContent", () => {
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
         platform: linuxPlatform,
-        assetProvider: new BundledAssetProviderAdapter(),
+        assetProvider: new BundledAssetProviderAdapter(wireTools()),
       });
 
       expect(results).toStrictEqual([]);

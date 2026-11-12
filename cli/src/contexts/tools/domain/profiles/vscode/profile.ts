@@ -1,3 +1,12 @@
+import vscodeExtensions from "../../../../../../assets/configs/vscode/extensions.json" with {
+  type: "json",
+};
+import vscodeKeybindings from "../../../../../../assets/configs/vscode/keybindings.json" with {
+  type: "json",
+};
+import vscodeSettings from "../../../../../../assets/configs/vscode/settings.json" with {
+  type: "json",
+};
 import {
   CONFIG_VSCODE_EXTENSIONS,
   CONFIG_VSCODE_KEYBINDINGS,
@@ -12,6 +21,11 @@ export const vscode = defineIdeTool({
   toolId: "vscode",
   directory: DIRECTORY,
   signalDir: null,
+  configAssets: {
+    "settings.json": vscodeSettings,
+    "keybindings.json": vscodeKeybindings,
+    "extensions.json": vscodeExtensions,
+  },
   capabilities: () => ({
     config: [
       new ConfigSection({
