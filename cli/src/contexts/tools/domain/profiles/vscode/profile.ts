@@ -3,8 +3,8 @@ import {
   CONFIG_VSCODE_KEYBINDINGS,
   CONFIG_VSCODE_SETTINGS,
 } from "../../../contract/config-refs.js";
-import { SettingsCapability } from "../../capabilities/settings-capability.js";
 import { defineIdeTool } from "../../profile/define-tool.js";
+import { SettingsCapability } from "../../sections/settings-capability.js";
 
 const DIRECTORY = ".vscode/";
 

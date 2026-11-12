@@ -5,12 +5,12 @@ import type {
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
-import { AgentsCapability } from "../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
-import { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
-import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import { RulesCapability } from "../../../../src/contexts/tools/domain/capabilities/rules-capability.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
+import { AgentsCapability } from "../../../../src/contexts/tools/domain/sections/agents-capability.js";
+import { CommandsCapability } from "../../../../src/contexts/tools/domain/sections/commands-capability.js";
+import { McpCapability } from "../../../../src/contexts/tools/domain/sections/mcp-capability.js";
+import { RulesCapability } from "../../../../src/contexts/tools/domain/sections/rules-capability.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */

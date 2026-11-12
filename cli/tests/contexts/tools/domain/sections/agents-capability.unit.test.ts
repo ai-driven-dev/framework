@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AgentsCapability } from "../../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
+import { AgentsCapability } from "../../../../../src/contexts/tools/domain/sections/agents-capability.js";
 
 const identity = (fm: Record<string, unknown>) => fm;
 

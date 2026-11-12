@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   NativeActivation,
   type NativeActivationSpec,
-} from "../../../../../src/contexts/tools/domain/plugins/native-activation.js";
+} from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 
 const driven = { binary: "claude", enableVerb: "install", disableVerb: "uninstall" } as const;

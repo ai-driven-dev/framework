@@ -14,12 +14,7 @@ import type {
   SettingsFileAnswers,
 } from "../../contract/tool-profile.js";
 import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
-import { AgentsCapability } from "../capabilities/agents-capability.js";
-import { CommandsCapability } from "../capabilities/commands-capability.js";
-import { RulesCapability } from "../capabilities/rules-capability.js";
-import { SkillsCapability } from "../capabilities/skills-capability.js";
-import { flatInstallPath, ownsFlatPath } from "../plugins/flat-install-paths.js";
-import type { NativeActivation } from "../plugins/native-activation.js";
+import type { NativeActivation } from "../native-registration/native-activation.js";
 import type { AiTool, IdeToolConfig } from "../profile.js";
 import {
   isProfileSectionKey,
@@ -27,6 +22,11 @@ import {
   type ProfileSectionKey,
   type ProfileSections,
 } from "../profile.js";
+import { AgentsCapability } from "../sections/agents-capability.js";
+import { CommandsCapability } from "../sections/commands-capability.js";
+import { RulesCapability } from "../sections/rules-capability.js";
+import { SkillsCapability } from "../sections/skills-capability.js";
+import { flatInstallPath, ownsFlatPath } from "./flat-install-paths.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
 /** Only `defineAiTool` and `defineIdeTool` can produce one: an object literal lacks the private

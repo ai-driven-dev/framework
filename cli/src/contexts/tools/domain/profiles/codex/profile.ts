@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { codexAgentFrontmatter, codexAgentToml } from "../../behaviours/codex-agent-toml.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { McpCapability } from "../../sections/mcp-capability.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,

@@ -4,7 +4,7 @@ A capability is one section a profile declares (`ProfileSections` in `domain/pro
 
 ## Class shape
 
-One class per file in `domain/capabilities/`, named `<kebab-name>-capability.ts`, class name ending in `Capability` (`SkillsCapability`).
+One class per file in `domain/sections/`, named `<kebab-name>-capability.ts`, class name ending in `Capability` (`SkillsCapability`).
 
 ```typescript
 type WidgetsCapabilityParams = {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { McpCapability } from "../../../../../src/contexts/tools/domain/sections/mcp-capability.js";
 import { KiloDualConfigError, OpencodeDualConfigError } from "../../../../../src/kernel/errors.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 

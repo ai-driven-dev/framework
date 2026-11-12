@@ -68,7 +68,7 @@ function uncalledMethods(bodies: ReadonlyMap<string, string>, ports: readonly st
   return uncalled.sort();
 }
 
-const CAPABILITY_FILE = /^src\/contexts\/[^/]+\/domain\/capabilities\/[^/]+\.ts$/;
+const CAPABILITY_FILE = /^src\/contexts\/[^/]+\/domain\/sections\/[^/]+\.ts$/;
 const CAPABILITY_CLASS = /^export class (\w+)Capability\b[^{]*\{([\s\S]*?)\n\}/gm;
 const CLASS_METHOD = /^ {2}(?:(static) )?(?:async )?(?:(get) )?(\w+)\s*(?:<[^>]*>)?\(/gm;
 
@@ -84,43 +84,43 @@ const CAPABILITY_BASELINE: readonly {
   readonly reason: string;
 }[] = [
   {
-    file: "src/contexts/tools/domain/capabilities/agents-capability.ts",
+    file: "src/contexts/tools/domain/sections/agents-capability.ts",
     className: "AgentsCapability",
     methods: ["accepts", "deserialize", "equals"],
     reason: "called only by tests; the translate pipeline reads agents through the build contract",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/commands-capability.ts",
+    file: "src/contexts/tools/domain/sections/commands-capability.ts",
     className: "CommandsCapability",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/hooks-capability.ts",
+    file: "src/contexts/tools/domain/sections/hooks-capability.ts",
     className: "HooksCapability",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/mcp-capability.ts",
+    file: "src/contexts/tools/domain/sections/mcp-capability.ts",
     className: "McpCapability",
     methods: ["accepts", "equals", "merge"],
     reason: "called only by tests; MCP config merges through the file adapter's strategy",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/rules-capability.ts",
+    file: "src/contexts/tools/domain/sections/rules-capability.ts",
     className: "RulesCapability",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/settings-capability.ts",
+    file: "src/contexts/tools/domain/sections/settings-capability.ts",
     className: "SettingsCapability",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/skills-capability.ts",
+    file: "src/contexts/tools/domain/sections/skills-capability.ts",
     className: "SkillsCapability",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
@@ -234,7 +234,7 @@ describe("a capability declares nothing nobody calls", () => {
 });
 
 describe("the guard itself", () => {
-  const capability = "src/contexts/tools/domain/capabilities/thing-capability.ts";
+  const capability = "src/contexts/tools/domain/sections/thing-capability.ts";
   const thing = [
     "export class ThingCapability {",
     "  constructor(readonly params: { a: string }) {}",

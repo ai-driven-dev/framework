@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HooksCapability } from "../../../../../src/contexts/tools/domain/capabilities/hooks-capability.js";
+import { HooksCapability } from "../../../../../src/contexts/tools/domain/sections/hooks-capability.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 
 describe("HooksCapability", () => {

@@ -7,8 +7,8 @@ import type {
   PluginTranslationMode,
   ProjectHooksFormat,
 } from "../../contract/tool-vocabulary.js";
-import type { MarketplaceSettings } from "../marketplace-settings.js";
-import type { NativeActivationSpec } from "./native-activation.js";
+import type { MarketplaceSettings } from "../native-registration/marketplace-settings.js";
+import type { NativeActivationSpec } from "../native-registration/native-activation.js";
 
 /** A hook lands in the plugin's own dir, or merged into the project hooks file measured to fire. */
 export interface ProjectHooksDelivery {

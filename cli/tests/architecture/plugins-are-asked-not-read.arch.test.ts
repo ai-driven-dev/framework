@@ -18,7 +18,8 @@ import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
 const TOOLS_CONTEXT = /^(src|tests)\/contexts\/tools\//;
 
 const ANSWERING_DIRS = [
-  "src/contexts/tools/domain/capabilities",
+  "src/contexts/tools/domain/sections",
+  "src/contexts/tools/domain/native-registration",
   "src/contexts/tools/domain/plugins",
 ];
 
@@ -54,27 +55,27 @@ const STORED_OBJECT_COPY =
  * The eleven on the plugin delivery classes are the answers `plan-tools-clean.md` section 3.1
  * names; the others are declared values recorded there with their reason. Shrink-only: an entry the code no longer matches fails the test, and none is added. */
 const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
-  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.hostBinary":
+  "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.hostBinary":
     "the executable is the key every host registry and driver is looked up by; no computation sits behind it",
-  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.cliShape":
+  "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.cliShape":
     "the composition root configures the host CLI adapter with the whole declared shape; an answer per field would make the adapter ask the tool nine times for what it is handed once",
-  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration":
+  "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration":
     "the composition root picks the source reader by the declared form, which carries its own list command and wording",
-  "src/contexts/tools/domain/plugins/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile":
+  "src/contexts/tools/domain/native-registration/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile":
     "the path that names the tracked file in the manifest, resolved against a project root and hashed by its caller",
-  "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.outputPath":
+  "src/contexts/tools/domain/sections/hooks-capability.ts :: HooksCapability.outputPath":
     "the declared destination, asked by the framework install use cases (config, runtime config) and written into the manifest",
-  "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.mergeStrategy":
+  "src/contexts/tools/domain/sections/hooks-capability.ts :: HooksCapability.mergeStrategy":
     "the declared way the hooks file is merged, recorded on each installed file by the framework install use cases",
-  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPath":
+  "src/contexts/tools/domain/sections/mcp-capability.ts :: McpCapability.outputPath":
     "the declared destination, asked by the framework install use cases (config, runtime config)",
-  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.mergeStrategy":
+  "src/contexts/tools/domain/sections/mcp-capability.ts :: McpCapability.mergeStrategy":
     "the declared way the mcp file is merged, recorded on each installed file by the framework install use cases",
-  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.outputPath":
+  "src/contexts/tools/domain/sections/settings-capability.ts :: SettingsCapability.outputPath":
     "the declared destination, asked by the framework install use cases (ide tool, runtime config) and written into the manifest",
-  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.mergeStrategy":
+  "src/contexts/tools/domain/sections/settings-capability.ts :: SettingsCapability.mergeStrategy":
     "the declared way the settings file is merged, handed to the file merge by the framework install use cases",
-  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.requiredTool":
+  "src/contexts/tools/domain/sections/settings-capability.ts :: SettingsCapability.requiredTool":
     "the declared tool a settings section applies to, matched against the installed one by the ide tool and runtime config install use cases",
   "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.flatLayout":
     "the declared layout of a flat tool, asked by the flat build",
@@ -176,10 +177,12 @@ describe("a tool's plugin delivery is asked, never read", () => {
 
   it("reads every capability and plugins file, the activation and registration included", () => {
     const files = answeringFiles();
-    expect(files).toContain("src/contexts/tools/domain/capabilities/settings-capability.ts");
+    expect(files).toContain("src/contexts/tools/domain/sections/settings-capability.ts");
     expect(files).toContain("src/contexts/tools/domain/plugins/native-plugins.ts");
-    expect(files).toContain("src/contexts/tools/domain/plugins/native-activation.ts");
-    expect(files).toContain("src/contexts/tools/domain/plugins/marketplace-registration.ts");
+    expect(files).toContain("src/contexts/tools/domain/native-registration/native-activation.ts");
+    expect(files).toContain(
+      "src/contexts/tools/domain/native-registration/marketplace-registration.ts"
+    );
   });
 
   it("the shared base declares no answer only one way of taking plugins has", () => {

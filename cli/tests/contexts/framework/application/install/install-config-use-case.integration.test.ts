@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { McpCapability } from "../../../../../src/contexts/tools/domain/sections/mcp-capability.js";
+import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";

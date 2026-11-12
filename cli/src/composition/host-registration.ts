@@ -28,7 +28,7 @@ import type {
   MarketplaceSourcesDeclaration,
   NativeActivation,
   PluginRegistryLayout,
-} from "../contexts/tools/domain/plugins/native-activation.js";
+} from "../contexts/tools/domain/native-registration/native-activation.js";
 import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../kernel/errors.js";
 import { resolveHomeDir } from "../kernel/reading/home-dir.js";

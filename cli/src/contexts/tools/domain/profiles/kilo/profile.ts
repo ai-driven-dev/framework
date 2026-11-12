@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -10,6 +9,7 @@ import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { flatGlobalFilePath } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { McpCapability } from "../../sections/mcp-capability.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";

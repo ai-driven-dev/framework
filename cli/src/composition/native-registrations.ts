@@ -1,4 +1,4 @@
-import type { NativeActivation } from "../contexts/tools/domain/plugins/native-activation.js";
+import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
 import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
 import { DuplicateToolIdError } from "../kernel/errors.js";
 import type { ToolId } from "../kernel/tool.js";

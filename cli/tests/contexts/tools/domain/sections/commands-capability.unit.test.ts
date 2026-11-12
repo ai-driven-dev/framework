@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CommandsCapability } from "../../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
+import { CommandsCapability } from "../../../../../src/contexts/tools/domain/sections/commands-capability.js";
 
 const stubParams = {
   buildInstallPath: (fileName: string): string | null => `stub/${fileName}`,

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
-import type { MarketplaceSettings } from "../../../../../src/contexts/tools/domain/marketplace-settings.js";
-import type { NativeActivationSpec } from "../../../../../src/contexts/tools/domain/plugins/native-activation.js";
+import type { MarketplaceSettings } from "../../../../../src/contexts/tools/domain/native-registration/marketplace-settings.js";
+import type { NativeActivationSpec } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
 import {
   defineAiTool,
   defineIdeTool,
   type ProfileBrand,
 } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
+import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
 import { InvalidToolProfileError } from "../../../../../src/kernel/errors.js";
 import {
   anEmptyContract,

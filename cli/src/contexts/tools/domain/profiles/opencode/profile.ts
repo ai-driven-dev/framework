@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE } from "../../../contract/config-refs.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -10,6 +9,7 @@ import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { McpCapability } from "../../sections/mcp-capability.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";

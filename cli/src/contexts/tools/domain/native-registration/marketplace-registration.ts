@@ -1,6 +1,6 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { MarketplaceSettingsInput } from "../../contract/tool-vocabulary.js";
-import type { MarketplaceSettings } from "../marketplace-settings.js";
+import type { MarketplaceSettings } from "./marketplace-settings.js";
 import type { NativeActivation } from "./native-activation.js";
 
 /** Where and how a tool records the marketplaces it knows about, held only by a tool whose own

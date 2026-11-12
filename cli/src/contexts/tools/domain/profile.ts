@@ -1,15 +1,15 @@
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
-import type { AgentsCapability } from "./capabilities/agents-capability.js";
-import type { CommandsCapability } from "./capabilities/commands-capability.js";
-import type { HooksCapability } from "./capabilities/hooks-capability.js";
-import type { McpCapability } from "./capabilities/mcp-capability.js";
-import type { RulesCapability } from "./capabilities/rules-capability.js";
-import type { SettingsCapability } from "./capabilities/settings-capability.js";
-import type { SkillsCapability } from "./capabilities/skills-capability.js";
-import type { NativeActivation } from "./plugins/native-activation.js";
+import type { NativeActivation } from "./native-registration/native-activation.js";
 import type { PluginsCapability } from "./plugins/plugins-capability.js";
+import type { AgentsCapability } from "./sections/agents-capability.js";
+import type { CommandsCapability } from "./sections/commands-capability.js";
+import type { HooksCapability } from "./sections/hooks-capability.js";
+import type { McpCapability } from "./sections/mcp-capability.js";
+import type { RulesCapability } from "./sections/rules-capability.js";
+import type { SettingsCapability } from "./sections/settings-capability.js";
+import type { SkillsCapability } from "./sections/skills-capability.js";
 
 /** What a tool can declare, by the key it declares it under. */
 export interface ProfileSections {

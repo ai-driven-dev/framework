@@ -1,8 +1,8 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { HooksAcceptance } from "../../contract/tool-profile.js";
 import type { HookScript, PluginTranslationMode } from "../../contract/tool-vocabulary.js";
-import { MarketplaceRegistration } from "./marketplace-registration.js";
-import { NativeActivation } from "./native-activation.js";
+import { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
+import { NativeActivation } from "../native-registration/native-activation.js";
 import {
   AS_SHIPPED,
   PluginDeliveryBase,

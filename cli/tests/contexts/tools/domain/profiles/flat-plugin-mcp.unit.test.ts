@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
+import { McpCapability } from "../../../../../src/contexts/tools/domain/sections/mcp-capability.js";
 import { registeredAiConfig, registeredAiProfile } from "../../testing/catalog-of.js";
 import { aProfile, flatPlugins } from "../../testing/profiles.js";
 

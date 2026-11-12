@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SkillsCapability } from "../../../../../src/contexts/tools/domain/capabilities/skills-capability.js";
+import { SkillsCapability } from "../../../../../src/contexts/tools/domain/sections/skills-capability.js";
 
 const stubCallbacks = {
   buildInstallPath: (fileName: string): string | null => `stub/${fileName}`,
