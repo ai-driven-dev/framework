@@ -31,7 +31,7 @@ A string transform used by one profile stays in its folder; one shared by two go
 ## Conventions
 
 - `rewriteContent(content)` is one way, per tool, with no reverse and no shared base helper. See `references/content-rewrite.md`.
-- A capability class ends in `Capability`, takes one params object, all fields `readonly`, throws `CapabilityConfigError` on an invalid combination. See `references/capability-conventions.md`.
+- A capability class ends in `Capability`, takes one params object, keeps it in a private `#params`, throws `CapabilityConfigError` on an invalid combination. See `references/capability-conventions.md`.
 - Plugin delivery has three kinds, `native`, `flat` and `unsupported`. See `references/plugins-capability.md`.
 - Build behaviour is one artifact-symmetric `ToolBuildContract` per tool and mode, read by the two mode-generic strategies in `translate`: never a per-tool strategy, never a per-tool branch in one. See `references/build-contract.md`.
 - Follow the port/adapter and shared-module rules in `.claude/rules/00-architecture/`.
@@ -40,4 +40,5 @@ A string transform used by one profile stays in its folder; one shared by two go
 ## How it's tested
 
 - `tests/contexts/tools/` mirrors the source. A rule over what every profile declares is a conformance check; a profile's declared data gets no test.
+- `tests/architecture/tool-addition-cost.arch.test.ts` guards the cost of adding a tool: a tool id appears only in its own profile, the registration list and the shared vocabulary.
 - See the `test` skill for tier conventions.
