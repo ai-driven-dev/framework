@@ -495,6 +495,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
+      expect.anything(),
       expect.anything()
     );
   });

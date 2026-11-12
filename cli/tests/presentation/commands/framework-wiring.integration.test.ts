@@ -376,6 +376,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
+      expect.anything(),
       expect.anything()
     );
   });

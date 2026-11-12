@@ -347,6 +347,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
+      expect.anything(),
       expect.anything()
     );
   });

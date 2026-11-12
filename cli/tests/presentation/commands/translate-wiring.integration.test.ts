@@ -112,6 +112,7 @@ describe("aidd translate — what it hands the build", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
+      expect.anything(),
       expect.anything()
     );
   });

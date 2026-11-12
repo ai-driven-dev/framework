@@ -199,7 +199,7 @@ export function registerSetupCommand(program: Command, catalog: ToolCatalog): vo
 
         if (interactive) printWelcomeBanner(output);
 
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
 
         const result = await new SetupUseCase(
           deps.fs,

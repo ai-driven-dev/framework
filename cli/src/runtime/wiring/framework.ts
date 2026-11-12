@@ -73,6 +73,7 @@ import { PluginDistributionReaderAdapter } from "../../contexts/framework/infras
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../../contexts/translate/domain/plugin-format.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
@@ -189,7 +190,8 @@ export function createMenuDeps(projectRoot: string): {
 export async function createDeps(
   projectRoot: string,
   options: GlobalOptions,
-  output?: CLIOutput
+  output?: CLIOutput,
+  tools: ToolCatalog = wireTools()
 ): Promise<Deps> {
   const cacheKey = `${projectRoot}\u0000${options.token ?? ""}`;
   const cached = _cache.get(cacheKey);
@@ -197,7 +199,6 @@ export async function createDeps(
   const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
   const fs = new FileAdapter(hasher, logger);
-  const tools = wireTools();
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
     pluginManifestProbes(tools.sortedById())

@@ -29,7 +29,12 @@ interface TranslateExecutionParams {
 async function runTranslateCore(params: TranslateExecutionParams): Promise<void> {
   const errorHandler = new ErrorHandler(params.output);
   try {
-    const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
+    const deps = await createDeps(
+      params.projectRoot,
+      { verbose: params.verbose },
+      params.output,
+      params.tools
+    );
     const useCase = createFrameworkBuildUseCase(params.tools, deps, {
       target: params.target,
       mode: params.mode,

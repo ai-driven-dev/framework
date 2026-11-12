@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import {
   NoManifestError,
   SyncFailedError,
@@ -71,13 +72,14 @@ async function runUserScopeSync(
 
 async function runSyncAction(
   program: Command,
+  tools: ToolCatalog,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const errorHandler = new ErrorHandler(output);
   try {
-    const deps = await createDeps(projectRoot, { verbose }, output);
+    const deps = await createDeps(projectRoot, { verbose }, output, tools);
     const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
     if (scope === "user") {
@@ -145,7 +147,7 @@ async function runScopedSync(
   if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
 }
 
-export function registerSyncCommand(program: Command): void {
+export function registerSyncCommand(program: Command, tools: ToolCatalog): void {
   program
     .command("sync")
     .description(
@@ -162,6 +164,6 @@ export function registerSyncCommand(program: Command): void {
     )
     .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
-      await runSyncAction(program, fileArgs, cmdOptions);
+      await runSyncAction(program, tools, fileArgs, cmdOptions);
     });
 }

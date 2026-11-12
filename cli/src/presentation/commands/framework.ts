@@ -189,7 +189,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         await runFrameworkInstall(
           deps,
           output,
@@ -213,7 +213,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool as ToolId);
       } catch (error) {
         errorHandler.handle(error);
@@ -231,7 +231,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         await runFrameworkUpdate(
           deps,
           output,
@@ -253,7 +253,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const { rules } = await deps.listInstalledRulesUseCase.execute({ projectRoot });
         if (cmdOptions.json) printInstalledRulesJson(output, rules);
         else printInstalledRules(output, rules);
@@ -271,7 +271,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const directories = [];
         if (options.all)
           directories.push({ path: join(projectRoot, "aidd_docs", "recipes"), optional: true });

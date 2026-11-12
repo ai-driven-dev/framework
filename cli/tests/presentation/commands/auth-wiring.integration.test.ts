@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { AIDD_DIR } from "../../../src/kernel/paths.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const login = vi.fn();
 const status = vi.fn();
@@ -64,7 +65,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerAuthCommand(program);
+  registerAuthCommand(program, catalogOf());
   await program.parseAsync(["node", "aidd", "auth", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -235,6 +236,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
       expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
         PROJECT_ROOT,
         { verbose: false },
+        expect.anything(),
         expect.anything()
       );
     }
@@ -254,7 +256,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
 describe("aidd auth, the help surface", () => {
   function authCommand(): Command {
     const program = new Command();
-    registerAuthCommand(program);
+    registerAuthCommand(program, catalogOf());
     const auth = program.commands.find((command) => command.name() === "auth");
     if (auth === undefined) throw new Error("auth command was not registered");
     return auth;

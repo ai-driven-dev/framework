@@ -180,7 +180,7 @@ export function registerDoctorCommand(program: Command, tools: ToolCatalog): voi
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, tools);
         const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
         if (scope === "user") {
           await runUserScopeDoctor(tools, deps, output, projectRoot, cmdOptions);

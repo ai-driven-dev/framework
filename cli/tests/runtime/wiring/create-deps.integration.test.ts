@@ -2,8 +2,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { ToolCategory, ToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { createDeps, createMenuDeps } from "../../../src/runtime/wiring/framework.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {
   let root: string;
@@ -53,6 +55,23 @@ describe("createDeps", () => {
     } finally {
       await rm(withOutput, { recursive: true, force: true });
     }
+  });
+
+  it("reads the catalog it was handed, never one of its own", async () => {
+    const real = catalogOf();
+    let walked = 0;
+    const handed = {
+      profile: (id: ToolId) => real.profile(id),
+      inHelpOrder: (category: ToolCategory) => real.inHelpOrder(category),
+      sortedById: () => {
+        walked += 1;
+        return real.sortedById();
+      },
+    };
+
+    await createDeps(root, { verbose: false }, undefined, handed);
+
+    expect(walked).toBeGreaterThan(0);
   });
 
   it("hands the menu a manifest repository rooted at the project", () => {

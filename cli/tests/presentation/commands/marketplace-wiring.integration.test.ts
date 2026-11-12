@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePluginSourceShorthand } from "../../../src/kernel/source.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const marketplaceAdd = vi.fn();
 const marketplaceList = vi.fn();
@@ -88,7 +89,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerMarketplaceCommand(program);
+  registerMarketplaceCommand(program, catalogOf());
   await program.parseAsync(["node", "aidd", "marketplace", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -156,6 +157,7 @@ describe("aidd marketplace add", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
+      expect.anything(),
       expect.anything()
     );
     expect(process.env.AIDD_TOKEN).not.toBe("ghp_x");
@@ -205,6 +207,7 @@ it("hands no token when none was given", async () => {
   expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
     PROJECT_ROOT,
     { verbose: false, token: undefined },
+    expect.anything(),
     expect.anything()
   );
 });
@@ -375,6 +378,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
+      expect.anything(),
       expect.anything()
     );
   });
@@ -395,7 +399,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
 describe("aidd marketplace — the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
-    registerMarketplaceCommand(program);
+    registerMarketplaceCommand(program, catalogOf());
     const marketplace = program.commands.find((command) => command.name() === "marketplace");
     if (marketplace === undefined) throw new Error("marketplace command was not registered");
     return marketplace;

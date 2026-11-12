@@ -198,6 +198,7 @@ describe("aidd plugin install", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
+      expect.anything(),
       expect.anything()
     );
     expect(pluginInstall.mock.calls[0][0]).not.toHaveProperty("token");
@@ -342,6 +343,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
+      expect.anything(),
       expect.anything()
     );
   });

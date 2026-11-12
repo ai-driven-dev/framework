@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import { printSelfUpdateResult } from "../display/update-display.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -13,12 +14,16 @@ interface UpdateCmdOptions {
 /** A bare verb with no subject means the CLI itself, the convention Claude Code and Codex
  * share. The project-wide sweep lives at `framework update`, `plugin update` and
  * `marketplace refresh`. */
-async function runUpdateAction(program: Command, cmdOptions: UpdateCmdOptions): Promise<void> {
+async function runUpdateAction(
+  program: Command,
+  tools: ToolCatalog,
+  cmdOptions: UpdateCmdOptions
+): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const errorHandler = new ErrorHandler(output);
 
   try {
-    const deps = await createDeps(projectRoot, { verbose }, output);
+    const deps = await createDeps(projectRoot, { verbose }, output, tools);
 
     const result = await deps.selfUpdateUseCase.execute({
       check: cmdOptions.check,
@@ -32,7 +37,7 @@ async function runUpdateAction(program: Command, cmdOptions: UpdateCmdOptions): 
   }
 }
 
-export function registerUpdateCommand(program: Command): void {
+export function registerUpdateCommand(program: Command, tools: ToolCatalog): void {
   program
     .command("update")
     .alias("upgrade")
@@ -41,6 +46,6 @@ export function registerUpdateCommand(program: Command): void {
     .option("--dry-run", "Preview the update without installing", false)
     .option("-f, --force", "Reinstall even if already up to date", false)
     .action(async (cmdOptions: UpdateCmdOptions) => {
-      await runUpdateAction(program, cmdOptions);
+      await runUpdateAction(program, tools, cmdOptions);
     });
 }

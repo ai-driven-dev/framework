@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const restoreAll = vi.fn();
 const restoreOne = vi.fn();
@@ -82,7 +83,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSyncCommand(program);
+  registerSyncCommand(program, catalogOf());
   await program.parseAsync(["node", "aidd", "sync", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -332,6 +333,7 @@ describe("aidd sync — how it builds its graph", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
+      expect.anything(),
       expect.anything()
     );
   });
@@ -340,7 +342,7 @@ describe("aidd sync — how it builds its graph", () => {
 describe("aidd sync — the help surface", () => {
   function syncCommand(): Command {
     const program = new Command();
-    registerSyncCommand(program);
+    registerSyncCommand(program, catalogOf());
     const sync = program.commands.find((command) => command.name() === "sync");
     if (sync === undefined) throw new Error("sync command was not registered");
     return sync;

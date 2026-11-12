@@ -67,7 +67,7 @@ export function registerCleanCommand(program: Command, catalog: ToolCatalog): vo
       const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         if (scope === "user") {
           await runUserScopeClean(deps, output, projectRoot, cmdOptions);
         } else {

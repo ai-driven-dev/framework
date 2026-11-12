@@ -45,7 +45,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       try {
         assertValidAiToolId(cmdOptions.tool);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         await deps.pluginRemoveUseCase.execute({
           pluginName: name,
           toolIds: parseToolOption(cmdOptions.tool),
@@ -68,7 +68,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const result = await deps.pluginListUseCase.execute({
           toolIds: parseToolOption(cmdOptions.tool),
         });
@@ -102,7 +102,12 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
         try {
           assertValidAiToolId(cmdOptions.tool);
           const scope = parseInstallScope(cmdOptions.scope);
-          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
+          const deps = await createDeps(
+            projectRoot,
+            { verbose, token: cmdOptions.token },
+            output,
+            catalog
+          );
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
             toolIds: parseToolOption(cmdOptions.tool),
@@ -135,7 +140,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const { hits } = await deps.pluginSearchUseCase.execute({
           query,
           recommendedOnly: cmdOptions.recommended ?? false,
@@ -159,7 +164,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       try {
         assertValidAiToolId(cmdOptions.tool);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const updated = await (scope === "user"
           ? deps.userPluginUpdateUseCase
           : deps.pluginUpdateUseCase

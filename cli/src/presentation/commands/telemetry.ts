@@ -24,6 +24,7 @@ import {
   type ReportAxis,
 } from "../../contexts/telemetry/domain/report/usage-report.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage-record.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
@@ -46,13 +47,13 @@ import { parseGlobalOptions } from "./global-options.js";
 
 /** A command's output and directory, and `run`, which wires its dependencies for some work
  * and reports any failure the one way. */
-function commandOf(program: Command) {
+function commandOf(program: Command, tools: ToolCatalog) {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const run = async (
     work: (deps: Awaited<ReturnType<typeof createDeps>>) => Promise<void>
   ): Promise<void> => {
     try {
-      await work(await createDeps(projectRoot, { verbose }, output));
+      await work(await createDeps(projectRoot, { verbose }, output, tools));
     } catch (error) {
       new ErrorHandler(output).handle(error);
     }
@@ -124,7 +125,7 @@ function filterOption(
   );
 }
 
-export function registerTelemetryCommand(program: Command): void {
+export function registerTelemetryCommand(program: Command, tools: ToolCatalog): void {
   const telemetry = program
     .command("telemetry")
     .description("Measure what Claude Code and Codex sessions consume, locally");
@@ -136,7 +137,7 @@ export function registerTelemetryCommand(program: Command): void {
     .option("--as <id>", "Name you by this identifier on your own measurement")
     .option("--anonymous", "Name nobody on your own measurement", false)
     .action(async (cmdOptions: OnOptions) => {
-      const { output, projectRoot, run } = commandOf(program);
+      const { output, projectRoot, run } = commandOf(program, tools);
       if (cmdOptions.as !== undefined && cmdOptions.anonymous) {
         output.error("--as names you and --anonymous names nobody: give one of them.");
         process.exit(1);
@@ -183,7 +184,7 @@ export function registerTelemetryCommand(program: Command): void {
     .command("off")
     .description("Stop measuring this clone; what was measured stays")
     .action(async () => {
-      const { output, projectRoot, run } = commandOf(program);
+      const { output, projectRoot, run } = commandOf(program, tools);
       await run(async (deps) => {
         const result = await deps.telemetry.telemetryOffUseCase.execute(projectRoot);
         printOffResult(output, result);
@@ -196,7 +197,7 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Show everything measurement keeps on this machine, or remove it with --yes")
     .option("--yes", "Remove it, instead of only showing it", false)
     .action(async (cmdOptions: { yes: boolean }) => {
-      const { output, run } = commandOf(program);
+      const { output, run } = commandOf(program, tools);
       await run(async (deps) => {
         printForgetResult(
           output,
@@ -210,7 +211,7 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Read new transcripts into the local ledger, for clones that opted in")
     .option("--quiet", "Print nothing on success (for hooks)", false)
     .action(async (cmdOptions: { quiet: boolean }) => {
-      const { output, run } = commandOf(program);
+      const { output, run } = commandOf(program, tools);
       await run(async (deps) => {
         const result = await deps.telemetry.ingestUsageUseCase.execute();
         if (!cmdOptions.quiet) printIngestResult(output, result);
@@ -233,7 +234,7 @@ export function registerTelemetryCommand(program: Command): void {
         name: string | undefined,
         cmdOptions: { ticket?: string; none: boolean; by: DeclaredBy }
       ) => {
-        const { output, projectRoot, run } = commandOf(program);
+        const { output, projectRoot, run } = commandOf(program, tools);
         const request = cmdOptions.none
           ? { kind: "none" as const }
           : requestOf(name, cmdOptions.ticket);
@@ -263,7 +264,7 @@ export function registerTelemetryCommand(program: Command): void {
     .command("status")
     .description("Show if this clone is measured, since when, and its task")
     .action(async () => {
-      const { output, projectRoot, run } = commandOf(program);
+      const { output, projectRoot, run } = commandOf(program, tools);
       await run(async (deps) => {
         printTelemetryStatus(
           output,
@@ -319,7 +320,7 @@ export function registerTelemetryCommand(program: Command): void {
           json: boolean;
         } & Partial<ReportFilters>
       ) => {
-        const { output, projectRoot, run } = commandOf(program);
+        const { output, projectRoot, run } = commandOf(program, tools);
         const period = periodOf(cmdOptions, new Date());
         if (!period.ok) {
           output.error(period.message);
@@ -359,7 +360,7 @@ export function registerTelemetryCommand(program: Command): void {
     .description("Choose to be named on your own measurement, or show or remove that choice")
     .option("--off", "Stop naming you and remove the identity", false)
     .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
-      const { output, run } = commandOf(program);
+      const { output, run } = commandOf(program, tools);
       if (cmdOptions.off && id !== undefined) {
         output.error("--off removes the identity: give it no identifier.");
         process.exit(1);
