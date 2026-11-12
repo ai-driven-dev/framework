@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf, ERROR, WARNING, HISTORY_FILE } = require("./project.cjs");
-const { breakpointsOf, STEPS_SECTION, REVIEW_KIND, VERDICTS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { breakpointsOf, STEPS_SECTION, PERSONA_SECTION, REVIEW_KIND, VERDICTS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
 const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
@@ -15,7 +15,6 @@ const NO_REPLACEMENT = "none";
 const DEFAULT_STATE = "default";
 const FOCUS_STATE = "focus"; // a component taking focus is driven by the keyboard
 const KEYBOARD_SECTION = "Keyboard";
-const PERSONA_SECTION = "Persona";
 const SCREEN_KINDS = ["screen", "wireframe"]; // what a journey step names
 const USAGE_SECTION = "Usage";
 const DEPRECATION_SECTION = "Deprecation";

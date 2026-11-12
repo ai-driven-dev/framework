@@ -3,12 +3,12 @@
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
 const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, STEPS_SECTION, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS, SYSTEM_ID } = require("./model.cjs");
+const { placed, fm, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS, SYSTEM_ID } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
 const { text } = require("./project.cjs");
-const { STYLE, escaped, documentOf, inlined, STYLESHEET_LINK } = require("./page.cjs");
+const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./page.cjs");
 const { catalog, resolvedValues, TYPES } = require("./tokens.cjs");
 
 const DEFAULT_LANGUAGE = "en";
@@ -59,6 +59,10 @@ const LABELS = {
     sides: "Side by side",
     combination: "Combination",
     tokens: "Tokens",
+    persona: "Persona",
+    states: "States",
+    steps: "{count} steps",
+    noRender: "No render",
   },
   fr: {
     title: "Vitrine du système de design",
@@ -96,6 +100,10 @@ const LABELS = {
     sides: "Côte à côte",
     combination: "Combinaison",
     tokens: "Tokens",
+    persona: "Persona",
+    states: "États",
+    steps: "{count} étapes",
+    noRender: "Aucun rendu",
   },
 };
 
@@ -106,56 +114,172 @@ const filled = (label, values) => label.replace(/\{(\w+)\}/g, (_, key) => values
 const byCode = (a, b) => (a < b ? -1 : a > b ? 1 : 0); // the same order on every machine
 const byRecordId = (a, b) => byCode(fm(a).id, fm(b).id);
 
-const LAYOUT = `
-body { display: block; height: auto; }
-.shell { display: grid; grid-template-columns: 16rem minmax(0, 1fr); min-height: 100vh; }
-.shell > nav, .shell > main { grid-area: auto; }
-.shell > main > h1 { font-size: 24px; line-height: 1.25; white-space: normal; }
-.shell > nav { position: sticky; top: 0; height: 100vh; }
-.shell > main { padding: 24px; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
-nav h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 16px 8px 4px; }
-nav h3 { font-size: 12px; color: var(--muted); margin: 8px 8px 2px; }
-nav ul, .links ul, .checks ul { list-style: none; margin: 0; padding: 0; }
-nav li { padding: 2px 8px; display: flex; gap: 6px; align-items: center; }
-nav a, .links a { color: var(--accent-text); text-decoration: none; }
-nav a[aria-current="page"] { font-weight: 600; color: var(--text); }
-.tag { font-size: 10px; border-radius: 4px; padding: 0 4px; background: var(--revise-bg); color: var(--revise-fg); }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-.chip { display: inline-flex; gap: 6px; border-radius: 999px; padding: 0 8px; line-height: 20px; font-size: 12px; background: var(--pill); color: var(--pill-text); }
-.chip[data-status="proposed"] { background: var(--revise-bg); color: var(--revise-fg); }
-.key { color: var(--muted); }
-.links { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
-.links h2, .checks h2, .review h2 { font-size: 13px; margin: 0; }
-.links ul { display: flex; gap: 12px; flex-wrap: wrap; }
-.checks li { padding: 2px 0; }
-.review { display: flex; flex-direction: column; gap: 16px; }
-.review .bar-top, .review .toolbar, .gallery .toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-.review fieldset, .gallery fieldset { border: 0; display: flex; gap: 8px; align-items: center; padding: 0; margin: 0; }
-.state { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-.state h3 { margin: 0; font-size: 13px; }
-.state[data-current="ok"] { border-color: var(--keep-dot); }
-.state[data-current="revise"] { border-color: var(--revise-dot); }
-.pair { display: flex; gap: 12px; flex-wrap: wrap; }
-.render { display: flex; gap: 12px; flex: 1 1 24rem; min-width: 0; }
-.render iframe { flex: 1; min-width: 0; width: 100%; min-block-size: 120px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+/** The look of the showcase, light on purpose: wireframes are paper and renders are mostly light
+ * screens, so a light shell frames them like a design tool's canvas instead of glaring against them.
+ * One scale for space, type and radius, one accent, the system fonts only. */
+const SHELL = `
+:root { color-scheme: light;
+  --bg: #f5f5f3; --surface: #ffffff; --sunken: #eeeeeb; --canvas: #ebebe7; --line: #e3e3df; --line-strong: #d2d2cc;
+  --text: #1d1d1b; --muted: #66665f; --faint: #96968f;
+  --accent: #4f46e5; --accent-hover: #4338ca; --accent-soft: #eef0fe; --accent-text: #4338ca;
+  --ok: #15803d; --ok-soft: #e6f4ea; --revise: #b45309; --revise-soft: #fdf2e1; --pending: #96968f;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --r1: 6px; --r2: 10px; --r3: 14px;
+  --t-xs: 11px; --t-sm: 12px; --t-md: 14px; --t-lg: 16px; --t-xl: 20px; --t-2xl: 28px;
+  --shadow-1: 0 1px 2px rgba(24, 24, 20, 0.06); --shadow-2: 0 1px 2px rgba(24, 24, 20, 0.06), 0 8px 24px rgba(24, 24, 20, 0.08);
+  --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font: var(--t-md)/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code { font: var(--t-sm) var(--mono); background: var(--sunken); border-radius: 4px; padding: 1px 5px; }
+button { font: 500 var(--t-sm)/1 var(--font); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); height: 32px; padding: 0 var(--s3); cursor: pointer; transition: background-color 120ms, border-color 120ms, color 120ms; }
+button:hover { background: var(--sunken); }
+button:disabled { opacity: 0.45; cursor: default; }
+#copy, #copy-all { background: var(--accent); border-color: var(--accent); color: #fff; }
+#copy:hover:not(:disabled), #copy-all:hover:not(:disabled) { background: var(--accent-hover); }
+select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); height: 32px; padding: 0 var(--s5) 0 var(--s2); }
+input[type="checkbox"] { appearance: none; flex: none; display: inline-grid; place-content: center; inline-size: 16px; block-size: 16px; margin: 0; border: 1.5px solid var(--line-strong); border-radius: 4px; background: var(--surface); cursor: pointer; }
+input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+input[type="checkbox"]:checked::after { content: ""; inline-size: 8px; block-size: 4px; border: solid #fff; border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); }
+.shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+.shell > nav { position: sticky; top: 0; height: 100vh; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s6); }
+.shell > main { min-width: 0; padding: var(--s6) var(--s7) var(--s7); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
+nav .brand { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) var(--s2) var(--s4); font-size: var(--t-sm); font-weight: 600; }
+nav .mark { inline-size: 18px; block-size: 18px; border-radius: 5px; background: linear-gradient(135deg, var(--accent), #8b5cf6); flex: none; }
+nav .home { margin: 0; }
+nav h2 { font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); margin: var(--s5) var(--s2) var(--s1); }
+nav h3 { font-size: var(--t-xs); font-weight: 500; color: var(--muted); margin: var(--s3) var(--s2) 2px; }
+nav ul, .links ul, .checks ul, .batch ul { list-style: none; margin: 0; padding: 0; }
+nav li, nav .home { display: flex; align-items: center; gap: var(--s2); border-radius: var(--r1); }
+nav li a, nav .home a { flex: 1; min-width: 0; padding: 5px var(--s2); color: var(--text); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+nav li:hover, nav .home:hover { background: var(--sunken); }
+nav a:hover { text-decoration: none; }
+nav li:has(a[aria-current="page"]), nav .home:has(a[aria-current="page"]) { background: var(--accent-soft); }
+nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
+.tag { flex: none; margin-right: var(--s2); font-size: 10px; font-weight: 500; border-radius: 999px; padding: 1px 6px; background: var(--revise-soft); color: var(--revise); }
+.head { display: flex; flex-direction: column; gap: var(--s2); }
+.crumb { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--faint); }
+.head h1, main > h1 { margin: 0; font-size: var(--t-2xl); line-height: 1.2; font-weight: 650; letter-spacing: -0.01em; }
+.lede { margin: 0; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--s1) 0 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0 10px; line-height: 22px; font-size: var(--t-sm); color: var(--text); }
+.chip .key { color: var(--faint); }
+.chip[data-key="code"] { font-family: var(--mono); font-size: var(--t-xs); }
+.chip[data-status] { border-color: transparent; font-weight: 500; }
+.chip[data-status="proposed"] { background: var(--revise-soft); color: var(--revise); }
+.chip[data-status="validated"] { background: var(--ok-soft); color: var(--ok); }
+.chip[data-status]::before { content: ""; inline-size: 6px; block-size: 6px; border-radius: 50%; background: currentColor; }
+.links { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; }
+.links h2, .checks h2, .bar-top h2, .batch h2, .overview h2 { font-size: var(--t-md); font-weight: 600; margin: 0; }
+.links h2 { font-size: var(--t-sm); color: var(--muted); font-weight: 500; min-width: 4rem; }
+.links ul { display: flex; gap: 6px; flex-wrap: wrap; }
+.links a { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); font-size: var(--t-sm); }
+.panel, .checks, .doc, .batch { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); }
+.checks { padding: var(--s4) var(--s5); display: flex; flex-direction: column; gap: var(--s2); }
+.checks li { padding: var(--s2) 0; border-top: 1px solid var(--line); color: var(--muted); }
+.checks li b { display: inline-block; margin-right: var(--s2); padding: 0 6px; border-radius: 4px; background: var(--revise-soft); color: var(--revise); font: 600 var(--t-xs)/18px var(--mono); }
+.checks .fix { display: block; color: var(--faint); font-size: var(--t-sm); }
+.doc { padding: var(--s5) var(--s6); color: var(--text); max-width: 72ch; }
+.doc:empty { display: none; }
+.doc h1, .doc h2, .doc h3 { margin: var(--s5) 0 var(--s2); line-height: 1.3; }
+.doc h2 { font-size: var(--t-lg); }
+.doc h3 { font-size: var(--t-md); }
+.doc > :first-child { margin-top: 0; }
+.doc > :last-child { margin-bottom: 0; }
+.doc p, .doc ul { margin: 0 0 var(--s3); color: #3b3b37; }
+.doc .scroll { overflow-x: auto; }
+.doc table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.doc th { text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line-strong); padding: 6px 10px; }
+.doc td { border-bottom: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
+.persona { display: flex; gap: var(--s4); align-items: flex-start; max-width: 640px; padding: var(--s4) var(--s5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); }
+.avatar { flex: none; display: grid; place-content: center; inline-size: 40px; block-size: 40px; border-radius: 50%; background: linear-gradient(135deg, #c7d2fe, #ddd6fe); color: var(--accent-text); font-weight: 650; font-size: var(--t-lg); }
+.persona .eyebrow { margin: 0; font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); }
+.persona .who { margin: 2px 0 var(--s1); font-weight: 600; }
+.persona p:last-child { margin: 0; color: var(--muted); }
+.journey { margin: 0 calc(var(--s7) * -1); padding: var(--s2) var(--s7) var(--s4); overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: var(--s7); }
+.board { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--s7); align-items: flex-start; inline-size: max-content; }
+.board .card { position: relative; flex: none; inline-size: 232px; scroll-snap-align: start; display: flex; flex-direction: column; gap: var(--s3); }
+.board .card:not(:last-child)::after { content: ""; position: absolute; top: 74px; right: calc(var(--s7) * -1 + 10px); inline-size: calc(var(--s7) - 20px); block-size: 2px; background: var(--line-strong); }
+.board .card:not(:last-child)::before { content: ""; position: absolute; top: 70px; right: calc(var(--s7) * -1 + 10px); inline-size: 8px; block-size: 8px; border: solid var(--line-strong); border-width: 2px 2px 0 0; transform: rotate(45deg); }
+.step { display: flex; flex-direction: column; gap: var(--s2); color: var(--text); }
+.step:hover { text-decoration: none; }
+.step:hover .mini { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-2); }
+.screen { font-size: 13px; font-weight: 600; padding: 0 2px; }
+.action { display: flex; gap: var(--s2); margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.num { flex: none; display: grid; place-content: center; inline-size: 20px; block-size: 20px; border-radius: 50%; background: var(--accent); color: #fff; font-size: var(--t-xs); font-weight: 600; line-height: 1; }
+.mini { position: relative; display: block; overflow: hidden; inline-size: 100%; aspect-ratio: 8 / 5; border: 1px solid var(--line); border-radius: var(--r2); background: #fbfbfa; box-shadow: var(--shadow-2); transition: border-color 120ms, box-shadow 120ms; }
+.mini iframe { position: absolute; top: 0; left: 0; inline-size: 400%; block-size: 400%; border: 0; transform: scale(0.25); transform-origin: 0 0; pointer-events: none; }
+.mini.empty { display: grid; place-content: center; border-style: dashed; box-shadow: none; background: var(--sunken); color: var(--faint); font-size: var(--t-sm); }
+.review { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); overflow: hidden; }
+.bar-top { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: var(--s3) var(--s4) var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
+.count { margin: 0; padding: 0 var(--s2); border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-sm); line-height: 22px; }
+#note { margin-left: auto; color: var(--revise); font-size: var(--t-sm); }
+#note:empty { display: none; }
+.bar-top #copy { margin-left: auto; }
+#note:not(:empty) + #copy { margin-left: 0; }
+.toolbar { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: var(--s2) var(--s5); border-bottom: 1px solid var(--line); background: var(--bg); }
+.gallery .toolbar { border: 1px solid var(--line); border-radius: var(--r2); }
+.review fieldset, .gallery fieldset { border: 0; display: flex; gap: var(--s2); align-items: center; padding: 0; margin: 0; }
+legend { float: left; margin-right: var(--s2); font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
+label { font-size: var(--t-sm); color: var(--muted); }
+#sides[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
+.tabs { display: flex; gap: var(--s1); padding: 0 var(--s4); border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { display: inline-flex; align-items: center; gap: var(--s2); height: 42px; padding: 0 var(--s3); border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--muted); font-size: 13px; }
+.tab:hover { background: transparent; color: var(--text); }
+.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.tab .dot { inline-size: 8px; block-size: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--faint); }
+.tab[data-current="ok"] .dot { background: var(--ok); box-shadow: none; }
+.tab[data-current="revise"] .dot { background: var(--revise); box-shadow: none; }
+.tab[data-current="pending"] .dot { box-shadow: inset 0 0 0 1.5px var(--revise); }
+.tab[data-choice="ok"] .dot { background: var(--ok); box-shadow: none; }
+.tab[data-choice="revise"] .dot { background: var(--revise); box-shadow: none; }
+.state { display: flex; flex-direction: column; }
+.state-bar { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: var(--s3) var(--s5); }
+.state-bar h3 { margin: 0; font-size: var(--t-md); font-weight: 600; }
+.outdated, .said { margin: 0; font-size: var(--t-sm); color: var(--muted); }
+.outdated { padding: 0 var(--s2); border-radius: 999px; background: var(--sunken); line-height: 20px; }
+.said { padding-left: var(--s2); border-left: 2px solid var(--revise); }
+.choose { display: inline-flex; margin-left: auto; padding: 2px; gap: 2px; background: var(--sunken); border-radius: var(--r1); }
+.choose .verdict { height: 28px; border: 0; background: transparent; color: var(--muted); }
+.choose .verdict:hover { color: var(--text); }
+.verdict[data-verdict="ok"][aria-pressed="true"] { background: var(--surface); color: var(--ok); box-shadow: var(--shadow-1); }
+.verdict[data-verdict="revise"][aria-pressed="true"] { background: var(--surface); color: var(--revise); box-shadow: var(--shadow-1); }
+.state[data-current="ok"] .state-bar h3::after { content: " \\2713"; color: var(--ok); }
+textarea.comment { display: block; margin: 0 var(--s5) var(--s3); inline-size: calc(100% - 2 * var(--s5)); font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); padding: var(--s2) var(--s3); resize: vertical; }
+textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.pair { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; padding: var(--s6); background: var(--canvas) radial-gradient(#d6d6d0 1px, transparent 1px) 0 0 / 16px 16px; border-top: 1px solid var(--line); }
+.render { display: flex; gap: var(--s5); flex: 1 1 24rem; min-width: 0; align-items: flex-start; }
+.render iframe { box-sizing: content-box; flex: 1; min-width: 0; width: 100%; height: 240px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; box-shadow: 0 2px 4px rgba(24, 24, 20, 0.05), 0 16px 40px rgba(24, 24, 20, 0.1); }
 .state .render iframe[data-platform="mobile"] { flex: 0 0 390px; inline-size: 390px; }
 .capture { flex: 1 1 24rem; margin: 0; min-width: 0; }
-.capture img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
-.capture.missing { display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line); border-radius: 6px; color: var(--muted); padding: 12px; }
-.journey { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.journey .step { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; color: var(--accent-text); text-decoration: none; }
-.journey .arrow { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
-.journey .arrow::after { content: "\\2192"; font-size: 18px; }
-.choose { display: flex; gap: 8px; }
-.verdict[aria-pressed="true"] { background: var(--sel); border-color: var(--sel-line); }
-.outdated, .said, .count { margin: 0; color: var(--muted); }
-.batch { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.batch h2, .batch p { margin: 0; }
-.batch ul { list-style: none; margin: 0; padding: 0; }
-textarea.out { width: 100%; min-height: 8rem; font: 12px ui-monospace, monospace; }
-textarea.comment { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+.capture img { display: block; max-width: 100%; border: 1px solid var(--line-strong); border-radius: var(--r2); box-shadow: var(--shadow-2); }
+.capture.missing { display: flex; align-items: center; justify-content: center; min-block-size: 160px; border: 1.5px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); padding: var(--s4); font-size: var(--t-sm); text-align: center; }
+.gallery { display: flex; flex-direction: column; gap: var(--s3); }
+.gallery .pair { border: 1px solid var(--line); border-radius: var(--r3); }
+.batch { display: flex; flex-direction: column; gap: var(--s3); align-items: flex-start; padding: var(--s4) var(--s5); }
+.batch p { margin: 0; color: var(--muted); font-size: 13px; }
+.batch ul { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.batch label { display: inline-flex; align-items: center; gap: var(--s2); padding: 6px var(--s3) 6px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--text); font-size: 13px; cursor: pointer; }
+.batch label:has(:checked) { border-color: #c7cdfb; background: var(--accent-soft); }
+.overview { display: flex; flex-direction: column; gap: var(--s3); }
+.overview h2 { display: flex; align-items: center; gap: var(--s2); }
+.overview h2 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: var(--s4); }
+a.card { display: flex; flex-direction: column; overflow: hidden; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); transition: border-color 120ms, box-shadow 120ms, transform 120ms; }
+a.card:hover { text-decoration: none; border-color: #c7cdfb; box-shadow: var(--shadow-2); transform: translateY(-1px); }
+a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+.glyph { display: grid; place-content: center; aspect-ratio: 8 / 5; border-bottom: 1px solid var(--line); background: var(--sunken) radial-gradient(#dcdcd6 1px, transparent 1px) 0 0 / 12px 12px; color: var(--faint); font-size: var(--t-2xl); font-weight: 650; letter-spacing: -0.02em; }
+.card-body { display: flex; flex-direction: column; gap: 6px; padding: var(--s3) var(--s4) var(--s4); }
+.card-body b { font-size: var(--t-md); font-weight: 600; }
+.meta { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); color: var(--muted); }
+.meta .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
+.steps { margin-left: auto; color: var(--faint); }
+textarea.out { width: 100%; min-height: 8rem; font: var(--t-sm) var(--mono); border: 1px solid var(--line-strong); border-radius: var(--r1); padding: var(--s2); }
 `;
-
 /** The delivery of a copy, shared by the pages that hand a review back: the clipboard, else a text area to copy from. */
 const DELIVER = `
 function shown(button, content) {
@@ -192,8 +316,9 @@ function dress(frame) {
   fit(frame);
 }
 function fit(frame) {
-  frame.style.height = "";
-  frame.style.height = frame.contentDocument.documentElement.scrollHeight + "px";
+  const root = frame.contentDocument && frame.contentDocument.documentElement;
+  const height = root ? Math.ceil(root.getBoundingClientRect().height) : 0;
+  if (height > 0) frame.style.height = height + "px";
 }
 function watch(frame) {
   frame.addEventListener("load", () => dress(frame));
@@ -251,6 +376,36 @@ copy.addEventListener("click", () => {
 refresh();
 `;
 
+/** The script of the state tabs: one panel open at a time, its frames fitted as it opens, each tab
+ * marked with the verdict chosen in its panel. */
+const TABS = `
+const tabs = [...document.querySelectorAll('.tabs [role="tab"]')];
+function openTab(tab) {
+  for (const each of tabs) {
+    const on = each === tab;
+    each.setAttribute("aria-selected", String(on));
+    each.tabIndex = on ? 0 : -1;
+    document.getElementById(each.getAttribute("aria-controls")).hidden = !on;
+  }
+  document.getElementById(tab.getAttribute("aria-controls")).querySelectorAll(".render iframe").forEach(fit);
+}
+tabs.forEach((tab, at) => {
+  tab.addEventListener("click", () => openTab(tab));
+  tab.addEventListener("keydown", (event) => {
+    const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+    if (!step) return;
+    const next = tabs[(at + step + tabs.length) % tabs.length];
+    openTab(next);
+    next.focus();
+  });
+});
+review.querySelectorAll("article.state").forEach((article) => {
+  article.querySelectorAll(".verdict").forEach((button) => button.addEventListener("click", () => {
+    document.getElementById(article.getAttribute("aria-labelledby")).dataset.choice = button.dataset.verdict;
+  }));
+});
+`;
+
 /** The script of the home page: the records still checked are handed back as OK in one copy. */
 const HOME_SCRIPT = `${DELIVER}
 const batch = document.querySelector(".batch");
@@ -305,16 +460,40 @@ function navigationOf(records, labels, current) {
     });
     return [`<section data-group="${group}"><h2>${labels[group]}</h2>${levels.join("")}</section>`];
   });
-  return `<nav aria-label="${escaped(labels.list)}"><p><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p>${sections.join("")}</nav>`;
+  return `<nav aria-label="${escaped(labels.list)}"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p>${sections.join("")}</nav>`;
 }
 
-/** A journey as a chain: a card for each step of its Steps table, linking its page when a record bears the name, an arrow after each carrying the action done there. */
-function journeyOf(record, ids) {
+/** The state a miniature shows: `default` when the record has it, else its first. */
+const shownState = (record) => (list(fm(record).states).includes("default") ? "default" : list(fm(record).states)[0]);
+
+/** A live miniature of a record's shown state, sketched for a wireframe; an empty box when it has no render.
+ * Out of `.render`, so the frames script never dresses nor fits it. */
+function miniatureOf(project, record, tokens, labels) {
+  if (!record || !hasRender(project, record)) return `<span class="mini empty">${labels.noRender}</span>`;
+  const doc = stateDocument(text(project, renderOf(record)), tokens, shownState(record), fm(record).kind === "wireframe");
+  return `<span class="mini"><iframe tabindex="-1" aria-hidden="true" loading="eager" title="${escaped(fm(record).id)}" srcdoc="${escaped(doc)}"></iframe></span>`;
+}
+
+/** The persona of a journey as a card: the name the front matter gives, then the text of its Persona section. */
+function personaOf(record, labels) {
+  const said = (record.sections[PERSONA_SECTION]?.lines ?? []).map((line) => line.trim()).filter(Boolean).join(" ");
+  const name = String(fm(record).persona ?? "");
+  if (!said && !name) return "";
+  return `<section class="persona"><span class="avatar" aria-hidden="true">${escaped(name.trim().charAt(0).toUpperCase())}</span><div><p class="eyebrow">${labels.persona}</p>${name ? `<p class="who">${escaped(name)}</p>` : ""}${said ? `<p>${escaped(said)}</p>` : ""}</div></section>`;
+}
+
+/** A journey as a storyboard: a card per step of its Steps table, showing a miniature of the record that
+ * bears the name and linking its page, the screen named under it, then the action numbered. */
+function journeyOf({ project, record, recordsById, tokens, labels }) {
   const steps = table(record.sections[STEPS_SECTION]);
   if (!steps.length) return "";
-  const card = (screen) => (ids.has(screen) ? `<a class="step" href="${escaped(screen)}.html">${escaped(screen)}</a>` : `<span class="step">${escaped(screen)}</span>`);
-  const chain = steps.map((row, at) => card(row.Screen) + (at < steps.length - 1 ? `<span class="arrow">${escaped(row.Action ?? "")}</span>` : ""));
-  return `<section class="journey">${chain.join("")}</section>`;
+  const card = (row, at) => {
+    const target = recordsById.get(row.Screen);
+    const face = `${miniatureOf(project, target, tokens, labels)}<span class="screen">${escaped(target ? titleOf(project, target) : row.Screen ?? "")}</span>`;
+    const shown = target ? `<a class="step" href="${escaped(row.Screen)}.html">${face}</a>` : `<div class="step">${face}</div>`;
+    return `<li class="card" data-step="${at + 1}">${shown}<p class="action"><span class="num">${at + 1}</span>${escaped(row.Action ?? "")}</p></li>`;
+  };
+  return `<section class="journey"><ol class="board">${steps.map(card).join("")}</ol></section>`;
 }
 
 const chipOf = (key, value) => `<span class="chip" data-key="${key}"><span class="key">${key}</span>${escaped(String(value))}</span>`;
@@ -342,12 +521,41 @@ function checksOf(problems, record, labels) {
   return `<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
 }
 
-/** How a wireframe looks in the showcase: each zone a bordered box named by a small label, stacked, in the colours of the reader's scheme. The record stays unstyled. */
+/** How a wireframe looks in the showcase: a lo-fi sketch on paper. Text in a readable scale, buttons as
+ * grey rounded blocks, fields as outlined boxes, tables with light rules, links as plain dark text,
+ * emphasis as a pill, images as crossed boxes, each zone a faint outline named small in its corner.
+ * Fixed colours, so the paper stays light whatever the reader's scheme. The record stays unstyled. */
 const GREY_BOX = `
-:root { color-scheme: light dark; }
-body { margin: 0; padding: 12px; font: 13px system-ui, sans-serif; color: CanvasText; background: Canvas; }
-[data-zone] { position: relative; box-sizing: border-box; min-height: 56px; margin: 0 0 8px; padding: 22px 10px 10px; border: 1px solid GrayText; border-radius: 4px; background: color-mix(in srgb, GrayText 8%, Canvas); }
-[data-zone]::before { content: attr(data-zone); position: absolute; top: 4px; left: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: GrayText; }`;
+:root { color-scheme: light; background: #fbfbfa; }
+body { margin: 0; padding: 24px 28px 28px; font: 14px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #45453f; background: #fbfbfa; }
+[data-zone] { position: relative; box-sizing: border-box; min-height: 48px; margin: 0 0 12px; padding: 24px 16px 14px; border: 1px solid #e7e7e2; border-radius: 10px; background: #ffffff; }
+[data-zone]::before { content: attr(data-zone); position: absolute; top: 6px; left: 12px; font: 500 10px/1 system-ui, sans-serif; letter-spacing: 0.02em; color: #b4b4ad; }
+[data-zone]:empty { background: repeating-linear-gradient(-45deg, #ffffff 0 7px, #f3f3f0 7px 8px); }
+h1, h2, h3, h4 { margin: 0 0 8px; color: #2b2b28; line-height: 1.25; font-weight: 650; }
+h1 { font-size: 22px; } h2 { font-size: 16px; } h3, h4 { font-size: 14px; }
+p { margin: 0 0 8px; } p:last-child, ul:last-child, ol:last-child, table:last-child { margin-bottom: 0; }
+a { color: #2b2b28; text-decoration: none; font-weight: 500; }
+nav, menu { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; margin: 0; padding: 0; }
+nav strong, nav b { margin-right: auto; padding: 0; background: none; font-size: 15px; font-weight: 700; color: #2b2b28; }
+nav strong::before { content: ""; display: inline-block; inline-size: 14px; block-size: 14px; margin-right: 8px; vertical-align: -2px; border-radius: 4px; background: #c9c9c3; }
+strong, b, mark, [role="status"] { display: inline-block; padding: 0 8px; border-radius: 999px; background: #ecece8; color: #3b3b37; font-size: 12px; font-weight: 600; line-height: 20px; }
+button, input[type="submit"], input[type="button"] { font: 500 13px/1 system-ui, sans-serif; color: #3b3b37; background: #e4e4df; border: 0; border-radius: 8px; padding: 10px 16px; margin: 0 8px 4px 0; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]), select, textarea { box-sizing: border-box; font: 13px system-ui, sans-serif; color: #9a9a93; background: #ffffff; border: 1.5px solid #d4d4ce; border-radius: 8px; padding: 9px 12px; min-inline-size: 220px; max-inline-size: 100%; }
+input[type="checkbox"], input[type="radio"] { inline-size: 15px; block-size: 15px; margin: 0 8px 0 0; vertical-align: -2px; accent-color: #8a8a83; }
+label { display: block; margin: 0 0 12px; font-size: 13px; font-weight: 500; color: #5c5c55; }
+label > input:not([type="checkbox"]):not([type="radio"]), label > select, label > textarea { display: block; margin-top: 6px; inline-size: 100%; max-inline-size: 420px; }
+form > button, form > input[type="submit"] { margin-top: 4px; }
+table { border-collapse: collapse; inline-size: 100%; font-size: 13px; margin: 0 0 8px; }
+th { text-align: left; font-weight: 600; font-size: 12px; color: #8a8a83; padding: 8px 12px; border-bottom: 1px solid #deded8; }
+td { padding: 10px 12px; border-bottom: 1px solid #efefeb; }
+th strong, td strong { font-size: 11px; }
+ul, ol { margin: 0 0 8px; padding-left: 18px; }
+li { margin: 4px 0; } li::marker { color: #bcbcb5; }
+img, video, canvas, [role="img"] { display: inline-block; min-inline-size: 96px; min-block-size: 64px; border: 1px solid #d4d4ce; border-radius: 6px; font-size: 0; background: #f4f4f1 linear-gradient(to top right, transparent calc(50% - 0.5px), #d4d4ce 50%, transparent calc(50% + 0.5px)), linear-gradient(to bottom right, transparent calc(50% - 0.5px), #d4d4ce 50%, transparent calc(50% + 0.5px)); }
+hr { border: 0; border-top: 1px solid #e7e7e2; margin: 12px 0; }
+[role="alert"] { padding: 10px 12px; border-radius: 8px; background: #f1f1ed; border-left: 3px solid #9a9a93; color: #3b3b37; }
+small { color: #8a8a83; }
+code { font: 12px ui-monospace, Menlo, monospace; background: #f0f0ec; border-radius: 4px; padding: 1px 4px; }`;
 
 /** The document of one state of a render: the tokens inline, every other state hidden. A render without `</head>` keeps every state visible in each frame: a known limit. */
 function stateDocument(render, tokens, state, sketch) {
@@ -366,21 +574,32 @@ function toolbarOf(system, labels) {
   return `<div class="toolbar">${combo("a", false)}${combo("b", true)}<button type="button" id="sides" aria-pressed="false">${labels.sides}</button></div>`;
 }
 
-/** One state of a record: its render, the capture beside it for a coded screen, and the two choices. */
-function stateOf({ record, state, verdict, render, tokens, captures, labels, platform }) {
+/** The id of a state's tab and of its panel. */
+const tabId = (state) => `tab-${state}`;
+const panelId = (state) => `panel-${state}`;
+
+/** One state of a record, as the panel of its tab: its name and the two choices, the comment, then its
+ * render on the canvas, the capture beside it for a coded screen. Only the first panel starts open. */
+function stateOf({ record, state, verdict, render, tokens, captures, labels, platform, first }) {
   const { id, version } = fm(record);
   const file = `${record.folder}/${id}.${state}@${version}.png`;
   const capture = !isCoded(record) ? "" : captures.has(file) ? `<figure class="capture" data-file="${escaped(file)}"><img src="../${escaped(file)}" alt="${escaped(filled(labels.capture, { state }))}"></figure>` : `<div class="capture missing" data-file="${escaped(file)}">${escaped(filled(labels.noCapture, { path: file }))}</div>`;
   return [
-    `<article class="state" data-state="${escaped(state)}" data-current="${escaped(verdict.current)}">`,
-    `<h3>${escaped(state)}</h3>`,
+    `<article class="state" data-state="${escaped(state)}" data-current="${escaped(verdict.current)}" role="tabpanel" id="${escaped(panelId(state))}" aria-labelledby="${escaped(tabId(state))}"${first ? "" : " hidden"}>`,
+    `<div class="state-bar"><h3>${escaped(state)}</h3>`,
     verdict.outdated === null ? "" : `<p class="outdated" data-version="${escaped(verdict.outdated)}">${escaped(filled(labels.outdated, { version: verdict.outdated }))}</p>`,
     verdict.comment ? `<p class="said">${escaped(verdict.comment)}</p>` : "",
-    `<div class="pair"><div class="render"><iframe data-combo="a"${platform} title="${escaped(`${id} ${state}`)}" srcdoc="${escaped(stateDocument(render, tokens, state, fm(record).kind === "wireframe"))}"></iframe></div>${capture}</div>`,
-    `<div class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></div>`,
+    `<div class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></div></div>`,
     `<textarea class="comment" rows="2" hidden placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}"></textarea>`,
+    `<div class="pair"><div class="render"><iframe data-combo="a"${platform} title="${escaped(`${id} ${state}`)}" srcdoc="${escaped(stateDocument(render, tokens, state, fm(record).kind === "wireframe"))}"></iframe></div>${capture}</div>`,
     "</article>",
   ].filter(Boolean).join("\n");
+}
+
+/** The tabs of the states, in the order of their panels, each marked with the verdict that decides it. */
+function tabsOf(states, labels) {
+  const tab = ({ state, verdict }, at) => `<button type="button" role="tab" class="tab" id="${escaped(tabId(state))}" aria-controls="${escaped(panelId(state))}" aria-selected="${at === 0}" tabindex="${at === 0 ? 0 : -1}" data-tab="${escaped(state)}" data-current="${escaped(verdict.current)}"><i class="dot" aria-hidden="true"></i>${escaped(state)}</button>`;
+  return `<div class="tabs" role="tablist" aria-label="${escaped(labels.states)}">${states.map(tab).join("")}</div>`;
 }
 
 const GALLERY_STYLE = `
@@ -444,9 +663,10 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
   const ordered = [...states.filter(({ verdict }) => UNRESOLVED.includes(verdict.current)), ...states.filter(({ verdict }) => !UNRESOLVED.includes(verdict.current))];
   return [
     `<section class="review" data-record="${escaped(fm(record).id)}" data-version="${escaped(String(fm(record).version))}">`,
-    `<div class="bar-top"><h2>${labels.review}</h2><p class="count" data-ok="${ok}" data-total="${states.length}">${filled(labels.count, { ok, total: states.length })}</p><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button><span id="note" role="status"></span></div>`,
+    `<div class="bar-top"><h2>${labels.review}</h2><p class="count" data-ok="${ok}" data-total="${states.length}">${filled(labels.count, { ok, total: states.length })}</p><span id="note" role="status"></span><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button></div>`,
     toolbarOf(system, labels),
-    ...ordered.map(({ state, verdict }) => stateOf({ record, state, verdict, render, tokens, captures, labels, platform: platformOf(system) })),
+    tabsOf(ordered, labels),
+    ...ordered.map(({ state, verdict }, at) => stateOf({ record, state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
     "</section>",
   ].join("\n");
 }
@@ -474,14 +694,52 @@ function bodyLines(project, record) {
 /** The first `# ` heading of a record's text, else its id. */
 const titleOf = (project, record) => bodyLines(project, record).map((line) => TITLE_LINE.exec(line)?.[1]).find(Boolean) ?? fm(record).id;
 
-/** The record as text under its title, without its front matter and its title, which the page heading shows. */
+/** The `## ` sections a page already shows in its own shape, so its text leaves them out. */
+const SHOWN_SECTIONS = { journey: [PERSONA_SECTION, STEPS_SECTION] };
+const SECTION_LINE = /^## +(.+?)\s*$/;
+
+/** The record as text under its title, without its front matter, its title, which the page heading
+ * shows, and the sections the page draws otherwise. */
 function specOf(project, record) {
-  const lines = bodyLines(project, record);
-  const at = lines.findIndex((line) => TITLE_LINE.test(line));
-  return documentOf((at === -1 ? lines : lines.filter((_, index) => index !== at)).join(LINE_BREAK));
+  const shown = SHOWN_SECTIONS[fm(record).kind] ?? [];
+  let skipping = false;
+  const kept = bodyLines(project, record).filter((line) => {
+    const section = SECTION_LINE.exec(line);
+    if (section) skipping = shown.includes(section[1]);
+    return !skipping;
+  });
+  const at = kept.findIndex((line) => TITLE_LINE.test(line));
+  return documentOf((at === -1 ? kept : kept.filter((_, index) => index !== at)).join(LINE_BREAK));
 }
 
-const pageOf = (title, lang, navigation, body, script) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${STYLE}${LAYOUT}</style>`, "</head>", "<body>", '<div class="shell">', navigation, "<main>", body, "</main>", "</div>", ...(script ? [`<script>${script}</script>`] : []), "</body>", "</html>", ""].join("\n");
+/** The heading of a record's page: its group, its title, its chips. */
+const headOf = (record, title, labels) => `<header class="head"><p class="crumb">${labels[groupOf(record)]}</p><h1>${escaped(title)}</h1><div class="chips">${chipsOf(record)}</div></header>`;
+
+/** The record a card or a journey shows first: a journey's first step that names a record with a render, else the record itself. */
+function shownRecordOf(project, record, recordsById) {
+  if (fm(record).kind !== "journey") return record;
+  return table(record.sections[STEPS_SECTION]).map((row) => recordsById.get(row.Screen)).find((target) => target && hasRender(project, target)) ?? null;
+}
+
+/** The home page: each group of records as cards, a miniature on each that has something to show. */
+function overviewOf({ project, records, recordsById, tokens, labels }) {
+  const card = (record) => {
+    const { id, status, kind } = fm(record);
+    const title = titleOf(project, record);
+    const shown = shownRecordOf(project, record, recordsById);
+    const face = shown && hasRender(project, shown) ? miniatureOf(project, shown, tokens, labels) : `<span class="glyph" aria-hidden="true">${escaped(title.slice(0, 2))}</span>`;
+    const steps = kind === "journey" ? `<span class="steps">${escaped(filled(labels.steps, { count: table(record.sections[STEPS_SECTION]).length }))}</span>` : "";
+    const chip = status === undefined ? "" : `<span class="chip" data-status="${escaped(status)}">${escaped(status)}</span>`;
+    return `<a class="card" href="${escaped(id)}.html">${face}<span class="card-body"><b>${escaped(title)}</b><span class="meta">${chip}<span>${escaped(String(kind))}</span>${steps}</span></span></a>`;
+  };
+  const levelOrder = (record) => LEVELS.indexOf(fm(record).kind);
+  return GROUPS.flatMap((group) => {
+    const own = records.filter((record) => groupOf(record) === group).sort((a, b) => levelOrder(a) - levelOrder(b) || byRecordId(a, b));
+    return own.length ? [`<section class="overview" data-overview="${group}"><h2>${labels[group]}<span>${own.length}</span></h2><div class="cards">${own.map(card).join("")}</div></section>`] : [];
+  }).join("\n");
+}
+
+const pageOf = (title, lang, navigation, body, script) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}</style>`, "</head>", "<body>", '<div class="shell">', navigation, "<main>", body, "</main>", "</div>", ...(script ? [`<script>${script}</script>`] : []), "</body>", "</html>", ""].join("\n");
 
 /** The pages of the showcase by file name: `index.html` and one page per record that is not a review.
  * `problems` are the engine's, `tokens` the stylesheet text or null, `captures` the png paths beside
@@ -490,29 +748,32 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
   const language = languageOf(lang);
   const labels = LABELS[language];
   const records = placed(project).filter((record) => fm(record).kind !== REVIEW_KIND && fm(record).id);
-  const ids = new Set(records.map((record) => fm(record).id));
+  const recordsById = new Map();
+  for (const record of records) if (!recordsById.has(fm(record).id)) recordsById.set(fm(record).id, record);
   const rows = verdictRows(placed(project));
   const system = project.records.find((record) => fm(record).kind === "system");
   const batch = batchOf({ project, records, rows, labels });
-  const pages = { "index.html": pageOf(labels.title, language, navigationOf(records, labels, null), `<h1>${labels.title}</h1><p>${labels.pick}</p>${batch}`, batch ? HOME_SCRIPT : "") };
+  const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, batch, overviewOf({ project, records, recordsById, tokens, labels })].filter(Boolean).join("\n");
+  const pages = { "index.html": pageOf(labels.title, language, navigationOf(records, labels, null), home, batch ? HOME_SCRIPT : "") };
   for (const record of records) {
     const id = fm(record).id;
-    const uses = [...new Set(cited(record))].filter((each) => each !== id && ids.has(each)).sort(byCode);
+    const uses = [...new Set(cited(record))].filter((each) => each !== id && recordsById.has(each)).sort(byCode);
     const usedBy = records.filter((other) => fm(other).id !== id && cited(other).includes(id)).map((other) => fm(other).id).sort(byCode);
     const reviewed = hasRender(project, record);
     const title = titleOf(project, record);
+    const journey = fm(record).kind === "journey";
     const body = [
-      `<h1>${escaped(title)}</h1>`,
-      `<div class="chips">${chipsOf(record)}</div>`,
+      headOf(record, title, labels),
       linksOf("uses", labels.uses, uses),
       linksOf("used-by", labels.usedBy, usedBy),
-      fm(record).kind === "journey" ? journeyOf(record, ids) : "",
+      journey ? personaOf(record, labels) : "",
+      journey ? journeyOf({ project, record, recordsById, tokens, labels }) : "",
       id === SYSTEM_ID ? galleryOf({ project, system, tokens, labels, language }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
       checksOf(problems, record, labels),
       specOf(project, record),
     ].filter(Boolean).join("\n");
-    pages[`${id}.html`] = pageOf(title, language, navigationOf(records, labels, id), body, reviewed ? FRAMES + REVIEW : id === SYSTEM_ID ? FRAMES : "");
+    pages[`${id}.html`] = pageOf(title, language, navigationOf(records, labels, id), body, reviewed ? FRAMES + REVIEW + TABS : id === SYSTEM_ID ? FRAMES : "");
   }
   return pages;
 }

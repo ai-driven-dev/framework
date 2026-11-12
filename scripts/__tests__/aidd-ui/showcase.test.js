@@ -39,6 +39,49 @@ const articleOf = (html, state) => html.match(new RegExp(`<article class="state"
 const groupOf = (html, group) => html.match(new RegExp(`<section data-group="${group}">[\\s\\S]*?</section>`))[0];
 const linksOf = (html, kind) => [...html.match(new RegExp(`<section class="links" data-links="${kind}">[\\s\\S]*?</section>`))[0].matchAll(/href="([^"]+)\.html"/g)].map((match) => match[1]);
 const capture = (name) => put(tmp, `${UI}/screens/${name}`, PNG);
+const unescaped = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
+const cardsOf = (html) => [...html.match(/<section class="journey"[\s\S]*?<\/section>/)[0].matchAll(/<li class="card"[\s\S]*?<\/li>/g)].map((match) => match[0]);
+const tabsOf = (html) => [...html.matchAll(/<button type="button" role="tab"[^>]*>/g)].map((match) => match[0]);
+const attributeOf = (tag, name) => tag.match(new RegExp(`${name}="([^"]*)"`))?.[1];
+
+/** Runs the script of a record's page against a minimal document built from its articles, clicks the
+ * verdicts `picks` names, `{ state: [verdict, comment] }`, then Copy, and returns what reached the clipboard. */
+async function copiedFrom(html, picks) {
+  const node = (extra = {}) => {
+    const on = {};
+    const attributes = {};
+    return {
+      dataset: {}, style: {}, hidden: false, disabled: false, textContent: "", value: "",
+      setAttribute: (name, value) => { attributes[name] = String(value); },
+      getAttribute: (name) => attributes[name] ?? null,
+      addEventListener: (type, listener) => (on[type] ??= []).push(listener),
+      fire: (type) => (on[type] ?? []).forEach((listener) => listener({ key: "" })),
+      querySelector: () => null, querySelectorAll: () => [], focus() {}, select() {},
+      ...extra,
+    };
+  };
+  const articles = statesIn(html).map((state) => {
+    const buttons = ["ok", "revise"].map((verdict) => node({ dataset: { verdict } }));
+    const comment = node();
+    return { state, buttons, comment, article: node({ dataset: { state }, querySelector: (selector) => (selector === ".comment" ? comment : null), querySelectorAll: (selector) => (selector === ".verdict" ? buttons : []) }) };
+  });
+  const [, record, version] = html.match(/<section class="review" data-record="([^"]+)" data-version="([^"]+)">/);
+  const review = node({ dataset: { record, version }, querySelectorAll: (selector) => (selector === "article.state" ? articles.map((each) => each.article) : []) });
+  const ids = { copy: node({ dataset: { copied: "Copied", blocked: "blocked" } }), note: node() };
+  const document = { querySelector: (selector) => (selector === ".review" ? review : null), querySelectorAll: () => [], getElementById: (id) => ids[id] ?? node(), createElement: () => node() };
+  let copied = null;
+  const navigator = { clipboard: { writeText: (text) => { copied = text; return Promise.resolve(); } } };
+  new Function("document", "navigator", "setTimeout", html.match(/<script>([\s\S]*)<\/script>/)[1])(document, navigator, () => {});
+  for (const [state, [verdict, comment]] of Object.entries(picks)) {
+    const own = articles.find((each) => each.state === state);
+    own.buttons.find((button) => button.dataset.verdict === verdict).fire("click");
+    own.comment.value = comment ?? "";
+    own.comment.fire("input");
+  }
+  ids.copy.fire("click");
+  await new Promise((resolve) => setImmediate(resolve));
+  return copied;
+}
 
 describe("aidd-ui showcase", () => {
   describe("the pages", () => {
@@ -74,21 +117,45 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(fs.readFileSync(path.join(tmp, `${UI}/wireframes/search-flow.html`), "utf8"), /<style/);
     });
 
-    it("draws a journey as step cards joined by arrows, the action on the arrow, each card linking its page", () => {
-      const journey = pagesOf()["onboarding.html"].match(/<section class="journey"[\s\S]*?<\/section>/)[0];
-      assert.deepEqual([...journey.matchAll(/<a class="step" href="([^"]+)\.html">/g)].map((match) => match[1]), ["home", "home", "search-flow"]);
-      assert.deepEqual([...journey.matchAll(/<span class="arrow">([^<]*)</g)].map((match) => match[1]), ["types a query", "opens a result"]);
+    it("draws a journey as a storyboard: a card per step, linking its page, its action numbered under it, the last one too", () => {
+      const cards = cardsOf(pagesOf()["onboarding.html"]);
+      assert.deepEqual(cards.map((card) => card.match(/<a class="step" href="([^"]+)\.html"/)?.[1]), ["home", "home", "search-flow"]);
+      assert.deepEqual(cards.map((card) => card.match(/<p class="action"><span class="num">(\d+)<\/span>([^<]*)<\/p>/).slice(1)), [["1", "types a query"], ["2", "opens a result"], ["3", "narrows the results"]]);
     });
 
-    it("draws a journey step that names no record as a card without a link", () => {
+    it("shows each journey step as a live miniature of its record's default state, sketched for a wireframe", () => {
+      const cards = cardsOf(pagesOf()["onboarding.html"]);
+      for (const card of cards) assert.match(card, /<iframe [^>]*tabindex="-1"[^>]*srcdoc="/);
+      const frames = cards.map((card) => unescaped(card.match(/srcdoc="([^"]*)"/)[1]));
+      for (const frame of frames) assert.ok(frame.includes('[data-state]:not([data-state="default"])'), frame);
+      assert.match(frames[2], /\[data-zone\]::before/);
+      assert.doesNotMatch(frames[0], /\[data-zone\]::before/);
+    });
+
+    it("draws a journey step that names no record as a card with neither a link nor a miniature", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "| search-flow | narrows", "| ghost | narrows");
-      const journey = pagesOf()["onboarding.html"].match(/<section class="journey"[\s\S]*?<\/section>/)[0];
-      assert.match(journey, /<span class="step">ghost<\/span>/);
-      assert.doesNotMatch(journey, /ghost\.html/);
+      const ghost = cardsOf(pagesOf()["onboarding.html"])[2];
+      assert.match(ghost, /<span class="screen">ghost<\/span>/);
+      assert.doesNotMatch(ghost, /ghost\.html|<iframe/);
+    });
+
+    it("shows the persona as a card and leaves the Steps table and the Persona section out of the journey's text", () => {
+      const page = pagesOf()["onboarding.html"];
+      assert.match(page.match(/<section class="persona">[\s\S]*?<\/section>/)[0], /An analyst opening the product for the first time, looking for one answer\./);
+      assert.doesNotMatch(page, /<h2>Steps<\/h2>|<h2>Persona<\/h2>|<table/);
+      assert.equal(page.match(/An analyst opening the product/g).length, 1);
     });
 
     it("draws no journey chain on a record that is not a journey", () => {
       assert.doesNotMatch(pagesOf()["home.html"], /class="journey"/);
+    });
+
+    it("gives the home page a card per record, with a miniature for a record that has a render and for a journey", () => {
+      const index = pagesOf()["index.html"];
+      const cards = Object.fromEntries([...index.matchAll(/<a class="card" href="([^"]+)\.html"[\s\S]*?<\/a>/g)].map((match) => [match[1], match[0]]));
+      assert.deepEqual(Object.keys(cards).sort(), [...PAGE_IDS].sort());
+      for (const id of ["search-flow", "home", "button", "onboarding"]) assert.match(cards[id], /<iframe [^>]*tabindex="-1"/, id);
+      for (const id of ["brand", "system"]) assert.doesNotMatch(cards[id], /<iframe/, id);
     });
 
     it("orders the navigation brand and system, components by level, journeys, templates, pages", () => {
@@ -408,6 +475,52 @@ describe("aidd-ui showcase", () => {
         assert.deepEqual(buttons, ["ok", "revise"], state);
       }
       assert.equal(home.match(/id="copy"/g).length, 1);
+    });
+
+    it("shows the states as tabs in the order of the review, the first open and the others hidden", () => {
+      verdicts(["home", "default", "1", "ok", ""]);
+      const home = pagesOf()["home.html"];
+      const tabs = tabsOf(home);
+      assert.deepEqual(tabs.map((tab) => attributeOf(tab, "data-tab")), statesIn(home));
+      assert.deepEqual(tabs.map((tab) => attributeOf(tab, "aria-selected")), ["true", "false", "false", "false"]);
+      statesIn(home).forEach((state, at) => {
+        const open = articleOf(home, state).match(/^<article [^>]*>/)[0];
+        assert.equal(attributeOf(open, "id"), attributeOf(tabs[at], "aria-controls"), state);
+        assert.equal(/ hidden[ >]/.test(open), at > 0, state);
+      });
+    });
+
+    it("keeps a verdict pair and a comment field in the panel of each state", () => {
+      const home = pagesOf()["home.html"];
+      for (const state of HOME_STATES) assert.equal(articleOf(home, state).match(/<textarea class="comment"/g).length, 1, state);
+      assert.equal(home.match(/class="verdict"/g).length, HOME_STATES.length * 2);
+    });
+
+    it("copies the verdicts chosen, in the order of the panels, as fenced JSON", async () => {
+      verdicts();
+      const copied = await copiedFrom(pagesOf()["home.html"], { default: ["ok"], loading: ["revise", "  spinner too small "] });
+      const expected = [
+        "```json",
+        "{",
+        '  "record": "home",',
+        '  "version": 1,',
+        '  "verdicts": [',
+        "    {",
+        '      "state": "default",',
+        '      "verdict": "ok",',
+        '      "comment": ""',
+        "    },",
+        "    {",
+        '      "state": "loading",',
+        '      "verdict": "revise",',
+        '      "comment": "spinner too small"',
+        "    }",
+        "  ]",
+        "}",
+        "```",
+        "",
+      ].join("\n");
+      assert.equal(copied, expected);
     });
   });
 
