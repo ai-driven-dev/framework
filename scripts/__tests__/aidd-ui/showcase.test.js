@@ -88,7 +88,7 @@ describe("aidd-ui showcase", () => {
 
     it("draws a journey as a storyboard: a card per step, linking its page, its action numbered under it, the last one too", () => {
       const cards = cardsOf(pagesOf()["onboarding.html"]);
-      assert.deepEqual(cards.map((card) => card.match(/<a class="step" href="([^"]+)\.html"/)?.[1]), ["home", "home", "search-flow"]);
+      assert.deepEqual(cards.map((card) => card.match(/<a class="step" href="([^".]+)\.html/)?.[1]), ["home", "home", "search-flow"]);
       assert.deepEqual(cards.map((card) => card.match(/<p class="action"><span class="num">(\d+)<\/span>([^<]*)<\/p>/).slice(1)), [["1", "types a query"], ["2", "opens a result"], ["3", "narrows the results"]]);
     });
 
@@ -172,10 +172,11 @@ describe("aidd-ui showcase", () => {
       assert.match(pages["home.html"], /<span class="chip" data-status="validated">/);
     });
 
-    it("titles a page with its record's heading, then its status and its version, and no id or kind chip", () => {
+    it("titles a page with its record's heading, its status and version stamped on the title line, and no id or kind chip", () => {
       const home = pagesOf()["home.html"];
       assert.deepEqual(home.match(/<h1[ >][^<]*<\/h1>/g), ["<h1>Home</h1>"]);
-      assert.match(headerOf(home), /<div class="chips"><span class="chip" data-status="validated">validated<\/span><span class="version">v1<\/span>/);
+      assert.match(headerOf(home), /<div class="stamp"><span class="chip" data-status="validated">validated<\/span><span class="version">v1<\/span><\/div>/);
+      assert.match(headerOf(home), /<div class="chips"><span class="chip" data-key="route">/);
       assert.doesNotMatch(home, /data-key="id"|data-key="kind"|data-key="version"/);
       assert.doesNotMatch(headerOf(home), /class="lede"/);
       assert.match(home, /<title>Home<\/title>/);
@@ -184,7 +185,7 @@ describe("aidd-ui showcase", () => {
     it("puts the record's description under its title, before the canvas, and not again in its text", () => {
       edit(tmp, `${UI}/wireframes/search-flow.md`, "# Search flow", "# Search flow\n\nLet an analyst narrow a search\nto one result.\n\n## Notes\n\nKept below.");
       const page = pagesOf()["search-flow.html"];
-      assert.match(headerOf(page), /<h1>Search flow<\/h1><p class="lede">Let an analyst narrow a search to one result\.<\/p><div class="chips">/);
+      assert.match(headerOf(page), /<h1>Search flow<\/h1><p class="lede">Let an analyst narrow a search to one result\.<\/p><div class="stamp">/);
       assert.equal(page.match(/narrow a search/g).length, 1);
       assert.ok(page.indexOf('class="lede"') < page.indexOf('<section class="review"'));
       assert.match(page, /<p>Kept below\.<\/p>/);
@@ -603,6 +604,138 @@ describe("aidd-ui showcase", () => {
       assert.deepEqual(keptOf(stored, ["home@1", "button@1"]), { "home@1": { empty: { verdict: "revise", comment: "x" } } });
       assert.deepEqual(keptOf(null, ["home@1"]), {});
       assert.deepEqual(keptOf("broken", ["home@1"]), {});
+    });
+  });
+
+  describe("the sidebar and the header", () => {
+    const itemOf = (html, id) => html.match(new RegExp(`<li data-id="${id}">[\\s\\S]*?</li>`))[0];
+    const rule = (html, selector) => html.match(new RegExp(`(?:^|\\n)${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`))[1];
+
+    it("lists each record in the navigation by its title, the id staying in the address", () => {
+      const home = pagesOf()["home.html"];
+      assert.match(itemOf(home, "search-flow"), /<a href="search-flow\.html">Search flow<\/a>/);
+      assert.match(itemOf(home, "home"), /<a href="home\.html" aria-current="page">Home<\/a>/);
+      assert.doesNotMatch(itemOf(home, "search-flow"), />search-flow</);
+    });
+
+    it("writes the status of a chip, a card and the navigation in the language, the stored value staying", () => {
+      const pages = pagesOf({ lang: "fr" });
+      assert.match(itemOf(pages["home.html"], "search-flow"), /<span class="tag">proposé<\/span>/);
+      assert.match(headerOf(pages["search-flow.html"]), /<span class="chip" data-status="proposed">proposé<\/span>/);
+      assert.match(headerOf(pages["home.html"]), /<span class="chip" data-status="validated">validé<\/span>/);
+      assert.match(pages["index.html"], /<span class="chip" data-status="validated">validé<\/span>/);
+      assert.deepEqual(appearsOf(pages["home.html"]), [["onboarding", "Onboarding", "validated"]]);
+      assert.match(pages["home.html"], /<a class="mini-card"[^>]*><b>Onboarding<\/b><span class="chip" data-status="validated">validé<\/span>/);
+      assert.match(pagesOf()["search-flow.html"], /<span class="chip" data-status="proposed">proposed<\/span>/);
+    });
+
+    it("translates a deprecated status too, and shows an unknown one as written", () => {
+      edit(tmp, `${UI}/wireframes/search-flow.md`, "status: proposed", "status: deprecated");
+      assert.match(headerOf(pagesOf({ lang: "fr" })["search-flow.html"]), /data-status="deprecated">déprécié</);
+      assert.match(headerOf(pagesOf()["search-flow.html"]), /data-status="deprecated">deprecated</);
+      edit(tmp, `${UI}/wireframes/search-flow.md`, "status: deprecated", "status: odd");
+      assert.match(headerOf(pagesOf({ lang: "fr" })["search-flow.html"]), /data-status="odd">odd</);
+    });
+
+    it("stamps the status and the version on the title line, and keeps the route and the code below", () => {
+      const home = headerOf(pagesOf()["home.html"]);
+      assert.ok(home.indexOf("<h1>") < home.indexOf('class="stamp"'));
+      assert.doesNotMatch(home.match(/<div class="chips">[\s\S]*?<\/div>/)[0], /data-status|class="version"/);
+      assert.match(pagesOf()["home.html"], /\.head \{[^}]*grid-template-columns/);
+      assert.match(rule(pagesOf()["home.html"], ".head > .stamp"), /grid-row: 2/);
+    });
+
+    it("reads the description in the text color, and the persona darker than the faint grey", () => {
+      const html = pagesOf()["onboarding.html"];
+      assert.match(rule(html, ".lede"), /color: var\(--text\)/);
+      assert.doesNotMatch(rule(html, ".head .persona"), /var\(--muted\)|var\(--faint\)/);
+    });
+
+    it("lets only a journey page use the width of the screen", () => {
+      const pages = pagesOf();
+      assert.ok(pages["onboarding.html"].includes('<main class="wide">'));
+      for (const name of ["home.html", "search-flow.html", "index.html"]) assert.ok(pages[name].includes("<main>"), name);
+      assert.match(rule(pages["home.html"], ".shell > main.wide"), /max-width: none/);
+    });
+  });
+
+  describe("the journey navigation", () => {
+    const barsOf = (html) => [...html.matchAll(/<nav class="journey-bar"[^>]*>[\s\S]*?<\/nav>/g)].map((match) => match[0]);
+    const hrefsOf = (bar) => [...bar.matchAll(/href="([^"]+)"/g)].map((match) => unescaped(match[1]));
+    const textOf = (bar, name) => unescaped(bar.match(new RegExp(`<a class="${name}"[^>]*>([\\s\\S]*?)</a>`))?.[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? "");
+
+    it("sends each storyboard card to its page with the journey and the step in the query", () => {
+      const cards = cardsOf(pagesOf()["onboarding.html"]);
+      assert.deepEqual(cards.map((card) => unescaped(card.match(/<a class="step" href="([^"]+)"/)[1])), ["home.html?journey=onboarding&step=1", "home.html?journey=onboarding&step=2", "search-flow.html?journey=onboarding&step=3"]);
+    });
+
+    it("draws one hidden bar per step a page holds in a journey, under the header", () => {
+      const page = pagesOf()["home.html"];
+      const bars = barsOf(page);
+      assert.deepEqual(bars.map((bar) => [attributeOf(bar, "data-journey"), attributeOf(bar, "data-step")]), [["onboarding", "1"], ["onboarding", "2"]]);
+      for (const bar of bars) assert.match(bar, /^<nav class="journey-bar"[^>]* hidden/);
+      assert.ok(page.indexOf("</header>") < page.indexOf('class="journey-bar"'));
+      assert.ok(page.indexOf('class="journey-bar"') < page.indexOf('<section class="review"'));
+    });
+
+    it("names the journey, the step of the total, and the titles of the steps around", () => {
+      const [first, second] = barsOf(pagesOf()["home.html"]);
+      assert.deepEqual(hrefsOf(second), ["onboarding.html", "home.html?journey=onboarding&step=1", "search-flow.html?journey=onboarding&step=3"]);
+      assert.equal(textOf(second, "journey-title"), "Onboarding");
+      assert.match(second, /Step 2 of 3/);
+      assert.equal(textOf(second, "prev"), "Previous step Home");
+      assert.equal(textOf(second, "next"), "Next step Search flow");
+      assert.deepEqual(hrefsOf(first), ["onboarding.html", "home.html?journey=onboarding&step=2"]);
+      assert.doesNotMatch(first, /class="prev"/);
+      const last = barsOf(pagesOf()["search-flow.html"])[0];
+      assert.deepEqual(hrefsOf(last), ["onboarding.html", "home.html?journey=onboarding&step=2"]);
+      assert.doesNotMatch(last, /class="next"/);
+    });
+
+    it("writes the bar in the language", () => {
+      const second = barsOf(pagesOf({ lang: "fr" })["home.html"])[1];
+      assert.match(second, /Étape 2 sur 3/);
+      assert.match(textOf(second, "next"), /^Étape suivante/);
+    });
+
+    it("draws no bar and no script for it on a page no journey holds, nor on the journey itself", () => {
+      const pages = pagesOf();
+      for (const name of ["button.html", "onboarding.html", "index.html", "dialog.html"]) {
+        assert.deepEqual(barsOf(pages[name]), [], name);
+        assert.ok(!pages[name].includes("URLSearchParams"), name);
+      }
+    });
+
+    it("leaves a step that names no record without a link", () => {
+      edit(tmp, `${UI}/journeys/onboarding.md`, "| search-flow | narrows", "| ghost | narrows");
+      const second = barsOf(pagesOf()["home.html"])[1];
+      assert.doesNotMatch(second, /class="next"/);
+    });
+
+    describe("the script", () => {
+      const run = (html, search) => {
+        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        const bars = barsOf(html).map((bar) => ({ dataset: { journey: attributeOf(bar, "data-journey"), step: attributeOf(bar, "data-step") }, hidden: true }));
+        const stub = { querySelectorAll: (selector) => (selector.includes("journey-bar") ? bars : []), getElementById: () => null, querySelector: () => null };
+        const tail = script.slice(script.indexOf("const query = new URLSearchParams"));
+        new Function("document", "location", "URLSearchParams", tail)(stub, { search, hash: "" }, URLSearchParams);
+        return bars.map((bar) => bar.hidden);
+      };
+
+      it("shows the bar of the journey and step the address names, and none without them", () => {
+        const page = pagesOf()["home.html"];
+        assert.deepEqual(run(page, "?journey=onboarding&step=2"), [true, false]);
+        assert.deepEqual(run(page, "?journey=onboarding&step=1"), [false, true]);
+        assert.deepEqual(run(page, ""), [true, true]);
+        assert.deepEqual(run(page, "?journey=other&step=1"), [true, true]);
+        assert.deepEqual(run(page, "?journey=onboarding"), [true, true]);
+      });
+
+      it("leaves the tab of the hash to the tabs", () => {
+        const html = pagesOf()["home.html"];
+        assert.ok(html.includes("location.hash.slice(1)"));
+        assert.ok(!html.slice(html.indexOf("const query = new URLSearchParams")).includes("location.hash"));
+      });
     });
   });
 
