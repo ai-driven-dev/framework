@@ -215,7 +215,7 @@ describe("SetupPluginsPromptUseCase — what each install is asked for", () => {
 
     expect(installer.calls).toEqual([
       {
-        tools: expect.any(Array),
+        tools: catalogOf().sortedById(),
         pluginName: "aidd-dev",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -255,7 +255,12 @@ describe("SetupPluginsPromptUseCase — the interactive pick", () => {
 
     expect(result).toEqual({ installed: ["aidd-dev", "aidd-pm"] });
     expect(pick.calls).toEqual([
-      { tools: expect.any(Array), toolIds: "all", projectRoot: PROJECT_ROOT, interactive: true },
+      {
+        tools: catalogOf().sortedById(),
+        toolIds: "all",
+        projectRoot: PROJECT_ROOT,
+        interactive: true,
+      },
     ]);
   });
 

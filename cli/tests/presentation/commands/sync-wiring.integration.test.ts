@@ -167,7 +167,7 @@ describe("aidd sync --tool", () => {
       interactive: false,
       manifest: expect.anything(),
       pluginName: undefined,
-      tools: expect.any(Array),
+      tools: registeredProfiles(),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
@@ -267,7 +267,7 @@ describe("aidd sync --scope user", () => {
       projectRoot: PROJECT_ROOT,
       scope: "user",
       rebuild: true,
-      tools: expect.any(Array),
+      tools: registeredProfiles(),
     });
     expect(activation).toHaveBeenCalledWith(expect.objectContaining({ scope: "user" }));
   });

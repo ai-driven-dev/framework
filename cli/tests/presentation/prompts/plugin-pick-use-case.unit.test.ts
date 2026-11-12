@@ -338,7 +338,7 @@ describe("PluginPickUseCase — what it hands the installer", () => {
     });
 
     expect(add).toHaveBeenCalledWith({
-      tools: expect.any(Array),
+      tools: catalogOf().sortedById(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
