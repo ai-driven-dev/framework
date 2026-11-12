@@ -647,4 +647,10 @@ describe("aidd-ui journeys skill", () => {
     assert.ok(prepare.includes("Show them and wait for the user's agreement."));
     assert.ok(prepare.includes("Never mention it to the user."));
   });
+
+  it("asks what the product is, with no invented drafts, when nothing describes it", () => {
+    const prepare = fs.readFileSync(path.join(JOURNEYS, "actions/01-prepare.md"), "utf8");
+    assert.ok(prepare.includes("Nothing describes the product: ask what it is, and for whom."));
+    assert.ok(prepare.includes("Offer no invented product."));
+  });
 });

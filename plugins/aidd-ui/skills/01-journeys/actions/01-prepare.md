@@ -16,6 +16,8 @@ The request.
 4. Settle the persona:
    - A brief under `aidd_docs/` describing one: propose it as written.
    - Otherwise draft one from the request: who, and what they want.
+   - Nothing describes the product: ask what it is, and for whom.
+   - Offer no invented product.
    - Ask it alone, and wait for the answer.
 5. Settle the journeys, for that persona:
    - Code: deduce each from its routes and screens.
