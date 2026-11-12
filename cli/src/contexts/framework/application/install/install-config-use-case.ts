@@ -1,10 +1,10 @@
+import { join } from "node:path";
 import { InstallationFile } from "../../../../kernel/file.js";
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
-import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import { CONFIG_MCP, type ConfigRef } from "../../../tools/domain/capabilities/config-refs.js";
 import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
@@ -99,7 +99,9 @@ export class InstallConfigUseCase {
     projectRoot: string
   ): Promise<string | null> {
     if (capability instanceof McpCapability) {
-      return resolveMcpOutputPath(this.fs, capability, projectRoot);
+      return capability.resolveOutputPath((relativePath) =>
+        this.fs.fileExists(join(projectRoot, relativePath))
+      );
     }
     return capability.outputPath();
   }

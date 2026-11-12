@@ -3,8 +3,6 @@ import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
-import { resolveMcpOutputPath } from "../../../../tools/application/resolve-mcp-output-path.js";
-import { mergeOpencodeMcp } from "../../../../tools/domain/formats/opencode-mcp-merge.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type {
   PluginTranslationSkip,
@@ -43,16 +41,14 @@ export async function materializeFlatMcp(
   if (mcpCap === null) {
     return { mcpEntries: new Map(), mcpSkips: [], outputRelPath: undefined };
   }
-  const outputRelPath = await resolveMcpOutputPath(fs, mcpCap, projectRoot);
+  const outputRelPath = await mcpCap.resolveOutputPath((relativePath) =>
+    fs.fileExists(join(projectRoot, relativePath))
+  );
   const outputPath = join(projectRoot, outputRelPath);
   const existingContent = await readExistingJson(fs, outputPath);
   const transformed = mcpCap.transform(dist.components.mcp[0].content);
-  const { mergedContent, contributedEntries, collisions, editedPreviousEntries } = mergeOpencodeMcp(
-    existingContent,
-    transformed,
-    previousMcpEntries,
-    hasher
-  );
+  const { mergedContent, contributedEntries, collisions, editedPreviousEntries } =
+    mcpCap.mergePluginServers(existingContent, transformed, previousMcpEntries, hasher);
   if (editedPreviousEntries.length > 0) {
     throw new Error(
       `MCP server '${editedPreviousEntries[0]}' was edited after install; reinstall refused.`

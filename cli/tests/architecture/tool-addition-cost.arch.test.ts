@@ -121,19 +121,9 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
   { path: "src/contexts/distribution/application/marketplace-refresh-use-case.ts", named: 1 },
   { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
   {
-    path: "src/contexts/framework/application/framework/translator/flat-mcp-materializer.ts",
-    named: 1,
-  },
-  {
     path: "src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",
     named: 1,
   },
-  {
-    path: "src/contexts/framework/application/install/install-runtime-config-use-case.ts",
-    named: 1,
-  },
-  { path: "src/contexts/framework/application/ownership/project-plugin-cleanup.ts", named: 1 },
-  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", named: 1 },
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
   { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
   { path: "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts", named: 2 },

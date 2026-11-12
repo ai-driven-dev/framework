@@ -21,11 +21,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/mcp-launch-command.ts",
     "src/contexts/tools/domain/capabilities/settings-capability.ts",
     "src/contexts/tools/domain/capabilities/config-refs.ts",
-    "src/contexts/tools/domain/formats/opencode-mcp-merge.ts",
-    // what a tool answers from the project's files: which tool's files are present, and which
-    // file its MCP config goes in
+    // what a tool answers from the project's files: which tool's files are present
     "src/contexts/tools/application/detect-tool-signals.ts",
-    "src/contexts/tools/application/resolve-mcp-output-path.ts",
     // what a tool declares about plugins: installing is framework work
     "src/contexts/tools/domain/plugins/plugins-capability.ts",
     "src/contexts/tools/domain/plugins/plugin-params.ts",

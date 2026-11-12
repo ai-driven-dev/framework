@@ -18,8 +18,6 @@ import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
 } from "../../../host-registration/contract/host-plugin-registry.js";
-import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
 import {
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
@@ -569,11 +567,13 @@ export class PluginRemoveUseCase {
     if (plugin.mcpEntries.size === 0) return;
     const mcpCap = frameworkPrimeFlatMcpOf(toolId);
     if (mcpCap === null) return;
-    const outputRelPath = await resolveMcpOutputPath(this.fs, mcpCap, projectRoot);
+    const outputRelPath = await mcpCap.resolveOutputPath((relativePath) =>
+      this.fs.fileExists(join(projectRoot, relativePath))
+    );
     const outputPath = join(projectRoot, outputRelPath);
     const existing = await this.readExistingJson(outputPath);
     if (existing === null) return;
-    const updated = unmergeOpencodeMcp(existing, plugin.mcpEntries);
+    const updated = mcpCap.removePluginServers(existing, plugin.mcpEntries);
     await assertProjectPathWithinRoot(this.fs, projectRoot, outputPath);
     await this.fs.writeFile(outputPath, updated);
   }

@@ -67,11 +67,9 @@ const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.mergeStrategy":
     "the declared way the hooks file is merged, recorded on each installed file by the framework install use cases",
   "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPath":
-    "the declared destination, asked by the framework install use cases (config, runtime config) and by resolve-mcp-output-path",
+    "the declared destination, asked by the framework install use cases (config, runtime config)",
   "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.mergeStrategy":
     "the declared way the mcp file is merged, recorded on each installed file by the framework install use cases",
-  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPathCandidates":
-    "the declared places a tool's mcp file may already sit, probed in order by resolve-mcp-output-path",
   "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.outputPath":
     "the declared destination, asked by the framework install use cases (ide tool, runtime config) and written into the manifest",
   "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.mergeStrategy":

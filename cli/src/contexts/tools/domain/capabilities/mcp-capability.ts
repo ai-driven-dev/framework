@@ -1,4 +1,10 @@
+import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
+import {
+  buildOpencodeFlatConfig,
+  mergeOpencodeMcp,
+  unmergeOpencodeMcp,
+} from "../formats/opencode-mcp-merge.js";
 
 /** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
  * first tier that has any file present, two present files make `conflict` throw, one is the answer.
@@ -63,9 +69,47 @@ export class McpCapability {
     return afterTransform;
   }
 
-  /** `null` when the tool's output path is the fixed `outputPath`. */
-  outputPathCandidates(): McpOutputPathCandidates | null {
-    return this.#params.outputPathCandidates ?? null;
+  /** The project-relative file this tool's MCP config goes in: the first tier of candidates for
+   * which `exists` answers true (reusing user-owned configuration), the fallback when none does.
+   * Two files in the answering tier raise the declared conflict. */
+  async resolveOutputPath(exists: (relativePath: string) => Promise<boolean>): Promise<string> {
+    const candidates = this.#params.outputPathCandidates;
+    if (candidates === undefined) return this.#params.outputPath;
+    for (const tier of candidates.tiers) {
+      const present: string[] = [];
+      for (const candidate of tier) {
+        if (await exists(candidate)) present.push(candidate);
+      }
+      if (present.length > 1) candidates.conflict();
+      if (present.length === 1) return present[0] as string;
+    }
+    return candidates.fallback;
+  }
+
+  /** Adds the plugin's transformed servers to the existing file: what the plugin contributed
+   * before is replaced, a user-owned server is kept and reported as a collision. */
+  mergePluginServers(
+    existing: string | null,
+    incomingTransformed: string,
+    previousEntries: ReadonlyMap<string, string>,
+    hasher: Hasher
+  ): ReturnType<typeof mergeOpencodeMcp> {
+    return mergeOpencodeMcp(existing, incomingTransformed, previousEntries, hasher);
+  }
+
+  /** Removes the servers a plugin contributed, refusing one edited since. */
+  removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string {
+    return unmergeOpencodeMcp(existing, entries);
+  }
+
+  /** The tool's framework-owned config merged over what a person already keeps in the file. */
+  frameworkConfigOver(
+    baseConfig: string,
+    existing: string | null,
+    incoming: Record<string, unknown>,
+    mergedKeys: readonly string[] = []
+  ): string {
+    return buildOpencodeFlatConfig(baseConfig, existing, incoming, mergedKeys);
   }
 
   merge(existing: string, incoming: string): string {

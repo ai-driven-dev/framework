@@ -1,25 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { resolveMcpOutputPath } from "../../../../src/contexts/tools/application/resolve-mcp-output-path.js";
-import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { KiloDualConfigError, OpencodeDualConfigError } from "../../../../src/kernel/errors.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
+import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
+import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { KiloDualConfigError, OpencodeDualConfigError } from "../../../../../src/kernel/errors.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 
-const ROOT = "/project";
-const withFiles = (...relPaths: string[]) =>
-  new InMemoryFileAdapter(Object.fromEntries(relPaths.map((path) => [`${ROOT}/${path}`, "{}"])));
+const withFiles =
+  (...relPaths: string[]) =>
+  async (relativePath: string) =>
+    relPaths.includes(relativePath);
 
 describe("the file a tool's MCP config goes in", () => {
   it("is the fixed output path for a tool declaring no candidates, reading nothing", async () => {
     const fixed = new McpCapability({ outputPath: ".mcp.json", format: "json" });
 
-    expect(await resolveMcpOutputPath(withFiles(".mcp.jsonc"), fixed, ROOT)).toBe(".mcp.json");
+    expect(await fixed.resolveOutputPath(withFiles(".mcp.jsonc"))).toBe(".mcp.json");
   });
 
   describe("opencode", () => {
     const resolve = (...files: string[]) =>
-      resolveMcpOutputPath(withFiles(...files), opencode.section("mcp"), ROOT);
+      opencode.section("mcp").resolveOutputPath(withFiles(...files));
 
     it("falls back to opencode.json when neither config file exists", async () => {
       expect(await resolve()).toBe("opencode.json");
@@ -42,7 +42,7 @@ describe("the file a tool's MCP config goes in", () => {
 
   describe("kilo", () => {
     const resolve = (...files: string[]) =>
-      resolveMcpOutputPath(withFiles(...files), kilo.section("mcp"), ROOT);
+      kilo.section("mcp").resolveOutputPath(withFiles(...files));
 
     it("falls back to project-local JSONC when no config exists", async () => {
       expect(await resolve()).toBe(".kilo/kilo.jsonc");
@@ -66,5 +66,28 @@ describe("the file a tool's MCP config goes in", () => {
         KiloDualConfigError
       );
     });
+  });
+});
+
+describe("the opencode file an McpCapability merges into", () => {
+  const hasher = new DeterministicHasher();
+  const incoming = JSON.stringify({ mcp: { added: { type: "remote", url: "https://a" } } });
+
+  it("contributes a plugin's servers and hands back what to remove them by", () => {
+    const merged = opencode.section("mcp").mergePluginServers(null, incoming, new Map(), hasher);
+
+    expect([...merged.contributedEntries.keys()]).toStrictEqual(["added"]);
+    const removed = opencode
+      .section("mcp")
+      .removePluginServers(merged.mergedContent, merged.contributedEntries);
+    expect(JSON.parse(removed)).toStrictEqual({ mcp: {} });
+  });
+
+  it("keeps a person's own keys beside the framework's config", () => {
+    const config = opencode
+      .section("mcp")
+      .frameworkConfigOver('{"theme":"base"}', '{"mine":1}', {});
+
+    expect(JSON.parse(config)).toStrictEqual({ theme: "base", mine: 1 });
   });
 });
