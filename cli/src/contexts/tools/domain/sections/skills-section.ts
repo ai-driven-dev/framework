@@ -4,7 +4,7 @@ import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 const AGENTS_SKILLS_PREFIX = ".agents/skills/";
 
-type SkillsCapabilityParams = {
+type SkillsSectionParams = {
   directory?: string;
   toolSuffix?: string;
   agentsSkillsDirectory?: boolean;
@@ -12,15 +12,15 @@ type SkillsCapabilityParams = {
   convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
 };
 
-export class SkillsCapability {
-  readonly #params: SkillsCapabilityParams;
+export class SkillsSection {
+  readonly #params: SkillsSectionParams;
   readonly #foreignSuffixes: ForeignSuffixFilter;
 
-  constructor(params: SkillsCapabilityParams) {
+  constructor(params: SkillsSectionParams) {
     this.#params = params;
     if (!params.agentsSkillsDirectory && !params.directory) {
       throw new CapabilityConfigError(
-        "SkillsCapability requires either agentsSkillsDirectory or directory"
+        "SkillsSection requires either agentsSkillsDirectory or directory"
       );
     }
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix ?? "");
@@ -49,7 +49,7 @@ export class SkillsCapability {
     return relativePath.startsWith(this.#params.directory ?? "");
   }
 
-  equals(other: SkillsCapability): boolean {
+  equals(other: SkillsSection): boolean {
     return (
       this.#params.directory === other.#params.directory &&
       this.#params.toolSuffix === other.#params.toolSuffix &&

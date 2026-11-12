@@ -7,7 +7,7 @@ import {
   type ProfileBrand,
 } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { InvalidToolProfileError } from "../../../../../src/kernel/errors.js";
 import {
   anEmptyContract,
@@ -17,7 +17,7 @@ import {
   PROJECT_HOOKS_FORMAT,
 } from "../../testing/profiles.js";
 
-const settings = new SettingsCapability({
+const settings = new ConfigSection({
   outputPath: ".x/settings.json",
   mergeStrategy: "none",
 });
@@ -98,9 +98,9 @@ describe("defineAiTool", () => {
   });
 
   it("answers a declared section, and null for one it does not declare", () => {
-    const tool = defineAiTool({ ...aiSpec, capabilities: () => ({ settings: [settings] }) });
+    const tool = defineAiTool({ ...aiSpec, capabilities: () => ({ config: [settings] }) });
 
-    expect(tool.section("settings")).toStrictEqual([settings]);
+    expect(tool.section("config")).toStrictEqual([settings]);
     expect(tool.section("mcp")).toBeNull();
   });
 
@@ -156,7 +156,7 @@ describe("defineAiTool", () => {
   });
 
   it("refuses a section key no tool can declare", () => {
-    const sections = { settings: [settings], bogus: 1 };
+    const sections = { config: [settings], bogus: 1 };
 
     expect(
       refusalOf(() => defineAiTool({ ...aiSpec, capabilities: () => sections })).invariant
@@ -193,7 +193,7 @@ describe("defineIdeTool", () => {
   });
 
   it("refuses a section key no tool can declare", () => {
-    const sections = { settings: [settings], bogus: 1 };
+    const sections = { config: [settings], bogus: 1 };
 
     expect(
       refusalOf(() => defineIdeTool({ ...ideSpec, capabilities: () => sections })).invariant

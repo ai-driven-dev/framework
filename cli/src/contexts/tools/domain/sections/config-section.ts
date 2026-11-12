@@ -3,7 +3,7 @@ import type { ConfigAsset } from "../../../../kernel/file.js";
 import type { MergeStrategy } from "../../../../kernel/merge.js";
 import type { ToolId } from "../../../../kernel/tool.js";
 
-type SettingsCapabilityParams = {
+type ConfigSectionParams = {
   outputPath: string;
   mergeStrategy: MergeStrategy;
   consumes?: readonly string[];
@@ -12,26 +12,26 @@ type SettingsCapabilityParams = {
   requiresTool?: ToolId;
 };
 
-export class SettingsCapability {
-  readonly #params: SettingsCapabilityParams;
+export class ConfigSection {
+  readonly #params: ConfigSectionParams;
 
-  constructor(params: SettingsCapabilityParams) {
+  constructor(params: ConfigSectionParams) {
     this.#params = params;
     if (params.staticContent !== undefined && params.staticContentAssetFile !== undefined) {
       throw new CapabilityConfigError(
-        "SettingsCapability: set either 'staticContent' or 'staticContentAssetFile', not both."
+        "ConfigSection: set either 'staticContent' or 'staticContentAssetFile', not both."
       );
     }
     const hasStaticForm =
       params.staticContent !== undefined || params.staticContentAssetFile !== undefined;
     if (params.consumes?.length && hasStaticForm) {
       throw new CapabilityConfigError(
-        "SettingsCapability: set either 'consumes' or 'staticContent', not both."
+        "ConfigSection: set either 'consumes' or 'staticContent', not both."
       );
     }
     if (params.requiresTool !== undefined && !hasStaticForm) {
       throw new CapabilityConfigError(
-        "SettingsCapability: 'requiresTool' is only meaningful with 'staticContent'."
+        "ConfigSection: 'requiresTool' is only meaningful with 'staticContent'."
       );
     }
   }
@@ -67,7 +67,7 @@ export class SettingsCapability {
     return this.#params.outputPath;
   }
 
-  equals(other: SettingsCapability): boolean {
+  equals(other: ConfigSection): boolean {
     return (
       this.#params.outputPath === other.#params.outputPath &&
       this.#params.mergeStrategy === other.#params.mergeStrategy

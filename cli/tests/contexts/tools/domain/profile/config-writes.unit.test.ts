@@ -1,28 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { defineIdeTool } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { IdeToolConfig } from "../../../../../src/contexts/tools/domain/profile.js";
-import { HooksCapability } from "../../../../../src/contexts/tools/domain/sections/hooks-capability.js";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/sections/mcp-capability.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
+import { HooksSection } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
+import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
 
-const mcp = new McpCapability({ outputPath: ".mcp.json", format: "json" });
-const hooks = new HooksCapability({ outputPath: ".claude/settings.json" });
-const settings = new SettingsCapability({
+const mcp = new McpSection({ outputPath: ".mcp.json", format: "json" });
+const hooks = new HooksSection({ outputPath: ".claude/settings.json" });
+const settings = new ConfigSection({
   outputPath: ".claude/settings.json",
   mergeStrategy: "none",
 });
-const extensions = new SettingsCapability({
+const extensions = new ConfigSection({
   outputPath: ".vscode/extensions.json",
   mergeStrategy: "user-prime",
 });
 
-function ideTool(declared: SettingsCapability[]): IdeToolConfig {
+function ideTool(declared: ConfigSection[]): IdeToolConfig {
   return defineIdeTool({
     toolId: "vscode",
     directory: ".vscode/",
     signalDir: null,
-    capabilities: () => ({ settings: declared }),
+    capabilities: () => ({ config: declared }),
   });
 }
 
@@ -44,7 +44,7 @@ describe("configWrites, the config files a tool writes in the order they claim a
 
   describe("an AI tool", () => {
     it("lists mcp, hooks and settings in that order", () => {
-      const tool = stubAiTool("claude", { mcp, hooks, settings: [settings] });
+      const tool = stubAiTool("claude", { mcp, hooks, config: [settings] });
 
       expect(tool.configWrites()).toStrictEqual([
         { kind: "mcp", capability: mcp },
@@ -54,7 +54,7 @@ describe("configWrites, the config files a tool writes in the order they claim a
     });
 
     it("lists each settings file of a tool declaring several", () => {
-      const tool = stubAiTool("claude", { settings: [extensions, settings] });
+      const tool = stubAiTool("claude", { config: [extensions, settings] });
 
       expect(tool.configWrites()).toStrictEqual([
         { kind: "settings", capability: extensions },

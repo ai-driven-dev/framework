@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/sections/mcp-capability.js";
+import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { registeredAiConfig, registeredAiProfile } from "../../testing/catalog-of.js";
 import { aProfile, flatPlugins } from "../../testing/profiles.js";
 
@@ -25,7 +25,7 @@ describe("AiToolProfile.flatPluginMcp()", () => {
     const profile = aProfile("opencode")
       .withPlugins(flatPlugins("accepts"))
       .withMcp(
-        new McpCapability({ outputPath: "mcp.json", format: "json", mergeStrategy: "user-prime" })
+        new McpSection({ outputPath: "mcp.json", format: "json", mergeStrategy: "user-prime" })
       )
       .build();
 

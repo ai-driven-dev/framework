@@ -1,15 +1,15 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 
-type HooksCapabilityParams = {
+type HooksSectionParams = {
   outputPath: string;
   mergeStrategy?: "user-prime" | "none";
   consumes?: readonly string[];
 };
 
-export class HooksCapability {
-  readonly #params: HooksCapabilityParams;
+export class HooksSection {
+  readonly #params: HooksSectionParams;
 
-  constructor(params: HooksCapabilityParams) {
+  constructor(params: HooksSectionParams) {
     this.#params = params;
     if (/^([/\\]|[A-Za-z]:)/.test(params.outputPath)) {
       throw new CapabilityConfigError(`hooks outputPath "${params.outputPath}" must be relative.`);
@@ -37,7 +37,7 @@ export class HooksCapability {
     return relativePath === this.#params.outputPath;
   }
 
-  equals(other: HooksCapability): boolean {
+  equals(other: HooksSection): boolean {
     return (
       this.#params.outputPath === other.#params.outputPath &&
       this.#params.mergeStrategy === other.#params.mergeStrategy

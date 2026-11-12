@@ -2,8 +2,8 @@
 name: tools
 description: >
   Defines or modifies what the project targets, under src/contexts/tools/ — an AI/IDE tool
-  profile, its build contract, the capabilities it declares (agents/skills/commands/rules/
-  mcp/hooks/plugins/settings) and its plugin delivery. Use when adding a new AI or IDE tool,
+  profile, its build contract, the sections it declares (agents/skills/commands/rules/
+  mcp/hooks/plugins/config) and its plugin delivery. Use when adding a new AI or IDE tool,
   changing what a tool declares, or declaring a tool's `aidd translate` build contract. Do NOT
   use for the canonical-to-native translation pipeline itself — use `translate`. Do NOT use for
   where plugin content comes from — use `distribution`. Do NOT use for manifest or install
@@ -26,12 +26,12 @@ description: >
 2. One line in `REGISTERED_PROFILES` (`domain/profiles/registered-profiles.ts`), AI tools before IDE tools.
 3. The conformance suite (`tests/contexts/tools/testing/`) walks that list and checks the new profile: it has no test of its own for declared data.
 
-A string transform used by one profile stays in its folder; one shared by two goes to `domain/formats/`. A missing capability is a missing declaration.
+A string transform used by one profile stays in its folder; one shared by two goes to `domain/formats/`. A missing section is a missing declaration.
 
 ## Conventions
 
 - `rewriteContent(content)` is one way, per tool, with no reverse and no shared base helper. See `references/content-rewrite.md`.
-- A capability class ends in `Capability`, takes one params object, keeps it in a private `#params`, throws `CapabilityConfigError` on an invalid combination. See `references/capability-conventions.md`.
+- A section class ends in `Section`, takes one params object, keeps it in a private `#params`, throws `CapabilityConfigError` on an invalid combination. See `references/section-conventions.md`.
 - Plugin delivery has three kinds, `native`, `flat` and `unsupported`. See `references/plugins-capability.md`.
 - Build behaviour is one artifact-symmetric `ToolBuildContract` per tool and mode, read by the two mode-generic strategies in `translate`: never a per-tool strategy, never a per-tool branch in one. See `references/build-contract.md`.
 - Follow the port/adapter and shared-module rules in `.claude/rules/00-architecture/`.

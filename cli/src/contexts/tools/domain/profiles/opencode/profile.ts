@@ -9,7 +9,7 @@ import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpCapability } from "../../sections/mcp-capability.js";
+import { McpSection } from "../../sections/mcp-section.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
@@ -55,7 +55,7 @@ export const opencode = defineAiTool({
         return {};
       },
     }),
-    mcp: new McpCapability({
+    mcp: new McpSection({
       outputPath: "opencode.json",
       format: "json",
       mergeStrategy: "framework-prime",

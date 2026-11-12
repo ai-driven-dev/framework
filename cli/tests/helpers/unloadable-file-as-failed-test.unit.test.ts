@@ -5,7 +5,7 @@ import { UnloadableFileAsFailedTest } from "./unloadable-file-as-failed-test.js"
 
 const LOAD_ERROR = {
   name: "Error",
-  message: "SkillsCapability requires either prefix or directory",
+  message: "SkillsSection requires either prefix or directory",
 };
 
 function testFile(state: "pass" | "fail", tasks: RunnerTestFile["tasks"] = []): RunnerTestFile {

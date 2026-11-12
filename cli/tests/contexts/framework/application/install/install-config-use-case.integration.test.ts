@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/sections/mcp-capability.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
+import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -29,9 +29,9 @@ function emptyDescriptor(): FrameworkDescriptor {
 }
 
 describe("InstallConfigUseCase — staticContent", () => {
-  it("produces an installation file for a SettingsCapability with staticContent", async () => {
+  it("produces an installation file for a ConfigSection with staticContent", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"my.key": true}',
@@ -53,7 +53,7 @@ describe("InstallConfigUseCase — staticContent", () => {
 
   it("staticContent capability does not need a matching configRef", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"standalone": true}',
@@ -99,7 +99,7 @@ describe("InstallConfigUseCase — staticContent", () => {
 
   it("skips a consumes-based capability when no matching configRef content is available", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       consumes: ["someSignal"],
@@ -118,7 +118,7 @@ describe("InstallConfigUseCase — staticContent", () => {
 
   it("leaves a consumes-only capability alone even with an asset provider at hand", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       consumes: ["someSignal"],
@@ -138,7 +138,7 @@ describe("InstallConfigUseCase — staticContent", () => {
   });
 
   describe("an asset-backed capability", () => {
-    const fromAsset = new SettingsCapability({
+    const fromAsset = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContentAssetFile: "vscode-settings.json",
@@ -203,7 +203,7 @@ describe("InstallConfigUseCase — MCP config", () => {
   );
 
   function mcpCapability(mergeStrategy?: "user-prime" | "framework-prime" | "none") {
-    return new McpCapability({
+    return new McpSection({
       outputPath: ".cursor/mcp.json",
       format: "json",
       consumes: [CONFIG_MCP],
@@ -229,7 +229,7 @@ describe("InstallConfigUseCase — MCP config", () => {
 
   it("leaves a non-MCP config as written on Windows, even from a capability that also takes MCP", async () => {
     const { useCase } = buildUseCase();
-    const both = new SettingsCapability({
+    const both = new ConfigSection({
       outputPath: ".cursor/hooks.json",
       mergeStrategy: "user-prime",
       consumes: [CONFIG_MCP, HOOKS_REF.name],

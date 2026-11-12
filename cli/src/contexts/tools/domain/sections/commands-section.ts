@@ -1,7 +1,7 @@
 import { serializeFrontmatter } from "../../../../kernel/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
-type CommandsCapabilityParams = {
+type CommandsSectionParams = {
   directory: string;
   toolSuffix: string;
   buildInstallPath: (fileName: string) => string | null;
@@ -11,11 +11,11 @@ type CommandsCapabilityParams = {
   ) => Record<string, unknown>;
 };
 
-export class CommandsCapability {
-  readonly #params: CommandsCapabilityParams;
+export class CommandsSection {
+  readonly #params: CommandsSectionParams;
   readonly #foreignSuffixes: ForeignSuffixFilter;
 
-  constructor(params: CommandsCapabilityParams) {
+  constructor(params: CommandsSectionParams) {
     this.#params = params;
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
@@ -43,7 +43,7 @@ export class CommandsCapability {
     return relativePath.startsWith(this.#params.directory);
   }
 
-  equals(other: CommandsCapability): boolean {
+  equals(other: CommandsSection): boolean {
     return (
       this.#params.directory === other.#params.directory &&
       this.#params.toolSuffix === other.#params.toolSuffix

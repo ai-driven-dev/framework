@@ -9,7 +9,7 @@ import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { flatGlobalFilePath } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpCapability } from "../../sections/mcp-capability.js";
+import { McpSection } from "../../sections/mcp-section.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
@@ -49,7 +49,7 @@ export const kilo = defineAiTool({
           ? { description: fm.description }
           : {},
     }),
-    mcp: new McpCapability({
+    mcp: new McpSection({
       outputPath: "kilo.json",
       format: "json",
       mergeStrategy: "framework-prime",

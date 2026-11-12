@@ -29,7 +29,7 @@ import {
   pluginScriptPath,
   unmergeHooks,
 } from "../hooks/hooks-merge.js";
-import { HooksCapability } from "../sections/hooks-capability.js";
+import { HooksSection } from "../sections/hooks-section.js";
 
 /** The events a plugin's hooks may name, whichever tool runs them. */
 export const CANONICAL_HOOK_EVENTS = [
@@ -89,7 +89,7 @@ export interface ProjectHooksRoute {
 }
 
 /** The hooks file the framework install writes for a tool, outside any plugin. */
-export type HooksConfig = ConstructorParameters<typeof HooksCapability>[0];
+export type HooksConfig = ConstructorParameters<typeof HooksSection>[0];
 
 type DerivedKeys = "events" | "eventMap" | "undeclaredEvents";
 
@@ -261,10 +261,8 @@ function flatHooksPath(route: FlatHooksRoute, plugin: string, rel: string): stri
 }
 
 /** The capability the framework install reads to write the tool's own hooks file. */
-export function hooksConfigCapability(descriptor: {
-  readonly config: HooksConfig;
-}): HooksCapability {
-  return new HooksCapability(descriptor.config);
+export function hooksConfigCapability(descriptor: { readonly config: HooksConfig }): HooksSection {
+  return new HooksSection(descriptor.config);
 }
 
 /** A native tool's plugins capability, as far as hooks go. */

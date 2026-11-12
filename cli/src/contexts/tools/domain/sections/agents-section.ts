@@ -23,7 +23,7 @@ function toTomlBasename(toolSuffix: string, fileName: string): string {
   return `${basename}.toml`;
 }
 
-type AgentsCapabilityParams = {
+type AgentsSectionParams = {
   directory: string;
   toolSuffix: string;
   format: "markdown" | "toml";
@@ -36,12 +36,12 @@ type AgentsCapabilityParams = {
   buildInstallPath?: (fileName: string) => string | null;
 };
 
-export class AgentsCapability {
-  readonly #params: AgentsCapabilityParams;
+export class AgentsSection {
+  readonly #params: AgentsSectionParams;
   readonly #suffix: ToolSuffix;
   readonly #foreignSuffixes: ForeignSuffixFilter;
 
-  constructor(params: AgentsCapabilityParams) {
+  constructor(params: AgentsSectionParams) {
     this.#params = params;
     this.#suffix = new ToolSuffix(params.toolSuffix);
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
@@ -77,7 +77,7 @@ export class AgentsCapability {
     return parseFrontmatter(content);
   }
 
-  equals(other: AgentsCapability): boolean {
+  equals(other: AgentsSection): boolean {
     return (
       this.#params.directory === other.#params.directory &&
       this.#params.toolSuffix === other.#params.toolSuffix &&

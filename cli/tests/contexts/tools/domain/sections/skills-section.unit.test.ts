@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SkillsCapability } from "../../../../../src/contexts/tools/domain/sections/skills-capability.js";
+import { SkillsSection } from "../../../../../src/contexts/tools/domain/sections/skills-section.js";
 
 const stubCallbacks = {
   buildInstallPath: (fileName: string): string | null => `stub/${fileName}`,
@@ -7,10 +7,10 @@ const stubCallbacks = {
   reverseConvertFrontmatter: (fm: Record<string, unknown>): Record<string, unknown> => fm,
 };
 
-describe("SkillsCapability", () => {
+describe("SkillsSection", () => {
   describe("accepts (directory mode)", () => {
     it("returns true when path starts with directory", () => {
-      const cap = new SkillsCapability({
+      const cap = new SkillsSection({
         directory: ".claude/",
         toolSuffix: ".claude.md",
         ...stubCallbacks,
@@ -19,7 +19,7 @@ describe("SkillsCapability", () => {
     });
 
     it("returns false when path does not start with directory", () => {
-      const cap = new SkillsCapability({
+      const cap = new SkillsSection({
         directory: ".claude/",
         toolSuffix: ".claude.md",
         ...stubCallbacks,
@@ -30,30 +30,30 @@ describe("SkillsCapability", () => {
 
   describe("accepts (agents skills directory mode)", () => {
     it("returns true when path starts with .agents/skills/", () => {
-      const cap = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
+      const cap = new SkillsSection({ agentsSkillsDirectory: true, ...stubCallbacks });
       expect(cap.accepts(".agents/skills/aidd-foo/SKILL.md")).toBe(true);
     });
 
     it("returns false when path does not start with .agents/skills/", () => {
-      const cap = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
+      const cap = new SkillsSection({ agentsSkillsDirectory: true, ...stubCallbacks });
       expect(cap.accepts(".claude/skills/foo.md")).toBe(false);
     });
   });
 
   describe("constructor validation", () => {
     it("throws when neither agentsSkillsDirectory nor directory is provided", () => {
-      expect(() => new SkillsCapability({ ...stubCallbacks })).toThrow();
+      expect(() => new SkillsSection({ ...stubCallbacks })).toThrow();
     });
   });
 
   describe("equals", () => {
     it("returns true for identical params", () => {
-      const a = new SkillsCapability({
+      const a = new SkillsSection({
         directory: ".claude/",
         toolSuffix: ".claude.md",
         ...stubCallbacks,
       });
-      const b = new SkillsCapability({
+      const b = new SkillsSection({
         directory: ".claude/",
         toolSuffix: ".claude.md",
         ...stubCallbacks,
@@ -62,12 +62,12 @@ describe("SkillsCapability", () => {
     });
 
     it("returns false when directory differs", () => {
-      const a = new SkillsCapability({
+      const a = new SkillsSection({
         directory: ".claude/",
         toolSuffix: ".claude.md",
         ...stubCallbacks,
       });
-      const b = new SkillsCapability({
+      const b = new SkillsSection({
         directory: ".cursor/",
         toolSuffix: ".claude.md",
         ...stubCallbacks,
@@ -76,16 +76,16 @@ describe("SkillsCapability", () => {
     });
 
     it("returns false when one is the agents skills directory and the other is not", () => {
-      const a = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
-      const b = new SkillsCapability({ directory: ".agents/", ...stubCallbacks });
+      const a = new SkillsSection({ agentsSkillsDirectory: true, ...stubCallbacks });
+      const b = new SkillsSection({ directory: ".agents/", ...stubCallbacks });
       expect(a.equals(b)).toBe(false);
     });
   });
 });
 
-describe("SkillsCapability file acceptance", () => {
+describe("SkillsSection file acceptance", () => {
   const cap = () =>
-    new SkillsCapability({
+    new SkillsSection({
       directory: ".claude/",
       toolSuffix: ".claude.md",
       buildInstallPath: (fileName) => fileName,
@@ -104,7 +104,7 @@ describe("SkillsCapability file acceptance", () => {
   it("differs from a capability with another tool suffix", () => {
     expect(
       cap().equals(
-        new SkillsCapability({
+        new SkillsSection({
           directory: ".claude/",
           toolSuffix: ".x.md",
           buildInstallPath: (fileName) => fileName,

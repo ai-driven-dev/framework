@@ -9,7 +9,7 @@ The language of the `tools` context. A name in the code means what this page say
 | Catalog | The registered profiles, asked by id or walked in one of two orders: registration order for help, sorted by id for setup and doctor. Built once, handed to every use case | `ToolCatalog`, `RegisteredToolCatalog`, `wireTools` |
 | Registration list | The one list of profiles the catalog is built from; a new tool adds its line | `REGISTERED_PROFILES` |
 | Contract | The only folder another context or presentation imports from `tools`: the answers, the catalog and the build contract | `contract/` |
-| Capability | One section a profile declares: agents, skills, commands, rules, mcp, hooks, plugins or settings. A missing one is a missing declaration | `ProfileSections`, `domain/sections/` |
+| Section | One part a profile declares: agents, skills, commands, rules, mcp, hooks, plugins or config. A missing one is a missing declaration | `ProfileSections`, `domain/sections/` |
 | Plugin delivery | How a tool takes plugins, asked through methods. It comes in three kinds | `PluginDelivery`, `PluginDeliveryBase` |
 | Native delivery | The tool installs a plugin through its own plugin CLI | `NativePlugins`, `NativePluginAnswers` |
 | Flat delivery | The tool has the plugin's files injected into the project tree | `FlatPlugins`, `FlatPluginAnswers` |

@@ -15,7 +15,7 @@ export type McpOutputPathCandidates = {
   readonly conflict: () => never;
 };
 
-type McpCapabilityParams = {
+type McpSectionParams = {
   outputPath: string;
   format: "json" | "toml";
   mergeStrategy?: "user-prime" | "framework-prime" | "none";
@@ -52,10 +52,10 @@ function transformMcpForWin32(content: string): string {
   return JSON.stringify(config, null, 2);
 }
 
-export class McpCapability {
-  readonly #params: McpCapabilityParams;
+export class McpSection {
+  readonly #params: McpSectionParams;
 
-  constructor(params: McpCapabilityParams) {
+  constructor(params: McpSectionParams) {
     this.#params = params;
   }
 
@@ -155,7 +155,7 @@ export class McpCapability {
     return relativePath === this.#params.outputPath;
   }
 
-  equals(other: McpCapability): boolean {
+  equals(other: McpSection): boolean {
     return (
       this.#params.outputPath === other.#params.outputPath &&
       this.#params.format === other.#params.format &&

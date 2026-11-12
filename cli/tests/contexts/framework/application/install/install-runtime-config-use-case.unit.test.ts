@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { extractMergeEntries } from "../../../../../src/kernel/merge.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
@@ -355,17 +355,17 @@ describe("InstallRuntimeConfigUseCase", () => {
   });
 
   describe("static settings declared by the tool", () => {
-    const inline = new SettingsCapability({
+    const inline = new ConfigSection({
       outputPath: ".cursor/aidd-static.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"static": true}',
     });
-    const consumesOnly = new SettingsCapability({
+    const consumesOnly = new ConfigSection({
       outputPath: ".cursor/consumed.json",
       mergeStrategy: "user-prime",
       consumes: ["something"],
     });
-    const fromAsset = new SettingsCapability({
+    const fromAsset = new ConfigSection({
       outputPath: ".cursor/from-asset.json",
       mergeStrategy: "framework-prime",
       staticContentAssetFile: "static.json",
@@ -373,8 +373,8 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     let cursorProfile: BuiltToolConfig = cursor;
 
-    function registerCursorWith(settings: SettingsCapability[]): void {
-      cursorProfile = withSections(cursor, { settings });
+    function registerCursorWith(settings: ConfigSection[]): void {
+      cursorProfile = withSections(cursor, { config: settings });
     }
 
     afterEach(() => {
@@ -384,7 +384,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     it("merges a single declared settings capability and records its keys", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      cursorProfile = withSections(cursor, { settings: [inline] });
+      cursorProfile = withSections(cursor, { config: [inline] });
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       deps.fs.setFile(join(PROJECT_ROOT, ".cursor/aidd-static.json"), '{"user.setting": 7}');
 

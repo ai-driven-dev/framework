@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CommandsCapability } from "../../../../../src/contexts/tools/domain/sections/commands-capability.js";
+import { CommandsSection } from "../../../../../src/contexts/tools/domain/sections/commands-section.js";
 
 const stubParams = {
   buildInstallPath: (fileName: string): string | null => `stub/${fileName}`,
@@ -7,44 +7,44 @@ const stubParams = {
   reverseConvertFrontmatter: (fm: Record<string, unknown>): Record<string, unknown> => fm,
 };
 
-describe("CommandsCapability", () => {
+describe("CommandsSection", () => {
   const params = { directory: ".claude/", toolSuffix: ".claude.md", ...stubParams };
 
   describe("accepts", () => {
     it("returns true when path starts with directory", () => {
-      const cap = new CommandsCapability(params);
+      const cap = new CommandsSection(params);
       expect(cap.accepts(".claude/commands/foo.md")).toBe(true);
     });
 
     it("returns false when path does not start with directory", () => {
-      const cap = new CommandsCapability(params);
+      const cap = new CommandsSection(params);
       expect(cap.accepts(".cursor/commands/foo.md")).toBe(false);
     });
   });
 
   describe("equals", () => {
     it("returns true for identical params", () => {
-      const a = new CommandsCapability(params);
-      const b = new CommandsCapability({ ...params });
+      const a = new CommandsSection(params);
+      const b = new CommandsSection({ ...params });
       expect(a.equals(b)).toBe(true);
     });
 
     it("returns false when directory differs", () => {
-      const a = new CommandsCapability(params);
-      const b = new CommandsCapability({ ...params, directory: ".cursor/" });
+      const a = new CommandsSection(params);
+      const b = new CommandsSection({ ...params, directory: ".cursor/" });
       expect(a.equals(b)).toBe(false);
     });
 
     it("returns false when toolSuffix differs", () => {
-      const a = new CommandsCapability(params);
-      const b = new CommandsCapability({ ...params, toolSuffix: ".cursor.md" });
+      const a = new CommandsSection(params);
+      const b = new CommandsSection({ ...params, toolSuffix: ".cursor.md" });
       expect(a.equals(b)).toBe(false);
     });
   });
 });
 
-describe("CommandsCapability file acceptance", () => {
-  const cap = new CommandsCapability({
+describe("CommandsSection file acceptance", () => {
+  const cap = new CommandsSection({
     directory: ".claude/",
     toolSuffix: ".claude.md",
     buildInstallPath: (fileName) => fileName,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/sections/mcp-capability.js";
+import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { KiloDualConfigError, OpencodeDualConfigError } from "../../../../../src/kernel/errors.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 
@@ -12,7 +12,7 @@ const withFiles =
 
 describe("the file a tool's MCP config goes in", () => {
   it("is the fixed output path for a tool declaring no candidates, reading nothing", async () => {
-    const fixed = new McpCapability({ outputPath: ".mcp.json", format: "json" });
+    const fixed = new McpSection({ outputPath: ".mcp.json", format: "json" });
 
     expect(await fixed.resolveOutputPath(withFiles(".mcp.jsonc"))).toBe(".mcp.json");
   });
@@ -69,7 +69,7 @@ describe("the file a tool's MCP config goes in", () => {
   });
 });
 
-describe("the opencode file an McpCapability merges into", () => {
+describe("the opencode file an McpSection merges into", () => {
   const hasher = new DeterministicHasher();
   const incoming = JSON.stringify({ mcp: { added: { type: "remote", url: "https://a" } } });
 

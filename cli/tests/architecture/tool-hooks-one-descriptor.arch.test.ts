@@ -46,7 +46,7 @@ function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[
       typeDepth = Math.max(0, typeDepth + line.split("{").length - line.split("}").length);
       return;
     }
-    if (/\bnew HooksCapability\(/.test(line)) facts.push("HooksCapability");
+    if (/\bnew HooksSection\(/.test(line)) facts.push("HooksSection");
     for (const { 1: name = "", 2: rawValue = "", index } of line.matchAll(
       /(?<=^|[{,])\s*(?:readonly\s+)?(\w+)\??\s*:\s*(?=([^,}]*))/g
     )) {
@@ -58,8 +58,11 @@ function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[
         (/hook/i.test(name) && index === 0) || isRoute === false
           ? !REFERENCE_OR_CALL.test(value)
           : isRoute === true && value.startsWith("{");
+      // `config: [...]` is the profile's config section list; the descriptor's own `config`
+      // is an object literal and stays a fact.
       const absent =
         name === "hooksUnsupportedReason" ||
+        (name === "config" && value.startsWith("[")) ||
         ((name === "acceptsHooks" || name === "hooks") && ABSENCE.test(value));
       if (fact && !absent) facts.push(name);
     }
@@ -93,7 +96,7 @@ const BUILD = "src/contexts/tools/domain/profiles/claude/build.ts";
 
 /** A planted profile source, then ` → ` and the facts it declares, which none must be. */
 const PLANTED = [
-  "const p = new HooksCapability({ a: X }); → HooksCapability",
+  "const p = new HooksSection({ a: X }); → HooksSection",
   "const c = {\n  hooks: { supported: true },\n  hooksBridge: true,\n}; → hooks hooksBridge",
   'const HOOK_TIMEOUT = 30;\nconst EVENT_ON = false;\nconst HOOK_FIELDS = ["a"]; → HOOK_TIMEOUT EVENT_ON HOOK_FIELDS',
   'const HOOK_NAME =\n  "a" + "b"; → HOOK_NAME',
@@ -109,6 +112,8 @@ const PLANTED = [
   'function f(): void {\n  const localHooks = { a: "hooks/" };\n} →',
   'const a = { scopeArgs: { project: ["--scope", "local"] }, features: { hooks: true } }; →',
   'const U = ".codex/config.toml"; →',
+  "const s = {\n  config: [new ConfigSection({ a: X })],\n}; →",
+  "const c = {\n  config: { outputPath: X },\n}; → config",
   'const p = {\n  acceptsHooks: false,\n  hooksUnsupportedReason: "runs no plugin hooks",\n}; →',
   "const c = {\n  hooks: { supported: true },\n  acceptsHooks: true,\n}; → hooks acceptsHooks",
   "const c = {\n  skills: { supported: true },\n  hooks: { supported: false },\n}; →",
@@ -132,7 +137,7 @@ describe("a tool's hooks facts live in its descriptor", () => {
   });
 
   it("names the file, and reads no fact in the tool's own hooks.ts", () => {
-    const fact = "export const p = new HooksCapability({});";
+    const fact = "export const p = new HooksSection({});";
     const bodies = new Map([
       [BUILD, fact],
       [BUILD.replace("build.ts", "hooks.ts"), fact],

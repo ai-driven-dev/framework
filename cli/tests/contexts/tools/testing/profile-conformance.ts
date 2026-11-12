@@ -7,10 +7,10 @@ import type {
 import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
-import { AgentsCapability } from "../../../../src/contexts/tools/domain/sections/agents-capability.js";
-import { CommandsCapability } from "../../../../src/contexts/tools/domain/sections/commands-capability.js";
-import { McpCapability } from "../../../../src/contexts/tools/domain/sections/mcp-capability.js";
-import { RulesCapability } from "../../../../src/contexts/tools/domain/sections/rules-capability.js";
+import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
+import { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
+import { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import { RulesSection } from "../../../../src/contexts/tools/domain/sections/rules-section.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */
@@ -78,9 +78,9 @@ function expectRelative(path: string, what: string): void {
 
 function installedPaths(profile: AiTool): string[] {
   return [
-    capability(profile, "commands", CommandsCapability)?.buildInstallPath(SAMPLE_PATHS.commands),
-    capability(profile, "rules", RulesCapability)?.buildInstallPath(SAMPLE_PATHS.rules),
-    capability(profile, "agents", AgentsCapability)?.buildInstallPath(SAMPLE_PATHS.agents),
+    capability(profile, "commands", CommandsSection)?.buildInstallPath(SAMPLE_PATHS.commands),
+    capability(profile, "rules", RulesSection)?.buildInstallPath(SAMPLE_PATHS.rules),
+    capability(profile, "agents", AgentsSection)?.buildInstallPath(SAMPLE_PATHS.agents),
   ].filter((path) => typeof path === "string");
 }
 
@@ -96,7 +96,7 @@ function flatPathsUnderDirectory(contract: ToolBuildContract): string[] {
 const NUMBERED_COMMAND = "04_code/implement.md";
 
 function expectNumberedCommandsRouted(profile: AiTool): void {
-  const commands = capability(profile, "commands", CommandsCapability);
+  const commands = capability(profile, "commands", CommandsSection);
   const routed = `${profile.directory}commands/aidd/04/implement.md`;
   if (commands?.buildInstallPath(NUMBERED_COMMAND) !== routed) return;
   const reference = `${profile.directory}commands/${NUMBERED_COMMAND}`;
@@ -189,7 +189,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(profile.section("plugins")).not.toBeNull();
   }),
   aiCheck("feeds its mcp file from the mcp config", (profile) => {
-    const mcp = capability(profile, "mcp", McpCapability);
+    const mcp = capability(profile, "mcp", McpSection);
     if (mcp === undefined) return;
     expect(mcp.consumes(CONFIG_MCP)).toBe(true);
   }),
@@ -197,7 +197,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expectNumberedCommandsRouted(profile);
   }),
   aiCheck("names a numbered command after its phase and keeps only what it reads", (profile) => {
-    const commands = capability(profile, "commands", CommandsCapability);
+    const commands = capability(profile, "commands", CommandsSection);
     if (commands === undefined) return;
     const source = { name: "implement", description: "Implement a plan", model: "sonnet" };
     const converted = commands.convertFrontmatter(source, NUMBERED_COMMAND);

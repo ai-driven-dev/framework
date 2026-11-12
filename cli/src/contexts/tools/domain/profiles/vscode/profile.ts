@@ -4,7 +4,7 @@ import {
   CONFIG_VSCODE_SETTINGS,
 } from "../../../contract/config-refs.js";
 import { defineIdeTool } from "../../profile/define-tool.js";
-import { SettingsCapability } from "../../sections/settings-capability.js";
+import { ConfigSection } from "../../sections/config-section.js";
 
 const DIRECTORY = ".vscode/";
 
@@ -13,18 +13,18 @@ export const vscode = defineIdeTool({
   directory: DIRECTORY,
   signalDir: null,
   capabilities: () => ({
-    settings: [
-      new SettingsCapability({
+    config: [
+      new ConfigSection({
         outputPath: ".vscode/extensions.json",
         mergeStrategy: "user-prime",
         consumes: [CONFIG_VSCODE_EXTENSIONS],
       }),
-      new SettingsCapability({
+      new ConfigSection({
         outputPath: ".vscode/keybindings.json",
         mergeStrategy: "none",
         consumes: [CONFIG_VSCODE_KEYBINDINGS],
       }),
-      new SettingsCapability({
+      new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "user-prime",
         consumes: [CONFIG_VSCODE_SETTINGS],

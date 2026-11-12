@@ -1,7 +1,7 @@
 import { serializeFrontmatter } from "../../../../kernel/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
-type RulesCapabilityParams = {
+type RulesSectionParams = {
   directory: string;
   toolSuffix: string;
   inputSuffix?: string;
@@ -9,11 +9,11 @@ type RulesCapabilityParams = {
   convertFrontmatter: (fm: Record<string, unknown>) => Record<string, unknown>;
 };
 
-export class RulesCapability {
-  readonly #params: RulesCapabilityParams;
+export class RulesSection {
+  readonly #params: RulesSectionParams;
   readonly #foreignSuffixes: ForeignSuffixFilter;
 
-  constructor(params: RulesCapabilityParams) {
+  constructor(params: RulesSectionParams) {
     this.#params = params;
     this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.inputSuffix ?? params.toolSuffix);
   }
@@ -30,15 +30,15 @@ export class RulesCapability {
    * recognition; neither is a guess. */
   installedLocation(): { readonly directory: string; readonly extension: string } | null {
     const suffix = this.#params.inputSuffix ?? this.#params.toolSuffix;
-    const installed = this.buildInstallPath(`${RulesCapability.#PROBE_STEM}${suffix}`);
+    const installed = this.buildInstallPath(`${RulesSection.#PROBE_STEM}${suffix}`);
     if (installed === null) return null;
     const lastSlash = installed.lastIndexOf("/");
     const basename = installed.slice(lastSlash + 1);
-    const stemAt = basename.indexOf(RulesCapability.#PROBE_STEM);
+    const stemAt = basename.indexOf(RulesSection.#PROBE_STEM);
     if (stemAt === -1) return null;
     return {
       directory: installed.slice(0, lastSlash + 1),
-      extension: basename.slice(stemAt + RulesCapability.#PROBE_STEM.length),
+      extension: basename.slice(stemAt + RulesSection.#PROBE_STEM.length),
     };
   }
 
@@ -62,7 +62,7 @@ export class RulesCapability {
     return relativePath.startsWith(this.#params.directory);
   }
 
-  equals(other: RulesCapability): boolean {
+  equals(other: RulesSection): boolean {
     return (
       this.#params.directory === other.#params.directory &&
       this.#params.toolSuffix === other.#params.toolSuffix

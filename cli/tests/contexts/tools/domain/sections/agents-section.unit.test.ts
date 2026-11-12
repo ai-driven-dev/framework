@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { AgentsCapability } from "../../../../../src/contexts/tools/domain/sections/agents-capability.js";
+import { AgentsSection } from "../../../../../src/contexts/tools/domain/sections/agents-section.js";
 
 const identity = (fm: Record<string, unknown>) => fm;
 
-describe("AgentsCapability", () => {
+describe("AgentsSection", () => {
   const markdownParams = {
     directory: ".claude/",
     toolSuffix: ".claude.md",
@@ -20,19 +20,19 @@ describe("AgentsCapability", () => {
 
   describe("accepts", () => {
     it("returns true when path starts with directory", () => {
-      const cap = new AgentsCapability(markdownParams);
+      const cap = new AgentsSection(markdownParams);
       expect(cap.accepts(".claude/agents/foo.md")).toBe(true);
     });
 
     it("returns false when path does not start with directory", () => {
-      const cap = new AgentsCapability(markdownParams);
+      const cap = new AgentsSection(markdownParams);
       expect(cap.accepts(".cursor/agents/foo.md")).toBe(false);
     });
   });
 
   describe("serialize (markdown)", () => {
     it("produces frontmatter-delimited markdown content", () => {
-      const cap = new AgentsCapability(markdownParams);
+      const cap = new AgentsSection(markdownParams);
       const result = cap.serialize({ name: "my-agent", description: "A test" }, "Body text.");
       expect(result).toContain("---");
       expect(result).toContain("name: 'my-agent'");
@@ -41,7 +41,7 @@ describe("AgentsCapability", () => {
   });
 
   it("writes through the host's own serializer when it declares one", () => {
-    const cap = new AgentsCapability({
+    const cap = new AgentsSection({
       ...tomlParams,
       serialize: (fm, body) => `${fm.name}|${body}`,
     });
@@ -50,7 +50,7 @@ describe("AgentsCapability", () => {
 
   describe("deserialize", () => {
     it("parses frontmatter and body from markdown content", () => {
-      const cap = new AgentsCapability(markdownParams);
+      const cap = new AgentsSection(markdownParams);
       const content = "---\nname: my-agent\ndescription: A test\n---\nBody text.";
       const { frontmatter, body } = cap.deserialize(content);
       expect(frontmatter).toEqual({ name: "my-agent", description: "A test" });
@@ -58,7 +58,7 @@ describe("AgentsCapability", () => {
     });
 
     it("returns empty frontmatter when no delimiter present", () => {
-      const cap = new AgentsCapability(markdownParams);
+      const cap = new AgentsSection(markdownParams);
       const { frontmatter, body } = cap.deserialize("plain body");
       expect(frontmatter).toEqual({});
       expect(body).toBe("plain body");
@@ -67,33 +67,33 @@ describe("AgentsCapability", () => {
 
   describe("equals", () => {
     it("returns true for identical params", () => {
-      const a = new AgentsCapability(markdownParams);
-      const b = new AgentsCapability({ ...markdownParams });
+      const a = new AgentsSection(markdownParams);
+      const b = new AgentsSection({ ...markdownParams });
       expect(a.equals(b)).toBe(true);
     });
 
     it("returns false when directory differs", () => {
-      const a = new AgentsCapability(markdownParams);
-      const b = new AgentsCapability({ ...markdownParams, directory: ".cursor/" });
+      const a = new AgentsSection(markdownParams);
+      const b = new AgentsSection({ ...markdownParams, directory: ".cursor/" });
       expect(a.equals(b)).toBe(false);
     });
 
     it("returns false when format differs", () => {
-      const a = new AgentsCapability(markdownParams);
-      const b = new AgentsCapability({ ...markdownParams, format: "toml" });
+      const a = new AgentsSection(markdownParams);
+      const b = new AgentsSection({ ...markdownParams, format: "toml" });
       expect(a.equals(b)).toBe(false);
     });
   });
 });
 
-describe("AgentsCapability install paths", () => {
-  const markdown = new AgentsCapability({
+describe("AgentsSection install paths", () => {
+  const markdown = new AgentsSection({
     directory: ".claude/",
     toolSuffix: ".claude.md",
     format: "markdown",
     frontmatter: identity,
   });
-  const toml = new AgentsCapability({
+  const toml = new AgentsSection({
     directory: ".codex/",
     toolSuffix: ".codex.md",
     format: "toml",
@@ -115,7 +115,7 @@ describe("AgentsCapability install paths", () => {
   });
 
   it("asks the installer the tool declares before deriving a path itself", () => {
-    const delegating = new AgentsCapability({
+    const delegating = new AgentsSection({
       directory: ".x/",
       toolSuffix: ".x.md",
       format: "markdown",
@@ -127,8 +127,8 @@ describe("AgentsCapability install paths", () => {
   });
 });
 
-describe("AgentsCapability file acceptance", () => {
-  const cap = new AgentsCapability({
+describe("AgentsSection file acceptance", () => {
+  const cap = new AgentsSection({
     directory: ".claude/",
     toolSuffix: ".claude.md",
     format: "markdown",
@@ -145,8 +145,8 @@ describe("AgentsCapability file acceptance", () => {
   });
 });
 
-describe("AgentsCapability frontmatter conversion", () => {
-  const cap = new AgentsCapability({
+describe("AgentsSection frontmatter conversion", () => {
+  const cap = new AgentsSection({
     directory: ".x/",
     toolSuffix: ".x.md",
     format: "markdown",
@@ -170,7 +170,7 @@ describe("AgentsCapability frontmatter conversion", () => {
   });
 });
 
-describe("AgentsCapability equality", () => {
+describe("AgentsSection equality", () => {
   const base = {
     directory: ".claude/",
     toolSuffix: ".claude.md",
@@ -180,7 +180,7 @@ describe("AgentsCapability equality", () => {
 
   it("differs on the tool suffix", () => {
     expect(
-      new AgentsCapability(base).equals(new AgentsCapability({ ...base, toolSuffix: ".x.md" }))
+      new AgentsSection(base).equals(new AgentsSection({ ...base, toolSuffix: ".x.md" }))
     ).toBe(false);
   });
 });

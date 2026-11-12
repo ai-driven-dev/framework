@@ -22,10 +22,10 @@ import {
   type ProfileSectionKey,
   type ProfileSections,
 } from "../profile.js";
-import { AgentsCapability } from "../sections/agents-capability.js";
-import { CommandsCapability } from "../sections/commands-capability.js";
-import { RulesCapability } from "../sections/rules-capability.js";
-import { SkillsCapability } from "../sections/skills-capability.js";
+import { AgentsSection } from "../sections/agents-section.js";
+import { CommandsSection } from "../sections/commands-section.js";
+import { RulesSection } from "../sections/rules-section.js";
+import { SkillsSection } from "../sections/skills-section.js";
 import { flatInstallPath, ownsFlatPath } from "./flat-install-paths.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
@@ -46,10 +46,10 @@ type ParamsOf<T extends new (params: never) => unknown> = ConstructorParameters<
 export interface BoundTool {
   /** Where a built file lands: `<directory><subdirectory><name without the tool suffix>`. */
   installUnder(subdirectory: string): (fileName: string) => string;
-  agents(params: Unbound<ParamsOf<typeof AgentsCapability>>): AgentsCapability;
-  skills(params: Unbound<ParamsOf<typeof SkillsCapability>>): SkillsCapability;
-  commands(params: Unbound<ParamsOf<typeof CommandsCapability>>): CommandsCapability;
-  rules(params: Unbound<ParamsOf<typeof RulesCapability>>): RulesCapability;
+  agents(params: Unbound<ParamsOf<typeof AgentsSection>>): AgentsSection;
+  skills(params: Unbound<ParamsOf<typeof SkillsSection>>): SkillsSection;
+  commands(params: Unbound<ParamsOf<typeof CommandsSection>>): CommandsSection;
+  rules(params: Unbound<ParamsOf<typeof RulesSection>>): RulesSection;
 }
 
 type AiToolFields = Omit<
@@ -124,10 +124,10 @@ function bind(directory: string, suffix: ToolSuffix): BoundTool {
   return {
     installUnder: (subdirectory) => (fileName) =>
       `${directory}${subdirectory}${suffix.strip(fileName)}`,
-    agents: (params) => new AgentsCapability({ directory, toolSuffix, ...params }),
-    skills: (params) => new SkillsCapability({ directory, toolSuffix, ...params }),
-    commands: (params) => new CommandsCapability({ directory, toolSuffix, ...params }),
-    rules: (params) => new RulesCapability({ directory, toolSuffix, ...params }),
+    agents: (params) => new AgentsSection({ directory, toolSuffix, ...params }),
+    skills: (params) => new SkillsSection({ directory, toolSuffix, ...params }),
+    commands: (params) => new CommandsSection({ directory, toolSuffix, ...params }),
+    rules: (params) => new RulesSection({ directory, toolSuffix, ...params }),
   };
 }
 
@@ -159,7 +159,7 @@ function nativeActivationOf(sections: ProfileSections): NativeActivation | undef
 }
 
 function settingsOf(sections: ProfileSections): readonly SettingsFileAnswers[] {
-  return sections.settings ?? [];
+  return sections.config ?? [];
 }
 
 function signalDirectoryOf(signalDir: string | null, projectRoot: string): SignalDirectory | null {

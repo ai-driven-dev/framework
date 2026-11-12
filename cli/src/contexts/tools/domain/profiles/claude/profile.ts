@@ -5,7 +5,7 @@ import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpCapability } from "../../sections/mcp-capability.js";
+import { McpSection } from "../../sections/mcp-section.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
 import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
@@ -71,7 +71,7 @@ export const claude = defineAiTool({
         return {};
       },
     }),
-    mcp: new McpCapability({
+    mcp: new McpSection({
       outputPath: ".mcp.json",
       format: "json",
       consumes: [CONFIG_MCP],

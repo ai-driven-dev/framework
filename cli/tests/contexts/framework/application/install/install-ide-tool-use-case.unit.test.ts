@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import {
   buildUnitDeps,
@@ -153,23 +153,23 @@ describe("InstallIdeToolUseCase", () => {
   });
 
   describe("selecting what an installed AI tool declares for the IDE", () => {
-    const forIde = new SettingsCapability({
+    const forIde = new ConfigSection({
       outputPath: ".vscode/aidd-a.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"a": 1}',
       requiresTool: "vscode",
     });
-    const consumesOnly = new SettingsCapability({
+    const consumesOnly = new ConfigSection({
       outputPath: ".vscode/aidd-b.json",
       mergeStrategy: "user-prime",
       consumes: ["something"],
     });
-    const forItself = new SettingsCapability({
+    const forItself = new ConfigSection({
       outputPath: ".cursor/aidd-c.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"c": 1}',
     });
-    const fromAsset = new SettingsCapability({
+    const fromAsset = new ConfigSection({
       outputPath: ".vscode/aidd-d.json",
       mergeStrategy: "framework-prime",
       staticContentAssetFile: "d.json",
@@ -178,8 +178,8 @@ describe("InstallIdeToolUseCase", () => {
 
     let cursorProfile: BuiltToolConfig = cursor;
 
-    function registerCursorWith(settings: SettingsCapability[]): void {
-      cursorProfile = withSections(cursor, { settings });
+    function registerCursorWith(settings: ConfigSection[]): void {
+      cursorProfile = withSections(cursor, { config: settings });
     }
 
     afterEach(() => {

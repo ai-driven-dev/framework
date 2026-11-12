@@ -5,7 +5,7 @@ import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../forma
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpCapability } from "../../sections/mcp-capability.js";
+import { McpSection } from "../../sections/mcp-section.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
@@ -77,7 +77,7 @@ export const codex = defineAiTool({
       buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => fm,
     }),
-    mcp: new McpCapability({
+    mcp: new McpSection({
       outputPath: ".codex/config.toml",
       format: "toml",
       mergeFn: mergeCodexConfigToml,

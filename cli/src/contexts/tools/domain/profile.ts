@@ -3,24 +3,24 @@ import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
 import type { NativeActivation } from "./native-registration/native-activation.js";
 import type { PluginsCapability } from "./plugins/plugins-capability.js";
-import type { AgentsCapability } from "./sections/agents-capability.js";
-import type { CommandsCapability } from "./sections/commands-capability.js";
-import type { HooksCapability } from "./sections/hooks-capability.js";
-import type { McpCapability } from "./sections/mcp-capability.js";
-import type { RulesCapability } from "./sections/rules-capability.js";
-import type { SettingsCapability } from "./sections/settings-capability.js";
-import type { SkillsCapability } from "./sections/skills-capability.js";
+import type { AgentsSection } from "./sections/agents-section.js";
+import type { CommandsSection } from "./sections/commands-section.js";
+import type { ConfigSection } from "./sections/config-section.js";
+import type { HooksSection } from "./sections/hooks-section.js";
+import type { McpSection } from "./sections/mcp-section.js";
+import type { RulesSection } from "./sections/rules-section.js";
+import type { SkillsSection } from "./sections/skills-section.js";
 
 /** What a tool can declare, by the key it declares it under. */
 export interface ProfileSections {
-  agents?: AgentsCapability;
-  skills?: SkillsCapability;
-  commands?: CommandsCapability;
-  rules?: RulesCapability;
-  mcp?: McpCapability;
-  hooks?: HooksCapability;
+  agents?: AgentsSection;
+  skills?: SkillsSection;
+  commands?: CommandsSection;
+  rules?: RulesSection;
+  mcp?: McpSection;
+  hooks?: HooksSection;
   plugins?: PluginsCapability;
-  settings?: SettingsCapability[];
+  config?: ConfigSection[];
 }
 
 export type ProfileSectionKey = keyof ProfileSections;
@@ -36,7 +36,7 @@ export const PROFILE_SECTION_KEYS: readonly ProfileSectionKey[] = [
   "mcp",
   "hooks",
   "plugins",
-  "settings",
+  "config",
 ];
 
 export function isProfileSectionKey(name: string): name is ProfileSectionKey {
@@ -44,7 +44,7 @@ export function isProfileSectionKey(name: string): name is ProfileSectionKey {
 }
 
 export interface HasAgents {
-  readonly agents: AgentsCapability;
+  readonly agents: AgentsSection;
 }
 
 export interface HasPlugins {

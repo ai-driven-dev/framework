@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/sections/settings-capability.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 
-describe("SettingsCapability", () => {
+describe("ConfigSection", () => {
   describe("constructor", () => {
     it("accepts consumes without staticContent", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         consumes: ["mySignal"],
@@ -15,7 +15,7 @@ describe("SettingsCapability", () => {
     });
 
     it("accepts staticContent without consumes", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
@@ -27,43 +27,41 @@ describe("SettingsCapability", () => {
     it("throws when both consumes and staticContent are provided", () => {
       expect(
         () =>
-          new SettingsCapability({
+          new ConfigSection({
             outputPath: ".vscode/settings.json",
             mergeStrategy: "framework-prime",
             consumes: ["mySignal"],
             staticContent: '{"key": true}',
           })
-      ).toThrow("SettingsCapability: set either 'consumes' or 'staticContent', not both.");
+      ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
     });
 
     it("throws when both staticContent and staticContentAssetFile are provided", () => {
       expect(
         () =>
-          new SettingsCapability({
+          new ConfigSection({
             outputPath: ".vscode/settings.json",
             mergeStrategy: "framework-prime",
             staticContent: '{"key": true}',
             staticContentAssetFile: "vscode-settings.json",
           })
-      ).toThrow(
-        "SettingsCapability: set either 'staticContent' or 'staticContentAssetFile', not both."
-      );
+      ).toThrow("ConfigSection: set either 'staticContent' or 'staticContentAssetFile', not both.");
     });
 
     it("throws when consumes and staticContentAssetFile are both provided", () => {
       expect(
         () =>
-          new SettingsCapability({
+          new ConfigSection({
             outputPath: ".vscode/settings.json",
             mergeStrategy: "framework-prime",
             consumes: ["mySignal"],
             staticContentAssetFile: "vscode-settings.json",
           })
-      ).toThrow("SettingsCapability: set either 'consumes' or 'staticContent', not both.");
+      ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
     });
 
     it("accepts staticContentAssetFile without consumes", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContentAssetFile: "vscode-settings.json",
@@ -80,7 +78,7 @@ describe("SettingsCapability", () => {
     });
 
     it("accepts neither consumes nor staticContent (empty capability)", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
       });
@@ -91,7 +89,7 @@ describe("SettingsCapability", () => {
 
   describe("requiredTool", () => {
     it("is null when not set", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
@@ -100,7 +98,7 @@ describe("SettingsCapability", () => {
     });
 
     it("is set when provided alongside staticContent", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
@@ -112,16 +110,16 @@ describe("SettingsCapability", () => {
     it("throws when requiresTool is set without staticContent", () => {
       expect(
         () =>
-          new SettingsCapability({
+          new ConfigSection({
             outputPath: ".vscode/settings.json",
             mergeStrategy: "framework-prime",
             requiresTool: "vscode",
           })
-      ).toThrow("SettingsCapability: 'requiresTool' is only meaningful with 'staticContent'.");
+      ).toThrow("ConfigSection: 'requiresTool' is only meaningful with 'staticContent'.");
     });
 
     it("accepts staticContentAssetFile with requiresTool", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContentAssetFile: "vscode-settings.json",
@@ -133,7 +131,7 @@ describe("SettingsCapability", () => {
   });
 
   describe("resolveStaticContent", () => {
-    const fromAsset = new SettingsCapability({
+    const fromAsset = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContentAssetFile: "vscode-settings.json",
@@ -148,7 +146,7 @@ describe("SettingsCapability", () => {
     });
 
     it("prefers inline content and never asks the loader", () => {
-      const inline = new SettingsCapability({
+      const inline = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: "{}",
@@ -163,7 +161,7 @@ describe("SettingsCapability", () => {
 
   describe("outputPath", () => {
     it("returns the configured output path", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
       });
@@ -173,7 +171,7 @@ describe("SettingsCapability", () => {
 
   describe("mergeStrategy", () => {
     it("returns the configured merge strategy", () => {
-      const cap = new SettingsCapability({
+      const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "user-prime",
       });
@@ -182,9 +180,9 @@ describe("SettingsCapability", () => {
   });
 });
 
-describe("SettingsCapability path acceptance", () => {
+describe("ConfigSection path acceptance", () => {
   it("accepts exactly its own output path", () => {
-    const cap = new SettingsCapability({
+    const cap = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "none",
     });
@@ -195,26 +193,24 @@ describe("SettingsCapability path acceptance", () => {
   });
 });
 
-describe("SettingsCapability equality", () => {
+describe("ConfigSection equality", () => {
   const base = { outputPath: ".vscode/settings.json", mergeStrategy: "none" as const };
 
   it("is equal on the same output path and merge strategy", () => {
-    expect(new SettingsCapability(base).equals(new SettingsCapability({ ...base }))).toBe(true);
+    expect(new ConfigSection(base).equals(new ConfigSection({ ...base }))).toBe(true);
   });
 
   it("differs on the output path", () => {
     expect(
-      new SettingsCapability(base).equals(
-        new SettingsCapability({ ...base, outputPath: ".vscode/extensions.json" })
+      new ConfigSection(base).equals(
+        new ConfigSection({ ...base, outputPath: ".vscode/extensions.json" })
       )
     ).toBe(false);
   });
 
   it("differs on the merge strategy", () => {
     expect(
-      new SettingsCapability(base).equals(
-        new SettingsCapability({ ...base, mergeStrategy: "user-prime" })
-      )
+      new ConfigSection(base).equals(new ConfigSection({ ...base, mergeStrategy: "user-prime" }))
     ).toBe(false);
   });
 });

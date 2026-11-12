@@ -4,7 +4,7 @@ import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../forma
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpCapability } from "../../sections/mcp-capability.js";
+import { McpSection } from "../../sections/mcp-section.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import { CURSOR_DIRECTORY } from "./cursor-paths.js";
@@ -69,7 +69,7 @@ export const cursor = defineAiTool({
         };
       },
     }),
-    mcp: new McpCapability({
+    mcp: new McpSection({
       outputPath: `${DIRECTORY}mcp.json`,
       format: "json",
       consumes: [CONFIG_MCP],

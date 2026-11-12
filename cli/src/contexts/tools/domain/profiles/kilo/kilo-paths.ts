@@ -2,7 +2,7 @@
  * later hooks bridge share one declaration rather than duplicate Kilo's plugin layout. */
 
 import { KiloDualConfigError } from "../../../../../kernel/errors.js";
-import type { McpOutputPathCandidates } from "../../sections/mcp-capability.js";
+import type { McpOutputPathCandidates } from "../../sections/mcp-section.js";
 
 export const KILO_DIRECTORY = ".kilo/";
 export const KILO_PLUGIN_DIR = `${KILO_DIRECTORY}plugin/`;

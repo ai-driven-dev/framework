@@ -10,17 +10,17 @@ import {
   type ProfileBrand,
 } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
-import type { CommandsCapability } from "../../../../src/contexts/tools/domain/sections/commands-capability.js";
-import type { McpCapability } from "../../../../src/contexts/tools/domain/sections/mcp-capability.js";
-import type { SettingsCapability } from "../../../../src/contexts/tools/domain/sections/settings-capability.js";
+import type { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
+import type { ConfigSection } from "../../../../src/contexts/tools/domain/sections/config-section.js";
+import type { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
 export type KitCapabilities = {
   readonly plugins?: PluginsCapability;
-  readonly mcp?: McpCapability;
-  readonly commands?: CommandsCapability;
-  readonly settings?: SettingsCapability[];
+  readonly mcp?: McpSection;
+  readonly commands?: CommandsSection;
+  readonly config?: ConfigSection[];
 };
 
 type Contracts = NonNullable<AiTool<KitCapabilities>["buildContracts"]>;
@@ -112,18 +112,18 @@ export class ProfileBuilder {
     return this;
   }
 
-  withMcp(mcp: McpCapability): this {
+  withMcp(mcp: McpSection): this {
     this.capabilities = { ...this.capabilities, mcp };
     return this;
   }
 
-  withCommands(commands: CommandsCapability): this {
+  withCommands(commands: CommandsSection): this {
     this.capabilities = { ...this.capabilities, commands };
     return this;
   }
 
-  withSettings(settings: SettingsCapability | SettingsCapability[]): this {
-    this.capabilities = { ...this.capabilities, settings: [settings].flat() };
+  withSettings(settings: ConfigSection | ConfigSection[]): this {
+    this.capabilities = { ...this.capabilities, config: [settings].flat() };
     return this;
   }
 

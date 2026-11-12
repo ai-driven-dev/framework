@@ -7,12 +7,12 @@ import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { AgentsCapability } from "../../sections/agents-capability.js";
-import { CommandsCapability } from "../../sections/commands-capability.js";
-import { McpCapability } from "../../sections/mcp-capability.js";
-import { RulesCapability } from "../../sections/rules-capability.js";
-import { SettingsCapability } from "../../sections/settings-capability.js";
-import { SkillsCapability } from "../../sections/skills-capability.js";
+import { AgentsSection } from "../../sections/agents-section.js";
+import { CommandsSection } from "../../sections/commands-section.js";
+import { ConfigSection } from "../../sections/config-section.js";
+import { McpSection } from "../../sections/mcp-section.js";
+import { RulesSection } from "../../sections/rules-section.js";
+import { SkillsSection } from "../../sections/skills-section.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
@@ -204,33 +204,33 @@ export const copilot = defineAiTool({
   },
 
   capabilities: () => ({
-    agents: new AgentsCapability({
+    agents: new AgentsSection({
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
       format: "markdown",
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       frontmatter: copilotAgentFrontmatter,
     }),
-    skills: new SkillsCapability({
+    skills: new SkillsSection({
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => skillsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => skillsHandler.convertFrontmatter(fm),
     }),
-    commands: new CommandsCapability({
+    commands: new CommandsSection({
       directory: DIRECTORY,
       toolSuffix: EXT_PROMPT,
       buildInstallPath: (fileName) => commandsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
+    rules: new RulesSection({
       directory: DIRECTORY,
       toolSuffix: EXT_INSTRUCTIONS,
       inputSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
     }),
-    mcp: new McpCapability({
+    mcp: new McpSection({
       outputPath: ".vscode/mcp.json",
       format: "json",
       consumes: [CONFIG_MCP],
@@ -246,8 +246,8 @@ export const copilot = defineAiTool({
         return content;
       },
     }),
-    settings: [
-      new SettingsCapability({
+    config: [
+      new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContentAssetFile: "vscode-settings.json",
