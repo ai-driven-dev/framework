@@ -256,6 +256,8 @@ test('does not propose a release older than an installed plugin source even when
   assert.match(text,/non propos/i);
   assert.doesNotMatch(text,/mise à jour disponible/i);
   assert.equal(result.pluginUpdates.length,0);
+  assert.equal(result.upToDate,false);
+  assert.doesNotMatch(format(result),/up to date/);
 });
 
 test('does not propose downgrading an installed plugin even if its source reference is older', async t => {
@@ -267,6 +269,8 @@ test('does not propose downgrading an installed plugin even if its source refere
   assert.match(text,/non propos/i);
   assert.doesNotMatch(text,/mise à jour disponible/i);
   assert.equal(result.pluginUpdates.length,0);
+  assert.equal(result.upToDate,false);
+  assert.doesNotMatch(format(result),/up to date/);
 });
 
 test('keeps prerelease and stable source channels separate', async t => {
@@ -275,6 +279,8 @@ test('keeps prerelease and stable source channels separate', async t => {
   const choices=[{tag_name:'v5.13.0-beta.2',name:'Beta two',assets:[],draft:false,prerelease:true}];
   const result=await status({...options,fetcher:releasesWithVersions([],choices,{'.':'5.13.0-beta.2','plugins/aidd-context':'2.10.0-beta.1'})});
   assert.equal(result.pluginUpdates.length,0);
+  assert.equal(result.upToDate,false);
+  assert.doesNotMatch(format(result),/up to date/);
   assert.match(format(result),/plugins non vérifié/i);
 });
 
@@ -293,7 +299,7 @@ test('compares official global plugins independently of a local project source',
   fs.writeFileSync(path.join(options.env.AIDD_USER_CONFIG_DIR,'marketplaces.json'),JSON.stringify({version:1,marketplaces:[{name:'aidd-framework',version:'5.12.0',source:{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.12.0'}}]}));
   const result=await status({...options,fetcher:releasesWithVersions([],available,{'.':'5.13.0','plugins/aidd-dev':'2.7.1'})});
   assert.match(format(result),/opencode.*aidd-dev.*global.*2\.6\.0.*2\.7\.1/i);
-  assert.match(format(result),/source locale.*contenu.*différer/i);
+  assert.match(format(result),/source locale/i);
   assert.doesNotMatch(format(result),/plugins.*non vérifié/i);
 });
 
@@ -322,6 +328,26 @@ test('compares each global plugin on its own channel when the registry is stable
   assert.match(text,/kilo.*aidd-dev.*2\.7\.0-beta\.1.*2\.7\.0-beta\.2/i);
   assert.match(text,/source.*v5\.12\.0-beta\.1.*v5\.13\.0-beta\.2/i);
   assert.doesNotMatch(text,/source.*v5\.12\.0-beta\.1.*v5\.13\.0(?:\s|$)/i);
+});
+
+test('plugin update titles belong to their target release, not the current catalogue channel', async t => {
+  const options=fixture(t,{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.13.0'},'5.13.0');
+  writeManifest(path.join(options.cwd,'.aidd','manifest.json'),{opencode:{plugins:[
+    plugin('aidd-context','v5.14.0-beta.1','2.11.0-beta.1'),
+    plugin('aidd-dev','v5.14.0-beta.1','2.8.0-beta.1'),
+  ]}});
+  const choices=[
+    {tag_name:'v5.13.0',name:'Stable release title',assets:[],draft:false,prerelease:false},
+    {tag_name:'v5.14.0-beta.2',name:'Beta release title',assets:[],draft:false,prerelease:true},
+  ];
+  const result=await status({...options,fetcher:releasesWithVersions([],choices,
+    {'.':'5.14.0-beta.2','plugins/aidd-context':'2.11.0-beta.2','plugins/aidd-dev':'2.8.0-beta.2'})});
+  assert.equal(result.hasUpdate,false);
+  assert.equal(result.pluginUpdates.length,2);
+  const text=format(result);
+  assert.match(text,/v5\.14\.0-beta\.2 · Beta release title/);
+  assert.equal(text.split('Beta release title').length-1,1);
+  assert.doesNotMatch(text,/Stable release title/);
 });
 
 test('fetches independent project and global release channels concurrently', {timeout:2000}, async t => {
@@ -363,7 +389,7 @@ test('does not invent a target for a local project referencing a global plugin',
   const options=fixture(t,{kind:'local',path:'/local/framework'});
   writeManifest(path.join(options.cwd,'.aidd','manifest.json'), {cursor:{plugins:[plugin('aidd-dev','v5.12.0','2.6.0','user')]}});
   const result=await status({...options,fetcher:releases([],available)});
-  assert.match(format(result),/source locale.*contenu.*différer/i);
+  assert.match(format(result),/source locale/i);
   assert.match(format(result),/plugins globaux non vérifié/i);
 });
 
@@ -407,39 +433,58 @@ test('matches the CLI semver treatment of build metadata', async t => {
 test('reports a verified catalogue diff and editorial title', async t => {
   const options = fixture(t); const calls=[];
   const text = format(await status({...options, fetcher:releases(calls, available)}), {CLAUDE_PLUGIN_ROOT:'/plugin'});
-  assert.match(text,/marketplace v5\.12\.0/);
+  assert.match(text,/v5\.12\.0/);
   assert.match(text,/Framework - Release 5\.13 : Télémétrie et Plan/);
   assert.match(text,/v5\.13\.0/);
   assert.match(text,/skill aidd-maintenance · 01-update/);
   assert.equal(calls.length,2);
 });
 
-test('shows the release tag with its title even when the marketplace is current', async t => {
+test('a verified current catalogue and plugins show one up-to-date line', async t => {
   const options=fixture(t,{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.13.0'},'5.13.0');
-  const text=format(await status({...options,fetcher:releases([],available)}));
-  const releaseLine=text.split('\n').find(line=>line.includes('Dernière release'));
-  assert.match(releaseLine,/v5\.13\.0/);
-  assert.match(releaseLine,/Télémétrie et Plan/);
+  writeManifest(path.join(options.cwd,'.aidd','manifest.json'), {codex:{plugins:[plugin('aidd-context','v5.13.0','2.10.0')]}});
+  const result=await status({...options,fetcher:releasesWithVersions([],available,{'.':'5.13.0','plugins/aidd-context':'2.10.0'})});
+  assert.equal(result.upToDate,true);
+  assert.equal(format(result),'.\\ AIDD v5.13.0 · ✓ up to date');
+  assert.match(result.latest.title,/Télémétrie et Plan/,'the skill still receives release metadata');
+});
+
+test('a current catalogue cannot hide an unverified plugin inventory', async t => {
+  const options=fixture(t,{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.13.0'},'5.13.0');
+  const result=await status({...options,fetcher:releases([],available)});
+  assert.equal(result.upToDate,false);
+  assert.doesNotMatch(format(result),/up to date/);
+  assert.match(format(result),/plugins non vérifié/i);
+});
+
+test('a catalogue ahead of the latest release is not offered a downgrade or called current', async t => {
+  const options=fixture(t,{kind:'github',repo:'ai-driven-dev/framework',ref:'v5.14.0'},'5.14.0');
+  writeManifest(path.join(options.cwd,'.aidd','manifest.json'), {});
+  const result=await status({...options,fetcher:releases([],available)});
+  assert.equal(result.upToDate,false);
+  assert.doesNotMatch(format(result),/up to date|mise à jour disponible/);
+  assert.match(format(result),/v5\.14\.0/);
+  assert.match(format(result),/supérieure.*v5\.13\.0/i);
 });
 
 test('dates a release from the cache and refreshes it after 24 hours', async t => {
   const options = fixture(t); const calls=[]; const fetcher=releases(calls, available);
   const now=Date.parse('2026-11-04T23:30:00Z');
   const first=await status({...options,now,fetcher});
-  assert.match(format(first),/vérifi.*2026-11-04 23:30 UTC/i);
+  assert.equal(first.checkedAt,now);
   const next = await status({...options,now:now+23*3600000,fetcher});
   assert.equal(calls.length,2);
-  assert.match(format(next),/vérifi.*2026-11-04 23:30 UTC/i);
+  assert.equal(next.checkedAt,now);
   assert.match(format(next, {}),/v5\.13\.0/);
   const refreshed=await status({...options,now:now+86400000,fetcher});
   assert.equal(calls.length,4);
-  assert.match(format(refreshed),/vérifi.*2026-11-05 23:30 UTC/i);
+  assert.equal(refreshed.checkedAt,now+86400000);
 });
 
 test('network failure never presents unknown state as up to date', async t => {
   const options=fixture(t);
   const text=format(await status({...options,fetcher:async()=>{throw Error('offline');}}),{});
-  assert.match(text,/marketplace v5\.12\.0/);
+  assert.match(text,/v5\.12\.0/);
   assert.doesNotMatch(text,/up.to.date|à jour/i);
   assert.doesNotMatch(text,/mise à jour disponible/i);
 });
@@ -447,10 +492,10 @@ test('network failure never presents unknown state as up to date', async t => {
 test('reports the official release separately from the registered local version', async t => {
   const options=fixture(t,{kind:'local',path:'/local/framework'}); const calls=[];
   const text=format(await status({...options,fetcher:releases(calls,available)}),{});
-  assert.match(text,/marketplace.*v5\.12\.0.*enregistrée/i);
-  assert.match(text,/release officielle.*v5\.13\.0.*Framework - Release 5\.13 : Télémétrie et Plan/i);
+  assert.match(text,/AIDD v5\.12\.0.*source locale/i);
+  assert.match(text,/comparaison indicative.*release.*v5\.13\.0/i);
   assert.match(text,/version enregistrée.*v5\.12\.0.*v5\.13\.0.*indicati/i);
-  assert.match(text,/source locale.*contenu.*différer/i);
+  assert.match(text,/source locale/i);
   assert.doesNotMatch(text,/plugins.*non vérifié/i);
   assert.equal(calls.length,2);
   assert.doesNotMatch(text,/mise à jour disponible/i);
@@ -460,10 +505,10 @@ test('reports the official release separately from the registered local version'
 test('equal local and official versions do not imply identical content', async t => {
   const options=fixture(t,{kind:'local',path:'/local/framework'},'5.13.0');
   const text=format(await status({...options,fetcher:releases([],available)}));
-  assert.match(text,/marketplace.*v5\.13\.0.*enregistrée/i);
-  assert.match(text,/release officielle.*v5\.13\.0/i);
-  assert.match(text,/source locale.*contenu.*différer/i);
-  assert.doesNotMatch(text,/identique|à jour|mise à jour disponible/i);
+  assert.match(text,/AIDD v5\.13\.0.*source locale/i);
+  assert.match(text,/release.*v5\.13\.0/i);
+  assert.match(text,/source locale/i);
+  assert.doesNotMatch(text,/identique|à jour|up to date|mise à jour disponible|Télémétrie|Vérifiée/i);
 });
 
 test('retries unavailable release title without waiting for the daily release refresh', async t => {
@@ -474,7 +519,7 @@ test('retries unavailable release title without waiting for the daily release re
     return {ok:false};
   };
   const first=await status({...options,fetcher});
-  assert.match(format(first),/titre.*indisponible/i);
+  assert.equal(first.latest.titlePending,true);
   assert.doesNotMatch(format(first),/v5\.13\.0\s*·\s*v5\.13\.0/);
   const early=[];
   await status({...options,now:options.now+3599999,fetcher:releases(early,available)});
@@ -482,8 +527,8 @@ test('retries unavailable release title without waiting for the daily release re
   const retry=[];
   const recovered=await status({...options,now:options.now+3600000,fetcher:releases(retry,available)});
   assert.equal(retry.length,1);
-  assert.match(format(recovered),/Télémétrie et Plan/);
-  assert.doesNotMatch(format(recovered),/titre.*indisponible/i);
+  assert.match(recovered.latest.title,/Télémétrie et Plan/);
+  assert.equal(recovered.latest.titlePending,false);
 });
 
 test('caches the official release for a local source and handles offline state', async t => {
@@ -492,7 +537,7 @@ test('caches the official release for a local source and handles offline state',
   const cached=await status({...options,now:options.now+23*3600000,fetcher:async()=>{throw Error('offline');}});
   assert.equal(calls.length,2);
   assert.deepEqual(cached.latest,first.latest);
-  assert.match(format(cached),/vérifi.*2026-11-04 00:00 UTC/i);
+  assert.equal(cached.checkedAt,options.now);
   const offline=await status({...options,now:options.now+86400000,fetcher:async()=>{throw Error('offline');}});
   assert.match(format(offline),/release.*indisponible/i);
   assert.doesNotMatch(format(offline),/indicati|mise à jour disponible/i);
@@ -502,8 +547,8 @@ test('a local source with no declared version shows the official release without
   const options=fixture(t,{kind:'local',path:'/custom/fork'},'unknown');
   const text=format(await status({...options,fetcher:releases([],available)}));
   assert.match(text,/version du marketplace inconnue/i);
-  assert.match(text,/release officielle.*v5\.13\.0/i);
-  assert.doesNotMatch(text,/indicati|mise à jour disponible/i);
+  assert.match(text,/release.*v5\.13\.0/i);
+  assert.doesNotMatch(text,/version enregistrée|mise à jour disponible|up to date/i);
 });
 
 test('a beta installation compares releases from its own channel', async t => {
@@ -605,7 +650,7 @@ test('Claude reports project plugins as unverified when their CLI registry is co
   fs.writeFileSync(path.join(options.cwd,'.aidd','marketplaces.json'),'{bad json');
   writeManifest(path.join(options.cwd,'.aidd','manifest.json'),{opencode:{plugins:[plugin('aidd-context','v5.12.0','2.9.0')]}});
   const text=format(await status({...options,env:{...options.env,CLAUDE_PLUGIN_ROOT:pluginRoot},fetcher:releases([],available)}));
-  assert.match(text,/marketplace v5\.13\.0/i);
+  assert.match(text,/AIDD v5\.13\.0/i);
   assert.match(text,/plugins non vérifié/i);
   assert.doesNotMatch(text,/opencode.*aidd-context/i);
 });
@@ -676,7 +721,7 @@ test('Copilot CLI displays a progress message before its final hook context', t 
   const payload={sessionId:'id',timestamp:123,cwd:options.cwd,source:'startup'};
   const [progress,final]=run(payload,true);
   assert.equal(progress.type,'progress');
-  assert.match(progress.message,/marketplace v5\.12\.0/);
+  assert.match(progress.message,/v5\.12\.0/);
   assert.deepEqual(final,{additionalContext:progress.message});
   assert.deepEqual(run(payload,false),[final]);
   assert.equal(run({hook_event_name:'SessionStart',source:'startup'},true).length,1);

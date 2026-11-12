@@ -50,6 +50,35 @@ for(const tool of ['codex','copilot','claude']) test(`${tool} discovers native p
   assert.equal(result.nativePluginsUnverified,false);
 });
 
+for(const tool of ['codex','copilot','claude']) test(`${tool} reports verified current native plugins without an AIDD manifest`,async t=>{
+  const options=fixture(t);
+  fs.writeFileSync(path.join(options.root,'.claude-plugin','marketplace.json'),JSON.stringify({name:'aidd-framework',version:'5.13.0'}));
+  const plugins=[{name:'aidd-context',pluginId:'aidd-context@aidd-framework',id:'aidd-context@aidd-framework',
+    marketplace:'aidd-framework',scope:'user',version:'2.10.0',enabled:true}];
+  const result=await status({...options,tool,runner:nativeRunner(options,tool,{plugins}),
+    sourceReader:()=>({path:'/config',scope:'user',source:{...source,ref:'v5.13.0'}}),fetcher});
+  // Copilot does not expose a catalogue path/version in its marketplace listing.
+  assert.equal(result.upToDate,tool!=='copilot');
+  assert.equal(format(result).includes('up to date'),tool!=='copilot');
+});
+
+test('a current official catalogue does not certify a detected local native plugin',async t=>{
+  const options=fixture(t); fs.mkdirSync(path.join(options.cwd,'.aidd'));
+  fs.writeFileSync(path.join(options.cwd,'.aidd','marketplaces.json'),JSON.stringify({marketplaces:[{name:'aidd-framework',version:'5.13.0',source:{...source,ref:'v5.13.0'}}]}));
+  fs.writeFileSync(path.join(options.cwd,'.aidd','manifest.json'),JSON.stringify({version:8,tools:{}}));
+  const runner=async (tool,args)=>{
+    if(tool==='codex') return args.includes('marketplace')
+      ? {marketplaces:[{name:'aidd-framework',root:options.root,marketplaceSource:{sourceType:'local',source:options.root}}]}
+      : {installed:[{pluginId:'aidd-context@aidd-framework',version:'2.10.0',enabled:true}]};
+    return [];
+  };
+  const result=await status({...options,allNative:true,runner,fetcher});
+  assert.equal(result.version,'5.13.0');
+  assert.equal(result.upToDate,false);
+  assert.doesNotMatch(format(result),/up to date/);
+  assert.equal(result.nativePluginsUnverified,true);
+});
+
 test('native Codex uses its own source even when an unrelated AIDD catalogue exists',async t=>{
   const options=fixture(t); fs.mkdirSync(path.join(options.cwd,'.aidd'));
   fs.writeFileSync(path.join(options.cwd,'.aidd','marketplaces.json'),JSON.stringify({marketplaces:[{name:'aidd-framework',version:'99.0.0',source:{kind:'github',repo:'unrelated/repo',ref:'v99.0.0'}}]}));

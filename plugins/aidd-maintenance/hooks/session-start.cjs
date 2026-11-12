@@ -99,7 +99,7 @@ async function status({ cwd = process.cwd(), env = process.env, home = os.homedi
   const nativeComparable = nativePlugins.flatMap(plugin => {
     const source = plugin.source; const ref = releaseTag(source.ref);
     if (source.kind !== 'github' || !ref || !semver(plugin.version)) {
-      if (source.kind !== 'local') result.nativePluginsUnverified = true;
+      if (source.kind !== 'local' || !local) result.nativePluginsUnverified = true;
       return [];
     }
     return [{...plugin,ref:source.ref,repo:source.repo,channel:ref.prerelease[0] || ''}];
@@ -156,6 +156,10 @@ async function status({ cwd = process.cwd(), env = process.env, home = os.homedi
     }
   }
   if (!result.latest && comparable) result.pluginsUnverified = true;
+  result.upToDate = Boolean(comparable && source.repo === OFFICIAL_REPO && version && result.latest &&
+    compare(releaseTag(result.latest.tag), version) === 0 && !result.marketplaceUpdate &&
+    !result.pluginUpdates.length && !result.pluginAhead.length &&
+    !result.pluginsUnverified && !result.globalPluginsUnverified && !result.nativePluginsUnverified);
   result.releases = [];
   for (const [key,promise] of states) {
     const state = await promise;
@@ -170,49 +174,65 @@ async function status({ cwd = process.cwd(), env = process.env, home = os.homedi
 }
 
 function format(result) {
-  let message = result.version ? `AI-Driven Development ON · marketplace v${result.version}${result.local ? ' (version enregistrée)' : ''}` : 'AI-Driven Development ON · version du marketplace inconnue';
-  if (result.latest) {
-    const checkedAt = new Date(result.checkedAt);
-    const checked = Number.isFinite(checkedAt.getTime()) ? `\nVérifiée le ${checkedAt.toISOString().slice(0,16).replace('T',' ')} UTC` : '';
-    const title = clean(result.latest.title);
-    const detail = title && title !== result.latest.tag ? ` · ${title}` : result.latest.titlePending ? ' · titre indisponible' : '';
-    message += `\n\nDernière release${result.local ? ' officielle' : ''} : ${result.latest.tag}${detail}${checked}`;
-  }
-  if (result.local && result.version && result.latest && compare(semver(result.latest.tag), semver(result.version)) > 0)
-    message += `\nVersion enregistrée : v${result.version} → ${result.latest.tag} (comparaison indicative)`;
-  if (result.local) message += '\nSource locale : le contenu peut différer de la release officielle';
-  if (result.marketplaceUpdate) message += `\nMarketplace partagé : v${result.version} → ${result.marketplaceUpdate} (source inchangée)`;
-  if (result.hasUpdate) {
-    message += `\n\nMise à jour disponible : v${result.version} → ${result.latest.tag}\nPour mettre à jour : skill aidd-maintenance · 01-update`;
-  }
+  const identity = result.version ? `AIDD v${result.version}` : 'AIDD · version du marketplace inconnue';
+  if (result.upToDate) return `.\\ ${identity} · ✓ up to date`;
+
   const updates = result.pluginUpdates || [];
+  const hasUpdate = result.hasUpdate || updates.length > 0;
+  const lines = [hasUpdate ? '.\\ AIDD · ↑ mise à jour disponible' : `.\\ ${identity}${result.local ? ' · source locale' : ''}`];
+  if (result.hasUpdate) lines.push(`   v${result.version} → ${result.latest.tag}`);
+  else if (hasUpdate && result.version) lines.push(`   ${identity}${result.local ? ' · source locale' : ''}`);
+  if (result.local && result.latest) {
+    lines.push(`   Comparaison indicative · dernière release : ${result.latest.tag}`);
+    if (result.version && compare(semver(result.latest.tag), semver(result.version)) > 0)
+      lines.push(`   Version enregistrée : v${result.version} → ${result.latest.tag} (comparaison indicative)`);
+  } else if (result.latest && result.version && !result.comparisonUnavailable &&
+      compare(semver(result.version), semver(result.latest.tag)) > 0) {
+    lines.push(`   Version supérieure à la dernière release (${result.latest.tag}) : mise à jour non proposée`);
+  }
+  if (result.hasUpdate && result.latest) {
+    const title = clean(result.latest.title);
+    if (title && title !== result.latest.tag) lines.push(`   ${title}`);
+    else if (result.latest.titlePending) lines.push('   Titre de release indisponible');
+  }
+  const pluginTitles = (result.releases || [])
+    .filter(release => updates.some(plugin => plugin.repo === release.repo && plugin.targetRef === release.tag))
+    .filter(release => !(result.hasUpdate && release.tag === result.latest.tag && clean(release.title) === clean(result.latest.title)))
+    .map(release => {
+      const title = clean(release.title);
+      return `${release.tag}${title && title !== release.tag ? ` · ${title}` : ''}`;
+    });
+  for (const title of [...new Set(pluginTitles)].sort()) lines.push(`   ${title}`);
+  if (result.marketplaceUpdate)
+    lines.push(`   Marketplace partagé : v${result.version} → ${result.marketplaceUpdate} (source inchangée)`);
+
   const entries = [...updates, ...(result.pluginAhead || []).map(plugin => ({...plugin, ahead:true}))];
   entries.sort((a, b) => {
     const left = `${a.scope}:${a.tool}:${a.name}`; const right = `${b.scope}:${b.tool}:${b.name}`;
     return left < right ? -1 : left > right ? 1 : 0;
   });
-  if (entries.length) message += entries.every(plugin=>plugin.manager !== 'native')
-    ? '\n\nPlugins enregistrés par le CLI AIDD :' : '\n\nPlugins installés :';
+  if (entries.length) lines.push('', entries.every(plugin=>plugin.manager !== 'native')
+    ? '   Plugins enregistrés par le CLI AIDD :' : '   Plugins installés :');
   for (const plugin of entries.slice(0, 5)) {
     const identity = `${plugin.tool} · ${plugin.name} · ${plugin.scope === 'user' ? 'global' : 'projet'}`;
     if (plugin.ahead) {
       const conflict = plugin.targetVersion
         ? `version enregistrée ${plugin.version} supérieure à ${plugin.targetVersion}`
         : `source ${plugin.ref} supérieure à ${plugin.targetRef}`;
-      message += `\n  • ${identity} · ${conflict} : mise à jour non proposée`;
+      lines.push(`   - ${identity} · ${conflict} : mise à jour non proposée`);
     } else {
       const targetVersion = plugin.targetVersion ? ` → ${plugin.targetVersion}` : ' → version cible inconnue';
-      message += `\n  • ${identity} · version enregistrée ${plugin.version}${targetVersion} · source ${plugin.ref} → ${plugin.targetRef}`;
+      lines.push(`   - ${identity} · ${plugin.version}${targetVersion} · source ${plugin.ref} → ${plugin.targetRef}`);
     }
   }
-  if (entries.length > 5) message += `\nEt ${entries.length - 5} autre${entries.length === 6 ? '' : 's'} installation${entries.length === 6 ? '' : 's'} à vérifier`;
-  if (updates.length && !result.hasUpdate) message += '\nPour vérifier : skill aidd-maintenance · 01-update';
-  if (result.comparisonUnavailable) message += `\n${result.comparisonUnavailable}`;
-  if (result.pluginsUnverified) message += '\nÉtat de certains plugins non vérifié';
-  if (result.globalPluginsUnverified) message += '\nÉtat des plugins globaux non vérifié';
-  if (result.nativePluginsUnverified) message += '\nÉtat de certains plugins natifs non vérifié';
-  if (result.unavailable) message += '\nDernière release indisponible';
-  return message;
+  if (entries.length > 5) lines.push(`   Et ${entries.length - 5} autre${entries.length === 6 ? '' : 's'} installation${entries.length === 6 ? '' : 's'} à vérifier`);
+  if (result.comparisonUnavailable) lines.push(`   ${result.comparisonUnavailable}`);
+  if (result.pluginsUnverified) lines.push('   État de certains plugins non vérifié');
+  if (result.globalPluginsUnverified) lines.push('   État des plugins globaux non vérifié');
+  if (result.nativePluginsUnverified) lines.push('   État de certains plugins natifs non vérifié');
+  if (result.unavailable) lines.push('   Dernière release indisponible');
+  if (hasUpdate) lines.push('', '   Diff et mise à jour : skill aidd-maintenance · 01-update');
+  return lines.join('\n');
 }
 
 function hookOutput(message, input) {
@@ -243,7 +263,7 @@ if (require.main === module) {
     root.startsWith(`${process.env.CODEX_HOME || path.join(os.homedir(),'.codex')}${path.sep}`) ? 'codex' :
     root.startsWith(`${process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(),'.claude')}${path.sep}`) ? 'claude' : undefined);
   status({tool,cwd:typeof input.cwd === 'string' ? input.cwd : process.cwd()}).then(result => write(format(result)))
-    .catch(() => write('AI-Driven Development ON · version du marketplace inconnue'));
+    .catch(() => write('.\\ AIDD · version du marketplace inconnue'));
   }
 }
 
