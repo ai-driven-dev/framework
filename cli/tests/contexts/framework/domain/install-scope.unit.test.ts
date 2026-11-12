@@ -1,15 +1,11 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   assertToolSupportsScope,
   getToolSupportedScope,
   isInstallScope,
   parseInstallScope,
 } from "../../../../src/contexts/framework/domain/install-scope.js";
-import { pluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
-import { getToolConfig, registerTool } from "../../../../src/contexts/tools/domain/registry.js";
 import { InvalidPluginScopeError } from "../../../../src/kernel/errors.js";
-import type { AiToolId } from "../../../../src/kernel/tool.js";
-import { stubAiTool } from "../../../helpers/ports/stub-ai-tool.js";
 
 describe("install-scope value object", () => {
   describe("isInstallScope", () => {
@@ -41,62 +37,28 @@ describe("install-scope value object", () => {
   });
 
   describe("getToolSupportedScope", () => {
-    it("returns user for cursor", () => {
-      expect(getToolSupportedScope("cursor")).toBe("user");
+    it("answers user for a tool that requires the user scope", () => {
+      expect(getToolSupportedScope(true)).toBe("user");
     });
 
-    it("returns project for claude/codex/copilot/opencode", () => {
-      expect(getToolSupportedScope("claude")).toBe("project");
-      expect(getToolSupportedScope("codex")).toBe("project");
-      expect(getToolSupportedScope("copilot")).toBe("project");
-      expect(getToolSupportedScope("opencode")).toBe("project");
-    });
-
-    it("answers project for a tool that is not an AI tool", () => {
-      expect(getToolSupportedScope("vscode" as AiToolId)).toBe("project");
-    });
-
-    describe("an AI tool declaring no plugins capability", () => {
-      const original = getToolConfig("opencode");
-
-      afterEach(() => {
-        registerTool(original);
-      });
-
-      it("answers project", () => {
-        registerTool(stubAiTool("opencode", {}));
-
-        expect(getToolSupportedScope("opencode")).toBe("project");
-      });
-
-      it("answers project when the capability names no install scope", () => {
-        registerTool(
-          stubAiTool("opencode", {
-            plugins: pluginsCapability({
-              mode: "native",
-              pluginRootToken: "$X_PLUGIN_ROOT",
-              acceptsHooks: true,
-              pluginsDir: ".x/plugins/",
-              pluginManifestRelativePath: "plugin.json",
-            }),
-          })
-        );
-
-        expect(getToolSupportedScope("opencode")).toBe("project");
-      });
+    it("answers project for a tool that does not", () => {
+      expect(getToolSupportedScope(false)).toBe("project");
     });
   });
 
   describe("assertToolSupportsScope", () => {
-    it("does not throw when requested scope matches tool's supported scope", () => {
-      expect(() => assertToolSupportsScope("cursor", "user")).not.toThrow();
-      expect(() => assertToolSupportsScope("claude", "project")).not.toThrow();
+    it("does not throw when the requested scope is the supported one", () => {
+      expect(() => assertToolSupportsScope("cursor", "user", "user")).not.toThrow();
+      expect(() => assertToolSupportsScope("claude", "project", "project")).not.toThrow();
     });
 
     it("throws InvalidPluginScopeError on mismatch", () => {
-      expect(() => assertToolSupportsScope("cursor", "project")).toThrow(InvalidPluginScopeError);
-      expect(() => assertToolSupportsScope("claude", "user")).toThrow(InvalidPluginScopeError);
-      expect(() => assertToolSupportsScope("copilot", "user")).toThrow(InvalidPluginScopeError);
+      expect(() => assertToolSupportsScope("cursor", "project", "user")).toThrow(
+        InvalidPluginScopeError
+      );
+      expect(() => assertToolSupportsScope("claude", "user", "project")).toThrow(
+        InvalidPluginScopeError
+      );
     });
   });
 });

@@ -203,6 +203,7 @@ function remoteFlow(
   opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[]; scope: "project" | "user" }> = {}
 ): SetupFlow {
   return new SetupFlow({
+    supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
     source: MarketplaceSourceMode.remote(),
     aiTools: opts.aiTools ?? [],
@@ -217,6 +218,7 @@ describe("setup validates before any side effect", () => {
   it("non-interactive with no --source rejects without writing a manifest or .gitignore", async () => {
     const { useCase, deps } = await buildUseCase();
     const flow = new SetupFlow({
+      supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       aiTools: [],
       ideTools: [],
@@ -319,6 +321,7 @@ describe("setup without TTY", () => {
   describe("plugins named on the command line", () => {
     function namedFlow(registerDefaultMarketplace: boolean): SetupFlow {
       return new SetupFlow({
+        supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
         source: MarketplaceSourceMode.remote(),
         aiTools: ["claude" as ToolId],
@@ -367,6 +370,7 @@ describe("setup without TTY", () => {
       const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
       await useCase.execute(
         new SetupFlow({
+          supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: MarketplaceSourceMode.remote(),
           aiTools: ["claude" as ToolId],
@@ -384,6 +388,7 @@ describe("setup without TTY", () => {
       const { useCase } = await buildUseCase();
       const result = await useCase.execute(
         new SetupFlow({
+          supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: MarketplaceSourceMode.remote(),
           aiTools: ["claude" as ToolId],
@@ -419,6 +424,7 @@ describe("setup without TTY", () => {
 
       await useCase.execute(
         new SetupFlow({
+          supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: MarketplaceSourceMode.remote(),
           aiTools: ["claude" as ToolId],
@@ -506,6 +512,7 @@ describe("setup interactive tool selection", () => {
     opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}
   ): SetupFlow {
     return new SetupFlow({
+      supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),
       aiTools: opts.aiTools ?? [],

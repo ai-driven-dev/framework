@@ -9,11 +9,16 @@ import {
 import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
 import type { PluginPick } from "../../../../presentation/prompts/plugin-pick-use-case.js";
 import type { MarketplaceTrustStore } from "../../../distribution/domain/ports/marketplace-trust-store.js";
-import { assertToolSupportsScope, type InstallScope } from "../../domain/install-scope.js";
+import {
+  assertToolSupportsScope,
+  getToolSupportedScope,
+  type InstallScope,
+} from "../../domain/install-scope.js";
 import { parsePluginSpec } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginAdd } from "./plugin-add-use-case.js";
 import type { PluginInstallFromMarketplace } from "./plugin-install-from-marketplace-use-case.js";
+import { requiresUserScope } from "./plugin-target-resolution.js";
 
 export interface PluginInstallOptions {
   pluginArg: string | undefined;
@@ -49,7 +54,8 @@ export class PluginInstallUseCase {
 
   private async validateScope(toolIds: AiToolId[] | "all", scope: InstallScope): Promise<void> {
     const targets = await this.resolveTargetTools(toolIds);
-    for (const toolId of targets) assertToolSupportsScope(toolId, scope);
+    for (const toolId of targets)
+      assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope(toolId)));
   }
 
   private async resolveTargetTools(toolIds: AiToolId[] | "all"): Promise<readonly AiToolId[]> {

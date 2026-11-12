@@ -9,7 +9,6 @@ import {
 import type { MarketplaceScope } from "../../../kernel/scope.js";
 import { type ToolId, VALID_TOOL_IDS } from "../../../kernel/tool.js";
 import type { MarketplaceSourceMode } from "../../distribution/domain/marketplace-source-mode.js";
-import { supportsUserScopeActivation } from "../../tools/domain/registry.js";
 
 export type PluginInstallMode = "interactive" | "all" | "recommended" | "named" | "none";
 
@@ -19,6 +18,8 @@ export type SetupScope = MarketplaceScope;
 
 export interface SetupFlowParams {
   projectRoot: string;
+  /** Whether `--scope user` has anywhere to point this tool, as the tool answers it. */
+  supportsUserScopeActivation: (toolId: ToolId) => boolean;
   source?: MarketplaceSourceMode;
   aiTools?: readonly ToolId[];
   ideTools?: readonly ToolId[];
@@ -49,6 +50,7 @@ export class SetupFlow {
     this.validateToolIds(params.aiTools ?? [], params.ideTools ?? []);
     this.validatePluginMode(params.pluginMode ?? "none", params.pluginNames ?? []);
     this.validateScope(
+      params.supportsUserScopeActivation,
       params.scope ?? "project",
       params.aiTools ?? [],
       params.ideTools ?? [],
@@ -81,6 +83,7 @@ export class SetupFlow {
   // all, and an interactive pick has no project to offer it in. Each is refused rather than
   // silently dropped; named, recommended and all plugins install machine-wide.
   private validateScope(
+    supportsUserScopeActivation: (toolId: ToolId) => boolean,
     scope: SetupScope,
     aiTools: readonly ToolId[],
     ideTools: readonly ToolId[],

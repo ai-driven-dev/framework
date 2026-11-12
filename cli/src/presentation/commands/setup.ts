@@ -180,6 +180,12 @@ export function registerSetupCommand(program: Command, catalog: ToolCatalog): vo
       try {
         const flow = new SetupFlow({
           projectRoot,
+          supportsUserScopeActivation: (id) => {
+            const profile = catalog.profile(id);
+            return (
+              profile.kind === "ai" && profile.plugins()?.supportsUserScopeActivation() === true
+            );
+          },
           source,
           aiTools: toolIds.aiTools,
           ideTools: toolIds.ideTools,

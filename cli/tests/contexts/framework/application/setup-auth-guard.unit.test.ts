@@ -132,6 +132,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), false);
 
     const flow = new SetupFlow({
+      supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),
       interactive: false,
@@ -144,6 +145,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), true);
 
     const flow = new SetupFlow({
+      supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),
       interactive: false,
@@ -156,6 +158,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider("ghp_valid-token"));
 
     const flow = new SetupFlow({
+      supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),
       interactive: false,
@@ -168,6 +171,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null));
 
     const flow = new SetupFlow({
+      supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.local("/some/path"),
       interactive: false,

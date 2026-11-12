@@ -1,3 +1,4 @@
+import { machineLocalFilesOf } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { aiddGitignoreEntries } from "../../domain/manifest-gitignore-entries.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -19,6 +20,9 @@ export class PostInstallPipelineUseCase {
     await this.manifestRepo.save(manifest);
     // One call for everything this CLI's own writes require ignored: the plugin cache and each
     // installed tool's machine-local file.
-    await this.gitignoreUseCase.execute(projectRoot, aiddGitignoreEntries(manifest));
+    await this.gitignoreUseCase.execute(
+      projectRoot,
+      aiddGitignoreEntries(manifest, machineLocalFilesOf)
+    );
   }
 }

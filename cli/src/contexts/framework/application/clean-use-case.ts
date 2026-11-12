@@ -204,7 +204,10 @@ export class CleanUseCase {
     });
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
-    await this.gitignoreUseCase.remove(options.projectRoot, aiddGitignoreEntries(manifest));
+    await this.gitignoreUseCase.remove(
+      options.projectRoot,
+      aiddGitignoreEntries(manifest, machineLocalFilesOf)
+    );
     // One project-level decrement, only after the local projection has been cleaned successfully.
     await this.dropSharedSourceReference(sharedSourceOutcome?.resolvedRoot);
     const nativeRefs = new Map<ToolId, readonly string[]>();

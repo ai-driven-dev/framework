@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { registerTool } from "../../../../src/contexts/tools/domain/registry.js";
 import {
   InvalidPluginModeConfigError,
   InvalidSetupToolIdError,
@@ -10,12 +8,15 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../../src/kernel/errors.js";
-import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
 
 const ROOT = "/project";
 
 function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]> = {}): SetupFlow {
-  return new SetupFlow({ projectRoot: ROOT, ...overrides });
+  return new SetupFlow({
+    projectRoot: ROOT,
+    supportsUserScopeActivation: () => true,
+    ...overrides,
+  });
 }
 
 describe("SetupFlow", () => {
@@ -117,31 +118,18 @@ describe("SetupFlow", () => {
       expect(() => makeFlow({ scope: "user" })).toThrow(UserScopeNoToolsError);
     });
 
-    it("refuses an AI tool with no user-scope activation at --scope user", () => {
-      registerTool(withSections(kilo, { plugins: null }));
-      try {
-        expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).toThrow(
-          UserScopeUnsupportedAiToolsError
-        );
-      } finally {
-        registerTool(kilo);
-      }
+    it("refuses an AI tool the answer says has no user-scope activation at --scope user", () => {
+      expect(() =>
+        makeFlow({
+          scope: "user",
+          aiTools: ["kilo", "claude"],
+          supportsUserScopeActivation: (id) => id !== "kilo",
+        })
+      ).toThrow(UserScopeUnsupportedAiToolsError);
     });
 
-    it("accepts an AI tool that copies global files at --scope user (kilo)", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).not.toThrow();
-    });
-
-    it("accepts an AI tool that copies global files at --scope user (opencode)", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["opencode"] })).not.toThrow();
-    });
-
-    it("accepts an AI tool that installs to a user-scope directory at --scope user (cursor)", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["cursor"] })).not.toThrow();
-    });
-
-    it("accepts a tool driving native activation at --scope user (claude)", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["claude"] })).not.toThrow();
+    it("accepts AI tools the answer says have a user-scope activation", () => {
+      expect(() => makeFlow({ scope: "user", aiTools: ["kilo", "claude"] })).not.toThrow();
     });
 
     it("refuses an interactive plugin pick at --scope user — there is no project to ask in", () => {

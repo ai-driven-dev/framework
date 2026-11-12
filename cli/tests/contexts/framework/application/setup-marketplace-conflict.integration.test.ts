@@ -123,6 +123,7 @@ async function buildUseCaseWithConflict() {
 
 function remoteFlow(aiTools: ToolId[]): SetupFlow {
   return new SetupFlow({
+    supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
     source: MarketplaceSourceMode.remote(),
     aiTools,

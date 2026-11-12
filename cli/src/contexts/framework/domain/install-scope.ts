@@ -1,6 +1,5 @@
 import { InvalidInstallScopeError, InvalidPluginScopeError } from "../../../kernel/errors.js";
 import type { AiToolId } from "../../../kernel/tool.js";
-import { resolveNativePlugins } from "../../tools/domain/registry.js";
 
 export type InstallScope = "project" | "user";
 
@@ -18,12 +17,15 @@ export function parseInstallScope(value: string | undefined): InstallScope | und
   return value;
 }
 
-export function getToolSupportedScope(toolId: AiToolId): InstallScope {
-  return resolveNativePlugins(toolId)?.requiresUserScope() === true ? "user" : "project";
+export function getToolSupportedScope(requiresUserScope: boolean): InstallScope {
+  return requiresUserScope ? "user" : "project";
 }
 
-export function assertToolSupportsScope(toolId: AiToolId, requested: InstallScope): void {
-  const supported = getToolSupportedScope(toolId);
+export function assertToolSupportsScope(
+  toolId: AiToolId,
+  requested: InstallScope,
+  supported: InstallScope
+): void {
   if (supported !== requested) {
     throw new InvalidPluginScopeError(toolId, requested, supported);
   }
