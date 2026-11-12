@@ -58,6 +58,39 @@ describe("aidd-ui showcase", () => {
       assert.ok(!groupOf(index, "pages").includes("search-flow"));
     });
 
+    it("labels the wireframe group Wireframes, not Templates, in both languages", () => {
+      for (const lang of ["en", "fr"]) {
+        const group = groupOf(pagesOf({ lang })["index.html"], "templates");
+        assert.match(group, /<h2>Wireframes<\/h2>/);
+        assert.doesNotMatch(group, /Templates|Modèles/);
+      }
+    });
+
+    it("draws a wireframe state as labelled grey boxes, and no other record's", () => {
+      const pages = pagesOf();
+      const frameOf = (html) => html.match(/<iframe [^>]*srcdoc="([^"]*)"/)[1];
+      assert.match(frameOf(pages["search-flow.html"]), /\[data-zone\]::before \{ content: attr\(data-zone\)/);
+      assert.doesNotMatch(frameOf(pages["home.html"]), /data-zone/);
+      assert.doesNotMatch(fs.readFileSync(path.join(tmp, `${UI}/wireframes/search-flow.html`), "utf8"), /<style/);
+    });
+
+    it("draws a journey as step cards joined by arrows, the action on the arrow, each card linking its page", () => {
+      const journey = pagesOf()["onboarding.html"].match(/<section class="journey"[\s\S]*?<\/section>/)[0];
+      assert.deepEqual([...journey.matchAll(/<a class="step" href="([^"]+)\.html">/g)].map((match) => match[1]), ["home", "home", "search-flow"]);
+      assert.deepEqual([...journey.matchAll(/<span class="arrow">([^<]*)</g)].map((match) => match[1]), ["types a query", "opens a result"]);
+    });
+
+    it("draws a journey step that names no record as a card without a link", () => {
+      edit(tmp, `${UI}/journeys/onboarding.md`, "| search-flow | narrows", "| ghost | narrows");
+      const journey = pagesOf()["onboarding.html"].match(/<section class="journey"[\s\S]*?<\/section>/)[0];
+      assert.match(journey, /<span class="step">ghost<\/span>/);
+      assert.doesNotMatch(journey, /ghost\.html/);
+    });
+
+    it("draws no journey chain on a record that is not a journey", () => {
+      assert.doesNotMatch(pagesOf()["home.html"], /class="journey"/);
+    });
+
     it("orders the navigation brand and system, components by level, journeys, templates, pages", () => {
       const index = pagesOf()["index.html"];
       const order = [...index.matchAll(/<section data-group="([^"]+)">/g)].map((match) => match[1]);
@@ -349,6 +382,16 @@ describe("aidd-ui showcase", () => {
       assert.ok(!pages["home.html"].includes("button problem"));
       assert.ok(pages["button.html"].includes("button problem") && !pages["button.html"].includes("home record problem"));
       assert.match(pages["home.html"], /<li data-rule="V1">/);
+    });
+
+    it("leaves the expected-component check out of a page, the engine still reports it", () => {
+      const problems = [
+        { rule: "R18", severity: "warning", file: `${UI}/wireframes/search-flow.md`, message: "expected component", fix: "f" },
+        { rule: "V13", severity: "warning", file: `${UI}/wireframes/search-flow.md`, message: "same markup", fix: "f" },
+      ];
+      const page = pagesOf({ problems })["search-flow.html"];
+      assert.doesNotMatch(page, /data-rule="R18"/);
+      assert.match(page, /data-rule="V13"/);
     });
 
     it("holds the review only on a record with states and a render", () => {

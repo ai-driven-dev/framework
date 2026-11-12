@@ -2,8 +2,8 @@
 // the project, the engine's problems, the tokens stylesheet and the captures already read. Pure:
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
-const { list, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS, SYSTEM_ID } = require("./model.cjs");
+const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
+const { placed, fm, STEPS_SECTION, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS, SYSTEM_ID } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
@@ -18,6 +18,7 @@ const LEVELS = ["asset", ...COMPONENT_KINDS];
 const BASE_CONTEXT = ""; // the key of `resolvedValues` for the base
 const UNTYPED = "css"; // the section of the tokens that hold raw CSS and no `$type`
 const SAMPLE = "Aa";
+const EXPECTED_COMPONENT = "R18";
 const GROUPS = ["system", "components", "journeys", "templates", "pages"];
 
 /** The words of the page chrome, one table per language: the same keys in each. */
@@ -30,7 +31,7 @@ const LABELS = {
     system: "Brand and system",
     components: "Components",
     journeys: "Journeys",
-    templates: "Templates",
+    templates: "Wireframes",
     pages: "Pages",
     asset: "Assets",
     atom: "Atoms",
@@ -67,7 +68,7 @@ const LABELS = {
     system: "Marque et système",
     components: "Composants",
     journeys: "Parcours",
-    templates: "Modèles",
+    templates: "Wireframes",
     pages: "Pages",
     asset: "Ressources",
     atom: "Atomes",
@@ -141,6 +142,10 @@ nav a[aria-current="page"] { font-weight: 600; color: var(--text); }
 .capture { flex: 1 1 24rem; margin: 0; min-width: 0; }
 .capture img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
 .capture.missing { display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line); border-radius: 6px; color: var(--muted); padding: 12px; }
+.journey { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.journey .step { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; color: var(--accent-text); text-decoration: none; }
+.journey .arrow { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.journey .arrow::after { content: "\\2192"; font-size: 18px; }
 .choose { display: flex; gap: 8px; }
 .verdict[aria-pressed="true"] { background: var(--sel); border-color: var(--sel-line); }
 .outdated, .said, .count { margin: 0; color: var(--muted); }
@@ -303,6 +308,15 @@ function navigationOf(records, labels, current) {
   return `<nav aria-label="${escaped(labels.list)}"><p><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p>${sections.join("")}</nav>`;
 }
 
+/** A journey as a chain: a card for each step of its Steps table, linking its page when a record bears the name, an arrow after each carrying the action done there. */
+function journeyOf(record, ids) {
+  const steps = table(record.sections[STEPS_SECTION]);
+  if (!steps.length) return "";
+  const card = (screen) => (ids.has(screen) ? `<a class="step" href="${escaped(screen)}.html">${escaped(screen)}</a>` : `<span class="step">${escaped(screen)}</span>`);
+  const chain = steps.map((row, at) => card(row.Screen) + (at < steps.length - 1 ? `<span class="arrow">${escaped(row.Action ?? "")}</span>` : ""));
+  return `<section class="journey">${chain.join("")}</section>`;
+}
+
 const chipOf = (key, value) => `<span class="chip" data-key="${key}"><span class="key">${key}</span>${escaped(String(value))}</span>`;
 
 /** The chips under the title of a record: its id, status, kind, version, route and code links. */
@@ -320,17 +334,24 @@ function chipsOf(record) {
 
 const linksOf = (kind, label, ids) => (ids.length ? `<section class="links" data-links="${kind}"><h2>${label}</h2><ul>${ids.map((id) => `<li>${link(id, false)}</li>`).join("")}</ul></section>` : "");
 
-/** The engine checks about a record or its render. */
+/** The engine checks about a record or its render. A component the design system does not hold yet (R18) is left to the final reply. */
 function checksOf(problems, record, labels) {
-  const own = problems.filter((each) => each.file === record.file || each.file === renderOf(record));
+  const own = problems.filter((each) => each.rule !== EXPECTED_COMPONENT && (each.file === record.file || each.file === renderOf(record)));
   if (!own.length) return "";
   const items = own.map((each) => `<li data-rule="${escaped(each.rule)}"><b>${escaped(each.rule)}</b> ${escaped(each.message)} <span class="fix">${escaped(each.fix)}</span></li>`);
   return `<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
 }
 
+/** How a wireframe looks in the showcase: each zone a bordered box named by a small label, stacked, in the colours of the reader's scheme. The record stays unstyled. */
+const GREY_BOX = `
+:root { color-scheme: light dark; }
+body { margin: 0; padding: 12px; font: 13px system-ui, sans-serif; color: CanvasText; background: Canvas; }
+[data-zone] { position: relative; box-sizing: border-box; min-height: 56px; margin: 0 0 8px; padding: 22px 10px 10px; border: 1px solid GrayText; border-radius: 4px; background: color-mix(in srgb, GrayText 8%, Canvas); }
+[data-zone]::before { content: attr(data-zone); position: absolute; top: 4px; left: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: GrayText; }`;
+
 /** The document of one state of a render: the tokens inline, every other state hidden. A render without `</head>` keeps every state visible in each frame: a known limit. */
-function stateDocument(render, tokens, state) {
-  const hide = `<style>[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }</style>`;
+function stateDocument(render, tokens, state, sketch) {
+  const hide = `<style>[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }${sketch ? GREY_BOX : ""}</style>`;
   const doc = inlined(render, tokens);
   return doc.replace(/<\/head>/i, () => `${hide}</head>`);
 }
@@ -355,7 +376,7 @@ function stateOf({ record, state, verdict, render, tokens, captures, labels, pla
     `<h3>${escaped(state)}</h3>`,
     verdict.outdated === null ? "" : `<p class="outdated" data-version="${escaped(verdict.outdated)}">${escaped(filled(labels.outdated, { version: verdict.outdated }))}</p>`,
     verdict.comment ? `<p class="said">${escaped(verdict.comment)}</p>` : "",
-    `<div class="pair"><div class="render"><iframe data-combo="a"${platform} title="${escaped(`${id} ${state}`)}" srcdoc="${escaped(stateDocument(render, tokens, state))}"></iframe></div>${capture}</div>`,
+    `<div class="pair"><div class="render"><iframe data-combo="a"${platform} title="${escaped(`${id} ${state}`)}" srcdoc="${escaped(stateDocument(render, tokens, state, fm(record).kind === "wireframe"))}"></iframe></div>${capture}</div>`,
     `<div class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></div>`,
     `<textarea class="comment" rows="2" hidden placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}"></textarea>`,
     "</article>",
@@ -485,6 +506,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
       `<div class="chips">${chipsOf(record)}</div>`,
       linksOf("uses", labels.uses, uses),
       linksOf("used-by", labels.usedBy, usedBy),
+      fm(record).kind === "journey" ? journeyOf(record, ids) : "",
       id === SYSTEM_ID ? galleryOf({ project, system, tokens, labels, language }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
       checksOf(problems, record, labels),
