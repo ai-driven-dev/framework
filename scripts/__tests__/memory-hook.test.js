@@ -1,6 +1,5 @@
 const assert = require("node:assert/strict");
 const { spawnSync } = require("node:child_process");
-const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -126,10 +125,10 @@ function run(host, payload, { cwd = os.tmpdir(), preload, tmp = tempDir("memory-
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-/** The snapshots live in the repository's own git folder, never in the system temp folder. */
-const snapshotDir = (root) => path.join(root, ".git", "aidd-context");
-const snapshotName = (root, session = SESSION) => `${crypto.createHash("sha1").update(fs.realpathSync(root)).digest("hex")}-${session}.json`;
-const snapshotPath = (root, session) => path.join(snapshotDir(root), snapshotName(root, session));
+/** The snapshots live in the project's AIDD cache, never in the system temp folder. */
+const snapshotDir = (root) => path.join(root, ".aidd", "cache", "aidd-context");
+const snapshotName = (session = SESSION) => `${session}.json`;
+const snapshotPath = (root, session) => path.join(snapshotDir(root), snapshotName(session));
 const readSnapshot = (root) => JSON.parse(fs.readFileSync(snapshotPath(root), "utf8"));
 
 function gitInit(root) {
@@ -158,7 +157,7 @@ const SHOW_THEM = "Show these lines to the person as they are; restore one only 
 
 // ---- SessionStart: the snapshot -------------------------------------------------------------
 
-test("a session start snapshots every markdown file of the bank, nested ones included, to the git folder", () => {
+test("a session start snapshots every markdown file of the bank, nested ones included, to the project's AIDD cache", () => {
   const files = { [VCS]: "# VCS\n\n- one\n", [`${MEMORY}/internal/notes.md`]: "# N\n\n- deep\n", [`${MEMORY}/external/x.txt`]: "not markdown\n" };
   const { root, tmp } = started(files);
   const expected = Object.fromEntries(
@@ -167,7 +166,7 @@ test("a session start snapshots every markdown file of the bank, nested ones inc
       .sort(([a], [b]) => a.localeCompare(b))
   );
   assert.deepEqual(readSnapshot(root), expected);
-  assert.deepEqual(fs.readdirSync(snapshotDir(root)), [snapshotName(root)]);
+  assert.deepEqual(fs.readdirSync(snapshotDir(root)), [snapshotName()]);
 });
 
 test("a session start with no session id writes no snapshot", () => {
@@ -199,7 +198,7 @@ test("a setup after a session start with no bank gets its lint and its sync at S
 test("a session start deletes snapshots older than 7 days and keeps the others", () => {
   const root = project();
   const tmp = tempDir("memory-hook-state-");
-  fs.mkdirSync(snapshotDir(root));
+  fs.mkdirSync(snapshotDir(root), { recursive: true });
   const stale = path.join(snapshotDir(root), "stale-session.json");
   const recent = path.join(snapshotDir(root), "recent-session.json");
   fs.writeFileSync(stale, "{}");
@@ -209,7 +208,7 @@ test("a session start deletes snapshots older than 7 days and keeps the others",
   fs.utimesSync(stale, old, old);
   fs.utimesSync(recent, near, near);
   run("claude", sessionStartPayload("claude", root), { tmp });
-  assert.deepEqual(fs.readdirSync(snapshotDir(root)).sort(), ["recent-session.json", snapshotName(root)].sort());
+  assert.deepEqual(fs.readdirSync(snapshotDir(root)).sort(), ["recent-session.json", snapshotName()].sort());
 });
 
 test("a session start writes nothing to the system temp folder", () => {
@@ -217,38 +216,37 @@ test("a session start writes nothing to the system temp folder", () => {
   assert.deepEqual(fs.readdirSync(tmp), []);
 });
 
-test("a bank nested in a repository keeps its snapshot in that repository's git folder", () => {
+test("a bank nested in a repository keeps its snapshot in its own project's cache", () => {
   const outer = gitInit(tempDir("memory-repo-"));
   const root = path.join(outer, "cli");
   write(outer, `cli/${VCS}`, BANK);
   const tmp = tempDir("memory-hook-state-");
   run("claude", sessionStartPayload("claude", root), { tmp });
-  assert.deepEqual(fs.readdirSync(snapshotDir(outer)), [snapshotName(root)]);
+  assert.deepEqual(fs.readdirSync(snapshotDir(root)), [snapshotName()]);
   write(root, VCS, "# VCS\n");
   assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(3)}\\n`, "u"));
 });
 
-test("a repository whose .git is a file keeps the snapshot in the git folder it points to", () => {
-  const root = project({ [VCS]: BANK });
-  const elsewhere = path.join(tempDir("memory-gitdir-"), "repo.git");
-  fs.renameSync(path.join(root, ".git"), elsewhere);
-  fs.writeFileSync(path.join(root, ".git"), `gitdir: ${path.relative(root, elsewhere)}\n`);
-  const tmp = tempDir("memory-hook-state-");
-  run("claude", sessionStartPayload("claude", root), { tmp });
-  assert.deepEqual(fs.readdirSync(path.join(elsewhere, "aidd-context")), [snapshotName(root)]);
-  write(root, VCS, "# VCS\n");
-  assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(3)}\\n`, "u"));
-});
-
-test("outside a git repository no snapshot is written and Stop names no lost line", () => {
+test("outside a git repository the snapshot is kept and Stop names the lost line", () => {
   const root = tempDir("memory-project-");
   write(root, VCS, BANK);
   const tmp = tempDir("memory-hook-state-");
   assert.deepEqual(run("claude", sessionStartPayload("claude", root), { tmp }), { status: 0, stdout: "", stderr: "" });
   write(root, VCS, "# VCS\n");
-  assert.equal(stopped(root, tmp), null);
+  assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(3)}\\n`, "u"));
   assert.deepEqual(fs.readdirSync(tmp), []);
-  assert.equal(fs.existsSync(path.join(root, ".git")), false);
+});
+
+test("the cache ignores itself, so git never lists a snapshot, and a team's own ignore file is kept", () => {
+  const { root } = started({ [VCS]: BANK });
+  const untracked = spawnSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root, env: ENV, encoding: "utf8" }).stdout;
+  assert.doesNotMatch(untracked, /\.aidd/u);
+  const ignore = path.join(root, ".aidd", "cache", ".gitignore");
+  fs.writeFileSync(ignore, "*\n# team\n");
+  fs.rmSync(snapshotPath(root));
+  run("claude", sessionStartPayload("claude", root), { tmp: tempDir("memory-hook-state-") });
+  assert.ok(fs.existsSync(snapshotPath(root)));
+  assert.equal(fs.readFileSync(ignore, "utf8"), "*\n# team\n");
 });
 
 for (const host of HOSTS) {

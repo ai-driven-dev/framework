@@ -6,7 +6,6 @@
  * through `lib/host.cjs` and never blocks a write: the report reaches the model. Node built-ins only.
  */
 
-const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { RULES, ERROR } = require("./lib/memory-rules.cjs");
@@ -19,7 +18,7 @@ const MEMORY_DIR = `${DOCS_DIR}/${MEMORY_SUBDIR}`;
 const ON_DEMAND_DIRS = ["internal", "external"];
 const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
 
-const SNAPSHOT_DIR = "aidd-context";
+const SNAPSHOT_DIR = ".aidd/cache/aidd-context";
 const SNAPSHOT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const EXIT_OK = 0;
@@ -65,7 +64,6 @@ function unlessMissing(read, fallback) {
 
 const entriesOf = (dir) => unlessMissing(() => fs.readdirSync(dir, { withFileTypes: true }), []);
 const readTextOrNull = (file) => unlessMissing(() => fs.readFileSync(file, "utf8"), null);
-const isDirectory = (file) => unlessMissing(() => fs.statSync(file).isDirectory(), false);
 
 function partsOf(file) {
   return file.slice(MEMORY_DIR.length + 1).split("/");
@@ -144,27 +142,16 @@ function bankTexts(root) {
   return Object.fromEntries(bankFiles(root).filter((file) => file.endsWith(".md")).map((file) => [file, readTextOrNull(path.join(root, file)) ?? ""]));
 }
 
-/** The repository's git folder, searched up from `root`: `.git` itself, or where a `.git` file points. Null outside git. */
-function gitDir(root) {
-  for (let dir = root; ; dir = path.dirname(dir)) {
-    const dotGit = path.join(dir, ".git");
-    if (isDirectory(dotGit)) return dotGit;
-    const pointer = /^gitdir:\s*(.+?)\s*$/mu.exec(readTextOrNull(dotGit) ?? "");
-    if (pointer !== null) return path.resolve(dir, pointer[1]);
-    if (path.dirname(dir) === dir) return null;
-  }
-}
-
-/** The session's snapshot, private to the repository and never committed; null outside git. */
+/** The session's snapshot, in the project's AIDD cache, which git ignores. */
 function snapshotFile(root, sessionId) {
-  const dir = gitDir(root);
-  if (dir === null) return null;
-  const project = crypto.createHash("sha1").update(root).digest("hex");
-  return path.join(dir, SNAPSHOT_DIR, `${project}-${sessionId.replace(/[^\w.-]/gu, "_")}.json`);
+  return path.join(root, SNAPSHOT_DIR, `${sessionId.replace(/[^\w.-]/gu, "_")}.json`);
 }
 
+/** A cache made without the CLI, which ignores it, ignores itself; a team's own ignore file is kept. */
 function writeSnapshot(file, texts) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
+  const ignore = path.join(path.dirname(file), "..", ".gitignore");
+  if (readTextOrNull(ignore) === null) fs.writeFileSync(ignore, "*\n", "utf8");
   fs.writeFileSync(file, JSON.stringify(texts), "utf8");
 }
 
@@ -218,7 +205,6 @@ function atSessionStart(event) {
   if (event.sessionId === null) return;
   const root = realish(path.resolve(event.cwd));
   const file = snapshotFile(root, event.sessionId);
-  if (file === null) return;
   dropStaleSnapshots(path.dirname(file));
   // A resume or a compact starts the same session again: its snapshot stays, so no loss is skipped.
   if (readSnapshot(file) === null) writeSnapshot(file, bankTexts(root));
@@ -228,7 +214,6 @@ function atTurnEnd(host, event) {
   const root = projectRoot(event.cwd);
   if (event.stopActive || root === null || event.sessionId === null) return;
   const file = snapshotFile(root, event.sessionId);
-  if (file === null) return;
   const before = readSnapshot(file);
   const now = bankTexts(root);
   const notSynced = sync(root);
