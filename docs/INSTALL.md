@@ -3,7 +3,7 @@
 ## Requirements
 
 - [Node](https://nodejs.org) 22.12 or later (`node --version`).
-- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code or Antigravity CLI.
+- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Kiro (IDE, CLI V3) or Antigravity CLI.
 
 ## Pick a method
 
@@ -30,6 +30,8 @@ It asks for your tool and your plugins, then installs them in your project.
 ```sh
 npx @ai-driven-dev/cli@latest setup --ide claude --plugins recommended --yes
 ```
+
+*On Kiro, read the Kiro notes under [Flat files](#flat-files) before the first session: they apply to this method too.*
 
 ### For every project
 
@@ -119,7 +121,7 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 </details>
 
-*OpenCode and Kilo Code have no marketplace: use flat files. Antigravity CLI also uses flat files.*
+*OpenCode, Kilo Code and Kiro have no marketplace: use flat files. Antigravity CLI also uses flat files.*
 
 ## Flat files
 
@@ -130,7 +132,7 @@ git clone https://github.com/ai-driven-dev/framework.git
 npx @ai-driven-dev/cli@latest translate ./framework --to <tool> --as flat --out .
 ```
 
-Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo` or `antigravity`.
+Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo`, `kiro` or `antigravity`.
 
 <details>
 <summary>Without Node</summary>
@@ -146,6 +148,20 @@ If a configuration file already exists, merge its contents into the extracted co
 ```sh
 cp -R aidd-framework-<tool>-flat-<version>/. .
 ```
+
+</details>
+
+<details>
+<summary><b>Kiro</b></summary>
+
+<br />
+
+- For every project at once, put the files in your home directory instead: copy the release archive there (`cp -R aidd-framework-kiro-flat-<version>/. ~`), or run `translate` with `--out ~` from a clone kept outside your home directory. The CLI refuses an output directory that contains its source.
+- Keep the project memory in `AGENTS.md` at the project root. For a home-directory install, a global `AGENTS.md` goes in `~/.kiro/steering/`.
+- Run the CLI on its V3 engine (`kiro-cli --v3`, or `kiro-cli settings chat.agentEngine v3`): the 2.x engine ignores `.kiro/hooks/`, so the memory refresh does not run.
+- Only a plugin's session start hooks are carried over, the memory refresh among them: Kiro names its tools differently, so a hook on a tool call is left out.
+- Trust the workspace when Kiro asks: an untrusted one loads no workspace skills or agents and runs no hook. A trust granted after the window opened counts from the next window, so reopen it before expecting the memory refresh.
+- Kiro Crew is not covered: it reads skills and hooks from its own `~/.kiro/crew/` paths.
 
 </details>
 
