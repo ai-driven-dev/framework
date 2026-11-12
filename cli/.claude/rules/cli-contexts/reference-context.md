@@ -152,7 +152,7 @@ Auth's pass is Appendix A of `aidd_docs/tasks/2026_11/2026_11_06_test-harness-st
 | Code size | not in force here, see section 8 | the code-size branch's own `code-size.arch.test.ts` |
 
 - A list of tools, help included, derives from `REGISTERED_PROFILES`, in its order; the help golden holds the bytes.
-- A use case gets the tools it acts on as profiles in its input; only presentation, composition and runtime wiring hold the `ToolCatalog`. `tools` is in `HELD_BY_BIOME`: its `domain/` and `application/` are the composition root's, and an outside caller imports `tools/contract/` only.
+- Translate and installation-side use cases consume the `ToolCatalog` port and ask it for a tool by id; presentation, composition and runtime wiring hand it over. `tools` is in `HELD_BY_BIOME`: its `domain/` and `application/` are the composition root's, and an outside caller imports `tools/contract/` only.
 - A missing capability is a missing file: no `hooks.ts`, no hooks.
 
 Written rules no tool checks: the glossary, a kit imported by its own context only, one subject per test file, the test challenge pass.
