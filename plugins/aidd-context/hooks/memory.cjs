@@ -483,25 +483,13 @@ function existingTargets(root, targets) {
     });
 }
 
-function endsInFence(content) {
-  const lines = markdownLines(`${content}\nx`);
-  return lines[lines.length - 1].kind === "fence";
-}
-
-/** With `add`, a file holding no block gains one at its end; every byte above it stays. */
-function filledBlock(original, inner, root, { add = false, outside = false } = {}) {
+/** A file holding no block is left as it is: the wiring adds the markers, never the sync. */
+function filledBlock(original, inner, root) {
   const current = findBlock(original, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
   const problem = blockProblem(original, current, legacy);
   if (problem !== null) return { problem };
-  if (current.status === "none" && legacy.status === "none") {
-    if (!add) return { text: original, missing: true };
-    if (outside) return { problem: "links outside the project" };
-    if (endsInFence(original)) return { problem: "ends inside a code fence" };
-    const ending = original.includes("\r\n") ? "\r\n" : "\n";
-    const gap = original === "" ? "" : original.endsWith(ending) ? ending : ending + ending;
-    return { text: original + gap + [BLOCK_OPEN, ...inner, BLOCK_CLOSE, ""].join(ending), added: true };
-  }
+  if (current.status === "none" && legacy.status === "none") return { text: original, missing: true };
   // Compared with the disk, so a legacy marker is rewritten even when the list is unchanged.
   const migrated = migrateLegacyMarkers(original, legacy);
   const found = findBlock(migrated, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
@@ -541,7 +529,7 @@ function tryWrite(file, text, shown, failed) {
 }
 
 /** Stages nothing. A block it cannot fill is left as it is and reported, never forced. */
-function sync(root, tools = [], { quiet = false, add = false } = {}) {
+function sync(root, tools = [], { quiet = false } = {}) {
   const absolute = realish(path.resolve(root));
   const result = { changed: [], unpaired: [], held: [], failed: [] };
   if (!fs.existsSync(path.join(absolute, DOCS_DIR))) return result;
@@ -553,13 +541,10 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
   for (const target of existingTargets(absolute, resolveTargets(tools))) {
     const original = readTextOrNull(target.file);
     if (original === null) continue;
-    const relative = path.relative(absolute, target.file);
-    const outside = relative.startsWith("..") || path.isAbsolute(relative);
     const inner = buildBlockLines(lists, target.syntax, target.prefix);
-    const { text, problem, held, added, missing } = filledBlock(original, inner, absolute, { add: add && tools.length > 0, outside });
+    const { text, problem, held, missing } = filledBlock(original, inner, absolute);
     if (missing && tools.length > 0) {
-      const tool = tools.find((name) => TOOL_FILES[name] === target.path);
-      report(`${target.path} has no memory block; run sync --add ${tool} to add one`);
+      report(`${target.path} has no memory block, not synced`);
     } else if (problem !== undefined) {
       result.unpaired.push(target.path);
       report(`${target.path} ${problem}, not synced`);
@@ -568,7 +553,6 @@ function sync(root, tools = [], { quiet = false, add = false } = {}) {
       report(`${target.path} holds a line the memory block would not write ("${held}"), not synced`);
     } else if (text !== original && tryWrite(target.file, text, target.path, result.failed)) {
       result.changed.push(target.path);
-      if (added) report(`${target.path} had no project memory block, added at its end`);
     }
   }
 
@@ -622,9 +606,9 @@ function runSync(args) {
   // Other commands take `.` as root: a path here is that habit, not a tool.
   const given = args.find((arg) => /[./\\]/u.test(arg));
   if (given !== undefined) return fail(`sync takes tool names, run it from the project root (got "${given}")`);
-  const tools = args.filter((arg) => arg !== "--add").map((arg) => arg.toLowerCase());
+  const tools = args.map((arg) => arg.toLowerCase());
   try {
-    const { unpaired, held, failed } = sync(process.cwd(), tools, { add: args.includes("--add") });
+    const { unpaired, held, failed } = sync(process.cwd(), tools);
     // An unnamed run never fails over a file the user has yet to repair.
     return unpaired.length + held.length + failed.length > 0 && tools.length > 0 ? EXIT_ERRORS : EXIT_OK;
   } catch (error) {
@@ -636,7 +620,7 @@ function runSync(args) {
 const COMMANDS = {
   hook: { run: runHook, usage: "hook" },
   check: { run: runCheck, usage: "check [root] [file...]" },
-  sync: { run: runSync, usage: "sync [--add] [tool...]" },
+  sync: { run: runSync, usage: "sync [tool...]" },
 };
 
 function main([command, ...args]) {

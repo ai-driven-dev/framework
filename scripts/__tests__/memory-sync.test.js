@@ -286,8 +286,6 @@ const read = (root, name) => fs.readFileSync(path.join(root, name), "utf8");
 const EMPTY = `# P\n\n${OPEN}\n${CLOSE}\n`;
 const FILLED_AT = `${OPEN}\n\n@aidd_docs/memory/architecture.md\n\n${CLOSE}`;
 
-// A tool picked with --add: its context file gains the block it lacks. Without it, and at a session
-// start, sync only refreshes the blocks that already stand.
 test("sync leaves the memory README as it is: it no longer keeps a list of files", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-"));
   try {
@@ -323,24 +321,11 @@ test("a root or path given to sync is refused with the fix, and nothing is writt
   }
 });
 
-test("sync --add appends the block a picked tool's file lacks, after the team's content left byte for byte", () => {
-  const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": TEAM });
-  try {
-    const result = sync(root, "--add", "claude");
-    assert.equal(result.status, 0, result.stderr);
-    assert.equal(read(root, "CLAUDE.md"), `${TEAM}\n${FILLED_AT}\n`);
-    assert.equal(result.stderr, "memory: CLAUDE.md had no project memory block, added at its end\n");
-    assert.equal(read(root, "AGENTS.md"), TEAM, "an unpicked tool's file is left alone");
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("naming a tool without --add only fills a block that stands, and names the fix for a file holding none", () => {
+test("naming a tool only fills a block that stands, and reports a file holding none", () => {
   const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": EMPTY });
   try {
     const result = sync(root, "codex", "claude");
-    assert.deepEqual(result, { status: 0, stdout: "", stderr: "memory: CLAUDE.md has no memory block; run sync --add claude to add one\n" });
+    assert.deepEqual(result, { status: 0, stdout: "", stderr: "memory: CLAUDE.md has no memory block, not synced\n" });
     assert.equal(read(root, "CLAUDE.md"), TEAM);
     assert.equal(read(root, "AGENTS.md"), `# P\n\n${FILLED_LINK}\n`);
   } finally {
@@ -348,93 +333,28 @@ test("naming a tool without --add only fills a block that stands, and names the 
   }
 });
 
-test("AGENTS.md gains the block in the link form, and a second run changes nothing", () => {
-  const root = sandbox({ "AGENTS.md": "# Agents\nNo trailing newline" });
-  try {
-    assert.equal(sync(root, "--add", "codex").status, 0);
-    const once = read(root, "AGENTS.md");
-    assert.equal(once, `# Agents\nNo trailing newline\n\n${FILLED_LINK}\n`);
-    const again = sync(root, "--add", "codex");
-    assert.equal(read(root, "AGENTS.md"), once);
-    assert.equal(again.stderr, "", "a second run reports no addition");
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("a CRLF file gains the block in CRLF, and an empty file the block alone", () => {
-  const crlf = (text) => text.replace(/\n/gu, "\r\n");
-  const root = sandbox({ "CLAUDE.md": crlf(TEAM), "AGENTS.md": "" });
-  try {
-    assert.equal(sync(root, "--add", "claude", "codex").status, 0);
-    assert.equal(read(root, "CLAUDE.md"), crlf(`${TEAM}\n${FILLED_AT}\n`));
-    assert.equal(read(root, "AGENTS.md"), `${FILLED_LINK}\n`);
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("a session start, or a sync naming no tool, never adds a block to a file holding none", () => {
+test("a session start, or any sync, never adds a block to a file holding none", () => {
   const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": TEAM });
   try {
     const payload = JSON.stringify({ hook_event_name: "SessionStart", session_id: "sync-no-block", cwd: root, source: "startup" });
     const hook = spawnSync(process.execPath, [HOOK, "hook"], { cwd: root, env: HOOK_ENV, input: payload, encoding: "utf8" });
     assert.equal(hook.status, 0, hook.stderr);
     assert.equal(read(root, "CLAUDE.md"), TEAM, "the session start added a block");
-    assert.deepEqual(sync(root, "--add"), { status: 0, stdout: "", stderr: "" });
     assert.deepEqual(sync(root), { status: 0, stdout: "", stderr: "" }, "a bare sync spoke about a file it never adds to");
-    assert.equal(read(root, "CLAUDE.md"), TEAM, "a sync naming no tool added a block");
+    assert.equal(sync(root, "claude", "codex").status, 0);
+    assert.equal(read(root, "CLAUDE.md"), TEAM, "a sync added a block");
     assert.equal(read(root, "AGENTS.md"), TEAM);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
 
-test("CLAUDE.md linked to AGENTS.md with no block gains one block, in the @ form", () => {
-  const root = sandbox({ "AGENTS.md": TEAM }, { "CLAUDE.md": "AGENTS.md" });
-  try {
-    assert.equal(sync(root, "--add", "claude", "codex").status, 0);
-    assert.equal(read(root, "AGENTS.md"), `${TEAM}\n${FILLED_AT}\n`);
-    assert.ok(fs.lstatSync(path.join(root, "CLAUDE.md")).isSymbolicLink(), "the link stays a link");
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
 test("a link to nothing and a copilot file linked to AGENTS.md are still never written", () => {
-  const root = sandbox({ "AGENTS.md": TEAM }, { "CLAUDE.md": "gone.md", [".github/copilot-instructions.md"]: "../AGENTS.md" });
+  const root = sandbox({ "AGENTS.md": EMPTY }, { "CLAUDE.md": "gone.md", [".github/copilot-instructions.md"]: "../AGENTS.md" });
   try {
-    assert.equal(sync(root, "--add", "claude", "copilot").status, 0);
+    assert.equal(sync(root, "claude", "copilot").status, 0);
     assert.equal(fs.existsSync(path.join(root, "gone.md")), false, "a dangling link was followed");
-    assert.equal(read(root, "AGENTS.md"), `${TEAM}\n${FILLED_LINK}\n`, "copilot's pick fills AGENTS.md once, with no pointer");
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("a file reached through a link leaving the project is never given a block", () => {
-  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "memory-sync-shared-"));
-  fs.writeFileSync(path.join(outside, "G.md"), TEAM);
-  const root = sandbox({}, { "CLAUDE.md": path.join(outside, "G.md") });
-  try {
-    const result = sync(root, "--add", "claude");
-    assert.equal(result.status, 1);
-    assert.equal(result.stderr, "memory: CLAUDE.md links outside the project, not synced\n");
-    assert.equal(fs.readFileSync(path.join(outside, "G.md"), "utf8"), TEAM);
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-    fs.rmSync(outside, { recursive: true, force: true });
-  }
-});
-
-test("a file ending inside an open code fence is never given a block", () => {
-  const open = "# P\n\n```md\n@README.md\n";
-  const root = sandbox({ "CLAUDE.md": open });
-  try {
-    const result = sync(root, "--add", "claude");
-    assert.equal(result.status, 1);
-    assert.equal(result.stderr, "memory: CLAUDE.md ends inside a code fence, not synced\n");
-    assert.equal(read(root, "CLAUDE.md"), open);
+    assert.equal(read(root, "AGENTS.md"), `# P\n\n${FILLED_LINK}\n`, "copilot's pick fills AGENTS.md once, with no pointer");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

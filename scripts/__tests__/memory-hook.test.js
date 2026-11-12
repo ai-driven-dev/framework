@@ -490,7 +490,7 @@ test("hooks.json runs the one entry, within 5 s, at session start and at the tur
 test("the engine keeps check, sync and hook and has dropped the plan, answer, report and changes commands and their libraries", () => {
   for (const command of ["plan", "answer", "report", "changes"]) {
     const result = spawnSync(process.execPath, [path.join(HOOKS, ENTRY), command], { encoding: "utf8" });
-    assert.match(result.stderr, /^usage: memory\.cjs hook \| check \[root\] \[file\.\.\.\] \| sync \[--add\] \[tool\.\.\.\]\n$/u, command);
+    assert.match(result.stderr, /^usage: memory\.cjs hook \| check \[root\] \[file\.\.\.\] \| sync \[tool\.\.\.\]\n$/u, command);
     assert.equal(result.status, 1, command);
   }
   for (const lib of ["plan", "fact-sheet", "report", "changes", "bank-guard"]) assert.equal(fs.existsSync(path.join(HOOKS, "lib", `${lib}.cjs`)), false, lib);
