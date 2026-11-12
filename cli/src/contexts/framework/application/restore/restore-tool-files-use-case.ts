@@ -9,7 +9,8 @@ import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { ToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import { getToolConfig } from "../../../tools/domain/registry.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { profileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { GenerateToolDistributionUseCase } from "./generate-tool-distribution-use-case.js";
@@ -26,6 +27,8 @@ export interface RestoreToolFilesOptions {
   force: boolean;
   interactive: boolean;
   fileFilter: ((p: string) => boolean) | null;
+  /** The tool profiles the restore asks. */
+  tools: readonly ToolProfile[];
 }
 
 interface SectionRestoreResult {
@@ -80,8 +83,8 @@ export class RestoreToolFilesUseCase {
   private async buildDistributionMap(
     options: RestoreToolFilesOptions
   ): Promise<Map<string, InstallationFile>> {
-    const { toolId, descriptor, contentFiles, projectRoot } = options;
-    const config = getToolConfig(toolId);
+    const { toolId, descriptor, contentFiles, projectRoot, tools } = options;
+    const config = profileOf(tools, toolId);
     const distribution = await new GenerateToolDistributionUseCase(
       this.fs,
       this.hasher,

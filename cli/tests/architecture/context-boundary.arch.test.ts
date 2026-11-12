@@ -14,8 +14,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/contract/tool-profile.ts",
     "src/contexts/tools/contract/tool-profile-lookup.ts",
     "src/contexts/tools/contract/tool-vocabulary.ts",
-    // the tool contract and lookup surface
-    "src/contexts/tools/domain/contracts.ts",
+    // the tool lookup surface
     "src/contexts/tools/domain/registry.ts",
     "src/contexts/tools/contract/build-contract.ts",
     // co-owned configuration (settings.json, .mcp.json et al.)
@@ -170,18 +169,8 @@ function reachesIntoInterior(
   return violations.sort();
 }
 
-/**
- * Reaches into a context's interior today; the list may only shrink. Each entry is an
- * `install-*-use-case.ts` reaching past `tools`' declared contract for the capability class
- * itself, and they resolve together when `install/` moves into `contexts/tools/application/`.
- */
-const BASELINE = [
-  "src/contexts/framework/application/install/content/install-agents-use-case.ts -> src/contexts/tools/domain/capabilities/agents-capability.ts",
-  "src/contexts/framework/application/install/content/install-commands-use-case.ts -> src/contexts/tools/domain/capabilities/commands-capability.ts",
-  "src/contexts/framework/application/install/content/install-content-section-use-case.ts -> src/contexts/tools/domain/formats/command.ts",
-  "src/contexts/framework/application/install/content/install-rules-use-case.ts -> src/contexts/tools/domain/capabilities/rules-capability.ts",
-  "src/contexts/framework/application/install/content/install-skills-use-case.ts -> src/contexts/tools/domain/capabilities/skills-capability.ts",
-];
+/** Reaches into a context's interior today; the list may only shrink. */
+const BASELINE: string[] = [];
 
 /**
  * What a context publishes in `contract/` exists for a reader outside it: another context,

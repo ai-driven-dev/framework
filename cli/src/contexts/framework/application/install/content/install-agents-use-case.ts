@@ -1,28 +1,29 @@
 import type { InstallationFile } from "../../../../../kernel/file.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
-import type { AgentsCapability } from "../../../../tools/domain/capabilities/agents-capability.js";
-import type { AiTool, HasAgents } from "../../../../tools/domain/contracts.js";
+import type {
+  AiToolProfile,
+  MarkdownSectionAnswers,
+} from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../../translate/domain/canon.js";
 import {
   type ContentSectionDescriptor,
   InstallContentSectionUseCase,
 } from "./install-content-section-use-case.js";
 
-const agentsDescriptor: ContentSectionDescriptor<"agents", AgentsCapability> = {
-  capabilityOf: (tool) => tool.section("agents"),
-  acceptsFileName: (cap, fileName) => cap.acceptsFileName(fileName),
+const agentsDescriptor: ContentSectionDescriptor<MarkdownSectionAnswers> = {
+  answersOf: (tool) => tool.markdownSection("agents"),
   convertFrontmatter: (cap, frontmatter, relativeFileName) =>
     cap.convertFrontmatter(frontmatter, relativeFileName),
 };
 
 interface InstallAgentsOptions {
-  toolConfig: AiTool<HasAgents>;
+  toolConfig: AiToolProfile;
   section: ContentSection;
   contentFiles: Map<string, string>;
 }
 
 export class InstallAgentsUseCase {
-  private readonly inner: InstallContentSectionUseCase<"agents", AgentsCapability>;
+  private readonly inner: InstallContentSectionUseCase<MarkdownSectionAnswers>;
 
   constructor(hasher: Hasher) {
     this.inner = new InstallContentSectionUseCase(hasher, agentsDescriptor);

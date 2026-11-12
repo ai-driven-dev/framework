@@ -66,4 +66,26 @@ describe("what an install asks a tool profile", () => {
       expect(aiProfile("opencode").machineLocalFiles()).toEqual([]);
     });
   });
+
+  describe("the content sections", () => {
+    it("answers whether a markdown section takes a file by its tool suffix", () => {
+      const agents = aiProfile("claude").markdownSection("agents");
+
+      expect(agents?.acceptsFileName("reviewer.claude.md")).toBe(true);
+      expect(agents?.acceptsFileName("reviewer.cursor.md")).toBe(false);
+    });
+
+    it("answers whether the skills section takes a file by its tool suffix", () => {
+      const skills = aiProfile("claude").skillsSection();
+
+      expect(skills?.acceptsFileName("hello.claude.md")).toBe(true);
+      expect(skills?.acceptsFileName("hello.cursor.md")).toBe(false);
+    });
+
+    it("answers where the skills section lands a built file", () => {
+      expect(aiProfile("claude").skillsSection()?.buildInstallPath("hello.claude.md")).toBe(
+        ".claude/skills/hello.md"
+      );
+    });
+  });
 });

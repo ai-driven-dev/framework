@@ -2,9 +2,7 @@ import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
 import type { AgentsCapability } from "./capabilities/agents-capability.js";
-import type { CommandsCapability } from "./capabilities/commands-capability.js";
 import type { RulesCapability } from "./capabilities/rules-capability.js";
-import type { SkillsCapability } from "./capabilities/skills-capability.js";
 import type { NativeActivation } from "./plugins/native-activation.js";
 import type { PluginsCapability } from "./plugins/plugins-capability.js";
 import type {
@@ -15,14 +13,6 @@ import type {
 
 export interface HasAgents {
   readonly agents: AgentsCapability;
-}
-
-export interface HasSkills {
-  readonly skills: SkillsCapability;
-}
-
-export interface HasCommands {
-  readonly commands: CommandsCapability;
 }
 
 export interface HasRules {

@@ -1,5 +1,3 @@
-export type UserFileSection = "agents" | "commands" | "rules" | "skills";
-
 function buildCommandName(fm: Record<string, unknown>, relativeFileName: string): string {
   const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
   const baseName = String(fm.name ?? "");

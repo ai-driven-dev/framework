@@ -17,6 +17,7 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { KeepPrompter, OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
@@ -102,6 +103,7 @@ function restore(
     force: true,
     interactive: false,
     fileFilter: null,
+    tools: catalogOf().sortedById(),
     ...overrides,
   });
 }

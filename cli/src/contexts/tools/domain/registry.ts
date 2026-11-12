@@ -9,19 +9,12 @@ import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { NativeActivation } from "./plugins/native-activation.js";
 import type { NativePluginsCapability, PluginsCapability } from "./plugins/plugins-capability.js";
 import type { ProfileBrand } from "./profile/define-tool.js";
-import { isProfileSectionKey } from "./profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
 
 export type ToolConfig = AiTool | IdeToolConfig;
 
 /** A profile only the factory could have produced. */
 export type BuiltToolConfig = ToolConfig & ProfileBrand;
-
-/** Whether a tool declares the section a framework content section is named after; a name that is no
- * section key is declared by no tool. */
-export function declaresSection(tool: ToolConfig, name: string): boolean {
-  return isProfileSectionKey(name) && tool.section(name) !== null;
-}
 
 export function isAiTool(config: ToolConfig): config is AiTool {
   return config.kind === "ai";

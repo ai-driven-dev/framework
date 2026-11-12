@@ -1,27 +1,28 @@
 import type { InstallationFile } from "../../../../../kernel/file.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
-import type { SkillsCapability } from "../../../../tools/domain/capabilities/skills-capability.js";
-import type { AiTool, HasSkills } from "../../../../tools/domain/contracts.js";
+import type {
+  AiToolProfile,
+  SkillsSectionAnswers,
+} from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../../translate/domain/canon.js";
 import {
   type ContentSectionDescriptor,
   InstallContentSectionUseCase,
 } from "./install-content-section-use-case.js";
 
-const skillsDescriptor: ContentSectionDescriptor<"skills", SkillsCapability> = {
-  capabilityOf: (tool) => tool.section("skills"),
-  acceptsFileName: (cap, fileName) => cap.acceptsFileName(fileName),
+const skillsDescriptor: ContentSectionDescriptor<SkillsSectionAnswers> = {
+  answersOf: (tool) => tool.skillsSection(),
   convertFrontmatter: (cap, frontmatter) => cap.convertFrontmatter(frontmatter),
 };
 
 interface InstallSkillsOptions {
-  toolConfig: AiTool<HasSkills>;
+  toolConfig: AiToolProfile;
   section: ContentSection;
   contentFiles: Map<string, string>;
 }
 
 export class InstallSkillsUseCase {
-  private readonly inner: InstallContentSectionUseCase<"skills", SkillsCapability>;
+  private readonly inner: InstallContentSectionUseCase<SkillsSectionAnswers>;
 
   constructor(hasher: Hasher) {
     this.inner = new InstallContentSectionUseCase(hasher, skillsDescriptor);

@@ -1,31 +1,24 @@
 import { GITKEEP_FILE, InstallationFile } from "../../../../../kernel/file.js";
 import { parseFrontmatter } from "../../../../../kernel/markdown.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
-import type { AiTool } from "../../../../tools/domain/contracts.js";
-import type { UserFileSection } from "../../../../tools/domain/formats/command.js";
+import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../../translate/domain/canon.js";
 
 /**
- * The shape every content-section capability exposes with identical arity, so this engine calls
+ * The shape every content-section answer exposes with identical arity, so this engine calls
  * them without per-section branching. Where arity genuinely differs, a `ContentSectionDescriptor`
  * supplies the per-section adapter instead.
  */
 export interface ContentSectionCapability {
   buildInstallPath(fileName: string): string | null;
+  acceptsFileName(fileName: string): boolean;
   serialize(frontmatter: Record<string, unknown>, body: string): string;
 }
 
-/**
- * Per-section behaviour no uniform signature can express. `capabilityOf` names the section this
- * descriptor reads, keeping K, Cap and the toolConfig type correlated through generics instead of
- * an `as` cast at the call site.
- */
-export interface ContentSectionDescriptor<
-  K extends UserFileSection,
-  Cap extends ContentSectionCapability,
-> {
-  capabilityOf(tool: AiTool<Record<K, Cap>>): Cap;
-  acceptsFileName(cap: Cap, fileName: string): boolean;
+/** Per-section behaviour no uniform signature can express: which answers the profile gives for
+ * the section, and how its frontmatter is converted. */
+export interface ContentSectionDescriptor<Cap extends ContentSectionCapability> {
+  answersOf(tool: AiToolProfile): Cap | null;
   convertFrontmatter(
     cap: Cap,
     frontmatter: Record<string, unknown>,
@@ -33,27 +26,22 @@ export interface ContentSectionDescriptor<
   ): Record<string, unknown>;
 }
 
-export interface InstallContentSectionOptions<
-  K extends UserFileSection,
-  Cap extends ContentSectionCapability,
-> {
-  toolConfig: AiTool<Record<K, Cap>>;
+export interface InstallContentSectionOptions {
+  toolConfig: AiToolProfile;
   section: ContentSection;
   contentFiles: Map<string, string>;
 }
 
-export class InstallContentSectionUseCase<
-  K extends UserFileSection,
-  Cap extends ContentSectionCapability,
-> {
+export class InstallContentSectionUseCase<Cap extends ContentSectionCapability> {
   constructor(
     private readonly hasher: Hasher,
-    private readonly descriptor: ContentSectionDescriptor<K, Cap>
+    private readonly descriptor: ContentSectionDescriptor<Cap>
   ) {}
 
-  execute(options: InstallContentSectionOptions<K, Cap>): InstallationFile[] {
+  execute(options: InstallContentSectionOptions): InstallationFile[] {
     const { toolConfig, section, contentFiles } = options;
-    const cap = this.descriptor.capabilityOf(toolConfig);
+    const cap = this.descriptor.answersOf(toolConfig);
+    if (cap === null) return [];
     const results: InstallationFile[] = [];
     for (const [filePath, rawContent] of contentFiles) {
       const file = this.processFile(filePath, rawContent, section, cap, toolConfig);
@@ -67,11 +55,11 @@ export class InstallContentSectionUseCase<
     rawContent: string,
     section: ContentSection,
     cap: Cap,
-    toolConfig: AiTool<Record<K, Cap>>
+    toolConfig: AiToolProfile
   ): InstallationFile | null {
     if (!filePath.startsWith(`${section.directory}/`)) return null;
     const relativeFileName = filePath.slice(`${section.directory}/`.length);
-    if (!this.descriptor.acceptsFileName(cap, relativeFileName)) return null;
+    if (!cap.acceptsFileName(relativeFileName)) return null;
     if (section.entryFile !== null) {
       const basename = relativeFileName.split("/").at(-1) ?? relativeFileName;
       if (basename !== section.entryFile) return null;
@@ -95,7 +83,7 @@ export class InstallContentSectionUseCase<
     relativeFileName: string,
     rawContent: string,
     cap: Cap,
-    toolConfig: AiTool<Record<K, Cap>>
+    toolConfig: AiToolProfile
   ): InstallationFile {
     const rewrittenRaw = toolConfig.rewriteContent(rawContent);
     const { frontmatter, body } = parseFrontmatter(rewrittenRaw);

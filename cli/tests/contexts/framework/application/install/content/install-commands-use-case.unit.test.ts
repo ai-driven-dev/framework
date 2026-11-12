@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { InstallCommandsUseCase } from "../../../../../../src/contexts/framework/application/install/content/install-commands-use-case.js";
+import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import type { ContentSection } from "../../../../../../src/contexts/translate/domain/canon.js";
@@ -22,6 +23,19 @@ function buildUseCase() {
 
 describe("InstallCommandsUseCase", () => {
   describe("execute", () => {
+    it("installs nothing for a tool that declares no commands", () => {
+      const { useCase } = buildUseCase();
+      const contentFiles = new Map([["commands/implement.md", "# Implement\n"]]);
+
+      const files = useCase.execute({
+        toolConfig: antigravity,
+        section: commandsSection,
+        contentFiles,
+      });
+
+      expect(files).toEqual([]);
+    });
+
     it("produces an InstallationFile with correct relativePath and content for a standard command", () => {
       const { hasher, useCase } = buildUseCase();
       const rawContent =

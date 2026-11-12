@@ -2,16 +2,8 @@ import { InstallationFile, removeRedundantGitkeeps } from "../../../../kernel/fi
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasRules,
-  HasSkills,
-} from "../../../tools/domain/contracts.js";
-import { declaresSection, isAiTool, type ToolConfig } from "../../../tools/domain/registry.js";
+import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import { InstallAgentsUseCase } from "../install/content/install-agents-use-case.js";
 import { InstallCommandsUseCase } from "../install/content/install-commands-use-case.js";
@@ -20,7 +12,7 @@ import { InstallSkillsUseCase } from "../install/content/install-skills-use-case
 import { InstallConfigUseCase } from "../install/install-config-use-case.js";
 
 interface GenerateToolDistributionOptions {
-  config: ToolConfig;
+  config: ToolProfile;
   descriptor: FrameworkDescriptor;
   contentFiles: Map<string, string>;
   projectRoot: string;
@@ -36,14 +28,14 @@ export class GenerateToolDistributionUseCase {
 
   async execute(options: GenerateToolDistributionOptions): Promise<InstallationFile[]> {
     const { config, descriptor, contentFiles, projectRoot } = options;
-    if (!isAiTool(config)) {
+    if (config.kind !== "ai") {
       return this.generateIdeToolFiles(config, descriptor, contentFiles, projectRoot);
     }
     return this.generateAiToolFiles(config, descriptor, contentFiles, projectRoot);
   }
 
   private async generateIdeToolFiles(
-    config: ToolConfig,
+    config: ToolProfile,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     projectRoot: string
@@ -59,7 +51,7 @@ export class GenerateToolDistributionUseCase {
   }
 
   private async generateAiToolFiles(
-    config: AiTool,
+    config: AiToolProfile,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     projectRoot: string
@@ -72,18 +64,18 @@ export class GenerateToolDistributionUseCase {
       projectRoot,
       platform: this.platform,
       assetProvider: this.assetProvider,
-      toolId: config.toolId as AiToolId,
+      toolId: config.toolId,
     });
     const outputPathFiles = this.buildConfigOutputPathFiles(config);
     return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...outputPathFiles]);
   }
 
-  private buildConfigOutputPathFiles(config: AiTool): InstallationFile[] {
+  private buildConfigOutputPathFiles(config: AiToolProfile): InstallationFile[] {
     if (this.assetProvider === undefined) return [];
     const outputPaths = config.configFiles();
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(outputPaths)) {
-      const asset = this.assetProvider.loadConfigAsset(config.toolId as AiToolId, fileName);
+      const asset = this.assetProvider.loadConfigAsset(config.toolId, fileName);
       const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       files.push(
         new InstallationFile({
@@ -97,45 +89,32 @@ export class GenerateToolDistributionUseCase {
   }
 
   private generateCapabilitySectionFiles(
-    config: AiTool,
+    config: AiToolProfile,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
     const results: InstallationFile[] = [];
     for (const section of descriptor.contentSections) {
-      if (!declaresSection(config, section.name)) continue;
       results.push(...this.generateSectionFiles(config, section, contentFiles));
     }
     return results;
   }
 
   private generateSectionFiles(
-    config: AiTool,
+    config: AiToolProfile,
     section: ContentSection,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
-    const base = { section, contentFiles };
+    const options = { toolConfig: config, section, contentFiles };
     switch (section.name) {
       case "agents":
-        return new InstallAgentsUseCase(this.hasher).execute({
-          ...base,
-          toolConfig: config as AiTool<HasAgents>,
-        });
+        return new InstallAgentsUseCase(this.hasher).execute(options);
       case "commands":
-        return new InstallCommandsUseCase(this.hasher).execute({
-          ...base,
-          toolConfig: config as AiTool<HasCommands>,
-        });
+        return new InstallCommandsUseCase(this.hasher).execute(options);
       case "rules":
-        return new InstallRulesUseCase(this.hasher).execute({
-          ...base,
-          toolConfig: config as AiTool<HasRules>,
-        });
+        return new InstallRulesUseCase(this.hasher).execute(options);
       case "skills":
-        return new InstallSkillsUseCase(this.hasher).execute({
-          ...base,
-          toolConfig: config as AiTool<HasSkills>,
-        });
+        return new InstallSkillsUseCase(this.hasher).execute(options);
       default:
         return [];
     }
