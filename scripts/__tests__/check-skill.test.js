@@ -246,6 +246,17 @@ describe("skill check", () => {
     expectError("R17");
   });
 
+  it("R17: a template slot left unfilled outside an asset", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. <step>");
+    expectError("R17");
+  });
+
+  it("R12: an action the diagram only ends needs no read-next step, wherever it sorts", () => {
+    mutate("SKILL.md", '  entry([request]) --> first["actions/01-first.md"] --> second["actions/02-second.md"]\n  second --> done((done))', '  entry([request]) -->|"one"| first["actions/01-first.md"] --> done((done))\n  entry -->|"two"| second["actions/02-second.md"] --> done');
+    mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Answer.");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
   it("R17: a comment shown inside a code block passes", () => {
     mutate("references/rubric.md", "| any | yes |", "| any | yes |\n\n```\n<!-- example -->\n```");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });

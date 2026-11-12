@@ -29,6 +29,7 @@ const TICKET = /(?:^|\s|(?<!\])\()#\d{2,}\b/u;
 const ACTION_NODE = /\["(actions\/[^"]+\.md)"\]/gu;
 const BOX = /([\w-]+)\["([^"]*)"\]/gu;
 const ARROW = /\s*(<?(?:-->|-\.->|==>)(?:\|[^|]*\|)?)\s*/u;
+const SLOT = /<[a-z][^<>\n]*>/u;
 const ACTION_LINK =/\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
 
 function excerpt(text) {
@@ -138,7 +139,24 @@ function checkEdges(skill, flow, rules, lineOf, report) {
   for (const [from, { line, targets }] of unlabeled) if (targets.size > 1) report.error(file, lineOf(line), "R8", `${from} --> ${[...targets].join(", ")}`, "label the condition of each edge but the default one");
 }
 
-function checkAction(file, text, isLast, report) {
+/** The action files the diagram draws an edge from to another action: only those end by reading the next. */
+function chainedActions(router) {
+  const flow = /```mermaid\n([\s\S]*?)```/u.exec(router)?.[1] ?? "";
+  const actions = new Map([...flow.matchAll(BOX)].filter(([, , label]) => /^actions\//u.test(label)).map(([, id, label]) => [id, label]));
+  const ids = (segment) => segment.split("&").map((part) => /^\s*([^\s[({]+)/u.exec(part)?.[1]).filter(Boolean);
+  const chained = new Set();
+  for (const line of flow.split("\n")) {
+    const segments = line.trim().split(ARROW).filter((_, index) => index % 2 === 0);
+    for (let index = 0; index + 1 < segments.length; index += 1) {
+      for (const from of ids(segments[index])) {
+        for (const to of ids(segments[index + 1])) if (actions.has(from) && actions.has(to) && from !== to) chained.add(actions.get(from));
+      }
+    }
+  }
+  return chained;
+}
+
+function checkAction(file, text, chains, report) {
   const lines = text.split("\n");
   if (!/^# \d\d - \S/u.test(lines[0] ?? "")) report.error(file, 1, "R11", lines[0] ?? "", "start with `# <NN> - <Title>`");
   const sections = [];
@@ -153,7 +171,7 @@ function checkAction(file, text, isLast, report) {
     else if (rank < last) report.error(file, section.line, "R11", `## ${section.name}`, `order the sections ${SECTION_ORDER.join(", ")}`);
     else last = rank;
   }
-  if (isLast) return;
+  if (!chains) return;
   const process = sections.find((section) => section.name === "Process");
   if (!process) return;
   const end = sections.find((section) => section.line > process.line)?.line ?? lines.length + 1;
@@ -188,6 +206,7 @@ function checkFile(skill, file, text, report) {
     const number = index + 1;
     if (DATE.test(line) || TICKET.test(line)) report.error(file, number, "R27", line, "remove the date or ticket id");
     if (!markdown) return;
+    if (!file.startsWith("assets/") && SLOT.test(line)) report.error(file, number, "R17", line, "fill the template slot, or move it to an asset");
     if (line.includes("**")) report.error(file, number, "R28", line, "write the sentence without bold");
     for (const match of line.matchAll(LINK)) {
       const target = match[1];
@@ -205,10 +224,11 @@ function check(skill) {
   const report = { error: (file, line, rule, offending, fix) => errors.push({ file, line, rule, ...(offending === undefined ? {} : { excerpt: excerpt(offending) }), fix }) };
   const files = walk(skill).map((full) => path.relative(skill, full).split(path.sep).join("/"));
   const actions = files.filter((file) => /^actions\/[^/]+\.md$/u.test(file)).sort();
+  const chained = chainedActions(fs.readFileSync(path.join(skill, "SKILL.md"), "utf8"));
   for (const file of files) {
     const text = fs.readFileSync(path.join(skill, file), "utf8");
     if (file === "SKILL.md") checkRouter(skill, text, report);
-    if (actions.includes(file)) checkAction(file, text, file === actions[actions.length - 1], report);
+    if (actions.includes(file)) checkAction(file, text, chained.has(file), report);
     checkFile(skill, file, text, report);
   }
   return errors;
