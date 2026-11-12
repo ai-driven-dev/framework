@@ -114,8 +114,8 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
 /**
  * Files under `ISOLATED_FROM_TOOLS` still naming a tool in an identifier, with how many
  * distinct identifiers; the list may only shrink, and a listed file may not take on another.
- * The two files under `tools/contract/` are the shared vocabulary itself: the config artifact
- * names a profile consumes, and the source spelling of the plugin root that translate rewrites.
+ * The file under `tools/contract/` is the shared vocabulary itself: the config artifact names a
+ * profile consumes.
  */
 const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/distribution/application/fetch-marketplace-source-use-case.ts", named: 1 },
@@ -127,12 +127,10 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
   },
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
   { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
-  { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
-  { path: "src/contexts/tools/contract/plugin-root-token.ts", named: 1 },
   { path: "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts", named: 2 },
   { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 2 },
+  { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
-  { path: "src/contexts/translate/domain/formats/plugin-root-token-rewrite.ts", named: 1 },
 ];
 
 describe("a tool identifier stays inside its own profile", () => {

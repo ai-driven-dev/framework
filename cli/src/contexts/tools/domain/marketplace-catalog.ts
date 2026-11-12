@@ -31,8 +31,9 @@ export interface SynthesizeSharedManifestOpts {
   readonly hooksField: boolean;
 }
 
-/** Synthesize a Claude-style plugin manifest, shared by the claude, cursor and copilot
- * strategies. Key insertion order is part of the output shape. */
+/** Synthesize the plugin manifest shared by the claude, cursor and copilot strategies: the
+ * source manifest's identity fields, then the skills, agents, hooks and MCP paths the built
+ * plugin ships, all as `./`-relative paths. Key insertion order is part of the output shape. */
 export function synthesizeSharedManifest(
   source: Record<string, unknown>,
   presence: PluginPresence,

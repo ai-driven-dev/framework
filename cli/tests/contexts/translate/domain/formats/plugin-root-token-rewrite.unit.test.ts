@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../../../src/contexts/tools/contract/plugin-root-token.js";
 import { rewritePluginRootToken } from "../../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 
 // Avoid biome noTemplateCurlyInString: split literals
@@ -117,9 +117,9 @@ describe("rewritePluginRootToken", () => {
     });
   });
 
-  describe("CLAUDE_PLUGIN_ROOT_TOKEN constant", () => {
+  describe("SOURCE_PLUGIN_ROOT_TOKEN constant", () => {
     it("exported constant matches the canonical source token", () => {
-      expect(CLAUDE_PLUGIN_ROOT_TOKEN).toBe(CLAUDE_TOKEN);
+      expect(SOURCE_PLUGIN_ROOT_TOKEN).toBe(CLAUDE_TOKEN);
     });
   });
 });
