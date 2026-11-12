@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { AIDD_DIR } from "../../../src/kernel/paths.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../../helpers/same-instance.js";
+import { sameInstance } from "../same-instance.js";
 
 const login = vi.fn();
 const status = vi.fn();

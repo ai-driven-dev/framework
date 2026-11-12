@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../../helpers/same-instance.js";
+import { sameInstance } from "../same-instance.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();

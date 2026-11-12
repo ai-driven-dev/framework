@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { userMachineLocalFilesOf } from "../../../src/contexts/tools/domain/registry.js";
-import { sameInstance } from "../../helpers/same-instance.js";
+import { sameInstance } from "../same-instance.js";
 
 const doctorAll = vi.fn();
 const statusAll = vi.fn();

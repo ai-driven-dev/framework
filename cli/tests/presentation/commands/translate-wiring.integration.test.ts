@@ -5,7 +5,7 @@ import { wireTools } from "../../../src/composition/tools.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { isAiTool } from "../../../src/contexts/tools/domain/registry.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
-import { sameInstance } from "../../helpers/same-instance.js";
+import { sameInstance } from "../same-instance.js";
 
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;

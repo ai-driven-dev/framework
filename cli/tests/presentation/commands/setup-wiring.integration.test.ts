@@ -6,7 +6,7 @@ import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../../helpers/same-instance.js";
+import { sameInstance } from "../same-instance.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();

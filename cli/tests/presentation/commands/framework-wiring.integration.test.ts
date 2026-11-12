@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../../helpers/same-instance.js";
+import { sameInstance } from "../same-instance.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
