@@ -86,7 +86,8 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
 const IDENTIFIER = /[A-Za-z_$][A-Za-z0-9_$]*/g;
-const ISOLATED_FROM_TOOLS = /^src\/contexts\/[^/]+\/(?:application\/|domain\/formats\/)/;
+const ISOLATED_FROM_TOOLS =
+  /^src\/contexts\/(?:[^/]+\/(?:application\/|domain\/formats\/)|tools\/domain\/(?:(?:sections|hooks|bridges|native-registration|profile)\/|profile\.ts$))/;
 
 function words(identifier: string): string[] {
   return identifier
