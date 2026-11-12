@@ -160,3 +160,17 @@ test("a recall case seeds a repo and expects the facts the restored slots must p
   // The narrowest-run slot accepts one test file or a changed-only run: expect the slot answered, not one answer.
   assert.ok(expected["aidd_docs/memory/testing.md"]?.includes("Narrowest run: `"), "the recall case does not expect the narrowest run answered");
 });
+
+test("the plan shows each changed line as a diff, and a question apart from the yes and no items", () => {
+  const read = fs.readFileSync(path.join(SKILL, "actions/01-read.md"), "utf8");
+  assert.match(read, /`- ` line/u, "a replaced or removed line is not shown as a `- ` line");
+  assert.match(read, /`\+ ` line/u, "a replacement is not shown as a `+ ` line");
+  assert.match(read, /questions? .*apart/iu, "the questions are not set apart from the numbered items");
+  assert.match(read, /`ok` .*never .*question/iu, "an `ok` can still answer a question");
+});
+
+test("wiring leaves the blocks to update themselves and never reports them stale", () => {
+  const wire = fs.readFileSync(path.join(SKILL, "actions/03-wire.md"), "utf8");
+  assert.match(wire, /session start and (?:at )?(?:each )?turn end/iu, "the wire action does not say when the blocks update");
+  assert.match(wire, /never report/iu, "the wire action lets a block be reported stale");
+});

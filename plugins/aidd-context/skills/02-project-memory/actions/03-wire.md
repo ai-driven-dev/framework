@@ -18,4 +18,4 @@ Each picked tool's context file, carrying the marker pair.
 
 ## Rules
 
-- Write nothing between the markers.
+- Write nothing between the markers: the blocks update themselves at session start and at turn end, so never report a block line as stale or missing.
