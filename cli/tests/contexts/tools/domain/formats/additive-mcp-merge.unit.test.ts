@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { mergeVscodeMcp } from "../../../../../src/contexts/tools/domain/formats/vscode-mcp-merge.js";
+import { mergeAdditiveMcp } from "../../../../../src/contexts/tools/domain/formats/additive-mcp-merge.js";
 
 const PLUGIN_SERVER = { command: "node", args: ["server.js"] };
 
-describe("mergeVscodeMcp", () => {
+describe("mergeAdditiveMcp", () => {
   describe("empty existing", () => {
     it("writes all incoming keys into a fresh servers object", () => {
-      const { mergedContent, collisions } = mergeVscodeMcp(
+      const { mergedContent, collisions } = mergeAdditiveMcp(
         null,
         { "aidd-dev-mcp": PLUGIN_SERVER },
         false
@@ -17,7 +17,7 @@ describe("mergeVscodeMcp", () => {
     });
 
     it("produces valid JSON with 2-space indent and trailing newline", () => {
-      const { mergedContent } = mergeVscodeMcp(null, { "aidd-dev-mcp": PLUGIN_SERVER }, false);
+      const { mergedContent } = mergeAdditiveMcp(null, { "aidd-dev-mcp": PLUGIN_SERVER }, false);
       expect(mergedContent).toBe(
         `${JSON.stringify({ servers: { "aidd-dev-mcp": PLUGIN_SERVER } }, null, 2)}\n`
       );
@@ -29,7 +29,7 @@ describe("mergeVscodeMcp", () => {
       const existing = JSON.stringify({
         servers: { "user-custom": { command: "myserver" } },
       });
-      const { mergedContent, collisions } = mergeVscodeMcp(
+      const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
         false
@@ -42,7 +42,11 @@ describe("mergeVscodeMcp", () => {
 
     it("preserves other top-level keys in the document", () => {
       const existing = JSON.stringify({ inputs: [], servers: {} });
-      const { mergedContent } = mergeVscodeMcp(existing, { "aidd-dev-mcp": PLUGIN_SERVER }, false);
+      const { mergedContent } = mergeAdditiveMcp(
+        existing,
+        { "aidd-dev-mcp": PLUGIN_SERVER },
+        false
+      );
       const parsed = JSON.parse(mergedContent) as { inputs: unknown[]; servers: unknown };
       expect(parsed.inputs).toEqual([]);
     });
@@ -53,7 +57,7 @@ describe("mergeVscodeMcp", () => {
       const existing = JSON.stringify({
         servers: { "aidd-personal": { command: "mine" } },
       });
-      const { mergedContent, collisions } = mergeVscodeMcp(
+      const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
         false
@@ -70,7 +74,7 @@ describe("mergeVscodeMcp", () => {
       const existing = JSON.stringify({
         servers: { "aidd-dev-mcp": { command: "old" } },
       });
-      const { mergedContent, collisions } = mergeVscodeMcp(
+      const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
         false
@@ -86,7 +90,7 @@ describe("mergeVscodeMcp", () => {
       const existing = JSON.stringify({
         servers: { "aidd-dev-mcp": { command: "old" } },
       });
-      const { mergedContent, collisions } = mergeVscodeMcp(
+      const { mergedContent, collisions } = mergeAdditiveMcp(
         existing,
         { "aidd-dev-mcp": PLUGIN_SERVER },
         true
@@ -99,12 +103,12 @@ describe("mergeVscodeMcp", () => {
 
   describe("idempotency (second run with force)", () => {
     it("produces byte-identical merged content when re-run with same input", () => {
-      const { mergedContent: firstRun } = mergeVscodeMcp(
+      const { mergedContent: firstRun } = mergeAdditiveMcp(
         null,
         { "aidd-dev-mcp": PLUGIN_SERVER },
         true
       );
-      const { mergedContent: secondRun } = mergeVscodeMcp(
+      const { mergedContent: secondRun } = mergeAdditiveMcp(
         firstRun,
         { "aidd-dev-mcp": PLUGIN_SERVER },
         true
@@ -116,7 +120,7 @@ describe("mergeVscodeMcp", () => {
   describe("insertion order", () => {
     it("preserves existing server key order and appends new keys", () => {
       const existing = JSON.stringify({ servers: { "a-server": {}, "b-server": {} } });
-      const { mergedContent } = mergeVscodeMcp(existing, { "c-server": PLUGIN_SERVER }, false);
+      const { mergedContent } = mergeAdditiveMcp(existing, { "c-server": PLUGIN_SERVER }, false);
       const parsed = JSON.parse(mergedContent) as { servers: Record<string, unknown> };
       const keys = Object.keys(parsed.servers);
       expect(keys).toEqual(["a-server", "b-server", "c-server"]);

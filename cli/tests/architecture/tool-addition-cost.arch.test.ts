@@ -128,8 +128,6 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
   { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
   { path: "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts", named: 2 },
   { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 2 },
-  { path: "src/contexts/tools/domain/formats/opencode-mcp-merge.ts", named: 4 },
-  { path: "src/contexts/tools/domain/formats/vscode-mcp-merge.ts", named: 1 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
   { path: "src/contexts/translate/domain/formats/plugin-root-token-rewrite.ts", named: 1 },
 ];

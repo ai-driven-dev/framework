@@ -11,8 +11,8 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
-import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
   buildClaudeStyleEntry,
   buildClaudeStyleMarketplace,
@@ -136,7 +136,7 @@ export function buildCursorFlatContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".cursor/mcp.json",
         merge: (existing, incoming, force) =>
-          mergeVscodeMcp(existing, incoming, force, "mcpServers"),
+          mergeAdditiveMcp(existing, incoming, force, "mcpServers"),
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.cursor/mcp.json`,
       },

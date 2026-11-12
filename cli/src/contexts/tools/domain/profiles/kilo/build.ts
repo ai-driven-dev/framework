@@ -10,7 +10,7 @@ import {
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
-import { buildOpencodeFlatConfig, toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
@@ -97,7 +97,7 @@ export function buildKiloFlatContract(): ToolBuildContract {
         const incoming = collectKiloMcp(builtPlugins, pluginMcp);
         const asset = assets.get("kilo.json");
         const base = typeof asset === "string" ? asset : JSON.stringify(asset);
-        const config = buildOpencodeFlatConfig(base, existing.get(configPath) ?? null, incoming);
+        const config = buildTypedMcpFlatConfig(base, existing.get(configPath) ?? null, incoming);
         return [{ path: configPath, content: config }];
       },
     },

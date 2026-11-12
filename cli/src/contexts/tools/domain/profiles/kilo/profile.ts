@@ -5,7 +5,7 @@ import {
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";

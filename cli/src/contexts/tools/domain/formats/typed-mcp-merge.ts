@@ -55,7 +55,7 @@ export function toTypedMcpSection(content: string): string {
   return JSON.stringify({ mcp }, null, 2);
 }
 
-interface OpencodeMcpSection {
+interface TypedMcpFile {
   mcp?: Record<string, unknown>;
 }
 
@@ -69,7 +69,7 @@ const MCP_COLLISION_REASON =
  * user-owned server is preserved, and an incoming server colliding with one is skipped and
  * returned as a collision. Both inputs must be JSON serialized with a two-space indent.
  */
-export function mergeOpencodeMcp(
+export function mergeTypedMcp(
   existingContent: string | null,
   incomingTransformed: string,
   previousEntriesForThisPlugin: ReadonlyMap<string, string>,
@@ -99,7 +99,7 @@ export function mergeOpencodeMcp(
  * omitted entirely when neither side contributes one, and malformed `existing` content throws
  * rather than being silently discarded.
  */
-export function buildOpencodeFlatConfig(
+export function buildTypedMcpFlatConfig(
   baseConfig: string,
   existing: string | null,
   incoming: Record<string, unknown>,
@@ -132,11 +132,11 @@ function arrayEntries(value: unknown): readonly unknown[] {
 
 /** Removes servers previously contributed by a plugin from opencode.json's mcp section. A key
  * absent from `entries` is left untouched. */
-export function unmergeOpencodeMcp(
+export function unmergeTypedMcp(
   existingContent: string,
   entries: ReadonlyMap<string, string>
 ): string {
-  const parsed = JSON.parse(stripJsonComments(existingContent)) as OpencodeMcpSection;
+  const parsed = JSON.parse(stripJsonComments(existingContent)) as TypedMcpFile;
   const mcp = { ...(parsed.mcp ?? {}) };
   for (const [name, digest] of entries) {
     if (!(name in mcp)) continue;
@@ -152,7 +152,7 @@ function parseExisting(content: string | null): {
 } {
   if (content === null) return { full: {}, mcp: {} };
   // opencode.json is user-owned and may be JSONC (comments / trailing commas).
-  const parsed = JSON.parse(stripJsonComments(content)) as OpencodeMcpSection;
+  const parsed = JSON.parse(stripJsonComments(content)) as TypedMcpFile;
   return {
     full: parsed as Record<string, unknown>,
     mcp: (parsed.mcp as Record<string, unknown>) ?? {},
@@ -160,7 +160,7 @@ function parseExisting(content: string | null): {
 }
 
 function parseIncoming(transformed: string): Record<string, unknown> {
-  const parsed = JSON.parse(transformed) as OpencodeMcpSection;
+  const parsed = JSON.parse(transformed) as TypedMcpFile;
   return (parsed.mcp as Record<string, unknown>) ?? {};
 }
 

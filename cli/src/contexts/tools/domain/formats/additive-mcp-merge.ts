@@ -7,7 +7,7 @@
  * and a user-owned server is always preserved. `serversKey` names the property holding the
  * map — `servers` for VS Code, `mcpServers` for Claude and Cursor.
  */
-export function mergeVscodeMcp(
+export function mergeAdditiveMcp(
   existing: string | null,
   incoming: Record<string, unknown>,
   force: boolean,

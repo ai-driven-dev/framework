@@ -15,7 +15,7 @@ import type {
   ToolBuildContract,
 } from "../../../contract/build-contract.js";
 import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks-descriptor.js";
-import { buildOpencodeFlatConfig, toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
@@ -85,7 +85,7 @@ function emitOpencodeConfig({
   const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
   const config = {
     path: configPath,
-    content: buildOpencodeFlatConfig(base, existing.get(configPath) ?? null, incoming),
+    content: buildTypedMcpFlatConfig(base, existing.get(configPath) ?? null, incoming),
   };
   const runsHooks = builtPlugins.some((plugin) =>
     pluginLoaders(plugin).some((loader) => present.has(loader))

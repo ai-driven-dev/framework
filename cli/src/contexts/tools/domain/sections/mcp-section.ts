@@ -1,10 +1,10 @@
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
 import {
-  buildOpencodeFlatConfig,
-  mergeOpencodeMcp,
-  unmergeOpencodeMcp,
-} from "../formats/opencode-mcp-merge.js";
+  buildTypedMcpFlatConfig,
+  mergeTypedMcp,
+  unmergeTypedMcp,
+} from "../formats/typed-mcp-merge.js";
 
 /** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
  * first tier that has any file present, two present files make `conflict` throw, one is the answer.
@@ -123,13 +123,13 @@ export class McpConfigPart {
     incomingTransformed: string,
     previousEntries: ReadonlyMap<string, string>,
     hasher: Hasher
-  ): ReturnType<typeof mergeOpencodeMcp> {
-    return mergeOpencodeMcp(existing, incomingTransformed, previousEntries, hasher);
+  ): ReturnType<typeof mergeTypedMcp> {
+    return mergeTypedMcp(existing, incomingTransformed, previousEntries, hasher);
   }
 
   /** Removes the servers a plugin contributed, refusing one edited since. */
   removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string {
-    return unmergeOpencodeMcp(existing, entries);
+    return unmergeTypedMcp(existing, entries);
   }
 
   /** The tool's framework-owned config merged over what a person already keeps in the file. */
@@ -139,7 +139,7 @@ export class McpConfigPart {
     incoming: Record<string, unknown>,
     mergedKeys: readonly string[] = []
   ): string {
-    return buildOpencodeFlatConfig(baseConfig, existing, incoming, mergedKeys);
+    return buildTypedMcpFlatConfig(baseConfig, existing, incoming, mergedKeys);
   }
 
   merge(existing: string, incoming: string): string {

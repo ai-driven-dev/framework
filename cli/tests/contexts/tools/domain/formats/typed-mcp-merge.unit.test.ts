@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildOpencodeFlatConfig,
-  mergeOpencodeMcp,
-  unmergeOpencodeMcp,
-} from "../../../../../src/contexts/tools/domain/formats/opencode-mcp-merge.js";
+  buildTypedMcpFlatConfig,
+  mergeTypedMcp,
+  unmergeTypedMcp,
+} from "../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 
 const hasher = new DeterministicHasher();
@@ -20,9 +20,9 @@ function makeExisting(servers: Record<string, unknown>): string {
   return JSON.stringify({ mcp: servers }, null, 2);
 }
 
-describe("mergeOpencodeMcp", () => {
+describe("mergeTypedMcp", () => {
   it("merges into empty target", () => {
-    const { mergedContent, contributedEntries, collisions } = mergeOpencodeMcp(
+    const { mergedContent, contributedEntries, collisions } = mergeTypedMcp(
       null,
       makeIncoming({ "my-server": LOCAL_SERVER }),
       new Map(),
@@ -35,7 +35,7 @@ describe("mergeOpencodeMcp", () => {
   });
 
   it("preserves user-added servers not in incoming", () => {
-    const { mergedContent } = mergeOpencodeMcp(
+    const { mergedContent } = mergeTypedMcp(
       makeExisting({ "user-server": REMOTE_SERVER }),
       makeIncoming({ "plugin-server": LOCAL_SERVER }),
       new Map(),
@@ -49,18 +49,18 @@ describe("mergeOpencodeMcp", () => {
   it("is idempotent: second merge with same version produces identical output", () => {
     const incoming = makeIncoming({ "plugin-server": LOCAL_SERVER });
     const prev = new Map<string, string>();
-    const first = mergeOpencodeMcp(null, incoming, prev, hasher);
+    const first = mergeTypedMcp(null, incoming, prev, hasher);
     const secondPrev = first.contributedEntries;
-    const second = mergeOpencodeMcp(first.mergedContent, incoming, secondPrev, hasher);
+    const second = mergeTypedMcp(first.mergedContent, incoming, secondPrev, hasher);
     expect(second.mergedContent).toBe(first.mergedContent);
     expect([...second.contributedEntries.keys()]).toEqual([...first.contributedEntries.keys()]);
   });
 
   it("replace path: drops orphaned server from v1, adds new server from v2", () => {
     const incomingV1 = makeIncoming({ "server-a": LOCAL_SERVER, "server-b": REMOTE_SERVER });
-    const v1 = mergeOpencodeMcp(null, incomingV1, new Map(), hasher);
+    const v1 = mergeTypedMcp(null, incomingV1, new Map(), hasher);
     const incomingV2 = makeIncoming({ "server-a": LOCAL_SERVER, "server-c": DISABLED_SERVER });
-    const v2 = mergeOpencodeMcp(v1.mergedContent, incomingV2, v1.contributedEntries, hasher);
+    const v2 = mergeTypedMcp(v1.mergedContent, incomingV2, v1.contributedEntries, hasher);
     const parsed = JSON.parse(v2.mergedContent) as { mcp: Record<string, unknown> };
     expect(parsed.mcp).toHaveProperty("server-a");
     expect(parsed.mcp).toHaveProperty("server-c");
@@ -69,7 +69,7 @@ describe("mergeOpencodeMcp", () => {
 
   it("skips incoming server that collides with user-owned key (not in previous)", () => {
     const existing = makeExisting({ "user-server": REMOTE_SERVER });
-    const { collisions, contributedEntries } = mergeOpencodeMcp(
+    const { collisions, contributedEntries } = mergeTypedMcp(
       existing,
       makeIncoming({ "user-server": LOCAL_SERVER }),
       new Map(),
@@ -82,9 +82,9 @@ describe("mergeOpencodeMcp", () => {
 
   it("replaces own server that was previously contributed (no collision)", () => {
     const incoming = makeIncoming({ "plugin-server": LOCAL_SERVER });
-    const first = mergeOpencodeMcp(null, incoming, new Map(), hasher);
+    const first = mergeTypedMcp(null, incoming, new Map(), hasher);
     const incomingV2 = makeIncoming({ "plugin-server": DISABLED_SERVER });
-    const { collisions, mergedContent } = mergeOpencodeMcp(
+    const { collisions, mergedContent } = mergeTypedMcp(
       first.mergedContent,
       incomingV2,
       first.contributedEntries,
@@ -96,14 +96,14 @@ describe("mergeOpencodeMcp", () => {
   });
 
   it("treats a user-edited previously contributed server as a collision on reinstall", () => {
-    const first = mergeOpencodeMcp(
+    const first = mergeTypedMcp(
       null,
       makeIncoming({ "plugin-server": LOCAL_SERVER }),
       new Map(),
       hasher
     );
     const edited = makeExisting({ "plugin-server": REMOTE_SERVER });
-    const next = mergeOpencodeMcp(
+    const next = mergeTypedMcp(
       edited,
       makeIncoming({ "plugin-server": DISABLED_SERVER }),
       first.contributedEntries,
@@ -117,7 +117,7 @@ describe("mergeOpencodeMcp", () => {
   });
 
   it("preserves disabled state (enabled: false) from incoming", () => {
-    const { mergedContent } = mergeOpencodeMcp(
+    const { mergedContent } = mergeTypedMcp(
       null,
       makeIncoming({ "off-server": DISABLED_SERVER }),
       new Map(),
@@ -128,7 +128,7 @@ describe("mergeOpencodeMcp", () => {
   });
 
   it("returns hashes in contributedEntries for each contributed server", () => {
-    const { contributedEntries } = mergeOpencodeMcp(
+    const { contributedEntries } = mergeTypedMcp(
       null,
       makeIncoming({ alpha: LOCAL_SERVER, beta: REMOTE_SERVER }),
       new Map(),
@@ -145,7 +145,7 @@ describe("mergeOpencodeMcp", () => {
       null,
       2
     );
-    const { mergedContent } = mergeOpencodeMcp(
+    const { mergedContent } = mergeTypedMcp(
       frameworkDefault,
       makeIncoming({ "my-server": LOCAL_SERVER }),
       new Map(),
@@ -180,7 +180,7 @@ describe("tolerates a JSONC user-owned opencode.json", () => {
     const incoming = { "aidd-context__server": LOCAL_SERVER };
     let merged = "";
     expect(() => {
-      merged = buildOpencodeFlatConfig(base, JSONC_EXISTING, incoming);
+      merged = buildTypedMcpFlatConfig(base, JSONC_EXISTING, incoming);
     }).not.toThrow();
     const parsed = JSON.parse(merged) as {
       $schema: string;
@@ -195,18 +195,18 @@ describe("tolerates a JSONC user-owned opencode.json", () => {
 
   it("unmerges from JSONC content without throwing", () => {
     const entries = new Map([["aidd-context__server", "hash"]]);
-    expect(() => unmergeOpencodeMcp(JSONC_EXISTING, entries)).not.toThrow();
+    expect(() => unmergeTypedMcp(JSONC_EXISTING, entries)).not.toThrow();
   });
 });
 
-describe("buildOpencodeFlatConfig", () => {
+describe("buildTypedMcpFlatConfig", () => {
   const BASE = JSON.stringify({
     $schema: "https://opencode.ai/config.json",
     instructions: [".opencode/rules/**/*.md"],
   });
 
   it("emits the base ($schema + instructions) with no mcp key when there are zero servers", () => {
-    const config = JSON.parse(buildOpencodeFlatConfig(BASE, null, {})) as Record<string, unknown>;
+    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, null, {})) as Record<string, unknown>;
     expect(config).toEqual({
       $schema: "https://opencode.ai/config.json",
       instructions: [".opencode/rules/**/*.md"],
@@ -216,7 +216,7 @@ describe("buildOpencodeFlatConfig", () => {
 
   it("includes the mcp key only when servers are contributed", () => {
     const config = JSON.parse(
-      buildOpencodeFlatConfig(BASE, null, { "aidd-dev-server": LOCAL_SERVER })
+      buildTypedMcpFlatConfig(BASE, null, { "aidd-dev-server": LOCAL_SERVER })
     ) as { $schema: string; instructions: string[]; mcp: Record<string, unknown> };
     expect(config.$schema).toBe("https://opencode.ai/config.json");
     expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
@@ -230,7 +230,7 @@ describe("buildOpencodeFlatConfig", () => {
       theme: "dark",
       mcp: { user: REMOTE_SERVER },
     });
-    const config = JSON.parse(buildOpencodeFlatConfig(BASE, existing, {})) as {
+    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, existing, {})) as {
       $schema: string;
       instructions: string[];
       theme: string;
@@ -246,18 +246,18 @@ describe("buildOpencodeFlatConfig", () => {
     const existing = JSON.stringify({
       instructions: ["user.md", "user.md", ".opencode/rules/**/*.md"],
     });
-    const config = JSON.parse(buildOpencodeFlatConfig(BASE, existing, {}, ["instructions"])) as {
+    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, existing, {}, ["instructions"])) as {
       instructions: string[];
     };
     expect(config.instructions).toEqual(["user.md", "user.md", ".opencode/rules/**/*.md"]);
   });
 });
 
-describe("unmergeOpencodeMcp", () => {
+describe("unmergeTypedMcp", () => {
   it("removes only the tracked entries, preserving other servers", () => {
     const existing = makeExisting({ plugin: LOCAL_SERVER, user: REMOTE_SERVER });
     const entries = new Map([["plugin", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]);
-    const result = unmergeOpencodeMcp(existing, entries);
+    const result = unmergeTypedMcp(existing, entries);
     const parsed = JSON.parse(result) as { mcp: Record<string, unknown> };
     expect(parsed.mcp).not.toHaveProperty("plugin");
     expect(parsed.mcp.user).toEqual(REMOTE_SERVER);
@@ -265,7 +265,7 @@ describe("unmergeOpencodeMcp", () => {
 
   it("is a no-op when entries map is empty", () => {
     const existing = makeExisting({ server: LOCAL_SERVER });
-    const result = unmergeOpencodeMcp(existing, new Map());
+    const result = unmergeTypedMcp(existing, new Map());
     const parsed = JSON.parse(result) as { mcp: Record<string, unknown> };
     expect(parsed.mcp.server).toEqual(LOCAL_SERVER);
   });
@@ -273,8 +273,8 @@ describe("unmergeOpencodeMcp", () => {
   it("does not fail when a tracked key is absent from existing", () => {
     const existing = makeExisting({ server: LOCAL_SERVER });
     const entries = new Map([["ghost-server", "oldhash"]]);
-    expect(() => unmergeOpencodeMcp(existing, entries)).not.toThrow();
-    const parsed = JSON.parse(unmergeOpencodeMcp(existing, entries)) as {
+    expect(() => unmergeTypedMcp(existing, entries)).not.toThrow();
+    const parsed = JSON.parse(unmergeTypedMcp(existing, entries)) as {
       mcp: Record<string, unknown>;
     };
     expect(parsed.mcp.server).toEqual(LOCAL_SERVER);
@@ -282,14 +282,14 @@ describe("unmergeOpencodeMcp", () => {
 
   it("refuses to unmerge a tracked server changed by the user", () => {
     const entries = new Map([["plugin", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]);
-    expect(() => unmergeOpencodeMcp(makeExisting({ plugin: REMOTE_SERVER }), entries)).toThrow(
+    expect(() => unmergeTypedMcp(makeExisting({ plugin: REMOTE_SERVER }), entries)).toThrow(
       /edited.*plugin|plugin.*edited/
     );
   });
 
   it("refuses an unproven legacy digest before removing a present server", () => {
     expect(() =>
-      unmergeOpencodeMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", ""]]))
+      unmergeTypedMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", ""]]))
     ).toThrow(/unproven.*plugin|plugin.*unproven/);
   });
 });

@@ -3,7 +3,7 @@ import type {
   ConfigArtifact,
   ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
-import { toTypedMcpSection } from "../../../../../../src/contexts/tools/domain/formats/opencode-mcp-merge.js";
+import { toTypedMcpSection } from "../../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
 import { buildOpencodeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.js";
 

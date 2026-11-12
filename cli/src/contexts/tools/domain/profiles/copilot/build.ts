@@ -11,8 +11,8 @@ import {
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
-import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
   resolveDescription,
   resolveVersion,
@@ -153,7 +153,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => FLAT_VSCODE_MCP_PATH,
-        merge: (existing, incoming, force) => mergeVscodeMcp(existing, incoming, force),
+        merge: (existing, incoming, force) => mergeAdditiveMcp(existing, incoming, force),
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },
