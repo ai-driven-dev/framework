@@ -10,7 +10,7 @@ import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copil
 import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
 import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
@@ -397,7 +397,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
 }
 
 describe("the hook files every route writes and removes, per tool", () => {
-  for (const toolId of AI_TOOL_IDS) {
+  for (const toolId of catalogOf().aiIdsInCanonicalOrder()) {
     describe(toolId, () => {
       for (const route of ROUTES) {
         it(`${route} leaves exactly the pinned hook files`, async () => {
