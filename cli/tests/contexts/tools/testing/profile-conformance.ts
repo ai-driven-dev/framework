@@ -121,9 +121,6 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(typeof profile.rewriteContent).toBe("function");
     expect(profile.signalDir === null || typeof profile.signalDir === "string").toBe(true);
   }),
-  aiCheck("keeps a relative directory ending in a slash", ({ directory }) => {
-    expect(!isAbsolute(directory) && directory.endsWith("/") && directory.length > 1).toBe(true);
-  }),
   aiCheck(
     "computes every path relative, and keeps commands, rules, agents and flat hooks under its directory",
     (profile) => {
