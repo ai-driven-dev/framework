@@ -1,12 +1,13 @@
 import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../kernel/file.js";
+import type { InstallationFile, UserFileOverrides } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { UserFileOverridesCapability } from "../../../tools/domain/capabilities/plugins-capability.js";
 import {
   frameworkBuildModeFor,
   getToolConfig,
@@ -16,6 +17,7 @@ import {
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
+import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
@@ -69,24 +71,38 @@ export class UserPluginFileUpdater {
   ): Promise<PlannedUserPluginFileUpdate | null> {
     const dist = await this.loader.loadLatest(plugin, projectRoot);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
-    const { files, componentPaths } = await this.materializeFiles(
-      dist,
-      toolId,
-      plugin,
-      projectRoot
-    );
+    const materialized = await this.materializeFiles(dist, toolId, plugin, projectRoot);
     const home = (this.builtDeps?.homedir ?? nodeHomedir)();
-    const present = await withoutMissingFiles(this.fs, plugin, toolId, home);
+    let files = materialized.files;
+    let pluginForSafety = plugin;
+    let userFileOverrides = plugin.userFileOverrides;
+    const overridesCapability = resolvePluginsCapability(toolId)?.userFileOverrides;
+    if (overridesCapability !== null && overridesCapability !== undefined) {
+      overridesCapability.validate(userFileOverrides, plugin.name);
+      await this.assertWritable(plugin, toolId, files, home);
+      const migration = await this.captureUserFileOverrides(
+        plugin,
+        toolId,
+        files,
+        home,
+        overridesCapability,
+        userFileOverrides
+      );
+      pluginForSafety = plugin.withFiles(migration.safeFileHashes);
+      userFileOverrides = migration.overrides;
+      files = overridesCapability.apply(files, userFileOverrides, this.hasher);
+    }
+    const present = await withoutMissingFiles(this.fs, pluginForSafety, toolId, home);
     const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, present, toolId, home);
     if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
       );
     }
-    await this.assertWritable(plugin, toolId, files, home);
+    await this.assertWritable(pluginForSafety, toolId, files, home);
     const baseDir = resolveBaseDirFromRecord("user", toolId, projectRoot, () => home);
     return {
-      plugin,
+      plugin: pluginForSafety,
       toolId,
       home,
       baseDir,
@@ -97,9 +113,11 @@ export class UserPluginFileUpdater {
         plugin.source,
         files,
         "user",
-        componentPaths,
+        materialized.componentPaths,
         plugin.marketplace
-      ).withDependents(plugin.dependents),
+      )
+        .withDependents(plugin.dependents)
+        .withUserFileOverrides(userFileOverrides),
     };
   }
 
@@ -164,6 +182,71 @@ export class UserPluginFileUpdater {
         `${toolId}: '${plugin.name}' has untracked existing file '${file.relativePath}'; update refused without overwriting user content or changing its machine claim.`
       );
     }
+  }
+
+  private async captureUserFileOverrides(
+    plugin: InstalledPlugin,
+    toolId: AiToolId,
+    files: readonly InstallationFile[],
+    home: string,
+    capability: UserFileOverridesCapability,
+    existingOverrides: UserFileOverrides
+  ): Promise<{
+    overrides: UserFileOverrides;
+    safeFileHashes: ReadonlyMap<string, string>;
+  }> {
+    const safeFileHashes = new Map(plugin.files);
+    const distributedPaths = new Set(files.map((file) => file.relativePath));
+    const overrides: Record<string, Readonly<Record<string, string>>> = {};
+    for (const [path, settings] of Object.entries(existingOverrides)) {
+      if (capability.canPreserve(path, plugin.name) && distributedPaths.has(path)) {
+        overrides[path] = settings;
+      } else if (!distributedPaths.has(path)) {
+        // A removed customized file becomes user-owned. Leave it on disk and drop our claim.
+        safeFileHashes.delete(path);
+      }
+    }
+    const baseDir = globalFilesOf(toolId)?.dir(home);
+    if (baseDir === undefined) return { overrides, safeFileHashes };
+    const resolvedBoundary = await this.fs.realpath(baseDir);
+
+    for (const file of files) {
+      const path = file.relativePath;
+      if (!capability.canPreserve(path, plugin.name) || !plugin.files.has(path)) continue;
+      const previousHash = plugin.files.get(path);
+      if (previousHash === undefined) continue;
+      const target = join(baseDir, path);
+      if (!(await this.fs.fileExists(target))) continue;
+      const resolvedTarget = await this.fs.realpath(target);
+      if (!isStrictlyWithinUserScope(resolvedTarget, resolvedBoundary)) continue;
+      const currentHash = await this.fs.readFileHash(target);
+      if (currentHash.value === plugin.files.get(path)) {
+        // Exact owned bytes can prove a prior override was removed from the file.
+        const existing = existingOverrides[path];
+        if (existing !== undefined) {
+          const installed = await this.fs.readFile(target);
+          const currentOverride = capability.capture(
+            file.content,
+            installed,
+            previousHash,
+            this.hasher
+          );
+          if (
+            currentOverride !== null &&
+            JSON.stringify(currentOverride) !== JSON.stringify(existing)
+          )
+            delete overrides[path];
+        }
+        continue;
+      }
+      const installed = await this.fs.readFile(target);
+      const override = capability.capture(file.content, installed, previousHash, this.hasher);
+      if (override === null) continue;
+      if (Object.keys(override).length === 0) delete overrides[path];
+      else overrides[path] = override;
+      safeFileHashes.set(path, currentHash.value);
+    }
+    return { overrides, safeFileHashes };
   }
 
   private async materializeFiles(

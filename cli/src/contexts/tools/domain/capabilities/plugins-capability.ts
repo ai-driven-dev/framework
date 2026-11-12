@@ -1,5 +1,11 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
+import type {
+  InstallationFile,
+  UserFileOverrides,
+  UserFileSettingOverrides,
+} from "../../../../kernel/file.js";
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 
@@ -7,6 +13,23 @@ export type PluginsMode = "native" | "flat" | "unsupported";
 
 /** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
 export type HookScript = (pluginPath: string, content: string) => string;
+
+/** A tool-specific adapter for preserving safe settings in regenerated user files. */
+export interface UserFileOverridesCapability {
+  canPreserve(relativePath: string, pluginName: string): boolean;
+  validate(overrides: UserFileOverrides, pluginName: string): void;
+  capture(
+    generated: string,
+    installed: string,
+    previousHash: string,
+    hasher: Hasher
+  ): UserFileSettingOverrides | null;
+  apply(
+    files: readonly InstallationFile[],
+    overrides: UserFileOverrides,
+    hasher: Hasher
+  ): InstallationFile[];
+}
 
 const AS_SHIPPED: HookScript = (_pluginPath, content) => content;
 
@@ -244,7 +267,9 @@ type PluginsParams = (
   | FlatPluginsParams
   | UnsupportedPluginsParams
 ) &
-  GlobalFilesParams;
+  GlobalFilesParams & {
+    userFileOverrides?: UserFileOverridesCapability;
+  };
 
 export class PluginsCapability {
   readonly mode: PluginsMode;
@@ -282,12 +307,14 @@ export class PluginsCapability {
   readonly installScope: "project" | "user";
   /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
   readonly globalFiles: GlobalFiles | null;
+  readonly userFileOverrides: UserFileOverridesCapability | null;
 
   private readonly _userPluginsDir?: (homedir: string) => string;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
     this.globalFiles = params.globalFiles ?? null;
+    this.userFileOverrides = params.userFileOverrides ?? null;
     this.translationMode = PluginsCapability.resolveTranslationMode(params);
     this.installScope = PluginsCapability.resolveInstallScope(params);
     PluginsCapability.validateUserScope(params);

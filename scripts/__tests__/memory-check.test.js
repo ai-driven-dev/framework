@@ -1173,6 +1173,23 @@ test("plan, sheet check: a Q line may cite the word none, any other line citing 
   assert.match(other.stdout, /R2 source not found: none/u);
 });
 
+test("plan, sheet check: source user is reserved for R and D facts; unknown sources still fail", () => {
+  assert.equal(factsRun(sheet(GOOD, "- R2 | browsing.md > Tool setup | Playwright MCP is user-confirmed | user |")).status, 0);
+  const q = factsRun(sheet(GOOD, "- Q1 | browsing.md > Tool setup | which browser? | user |"));
+  assert.equal(q.status, 1);
+  assert.match(q.stdout, /source "user" is reserved for R and D/u);
+
+  const unknown = factsRun(sheet(GOOD, "- R2 | browsing.md > Tool setup | a fact | user-confirmed |"));
+  assert.equal(unknown.status, 1);
+  assert.match(unknown.stdout, /source not found: user-confirmed/u);
+
+  const remove = factsRun(
+    sheet(GOOD, '- D2 | testing.md > Run | remove "- obsolete command" because the user requested it | user |'),
+    { "package.json": "{}\n", "aidd_docs/memory/testing.md": "# Testing\n\n- obsolete command\n" },
+  );
+  assert.equal(remove.status, 0, remove.stdout + remove.stderr);
+});
+
 // Nothing reads a convention set aside for a rule, so the sheet has no block for one.
 test("plan, sheet check: a T line is no fact id, and every line names a memory file", () => {
   const ruled = factsRun(sheet(GOOD, "- T1 | testing.md > Run | wrap every adapter call | package.json |"));

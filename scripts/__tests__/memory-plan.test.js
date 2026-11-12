@@ -49,12 +49,26 @@ const PLAN = [
   "Questions",
   "  Q1  Which gate runs before a push?",
   "",
+  "Changes needing approval",
+  '  3. change  architecture.md: "- TypeScript everywhere. `backend/`: Express on Node."',
+  '     "- TypeScript everywhere. `backend/`: Express on Node."',
+  '     → "- TypeScript everywhere. `backend/`: Hono on Node."',
+  "     at aidd_docs/memory/architecture.md:5",
+  '  4. change  codebase-map.md: "Three workspace packages in total."',
+  '     "Three workspace packages in total."',
+  '     → "Four workspace packages in total."',
+  "     at aidd_docs/memory/codebase-map.md:5",
+  '  5. remove  codebase-map.md: "- `legacy/` holds the old door."',
+  '     "- `legacy/` holds the old door."',
+  "     why: the folder is gone",
+  "     at aidd_docs/memory/codebase-map.md:10",
+  "",
   "Tools to wire",
   "  [x] claude  [ ] codex  [ ] cursor  [ ] opencode  [ ] antigravity  [ ] copilot",
   "",
   `Details: ${SHEET.replace("facts.md", "plan.md")}`,
   "",
-  'Say ok, or "not <n>" or "not <n>-<m>" with the numbers in the details, or "Q1: …".',
+  'Reply ok, no, or "not <n>" or "not <n>-<m>" with the numbers in the details, or answer a question as "Q1: …".',
   "",
 ].join("\n");
 
@@ -141,17 +155,111 @@ test("answer: a range declines every item in it", () => {
   }, REFRESH, FULL);
 });
 
-test("plan: a setup has no Since line, an empty section is left out, and no question means the example names only a number", () => {
+test("plan: a setup with only default additions asks no reply", () => {
   const setup = ["# Facts: setup", "", "- Capabilities: C1 api", "", "## Read", "", "- R1 | testing.md > Run | `pnpm test` runs the unit layer | package.json |", ""].join("\n");
   withProject((root) => {
     const out = engine(root, "plan", SHEET).stdout;
     assert.doesNotMatch(out, /Changes since/u);
     assert.doesNotMatch(out, /Will add|Will change|Will delete|Questions|none/u);
     assert.match(out, /^ {2}\[ \] claude {2}\[ \] codex/mu, "no tool given ticks none");
-    assert.match(out, /^Say ok, or "not <n>" or "not <n>-<m>" with the numbers in the details\.$/mu);
+    assert.doesNotMatch(out, /Say ok|Reply ok|answer a question/u);
     assert.match(out, /^Memory plan: 1 change$/mu);
     assert.match(detailOf(root), /^ {2}1\. write {3}testing\.md \(new\): Run$/mu);
   }, setup, {});
+});
+
+test("answer: a vague go-ahead is not approval, but ok to the shown plan approves listed removals", () => {
+  withProject((root) => {
+    const plan = engine(root, "plan", SHEET);
+    assert.equal(plan.status, 0, plan.stdout + plan.stderr);
+    assert.match(plan.stdout, /Reply ok/u);
+
+    const vague = engine(root, "answer", SHEET, "go ahead");
+    assert.equal(vague.status, 1);
+    assert.deepEqual(["D1", "D2", "D3"].map((id) => answerOf(sheetOf(root), id)), ["", "", ""]);
+
+    const explicit = engine(root, "answer", SHEET, "ok");
+    assert.equal(explicit.status, 0, explicit.stderr);
+    assert.deepEqual(["D1", "D2", "D3"].map((id) => answerOf(sheetOf(root), id)), ["yes", "yes", "yes"]);
+  });
+});
+
+test("plan asks no repeat approval for an exact earlier destructive approval", () => {
+  const approved = [
+    "# Facts: refresh",
+    "",
+    "- Capabilities: C1 core",
+    "",
+    "## Read",
+    "",
+    "- R1 | codebase-map.md > Entry points | Keep the server entry point. | package.json |",
+    "",
+    "## Inferred",
+    "",
+    '- D1 | codebase-map.md > Entry points | remove "- `legacy/` holds the old door." because the user explicitly requested it | user | yes',
+    "",
+  ].join("\n");
+  withProject((root) => {
+    const plan = engine(root, "plan", SHEET);
+    assert.equal(plan.status, 0, plan.stdout + plan.stderr);
+    assert.doesNotMatch(plan.stdout, /Reply ok/u);
+    assert.equal(answerOf(sheetOf(root), "D1"), "yes");
+  }, approved, FULL);
+});
+
+test("plan shows full destructive lines before one ok can approve similar deletions", () => {
+  const prefix = "- The legacy browser integration is selected for the same long-running pre-release deployment target named ";
+  const first = `${prefix}\`shared-environment-name-0001\`.`;
+  const second = `${prefix}\`shared-environment-name-0002\`.`;
+  const addition = "A non-destructive testing fact omitted from the short summary.";
+  const sheet = [
+    "# Facts: refresh",
+    "",
+    "- Capabilities: C1 core",
+    "",
+    "## Read",
+    "",
+    `- R1 | testing.md > Run | ${addition} | package.json |`,
+    "",
+    "## Inferred",
+    "",
+    `- D1 | testing.md > Run | remove \"${first}\" because the browser profile changed | package.json |`,
+    `- D2 | testing.md > Run | remove \"${second}\" because the browser profile changed | package.json |`,
+    "",
+  ].join("\n");
+  const bank = { ...FULL, "testing.md": `# Testing\n\n${first}\n${second}\n` };
+  withProject((root) => {
+    const plan = engine(root, "plan", SHEET, "--tools", "claude");
+    assert.equal(plan.status, 0, plan.stdout + plan.stderr);
+    assert.match(plan.stdout, /Changes needing approval/u);
+    assert.ok(plan.stdout.includes(`\"${first}\"`), "first full line was hidden behind its truncated prefix");
+    assert.ok(plan.stdout.includes(`\"${second}\"`), "second full line was hidden behind its truncated prefix");
+    assert.equal(plan.stdout.includes(addition), false, "the summary repeats a non-destructive detail");
+  }, sheet, bank);
+});
+
+test("plan: an answered Q is not asked again", () => {
+  const answered = REFRESH.replace("| none |\n", "| none | Playwright MCP, selected by the user.\n");
+  withProject((root) => {
+    const run = engine(root, "plan", SHEET);
+    assert.equal(run.status, 0, run.stdout + run.stderr);
+    assert.doesNotMatch(run.stdout, /Questions/u);
+    assert.doesNotMatch(detailOf(root), /Which gate runs before a push/u);
+  }, answered, FULL);
+});
+
+test("a user-sourced removal remains unanswered until an exact plan reply", () => {
+  const fromUser = REFRESH.replace("the folder is gone | package.json |", "the user requested it | user |");
+  withProject((root) => {
+    const plan = engine(root, "plan", SHEET);
+    assert.equal(plan.status, 0, plan.stdout + plan.stderr);
+    assert.equal(answerOf(sheetOf(root), "D3"), "", "source user approved the removal by itself");
+    const vague = engine(root, "answer", SHEET, "go ahead");
+    assert.equal(vague.status, 1, "a general go-ahead was accepted as a removal approval");
+    assert.equal(answerOf(sheetOf(root), "D3"), "");
+    assert.equal(engine(root, "answer", SHEET, "not 5").status, 0);
+    assert.equal(answerOf(sheetOf(root), "D3"), "no");
+  }, fromUser, FULL);
 });
 
 // An always file is written whatever the sheet holds, so the plan names it, with no number to decline.
@@ -206,15 +314,16 @@ test("answer: no marks every item no; all but N is not N", () => {
   withProject((root) => {
     assert.equal(engine(root, "answer", SHEET, "no").status, 0);
     for (const id of ["R1", "R2", "R3", "D1", "D2", "D3"]) assert.equal(answerOf(sheetOf(root), id), "no", id);
+    fs.writeFileSync(path.join(root, SHEET), REFRESH);
     assert.equal(engine(root, "answer", SHEET, "all but 2, 5").status, 0);
     const text = sheetOf(root);
-    assert.deepEqual(["R1", "D3", "D1"].map((id) => answerOf(text, id)), ["no", "no", "yes"]);
+    assert.deepEqual(["R2", "D3", "D1"].map((id) => answerOf(text, id)), ["yes", "no", "yes"]);
   });
 });
 
 test("answer: any other reply, or a number no item has, exits 1 and leaves the sheet as it was", () => {
   withProject((root) => {
-    for (const reply of ["change 2 to five packages", "not 9", "", "maybe"]) {
+    for (const reply of ["change 2 to five packages", "not 9", "", "maybe", "go ahead"]) {
       const run = engine(root, "answer", SHEET, reply);
       assert.equal(run.status, 1, reply);
       assert.equal(sheetOf(root), REFRESH, reply);

@@ -31,6 +31,8 @@ export interface SetupFlowParams {
    * the shared framework source and native activation machine-wide instead, writing
    * nothing under `projectRoot` — see `architecture.md`'s user-scope section. */
   scope?: SetupScope;
+  /** In machine-scope reloads, preserve existing native plugin enablement choices. */
+  preservePluginState?: boolean;
 }
 
 export class SetupFlow {
@@ -44,6 +46,7 @@ export class SetupFlow {
   readonly force: boolean;
   readonly registerDefaultMarketplace: boolean;
   readonly scope: SetupScope;
+  readonly preservePluginState: boolean;
 
   constructor(params: SetupFlowParams) {
     this.validateToolIds(params.aiTools ?? [], params.ideTools ?? []);
@@ -64,6 +67,7 @@ export class SetupFlow {
     this.force = params.force ?? false;
     this.registerDefaultMarketplace = params.registerDefaultMarketplace ?? true;
     this.scope = params.scope ?? "project";
+    this.preservePluginState = params.preservePluginState ?? false;
   }
 
   private validateToolIds(aiTools: readonly ToolId[], ideTools: readonly ToolId[]): void {

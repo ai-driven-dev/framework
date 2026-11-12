@@ -36,6 +36,7 @@ interface SetupCmdOptions {
   defaultMarketplace?: boolean;
   scope?: string;
   global?: boolean;
+  preservePluginState?: boolean;
 }
 
 export function parseSourceFlag(
@@ -142,6 +143,10 @@ export function registerSetupCommand(program: Command): void {
       "install for every project on this machine instead of into this project; see the " +
         "requirements below"
     )
+    .option(
+      "--preserve-plugin-state",
+      "keep explicitly disabled user plugins disabled during reload"
+    )
     .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
     .addHelpText("after", globalSetupHelp)
     .action(async (cmdOptions: SetupCmdOptions) => {
@@ -150,6 +155,10 @@ export function registerSetupCommand(program: Command): void {
 
       const source = parseSourceFlag(cmdOptions, output);
       const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
+      if (cmdOptions.preservePluginState === true && scope !== "user") {
+        output.error("--preserve-plugin-state requires --global");
+        return;
+      }
       const toolIds = parseToolIds(cmdOptions, errorHandler);
       if (toolIds === null) return;
 
@@ -160,7 +169,8 @@ export function registerSetupCommand(program: Command): void {
         cmdOptions.ide ||
         cmdOptions.plugins ||
         cmdOptions.yes ||
-        cmdOptions.global
+        cmdOptions.global ||
+        cmdOptions.preservePluginState
       );
       const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
@@ -182,6 +192,7 @@ export function registerSetupCommand(program: Command): void {
           force: false,
           registerDefaultMarketplace,
           scope,
+          preservePluginState: cmdOptions.preservePluginState,
         });
 
         if (interactive) printWelcomeBanner(output);

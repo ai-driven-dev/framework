@@ -53,43 +53,55 @@ elif command -v agent >/dev/null 2>&1 && agent --help 2>/dev/null | grep 'Start 
 fi
 
 aidd_cli() {
-  if [ -f "$FW/cli/dist/cli.js" ]; then
+  if [ -f "$FW/cli/package.json" ]; then
+    command -v pnpm >/dev/null 2>&1 || {
+      echo "pnpm is required to rebuild the checkout CLI; refusing to use a possibly stale dist." >&2
+      return 1
+    }
+    (cd "$FW/cli" && pnpm build >/dev/null) || {
+      echo "Could not build the checkout CLI; refusing to use a published fallback." >&2
+      return 1
+    }
+    if [ ! -f "$FW/cli/dist/cli.js" ]; then
+      echo "The checkout CLI build did not produce cli/dist/cli.js." >&2
+      return 1
+    fi
+    node "$FW/cli/dist/cli.js" "$@"
+  elif [ -f "$FW/cli/dist/cli.js" ]; then
     node "$FW/cli/dist/cli.js" "$@"
   else
     npx --yes "@ai-driven-dev/cli@${AIDD_CLI_VERSION}" "$@"
   fi
 }
 
-# A plugin keeps its version across edits to this checkout, so Claude and Codex would keep the
-# copy they cached: each reload hands them the plugins afresh. Copilot loads a local
-# marketplace live, and its uninstall leaves each plugin disabled rather than gone, which the
-# CLI then reads as a ref it does not own, so it is left alone. Claude's `remove --scope user`
-# drops only the settings declaration and keeps the registration, which setup --global then
-# takes as still declared, so a marketplace no project uses is removed from every scope. That
-# removal also uninstalls what a project installed from it, so one in use stays at user scope.
-claude_marketplace_used_by_a_project() {
-  { (cd "$HOME" && claude plugin list --json 2>/dev/null) || true; } | node -e '
-    try {
-      const plugins = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
-      process.exit(plugins.some((p) => p.id?.endsWith(`@${process.argv[1]}`) && p.scope !== "user") ? 0 : 1);
-    } catch { process.exit(0); }
-  ' "$MKT"
-}
-
-release_native_plugins() {
-  local name
-  for name in "${targets[@]}"; do
-    [ "$HAVE_CLAUDE" = 0 ] || claude plugin uninstall "$name@$MKT" --scope user >/dev/null 2>&1 || true
-    [ "$HAVE_CODEX" = 0 ] || codex plugin remove "$name@$MKT" >/dev/null 2>&1 || true
-  done
-  if [ "$HAVE_CLAUDE" = 1 ]; then
-    if claude_marketplace_used_by_a_project; then
-      claude plugin marketplace remove "$MKT" --scope user >/dev/null 2>&1 || true
-    else
-      (cd "$HOME" && claude plugin marketplace remove "$MKT") >/dev/null 2>&1 || true
-    fi
-  fi
-  [ "$HAVE_CODEX" = 0 ] || codex plugin marketplace remove "$MKT" >/dev/null 2>&1 || true
+refresh_codex_plugins() {
+  [ "$HAVE_CODEX" = 1 ] || return 0
+  local installed ref name
+  installed="$(cd "$HOME" && codex plugin list --marketplace "$MKT" --json)" || {
+    echo "Could not read enabled Codex plugins after setup; Codex cache refresh was skipped." >&2
+    return 1
+  }
+  local enabled
+  enabled="$(printf '%s\n' "$installed" | node -e '
+    const data = JSON.parse(require("node:fs").readFileSync(0, "utf8"));
+    if (!Array.isArray(data.installed)) throw new Error("Codex plugin list has no installed array");
+    for (const plugin of data.installed) {
+      if (plugin.installed === true && plugin.enabled === true && typeof plugin.pluginId === "string")
+        process.stdout.write(`${plugin.pluginId}\n`);
+    }
+  ')" || {
+    echo "Could not parse enabled Codex plugins after setup; Codex cache refresh was skipped." >&2
+    return 1
+  }
+  while IFS= read -r ref; do
+    [ -n "$ref" ] || continue
+    name="${ref%@*}"
+    case " ${targets[*]} " in *" $name "*) ;; *) continue ;; esac
+    codex plugin add "$ref" >/dev/null || {
+      echo "Codex could not refresh enabled plugin $ref; host state may be partially updated." >&2
+      return 1
+    }
+  done <<< "$enabled"
 }
 
 hosts=()
@@ -115,17 +127,17 @@ fi
 
 if [ "${#hosts[@]}" -gt 0 ]; then
   printf '%-22s' "global install"
-  release_native_plugins
   # From HOME, not this checkout: its own .claude/settings.json enables the plugins at project
-  # scope, which the host CLIs report and setup --global would refuse as refs it does not own.
+  # scope, which setup --global would otherwise refuse as refs it does not own.
   output="$(cd "$HOME" && aidd_cli setup --global --source local --path "$FW" --ide "$(IFS=,; echo "${hosts[*]}")" \
-    --plugins all --yes 2>&1)" || {
+    --plugins all --preserve-plugin-state --yes 2>&1)" || {
     echo "FAIL"; printf '%s\n' "$output" >&2
-    echo "aidd setup --global failed for ${hosts[*]}; their plugins were released, so rerun make reload once fixed." >&2; exit 1
+    echo "aidd setup --global failed for ${hosts[*]}; this script did not pre-remove plugin or marketplace state. File updates may be partial." >&2; exit 1
   }
   echo "ok ($(IFS=,; echo "${hosts[*]}"))"
   # A warning leaves setup at exit 0: what it skipped must stay visible.
   printf '%s\n' "$output" | sed 's/^/  /'
+  refresh_codex_plugins || { echo "FAIL"; exit 1; }
 fi
 
 instructions=()

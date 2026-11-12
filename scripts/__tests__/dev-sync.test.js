@@ -250,7 +250,7 @@ test("reload delivers global instructions to all three hosts while preserving pe
       mkdirSync(dirname(join(home, path)), { recursive: true });
       writeFileSync(join(home, path), "Personal rules.\n");
     }
-    for (const host of ["codex", "claude", "opencode"]) executable(join(fakeBin, host), "exit 0");
+    for (const host of ["codex", "claude", "opencode"]) executable(join(fakeBin, host), host === "codex" ? 'echo \'{"installed":[]}\'' : "exit 0");
     executable(join(fakeBin, "npx"), "exit 0");
     const first = runSync(fakeBin, home, []);
     assert.equal(first.status, 0, first.stderr);
@@ -307,14 +307,14 @@ test("managed OpenCode reload leaves other hosts on the global install path", ()
     mkdirSync(fakeBin);
     const source = fixture(home);
     recordingCli(source);
-    executable(join(fakeBin, "codex"), "exit 0");
+    executable(join(fakeBin, "codex"), 'echo \'{"installed":[]}\'');
     executable(join(fakeBin, "opencode"), "exit 99");
     executable(join(fakeBin, "aidd-opencode-reload"), 'echo managed:ok');
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /global install\s+ok \(codex\)/);
     assert.match(result.stdout, /reload opencode\s+managed:ok/);
-    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --yes\n$/);
+    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), / --ide codex --plugins all --preserve-plugin-state --yes\n$/);
     assert.match(readFileSync(join(home, ".codex/AGENTS.md"), "utf8"), /Use available agents when useful/);
     assert.match(readFileSync(join(home, ".config/opencode/AGENTS.md"), "utf8"), /Use available agents when useful/);
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -346,45 +346,110 @@ test("every host takes this checkout through aidd setup --global, afresh", () =>
     const source = fixture(home, ["aidd-dev", "aidd-pm"]);
     recordingCli(source);
     for (const host of ["claude", "codex", "copilot", "cursor-agent", "kilo", "opencode"]) {
-      executable(join(fakeBin, host), `printf '%s\\n' "${host} $*" >> "$HOME/host-calls"\n[ "$*" = "plugin list --json" ] && echo '[]'; exit 0`);
+      executable(join(fakeBin, host), `printf '%s\\n' "${host} $*" >> "$HOME/host-calls"\n[ "$*" = "plugin list --marketplace aidd-framework --json" ] && echo '{"installed":[]}'; exit 0`);
     }
     const result = runSync(fakeBin, home, []);
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, /global install\s+ok \(claude,codex,copilot,cursor,kilo,opencode\)/);
     assert.equal(
       readFileSync(join(home, "aidd-calls"), "utf8"),
-      `setup --global --source local --path ${source} --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --yes\n`
+      `setup --global --source local --path ${source} --ide claude,codex,copilot,cursor,kilo,opencode --plugins all --preserve-plugin-state --yes\n`
     );
     const hostCalls = readFileSync(join(home, "host-calls"), "utf8");
-    for (const plugin of ["aidd-dev", "aidd-pm"]) {
-      assert.match(hostCalls, new RegExp(`claude plugin uninstall ${plugin}@aidd-framework --scope user`));
-      assert.match(hostCalls, new RegExp(`codex plugin remove ${plugin}@aidd-framework`));
-    }
-    assert.match(hostCalls, /^claude plugin marketplace remove aidd-framework$/m);
-    assert.match(hostCalls, /codex plugin marketplace remove aidd-framework/);
-    assert.doesNotMatch(hostCalls, /^(copilot|cursor-agent|kilo|opencode) /m);
+    assert.match(hostCalls, /^codex plugin list --marketplace aidd-framework --json$/m);
+    assert.doesNotMatch(hostCalls, /plugin (uninstall|remove)|marketplace remove/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-for (const [name, listing] of [
-  ["a project installed from it", `echo '[{"id":"aidd-dev@aidd-framework","scope":"local","projectPath":"/p"}]'`],
-  ["its list cannot be read", "exit 1"],
-]) {
-  test(`Claude's marketplace stays at user scope when ${name}`, () => {
-    const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-local-"));
-    try {
-      const fakeBin = join(root, "bin"), home = join(root, "home");
-      mkdirSync(fakeBin);
-      recordingCli(fixture(home));
-      executable(join(fakeBin, "claude"), `printf '%s\\n' "$*" >> "$HOME/claude-calls"\n[ "$*" = "plugin list --json" ] && { ${listing}; }\nexit 0`);
-      const result = runSync(fakeBin, home, []);
-      assert.equal(result.status, 0, result.stderr);
-      const calls = readFileSync(join(home, "claude-calls"), "utf8");
-      assert.match(calls, /^plugin marketplace remove aidd-framework --scope user$/m);
-      assert.doesNotMatch(calls, /^plugin marketplace remove aidd-framework$/m);
-    } finally { rmSync(root, { recursive: true, force: true }); }
-  });
-}
+test("rebuilds an existing checkout CLI with pnpm before using it", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-build-cli-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    const source = fixture(home);
+    mkdirSync(join(source, "cli/dist"), { recursive: true });
+    writeFileSync(join(source, "cli/package.json"), "{}\n");
+    writeFileSync(join(source, "cli/dist/cli.js"), 'throw new Error("stale CLI used");\n');
+    // The checkout source changed after the existing dist was produced.
+    writeFileSync(join(source, "cli/build-result.js"), `
+      import { appendFileSync } from "node:fs";
+      import { join } from "node:path";
+      appendFileSync(join(process.env.HOME, "aidd-calls"), process.argv.slice(2).join(" ") + "\\n");
+    `);
+    executable(join(fakeBin, "pnpm"), 'printf "%s\\n" "$*" > "$HOME/pnpm-call"\nmkdir -p dist\ncp build-result.js dist/cli.js');
+    executable(join(fakeBin, "codex"), 'echo \'{"installed":[]}\'');
+    executable(join(fakeBin, "npx"), 'touch "$HOME/npx-call"\nexit 1');
+
+    const result = runSync(fakeBin, home, []);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(join(home, "pnpm-call"), "utf8"), "build\n");
+    assert.match(readFileSync(join(home, "aidd-calls"), "utf8"), /^setup --global .* --preserve-plugin-state --yes$/m);
+    assert.equal(existsSync(join(home, "npx-call")), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("refuses a possibly stale checkout CLI when pnpm is unavailable", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-no-pnpm-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    const source = fixture(home);
+    mkdirSync(join(source, "cli/dist"), { recursive: true });
+    writeFileSync(join(source, "cli/package.json"), "{}\n");
+    writeFileSync(join(source, "cli/dist/cli.js"), 'throw new Error("stale CLI used");\n');
+    executable(join(fakeBin, "codex"), 'echo \'{"installed":[]}\'');
+    executable(join(fakeBin, "npx"), 'touch "$HOME/npx-call"\nexit 1');
+
+    const result = runSync(fakeBin, home, []);
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /pnpm is required to rebuild the checkout CLI/);
+    assert.equal(existsSync(join(home, "aidd-calls")), false);
+    assert.equal(existsSync(join(home, "npx-call")), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("a marketplace source conflict fails visibly without removing plugins or registrations", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-source-conflict-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    recordingCli(fixture(home), 'console.error("source conflict"); process.exit(1);');
+    for (const host of ["claude", "codex"]) {
+      executable(join(fakeBin, host), `printf '%s\\n' "$*" >> "$HOME/host-calls"\nexit 0`);
+    }
+    const result = runSync(fakeBin, home, []);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /aidd setup --global failed/);
+    assert.match(result.stderr, /source conflict/);
+    const hostCalls = existsSync(join(home, "host-calls"))
+      ? readFileSync(join(home, "host-calls"), "utf8")
+      : "";
+    assert.doesNotMatch(hostCalls, /plugin (uninstall|remove)|marketplace remove/);
+    assert.doesNotMatch(hostCalls, /codex plugin add/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("Codex refreshes only enabled plugins after a successful setup", () => {
+  const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-codex-state-"));
+  try {
+    const fakeBin = join(root, "bin"), home = join(root, "home");
+    mkdirSync(fakeBin);
+    const source = fixture(home, ["aidd-dev", "aidd-pm"]);
+    recordingCli(source);
+    executable(join(fakeBin, "codex"), `printf '%s\\n' "$*" >> "$HOME/host-calls"
+if [ "$*" = "plugin list --marketplace aidd-framework --json" ]; then
+  echo '{"installed":[{"pluginId":"aidd-dev@aidd-framework","name":"aidd-dev","installed":true,"enabled":true},{"pluginId":"aidd-pm@aidd-framework","name":"aidd-pm","installed":true,"enabled":false}]}'
+fi
+`);
+    const result = runSync(fakeBin, home, []);
+    assert.equal(result.status, 0, result.stderr);
+    const calls = readFileSync(join(home, "host-calls"), "utf8");
+    assert.match(calls, /^plugin add aidd-dev@aidd-framework$/m);
+    assert.doesNotMatch(calls, /plugin add aidd-pm@aidd-framework/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 test("a failing global install stops the reload with its own cause", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-failed-"));
@@ -401,16 +466,18 @@ test("a failing global install stops the reload with its own cause", () => {
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test("a global install from the published CLI is used when the checkout has none built", () => {
+test("an older published CLI fails safely when the checkout has no built CLI", () => {
   const root = mkdtempSync(join(tmpdir(), "aidd-dev-sync-global-npx-"));
   try {
     const fakeBin = join(root, "bin"), home = join(root, "home");
     mkdirSync(fakeBin);
-    executable(join(fakeBin, "codex"), "exit 0");
-    executable(join(fakeBin, "npx"), 'printf \'%s\\n\' "$*" > "$HOME/npx-call"');
+    executable(join(fakeBin, "codex"), 'echo \'{"installed":[]}\'');
+    executable(join(fakeBin, "npx"), 'printf \'%s\\n\' "$*" > "$HOME/npx-call"\necho "unknown option --preserve-plugin-state" >&2\nexit 2');
     const result = runSync(fakeBin, home, []);
-    assert.equal(result.status, 0, result.stderr);
-    assert.match(readFileSync(join(home, "npx-call"), "utf8"), /^--yes @ai-driven-dev\/cli@latest setup --global .* --ide codex --plugins all --yes$/m);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /unknown option --preserve-plugin-state/);
+    assert.match(result.stderr, /this script did not pre-remove plugin or marketplace state/);
+    assert.match(readFileSync(join(home, "npx-call"), "utf8"), /^--yes @ai-driven-dev\/cli@latest setup --global .* --ide codex --plugins all --preserve-plugin-state --yes$/m);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

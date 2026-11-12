@@ -80,7 +80,10 @@ export class InstallGlobalPluginsUseCase {
         const plugin =
           owned === undefined
             ? resolved
-            : resolved.withFiles(owned.files).withDependents(owned.dependents);
+            : resolved
+                .withFiles(owned.files)
+                .withDependents(owned.dependents)
+                .withUserFileOverrides(owned.userFileOverrides);
         const plan = await this.fileUpdater.planUpdate(
           plugin,
           toolId as AiToolId,

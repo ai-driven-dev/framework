@@ -16,8 +16,13 @@ flowchart LR
   scan -->|"refresh"| check["check<br>actions/03-check.md<br>script: memory.cjs check"]
   scan -->|"nothing to remember"| done((done))
   check -->|"findings in the sheet"| write
-  write -->|"show the plan"| user((user answers))
-  user -->|"plan answered"| write
+  write --> plan["show plan"]
+  plan -->|"prior reply applies"| answer["run answer"]
+  plan -->|"defaults settle it"| write
+  plan -->|"material choice remains"| user((ask only that))
+  user -->|"reply"| answer
+  answer -->|"Q answered: promote and replan"| plan
+  answer -->|"otherwise"| write
   write --> sync
   sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync, report"] -->|"offer to reconcile"| user
   user -->|"reconcile answered"| sync
@@ -29,6 +34,7 @@ flowchart LR
 ## Transversal rules
 
 - Speak only to ask or to give the final reply; otherwise call tools.
-- After the plan or a reconcile offer, wait.
+- Reuse prior answers only for exact choices they cover; ask only about material choices still open. Showing the plan alone is not a request for approval.
+- For `remove`, `replace` or `move`, reuse prior approval only if it names that change. A general go-ahead before the plan is not approval; `ok` to the shown plan approves every listed item.
 - Edit no memory file outside write.
 - Run no version-control command: `changes` gives what changed.

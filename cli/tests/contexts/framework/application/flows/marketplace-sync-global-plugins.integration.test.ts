@@ -5,6 +5,7 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import type { HostPluginRegistryEntry } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -21,8 +22,10 @@ const REF = "test-plugin@aidd-framework";
 
 async function globalActivation(toolId: "claude" | "copilot") {
   const refs = new Map<string, HostPluginRegistryEntry>();
+  let failNextEnable = false;
   class StatefulActivator extends FakeNativePluginActivator {
     override enablePlugin(ref: string, scope: MarketplaceScope = "project"): void {
+      if (failNextEnable) throw new NativePluginCliError("unexpected native enable failure");
       super.enablePlugin(ref, scope);
       refs.set(ref, { enabled: true, scope });
     }
@@ -87,10 +90,43 @@ async function globalActivation(toolId: "claude" | "copilot") {
   expect(setup.warnings).toEqual([]);
   expect(userRepo.getCurrent()?.getPlugins(toolId)).toEqual([]);
   expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([REF]);
-  return { refs, activator, userRepo, sync, options };
+  return {
+    refs,
+    activator,
+    userRepo,
+    sync,
+    options,
+    failNextEnable: () => (failNextEnable = true),
+  };
 }
 
 describe.each(["claude", "copilot"] as const)("global %s native plugins", (toolId) => {
+  it("reload leaves an explicitly disabled plugin disabled", async () => {
+    const { refs, activator, sync, options, userRepo } = await globalActivation(toolId);
+    refs.set(REF, { enabled: false, scope: "user" });
+
+    const result = await sync.execute({ ...options, preserveUserPluginState: true });
+
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([]);
+    expect(refs.get(REF)?.enabled).toBe(false);
+    expect(activator.enabledPluginScopes).toEqual(["user"]);
+    expect(userRepo.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([REF]);
+  });
+
+  it("reports native activation failures as errors during reload", async () => {
+    const { refs, activator, sync, options, failNextEnable } = await globalActivation(toolId);
+    refs.delete(REF);
+    failNextEnable();
+
+    const result = await sync.execute({ ...options, preserveUserPluginState: true });
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]?.message).toContain("unexpected native enable failure");
+    expect(result.warnings).toEqual([]);
+    expect(activator.enabledPluginScopes).toEqual(["user"]);
+  });
+
   it.each(["enabled", "missing", "disabled", "claims only"] as const)(
     "sync retains and restores a successful selection when the ref is %s",
     async (state) => {

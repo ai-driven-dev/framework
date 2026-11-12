@@ -22,11 +22,16 @@ import {
   toleratingUnreadableSourceReferences,
 } from "./shared-source-reference-support.js";
 
+export interface SetupMarketplaceRegistration {
+  resolveSourceIfNeeded(flow: SetupFlow): Promise<MarketplaceSourceMode | null>;
+  registerIfPresent(flow: SetupFlow, source: MarketplaceSourceMode | null): Promise<void>;
+}
+
 /**
  * The one sequence project-scope and machine-scope setup both run, in the same order and gated the
  * same way: resolve, guard remote auth, register, refresh.
  */
-export class SetupMarketplaceRegistrationUseCase {
+export class SetupMarketplaceRegistrationUseCase implements SetupMarketplaceRegistration {
   constructor(
     private readonly fs: FileReader,
     private readonly setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase,

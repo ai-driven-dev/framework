@@ -66,6 +66,10 @@ function checkSheet(sheetFile, root) {
     ids.add(entry.fields[0]);
     const source = plainSource(entry.fields[3]);
     if ((source === "" || source === "none") && entry.fields[0][0] === "Q") continue;
+    if (source === "user") {
+      if (entry.fields[0][0] === "Q") problems.push(`${where} source "user" is reserved for R and D facts`);
+      continue;
+    }
     const relative = path.relative(root, path.resolve(root, source));
     if (path.isAbsolute(source) || relative.startsWith("..")) problems.push(`${where} source outside the root: ${source}`);
     else if (!fs.existsSync(path.resolve(root, source))) problems.push(`${where} source not found: ${source}`);

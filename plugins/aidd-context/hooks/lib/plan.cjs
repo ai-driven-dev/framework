@@ -121,6 +121,10 @@ function shownVerb(item) {
   return item.kind === "delete" ? "remove" : item.kind;
 }
 
+function needsApproval(item) {
+  return item.entries.some(({ id, fact, answer }) => id[0] === "D" && DECISION.test(fact) && answer === "");
+}
+
 /** One line per item: its number, its verb, and what it touches, cut short. */
 function summaryLine(item, bank, width) {
   const [first] = item.entries;
@@ -166,10 +170,12 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const text = fs.readFileSync(sheetFile, "utf8");
   const bank = diskBank(root);
   const items = itemsOf(text, bank);
-  const questions = entriesOf(text).filter(({ id }) => id[0] === "Q");
+  const questions = entriesOf(text).filter(({ id, answer }) => id[0] === "Q" && answer === "");
   const since = text.match(SINCE);
   const width = String(items.length).length;
   const fromTemplates = always.filter((name) => !items.some((item) => item.kind === "write" && item.file === name));
+  const pendingDestructive = items.filter(needsApproval);
+  const needsReply = pendingDestructive.length > 0;
   const verbs = items.map(shownVerb);
   const counts = ["write", "add", "change", "move", "remove"]
     .map((verb) => [verb, verbs.filter((one) => one === verb).length])
@@ -180,10 +186,21 @@ function renderPlan(sheetFile, root, tools, ticked, always = []) {
   const title = since === null ? `Memory plan: ${total}` : `Memory plan: ${total} since ${since[1]} (${since[3]}, ${since[4]})`;
   const asked = questions.length > 0 ? [["Questions", ...questions.map(({ id, fact }) => `  ${id}  ${fact}`)]] : [];
   const wire = ["Tools to wire", `  ${tools.map((tool) => `[${ticked.includes(tool) ? "x" : " "}] ${tool}`).join("  ")}`];
-  const answer = `Say ok, or "not <n>" or "not <n>-<m>" with the numbers in the details${questions.length > 0 ? `, or "${questions[0].id}: …"` : ""}.`;
+  const answer = [
+    ...(needsReply ? ['Reply ok, no, or "not <n>" or "not <n>-<m>" with the numbers in the details'] : []),
+    ...(questions.length > 0 ? [`answer a question as "${questions[0].id}: …"`] : []),
+  ];
   const detailFile = path.join(path.dirname(path.resolve(sheetFile)), "plan.md");
   const relative = (file) => path.relative(root, file).split(path.sep).join("/");
-  const summary = [[title, ...(counts.length > 1 || fromTemplates.length > 0 ? [`  ${counts.join(" · ")}`] : [])], ...asked, wire, [`Details: ${relative(detailFile)}`], [answer]];
+  const approvalDetails = pendingDestructive.flatMap((item) => detailLines(item, bank, root, width));
+  const summary = [
+    [title, ...(counts.length > 1 || fromTemplates.length > 0 ? [`  ${counts.join(" · ")}`] : [])],
+    ...asked,
+    ...(approvalDetails.length > 0 ? [["Changes needing approval", ...approvalDetails]] : []),
+    wire,
+    [`Details: ${relative(detailFile)}`],
+    ...(answer.length > 0 ? [[`${answer.join(", or ")}.`]] : []),
+  ];
   const listed = [
     ...items.flatMap((item) => detailLines(item, bank, root, width)),
     ...fromTemplates.map((name) => `  ${" ".repeat(width + 2)}write   ${name} (new): from its template, always written`),
@@ -216,10 +233,11 @@ function answerSheet(sheetFile, root, reply) {
   const bank = diskBank(root);
   const items = itemsOf(text, bank);
   const no = new Set(declined(decision, items.length));
+  const previouslyDeclined = new Set(items.filter((item) => item.entries.some(({ answer }) => answer.toLowerCase() === "no")).map(({ n }) => n));
   const lines = text.split("\n");
   const printed = [];
   for (const item of items) {
-    const value = no.has(item.n) ? "no" : "yes";
+    const value = no.has(item.n) || previouslyDeclined.has(item.n) ? "no" : "yes";
     for (const { line, id, target, fact, source } of item.entries) lines[line - 1] = `- ${id} | ${target} | ${fact} | ${source} | ${value}`;
     const quoted = item.kind === "change" || item.kind === "delete" ? quotedLine(item.entries[0].fact, bank(item.file)) : null;
     const label = quoted !== null ? `${item.file} "${quoted}"` : item.kind === "add" ? `${item.file}, ${item.section}` : item.file;

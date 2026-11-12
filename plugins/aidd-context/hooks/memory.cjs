@@ -52,6 +52,7 @@ const CONDITIONAL_FILES = Object.freeze([
   "ui.md",
   "mobile.md",
   "desktop.md",
+  "browsing.md",
 ]);
 const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
 

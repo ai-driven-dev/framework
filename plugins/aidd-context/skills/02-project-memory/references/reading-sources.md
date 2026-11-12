@@ -20,6 +20,7 @@
 | --- | --- |
 | A fact read | kept only if the reader rules of [memory-rules](memory-rules.md) keep it |
 | A command or a convention | take it from the file that defines it, as an `R` line; prose that names one is checked against that file |
+| A user-confirmed fact | copy exact words to an `R` or `D` line with source `user`; never infer the user's answer |
 | The root README | read it whole, and the other docs a section needs |
 | The code | read it last: it corrects the others and is never summarised |
 | A monorepo | read every workspace, never the root manifest alone |

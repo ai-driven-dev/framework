@@ -237,6 +237,114 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
     expect(result.warnings.join("\n")).toContain("EACCES");
   });
 
+  it.each(["different", "current"] as const)(
+    "reload preserves a disabled Codex ref with a %s marketplace source",
+    async (sourceState) => {
+      const registry = new InMemoryMarketplaceRegistry();
+      await registry.save(PROJECT_ROOT, frameworkAtUserScope());
+      const oldSource = userBuiltMarketplaceDir(
+        "/test-home/cache",
+        "5.6.0",
+        FRAMEWORK_MARKETPLACE_NAME,
+        "codex"
+      );
+      const registeredSource = sourceState === "different" ? oldSource : CODEX_BUILT_DIR;
+      const ref = `aidd-orchestrator@${FRAMEWORK_MARKETPLACE_NAME}`;
+      const machine = Manifest.create();
+      machine.addTool("codex", "test", []);
+      machine.setNativeRegistrations("codex", {
+        binary: "codex",
+        marketplaces: [
+          {
+            alias: FRAMEWORK_MARKETPLACE_NAME,
+            hostName: FRAMEWORK_MARKETPLACE_NAME,
+            provenance: {
+              kind: "effective-list",
+              root: registeredSource,
+              sourceType: "local",
+              source: registeredSource,
+            },
+          },
+        ],
+        pluginRefs: [ref],
+        pluginClaims: [{ ref, dependents: [] }],
+      });
+      const activator = new FakeNativePluginActivator({ available: true, conflictOnAdd: true });
+      const fs = new InMemoryFileAdapter({
+        [`${CODEX_BUILT_DIR}/.agents/plugins/marketplace.json`]: JSON.stringify({
+          name: FRAMEWORK_MARKETPLACE_NAME,
+          version: "5.13.0",
+          plugins: [],
+        }),
+      });
+      const pluginRegistry = new FakeHostPluginRegistryReader({
+        location: "/test-home/config.toml",
+        refs: new Map([[ref, { enabled: false, scope: "user" as const }]]),
+      });
+      const sourceReader = new FakeNativeMarketplaceSourceReader(
+        activator,
+        "effective-list",
+        (path) => (path === CODEX_BUILT_DIR ? FRAMEWORK_MARKETPLACE_NAME : undefined),
+        new Map([
+          [
+            FRAMEWORK_MARKETPLACE_NAME,
+            {
+              kind: "effective-list",
+              root: registeredSource,
+              sourceType: "local",
+              source: registeredSource,
+            },
+          ],
+        ])
+      );
+      const useCase = new MarketplaceSyncSettingsUseCase(
+        fs,
+        new InMemoryManifestRepository(machine),
+        registry,
+        new DeterministicHasher(),
+        new CapturingLogger(),
+        new Map([["codex", activator]]),
+        fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
+        new Map([
+          [
+            "codex",
+            new FakeHostMarketplaceRegistryReader({
+              location: "/test-home/marketplaces.toml",
+              entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, registeredSource]]),
+            }),
+          ],
+        ]),
+        () => "/test-home/cache",
+        undefined,
+        undefined,
+        undefined,
+        new Map([["codex", pluginRegistry]]),
+        new InMemoryManifestRepository(machine),
+        new Map([["codex", sourceReader]])
+      );
+
+      const result = await useCase.execute({
+        projectRoot: PROJECT_ROOT,
+        toolIds: ["codex"],
+        scope: "user",
+        enablePlugins: ["aidd-orchestrator"],
+        preserveUserPluginState: true,
+      });
+
+      if (sourceState === "different") {
+        expect(result.errors.map((error) => error.message).join("\n")).toContain(
+          "is registered from"
+        );
+      } else {
+        expect(result.errors).toEqual([]);
+      }
+      expect(activator.removedMarketplaces).toEqual([]);
+      expect(activator.forcedRemovals).toEqual([]);
+      expect(activator.enabledPlugins).toEqual([]);
+      expect(await registry.list(PROJECT_ROOT)).toEqual([frameworkAtUserScope()]);
+    }
+  );
+
   it("refuses an unproven reserved-name registration without force reclaim", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkAtUserScope());

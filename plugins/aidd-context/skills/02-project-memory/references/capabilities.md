@@ -15,15 +15,16 @@
 | `deployment` | `deployment.md` | where it runs and how it ships | a CI config, a `Dockerfile`, or infrastructure-as-code files | no | `infra.md` |
 | `api` | `api.md` | the server surface and its conventions | a server framework, or a `routes/`, `controllers/`, or `api/` dir | no | - |
 | `cli` | `cli.md` | the command line and its distribution | a `bin` field or a command-line parser | no | - |
-| `package` | `package.md` | what it publishes for import | a publishable manifest declaring an importable entry | no | - |
+| `package` | `package.md` | what it publishes for import | a publishable manifest declaring an importable library entry, not only a CLI binary | no | - |
 | `auth` | `auth.md` | identity, permissions, sessions | an auth library, auth middleware, or an auth module | no | - |
 | `database` | `database.md` | the data store, model, conventions | an ORM or driver, a `migrations/` dir, or a schema file | no | - |
-| `data` | `data.md` | datasets, pipelines, models, reproducing a run | notebooks, a data-versioning or ML tool, or pipeline files | no | - |
+| `data` | `data.md` | datasets, pipelines, models, reproducing a run | notebooks, a data-versioning or ML tool, or pipeline or model files | no | - |
 | `messaging` | `messaging.md` | queues and topics for asynchronous work | a queue or broker with producers or consumers | no | - |
 | `realtime` | `realtime.md` | live channels pushed to clients | a websocket or SSE library, or a socket endpoint | no | - |
 | `ui` | `ui.md` | front-end rules, routing, accessibility | a web frontend framework (not React Native), or a `components/`, `pages/`, or `views/` dir | no | `design.md`, `forms.md`, `navigation.md` |
-| `mobile` | `mobile.md` | the mobile app: platform, native access, release | an `ios/` or `android/` dir, React Native, or Flutter | no | - |
-| `desktop` | `desktop.md` | the desktop app: framework, native access, packaging | Electron, Tauri, or a native desktop toolkit | no | - |
+| `mobile` | `mobile.md` | the mobile app: platform, native access, release | an `ios/` or `android/` dir, `Podfile`, `pubspec.yaml`, React Native, or Flutter | no | - |
+| `desktop` | `desktop.md` | the desktop app: framework, native access, packaging | Electron, Tauri, or a native desktop toolkit such as Qt, GTK, WPF, or AppKit | no | - |
+| `browsing` | `browsing.md` | browser setup and project browsing rules | a browser configured for project work, or the user's confirmed browser choice; a UI alone does not count | no | - |
 
 | Case | Do |
 | --- | --- |
@@ -37,7 +38,7 @@
 
 | Path | Holds |
 | --- | --- |
-| `aidd_docs/memory/` | the files of the table, plus a team's own, loaded and kept, never rewritten or removed |
+| `aidd_docs/memory/` | table files and team files; load all, change only what the sheet names |
 | `internal/`, `external/` | exist even when empty, each with a `.gitkeep`; read on demand |
 | `internal/decisions/` | decision records; created with the first one, not by scaffold |
 
@@ -57,12 +58,15 @@
 
 | Answer | Read as |
 | --- | --- |
-| the person's own words | ids optional |
-| `ok` or "all good" | `yes` on each `remove`, `replace` and `move` line, the others left blank |
-| "all but X" | as `ok`, with `no` on X, in one turn |
-| `no`, or the plan declined | `no` on every line: nothing is written, nothing is synced |
+| the person's own words | copy exact answers only; ids optional |
+| `ok` or "all good" after the plan is shown | `yes` on every unanswered item, including each `remove`, `replace` and `move` |
+| "all but X" | as `ok`, with `no` on X, in one turn; earlier `no` answers stay `no` |
+| `no`, or the plan declined | `no` on every numbered item: nothing is written, nothing is synced |
 | silence on an addition | yes |
-| an answer unclear for a line | leaves a `remove` or `replace` on it unapplied |
+| an answer unclear for a line | leaves its `remove`, `replace` or `move` unapplied |
 | `tools: claude, codex` or "wire it into claude" | the tools picked |
-| an unanswered `Q` | drops its slot |
-| autonomous | only when the caller's instruction answers for the user |
+| an unanswered `Q` | drop its slot; never invent an answer |
+| an earlier specific instruction | reuse only when it names the same choice |
+| a general go-ahead before the plan | authorizes no `remove`, `replace` or `move` |
+| an earlier `no` | stays `no` across replans and later replies; change it only on the user's explicit reversal |
+| autonomous | follow defaults; exact prior approval or `ok` to the shown plan authorizes `remove`, `replace` or `move` |

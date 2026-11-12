@@ -111,6 +111,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
       force: false,
       registerDefaultMarketplace: true,
       scope: "project",
+      preservePluginState: false,
     });
     expect(setupTools).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
@@ -399,6 +400,7 @@ describe("aidd setup — the help surface", () => {
         "install for every project on this machine instead of into this project; see the " +
           "requirements below",
       ],
+      ["--preserve-plugin-state", "keep explicitly disabled user plugins disabled during reload"],
     ]);
     expect(
       setupCommand()

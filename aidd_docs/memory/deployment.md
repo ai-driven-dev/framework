@@ -68,6 +68,12 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 `make reload` installs every plugin into the installed hosts with `aidd setup --global` from this checkout, then syncs generic delegation guidance; details in `scripts/dev-sync.sh`.
 
+When changing shared instructions, align `AGENTS.md`, `CLAUDE.md`, the template and global copies, preserving project memory and personal rules. `make reload` updates only the managed Agents section of global instructions.
+
+`make reload` runs `aidd setup --global` for detected hosts. The CLI preserves recognized Codex agent model and effort overrides, and refuses unsafe file changes. Claude user-level agent copies are separate from plugin installs and must be refreshed separately.
+
+Reload needs a CLI build supporting `--preserve-plugin-state`; it builds the local CLI when possible. A conflicting native marketplace source stops reload before registration. Setup is not transactional: concurrent changes or later failures may leave partial updates.
+
 ## Monitoring
 
 None. Failures are a red run; `back-merge.yml` opens an issue when it cannot push.

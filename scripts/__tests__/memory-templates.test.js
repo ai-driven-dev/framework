@@ -13,7 +13,7 @@ const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
 const ALWAYS = ["project-brief.md", "architecture.md", "codebase-map.md", "coding-assertions.md", "testing.md", "vcs.md", "ecosystem.md"];
 const CONDITIONAL = [
   "backlog.md", "deployment.md", "api.md", "cli.md", "package.md", "auth.md", "database.md", "data.md",
-  "messaging.md", "realtime.md", "ui.md", "mobile.md", "desktop.md",
+  "messaging.md", "realtime.md", "ui.md", "mobile.md", "desktop.md", "browsing.md",
 ];
 const MERGED_NAMES = /\b(?:contract|native|async)\.md\b/u;
 
@@ -36,7 +36,7 @@ function capabilityRows() {
     .filter((cells) => cells.length === 6);
 }
 
-test("the templates are the twenty files, seven always written and thirteen conditional", () => {
+test("the templates are the twenty-one files, seven always written and fourteen conditional", () => {
   assert.deepEqual(templateFiles().map(({ name }) => name).sort(), [...ALWAYS, ...CONDITIONAL].sort());
 });
 

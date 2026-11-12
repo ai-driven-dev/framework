@@ -111,6 +111,7 @@ describe.concurrent("Command Matrix: Help", () => {
       expect(stdout).not.toContain("--ai ");
       expect(stdout).toContain("--ide");
       expect(stdout).toContain("--global");
+      expect(stdout).toContain("--preserve-plugin-state");
       expect(stdout).toContain("--plugins");
       expect(stdout).toContain("--release");
       expect(stdout).toContain("--yes");
