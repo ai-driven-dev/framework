@@ -1301,9 +1301,13 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       settings,
       marketplaces
     );
-    const pluginsChanged = settings.writesEnabledPlugins()
-      ? await this.syncEnabledPluginsFile(toolId, projectRoot, manifest, marketplaces, settings)
-      : false;
+    const pluginsChanged = await this.syncEnabledPluginsFile(
+      toolId,
+      projectRoot,
+      manifest,
+      marketplaces,
+      settings
+    );
     return marketplaceChanged || pluginsChanged;
   }
 
@@ -1333,8 +1337,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   ): Promise<boolean> {
     const sharedPath = resolve(projectRoot, settings.sharedSettingsFile());
     const shared = await this.loadSettings(sharedPath);
-    if (!settings.dropMarketplaces(shared)) return false;
-    const content = JSON.stringify(shared, null, 2);
+    const without = settings.withoutMarketplaces(shared);
+    if (without === null) return false;
+    const content = JSON.stringify(without, null, 2);
     await this.fs.writeFile(sharedPath, content);
     manifest.updateTrackedFileHash(
       toolId,
@@ -1354,9 +1359,12 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   ): Promise<boolean> {
     const pluginsPath = resolve(projectRoot, settings.sharedSettingsFile());
     const json = await this.loadSettings(pluginsPath);
-    if (!this.mergeEnabledPlugins(json, settings, toolId, manifest, marketplaces, provenRefs))
-      return false;
-    const content = JSON.stringify(json, null, 2);
+    const enabled = settings.withEnabledPlugins(
+      json,
+      this.refsToEnable(settings, toolId, manifest, marketplaces, provenRefs)
+    );
+    if (enabled === null) return false;
+    const content = JSON.stringify(enabled, null, 2);
     await this.fs.writeFile(pluginsPath, content);
     manifest.updateTrackedFileHash(
       toolId,
@@ -1366,23 +1374,15 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     return true;
   }
 
-  private mergeEnabledPlugins(
-    json: Record<string, unknown>,
+  private refsToEnable(
     settings: MarketplaceRegistrationAnswers,
     toolId: ToolId,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
     provenRefs?: readonly string[]
-  ): boolean {
-    if (!settings.writesEnabledPlugins()) return false;
-    const existing = settings.enabledPluginsIn(json);
-    const toAdd: Record<string, boolean> = {};
-    if (provenRefs !== undefined) {
-      for (const ref of provenRefs) if (!(ref in existing)) toAdd[ref] = true;
-      if (Object.keys(toAdd).length === 0) return false;
-      settings.recordEnabledPlugins(json, { ...existing, ...toAdd });
-      return true;
-    }
+  ): readonly string[] {
+    if (provenRefs !== undefined) return provenRefs;
+    const refs: string[] = [];
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
     for (const plugin of manifest.getPlugins(toolId)) {
       if (plugin.marketplace == null) continue;
@@ -1393,12 +1393,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         source: marketplace.source,
       });
       if (entryKey == null) continue;
-      const key = `${plugin.name}@${entryKey}`;
-      if (!(key in existing)) toAdd[key] = true;
+      refs.push(`${plugin.name}@${entryKey}`);
     }
-    if (Object.keys(toAdd).length === 0) return false;
-    settings.recordEnabledPlugins(json, { ...existing, ...toAdd });
-    return true;
+    return refs;
   }
 
   // These files are co-owned and the machine-local one is untracked and gitignored, which is

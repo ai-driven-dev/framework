@@ -107,13 +107,8 @@ export interface MarkdownSectionAnswers {
 }
 
 /** The skills section a tool declares. */
-export interface SkillsSectionAnswers {
-  /** Where a built file lands, or null when the tool takes none by that name. */
-  buildInstallPath(fileName: string): string | null;
-  /** Whether the tool takes a framework file of this name, a file for another tool's suffix refused. */
-  acceptsFileName(fileName: string): boolean;
+export interface SkillsSectionAnswers extends Omit<MarkdownSectionAnswers, "convertFrontmatter"> {
   convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
-  serialize(fm: Record<string, unknown>, body: string): string;
 }
 
 /** What merging a plugin's mcp servers into a tool's shared file produced. */
@@ -129,8 +124,6 @@ export interface McpConfigAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
   mergeStrategy(): "user-prime" | "framework-prime" | "none";
-  /** Whether the tool keeps the framework half of one file it shares with its plugins. */
-  isFrameworkPrime(): boolean;
   /** A plugin's mcp json rewritten to this tool's own shape. */
   transform(mcpJson: string): string;
   /** Adds the plugin's transformed servers to the existing file: what the plugin contributed
@@ -189,18 +182,23 @@ export type ConfigWrite =
 export interface MarketplaceRegistrationAnswers {
   /** The project file shared with teammates, where marketplaces are declared. */
   sharedSettingsFile(): string;
-  /** Takes the marketplaces declaration out of a parsed shared file; whether one was there. */
-  dropMarketplaces(shared: Record<string, unknown>): boolean;
-  /** Whether the tool enables plugins in the shared file. */
-  writesEnabledPlugins(): boolean;
-  /** The enabled-plugins map a parsed shared file holds, empty when absent or not a map. */
-  enabledPluginsIn(shared: Record<string, unknown>): Record<string, unknown>;
-  /** Sets the enabled-plugins map of a parsed shared file; nothing when the tool writes none. */
-  recordEnabledPlugins(shared: Record<string, unknown>, entries: Record<string, unknown>): void;
-  /** The name a marketplace is keyed by in the enabled-plugins map, or null when none is written. */
+  /** A parsed shared file without its marketplaces declaration, or null when it declared none. */
+  withoutMarketplaces(shared: Record<string, unknown>): Record<string, unknown> | null;
+  /** A parsed shared file with each ref not yet enabled added as enabled, or null when there is
+   * nothing to add: every ref already there, or a tool that enables no plugin in this file. */
+  withEnabledPlugins(
+    shared: Record<string, unknown>,
+    refs: readonly string[]
+  ): Record<string, unknown> | null;
+  /** The name a marketplace is keyed by in the enabled-plugins map, or null when the tool cannot
+   * express its source. */
   entryKeyFor(input: MarketplaceSettingsInput): string | null;
   /** Whether a declarative plugin entry may only be projected once the host proved the ref. */
   requiresNativeProof(): boolean;
+  /** The marketplace names a parsed settings file declares, whether as a list or as a map. */
+  declaredMarketplaceNames(parsed: unknown): ReadonlySet<string>;
+  /** The files its registrations keep on this machine, none when it keeps none. */
+  machineLocalFiles(): readonly string[];
 }
 
 /** An AI assistant, as an outside caller asks it. */
@@ -245,12 +243,8 @@ export interface AiToolProfile {
   settingsFiles(): readonly SettingsFileAnswers[];
   /** The config files an install writes: mcp, then hooks, then each settings file. */
   configWrites(): readonly ConfigWrite[];
-  /** The files its marketplace registration keeps on this machine, none when it keeps none. */
-  machineLocalFiles(): readonly string[];
   /** Its marketplace registration in the shared settings file, or null for a tool driving none. */
   marketplaceRegistration(): MarketplaceRegistrationAnswers | null;
-  /** The marketplace names a parsed settings file declares, none for a tool keeping no registration. */
-  declaredMarketplaceNames(parsed: unknown): ReadonlySet<string>;
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
   projectHooksDelivery(): ProjectHooksLocation | null;
   /** Where its installed rules live and what they end in, or null when it installs none. */

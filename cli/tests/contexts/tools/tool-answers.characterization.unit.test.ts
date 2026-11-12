@@ -100,8 +100,8 @@ function marketplaceSettingsAnswer(settings: MarketplaceRegistration | null): un
   if (settings === null) return null;
   return {
     settingsPath: settings.sharedSettingsFile(),
-    settingsKey: keyAskedOf((shared) => settings.dropMarketplaces(shared)),
-    enabledPluginsKey: keyAskedOf((shared) => settings.enabledPluginsIn(shared)),
+    settingsKey: keyAskedOf((shared) => settings.withoutMarketplaces(shared)),
+    enabledPluginsKey: keyAskedOf((shared) => settings.withEnabledPlugins(shared, ["p@m"])),
     declarativePluginActivationRequiresNativeProof: settings.requiresNativeProof() ? true : null,
     marketplacesSettingsPath: settings.machineLocalFiles()[0] ?? null,
     toEntryKey: SOURCES.map((source) => settings.entryKeyFor({ name: "aidd-framework", source })),

@@ -132,7 +132,7 @@ export class StatusUseCase implements StatusQuery {
         dir,
         trackedSet,
         projectRoot,
-        tool.kind === "ai" ? tool.machineLocalFiles() : []
+        tool.kind === "ai" ? (tool.marketplaceRegistration()?.machineLocalFiles() ?? []) : []
       ))
     );
     return { toolId, version, drifted };

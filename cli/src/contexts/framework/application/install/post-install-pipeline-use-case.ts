@@ -27,7 +27,9 @@ export class PostInstallPipelineUseCase {
       projectRoot,
       aiddGitignoreEntries(manifest, (toolId) => {
         const profile = profileOf(tools, toolId);
-        return profile.kind === "ai" ? profile.machineLocalFiles() : [];
+        return profile.kind === "ai"
+          ? (profile.marketplaceRegistration()?.machineLocalFiles() ?? [])
+          : [];
       })
     );
   }

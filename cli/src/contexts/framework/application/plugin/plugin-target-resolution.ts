@@ -43,6 +43,6 @@ export function resolveBaseDirFromRecord(
  * the framework half of, or `null` when the tool is not one. */
 export function frameworkPrimeFlatMcpOf(tool: AiToolProfile): McpConfigAnswers | null {
   const mcp = tool.mcpConfig();
-  if (mcp === null || !mcp.isFrameworkPrime()) return null;
+  if (mcp === null || mcp.mergeStrategy() !== "framework-prime") return null;
   return tool.plugins()?.kind === "flat" ? mcp : null;
 }

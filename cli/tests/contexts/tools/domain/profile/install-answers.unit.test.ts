@@ -58,12 +58,17 @@ describe("what an install asks a tool profile", () => {
 
   describe("the machine-local files", () => {
     it("lists what the tool's marketplace registration keeps on the machine", () => {
-      expect(aiProfile("claude").machineLocalFiles()).toEqual([".claude/settings.local.json"]);
+      expect(aiProfile("claude").marketplaceRegistration()?.machineLocalFiles()).toEqual([
+        ".claude/settings.local.json",
+      ]);
     });
 
     it("lists none for a tool whose registration keeps no file of its own", () => {
-      expect(aiProfile("copilot").machineLocalFiles()).toEqual([]);
-      expect(aiProfile("opencode").machineLocalFiles()).toEqual([]);
+      expect(aiProfile("copilot").marketplaceRegistration()?.machineLocalFiles()).toEqual([]);
+    });
+
+    it("keeps no registration for a tool with no native plugin CLI", () => {
+      expect(aiProfile("opencode").marketplaceRegistration()).toBeNull();
     });
   });
 

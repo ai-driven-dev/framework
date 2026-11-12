@@ -117,7 +117,9 @@ type UndoneRegistration = UndoneToolRegistrations;
 
 function machineLocalFilesOf(tools: readonly ToolProfile[], toolId: ToolId): readonly string[] {
   const profile = profileOf(tools, toolId);
-  return profile.kind === "ai" ? profile.machineLocalFiles() : [];
+  return profile.kind === "ai"
+    ? (profile.marketplaceRegistration()?.machineLocalFiles() ?? [])
+    : [];
 }
 
 function machineGlobalEnablement(tools: readonly ToolProfile[], toolId: ToolId): boolean {

@@ -2510,7 +2510,15 @@ describe("clean", () => {
         .sortedById()
         .map((profile) =>
           profile.toolId === "claude" && profile.kind === "ai"
-            ? { ...profile, machineLocalFiles: () => [".claude/answered.local.json"] }
+            ? {
+                ...profile,
+                marketplaceRegistration: () => {
+                  const registration = profile.marketplaceRegistration();
+                  return registration === null
+                    ? null
+                    : { ...registration, machineLocalFiles: () => [".claude/answered.local.json"] };
+                },
+              }
             : profile
         );
 

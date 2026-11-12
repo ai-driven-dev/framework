@@ -48,27 +48,25 @@ describe("what a project check asks a tool profile", () => {
 
   describe("the marketplaces a tool's settings file declares", () => {
     it("names those listed in the tool's settings key, as a map or as a list", () => {
-      const claude = registeredAiProfile("claude");
+      const claude = registeredAiProfile("claude").marketplaceRegistration();
 
       expect(
-        claude.declaredMarketplaceNames({ extraKnownMarketplaces: { a: {}, b: {} } })
+        claude?.declaredMarketplaceNames({ extraKnownMarketplaces: { a: {}, b: {} } })
       ).toStrictEqual(new Set(["a", "b"]));
-      expect(claude.declaredMarketplaceNames({ extraKnownMarketplaces: ["a", "b"] })).toStrictEqual(
-        new Set(["a", "b"])
-      );
+      expect(
+        claude?.declaredMarketplaceNames({ extraKnownMarketplaces: ["a", "b"] })
+      ).toStrictEqual(new Set(["a", "b"]));
     });
 
     it("names none under another key or from a value that is no object", () => {
-      const claude = registeredAiProfile("claude");
+      const claude = registeredAiProfile("claude").marketplaceRegistration();
 
-      expect(claude.declaredMarketplaceNames({ other: { a: {} } })).toStrictEqual(new Set());
-      expect(claude.declaredMarketplaceNames(null)).toStrictEqual(new Set());
+      expect(claude?.declaredMarketplaceNames({ other: { a: {} } })).toStrictEqual(new Set());
+      expect(claude?.declaredMarketplaceNames(null)).toStrictEqual(new Set());
     });
 
-    it("names none for a tool with no native plugin CLI", () => {
-      expect(
-        registeredAiProfile("cursor").declaredMarketplaceNames({ extraKnownMarketplaces: ["a"] })
-      ).toStrictEqual(new Set());
+    it("keeps no registration for a tool with no native plugin CLI", () => {
+      expect(registeredAiProfile("cursor").marketplaceRegistration()).toBeNull();
     });
   });
 
@@ -94,29 +92,28 @@ describe("what a project check asks a tool profile", () => {
       const copilot = registeredAiProfile("copilot").marketplaceRegistration();
 
       expect(claude?.sharedSettingsFile()).toBe(".claude/settings.json");
-      expect(claude?.writesEnabledPlugins()).toBe(true);
       expect(claude?.requiresNativeProof()).toBe(false);
       expect(copilot?.sharedSettingsFile()).toBe(".github/copilot/settings.json");
       expect(copilot?.requiresNativeProof()).toBe(true);
     });
 
-    it("reads and records the enabled-plugins map of a parsed shared file", () => {
+    it("answers a copy of a parsed shared file with the plugins enabled", () => {
       const registration = registeredAiProfile("claude").marketplaceRegistration();
       const shared: Record<string, unknown> = {};
 
-      registration?.recordEnabledPlugins(shared, { "p@m": true });
-
-      expect(shared).toStrictEqual({ enabledPlugins: { "p@m": true } });
-      expect(registration?.enabledPluginsIn(shared)).toStrictEqual({ "p@m": true });
+      expect(registration?.withEnabledPlugins(shared, ["p@m"])).toStrictEqual({
+        enabledPlugins: { "p@m": true },
+      });
+      expect(shared).toStrictEqual({});
     });
 
-    it("drops the marketplaces declaration and says whether one was there", () => {
+    it("answers a copy without the marketplaces declaration, or null when there was none", () => {
       const registration = registeredAiProfile("claude").marketplaceRegistration();
       const shared: Record<string, unknown> = { extraKnownMarketplaces: {}, keep: 1 };
 
-      expect(registration?.dropMarketplaces(shared)).toBe(true);
-      expect(shared).toStrictEqual({ keep: 1 });
-      expect(registration?.dropMarketplaces(shared)).toBe(false);
+      expect(registration?.withoutMarketplaces(shared)).toStrictEqual({ keep: 1 });
+      expect(shared).toStrictEqual({ extraKnownMarketplaces: {}, keep: 1 });
+      expect(registration?.withoutMarketplaces({ keep: 1 })).toBeNull();
     });
 
     it("names the entry key a marketplace is keyed by", () => {

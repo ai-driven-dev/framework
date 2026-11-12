@@ -67,9 +67,9 @@ describe("claude plugins", () => {
 
       expect({
         settingsPath: settings?.sharedSettingsFile(),
-        settingsKey: keyAskedOf((shared) => settings?.dropMarketplaces(shared)),
+        settingsKey: keyAskedOf((shared) => settings?.withoutMarketplaces(shared)),
         marketplacesSettingsPath: settings?.machineLocalFiles()[0] ?? null,
-        enabledPluginsKey: keyAskedOf((shared) => settings?.enabledPluginsIn(shared)),
+        enabledPluginsKey: keyAskedOf((shared) => settings?.withEnabledPlugins(shared, ["p@m"])),
         entryKey: settings?.entryKeyFor({
           name: "aidd-framework",
           source: { kind: "local", path: "/abs/cache" },

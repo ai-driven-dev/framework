@@ -44,17 +44,13 @@ export class McpCapability {
     return this.#params.mergeStrategy ?? "user-prime";
   }
 
-  isFrameworkPrime(): boolean {
-    return this.mergeStrategy() === "framework-prime";
-  }
-
   /** Whether `fileName` is the JSON file this tool shares with a person, the framework's half of
    * it written over theirs. */
   isFrameworkPrimeJson(fileName: string): boolean {
     return (
       this.#params.outputPath === fileName &&
       this.#params.format === "json" &&
-      this.isFrameworkPrime()
+      this.mergeStrategy() === "framework-prime"
     );
   }
 

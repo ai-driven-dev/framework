@@ -63,11 +63,9 @@ type AiToolFields = Omit<
   | "runtimeFiles"
   | "mcpConfig"
   | "settingsFiles"
-  | "machineLocalFiles"
   | "projectHooksDelivery"
   | "frameworkBuildMode"
   | "marketplaceRegistration"
-  | "declaredMarketplaceNames"
   | "installedRulesLocation"
   | "pluginEnablementIsMachineGlobal"
   | "signalDirectoryIn"
@@ -153,13 +151,6 @@ function settingsOf(sections: ProfileSections): readonly SettingsFileAnswers[] {
   return sections.settings ?? [];
 }
 
-function machineLocalFilesOf(sections: ProfileSections): readonly string[] {
-  const plugins = sections.plugins;
-  return plugins?.kind === "native"
-    ? (plugins.marketplaceRegistration()?.machineLocalFiles() ?? [])
-    : [];
-}
-
 function signalDirectoryOf(signalDir: string | null, projectRoot: string): SignalDirectory | null {
   return signalDir === null
     ? null
@@ -219,16 +210,10 @@ export function defineAiTool<C extends ProfileSections>(
     runtimeFiles: () => ({ ...fields.pluginRuntimeFiles }),
     mcpConfig: () => capabilities.mcp ?? null,
     settingsFiles: () => settingsOf(capabilities),
-    machineLocalFiles: () => machineLocalFilesOf(capabilities),
     marketplaceRegistration: () =>
       capabilities.plugins?.kind === "native"
         ? capabilities.plugins.marketplaceRegistration()
         : null,
-    declaredMarketplaceNames: (parsed: unknown): ReadonlySet<string> =>
-      capabilities.plugins?.kind === "native"
-        ? (capabilities.plugins.marketplaceRegistration()?.declaredMarketplaceNames(parsed) ??
-          new Set<string>())
-        : new Set<string>(),
     installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
     pluginEnablementIsMachineGlobal: () =>
       capabilities.plugins?.kind === "native"

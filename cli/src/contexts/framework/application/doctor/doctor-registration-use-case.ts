@@ -19,7 +19,10 @@ import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type {
+  MarketplaceRegistrationAnswers,
+  ToolProfile,
+} from "../../../tools/contract/tool-profile.js";
 import { aiProfileOf, profileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -321,17 +324,18 @@ export class DoctorRegistrationUseCase {
 
   private untrackedSettingsOf(
     tool: ToolProfile
-  ): { file: string; profile: AiToolProfile } | undefined {
+  ): { file: string; registration: MarketplaceRegistrationAnswers } | undefined {
     if (tool.kind !== "ai") return undefined;
     // No machine-local file means the tool writes no machine-local registration at all, so
     // there is nothing here to check.
-    const file = tool.machineLocalFiles()[0];
-    return file === undefined ? undefined : { file, profile: tool };
+    const registration = tool.marketplaceRegistration();
+    const file = registration?.machineLocalFiles()[0];
+    return registration === null || file === undefined ? undefined : { file, registration };
   }
 
   private async registeredNames(
     projectRoot: string,
-    settings: { file: string; profile: AiToolProfile }
+    settings: { file: string; registration: MarketplaceRegistrationAnswers }
   ): Promise<Set<string>> {
     const path = join(projectRoot, settings.file);
     if (!(await this.fs.fileExists(path))) return new Set();
@@ -341,7 +345,7 @@ export class DoctorRegistrationUseCase {
     } catch {
       return new Set();
     }
-    return new Set(settings.profile.declaredMarketplaceNames(parsed));
+    return new Set(settings.registration.declaredMarketplaceNames(parsed));
   }
 
   private canRegisterItself(tool: ToolProfile): boolean {

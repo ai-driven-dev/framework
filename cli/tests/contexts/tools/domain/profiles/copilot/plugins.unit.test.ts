@@ -36,11 +36,15 @@ describe("copilot plugins", () => {
     });
 
     it("uses extraKnownMarketplaces as settings key", () => {
-      expect(keyAskedOf((shared) => ms?.dropMarketplaces(shared))).toBe("extraKnownMarketplaces");
+      expect(keyAskedOf((shared) => ms?.withoutMarketplaces(shared))).toBe(
+        "extraKnownMarketplaces"
+      );
     });
 
     it("uses enabledPlugins as enabled plugins key", () => {
-      expect(keyAskedOf((shared) => ms?.enabledPluginsIn(shared))).toBe("enabledPlugins");
+      expect(keyAskedOf((shared) => ms?.withEnabledPlugins(shared, ["p@m"]))).toBe(
+        "enabledPlugins"
+      );
     });
 
     describe("the key a marketplace is recorded under", () => {
