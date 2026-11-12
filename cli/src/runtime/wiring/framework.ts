@@ -206,7 +206,7 @@ export async function createDeps(
   const fs = new FileAdapter(hasher, logger);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
-    pluginManifestProbes(tools.sortedById())
+    pluginManifestProbes(tools)
   );
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);

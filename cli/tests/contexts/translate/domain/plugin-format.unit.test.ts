@@ -12,7 +12,7 @@ describe("distributionProbesOf", () => {
       aProfile("copilot").withManifestProbe([".plugin/plugin.json", ".a/b/plugin.json"]).build(),
     ]);
 
-    const probes = distributionProbesOf(catalog.sortedById(), "manifest");
+    const probes = distributionProbesOf(catalog, "manifest");
 
     expect(probes.map((probe) => probe.relativePath)).toEqual([
       ".a/b/plugin.json",
@@ -27,9 +27,29 @@ describe("distributionProbesOf", () => {
       aProfile("cursor").build(),
     ]);
 
-    expect(distributionProbesOf(catalog.sortedById(), "marketplace")).toEqual([
+    expect(distributionProbesOf(catalog, "marketplace")).toEqual([
       { format: "claude", relativePath: "m.json" },
     ]);
-    expect(distributionProbesOf(catalog.sortedById(), "manifest")).toEqual([]);
+    expect(distributionProbesOf(catalog, "manifest")).toEqual([]);
+  });
+
+  it("breaks a tie between equally deep paths in the order the tools were registered", () => {
+    const cursorFirst = catalogOf([
+      aProfile("cursor").withManifestProbe([".cursor-plugin/plugin.json"]).build(),
+      aProfile("claude").withManifestProbe([".claude-plugin/plugin.json"]).build(),
+    ]);
+    const claudeFirst = catalogOf([
+      aProfile("claude").withManifestProbe([".claude-plugin/plugin.json"]).build(),
+      aProfile("cursor").withManifestProbe([".cursor-plugin/plugin.json"]).build(),
+    ]);
+
+    expect(distributionProbesOf(cursorFirst, "manifest").map((probe) => probe.format)).toEqual([
+      "cursor",
+      "claude",
+    ]);
+    expect(distributionProbesOf(claudeFirst, "manifest").map((probe) => probe.format)).toEqual([
+      "claude",
+      "cursor",
+    ]);
   });
 });

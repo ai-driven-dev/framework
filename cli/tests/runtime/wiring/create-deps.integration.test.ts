@@ -72,11 +72,11 @@ describe("createDeps", () => {
     const handed = {
       profile: (id: ToolId) => real.profile(id),
       aiProfile: (id: AiToolId) => real.aiProfile(id),
-      inHelpOrder: (category: ToolCategory) => real.inHelpOrder(category),
-      sortedById: () => {
+      inHelpOrder: (category: ToolCategory) => {
         walked += 1;
-        return real.sortedById();
+        return real.inHelpOrder(category);
       },
+      sortedById: () => real.sortedById(),
     };
 
     await createDeps(root, { verbose: false }, undefined, handed);
