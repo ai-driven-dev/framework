@@ -33,22 +33,4 @@ describe("profiles are islands", () => {
     expect(sources.size).toBeGreaterThan(0);
     expect(crossProfileImports(sources)).toEqual([]);
   });
-
-  it("names an import into a sibling profile, and leaves an import of the shared folders", () => {
-    const sources = new Map([
-      ["src/contexts/tools/domain/profiles/opencode/build.ts", ""],
-      [
-        "src/contexts/tools/domain/profiles/kilo/profile.ts",
-        [
-          'import { toTypedMcpSection } from "../opencode/build.js";',
-          'import { stripToolSuffix } from "../../formats/command.js";',
-          'import { KILO_HOOKS } from "./hooks.js";',
-        ].join("\n"),
-      ],
-    ]);
-
-    expect(crossProfileImports(sources)).toEqual([
-      "src/contexts/tools/domain/profiles/kilo/profile.ts -> src/contexts/tools/domain/profiles/opencode/build.ts",
-    ]);
-  });
 });

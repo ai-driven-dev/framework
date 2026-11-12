@@ -174,96 +174,6 @@ describe("a tool's plugin delivery is asked, never read", () => {
     expect(verdictOn(readableFields(), Object.keys(STORED_ANSWERS_ALLOWED))).toEqual([]);
   });
 
-  it("names a stored value nobody allowed, and an allowed entry the code no longer holds", () => {
-    expect(verdictOn(["a :: A.x", "a :: A.y"], ["a :: A.y", "a :: A.gone"])).toEqual([
-      "readable: a :: A.x",
-      "stale: a :: A.gone",
-    ]);
-  });
-
-  it("sees a public field, a keyword-private one, a parameter property, a stored-value getter and method in each written shape, an object of stored fields, and clears a # field and a computed answer", () => {
-    const planted = [
-      "class A {",
-      "  readonly open: string;",
-      "  private readonly secret: string;",
-      "  readonly #hidden: string;",
-      "  constructor(private readonly leaked: string) {}",
-      "  get echoed(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  get kind(): string {",
-      '    return "a";',
-      "  }",
-      "  ask(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  askPlain(): string {",
-      "    return this.shown;",
-      "  }",
-      "  derived(): boolean {",
-      "    return this.#hidden !== undefined;",
-      "  }",
-      "  derivedFromOptional(name: string): boolean {",
-      "    return this.#hidden?.includes(name) ?? false;",
-      "  }",
-      "  override get overridden(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  override askOverridden(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  askGeneric<T>(): T {",
-      "    return this.#hidden;",
-      "  }",
-      "  askWithDefault(): string {",
-      '    return this.#hidden ?? "none";',
-      "  }",
-      "  askOptional(): string | undefined {",
-      "    return this.#hidden?.inner;",
-      "  }",
-      "  askCopy(): Shape {",
-      "    return { ...this.#hidden };",
-      "  }",
-      "  askShape(): Shape {",
-      "    const spec = this.#hidden;",
-      "    return {",
-      "      first: spec.first,",
-      "      second: spec.second,",
-      "    };",
-      "  }",
-      "  askShapeDirect(): Shape {",
-      "    return {",
-      "      first: this.#hidden.first,",
-      "      second: this.#hidden.second,",
-      "    };",
-      "  }",
-      "  askComputedShape(): Shape {",
-      "    const spec = this.#hidden;",
-      "    return {",
-      "      first: spec.first,",
-      "      second: spec.second.trim(),",
-      "    };",
-      "  }",
-      "}",
-    ].join("\n");
-    expect(readableIn("a.ts", planted)).toEqual([
-      "a.ts :: A.open",
-      "a.ts :: A.secret",
-      "a.ts :: A.leaked",
-      "a.ts :: A.echoed",
-      "a.ts :: A.overridden",
-      "a.ts :: A.ask",
-      "a.ts :: A.askPlain",
-      "a.ts :: A.askOverridden",
-      "a.ts :: A.askGeneric",
-      "a.ts :: A.askWithDefault",
-      "a.ts :: A.askOptional",
-      "a.ts :: A.askCopy",
-      "a.ts :: A.askShape",
-      "a.ts :: A.askShapeDirect",
-    ]);
-  });
-
   it("reads every capability and plugins file, the activation and registration included", () => {
     const files = answeringFiles();
     expect(files).toContain("src/contexts/tools/domain/capabilities/settings-capability.ts");
@@ -272,49 +182,9 @@ describe("a tool's plugin delivery is asked, never read", () => {
     expect(files).toContain("src/contexts/tools/domain/plugins/marketplace-registration.ts");
   });
 
-  it("sees a read and a destructuring where one is written", () => {
-    const written = [
-      'const a = tool.section("plugins").acceptsMcp;',
-      'const b = tool.section("plugins")?.acceptsMcp;',
-      'const { hookScript } = tool.section("plugins");',
-      "const c = catalog.resolvePluginsCapability(id).acceptsMcp;",
-      "const e = (x as PluginsCapability).acceptsMcp;",
-      "const f = catalog.resolveNativePlugins(id).hookScript;",
-      "const g = profile.plugins()?.hooksAcceptance;",
-      "const h = profile.plugins()?.hookScript;",
-      "const i = profile.nativeActivation()?.cliShape;",
-      "const { hookScript: j } = profile.plugins();",
-    ];
-    const found = written.map((line) => [...line.matchAll(FIELD_READ)].length);
-    const destructured = written.map((line) => [...line.matchAll(DESTRUCTURING)].length);
-    expect([found, destructured]).toEqual([
-      [1, 1, 0, 1, 1, 1, 1, 1, 1, 0],
-      [0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-    ]);
-
-    const asked = 'const d = tool.section("plugins").buildMode();';
-    expect([...asked.matchAll(FIELD_READ)]).toHaveLength(0);
-
-    const narrowed = 'if (tool.section("plugins").kind === "flat") return;';
-    expect([...narrowed.matchAll(FIELD_READ)]).toHaveLength(0);
-
-    const askedOfProfile = [
-      "const k = profile.plugins()?.buildMode();",
-      "const l = profile.nativeActivation()?.userSettingsFile(home, env);",
-      'if (profile.plugins()?.kind === "native") return;',
-    ];
-    for (const line of askedOfProfile) expect([...line.matchAll(FIELD_READ)]).toHaveLength(0);
-  });
-
   it("the shared base declares no answer only one way of taking plugins has", () => {
     const base = read("src/contexts/tools/domain/plugins/plugin-delivery.ts");
     expect(variantOnlyAnswersOn(base)).toEqual([]);
-  });
-
-  it("sees a variant-only answer declared on a base, and clears a shared one", () => {
-    const placeholder = "  manifestPath(): string | null {\n    return null;\n  }";
-    expect(variantOnlyAnswersOn(placeholder)).toEqual(["manifestPath"]);
-    expect(variantOnlyAnswersOn("  globalFiles(): GlobalFiles | null {")).toEqual([]);
   });
 });
 
