@@ -4,7 +4,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
-const { showcaseOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
+const { showcaseOf, copiedOf, keptOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The showcase is a pure module that renders pages and a command that writes them: the pages are
 // judged as text, and the command as a subprocess, as the skill calls it.
@@ -13,6 +13,8 @@ const SHOWCASE = `${UI}/showcase`;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const REVIEW_FILE = `${UI}/reviews/first-pass.md`;
 const HOME_STATES = ["default", "empty", "loading", "error"];
+// The records with states and a render, in the order of the navigation, and how many states each holds.
+const REVIEWABLE = [["button", 4], ["old-button", 1], ["search-field", 4], ["dialog", 4], ["search-flow", 2], ["home", 4]];
 
 let tmp;
 
@@ -44,44 +46,11 @@ const cardsOf = (html) => [...html.match(/<section class="journey"[\s\S]*?<\/sec
 const tabsOf = (html) => [...html.matchAll(/<button type="button" role="tab"[^>]*>/g)].map((match) => match[0]);
 const attributeOf = (tag, name) => tag.match(new RegExp(`${name}="([^"]*)"`))?.[1];
 
-/** Runs the script of a record's page against a minimal document built from its articles, clicks the
- * verdicts `picks` names, `{ state: [verdict, comment] }`, then Copy, and returns what reached the clipboard. */
-async function copiedFrom(html, picks) {
-  const node = (extra = {}) => {
-    const on = {};
-    const attributes = {};
-    return {
-      dataset: {}, style: {}, hidden: false, disabled: false, textContent: "", value: "",
-      setAttribute: (name, value) => { attributes[name] = String(value); },
-      getAttribute: (name) => attributes[name] ?? null,
-      addEventListener: (type, listener) => (on[type] ??= []).push(listener),
-      fire: (type) => (on[type] ?? []).forEach((listener) => listener({ key: "" })),
-      querySelector: () => null, querySelectorAll: () => [], focus() {}, select() {},
-      ...extra,
-    };
-  };
-  const articles = statesIn(html).map((state) => {
-    const buttons = ["ok", "revise"].map((verdict) => node({ dataset: { verdict } }));
-    const comment = node();
-    return { state, buttons, comment, article: node({ dataset: { state }, querySelector: (selector) => (selector === ".comment" ? comment : null), querySelectorAll: (selector) => (selector === ".verdict" ? buttons : []) }) };
-  });
-  const [, record, version] = html.match(/<section class="review" data-record="([^"]+)" data-version="([^"]+)">/);
-  const review = node({ dataset: { record, version }, querySelectorAll: (selector) => (selector === "article.state" ? articles.map((each) => each.article) : []) });
-  const ids = { copy: node({ dataset: { copied: "Copied", blocked: "blocked" } }), note: node() };
-  const document = { querySelector: (selector) => (selector === ".review" ? review : null), querySelectorAll: () => [], getElementById: (id) => ids[id] ?? node(), createElement: () => node() };
-  let copied = null;
-  const navigator = { clipboard: { writeText: (text) => { copied = text; return Promise.resolve(); } } };
-  new Function("document", "navigator", "setTimeout", html.match(/<script>([\s\S]*)<\/script>/)[1])(document, navigator, () => {});
-  for (const [state, [verdict, comment]] of Object.entries(picks)) {
-    const own = articles.find((each) => each.state === state);
-    own.buttons.find((button) => button.dataset.verdict === verdict).fire("click");
-    own.comment.value = comment ?? "";
-    own.comment.fire("input");
-  }
-  ids.copy.fire("click");
-  await new Promise((resolve) => setImmediate(resolve));
-  return copied;
-}
+const drawerOf = (html) => html.match(/<aside class="drawer" id="review"[\s\S]*?<\/aside>/)[0];
+const itemsOf = (html) => [...drawerOf(html).matchAll(/<details class="item" data-record="([^"]+)" data-version="([^"]+)"([^>]*)>[\s\S]*?<\/details>/g)].map((match) => ({ record: match[1], version: match[2], attributes: match[3], html: match[0] }));
+const rowOf = (html, record, state) => itemsOf(html).find((item) => item.record === record).html.match(new RegExp(`<li class="pstate" data-state="${state}"[\\s\\S]*?</li>`))[0];
+const headerOf = (html) => html.match(/<header class="head">[\s\S]*?<\/header>/)[0];
+const appearsOf = (html) => [...(html.match(/<section class="appears">[\s\S]*?<\/section>/)?.[0] ?? "").matchAll(/<a class="mini-card" href="([^"]+)\.html"><b>([^<]*)<\/b><span class="chip" data-status="([^"]+)">/g)].map((match) => match.slice(1));
 
 describe("aidd-ui showcase", () => {
   describe("the pages", () => {
@@ -139,11 +108,20 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(ghost, /ghost\.html|<iframe/);
     });
 
-    it("shows the persona as a card and leaves the Steps table and the Persona section out of the journey's text", () => {
+    it("shows the persona as one line under the title, and leaves the Steps table and the Persona section out of the journey's text", () => {
       const page = pagesOf()["onboarding.html"];
-      assert.match(page.match(/<section class="persona">[\s\S]*?<\/section>/)[0], /An analyst opening the product for the first time, looking for one answer\./);
-      assert.doesNotMatch(page, /<h2>Steps<\/h2>|<h2>Persona<\/h2>|<table/);
+      assert.match(headerOf(page), /<h1>Onboarding<\/h1><p class="persona">For a first-time analyst: An analyst opening the product for the first time, looking for one answer\.<\/p>/);
+      assert.doesNotMatch(page, /<h2>Steps<\/h2>|<h2>Persona<\/h2>|<table|<section class="persona"/);
       assert.equal(page.match(/An analyst opening the product/g).length, 1);
+    });
+
+    it("writes the persona line as its text alone when the text already opens with the persona's name", () => {
+      edit(tmp, `${UI}/journeys/onboarding.md`, "An analyst opening", "A first-time analyst opening");
+      assert.match(headerOf(pagesOf()["onboarding.html"]), /<p class="persona">For a first-time analyst opening the product for the first time, looking for one answer\.<\/p>/);
+    });
+
+    it("holds no Uses row on a journey, whose storyboard already shows its screens", () => {
+      assert.doesNotMatch(pagesOf()["onboarding.html"], /data-links="uses"/);
     });
 
     it("draws no journey chain on a record that is not a journey", () => {
@@ -169,12 +147,21 @@ describe("aidd-ui showcase", () => {
       assert.ok(components.match(/data-level="molecule"[\s\S]*?<\/ul>/)[0].includes('href="search-field.html"'));
     });
 
-    it("lists what a record uses and what uses it, from every field that cites an id", () => {
+    it("lists what a record uses at the top, and where it appears at the bottom, from every field that cites an id", () => {
       const pages = pagesOf();
       assert.deepEqual(linksOf(pages["home.html"], "uses"), ["dialog", "search-field"]);
-      assert.deepEqual(linksOf(pages["home.html"], "used-by"), ["onboarding"]);
-      assert.deepEqual(linksOf(pages["search-field.html"], "used-by"), ["home", "search-flow"]);
+      assert.deepEqual(appearsOf(pages["home.html"]), [["onboarding", "Onboarding", "validated"]]);
+      assert.deepEqual(appearsOf(pages["search-field.html"]).map(([id]) => id), ["home", "search-flow"]);
       assert.ok(!pages["home.html"].includes('href="first-pass.html"'));
+      assert.doesNotMatch(pages["home.html"], /data-links="used-by"/);
+    });
+
+    it("puts the journeys a wireframe appears in at the very bottom of its page, as small cards with a title and a status", () => {
+      const page = pagesOf()["search-flow.html"];
+      assert.deepEqual(appearsOf(page), [["onboarding", "Onboarding", "validated"]]);
+      const main = page.match(/<main>([\s\S]*)<\/main>/)[1];
+      assert.ok(main.indexOf('<section class="appears">') > main.indexOf('<section class="review"'));
+      assert.match(main, /<section class="appears">[\s\S]*<\/section>\s*$/);
     });
 
     it("marks a proposed record on its page and in the navigation, and a validated one nowhere", () => {
@@ -185,11 +172,22 @@ describe("aidd-ui showcase", () => {
       assert.match(pages["home.html"], /<span class="chip" data-status="validated">/);
     });
 
-    it("titles a page with its record's heading and shows the id as a chip", () => {
+    it("titles a page with its record's heading, then its status and its version, and no id or kind chip", () => {
       const home = pagesOf()["home.html"];
       assert.deepEqual(home.match(/<h1[ >][^<]*<\/h1>/g), ["<h1>Home</h1>"]);
-      assert.match(home, /<span class="chip" data-key="id"><span class="key">id<\/span>home<\/span>/);
+      assert.match(headerOf(home), /<div class="chips"><span class="chip" data-status="validated">validated<\/span><span class="version">v1<\/span>/);
+      assert.doesNotMatch(home, /data-key="id"|data-key="kind"|data-key="version"/);
+      assert.doesNotMatch(headerOf(home), /class="lede"/);
       assert.match(home, /<title>Home<\/title>/);
+    });
+
+    it("puts the record's description under its title, before the canvas, and not again in its text", () => {
+      edit(tmp, `${UI}/wireframes/search-flow.md`, "# Search flow", "# Search flow\n\nLet an analyst narrow a search\nto one result.\n\n## Notes\n\nKept below.");
+      const page = pagesOf()["search-flow.html"];
+      assert.match(headerOf(page), /<h1>Search flow<\/h1><p class="lede">Let an analyst narrow a search to one result\.<\/p><div class="chips">/);
+      assert.equal(page.match(/narrow a search/g).length, 1);
+      assert.ok(page.indexOf('class="lede"') < page.indexOf('<section class="review"'));
+      assert.match(page, /<p>Kept below\.<\/p>/);
     });
 
     it("shows the code links and the route of a screen as chips", () => {
@@ -352,9 +350,9 @@ describe("aidd-ui showcase", () => {
       assert.deepEqual([usage.status, usage.stderr], [2, "usage: node aidd-ui.cjs showcase [--lang <code>] [--root <dir>]\n"]);
     });
 
-    it("holds no script that reaches out or keeps state: no request, no listener, no storage", () => {
+    it("holds no script that reaches out: no request, and no storage but the browser's own local one", () => {
       for (const [name, html] of Object.entries(pagesOf())) {
-        for (const reaching of ["http://", "https://", "fetch(", "XMLHttpRequest", "WebSocket", "localStorage", "sessionStorage", "indexedDB"]) assert.ok(!html.includes(reaching), `${name} ${reaching}`);
+        for (const reaching of ["http://", "https://", "fetch(", "XMLHttpRequest", "WebSocket", "sendBeacon", "sessionStorage", "indexedDB", "document.cookie"]) assert.ok(!html.includes(reaching), `${name} ${reaching}`);
       }
     });
   });
@@ -464,17 +462,13 @@ describe("aidd-ui showcase", () => {
     it("holds the review only on a record with states and a render", () => {
       const pages = pagesOf();
       for (const id of ["home", "button", "search-flow"]) assert.match(pages[`${id}.html`], /<section class="review" data-record="/, id);
-      for (const id of ["brand", "system", "onboarding", "icon-search", "index"]) assert.doesNotMatch(pages[`${id}.html`], /class="review"|id="copy"/, id);
+      for (const id of ["brand", "system", "onboarding", "icon-search", "index"]) assert.doesNotMatch(pages[`${id}.html`], /<section class="review"/, id);
     });
 
-    it("hands the review of a record back as one copy, with the record, its version and the verdicts", () => {
+    it("keeps no verdict under the canvas: no choice, no comment field, no state name repeated beside the tabs", () => {
       const home = pagesOf()["home.html"];
-      assert.match(home, /<section class="review" data-record="home" data-version="1">/);
-      for (const state of HOME_STATES) {
-        const buttons = [...articleOf(home, state).matchAll(/<button type="button" class="verdict" data-verdict="(\w+)"/g)].map((match) => match[1]);
-        assert.deepEqual(buttons, ["ok", "revise"], state);
-      }
-      assert.equal(home.match(/id="copy"/g).length, 1);
+      for (const state of HOME_STATES) assert.doesNotMatch(articleOf(home, state), /class="verdict"|<textarea|<h3>/, state);
+      assert.doesNotMatch(home.match(/<section class="review"[\s\S]*?<\/section>/)[0], /id="copy"/);
     });
 
     it("shows the states as tabs in the order of the review, the first open and the others hidden", () => {
@@ -489,119 +483,130 @@ describe("aidd-ui showcase", () => {
         assert.equal(/ hidden[ >]/.test(open), at > 0, state);
       });
     });
+  });
 
-    it("keeps a verdict pair and a comment field in the panel of each state", () => {
-      const home = pagesOf()["home.html"];
-      for (const state of HOME_STATES) assert.equal(articleOf(home, state).match(/<textarea class="comment"/g).length, 1, state);
-      assert.equal(home.match(/class="verdict"/g).length, HOME_STATES.length * 2);
+  describe("the review panel", () => {
+    it("opens from a Review button on every page, the overview included, with the tally of every state reviewed", () => {
+      verdicts(["home", "default", "1", "ok", ""], ["home", "loading", "1", "revise", "too small"], ["home", "error", "1", "pending", ""], ["button", "default", "0", "ok", ""]);
+      const total = REVIEWABLE.reduce((sum, [, count]) => sum + count, 0);
+      for (const [name, html] of Object.entries(pagesOf())) {
+        assert.equal(html.match(/<button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">Review <span class="tally">2\/(\d+)<\/span><\/button>/)?.[1], String(total), name);
+        assert.equal(html.match(/<aside class="drawer" id="review"/g).length, 1, name);
+        assert.equal(html.match(/id="copy"/g).length, 1, name);
+      }
     });
 
-    it("copies the verdicts chosen, in the order of the panels, as fenced JSON", async () => {
-      verdicts();
-      const copied = await copiedFrom(pagesOf()["home.html"], { default: ["ok"], loading: ["revise", "  spinner too small "] });
-      const expected = [
-        "```json",
-        "{",
-        '  "record": "home",',
-        '  "version": 1,',
-        '  "verdicts": [',
-        "    {",
-        '      "state": "default",',
-        '      "verdict": "ok",',
-        '      "comment": ""',
-        "    },",
-        "    {",
-        '      "state": "loading",',
-        '      "verdict": "revise",',
-        '      "comment": "spinner too small"',
-        "    }",
-        "  ]",
-        "}",
-        "```",
-        "",
-      ].join("\n");
-      assert.equal(copied, expected);
+    it("lists every record with states and a render, in the order of the navigation, the record of the page open", () => {
+      const pages = pagesOf();
+      assert.deepEqual(itemsOf(pages["index.html"]).map((item) => [item.record, item.version]), REVIEWABLE.map(([id]) => [id, id === "old-button" ? "2" : "1"]));
+      for (const item of itemsOf(pages["index.html"])) assert.doesNotMatch(item.attributes, /open|data-here/, item.record);
+      const open = itemsOf(pages["home.html"]).filter((item) => / open/.test(item.attributes)).map((item) => item.record);
+      assert.deepEqual(open, ["home"]);
+      assert.match(itemsOf(pages["home.html"]).find((item) => item.record === "home").attributes, /data-here/);
+    });
+
+    it("gives each state of a record a verdict pair, a comment field and a link to its tab, in the order of the tabs", () => {
+      verdicts(["home", "default", "1", "ok", ""]);
+      const home = pagesOf()["home.html"];
+      const item = itemsOf(home).find((each) => each.record === "home").html;
+      assert.deepEqual([...item.matchAll(/<li class="pstate" data-state="([^"]+)"/g)].map((match) => match[1]), statesIn(home));
+      for (const state of HOME_STATES) {
+        const row = rowOf(home, "home", state);
+        assert.deepEqual([...row.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)" aria-pressed="false">/g)].map((match) => match[1]), ["ok", "revise"], state);
+        assert.equal(row.match(/<textarea class="comment"[^>]* hidden/g).length, 1, state);
+        assert.match(row, new RegExp(`<a class="pick" href="home\\.html#tab-${state}">${state}</a>`), state);
+      }
+      assert.match(rowOf(home, "home", "default"), /data-current="ok"/);
+    });
+
+    it("shows the overview's progress on each card, and nothing pre-checked nor a batch to copy", () => {
+      verdicts(["button", "default", "1", "ok", ""], ["button", "hover", "1", "revise", "too pale"]);
+      const index = pagesOf()["index.html"];
+      assert.match(index.match(/<a class="card" href="button\.html"[\s\S]*?<\/a>/)[0], /<span class="progress" data-record="button">2\/4<\/span>/);
+      assert.match(index.match(/<a class="card" href="search-flow\.html"[\s\S]*?<\/a>/)[0], /<span class="progress" data-record="search-flow">0\/2<\/span>/);
+      assert.doesNotMatch(index.match(/<a class="card" href="brand\.html"[\s\S]*?<\/a>/)[0], /class="progress"/);
+      assert.doesNotMatch(index, /type="checkbox"|checked|class="batch"|copy-all/);
+    });
+
+    it("offers marking the remaining states OK only as an explicit action of the panel", () => {
+      const index = pagesOf()["index.html"];
+      assert.match(drawerOf(index), /<button type="button" id="all-ok">Mark the remaining as OK<\/button>/);
+      assert.equal(index.match(/id="all-ok"/g).length, 1);
+    });
+
+    it("carries a script that compiles on every page, holding the copy the review skill reads", () => {
+      for (const [name, html] of Object.entries(pagesOf())) {
+        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        assert.doesNotThrow(() => new Function(script), name);
+        assert.ok(script.includes(copiedOf.toString()) && script.includes(keptOf.toString()), name);
+      }
+    });
+
+    it("writes the same page twice", () => {
+      assert.equal(pagesOf()["index.html"], pagesOf()["index.html"]);
+      assert.equal(pagesOf()["home.html"], pagesOf()["home.html"]);
     });
   });
 
-  describe("the home page batch", () => {
-    const LISTABLE = { button: ["default", "hover", "focus", "disabled"], "search-field": ["default", "hover", "focus", "disabled"], dialog: ["default", "hover", "focus", "disabled"], "old-button": ["default"], "search-flow": ["default", "empty"] };
-    const okRows = (...ids) => ids.flatMap((id) => LISTABLE[id].map((state) => [id, state, id === "old-button" ? "2" : "1", "ok", ""]));
-    const batchOf = (html) => [...html.matchAll(/<li data-record="([^"]+)" data-version="(\d+)" data-states="([^"]*)">/g)].map((match) => ({ record: match[1], version: match[2], states: JSON.parse(match[3].replaceAll("&quot;", '"')) }));
+  describe("the copy of a review", () => {
+    const HOME_COPY = [
+      "```json",
+      "{",
+      '  "record": "home",',
+      '  "version": 1,',
+      '  "verdicts": [',
+      "    {",
+      '      "state": "default",',
+      '      "verdict": "ok",',
+      '      "comment": ""',
+      "    },",
+      "    {",
+      '      "state": "loading",',
+      '      "verdict": "revise",',
+      '      "comment": "spinner too small"',
+      "    }",
+      "  ]",
+      "}",
+      "```",
+      "",
+    ].join("\n");
+    const home = { record: "home", version: "1", verdicts: [{ state: "default", verdict: "ok", comment: "" }, { state: "loading", verdict: "revise", comment: "  spinner too small " }] };
 
-    it("lists a record whose states are not all ok, checked, with only its states still to judge", () => {
-      verdicts(["button", "default", "1", "ok", ""]);
-      const index = pagesOf()["index.html"];
-      const entries = batchOf(index);
-      assert.deepEqual(entries.map((entry) => entry.record), ["button", "dialog", "old-button", "search-field", "search-flow"]);
-      assert.deepEqual(entries[0], { record: "button", version: "1", states: ["hover", "focus", "disabled"] });
-      assert.match(index, /<section class="batch" data-records="5">/);
-      assert.equal(index.match(/<input type="checkbox" checked>/g).length, 5);
-      assert.equal(index.match(/id="copy-all"/g).length, 1);
+    it("copies one record as the page copy did: one object, its decided states in order, the comments trimmed", () => {
+      assert.equal(copiedOf([home, { record: "button", version: "1", verdicts: [] }]), HOME_COPY);
     });
 
-    it("leaves out a record whose states are all ok", () => {
-      verdicts(...okRows("button"));
-      assert.ok(!batchOf(pagesOf()["index.html"]).some((entry) => entry.record === "button"));
+    it("copies several records as the overview copy did: a list of the same objects, in the order given", () => {
+      const button = { record: "button", version: "1", verdicts: [{ state: "hover", verdict: "ok", comment: "" }] };
+      const expected = "```json\n" + JSON.stringify([{ record: "button", version: 1, verdicts: [{ state: "hover", verdict: "ok", comment: "" }] }, { record: "home", version: 1, verdicts: [{ state: "default", verdict: "ok", comment: "" }, { state: "loading", verdict: "revise", comment: "spinner too small" }] }], null, 2) + "\n```\n";
+      assert.equal(copiedOf([button, home]), expected);
     });
 
-    it("leaves out a record with a state to revise at its version, which is judged on its own page", () => {
-      verdicts(["button", "hover", "1", "revise", "too pale"]);
-      assert.ok(!batchOf(pagesOf()["index.html"]).some((entry) => entry.record === "button"));
+    it("copies nothing when nothing is decided", () => {
+      assert.equal(copiedOf([{ record: "home", version: "1", verdicts: [] }]), "");
     });
 
-    it("lists a record whose ok is of an older version only, with every state", () => {
-      verdicts(["button", "default", "0", "ok", ""]);
-      assert.deepEqual(batchOf(pagesOf()["index.html"]).find((entry) => entry.record === "button").states, ["default", "hover", "focus", "disabled"]);
-    });
-
-    it("leaves out a screen whose code is at its version", () => {
-      verdicts();
-      assert.ok(!batchOf(pagesOf()["index.html"]).some((entry) => entry.record === "home"));
-    });
-
-    it("holds no batch and no script when nothing is left to judge", () => {
-      verdicts(...okRows("button", "search-field", "dialog", "old-button", "search-flow"));
-      const index = pagesOf()["index.html"];
-      assert.doesNotMatch(index, /class="batch"|id="copy-all"|<script>/);
-    });
-
-    it("writes the labels in the language, the stored verdict staying ok", () => {
-      const index = pagesOf({ lang: "fr" })["index.html"];
-      assert.match(index, /id="copy-all"[^>]*>Tout OK, copier</);
-      assert.match(index, /<h2>Encore à juger<\/h2>/);
-      assert.match(index, /Décochez une fiche pour la juger sur sa page\./);
-    });
-
-    it("writes the same page twice, the records in the order of their ids", () => {
-      assert.equal(pagesOf()["index.html"], pagesOf()["index.html"]);
-    });
-
-    it("carries a script that compiles, on the home page, on the system page and on a record's page", () => {
-      for (const name of ["index.html", "system.html", "button.html"]) {
-        const script = pagesOf()[name].match(/<script>([\s\S]*)<\/script>/)[1];
-        assert.doesNotThrow(() => new Function(script), name);
-      }
-      const scriptOf = (name) => pagesOf()[name].match(/<script>([\s\S]*)<\/script>/)[1];
-      assert.ok(!scriptOf("system.html").includes('document.querySelector(".review")'));
-      assert.ok(scriptOf("button.html").includes('document.querySelector(".review")'));
-      assert.match(pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1], /verdict: "ok"/);
+    it("keeps only the verdicts of a record at the version a page shows, so a raised version starts clean", () => {
+      const stored = { "home@0": { default: { verdict: "ok", comment: "" } }, "home@1": { empty: { verdict: "revise", comment: "x" } }, "gone@1": { default: { verdict: "ok", comment: "" } } };
+      assert.deepEqual(keptOf(stored, ["home@1", "button@1"]), { "home@1": { empty: { verdict: "revise", comment: "x" } } });
+      assert.deepEqual(keptOf(null, ["home@1"]), {});
+      assert.deepEqual(keptOf("broken", ["home@1"]), {});
     });
   });
 
   describe("the language", () => {
     it("labels the verdicts OK and Revise in English, by default", () => {
-      const article = articleOf(pagesOf()["home.html"], "default");
-      assert.match(article, /data-verdict="ok"[^>]*>OK</);
-      assert.match(article, /data-verdict="revise"[^>]*>Revise</);
+      const row = rowOf(pagesOf()["home.html"], "home", "default");
+      assert.match(row, /data-verdict="ok"[^>]*>OK</);
+      assert.match(row, /data-verdict="revise"[^>]*>Revise</);
       assert.match(pagesOf()["home.html"], /<html lang="en">/);
     });
 
     it("labels them OK and À revoir in French, the stored values staying ok and revise", () => {
       const home = pagesOf({ lang: "fr" })["home.html"];
-      const article = articleOf(home, "default");
-      assert.match(article, /data-verdict="ok"[^>]*>OK</);
-      assert.match(article, /data-verdict="revise"[^>]*>À revoir</);
+      const row = rowOf(home, "home", "default");
+      assert.match(row, /data-verdict="ok"[^>]*>OK</);
+      assert.match(row, /data-verdict="revise"[^>]*>À revoir</);
       assert.match(home, /<html lang="fr">/);
     });
 
