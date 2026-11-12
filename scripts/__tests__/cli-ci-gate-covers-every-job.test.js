@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
+const { spawnSync } = require("node:child_process");
 const yaml = require("js-yaml");
 
 const root = path.resolve(__dirname, "../..");
@@ -142,4 +143,22 @@ test("only a proven next snapshot tree skips the promotion or main mutation matr
       `${name} must still run for a relevant promotion PR`
     );
   }
+});
+
+// The Windows and macOS jobs are the only runs of the plugin suite off Linux, and a plugin's
+// bundled script or hook is what handles paths and line endings there. Runs the filter's own
+// `case` under bash, so the assertion is what the workflow decides, not a reading of its text.
+test("the changes filter runs the suite for a plugin's bundled script or hook, not its prose", () => {
+  const script = cliCiWorkflow().jobs.changes.steps.map((step) => step.run ?? "").join("\n");
+  const filter = script.match(/^\s*case "\$f" in\n[\s\S]*?^\s*esac$/m);
+  assert.ok(filter, "the relevance filter must be a `case \"$f\" in ... esac` block");
+  const decide = (file) =>
+    spawnSync("bash", ["-c", `relevant=false\nf="$1"\n${filter[0]}\necho "$relevant"`, "filter", file], {
+      encoding: "utf8",
+    }).stdout.trim();
+
+  assert.equal(decide("plugins/aidd-context/skills/05-rule-generate/scripts/write-rule.cjs"), "true");
+  assert.equal(decide("plugins/aidd-context/hooks/memory.cjs"), "true");
+  assert.equal(decide("plugins/aidd-telemetry/hooks/lib/record.cjs"), "true");
+  assert.equal(decide("plugins/aidd-context/skills/05-rule-generate/SKILL.md"), "false");
 });

@@ -20,12 +20,13 @@ import type {
   HasSkills,
 } from "../../contracts.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { registerTool } from "../../registry.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
+import { COPILOT_HOOKS } from "./hooks.js";
 
 const DIRECTORY = COPILOT_WORKSPACE_DIR;
 const TOOL_SUFFIX = ".copilot.md";
@@ -270,8 +271,7 @@ export const copilot: AiTool<
       mode: "native",
       pluginsDir: ".github/plugins/",
       pluginManifestRelativePath: "plugin.json",
-      acceptsHooks: true,
-      pluginRootToken: PLUGIN_ROOT_TOKEN,
+      ...nativeHooksSupport(COPILOT_HOOKS),
       acceptsMcp: true,
       translationMode: "marketplace",
       // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
@@ -288,6 +288,9 @@ export const copilot: AiTool<
         disableVerb: "uninstall",
         sourceCheckVerb: "update",
         forceRemoveArgs: ["--force"],
+        // Measured on 1.0.98: `plugin uninstall` sets the ref to `false` in enabledPlugins
+        // rather than deleting it.
+        uninstallLeavesRefDisabled: true,
         // Where `copilot plugin marketplace add`/`install` land, measured against the real
         // binary. Never written by aidd; named here for a diagnostic alone.
         userSettingsPath: (h) => join(h, ".copilot", "settings.json"),

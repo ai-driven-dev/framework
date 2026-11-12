@@ -170,8 +170,8 @@ importers:
         specifier: 0.6.5
         version: 0.6.5
       commander:
-        specifier: ^15.0.0
-        version: 15.0.0
+        specifier: ^15.1.0
+        version: 15.1.0
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -780,8 +780,8 @@ packages:
     resolution: {integrity: sha512-xxodCmBen3iy2i0WtAK8FlFNrRzjUqjRsMfho58xT/wvZU1YTM3fCnRjcy1gJPMepaRlgm/0e6w8SpWHpn3/cA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  commander@15.0.0:
-    resolution: {integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==}
+  commander@15.1.0:
+    resolution: {integrity: sha512-cgnQ88TRrWcC7pVq46RzJVRMktu3W2RcbnoidnfBsl1bmDCBwJS/udcIZpKoCrbAYYaCqsz1yZCVIgbIaU3ddQ==}
     engines: {node: '>=22.12.0'}
 
   convert-to-spaces@2.0.1:
@@ -1481,7 +1481,7 @@ snapshots:
     dependencies:
       convert-to-spaces: 2.0.1
 
-  commander@15.0.0: {}
+  commander@15.1.0: {}
 
   convert-to-spaces@2.0.1: {}
 

@@ -124,9 +124,10 @@ export class RestoreUseCase {
   }
 
   private async executeRestore(ctx: RestoreCtx): Promise<RestoreResult> {
+    const previousManifest = JSON.stringify(ctx.manifest.toJSON());
     const toolResults = await this.runToolRestores(ctx);
     const pluginResult = await this.runPluginRestore(ctx);
-    await this.saveIfChanged(toolResults, pluginResult.totalFiles, ctx.manifest);
+    await this.saveIfChanged(toolResults, pluginResult.totalFiles, ctx.manifest, previousManifest);
     return this.buildTotals(toolResults, pluginResult);
   }
 
@@ -162,16 +163,20 @@ export class RestoreUseCase {
       fileFilter: ctx.fileFilter,
       pluginName: ctx.pluginName,
       toolIds: ctx.toolIds,
+      force: ctx.force,
     });
   }
 
   private async saveIfChanged(
     toolResults: RestoreToolFilesResult[],
     totalPluginFilesRestored: number,
-    manifest: Manifest
+    manifest: Manifest,
+    previousManifest: string
   ): Promise<void> {
     const hasChanges =
-      toolResults.some((t) => t.restored.length > 0) || totalPluginFilesRestored > 0;
+      toolResults.some((t) => t.restored.length > 0) ||
+      totalPluginFilesRestored > 0 ||
+      JSON.stringify(manifest.toJSON()) !== previousManifest;
     if (hasChanges) await this.manifestRepo.save(manifest);
   }
 

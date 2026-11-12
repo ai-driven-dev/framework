@@ -1,11 +1,5 @@
 {
-  "intro": {
-    "highlights": [
-      "Feature in a few words",
-      "Feature in a few words",
-      "Feature in a few words"
-    ]
-  },
+  "intro": {},
   "scenes": [
     {
       "template": "terminal-demo",

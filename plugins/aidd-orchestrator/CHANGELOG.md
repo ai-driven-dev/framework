@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.5.0](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.4.0...aidd-orchestrator-v2.5.0) (2026-11-13)
+
+
+### Features
+
+* **framework:** ship generic sub-agents across six hosts ([#1027](https://github.com/ai-driven-dev/framework/issues/1027)) ([7c67ca3](https://github.com/ai-driven-dev/framework/commit/7c67ca37a19dc30b8ba8933f7561f79e91736e2b))
+
+
+### Documentation
+
+* rewrite the documentation set by audience ([#1131](https://github.com/ai-driven-dev/framework/issues/1131)) ([b90bffa](https://github.com/ai-driven-dev/framework/commit/b90bffada166c69f4e3952dd5e56abfcad540264))
+
+
+### Refactoring
+
+* **aidd-dev:** make assert a judge and route sdlc through plan, implement and assert ([#1135](https://github.com/ai-driven-dev/framework/issues/1135)) ([65b54db](https://github.com/ai-driven-dev/framework/commit/65b54dbe0573da5542a20d5bd8abd380cfa70c03))
+
 ## [2.4.0](https://github.com/ai-driven-dev/framework/compare/aidd-orchestrator-v2.3.1...aidd-orchestrator-v2.4.0) (2026-10-16)
 
 

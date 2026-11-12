@@ -195,6 +195,13 @@ export class UnresolvableUserScopeError extends Error {
   }
 }
 
+export class InvalidAgentFrontmatterError extends Error {
+  constructor(agentName: string, detail: string) {
+    super(`Agent '${agentName}' has invalid frontmatter: ${detail}.`);
+    this.name = "InvalidAgentFrontmatterError";
+  }
+}
+
 export class InvalidPluginManifestError extends Error {
   constructor(detail?: string) {
     super(detail ? `Invalid plugin manifest: ${detail}` : "Invalid plugin manifest.");
@@ -477,9 +484,9 @@ export class UserScopeUnavailableError extends Error {
 export class UserScopeIdeToolsError extends Error {
   constructor(ideTools: readonly string[]) {
     super(
-      `--scope user installs no project files, so an IDE tool (${ideTools.join(", ")}) has ` +
-        "nothing to install at user scope. Drop --ide, or run `aidd setup --ide <ids>` " +
-        "separately at project scope."
+      `--global installs no project files, so an editor (${ideTools.join(", ")}) has ` +
+        "nothing to install machine-wide. Drop it from --ide, or run `aidd setup --ide <ids>` " +
+        "separately in the project."
     );
     this.name = "UserScopeIdeToolsError";
   }
@@ -488,9 +495,8 @@ export class UserScopeIdeToolsError extends Error {
 export class UserScopeUnsupportedAiToolsError extends Error {
   constructor(aiTools: readonly string[]) {
     super(
-      `--scope user drives native activation machine-wide, and ${aiTools.join(", ")} declares ` +
-        "no user-scope settings this CLI can point at. Drop it from --ai, or run " +
-        "`aidd setup --ai <ids>` separately at project scope."
+      `--global installs through an IDE's own plugin CLI or its user configuration directory, and neither exists for: ${aiTools.join(", ")}. ` +
+        "Drop them from --ide, or run `aidd setup --ide <ids>` in the project instead."
     );
     this.name = "UserScopeUnsupportedAiToolsError";
   }
@@ -499,8 +505,8 @@ export class UserScopeUnsupportedAiToolsError extends Error {
 export class UserScopeNoToolsError extends Error {
   constructor() {
     super(
-      "--scope user with no --ai registers the shared source for no tool at all. Pass " +
-        "`--ai <ids>` naming which tool to activate machine-wide."
+      "--global with no --ide registers the shared source for no tool at all. Pass " +
+        "`--ide <ids>` naming which tool to activate machine-wide."
     );
     this.name = "UserScopeNoToolsError";
   }
@@ -509,9 +515,8 @@ export class UserScopeNoToolsError extends Error {
 export class UserScopePluginModeError extends Error {
   constructor() {
     super(
-      "--scope user has no manifest entry a plugin can be recorded against yet, so " +
-        "--plugins has nothing to enable. Drop --plugins, or run `aidd plugin install` " +
-        "separately at project scope."
+      "--global cannot ask which plugins to install. Pass --plugins all, recommended, " +
+        "none, or comma-separated names."
     );
     this.name = "UserScopePluginModeError";
   }

@@ -3,7 +3,7 @@
 ## Requirements
 
 - [Node](https://nodejs.org) 22.12 or later (`node --version`).
-- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode or Kilo Code.
+- An AI coding tool: Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code or Antigravity CLI.
 
 ## Pick a method
 
@@ -28,8 +28,16 @@ It asks for your tool and your plugins, then installs them in your project.
 *Example for Claude Code, without the questions:*
 
 ```sh
-npx @ai-driven-dev/cli@latest setup --ai claude --plugins recommended --yes
+npx @ai-driven-dev/cli@latest setup --ide claude --plugins recommended --yes
 ```
+
+### For every project
+
+```sh
+npx @ai-driven-dev/cli@latest setup --global --ide claude,codex,opencode --plugins all --yes
+```
+
+It installs the plugins once for the whole machine and writes nothing in your project. It takes any of `claude`, `codex`, `copilot`, `cursor`, `kilo` and `opencode`: [what each one gets](../cli/README.md#scope).
 
 ### Check
 
@@ -111,7 +119,7 @@ cp -r aidd-framework-cursor-marketplace-<version>/plugins/aidd-* ~/.cursor/plugi
 
 </details>
 
-*OpenCode and Kilo Code have no marketplace: use flat files.*
+*OpenCode and Kilo Code have no marketplace: use flat files. Antigravity CLI also uses flat files.*
 
 ## Flat files
 
@@ -119,10 +127,10 @@ Generate the files with the CLI:
 
 ```sh
 git clone https://github.com/ai-driven-dev/framework.git
-npx @ai-driven-dev/cli@latest translate ./framework --to cursor --as flat --out .
+npx @ai-driven-dev/cli@latest translate ./framework --to <tool> --as flat --out .
 ```
 
-Replace `cursor` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode` or `kilo`.
+Replace `<tool>` with your tool: `claude`, `cursor`, `copilot`, `codex`, `opencode`, `kilo` or `antigravity`.
 
 <details>
 <summary>Without Node</summary>
@@ -131,6 +139,11 @@ Download `aidd-framework-<tool>-flat-<version>.zip` from the [latest release](ht
 
 ```sh
 unzip aidd-framework-<tool>-flat-<version>.zip
+```
+
+If a configuration file already exists, merge its contents into the extracted copy. Then copy the files, including hidden files:
+
+```sh
 cp -R aidd-framework-<tool>-flat-<version>/. .
 ```
 
@@ -141,6 +154,7 @@ cp -R aidd-framework-<tool>-flat-<version>/. .
 | Installed with | Run |
 | --- | --- |
 | CLI | `npx @ai-driven-dev/cli@latest plugin update` |
+| CLI, every project | `npx @ai-driven-dev/cli@latest sync --global` |
 | Claude Code marketplace | `claude plugin update <plugin>@aidd-framework` |
 | Flat files | The same `translate` command, with `--force` |
 
@@ -152,8 +166,11 @@ For another tool's marketplace, use that tool's plugin manager.
 | --- | --- |
 | CLI, one plugin | `npx @ai-driven-dev/cli@latest plugin remove <plugin>` |
 | CLI, everything | `npx @ai-driven-dev/cli@latest clean` previews. Add `--force` to delete |
+| CLI, every project | `npx @ai-driven-dev/cli@latest clean --global --force` |
 | Claude Code marketplace | `claude plugin uninstall <plugin>` |
 | Flat files | Delete the files you copied |
+
+Codex and Antigravity share `.agents/skills/`. When removing either tool, keep skills still used by the other.
 
 ## Problems
 

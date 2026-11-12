@@ -20,7 +20,7 @@ What this project is, the problem it solves, and its domain language. The non-de
 | ---- | ------- |
 | Plugin | installable package grouping skills around one concern, listed in `marketplace.json` |
 | Skill | a router: `SKILL.md` dispatching a request to its actions |
-| Action | one atomic step, with its own inputs, outputs, process and test |
+| Action | one atomic step, with its own input, process, output and rules |
 | Agent | isolated executor; own context, returns only a result |
 | Rule | coding standard injected into the tool's context automatically |
 | Memory | the bank under `aidd_docs/memory/`, loaded every session |
@@ -33,7 +33,7 @@ What this project is, the problem it solves, and its domain language. The non-de
 
 | Capability | Entry |
 | --- | --- |
-| Install and refresh a tool's configuration | `aidd setup --ai <ids> --ide <ids>` |
+| Install and refresh a tool's configuration | `aidd setup --ide <ids>`; `--global` for every project on the machine |
 | Install plugins from a marketplace | `aidd plugin install`, `aidd marketplace add` |
 | Build a target-native distribution | `aidd translate <source> --to <tool> --out <dir>` |
 | Bootstrap and refresh project memory | `aidd-context:02-project-memory` |

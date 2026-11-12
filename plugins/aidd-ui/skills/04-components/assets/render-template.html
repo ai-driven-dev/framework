@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="{{BCP 47 language}}" dir="{{ltr or rtl}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{component id}}</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+.{{component id}} {
+  padding-block: var(--{{spacing token CSS name}});
+  color: var(--{{text token CSS name}});
+}
+</style>
+</head>
+<body>
+<div class="{{component id}}" data-variant="{{variant}}" data-state="{{first state}}">{{first state}}</div>
+<div class="{{component id}}" data-variant="{{variant}}" data-state="{{next state}}">{{next state}}</div>
+</body>
+</html>
+
+<!--
+- Replace every `{{...}}` and delete every comment.
+-->

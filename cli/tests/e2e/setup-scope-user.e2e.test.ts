@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { environmentWithoutGitVariables } from "../../src/runtime/git/git-environment.js";
@@ -25,29 +25,91 @@ async function readJson(path: string): Promise<Record<string, unknown>> {
 }
 
 describe("E2E: setup --scope user writes nothing under the project", () => {
-  it.each(["all", "recommended", "aidd-dev"])(
-    "prints a clean refusal for user-scope plugin mode %s",
-    async (plugins) => {
-      const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-plugins");
-      try {
-        const result = await runCli(
-          ["setup", "--scope", "user", "--ai", "claude", "--plugins", plugins, "--yes"],
-          projectDir,
-          fakeHome
-        );
+  it("installs OpenCode's skills and agents for the machine, refreshes them, and cleans them", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-opencode");
+    try {
+      await gitInit(projectDir);
+      await execFileAsync("git", [...GIT_TEST_IDENTITY, "commit", "--allow-empty", "-m", "empty"], {
+        cwd: projectDir,
+        env: environmentWithoutGitVariables(process.env),
+      });
+      const opencode = join(fakeHome, ".config", "opencode");
 
-        expect(result.exitCode).toBe(1);
-        expect(result.stdout).toBe("");
-        expect(result.stderr).toBe(
-          "Error: --scope user has no manifest entry a plugin can be recorded against yet, so " +
-            "--plugins has nothing to enable. Drop --plugins, or run `aidd plugin install` " +
-            "separately at project scope.\n"
-        );
-      } finally {
-        await cleanup();
-      }
+      const setup = await runCli(
+        [
+          "setup",
+          "--global",
+          "--source",
+          "local",
+          "--path",
+          FRAMEWORK_REAL_PATH,
+          "--ide",
+          "opencode",
+          "--plugins",
+          "aidd-dev",
+          "--yes",
+        ],
+        projectDir,
+        fakeHome
+      );
+      expect(setup.stderr).toBe("");
+      expect(setup.exitCode).toBe(0);
+      expect(setup.stdout).toContain("Installed for every project on this machine: aidd-dev.");
+      expect(await gitStatusPorcelain(projectDir)).toBe("");
+      const agent = join(opencode, "agents", "aidd-dev-reviewer.md");
+      expect(await readFile(agent, "utf-8")).toMatch(/^mode: '?subagent'?$/m);
+      const skills = await readdir(join(opencode, "skills", "aidd-dev"));
+      expect(skills.length).toBeGreaterThan(0);
+
+      const sync = await runCli(["sync", "--global"], projectDir, fakeHome);
+      expect(sync.exitCode).toBe(0);
+      expect(sync.stdout).toContain("Refreshed global files for: aidd-dev");
+
+      const clean = await runCli(["clean", "--global", "--force"], projectDir, fakeHome);
+      expect(clean.exitCode).toBe(0);
+      await expect(readFile(agent, "utf-8")).rejects.toThrow();
+      expect(await gitStatusPorcelain(projectDir)).toBe("");
+    } finally {
+      await cleanup();
     }
-  );
+  });
+
+  it("preserves a pre-existing identical agent through refused setup and global clean", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-unowned-agent");
+    try {
+      const args = [
+        "setup",
+        "--global",
+        "--source",
+        "local",
+        "--path",
+        FRAMEWORK_REAL_PATH,
+        "--ide",
+        "opencode",
+        "--plugins",
+        "aidd-dev",
+        "--yes",
+      ];
+      expect((await runCli(args, projectDir, fakeHome)).exitCode).toBe(0);
+      const agent = join(fakeHome, ".config", "opencode", "agents", "aidd-dev-reviewer.md");
+      const content = await readFile(agent, "utf-8");
+      expect((await runCli(["clean", "--global", "--force"], projectDir, fakeHome)).exitCode).toBe(
+        0
+      );
+      await mkdir(dirname(agent), { recursive: true });
+      await writeFile(agent, content);
+
+      const refused = await runCli(args, projectDir, fakeHome);
+      expect(refused.exitCode).toBe(1);
+      expect(refused.stderr).toContain("already exists and was not installed by aidd");
+      expect((await runCli(["clean", "--global", "--force"], projectDir, fakeHome)).exitCode).toBe(
+        0
+      );
+      expect(await readFile(agent, "utf-8")).toBe(content);
+    } finally {
+      await cleanup();
+    }
+  });
 
   it("explains user-scope restrictions in setup help", async () => {
     const { projectDir, fakeHome, cleanup } = await createTestEnv("scope-user-help");
@@ -56,10 +118,11 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe("");
-      expect(result.stdout).toContain("--ai claude,codex,copilot,cursor");
-      expect(result.stdout).toContain("--plugins none");
-      expect(result.stdout).toContain("no --ide");
-      expect(result.stdout).toContain("host CLI on PATH");
+      expect(result.stdout).toContain("--ide claude,codex,copilot,cursor,kilo,opencode");
+      expect(result.stdout).toContain("--plugins all, recommended, none or names");
+      expect(result.stdout).toContain("no editor");
+      expect(result.stdout).toContain("must be on PATH");
+      expect(result.stdout).toContain("opencode gets their files in ~/.config/opencode");
     } finally {
       await cleanup();
     }
@@ -214,7 +277,7 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
       const doctorResult = await runCli(["doctor", "--scope", "user"], projectDir, fakeHome);
       expect(doctorResult.exitCode).toBe(0);
       expect(doctorResult.stdout).toContain("Nothing registered at user scope yet");
-      expect(doctorResult.stdout).toContain("aidd setup --scope user");
+      expect(doctorResult.stdout).toContain("aidd setup --global");
 
       const syncResult = await runCli(["sync", "--scope", "user"], projectDir, fakeHome);
       expect(syncResult.exitCode).toBe(0);

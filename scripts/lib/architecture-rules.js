@@ -116,7 +116,7 @@ function checkOrthogonality(filePath, content) {
     );
 }
 
-// --- Reading a `## Actions` section --------------------------------------------------------
+// --- Reading a router ---------------------------------------------------------------------
 
 function fenceCharacter(line) {
   return line.match(FENCE_MARKER)?.[1][0] ?? null;
@@ -157,10 +157,36 @@ function actionsSection(lines) {
   const nextHeading = after.findIndex((line) => SECOND_LEVEL_HEADING.test(line));
 
   return {
+    label: "## Actions",
     headingLine: headingIndex + 1,
     startIndex: headingIndex + 1,
     endIndex: nextHeading === -1 ? lines.length : headingIndex + 1 + nextHeading,
   };
+}
+
+/** The first closed Mermaid flowchart before any H2 is a router; later examples cannot add citations. */
+function preambleFlowSection(lines) {
+  let fence = null;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (fence === null) {
+      if (SECOND_LEVEL_HEADING.test(line)) return null;
+      const opening = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+      if (opening) fence = { marker: opening[1], language: opening[2].trim(), start: index };
+      continue;
+    }
+
+    const closing = line.match(/^ {0,3}(`{3,}|~{3,})\s*$/);
+    if (!closing || closing[1][0] !== fence.marker[0] || closing[1].length < fence.marker.length) continue;
+
+    const body = lines.slice(fence.start + 1, index);
+    const firstContent = body.find((value) => value.trim() && !/^\s*%%/.test(value));
+    if (fence.language === "mermaid" && /^\s*(?:flowchart|graph)(?:\s+(?:TB|TD|BT|RL|LR))?\s*(?:;|$)/.test(firstContent ?? "")) {
+      return { label: "Mermaid router", headingLine: fence.start + 1, startIndex: fence.start + 1, endIndex: index };
+    }
+    fence = null;
+  }
+  return null;
 }
 
 function tableCells(line) {
@@ -280,14 +306,14 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
 
   const rawLines = toLines(content);
   const lines = withoutFences(rawLines);
-  const section = actionsSection(lines);
+  const section = actionsSection(lines) ?? preambleFlowSection(rawLines);
 
   if (!section) {
-    const message = `${filePath} has action files but no "## Actions" section`;
+    const message = `${filePath} has action files but no "## Actions" section or preamble Mermaid flowchart`;
     return [violation("router-coherence", filePath, 1, surface.owner, message)];
   }
 
-  const { startIndex, endIndex, headingLine } = section;
+  const { startIndex, endIndex, headingLine, label } = section;
   const sectionLines = lines.slice(startIndex, endIndex);
   const { cited, cutOff } = citationsFromActionColumns(sectionLines);
 
@@ -309,7 +335,7 @@ function checkRouterCoherence(filePath, content, actionFileNames) {
         filePath,
         headingLine,
         surface.owner,
-        `${filePath}:${headingLine} "## Actions" never names action file "${name}"`
+        `${filePath}:${headingLine} "${label}" never names action file "${name}"`
       )
     );
 }

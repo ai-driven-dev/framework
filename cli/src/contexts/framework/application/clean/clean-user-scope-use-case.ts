@@ -327,7 +327,8 @@ export class CleanUserScopeUseCase {
           this.hostPluginRegistries.get(toolId),
           registration.hostName,
           owned,
-          projectRoot
+          projectRoot,
+          toolId
         );
         for (const ref of refsByHost.get(registration.hostName) ?? []) {
           if (hostRefs.get(ref)?.enabled !== true)
@@ -419,6 +420,15 @@ export class CleanUserScopeUseCase {
     await this.purgeWhitelistedPath("cache/built", "cache/built", (candidate) =>
       this.fs.deleteDirectory(candidate)
     );
+    // Other user marketplaces keep their registered sources. Plugin fetches belong to the
+    // machine manifest being removed, whose active dependents were checked before any purge.
+    const frameworkSource = `cache/marketplaces/${FRAMEWORK_MARKETPLACE_NAME}`;
+    for (const path of [frameworkSource, "cache/plugin-cache"]) {
+      await this.purgeWhitelistedPath(path, path, (candidate) =>
+        this.fs.deleteDirectory(candidate)
+      );
+    }
+    await this.purgeEmptyCacheShell("cache/marketplaces");
     // The self-update check cache, written into the same `cache/` directory by any online
     // command: left behind it keeps the shell below non-empty, the one occupant that made
     // "leaves nothing of aidd's on the machine" false in the ordinary case.
@@ -444,17 +454,15 @@ export class CleanUserScopeUseCase {
     await this.userManifestRepo.delete();
   }
 
-  /** `cache/built/` and `cache/update-check.json` are this whitelist's only occupants of
-   * `userConfigDir()/cache/`. The shell around them is removed only once proven empty, under the
-   * same containment as every other candidate — never assumed from having just purged its only
-   * children, since a future writer under `cache/` would make that assumption stale silently. */
-  private async purgeEmptyCacheShell(): Promise<void> {
+  /** Remove a cache directory only once proven empty, with the same containment as every
+   * whitelist candidate: another marketplace or a future cache writer may still use it. */
+  private async purgeEmptyCacheShell(path = "cache"): Promise<void> {
     const candidate = await resolveCacheCandidate(
       this.fs,
       this.logger,
       this.userConfigDir(),
-      "cache",
-      "user scope: cache"
+      path,
+      `user scope: ${path}`
     );
     if (candidate === null) return;
     let entries: string[];
@@ -466,7 +474,7 @@ export class CleanUserScopeUseCase {
     }
     if (entries.length > 0) return;
     await this.fs.deleteDirectory(candidate);
-    this.logger.info(`user scope: cache purged: ${candidate}`);
+    this.logger.info(`user scope: ${path} purged: ${candidate}`);
   }
 
   /** Never `userConfigDir()` itself, and never on a manifest's word: every fixed whitelist entry

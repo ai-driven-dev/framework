@@ -3,6 +3,8 @@ import type {
   ArtifactContract,
   ToolBuildContract,
 } from "../../../../src/contexts/tools/domain/build-contract.js";
+import { buildAntigravityFlatContract } from "../../../../src/contexts/tools/domain/profiles/antigravity/build.js";
+import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { buildClaudeFlatContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { buildCodexFlatContract } from "../../../../src/contexts/tools/domain/profiles/codex/build.js";
@@ -31,6 +33,7 @@ const FLAT_CONTRACTS: ReadonlyArray<[HooksDeclaringTool, () => ToolBuildContract
   [copilot, buildCopilotFlatContract],
   [codex, buildCodexFlatContract],
   [kilo, buildKiloFlatContract],
+  [antigravity, buildAntigravityFlatContract],
   [opencode, buildOpencodeFlatContract],
 ];
 

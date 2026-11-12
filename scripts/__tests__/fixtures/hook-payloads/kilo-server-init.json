@@ -1,0 +1,36 @@
+{
+  "host": "kilo",
+  "event": "server-init",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "inputKeys": [
+          "client",
+          "project",
+          "worktree",
+          "directory",
+          "experimental_workspace",
+          "serverUrl",
+          "$"
+        ],
+        "directory": "/Users/user/project"
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "inputKeys": [
+          "client",
+          "project",
+          "worktree",
+          "directory",
+          "experimental_workspace",
+          "serverUrl",
+          "$"
+        ],
+        "directory": "/Users/user/project"
+      }
+    }
+  ]
+}
