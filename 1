@@ -1,0 +1,17 @@
+usage: git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]
+                        [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]
+
+    -f, --[no-]force      checkout <branch> even if already checked out in other worktree
+    -b <branch>           create a new branch
+    -B <branch>           create or reset a branch
+    --[no-]orphan         create unborn branch
+    -d, --[no-]detach     detach HEAD at named commit
+    --[no-]checkout       populate the new working tree
+    --[no-]lock           keep the new working tree locked
+    --[no-]reason <string>
+                          reason for locking
+    -q, --[no-]quiet      suppress progress reporting
+    --[no-]track          set up tracking mode (see git-branch(1))
+    --[no-]guess-remote   try to match the new branch name with a remote-tracking branch
+    --[no-]relative-paths use relative paths for worktrees
+
