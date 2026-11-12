@@ -63,8 +63,7 @@ export class PluginInstallUseCase {
   ): Promise<void> {
     const targets = await this.resolveTargetTools(toolIds);
     for (const toolId of targets) {
-      const plugins = aiProfileOf(tools, toolId).plugins();
-      const requiresUserScope = plugins?.kind === "native" && plugins.requiresUserScope();
+      const requiresUserScope = aiProfileOf(tools, toolId).plugins()?.requiresUserScope() === true;
       assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope));
     }
   }

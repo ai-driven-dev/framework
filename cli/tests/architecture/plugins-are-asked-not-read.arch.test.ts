@@ -191,7 +191,6 @@ describe("a tool's plugin delivery is asked, never read", () => {
 /** Answers that belong to one variant alone; the base holds none of them. */
 const VARIANT_ONLY = [
   "translatesAsMarketplace",
-  "requiresUserScope",
   "manifestPath",
   "rootToken",
   "trustNotice",

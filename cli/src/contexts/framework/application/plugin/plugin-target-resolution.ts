@@ -14,13 +14,8 @@ export function resolvePluginToolIds(toolIds: AiToolId[] | "all", manifest: Mani
 /** The scope a fresh install writes to the manifest, read once from the tool's own profile.
  * Nothing else calls this: every later command reads the scope the manifest already recorded,
  * which the profile can disagree with. */
-function requiresUserScope(tool: AiToolProfile): boolean {
-  const plugins = tool.plugins();
-  return plugins?.kind === "native" && plugins.requiresUserScope();
-}
-
 export function resolveScopeForInstall(tool: AiToolProfile): PluginScope {
-  return getToolSupportedScope(requiresUserScope(tool));
+  return getToolSupportedScope(tool.plugins()?.requiresUserScope() === true);
 }
 
 /** The base directory a plugin's `files` are relative to, from the manifest's own recorded

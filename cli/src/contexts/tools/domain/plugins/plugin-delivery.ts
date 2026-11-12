@@ -33,6 +33,9 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
 
   abstract projectHooksDelivery(): ProjectHooksPlacement | null;
 
+  requiresUserScope(): boolean {
+    return false;
+  }
   deliversHooksToProject(): boolean {
     return this.projectHooksDelivery() !== null;
   }

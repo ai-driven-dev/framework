@@ -68,7 +68,7 @@ export class NativePlugins extends PluginDeliveryBase {
   translatesAsMarketplace(): boolean {
     return this.#translationMode === "marketplace";
   }
-  requiresUserScope(): boolean {
+  override requiresUserScope(): boolean {
     return this.#installScope === "user";
   }
   manifestPath(): string | null {

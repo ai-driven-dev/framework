@@ -36,6 +36,10 @@ describe("PluginsCapability", () => {
     it("flatHooksLoaderEntry is null when not declared", () => {
       expect(flatOf(cap).flatLayout().hooksLoaderEntry).toBeNull();
     });
+
+    it("takes a fresh install at project scope, the way every tool but a user-scope one does", () => {
+      expect(cap.requiresUserScope()).toBe(false);
+    });
   });
 
   describe("user scope without userPluginsDir resolver", () => {
