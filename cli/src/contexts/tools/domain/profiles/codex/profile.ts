@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
+import { codexAgentFrontmatter, codexAgentToml } from "../../behaviours/codex-agent-toml.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
@@ -11,7 +12,6 @@ import {
   mergeCodexConfigToml,
   stripCodexSkillFrontmatter,
 } from "./build.js";
-import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
 import { CODEX_DIRECTORY, codexGlobalFilePath } from "./codex-paths.js";
 import { CODEX_HOOKS } from "./hooks.js";
 
