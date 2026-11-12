@@ -1,14 +1,7 @@
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
-import {
-  antigravityHookEntries,
-  antigravityHooksScriptDir,
-  antigravityHooksScriptPath,
-  isAntigravityHooksFileEmpty,
-  mergeAntigravityHooks,
-  unmergeAntigravityHooks,
-} from "./antigravity-hooks.js";
+import { antigravityHooksFormat } from "./antigravity-hooks.js";
 import { ANTIGRAVITY_DIRECTORY } from "./antigravity-paths.js";
 import { buildAntigravityFlatContract } from "./build.js";
 import { ANTIGRAVITY_HOOKS } from "./hooks.js";
@@ -28,14 +21,7 @@ function skillName(fileName: string): string {
 const hooksDelivery = flatProjectHooksDelivery(
   flatHooksSupport(ANTIGRAVITY_HOOKS),
   ANTIGRAVITY_HOOKS.flat,
-  {
-    merge: mergeAntigravityHooks,
-    unmerge: unmergeAntigravityHooks,
-    contributedEntries: antigravityHookEntries,
-    isEmpty: isAntigravityHooksFileEmpty,
-    scriptPath: antigravityHooksScriptPath,
-    scriptDir: antigravityHooksScriptDir,
-  }
+  antigravityHooksFormat()
 );
 
 export const antigravity = defineAiTool({
