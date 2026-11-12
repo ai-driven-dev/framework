@@ -272,7 +272,7 @@ jobs:
   # Every tier once, instrumented: coverage is the test run, and a second uninstrumented
   # pass would prove nothing this one does not.
   cli-coverage:
-    name: cli / Test & Coverage thresholds
+    name: cli / Test & Coverage
     needs: [changes]
     if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
@@ -613,7 +613,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.changes.outputs.mutation_legs) }}
     env:
-      # `--` closes the name: `tools` must never restore `tools-codex`'s file.
+      # `--` closes the name, so one leg never restores another's file.
       LEG: ${{ matrix.of > 1 && format('{0}-shard-{1}-of-{2}', matrix.scope, matrix.shard, matrix.of) || matrix.scope }}
       LEG_DIR: cli/reports/mutation/${{ matrix.of > 1 && format('{0}/shard-{1}-of-{2}', matrix.scope, matrix.shard, matrix.of) || matrix.scope }}
     steps:
