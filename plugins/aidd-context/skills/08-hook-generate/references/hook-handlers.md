@@ -21,8 +21,25 @@ How a handler reads the event and signals back, per tool.
 | --- | --- |
 | Antigravity CLI | JSON with `conversationId` and `workspacePaths`; tool events add `toolCall.{name,args}` |
 
+| Intent | Effect | Moment it fits |
+| --- | --- | --- |
+| inform the model | the model reads a message and decides | after a tool runs, session start, turn stop |
+| block before a tool runs | the tool call is denied | before a tool runs |
+| require a fix after a write | the model must correct before going on | after a tool runs |
+| keep the turn going at Stop | the turn continues until the check passes | turn stop |
+| side effect only | format or log; the model is told nothing | any |
+
+| Intent | Claude Code | Codex CLI | Cursor | GitHub Copilot |
+| --- | --- | --- | --- | --- |
+| inform the model | stdout `hookSpecificOutput.additionalContext` | same | stdout `{ "additional_context": "..." }` | stdout `{ "additionalContext": "..." }` |
+| block before a tool runs | exit `2` | exit `2` | `{ "permission": "deny" }` or exit `2` | exit `2` |
+| require a fix after a write | stdout `{ "decision": "block", "reason": "..." }` | same | unsupported; it informs instead | same as Claude Code |
+| keep the turn going at Stop | stdout `{ "decision": "block", "reason": "..." }` | same | stdout `{ "followup_message": "..." }`, unverified headless | same as Claude Code |
+| side effect only | exit `0`, no stdout | same | same | same |
+
 | Case | Rule |
 | --- | --- |
 | One script for several tools | write the stdout key each host reads, chosen by the payload (Copilot's carries `tool_result`) |
 | Which moments can block, and the full stdout schema | read the tool's docs listed in `hook-support` |
+| A Stop hook that keeps the turn going | check the host's continuation flag first, so it asks once: `stop_hook_active` on Claude Code, Codex and Copilot, `loop_count` on Cursor |
 | Codex simple turn-complete notice | its `notify` mechanism: user scope only, one turn-complete event, JSON on argv not stdin |

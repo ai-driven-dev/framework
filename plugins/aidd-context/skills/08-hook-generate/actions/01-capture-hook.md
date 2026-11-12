@@ -15,7 +15,9 @@ A free-form request to add a hook.
 4. Pick the narrowest lifecycle moment that fits per [hook-authoring.md](../references/hook-authoring.md).
 5. Check each target tool exposes the moment in [hook-moments.md](../references/hook-moments.md).
    - A tool without the moment: skip it with the reason.
-6. Decide what the backing script does at the moment, and whether it blocks, per [hook-handlers.md](../references/hook-handlers.md).
+6. Ask what the hook does when it fires, offering only the intents the moment and each confirmed tool support in [hook-handlers.md](../references/hook-handlers.md).
+   - A tool that cannot carry the intent: say what it does instead.
+   - Decide what the backing script checks or runs to serve it.
 7. Set a matcher only when the moment must be filtered, per `hook-authoring.md`.
 8. Choose the write mode: a host project or a plugin source.
    - Plugin source: name the plugin. The scope is the plugin scope of [hook-scopes.md](../references/hook-scopes.md), so ask no scope question.
@@ -29,7 +31,7 @@ In-context decisions, nothing written yet:
 
 - the lifecycle moment the hook targets
 - the backing script the hook runs
-- whether the script blocks
+- the intent, and what each tool does instead where it cannot carry it
 - the matcher, or none for every occurrence
 - the scope to install into: the plugin scope for a plugin source
 - the plugin name for a plugin source, or the skill or agent file for a component scope
