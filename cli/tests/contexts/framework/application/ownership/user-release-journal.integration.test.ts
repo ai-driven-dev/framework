@@ -1,5 +1,5 @@
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -118,6 +118,88 @@ describe("machine release journal", () => {
     expect(await readFile(join(f.root, "skills/a.md"), "utf8")).toBe("user edit");
     expect(await f.fs.fileExists(join(f.root, "skills/b.md"))).toBe(false);
   });
+
+  it.skipIf(process.platform === "win32").each(["commit", "recovery"] as const)(
+    "refuses an internal directory symlink before %s without changing its target",
+    async (operation) => {
+      const f = await fixture();
+      if (operation === "recovery") {
+        f.fs.stop = true;
+        await expect(
+          f.journal.commit(f.old, f.next, "opencode", "aidd-context", f.files)
+        ).rejects.toThrow("interrupted");
+      }
+      const foreign = join(f.root, "personal-skills");
+      const saved = join(f.root, "saved-skills");
+      await mkdir(foreign);
+      await writeFile(join(foreign, "a.md"), "old");
+      await rename(join(f.root, "skills"), saved);
+      await symlink(foreign, join(f.root, "skills"));
+
+      await expect(
+        operation === "recovery"
+          ? f.journal.recover()
+          : f.journal.commit(f.old, f.next, "opencode", "aidd-context", f.files)
+      ).rejects.toThrow(/symlink/);
+      expect(await readFile(join(foreign, "a.md"), "utf8")).toBe("old");
+      expect(await f.fs.fileExists(join(foreign, "b.md"))).toBe(false);
+      expect(await readFile(join(saved, "a.md"), "utf8")).toBe(
+        operation === "recovery" ? "new" : "old"
+      );
+      expect((await f.repo.load())?.toJSON()).toEqual(f.old.toJSON());
+      expect(await f.fs.fileExists(`${f.repo.path}.release-journal`)).toBe(
+        operation === "recovery"
+      );
+    }
+  );
+
+  it.skipIf(process.platform === "win32").each(["write", "remove"] as const)(
+    "refuses to %s through a directory symlink introduced after validation",
+    async (operation) => {
+      const f = await fixture();
+      const hasher = new HasherAdapter();
+      const old = f.old.getPlugins("opencode")[0];
+      f.old.updatePlugin(
+        "opencode",
+        old.withFiles(new Map([...old.files, ["skills/b.md", hasher.hash("old b").value]]))
+      );
+      await f.repo.save(f.old);
+      await writeFile(join(f.root, "skills/b.md"), "old b");
+      if (operation === "remove") {
+        f.next.updatePlugin(
+          "opencode",
+          f.next
+            .getPlugins("opencode")[0]
+            .withFiles(new Map([[f.files[0].relativePath, f.files[0].hash.value]]))
+        );
+      }
+      const foreign = join(f.root, "personal-skills");
+      await mkdir(foreign);
+      await writeFile(join(foreign, "a.md"), "new");
+      await writeFile(join(foreign, "b.md"), "old b");
+      f.fs.afterWrite = async (path) => {
+        if (!path.endsWith("a.md")) return;
+        f.fs.afterWrite = undefined;
+        await rename(join(f.root, "skills"), join(f.root, "saved-skills"));
+        await symlink(foreign, join(f.root, "skills"));
+      };
+
+      await expect(
+        f.journal.commit(
+          f.old,
+          f.next,
+          "opencode",
+          "aidd-context",
+          operation === "remove" ? [f.files[0]] : f.files
+        )
+      ).rejects.toThrow(/symlink/);
+      expect(await readFile(join(foreign, "b.md"), "utf8")).toBe("old b");
+      expect(await readFile(join(f.root, "saved-skills/b.md"), "utf8")).toBe("old b");
+      expect((await f.repo.load())?.toJSON()).toEqual(f.old.toJSON());
+      expect(await f.fs.fileExists(`${f.repo.path}.release-journal`)).toBe(true);
+    }
+  );
+
   it("refuses to claim an existing untracked target even if its bytes match", async () => {
     const f = await fixture();
     await writeFile(join(f.root, "skills/b.md"), "added");

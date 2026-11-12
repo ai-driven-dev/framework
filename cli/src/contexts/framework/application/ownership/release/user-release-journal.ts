@@ -8,7 +8,7 @@ import { globalFilesOf } from "../../../../tools/domain/registry.js";
 import { Manifest } from "../../../domain/manifest.js";
 import { PLUGIN_NAME_REGEX } from "../../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../domain/ports/manifest-repository.js";
-import { assertProjectPathWithinRoot } from "../project-path-boundary.js";
+import { assertNoSymlinksWithinRoot } from "../project-path-boundary.js";
 
 interface JournalFile {
   readonly path: string;
@@ -187,7 +187,7 @@ export class UserReleaseJournal {
         (file.content !== null && this.hasher.hash(file.content).value !== file.after)
       )
         throw new Error(`Journal ownership or digest mismatch for '${file.path}'.`);
-      await assertProjectPathWithinRoot(this.fs, root, join(root, file.path));
+      await assertNoSymlinksWithinRoot(this.fs, root, join(root, file.path));
     }
     const current = await this.repo.load();
     if (
@@ -204,7 +204,7 @@ export class UserReleaseJournal {
 
   private async assertState(root: string, file: JournalFile, starting = false): Promise<void> {
     const path = join(root, file.path);
-    await assertProjectPathWithinRoot(this.fs, root, path);
+    await assertNoSymlinksWithinRoot(this.fs, root, path);
     const current = (await this.fs.fileExists(path))
       ? (await this.fs.readFileHash(path)).value
       : null;
