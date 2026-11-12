@@ -108,6 +108,17 @@ describe("GenerateToolDistributionUseCase — a tool's own config assets", () =>
     );
   });
 
+  it("writes the files the tool's profile answers for its config, wherever the profile keeps them", async () => {
+    const claude = getToolConfig("claude");
+    if (!isAiTool(claude)) throw new Error("claude is an AI tool");
+    const relocated = { ...claude, configFiles: () => ({ "settings.json": ".relocated/s.json" }) };
+
+    const paths = (await generate(relocated, assets)).map((f) => f.relativePath);
+
+    expect(paths).toContain(".relocated/s.json");
+    expect(paths).not.toContain(".claude/settings.json");
+  });
+
   it("writes a text asset verbatim", async () => {
     const asset = assets.loadConfigAsset("codex", "config.toml");
     if (typeof asset !== "string") throw new Error("the codex config asset is text");

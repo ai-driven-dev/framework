@@ -5,7 +5,7 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import { projectHooksDeliveryOf, type ToolConfig } from "../../../tools/domain/registry.js";
+import type { ToolConfig } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -40,6 +40,10 @@ export interface BuiltMaterializationDeps {
   homedir: () => string;
 }
 
+function deliversHooksToProject(toolConfig: ToolConfig): boolean {
+  return toolConfig.kind === "ai" && (toolConfig.plugins()?.deliversHooksToProject() ?? false);
+}
+
 export class ApplyPluginFilesUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -57,7 +61,7 @@ export class ApplyPluginFilesUseCase {
     if (
       translator !== null &&
       (options.plugin.marketplace !== undefined ||
-        (!options.fileFilter && projectHooksDeliveryOf(options.toolId) !== null))
+        (!options.fileFilter && deliversHooksToProject(options.toolConfig)))
     ) {
       return this.restoreViaTranslator(translator, dist, options);
     }
