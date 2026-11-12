@@ -8,10 +8,10 @@ import {
   type ProjectHooksPlacement,
   resolveProjectHooks,
 } from "../sections/hooks-section.js";
+import { DEFAULT_PLUGIN_MCP_PATH, type McpPluginPart } from "../sections/mcp-section.js";
 import { PluginDeliveryBase } from "./plugin-delivery.js";
 import type { NativeParams } from "./plugin-params.js";
 
-const DEFAULT_MCP_PATH = ".mcp.json";
 const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
 
 /** A tool that installs a plugin into its own plugin directory and activates it natively. */
@@ -21,8 +21,7 @@ export class NativePlugins extends PluginDeliveryBase {
   readonly #hooksSupport: HooksAcceptance;
   readonly #hooksTrustNotice: string | null;
   readonly #pluginRootToken: string;
-  readonly #acceptsMcp: boolean;
-  readonly #mcpRelativePath: string;
+  readonly #mcp: McpPluginPart;
   readonly #hooksRelativePath: string;
   readonly #projectHooks: ProjectHooksPlacement | null;
   readonly #delivered: HookScript;
@@ -49,8 +48,7 @@ export class NativePlugins extends PluginDeliveryBase {
       ? { accepts: true }
       : { accepts: false, reason: params.hooksUnsupportedReason };
     this.#hooksTrustNotice = params.acceptsHooks ? (params.hooksTrustNotice ?? null) : null;
-    this.#acceptsMcp = params.acceptsMcp ?? false;
-    this.#mcpRelativePath = params.mcpRelativePath ?? DEFAULT_MCP_PATH;
+    this.#mcp = params.mcp ?? { accepts: false, relativePath: DEFAULT_PLUGIN_MCP_PATH };
     this.#hooksRelativePath = params.hooksRelativePath ?? DEFAULT_HOOKS_PATH;
     this.#nativeActivation =
       params.nativeActivation === undefined ? null : new NativeActivation(params.nativeActivation);
@@ -94,7 +92,7 @@ export class NativePlugins extends PluginDeliveryBase {
   }
   /** Whether the tool takes a plugin's MCP file, and where it lands in the plugin directory. */
   mcpFile(): { accepts: boolean; relativePath: string } {
-    return { accepts: this.#acceptsMcp, relativePath: this.#mcpRelativePath };
+    return { accepts: this.#mcp.accepts, relativePath: this.#mcp.relativePath };
   }
   /** Where the plugin's hooks manifest lands in the plugin directory. */
   hooksFilePath(): string {

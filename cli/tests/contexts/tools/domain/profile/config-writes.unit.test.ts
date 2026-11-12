@@ -3,10 +3,10 @@ import { defineIdeTool } from "../../../../../src/contexts/tools/domain/profile/
 import type { IdeToolConfig } from "../../../../../src/contexts/tools/domain/profile.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { HooksConfigPart } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
-import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
 
-const mcp = new McpSection({ outputPath: ".mcp.json", format: "json" });
+const mcp = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
 const hooks = new HooksConfigPart({ outputPath: ".claude/settings.json" });
 const hooksSection = { config: hooks, delivery: { kind: "plugin-file" } } as const;
 const settings = new ConfigSection({
@@ -45,7 +45,11 @@ describe("configWrites, the config files a tool writes in the order they claim a
 
   describe("an AI tool", () => {
     it("lists mcp, hooks and settings in that order", () => {
-      const tool = stubAiTool("claude", { mcp, hooks: hooksSection, config: [settings] });
+      const tool = stubAiTool("claude", {
+        mcp: { config: mcp },
+        hooks: hooksSection,
+        config: [settings],
+      });
 
       expect(tool.configWrites()).toStrictEqual([
         { kind: "mcp", capability: mcp },
@@ -61,6 +65,14 @@ describe("configWrites, the config files a tool writes in the order they claim a
         { kind: "settings", capability: extensions },
         { kind: "settings", capability: settings },
       ]);
+    });
+
+    it("adds no write for an mcp section that only carries a plugin part", () => {
+      const tool = stubAiTool("claude", {
+        mcp: { plugin: { accepts: true, relativePath: ".mcp.json" } },
+      });
+
+      expect(tool.configWrites()).toStrictEqual([]);
     });
 
     it("adds no write for a hooks section that only carries a delivery", () => {

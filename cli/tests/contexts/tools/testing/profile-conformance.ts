@@ -9,7 +9,6 @@ import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domai
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
 import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
 import { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
-import { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { RulesSection } from "../../../../src/contexts/tools/domain/sections/rules-section.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
 
@@ -189,9 +188,9 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(profile.section("plugins")).not.toBeNull();
   }),
   aiCheck("feeds its mcp file from the mcp config", (profile) => {
-    const mcp = capability(profile, "mcp", McpSection);
-    if (mcp === undefined) return;
-    expect(mcp.consumes(CONFIG_MCP)).toBe(true);
+    const config = profile.section("mcp")?.config;
+    if (config === undefined) return;
+    expect(config.consumes(CONFIG_MCP)).toBe(true);
   }),
   aiCheck("routes a numbered command and its references to the same folder", (profile) => {
     expectNumberedCommandsRouted(profile);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 
 const sampleMcpJson = JSON.stringify({
   mcpServers: {
@@ -13,27 +13,27 @@ const existingJson = JSON.stringify({
   },
 });
 
-describe("McpSection", () => {
+describe("McpConfigPart", () => {
   describe("outputPath / accepts", () => {
     it("accepts the exact output path", () => {
-      const cap = new McpSection({ outputPath: ".claude/mcp.json", format: "json" });
+      const cap = new McpConfigPart({ outputPath: ".claude/mcp.json", format: "json" });
       expect(cap.accepts(".claude/mcp.json")).toBe(true);
     });
 
     it("rejects paths that do not match exactly", () => {
-      const cap = new McpSection({ outputPath: ".claude/mcp.json", format: "json" });
+      const cap = new McpConfigPart({ outputPath: ".claude/mcp.json", format: "json" });
       expect(cap.accepts(".claude/other.json")).toBe(false);
     });
   });
 
   describe("transform", () => {
     it("returns JSON as-is when format is json", () => {
-      const cap = new McpSection({ outputPath: ".claude/mcp.json", format: "json" });
+      const cap = new McpConfigPart({ outputPath: ".claude/mcp.json", format: "json" });
       expect(cap.transform(sampleMcpJson)).toBe(sampleMcpJson);
     });
 
     it("converts JSON to TOML when format is toml", () => {
-      const cap = new McpSection({ outputPath: "config.toml", format: "toml" });
+      const cap = new McpConfigPart({ outputPath: "config.toml", format: "toml" });
       const result = cap.transform(sampleMcpJson);
       expect(result).toContain("my-server");
       expect(result).not.toContain('"mcpServers"');
@@ -43,12 +43,12 @@ describe("McpSection", () => {
   describe("merge", () => {
     it("uses injected mergeFn when provided", () => {
       const mergeFn = (_existing: string, incoming: string) => incoming;
-      const cap = new McpSection({ outputPath: ".mcp.json", format: "json", mergeFn });
+      const cap = new McpConfigPart({ outputPath: ".mcp.json", format: "json", mergeFn });
       expect(cap.merge(existingJson, sampleMcpJson)).toBe(sampleMcpJson);
     });
 
     it("returns incoming when mergeStrategy is none", () => {
-      const cap = new McpSection({
+      const cap = new McpConfigPart({
         outputPath: ".mcp.json",
         format: "json",
         mergeStrategy: "none",
@@ -59,7 +59,7 @@ describe("McpSection", () => {
     it("user-prime: existing keys win over incoming keys", () => {
       const existing = JSON.stringify({ key: "existing-value", shared: "keep-me" });
       const incoming = JSON.stringify({ key: "new-value", extra: "added" });
-      const cap = new McpSection({
+      const cap = new McpConfigPart({
         outputPath: ".mcp.json",
         format: "json",
         mergeStrategy: "user-prime",
@@ -73,20 +73,20 @@ describe("McpSection", () => {
 
   describe("equals", () => {
     it("returns true for identical params", () => {
-      const a = new McpSection({ outputPath: ".mcp.json", format: "json" });
-      const b = new McpSection({ outputPath: ".mcp.json", format: "json" });
+      const a = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
+      const b = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
       expect(a.equals(b)).toBe(true);
     });
 
     it("returns false when outputPath differs", () => {
-      const a = new McpSection({ outputPath: ".mcp.json", format: "json" });
-      const b = new McpSection({ outputPath: "config.toml", format: "json" });
+      const a = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
+      const b = new McpConfigPart({ outputPath: "config.toml", format: "json" });
       expect(a.equals(b)).toBe(false);
     });
 
     it("returns false when format differs", () => {
-      const a = new McpSection({ outputPath: "config.toml", format: "json" });
-      const b = new McpSection({ outputPath: "config.toml", format: "toml" });
+      const a = new McpConfigPart({ outputPath: "config.toml", format: "json" });
+      const b = new McpConfigPart({ outputPath: "config.toml", format: "toml" });
       expect(a.equals(b)).toBe(false);
     });
   });
@@ -94,18 +94,22 @@ describe("McpSection", () => {
 
 describe("McpSection declarations", () => {
   it("consumes nothing unless told otherwise", () => {
-    expect(new McpSection({ outputPath: ".mcp.json", format: "json" }).consumes("mcp")).toBe(false);
+    expect(new McpConfigPart({ outputPath: ".mcp.json", format: "json" }).consumes("mcp")).toBe(
+      false
+    );
     expect(
-      new McpSection({ outputPath: ".mcp.json", format: "json", consumes: ["mcp"] }).consumes("mcp")
+      new McpConfigPart({ outputPath: ".mcp.json", format: "json", consumes: ["mcp"] }).consumes(
+        "mcp"
+      )
     ).toBe(true);
   });
 
   it("is not equal to a capability that differs in mergeStrategy alone", () => {
     const base = { outputPath: ".mcp.json", format: "json" as const };
-    const cap = new McpSection({ ...base, mergeStrategy: "user-prime" });
+    const cap = new McpConfigPart({ ...base, mergeStrategy: "user-prime" });
 
-    expect(cap.equals(new McpSection({ ...base, mergeStrategy: "user-prime" }))).toBe(true);
-    expect(cap.equals(new McpSection({ ...base, mergeStrategy: "none" }))).toBe(false);
+    expect(cap.equals(new McpConfigPart({ ...base, mergeStrategy: "user-prime" }))).toBe(true);
+    expect(cap.equals(new McpConfigPart({ ...base, mergeStrategy: "none" }))).toBe(false);
   });
 });
 
@@ -114,26 +118,30 @@ describe("McpSection isFrameworkPrimeJson", () => {
   const prime = { ...json, mergeStrategy: "framework-prime" as const };
 
   it("names the one JSON file whose framework half is written over the person's", () => {
-    const cap = new McpSection(prime);
+    const cap = new McpConfigPart(prime);
     expect(cap.isFrameworkPrimeJson("opencode.json")).toBe(true);
     expect(cap.isFrameworkPrimeJson("other.json")).toBe(false);
   });
 
   it("refuses a file merged the other way", () => {
     expect(
-      new McpSection({ ...json, mergeStrategy: "user-prime" }).isFrameworkPrimeJson("opencode.json")
+      new McpConfigPart({ ...json, mergeStrategy: "user-prime" }).isFrameworkPrimeJson(
+        "opencode.json"
+      )
     ).toBe(false);
   });
 
   it("refuses a file that is not JSON", () => {
-    expect(new McpSection({ ...prime, format: "toml" }).isFrameworkPrimeJson("opencode.json")).toBe(
-      false
-    );
+    expect(
+      new McpConfigPart({ ...prime, format: "toml" }).isFrameworkPrimeJson("opencode.json")
+    ).toBe(false);
   });
 });
 
 function transformFor(platform: string): ((content: string) => string) | undefined {
-  return new McpSection({ outputPath: ".mcp.json", format: "json" }).launchTransformFor(platform);
+  return new McpConfigPart({ outputPath: ".mcp.json", format: "json" }).launchTransformFor(
+    platform
+  );
 }
 
 function makeConfig(servers: Record<string, object>): string {

@@ -6,11 +6,13 @@ import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
 import { nativeHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpSection } from "../../sections/mcp-section.js";
+import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
 import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
 import { CLAUDE_HOOKS } from "./hooks.js";
+
+const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = CLAUDE_DIRECTORY;
 const TOOL_SUFFIX = ".claude.md";
@@ -74,11 +76,14 @@ export const claude = defineAiTool({
         return {};
       },
     }),
-    mcp: new McpSection({
-      outputPath: ".mcp.json",
-      format: "json",
-      consumes: [CONFIG_MCP],
-    }),
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: ".mcp.json",
+        format: "json",
+        consumes: [CONFIG_MCP],
+      }),
+      plugin: PLUGIN_MCP,
+    },
     hooks: { delivery: hooksSupport.delivery },
     plugins: pluginsCapability({
       mode: "native",
@@ -86,7 +91,7 @@ export const claude = defineAiTool({
       pluginManifestRelativePath: "plugin.json",
       ...nativeHooksParams(hooksSupport.delivery),
       pluginRootToken: hooksSupport.rootToken,
-      acceptsMcp: true,
+      mcp: PLUGIN_MCP,
       translationMode: "marketplace",
       // Claude registers its own marketplaces and enables its own plugins, both driven here.
       // At project scope the command rewrites `.claude/settings.json` after this CLI hashed

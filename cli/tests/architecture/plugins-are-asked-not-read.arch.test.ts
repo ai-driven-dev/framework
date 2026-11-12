@@ -67,9 +67,9 @@ const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
     "the declared destination, asked by the framework install use cases (config, runtime config) and written into the manifest",
   "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.mergeStrategy":
     "the declared way the hooks file is merged, recorded on each installed file by the framework install use cases",
-  "src/contexts/tools/domain/sections/mcp-section.ts :: McpSection.outputPath":
+  "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.outputPath":
     "the declared destination, asked by the framework install use cases (config, runtime config)",
-  "src/contexts/tools/domain/sections/mcp-section.ts :: McpSection.mergeStrategy":
+  "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.mergeStrategy":
     "the declared way the mcp file is merged, recorded on each installed file by the framework install use cases",
   "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.outputPath":
     "the declared destination, asked by the framework install use cases (ide tool, runtime config) and written into the manifest",

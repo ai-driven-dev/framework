@@ -10,7 +10,7 @@ import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { flatHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpSection } from "../../sections/mcp-section.js";
+import { McpConfigPart } from "../../sections/mcp-section.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
@@ -58,20 +58,22 @@ export const opencode = defineAiTool({
         return {};
       },
     }),
-    mcp: new McpSection({
-      outputPath: "opencode.json",
-      format: "json",
-      mergeStrategy: "framework-prime",
-      transformContent: toTypedMcpSection,
-      consumes: [CONFIG_MCP, CONFIG_OPENCODE],
-      outputPathCandidates: {
-        tiers: [["opencode.json", "opencode.jsonc"]],
-        fallback: "opencode.json",
-        conflict: () => {
-          throw new OpencodeDualConfigError();
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: "opencode.json",
+        format: "json",
+        mergeStrategy: "framework-prime",
+        transformContent: toTypedMcpSection,
+        consumes: [CONFIG_MCP, CONFIG_OPENCODE],
+        outputPathCandidates: {
+          tiers: [["opencode.json", "opencode.jsonc"]],
+          fallback: "opencode.json",
+          conflict: () => {
+            throw new OpencodeDualConfigError();
+          },
         },
-      },
-    }),
+      }),
+    },
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
     // only npm package names — no source or version a marketplace entry could express.
     hooks: { delivery: hooksDelivery },

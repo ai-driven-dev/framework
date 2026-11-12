@@ -6,7 +6,7 @@ import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descrip
 import { nativeHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpSection } from "../../sections/mcp-section.js";
+import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
@@ -15,6 +15,8 @@ import {
 } from "./build.js";
 import { CODEX_DIRECTORY, codexGlobalFilePath } from "./codex-paths.js";
 import { CODEX_HOOKS } from "./hooks.js";
+
+const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = CODEX_DIRECTORY;
 const TOOL_SUFFIX = ".codex.md";
@@ -80,19 +82,22 @@ export const codex = defineAiTool({
       buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => fm,
     }),
-    mcp: new McpSection({
-      outputPath: ".codex/config.toml",
-      format: "toml",
-      mergeFn: mergeCodexConfigToml,
-      consumes: [CONFIG_MCP],
-    }),
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: ".codex/config.toml",
+        format: "toml",
+        mergeFn: mergeCodexConfigToml,
+        consumes: [CONFIG_MCP],
+      }),
+      plugin: PLUGIN_MCP,
+    },
     hooks: { config: hooksConfigPart(CODEX_HOOKS), delivery: hooksSupport.delivery },
     plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
       globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
-      acceptsMcp: true,
+      mcp: PLUGIN_MCP,
       translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a
       // project-local settings file is inert, so the `codex` CLI is driven directly instead.

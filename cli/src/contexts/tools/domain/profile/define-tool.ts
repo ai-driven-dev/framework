@@ -141,7 +141,9 @@ function sectionReader(
 
 function aiConfigWrites(sections: ProfileSections): readonly ConfigWrite[] {
   return [
-    ...(sections.mcp === undefined ? [] : [{ kind: "mcp" as const, capability: sections.mcp }]),
+    ...(sections.mcp?.config === undefined
+      ? []
+      : [{ kind: "mcp" as const, capability: sections.mcp.config }]),
     ...(sections.hooks?.config === undefined
       ? []
       : [{ kind: "hooks" as const, capability: sections.hooks.config }]),
@@ -229,11 +231,11 @@ export function defineAiTool<C extends ProfileSections>(
       nativeActivationOf(capabilities)?.takesRefForInUse(enabled) ?? true,
     configFiles: () => ({ ...fields.configOutputPaths, ...fields.pluginRuntimeFiles }),
     runtimeFiles: () => ({ ...fields.pluginRuntimeFiles }),
-    mcpConfig: () => capabilities.mcp ?? null,
+    mcpConfig: () => capabilities.mcp?.config ?? null,
     flatPluginMcp: () =>
-      capabilities.mcp?.mergeStrategy() === "framework-prime" &&
+      capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
       capabilities.plugins?.kind === "flat"
-        ? capabilities.mcp
+        ? capabilities.mcp.config
         : null,
     settingsFiles: () => settingsOf(capabilities),
     marketplaceRegistration: () =>

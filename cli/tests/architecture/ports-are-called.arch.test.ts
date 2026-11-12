@@ -96,12 +96,6 @@ const SECTION_BASELINE: readonly {
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/sections/mcp-section.ts",
-    className: "McpSection",
-    methods: ["accepts", "equals", "merge"],
-    reason: "called only by tests; MCP config merges through the file adapter's strategy",
-  },
-  {
     file: "src/contexts/tools/domain/sections/rules-section.ts",
     className: "RulesSection",
     methods: ["accepts", "equals"],

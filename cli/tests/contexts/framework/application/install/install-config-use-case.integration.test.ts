@@ -3,7 +3,7 @@ import { InstallConfigUseCase } from "../../../../../src/contexts/framework/appl
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { McpSection } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -203,7 +203,7 @@ describe("InstallConfigUseCase — MCP config", () => {
   );
 
   function mcpCapability(mergeStrategy?: "user-prime" | "framework-prime" | "none") {
-    return new McpSection({
+    return new McpConfigPart({
       outputPath: ".cursor/mcp.json",
       format: "json",
       consumes: [CONFIG_MCP],

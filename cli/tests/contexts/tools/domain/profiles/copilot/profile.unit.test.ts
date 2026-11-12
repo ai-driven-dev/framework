@@ -27,9 +27,9 @@ describe("copilot declarations the rest of the CLI reads", () => {
   it("writes its MCP servers as JSON under `servers`", () => {
     const written = copilot
       .section("mcp")
-      .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+      .config?.transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
     expect(() => JSON.parse(written)).not.toThrow();
-    expect(copilot.section("mcp").consumes(CONFIG_MCP)).toBe(true);
+    expect(copilot.section("mcp").config?.consumes(CONFIG_MCP)).toBe(true);
   });
 
   it("translates plugins for its own marketplace", () => {

@@ -18,23 +18,23 @@ function _makeFs(existingPaths: string[]): FileReader {
 describe("opencode mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps both opencode and mcp config names to opencode.json", () => {
-      expect(opencode.section("mcp").outputPath()).toBe("opencode.json");
-      expect(opencode.section("mcp").consumes("opencode")).toBe(true);
-      expect(opencode.section("mcp").consumes("mcp")).toBe(true);
+      expect(opencode.section("mcp").config?.outputPath()).toBe("opencode.json");
+      expect(opencode.section("mcp").config?.consumes("opencode")).toBe(true);
+      expect(opencode.section("mcp").config?.consumes("mcp")).toBe(true);
     });
 
     it("does not consume unknown config names", () => {
-      expect(opencode.section("mcp").consumes("unknown")).toBe(false);
+      expect(opencode.section("mcp").config?.consumes("unknown")).toBe(false);
     });
 
     it("uses framework-prime merge strategy", () => {
-      expect(opencode.section("mcp").mergeStrategy()).toBe("framework-prime");
+      expect(opencode.section("mcp").config?.mergeStrategy()).toBe("framework-prime");
     });
 
     it("writes its config as JSON", () => {
       const written = opencode
         .section("mcp")
-        .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+        .config?.transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
       expect(() => JSON.parse(written)).not.toThrow();
     });
   });
@@ -42,12 +42,12 @@ describe("opencode mcp", () => {
   describe("capabilities.mcp.transform() (MCP transform)", () => {
     it("rewrites the servers the OpenCode mcp capability is given", () => {
       const input = JSON.stringify({ mcpServers: { a: { command: "node" } } });
-      expect(opencode.section("mcp").transform(input)).not.toBe(input);
+      expect(opencode.section("mcp").config?.transform(input)).not.toBe(input);
     });
 
     const transform = (configName: string, content: string): string => {
       if (configName !== "mcp") return content;
-      return opencode.section("mcp").transform(content);
+      return opencode.section("mcp").config?.transform(content);
     };
 
     it("transforms mcpServers to OpenCode mcp format with env", () => {

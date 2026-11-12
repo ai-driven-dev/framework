@@ -35,7 +35,6 @@ describe("a plugin's mcp declaration", () => {
         pluginsDir: ".claude/plugins/",
         pluginManifestRelativePath: null,
         acceptsHooks: true,
-        acceptsMcp: false,
       }),
     });
     const mcp = [makeFile(".mcp.json", mcpJsonContent)];

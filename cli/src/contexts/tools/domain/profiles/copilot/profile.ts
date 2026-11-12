@@ -11,13 +11,15 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { AgentsSection } from "../../sections/agents-section.js";
 import { CommandsSection } from "../../sections/commands-section.js";
 import { ConfigSection } from "../../sections/config-section.js";
-import { McpSection } from "../../sections/mcp-section.js";
+import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { RulesSection } from "../../sections/rules-section.js";
 import { SkillsSection } from "../../sections/skills-section.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 import { COPILOT_HOOKS } from "./hooks.js";
+
+const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = COPILOT_WORKSPACE_DIR;
 const TOOL_SUFFIX = ".copilot.md";
@@ -233,22 +235,25 @@ export const copilot = defineAiTool({
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
     }),
-    mcp: new McpSection({
-      outputPath: ".vscode/mcp.json",
-      format: "json",
-      consumes: [CONFIG_MCP],
-      transformContent: (content) => {
-        const parsed = JSON.parse(content) as Record<string, unknown>;
-        if ("mcpServers" in parsed && !("servers" in parsed)) {
-          const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<
-            string,
-            unknown
-          >;
-          return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
-        }
-        return content;
-      },
-    }),
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: ".vscode/mcp.json",
+        format: "json",
+        consumes: [CONFIG_MCP],
+        transformContent: (content) => {
+          const parsed = JSON.parse(content) as Record<string, unknown>;
+          if ("mcpServers" in parsed && !("servers" in parsed)) {
+            const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<
+              string,
+              unknown
+            >;
+            return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
+          }
+          return content;
+        },
+      }),
+      plugin: PLUGIN_MCP,
+    },
     config: [
       new ConfigSection({
         outputPath: ".vscode/settings.json",
@@ -264,7 +269,7 @@ export const copilot = defineAiTool({
       pluginManifestRelativePath: "plugin.json",
       ...nativeHooksParams(hooksSupport.delivery),
       pluginRootToken: hooksSupport.rootToken,
-      acceptsMcp: true,
+      mcp: PLUGIN_MCP,
       translationMode: "marketplace",
       // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
       // must therefore never receive a declarative true entry before native source proof.

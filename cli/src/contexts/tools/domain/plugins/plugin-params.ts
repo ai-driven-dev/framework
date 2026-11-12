@@ -16,6 +16,7 @@ import type {
   ProjectHooksDelivery,
   ProjectMergeDelivery,
 } from "../sections/hooks-section.js";
+import type { McpPluginPart } from "../sections/mcp-section.js";
 
 /**
  * The global-file mapping of a flat tool whose user configuration directory takes the same
@@ -44,9 +45,9 @@ export interface NativePluginsParams extends ProjectHooksDelivery {
   pluginsDir: string;
   /** Set to `null` to suppress writing a plugin manifest file into the plugin directory. */
   pluginManifestRelativePath: string | null;
-  mcpRelativePath?: string;
   hooksRelativePath?: string;
-  acceptsMcp?: boolean;
+  /** The MCP file a plugin delivers, when the tool takes one. */
+  mcp?: McpPluginPart;
   /** The variable this tool expands to the installed plugin's directory, as written in a
    * hook or MCP command. */
   pluginRootToken: string;

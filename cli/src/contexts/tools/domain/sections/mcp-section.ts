@@ -15,7 +15,7 @@ export type McpOutputPathCandidates = {
   readonly conflict: () => never;
 };
 
-type McpSectionParams = {
+export type McpConfigParams = {
   outputPath: string;
   format: "json" | "toml";
   mergeStrategy?: "user-prime" | "framework-prime" | "none";
@@ -52,10 +52,11 @@ function transformMcpForWin32(content: string): string {
   return JSON.stringify(config, null, 2);
 }
 
-export class McpSection {
-  readonly #params: McpSectionParams;
+/** The file a tool's own MCP servers are written to, and how it is merged and converted. */
+export class McpConfigPart {
+  readonly #params: McpConfigParams;
 
-  constructor(params: McpSectionParams) {
+  constructor(params: McpConfigParams) {
     this.#params = params;
   }
 
@@ -155,11 +156,30 @@ export class McpSection {
     return relativePath === this.#params.outputPath;
   }
 
-  equals(other: McpSection): boolean {
+  equals(other: McpConfigPart): boolean {
     return (
       this.#params.outputPath === other.#params.outputPath &&
       this.#params.format === other.#params.format &&
       this.#params.mergeStrategy === other.#params.mergeStrategy
     );
   }
+}
+
+/** Whether the tool takes a plugin's MCP file, and where it lands in the plugin directory. */
+export interface McpPluginPart {
+  readonly accepts: boolean;
+  readonly relativePath: string;
+}
+
+export const DEFAULT_PLUGIN_MCP_PATH = ".mcp.json";
+
+/** A tool that takes a plugin's MCP file, landing it at `relativePath` in the plugin directory. */
+export function acceptedPluginMcp(relativePath: string = DEFAULT_PLUGIN_MCP_PATH): McpPluginPart {
+  return { accepts: true, relativePath };
+}
+
+/** What a tool declares about MCP: the file it writes, the file a plugin delivers, or both. */
+export interface McpSection {
+  readonly config?: McpConfigPart;
+  readonly plugin?: McpPluginPart;
 }

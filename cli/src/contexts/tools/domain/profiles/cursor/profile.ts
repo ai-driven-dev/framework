@@ -5,11 +5,13 @@ import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-des
 import { nativeHooksParams } from "../../plugins/plugin-params.js";
 import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import { McpSection } from "../../sections/mcp-section.js";
+import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import { CURSOR_DIRECTORY } from "./cursor-paths.js";
 import { CURSOR_HOOKS } from "./hooks.js";
+
+const PLUGIN_MCP = acceptedPluginMcp("mcp.json");
 
 const DIRECTORY = CURSOR_DIRECTORY;
 const TOOL_SUFFIX = ".cursor.md";
@@ -73,11 +75,14 @@ export const cursor = defineAiTool({
         };
       },
     }),
-    mcp: new McpSection({
-      outputPath: `${DIRECTORY}mcp.json`,
-      format: "json",
-      consumes: [CONFIG_MCP],
-    }),
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: `${DIRECTORY}mcp.json`,
+        format: "json",
+        consumes: [CONFIG_MCP],
+      }),
+      plugin: PLUGIN_MCP,
+    },
     hooks: { delivery: hooksDelivery },
     plugins: pluginsCapability({
       mode: "native",
@@ -87,8 +92,7 @@ export const cursor = defineAiTool({
       pluginManifestRelativePath: null,
       ...nativeHooksParams(hooksDelivery),
       pluginRootToken: CURSOR_ROOT_TOKEN,
-      acceptsMcp: true,
-      mcpRelativePath: "mcp.json",
+      mcp: PLUGIN_MCP,
       installScope: "user",
       userPluginsDir: (h) => join(h, ".cursor", "plugins", "local"),
     }),
