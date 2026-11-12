@@ -1,11 +1,5 @@
 import { join, posix } from "node:path";
 import { InstallationFile } from "../../../../../kernel/file.js";
-/**
- * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
- * directory, bypassing the per-file transform the build already applied. Marketplace-sourced
- * installs only; a raw local-path install falls back to flat materialization.
- */
-import { flatHooksPathWithLoaderEntry } from "../../../../../kernel/materialization/flat-paths.js";
 import { posixRelative } from "../../../../../kernel/paths.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
@@ -13,6 +7,12 @@ import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { PluginSource } from "../../../../../kernel/source.js";
 import type { MarketplaceRegistry } from "../../../../distribution/domain/ports/marketplace-registry.js";
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
+/**
+ * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
+ * directory, bypassing the per-file transform the build already applied. Marketplace-sourced
+ * installs only; a raw local-path install falls back to flat materialization.
+ */
+import { PluginContentTranslator } from "../../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
@@ -169,7 +169,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const name = dist.manifest.name;
     const hookPaths = deliversHooksToProject
       ? new Set<string>()
-      : this.flatHookOutputPaths(dist, tool);
+      : new PluginContentTranslator(this.hasher).flatHookPaths(dist, tool);
     const absPaths = await this.fs.listFilesRecursive(builtDir);
     const files: InstallationFile[] = [];
     for (const abs of absPaths) {
@@ -185,32 +185,6 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
 
   private belongsToPlugin(rel: string, name: string, tool: AiToolProfile): boolean {
     return tool.ownsFlatPath(rel, name);
-  }
-
-  private flatHookOutputPaths(dist: PluginDistribution, tool: AiToolProfile): ReadonlySet<string> {
-    const plugins = tool.plugins();
-    const layout = plugins?.kind === "flat" ? plugins.flatLayout() : undefined;
-    const flatHooksDir = layout?.hooksDir;
-    if (layout === undefined || flatHooksDir === null || flatHooksDir === undefined) {
-      return new Set();
-    }
-    const name = dist.manifest.name;
-    const paths = new Set(
-      dist.components.hooks
-        .filter((f) => f.relativePath !== "hooks/hooks.json")
-        .map((f) =>
-          flatHooksPathWithLoaderEntry(flatHooksDir, layout.hooksLoaderEntry, name, f.relativePath)
-        )
-    );
-    const bridge = layout.hooksBridge;
-    const hooksJson = dist.components.hooks.find((f) => f.relativePath === "hooks/hooks.json");
-    const hasOwnBridge =
-      bridge !== null &&
-      dist.components.hooks.some((f) => f.relativePath.endsWith(`/${bridge.skipIfSourceHas}`));
-    if (bridge !== null && hooksJson !== undefined && !hasOwnBridge) {
-      if (bridge.generate(hooksJson.content, name) !== null) paths.add(bridge.path(name));
-    }
-    return paths;
   }
 
   private async findMarketplace(name: string, projectRoot: string) {

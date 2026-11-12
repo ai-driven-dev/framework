@@ -619,6 +619,26 @@ describe("a flat target whose loader is triggered by a generated bridge", () => 
     ]);
   });
 
+  it("names the hook paths it writes, the generated bridge among them", () => {
+    expect([...translator.flatHookPaths(hooksDist(), bridged)].sort()).toEqual([
+      ".stub/hooks/sample-plugin/lib/check.sh",
+      ".stub/plugin/sample-plugin.js",
+    ]);
+  });
+
+  it("names no bridge path for a plugin shipping its own", () => {
+    const own = hooksDist([makeFile("hooks/own-plugin.js", "export const plugin = () => {};\n")]);
+
+    expect([...translator.flatHookPaths(own, bridged)].sort()).toEqual([
+      ".stub/hooks/sample-plugin/lib/check.sh",
+      ".stub/hooks/sample-plugin/own-plugin.js",
+    ]);
+  });
+
+  it("names no hook path for a tool that is not flat", () => {
+    expect(translator.flatHookPaths(hooksDist(), claude).size).toBe(0);
+  });
+
   it("generates none where the manifest names nothing the bridge maps", () => {
     const hooks = [
       makeFile("hooks/hooks.json", '{ "hooks": {} }'),

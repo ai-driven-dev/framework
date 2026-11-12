@@ -77,6 +77,14 @@ export class PluginContentTranslator {
     return { files: [], componentPaths: new Map(), skipped: [], notices: [] };
   }
 
+  /** The hook paths a flat install writes for this plugin: its scripts and the generated bridge,
+   * none for a tool that is not flat. */
+  flatHookPaths(dist: PluginDistribution, toolConfig: ToolProfile): ReadonlySet<string> {
+    const delivery = asPluginTool(toolConfig);
+    if (delivery === null || delivery.plugins.kind !== "flat") return new Set();
+    return new Set(this.flatHooksFiles(dist, delivery.plugins).map((file) => file.relativePath));
+  }
+
   detectFlatCollisions(
     dists: PluginDistribution[],
     toolConfig: ToolProfile
