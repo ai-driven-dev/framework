@@ -1,8 +1,5 @@
-import type {
-  AssetProvider,
-  ConfigAsset,
-  SchemaName,
-} from "../../../src/kernel/ports/asset-provider.js";
+import type { ConfigAsset, SchemaName } from "../../../src/kernel/file.js";
+import type { AssetProvider } from "../../../src/kernel/ports/asset-provider.js";
 import type { ToolId } from "../../../src/kernel/tool.js";
 
 export class StubAssetProvider implements AssetProvider {

@@ -1,6 +1,7 @@
 import { basename, join, relative } from "node:path";
 import { MarketplaceOutDirNotEmptyError } from "../../../../kernel/errors.js";
-import type { AssetProvider, SchemaName } from "../../../../kernel/ports/asset-provider.js";
+import type { SchemaName } from "../../../../kernel/file.js";
+import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { PluginPresence, ToolBuildContract } from "../../../tools/contract/build-contract.js";

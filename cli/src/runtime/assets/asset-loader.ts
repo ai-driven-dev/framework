@@ -15,7 +15,8 @@ import vscodeKeybindings from "../../../assets/configs/vscode/keybindings.json" 
 };
 import vscodeSettings from "../../../assets/configs/vscode/settings.json" with { type: "json" };
 import { AssetNotFoundError } from "../../kernel/errors.js";
-import type { AssetProvider, ConfigAsset, SchemaName } from "../../kernel/ports/asset-provider.js";
+import type { ConfigAsset, SchemaName } from "../../kernel/file.js";
+import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { ToolId } from "../../kernel/tool.js";
 
 const SCHEMA_FILE = "claude-code-plugin-manifest.json";

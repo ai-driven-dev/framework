@@ -1,7 +1,8 @@
+import type { ConfigAsset } from "../../../kernel/file.js";
 import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-paths.js";
 import type { MergeStrategy } from "../../../kernel/merge.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../kernel/tool.js";
-import type { ConfigAsset, FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
+import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;

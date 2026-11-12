@@ -1,6 +1,6 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
+import type { ConfigAsset } from "../../../../kernel/file.js";
 import type { MergeStrategy } from "../../../../kernel/merge.js";
-import type { ConfigAsset } from "../../../../kernel/ports/asset-provider.js";
 import type { ToolId } from "../../../../kernel/tool.js";
 
 type SettingsCapabilityParams = {

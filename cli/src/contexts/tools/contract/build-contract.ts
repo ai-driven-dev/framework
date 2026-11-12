@@ -1,16 +1,5 @@
+import type { ConfigAsset, SchemaName } from "../../../kernel/file.js";
 import type { ToolId } from "../../../kernel/tool.js";
-
-/** The bundled schemas a build validates against. Same names as the asset provider serves: a
- * contract folder imports no `ports/` folder, the kernel's included. */
-export type SchemaName =
-  | "plugin-manifest"
-  | "marketplace"
-  | "claude-marketplace"
-  | "codex-marketplace"
-  | "codex-plugin-manifest";
-
-/** A bundled config asset as the asset provider hands it over. */
-export type ConfigAsset = Record<string, unknown> | readonly unknown[] | string;
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
