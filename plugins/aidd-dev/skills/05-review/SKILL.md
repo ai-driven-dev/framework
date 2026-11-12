@@ -23,6 +23,6 @@ flowchart LR
 ## Transversal rules
 
 - Speak only to ask or to give the final reply; otherwise call tools.
-- Read only: run neither the app nor its checks.
+- Read only: never run the app or its checks.
 - Change nothing but the report: no code, no test, no config.
-- Judge this work alone, ignoring earlier rounds.
+- Judge this work alone, never an earlier round.

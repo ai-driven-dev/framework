@@ -5,7 +5,7 @@ A criterion is a row of the plan's acceptance criteria tables, or one the caller
 | The criterion | Its line |
 | --- | --- |
 | Met | checked |
-| Unmet, partial, or a name echoing it with no behaviour behind | unchecked, not a finding |
+| Unmet, partial, or a name echoing it with no behaviour behind | unchecked, never a finding |
 | Only a run could show it | unverified, unless a run recorded on this head settles it |
 | Its phase's projected files all untouched | out of the diff, no box |
 | In the safety-net phase | traced, even untouched |

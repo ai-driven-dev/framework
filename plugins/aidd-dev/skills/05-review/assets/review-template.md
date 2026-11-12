@@ -27,7 +27,7 @@
 - {{the doubt}} — {{what would settle it}}
 
 <!--
-- Append one round per pass and leave earlier rounds as written.
+- Append one round per pass, never rewrite an earlier one.
 - Set the round count to the number of round headings, this one included.
 - Replace every `{{...}}` and delete every comment.
 - Leave out what has nothing to hold.

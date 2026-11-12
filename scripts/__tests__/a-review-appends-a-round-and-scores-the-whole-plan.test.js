@@ -37,9 +37,9 @@ describe("a review appends a round and scores the whole plan", () => {
   it("the round is written once, at the end, and an earlier one is never judged", () => {
     assert.doesNotMatch(read("actions/01-prepare.md"), /template|`review\.md`/u);
     assert.doesNotMatch(read("actions/02-review.md"), /template|`review\.md`/u);
-    assert.match(read("SKILL.md"), /^- Judge this work alone, ignoring earlier rounds\.$/mu);
+    assert.match(read("SKILL.md"), /^- Judge this work alone, never an earlier round\.$/mu);
     assert.match(template(), /Set the round count to the number of round headings, this one included/u);
-    assert.match(template(), /Append one round per pass and leave earlier rounds as written/u);
+    assert.match(template(), /Append one round per pass, never rewrite an earlier one/u);
   });
 
   it("the round goes to the folder named, else the plan's, and alone the reply can hold it", () => {
@@ -60,7 +60,7 @@ describe("a review appends a round and scores the whole plan", () => {
 
   it("a finding carries its proof, and a doubt left unproven is a limit", () => {
     assert.match(rubric(), /^\| Proof \| the `file:line` that makes the defect real/mu);
-    assert.match(rubric(), /^\| Limit \| a doubt left unproven, or a shape nothing reaches; not a finding \|$/mu);
+    assert.match(rubric(), /^\| Limit \| a doubt left unproven, or a shape nothing reaches; never a finding \|$/mu);
     assert.match(read("actions/02-review.md"), /check each where the value is produced or used/u);
     assert.match(template(), /— \{\{holds, finding or limit\}\}, checked at `\{\{file:line\}\}`/u);
     assert.match(template(), /, proof `\{\{file:line\}\}` →/u);
@@ -117,7 +117,7 @@ describe("a review appends a round and scores the whole plan", () => {
   });
 
   it("an unmet criterion has one home, and it is not Findings", () => {
-    assert.match(functional(), /a name echoing it with no behaviour behind \| unchecked, not a finding/u);
+    assert.match(functional(), /a name echoing it with no behaviour behind \| unchecked, never a finding/u);
   });
 
   it("a criterion only a run could show is unverified, unless a run on this head settles it", () => {
@@ -143,7 +143,7 @@ describe("a review appends a round and scores the whole plan", () => {
   });
 
   it("a review reads the code and never runs or fixes it", () => {
-    assert.match(read("SKILL.md"), /^- Read only: run neither the app nor its checks\.$/mu);
+    assert.match(read("SKILL.md"), /^- Read only: never run the app or its checks\.$/mu);
     assert.match(read("SKILL.md"), /^- Change nothing but the report: no code, no test, no config\.$/mu);
   });
 });
