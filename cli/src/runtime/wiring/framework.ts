@@ -6,6 +6,7 @@ import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
 import "../../contexts/tools/domain/profiles/cursor/profile.js";
 import "../../contexts/tools/domain/profiles/kilo/profile.js";
+import "../../contexts/tools/domain/profiles/kiro/profile.js";
 import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import { MarketplaceAddUseCase } from "../../contexts/distribution/application/marketplace-add-use-case.js";

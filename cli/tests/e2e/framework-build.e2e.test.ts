@@ -617,6 +617,38 @@ describe.concurrent("E2E: aidd translate", () => {
     }
   });
 
+  it("--target kiro --flat emits JSON agents, skills, and one hooks file every plugin shares", async () => {
+    const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-flat-kiro");
+    try {
+      const projRoot = join(tempDir, "proj");
+      await mkdir(projRoot, { recursive: true });
+      const result = await runCli(
+        ["translate", FRAMEWORK_PATH, "--to", "kiro", "--as", "flat", "--out", projRoot],
+        projectDir,
+        fakeHome
+      );
+      expect(result.exitCode).toBe(0);
+      expect(existsSync(join(projRoot, ".kiro", "skills"))).toBe(true);
+      expect(existsSync(join(projRoot, ".kiro", "hooks", "hooks.json"))).toBe(false);
+      const hooks = JSON.parse(
+        await readFile(join(projRoot, ".kiro", "hooks", "aidd.json"), "utf-8")
+      ) as { version: string; hooks: { name: string; trigger: string }[] };
+      expect(hooks.version).toBe("v1");
+      expect(hooks.hooks.map((hook) => `${hook.trigger} ${hook.name}`)).toEqual([
+        "SessionStart aidd-test-session-start.js",
+      ]);
+      const agent = JSON.parse(
+        await readFile(join(projRoot, ".kiro", "agents", "aidd-test-code-reviewer.json"), "utf-8")
+      ) as { name: string; prompt: string; tools: string[] };
+      expect(agent.name).toBe("aidd-test-code-reviewer");
+      expect(agent.prompt.length).toBeGreaterThan(0);
+      expect(agent.tools).toEqual(["*"]);
+      expect(existsSync(join(projRoot, "CLAUDE.md"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
   it("AC #7: --target opencode (non-flat) exits 1 with unsupported error", async () => {
     const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv("fw-opencode-no-flat");
     try {

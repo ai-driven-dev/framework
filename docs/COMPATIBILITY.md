@@ -11,6 +11,7 @@ What each AI tool receives from the framework.
 | GitHub Copilot | `.github/` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | OpenCode | `.opencode/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
 | Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
+| Kiro | `.kiro/` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ |
 | Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
 

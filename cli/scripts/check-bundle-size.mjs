@@ -59,6 +59,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // above); 2.0% measured headroom.
 // 772 KB: 756.0 KB, the seven host adapters shipped as product, inlined as text, Antigravity's
 // among them (+23.6 KB over the 732.4 KB above); 2.1% measured headroom.
+// 780 KB: 777.8 KB, Kiro's flat profile, its hooks and its host adapter rebased on next's
+// 770.3 KB (+7.5 KB); 0.3% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

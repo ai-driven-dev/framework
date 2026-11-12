@@ -23,13 +23,14 @@ const makeStubConfig = (toolId: AiToolId, toolSuffix: string): AiTool<unknown> =
 });
 
 describe("VALID_TOOL_IDS", () => {
-  it("contains exactly claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode", () => {
+  it("contains exactly claude, cursor, copilot, opencode, kilo, kiro, codex, antigravity, vscode", () => {
     expect(VALID_TOOL_IDS).toEqual([
       "claude",
       "cursor",
       "copilot",
       "opencode",
       "kilo",
+      "kiro",
       "codex",
       "antigravity",
       "vscode",
@@ -65,6 +66,7 @@ describe("toolIdsForCategory()", () => {
       "copilot",
       "opencode",
       "kilo",
+      "kiro",
       "codex",
       "antigravity",
     ]);

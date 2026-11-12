@@ -49,6 +49,7 @@ https://github.com/user-attachments/assets/92474f4c-053a-471d-9c62-16560b7a2a09
 <tr><td><b>GitHub Copilot</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
 <tr><td><b>OpenCode</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
 <tr><td><b>Kilo Code</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
+<tr><td><b>Kiro</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr>
 <tr><td><b>Codex</b></td><td align="center">✅</td><td align="center">✅</td><td align="center">✅</td></tr>
 <tr><td><b>Antigravity CLI</b></td><td align="center">✅</td><td align="center">—</td><td align="center">✅</td></tr></tbody>
 </table>
