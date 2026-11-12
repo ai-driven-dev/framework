@@ -4,7 +4,6 @@ import { Marketplace } from "../../../../../../src/contexts/distribution/domain/
 import { MarketplaceSyncSettingsUseCase } from "../../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
-import { aiProfileOf } from "../../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
@@ -15,7 +14,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredProfiles } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, registeredProfiles } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -61,7 +60,7 @@ async function seedCopilotPlugin(
   manifest.addTool("copilot", "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    aiProfileOf(catalogOf().sortedById(), "copilot"),
+    registeredAiProfile("copilot"),
     { kind: "github", repo: "ai-driven-dev/framework" },
     PROJECT_ROOT,
     manifest,

@@ -2,13 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
-import { aiProfileOf } from "../../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { catalogOf } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const HOME = "/home/u";
@@ -53,7 +52,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
       restored.addTool("cursor", "test", []);
       return translator.addPlugin(
         dist(),
-        aiProfileOf(catalogOf().sortedById(), "cursor"),
+        registeredAiProfile("cursor"),
         { kind: "local", path: "/source" },
         PROJECT_ROOT,
         restored,
@@ -99,7 +98,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
 
     await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -133,7 +132,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
 
     const result = await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -159,7 +158,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     );
     const result = await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -202,7 +201,7 @@ describe("BuiltTreeMaterializationTranslator — when no built tree applies (int
     );
     await translator.addPlugin(
       distWithCommand(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

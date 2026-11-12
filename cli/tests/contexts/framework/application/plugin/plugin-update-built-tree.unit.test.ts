@@ -10,13 +10,12 @@ import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framewo
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { aiProfileOf } from "../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -701,7 +700,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     );
     const plan = await updater.planUpdate(
       machine.getPlugins("cursor")[0],
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       PROJECT_ROOT,
       deps.logger
     );

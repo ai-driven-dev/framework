@@ -5,7 +5,6 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { aiProfileOf } from "../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
 import type { PluginSource } from "../../../../../src/kernel/source.js";
@@ -18,7 +17,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, registeredProfiles } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const SHARED_SETTINGS = resolve(PROJECT_ROOT, ".claude/settings.json");
@@ -118,7 +117,7 @@ async function sync(setup: SyncSetup = {}) {
 
   await new ModeAMarketplaceTranslator().addPlugin(
     distribution("aidd-context"),
-    aiProfileOf(catalogOf().sortedById(), "claude"),
+    registeredAiProfile("claude"),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -395,7 +394,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     manifest.addTool("codex", "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       distribution("aidd-context"),
-      aiProfileOf(catalogOf().sortedById(), "claude"),
+      registeredAiProfile("claude"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

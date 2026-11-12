@@ -2,14 +2,13 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
-import { aiProfileOf } from "../../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { InstallationFile } from "../../../../../../src/kernel/file.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { catalogOf } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";
@@ -82,7 +81,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "opencode"),
+      registeredAiProfile("opencode"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -119,7 +118,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       distWithHooks(),
-      aiProfileOf(catalogOf().sortedById(), "opencode"),
+      registeredAiProfile("opencode"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -153,7 +152,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
     );
     return translator.addPlugin(
       distribution,
-      aiProfileOf(catalogOf().sortedById(), "opencode"),
+      registeredAiProfile("opencode"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -250,7 +249,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
 
     await translator.addPlugin(
       distribution,
-      aiProfileOf(catalogOf().sortedById(), "kilo"),
+      registeredAiProfile("kilo"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

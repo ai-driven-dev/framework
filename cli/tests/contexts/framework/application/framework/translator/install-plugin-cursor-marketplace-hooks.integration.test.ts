@@ -7,7 +7,6 @@ import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contex
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";
 import type { PluginTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
-import { aiProfileOf } from "../../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { projectHooksFileOf } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import type { AiToolId } from "../../../../../../src/kernel/tool.js";
@@ -15,7 +14,7 @@ import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { catalogOf } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const HOME = "/home/u";
@@ -83,7 +82,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
 
     const { skipped } = await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -113,7 +112,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
 
     await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -138,7 +137,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     );
     await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -162,7 +161,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     );
     await translator.addPlugin(
       dist(),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

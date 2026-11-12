@@ -8,13 +8,12 @@ import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contex
 import { PluginRemoveUseCase } from "../../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import { aiProfileOf } from "../../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CLIOutput } from "../../../../../../src/presentation/output.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf } from "../../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
@@ -96,7 +95,7 @@ async function installPlugin(
   );
   await adapter.addPlugin(
     buildDist(name),
-    aiProfileOf(catalogOf().sortedById(), "cursor"),
+    registeredAiProfile("cursor"),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -213,7 +212,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     );
     await translator.addPlugin(
       buildWithoutHooks(PLUGIN_NAME),
-      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

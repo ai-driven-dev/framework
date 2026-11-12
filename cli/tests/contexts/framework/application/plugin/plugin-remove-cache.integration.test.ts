@@ -8,14 +8,13 @@ import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { aiProfileOf } from "../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const ALIAS = "my-local-alias";
@@ -47,7 +46,7 @@ async function seedManifest(): Promise<Manifest> {
   manifest.addTool("claude", "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    aiProfileOf(catalogOf().sortedById(), "claude"),
+    registeredAiProfile("claude"),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -193,7 +192,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     manifest.addTool("claude", "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      aiProfileOf(catalogOf().sortedById(), "claude"),
+      registeredAiProfile("claude"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -278,7 +277,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     manifest.addTool("copilot", "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      aiProfileOf(catalogOf().sortedById(), "copilot"),
+      registeredAiProfile("copilot"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

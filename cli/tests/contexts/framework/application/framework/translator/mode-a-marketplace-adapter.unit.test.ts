@@ -3,10 +3,9 @@
 import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
-import { aiProfileOf } from "../../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
@@ -38,7 +37,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("aidd-context");
       await adapter.addPlugin(
         dist,
-        aiProfileOf(catalogOf().sortedById(), "claude"),
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -58,7 +57,7 @@ describe("ModeAMarketplaceTranslator", () => {
 
       const result = await adapter.addPlugin(
         buildDist("aidd-context"),
-        aiProfileOf(catalogOf().sortedById(), "claude"),
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -77,7 +76,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        aiProfileOf(catalogOf().sortedById(), "claude"),
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -99,7 +98,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        aiProfileOf(catalogOf().sortedById(), "claude"),
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,

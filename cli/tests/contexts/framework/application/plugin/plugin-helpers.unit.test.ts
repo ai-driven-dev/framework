@@ -4,11 +4,10 @@ import {
   deletePluginFilesForTool,
   loadPluginManifest,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-helpers.js";
-import { aiProfileOf } from "../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { NoManifestError } from "../../../../../src/kernel/errors.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -33,7 +32,7 @@ describe("deletePluginFilesForTool()", () => {
     const deleted = await deletePluginFilesForTool(
       files,
       "project",
-      aiProfileOf(catalogOf().sortedById(), "claude"),
+      registeredAiProfile("claude"),
       PROJECT_ROOT,
       fs
     );
