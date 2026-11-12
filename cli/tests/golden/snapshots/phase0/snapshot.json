@@ -25,7 +25,7 @@
   {
     "command": "setup --source local --path <FRAMEWORK_FIXTURE> --ai claude --plugins none --yes --scope user",
     "exitCode": 0,
-    "stdout": "Fetching marketplace 'aidd-framework'...\nProject initialized.\n",
+    "stdout": "Fetching marketplace 'aidd-framework'...\nRegistered for every project on this machine.\n",
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": {
@@ -800,7 +800,7 @@
     "command": "[errors] framework install --tool not-a-tool",
     "exitCode": 1,
     "stdout": "",
-    "stderr": "Error: Unknown tool: not-a-tool. Valid tools: claude, cursor, copilot, opencode, kilo, codex, vscode\n",
+    "stderr": "Error: Unknown tool: not-a-tool. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode\n",
     "filesWritten": [],
     "manifest": null
   },
@@ -823,7 +823,7 @@
   {
     "command": "[user-scope-clean] setup --source local --path <FRAMEWORK_FIXTURE> --ai claude --plugins none --yes --scope user",
     "exitCode": 0,
-    "stdout": "Fetching marketplace 'aidd-framework'...\nProject initialized.\n",
+    "stdout": "Fetching marketplace 'aidd-framework'...\nRegistered for every project on this machine.\n",
     "stderr": "Warning: claude CLI not found on PATH — skipping native plugin activation.\n",
     "filesWritten": [],
     "manifest": null,
@@ -853,7 +853,7 @@
   {
     "command": "[user-scope-clean] doctor --scope user",
     "exitCode": 0,
-    "stdout": "Nothing registered at user scope yet — run `aidd setup --scope user` first.\n",
+    "stdout": "Nothing registered at user scope yet — run `aidd setup --global` first.\n",
     "stderr": "",
     "filesWritten": [],
     "manifest": null

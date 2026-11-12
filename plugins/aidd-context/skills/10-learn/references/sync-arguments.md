@@ -1,6 +1,6 @@
 # Sync Arguments
 
-Arguments accepted by `hooks/update_memory.js`. The hook maps tool names to context files; it does not detect installed tools.
+Arguments accepted by `hooks/memory.cjs sync`. It maps tool names to context files; it does not detect installed tools.
 
 | Argument | Refreshes |
 | -------- | --------- |
@@ -8,7 +8,8 @@ Arguments accepted by `hooks/update_memory.js`. The hook maps tool names to cont
 | `codex` | `AGENTS.md` |
 | `cursor` | `AGENTS.md` |
 | `opencode` | `AGENTS.md` |
-| `copilot` | `.github/copilot-instructions.md` |
+| `antigravity` | `AGENTS.md` |
+| `copilot` | `AGENTS.md`, and a pointer line in `.github/copilot-instructions.md` |
 
 Rules:
 

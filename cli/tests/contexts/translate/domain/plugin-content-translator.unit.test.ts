@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { parseToml } from "../../../../src/contexts/tools/domain/profiles/codex/toml.js";
@@ -308,6 +309,15 @@ describe("PluginContentTranslator.translate()", () => {
     });
   });
 
+  describe("antigravity target (flat mode, one-level skills)", () => {
+    it("emits a skill as .agents/skills/<plugin>-<skill>/, never nested under the plugin", () => {
+      expect(pathsFor(antigravity)).toEqual([
+        ".agents/agents/sample-plugin-reviewer/agent.md",
+        ".agents/skills/sample-plugin-hello/SKILL.md",
+      ]);
+    });
+  });
+
   describe("vscode (IDE tool)", () => {
     it("returns empty array", () => {
       expect(translator.translate(makeDist(), vscodeToolConfig)).toEqual([]);
@@ -537,17 +547,6 @@ describe("a plugin's hooks", () => {
       ".codex/plugins/sample-plugin/hooks/hooks.json": hooksManifestFor(CODEX_ROOT_TOKEN),
       ".codex/plugins/sample-plugin/hooks/lib/check.sh": hookScriptContent,
       ".codex/plugins/sample-plugin/plugin.json": claudeManifestContent,
-    });
-  });
-
-  it("flattens the manifest into the shape cursor reads and keeps the scripts under hooks/", () => {
-    expect(treeOf(cursor, hooksDist())).toEqual({
-      "sample-plugin/hooks.json": JSON.stringify(
-        { hooks: { preToolUse: [{ type: "command", command: "./hooks/check.sh" }] } },
-        null,
-        2
-      ),
-      "sample-plugin/hooks/lib/check.sh": hookScriptContent,
     });
   });
 

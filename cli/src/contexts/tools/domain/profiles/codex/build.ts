@@ -8,14 +8,10 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   flatMcpKeyPrefix,
-  genericFlatHooksScriptPath,
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
-import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { PluginPresence, ToolBuildContract } from "../../build-contract.js";
-import { mergeCodexFrameworkHooksJson } from "../../formats/flat-hooks-merge.js";
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildCodexMarketplace, buildCodexMarketplaceEntry } from "../../marketplace-catalog.js";
 import { codexAgentMarkdownToToml } from "./codex-agent-toml.js";
 import {
@@ -23,9 +19,8 @@ import {
   OUTPUT_CODEX_MANIFEST_RELATIVE,
   OUTPUT_CODEX_MARKETPLACE_RELATIVE,
 } from "./codex-paths.js";
+import { CODEX_HOOKS } from "./hooks.js";
 import { parseToml, stringifyToml } from "./toml.js";
-
-type FsType = FileReader & FileWriter;
 
 type TomlRecord = Record<string, unknown>;
 
@@ -132,7 +127,7 @@ export function buildCodexContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CODEX_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CODEX_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: PLUGIN_ROOT_TOKEN,
+    pluginRootToken: CODEX_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: buildCodexManifest,
     manifestSchemaName: "codex-plugin-manifest",
@@ -155,11 +150,7 @@ export function buildCodexContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: (_p, rel) => rel,
-      },
+      hooks: pluginTreeHooksArtifact(CODEX_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -190,21 +181,14 @@ function codexFlatAgentPath(plugin: string, rel: string): string {
   return `.codex/agents/${plugin}-${base}`;
 }
 
-function codexFlatHooksPath(plugin: string, rel: string): string {
-  const rest = rel.replace(/^hooks\//, "");
-  return genericFlatHooksScriptPath(".codex/hooks/", plugin, rest);
-}
-
-async function collectPrefixedMcpServers(
+function collectPrefixedMcpServers(
   builtPlugins: readonly string[],
-  sourceDir: string,
-  fs: FsType
-): Promise<Record<string, unknown>> {
+  pluginMcp: ReadonlyMap<string, string>
+): Record<string, unknown> {
   const mcpServers: Record<string, unknown> = {};
   for (const plugin of builtPlugins) {
-    const mcpSrc = `${sourceDir}/plugins/${plugin}/.mcp.json`;
-    if (!(await fs.fileExists(mcpSrc))) continue;
-    const raw = await fs.readFile(mcpSrc);
+    const raw = pluginMcp.get(plugin);
+    if (raw === undefined) continue;
     const parsed = JSON.parse(raw) as { mcpServers?: Record<string, unknown> };
     const prefix = flatMcpKeyPrefix(plugin);
     for (const [k, v] of Object.entries(parsed.mcpServers ?? {})) {
@@ -213,6 +197,8 @@ async function collectPrefixedMcpServers(
   }
   return mcpServers;
 }
+
+const CODEX_FLAT_CONFIG = ".codex/config.toml";
 
 function buildCodexConfigPayload(mcpServers: Record<string, unknown>): string {
   if (Object.keys(mcpServers).length === 0) return "";
@@ -237,27 +223,23 @@ export function buildCodexFlatContract(): ToolBuildContract {
         path: codexFlatAgentPath,
         transform: codexAgentMarkdownToToml,
       },
-      mcp: { supported: false }, // handled by emitConfigArtifact (config.toml mcp_servers)
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: codexFlatHooksPath,
-        hooksMerge: (existing, incoming) => mergeCodexFrameworkHooksJson(existing, incoming),
-        hooksMergeDest: (outDir) => `${outDir}/.codex/hooks.json`,
-      },
+      mcp: { supported: false }, // handled by configArtifact (config.toml mcp_servers)
+      hooks: flatHooksArtifact(CODEX_HOOKS, { tool: "codex" }),
       rules: { supported: false },
       commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
-    emitConfigArtifact: async (builtPlugins, outDir, sourceDir, fs) => {
-      const configPath = `${outDir}/.codex/config.toml`;
-      const existing = (await fs.fileExists(configPath)) ? await fs.readFile(configPath) : "";
-      const mcpServers = await collectPrefixedMcpServers(builtPlugins, sourceDir, fs);
-      const aiddPayload = buildCodexConfigPayload(mcpServers);
-      const merged = mergeCodexConfigToml(existing, aiddPayload);
-      await fs.writeFile(configPath, merged);
-      return 1;
+    configArtifact: {
+      reads: () => [CODEX_FLAT_CONFIG],
+      probes: () => [],
+      assets: { tool: "codex", names: [] },
+      emit: ({ builtPlugins, pluginMcp, existing }) => {
+        const mcpServers = collectPrefixedMcpServers(builtPlugins, pluginMcp);
+        const aiddPayload = buildCodexConfigPayload(mcpServers);
+        const merged = mergeCodexConfigToml(existing.get(CODEX_FLAT_CONFIG) ?? "", aiddPayload);
+        return [{ path: CODEX_FLAT_CONFIG, content: merged }];
+      },
     },
   };
 }

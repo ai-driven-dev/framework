@@ -5,7 +5,7 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import type { ToolConfig } from "../../../tools/domain/registry.js";
+import { projectHooksDeliveryOf, type ToolConfig } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -29,6 +29,8 @@ interface ApplyPluginFilesOptions {
   cacheDir: string;
   manifest: Manifest;
   fileFilter?: ((relativePath: string) => boolean) | null;
+  /** Overwrite a project hook the user edited after install instead of refusing. */
+  force?: boolean;
 }
 
 /** Optional deps that let restore re-materialize through the build pipeline, as install does. */
@@ -52,7 +54,11 @@ export class ApplyPluginFilesUseCase {
     const localPath = await this.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
     const translator = this.resolveTranslator(options.toolConfig);
-    if (translator !== null && options.plugin.marketplace !== undefined) {
+    if (
+      translator !== null &&
+      (options.plugin.marketplace !== undefined ||
+        (!options.fileFilter && projectHooksDeliveryOf(options.toolId) !== null))
+    ) {
       return this.restoreViaTranslator(translator, dist, options);
     }
     return this.restoreViaTranslate(dist, options);
@@ -78,7 +84,7 @@ export class ApplyPluginFilesUseCase {
     dist: PluginDistribution,
     options: ApplyPluginFilesOptions
   ): Promise<number> {
-    const { toolId, plugin, projectRoot, manifest } = options;
+    const { toolId, plugin, projectRoot, manifest, force = false } = options;
     // Mode A never materializes files, so any manifest-tracked path here is a leftover from a run
     // before that was true. Scoped to the manifest's own keys under the plugin's base dir — never a
     // directory scan — so it cannot touch files the plugin never wrote.
@@ -91,7 +97,9 @@ export class ApplyPluginFilesUseCase {
       );
       await deleteOldFiles(plugin.files, baseDir, this.fs);
     }
-    return materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest);
+    return materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest, {
+      overwriteEdited: force,
+    });
   }
 
   private async restoreViaTranslate(

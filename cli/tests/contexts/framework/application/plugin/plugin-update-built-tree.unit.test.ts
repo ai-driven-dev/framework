@@ -598,6 +598,30 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]).toEqual(machineBefore);
   });
 
+  it("refuses an untracked identical file without changing its bytes or claiming it", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    const registry = await makeRegistry();
+    await installStalePlugin(deps, registry);
+    const newRelativePath = "sample-plugin/skills/demo/new.md";
+    deps.fs.setFile(join("/built/cursor/plugins", newRelativePath), "# Built v2\n");
+    deps.fs.setFile(join(USER_PLUGINS_DIR, newRelativePath), "# Built v2\n");
+
+    const before = deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0];
+    const savesBefore = deps.userManifestRepo.saveCount;
+    await expect(
+      makeUpdateUseCase(deps, registry).execute({
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+      })
+    ).rejects.toThrow(/new.md.*untracked|untracked.*new.md/);
+
+    expect(deps.fs.getFile(join(USER_PLUGINS_DIR, newRelativePath))).toBe("# Built v2\n");
+    expect(deps.userManifestRepo.saveCount).toBe(savesBefore);
+    expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]).toEqual(before);
+  });
+
   it("preflights a Cursor user-file collision before any selected native host update", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "cursor");

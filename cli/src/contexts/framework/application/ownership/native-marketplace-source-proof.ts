@@ -1,3 +1,4 @@
+import type { ToolId } from "../../../../kernel/tool.js";
 import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReader,
@@ -8,6 +9,7 @@ import type {
   NativeMarketplaceSourceReader,
   NativeMarketplaceSourceReading,
 } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
+import { hostRefInUse } from "../../../tools/domain/registry.js";
 import type { NativeMarketplaceRegistration } from "../../domain/manifest/native-registrations.js";
 
 export interface NativeMarketplaceSourceInspection {
@@ -80,7 +82,8 @@ export async function assertNoForeignNativeRefs(
   reader: HostPluginRegistryReader | undefined,
   hostName: string,
   ownedRefs: ReadonlySet<string>,
-  projectRoot: string
+  projectRoot: string,
+  toolId: ToolId
 ): Promise<ReadonlyMap<string, HostPluginRegistryEntry>> {
   if (reader === undefined)
     throw new Error(
@@ -99,9 +102,10 @@ export async function assertNoForeignNativeRefs(
       `Catalogue '${hostName}': host plugin registry unreadable (${reading.unreadable ?? reading.location}); no host mutation made.`
     );
   const refs = reading.refs ?? new Map<string, HostPluginRegistryEntry>();
-  const foreign = [...refs.keys()].find(
-    (ref) => ref.endsWith(`@${hostName}`) && !ownedRefs.has(ref)
-  );
+  const foreign = [...refs].find(
+    ([ref, entry]) =>
+      hostRefInUse(toolId, entry.enabled) && ref.endsWith(`@${hostName}`) && !ownedRefs.has(ref)
+  )?.[0];
   if (foreign !== undefined)
     throw new Error(
       `Catalogue '${hostName}' includes foreign host ref '${foreign}'; no host mutation made.`

@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/00-onboard`](#skills00-onboard)
   - [`skills/01-bootstrap`](#skills01-bootstrap)
@@ -37,7 +38,20 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [hooks.json](hooks/hooks.json) |
-| [update_memory.js](hooks/update_memory.js) |
+| [memory.cjs](hooks/memory.cjs) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [bank-guard.cjs](hooks/lib/bank-guard.cjs) |
+| [changes.cjs](hooks/lib/changes.cjs) |
+| [common-rules.cjs](hooks/lib/common-rules.cjs) |
+| [fact-sheet.cjs](hooks/lib/fact-sheet.cjs) |
+| [host.cjs](hooks/lib/host.cjs) |
+| [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
+| [plan.cjs](hooks/lib/plan.cjs) |
+| [report.cjs](hooks/lib/report.cjs) |
 
 ### `skills`
 
@@ -76,17 +90,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
 | `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
 | `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [report.md](skills/02-project-memory/assets/report.md) | - |
-| `assets` | [scan-summary.md](skills/02-project-memory/assets/scan-summary.md) | - |
-| `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
+| `assets` | [fact-sheet.md](skills/02-project-memory/assets/fact-sheet.md) | - |
+| `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
-| `references` | [memory-destinations.md](skills/02-project-memory/references/memory-destinations.md) | - |
+| `references` | [engine.md](skills/02-project-memory/references/engine.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
-| `references` | [structure.md](skills/02-project-memory/references/structure.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up or refresh project memory, or rewire it into a tool. Not for editing one existing memory file.` |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or update the project memory of its architecture, conventions and decisions, and wire it into your AI tools. Use for any request about the project memory, even a bare "check the project memory"; with no bank it sets one up, with a bank it refreshes it. Not for editing one existing memory file.` |
 
 #### `skills/03-context-generate`
 
@@ -124,6 +136,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [rule-discovery.md](skills/05-rule-generate/references/rule-discovery.md) | - |
 | `references` | [rule-publication.md](skills/05-rule-generate/references/rule-publication.md) | - |
+| `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
 | `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`

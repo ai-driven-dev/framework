@@ -97,14 +97,13 @@ describe("parseToolIds", () => {
     expect(output.at("error")).toHaveLength(1);
   });
 
-  it("refuses an AI id given as an IDE one", () => {
-    const output = new CapturingOutput(false);
-    const exit = refuseByThrowing();
+  it("files every id --ide names under the list its category decides", () => {
+    const errorHandler = new ErrorHandler(new CapturingOutput(false));
 
-    expect(() => parseToolIds({ ide: "claude" }, new ErrorHandler(output))).toThrow("process.exit");
-
-    expect(exit).toHaveBeenCalledWith(1);
-    expect(output.at("error")).toHaveLength(1);
+    expect(parseToolIds({ ide: "claude,vscode", ai: "codex" }, errorHandler)).toStrictEqual({
+      aiTools: ["codex", "claude"],
+      ideTools: ["vscode"],
+    });
   });
 
   it("accepts 'all' without checking it against the category", () => {
