@@ -23,7 +23,7 @@ description: >
 ## Add a tool
 
 1. One folder `domain/profiles/<tool>/` with `profile.ts` (the declaration), and `build.ts` when the tool is a build target.
-2. One line in `REGISTERED_PROFILES` (`domain/profiles/registered-profiles.ts`), AI tools before IDE tools, and the id in `kernel/tool.ts` until it moves to `shared/` (M-T1 in `reference-context.md` section 9). A file listed in `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) may also need the tool.
+2. One line in `REGISTERED_PROFILES` (`domain/profiles/registered-profiles.ts`), AI tools before IDE tools, and the id in `kernel/tool.ts` until it moves to `shared/` (M-T1 in `reference-context.md` section 9). A file listed in `BASELINE` or `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) may also need the tool. A tool running hooks adds its `hooks.ts`, a host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event.
 3. The conformance suite (`tests/contexts/tools/testing/`) walks that list and checks the new profile: it has no test of its own for declared data.
 
 A string transform used by one profile stays in its folder; one shared by two goes to `domain/formats/`. A missing section is a missing declaration.
