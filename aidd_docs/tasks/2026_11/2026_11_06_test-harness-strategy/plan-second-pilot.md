@@ -628,7 +628,7 @@ Re-run after the sections refactor and the design-bar fixes (head `87573c633`):
 
 Verdict after re-review: no-go. B2 and the design bar are met; B1 is not, B3 and B4 are partial.
 
-- B1, unrecorded deviations: the `CONFIG_ASSETS` table in `src/runtime/assets/asset-loader.ts` (`target/04-tools-and-translate.md:299`, decided: the table disappears); `SourceMarketplaceRef` and `SourcePluginEntryRef` still in `tools/contract/build-contract.ts` (`:124` moves them to translate, `:117` forbids a `tools -> translate` edge: an ambiguity to settle); the kilo and opencode bridge files each keep their own `runHook`, `answerOf`, `stopReasonOf` and `toIdentifier` (`:293` puts them in the shared module, `:139` leaves two parameter files). The bullet above calling the bridge what `:139` asks for is wrong.
+- B1, unrecorded deviations: the `CONFIG_ASSETS` table in `src/runtime/assets/asset-loader.ts` (`target/04-tools-and-translate.md:299`, decided: the table disappears); `SourceMarketplaceRef` and `SourcePluginEntryRef` still in `tools/contract/build-contract.ts` (`:124` moves them to translate, `:15,115` forbid a `tools -> translate` edge: an ambiguity to settle); the kilo and opencode bridge files each keep their own `runHook`, `answerOf`, `stopReasonOf` and `toIdentifier` (`:293` puts them in the shared module, `:139` leaves two parameter files). The bullet above calling the bridge what `:139` asks for is wrong.
 - B3: the widened identifier guard has no Red proofs row.
 - B4: "Add a tool" omits `BASELINE` of `tool-addition-cost.arch.test.ts` (`asset-loader.ts`) and the hooks cost (descriptor, host adapter, payload fixtures).
 - Should-fix: the identifier guard skips `contract/` and `domain/marketplace-*.ts`, where one-profile names remain (`CURSOR_PLUGIN_ROOT_TOKEN`, `buildCodexMarketplace`); stale guard titles; the tools ambiguities live in the plan only, not in section 9.
@@ -639,14 +639,23 @@ Fixes after the no-go (heads `0bca4d0dc`, `ba0d017f4`, `b2a6b6f9e`):
 - Config assets: each profile declares `configAssets`; `CONFIG_ASSETS` is gone and `asset-loader.ts` left `BASELINE`. Contract change: `configAssets()` on both profile interfaces.
 - Source refs: settled as ambiguity T-A13 (they stay in `tools/contract`, the build contract's signatures take them).
 - Identifier guard widened to `tools/contract/` and `domain/marketplace-{catalog,entry}.ts`: `CURSOR_PLUGIN_ROOT_TOKEN` and the Codex marketplace builders moved into their profiles, the shared builders renamed by shape. `contract/config-refs.ts` (4) and `contract/plugin-root-token.ts` (1) entered `IDENTIFIER_BASELINE`: newly covered paths, held shrink-only, rather than left unguarded.
-- Section 9 now holds the tools ambiguities T-A1 to T-A13 and E-T11; "Add a tool" names `BASELINE` and the hooks cost.
+- Section 9 now holds the tools ambiguities T-A1 to T-A13 (T-A9 became E-T11) and E-T11; "Add a tool" names `BASELINE` and the hooks cost.
 
 | Measure | Limit | Measured | Met |
 | --- | --- | --- | --- |
-| C3 | exceptions not above ambiguities | 7 (E-T3, E-T4, E-T7 to E-T11) against 12 (T-A1 to T-A8, T-A10 to T-A13) | yes |
+| C3 | exceptions not above ambiguities | 8 (E-T3, E-T4, E-T7 to E-T12) against 12 (T-A1 to T-A8, T-A10 to T-A13) | yes |
 | Gates | all green | unit 4565, integration 2653, architecture 291, golden 6, e2e 88, contract 160; lint, typecheck, knip, jscpd, jscpd:profiles, type honesty, doc duplication | yes |
 | Answers | unchanged but the 18 waived duplicate paths | probe equals `accepted.txt`; frozen surface only `tests/e2e/helpers.ts` | yes |
 | Mutation `tools` | floor 95 | 96.0; every per-tool scope holds its floor | yes |
+
+Second re-review: no-go on one citation, T-A13 cited `:117` for the rule at `:15,115`; corrected. Its should-fixes, closed (heads `98f6937a6`, `e02bc141d`, `c8953fc1b`):
+
+- Shipped config: one `ShippedConfig { name, content, destination, delivery }` list per profile (`target/04-tools-and-translate.md:66`); `configOutputPaths` and `pluginRuntimeFiles` are gone, a destination is required by type. Limit: two entries with one name are not refused, the first wins.
+- Bridge tests: the generated-text comparisons are deleted, each with its holder (golden, `tests/fixtures/hooks-routes/`, the bridge integration runs); the broken-pipe case runs the module (`target/04-tools-and-translate.md:293`).
+- `SOURCE_PLUGIN_ROOT_TOKEN` names the token by its role; it and `plugin-root-token-rewrite.ts` left `IDENTIFIER_BASELINE`.
+- `config-refs.ts`, read by `framework`'s restore, is E-T12.
+- The bridge integration file failed once on `ENOTEMPTY` at temp-directory removal (opencode's load-time SessionStart script racing the cleanup); its cleanup now retries the removal. Limit: a race longer than five retries still fails.
+- Mutation `tools` after these commits: 95.8 against floor 95.
 
 ## Design bar (user requirement, checked at every design review)
 
