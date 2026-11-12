@@ -599,7 +599,34 @@ Re-run, after the revised sections 6, 7, 9 and 10 of the reference:
 - Counts: `count-after.mjs` from `cli/`, total 6618.
 - C2: the zeta probe replayed on the final tree, all gates green, then discarded.
 
-Measures: go. Verdict waits on the design bar review.
+Measures: go. Design bar: no-go, pending one decision.
+
+- Pass: the boundary (outside callers reach `tools` through `contract/` only, held by Biome, no `PUBLIC_MODULES` entry), domain purity, construction refusals tested in `define-tool`, characterization deleted.
+- Fail, leaking structure: the flat install path is built by `translate/domain/content-translator.ts` and parsed back by `built-tree-materialization-translator.ts` from `directory` and `flatLayout()`; `kind === "native" && requiresUserScope()` is repeated in four framework files; `distributionProbes?.marketplace?.[0]` is read by two callers. Each becomes one profile answer.
+- Fail, invariant outside its owner, open: single-profile rules (root token, probes, flat hooks against `acceptsHooks`, artefact paths under `directory`) are checked by conformance over the registration list, not refused by `defineAiTool`. A7 put them in conformance on purpose; the bar requires a refusal at construction. Decided: the target wins. `target/04-tools-and-translate.md:71-104` checks I1 to I10 by the conformance suite over every registered profile, and `:350` holds a profile as data checked by that suite; the bar's construction rule binds aggregates. Not a blocker.
+- Reserved to stage D (`target/00-overview.md`, section 12), not debt: the profile in `composition/tool-profiles/` and translation form 1.
+- Every other finding is fixed in this PR.
+- Stage C blockers whatever the decision: `cli/.claude/skills/tools/SKILL.md` describes the deleted registry; `src/contexts/tools/glossary.md` and `cli/.claude/rules/cli-contexts/tools.md` are missing; E-T3 is not written in reference section 9.
+
+Re-run after the sections refactor and the design-bar fixes (head `87573c633`):
+
+| Measure | Limit | Measured | Met |
+| --- | --- | --- | --- |
+| C2 code and test outside the profile | at most 7 | 2 (`kernel/tool.ts`, `registered-profiles.ts`), M-T1 written | yes |
+| C3 | exceptions not above ambiguities | 6 against 10: E-T3, E-T4, E-T7 kept, E-T8 to E-T10 added; M-T1 to M-T3 are migration state, not counted | yes |
+| Gates | all green | unit 4557, integration 2644, architecture 291, golden 6, e2e 88, contract 160; lint, typecheck, knip, jscpd, jscpd:profiles, type honesty, doc duplication | yes |
+| Answers | unchanged but the 18 waived duplicate paths | probe diff equals `accepted.txt`; contract folder diff empty; frozen surface only `tests/e2e/helpers.ts` | yes |
+| Mutation `tools` | floor | 95.3 | yes |
+
+- Leaking structure, fixed: the flat install path is a profile answer (`flatInstallPath`, `ownsFlatPath`); `requiresUserScope()` is asked once; distribution paths are asked, not indexed. `plugins-are-asked-not-read` holds callers to answers, its allowlist shrink-only and checked against missing files.
+- Invariants at construction: `define-tool` refuses an invalid profile, each refusal proven by a planted break (commit body of the layout and manifest sections commit).
+- No tool-named identifier in `domain/sections/`, `hooks/`, `bridges/`, `native-registration/`, `profile/` or `profile.ts`; the guard went red on a planted `claudeDir` in each.
+- Not exceptions: the shared event bridge is what `target/04-tools-and-translate.md:139` asks for; the antigravity hooks merge and the codex TOML agent writer became tool-free shared code with a thin binder in the profile folder, so the `behaviours/` proposal (`target/04-tools-and-translate.md:140-141`) is not needed; the profile data golden (`:364`) is a stage D proposal.
+- Commit `700e57711`'s subject claimed `createDeps` required the catalog while a default remained; the default is now gone and `create-deps-takes-the-catalog` holds it.
+- Stage C blockers above: the skill, the glossary, the context rule file and E-T3 are written.
+- Cross-context test imports, migration state M-T3: 157 test files outside `tools` import its kit, 40 the `host-registration` kit, 48 `tools/domain`.
+
+Verdict after re-review: pending.
 
 ## Design bar (user requirement, checked at every design review)
 
@@ -642,3 +669,9 @@ Phases 3 and 6 end with an opus design review against this bar before the phase 
 | generates a bridge for exactly the events it relays through one | bridge relay, generator returns null | `expected [] to deeply equal [ 'SessionStart' ]` |
 | comes with one captured payload per event it relays | no payload fixtures | `claude: no payload for SessionStart: expected false to be true // Object.is equality` |
 | `registeredIdsMatchKernel` | kernel ids missing from the list | throws |
+| `tools-travel-as-the-catalog`: types no profile list outside the tools context and presentation | `export type Plant = ToolProfile[];` in a framework file | `Received ["src/contexts/framework/zz-plant.ts"]` |
+| `create-deps-takes-the-catalog`: passes all four arguments wherever src calls it | `createDeps(root, opts, out);` in a framework file | `Received ["src/contexts/framework/zz-plant.ts"]` |
+| `source-tree-holds-only-source`: has no file with an extension outside .ts and .md | a `zz-plant.ts-E` file under src | `Received ["src/contexts/framework/zz-plant.ts-E"]` |
+| `profiles-are-islands`: has no profile importing a file of another profile | claude file importing `../codex/codex-paths.js` | `Received ["...profiles/claude/zz-plant.ts -> ...profiles/codex/codex-paths.ts"]` |
+| `plugins-are-asked-not-read`: no code outside the tools context reads a field of a plugins capability | `tool.section("plugins").hooksAcceptance` in a framework file | `Received ["src/contexts/framework/zz-plant.ts :: reads .hooksAcceptance"]` |
+| `tool-id-list-is-the-catalogs`: is named only in the kernel and the tools context | `void AI_TOOL_IDS;` in `doctor-registration-use-case.ts` | `ask ToolCatalog.aiIdsInCanonicalOrder() instead: expected [ Array(1) ] to deeply equal []` |
