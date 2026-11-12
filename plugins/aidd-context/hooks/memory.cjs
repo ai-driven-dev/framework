@@ -657,6 +657,21 @@ function main([command, ...args]) {
   return EXIT_ERRORS;
 }
 
-module.exports = { ALWAYS_WRITTEN, ACCEPTED_ALWAYS, ROW_FILES, TARGET_FILES, lintFile, lintBank, check, sync };
+module.exports = {
+  ALWAYS_WRITTEN,
+  ACCEPTED_ALWAYS,
+  ROW_FILES,
+  TARGET_FILES,
+  BLOCK_OPEN,
+  BLOCK_CLOSE,
+  LEGACY_BLOCK_OPEN,
+  LEGACY_BLOCK_CLOSE,
+  COPILOT_FILE,
+  COPILOT_POINTER,
+  lintFile,
+  lintBank,
+  check,
+  sync,
+};
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
