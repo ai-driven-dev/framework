@@ -21,15 +21,19 @@ import {
   PluginEntriesByScopeReader,
   TomlPluginTablesReader,
 } from "../contexts/host-registration/infrastructure/plugin-registry-readers.js";
+import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type {
   MarketplaceListLayout,
   MarketplaceRegistryLayout,
   MarketplaceSourcesDeclaration,
+  NativeActivation,
   PluginRegistryLayout,
 } from "../contexts/tools/domain/plugins/native-activation.js";
 import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
+import { UnregisteredToolError } from "../kernel/errors.js";
 import { resolveHomeDir } from "../kernel/reading/home-dir.js";
-import { AI_TOOL_IDS, type AiToolId } from "../kernel/tool.js";
+import type { AiToolId, ToolId } from "../kernel/tool.js";
+import { nativeRegistrationsOf } from "./native-registrations.js";
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */
 const PLUGIN_READERS = {
@@ -72,31 +76,36 @@ export interface HostRegistrationDeps {
 
 /** Everything a host's own CLI and registries need, read off each tool's declared activation:
  * a new tool costs its profile and no edit here, a new layout one reader and one table line. */
-export function wireHostRegistration(home: string = resolveHomeDir()): HostRegistrationDeps {
+export function wireHostRegistration(
+  tools: ToolCatalog,
+  home: string = resolveHomeDir(),
+  registrations: ReadonlyMap<ToolId, NativeActivation> = nativeRegistrationsOf(REGISTERED_PROFILES)
+): HostRegistrationDeps {
   const hostActions = new Map<string, HostActions>();
   const pluginRegistries = new Map<AiToolId, HostPluginRegistry>();
   const marketplaceRegistries = new Map<AiToolId, HostMarketplaceRegistry>();
   const marketplaceSources = new Map<AiToolId, HostMarketplaceSources>();
-  for (const id of AI_TOOL_IDS) {
-    const profile = REGISTERED_PROFILES.find((registered) => registered.toolId === id);
-    const activation = profile?.kind === "ai" ? profile.nativeActivation() : undefined;
-    if (activation === undefined) continue;
+  for (const id of tools.inHelpOrder("ai")) {
+    const aiId = id as AiToolId;
+    if (tools.aiProfile(aiId).nativeActivation() === undefined) continue;
+    const activation = registrations.get(id);
+    if (activation === undefined) throw new UnregisteredToolError(id);
     const binary = activation.hostBinary();
     hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
     const pluginRegistry = activation.pluginRegistryAt(home);
     const marketplaceRegistry = activation.marketplaceRegistryAt(home);
     const sources = activation.marketplaceSourcesDeclaration();
     if (pluginRegistry !== undefined)
-      pluginRegistries.set(id, PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.path));
+      pluginRegistries.set(aiId, PLUGIN_READERS[pluginRegistry.layout](pluginRegistry.path));
     if (marketplaceRegistry !== undefined) {
       const registry = MARKETPLACE_READERS[marketplaceRegistry.layout](marketplaceRegistry.path);
-      marketplaceRegistries.set(id, registry);
+      marketplaceRegistries.set(aiId, registry);
       if (sources?.from === "marketplace-registry")
-        marketplaceSources.set(id, new HostRegistryMarketplaceSourceReaderAdapter(registry));
+        marketplaceSources.set(aiId, new HostRegistryMarketplaceSourceReaderAdapter(registry));
     }
     if (sources?.from === "list-command") {
       marketplaceSources.set(
-        id,
+        aiId,
         new NativeMarketplaceSourceReaderAdapter(marketplaceListContract(binary, sources))
       );
     }

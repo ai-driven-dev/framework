@@ -740,7 +740,9 @@ describe("clean purges a host's own plugin cache", () => {
     const activator = new FakeHostActions({ available: true });
     // The real adapter, resolved from the same sentinel the cache root is composed from — a
     // fake reader built independently of `homeDir` could never catch the two halves drifting.
-    const reader = wireHostRegistration(SENTINEL_HOME).marketplaceRegistries.get("claude");
+    const reader = wireHostRegistration(catalogOf(), SENTINEL_HOME).marketplaceRegistries.get(
+      "claude"
+    );
     if (reader === undefined) throw new Error("claude must declare marketplaceRegistry");
 
     const useCase = buildUseCase({

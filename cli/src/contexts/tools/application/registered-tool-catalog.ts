@@ -1,7 +1,7 @@
 import { DuplicateToolIdError, UnregisteredToolError } from "../../../kernel/errors.js";
-import type { ToolCategory, ToolId } from "../../../kernel/tool.js";
+import type { AiToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
 import type { ToolCatalog } from "../contract/tool-catalog.js";
-import type { ToolProfile } from "../contract/tool-profile.js";
+import type { AiToolProfile, ToolProfile } from "../contract/tool-profile.js";
 import type { BuiltToolConfig } from "../domain/profile/define-tool.js";
 
 /** The catalog of the profiles it is built from, which are held in the order they were given. */
@@ -18,6 +18,12 @@ export class RegisteredToolCatalog implements ToolCatalog {
   profile(id: ToolId): ToolProfile {
     const profile = this.#byId.get(id);
     if (profile === undefined) throw new UnregisteredToolError(id);
+    return profile;
+  }
+
+  aiProfile(id: AiToolId): AiToolProfile {
+    const profile = this.profile(id);
+    if (profile.kind !== "ai") throw new UnregisteredToolError(id);
     return profile;
   }
 

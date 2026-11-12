@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { DuplicateToolIdError, UnregisteredToolError } from "../../../../src/kernel/errors.js";
+import type { AiToolId } from "../../../../src/kernel/tool.js";
 import { catalogOf } from "../testing/catalog-of.js";
 
 describe("the registered tool catalog", () => {
@@ -55,5 +56,15 @@ describe("the registered tool catalog", () => {
   it("refuses two profiles declaring the same id", () => {
     const twice = [...REGISTERED_PROFILES.slice(0, 1), ...REGISTERED_PROFILES.slice(0, 1)];
     expect(() => catalogOf(twice)).toThrow(DuplicateToolIdError);
+  });
+
+  describe("asked by kind", () => {
+    const ide: string = "vscode";
+
+    it("answers the AI profile of an AI id, and refuses an editor or an unregistered id", () => {
+      expect(catalogOf().aiProfile("claude").toolId).toBe("claude");
+      expect(() => catalogOf().aiProfile(ide as AiToolId)).toThrow(UnregisteredToolError);
+      expect(() => catalogOf([]).aiProfile("claude")).toThrow(UnregisteredToolError);
+    });
   });
 });

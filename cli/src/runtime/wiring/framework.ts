@@ -238,7 +238,7 @@ export async function createDeps(
     marketplaceRegistries: hostMarketplaceRegistries,
     marketplaceSources: nativeSources,
     pluginRegistries: hostPluginRegistries,
-  } = wireHostRegistration();
+  } = wireHostRegistration(tools);
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const userSourceReferences = new UserSourceReferencesAdapter(fs, userConfigDir);

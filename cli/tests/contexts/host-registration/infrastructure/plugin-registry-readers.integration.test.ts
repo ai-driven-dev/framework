@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 /**
  * Fixtures carry the recorded shape only: a real machine's file holds hashed experiment
@@ -28,7 +29,7 @@ async function write(relative: string, content: string): Promise<void> {
 }
 
 function readerFor(tool: AiToolId) {
-  const reader = wireHostRegistration(home).pluginRegistries.get(tool);
+  const reader = wireHostRegistration(catalogOf(), home).pluginRegistries.get(tool);
   if (reader === undefined) throw new Error(`no reader declared for ${tool}`);
   return reader;
 }

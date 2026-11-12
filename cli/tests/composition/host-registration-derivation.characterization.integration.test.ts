@@ -3,6 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../src/composition/host-registration.js";
+import { nativeRegistrationsOf } from "../../src/composition/native-registrations.js";
+import { DuplicateToolIdError, UnregisteredToolError } from "../../src/kernel/errors.js";
+import { catalogOf, registeredConfig } from "../contexts/tools/testing/catalog-of.js";
 import { listContractOf } from "../helpers/list-command-contract.js";
 
 /**
@@ -30,11 +33,9 @@ async function write(relative: string, content: string): Promise<void> {
 
 describe("the plugin registry readers", () => {
   it("are keyed by the three native tools, and by no other", () => {
-    expect([...wireHostRegistration(home).pluginRegistries.keys()].sort()).toStrictEqual([
-      "claude",
-      "codex",
-      "copilot",
-    ]);
+    expect(
+      [...wireHostRegistration(catalogOf(), home).pluginRegistries.keys()].sort()
+    ).toStrictEqual(["claude", "codex", "copilot"]);
   });
 
   it.each([
@@ -42,7 +43,9 @@ describe("the plugin registry readers", () => {
     ["codex", join(".codex", "config.toml")],
     ["copilot", join(".copilot", "settings.json")],
   ] as const)("read %s from its own registry file under the home", async (tool, relative) => {
-    const reading = await wireHostRegistration(home).pluginRegistries.get(tool)?.read(PROJECT);
+    const reading = await wireHostRegistration(catalogOf(), home)
+      .pluginRegistries.get(tool)
+      ?.read(PROJECT);
 
     expect(reading).toStrictEqual({ location: join(home, relative), absent: true });
   });
@@ -51,7 +54,9 @@ describe("the plugin registry readers", () => {
     const previous = process.env.CODEX_HOME;
     process.env.CODEX_HOME = join(home, "elsewhere");
     try {
-      const reading = await wireHostRegistration(home).pluginRegistries.get("codex")?.read(PROJECT);
+      const reading = await wireHostRegistration(catalogOf(), home)
+        .pluginRegistries.get("codex")
+        ?.read(PROJECT);
 
       expect(reading?.location).toBe(join(home, ".codex", "config.toml"));
     } finally {
@@ -66,7 +71,9 @@ describe("the plugin registry readers", () => {
       JSON.stringify({ plugins: { "a@m": [{ scope: "user" }] } })
     );
 
-    const reading = await wireHostRegistration(home).pluginRegistries.get("claude")?.read(PROJECT);
+    const reading = await wireHostRegistration(catalogOf(), home)
+      .pluginRegistries.get("claude")
+      ?.read(PROJECT);
 
     expect(reading?.refs?.get("a@m")).toStrictEqual({ enabled: true, scope: "user" });
   });
@@ -74,7 +81,9 @@ describe("the plugin registry readers", () => {
   it("read codex as TOML plugin tables carrying an enabled flag and no scope", async () => {
     await write(join(".codex", "config.toml"), '[plugins."a@m"]\nenabled = false\n');
 
-    const reading = await wireHostRegistration(home).pluginRegistries.get("codex")?.read(PROJECT);
+    const reading = await wireHostRegistration(catalogOf(), home)
+      .pluginRegistries.get("codex")
+      ?.read(PROJECT);
 
     expect(reading?.refs?.get("a@m")).toStrictEqual({ enabled: false });
   });
@@ -85,7 +94,9 @@ describe("the plugin registry readers", () => {
       JSON.stringify({ enabledPlugins: { "a@m": false } })
     );
 
-    const reading = await wireHostRegistration(home).pluginRegistries.get("copilot")?.read(PROJECT);
+    const reading = await wireHostRegistration(catalogOf(), home)
+      .pluginRegistries.get("copilot")
+      ?.read(PROJECT);
 
     expect(reading?.refs?.get("a@m")).toStrictEqual({ enabled: false });
   });
@@ -93,11 +104,13 @@ describe("the plugin registry readers", () => {
 
 describe("the marketplace registry readers", () => {
   it("are keyed by claude alone", () => {
-    expect([...wireHostRegistration(home).marketplaceRegistries.keys()]).toStrictEqual(["claude"]);
+    expect([...wireHostRegistration(catalogOf(), home).marketplaceRegistries.keys()]).toStrictEqual(
+      ["claude"]
+    );
   });
 
   it("read claude from known_marketplaces.json under the home, keyed by name", async () => {
-    const reader = wireHostRegistration(home).marketplaceRegistries.get("claude");
+    const reader = wireHostRegistration(catalogOf(), home).marketplaceRegistries.get("claude");
     expect(await reader?.read()).toStrictEqual({
       location: join(home, ".claude", "plugins", "known_marketplaces.json"),
       absent: true,
@@ -115,7 +128,7 @@ describe("the marketplace registry readers", () => {
 
 describe("the native activators", () => {
   it("are keyed by the binary each activation declares", () => {
-    expect([...wireHostRegistration(home).hostActions.keys()].sort()).toStrictEqual([
+    expect([...wireHostRegistration(catalogOf(), home).hostActions.keys()].sort()).toStrictEqual([
       "claude",
       "codex",
       "copilot",
@@ -195,5 +208,31 @@ describe("the marketplace source list contracts", () => {
     expect(() => copilot?.('[{"name":"","source":""}]')).toThrow(
       "ambiguous Copilot marketplace JSON row"
     );
+  });
+});
+
+describe("the native registrations the catalog is asked about", () => {
+  it("leave a tool the catalog does not register without a driver", () => {
+    const withoutClaude = catalogOf(
+      catalogOf()
+        .sortedById()
+        .filter((profile) => profile.toolId !== "claude")
+        .map((profile) => registeredConfig(profile.toolId))
+    );
+
+    const wired = wireHostRegistration(withoutClaude, home);
+
+    expect([...wired.hostActions.keys()].sort()).toStrictEqual(["codex", "copilot"]);
+    expect(wired.marketplaceRegistries.size).toBe(0);
+  });
+
+  it("refuse a tool the catalog calls native when no registration backs it", () => {
+    expect(() => wireHostRegistration(catalogOf(), home, new Map())).toThrow(UnregisteredToolError);
+  });
+
+  it("refuse two profiles declaring the same id", () => {
+    const claude = registeredConfig("claude");
+
+    expect(() => nativeRegistrationsOf([claude, claude])).toThrow(DuplicateToolIdError);
   });
 });
