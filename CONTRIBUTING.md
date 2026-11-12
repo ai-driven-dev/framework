@@ -86,4 +86,4 @@ Fork the repository, or branch from it if you have write access.
 | Fill in the template | [Pull request template](.github/PULL_REQUEST_TEMPLATE.md) |
 | Wait for a Maintainer review | [Governance](GOVERNANCE.md#code-decisions) |
 
-GitHub requests review from the [framework reviewers](https://github.com/orgs/ai-driven-dev/teams/framework-reviewers) through `CODEOWNERS`. If you are the assigned reviewer or the PR author, request another Maintainer when needed; authors cannot approve their own PRs.
+GitHub requests review from the [framework reviewers](https://github.com/orgs/ai-driven-dev/teams/framework-reviewers) through `CODEOWNERS`. If no reviewer is assigned, request a Maintainer; authors cannot approve their own PRs.
