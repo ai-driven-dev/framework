@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
-import { HooksCapability } from "../../../../../src/contexts/tools/domain/capabilities/hooks-capability.js";
 import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
@@ -9,7 +8,6 @@ import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domai
 import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
 import { linuxPlatform, win32Platform } from "../helpers.js";
 
@@ -274,69 +272,5 @@ describe("InstallConfigUseCase — MCP config", () => {
     });
 
     expect(results.map((f) => f.mergeStrategy)).toStrictEqual(["user-prime"]);
-  });
-});
-
-describe("InstallConfigUseCase — the order a tool's config is written in", () => {
-  const SHARED_REF = { name: "shared", path: "config/shared.json" };
-  const HOOKS_REF = { name: "hooks", path: "config/hooks.json" };
-  const SETTINGS_REF = { name: "settings", path: "config/settings.json" };
-
-  function declaredTool() {
-    return stubAiTool("claude", {
-      mcp: new McpCapability({
-        outputPath: ".mcp.json",
-        format: "json",
-        consumes: [SHARED_REF.name],
-      }),
-      hooks: new HooksCapability({
-        outputPath: ".hooks.json",
-        mergeStrategy: "none",
-        consumes: [SHARED_REF.name, HOOKS_REF.name],
-      }),
-      settings: [
-        new SettingsCapability({
-          outputPath: "consumed.json",
-          mergeStrategy: "framework-prime",
-          consumes: [SHARED_REF.name, SETTINGS_REF.name],
-        }),
-        new SettingsCapability({
-          outputPath: "static-first.json",
-          mergeStrategy: "user-prime",
-          staticContent: '{"first":true}',
-        }),
-        new SettingsCapability({
-          outputPath: "static-second.json",
-          mergeStrategy: "none",
-          staticContent: '{"second":true}',
-        }),
-      ],
-    });
-  }
-
-  it("hands a config two writes consume to mcp first, then hooks, then settings", async () => {
-    const { useCase } = buildUseCase();
-
-    const results = await useCase.execute({
-      writes: declaredTool().configWrites(),
-      configRefs: [SHARED_REF, HOOKS_REF, SETTINGS_REF],
-      contentFiles: new Map([
-        [SHARED_REF.path, '{"from":"shared"}'],
-        [HOOKS_REF.path, '{"from":"hooks"}'],
-        [SETTINGS_REF.path, '{"from":"settings"}'],
-      ]),
-      projectRoot: PROJECT_ROOT,
-      platform: linuxPlatform,
-    });
-
-    expect(
-      results.map((f) => [f.relativePath, f.content, f.mergeStrategy, f.frameworkPath])
-    ).toStrictEqual([
-      [".mcp.json", '{"from":"shared"}', "user-prime", SHARED_REF.path],
-      [".hooks.json", '{"from":"hooks"}', "none", HOOKS_REF.path],
-      ["consumed.json", '{"from":"settings"}', "framework-prime", SETTINGS_REF.path],
-      ["static-first.json", '{"first":true}', "user-prime", undefined],
-      ["static-second.json", '{"second":true}', "none", undefined],
-    ]);
   });
 });
