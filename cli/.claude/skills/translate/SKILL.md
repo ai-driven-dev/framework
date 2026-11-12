@@ -66,7 +66,7 @@ by `framework` must be on that list.
 
 - `tests/contexts/translate/` mirrors `src/contexts/translate/` — formats, content-translator,
   canon, and the two build strategies each have unit or integration coverage.
-- `tests/golden/framework-build-golden.e2e.test.ts` snapshots a full build across every target —
+- `tests/golden/framework-build-golden.golden.test.ts` snapshots a full build across every target —
   see `test` skill's golden/machine-independence rules before touching a snapshot.
 - A new target-aware transform gets a unit test over a representative input carrying the marker it
   is meant to rewrite. A transform that is the identity for the fixture it was given is

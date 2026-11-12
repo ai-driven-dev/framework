@@ -18,7 +18,7 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     reason:
       "the bridge text shipped into OpenCode: a hook that fails must never surface as a thrown error inside the host",
   },
-  "tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.unit.test.ts": {
+  "tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.integration.test.ts": {
     count: 3,
     reason: "asserts that same bridge text byte for byte",
   },
@@ -30,7 +30,7 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     count: 1,
     reason: "hashing a tree skips directories and vanished entries",
   },
-  "tests/golden/framework-build-golden.e2e.test.ts": {
+  "tests/golden/framework-build-golden.golden.test.ts": {
     count: 1,
     reason: "hashing a tree skips directories and vanished entries",
   },

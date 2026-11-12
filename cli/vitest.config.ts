@@ -61,6 +61,18 @@ export default defineConfig({
           globalSetup: ["./tests/e2e/global-setup.ts", "./tests/helpers/sweep-stale-temp-dirs.ts"],
         },
       },
+      {
+        extends: false,
+        plugins: [textLoader(TEXT_EXTENSIONS)],
+        test: {
+          name: "golden",
+          include: ["tests/**/*.golden.test.ts"],
+          globals: false,
+          environment: "node",
+          testTimeout: 60000,
+          globalSetup: ["./tests/e2e/global-setup.ts", "./tests/helpers/sweep-stale-temp-dirs.ts"],
+        },
+      },
     ],
     globals: false,
     environment: "node",
