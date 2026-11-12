@@ -163,8 +163,10 @@ test("a recall case seeds a repo and expects the facts the restored slots must p
 
 test("the plan shows each changed line as a diff, and a question apart from the yes and no items", () => {
   const read = fs.readFileSync(path.join(SKILL, "actions/01-read.md"), "utf8");
-  assert.match(read, /`- ` line/u, "a replaced or removed line is not shown as a `- ` line");
-  assert.match(read, /`\+ ` line/u, "a replacement is not shown as a `+ ` line");
+  assert.match(read, /`diff` block/u, "a bank change is not shown in a diff block");
+  assert.match(read, /`- ` lines? quoting/u, "a replaced or removed line is not quoted as a `- ` line");
+  assert.match(read, /`\+ ` lines?/u, "a replacement is not shown as a `+ ` line");
+  assert.match(read, /file to remove\b.*every line/iu, "a removed file can be summarized instead of quoted");
   assert.match(read, /questions? .*apart/iu, "the questions are not set apart from the numbered items");
   assert.match(read, /`ok` .*never .*question/iu, "an `ok` can still answer a question");
 });

@@ -15,9 +15,10 @@ The project root, and the bank when one exists.
 5. List the files to create, the lines to add, and the bank lines to replace or remove with their reason.
 6. If the list is empty and no tool is to be wired, say the bank is current and stop.
 7. Send one message, opened by one line: what is stale, what is to wire. Then number the items: each file to create, each misplaced folder, each [tool](../references/tools.md) to wire, each bank line to change.
-8. Show a bank line to change under its file name: a `- ` line quoting it exactly, a `+ ` line with its new text unless removed, its reason in a few words.
-9. Put the questions the code cannot answer apart, after the items, as `Q1`, `Q2`.
-10. End with how to answer: `ok`, or `not 2`.
+8. Head each bank change with its number and file, then a `diff` block: `- ` lines quoting the bank lines exactly, `+ ` lines with the new text. Its reason follows in a few words.
+9. For a file to remove, the block quotes every line of it.
+10. Put the questions the code cannot answer apart, after the items, as `Q1`, `Q2`.
+11. End with how to answer: `ok`, or `not 2`.
 
 ## Output
 
