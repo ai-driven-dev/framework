@@ -131,12 +131,6 @@ function realish(file) {
   }
 }
 
-/** The project's real root when it holds a bank, else null. */
-function projectRoot(cwd) {
-  const root = realish(path.resolve(cwd));
-  return fs.existsSync(path.join(root, MEMORY_DIR)) ? root : null;
-}
-
 /** Every markdown file of the bank, bank-relative path to text. */
 function bankTexts(root) {
   return Object.fromEntries(bankFiles(root).filter((file) => file.endsWith(".md")).map((file) => [file, readTextOrNull(path.join(root, file)) ?? ""]));
@@ -202,17 +196,18 @@ function changedFindings(root, before, now) {
 
 function atSessionStart(event) {
   sync(event.cwd);
-  if (event.sessionId === null) return;
   const root = realish(path.resolve(event.cwd));
+  dropStaleSnapshots(path.join(root, SNAPSHOT_DIR));
+  if (event.sessionId === null) return;
   const file = snapshotFile(root, event.sessionId);
-  dropStaleSnapshots(path.dirname(file));
   // A resume or a compact starts the same session again: its snapshot stays, so no loss is skipped.
   if (readSnapshot(file) === null) writeSnapshot(file, bankTexts(root));
 }
 
 function atTurnEnd(host, event) {
-  const root = projectRoot(event.cwd);
-  if (event.stopActive || root === null || event.sessionId === null) return;
+  // A turn ending with no bank still leaves a snapshot, so a bank the next turn writes is checked.
+  const root = realish(path.resolve(event.cwd));
+  if (event.stopActive || event.sessionId === null) return;
   const file = snapshotFile(root, event.sessionId);
   const before = readSnapshot(file);
   const now = bankTexts(root);

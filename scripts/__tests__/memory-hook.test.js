@@ -211,6 +211,27 @@ test("a session start deletes snapshots older than 7 days and keeps the others",
   assert.deepEqual(fs.readdirSync(snapshotDir(root)).sort(), ["recent-session.json", snapshotName()].sort());
 });
 
+test("a session start with no session id still deletes snapshots older than 7 days", () => {
+  const root = project();
+  const tmp = tempDir("memory-hook-state-");
+  fs.mkdirSync(snapshotDir(root), { recursive: true });
+  const stale = path.join(snapshotDir(root), "stale-session.json");
+  fs.writeFileSync(stale, "{}");
+  const old = new Date(Date.now() - 8 * DAY_MS);
+  fs.utimesSync(stale, old, old);
+  run("opencode", sessionStartPayload("opencode", root), { tmp });
+  assert.deepEqual(fs.readdirSync(snapshotDir(root)), []);
+});
+
+test("a turn that ends with no bank and no snapshot leaves an empty one, so the setup of the next turn is checked", () => {
+  const root = gitInit(tempDir("memory-project-"));
+  const tmp = tempDir("memory-hook-state-");
+  assert.equal(stopped(root, tmp), null);
+  assert.deepEqual(readSnapshot(root), {});
+  write(root, `${MEMORY}/api.md`, `# API\n\n- Use ${slotOf("api.md")} here.\n`);
+  assert.match(stopped(root, tmp).reason, /^aidd-context: 1 error, 0 warnings\naidd_docs\/memory\/api\.md:3 M3 /u);
+});
+
 test("a session start writes nothing to the system temp folder", () => {
   const { tmp } = started({ [VCS]: BANK });
   assert.deepEqual(fs.readdirSync(tmp), []);
@@ -362,13 +383,6 @@ test("Stop with no session id answers nothing and writes no snapshot", () => {
   const payload = stopPayload("claude", root);
   delete payload.session_id;
   assert.deepEqual(run("claude", payload, { tmp }), { status: 0, stdout: "", stderr: "" });
-});
-
-test("Stop in a project with no bank answers nothing and writes no snapshot", () => {
-  const root = tempDir("memory-project-");
-  const tmp = tempDir("memory-hook-state-");
-  assert.equal(stopped(root, tmp), null);
-  assert.equal(fs.existsSync(snapshotDir(root)), false);
 });
 
 test("Stop advances the snapshot: the same loss is not reported twice", () => {
