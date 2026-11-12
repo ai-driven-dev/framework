@@ -321,7 +321,7 @@ export async function runCliFast(
 
 export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
   const output = new CLIOutput(false);
-  const deps = await createDeps(projectDir, { verbose: false }, output);
+  const deps = await createDeps(projectDir, { verbose: false }, output, catalogOf());
   await new InitUseCase(deps.fs, deps.manifestRepo).execute({
     projectRoot: projectDir,
     tools: catalogOf(),

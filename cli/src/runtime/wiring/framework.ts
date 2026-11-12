@@ -2,7 +2,6 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
 import { wireHostRegistration } from "../../composition/host-registration.js";
-import { wireTools } from "../../composition/tools.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.js";
@@ -177,8 +176,6 @@ interface Deps {
 
 /** One graph per catalog, then per project root and token: two catalogs never share a graph. */
 const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
-/** What a caller that hands no catalog gets; built once so such callers still share one graph. */
-const DEFAULT_TOOLS = wireTools();
 
 export function createMenuDeps(projectRoot: string): {
   manifestRepo: ManifestRepository;
@@ -193,8 +190,8 @@ export function createMenuDeps(projectRoot: string): {
 export async function createDeps(
   projectRoot: string,
   options: GlobalOptions,
-  output?: CLIOutput,
-  tools: ToolCatalog = DEFAULT_TOOLS
+  output: CLIOutput | undefined,
+  tools: ToolCatalog
 ): Promise<Deps> {
   const cacheKey = `${projectRoot}\u0000${options.token ?? ""}`;
   const graphs = _cache.get(tools) ?? new Map<string, Deps>();

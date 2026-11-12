@@ -164,7 +164,10 @@ describe("running a command in process", () => {
         program.command("clean").action(async () => {
           const { createDeps } = await import("../../src/runtime/wiring/framework.js");
           const { CLIOutput } = await import("../../src/presentation/output.js");
-          built.push(await createDeps(process.cwd(), { verbose: false }, new CLIOutput(false)));
+          const { catalogOf } = await import("../contexts/tools/testing/catalog-of.js");
+          built.push(
+            await createDeps(process.cwd(), { verbose: false }, new CLIOutput(false), catalogOf())
+          );
         });
       },
     }));

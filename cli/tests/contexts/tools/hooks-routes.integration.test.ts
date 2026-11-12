@@ -105,7 +105,7 @@ async function writeSource(source: string): Promise<void> {
 
 async function deps(project: string) {
   const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
-  return createDeps(project, { verbose: false }, new CLIOutput(false));
+  return createDeps(project, { verbose: false }, new CLIOutput(false), catalogOf());
 }
 
 async function installTool(project: string, toolId: AiToolId): Promise<void> {

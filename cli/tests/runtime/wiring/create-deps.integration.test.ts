@@ -8,6 +8,7 @@ import { createDeps, createMenuDeps } from "../../../src/runtime/wiring/framewor
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {
+  const tools = catalogOf();
   let root: string;
 
   beforeEach(async () => {
@@ -19,16 +20,16 @@ describe("createDeps", () => {
   });
 
   it("builds the graph once per project root", async () => {
-    const first = await createDeps(root, { verbose: false });
+    const first = await createDeps(root, { verbose: false }, undefined, tools);
 
-    expect(await createDeps(root, { verbose: false })).toBe(first);
+    expect(await createDeps(root, { verbose: false }, undefined, tools)).toBe(first);
   });
 
   it("builds a separate graph for another project root", async () => {
     const other = await mkdtemp(join(tmpdir(), "aidd-create-deps-other-"));
     try {
-      expect(await createDeps(other, { verbose: false })).not.toBe(
-        await createDeps(root, { verbose: false })
+      expect(await createDeps(other, { verbose: false }, undefined, tools)).not.toBe(
+        await createDeps(root, { verbose: false }, undefined, tools)
       );
     } finally {
       await rm(other, { recursive: true, force: true });
@@ -36,14 +37,14 @@ describe("createDeps", () => {
   });
 
   it("builds a separate graph when a token is given on the command line", async () => {
-    expect(await createDeps(root, { verbose: false, token: "ghp_x" })).not.toBe(
-      await createDeps(root, { verbose: false })
+    expect(await createDeps(root, { verbose: false, token: "ghp_x" }, undefined, tools)).not.toBe(
+      await createDeps(root, { verbose: false }, undefined, tools)
     );
   });
 
   it("builds a separate graph per token", async () => {
-    expect(await createDeps(root, { verbose: false, token: "ghp_a" })).not.toBe(
-      await createDeps(root, { verbose: false, token: "ghp_b" })
+    expect(await createDeps(root, { verbose: false, token: "ghp_a" }, undefined, tools)).not.toBe(
+      await createDeps(root, { verbose: false, token: "ghp_b" }, undefined, tools)
     );
   });
 
@@ -60,7 +61,7 @@ describe("createDeps", () => {
     const output = new CLIOutput(false);
     const withOutput = await mkdtemp(join(tmpdir(), "aidd-create-deps-output-"));
     try {
-      expect((await createDeps(withOutput, { verbose: false }, output)).logger).toBe(output);
+      expect((await createDeps(withOutput, { verbose: false }, output, tools)).logger).toBe(output);
     } finally {
       await rm(withOutput, { recursive: true, force: true });
     }

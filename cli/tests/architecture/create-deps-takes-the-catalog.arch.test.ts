@@ -1,7 +1,7 @@
 /**
- * `createDeps` defaults its catalog so the frozen end-to-end helper can omit it. A product call
- * that omits it silently builds a second catalog nobody handed in and nothing fails, so every
- * call under `src/` passes all four arguments.
+ * `createDeps` requires its catalog, so a caller that omits it fails to compile. This guard
+ * reads `src/` alone, where the argument count is the whole contract: a call that hands fewer
+ * builds a graph from a catalog nobody handed in.
  */
 import { describe, expect, it } from "vitest";
 import { read, sourceFiles } from "./helpers.js";
