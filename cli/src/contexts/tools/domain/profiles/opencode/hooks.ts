@@ -1,4 +1,4 @@
-import { declareBridgeHooks } from "../../hooks/event-bridge.js";
+import { declareBridgeHooks } from "../../bridges/event-bridge.js";
 import { OPENCODE_DIRECTORY, OPENCODE_PLUGIN_ENTRY_BASENAME } from "./opencode-paths.js";
 
 // No family OpenCode's loader scans is named "hooks", so a plugin's scripts land under

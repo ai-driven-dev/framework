@@ -1,4 +1,4 @@
-import { declareBridgeHooks } from "../../hooks/event-bridge.js";
+import { declareBridgeHooks } from "../../bridges/event-bridge.js";
 import { KILO_DIRECTORY, KILO_PLUGIN_DIR, KILO_PLUGIN_ENTRY_BASENAME } from "./kilo-paths.js";
 
 export const KILO_HOOKS = declareBridgeHooks(

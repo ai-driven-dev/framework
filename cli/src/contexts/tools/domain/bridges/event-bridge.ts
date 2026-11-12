@@ -16,7 +16,7 @@ import {
   type BridgeHookCall,
   bridgeHookCalls,
   type PluginHooksShape,
-} from "./plugin-hooks-shape.js";
+} from "../hooks/plugin-hooks-shape.js";
 
 export interface BridgeHookTable {
   readonly sessionStart: readonly BridgeHookCall[];
@@ -36,6 +36,20 @@ export function parseHooksJsonForBridge(rawHooksJson: string): BridgeHookTable {
     postToolUse: bridgeHookCalls(hooks.PostToolUse),
   };
 }
+
+/** The generated modules' reading of a finished script: exit 2 puts the answer on stderr, exit 0
+ * puts it in `additionalContext` on stdout, anything else says nothing. Written once here, so
+ * both hosts' bridges tell the model the same thing. */
+export const ANSWER_FROM_SOURCE = `function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}`;
 
 /** A bridge with nothing to spawn is not a file worth writing. */
 export function replaysNothing(table: BridgeHookTable): boolean {

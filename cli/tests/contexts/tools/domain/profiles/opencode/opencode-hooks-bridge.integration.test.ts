@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { parseHooksJsonForBridge } from "../../../../../../src/contexts/tools/domain/hooks/event-bridge.js";
+import { parseHooksJsonForBridge } from "../../../../../../src/contexts/tools/domain/bridges/event-bridge.js";
 import { generateOpencodeHooksBridge } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.js";
 
 // Built rather than written as a literal "${CLAUDE_PLUGIN_ROOT}" string: biome reads a plain

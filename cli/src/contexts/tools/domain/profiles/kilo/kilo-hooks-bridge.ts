@@ -8,10 +8,11 @@
  */
 
 import {
+  ANSWER_FROM_SOURCE,
   parseHooksJsonForBridge,
   pascalCasePluginName,
   replaysNothing,
-} from "../../hooks/event-bridge.js";
+} from "../../bridges/event-bridge.js";
 
 function toIdentifier(plugin: string): string {
   return `${pascalCasePluginName(plugin)}KiloHooks`;
@@ -56,16 +57,7 @@ function runHook(script, args, payload, directory) {
 }
 
 // Exit 2 puts the answer on stderr; exit 0 puts it in additionalContext on stdout.
-function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
-  try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
-  } catch {
-    return "";
-  }
-}
+${ANSWER_FROM_SOURCE}
 
 /** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
 function stopReasonOf(script, args, payload, directory) {

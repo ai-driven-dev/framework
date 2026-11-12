@@ -20,10 +20,11 @@
  */
 
 import {
+  ANSWER_FROM_SOURCE,
   parseHooksJsonForBridge,
   pascalCasePluginName,
   replaysNothing,
-} from "../../hooks/event-bridge.js";
+} from "../../bridges/event-bridge.js";
 import type { BridgeHookCall } from "../../hooks/plugin-hooks-shape.js";
 
 // Every plugin this generator sees is already named "aidd-<something>", so an "Aidd" prefix
@@ -90,16 +91,7 @@ function stopCallsFor(event, directory) {
 
 // Awaited, unlike runHook: the script has something the model must read.
 // Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
-function answerFrom(code, stdout, stderr) {
-  if (code === 2) return stderr.trim();
-  if (code !== 0) return "";
-  try {
-    const output = JSON.parse(stdout);
-    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
-  } catch {
-    return "";
-  }
-}
+${ANSWER_FROM_SOURCE}
 
 /** Runs one hook script with its payload on stdin and collects what it wrote. */
 function runCapture(script, args, payload, directory) {

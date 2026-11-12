@@ -1,7 +1,7 @@
 /**
  * A tool evolves inside its own folder: a profile that imports another profile's file is edited
- * whenever that other tool changes. What two tools share goes to `domain/formats/` or
- * `domain/hooks/`, owned by neither.
+ * whenever that other tool changes. What two tools share goes to `domain/formats/`,
+ * `domain/hooks/` or `domain/bridges/`, owned by neither.
  */
 import { describe, expect, it } from "vitest";
 import { INTERNAL_IMPORT, read, resolveImportTarget, sourceFiles } from "./helpers.js";

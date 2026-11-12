@@ -46,6 +46,7 @@ src/
 │   │   ├── application/
 │   │   ├── contract/
 │   │   └── domain/
+│   │       ├── bridges/    # the generated event modules of the hosts that read no hooks file
 │   │       ├── capabilities/
 │   │       ├── formats/
 │   │       ├── hooks/
