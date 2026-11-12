@@ -46,11 +46,7 @@ import {
 } from "../shared/shared-source-reference-support.js";
 import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
 import { deletePluginFilesForTool, loadPluginManifest } from "./plugin-helpers.js";
-import {
-  frameworkPrimeFlatMcpOf,
-  resolveBaseDirFromRecord,
-  resolvePluginToolIds,
-} from "./plugin-target-resolution.js";
+import { resolveBaseDirFromRecord, resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 export interface PluginRemoveOptions {
   pluginName: string;
@@ -577,7 +573,7 @@ export class PluginRemoveUseCase {
     projectRoot: string
   ): Promise<void> {
     if (plugin.mcpEntries.size === 0) return;
-    const mcpCap = frameworkPrimeFlatMcpOf(tool);
+    const mcpCap = tool.flatPluginMcp();
     if (mcpCap === null) return;
     const outputRelPath = await mcpCap.resolveOutputPath((relativePath) =>
       this.fs.fileExists(join(projectRoot, relativePath))

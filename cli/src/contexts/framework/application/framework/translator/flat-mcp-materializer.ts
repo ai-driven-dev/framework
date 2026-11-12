@@ -10,7 +10,6 @@ import type {
   ReadonlySkipList,
 } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
-import { frameworkPrimeFlatMcpOf } from "../../plugin/plugin-target-resolution.js";
 
 export async function refreshTrackedMcpConfigHash(
   fs: FileReader,
@@ -38,7 +37,7 @@ export async function materializeFlatMcp(
   mcpSkips: ReadonlySkipList;
   outputRelPath?: string;
 }> {
-  const mcpCap = dist.components.mcp.length === 0 ? null : frameworkPrimeFlatMcpOf(tool);
+  const mcpCap = dist.components.mcp.length === 0 ? null : tool.flatPluginMcp();
   if (mcpCap === null) {
     return { mcpEntries: new Map(), mcpSkips: [], outputRelPath: undefined };
   }

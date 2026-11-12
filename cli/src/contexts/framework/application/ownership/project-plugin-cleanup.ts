@@ -6,7 +6,6 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
-import { frameworkPrimeFlatMcpOf } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
 import { assertProjectPathWithinRoot } from "./project-path-boundary.js";
@@ -29,7 +28,7 @@ async function planProjectMcpRemoval(
   projectRoot: string
 ): Promise<{ output: string; content: string } | undefined> {
   if (plugin.mcpEntries.size === 0) return undefined;
-  const mcp = frameworkPrimeFlatMcpOf(tool);
+  const mcp = tool.flatPluginMcp();
   if (mcp === null) return undefined;
   const output = join(
     projectRoot,

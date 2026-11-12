@@ -247,6 +247,9 @@ export interface AiToolProfile {
   runtimeFiles(): Readonly<Record<string, string>>;
   /** The mcp file the tool declares, or null. */
   mcpConfig(): McpConfigAnswers | null;
+  /** The mcp file of a tool that merges plugin MCP entries into one shared file it owns the
+   * framework half of, or null when the tool is not one. */
+  flatPluginMcp(): McpConfigAnswers | null;
   /** The settings files the tool declares, none when it declares none. */
   settingsFiles(): readonly SettingsFileAnswers[];
   /** The config files an install writes: mcp, then hooks, then each settings file. */

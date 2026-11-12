@@ -68,6 +68,7 @@ type AiToolFields = Omit<
   | "configFiles"
   | "runtimeFiles"
   | "mcpConfig"
+  | "flatPluginMcp"
   | "settingsFiles"
   | "projectHooksDelivery"
   | "frameworkBuildMode"
@@ -228,6 +229,11 @@ export function defineAiTool<C extends ProfileSections>(
     configFiles: () => ({ ...fields.configOutputPaths, ...fields.pluginRuntimeFiles }),
     runtimeFiles: () => ({ ...fields.pluginRuntimeFiles }),
     mcpConfig: () => capabilities.mcp ?? null,
+    flatPluginMcp: () =>
+      capabilities.mcp?.mergeStrategy() === "framework-prime" &&
+      capabilities.plugins?.kind === "flat"
+        ? capabilities.mcp
+        : null,
     settingsFiles: () => settingsOf(capabilities),
     marketplaceRegistration: () =>
       capabilities.plugins?.kind === "native"

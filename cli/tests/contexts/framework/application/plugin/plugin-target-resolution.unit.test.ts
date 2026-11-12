@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  frameworkPrimeFlatMcpOf,
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
   resolveScopeForInstall,
@@ -20,25 +19,6 @@ describe("resolvePluginToolIds()", () => {
     manifest.addTool("claude", "1.0.0", []);
 
     expect(resolvePluginToolIds("all", manifest)).toStrictEqual(["claude", "cursor"]);
-  });
-});
-
-describe("frameworkPrimeFlatMcpOf()", () => {
-  it("answers the MCP capability of a flat tool merging framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf(registeredAiProfile("opencode"))).toBe(
-      registeredAiConfig("opencode").section("mcp")
-    );
-    expect(frameworkPrimeFlatMcpOf(registeredAiProfile("kilo"))).toBe(
-      registeredAiConfig("kilo").section("mcp")
-    );
-  });
-
-  it("answers null for a native tool merging framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf(registeredAiProfile("copilot"))).toBeNull();
-  });
-
-  it("answers null for a tool whose MCP does not merge framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf(registeredAiProfile("claude"))).toBeNull();
   });
 });
 

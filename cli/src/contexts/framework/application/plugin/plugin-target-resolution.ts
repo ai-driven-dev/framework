@@ -1,7 +1,7 @@
 import { UnresolvableUserScopeError } from "../../../../kernel/errors.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-import type { AiToolProfile, McpConfigAnswers } from "../../../tools/contract/tool-profile.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { getToolSupportedScope } from "../../domain/install-scope.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PluginScope } from "../../domain/plugins/installed-plugin.js";
@@ -32,12 +32,4 @@ export function resolveBaseDirFromRecord(
   const dir = tool.plugins()?.userPluginsBaseDir(homedir());
   if (dir === null || dir === undefined) throw new UnresolvableUserScopeError(tool.toolId);
   return dir;
-}
-
-/** The MCP capability of a tool that merges plugin MCP entries into one shared file it owns
- * the framework half of, or `null` when the tool is not one. */
-export function frameworkPrimeFlatMcpOf(tool: AiToolProfile): McpConfigAnswers | null {
-  const mcp = tool.mcpConfig();
-  if (mcp === null || mcp.mergeStrategy() !== "framework-prime") return null;
-  return tool.plugins()?.kind === "flat" ? mcp : null;
 }
