@@ -114,7 +114,10 @@ for (const tool of ['claude','codex','copilot']) {
   test(`${tool} updates with native commands while preserving unrelated bytes, permissions and disabled plugins`, async t => {
     const f = fixture(t,tool);
     const initial = structuredClone(f.state.installations);
-    const initialMode = fs.statSync(f.config).mode & 0o777;
+    const original = fs.openSync(f.config,'r');
+    let initialMode;
+    try { initialMode = fs.fstatSync(original).mode & 0o777; }
+    finally { fs.closeSync(original); }
     const result = await approved(f);
     assert.equal(result.status,'updated');
     const expected = tool === 'codex'
