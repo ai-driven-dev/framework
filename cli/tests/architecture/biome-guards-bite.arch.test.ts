@@ -351,13 +351,12 @@ describe("the guard itself", () => {
       join(planted, "src/shared/infrastructure/exit.ts"),
       "export const stop = (): never => process.exit(1);\n"
     );
-    const readsEnv = readsEnvSource;
     for (const file of [
       "src/contexts/framework/domain/env.ts",
       "src/contexts/framework/application/env.ts",
       "src/contexts/framework/infrastructure/env.ts",
     ]) {
-      writeFileSync(join(planted, file), readsEnv);
+      writeFileSync(join(planted, file), readsEnvSource);
     }
   });
 
