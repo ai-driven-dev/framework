@@ -264,7 +264,9 @@ describe("what every registered tool answers to the contexts that read it", () =
       REGISTERED_PROFILES.map((config) => [config.toolId, toolAnswer(catalog, config)])
     );
 
-    await expect(`${JSON.stringify(answers, null, 2)}\n`).toMatchFileSnapshot(
+    // A machine path is joined with the platform separator; the pin holds the POSIX form.
+    const pinned = JSON.stringify(answers, null, 2).replaceAll("\\\\", "/");
+    await expect(`${pinned}\n`).toMatchFileSnapshot(
       "./__snapshots__/tool-answers.characterization.snap"
     );
   });
