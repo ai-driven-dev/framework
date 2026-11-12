@@ -13,6 +13,7 @@ import { createFrameworkBuildUseCase } from "../../../../../src/runtime/wiring/t
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 // Avoid biome noTemplateCurlyInString: split literal for the placeholder.
@@ -35,6 +36,7 @@ async function buildFlat(
 ): Promise<void> {
   const logger = new CapturingLogger();
   const useCase = createFrameworkBuildUseCase(
+    catalogOf(),
     {
       fs: new FileAdapter(new HasherAdapter(), logger),
       assetProvider: new BundledAssetProviderAdapter(),

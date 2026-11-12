@@ -1,4 +1,4 @@
-import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
+import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";

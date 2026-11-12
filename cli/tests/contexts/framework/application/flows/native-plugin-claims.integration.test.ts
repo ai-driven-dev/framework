@@ -25,6 +25,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 for (const [toolId, catalogPath] of [
   ["codex", ".agents/plugins/marketplace.json"],
@@ -243,7 +244,7 @@ for (const [toolId, catalogPath] of [
           updateFs,
           new PluginDistributionLoader(
             new FixturePluginFetcher(),
-            new PluginDistributionReaderAdapter(updateFs)
+            new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
           ),
           new DeterministicHasher()
         ),
@@ -271,7 +272,7 @@ for (const [toolId, catalogPath] of [
             updateFs,
             new PluginDistributionLoader(
               new FixturePluginFetcher(),
-              new PluginDistributionReaderAdapter(updateFs)
+              new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
             ),
             new DeterministicHasher()
           ),

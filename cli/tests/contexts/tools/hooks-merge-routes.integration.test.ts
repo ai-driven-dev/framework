@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProjectHooksMaterializer } from "../../../src/contexts/framework/application/framework/translator/project-hooks-materializer.js";
-import type { ToolBuildContract } from "../../../src/contexts/tools/domain/build-contract.js";
+import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";

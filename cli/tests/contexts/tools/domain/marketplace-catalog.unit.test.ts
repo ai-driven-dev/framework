@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PluginPresence } from "../../../../src/contexts/tools/domain/build-contract.js";
+import type { PluginPresence } from "../../../../src/contexts/tools/contract/build-contract.js";
 import {
   buildClaudeStyleCatalogEntry,
   buildClaudeStyleEntry,

@@ -21,6 +21,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-b
 import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -88,7 +89,7 @@ function countingReader(fs: Deps["fs"]): {
   reader: PluginDistributionReaderAdapter;
   count: () => number;
 } {
-  const reader = new PluginDistributionReaderAdapter(fs);
+  const reader = new PluginDistributionReaderAdapter(fs, registeredManifestProbes());
   let calls = 0;
   const original = reader.read.bind(reader);
   reader.read = async (...args: Parameters<typeof original>) => {
@@ -118,7 +119,11 @@ describe("RestoreAllUseCase — the --force flag", () => {
     const trackedPath = join(PROJECT_ROOT, tracked[0].relativePath);
     await deps.fs.writeFile(trackedPath, "EDITED OUTSIDE THE CLI");
 
-    return { deps, reader: new PluginDistributionReaderAdapter(deps.fs), trackedPath };
+    return {
+      deps,
+      reader: new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
+      trackedPath,
+    };
   }
 
   it("restores a modified tracked file when force is set", async () => {
@@ -154,7 +159,7 @@ describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
 
     const result = await makeRestoreAllUseCase(
       deps,
-      new PluginDistributionReaderAdapter(deps.fs),
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
       prompter
     ).execute(PROJECT_ROOT, false, true);
 
@@ -175,7 +180,11 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "claude");
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-    await installPlugin(deps, "claude", new PluginDistributionReaderAdapter(deps.fs));
+    await installPlugin(
+      deps,
+      "claude",
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    );
 
     const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
@@ -194,7 +203,11 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "cursor");
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-    await installPlugin(deps, "cursor", new PluginDistributionReaderAdapter(deps.fs));
+    await installPlugin(
+      deps,
+      "cursor",
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    );
 
     const manifestAfterInstall = deps.userManifestRepo.getCurrent();
     const plugin = manifestAfterInstall

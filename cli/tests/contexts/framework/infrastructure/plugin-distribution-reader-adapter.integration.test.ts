@@ -15,13 +15,17 @@ import {
 import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";
 import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 
 function makeAdapter(): PluginDistributionReaderAdapter {
-  return new PluginDistributionReaderAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginDistributionReaderAdapter(
+    new FileAdapter(new HasherAdapter()),
+    registeredManifestProbes()
+  );
 }
 
 function readInMemory(
@@ -34,7 +38,10 @@ function readInMemory(
   for (const [relativePath, content] of Object.entries(files)) {
     seed[`${IN_MEMORY_ROOT}/${relativePath}`] = content;
   }
-  return new PluginDistributionReaderAdapter(new InMemoryFileAdapter(seed)).read(IN_MEMORY_ROOT);
+  return new PluginDistributionReaderAdapter(
+    new InMemoryFileAdapter(seed),
+    registeredManifestProbes()
+  ).read(IN_MEMORY_ROOT);
 }
 
 function readManifest(manifest: Record<string, unknown>): Promise<PluginDistribution> {
@@ -46,6 +53,21 @@ function byPath(a: PluginComponentFile, b: PluginComponentFile): number {
 }
 
 describe("PluginDistributionReaderAdapter", () => {
+  it("looks for a manifest only where the probes it was given say one can sit", async () => {
+    const fs = new InMemoryFileAdapter({
+      [`${IN_MEMORY_ROOT}/custom/plugin.json`]: JSON.stringify({ name: "p", version: "1.0.0" }),
+    });
+
+    const dist = await new PluginDistributionReaderAdapter(fs, [
+      { format: "cursor", relativePath: "custom/plugin.json" },
+    ]).read(IN_MEMORY_ROOT);
+
+    expect(dist.format).toBe("cursor");
+    await expect(
+      new PluginDistributionReaderAdapter(fs, []).read(IN_MEMORY_ROOT)
+    ).rejects.toBeInstanceOf(InvalidPluginManifestError);
+  });
+
   describe("claude-format fixture", () => {
     it("detects claude format", async () => {
       const adapter = makeAdapter();
@@ -189,7 +211,10 @@ describe("PluginDistributionReaderAdapter", () => {
     });
 
     it("names the directory it searched", async () => {
-      const reader = new PluginDistributionReaderAdapter(new InMemoryFileAdapter());
+      const reader = new PluginDistributionReaderAdapter(
+        new InMemoryFileAdapter(),
+        registeredManifestProbes()
+      );
 
       await expect(reader.read("/plugins/none")).rejects.toThrow(
         new InvalidPluginManifestError('no plugin.json found in "/plugins/none"')

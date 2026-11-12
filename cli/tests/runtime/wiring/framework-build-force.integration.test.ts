@@ -8,6 +8,7 @@ import {
   createFrameworkBuildUseCase,
   type FrameworkBuildDeps,
 } from "../../../src/runtime/wiring/translate.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
@@ -44,7 +45,7 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
   });
 
   it("force: false throws FlatTargetExistsError when the canonical destination already exists", async () => {
-    const useCase = createFrameworkBuildUseCase(makeDeps(fs), {
+    const useCase = createFrameworkBuildUseCase(catalogOf(), makeDeps(fs), {
       target: "copilot",
       mode: "flat",
       outDir,
@@ -59,7 +60,7 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
   });
 
   it("force: true overwrites the canonical destination instead of throwing", async () => {
-    const useCase = createFrameworkBuildUseCase(makeDeps(fs), {
+    const useCase = createFrameworkBuildUseCase(catalogOf(), makeDeps(fs), {
       target: "copilot",
       mode: "flat",
       outDir,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ConfigArtifact } from "../../../../../../src/contexts/tools/domain/build-contract.js";
+import type { ConfigArtifact } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,

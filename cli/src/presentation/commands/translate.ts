@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { FrameworkBuildMode } from "../../contexts/tools/domain/registry.js";
+import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
 import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
@@ -14,6 +14,7 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 interface TranslateExecutionParams {
+  tools: ToolCatalog;
   projectRoot: string;
   verbose: boolean;
   output: CLIOutput;
@@ -29,7 +30,7 @@ async function runTranslateCore(params: TranslateExecutionParams): Promise<void>
   const errorHandler = new ErrorHandler(params.output);
   try {
     const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
-    const useCase = createFrameworkBuildUseCase(deps, {
+    const useCase = createFrameworkBuildUseCase(params.tools, deps, {
       target: params.target,
       mode: params.mode,
       outDir: params.outDir,
@@ -78,7 +79,7 @@ export function registerTranslateCommand(program: Command, tools: ToolCatalog): 
     .action(async (source: string, cmdOptions: TranslateCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
-      const targets = supportedBuildTargets();
+      const targets = supportedBuildTargets(tools.sortedById());
       if (!(targets as readonly string[]).includes(cmdOptions.to)) {
         output.error(
           `Unsupported target '${cmdOptions.to}'. Supported targets: ${targets.join(", ")}.`
@@ -96,6 +97,7 @@ export function registerTranslateCommand(program: Command, tools: ToolCatalog): 
       const mode: FrameworkBuildMode = cmdOptions.as === "flat" ? "flat" : "marketplace";
 
       await runTranslateCore({
+        tools,
         projectRoot,
         verbose,
         output,

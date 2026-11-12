@@ -8,7 +8,7 @@ import {
   genericFlatSkillTreePath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../build-contract.js";
+import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig, toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { KILO_HOOKS } from "./hooks.js";

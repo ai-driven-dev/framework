@@ -42,7 +42,14 @@ export interface BoundTool {
 
 type AiToolFields = Omit<
   AiTool<ProfileSections>,
-  "kind" | "toolId" | "section" | "configCapabilities" | "plugins" | "nativeActivation"
+  | "kind"
+  | "toolId"
+  | "section"
+  | "configCapabilities"
+  | "plugins"
+  | "nativeActivation"
+  | "markdownSection"
+  | "skillsSection"
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
@@ -155,6 +162,8 @@ export function defineAiTool<C extends ProfileSections>(
     section: sectionReader(capabilities),
     configCapabilities: () => aiConfigCapabilities(capabilities),
     plugins: () => capabilities.plugins ?? null,
+    markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
+    skillsSection: () => capabilities.skills ?? null,
     nativeActivation: () => nativeActivationOf(capabilities),
   };
   return profile as AiTool<C> & ProfileBrand;

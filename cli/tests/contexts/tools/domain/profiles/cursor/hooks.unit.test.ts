@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../../src/contexts/tools/domain/build-contract.js";
+import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildCursorFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 

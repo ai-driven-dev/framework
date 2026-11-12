@@ -7,6 +7,7 @@ import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/fra
 import { getToolConfig } from "../../../../../src/contexts/tools/domain/registry.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -28,7 +29,7 @@ async function makeUseCase(): Promise<{
     deps.fs,
     deps.hasher,
     deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs)
+    new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
   );
   return { useCase, fs: deps.fs };
 }

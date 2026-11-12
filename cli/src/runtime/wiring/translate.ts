@@ -1,15 +1,16 @@
 import { stat } from "node:fs/promises";
-import type { ToolBuildContract } from "../../contexts/tools/domain/build-contract.js";
-import { buildContractFor } from "../../contexts/tools/domain/registry.js";
+import type { ToolBuildContract } from "../../contexts/tools/contract/build-contract.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
 import { FlatBuildStrategy } from "../../contexts/translate/application/strategies/flat-build-strategy.js";
 import { MarketplaceBuildStrategy } from "../../contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../contexts/translate/application/translate-source.js";
-import { frameworkBuildTargetModes } from "../../contexts/translate/domain/build-target.js";
 import { AjvSchemaValidatorAdapter } from "../../contexts/translate/infrastructure/schema-validator.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
+import { isAiToolId } from "../../kernel/tool.js";
 import type { FileMerger } from "../../shared/ports/file-merger.js";
 
 export interface FrameworkBuildDeps {
@@ -57,7 +58,7 @@ async function isDirectory(path: string): Promise<boolean> {
 
 function frameworkBuildFactoryFor(
   buildContract: () => ToolBuildContract,
-  mode: "marketplace" | "flat"
+  mode: FrameworkBuildMode
 ): FrameworkBuildFactory {
   if (mode === "marketplace") {
     return (deps, ctx) =>
@@ -83,27 +84,21 @@ function frameworkBuildFactoryFor(
     );
 }
 
-/** One factory per pair `frameworkBuildTargetModes()` reports, so the wiring cannot offer a
- * target the domain rejects nor miss one it accepts, and a new profile needs no edit here. */
-function frameworkBuildRegistryEntries(): (readonly [string, FrameworkBuildFactory])[] {
-  const entries: (readonly [string, FrameworkBuildFactory])[] = [];
-  for (const { target, mode } of frameworkBuildTargetModes()) {
-    const buildContract = buildContractFor(target, mode);
-    if (buildContract === undefined) continue;
-    entries.push([`${target}:${mode}`, frameworkBuildFactoryFor(buildContract, mode)]);
-  }
-  return entries;
+function isBuildMode(mode: string): mode is FrameworkBuildMode {
+  return mode === "marketplace" || mode === "flat";
 }
 
-const FRAMEWORK_BUILD_REGISTRY: Record<string, FrameworkBuildFactory> = Object.fromEntries(
-  frameworkBuildRegistryEntries()
-);
-
+/** The use case for the target and mode the catalog's profile declares a build contract for, or
+ * undefined when it declares none. */
 export function createFrameworkBuildUseCase(
+  tools: ToolCatalog,
   deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
 ): FrameworkBuildUseCase | undefined {
-  const key = `${ctx.target}:${ctx.mode}`;
-  const factory = FRAMEWORK_BUILD_REGISTRY[key];
-  return factory?.(deps, ctx);
+  if (!isAiToolId(ctx.target) || !isBuildMode(ctx.mode)) return undefined;
+  const profile = tools.profile(ctx.target);
+  if (profile.kind !== "ai") return undefined;
+  const buildContract = profile.buildContracts[ctx.mode];
+  if (buildContract === undefined) return undefined;
+  return frameworkBuildFactoryFor(buildContract, ctx.mode)(deps, ctx);
 }

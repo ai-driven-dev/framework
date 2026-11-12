@@ -12,15 +12,19 @@ import {
   PluginDistribution,
   type PluginManifestFields,
 } from "../../translate/domain/plugin-distribution.js";
-import type { PluginFormat } from "../../translate/domain/plugin-format.js";
-import { pluginManifestProbes } from "../../translate/domain/plugin-format.js";
+import type { DistributionProbe, PluginFormat } from "../../translate/domain/plugin-format.js";
 import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../domain/ports/plugin-distribution-reader.js";
 
 const README_FILENAME = "README.md";
 
 export class PluginDistributionReaderAdapter implements PluginDistributionReader {
-  constructor(private readonly fs: FileReader) {}
+  /** `manifestProbes` is the ordered list of places a manifest can sit, deepest first, built
+   * once by the composition from the registered profiles. */
+  constructor(
+    private readonly fs: FileReader,
+    private readonly manifestProbes: readonly DistributionProbe[]
+  ) {}
 
   async read(pluginRoot: string): Promise<PluginDistribution> {
     const { format, manifestPath, manifestRelativePath } = await this.probeManifest(pluginRoot);
@@ -33,7 +37,7 @@ export class PluginDistributionReaderAdapter implements PluginDistributionReader
   private async probeManifest(
     pluginRoot: string
   ): Promise<{ format: PluginFormat; manifestPath: string; manifestRelativePath: string }> {
-    for (const probe of pluginManifestProbes()) {
+    for (const probe of this.manifestProbes) {
       const fullPath = join(pluginRoot, probe.relativePath);
       if (await this.fs.fileExists(fullPath)) {
         return {

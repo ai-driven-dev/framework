@@ -4,7 +4,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../src/contexts/tools/domain/build-contract.js";
+import type { ArtifactContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import {
   buildContractFor,
   getAiToolConfig,

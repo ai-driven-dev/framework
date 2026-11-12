@@ -8,9 +8,7 @@
  */
 import { join } from "node:path";
 import { InvalidSourceMarketplaceError } from "../../../kernel/errors.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import type { PluginPresence } from "./build-contract.js";
+import type { BuildFileReader, PluginPresence } from "../contract/build-contract.js";
 
 type SrcEntry =
   | {
@@ -94,7 +92,7 @@ export function buildClaudeStyleCatalogEntry(
 }
 
 export async function resolveVersion(
-  fs: FileReader,
+  fs: BuildFileReader,
   name: string,
   srcEntry: { version?: string } | undefined,
   outDir: string,
@@ -111,7 +109,7 @@ export async function resolveVersion(
 }
 
 export async function resolveDescription(
-  fs: FileReader,
+  fs: BuildFileReader,
   name: string,
   srcEntry: { description?: string } | undefined,
   outDir: string,
@@ -136,7 +134,7 @@ export async function buildClaudeStyleEntry(
   outDir: string,
   srcEntry: SrcEntry,
   manifestRelative: string,
-  fs: FileReader & FileWriter
+  fs: BuildFileReader
 ): Promise<Record<string, unknown>> {
   const args = [fs, name, srcEntry, outDir, manifestRelative] as const;
   const version = await resolveVersion(...args);

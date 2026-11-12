@@ -1,4 +1,6 @@
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import type { FlatHooksBridge } from "../../contract/build-contract.js";
+import type { FlatSkillLayout } from "../../contract/tool-profile.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 import type { NativeActivationSpec } from "./native-activation.js";
@@ -111,22 +113,6 @@ export interface NativePluginsParams extends ProjectHooksDelivery {
   userPluginsDir?: (homedir: string) => string;
 }
 
-/**
- * A generated event bridge, for a flat loader that scans no "hooks" family and reads no
- * hooks.json of its own. Both flat-materialization routes read it, so one plugin looks the
- * same whichever route installed it.
- */
-export interface FlatHooksBridge {
-  /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge module's
-   * full text, or `null` when nothing in it named an event the bridge maps. */
-  readonly generate: (rawHooksJson: string, plugin: string) => string | null;
-  /** Output path for the generated bridge module, relative to the project root. */
-  readonly path: (plugin: string) => string;
-  /** A hooks/ file whose presence in this plugin's own source means it ships its own bridge
-   * already — generate nothing for it. */
-  readonly skipIfSourceHas: string;
-}
-
 export type FlatHooksSupport =
   | ({
       acceptsHooks: true;
@@ -143,9 +129,6 @@ export type FlatHooksSupport =
       hookScript?: HookScript;
     } & ProjectHooksDelivery)
   | { acceptsHooks: false; hooksUnsupportedReason: string };
-
-/** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
-export type FlatSkillLayout = "nested" | "single-level";
 
 export type FlatPluginsParams = {
   mode: "flat";

@@ -17,6 +17,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
   readonly deletedPaths: string[] = [];
@@ -64,7 +65,10 @@ async function installPlugin(
   const addUseCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     deps.logger,
     deps.marketplaceRegistry,

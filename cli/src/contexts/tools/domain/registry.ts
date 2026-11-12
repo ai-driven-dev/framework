@@ -1,7 +1,7 @@
 import { DuplicateToolIdError, UnregisteredToolError } from "../../../kernel/errors.js";
 import type { AiToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
-import type { EnvironmentReader } from "../contract/tool-profile.js";
-import type { ToolBuildContract } from "./build-contract.js";
+import type { ToolBuildContract } from "../contract/build-contract.js";
+import type { EnvironmentReader, FrameworkBuildMode } from "../contract/tool-profile.js";
 import type { McpCapability } from "./capabilities/mcp-capability.js";
 import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
@@ -11,11 +11,6 @@ import type { NativePluginsCapability, PluginsCapability } from "./plugins/plugi
 import type { ProfileBrand } from "./profile/define-tool.js";
 import { isProfileSectionKey } from "./profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
-
-/** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by
- * translate, because it is read off a tool's own plugins capability — a tool's build mode is
- * tool knowledge. */
-export type FrameworkBuildMode = "marketplace" | "flat";
 
 export type ToolConfig = AiTool | IdeToolConfig;
 

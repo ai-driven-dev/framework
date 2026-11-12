@@ -1,8 +1,5 @@
-import {
-  type HooksAcceptance,
-  PluginDeliveryBase,
-  type ProjectHooksPlacement,
-} from "./plugin-delivery.js";
+import type { HooksAcceptance } from "../../contract/tool-profile.js";
+import { PluginDeliveryBase, type ProjectHooksPlacement } from "./plugin-delivery.js";
 import type { UnsupportedParams } from "./plugin-params.js";
 
 /** A tool that takes no plugin: it states why its hooks cannot be delivered. */

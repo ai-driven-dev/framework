@@ -57,6 +57,38 @@ describe("defineAiTool", () => {
     expect(tool.section("commands").buildInstallPath("run.claude.md")).toBe(".x/commands/run.md");
   });
 
+  it("answers a markdown section by kind, and null for a kind it does not declare", () => {
+    const tool = defineAiTool({
+      ...aiSpec,
+      capabilities: (bound) => ({
+        commands: bound.commands({
+          buildInstallPath: bound.installUnder("commands/"),
+          convertFrontmatter: (frontmatter) => frontmatter,
+        }),
+      }),
+    });
+
+    expect(tool.markdownSection("commands")?.buildInstallPath("run.claude.md")).toBe(
+      ".x/commands/run.md"
+    );
+    expect(tool.markdownSection("agents")).toBeNull();
+  });
+
+  it("answers its skills section, and null when it declares none", () => {
+    const tool = defineAiTool({
+      ...aiSpec,
+      capabilities: (bound) => ({
+        skills: bound.skills({
+          buildInstallPath: bound.installUnder("skills/"),
+          convertFrontmatter: (frontmatter) => frontmatter,
+        }),
+      }),
+    });
+
+    expect(tool.skillsSection()?.convertFrontmatter({ a: 1 })).toStrictEqual({ a: 1 });
+    expect(defineAiTool(aiSpec).skillsSection()).toBeNull();
+  });
+
   it("answers a declared section, and null for one it does not declare", () => {
     const tool = defineAiTool({ ...aiSpec, capabilities: () => ({ settings: [settings] }) });
 

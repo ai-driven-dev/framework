@@ -38,7 +38,7 @@ field to the contract — never a branch in an orchestrator.
 Contract-level: `manifestFileRelative` / `synthesizeManifest` / `manifestSchemaName`
 (marketplace mode; each `null` when the tool has no native manifest), the optional
 `pluginRootToken`, and an optional `emitConfigArtifact(builtPlugins, outDir, …)`. Read
-`contexts/tools/domain/build-contract.ts` for the live field list.
+`contexts/tools/contract/build-contract.ts` for the live field list.
 
 ## Reuse, never reinvent
 

@@ -13,6 +13,7 @@ import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-f
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
@@ -59,7 +60,7 @@ function fixture(
       fs,
       new PluginDistributionLoader(
         new FixturePluginFetcher(),
-        new PluginDistributionReaderAdapter(fs)
+        new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
       ),
       new DeterministicHasher()
     ),

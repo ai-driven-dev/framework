@@ -21,6 +21,7 @@ import {
   ScriptedPrompter,
 } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -30,7 +31,7 @@ async function installPlugin(
   toolId: "claude" | "codex"
 ): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-  const pluginReader = new PluginDistributionReaderAdapter(deps.fs);
+  const pluginReader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
   await new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,

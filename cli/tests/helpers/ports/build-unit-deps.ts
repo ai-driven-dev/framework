@@ -24,6 +24,7 @@ import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/s
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { SilentPrompterAdapter } from "../../../src/runtime/prompter/prompter-adapter.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
@@ -45,7 +46,10 @@ export async function buildUnitDeps(_projectRoot: string) {
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter();
   const pluginFetcher = new FixturePluginFetcher();
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(
+    fs,
+    registeredManifestProbes()
+  );
   const _pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const marketplaceRegistry = new InMemoryMarketplaceRegistry();
   const gitignoreUseCase = new GitignoreUseCase(fs);

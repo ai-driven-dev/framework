@@ -1,6 +1,6 @@
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
+import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
-import type { ToolBuildContract } from "./build-contract.js";
 import type { AgentsCapability } from "./capabilities/agents-capability.js";
 import type { CommandsCapability } from "./capabilities/commands-capability.js";
 import type { HooksCapability } from "./capabilities/hooks-capability.js";

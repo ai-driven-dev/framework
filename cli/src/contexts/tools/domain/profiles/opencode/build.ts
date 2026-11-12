@@ -13,7 +13,7 @@ import type {
   ConfigArtifactFile,
   ConfigArtifactInput,
   ToolBuildContract,
-} from "../../build-contract.js";
+} from "../../../contract/build-contract.js";
 import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig, toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { OPENCODE_HOOKS } from "./hooks.js";

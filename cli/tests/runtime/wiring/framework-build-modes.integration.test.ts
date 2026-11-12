@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { OutDirNotDirectoryError } from "../../../src/kernel/errors.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { createFrameworkBuildUseCase } from "../../../src/runtime/wiring/translate.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
@@ -29,6 +30,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
 
   it("builds a marketplace tree, plugin directories included, in marketplace mode", async () => {
     const useCase = createFrameworkBuildUseCase(
+      catalogOf(),
       { fs, assetProvider: new BundledAssetProviderAdapter(), logger: new CapturingLogger() },
       { target: "claude", mode: "marketplace", outDir, force: true }
     );
@@ -42,6 +44,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
 
   it("builds a flat tree, no marketplace catalog, in flat mode", async () => {
     const useCase = createFrameworkBuildUseCase(
+      catalogOf(),
       { fs, assetProvider: new BundledAssetProviderAdapter(), logger: new CapturingLogger() },
       { target: "copilot", mode: "flat", outDir, force: true }
     );
@@ -57,6 +60,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
     const gone = join(outDir, "gone");
     fs.setFile(`${gone}/.keep`, "");
     const useCase = createFrameworkBuildUseCase(
+      catalogOf(),
       { fs, assetProvider: new BundledAssetProviderAdapter(), logger: new CapturingLogger() },
       { target: "copilot", mode: "flat", outDir: gone, force: true }
     );

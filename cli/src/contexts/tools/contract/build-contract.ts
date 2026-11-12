@@ -1,8 +1,37 @@
-import type { ConfigAsset, SchemaName } from "../../../kernel/ports/asset-provider.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
 import type { ToolId } from "../../../kernel/tool.js";
-import type { FlatHooksBridge } from "./plugins/plugin-params.js";
+
+/** The bundled schemas a build validates against. Same names as the asset provider serves: a
+ * contract folder imports no `ports/` folder, the kernel's included. */
+export type SchemaName =
+  | "plugin-manifest"
+  | "marketplace"
+  | "claude-marketplace"
+  | "codex-marketplace"
+  | "codex-plugin-manifest";
+
+/** A bundled config asset as the asset provider hands it over. */
+export type ConfigAsset = Record<string, unknown> | readonly unknown[] | string;
+
+/** All a marketplace builder reads of the output tree. */
+export interface BuildFileReader {
+  readFile(path: string): Promise<string>;
+}
+
+/**
+ * A generated event bridge, for a flat loader that scans no "hooks" family and reads no
+ * hooks.json of its own. Both flat-materialization routes read it, so one plugin looks the
+ * same whichever route installed it.
+ */
+export interface FlatHooksBridge {
+  /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge module's
+   * full text, or `null` when nothing in it named an event the bridge maps. */
+  readonly generate: (rawHooksJson: string, plugin: string) => string | null;
+  /** Output path for the generated bridge module, relative to the project root. */
+  readonly path: (plugin: string) => string;
+  /** A hooks/ file whose presence in this plugin's own source means it ships its own bridge
+   * already — generate nothing for it. */
+  readonly skipIfSourceHas: string;
+}
 
 /** How a plugin's artifact files are sourced: a sub-directory walked with an extension filter
  * or in full, a single plugin-relative file, or hooks.json plus its sibling scripts. */
@@ -96,7 +125,7 @@ export interface ToolBuildContract {
     | ((
         sourceMarketplace: SourceMarketplaceRef,
         pluginEntries: readonly Record<string, unknown>[],
-        fs: FileReader & FileWriter
+        fs: BuildFileReader
       ) => Promise<{
         catalog: Record<string, unknown>;
         schemaName: SchemaName | null;
@@ -110,7 +139,7 @@ export interface ToolBuildContract {
         pluginSrc: string,
         outDir: string,
         srcEntry: SourcePluginEntryRef | undefined,
-        fs: FileReader & FileWriter
+        fs: BuildFileReader
       ) => Promise<Record<string, unknown>>)
     | null;
 }

@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
 import { wireHostRegistration } from "../../composition/host-registration.js";
+import { wireTools } from "../../composition/tools.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.js";
@@ -72,6 +73,7 @@ import { PluginDistributionReaderAdapter } from "../../contexts/framework/infras
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import { pluginManifestProbes } from "../../contexts/translate/domain/plugin-format.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
@@ -195,7 +197,11 @@ export async function createDeps(
   const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
   const fs = new FileAdapter(hasher, logger);
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const tools = wireTools();
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(
+    fs,
+    pluginManifestProbes(tools.sortedById())
+  );
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
   const http = new HttpClient();
@@ -300,6 +306,7 @@ export async function createDeps(
   };
   const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir) =>
     createFrameworkBuildUseCase(
+      tools,
       { fs, assetProvider, logger: cacheBuildLogger },
       { target, mode, outDir, force: true }
     );

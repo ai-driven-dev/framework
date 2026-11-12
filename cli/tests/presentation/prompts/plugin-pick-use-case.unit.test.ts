@@ -14,6 +14,7 @@ import {
 } from "../../../src/kernel/errors.js";
 import type { Prompter } from "../../../src/kernel/ports/prompter.js";
 import { PluginPickUseCase } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import type { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
@@ -58,7 +59,10 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   const pluginAdd = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     deps.logger,
     registry,

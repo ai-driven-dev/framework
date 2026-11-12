@@ -2,7 +2,7 @@ import type {
   ArtifactContract,
   ArtifactSource,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/domain/build-contract.js";
+} from "../../../../src/contexts/tools/contract/build-contract.js";
 
 type Artifacts = ToolBuildContract["artifacts"];
 

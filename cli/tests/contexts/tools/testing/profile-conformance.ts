@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/domain/build-contract.js";
+} from "../../../../src/contexts/tools/contract/build-contract.js";
 import { AgentsCapability } from "../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
 import { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../../../src/contexts/tools/domain/capabilities/config-refs.js";

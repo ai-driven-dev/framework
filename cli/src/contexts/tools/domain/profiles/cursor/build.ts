@@ -10,7 +10,7 @@ import {
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../build-contract.js";
+import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {

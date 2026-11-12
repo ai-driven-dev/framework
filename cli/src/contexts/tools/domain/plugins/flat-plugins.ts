@@ -1,13 +1,13 @@
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import type { FlatHooksBridge } from "../../contract/build-contract.js";
+import type { FlatLayout, FlatSkillLayout, HooksAcceptance } from "../../contract/tool-profile.js";
 import {
   AS_SHIPPED,
-  type FlatLayout,
-  type HooksAcceptance,
   PluginDeliveryBase,
   type ProjectHooksPlacement,
   resolveProjectHooks,
 } from "./plugin-delivery.js";
-import type { FlatHooksBridge, FlatParams, FlatSkillLayout, HookScript } from "./plugin-params.js";
+import type { FlatParams, HookScript } from "./plugin-params.js";
 
 /** A tool that loads a plugin's skills, agents and hooks from its own workspace directory. */
 export class FlatPlugins extends PluginDeliveryBase {

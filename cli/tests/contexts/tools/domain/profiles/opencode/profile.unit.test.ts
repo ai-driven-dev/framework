@@ -49,11 +49,9 @@ describe("opencode build and conversion tables", () => {
 describe("opencode as the registry answers for it", () => {
   it("builds flat, and probes a marketplace although it builds none natively", () => {
     expect(new ToolCatalog([opencode]).frameworkBuildModeFor("opencode")).toBe("flat");
-    expect(
-      distributionProbesOf(new Map([[opencode.toolId, opencode]]), "marketplace").map(
-        (probe) => probe.format
-      )
-    ).toEqual(["opencode"]);
+    expect(distributionProbesOf([opencode], "marketplace").map((probe) => probe.format)).toEqual([
+      "opencode",
+    ]);
   });
 
   it("installs its rules into .opencode/rules/ as markdown", () => {

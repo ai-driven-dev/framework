@@ -1,5 +1,5 @@
 import { expect } from "vitest";
-import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
+import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import {

@@ -15,7 +15,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the tool contract and lookup surface
     "src/contexts/tools/domain/contracts.ts",
     "src/contexts/tools/domain/registry.ts",
-    "src/contexts/tools/domain/build-contract.ts",
+    "src/contexts/tools/contract/build-contract.ts",
     // co-owned configuration (settings.json, .mcp.json et al.)
     "src/contexts/tools/domain/capabilities/mcp-capability.ts",
     "src/contexts/tools/domain/mcp-launch-command.ts",

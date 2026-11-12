@@ -3,7 +3,7 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import { genericFlatSkillPath } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../build-contract.js";
+import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";
 import { mergeAntigravityHooks } from "./antigravity-hooks.js";

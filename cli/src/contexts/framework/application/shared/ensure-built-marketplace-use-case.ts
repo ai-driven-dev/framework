@@ -10,7 +10,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace-use-case.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type { FrameworkBuildMode } from "../../../tools/domain/registry.js";
+import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuild } from "../../../translate/application/translate-source.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
 

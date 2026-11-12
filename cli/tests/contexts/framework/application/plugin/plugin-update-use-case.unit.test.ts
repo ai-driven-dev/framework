@@ -11,6 +11,7 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -40,7 +41,7 @@ async function setup(
   options: { fetcher?: FixturePluginFetcher; builtDeps?: BuiltMaterializationDeps } = {}
 ) {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-  const reader = new PluginDistributionReaderAdapter(deps.fs);
+  const reader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
   const addUseCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,

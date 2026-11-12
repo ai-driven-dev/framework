@@ -13,6 +13,7 @@ import {
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const EXTRA_PLUGIN_FIXTURE = join(
   process.cwd(),
@@ -44,7 +45,10 @@ async function buildOpencodeProject(): Promise<{
   const useCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     logger,
     deps.marketplaceRegistry,

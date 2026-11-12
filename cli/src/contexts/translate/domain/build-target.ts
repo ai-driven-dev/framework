@@ -1,6 +1,5 @@
-import { AI_TOOL_IDS, type AiToolId, type ToolId } from "../../../kernel/tool.js";
-import type { FrameworkBuildMode, ToolConfig } from "../../tools/domain/registry.js";
-import { getAllRegisteredTools, isAiTool } from "../../tools/domain/registry.js";
+import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
+import type { FrameworkBuildMode, ToolProfile } from "../../tools/contract/tool-profile.js";
 
 /** The tool a framework build produces for. An alias rather than its own union: every AI tool
  * is buildable, so a sixth tool is a sixth target by construction, and writing the members
@@ -14,33 +13,28 @@ export interface FrameworkBuildTargetMode {
 
 const BUILD_MODES: readonly FrameworkBuildMode[] = ["marketplace", "flat"];
 
-/** A tool supports a mode when its profile declares a build contract for it. Exported so the
- * rule can be probed with synthetic tools — the version reading the live registry cannot say
- * what it would do with a tool that declares nothing. */
+/** A tool supports a mode when its profile declares a build contract for it. Takes the profiles
+ * explicitly so the rule can be probed with synthetic tools. Walks the kernel's tool order, never
+ * the order the profiles come in. */
 export function buildTargetModesOf(
-  tools: ReadonlyMap<ToolId, ToolConfig>
+  profiles: readonly ToolProfile[]
 ): readonly FrameworkBuildTargetMode[] {
   const pairs: FrameworkBuildTargetMode[] = [];
   for (const target of AI_TOOL_IDS) {
-    const config = tools.get(target);
-    if (config === undefined || !isAiTool(config)) continue;
+    const profile = profiles.find((candidate) => candidate.toolId === target);
+    if (profile === undefined || profile.kind !== "ai") continue;
     for (const mode of BUILD_MODES) {
-      if (config.buildContracts?.[mode] !== undefined) pairs.push({ target, mode });
+      if (profile.buildContracts[mode] !== undefined) pairs.push({ target, mode });
     }
   }
   return pairs;
 }
 
-/** Every target/mode pair the build pipeline supports, read off the registered profiles. A
- * function and not a constant: the registry fills at wiring time, so a constant evaluated at
- * import would capture an empty one. */
-export function frameworkBuildTargetModes(): readonly FrameworkBuildTargetMode[] {
-  return buildTargetModesOf(getAllRegisteredTools());
-}
-
 /** Every target with at least one supported build mode. */
-export function supportedBuildTargets(): readonly FrameworkBuildTarget[] {
-  return [...new Set(frameworkBuildTargetModes().map((entry) => entry.target))];
+export function supportedBuildTargets(
+  profiles: readonly ToolProfile[]
+): readonly FrameworkBuildTarget[] {
+  return [...new Set(buildTargetModesOf(profiles).map((entry) => entry.target))];
 }
 
 export interface FrameworkBuildOptions {

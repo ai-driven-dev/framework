@@ -1,24 +1,11 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
-import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
-import type { PluginDelivery } from "../../contract/tool-profile.js";
+import type { HooksAcceptance, PluginDelivery } from "../../contract/tool-profile.js";
 import type {
-  FlatHooksBridge,
-  FlatSkillLayout,
   GlobalFiles,
   HookScript,
   ProjectHooksDelivery,
   ProjectHooksFormat,
 } from "./plugin-params.js";
-
-/** Where a flat-mode plugin lands and how its hooks are loaded; each part is `null` or
- * `"nested"` when the mode has none. */
-export interface FlatLayout {
-  skillLayout: FlatSkillLayout;
-  namespacePrefix: string | null;
-  hooksDir: string | null;
-  hooksLoaderEntry: FlatHooksLoaderEntry | null;
-  hooksBridge: FlatHooksBridge | null;
-}
 
 /** Where a hook lands in the project and how, with the script as this tool runs it. */
 export interface ProjectHooksPlacement {
@@ -28,9 +15,6 @@ export interface ProjectHooksPlacement {
 }
 
 export const AS_SHIPPED: HookScript = (_pluginPath, content) => content;
-
-/** Whether a delivered hook runs on this tool, and why not when it does not. */
-export type HooksAcceptance = { accepts: true } | { accepts: false; reason: string };
 
 /**
  * What a tool answers about how a plugin is delivered, as every way a tool takes plugins

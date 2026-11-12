@@ -1,4 +1,4 @@
-import type { FrameworkBuildMode } from "../../contexts/tools/domain/registry.js";
+import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
 import type { CLIOutput } from "../output.js";
 
 interface TranslateOutcome {

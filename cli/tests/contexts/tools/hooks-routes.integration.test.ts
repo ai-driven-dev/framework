@@ -14,6 +14,7 @@ import { AI_TOOL_IDS, type AiToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { catalogOf } from "./testing/catalog-of.js";
 
 /**
  * Every route that writes or removes a tool's hook files, driven through the same use cases
@@ -142,7 +143,7 @@ async function build(
   const d = await deps(ws.project);
   const out = join(ws.root, `out-${mode}`);
   await mkdir(out, { recursive: true });
-  const useCase = createFrameworkBuildUseCase(d, {
+  const useCase = createFrameworkBuildUseCase(catalogOf(), d, {
     target: toolId,
     mode,
     outDir: out,

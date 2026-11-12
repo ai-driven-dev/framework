@@ -66,12 +66,16 @@ describe("aidd translate — what it hands the build", () => {
     expect(await run("translate", "framework", "--to", "claude", "--out", "dist-plugins")).toEqual([
       `Built 2 plugins, 12 files written to ${OUT_DIR}`,
     ]);
-    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(expect.anything(), {
-      target: "claude",
-      mode: "marketplace",
-      outDir: OUT_DIR,
-      force: false,
-    });
+    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      {
+        target: "claude",
+        mode: "marketplace",
+        outDir: OUT_DIR,
+        force: false,
+      }
+    );
     expect(build).toHaveBeenCalledWith({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,
@@ -86,6 +90,7 @@ describe("aidd translate — what it hands the build", () => {
     ).toEqual([`Flat-installed 2 plugins, 12 files written under ${OUT_DIR}`]);
     expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
       expect.anything(),
+      expect.anything(),
       expect.objectContaining({ mode: "flat" })
     );
     expect(build).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
@@ -95,6 +100,7 @@ describe("aidd translate — what it hands the build", () => {
     await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--force");
 
     expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
+      expect.anything(),
       expect.anything(),
       expect.objectContaining({ force: true })
     );
@@ -122,7 +128,7 @@ describe("aidd translate — what it refuses", () => {
     ).rejects.toThrow("exited");
 
     expect(errors.join("")).toBe(
-      `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets().join(", ")}.\n`
+      `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets(wireTools().sortedById()).join(", ")}.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();

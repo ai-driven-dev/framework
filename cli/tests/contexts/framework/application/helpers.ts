@@ -21,6 +21,7 @@ import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter
 import type { Platform } from "../../../../src/runtime/platform/platform.js";
 import { SilentPrompterAdapter } from "../../../../src/runtime/prompter/prompter-adapter.js";
 import { CurrentVersionAdapter } from "../../../../src/runtime/self-update/current-version-adapter.js";
+import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
 export const OverwritePrompter = SilentPrompterAdapter;
@@ -202,7 +203,10 @@ export function buildDeps(projectRoot: string) {
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter();
   const pluginFetcher = new PluginFetcherAdapter(fs);
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(
+    fs,
+    registeredManifestProbes()
+  );
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const gitignoreUseCase = new GitignoreUseCase(fs);
   const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);

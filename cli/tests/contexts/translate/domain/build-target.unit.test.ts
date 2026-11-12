@@ -1,18 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { buildTargetModesOf } from "../../../../src/contexts/translate/domain/build-target.js";
-import { aCatalog, anEmptyContract, aProfile } from "../../tools/testing/profiles.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { anEmptyContract, aProfile } from "../../tools/testing/profiles.js";
 
 describe("buildTargetModesOf", () => {
   it("gives a tool one pair per contract it declares, and none for what it omits", () => {
-    const catalog = aCatalog(
+    const catalog = catalogOf([
       aProfile("claude")
         .withBuildContract("marketplace", anEmptyContract())
         .withBuildContract("flat", anEmptyContract())
         .build(),
-      aProfile("opencode").withBuildContract("flat", anEmptyContract()).build()
-    );
+      aProfile("opencode").withBuildContract("flat", anEmptyContract()).build(),
+    ]);
 
-    expect(buildTargetModesOf(catalog.getAllRegisteredTools())).toEqual([
+    expect(buildTargetModesOf(catalog.sortedById())).toEqual([
       { target: "claude", mode: "marketplace" },
       { target: "claude", mode: "flat" },
       { target: "opencode", mode: "flat" },

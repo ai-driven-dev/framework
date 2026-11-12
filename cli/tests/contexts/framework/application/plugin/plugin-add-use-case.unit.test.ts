@@ -20,6 +20,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -50,7 +51,10 @@ function buildAddUseCase(
   return new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     logger,
     registry,
@@ -152,7 +156,7 @@ describe("PluginAddUseCase", () => {
         deps.manifestRepo,
         new PluginDistributionLoader(
           deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs)
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
         ),
         deps.hasher,
         deps.logger,
@@ -198,7 +202,7 @@ describe("PluginAddUseCase", () => {
         deps.manifestRepo,
         new PluginDistributionLoader(
           deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs)
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
         ),
         deps.hasher,
         deps.logger,
@@ -241,7 +245,7 @@ describe("PluginAddUseCase", () => {
         deps.manifestRepo,
         new PluginDistributionLoader(
           deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs)
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
         ),
         deps.hasher,
         deps.logger,
@@ -301,7 +305,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -342,7 +346,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -382,7 +386,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -548,7 +552,7 @@ describe("PluginAddUseCase", () => {
           projectBRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           logger,
@@ -588,7 +592,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -623,7 +627,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -660,7 +664,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -694,7 +698,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -731,7 +735,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -785,7 +789,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,

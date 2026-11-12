@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ConfigArtifact,
   ConfigArtifactFile,
-} from "../../../../../../src/contexts/tools/domain/build-contract.js";
+} from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { KiloDualConfigError } from "../../../../../../src/kernel/errors.js";
 import { supported } from "../../../testing/build-artifacts.js";

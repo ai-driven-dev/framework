@@ -11,6 +11,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -28,7 +29,7 @@ describe("PluginAddUseCase skip warnings", () => {
         deps.manifestRepo,
         new PluginDistributionLoader(
           deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs)
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
         ),
         deps.hasher,
         capturingLogger,

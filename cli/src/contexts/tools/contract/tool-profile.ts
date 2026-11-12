@@ -1,4 +1,6 @@
+import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-paths.js";
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
+import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
@@ -19,12 +21,97 @@ export interface NativeActivationAnswers {
   userSettingsFile(home: string, env: EnvironmentReader): string | undefined;
 }
 
+/** Output layout: a marketplace dist versus a flat workspace inject. */
+export type FrameworkBuildMode = "marketplace" | "flat";
+
+/** Whether a delivered hook runs on this tool, and why not when it does not. */
+export type HooksAcceptance = { accepts: true } | { accepts: false; reason: string };
+
+/** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
+export type FlatSkillLayout = "nested" | "single-level";
+
+/** Where a flat-mode plugin lands and how its hooks are loaded; each part is `null` or
+ * `"nested"` when the mode has none. */
+export interface FlatLayout {
+  skillLayout: FlatSkillLayout;
+  namespacePrefix: string | null;
+  hooksDir: string | null;
+  hooksLoaderEntry: FlatHooksLoaderEntry | null;
+  hooksBridge: FlatHooksBridge | null;
+}
+
+/** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */
+export interface NativePluginAnswers extends PluginDelivery {
+  readonly kind: "native";
+  hooksAcceptance(): HooksAcceptance;
+  /** The directory a plugin's files land in. */
+  pluginOutputDir(pluginName: string): string;
+  /** The manifest file relative to that directory, or null when the tool takes none. */
+  manifestPath(): string | null;
+  /** The variable a hook or mcp manifest names the plugin root by. */
+  rootToken(): string;
+  /** What a person must still do before a delivered hook runs, or null. */
+  trustNotice(): string | null;
+  mcpFile(): { accepts: boolean; relativePath: string };
+  hooksFilePath(): string;
+  hookScript(pluginPath: string, content: string): string;
+}
+
+/** A tool whose plugins are injected into the project tree, as an outside caller asks it. */
+export interface FlatPluginAnswers extends PluginDelivery {
+  readonly kind: "flat";
+  hooksAcceptance(): HooksAcceptance;
+  flatLayout(): FlatLayout;
+  hookScript(pluginPath: string, content: string): string;
+}
+
+/** A tool that takes no plugin. */
+export interface UnsupportedPluginAnswers extends PluginDelivery {
+  readonly kind: "unsupported";
+  hooksAcceptance(): HooksAcceptance;
+}
+
+export type PluginAnswers = NativePluginAnswers | FlatPluginAnswers | UnsupportedPluginAnswers;
+
+/** A markdown section (commands, agents, rules) a tool declares. */
+export interface MarkdownSectionAnswers {
+  /** Where a built file lands, or null when the tool takes none by that name. */
+  buildInstallPath(fileName: string): string | null;
+  convertFrontmatter(fm: Record<string, unknown>, fileName: string): Record<string, unknown>;
+  serialize(fm: Record<string, unknown>, body: string): string;
+}
+
+/** The skills section a tool declares. */
+export interface SkillsSectionAnswers {
+  convertFrontmatter(fm: Record<string, unknown>): Record<string, unknown>;
+  serialize(fm: Record<string, unknown>, body: string): string;
+}
+
 /** An AI assistant, as an outside caller asks it. */
 export interface AiToolProfile {
   readonly kind: "ai";
   readonly toolId: AiToolId;
+  /** Where a built file lands, relative to the project root, ending in a slash. */
+  readonly directory: string;
+  /** The tool's framework-build contracts, one per supported build mode. */
+  readonly buildContracts: {
+    readonly marketplace?: () => ToolBuildContract;
+    readonly flat?: () => ToolBuildContract;
+  };
+  /** Where this tool's plugin manifest and marketplace catalog sit inside a distribution it
+   * produced. Order is irrelevant: the collected probes are sorted deepest first. */
+  readonly distributionProbes?: {
+    readonly manifest?: readonly string[];
+    readonly marketplace?: readonly string[];
+  };
+  /** Rewrites source content to this tool's own conventions. */
+  rewriteContent(content: string): string;
   /** The tool's plugin delivery, or null when it declares none. */
-  plugins(): PluginDelivery | null;
+  plugins(): PluginAnswers | null;
+  /** The commands, agents or rules section the tool declares, or null. */
+  markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
+  /** The skills section the tool declares, or null. */
+  skillsSection(): SkillsSectionAnswers | null;
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
 }

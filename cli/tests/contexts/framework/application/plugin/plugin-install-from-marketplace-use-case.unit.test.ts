@@ -23,6 +23,7 @@ import type { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-fi
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -50,7 +51,10 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
   const pluginAdd = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     deps.logger,
     registry,

@@ -1,6 +1,5 @@
-import { AI_TOOL_IDS, type AiToolId, type ToolId } from "../../../kernel/tool.js";
-import type { ToolConfig } from "../../tools/domain/registry.js";
-import { getAllRegisteredTools, isAiTool } from "../../tools/domain/registry.js";
+import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
+import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 
 /** The tool whose layout a plugin distribution follows. An alias rather than its own union: a
  * format is a tool's way of laying out a plugin, so a sixth tool is a sixth format by
@@ -19,14 +18,14 @@ export interface DistributionProbe {
  * explicitly so the rule can be probed with synthetic tools.
  */
 export function distributionProbesOf(
-  tools: ReadonlyMap<ToolId, ToolConfig>,
+  profiles: readonly ToolProfile[],
   kind: "manifest" | "marketplace"
 ): readonly DistributionProbe[] {
   const probes: DistributionProbe[] = [];
   for (const format of AI_TOOL_IDS) {
-    const config = tools.get(format);
-    if (config === undefined || !isAiTool(config)) continue;
-    for (const relativePath of config.distributionProbes?.[kind] ?? []) {
+    const profile = profiles.find((candidate) => candidate.toolId === format);
+    if (profile === undefined || profile.kind !== "ai") continue;
+    for (const relativePath of profile.distributionProbes?.[kind] ?? []) {
       probes.push({ format, relativePath });
     }
   }
@@ -37,6 +36,8 @@ export function distributionProbesOf(
 }
 
 /** Where a plugin manifest can sit, across every registered tool's layout. */
-export function pluginManifestProbes(): readonly DistributionProbe[] {
-  return distributionProbesOf(getAllRegisteredTools(), "manifest");
+export function pluginManifestProbes(
+  profiles: readonly ToolProfile[]
+): readonly DistributionProbe[] {
+  return distributionProbesOf(profiles, "manifest");
 }

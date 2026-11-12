@@ -14,6 +14,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-b
 import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -26,7 +27,7 @@ describe("UninstallUseCase — plugin scope", () => {
 
     await initAndInstall(deps, PROJECT_ROOT, "claude");
 
-    const reader = new PluginDistributionReaderAdapter(deps.fs);
+    const reader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
     await new PluginAddUseCase(
       deps.fs,
       deps.manifestRepo,
