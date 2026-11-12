@@ -113,30 +113,20 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
   const { InitUseCase } = await import(
     "../../../src/contexts/framework/application/init-use-case.js"
   );
-  await new InitUseCase(d.fs, d.manifestRepo).execute({
-    projectRoot: project,
-    tools: catalogOf(),
-  });
+  await new InitUseCase(d.fs, d.manifestRepo).execute({ projectRoot: project, tools: catalogOf() });
+  const install = { tools: catalogOf(), toolId, force: false, version: "1.0.0" };
   await d.installAiToolUseCase.execute({
-    tools: catalogOf(),
-    toolId,
+    ...install,
     projectRoot: project,
-    force: false,
-    version: "1.0.0",
     propagatePlugins: false,
   });
 }
 
 async function installPlugin(project: string, toolId: AiToolId, plugin: string): Promise<void> {
   const d = await deps(project);
-  await d.pluginInstallUseCase.execute({
-    pluginArg: join(REPOSITORY_ROOT, "plugins", plugin),
-    toolIds: [toolId],
-    tools: catalogOf(),
-    projectRoot: project,
-    interactive: false,
-    yes: true,
-  });
+  const pluginArg = join(REPOSITORY_ROOT, "plugins", plugin);
+  const install = { pluginArg, toolIds: [toolId], tools: catalogOf(), interactive: false };
+  await d.pluginInstallUseCase.execute({ ...install, projectRoot: project, yes: true });
 }
 
 async function build(
@@ -379,20 +369,12 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
   }
   const d = await deps(ws.project);
   if (route === "plugin-remove") {
-    await d.pluginRemoveUseCase.execute({
-      tools: catalogOf(),
-      pluginName: "aidd-context",
-      toolIds: [toolId],
-      projectRoot: ws.project,
-    });
+    const removal = { tools: catalogOf(), pluginName: "aidd-context", toolIds: [toolId] };
+    await d.pluginRemoveUseCase.execute({ ...removal, projectRoot: ws.project });
     return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
   }
-  await d.cleanUseCase.execute({
-    projectRoot: ws.project,
-    force: true,
-    interactive: false,
-    tools: catalogOf(),
-  });
+  const clean = { force: true, interactive: false, tools: catalogOf() };
+  await d.cleanUseCase.execute({ ...clean, projectRoot: ws.project });
   return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
 }
 

@@ -58,10 +58,7 @@ describe("Claude Code's own installed_plugins.json", () => {
     expect(reading.refs?.get("aidd-dev@aidd-framework")).toEqual({ enabled: true, scope: "user" });
   });
 
-  /**
-   * `aidd` registers every plugin at project scope (`host-cli-adapter.ts`'s
-   * `scopeArgs`), so an entry's `projectPath` decides whether this host loads it here.
-   */
+  // `aidd` registers at project scope (`host-cli-adapter.ts`'s `scopeArgs`), so `projectPath` decides.
   it("does not count a ref installed only for another project", async () => {
     await write(
       PATH,

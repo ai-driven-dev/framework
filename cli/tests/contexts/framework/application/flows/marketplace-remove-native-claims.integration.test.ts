@@ -21,6 +21,20 @@ const REF = "sample-plugin@real-catalog";
 const OTHER = "other-plugin@other-catalog";
 const NAME = "project-alias";
 
+/** Removes `NAME` from project `/A`, with only what a case changes. */
+function remove(
+  useCase: MarketplaceRemoveUseCase,
+  overrides: { autoConfirm?: boolean; scope?: "user" } = {}
+) {
+  return useCase.execute({
+    tools: catalogOf(),
+    name: NAME,
+    projectRoot: "/A",
+    autoConfirm: true,
+    ...overrides,
+  });
+}
+
 async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {}) {
   const project = Manifest.create();
   project.addTool("codex", "1.0.0", []);
@@ -82,14 +96,7 @@ describe("project marketplace removal against machine native claims", () => {
     async (nativeMapping) => {
       const f = await fixture({ nativeMapping });
       const before = f.projectRepo.getCurrent()?.getNativeRegistrations("codex");
-      expect(
-        await f.useCase.execute({
-          tools: catalogOf(),
-          name: NAME,
-          projectRoot: "/A",
-          autoConfirm: true,
-        })
-      ).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
+      expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
       expect(f.projectRepo.getCurrent()?.getPlugins("codex")).toEqual([]);
       expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")).toEqual(before);
       expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
@@ -104,14 +111,7 @@ describe("project marketplace removal against machine native claims", () => {
     const f = await fixture();
     f.projectRepo.getCurrent()?.removePlugin("codex", "sample-plugin");
     const before = f.projectRepo.getCurrent()?.getNativeRegistrations("codex");
-    expect(
-      await f.useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: true,
-      })
-    ).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
+    expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
     expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")).toEqual(before);
     expect(f.projectRepo.saveCount).toBe(0);
     expect(f.machineRepo.saveCount).toBe(0);
@@ -197,14 +197,7 @@ describe("project marketplace removal against machine native claims", () => {
       new KeepPrompter()
     );
 
-    await expect(
-      useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: true,
-      })
-    ).rejects.toThrow(/EACCES/);
+    await expect(remove(useCase)).rejects.toThrow(/EACCES/);
 
     expect(projectRepo.saveCount).toBe(0);
     expect(projectRepo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
@@ -216,15 +209,9 @@ describe("project marketplace removal against machine native claims", () => {
 
   it("refuses user scope at the project use-case edge without touching a catalogue", async () => {
     const f = await fixture();
-    await expect(
-      f.useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: true,
-        scope: "user",
-      })
-    ).rejects.toThrow(/User-scope marketplace removal requires/);
+    await expect(remove(f.useCase, { scope: "user" })).rejects.toThrow(
+      /User-scope marketplace removal requires/
+    );
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeDefined();
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
@@ -239,14 +226,7 @@ describe("project marketplace removal against machine native claims", () => {
       f.registry,
       new KeepPrompter()
     );
-    expect(
-      await useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: true,
-      })
-    ).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
+    expect(await remove(useCase)).toMatchObject({ removedPluginCount: 0, orphanCount: 0 });
     expect((await f.registry.list("/A")).find((entry) => entry.name === NAME)).toBeUndefined();
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
@@ -255,14 +235,7 @@ describe("project marketplace removal against machine native claims", () => {
 
   it("deletes A's exact orphan projection but preserves B and a different host catalogue", async () => {
     const f = await fixture();
-    expect(
-      await f.useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: true,
-      })
-    ).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
+    expect(await remove(f.useCase)).toMatchObject({ removedPluginCount: 1, orphanCount: 1 });
     expect(f.projectRepo.getCurrent()?.getPlugins("codex")).toEqual([]);
     expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
       OTHER,
@@ -291,14 +264,7 @@ describe("project marketplace removal against machine native claims", () => {
       f.registry,
       new KeepPrompter()
     );
-    await expect(
-      useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: true,
-      })
-    ).rejects.toThrow(/local file delete failed/);
+    await expect(remove(useCase)).rejects.toThrow(/local file delete failed/);
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
     ]);
@@ -314,14 +280,10 @@ describe("project marketplace removal against machine native claims", () => {
       f.registry,
       prompter
     );
-    expect(
-      await useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: false,
-      })
-    ).toMatchObject({ removedPluginCount: 0, orphanCount: 1 });
+    expect(await remove(useCase, { autoConfirm: false })).toMatchObject({
+      removedPluginCount: 0,
+      orphanCount: 1,
+    });
     expect(f.projectRepo.getCurrent()?.getPlugins("codex")).toHaveLength(1);
     expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
@@ -412,16 +374,7 @@ describe("project marketplace removal against machine native claims", () => {
       registry,
       new KeepPrompter()
     );
-    expect(
-      await useCase.execute({
-        tools: catalogOf(),
-        name: NAME,
-        projectRoot: "/A",
-        autoConfirm: true,
-      })
-    ).toMatchObject({
-      removedPluginCount: 1,
-    });
+    expect(await remove(useCase)).toMatchObject({ removedPluginCount: 1 });
     expect(fs.getFile(ownedPath)).toBe("B's bytes");
     expect(fs.getFile(ownedMcp)).toBe("B's MCP");
     expect(fs.getFile(aHooks)).toBeUndefined();

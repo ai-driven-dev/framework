@@ -27,6 +27,7 @@ import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-hos
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
+const AT_PROJECT = { tools: catalogOf(), projectRoot: PROJECT_ROOT } as const;
 const md5 = (content: string): string => createHash("md5").update(content, "utf-8").digest("hex");
 
 /** Test-double host catalogues, deliberately seeded without consulting the manifest claim. */
@@ -126,11 +127,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     const content = deps.fs.getFile(gitignorePath);
     expect(content).not.toContain(".aidd/cache/");
@@ -151,11 +148,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     const content = deps.fs.getFile(gitignorePath);
     expect(content).not.toContain(".aidd/cache/");
@@ -176,11 +169,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     const content = deps.fs.getFile(gitignorePath);
     expect(content).toBe("node_modules/\n");
@@ -199,11 +188,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(deps.fs.has(userFile)).toBe(true);
   });
@@ -223,11 +208,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(deps.fs.has(configPath)).toBe(true);
     expect(deps.fs.has(cacheFile)).toBe(false);
@@ -247,11 +228,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(deps.fs.has(pluginCacheFile)).toBe(false);
     expect(deps.fs.listUnder(join(PROJECT_ROOT, ".aidd")).length).toBe(0);
@@ -270,11 +247,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(deps.fs.listUnder(join(PROJECT_ROOT, ".aidd")).length).toBe(0);
   });
@@ -293,11 +266,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(deps.fs.has(registry)).toBe(false);
     expect(deps.fs.listUnder(join(PROJECT_ROOT, ".aidd")).length).toBe(0);
@@ -320,11 +289,7 @@ describe("clean", () => {
       deps.logger,
       deps.gitignoreUseCase
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(deps.fs.has(registry)).toBe(false);
     expect(deps.fs.has(config)).toBe(true);
@@ -353,11 +318,7 @@ describe("clean", () => {
       new CapturingLogger(),
       new GitignoreUseCase(fs)
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(
       fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
@@ -389,11 +350,7 @@ describe("clean", () => {
       new CapturingLogger(),
       new GitignoreUseCase(fs)
     );
-    await useCase.execute({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
+    await useCase.execute({ ...AT_PROJECT, force: true });
 
     expect(fs.deletedPaths).toContain(join(PROJECT_ROOT, PLUGIN_KEY));
     expect(fs.deletedPaths.some((p) => p.includes(join(".cursor", "plugins", "local")))).toBe(
@@ -538,11 +495,7 @@ describe("clean", () => {
           new InMemoryManifestRepository(Manifest.create(), "/fake-home")
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(activator.removedMarketplaces).toEqual(["other-host"]);
@@ -606,11 +559,7 @@ describe("clean", () => {
             machineRepo
           );
 
-          await useCase.execute({
-            tools: catalogOf(),
-            projectRoot: PROJECT_ROOT,
-            force: true,
-          });
+          await useCase.execute({ ...AT_PROJECT, force: true });
 
           expect(activator.uninstalledPlugins).toEqual([]);
           expect(activator.removedMarketplaces).toEqual([]);
@@ -654,11 +603,7 @@ describe("clean", () => {
             new InMemoryManifestRepository(machine, "/fake-home")
           );
 
-          await useCase.execute({
-            tools: catalogOf(),
-            projectRoot: PROJECT_ROOT,
-            force: true,
-          });
+          await useCase.execute({ ...AT_PROJECT, force: true });
 
           expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
           expect(logger.warnMessages).toEqual([
@@ -714,11 +659,7 @@ describe("clean", () => {
             new Map([["claude", source]])
           );
 
-          await useCase.execute({
-            tools: catalogOf(),
-            projectRoot: PROJECT_ROOT,
-            force: true,
-          });
+          await useCase.execute({ ...AT_PROJECT, force: true });
 
           expect(activator.uninstalledPlugins).toEqual([]);
           expect(activator.removedMarketplaces).toEqual([]);
@@ -747,11 +688,7 @@ describe("clean", () => {
           await sharedClaudeRegistry()
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(logger.warnMessages[0]).toBe(
@@ -797,11 +734,7 @@ describe("clean", () => {
             new InMemoryManifestRepository(machine, "/fake-home")
           );
 
-          await useCase.execute({
-            tools: catalogOf(),
-            projectRoot: PROJECT_ROOT,
-            force: true,
-          });
+          await useCase.execute({ ...AT_PROJECT, force: true });
 
           expect(activator.uninstalledPlugins).toEqual(claimed ? [REF] : []);
           expect(activator.removedMarketplaces).toEqual([]);
@@ -875,9 +808,7 @@ describe("clean", () => {
         new Map([["codex", sourceReader]])
       );
 
-      await expect(
-        useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
-      ).rejects.toThrow("differs");
+      await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow("differs");
 
       expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
       expect(await references.listAllReferencingProjects()).toContain("/other-project");
@@ -933,9 +864,7 @@ describe("clean", () => {
         new Map([["codex", hostRefs]])
       );
 
-      await expect(
-        useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
-      ).rejects.toThrow("foreign");
+      await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow("foreign");
 
       expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
       expect(await references.listAllReferencingProjects()).toContain("/other-project");
@@ -958,11 +887,7 @@ describe("clean", () => {
         seedMarketplaceRegistry()
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
@@ -998,11 +923,7 @@ describe("clean", () => {
         () => HOME
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
@@ -1083,11 +1004,7 @@ describe("clean", () => {
           seedClaudeMarketplaceRegistry()
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toEqual([CLAUDE_REF]);
         expect(activator.uninstalledPluginScopes).toEqual(["project", "user"]);
@@ -1124,11 +1041,7 @@ describe("clean", () => {
           hostPluginRegistries
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toEqual([CLAUDE_REF]);
         expect(activator.uninstalledPluginScopes).toEqual(["user"]);
@@ -1177,11 +1090,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         // The host-side guard already in place: the shared marketplace is never
         // unregistered from claude/codex/copilot by a single project's own `clean`.
@@ -1227,13 +1136,9 @@ describe("clean", () => {
           references
         );
 
-        await expect(
-          useCase.execute({
-            tools: catalogOf(),
-            projectRoot: PROJECT_ROOT,
-            force: true,
-          })
-        ).rejects.toThrow("gitignore cleanup failed");
+        await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(
+          "gitignore cleanup failed"
+        );
         expect(await references.listAllReferencingProjects()).toEqual([
           PROJECT_ROOT,
           OTHER_PROJECT_ROOT,
@@ -1249,13 +1154,9 @@ describe("clean", () => {
           () => "/fake-home",
           references
         );
-        await expect(
-          userClean.execute({
-            tools: catalogOf(),
-            projectRoot: PROJECT_ROOT,
-            force: true,
-          })
-        ).rejects.toThrow("the shared framework source");
+        await expect(userClean.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(
+          "the shared framework source"
+        );
       });
 
       it("names how many other projects still reference the source", async () => {
@@ -1290,11 +1191,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         const message = logger.warnMessages.find((m) => m.includes("shared by every project"));
         expect(message).toBeDefined();
@@ -1341,11 +1238,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         const message = logger.warnMessages.find((m) => m.includes("shared by every project"));
         expect(message).toBeDefined();
@@ -1383,11 +1276,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         const message = logger.warnMessages.find((m) => m.includes("shared by every project"));
         expect(message).toBeDefined();
@@ -1427,11 +1316,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: false,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
         expect(result.dryRun).toBe(true);
         expect(result.preview.sharedSourceOtherProjects).toEqual([OTHER_PROJECT_ROOT]);
@@ -1474,11 +1359,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: false,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
         expect(result.dryRun).toBe(true);
         expect(result.preview.sharedSourceOtherProjects).toEqual([OTHER_PROJECT_ROOT]);
@@ -1520,11 +1401,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(await userSourceReferences.listAllReferencingProjects()).not.toContain(PROJECT_ROOT);
         expect(await userSourceReferences.listAllReferencingProjects()).toContain(
@@ -1571,11 +1448,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: false,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
         expect(result.dryRun).toBe(true);
         expect(result.preview.sharedSourceOtherProjects).toBeUndefined();
@@ -1616,11 +1489,7 @@ describe("clean", () => {
           userSourceReferences
         );
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(result.dryRun).toBe(false);
         expect(logger.warnMessages.some((m) => m.includes("references.json"))).toBe(true);
@@ -1642,11 +1511,7 @@ describe("clean", () => {
         seedMarketplaceRegistry()
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
@@ -1682,11 +1547,7 @@ describe("clean", () => {
         claudeRefOnHost("project")
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(calls).toEqual([`uninstall:${REF}`, `removeMarketplace:${MARKETPLACE}`]);
     });
@@ -1718,11 +1579,7 @@ describe("clean", () => {
         seedMarketplaceRegistry()
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(builtTreeExistedAtRemoveMarketplace).toBe(true);
     });
@@ -1741,11 +1598,7 @@ describe("clean", () => {
         seedMarketplaceRegistry()
       );
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
       expect(result.dryRun).toBe(true);
       expect(result.preview.nativeRegistrations).toEqual([
@@ -1810,11 +1663,7 @@ describe("clean", () => {
         new InMemoryManifestRepository(Manifest.create())
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(activator.removedMarketplaces).toEqual([HOST_NAME]);
       expect(activator.removedMarketplaces).not.toContain(ALIAS);
@@ -1858,11 +1707,7 @@ describe("clean", () => {
           registry: seedMarketplaceRegistry(),
         });
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(result.manifestFound).toBe(true);
         expect(logger.warnMessages).toStrictEqual([
@@ -1893,11 +1738,7 @@ describe("clean", () => {
           registry,
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(activator.removedMarketplaces).toStrictEqual([]);
@@ -1920,11 +1761,7 @@ describe("clean", () => {
           registry: undefined,
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(activator.removedMarketplaces).toStrictEqual([]);
@@ -1947,11 +1784,7 @@ describe("clean", () => {
           registry: seedMarketplaceRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toStrictEqual([]);
         expect(logger.warnMessages).toStrictEqual([
@@ -1977,11 +1810,7 @@ describe("clean", () => {
           hostPluginRegistries: claudeRefOnHost(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPluginScopes).toStrictEqual(["project", "user"]);
         expect(logger.warnMessages).toStrictEqual([
@@ -2000,13 +1829,9 @@ describe("clean", () => {
           hostPluginRegistries: claudeRefOnHost("project"),
         });
 
-        await expect(
-          useCase.execute({
-            tools: catalogOf(),
-            projectRoot: PROJECT_ROOT,
-            force: true,
-          })
-        ).rejects.toThrow("activator crashed uninstalling a plugin");
+        await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(
+          "activator crashed uninstalling a plugin"
+        );
       });
 
       function seedSharedRegistry(): InMemoryMarketplaceRegistry {
@@ -2056,11 +1881,7 @@ describe("clean", () => {
           registry: seedSharedRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
           `copilot: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json.`,
@@ -2091,11 +1912,7 @@ describe("clean", () => {
           new Map()
         );
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(result.manifestFound).toBe(true);
         expect(activator.removedMarketplaces).toEqual([]);
@@ -2131,11 +1948,7 @@ describe("clean", () => {
           new Map()
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(activator.removedMarketplaces).toEqual([]);
@@ -2177,11 +1990,7 @@ describe("clean", () => {
           hostRefs
         );
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(activator.removedMarketplaces).toEqual([]);
@@ -2199,11 +2008,7 @@ describe("clean", () => {
           registry: seedSharedRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
           `cursor: '${MARKETPLACE}' is shared by every project on this machine — left registered. Its entry survives at userConfigDir()/marketplaces.json.`,
@@ -2222,11 +2027,7 @@ describe("clean", () => {
           registry: seedSharedRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(fs.has(join(CODEX_CACHE, MARKETPLACE, "leftover.json"))).toBe(true);
         expect(logger.warnMessages).toStrictEqual([
@@ -2246,11 +2047,7 @@ describe("clean", () => {
           registry: seedSharedRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
           "copilot: registration left in place, the copilot CLI is not on the PATH.",
@@ -2268,11 +2065,7 @@ describe("clean", () => {
           registry: seedSharedRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
           "cursor: registration left in place, the cursor CLI is not on the PATH.",
@@ -2297,11 +2090,7 @@ describe("clean", () => {
           registry: seedMarketplaceRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
           "codex: registration left in place, the codex CLI is not on the PATH.",
@@ -2329,11 +2118,7 @@ describe("clean", () => {
           registry: seedMarketplaceRegistry(),
         });
 
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(logger.warnMessages).toStrictEqual([
           `codex: registration left in place, the codex CLI is not on the PATH. Its cache survives at: ${join(CODEX_CACHE, "mkt-a")}, ${join(CODEX_CACHE, "mkt-b")}.`,
@@ -2389,11 +2174,7 @@ describe("clean", () => {
           new Map([["claude", activator]]),
           seedMarketplaceRegistry()
         );
-        await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        await useCase.execute({ ...AT_PROJECT, force: true });
         return activator.uninstalledPluginScopes;
       }
 
@@ -2449,11 +2230,7 @@ describe("clean", () => {
         new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd")
       );
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
       expect(result).toStrictEqual({
         dryRun: true,
@@ -2490,11 +2267,7 @@ describe("clean", () => {
         deps.logger,
         deps.gitignoreUseCase
       );
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(deps.fs.has(settingsLocalPath)).toBe(false);
     });
@@ -2540,11 +2313,7 @@ describe("clean", () => {
         new CapturingLogger(),
         new GitignoreUseCase(fs)
       );
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(fs.has(hooksPath)).toBe(false);
       expect(fs.has(scriptPath)).toBe(false);
@@ -2597,11 +2366,7 @@ describe("clean", () => {
         new CapturingLogger(),
         new GitignoreUseCase(fs)
       );
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       const remainingHooks = fs.getFile(hooksPath);
       expect(remainingHooks).toBeDefined();
@@ -2710,12 +2475,7 @@ describe("clean", () => {
       );
 
       await expect(
-        useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: false,
-          interactive: true,
-        })
+        useCase.execute({ ...AT_PROJECT, force: false, interactive: true })
       ).rejects.toThrow("edited after install");
 
       expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
@@ -2787,9 +2547,7 @@ describe("clean", () => {
       references
     );
 
-    await expect(
-      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
-    ).rejects.toThrow("edited");
+    await expect(useCase.execute({ ...AT_PROJECT, force: true })).rejects.toThrow("edited");
 
     expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
     expect(await references.listAllReferencingProjects()).toContain("/other-project");
@@ -2826,11 +2584,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(
         fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
@@ -2865,11 +2619,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(fs.deletedPaths.some((p) => p.includes("evil"))).toBe(false);
       expect(
@@ -2889,11 +2639,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(result).toStrictEqual({
         dryRun: false,
@@ -2925,12 +2671,7 @@ describe("clean", () => {
       const prompter = new RecordingPrompter(true);
       const useCase = buildConfirmingUseCase(fs, prompter);
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        interactive: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false, interactive: true });
 
       expect(prompter.confirmMessages).toStrictEqual(["Remove all AIDD files?"]);
       expect(result).toStrictEqual({
@@ -2946,12 +2687,7 @@ describe("clean", () => {
       const fs = new InMemoryFileAdapter();
       const useCase = buildConfirmingUseCase(fs, new RecordingPrompter(false));
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        interactive: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false, interactive: true });
 
       expect(result).toStrictEqual({
         dryRun: true,
@@ -2967,11 +2703,7 @@ describe("clean", () => {
       const prompter = new RecordingPrompter(true);
       const useCase = buildConfirmingUseCase(fs, prompter);
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
       expect(prompter.confirmMessages).toStrictEqual([]);
       expect(result).toStrictEqual({
@@ -2986,12 +2718,7 @@ describe("clean", () => {
       const fs = new InMemoryFileAdapter();
       const useCase = buildConfirmingUseCase(fs, undefined);
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-        interactive: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false, interactive: true });
 
       expect(result.dryRun).toBe(true);
       expect(fs.has(join(PROJECT_ROOT, "a.md"))).toBe(true);
@@ -3016,11 +2743,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
       expect(result).toStrictEqual({
         dryRun: true,
@@ -3049,11 +2772,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
       expect(result.preview.nativeRegistrations).toStrictEqual([
         {
@@ -3082,11 +2801,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: false,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: false });
 
       expect(result.preview.nativeRegistrations).toStrictEqual([
         {
@@ -3119,11 +2834,7 @@ describe("clean", () => {
       const logger = new CapturingLogger();
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md", "b.md"]), logger);
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(result.fileCount).toBe(2);
       expect(fs.has(join(PROJECT_ROOT, "a.md"))).toBe(false);
@@ -3136,11 +2847,7 @@ describe("clean", () => {
       fs.setFile(join(PROJECT_ROOT, ".claude", "settings.local.json"), "{}");
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(result.fileCount).toBe(2);
     });
@@ -3149,11 +2856,7 @@ describe("clean", () => {
       const fs = new InMemoryFileAdapter();
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(result.fileCount).toBe(1);
     });
@@ -3189,11 +2892,7 @@ describe("clean", () => {
       );
       const useCase = buildCountingUseCase(fs, manifest);
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(result.fileCount).toBe(1);
     });
@@ -3215,11 +2914,7 @@ describe("clean", () => {
       fs.setFile(join(PROJECT_ROOT, "skills", "x.md"), "x");
       const useCase = buildCountingUseCase(fs, manifest);
 
-      const result = await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(fs.has(join(PROJECT_ROOT, "skills", "x.md"))).toBe(false);
       expect(result.fileCount).toBe(1);
@@ -3253,11 +2948,7 @@ describe("clean", () => {
           seedMerged(fs, '{"owned":1,"theirs":2}', ["owned"])
         );
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(fs.getFile(join(PROJECT_ROOT, MERGED))).toBe('{\n  "theirs": 2\n}');
         expect(result.fileCount).toBe(1);
@@ -3267,11 +2958,7 @@ describe("clean", () => {
         const fs = new InMemoryFileAdapter();
         const useCase = buildCountingUseCase(fs, seedMerged(fs, '{"owned":1}', ["owned"]));
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(fs.has(join(PROJECT_ROOT, MERGED))).toBe(false);
         expect(result.fileCount).toBe(1);
@@ -3281,11 +2968,7 @@ describe("clean", () => {
         const fs = new InMemoryFileAdapter();
         const useCase = buildCountingUseCase(fs, seedMerged(fs, '{"theirs":2}', []));
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(fs.has(join(PROJECT_ROOT, MERGED))).toBe(false);
         expect(result.fileCount).toBe(1);
@@ -3295,11 +2978,7 @@ describe("clean", () => {
         const fs = new InMemoryFileAdapter();
         const useCase = buildCountingUseCase(fs, seedMerged(fs, null, ["owned"]));
 
-        const result = await useCase.execute({
-          tools: catalogOf(),
-          projectRoot: PROJECT_ROOT,
-          force: true,
-        });
+        const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
         expect(result.fileCount).toBe(0);
       });
@@ -3318,11 +2997,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(logger.infoMessages).toStrictEqual([
         "Removing claude files...",
@@ -3341,11 +3016,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
 
-      await useCase.execute({
-        tools: catalogOf(),
-        projectRoot: PROJECT_ROOT,
-        force: true,
-      });
+      await useCase.execute({ ...AT_PROJECT, force: true });
 
       expect(logger.infoMessages).toStrictEqual(["Removing claude files..."]);
     });
