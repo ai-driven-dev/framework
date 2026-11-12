@@ -14,14 +14,22 @@ How this package is tested: the layers, the tools, the conventions.
 
 ### Levels
 
-| Level | Holds | Count |
+A level higher up costs more per test: measured on the whole suite, a unit test runs in about a millisecond, an integration test in several, an e2e test in about a hundred, since each spawns the built binary. Place each behaviour by the table below, at the first level that can prove it.
+
+| Behaviour | Level | Count |
 | --- | --- | --- |
-| unit | the bulk of the suite: domain rules, use cases and commands with in-memory doubles; no disk, process or network | one per rule, decision or error, cases in a table |
-| contract | one suite per port, run on the double and the real adapter | one per port |
-| integration | an adapter against the system it talks to: file system, git, a host CLI, the network | the cases that system can produce |
-| e2e | the built binary over a main user journey | the main journeys only, never every case |
-| golden | full output bytes | help text and generated distributions only |
-| arch | rules about `src/` structure | one per rule |
+| a domain rule or invariant: a refusal, a computed answer, an order | unit | one per rule, cases in a table |
+| a use case's decision: what it writes, skips, reports, and each error it raises | unit, with in-memory doubles | one per decision or error |
+| a command's parsing of its flags and the message of a user error | unit | one per flag rule or error |
+| what every implementation of a port must do | contract, on the double and the real adapter | one suite per port |
+| how an adapter talks to a real system: file system, git, a host CLI, the network | integration | the cases that system can produce |
+| a main user journey, through the built binary | e2e | the main journeys only |
+| a failure only the binary shows: exit code, stderr, an unknown command or flag | e2e | one per failure family, never one per case |
+| exact output bytes | golden | help text and generated distributions only |
+| a rule about `src/` structure | arch | one per rule |
+| a profile's declared data, wiring, delegation | none | none |
+
+Unit holds the bulk of the suite and reads no disk, process or network. A failure whose message a use case decides is a unit test; e2e only checks that some failure of that family reaches the user with its exit code.
 
 ### When to write it
 
