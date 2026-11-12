@@ -29,6 +29,12 @@ export interface ProjectHooksFormat {
   scriptDir(pluginName: string): string;
 }
 
+/** The directory a tool keeps its own commands in, from the project root and under it. */
+export interface SignalDirectory {
+  readonly absolute: string;
+  readonly relative: string;
+}
+
 /** Where a tool takes a plugin's hooks inside the project, and how it names itself in a refusal. */
 export interface ProjectHooksLocation {
   relativePath: string;

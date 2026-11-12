@@ -39,7 +39,7 @@ export class DoctorUseCase {
     const manifest = await this.loadManifest();
     const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
     const toolHealth = this.buildToolHealth(manifest, allowedIds);
-    const issues = await this.collectIssues(manifest, projectRoot, allowedIds, category);
+    const issues = await this.collectIssues(manifest, projectRoot, allowedIds, tools, category);
     const pluginIssues = await this.plugin.execute({
       manifest,
       projectRoot,
@@ -78,6 +78,7 @@ export class DoctorUseCase {
     manifest: Manifest,
     projectRoot: string,
     allowedIds: Set<string> | null,
+    tools: readonly ToolProfile[],
     category?: ToolCategory
   ): Promise<DoctorIssue[]> {
     const trackedFileList = this.trackedFiles.collectTrackedFiles(manifest, allowedIds);
@@ -90,9 +91,9 @@ export class DoctorUseCase {
         allowedIds,
         trackedFiles: trackedFileList,
       })),
-      ...(await this.registration.execute({ manifest, projectRoot, allowedIds })),
+      ...(await this.registration.execute({ manifest, projectRoot, allowedIds, tools })),
     ];
-    if (!category) issues.push(...(await this.layout.execute({ manifest, projectRoot })));
+    if (!category) issues.push(...(await this.layout.execute({ manifest, projectRoot, tools })));
     return issues;
   }
 

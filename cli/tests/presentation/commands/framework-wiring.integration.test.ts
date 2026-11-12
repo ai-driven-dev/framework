@@ -342,7 +342,10 @@ describe("aidd framework update", () => {
 describe("aidd framework rules", () => {
   it("reads this project's rules and says so when there are none", async () => {
     expect(await run("rules")).toEqual(["No rules installed for any AI tool."]);
-    expect(listInstalledRules).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
+    expect(listInstalledRules).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      tools: expect.any(Array),
+    });
   });
 
   it("prints the inventory as text a person reads", async () => {

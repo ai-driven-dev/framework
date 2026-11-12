@@ -281,7 +281,10 @@ describe("StatusUseCase", () => {
 describe("status", () => {
   it("reports no drift when no tools are installed", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitUseCase(deps.fs, deps.manifestRepo).execute({ projectRoot: PROJECT_ROOT });
+    await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+      projectRoot: PROJECT_ROOT,
+      tools: catalogOf().sortedById(),
+    });
 
     const useCase = new StatusUseCase(
       deps.fs,
@@ -300,7 +303,10 @@ describe("status", () => {
 
   it("does not call a machine-local file an addition, whatever the profile declares", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitUseCase(deps.fs, deps.manifestRepo).execute({ projectRoot: PROJECT_ROOT });
+    await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+      projectRoot: PROJECT_ROOT,
+      tools: catalogOf().sortedById(),
+    });
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest missing");
     manifest.addTool("claude", "test", []);

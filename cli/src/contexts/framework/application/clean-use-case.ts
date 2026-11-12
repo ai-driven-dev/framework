@@ -27,11 +27,6 @@ import type { HostMarketplaceSources } from "../../host-registration/contract/ho
 import type { HostPluginRegistry } from "../../host-registration/contract/host-plugin-registry.js";
 import type { AiToolProfile, ToolProfile } from "../../tools/contract/tool-profile.js";
 import { aiProfileOf, profileOf } from "../../tools/contract/tool-profile-lookup.js";
-import {
-  nativeActivationOf,
-  pluginEnablementIsMachineGlobal,
-  projectHooksFileOf,
-} from "../../tools/domain/registry.js";
 import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
 import type { Manifest } from "../domain/manifest.js";
 import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
@@ -125,6 +120,11 @@ function machineLocalFilesOf(tools: readonly ToolProfile[], toolId: ToolId): rea
   return profile.kind === "ai" ? profile.machineLocalFiles() : [];
 }
 
+function machineGlobalEnablement(tools: readonly ToolProfile[], toolId: ToolId): boolean {
+  const profile = profileOf(tools, toolId);
+  return profile.kind === "ai" ? profile.pluginEnablementIsMachineGlobal() : true;
+}
+
 export class CleanUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -167,7 +167,7 @@ export class CleanUseCase {
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };
     }
     const home = this.homeDir();
-    const preview = await this.buildPreview(manifest, home, options.projectRoot);
+    const preview = await this.buildPreview(manifest, home, options.projectRoot, options.tools);
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
     await this.assertNativeSourcesUnchanged(manifest, options.projectRoot, options.tools);
@@ -175,7 +175,7 @@ export class CleanUseCase {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         const tool = aiProfileOf(options.tools, toolId);
-        if (projectHooksFileOf(toolId) !== undefined) {
+        if (tool.projectHooksDelivery() !== null) {
           await assertProjectHooksRemovable(this.fs, plugin, tool, options.projectRoot, {
             overwriteEdited: options.force,
           });
@@ -356,7 +356,7 @@ export class CleanUseCase {
     if (activator === undefined || !activator.isAvailable()) {
       this.logger.warn(
         `${binary}: registration left in place, the ${binary} CLI is not on the PATH.` +
-          this.describeSurvivingCachePaths(toolId, registrations, home)
+          this.describeSurvivingCachePaths(toolId, registrations, home, tools)
       );
       return undefined;
     }
@@ -386,7 +386,8 @@ export class CleanUseCase {
         projectRoot,
         toolId,
         home,
-        sharedSourceOutcome
+        sharedSourceOutcome,
+        tools
       );
       if (removed) removedHostNames.add(hostName);
     }
@@ -406,7 +407,8 @@ export class CleanUseCase {
     projectRoot: string,
     toolId: ToolId,
     home: string,
-    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined
+    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined,
+    tools: readonly ToolProfile[]
   ): Promise<boolean> {
     const marketplaces = (await this.marketplaceRegistry?.list(projectRoot)) ?? [];
     const marketplace = marketplaces.find((m) => m.name === alias);
@@ -423,12 +425,12 @@ export class CleanUseCase {
       // plugin cache, named by its absolute path when the profile declares one.
       this.logger.warn(
         `${binary}: '${hostName}' is shared by every project on this machine — left registered. ` +
-          this.describeSharedSourceSurvival(toolId, hostName, home, sharedSourceOutcome)
+          this.describeSharedSourceSurvival(toolId, hostName, home, sharedSourceOutcome, tools)
       );
       return false;
     }
     const removeProjectRegistration = async (): Promise<boolean> => {
-      if (pluginEnablementIsMachineGlobal(toolId)) {
+      if (machineGlobalEnablement(tools, toolId)) {
         const machine = await this.userManifestRepo?.load();
         if (machine === undefined || machine === null) {
           if (marketplace.name !== FRAMEWORK_MARKETPLACE_NAME) {
@@ -506,9 +508,10 @@ export class CleanUseCase {
     toolId: ToolId,
     hostName: string,
     home: string,
-    outcome: SharedSourceReferenceOutcome | undefined
+    outcome: SharedSourceReferenceOutcome | undefined,
+    tools: readonly ToolProfile[]
   ): string {
-    const base = `Its entry survives at userConfigDir()/marketplaces.json${this.describeSurvivingCachePath(toolId, hostName, home)}.`;
+    const base = `Its entry survives at userConfigDir()/marketplaces.json${this.describeSurvivingCachePath(toolId, hostName, home, tools)}.`;
     if (outcome === undefined) return base;
     const { otherProjects } = outcome;
     if (otherProjects.length > 0) {
@@ -520,9 +523,14 @@ export class CleanUseCase {
 
   /** One marketplace's own surviving cache path — empty for a tool whose profile declares no
    * `NativeActivation.pluginCacheDir` (copilot). */
-  private describeSurvivingCachePath(toolId: ToolId, hostName: string, home: string): string {
+  private describeSurvivingCachePath(
+    toolId: ToolId,
+    hostName: string,
+    home: string,
+    tools: readonly ToolProfile[]
+  ): string {
     if (!isAiToolId(toolId)) return "";
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(home);
+    const cacheRoot = aiProfileOf(tools, toolId).nativeActivation()?.pluginCacheRoot(home);
     if (cacheRoot === undefined) return "";
     return `, and its cache at: ${join(cacheRoot, hostName)}`;
   }
@@ -533,10 +541,11 @@ export class CleanUseCase {
   private describeSurvivingCachePaths(
     toolId: ToolId,
     registrations: NativeRegistrations,
-    home: string
+    home: string,
+    tools: readonly ToolProfile[]
   ): string {
     if (!isAiToolId(toolId)) return "";
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(home);
+    const cacheRoot = aiProfileOf(tools, toolId).nativeActivation()?.pluginCacheRoot(home);
     if (cacheRoot === undefined) return "";
     const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
     if (paths.length === 0) return "";
@@ -568,7 +577,7 @@ export class CleanUseCase {
       );
       return;
     }
-    if (pluginEnablementIsMachineGlobal(toolId)) {
+    if (machineGlobalEnablement(tools, toolId)) {
       const sharedHostName = registrations.marketplaces.find(
         (registration) => registration.alias === sharedSourceOutcome?.alias
       )?.hostName;
@@ -586,7 +595,8 @@ export class CleanUseCase {
       toolId,
       ref,
       registrations,
-      sharedSourceOutcome
+      sharedSourceOutcome,
+      tools
     );
     if (guardMessage !== undefined) {
       this.logger.warn(guardMessage);
@@ -652,7 +662,8 @@ export class CleanUseCase {
     toolId: ToolId,
     ref: string,
     registrations: NativeRegistrations,
-    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined
+    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined,
+    tools: readonly ToolProfile[]
   ): string | undefined {
     const hostName = registrations.marketplaces.find(
       (m) => m.alias === sharedSourceOutcome?.alias
@@ -661,7 +672,7 @@ export class CleanUseCase {
     const guarded = refAnotherProjectStillNeeds({
       ref,
       sharedSourceHostName: hostName,
-      enablementIsMachineGlobal: pluginEnablementIsMachineGlobal(toolId),
+      enablementIsMachineGlobal: machineGlobalEnablement(tools, toolId),
       otherProjects,
     });
     if (!guarded) return undefined;
@@ -752,7 +763,7 @@ export class CleanUseCase {
     projectRoot: string,
     hooksGuard: ProjectHooksGuard
   ): Promise<number> {
-    if (projectHooksFileOf(toolId) === undefined || !isAiToolId(toolId)) return 0;
+    if (!isAiToolId(toolId) || aiProfileOf(tools, toolId).projectHooksDelivery() === null) return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
       if (
@@ -772,14 +783,15 @@ export class CleanUseCase {
   private async buildPreview(
     manifest: Manifest,
     home: string,
-    projectRoot: string
+    projectRoot: string,
+    profiles: readonly ToolProfile[]
   ): Promise<CleanPreview> {
     const tools = manifest.getInstalledToolIds().map((toolId) => ({
       toolId,
       fileCount: manifest.getToolFiles(toolId).length + manifest.getMergeFiles(toolId).length,
     }));
     const totalFileCount = tools.reduce((s, t) => s + t.fileCount, 0);
-    const nativeRegistrations = this.previewNativeRegistrations(manifest, home);
+    const nativeRegistrations = this.previewNativeRegistrations(manifest, home, profiles);
     const sharedSourceOtherProjects = await this.previewSharedSourceOtherProjects(projectRoot);
     return { tools, totalFileCount, nativeRegistrations, sharedSourceOtherProjects };
   }
@@ -797,14 +809,15 @@ export class CleanUseCase {
 
   private previewNativeRegistrations(
     manifest: Manifest,
-    home: string
+    home: string,
+    tools: readonly ToolProfile[]
   ): CleanPreview["nativeRegistrations"] {
     const preview: CleanPreview["nativeRegistrations"] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
       const cacheRoot = isAiToolId(toolId)
-        ? nativeActivationOf(toolId)?.pluginCacheRoot(home)
+        ? aiProfileOf(tools, toolId).nativeActivation()?.pluginCacheRoot(home)
         : undefined;
       preview.push({
         toolId,

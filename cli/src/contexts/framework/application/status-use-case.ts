@@ -11,7 +11,7 @@ import {
   toolIdsForCategory,
 } from "../../../kernel/tool.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
-import { getToolConfig, machineLocalFilesOf } from "../../tools/domain/registry.js";
+import { profileOf } from "../../tools/contract/tool-profile-lookup.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { DetectPluginDriftUseCase } from "./shared/detect-plugin-drift-use-case.js";
@@ -74,7 +74,7 @@ export class StatusUseCase implements StatusQuery {
       throw new ToolNotInstalledError(filterToolId);
 
     const installedToolIds = this.resolveToolIds(filterToolId, category, manifest);
-    const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
+    const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot, profiles);
     const pluginDrift = await this.checkAllPlugins(
       installedToolIds,
       manifest,
@@ -104,29 +104,36 @@ export class StatusUseCase implements StatusQuery {
   private async checkAllTools(
     toolIds: ToolId[],
     manifest: Manifest,
-    projectRoot: string
+    projectRoot: string,
+    profiles: readonly ToolProfile[]
   ): Promise<ToolStatus[]> {
     const tools: ToolStatus[] = [];
     for (const toolId of toolIds) {
-      tools.push(await this.checkOneTool(toolId, manifest, projectRoot));
+      tools.push(await this.checkOneTool(profileOf(profiles, toolId), manifest, projectRoot));
     }
     return tools;
   }
 
   private async checkOneTool(
-    toolId: ToolId,
+    tool: ToolProfile,
     manifest: Manifest,
     projectRoot: string
   ): Promise<ToolStatus> {
+    const toolId = tool.toolId;
     const version = manifest.getToolVersion(toolId) ?? "unknown";
     const trackedFiles = manifest.getToolFiles(toolId);
     const mergeFiles = manifest.getMergeFiles(toolId);
     const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
     drifted.push(...(await this.checkMergeFiles(mergeFiles, projectRoot)));
-    const dir = getToolConfig(toolId).directory;
+    const dir = tool.directory;
     const trackedSet = manifest.getTrackedPathsInDirectory(dir);
     drifted.push(
-      ...(await this.detectAddedFiles(dir, trackedSet, projectRoot, machineLocalFilesOf(toolId)))
+      ...(await this.detectAddedFiles(
+        dir,
+        trackedSet,
+        projectRoot,
+        tool.kind === "ai" ? tool.machineLocalFiles() : []
+      ))
     );
     return { toolId, version, drifted };
   }

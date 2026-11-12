@@ -257,7 +257,10 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output, catalog);
-        const { rules } = await deps.listInstalledRulesUseCase.execute({ projectRoot });
+        const { rules } = await deps.listInstalledRulesUseCase.execute({
+          projectRoot,
+          tools: catalog.sortedById(),
+        });
         if (cmdOptions.json) printInstalledRulesJson(output, rules);
         else printInstalledRules(output, rules);
       } catch (error) {

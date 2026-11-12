@@ -112,7 +112,7 @@ export async function initProject(
   projectRoot: string
 ): Promise<void> {
   const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
-  await initUseCase.execute({ projectRoot });
+  await initUseCase.execute({ projectRoot, tools: catalogOf().sortedById() });
 }
 
 export async function installTool(

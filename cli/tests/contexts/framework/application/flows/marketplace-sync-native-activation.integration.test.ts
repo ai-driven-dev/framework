@@ -21,6 +21,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -565,6 +566,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
+      tools: catalogOf().sortedById(),
     });
     expect(
       before.some((issue) => issue.severity === "error" && issue.fix.includes("aidd sync"))
@@ -576,6 +578,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
+      tools: catalogOf().sortedById(),
     });
     expect(after.filter((issue) => issue.severity === "error")).toEqual([]);
   });

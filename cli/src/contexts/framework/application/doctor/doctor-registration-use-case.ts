@@ -19,12 +19,8 @@ import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { MarketplaceRegistration } from "../../../tools/domain/plugins/marketplace-registration.js";
-import {
-  getAiToolConfig,
-  nativeActivationOf,
-  resolveNativePlugins,
-} from "../../../tools/domain/registry.js";
+import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf, profileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
@@ -39,6 +35,7 @@ export interface DoctorRegistrationOptions {
   manifest: Manifest;
   projectRoot: string;
   allowedIds: Set<string> | null;
+  tools: readonly ToolProfile[];
   /** A global install declares nothing in a project's settings, so it skips that check. */
   globalInstall?: boolean;
 }
@@ -110,11 +107,12 @@ export class DoctorRegistrationUseCase {
   private async checkMarketplaceSources(
     options: DoctorRegistrationOptions
   ): Promise<DoctorIssue[]> {
-    const { projectRoot } = options;
+    const { projectRoot, tools } = options;
     const issues: DoctorIssue[] = [];
     for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
       if (!isAiToolId(toolId)) continue;
-      if (nativeActivationOf(toolId)?.keepsMarketplaceRegistry() !== true) continue;
+      const profile = aiProfileOf(tools, toolId);
+      if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) continue;
       const reader = this.hostMarketplaceRegistries.get(toolId);
       if (reader === undefined) continue;
       for (const marketplace of expected) {
@@ -122,7 +120,7 @@ export class DoctorRegistrationUseCase {
         if (requestedSource === undefined) continue;
         const requestedIdentity = await readMarketplaceCatalogIdentity(
           this.fs,
-          getAiToolConfig(toolId),
+          profile,
           requestedSource
         );
         if (requestedIdentity === undefined) continue;
@@ -136,7 +134,7 @@ export class DoctorRegistrationUseCase {
         // at this project's own pre-migration cache" case this decides.
         const check: HostMarketplaceSourceCheck = await hostMarketplaceSourceConflict(
           this.fs,
-          getAiToolConfig(toolId),
+          profile,
           reader,
           requestedSource,
           requestedIdentity,
@@ -222,14 +220,15 @@ export class DoctorRegistrationUseCase {
   private async checkDeclaredMarketplaces(
     options: DoctorRegistrationOptions
   ): Promise<DoctorIssue[]> {
-    const { projectRoot } = options;
+    const { projectRoot, tools } = options;
     const issues: DoctorIssue[] = [];
     for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
-      const settings = this.untrackedSettingsOf(toolId);
+      const profile = profileOf(tools, toolId);
+      const settings = this.untrackedSettingsOf(profile);
       if (settings === undefined) continue;
       // A tool that writes its own registration cannot have written one while its binary was out
       // of reach: reporting the absence would report that an uninstalled tool is unconfigured.
-      if (!this.canRegisterItself(toolId)) continue;
+      if (!this.canRegisterItself(profile)) continue;
       const registered = await this.registeredNames(projectRoot, settings);
       for (const marketplace of expected) {
         if (registered.has(marketplace.name)) continue;
@@ -246,11 +245,11 @@ export class DoctorRegistrationUseCase {
   private async checkNativeRegistrations(
     options: DoctorRegistrationOptions
   ): Promise<DoctorIssue[]> {
-    const { manifest, projectRoot, allowedIds } = options;
+    const { manifest, projectRoot, allowedIds, tools } = options;
     const issues: DoctorIssue[] = [];
     for (const toolId of this.retainedToolIds(manifest, allowedIds)) {
       if (!isAiToolId(toolId)) continue;
-      if (nativeActivationOf(toolId) === undefined) continue;
+      if (aiProfileOf(tools, toolId).nativeActivation() === undefined) continue;
       const expected = this.expectedNativeRegistrations(manifest, toolId);
       if (expected.length === 0) continue;
       const reading = await this.hostRegistries.get(toolId)?.read(projectRoot);
@@ -321,19 +320,18 @@ export class DoctorRegistrationUseCase {
   }
 
   private untrackedSettingsOf(
-    toolId: ToolId
-  ): { file: string; registration: MarketplaceRegistration } | undefined {
-    const registration = resolveNativePlugins(toolId)?.marketplaceRegistration();
+    tool: ToolProfile
+  ): { file: string; profile: AiToolProfile } | undefined {
+    if (tool.kind !== "ai") return undefined;
     // No machine-local file means the tool writes no machine-local registration at all, so
     // there is nothing here to check.
-    const file = registration?.machineLocalFiles()[0];
-    if (registration == null || file === undefined) return undefined;
-    return { file, registration };
+    const file = tool.machineLocalFiles()[0];
+    return file === undefined ? undefined : { file, profile: tool };
   }
 
   private async registeredNames(
     projectRoot: string,
-    settings: { file: string; registration: MarketplaceRegistration }
+    settings: { file: string; profile: AiToolProfile }
   ): Promise<Set<string>> {
     const path = join(projectRoot, settings.file);
     if (!(await this.fs.fileExists(path))) return new Set();
@@ -343,11 +341,11 @@ export class DoctorRegistrationUseCase {
     } catch {
       return new Set();
     }
-    return settings.registration.declaredMarketplaceNames(parsed);
+    return new Set(settings.profile.declaredMarketplaceNames(parsed));
   }
 
-  private canRegisterItself(toolId: ToolId): boolean {
-    const activation = nativeActivationOf(toolId);
+  private canRegisterItself(tool: ToolProfile): boolean {
+    const activation = tool.kind === "ai" ? tool.nativeActivation() : undefined;
     if (activation === undefined) return true;
     return this.activators.get(activation.hostBinary())?.isAvailable() ?? false;
   }

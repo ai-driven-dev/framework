@@ -3,7 +3,7 @@ import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-
 import type { MergeStrategy } from "../../../kernel/merge.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../kernel/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
-import type { GlobalFiles, ProjectHooksLocation } from "./tool-vocabulary.js";
+import type { GlobalFiles, ProjectHooksLocation, SignalDirectory } from "./tool-vocabulary.js";
 
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
@@ -29,6 +29,8 @@ export interface NativeActivationAnswers {
   hostBinary(): string;
   /** Whether the host's own CLI can update one installed plugin ref. */
   refreshesOnePlugin(): boolean;
+  /** Whether the host keeps a registry of marketplaces that this CLI can read. */
+  keepsMarketplaceRegistry(): boolean;
   /** Where the host leaves its plugin cache under `home`, or undefined when it declares none. */
   pluginCacheRoot(home: string): string | undefined;
   /** The host's own user-scope settings file under `home`, or undefined when none is declared. */
@@ -193,16 +195,28 @@ export interface AiToolProfile {
   settingsFiles(): readonly SettingsFileAnswers[];
   /** The files its marketplace registration keeps on this machine, none when it keeps none. */
   machineLocalFiles(): readonly string[];
+  /** The marketplace names a parsed settings file declares, none for a tool keeping no registration. */
+  declaredMarketplaceNames(parsed: unknown): ReadonlySet<string>;
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
   projectHooksDelivery(): ProjectHooksLocation | null;
+  /** Where its installed rules live and what they end in, or null when it installs none. */
+  installedRulesLocation(): { readonly directory: string; readonly extension: string } | null;
+  /** Whether enabling a plugin acts on the whole machine: its own CLI takes no scope, or it has none. */
+  pluginEnablementIsMachineGlobal(): boolean;
+  /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */
+  signalDirectoryIn(projectRoot: string): SignalDirectory | null;
 }
 
 /** An editor, as an outside caller asks it. */
 export interface IdeToolProfile {
   readonly kind: "ide";
   readonly toolId: IdeToolId;
+  /** Where a built file lands, relative to the project root, ending in a slash. */
+  readonly directory: string;
   /** The settings files the tool declares, none when it declares none. */
   settingsFiles(): readonly SettingsFileAnswers[];
+  /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */
+  signalDirectoryIn(projectRoot: string): SignalDirectory | null;
 }
 
 export type ToolProfile = AiToolProfile | IdeToolProfile;

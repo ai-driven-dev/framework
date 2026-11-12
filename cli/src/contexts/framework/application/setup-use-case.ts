@@ -59,7 +59,7 @@ export class SetupUseCase {
     // Resolved before initManifest: a non-interactive run with no --source must reject
     // before it ever writes .aidd/manifest.json or touches .gitignore, not after.
     const source = await this.setupMarketplaceRegistration.resolveSourceIfNeeded(flow);
-    const isNew = await this.initManifest(flow);
+    const isNew = await this.initManifest(flow, tools);
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
     const install = await this.installTools(flow, context, tools);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow, tools);
@@ -86,12 +86,13 @@ export class SetupUseCase {
     return this.marketplaceSyncSettingsUseCase.execute({ projectRoot: flow.projectRoot });
   }
 
-  private async initManifest(flow: SetupFlow): Promise<boolean> {
+  private async initManifest(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<boolean> {
     const existing = await this.manifestRepo.load();
     if (existing !== null) return false;
     await new InitUseCase(this.fs, this.manifestRepo).execute({
       projectRoot: flow.projectRoot,
       force: false,
+      tools,
     });
     return true;
   }

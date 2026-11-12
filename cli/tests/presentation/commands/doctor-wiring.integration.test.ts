@@ -404,6 +404,7 @@ describe("aidd doctor --scope user", () => {
       manifest: expect.anything(),
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
+      tools: expect.any(Array),
       globalInstall: true,
     });
     expect(doctorAll).not.toHaveBeenCalled();

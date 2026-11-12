@@ -1,4 +1,4 @@
-import { isAbsolute } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { InvalidToolProfileError } from "../../../../kernel/errors.js";
 import {
   AI_TOOL_IDS,
@@ -7,6 +7,7 @@ import {
   type IdeToolId,
 } from "../../../../kernel/tool.js";
 import type { FrameworkBuildMode, SettingsFileAnswers } from "../../contract/tool-profile.js";
+import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
 import { AgentsCapability } from "../capabilities/agents-capability.js";
 import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
@@ -61,6 +62,10 @@ type AiToolFields = Omit<
   | "machineLocalFiles"
   | "projectHooksDelivery"
   | "frameworkBuildMode"
+  | "declaredMarketplaceNames"
+  | "installedRulesLocation"
+  | "pluginEnablementIsMachineGlobal"
+  | "signalDirectoryIn"
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
@@ -144,6 +149,12 @@ function machineLocalFilesOf(sections: ProfileSections): readonly string[] {
     : [];
 }
 
+function signalDirectoryOf(signalDir: string | null, projectRoot: string): SignalDirectory | null {
+  return signalDir === null
+    ? null
+    : { absolute: join(projectRoot, signalDir), relative: signalDir };
+}
+
 function aiToolId(id: string): AiToolId {
   const known = AI_TOOL_IDS.find((candidate) => candidate === id);
   if (known === undefined) {
@@ -198,6 +209,17 @@ export function defineAiTool<C extends ProfileSections>(
     mcpConfig: () => capabilities.mcp ?? null,
     settingsFiles: () => settingsOf(capabilities),
     machineLocalFiles: () => machineLocalFilesOf(capabilities),
+    declaredMarketplaceNames: (parsed: unknown): ReadonlySet<string> =>
+      capabilities.plugins?.kind === "native"
+        ? (capabilities.plugins.marketplaceRegistration()?.declaredMarketplaceNames(parsed) ??
+          new Set<string>())
+        : new Set<string>(),
+    installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
+    pluginEnablementIsMachineGlobal: () =>
+      capabilities.plugins?.kind === "native"
+        ? capabilities.plugins.enablementIsMachineGlobal()
+        : true,
+    signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
     projectHooksDelivery: () => {
       const delivery = capabilities.plugins?.projectHooksDelivery();
       return delivery === null || delivery === undefined
@@ -223,6 +245,7 @@ export function defineIdeTool<C extends ProfileSections>(
     section: sectionReader(capabilities),
     configCapabilities: () => [...(capabilities.settings ?? [])],
     settingsFiles: () => settingsOf(capabilities),
+    signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
   };
   return profile as IdeToolConfig<C> & ProfileBrand;
 }

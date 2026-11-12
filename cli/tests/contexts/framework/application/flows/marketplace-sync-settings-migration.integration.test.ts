@@ -31,6 +31,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_BUILT_DIR = "/shared/built/claude";
@@ -1383,7 +1384,12 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       fakeVersion(CURRENT_VERSION)
     );
 
-    const before = await doctor.execute({ manifest, projectRoot: PROJECT_A, allowedIds: null });
+    const before = await doctor.execute({
+      manifest,
+      projectRoot: PROJECT_A,
+      allowedIds: null,
+      tools: catalogOf().sortedById(),
+    });
     expect(before.some((issue) => issue.fix.includes("aidd sync"))).toBe(true);
 
     const activator = new RegisteringActivator(hostEntries);
@@ -1451,7 +1457,12 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
     });
     expect(syncResult.errors).toEqual([]);
 
-    const after = await doctor.execute({ manifest, projectRoot: PROJECT_A, allowedIds: null });
+    const after = await doctor.execute({
+      manifest,
+      projectRoot: PROJECT_A,
+      allowedIds: null,
+      tools: catalogOf().sortedById(),
+    });
     expect(after).toEqual([]);
 
     const projectBEntries = await registry.list(PROJECT_B);

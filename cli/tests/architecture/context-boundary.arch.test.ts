@@ -24,7 +24,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/capabilities/settings-capability.ts",
     "src/contexts/tools/contract/config-refs.ts",
     // what a tool answers from the project's files: which tool's files are present
-    "src/contexts/tools/application/detect-tool-signals.ts",
     // what a tool declares about plugins: installing is framework work
     "src/contexts/tools/domain/plugins/marketplace-registration.ts",
     "src/contexts/tools/domain/plugin-translation-mode.ts",

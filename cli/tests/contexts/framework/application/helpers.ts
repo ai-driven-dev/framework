@@ -259,6 +259,7 @@ export async function initProject(
   const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
   await initUseCase.execute({
     projectRoot,
+    tools: catalogOf().sortedById(),
   });
 }
 

@@ -113,7 +113,10 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
   const { InitUseCase } = await import(
     "../../../src/contexts/framework/application/init-use-case.js"
   );
-  await new InitUseCase(d.fs, d.manifestRepo).execute({ projectRoot: project });
+  await new InitUseCase(d.fs, d.manifestRepo).execute({
+    projectRoot: project,
+    tools: catalogOf().sortedById(),
+  });
   await d.installAiToolUseCase.execute({
     tools: catalogOf().sortedById(),
     toolId,

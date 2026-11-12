@@ -153,6 +153,7 @@ async function runUserScopeDoctor(
     manifest,
     projectRoot,
     allowedIds,
+    tools: tools.sortedById(),
     globalInstall: true,
   });
   printScopeIssues(output, "User scope", { issues });
