@@ -10,6 +10,7 @@ import {
 } from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { registeredProfile } from "../../../tools/testing/catalog-of.js";
 
 const NAME = "aidd-framework";
 const LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -38,7 +39,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
 
     const check = await hostMarketplaceSourceConflict(
       fs,
-      "claude",
+      registeredProfile("claude"),
       reader,
       requestedSource,
       { name: NAME, pluginNames: [] },
@@ -71,7 +72,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
 
     const check = await hostMarketplaceSourceConflict(
       fs,
-      "claude",
+      registeredProfile("claude"),
       reader,
       requestedSource,
       { name: NAME, pluginNames: [] },
@@ -101,10 +102,16 @@ describe("hostMarketplaceSourceConflict — without a drift context", () => {
       entries: new Map([[NAME, "/registered"]]),
     });
 
-    const check = await hostMarketplaceSourceConflict(fs, "claude", reader, "/requested", {
-      name: NAME,
-      pluginNames: ["aidd-dev", "aidd-vcs"],
-    });
+    const check = await hostMarketplaceSourceConflict(
+      fs,
+      registeredProfile("claude"),
+      reader,
+      "/requested",
+      {
+        name: NAME,
+        pluginNames: ["aidd-dev", "aidd-vcs"],
+      }
+    );
 
     expect(check).toStrictEqual({
       name: NAME,

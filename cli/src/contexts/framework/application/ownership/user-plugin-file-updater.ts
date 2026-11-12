@@ -6,14 +6,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { compareSemver } from "../../../../kernel/semver.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import {
-  frameworkBuildModeFor,
-  getToolConfig,
-  globalFilesOf,
-  resolvePluginsCapability,
-} from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
@@ -71,15 +64,10 @@ export class UserPluginFileUpdater {
     const toolId = tool.toolId;
     const dist = await this.loader.loadLatest(plugin, projectRoot);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
-    const { files, componentPaths } = await this.materializeFiles(
-      dist,
-      toolId,
-      plugin,
-      projectRoot
-    );
+    const { files, componentPaths } = await this.materializeFiles(dist, tool, plugin, projectRoot);
     const home = (this.builtDeps?.homedir ?? nodeHomedir)();
-    const present = await withoutMissingFiles(this.fs, plugin, toolId, home);
-    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, present, toolId, home);
+    const present = await withoutMissingFiles(this.fs, plugin, tool, home);
+    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, present, tool, home);
     if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
@@ -106,12 +94,12 @@ export class UserPluginFileUpdater {
   }
 
   async applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin> {
-    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.tool.toolId, plan.home);
+    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.tool, plan.home);
     const oldSafe = await userScopeFilesSafeToDelete(
       this.fs,
       logger,
       present,
-      plan.tool.toolId,
+      plan.tool,
       plan.home
     );
     if (oldSafe.size !== present.files.size || oldSafe.size !== plan.oldSafe.size) {
@@ -138,9 +126,8 @@ export class UserPluginFileUpdater {
     files: readonly InstallationFile[],
     home: string
   ): Promise<void> {
-    const toolId = tool.toolId;
-    if (globalFilesOf(toolId) !== null) {
-      await assertGlobalFilesWritable(this.fs, toolId, plugin, plugin.name, files, home);
+    if (tool.plugins()?.globalFiles() != null) {
+      await assertGlobalFilesWritable(this.fs, tool, plugin, plugin.name, files, home);
       return;
     }
     const baseDir = resolveBaseDirFromRecord("user", tool, "", () => home);
@@ -149,13 +136,13 @@ export class UserPluginFileUpdater {
     if (PLUGIN_NAME_REGEX.test(plugin.name)) {
       await this.fs.createDirectory(join(baseDir, plugin.name));
     }
-    await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, [...files], home);
-    await this.assertNewFilesDoNotCollide(plugin, toolId, baseDir, files);
+    await assertUserScopeWriteBoundary(this.fs, tool, plugin.name, [...files], home);
+    await this.assertNewFilesDoNotCollide(plugin, tool.toolId, baseDir, files);
   }
 
   private async assertNewFilesDoNotCollide(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    toolId: AiToolProfile["toolId"],
     baseDir: string,
     files: readonly InstallationFile[]
   ): Promise<void> {
@@ -171,7 +158,7 @@ export class UserPluginFileUpdater {
 
   private async materializeFiles(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<{ files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> }> {
@@ -185,34 +172,31 @@ export class UserPluginFileUpdater {
       const { builtDir } = await this.builtDeps.ensureBuilt.execute({
         projectRoot,
         marketplace,
-        target: toolId,
-        mode: frameworkBuildModeFor(toolId),
+        target: tool.toolId,
+        mode: tool.frameworkBuildMode(),
       });
-      if (globalFilesOf(toolId) !== null) {
-        const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, toolId, dist);
+      if (tool.plugins()?.globalFiles() != null) {
+        const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, tool, dist);
         return { files, componentPaths: new Map() };
       }
       const built = await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, plugin.name);
       const files =
-        resolvePluginsCapability(toolId)?.deliversHooksToProject() === true
+        tool.plugins()?.deliversHooksToProject() === true
           ? withoutHooksPrefix(built, plugin.name)
           : built;
       return { files, componentPaths: new Map() };
     }
     // Without the built tree, translation would write a project's layout in the user directory.
-    if (globalFilesOf(toolId) !== null) {
+    if (tool.plugins()?.globalFiles() != null) {
       throw new Error(
-        `${toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
+        `${tool.toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
       );
     }
-    const toolConfig = getToolConfig(toolId);
     const forGlobalFiles =
-      resolvePluginsCapability(toolId)?.deliversHooksToProject() === true
-        ? withoutHooks(dist)
-        : dist;
+      tool.plugins()?.deliversHooksToProject() === true ? withoutHooks(dist) : dist;
     const translated = new PluginContentTranslator(this.hasher).translateWithComponentPaths(
       forGlobalFiles,
-      toolConfig
+      tool
     );
     return { files: translated.files, componentPaths: translated.componentPaths };
   }

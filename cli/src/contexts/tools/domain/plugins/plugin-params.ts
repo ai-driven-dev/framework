@@ -1,7 +1,11 @@
 import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
 import type { FlatHooksBridge } from "../../contract/build-contract.js";
 import type { FlatSkillLayout } from "../../contract/tool-profile.js";
-import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
+import type {
+  GlobalFiles,
+  HookScript,
+  ProjectHooksFormat,
+} from "../../contract/tool-vocabulary.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
 import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 import type { NativeActivationSpec } from "./native-activation.js";
@@ -11,27 +15,6 @@ export interface ProjectHooksDelivery {
   hooksDestination?: "plugin" | "project";
   projectHooksRelativePath?: string;
   projectHooksFormat?: ProjectHooksFormat;
-}
-
-/**
- * What a machine-scope install (`setup --global`) copies out of this tool's built tree into
- * the user's own configuration directory, for a host that loads those files from there rather
- * than from a plugin it enables itself: OpenCode's and Kilo's skills and agents, Codex's agents.
- */
-export interface GlobalFiles {
-  /** The user configuration directory the files land in, given a homedir. */
-  readonly dir: (homedir: string) => string;
-  /** A built-tree path (relative to the tool's built dir) to its path under `dir` for one
-   * plugin, or `null` when that file is not this plugin's or is not installed machine-wide. */
-  readonly map: (builtPath: string, plugin: GlobalPlugin) => string | null;
-}
-
-/** The plugin a global file is read for: its name, and the agents its source ships, by base
- * name. A flat build prefixes an agent with its plugin, so a prefix alone cannot tell
- * `aidd-dev`'s agents from those of a plugin named `aidd-dev-tools`. */
-export interface GlobalPlugin {
-  readonly name: string;
-  readonly agents: ReadonlySet<string>;
 }
 
 /**

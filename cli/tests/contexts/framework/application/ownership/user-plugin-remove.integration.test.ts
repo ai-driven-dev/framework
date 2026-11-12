@@ -14,7 +14,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
@@ -394,7 +394,7 @@ describe("Cursor user plugin boundary", () => {
           fs,
           new CapturingLogger(),
           owned,
-          "cursor",
+          registeredAiProfile("cursor"),
           resolveHomeDir()
         )
       ).size

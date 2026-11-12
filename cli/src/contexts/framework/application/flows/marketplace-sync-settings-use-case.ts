@@ -38,6 +38,8 @@ import {
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
 import type { MarketplaceRegistration } from "../../../tools/domain/plugins/marketplace-registration.js";
 import {
+  getAiToolConfig,
+  getToolConfig,
   hostRefInUse,
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
@@ -878,10 +880,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     const builtDir = await this.buildForTool(toolId, marketplace, projectRoot);
     if (builtDir === null)
       return { hostName: marketplace.name, outcome: "build-failed", claimable: false };
-    const requestedIdentity = await readMarketplaceCatalogIdentity(this.fs, toolId, builtDir);
+    const requestedIdentity = await readMarketplaceCatalogIdentity(
+      this.fs,
+      getToolConfig(toolId),
+      builtDir
+    );
     if (requestedIdentity === undefined) {
       throw new UnreadableBuiltCatalogError(
-        marketplaceCatalogProbePath(toolId, builtDir) ?? builtDir
+        marketplaceCatalogProbePath(getToolConfig(toolId), builtDir) ?? builtDir
       );
     }
     const hostName = requestedIdentity.name;
@@ -1064,7 +1070,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     const requestedSource = await this.fs.realpath(builtDir).catch(() => builtDir);
     const check = await hostMarketplaceSourceConflict(
       this.fs,
-      toolId,
+      getAiToolConfig(toolId),
       reader,
       requestedSource,
       requestedIdentity,

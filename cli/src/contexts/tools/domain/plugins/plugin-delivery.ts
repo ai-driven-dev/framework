@@ -1,7 +1,11 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { HooksAcceptance, PluginDelivery } from "../../contract/tool-profile.js";
-import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
-import type { GlobalFiles, ProjectHooksDelivery } from "./plugin-params.js";
+import type {
+  GlobalFiles,
+  HookScript,
+  ProjectHooksFormat,
+} from "../../contract/tool-vocabulary.js";
+import type { ProjectHooksDelivery } from "./plugin-params.js";
 
 /** Where a hook lands in the project and how, with the script as this tool runs it. */
 export interface ProjectHooksPlacement {

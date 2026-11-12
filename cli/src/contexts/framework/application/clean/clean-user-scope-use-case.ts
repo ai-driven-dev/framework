@@ -123,9 +123,9 @@ export class CleanUserScopeUseCase {
     }
 
     if (manifest !== null) {
-      await this.assertTrackedUserPluginFilesSafe(manifest);
+      await this.assertTrackedUserPluginFilesSafe(manifest, options.tools);
       this.assertNativeActivatorsAvailable(manifest);
-      await this.assertNativeSourcesProven(manifest, options.projectRoot);
+      await this.assertNativeSourcesProven(manifest, options.projectRoot, options.tools);
       // Undoing a host's own registration must happen before any purge: a host's own CLI resolves
       // what it is unregistering against the built tree still on disk, and the purge below removes
       // exactly that tree. Absent a manifest there is nothing recorded to undo.
@@ -135,7 +135,8 @@ export class CleanUserScopeUseCase {
         this.logger,
         this.homeDir(),
         this.hostMarketplaceRegistries,
-        undone
+        undone,
+        options.tools
       );
       await this.purgeCursorUserScopeFiles(manifest, options.tools, options.projectRoot);
     }
@@ -202,7 +203,10 @@ export class CleanUserScopeUseCase {
     return this.userSourceReferences.listAllReferencingProjects();
   }
 
-  private async assertTrackedUserPluginFilesSafe(manifest: Manifest): Promise<void> {
+  private async assertTrackedUserPluginFilesSafe(
+    manifest: Manifest,
+    tools: readonly ToolProfile[]
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
@@ -211,7 +215,7 @@ export class CleanUserScopeUseCase {
           this.fs,
           this.logger,
           plugin,
-          toolId,
+          aiProfileOf(tools, toolId),
           this.homeDir()
         );
         if (safe.size !== plugin.files.size) {
@@ -275,7 +279,11 @@ export class CleanUserScopeUseCase {
     }
   }
 
-  private async assertNativeSourcesProven(manifest: Manifest, projectRoot: string): Promise<void> {
+  private async assertNativeSourcesProven(
+    manifest: Manifest,
+    projectRoot: string,
+    tools: readonly ToolProfile[]
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
@@ -325,7 +333,7 @@ export class CleanUserScopeUseCase {
           registration.hostName,
           owned,
           projectRoot,
-          toolId
+          aiProfileOf(tools, toolId)
         );
         for (const ref of refsByHost.get(registration.hostName) ?? []) {
           if (hostRefs.get(ref)?.enabled !== true)
@@ -409,7 +417,7 @@ export class CleanUserScopeUseCase {
           this.fs,
           this.logger,
           plugin,
-          toolId,
+          aiProfileOf(tools, toolId),
           this.homeDir()
         );
         await deletePluginFilesForTool(

@@ -259,7 +259,7 @@ export class PluginRemoveUseCase {
           this.fs,
           this.logger,
           plugin,
-          toolId,
+          aiProfileOf(options.tools, toolId),
           resolveHomeDir()
         );
         if (files.size !== plugin.files.size)

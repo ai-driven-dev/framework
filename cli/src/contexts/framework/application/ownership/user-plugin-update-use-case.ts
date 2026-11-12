@@ -84,7 +84,7 @@ export class UserPluginUpdateUseCase {
         toolId,
         claim,
         activator: await this.nativeHost.requireTargetedUpdate(
-          toolId,
+          aiProfileOf(options.tools, toolId),
           claim,
           options.projectRoot,
           registrations

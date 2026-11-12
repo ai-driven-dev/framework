@@ -191,6 +191,20 @@ describe("what a profile's plugins capability says about activation", () => {
     );
   });
 
+  it("answers on the profile whether a host ref is in use, and counts every ref in use for a tool with no native activation", () => {
+    const native = (extra: Partial<NativeActivationSpec>) =>
+      aProfile("cursor")
+        .withPlugins(nativePlugins({ nativeActivation: activation(extra) }))
+        .build();
+
+    expect(native({ uninstallLeavesRefDisabled: true }).hostRefInUse(true)).toBe(true);
+    expect(native({ uninstallLeavesRefDisabled: true }).hostRefInUse(false)).toBe(false);
+    expect(native({}).hostRefInUse(false)).toBe(true);
+    expect(
+      aProfile("opencode").withPlugins(flatPlugins("refuses")).build().hostRefInUse(false)
+    ).toBe(true);
+  });
+
   it("copies plugin files globally only for a user-scope install", () => {
     const user = nativePlugins({ installScope: "user", userPluginsDir: (home) => `${home}/.x` });
 

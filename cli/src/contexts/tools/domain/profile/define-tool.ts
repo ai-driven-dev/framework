@@ -51,6 +51,7 @@ type AiToolFields = Omit<
   | "plugins"
   | "supportsUserScopeActivation"
   | "nativeActivation"
+  | "hostRefInUse"
   | "markdownSection"
   | "skillsSection"
   | "configFiles"
@@ -190,6 +191,8 @@ export function defineAiTool<C extends ProfileSections>(
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
     skillsSection: () => capabilities.skills ?? null,
     nativeActivation: () => nativeActivationOf(capabilities),
+    hostRefInUse: (enabled: boolean) =>
+      nativeActivationOf(capabilities)?.takesRefForInUse(enabled) ?? true,
     configFiles: () => ({ ...fields.configOutputPaths, ...fields.pluginRuntimeFiles }),
     runtimeFiles: () => ({ ...fields.pluginRuntimeFiles }),
     mcpConfig: () => capabilities.mcp ?? null,

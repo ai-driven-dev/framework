@@ -2,12 +2,11 @@ import { DuplicateToolIdError, UnregisteredToolError } from "../../../kernel/err
 import type { AiToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { EnvironmentReader, FrameworkBuildMode } from "../contract/tool-profile.js";
-import type { HookScript, ProjectHooksFormat } from "../contract/tool-vocabulary.js";
+import type { GlobalFiles, HookScript, ProjectHooksFormat } from "../contract/tool-vocabulary.js";
 import type { McpCapability } from "./capabilities/mcp-capability.js";
 import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
 import type { NativeActivation } from "./plugins/native-activation.js";
-import type { GlobalFiles } from "./plugins/plugin-params.js";
 import type { NativePluginsCapability, PluginsCapability } from "./plugins/plugins-capability.js";
 import type { ProfileBrand } from "./profile/define-tool.js";
 import { isProfileSectionKey } from "./profile/profile-sections.js";
@@ -82,7 +81,8 @@ export class ToolCatalog {
   }
 
   hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
-    return this.nativeActivationOf(toolId)?.takesRefForInUse(enabled) ?? true;
+    const config = this.getToolConfig(toolId);
+    return isAiTool(config) ? config.hostRefInUse(enabled) : true;
   }
 
   copiesPluginFilesGlobally(toolId: ToolId): boolean {

@@ -2,7 +2,7 @@ import type { AiToolId } from "../../../../kernel/tool.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
-import { nativeActivationOf } from "../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type {
   NativeMarketplaceRegistration,
   NativePluginClaim,
@@ -21,12 +21,13 @@ export class NativeHostRegistrationGate {
   ) {}
 
   async requireTargetedUpdate(
-    toolId: AiToolId,
+    tool: AiToolProfile,
     claim: NativePluginClaim,
     projectRoot: string,
     registrations?: NativeRegistrations
   ): Promise<HostActions> {
-    const activation = nativeActivationOf(toolId);
+    const { toolId } = tool;
+    const activation = tool.nativeActivation();
     if (activation?.refreshesOnePlugin() !== true) {
       throw new Error(
         `${toolId} does not support targeted native plugin update for '${claim.ref}'; use marketplace refresh or framework update instead.`
@@ -67,7 +68,7 @@ export class NativeHostRegistrationGate {
   }
 
   async planMarketplaceRemoval(
-    toolId: AiToolId,
+    tool: AiToolProfile,
     registrations: NativeRegistrations,
     registration: NativeMarketplaceRegistration,
     projectRoot: string
@@ -76,6 +77,7 @@ export class NativeHostRegistrationGate {
     refs: readonly NativePluginClaim[];
     scopes: ReadonlyMap<string, "project" | "user" | undefined>;
   }> {
+    const { toolId } = tool;
     const activator = this.activators.get(registrations.binary);
     const reader = this.registries.get(toolId);
     if (activator === undefined || !activator.isAvailable() || reader === undefined) {
@@ -96,7 +98,7 @@ export class NativeHostRegistrationGate {
       registration.hostName,
       owned,
       projectRoot,
-      toolId
+      tool
     );
     const refs = (registrations.pluginClaims ?? []).filter((claim) =>
       claim.ref.endsWith(`@${registration.hostName}`)

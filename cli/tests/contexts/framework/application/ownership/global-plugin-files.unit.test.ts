@@ -9,6 +9,7 @@ import { PluginDistribution } from "../../../../../src/contexts/translate/domain
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const BUILT = "/cache/built/opencode";
 
@@ -36,7 +37,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      "opencode",
+      registeredAiProfile("opencode"),
       distribution("aidd-dev", ["agents/reviewer.md", "agents/nested/ignored.md", "skills/x.md"])
     );
 
@@ -51,7 +52,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      "opencode",
+      registeredAiProfile("opencode"),
       distribution("aidd-qa", [])
     );
 
@@ -62,7 +63,7 @@ describe("readGlobalPluginFiles", () => {
     await expect(
       assertGlobalFilesWritable(
         new InMemoryFileAdapter(),
-        "claude",
+        registeredAiProfile("claude"),
         undefined,
         "aidd-dev",
         [],
@@ -76,7 +77,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      "claude",
+      registeredAiProfile("claude"),
       distribution("aidd-dev", ["agents/reviewer.md"])
     );
 
@@ -96,7 +97,14 @@ describe("assertGlobalFilesWritable", () => {
     const fs = new InMemoryFileAdapter({}, hasher);
 
     await expect(
-      assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
+      assertGlobalFilesWritable(
+        fs,
+        registeredAiProfile("opencode"),
+        undefined,
+        "aidd-dev",
+        [file("agents/a.md")],
+        HOME
+      )
     ).resolves.toBe(DIR);
   });
 
@@ -106,7 +114,14 @@ describe("assertGlobalFilesWritable", () => {
       const fs = new InMemoryFileAdapter({}, hasher);
 
       await expect(
-        assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file(path)], HOME)
+        assertGlobalFilesWritable(
+          fs,
+          registeredAiProfile("opencode"),
+          undefined,
+          "aidd-dev",
+          [file(path)],
+          HOME
+        )
       ).rejects.toThrow(`opencode: 'aidd-dev' path '${path}' escapes ${DIR}.`);
     }
   );
@@ -116,7 +131,14 @@ describe("assertGlobalFilesWritable", () => {
     fs.setSymlink(under("agents"), "/elsewhere");
 
     await expect(
-      assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
+      assertGlobalFilesWritable(
+        fs,
+        registeredAiProfile("opencode"),
+        undefined,
+        "aidd-dev",
+        [file("agents/a.md")],
+        HOME
+      )
     ).rejects.toThrow(`opencode: 'aidd-dev' parent '${under("agents")}' escapes ${DIR}.`);
   });
 
@@ -124,7 +146,14 @@ describe("assertGlobalFilesWritable", () => {
     const fs = new InMemoryFileAdapter({ [under("agents", "a.md")]: content }, hasher);
 
     await expect(
-      assertGlobalFilesWritable(fs, "opencode", undefined, "aidd-dev", [file("agents/a.md")], HOME)
+      assertGlobalFilesWritable(
+        fs,
+        registeredAiProfile("opencode"),
+        undefined,
+        "aidd-dev",
+        [file("agents/a.md")],
+        HOME
+      )
     ).rejects.toThrow(
       `opencode: '${under("agents", "a.md")}' already exists and was not installed by aidd`
     );
@@ -141,7 +170,14 @@ describe("assertGlobalFilesWritable", () => {
     ).withFiles(new Map([["agents/owned.md", "0".repeat(32)]]));
 
     await expect(
-      assertGlobalFilesWritable(fs, "opencode", owned, "aidd-dev", [file("agents/owned.md")], HOME)
+      assertGlobalFilesWritable(
+        fs,
+        registeredAiProfile("opencode"),
+        owned,
+        "aidd-dev",
+        [file("agents/owned.md")],
+        HOME
+      )
     ).resolves.toBe(DIR);
   });
 });
@@ -158,7 +194,7 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
     await expect(
       assertGlobalFilesWritable(
         fs,
-        "opencode",
+        registeredAiProfile("opencode"),
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],
@@ -174,7 +210,7 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
     await expect(
       assertGlobalFilesWritable(
         fs,
-        "opencode",
+        registeredAiProfile("opencode"),
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],

@@ -104,7 +104,7 @@ export class UserMarketplaceRemoveUseCase {
           this.fs,
           { debug() {}, info() {}, warn() {} },
           plugin,
-          toolId,
+          aiProfileOf(options.tools, toolId),
           resolveHomeDir()
         );
         if (files.size !== plugin.files.size)
@@ -120,7 +120,7 @@ export class UserMarketplaceRemoveUseCase {
         registrations,
         registration,
         ...(await this.nativeHost.planMarketplaceRemoval(
-          toolId,
+          aiProfileOf(options.tools, toolId),
           registrations,
           registration,
           options.projectRoot

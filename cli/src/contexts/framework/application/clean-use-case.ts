@@ -170,7 +170,7 @@ export class CleanUseCase {
     const preview = await this.buildPreview(manifest, home, options.projectRoot);
     const dryRunResult = await this.confirmOrDryRun(options, preview);
     if (dryRunResult !== null) return dryRunResult;
-    await this.assertNativeSourcesUnchanged(manifest, options.projectRoot);
+    await this.assertNativeSourcesUnchanged(manifest, options.projectRoot, options.tools);
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
@@ -200,12 +200,13 @@ export class CleanUseCase {
       manifest,
       options.projectRoot,
       home,
-      sharedSourceOutcome
+      sharedSourceOutcome,
+      options.tools
     );
     // Purging a host's own plugin cache is the next step, never before this: it is only
     // Only ever safe once `undoNativeRegistrations` has actually asked that host to forget the
     // name (see `purgeNativeCaches`'s own post-conditions).
-    await this.purgeNativeCaches(home, undone);
+    await this.purgeNativeCaches(home, undone, options.tools);
     let deleted = await this.deleteAllToolFiles(manifest, options.tools, options.projectRoot);
     deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot, options.tools, {
       overwriteEdited: options.force,
@@ -244,7 +245,8 @@ export class CleanUseCase {
   /** A project clean must not decrement shared claims before proving the host names it may undo. */
   private async assertNativeSourcesUnchanged(
     manifest: Manifest,
-    projectRoot: string
+    projectRoot: string,
+    tools: readonly ToolProfile[]
   ): Promise<void> {
     const projectMarketplaces = (await this.marketplaceRegistry?.list(projectRoot)) ?? [];
     const machineManifest = await this.userManifestRepo?.load();
@@ -281,7 +283,7 @@ export class CleanUseCase {
           registration.hostName,
           new Set([...registrations.pluginRefs, ...machineRefs]),
           projectRoot,
-          toolId
+          aiProfileOf(tools, toolId)
         );
       }
     }
@@ -319,7 +321,8 @@ export class CleanUseCase {
     manifest: Manifest,
     projectRoot: string,
     home: string,
-    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined
+    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined,
+    tools: readonly ToolProfile[]
   ): Promise<ReadonlyMap<ToolId, UndoneRegistration>> {
     const undone = new Map<ToolId, UndoneRegistration>();
     for (const toolId of manifest.getInstalledToolIds()) {
@@ -331,7 +334,8 @@ export class CleanUseCase {
         registrations,
         projectRoot,
         home,
-        sharedSourceOutcome
+        sharedSourceOutcome,
+        tools
       );
       if (removedHostNames !== undefined) undone.set(toolId, { registrations, removedHostNames });
     }
@@ -344,7 +348,8 @@ export class CleanUseCase {
     registrations: NativeRegistrations,
     projectRoot: string,
     home: string,
-    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined
+    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined,
+    tools: readonly ToolProfile[]
   ): Promise<ReadonlySet<string> | undefined> {
     const { binary } = registrations;
     const activator = this.activators.get(binary);
@@ -367,7 +372,8 @@ export class CleanUseCase {
         projectRoot,
         manifest,
         registrations,
-        sharedSourceOutcome
+        sharedSourceOutcome,
+        tools
       );
     }
     const removedHostNames = new Set<string>();
@@ -551,7 +557,8 @@ export class CleanUseCase {
     projectRoot: string,
     manifest: Manifest,
     registrations: NativeRegistrations,
-    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined
+    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined,
+    tools: readonly ToolProfile[]
   ): Promise<void> {
     const claim = await machineNativePluginClaim(this.userManifestRepo, toolId, ref);
     if (claim !== undefined) {
@@ -614,7 +621,7 @@ export class CleanUseCase {
         sourceRegistration.hostName,
         new Set([...registrations.pluginRefs, ...machineRefs]),
         projectRoot,
-        toolId
+        isAiToolId(toolId) ? aiProfileOf(tools, toolId) : undefined
       );
     } catch (error) {
       this.logger.warn(`${binary}: '${ref}' left enabled; ${String(error)}`);
@@ -686,9 +693,17 @@ export class CleanUseCase {
    * was absent. */
   private async purgeNativeCaches(
     home: string,
-    undone: ReadonlyMap<ToolId, UndoneRegistration>
+    undone: ReadonlyMap<ToolId, UndoneRegistration>,
+    tools: readonly ToolProfile[]
   ): Promise<void> {
-    await purgeAllNativeCaches(this.fs, this.logger, home, this.hostMarketplaceRegistries, undone);
+    await purgeAllNativeCaches(
+      this.fs,
+      this.logger,
+      home,
+      this.hostMarketplaceRegistries,
+      undone,
+      tools
+    );
   }
 
   /** The files a tool writes that `plugins[].files` never tracks: a machine-local settings file
@@ -848,7 +863,7 @@ export class CleanUseCase {
     const toolId = tool.toolId;
     for (const plugin of manifest.getPlugins(toolId)) {
       if (plugin.scope === "user") continue;
-      const files = await this.filesSafeToDelete(plugin, toolId);
+      const files = await this.filesSafeToDelete(plugin, tool);
       const deleted = await deletePluginFilesForTool(
         files,
         plugin.scope,
@@ -867,10 +882,10 @@ export class CleanUseCase {
    * a symlink escape. */
   private async filesSafeToDelete(
     plugin: InstalledPlugin,
-    toolId: AiToolId
+    tool: AiToolProfile
   ): Promise<ReadonlyMap<string, string>> {
     if (plugin.scope !== "user") return plugin.files;
-    return userScopeFilesSafeToDelete(this.fs, this.logger, plugin, toolId, this.homeDir());
+    return userScopeFilesSafeToDelete(this.fs, this.logger, plugin, tool, this.homeDir());
   }
 
   private async cleanMergeFileKeys(

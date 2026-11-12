@@ -4,7 +4,7 @@
  */
 
 import { PLUGIN_ROOT_TOKEN } from "../../../contract/plugin-root-token.js";
-import type { GlobalPlugin } from "../../plugins/plugin-params.js";
+import type { GlobalPlugin } from "../../../contract/tool-vocabulary.js";
 
 export const CODEX_DIRECTORY = ".codex/";
 

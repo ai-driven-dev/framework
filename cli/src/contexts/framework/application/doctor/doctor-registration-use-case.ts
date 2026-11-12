@@ -20,7 +20,11 @@ import {
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
 import type { MarketplaceRegistration } from "../../../tools/domain/plugins/marketplace-registration.js";
-import { nativeActivationOf, resolveNativePlugins } from "../../../tools/domain/registry.js";
+import {
+  getAiToolConfig,
+  nativeActivationOf,
+  resolveNativePlugins,
+} from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
@@ -118,7 +122,7 @@ export class DoctorRegistrationUseCase {
         if (requestedSource === undefined) continue;
         const requestedIdentity = await readMarketplaceCatalogIdentity(
           this.fs,
-          toolId,
+          getAiToolConfig(toolId),
           requestedSource
         );
         if (requestedIdentity === undefined) continue;
@@ -132,7 +136,7 @@ export class DoctorRegistrationUseCase {
         // at this project's own pre-migration cache" case this decides.
         const check: HostMarketplaceSourceCheck = await hostMarketplaceSourceConflict(
           this.fs,
-          toolId,
+          getAiToolConfig(toolId),
           reader,
           requestedSource,
           requestedIdentity,

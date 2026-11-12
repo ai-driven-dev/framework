@@ -1,8 +1,7 @@
 import { join } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import { isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceCatalogIdentity } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import { getAiToolConfig } from "../../../tools/domain/registry.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 
 /**
  * What a directory's own catalog declares about itself — `name` and its plugin names, never
@@ -14,10 +13,10 @@ import { getAiToolConfig } from "../../../tools/domain/registry.js";
  */
 export async function readMarketplaceCatalogIdentity(
   fs: FileReader,
-  toolId: ToolId,
+  tool: ToolProfile,
   dir: string
 ): Promise<MarketplaceCatalogIdentity | undefined> {
-  const path = marketplaceCatalogProbePath(toolId, dir);
+  const path = marketplaceCatalogProbePath(tool, dir);
   if (path === undefined) return undefined;
   const content = await fs.readFile(path).catch(() => undefined);
   if (content === undefined) return undefined;
@@ -35,9 +34,9 @@ export async function readMarketplaceCatalogIdentity(
  * back `undefined` can report *which file* it found nothing readable at. `undefined` for the same
  * reason the read would answer nothing: not an AI tool, or one whose profile declares no
  * `distributionProbes.marketplace`. */
-export function marketplaceCatalogProbePath(toolId: ToolId, dir: string): string | undefined {
-  if (!isAiToolId(toolId)) return undefined;
-  const catalogRelative = getAiToolConfig(toolId).distributionProbes?.marketplace?.[0];
+export function marketplaceCatalogProbePath(tool: ToolProfile, dir: string): string | undefined {
+  if (tool.kind !== "ai") return undefined;
+  const catalogRelative = tool.distributionProbes?.marketplace?.[0];
   return catalogRelative === undefined ? undefined : join(dir, catalogRelative);
 }
 

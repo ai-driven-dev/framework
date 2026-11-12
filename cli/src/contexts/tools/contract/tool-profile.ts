@@ -3,7 +3,7 @@ import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-
 import type { MergeStrategy } from "../../../kernel/merge.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../kernel/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
-import type { ProjectHooksLocation } from "./tool-vocabulary.js";
+import type { GlobalFiles, ProjectHooksLocation } from "./tool-vocabulary.js";
 
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
@@ -16,6 +16,8 @@ export interface PluginDelivery {
   copiesFilesGlobally(): boolean;
   /** Where a machine-scope install puts a plugin's files under `homedir`, or null for none. */
   userPluginsBaseDir(homedir: string): string | null;
+  /** What a machine-scope install copies into the user's configuration directory, or null for none. */
+  globalFiles(): GlobalFiles | null;
   hooksAcceptance(): HooksAcceptance;
   /** Whether its hooks are merged into the project's own hooks file rather than the plugin's directory. */
   deliversHooksToProject(): boolean;
@@ -23,6 +25,12 @@ export interface PluginDelivery {
 
 /** What a tool's own plugin CLI declares about itself. */
 export interface NativeActivationAnswers {
+  /** The executable the host's own plugin CLI is run by: the key its driver and registry answer to. */
+  hostBinary(): string;
+  /** Whether the host's own CLI can update one installed plugin ref. */
+  refreshesOnePlugin(): boolean;
+  /** Where the host leaves its plugin cache under `home`, or undefined when it declares none. */
+  pluginCacheRoot(home: string): string | undefined;
   /** The host's own user-scope settings file under `home`, or undefined when none is declared. */
   userSettingsFile(home: string, env: EnvironmentReader): string | undefined;
 }
@@ -171,6 +179,9 @@ export interface AiToolProfile {
   skillsSection(): SkillsSectionAnswers | null;
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
+  /** Whether a ref the host's registry lists is a plugin in use: an enabled one always, a disabled
+   * one unless the host's uninstall leaves refs disabled. Every ref counts for a tool with no native CLI. */
+  hostRefInUse(enabled: boolean): boolean;
   /** The config files an install writes, by asset name: the tool's own, then the runtime
    * modules its plugins need. */
   configFiles(): Readonly<Record<string, string>>;
