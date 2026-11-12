@@ -1,10 +1,7 @@
 import { stat } from "node:fs/promises";
 import type { ToolBuildContract } from "../../contexts/tools/contract/build-contract.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import {
-  FRAMEWORK_BUILD_MODES,
-  type FrameworkBuildMode,
-} from "../../contexts/tools/contract/tool-profile.js";
+import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
 import { FlatBuildStrategy } from "../../contexts/translate/application/strategies/flat-build-strategy.js";
 import { MarketplaceBuildStrategy } from "../../contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../contexts/translate/application/translate-source.js";
@@ -24,7 +21,7 @@ export interface FrameworkBuildDeps {
 
 export interface FrameworkBuildContext {
   readonly target: string;
-  readonly mode: string;
+  readonly mode: FrameworkBuildMode;
   readonly outDir: string;
   readonly force: boolean;
 }
@@ -60,15 +57,14 @@ async function isDirectory(path: string): Promise<boolean> {
 }
 
 function frameworkBuildFactoryFor(
-  buildContract: () => ToolBuildContract,
+  buildContract: ToolBuildContract,
   mode: FrameworkBuildMode
 ): FrameworkBuildFactory {
   if (mode === "marketplace") {
     return (deps, ctx) =>
       buildFrameworkUseCase(
         deps,
-        (d, av) =>
-          new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildContract(), ctx.force)
+        (d, av) => new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildContract, ctx.force)
       );
   }
   return (deps, ctx) =>
@@ -78,17 +74,13 @@ function frameworkBuildFactoryFor(
         new FlatBuildStrategy(
           d.fs,
           d.assetProvider,
-          buildContract(),
+          buildContract,
           ctx.force,
           ctx.outDir,
           isDirectory,
           d.logger
         )
     );
-}
-
-function isBuildMode(mode: string): mode is FrameworkBuildMode {
-  return FRAMEWORK_BUILD_MODES.some((known) => known === mode);
 }
 
 /** The use case for the target and mode the catalog's profile declares a build contract for, or
@@ -98,10 +90,10 @@ export function createFrameworkBuildUseCase(
   deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
 ): FrameworkBuildUseCase | undefined {
-  if (!isAiToolId(ctx.target) || !isBuildMode(ctx.mode)) return undefined;
+  if (!isAiToolId(ctx.target)) return undefined;
   const profile = tools.profile(ctx.target);
   if (profile.kind !== "ai") return undefined;
   const buildContract = profile.buildContract(ctx.mode);
   if (buildContract === null) return undefined;
-  return frameworkBuildFactoryFor(() => buildContract, ctx.mode)(deps, ctx);
+  return frameworkBuildFactoryFor(buildContract, ctx.mode)(deps, ctx);
 }

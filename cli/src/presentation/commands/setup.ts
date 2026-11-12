@@ -4,7 +4,7 @@ import { MarketplaceSourceMode } from "../../contexts/distribution/domain/market
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../contexts/tools/contract/tool-profile.js";
+import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { ToolId } from "../../kernel/tool.js";
 import {
   AI_TOOL_IDS,
@@ -98,14 +98,13 @@ export function parsePluginsFlag(
   return { mode: "named", names };
 }
 
+function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
+  return profile.kind === "ai" && profile.supportsUserScopeActivation();
+}
+
 /** What `--global` does for each registered tool, read from its profile. */
 export function globalSetupHelp(catalog: ToolCatalog): string {
-  const global = catalog
-    .sortedById()
-    .filter(
-      (profile): profile is AiToolProfile =>
-        profile.kind === "ai" && profile.supportsUserScopeActivation()
-    );
+  const global = catalog.sortedById().filter(activatesAtUserScope);
   const tools = global.map((profile) => profile.toolId);
   const native = global.filter((profile) => profile.nativeActivation() !== undefined);
   const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());
@@ -177,10 +176,7 @@ export function registerSetupCommand(program: Command, catalog: ToolCatalog): vo
       try {
         const flow = new SetupFlow({
           projectRoot,
-          supportsUserScopeActivation: (id) => {
-            const profile = catalog.profile(id);
-            return profile.kind === "ai" && profile.supportsUserScopeActivation();
-          },
+          supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
           source,
           aiTools: toolIds.aiTools,
           ideTools: toolIds.ideTools,
