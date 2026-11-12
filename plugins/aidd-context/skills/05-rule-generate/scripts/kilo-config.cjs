@@ -216,7 +216,12 @@ function inspectProject(projectRoot, instructionPath, chosenPath) {
   if (!candidates.length) return { candidates, selectedPath: DEFAULT_CONFIG, needsChoice: false };
   if (candidates.length === 1) return { candidates, selectedPath: candidates[0].path, needsChoice: false };
   const owners = candidates.filter((item) => item.ownsInstruction);
-  if (owners.length === 1) return { candidates, selectedPath: owners[0].path, needsChoice: false };
+  if (owners.length === 1) {
+    if (chosenPath && chosenPath !== owners[0].path) {
+      fail(`Chosen Kilo config ${chosenPath} conflicts with the unique rule owner ${owners[0].path}.`);
+    }
+    return { candidates, selectedPath: owners[0].path, needsChoice: false };
+  }
   return { candidates, selectedPath: chosenPath || null, needsChoice: !chosenPath, multipleOwners: owners.length > 1 };
 }
 

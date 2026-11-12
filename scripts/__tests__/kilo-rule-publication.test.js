@@ -12,6 +12,7 @@ const fixtureRoot = path.join(__dirname, "fixtures/context-generation/kilo-confi
 const modulePath = process.env.AIDD_KILO_CONFIG_MODULE || path.resolve(__dirname, "../../plugins/aidd-context/skills/05-rule-generate/scripts/kilo-config.cjs");
 const instruction = ".kilo/rules/01-standards/1-naming.md";
 const canonicalScopedRule = `<!-- aidd_rule:${JSON.stringify({ version: 1, category: rule.category, slug: rule.slug, description: rule.description, paths: ["src/**/*.ts"], targets: ["kilo"] })} -->\n${rule.body}`;
+const canonicalKiloRule = `<!-- aidd_rule:${JSON.stringify({ version: 1, category: rule.category, slug: rule.slug, description: rule.description, paths: [], targets: ["kilo"] })} -->\n${rule.body}`;
 
 function project(t) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "aidd-kilo-config-")));
@@ -432,6 +433,39 @@ for (const owner of configPaths) {
     assert.deepEqual(p.snapshot(), before);
   });
 }
+
+test("a matching explicit Kilo config is accepted when the rule has one owner", (t) => {
+  const p = publisher(t);
+  p.put("kilo.jsonc", `{"instructions":["${instruction}"]}\n`);
+  p.put(".kilo/kilo.jsonc", "{}\n");
+  p.put("aidd_docs/rules/01-standards/1-naming.md", canonicalKiloRule);
+  const before = p.snapshot();
+  const choice = api().inspectProject(p.root, instruction, "kilo.jsonc");
+  assert.equal(choice.selectedPath, "kilo.jsonc");
+  assert.equal(choice.needsChoice, false);
+  assert.deepEqual(p.snapshot(), before);
+  assert.equal(p.run(rule, "kilo", ["--publish", "--kilo-config", "kilo.jsonc"]).status, 0);
+});
+
+test("an explicit Kilo config cannot override the unique rule owner in any writer mode", (t) => {
+  const modes = [
+    ["input", ["--kilo-config", ".kilo/kilo.jsonc"]],
+    ["plan", ["--plan", "--kilo-config", ".kilo/kilo.jsonc"]],
+    ["publish", ["--publish", "--kilo-config", ".kilo/kilo.jsonc"]],
+    ["check", ["--publish", "--check", "--kilo-config", ".kilo/kilo.jsonc"]],
+  ];
+  for (const [name, args] of modes) {
+    const p = publisher(t);
+    p.put("kilo.jsonc", `{"instructions":["${instruction}"]}\n`);
+    p.put(".kilo/kilo.jsonc", "{}\n");
+    if (args.includes("--publish")) p.put("aidd_docs/rules/01-standards/1-naming.md", canonicalKiloRule);
+    const before = p.snapshot();
+    const result = p.run(rule, "kilo", args);
+    assert.notEqual(result.status, 0, name);
+    assert.match(result.stderr, /conflicts with the unique rule owner kilo\.jsonc/u, name);
+    assert.deepEqual(p.snapshot(), before, name);
+  }
+});
 
 for (const size of [2, 3, 4]) {
   for (const present of subsets(configPaths, size)) {
