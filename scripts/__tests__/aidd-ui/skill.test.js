@@ -640,4 +640,11 @@ describe("aidd-ui journeys skill", () => {
     assert.ok(fs.readFileSync(path.join(JOURNEYS, "references/wireframes.md"), "utf8").includes("warning R18"));
     assert.ok(conclude.includes("the components the wireframes expect, for the design system"));
   });
+
+  it("stops for the persona, then for the journeys, and keeps the task folder silent", () => {
+    const prepare = fs.readFileSync(path.join(JOURNEYS, "actions/01-prepare.md"), "utf8");
+    assert.ok(prepare.includes("Ask it alone, and wait for the answer."));
+    assert.ok(prepare.includes("Show them and wait for the user's agreement."));
+    assert.ok(prepare.includes("Never mention it to the user."));
+  });
 });

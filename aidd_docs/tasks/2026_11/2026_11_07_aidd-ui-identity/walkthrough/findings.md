@@ -26,6 +26,10 @@ Ensuite : `feature`, `audit`, puis l'orchestrateur, selon la [feuille de route](
 | vierge | vitrine | oui | | La rubrique des wireframes s'appelle « Templates » dans la navigation, un mot que rien n'explique. | moyenne |
 | vierge | vitrine | oui | | Dès la fin de 01, la vue d'ensemble demande de valider les 16 wireframes (« Still to review », « All OK, copy »), alors qu'il n'y a encore rien à juger. | moyenne |
 | vierge | 01 | oui | | Le compte rendu de fin est clair : où sont les fichiers, ce qui a été ajouté et pourquoi, rien de commité. | aucune, à garder |
+| vierge, second passage | 01 | oui | | Mieux : une seule question, une proposition concrète, plus d'option vide. Les zones montrent du vrai contenu, les états diffèrent, `validate` sans erreur, compte rendu en mots simples. | aucune, à garder |
+| vierge, second passage | 01 | oui | | La question annonce le dossier de tâche juste après « start from scratch » : la personne croit que les fichiers iront dans `tasks/` et non dans `ui/`. | moyenne |
+| vierge, second passage | 01 | oui | | Persona et parcours sont demandés en une seule question, puis tout est écrit. Avis de la personne : « il me pose pas trop de questions, il génère directement tout ». | moyenne |
+| vierge, second passage | vitrine | oui | | Avis de la personne : le parcours n'est « pas beau », le tableau des étapes est toujours là, le HTML « fait cheap et année 2000 ». Un wireframe est « mieux mais pas très lisible, limite de l'ASCII » : styles par défaut du navigateur sur fond sombre, états empilés, cadre trop haut. | haute |
 
 ## Frontières entre skills, vues par la machine
 
