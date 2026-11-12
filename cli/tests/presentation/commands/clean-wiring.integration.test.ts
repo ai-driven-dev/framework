@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
@@ -65,7 +66,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerCleanCommand(program);
+  registerCleanCommand(program, catalogOf());
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -82,6 +83,7 @@ describe("aidd clean — the project this command was run in", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: false,
+      tools: catalogOf().sortedById(),
     });
     expect(cleanUserScope).not.toHaveBeenCalled();
   });
@@ -99,6 +101,7 @@ describe("aidd clean — the project this command was run in", () => {
       projectRoot: PROJECT_ROOT,
       force: true,
       interactive: false,
+      tools: catalogOf().sortedById(),
     });
   });
 
@@ -111,6 +114,7 @@ describe("aidd clean — the project this command was run in", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: true,
+      tools: catalogOf().sortedById(),
     });
     expect(lines[lines.length - 1]).toBe("No files removed.");
   });
@@ -196,7 +200,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
 describe("aidd clean — the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
-    registerCleanCommand(program);
+    registerCleanCommand(program, catalogOf());
     const clean = program.commands.find((command) => command.name() === "clean");
     if (clean === undefined) throw new Error("clean command was not registered");
     return clean;

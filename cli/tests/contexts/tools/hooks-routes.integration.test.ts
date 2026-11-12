@@ -382,7 +382,12 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
     });
     return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
   }
-  await d.cleanUseCase.execute({ projectRoot: ws.project, force: true, interactive: false });
+  await d.cleanUseCase.execute({
+    projectRoot: ws.project,
+    force: true,
+    interactive: false,
+    tools: catalogOf().sortedById(),
+  });
   return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
 }
 

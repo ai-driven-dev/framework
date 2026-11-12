@@ -25,6 +25,7 @@ import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-ma
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 // Resolve once for this in-memory fixture, then inject it into CleanUseCase: Stryker reuses
@@ -272,7 +273,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: userRepo,
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -313,7 +318,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: userRepo,
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
     expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
     expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
       { ref: "other-plugin@other-catalog", dependents: ["/project-b"] },
@@ -352,7 +361,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: userRepo,
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
     expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
     expect(activator.removalsUnderLock).toEqual([true]);
     expect(userRepo.lockCalls).toBe(1);
@@ -383,7 +396,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: new InMemoryManifestRepository(),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.deletedDirectories).not.toContain(emptyCache);
     expect(logger.warnMessages.join("\n")).toContain(
@@ -401,7 +418,11 @@ describe("clean purges a host's own plugin cache", () => {
       logger: noRepoLogger,
       aiddMarketplaceRegistry: registry,
     });
-    await noRepoUseCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await noRepoUseCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
     expect(noRepoActivator.removedMarketplaces).toEqual([]);
     expect(noRepoFs.deletedDirectories).not.toContain(emptyCache);
     expect(noRepoLogger.warnMessages.join("\n")).toContain(
@@ -435,7 +456,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: userRepo,
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
@@ -476,7 +501,11 @@ describe("clean purges a host's own plugin cache", () => {
       aiddMarketplaceRegistry: registry,
       userManifestRepo: userRepo,
     });
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
@@ -508,7 +537,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: userRepo,
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.deletedDirectories).not.toContain(emptyCache);
     expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
@@ -540,7 +573,11 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(await fs.fileExists(cacheEntry)).toBe(false);
     expect(activator.removedMarketplaces).toContain(MARKETPLACE);
@@ -570,7 +607,11 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(await fs.fileExists(cacheEntry)).toBe(true);
     expect(reader.reads).toBe(0);
@@ -607,7 +648,11 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(await fs.fileExists(cacheEntry)).toBe(true);
     // Source preflight and undo recheck ran; failed removal never reached cache confirmation.
@@ -635,9 +680,9 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
-      "absent on the host"
-    );
+    await expect(
+      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+    ).rejects.toThrow("absent on the host");
 
     expect(fs.getFile(cacheEntry)).toBe("{}");
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -665,9 +710,9 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
-      "EACCES"
-    );
+    await expect(
+      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+    ).rejects.toThrow("EACCES");
 
     expect(fs.getFile(cacheEntry)).toBe("{}");
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -709,9 +754,9 @@ describe("clean purges a host's own plugin cache", () => {
       homeDir: () => SENTINEL_HOME,
     });
 
-    await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
-      "absent on the host"
-    );
+    await expect(
+      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+    ).rejects.toThrow("absent on the host");
 
     // The real reader resolves the sentinel HOME, not the user's real registry.
     expect(fs.getFile(cacheEntry)).toBe("{}");
@@ -744,7 +789,11 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(await fs.fileExists(join(witness, "keep-me.txt"))).toBe(true);
     expect(fs.deletedDirectories).not.toContain(witness);
@@ -774,7 +823,11 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(fs.deletedDirectories).not.toContain(candidate);
     expect(logger.warnMessages.some((m) => m.includes("does not resolve inside"))).toBe(true);
@@ -803,7 +856,11 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(await fs.fileExists(cacheEntry)).toBe(true);
     expect(logger.warnMessages.some((m) => m.includes(candidate))).toBe(true);
@@ -831,7 +888,11 @@ describe("clean purges a host's own plugin cache", () => {
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE, "user"),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(fs.deletedDirectories.some((p) => p.startsWith(HOME))).toBe(false);
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -861,7 +922,11 @@ describe("clean purges a host's own plugin cache", () => {
       hostMarketplaceRegistries: new Map([["claude", reader]]),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(await fs.fileExists(cacheEntry)).toBe(false);
     expect(fs.deletedDirectories).not.toContain(join(CLAUDE_CACHE_ROOT, alias));
@@ -883,7 +948,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(fs.deletedDirectories).toContain(join(CODEX_CACHE_ROOT, MARKETPLACE));
   });
@@ -905,7 +974,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(fs.deletedDirectories).not.toContain(join(CODEX_CACHE_ROOT, MARKETPLACE));
     expect(logger.warnMessages.some((m) => m.includes("its own removal was not confirmed"))).toBe(
@@ -930,7 +1003,11 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(await fs.fileExists(leftover)).toBe(true);
     expect(fs.deletedDirectories).not.toContain(join(CODEX_CACHE_ROOT, MARKETPLACE));

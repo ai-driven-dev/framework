@@ -42,7 +42,7 @@ registerAuthCommand(program);
 registerSyncCommand(program);
 registerUpdateCommand(program);
 registerDoctorCommand(program, tools);
-registerCleanCommand(program);
+registerCleanCommand(program, tools);
 registerTelemetryCommand(program);
 
 // Commands already paying for network I/O, so the update-check refresh rides one of them.

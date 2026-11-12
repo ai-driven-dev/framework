@@ -25,8 +25,9 @@ import type { HostActions } from "../../host-registration/contract/host-actions.
 import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../host-registration/contract/host-plugin-registry.js";
+import type { ToolProfile } from "../../tools/contract/tool-profile.js";
+import { profileOf } from "../../tools/contract/tool-profile-lookup.js";
 import {
-  machineLocalFilesOf,
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
   projectHooksFileOf,
@@ -86,6 +87,7 @@ interface CleanOptions {
   projectRoot: string;
   force: boolean;
   interactive?: boolean;
+  tools: readonly ToolProfile[];
 }
 
 interface CleanPreview {
@@ -117,6 +119,11 @@ interface CleanResult {
 }
 
 type UndoneRegistration = UndoneToolRegistrations;
+
+function machineLocalFilesOf(tools: readonly ToolProfile[], toolId: ToolId): readonly string[] {
+  const profile = profileOf(tools, toolId);
+  return profile.kind === "ai" ? profile.machineLocalFiles() : [];
+}
 
 export class CleanUseCase {
   constructor(
@@ -199,14 +206,14 @@ export class CleanUseCase {
     // name (see `purgeNativeCaches`'s own post-conditions).
     await this.purgeNativeCaches(home, undone);
     let deleted = await this.deleteAllToolFiles(manifest, options.projectRoot);
-    deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot, {
+    deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot, options.tools, {
       overwriteEdited: options.force,
     });
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.gitignoreUseCase.remove(
       options.projectRoot,
-      aiddGitignoreEntries(manifest, machineLocalFilesOf)
+      aiddGitignoreEntries(manifest, (toolId) => machineLocalFilesOf(options.tools, toolId))
     );
     // One project-level decrement, only after the local projection has been cleaned successfully.
     await this.dropSharedSourceReference(sharedSourceOutcome?.resolvedRoot);
@@ -689,11 +696,12 @@ export class CleanUseCase {
   private async deleteMachineLocalFiles(
     manifest: Manifest,
     projectRoot: string,
+    tools: readonly ToolProfile[],
     hooksGuard: ProjectHooksGuard
   ): Promise<number> {
     let count = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
-      count += await this.deleteMachineLocalSettingsFiles(toolId, projectRoot);
+      count += await this.deleteMachineLocalSettingsFiles(toolId, projectRoot, tools);
       count += await this.removeProjectHooksForTool(manifest, toolId, projectRoot, hooksGuard);
     }
     return count;
@@ -701,10 +709,11 @@ export class CleanUseCase {
 
   private async deleteMachineLocalSettingsFiles(
     toolId: ToolId,
-    projectRoot: string
+    projectRoot: string,
+    tools: readonly ToolProfile[]
   ): Promise<number> {
     let count = 0;
-    for (const relativePath of machineLocalFilesOf(toolId)) {
+    for (const relativePath of machineLocalFilesOf(tools, toolId)) {
       const fullPath = join(projectRoot, relativePath);
       if (!(await this.fs.fileExists(fullPath))) continue;
       await this.fs.deleteFile(fullPath);
