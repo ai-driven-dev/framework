@@ -163,6 +163,19 @@ describe("defineAiTool", () => {
     expect(tool.buildContract("marketplace")).toBeNull();
   });
 
+  it("answers whether a user scope has anywhere to point it, from its plugins capability", () => {
+    const withPlugins = defineAiTool({
+      ...aiSpec,
+      capabilities: () => ({
+        plugins: nativePlugins({ installScope: "user", userPluginsDir: (home) => `${home}/.x` }),
+      }),
+    });
+    const withoutPlugins = defineAiTool(aiSpec);
+
+    expect(withPlugins.supportsUserScopeActivation()).toBe(true);
+    expect(withoutPlugins.supportsUserScopeActivation()).toBe(false);
+  });
+
   it("refuses an AI tool declaring no build contract", () => {
     expect(refusalOf(() => defineAiTool({ ...aiSpec, buildContracts: {} })).invariant).toBe(
       "no-build-contract"

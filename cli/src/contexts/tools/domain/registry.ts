@@ -76,7 +76,8 @@ export class ToolCatalog {
   }
 
   supportsUserScopeActivation(toolId: ToolId): boolean {
-    return this.resolvePluginsCapability(toolId)?.supportsUserScopeActivation() ?? false;
+    const config = this.getToolConfig(toolId);
+    return isAiTool(config) && config.supportsUserScopeActivation();
   }
 
   hostRefInUse(toolId: ToolId, enabled: boolean): boolean {

@@ -4,7 +4,7 @@ import { MarketplaceSourceMode } from "../../contexts/distribution/domain/market
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
+import type { AiToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { ToolId } from "../../kernel/tool.js";
 import {
   AI_TOOL_IDS,
@@ -102,18 +102,15 @@ export function parsePluginsFlag(
 export function globalSetupHelp(catalog: ToolCatalog): string {
   const global = catalog
     .sortedById()
-    .filter((profile) => profile.kind === "ai" && profile.plugins()?.supportsUserScopeActivation());
+    .filter(
+      (profile): profile is AiToolProfile =>
+        profile.kind === "ai" && profile.supportsUserScopeActivation()
+    );
   const tools = global.map((profile) => profile.toolId);
-  const native = global.filter(
-    (profile) => profile.kind === "ai" && profile.nativeActivation() !== undefined
-  );
-  const copying = global.filter(
-    (profile) => profile.kind === "ai" && profile.plugins()?.copiesFilesGlobally()
-  );
-  const where = (profile: ToolProfile) =>
-    profile.kind === "ai"
-      ? profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/")
-      : undefined;
+  const native = global.filter((profile) => profile.nativeActivation() !== undefined);
+  const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());
+  const where = (profile: AiToolProfile) =>
+    profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
   return [
     "",
     "Global:",
@@ -182,9 +179,7 @@ export function registerSetupCommand(program: Command, catalog: ToolCatalog): vo
           projectRoot,
           supportsUserScopeActivation: (id) => {
             const profile = catalog.profile(id);
-            return (
-              profile.kind === "ai" && profile.plugins()?.supportsUserScopeActivation() === true
-            );
+            return profile.kind === "ai" && profile.supportsUserScopeActivation();
           },
           source,
           aiTools: toolIds.aiTools,

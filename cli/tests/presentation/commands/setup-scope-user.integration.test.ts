@@ -57,4 +57,11 @@ describe("setup --scope user in a git-tracked project", () => {
     expect(syncResult.exitCode).toBe(0);
     expect(await gitStatusPorcelain(project)).toBe("");
   });
+
+  it("refuses a tool that has no user-scope activation, naming it", async () => {
+    const result = await aidd(setupFromFixture("antigravity", "none", ["--scope", "user"]));
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("neither exists for: antigravity");
+  });
 });

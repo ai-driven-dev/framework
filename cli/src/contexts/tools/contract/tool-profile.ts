@@ -134,6 +134,8 @@ export interface AiToolProfile {
   rewriteContent(content: string): string;
   /** The tool's plugin delivery, or null when it declares none. */
   plugins(): PluginAnswers | null;
+  /** Whether `--scope user` has anywhere to point this tool: false when it declares no plugins. */
+  supportsUserScopeActivation(): boolean;
   /** The commands, agents or rules section the tool declares, or null. */
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
   /** The skills section the tool declares, or null. */

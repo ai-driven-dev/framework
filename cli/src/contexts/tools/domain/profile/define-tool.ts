@@ -49,6 +49,7 @@ type AiToolFields = Omit<
   | "buildContract"
   | "configCapabilities"
   | "plugins"
+  | "supportsUserScopeActivation"
   | "nativeActivation"
   | "markdownSection"
   | "skillsSection"
@@ -181,6 +182,7 @@ export function defineAiTool<C extends ProfileSections>(
     buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
     configCapabilities: () => aiConfigCapabilities(capabilities),
     plugins: () => capabilities.plugins ?? null,
+    supportsUserScopeActivation: () => capabilities.plugins?.supportsUserScopeActivation() ?? false,
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
     skillsSection: () => capabilities.skills ?? null,
     nativeActivation: () => nativeActivationOf(capabilities),
