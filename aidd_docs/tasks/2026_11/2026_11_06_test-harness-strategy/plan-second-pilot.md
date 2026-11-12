@@ -626,7 +626,12 @@ Re-run after the sections refactor and the design-bar fixes (head `87573c633`):
 - Stage C blockers above: the skill, the glossary, the context rule file and E-T3 are written.
 - Cross-context test imports, migration state M-T3: 157 test files outside `tools` import its kit, 40 the `host-registration` kit, 48 `tools/domain`.
 
-Verdict after re-review: pending.
+Verdict after re-review: no-go. B2 and the design bar are met; B1 is not, B3 and B4 are partial.
+
+- B1, unrecorded deviations: the `CONFIG_ASSETS` table in `src/runtime/assets/asset-loader.ts` (`target/04-tools-and-translate.md:299`, decided: the table disappears); `SourceMarketplaceRef` and `SourcePluginEntryRef` still in `tools/contract/build-contract.ts` (`:124` moves them to translate, `:117` forbids a `tools -> translate` edge: an ambiguity to settle); the kilo and opencode bridge files each keep their own `runHook`, `answerOf`, `stopReasonOf` and `toIdentifier` (`:293` puts them in the shared module, `:139` leaves two parameter files). The bullet above calling the bridge what `:139` asks for is wrong.
+- B3: the widened identifier guard has no Red proofs row.
+- B4: "Add a tool" omits `BASELINE` of `tool-addition-cost.arch.test.ts` (`asset-loader.ts`) and the hooks cost (descriptor, host adapter, payload fixtures).
+- Should-fix: the identifier guard skips `contract/` and `domain/marketplace-*.ts`, where one-profile names remain (`CURSOR_PLUGIN_ROOT_TOKEN`, `buildCodexMarketplace`); stale guard titles; the tools ambiguities live in the plan only, not in section 9.
 
 ## Design bar (user requirement, checked at every design review)
 
