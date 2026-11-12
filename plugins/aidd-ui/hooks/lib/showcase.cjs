@@ -123,6 +123,20 @@ const byCode = (a, b) => (a < b ? -1 : a > b ? 1 : 0); // the same order on ever
 const byRecordId = (a, b) => byCode(fm(a).id, fm(b).id);
 const byLevel = (a, b) => LEVELS.indexOf(fm(a).kind) - LEVELS.indexOf(fm(b).kind) || byRecordId(a, b);
 
+/** The narrowest readable card of a storyboard, the gap that holds the arrow between two cards, and the
+ * longest journey that can stand on one row: a container query cannot read a variable, so the width that
+ * a count of steps needs is written out for each count. Longer, or narrower, a journey reads as a list. */
+const CARD_MIN = 160;
+const CARD_GAP = 48;
+const ROW_MAX_STEPS = 12;
+const ARROW_RIGHT = `url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 20 12'%3E%3Cpath d='M0 6h17M12 1l5 5-5 5' fill='none' stroke='%23d2d2cc' stroke-width='2'/%3E%3C/svg%3E")`;
+const ARROW_DOWN = `url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 12 20'%3E%3Cpath d='M6 0v17M1 12l5 5 5-5' fill='none' stroke='%23d2d2cc' stroke-width='2'/%3E%3C/svg%3E")`;
+const rowBoards = () => Array.from({ length: ROW_MAX_STEPS - 1 }, (_, at) => {
+  const n = at + 2;
+  const board = `.board[data-steps="${n}"]`;
+  return `@container (min-width: ${n * CARD_MIN + (n - 1) * CARD_GAP}px) { ${board} { display: grid; grid-template-columns: repeat(var(--steps), minmax(0, 1fr)); column-gap: ${CARD_GAP}px; } ${board} .card { display: flex; flex-direction: column; gap: var(--s2); } ${board} .screen { align-self: stretch; } ${board} .card:not(:first-child)::before { left: auto; right: 100%; top: 0; inline-size: ${CARD_GAP}px; padding-top: 62.5%; background: ${ARROW_RIGHT} center / 20px 12px no-repeat; } }`;
+}).join("\n");
+
 /** The look of the showcase, light on purpose: wireframes are paper and renders are mostly light
  * screens, so a light shell frames them like a design tool's canvas instead of glaring against them.
  * One scale for space, type and radius, one accent, the system fonts only. */
@@ -153,7 +167,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); height: 32px; padding: 0 var(--s5) 0 var(--s2); }
 .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
 .shell > nav { position: sticky; top: 0; height: 100vh; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s6); }
-.shell > main { min-width: 0; padding: var(--s6) var(--s7) var(--s7); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
+.shell > main { min-width: 0; padding: var(--s6) var(--s7) calc(var(--s7) + 34px + var(--s5)); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
 .shell > main.wide { max-width: none; }
 nav .brand { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) var(--s2) var(--s4); font-size: var(--t-sm); font-weight: 600; }
 nav .mark { inline-size: 18px; block-size: 18px; border-radius: 5px; background: linear-gradient(135deg, var(--accent), #8b5cf6); flex: none; }
@@ -168,9 +182,8 @@ nav a:hover { text-decoration: none; }
 nav li:has(a[aria-current="page"]), nav .home:has(a[aria-current="page"]) { background: var(--accent-soft); }
 nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
 .tag { flex: none; margin-right: var(--s2); font-size: 10px; font-weight: 500; border-radius: 999px; padding: 1px 6px; background: var(--revise-soft); color: var(--revise); }
-.head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s5); row-gap: var(--s2); align-items: start; }
-.head > * { grid-column: 1; }
-.head > .stamp { grid-column: 2; grid-row: 2; display: flex; align-items: center; gap: var(--s2); padding-top: var(--s2); }
+.head { display: flex; flex-direction: column; gap: var(--s2); }
+.head > .stamp { display: flex; align-items: center; gap: var(--s2); }
 .crumb { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--faint); }
 .head h1, main > h1 { margin: 0; font-size: var(--t-2xl); line-height: 1.2; font-weight: 650; letter-spacing: -0.01em; }
 .lede { margin: 0; color: var(--text); font-size: var(--t-lg); max-width: 72ch; }
@@ -212,11 +225,14 @@ nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
 .journey-bar .prev, .journey-bar .next { display: inline-flex; flex-direction: column; gap: 1px; min-width: 0; }
 .journey-bar .next { margin-left: auto; align-items: flex-end; text-align: right; }
 .journey-bar small { color: var(--faint); font-size: var(--t-xs); }
-.journey { padding: var(--s2) 0 var(--s4); }
-.board { list-style: none; margin: 0 0 0 calc(var(--s7) * -1); padding: 0; display: flex; flex-wrap: wrap; row-gap: var(--s6); align-items: flex-start; }
-.board .card { position: relative; flex: none; inline-size: calc(232px + var(--s7)); padding-left: var(--s7); display: flex; flex-direction: column; gap: var(--s3); }
-.board .card:not(:first-child)::after { content: ""; position: absolute; top: 74px; left: 10px; inline-size: calc(var(--s7) - 20px); block-size: 2px; background: var(--line-strong); }
-.board .card:not(:first-child)::before { content: ""; position: absolute; top: 70px; left: calc(var(--s7) - 18px); inline-size: 8px; block-size: 8px; border: solid var(--line-strong); border-width: 2px 2px 0 0; transform: rotate(45deg); }
+.journey { padding: var(--s2) 0 var(--s4); container-type: inline-size; }
+.board { list-style: none; margin: 0; padding: 0 0 var(--s4); display: flex; flex-direction: column; gap: var(--s5); }
+.board .card { position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--s4); row-gap: var(--s1); align-items: start; }
+.board .card:not(:first-child)::before { content: ""; position: absolute; left: 94px; top: calc(var(--s5) * -1); inline-size: 12px; block-size: var(--s5); background: ${ARROW_DOWN} center / contain no-repeat; }
+.board .step { display: contents; }
+.board .mini { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+.board .screen { grid-column: 2; grid-row: 1; align-self: end; }
+.board .action { grid-column: 2; grid-row: 2; }
 .step { display: flex; flex-direction: column; gap: var(--s2); color: var(--text); }
 .step:hover { text-decoration: none; }
 .step:hover .mini { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-2); }
@@ -286,7 +302,7 @@ a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0
 .mini-card:hover { text-decoration: none; border-color: #c7cdfb; box-shadow: var(--shadow-2); }
 .mini-card b { font-size: 13px; font-weight: 600; }
 .mini-card .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
-.open-review { position: fixed; top: var(--s4); right: var(--s5); z-index: 20; display: inline-flex; align-items: center; gap: var(--s2); height: 34px; box-shadow: var(--shadow-2); }
+.open-review { position: fixed; bottom: var(--s5); right: var(--s5); z-index: 20; display: inline-flex; align-items: center; gap: var(--s2); height: 34px; box-shadow: var(--shadow-2); }
 .open-review[aria-expanded="true"] { display: none; }
 .tally { padding: 0 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 30; inline-size: var(--drawer); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); box-shadow: -12px 0 32px rgba(24, 24, 20, 0.08); }
@@ -316,6 +332,7 @@ a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0
 #note { flex-basis: 100%; margin: 0; color: var(--revise); font-size: var(--t-sm); }
 #note:empty { display: none; }
 textarea.out { width: 100%; min-height: 8rem; font: var(--t-sm) var(--mono); border: 1px solid var(--line-strong); border-radius: var(--r1); padding: var(--s2); }
+${rowBoards()}
 `;
 /** The delivery of a copy, shared by the pages that hand a review back: the clipboard, else a text area to copy from. */
 const DELIVER = `
@@ -649,7 +666,7 @@ function journeyOf({ project, record, recordsById, tokens, labels }) {
     const shown = target ? `<a class="step" href="${escaped(stepAddress(fm(record).id, row.Screen, at + 1))}">${face}</a>` : `<div class="step">${face}</div>`;
     return `<li class="card" data-step="${at + 1}">${shown}<p class="action"><span class="num">${at + 1}</span>${escaped(row.Action ?? "")}</p></li>`;
   };
-  return `<section class="journey"><ol class="board">${steps.map(card).join("")}</ol></section>`;
+  return `<section class="journey"><ol class="board" data-steps="${steps.length}" style="--steps: ${steps.length}">${steps.map(card).join("")}</ol></section>`;
 }
 
 /** The bars of a page a journey passes through, one per step that names it, hidden until the address names
@@ -957,9 +974,9 @@ function specOf(project, record) {
   return documentOf(kept.join(LINE_BREAK));
 }
 
-/** The heading of a record's page: its group, its title, its description and a journey's persona under it, its
- * route and code, then its status and version, which the stylesheet sets at the right of the title. */
-const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels[groupOf(record)]}</p><h1>${escaped(title)}</h1>${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}${chipsOf(record)}${stampOf(record, labels)}</header>`;
+/** The heading of a record's page: its group, its title, its status and version under the title, clear of the
+ * review button at the top right, then its description, a journey's persona, its route and code. */
+const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels[groupOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}${chipsOf(record)}</header>`;
 
 /** The record a card or a journey shows first: a journey's first step that names a record with a render, else the record itself. */
 function shownRecordOf(project, record, recordsById) {

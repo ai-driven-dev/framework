@@ -51,6 +51,7 @@ Lecture des skills contre la spec et la feuille de route. Aucun skill ne refait 
 | aucun | `publish` sans identifiant, qui monte la version du design system, n'est lancé par aucun skill. | `06-review/references/engine.md` | moyenne |
 | 03, 04 | Arrêt dur sans le skill précédent, alors que le brainstorm laisse la personne libre de l'ordre. | `03-foundations/actions/01-prepare.md`, `04-components/actions/01-prepare.md` | à trancher |
 | 04, 05 | Écrivent un lien `code` à l'extraction : ce n'est pas encore le travail de `feature`, qui met ces liens à jour après le code. | `04-components/references/extraction.md`, `05-screens/references/screens.md` | aucune, à garder en tête |
+| tous | Décision, pour le moment : le moteur reste dans `hooks/`, appelé par chaque skill. C'est une exception à « un skill ne pointe pas hors de lui-même ». Écartés : la CLI (outil de plus à installer), un skill unique, des copies par skill (environ 41 000 lignes livrées). Restent dus : tester l'installation à plat, et faire charger au hook la vérification seule, sans le code qui crée. | `hooks/lib/hook.cjs:9`, `skills/*/references/engine.md` | à faire |
 
 ## Pilote, vu par la machine
 

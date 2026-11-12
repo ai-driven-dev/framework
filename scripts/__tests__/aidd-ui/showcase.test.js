@@ -110,7 +110,7 @@ describe("aidd-ui showcase", () => {
 
     it("shows the persona as one line under the title, and leaves the Steps table and the Persona section out of the journey's text", () => {
       const page = pagesOf()["onboarding.html"];
-      assert.match(headerOf(page), /<h1>Onboarding<\/h1><p class="persona">For a first-time analyst: An analyst opening the product for the first time, looking for one answer\.<\/p>/);
+      assert.match(headerOf(page), /<h1>Onboarding<\/h1><div class="stamp">[\s\S]*?<\/div><p class="persona">For a first-time analyst: An analyst opening the product for the first time, looking for one answer\.<\/p>/);
       assert.doesNotMatch(page, /<h2>Steps<\/h2>|<h2>Persona<\/h2>|<table|<section class="persona"/);
       assert.equal(page.match(/An analyst opening the product/g).length, 1);
     });
@@ -185,7 +185,7 @@ describe("aidd-ui showcase", () => {
     it("puts the record's description under its title, before the canvas, and not again in its text", () => {
       edit(tmp, `${UI}/wireframes/search-flow.md`, "# Search flow", "# Search flow\n\nLet an analyst narrow a search\nto one result.\n\n## Notes\n\nKept below.");
       const page = pagesOf()["search-flow.html"];
-      assert.match(headerOf(page), /<h1>Search flow<\/h1><p class="lede">Let an analyst narrow a search to one result\.<\/p><div class="stamp">/);
+      assert.match(headerOf(page), /<h1>Search flow<\/h1><div class="stamp">[\s\S]*?<\/div><p class="lede">Let an analyst narrow a search to one result\.<\/p>/);
       assert.equal(page.match(/narrow a search/g).length, 1);
       assert.ok(page.indexOf('class="lede"') < page.indexOf('<section class="review"'));
       assert.match(page, /<p>Kept below\.<\/p>/);
@@ -637,12 +637,39 @@ describe("aidd-ui showcase", () => {
       assert.match(headerOf(pagesOf({ lang: "fr" })["search-flow.html"]), /data-status="odd">odd</);
     });
 
-    it("stamps the status and the version on the title line, and keeps the route and the code below", () => {
+    it("stamps the status and the version under the title, clear of the review button, and keeps the route and the code below", () => {
       const home = headerOf(pagesOf()["home.html"]);
-      assert.ok(home.indexOf("<h1>") < home.indexOf('class="stamp"'));
+      assert.match(home, /<\/h1><div class="stamp">/);
       assert.doesNotMatch(home.match(/<div class="chips">[\s\S]*?<\/div>/)[0], /data-status|class="version"/);
-      assert.match(pagesOf()["home.html"], /\.head \{[^}]*grid-template-columns/);
-      assert.match(rule(pagesOf()["home.html"], ".head > .stamp"), /grid-row: 2/);
+      assert.match(rule(pagesOf()["home.html"], ".head"), /flex-direction: column/);
+      assert.doesNotMatch(pagesOf()["home.html"], /\.head \{[^}]*grid-template-columns/);
+    });
+
+    it("never wraps nor scrolls a journey's storyboard: one row of equal columns sharing the width, else one step per row", () => {
+      const html = pagesOf()["onboarding.html"];
+      const board = rule(html, ".board");
+      assert.doesNotMatch(board, /flex-wrap: wrap|overflow-x: auto|overflow: auto/);
+      assert.match(rule(html, ".journey"), /container-type: inline-size/);
+      assert.match(html, /<ol class="board" data-steps="3" style="--steps: 3">/);
+      assert.match(html, /@container \(min-width: \d+px\) \{ \.board\[data-steps="3"\] \{[^@]*grid-template-columns: repeat\(var\(--steps\), minmax\(0, 1fr\)\)/);
+      assert.match(rule(html, ".board .step"), /display: contents/);
+    });
+
+    it("switches to the vertical list below a readable card, the threshold following the step count", () => {
+      const html = pagesOf()["onboarding.html"];
+      const threshold = (n) => Number(html.match(new RegExp(`@container \\(min-width: (\\d+)px\\) \\{ \\.board\\[data-steps="${n}"\\]`))[1]);
+      assert.equal(threshold(4), 4 * 160 + 3 * 48);
+      assert.ok(threshold(5) > threshold(4));
+      assert.match(rule(html, ".board .card"), /grid-template-columns: 200px minmax\(0, 1fr\)/);
+    });
+
+    it("floats the review button at the bottom right, clear of the stamp, and keeps the last content above it", () => {
+      const html = pagesOf()["onboarding.html"];
+      const opener = rule(html, ".open-review");
+      assert.match(opener, /bottom: var\(--s5\)/);
+      assert.match(opener, /right: var\(--s5\)/);
+      assert.doesNotMatch(opener, /top:/);
+      assert.match(rule(html, ".shell > main"), /padding: var\(--s6\) var\(--s7\) calc\(var\(--s7\) \+ 34px \+ var\(--s5\)\)/);
     });
 
     it("reads the description in the text color, and the persona darker than the faint grey", () => {
