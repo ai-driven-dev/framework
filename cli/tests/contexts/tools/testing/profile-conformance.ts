@@ -9,15 +9,14 @@ import { AgentsCapability } from "../../../../src/contexts/tools/domain/capabili
 import { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { RulesCapability } from "../../../../src/contexts/tools/domain/capabilities/rules-capability.js";
-import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
+import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile/profile-sections.js";
-import { isAiTool, type ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */
 export interface ConformanceSubject {
-  readonly profile: ToolConfig;
-  readonly registration: readonly ToolConfig[];
+  readonly profile: AiTool | IdeToolConfig;
+  readonly registration: readonly (AiTool | IdeToolConfig)[];
 }
 
 /** A check is a pure assertion, so a proof can run it against a subject built to break it. */
@@ -68,7 +67,7 @@ function aiCheck(
   return {
     title,
     holds: (subject) => {
-      if (isAiTool(subject.profile)) holds(subject.profile, subject);
+      if (subject.profile.kind === "ai") holds(subject.profile, subject);
     },
   };
 }
@@ -112,7 +111,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     title: "is registered once, under its own id",
     holds: ({ profile, registration }) => {
       expect(registration.filter((other) => other.toolId === profile.toolId)).toHaveLength(1);
-      const ids: readonly string[] = isAiTool(profile) ? AI_TOOL_IDS : IDE_TOOL_IDS;
+      const ids: readonly string[] = profile.kind === "ai" ? AI_TOOL_IDS : IDE_TOOL_IDS;
       expect(ids).toContain(profile.toolId);
     },
   },
@@ -214,8 +213,8 @@ export function registeredIdsMatchKernel(ids: readonly ToolId[]): void {
 }
 
 export function describeProfileConformance(
-  profile: ToolConfig,
-  registration: readonly ToolConfig[]
+  profile: AiTool | IdeToolConfig,
+  registration: readonly (AiTool | IdeToolConfig)[]
 ): void {
   describe(profile.toolId, () => {
     for (const check of PROFILE_CHECKS) {

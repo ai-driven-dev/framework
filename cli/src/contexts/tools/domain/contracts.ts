@@ -2,7 +2,6 @@ import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
 import type { AgentsCapability } from "./capabilities/agents-capability.js";
-import type { RulesCapability } from "./capabilities/rules-capability.js";
 import type { NativeActivation } from "./plugins/native-activation.js";
 import type { PluginsCapability } from "./plugins/plugins-capability.js";
 import type {
@@ -13,10 +12,6 @@ import type {
 
 export interface HasAgents {
   readonly agents: AgentsCapability;
-}
-
-export interface HasRules {
-  readonly rules: RulesCapability;
 }
 
 export interface HasPlugins {
@@ -72,12 +67,4 @@ export interface IdeToolConfig<C extends ProfileSections = ProfileSections> exte
   readonly signalDir: string | null;
   section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
-}
-
-/** Whether this tool declares a rules capability at all. Generic over the tool's own capability
- * set so a caller keeps whatever it had already narrowed. */
-export function hasRules<TCapabilities extends ProfileSections>(
-  tool: AiTool<TCapabilities>
-): tool is AiTool<TCapabilities & HasRules> {
-  return tool.section("rules") !== null;
 }

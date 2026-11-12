@@ -152,6 +152,7 @@ Auth's pass is Appendix A of `aidd_docs/tasks/2026_11/2026_11_06_test-harness-st
 | Code size | not in force here, see section 8 | the code-size branch's own `code-size.arch.test.ts` |
 
 - A list of tools, help included, derives from `REGISTERED_PROFILES`, in its order; the help golden holds the bytes.
+- A use case gets the tools it acts on as profiles in its input; only presentation, composition and runtime wiring hold the `ToolCatalog`. `tools` is in `HELD_BY_BIOME`: its `domain/` and `application/` are the composition root's, and an outside caller imports `tools/contract/` only.
 - A missing capability is a missing file: no `hooks.ts`, no hooks.
 
 Written rules no tool checks: the glossary, a kit imported by its own context only, one subject per test file, the test challenge pass.
@@ -169,7 +170,7 @@ Written rules no tool checks: the glossary, a kit imported by its own context on
 | M1 | `shared/ports/http-get.ts` has one importing context, distribution | `target/00-overview.md:69` | created by foundations; auth receives `GitHubAdapter`, it does not import `HttpGet` | `update` migrates |
 | E10 | `framework -> host-registration` in `ALLOWED` | `target/00-overview.md:43-52`, `target/02-host-registration-and-recipes.md` | doctor and sync registration still live in framework and ask `contract/` for the pure rules | framework becomes orchestration and its doctor and sync registration move into host-registration commands |
 | E11 | `contract/` holds published pure rules over its own types, and imports no sibling folder; `host-registration` has no `domain/` folder, so these rules are its whole domain and the `host-registration-rules` mutation scope is the only check on them, since coverage excludes `contract/` | `target/02-host-registration-and-recipes.md` | an outside caller needs them before its commands move in, and a rules port would grow exact constructor baselines | the framework split moves doctor and sync registration into host-registration commands |
-| E-T7 | the native section types stay in `tools` as data | `target/02-host-registration-and-recipes.md` section 6 | profiles declare `nativeActivation` and `marketplaceRegistration`; the types move with the profiles | profiles move to composition |
+| E-T7 | the native section types stay in `tools` as data | `target/02-host-registration-and-recipes.md` section 6 | profiles declare `nativeActivation` and `marketplaceRegistration`; the types move with the profiles | profiles move to composition with the cost guard |
 | E-T4 | `tools/domain/formats/toml.ts` imports `smol-toml`, the only domain file that does | a domain imports no package (`aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-tools-clean.md` sections 0 F6, 2, 8) | TOML parsing and stringifying is the format `tools` writes; one wrapper keeps the package behind one file and `biome.json` denies it everywhere else in the domain | a `TomlCodec` port with an infrastructure adapter replaces the wrapper |
 
 ### Ambiguities removed

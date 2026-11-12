@@ -1,4 +1,6 @@
+import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { ProjectHooksFormat } from "../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import type { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
@@ -10,14 +12,11 @@ import {
   pluginsCapability,
 } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import {
+  type BuiltToolConfig,
   defineAiTool,
   defineIdeTool,
   type ProfileBrand,
 } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
-import {
-  type BuiltToolConfig,
-  ToolCatalog,
-} from "../../../../src/contexts/tools/domain/registry.js";
 import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
@@ -182,7 +181,7 @@ export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig & Prof
 }
 
 export function aCatalog(...profiles: readonly BuiltToolConfig[]): ToolCatalog {
-  return new ToolCatalog(profiles);
+  return new RegisteredToolCatalog(profiles);
 }
 
 export type InstallKind = "skills" | "agents" | "commands" | "rules";

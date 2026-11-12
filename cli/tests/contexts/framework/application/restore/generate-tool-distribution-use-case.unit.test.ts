@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/framework/application/restore/generate-tool-distribution-use-case.js";
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
-import {
-  getToolConfig,
-  isAiTool,
-  type ToolConfig,
-} from "../../../../../src/contexts/tools/domain/registry.js";
+import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
@@ -14,6 +10,7 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
+import { registeredAiConfig, registeredConfig } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKDOWN = "---\nname: sample\ndescription: A sample.\n---\n\nBody.\n";
@@ -42,7 +39,7 @@ const hasher = new DeterministicHasher();
 const assets = new BundledAssetProviderAdapter();
 
 function generate(
-  config: ToolConfig,
+  config: ToolProfile,
   assetProvider?: BundledAssetProviderAdapter
 ): Promise<InstallationFile[]> {
   return new GenerateToolDistributionUseCase(
@@ -54,7 +51,9 @@ function generate(
 }
 
 async function pathsFor(toolId: ToolId, assetProvider?: BundledAssetProviderAdapter) {
-  return (await generate(getToolConfig(toolId), assetProvider)).map((f) => f.relativePath).sort();
+  return (await generate(registeredConfig(toolId), assetProvider))
+    .map((f) => f.relativePath)
+    .sort();
 }
 
 describe("GenerateToolDistributionUseCase — content sections", () => {
@@ -72,8 +71,7 @@ describe("GenerateToolDistributionUseCase — content sections", () => {
   });
 
   it("skips a section the tool declares no capability for", async () => {
-    const claude = getToolConfig("claude");
-    if (!isAiTool(claude)) throw new Error("claude is an AI tool");
+    const claude = registeredAiConfig("claude");
 
     const paths = (await generate(withSections(claude, { rules: null })))
       .map((f) => f.relativePath)
@@ -89,14 +87,14 @@ describe("GenerateToolDistributionUseCase — content sections", () => {
 
 describe("GenerateToolDistributionUseCase — a tool's own config assets", () => {
   it("regenerates the shared OpenCode plugin runtime alongside tool configuration", async () => {
-    const files = await generate(getToolConfig("opencode"), assets);
+    const files = await generate(registeredConfig("opencode"), assets);
     expect(
       files.find((file) => file.relativePath === ".opencode/hooks/opencode-events.js")?.content
     ).toBe(assets.loadConfigAsset("opencode", "opencode-events.js"));
   });
 
   it("writes a JSON asset pretty-printed at the path the tool declares", async () => {
-    const files = await generate(getToolConfig("claude"), assets);
+    const files = await generate(registeredConfig("claude"), assets);
     const content = JSON.stringify(assets.loadConfigAsset("claude", "settings.json"), null, 2);
 
     expect(files.find((f) => f.relativePath === ".claude/settings.json")).toStrictEqual(
@@ -109,8 +107,7 @@ describe("GenerateToolDistributionUseCase — a tool's own config assets", () =>
   });
 
   it("writes the files the tool's profile answers for its config, wherever the profile keeps them", async () => {
-    const claude = getToolConfig("claude");
-    if (!isAiTool(claude)) throw new Error("claude is an AI tool");
+    const claude = registeredAiConfig("claude");
     const relocated = { ...claude, configFiles: () => ({ "settings.json": ".relocated/s.json" }) };
 
     const paths = (await generate(relocated, assets)).map((f) => f.relativePath);
@@ -123,7 +120,7 @@ describe("GenerateToolDistributionUseCase — a tool's own config assets", () =>
     const asset = assets.loadConfigAsset("codex", "config.toml");
     if (typeof asset !== "string") throw new Error("the codex config asset is text");
 
-    const files = await generate(getToolConfig("codex"), assets);
+    const files = await generate(registeredConfig("codex"), assets);
 
     expect(files.find((f) => f.relativePath === ".codex/config.toml")?.content).toBe(asset);
   });

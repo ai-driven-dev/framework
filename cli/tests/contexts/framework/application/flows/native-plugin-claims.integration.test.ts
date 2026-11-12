@@ -14,7 +14,6 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import { nativeActivationOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -25,7 +24,11 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf, registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import {
+  catalogOf,
+  registeredAiConfig,
+  registeredProfiles,
+} from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 for (const [toolId, catalogPath] of [
@@ -374,7 +377,9 @@ for (const [toolId, catalogPath] of [
         []
       );
       const removeFs = new InMemoryFileAdapter();
-      const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(resolveHomeDir());
+      const cacheRoot = registeredAiConfig(toolId)
+        .nativeActivation()
+        ?.pluginCacheRoot(resolveHomeDir());
       const cachedBytes =
         cacheRoot === undefined ? undefined : join(cacheRoot, hostName, "test-plugin", "skill.md");
       if (cachedBytes !== undefined)

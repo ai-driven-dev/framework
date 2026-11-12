@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
 import { parseToml } from "../../../../src/contexts/tools/domain/formats/toml.js";
 import { pluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
@@ -8,7 +9,6 @@ import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
-import type { ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import {
   type PluginComponentFile,
@@ -83,7 +83,7 @@ function makeDist(
   });
 }
 
-function pathsFor(tool: ToolConfig, dist = makeDist()): string[] {
+function pathsFor(tool: AiTool | IdeToolConfig, dist = makeDist()): string[] {
   return translator.translate(dist, tool).map((f) => f.relativePath);
 }
 
@@ -499,13 +499,13 @@ function hooksDist(extra: PluginComponentFile[] = []): PluginDistribution {
   return distOf([...hooks], { hooks });
 }
 
-function treeOf(tool: ToolConfig, dist: PluginDistribution): Record<string, string> {
+function treeOf(tool: AiTool | IdeToolConfig, dist: PluginDistribution): Record<string, string> {
   return Object.fromEntries(
     translator.translate(dist, tool).map((f) => [f.relativePath, f.content])
   );
 }
 
-function installedPathsOf(tool: ToolConfig, dist: PluginDistribution): string[] {
+function installedPathsOf(tool: AiTool | IdeToolConfig, dist: PluginDistribution): string[] {
   return Object.keys(treeOf(tool, dist)).sort();
 }
 

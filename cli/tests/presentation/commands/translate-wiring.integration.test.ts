@@ -3,7 +3,6 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { isAiTool } from "../../../src/contexts/tools/domain/registry.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
 import { sameInstance } from "../same-instance.js";
 
@@ -216,7 +215,7 @@ describe("aidd translate — the help surface", () => {
     ).toEqual([
       [
         "--to <target>",
-        `Conversion target (${REGISTERED_PROFILES.filter(isAiTool)
+        `Conversion target (${REGISTERED_PROFILES.filter((profile) => profile.kind === "ai")
           .map((profile) => profile.toolId)
           .join(", ")})`,
         undefined,

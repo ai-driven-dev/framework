@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { nativeActivationOf } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { registeredAiConfig } from "../../../testing/catalog-of.js";
 import { nativeOf } from "../../../testing/plugin-mode.js";
 import {
   pluginTreeShapeOf,
@@ -37,7 +37,7 @@ describe("copilot declarations the rest of the CLI reads", () => {
   });
 
   it("drives its own CLI with the verbs it answers to", () => {
-    const activation = nativeActivationOf("copilot");
+    const activation = registeredAiConfig("copilot").nativeActivation();
     expect(activation?.hostBinary()).toBe("copilot");
     expect(activation?.cliShape()).toMatchObject({
       upgradeVerb: "update",

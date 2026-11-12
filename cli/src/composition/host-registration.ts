@@ -27,7 +27,7 @@ import type {
   MarketplaceSourcesDeclaration,
   PluginRegistryLayout,
 } from "../contexts/tools/domain/plugins/native-activation.js";
-import { nativeActivationOf } from "../contexts/tools/domain/registry.js";
+import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
 import { resolveHomeDir } from "../kernel/reading/home-dir.js";
 import { AI_TOOL_IDS, type AiToolId } from "../kernel/tool.js";
 
@@ -78,7 +78,8 @@ export function wireHostRegistration(home: string = resolveHomeDir()): HostRegis
   const marketplaceRegistries = new Map<AiToolId, HostMarketplaceRegistry>();
   const marketplaceSources = new Map<AiToolId, HostMarketplaceSources>();
   for (const id of AI_TOOL_IDS) {
-    const activation = nativeActivationOf(id);
+    const profile = REGISTERED_PROFILES.find((registered) => registered.toolId === id);
+    const activation = profile?.kind === "ai" ? profile.nativeActivation() : undefined;
     if (activation === undefined) continue;
     const binary = activation.hostBinary();
     hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));

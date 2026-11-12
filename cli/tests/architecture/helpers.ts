@@ -135,15 +135,22 @@ export const ALLOWED = new Set([
  * keep the three folders below to themselves and the composition root. The list is data for
  * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
  */
-export const HELD_BY_BIOME: readonly string[] = ["auth", "host-registration"];
+export const HELD_BY_BIOME: readonly string[] = ["auth", "host-registration", "tools"];
 
 const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
 
+/** `tools` keeps its `application/` to the composition root too: what an outside caller asks of
+ * a tool is in `contract/`, and the one application file builds the catalog the root hands out. */
+const APPLICATION_CLOSED = new Set(["tools"]);
+
 /** The groups that forbid a held context's interior to an importer that may reach the rest. */
 export function interiorGroupsOf(context: string): string[] {
-  return INTERIOR_FOLDERS.filter((folder) =>
-    existsSync(join(SRC, "contexts", context, folder))
-  ).map((folder) => `**/${context}/${folder}/**`);
+  const folders: readonly string[] = APPLICATION_CLOSED.has(context)
+    ? [...INTERIOR_FOLDERS, "application"]
+    : INTERIOR_FOLDERS;
+  return folders
+    .filter((folder) => existsSync(join(SRC, "contexts", context, folder)))
+    .map((folder) => `**/${context}/${folder}/**`);
 }
 
 /**

@@ -7,9 +7,8 @@ import {
   resolveScopeForInstall,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { mcpCapabilityOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { UnresolvableUserScopeError } from "../../../../../src/kernel/errors.js";
-import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredAiConfig, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
 const homedir = () => HOME;
@@ -27,9 +26,11 @@ describe("resolvePluginToolIds()", () => {
 describe("frameworkPrimeFlatMcpOf()", () => {
   it("answers the MCP capability of a flat tool merging framework-prime", () => {
     expect(frameworkPrimeFlatMcpOf(registeredAiProfile("opencode"))).toBe(
-      mcpCapabilityOf("opencode")
+      registeredAiConfig("opencode").section("mcp")
     );
-    expect(frameworkPrimeFlatMcpOf(registeredAiProfile("kilo"))).toBe(mcpCapabilityOf("kilo"));
+    expect(frameworkPrimeFlatMcpOf(registeredAiProfile("kilo"))).toBe(
+      registeredAiConfig("kilo").section("mcp")
+    );
   });
 
   it("answers null for a native tool merging framework-prime", () => {

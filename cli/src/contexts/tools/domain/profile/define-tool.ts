@@ -32,6 +32,9 @@ export declare class ProfileBrand {
   private readonly profileBrand: true;
 }
 
+/** A profile only the factory could have produced. */
+export type BuiltToolConfig = (AiTool | IdeToolConfig) & ProfileBrand;
+
 type Unbound<P> = Omit<P, "directory" | "toolSuffix">;
 type ParamsOf<T extends new (params: never) => unknown> = ConstructorParameters<T>[0];
 

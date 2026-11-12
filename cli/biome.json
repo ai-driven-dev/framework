@@ -320,6 +320,10 @@
                   {
                     "group": ["**/host-registration/infrastructure/**"],
                     "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -352,6 +356,10 @@
                   {
                     "group": ["**/host-registration/infrastructure/**"],
                     "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1691,6 +1699,10 @@
                   {
                     "group": ["**/host-registration/infrastructure/**"],
                     "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1727,6 +1739,10 @@
                   {
                     "group": ["**/host-registration/infrastructure/**"],
                     "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1763,6 +1779,10 @@
                   {
                     "group": ["**/host-registration/infrastructure/**"],
                     "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1802,6 +1822,10 @@
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1838,6 +1862,10 @@
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -1874,6 +1902,10 @@
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }

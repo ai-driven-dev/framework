@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { InstallIdeToolUseCase } from "../../../../../src/contexts/framework/application/install/install-ide-tool-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
+import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/registry.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import {
   buildUnitDeps,

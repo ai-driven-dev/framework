@@ -9,9 +9,6 @@ import { UnsupportedPlugins } from "./unsupported-plugins.js";
  */
 export type PluginsCapability = NativePlugins | FlatPlugins | UnsupportedPlugins;
 
-/** The variant of a plugin capability that installs natively. */
-export type NativePluginsCapability = Extract<PluginsCapability, { kind: "native" }>;
-
 export function pluginsCapability(params: PluginsParams): PluginsCapability {
   if (params.mode === "native") return new NativePlugins(params);
   if (params.mode === "flat") return new FlatPlugins(params);

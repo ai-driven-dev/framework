@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { userMachineLocalFilesOf } from "../../../src/contexts/tools/domain/registry.js";
+import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const doctorAll = vi.fn();
@@ -396,7 +396,9 @@ describe("aidd doctor --scope user", () => {
   it("reads the machine-wide manifest and checks registrations alone", async () => {
     expect(await run("--scope", "user")).toEqual([
       "User-scope tools:",
-      `  claude (v5.2.2): expects activation in ${userMachineLocalFilesOf("claude", "/home/dev", () => undefined)[0]}`,
+      `  claude (v5.2.2): expects activation in ${registeredAiConfig("claude")
+        .nativeActivation()
+        ?.userSettingsFile("/home/dev", () => undefined)}`,
       "",
       "User-scope installation is healthy",
     ]);

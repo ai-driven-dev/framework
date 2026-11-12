@@ -3,33 +3,17 @@ import type {
   GlobalFiles,
   ProjectHooksFormat,
 } from "../../../src/contexts/tools/contract/tool-vocabulary.js";
-import { hasRules } from "../../../src/contexts/tools/domain/contracts.js";
+import type { AiTool } from "../../../src/contexts/tools/domain/contracts.js";
 import type { MarketplaceRegistration } from "../../../src/contexts/tools/domain/plugins/marketplace-registration.js";
 import type { NativeActivation } from "../../../src/contexts/tools/domain/plugins/native-activation.js";
 import type { PluginsCapability } from "../../../src/contexts/tools/domain/plugins/plugins-capability.js";
+import type { BuiltToolConfig } from "../../../src/contexts/tools/domain/profile/define-tool.js";
 import { PROFILE_SECTION_KEYS } from "../../../src/contexts/tools/domain/profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import {
-  copiesPluginFilesGlobally,
-  frameworkBuildModeFor,
-  getAllRegisteredTools,
-  globalFilesOf,
-  hostRefInUse,
-  isAiTool,
-  machineLocalFilesOf,
-  nativeActivationOf,
-  pluginEnablementIsMachineGlobal,
-  projectHooksDeliveryOf,
-  projectHooksFileOf,
-  registeredToolIds,
-  supportsUserScopeActivation,
-  ToolCatalog,
-  type ToolConfig,
-  userMachineLocalFilesOf,
-} from "../../../src/contexts/tools/domain/registry.js";
 import type { FlatHooksLoaderEntry } from "../../../src/kernel/materialization/flat-paths.js";
 import type { PluginSource } from "../../../src/kernel/source.js";
 import { keyAskedOf } from "../../helpers/settings-key-probe.js";
+import { catalogOf } from "./testing/catalog-of.js";
 import { pluginModeOf } from "./testing/plugin-mode.js";
 
 const HOME = "/fake/home";
@@ -193,18 +177,38 @@ function translationModeOf(plugins: PluginsCapability): "flat" | "marketplace" |
   return plugins.kind === "native" && plugins.translatesAsMarketplace() ? "marketplace" : null;
 }
 
-function registryAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
-  const id = config.toolId;
-  const delivery = projectHooksDeliveryOf(id);
+function registryAnswer(config: BuiltToolConfig): unknown {
+  if (config.kind !== "ai") {
+    return {
+      frameworkBuildModeFor: "marketplace",
+      frameworkBuildModeFromCatalog: "marketplace",
+      supportsUserScopeActivation: false,
+      pluginEnablementIsMachineGlobal: true,
+      hostRefInUse: { enabled: true, disabled: true },
+      copiesPluginFilesGlobally: false,
+      globalFilesOfIsNull: true,
+      projectHooksFileOf: null,
+      projectHooksDeliveryOf: null,
+      nativeActivationOf: null,
+      machineLocalFilesOf: [],
+      userMachineLocalFilesOf: { noEnv: [], echoEnv: [] },
+      buildContractModes: { marketplace: false, flat: false },
+    };
+  }
+  const delivery = config.projectHooksDelivery();
+  const userSettings = (env: (name: string) => string | undefined): readonly string[] => {
+    const path = config.nativeActivation()?.userSettingsFile(HOME, env);
+    return path === undefined ? [] : [path];
+  };
   return {
-    frameworkBuildModeFor: frameworkBuildModeFor(id),
-    frameworkBuildModeFromCatalog: catalog.frameworkBuildModeFor(id),
-    supportsUserScopeActivation: supportsUserScopeActivation(id),
-    pluginEnablementIsMachineGlobal: pluginEnablementIsMachineGlobal(id),
-    hostRefInUse: { enabled: hostRefInUse(id, true), disabled: hostRefInUse(id, false) },
-    copiesPluginFilesGlobally: copiesPluginFilesGlobally(id),
-    globalFilesOfIsNull: globalFilesOf(id) === null,
-    projectHooksFileOf: projectHooksFileOf(id) ?? null,
+    frameworkBuildModeFor: config.frameworkBuildMode(),
+    frameworkBuildModeFromCatalog: config.frameworkBuildMode(),
+    supportsUserScopeActivation: config.supportsUserScopeActivation(),
+    pluginEnablementIsMachineGlobal: config.pluginEnablementIsMachineGlobal(),
+    hostRefInUse: { enabled: config.hostRefInUse(true), disabled: config.hostRefInUse(false) },
+    copiesPluginFilesGlobally: config.plugins()?.copiesFilesGlobally() ?? false,
+    globalFilesOfIsNull: (config.plugins()?.globalFiles() ?? null) === null,
+    projectHooksFileOf: delivery?.relativePath ?? null,
     projectHooksDeliveryOf:
       delivery === null
         ? null
@@ -214,27 +218,29 @@ function registryAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
             hasFormat: delivery.format !== null,
             hookScript: delivery.hookScript("hooks/run.js", "console.log(1);"),
           },
-    nativeActivationOf: activationAnswer(nativeActivationOf(id) ?? null),
-    machineLocalFilesOf: machineLocalFilesOf(id),
-    userMachineLocalFilesOf: {
-      noEnv: userMachineLocalFilesOf(id, HOME, NO_ENV),
-      echoEnv: userMachineLocalFilesOf(id, HOME, ECHO_ENV),
-    },
+    nativeActivationOf: activationAnswer(config.nativeActivation() ?? null),
+    machineLocalFilesOf: config.marketplaceRegistration()?.machineLocalFiles() ?? [],
+    userMachineLocalFilesOf: { noEnv: userSettings(NO_ENV), echoEnv: userSettings(ECHO_ENV) },
     buildContractModes: {
-      marketplace: catalog.buildContractFor(id, "marketplace") !== undefined,
-      flat: catalog.buildContractFor(id, "flat") !== undefined,
+      marketplace: config.buildContract("marketplace") !== null,
+      flat: config.buildContract("flat") !== null,
     },
   };
 }
 
-function toolAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
-  if (!isAiTool(config)) {
+function rulesLocationOf(config: AiTool): unknown {
+  const rules = config.section("rules");
+  return rules === null ? "no rules section" : rules.installedLocation();
+}
+
+function toolAnswer(config: BuiltToolConfig): unknown {
+  if (config.kind !== "ai") {
     return {
       kind: config.kind,
       directory: config.directory,
       signalDir: config.signalDir,
       plugins: null,
-      registry: registryAnswer(catalog, config),
+      registry: registryAnswer(config),
     };
   }
   return {
@@ -250,19 +256,16 @@ function toolAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
     rewriteContent: config.rewriteContent(
       "See .claude/skills/x and CLAUDE.md for the Claude flow."
     ),
-    rulesInstalledLocation: hasRules(config)
-      ? config.section("rules").installedLocation()
-      : "no rules section",
-    plugins: pluginsAnswer(catalog.resolvePluginsCapability(config.toolId), config.directory),
-    registry: registryAnswer(catalog, config),
+    rulesInstalledLocation: rulesLocationOf(config),
+    plugins: pluginsAnswer(config.plugins(), config.directory),
+    registry: registryAnswer(config),
   };
 }
 
 describe("what every registered tool answers to the contexts that read it", () => {
   it("answers each question the same way for every registered profile", async () => {
-    const catalog = new ToolCatalog(REGISTERED_PROFILES);
     const answers = Object.fromEntries(
-      REGISTERED_PROFILES.map((config) => [config.toolId, toolAnswer(catalog, config)])
+      REGISTERED_PROFILES.map((config) => [config.toolId, toolAnswer(config)])
     );
 
     await expect(`${JSON.stringify(answers, null, 2)}\n`).toMatchFileSnapshot(
@@ -270,49 +273,14 @@ describe("what every registered tool answers to the contexts that read it", () =
     );
   });
 
-  it("answers through the capability's methods what the registry answers", () => {
-    const catalog = new ToolCatalog(REGISTERED_PROFILES);
-    for (const config of REGISTERED_PROFILES.filter(isAiTool)) {
-      const plugins = catalog.resolvePluginsCapability(config.toolId);
-      if (plugins === null) continue;
-      const id = config.toolId;
-      const native = plugins.kind === "native" ? plugins : null;
-      const delivery = plugins.projectHooksDelivery();
-      const registryDelivery = projectHooksDeliveryOf(id);
-
-      expect(
-        {
-          buildMode: plugins.kind === "flat" ? "flat" : "marketplace",
-          activation: activationAnswer(native?.activation() ?? null),
-          enablementIsMachineGlobal: native?.enablementIsMachineGlobal() ?? true,
-          supportsUserScopeActivation: plugins.supportsUserScopeActivation(),
-          copiesFilesGlobally: plugins.copiesFilesGlobally(),
-          globalFiles: globalFilesAnswer(plugins.globalFiles(), config.directory),
-          projectHooksDelivery: delivery === null ? null : delivery.relativePath,
-          projectHooksScript: delivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
-        },
-        id
-      ).toEqual({
-        buildMode: frameworkBuildModeFor(id),
-        activation: activationAnswer(nativeActivationOf(id) ?? null),
-        enablementIsMachineGlobal: pluginEnablementIsMachineGlobal(id),
-        supportsUserScopeActivation: supportsUserScopeActivation(id),
-        copiesFilesGlobally: copiesPluginFilesGlobally(id),
-        globalFiles: globalFilesAnswer(globalFilesOf(id), config.directory),
-        projectHooksDelivery: registryDelivery === null ? null : projectHooksFileOf(id),
-        projectHooksScript: registryDelivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
-      });
-    }
-  });
-
   it("lists the tools in registration order from the catalog and sorted by id from the free function", () => {
-    const catalog = new ToolCatalog(REGISTERED_PROFILES);
+    const catalog = catalogOf();
 
     expect({
-      catalogMethod: [...catalog.getAllRegisteredTools().keys()],
-      freeFunction: [...getAllRegisteredTools().keys()],
-      registeredAiIds: registeredToolIds("ai"),
-      registeredIdeIds: registeredToolIds("ide"),
+      catalogMethod: REGISTERED_PROFILES.map((config) => config.toolId),
+      freeFunction: catalog.sortedById().map((profile) => profile.toolId),
+      registeredAiIds: catalog.inHelpOrder("ai"),
+      registeredIdeIds: catalog.inHelpOrder("ide"),
     }).toMatchInlineSnapshot(`
       {
         "catalogMethod": [

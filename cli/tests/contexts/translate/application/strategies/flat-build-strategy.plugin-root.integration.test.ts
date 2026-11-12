@@ -1,15 +1,12 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/runtime/wiring/translate.js";
-import {
-  buildContractFor,
-  getAllRegisteredTools,
-} from "../../../../../src/contexts/tools/domain/registry.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { McpConfigError } from "../../../../../src/kernel/errors.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredFlatContract, registeredProfiles } from "../../../tools/testing/catalog-of.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-plugin-root");
@@ -27,14 +24,15 @@ const ASSETS: AssetProvider = {
 };
 
 function flatTools(): ToolId[] {
-  return [...getAllRegisteredTools().keys()]
-    .filter((id) => buildContractFor(id, "flat") !== undefined)
+  return registeredProfiles()
+    .map((profile) => profile.toolId)
+    .filter((id) => registeredFlatContract(id) !== null)
     .sort();
 }
 
 /** The flat tools that take a plugin's MCP servers. */
 function mcpTools(): ToolId[] {
-  return flatTools().filter((id) => buildContractFor(id, "flat")?.().artifacts.mcp.supported);
+  return flatTools().filter((id) => registeredFlatContract(id)?.artifacts.mcp.supported);
 }
 
 /** A plugin whose MCP server and hook name `paths`, each under the plugin root. */
@@ -60,9 +58,9 @@ function seeded(paths: readonly string[]): InMemoryFileAdapter {
 }
 
 async function build(tool: ToolId, fs: InMemoryFileAdapter): Promise<void> {
-  const contract = buildContractFor(tool, "flat");
-  if (contract === undefined) throw new Error(`${tool} has no flat contract`);
-  const strategy = new FlatBuildStrategy(fs, ASSETS, contract(), false, OUT, async () => true);
+  const contract = registeredFlatContract(tool);
+  if (contract === null) throw new Error(`${tool} has no flat contract`);
+  const strategy = new FlatBuildStrategy(fs, ASSETS, contract, false, OUT, async () => true);
   await strategy.preBuild(OUT, SOURCE);
   await strategy.writeAgents(PLUGIN, PLUGIN_SRC);
   await strategy.writeSkills(PLUGIN, PLUGIN_SRC);

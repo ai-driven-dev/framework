@@ -3,7 +3,6 @@ import { InitUseCase } from "../../../../src/contexts/framework/application/init
 import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { machineLocalFilesOf } from "../../../../src/contexts/tools/domain/registry.js";
 import { NoManifestError, ToolNotInstalledError } from "../../../../src/kernel/errors.js";
 import { InstallationFile } from "../../../../src/kernel/file.js";
 import { compareSemver } from "../../../../src/kernel/semver.js";
@@ -12,7 +11,7 @@ import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiConfig } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const TRACKED = ".claude/rules/one.md";
@@ -314,10 +313,14 @@ describe("status", () => {
 
     // Written by the CLI on purpose and never tracked. Reading the exclusion off
     // `machineLocalFilesOf` is what keeps it matching the path the profile declares.
-    for (const relativePath of machineLocalFilesOf("claude")) {
+    for (const relativePath of registeredAiConfig("claude")
+      .marketplaceRegistration()
+      ?.machineLocalFiles() ?? []) {
       await deps.fs.writeFile(`${PROJECT_ROOT}/${relativePath}`, "{}");
     }
-    expect(machineLocalFilesOf("claude").length).toBeGreaterThan(0);
+    expect(
+      (registeredAiConfig("claude").marketplaceRegistration()?.machineLocalFiles() ?? []).length
+    ).toBeGreaterThan(0);
 
     const report = await new StatusUseCase(
       deps.fs,

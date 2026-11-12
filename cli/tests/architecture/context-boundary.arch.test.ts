@@ -8,23 +8,6 @@ import { expectRatchet, HELD_BY_BIOME, importersByFile, sourceFiles } from "./he
 
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
-  tools: [
-    // what the presentation asks of the registered tools: the catalog and a profile's answers
-    "src/contexts/tools/contract/tool-catalog.ts",
-    "src/contexts/tools/contract/tool-profile.ts",
-    "src/contexts/tools/contract/tool-profile-lookup.ts",
-    "src/contexts/tools/contract/tool-vocabulary.ts",
-    // the tool lookup surface
-    "src/contexts/tools/domain/registry.ts",
-    "src/contexts/tools/contract/build-contract.ts",
-    // co-owned configuration (settings.json, .mcp.json et al.)
-    "src/contexts/tools/contract/config-refs.ts",
-    // what a tool declares about plugins: installing is framework work
-    "src/contexts/tools/contract/plugin-install-notice.ts",
-    // The variable each tool expands to an installed plugin's directory: a tool declares it,
-    // translate substitutes it, the diagnostic looks for it in what was installed.
-    "src/contexts/tools/contract/plugin-root-token.ts",
-  ],
   translate: [
     // the canonical shapes framework produces and translate consumes
     "src/contexts/translate/domain/canon.ts",

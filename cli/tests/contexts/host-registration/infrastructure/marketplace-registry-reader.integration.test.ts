@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
-import { nativeActivationOf } from "../../../../src/contexts/tools/domain/registry.js";
+import { registeredAiConfig } from "../../tools/testing/catalog-of.js";
 
 let home: string;
 
@@ -20,7 +20,7 @@ afterEach(async () => {
 /** Read off claude's own profile, never a literal, so this path cannot drift from
  * `profile.ts`'s own `marketplaceRegistry`. */
 function registryPath(): string {
-  const declared = nativeActivationOf("claude")?.marketplaceRegistryAt(home);
+  const declared = registeredAiConfig("claude").nativeActivation()?.marketplaceRegistryAt(home);
   if (declared === undefined) throw new Error("claude's profile declares no marketplaceRegistry");
   return declared.path;
 }
