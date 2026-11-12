@@ -25,6 +25,7 @@ const REFERENCE_HOOKS = JSON.stringify({
       { matcher: "Write|Edit", ...command("trap.cjs", "") },
       { matcher: "Write|Edit", ...command("trap.cjs", "python ") },
       { matcher: "Read", ...command("note.cjs") },
+      { matcher: "Deaf", ...command("deaf.cjs") },
       command("any.cjs"),
     ],
   },
@@ -45,6 +46,9 @@ const SCRIPTS: Record<string, string> = {
   "exit7.cjs": "process.exitCode = 7;",
   "note.cjs": `process.stdout.write(JSON.stringify({ hookSpecificOutput: { additionalContext: "noted" } }));`,
 };
+
+// A script that exits without ever reading its stdin.
+const DEAF = "process.exit(0);";
 
 interface Server {
   event: (input: { event: unknown }) => Promise<void>;
@@ -116,6 +120,7 @@ async function open(
   for (const [name, tail] of Object.entries(SCRIPTS)) {
     await writeFile(join(directory, "hooks", "probe", name), `${RECORDING}\n${tail}\n});\n`);
   }
+  await writeFile(join(directory, "hooks", "probe", "deaf.cjs"), DEAF);
   await writeFile(
     join(directory, "hooks", "opencode-events.js"),
     "export function setupOpencodeEvents(ctx, server) { return { ctx, server }; }\n"
@@ -204,6 +209,12 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
         .map((c) => c.script)
         .filter((script) => ["fix.cjs", "note.cjs"].includes(script))
     ).toEqual(["note.cjs", "fix.cjs"]);
+  });
+
+  it("lets a script that never reads its payload exit without breaking the host", async () => {
+    const { tool } = await open(host);
+
+    expect(await tool("deaf", { content: "x".repeat(2_000_000) })).toBe("done");
   });
 
   it("keeps a tool's arguments as they came when it names no written file", async () => {

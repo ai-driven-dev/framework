@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  type BridgeParts,
-  generateBridge,
   parseHooksJsonForBridge,
   pascalCasePluginName,
   replaysNothing,
@@ -80,86 +78,6 @@ describe("pascalCasePluginName", () => {
     ["aidd--sample", "AiddSample"],
   ])("writes %s as %s", (plugin, stem) => {
     expect(pascalCasePluginName(plugin)).toBe(stem);
-  });
-});
-
-describe("generateBridge", () => {
-  const ECHO = {
-    identifierSuffix: "EchoHooks",
-    render: (parts: BridgeParts) => parts,
-  };
-  const partsOf = (hooksJson: string) => {
-    const parts = generateBridge(ECHO, hooksJson, "aidd-sample");
-    if (parts === null) throw new Error("expected a module");
-    return parts;
-  };
-  const sample = hooksOf("SessionStart", `node ${ROOT}/hooks/a.cjs x`);
-
-  it("hands a host nothing to render when no mapped event is replayable", () => {
-    expect(generateBridge(ECHO, hooksOf("Stop", `${ROOT}/hooks/a.sh`), "aidd-sample")).toBeNull();
-  });
-
-  it("names the module after the plugin and the host's suffix", () => {
-    expect(partsOf(sample).identifier).toBe("AiddSampleEchoHooks");
-  });
-
-  it("resolves the scripts folder of a plugin from the module's own url", () => {
-    expect(partsOf(sample).hooksDir).toBe(
-      'const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-sample/", import.meta.url));'
-    );
-  });
-
-  it("declares one call table per mapped event, in the order the modules read them", () => {
-    const hooksJson = JSON.stringify({
-      hooks: {
-        SessionStart: [{ hooks: [{ command: `node ${ROOT}/hooks/a.cjs x` }] }],
-        PostToolUse: [{ hooks: [{ command: `node ${ROOT}/hooks/c.cjs` }] }],
-      },
-    });
-
-    expect(partsOf(hooksJson).callTables).toBe(
-      [
-        'const SESSION_START = [{"script":"a.cjs","args":["x"]}];',
-        "const STOP = [];",
-        'const POST_TOOL_USE = [{"script":"c.cjs","args":[]}];',
-      ].join("\n")
-    );
-  });
-
-  it("spawns a script with the given stdio, every line padded", () => {
-    expect(partsOf(sample).spawnHook(2, '["pipe", "ignore", "ignore"]')).toBe(
-      [
-        '  const child = spawn("node", [HOOKS_DIR + script, ...args], {',
-        "    cwd: directory,",
-        '    stdio: ["pipe", "ignore", "ignore"],',
-        "    timeout: 5000,",
-        "  });",
-      ].join("\n")
-    );
-  });
-
-  it("feeds the payload to the script's stdin and ignores a broken pipe", () => {
-    expect(partsOf(sample).feedStdin(4)).toBe(
-      [
-        '    child.stdin.on("error", () => {});',
-        "    child.stdin.end(JSON.stringify(payload));",
-      ].join("\n")
-    );
-  });
-
-  it("names the fragments the hosts write on one line", () => {
-    const { toolInput, stopReason, appendAnswer } = partsOf(sample);
-
-    expect([toolInput, stopReason, appendAnswer]).toStrictEqual([
-      'const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;',
-      'output?.decision === "block" ? String(output.reason ?? "").trim() : ""',
-      // biome-ignore lint/suspicious/noTemplateCurlyInString: source text of the generated module
-      'if (answer) output.output = `${output.output ?? ""}\\n\\n${answer}`;',
-    ]);
-  });
-
-  it("reads a finished script's exit 2 as the answer, on stderr", () => {
-    expect(partsOf(sample).answerFrom).toContain("if (code === 2) return stderr.trim();");
   });
 });
 
