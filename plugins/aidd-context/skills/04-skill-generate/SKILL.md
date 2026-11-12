@@ -11,15 +11,15 @@ flowchart LR
   entry([request]) -->|"new skill"| scope["actions/01-scope.md"]
   entry -->|"skill folder exists"| plan
   scope --> plan["actions/02-plan.md"] --> write["actions/03-write.md"] --> validate["actions/04-validate.md"]
-  scope <-->|"question or frame to confirm"| user((user answers))
+  scope <-->|"frame to confirm"| user((user answers))
   plan <-->|"table to confirm"| user
+  validate <-->|"trial or out-of-plan breach to confirm"| user
   plan -->|"nothing to change"| unchanged((unchanged))
-  validate -->|"fix a breach or failed trial"| validate
-  validate <-->|"trial approval or breach outside the plan"| user
+  validate -->|"breach or failed trial"| validate
   validate -->|"trial passed"| done((validated))
-  validate -->|"declined, unavailable or run in a subagent"| unverified((runtime unverified))
-  validate -->|"fix declined or cannot be completed"| blocked((blocked))
-  scope & plan & write & validate -->|"cited reference unreadable"| stopped((stopped))
+  validate -->|"trial declined or unavailable"| unverified((runtime unverified))
+  validate -->|"fix declined or impossible"| blocked((blocked))
+  scope & plan & write & validate -->|"reference unreadable"| stopped((stopped))
   write -->|"path outside the workspace"| stopped
 ```
 
@@ -28,4 +28,7 @@ flowchart LR
 - If a cited reference cannot be read, stop and report the missing file.
 - Confirm every target and name with the user.
 - Announce intended writes before editing.
+- Keep every rule, step, branch, wait, loop and stop an existing skill holds.
+- Add no default, exclusion, ordering or step beyond the existing skill, the request and the confirmed frame unless the user confirms it.
+- Leave each file the plan does not name byte-identical.
 - In a subagent, propose each confirmation to the caller instead of asking, write only inside the workspace and report runtime unverified.

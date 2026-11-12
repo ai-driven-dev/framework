@@ -13,6 +13,3 @@ Kebab-case, at most 64 chars, equal to the folder name (`^[a-z0-9]+(-[a-z0-9]+)*
 
 Kebab-case verb phrase (`post-message`), a numbered prefix when order is strict. The slug drops the prefix.
 
-## Collision check
-
-List the installed skills, scan for description overlap. Two triggering on the same phrase means one is wrong: merge, rename, or tighten.

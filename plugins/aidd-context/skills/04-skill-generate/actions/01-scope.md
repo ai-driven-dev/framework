@@ -4,7 +4,7 @@ Frame a new skill before any file is touched.
 
 ## Input
 
-A free-form request to create a skill whose folder does not exist.
+A request for a skill that does not exist yet.
 
 ## Process
 
@@ -15,7 +15,7 @@ A free-form request to create a skill whose folder does not exist.
 
 ## Output
 
-The confirmed frame, written nowhere, per `scope-frame.md`.
+The confirmed frame.
 
 ## Rules
 

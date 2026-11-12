@@ -5,13 +5,11 @@ const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 
-const GENERATOR = path.resolve(__dirname, "../../plugins/aidd-context/skills/04-skill-generate");
-const SCRIPT = path.join(GENERATOR, "scripts/check-skill.cjs");
+const ENGINE = path.resolve(__dirname, "../../plugins/aidd-context/skills/04-skill-generate/scripts/check-skill.cjs");
 
 /**
- * The check is the lexical half of the generator's validation: a clean skill passes, each rule has
- * the one mutation that makes it fail, and the skills the generator produced in this tree pass with
- * no finding at all.
+ * The generator's lexical gate: a clean skill passes, each rule has the one mutation that makes
+ * it fail, and the skills the generator produced in this tree pass with no finding at all.
  */
 
 const CLEAN = {
@@ -66,8 +64,8 @@ function write(files) {
   }
 }
 
-function run(skill = root) {
-  const result = spawnSync(process.execPath, [SCRIPT, skill], { encoding: "utf8" });
+function run(skill = root, ...extra) {
+  const result = spawnSync(process.execPath, [ENGINE, skill, ...extra], { encoding: "utf8" });
   return { code: result.status, out: result.stdout, err: result.stderr };
 }
 
@@ -84,9 +82,9 @@ function expectError(rule) {
   assert.match(out, new RegExp(` ${rule}[ "]`, "u"), out);
 }
 
-describe("check-skill", () => {
+describe("skill check", () => {
   beforeEach(() => {
-    root = fs.mkdtempSync(path.join(os.tmpdir(), "check-skill-"));
+    root = fs.mkdtempSync(path.join(os.tmpdir(), "skill-check-"));
     write(CLEAN);
   });
   afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -95,10 +93,15 @@ describe("check-skill", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("refuses a folder with no SKILL.md, readably", () => {
+  it("refuses a folder with no SKILL.md with exit 2, so a usage error never reads as findings", () => {
     const { code, err } = run(path.join(root, "actions"));
-    assert.equal(code, 1);
+    assert.equal(code, 2);
     assert.match(err, /usage: check-skill\.cjs <skill-folder>/u);
+  });
+
+  it("refuses a call with no folder with exit 2", () => {
+    const result = spawnSync(process.execPath, [ENGINE], { encoding: "utf8" });
+    assert.equal(result.status, 2);
   });
 
   it("R3: a description over 150 characters", () => {
@@ -108,6 +111,11 @@ describe("check-skill", () => {
 
   it("R3: a colon in the description", () => {
     mutate("SKILL.md", "Demonstrates a skill,", "Demonstrates: a skill,");
+    expectError("R3");
+  });
+
+  it("R3: a dash separator in the description", () => {
+    mutate("SKILL.md", "Demonstrates a skill,", "Demonstrates a skill -");
     expectError("R3");
   });
 
@@ -132,9 +140,44 @@ describe("check-skill", () => {
     expectError("R8");
   });
 
-  it("R10: a transversal rule copied from the generator", () => {
-    mutate("SKILL.md", "- Speak only to ask.", "- Announce intended writes before editing.");
-    expectError("R10");
+  it("R8: a reference drawn as a box", () => {
+    mutate("SKILL.md", "second --> done((done))", 'second --> persist["persistence"] --> done((done))');
+    expectError("R8");
+  });
+
+  it("R8: a file path drawn as a bare node", () => {
+    mutate("SKILL.md", "second --> done((done))", "second --> references/rubric.md --> done((done))");
+    expectError("R8");
+  });
+
+  it("R9: a node leaving by two edges without a condition", () => {
+    mutate("SKILL.md", "second --> done((done))", "second --> done((done))\n  second --> stopped((stopped))");
+    expectError("R9");
+  });
+
+  it("R9: an edge between actions that the source action never takes", () => {
+    mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Stop.");
+    expectError("R9");
+  });
+
+  it("R9: an edge drawn in a grouped source passes when each source links its target", () => {
+    write({ "actions/02-second.md": "# 02 - Second\n\nAnswer.\n\n## Process\n\n1. Answer, or read [third](03-third.md).\n", "actions/03-third.md": "# 03 - Third\n\nEnd.\n\n## Process\n\n1. End.\n" });
+    mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Read [second](02-second.md), or [third](03-third.md).");
+    mutate("SKILL.md", "second --> done((done))", 'first & second -->|"skip"| third["actions/03-third.md"]\n  second --> done((done))');
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("R9: an edge a transversal rule takes passes without a link in the source action", () => {
+    write({ "actions/03-third.md": "# 03 - Third\n\nEnd.\n\n## Process\n\n1. End.\n" });
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n2. Read [third](03-third.md).");
+    mutate("SKILL.md", "second --> done((done))", 'second --> third["actions/03-third.md"] --> done((done))\n  first -->|"user stops"| third');
+    mutate("SKILL.md", "- Speak only to ask.", "- Speak only to ask.\n- When the user stops, go to third.");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("R9: a self-loop needs no link", () => {
+    mutate("SKILL.md", "second --> done((done))", 'second -->|"again"| second\n  second --> done((done))');
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
   it("R12: a section outside the fixed set", () => {
@@ -183,16 +226,50 @@ describe("check-skill", () => {
     expectError("R30");
   });
 
+  it("R30: a ticket id", () => {
+    mutate("references/rubric.md", "| any | yes |", "| any | yes, see #1234 |");
+    expectError("R30");
+  });
+
+  it("R30: a link to a numbered heading is no ticket id", () => {
+    mutate("references/rubric.md", "| any | yes |", "| any | [ten](#10-plan) |");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("R13: a last step linking the next action with a ./ prefix passes", () => {
+    mutate("actions/01-first.md", "(02-second.md)", "(./02-second.md)");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("R20: a comment outside an asset", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n<!-- answer briefly -->");
+    expectError("R20");
+  });
+
+  it("R20: a comment shown inside a code block passes", () => {
+    mutate("references/rubric.md", "| any | yes |", "| any | yes |\n\n```\n<!-- example -->\n```");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("R20: a comment inside an asset passes", () => {
+    write({ "assets/answer.md": "# Answer\n\n<!-- one line per finding -->\n" });
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("R28: a boundary kept with never is no finding", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Never answer outside the rubric.");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
   it("R31: bold", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. **Answer** per the rubric.");
     expectError("R31");
   });
 
-  it("R28 and R26 only warn", () => {
-    mutate("actions/02-second.md", "1. Answer per the rubric.", `1. Never answer ${"word ".repeat(30)}per the rubric.`);
+  it("R26 only warns", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", `1. Answer ${"word ".repeat(30)}per the rubric.`);
     const { code, out } = run();
     assert.equal(code, 0, out);
-    assert.match(out, / R28 warning /u);
     assert.match(out, / R26 warning /u);
   });
 

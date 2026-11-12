@@ -2,15 +2,16 @@
 "use strict";
 // Usage: node check-skill.cjs <skill-folder>
 // The lexical rules of ../references/skill-authoring.md, checked without judgment.
-// Errors fail the run (exit 1); warnings only need a look. Node built-ins only.
+// Exit 0 clean, 1 findings, 2 usage. Warnings only need a look. Node built-ins only.
 
 const fs = require("node:fs");
 const path = require("node:path");
 
 const PLUGIN = "aidd-context";
-const GENERATOR = path.resolve(__dirname, "..");
 const EXIT_OK = 0;
 const EXIT_ERRORS = 1;
+const EXIT_USAGE = 2;
+const USAGE = "usage: check-skill.cjs <skill-folder>, a folder holding SKILL.md\n";
 
 const DESCRIPTION_LIMIT = 150;
 const FILE_LINE_LIMIT = 100;
@@ -25,10 +26,11 @@ const INLINE_CODE = /`[^`\n]*`/gu;
 const COMMENT = /<!--[\s\S]*?-->/gu;
 const LINK = /\[[^\]\n]*\]\(([^)\s#]+)(?:#[^)]*)?\)/gu;
 const DATE = /\b(?:19|20)\d\d[-_/](?:0[1-9]|1[0-2])\b/u;
-const TICKET = /(?:^|[\s(])#\d{2,}\b/u;
-const NEVER = /\bnever\b/iu;
+const TICKET = /(?:^|\s|(?<!\])\()#\d{2,}\b/u;
 const ACTION_NODE = /\["(actions\/[^"]+\.md)"\]/gu;
-const ACTION_LINK = /\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
+const BOX = /([\w-]+)\["([^"]*)"\]/gu;
+const ARROW = /\s*(<?(?:-->|-\.->|==>)(?:\|[^|]*\|)?)\s*/u;
+const ACTION_LINK =/\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
 
 function excerpt(text) {
   const flat = text.trim().replace(/\s+/gu, " ");
@@ -69,16 +71,6 @@ function walk(dir) {
     });
 }
 
-function transversalRules(text) {
-  const start = text.indexOf(`## ${ROUTER_SECTION}`);
-  if (start < 0) return [];
-  return text
-    .slice(start)
-    .split("\n")
-    .filter((line) => line.startsWith("- "))
-    .map((line) => line.slice(2).trim());
-}
-
 function checkRouter(skill, text, report) {
   const file = "SKILL.md";
   const { fields } = frontmatter(text);
@@ -106,14 +98,45 @@ function checkRouter(skill, text, report) {
     const present = fs.existsSync(actionsDir) ? fs.readdirSync(actionsDir).filter((name) => name.endsWith(".md")).map((name) => `actions/${name}`) : [];
     for (const action of present) if (!drawn.has(action)) report.error(file, lineOf("```mermaid"), "R8", action, `draw a node labeled ${action}`);
     for (const action of drawn) if (!present.includes(action)) report.error(file, lineOf(action), "R8", action, "remove the node or write its action file");
+    checkEdges(skill, flow[1], text.split(`## ${ROUTER_SECTION}`)[1] ?? "", lineOf, report);
   }
+}
 
-  if (path.resolve(skill) !== GENERATOR) {
-    const own = new Set(transversalRules(fs.readFileSync(path.join(GENERATOR, "SKILL.md"), "utf8")));
-    for (const rule of transversalRules(text)) {
-      if (own.has(rule)) report.error(file, lineOf(rule), "R10", rule, "drop the generator's own rule; keep only the skill's own behavior");
+/** A box is an action file, a node id holds no path, a node leaves by one unlabeled edge at most, and an edge between two actions is a link in the source action or a transversal rule naming the target. */
+function checkEdges(skill, flow, rules, lineOf, report) {
+  const file = "SKILL.md";
+  const actions = new Map();
+  for (const [box, id, label] of flow.matchAll(BOX)) {
+    if (/^actions\/[^"]+\.md$/u.test(label)) actions.set(id, label);
+    else report.error(file, lineOf(box), "R8", box, "draw only action files as boxes; cite a reference from the step that uses it");
+  }
+  const ids = (segment) => segment.split("&").map((part) => /^\s*([^\s[({]+)/u.exec(part)?.[1]).filter(Boolean);
+  const unlabeled = new Map();
+  for (const line of flow.split("\n")) {
+    const parts = line.trim().split(ARROW);
+    const segments = parts.filter((_, index) => index % 2 === 0);
+    for (const id of segments.flatMap(ids)) if (!/^[\w-]+$/u.test(id)) report.error(file, lineOf(line.trim()), "R8", id, "name the node with a plain id; cite a file from the step that uses it");
+    for (let index = 0; index + 1 < segments.length; index += 1) {
+      const arrow = parts[index * 2 + 1];
+      for (const from of ids(segments[index])) {
+        for (const to of ids(segments[index + 1])) {
+          for (const [start, end] of arrow.startsWith("<") ? [[from, to], [to, from]] : [[from, to]]) {
+            if (!arrow.includes("|")) unlabeled.set(start, { line: unlabeled.get(start)?.line ?? line.trim(), targets: new Set([...(unlabeled.get(start)?.targets ?? []), end]) });
+          }
+          const source = actions.get(from);
+          const target = actions.get(to);
+          if (!source || !target || source === target) continue;
+          const sourcePath = path.join(skill, source);
+          const text = fs.existsSync(sourcePath) ? fs.readFileSync(sourcePath, "utf8") : "";
+          const name = path.basename(target);
+          if (new RegExp(`\\b${name.replace(/^\d\d-|\.md$/gu, "")}\\b`, "iu").test(rules)) continue;
+          const linked = [...text.matchAll(LINK)].some((match) => path.basename(match[1]) === name);
+          if (!linked) report.error(file, lineOf(line.trim()), "R9", `${from} --> ${to}`, `link ${name} from the step of ${source} that takes this edge`);
+        }
+      }
     }
   }
+  for (const [from, { line, targets }] of unlabeled) if (targets.size > 1) report.error(file, lineOf(line), "R9", `${from} --> ${[...targets].join(", ")}`, "label the condition of each edge but the default one");
 }
 
 function checkAction(file, text, isLast, report) {
@@ -140,7 +163,7 @@ function checkAction(file, text, isLast, report) {
   if (step !== undefined && !ACTION_LINK.test(lines[step])) report.error(file, step + 1, "R13", lines[step], "end with a step that reads the next action, as a link");
 }
 
-/** Lexical rules every file obeys: length, bold, dates, never, citations, sentence length. */
+/** Lexical rules every file obeys: length, bold, dates, citations, sentence length. */
 function checkFile(skill, file, text, report) {
   const lines = text.split("\n");
   const markdown = file.endsWith(".md");
@@ -148,6 +171,18 @@ function checkFile(skill, file, text, report) {
     report.error(file, FILE_LINE_LIMIT + 1, file.startsWith("actions/") ? "R16" : "R19", undefined, `split the file, it has ${lines.length} lines`);
   }
   const skip = markdown && file === "SKILL.md" ? frontmatter(text).length : 0;
+  if (markdown && !file.startsWith("assets/")) {
+    let fenced = false;
+    const inFence = lines.map((line) => {
+      if (FENCE.test(line)) fenced = !fenced;
+      return fenced;
+    });
+    for (const match of text.matchAll(COMMENT)) {
+      const line = text.slice(0, match.index).split("\n").length;
+      if (inFence[line - 1]) continue;
+      report.error(file, line, "R20", match[0], "state it in the prose, or move it to an asset");
+    }
+  }
   const linked = new Map();
   proseLines(text).forEach((line, index) => {
     if (index < skip) return;
@@ -160,10 +195,9 @@ function checkFile(skill, file, text, report) {
       if (/^[a-z]+:/iu.test(target)) continue;
       const resolved = path.resolve(path.dirname(path.join(skill, file)), target);
       if (!fs.existsSync(resolved)) report.error(file, number, "R23", match[0], `fix the link, ${target} does not exist`);
-      if (linked.has(resolved)) report.error(file, number, "R23", match[0], `name it by its role; it is linked at line ${linked.get(resolved)}`);
+      if (linked.has(resolved)) report.error(file, number, "R23", match[0], `name it in backticks; it is linked at line ${linked.get(resolved)}`);
       else linked.set(resolved, number);
     }
-    if (NEVER.test(line)) report.warning(file, number, "R28", line, "state the boundary as a condition, or use avoid");
     if (/^\s*\|/u.test(line) || /^\s*#/u.test(line)) return;
     for (const sentence of line.replace(/^\s*(?:[-*+]|\d+\.)\s+/u, "").split(/(?<=[.!?;])\s+/u)) {
       const words = sentence.split(/\s+/u).filter(Boolean).length;
@@ -203,8 +237,8 @@ function format(skill, { errors, warnings }) {
 function main(args) {
   const [skill] = args;
   if (args.length !== 1 || !fs.existsSync(path.join(skill, "SKILL.md"))) {
-    process.stderr.write("usage: check-skill.cjs <skill-folder>, a folder holding SKILL.md\n");
-    return EXIT_ERRORS;
+    process.stderr.write(USAGE);
+    return EXIT_USAGE;
   }
   const findings = check(skill);
   const text = format(skill, findings);
