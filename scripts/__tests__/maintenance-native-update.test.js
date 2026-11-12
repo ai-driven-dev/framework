@@ -123,8 +123,11 @@ for (const tool of ['claude','codex','copilot']) {
     const expected = tool === 'codex'
       ? f.text.replace(`ref = '${current}'`,`ref = "${release}"`)
       : f.text.replace(`"ref":"${current}"`,`"ref":"${release}"`);
-    assert.equal(fs.readFileSync(f.config,'utf8'),expected);
-    assert.equal(fs.statSync(f.config).mode & 0o777,initialMode);
+    const updated = fs.openSync(f.config,fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+    try {
+      assert.equal(fs.readFileSync(updated,'utf8'),expected);
+      assert.equal(fs.fstatSync(updated).mode & 0o777,initialMode);
+    } finally { fs.closeSync(updated); }
     assert.deepEqual(f.state.installations.map(item=>item.enabled),initial.map(item=>item.enabled));
     const commands = tool === 'claude'
       ? [['plugin','marketplace','add',`${repo}#${release}`,'--scope','user'],['plugin','update','aidd-context@aidd-framework','--scope','local']]
