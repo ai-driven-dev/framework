@@ -92,6 +92,25 @@ describe("aidd-ui tokens and renders", () => {
     });
   });
 
+  describe("T1 before any element exists", () => {
+    // what journeys leave behind: journeys, wireframes and the history, no tokens
+    const withoutElements = () => {
+      for (const entry of fs.readdirSync(path.join(tmp, UI))) if (!["journeys", "wireframes", "history.md"].includes(entry)) fs.rmSync(path.join(tmp, UI, entry), { recursive: true });
+    };
+
+    it("does not name a missing tokens file while no component or screen exists", () => {
+      withoutElements();
+      assert.deepEqual(problems().filter((each) => /tokens/.test(each)), []);
+    });
+
+    it("names it again once a screen exists", () => {
+      const screen = fs.readFileSync(path.join(tmp, HOME), "utf8");
+      withoutElements();
+      put(tmp, HOME, screen);
+      assert.ok(tokens.check(load(tmp)).some((each) => each.rule === "T1"));
+    });
+  });
+
   describe("T2 names", () => {
     it("names a $ key that is not reserved", () => {
       editTokens(tmp, (tree) => (tree.color.$foo = 1));
@@ -806,6 +825,13 @@ describe("aidd-ui tokens and renders", () => {
       assert.deepEqual(problems(), [`${WIREFRAME_RENDER}: no data-state="empty"`, `${WIREFRAME_RENDER}: no data-zone="filters"`]);
     });
 
+    it("warns of a state that holds the same markup as an earlier one", () => {
+      edit(tmp, WIREFRAME_RENDER, "Results, empty", "Results, default");
+      assert.deepEqual(problems(), [`${WIREFRAME_RENDER}: state "empty" holds the same markup as state "default"`]);
+      const found = renders.check(load(tmp)).filter((each) => each.rule === "V13");
+      assert.deepEqual(found.map((each) => each.severity), ["warning"]);
+    });
+
     for (const [name, line] of [
       ["a style block", "<style>div { margin: 0; }</style>"],
       ["a style attribute", '<div style="color: red">Query</div>'],
@@ -1083,6 +1109,7 @@ const FIXES = [
   "V10 | line 10: a wireframe holds no style, remove it | \"<link\" | remove the style: the screen dressing the wireframe carries it",
   "V10 | line 10: a wireframe holds no style, remove it | \"<style\" | remove the style: the screen dressing the wireframe carries it",
   "V10 | line 10: a wireframe holds no style, remove it | \"style=\" | remove the style: the screen dressing the wireframe carries it",
+  "V13 | state \"empty\" holds the same markup as state \"default\" | \"data-state=\\\"empty\\\"\" | show in it what changes, or remove the state",
   "V2 | no data-size=\"sm\" | \"data-size=\\\"sm\\\"\" | add an element carrying it to the render",
   "V2 | no data-state=\"empty\" | \"data-state=\\\"empty\\\"\" | add an element carrying it to the render",
   "V2 | no data-state=\"hover\" | \"data-state=\\\"hover\\\"\" | add an element carrying it to the render",

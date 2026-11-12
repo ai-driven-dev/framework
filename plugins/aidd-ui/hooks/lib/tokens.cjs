@@ -5,7 +5,7 @@
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list } = require("./markdown.cjs");
-const { placed, systemOf, breakpointsOf, TOKENED_KINDS } = require("./model.cjs");
+const { placed, systemOf, breakpointsOf, isElement, TOKENED_KINDS } = require("./model.cjs");
 const { text, checkOf, besideTokens, RESOLVER_FILE, CSS_FILE, ENGINE_REF } = require("./project.cjs");
 const { MODIFIERS, RESOLVER_VERSION, MEDIA_EXTENSION, MIN_THEMES_FOR_MODIFIER, orderRef, resolverOfProject } = require("./resolver.cjs");
 const { FONT_WEIGHTS, RAW_CSS_EXTENSION, VAR_REFERENCE, render, customProperty, citedBy, loopOf, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
@@ -180,8 +180,11 @@ const tokenProblem = (project, file = project.tokensFile) => (path, message, fix
 /** Every token's CSS custom property. */
 const propertiesOf = (tree) => new Set([...tree.tokens.keys()].map(customProperty));
 
+/** Without tokens.json and without a component or a screen, nothing needs a token yet. */
+const awaitsElements = (tree, project) => tree.problem === MISSING && !placed(project).some(isElement);
+
 function jsonProblems(tree, project) {
-  if (!tree.problem) return [];
+  if (!tree.problem || awaitsElements(tree, project)) return [];
   const fix = tree.problem === MISSING ? `write tokens.json by hand, or run node ${ENGINE_REF} extract` : "make tokens.json a JSON object";
   return [{ file: project.tokensFile, message: tree.problem, fix }];
 }
@@ -494,7 +497,7 @@ const REGENERATE = "with the engine's tokens command";
 /** tokens.css is what the tokens generate. It is not judged while the tokens have an error, and a
  * composite token without raw CSS is named, since no stylesheet can carry it. */
 function stylesheetProblems(tree, project) {
-  if (blockers(project).length) return [];
+  if (blockers(project).length || awaitsElements(tree, project)) return [];
   const { css, problems } = generate(project);
   if (css === null) return problems;
   const file = cssFileOf(project);

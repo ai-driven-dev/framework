@@ -1,4 +1,4 @@
-// V1 to V12: each component and screen has its HTML render, showing every variant, axis and state
+// V1 to V13: each component and screen has its HTML render, showing every variant, axis and state
 // through the tokens its record declares alone, from the stylesheet generated out of the tokens; a
 // wireframe's shows every state and zone, and no style at all. A screen's also keeps its text
 // readable (V11), on its own background or on the one an ancestor lays behind it, and its controls
@@ -11,7 +11,7 @@ const { VAR_REFERENCE, customProperty, rulesOf } = require("./css.cjs");
 const { cssNames, resolvedValues, blockers } = require("./tokens.cjs");
 const { parse, over, contrast } = require("./colour.cjs");
 const { platformsOf, platformEntries } = require("./code.cjs");
-const { text, checkOf, RENDER_EXTENSION, CSS_FILE } = require("./project.cjs");
+const { text, checkOf, RENDER_EXTENSION, CSS_FILE, WARNING } = require("./project.cjs");
 
 const STYLESHEET_HREF = `../${CSS_FILE}`; // renders sit one folder below the generated stylesheet
 const STYLESHEET_LINK = `<link rel="stylesheet" href="${STYLESHEET_HREF}">`;
@@ -346,6 +346,21 @@ function targetProblems(project) {
   });
 }
 
+const STATE_SECTION = /<section\b[^>]*\bdata-state="([^"]*)"[^>]*>([\s\S]*?)<\/section>/gi; // a state's markup: a stated limit, sections do not nest in a wireframe
+
+/** A wireframe state whose markup is the one of an earlier state shows nothing different: a warning. */
+function sameStateProblems(project) {
+  return wireframeRenders(project).flatMap((file) => {
+    const first = new Map();
+    return [...readRender(project, file).matchAll(STATE_SECTION)].flatMap(([, state, markup]) => {
+      const shape = markup.replace(/\s+/g, " ").trim();
+      const earlier = first.get(shape);
+      if (earlier === undefined) return first.set(shape, state) && [];
+      return [{ severity: WARNING, file, message: `state "${state}" holds the same markup as state "${earlier}"`, fix: "show in it what changes, or remove the state", excerpt: `data-state="${state}"` }];
+    });
+  });
+}
+
 const RULES = {
   V1: presenceProblems,
   V2: coverageProblems,
@@ -359,6 +374,7 @@ const RULES = {
   V10: styleProblems,
   V11: contrastProblems,
   V12: targetProblems,
+  V13: sameStateProblems,
 };
 
 /** Every broken render rule, in rule order. */
