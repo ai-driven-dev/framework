@@ -1,6 +1,5 @@
 import { InstallationFile } from "../../../kernel/file.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../kernel/markdown.js";
-import { flatHooksPathWithLoaderEntry } from "../../../kernel/materialization/flat-paths.js";
 import type { Hasher } from "../../../kernel/ports/hasher.js";
 import type { FlatHooksBridge } from "../../tools/contract/build-contract.js";
 import type {
@@ -253,25 +252,15 @@ export class PluginContentTranslator {
   // it is never delivered here. Everything else under hooks/ is carried verbatim, namespaced per
   // plugin — unless it is that loader's own plugin module, delivered flat and renamed instead.
   private flatHooksFiles(dist: PluginDistribution, plugins: FlatPluginAnswers): InstallationFile[] {
-    const {
-      hooksDir: flatHooksDir,
-      hooksLoaderEntry: flatHooksLoaderEntry,
-      hooksBridge: flatHooksBridge,
-    } = plugins.flatLayout();
-    if (flatHooksDir === null) return [];
+    const { hooksBridge: flatHooksBridge } = plugins.flatLayout();
     const scripts = dist.components.hooks
       .filter((file) => file.relativePath !== `${PLUGIN_HOOKS_DIR}/hooks.json`)
-      .map((file) =>
-        this.makeFile(
-          flatHooksPathWithLoaderEntry(
-            flatHooksDir,
-            flatHooksLoaderEntry,
-            dist.manifest.name,
-            file.relativePath
-          ),
-          plugins.hookScript(file.relativePath, file.content)
-        )
-      );
+      .flatMap((file) => {
+        const path = plugins.hooksInstallPath(dist.manifest.name, file.relativePath);
+        return path === null
+          ? []
+          : [this.makeFile(path, plugins.hookScript(file.relativePath, file.content))];
+      });
     const bridge = this.flatHooksBridgeFile(dist, flatHooksBridge);
     return bridge === null ? scripts : [...scripts, bridge];
   }

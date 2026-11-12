@@ -1,4 +1,7 @@
-import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import {
+  type FlatHooksLoaderEntry,
+  flatHooksPathWithLoaderEntry,
+} from "../../../../kernel/materialization/flat-paths.js";
 import type { FlatHooksBridge } from "../../contract/build-contract.js";
 import type { FlatLayout, FlatSkillLayout, HooksAcceptance } from "../../contract/tool-profile.js";
 import type { HookScript } from "../../contract/tool-vocabulary.js";
@@ -47,6 +50,11 @@ export class FlatPlugins extends PluginDeliveryBase {
   }
   flatLayout(): FlatLayout {
     return this.#layout;
+  }
+  hooksInstallPath(pluginName: string, hooksRelativePath: string): string | null {
+    const { hooksDir, hooksLoaderEntry } = this.#layout;
+    if (hooksDir === null) return null;
+    return flatHooksPathWithLoaderEntry(hooksDir, hooksLoaderEntry, pluginName, hooksRelativePath);
   }
   projectHooksDelivery(): ProjectHooksPlacement | null {
     return this.#projectHooks;

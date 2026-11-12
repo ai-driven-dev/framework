@@ -22,5 +22,16 @@ describe("opencode plugins", () => {
         baseName: "opencode-plugin.js",
       });
     });
+
+    it("places a hook script under its plugin, and the loader's own module beside the loader", () => {
+      const plugins = flatOf(opencode.section("plugins"));
+
+      expect(plugins.hooksInstallPath("aidd-dev", "hooks/run.js")).toBe(
+        ".opencode/hooks/aidd-dev/run.js"
+      );
+      expect(plugins.hooksInstallPath("aidd-dev", "hooks/opencode-plugin.js")).toBe(
+        ".opencode/plugin/aidd-dev.js"
+      );
+    });
   });
 });

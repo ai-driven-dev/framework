@@ -92,6 +92,8 @@ export interface NativePluginAnswers extends PluginDelivery {
 export interface FlatPluginAnswers extends PluginDelivery {
   readonly kind: "flat";
   flatLayout(): FlatLayout;
+  /** Where a plugin's hook file lands, or null when the tool places no hooks of its own. */
+  hooksInstallPath(pluginName: string, hooksRelativePath: string): string | null;
   hookScript(pluginPath: string, content: string): string;
 }
 
