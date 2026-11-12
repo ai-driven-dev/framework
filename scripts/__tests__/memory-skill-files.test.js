@@ -78,8 +78,8 @@ test("capabilities.md holds one row per file, and every memory template belongs 
   for (const template of templates) assert.ok(named.includes(template), `${template} belongs to no capability row`);
 });
 
-test("no skill text names a script to run or a path outside the skill", () => {
-  const forbidden = /\bmemory\.cjs\b|`node [^`]*`|\$\{CLAUDE_[A-Z_]+\}|\]\(\.\.\/\.\.\/[^)]*\)/u;
+test("no skill text names the hook's engine, a node command line, or a path outside the skill", () => {
+  const forbidden = /(?<![\w-])memory\.cjs\b|`node [^`]*`|\$\{CLAUDE_[A-Z_]+\}|\]\(\.\.\/\.\.\/[^)]*\)/u;
   for (const file of skillMarkdown()) {
     const hit = fs.readFileSync(file, "utf8").match(forbidden);
     assert.equal(hit, null, `${path.relative(SKILL, file)}: ${hit?.[0]}`);

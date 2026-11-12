@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 "use strict";
 /**
- * The memory bank's engine: `load` snapshots the bank at session start, `guard` checks it at the
- * turn end, `check` is the one strict gate, `sync` keeps the context files' blocks true. The hooks
- * read their event only through `lib/host.cjs` and never block a write. Node built-ins only.
+ * The memory hook: `load` snapshots the bank at session start, `guard` reports at the turn end what
+ * the turn lost or wrote wrong; both keep the context files' blocks true. It reads its event only
+ * through `lib/host.cjs` and never blocks a write: the report reaches the model. Node built-ins only.
  */
 
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { RULES, ERROR, WARNING, wordsIn } = require("./lib/memory-rules.cjs");
+const { RULES, ERROR } = require("./lib/memory-rules.cjs");
 const { markdownLines } = require("./lib/markdown.cjs");
 
 const PLUGIN = "aidd-context";
@@ -20,44 +20,12 @@ const MEMORY_DIR = `${DOCS_DIR}/${MEMORY_SUBDIR}`;
 const ON_DEMAND_DIRS = ["internal", "external"];
 const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
 
-// The `Always` rows of the skill's capability table.
-const ALWAYS_WRITTEN = Object.freeze([
-  "project-brief.md",
-  "architecture.md",
-  "codebase-map.md",
-  "coding-assertions.md",
-  "testing.md",
-  "vcs.md",
-  "ecosystem.md",
-]);
-
-// The capability table of `references/capabilities.md`; a test holds them equal.
-const CONDITIONAL_FILES = Object.freeze([
-  "backlog.md",
-  "deployment.md",
-  "api.md",
-  "cli.md",
-  "package.md",
-  "auth.md",
-  "database.md",
-  "data.md",
-  "messaging.md",
-  "realtime.md",
-  "ui.md",
-  "mobile.md",
-  "desktop.md",
-]);
-const ROW_FILES = Object.freeze([...ALWAYS_WRITTEN, ...CONDITIONAL_FILES]);
-
-// Accepted names of the Always rows; a test holds them equal to the table.
-const ACCEPTED_ALWAYS = Object.freeze({ "ecosystem.md": ["integration.md"] });
-
 const SNAPSHOT_DIR = "aidd-context";
 const SNAPSHOT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const LOST_LINES_CAP = 15;
 
 const EXIT_OK = 0;
-const EXIT_ERRORS = 1;
+const EXIT_USAGE = 1;
 
 const WARNINGS_CAP = 10;
 
@@ -73,13 +41,13 @@ function counted(count, noun) {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
-// One count line, then the errors, then at most `warningsCap` warnings.
-function formatFindings(plugin, { errors, warnings }, { warningsCap = WARNINGS_CAP } = {}) {
+// One count line, then the errors, then at most WARNINGS_CAP warnings.
+function formatFindings(plugin, { errors, warnings }) {
   if (errors.length + warnings.length === 0) return "";
   return [
     `${plugin}: ${counted(errors.length, "error")}, ${counted(warnings.length, "warning")}`,
     ...errors.map((finding) => `${located(finding)} ${finding.rule}${quoted(finding.excerpt)} => ${finding.fix}`),
-    ...warnings.slice(0, warningsCap).map((finding) => `${located(finding)} ${finding.rule} warning ${finding.message} => ${finding.fix}`),
+    ...warnings.slice(0, WARNINGS_CAP).map((finding) => `${located(finding)} ${finding.rule} warning ${finding.message} => ${finding.fix}`),
   ].join("\n");
 }
 
@@ -126,22 +94,14 @@ function bankFiles(root) {
   return found.sort();
 }
 
-/** The bank's root, an on-demand folder, elsewhere in the bank, or outside. */
-function placeOf(file) {
-  if (!file.startsWith(`${MEMORY_DIR}/`)) return "outside";
-  const parts = partsOf(file);
-  if (parts.length === 1) return "root";
-  return ON_DEMAND_DIRS.includes(parts[0]) ? "on-demand" : "misplaced";
-}
-
-/** A rule that throws drops out, noted in `failures`. */
-function runRules(rules, context, failures) {
+/** A rule that throws drops out: the others still report. */
+function runRules(rules, context) {
   const found = [];
   for (const rule of rules) {
     try {
       found.push(...rule.check(context).map((finding) => ({ ...finding, severity: rule.severity })));
-    } catch (error) {
-      failures.push(`rule ${rule.id} failed: ${error.message}`);
+    } catch {
+      // One broken rule never silences the others.
     }
   }
   return found;
@@ -152,7 +112,7 @@ function bySeverity(a, b) {
 }
 
 /** Nothing for a file outside the bank's root, or gone. */
-function lintFile(root, file, rules = RULES, failures = []) {
+function lintFile(root, file, rules = RULES) {
   const relative = toPosix(path.isAbsolute(file) ? path.relative(root, file) : file);
   const files = rootFiles(root);
   if (!files.includes(relative)) return [];
@@ -161,67 +121,7 @@ function lintFile(root, file, rules = RULES, failures = []) {
   const others = Object.fromEntries(
     files.filter((other) => other !== relative).map((other) => [other, readTextOrNull(path.join(root, other)) ?? ""])
   );
-  return runRules(rules, { file: relative, text, root, others }, failures).sort((a, b) => bySeverity(a, b) || a.line - b.line);
-}
-
-function lintBank(root) {
-  return rootFiles(root)
-    .flatMap((file) => lintFile(root, file))
-    .sort(bySeverity);
-}
-
-function warning(file, rule, message, fix) {
-  return { file, rule, severity: WARNING, message, fix };
-}
-
-/** Layout warnings; a folder is one finding however many files it holds. */
-function structureFindings(root) {
-  const found = [];
-  const folders = new Set();
-  for (const file of bankFiles(root)) {
-    const parts = partsOf(file);
-    if (parts.length > 1 && !ON_DEMAND_DIRS.includes(parts[0])) folders.add(parts[0]);
-  }
-  for (const folder of [...folders].sort()) {
-    const owner = `the ${DOCS_DIR}/ folder of the plugin that owns it`;
-    const fix = `move ${MEMORY_DIR}/${folder}/ to ${MEMORY_DIR}/internal/${folder}/, or to ${owner}`;
-    found.push(warning(`${MEMORY_DIR}/${folder}/`, "placement", "a folder outside the bank's root, internal/ and external/", fix));
-  }
-  return found;
-}
-
-/** Words of the root files every session loads; null with none. */
-function sessionLoad(root) {
-  const files = rootFiles(root);
-  if (files.length === 0) return null;
-  return { words: files.reduce((total, file) => total + wordsIn(readTextOrNull(path.join(root, file)) ?? "").length, 0), files: files.length };
-}
-
-function loadFindings(root) {
-  const load = sessionLoad(root);
-  if (load === null) return [];
-  const message = `every session loads ${load.words} words, markup included, from ${load.files} ${load.files === 1 ? "file" : "files"}`;
-  return [warning(MEMORY_DIR, "load", message, "move what a session rarely needs to internal/ or external/")];
-}
-
-function missing(file, excerpt, fix) {
-  return { file, rule: "missing", severity: ERROR, message: excerpt, excerpt, fix };
-}
-
-/** An accepted name counts as the file, and so does one the team keeps in an on-demand folder. */
-function absentAlways(root) {
-  const present = new Set(bankFiles(root));
-  const places = (name) => [`${MEMORY_DIR}/${name}`, ...ON_DEMAND_DIRS.map((dir) => `${MEMORY_DIR}/${dir}/${name}`)];
-  const holds = (name) => [name, ...(ACCEPTED_ALWAYS[name] ?? [])].some((held) => places(held).some((place) => present.has(place)));
-  return ALWAYS_WRITTEN.filter((name) => !holds(name));
-}
-
-function missingFindings(root) {
-  if (!fs.existsSync(path.join(root, MEMORY_DIR))) {
-    return [missing(MEMORY_DIR, "no memory bank under the root", "write it with the project memory skill")];
-  }
-  const absent = absentAlways(root);
-  return absent.length === 0 ? [] : [missing(MEMORY_DIR, absent.join(", "), "write each from its template")];
+  return runRules(rules, { file: relative, text, root, others }).sort((a, b) => bySeverity(a, b) || a.line - b.line);
 }
 
 /** Links resolved; a missing path resolves through its nearest existing folder. */
@@ -304,7 +204,7 @@ function changedFindings(root, before, now) {
 }
 
 function atSessionStart(event) {
-  sync(event.cwd, [], { quiet: true });
+  sync(event.cwd);
   if (event.sessionId === null) return;
   const root = realish(path.resolve(event.cwd));
   dropStaleSnapshots();
@@ -317,7 +217,7 @@ function atTurnEnd(host, event) {
   const file = snapshotFile(root, event.sessionId);
   const before = readSnapshot(file);
   const now = bankTexts(root);
-  const { notSynced } = sync(root, [], { quiet: true });
+  const notSynced = sync(root);
   if (before === null || JSON.stringify(before) === JSON.stringify(now)) {
     if (before === null) writeSnapshot(file, now);
     return;
@@ -336,25 +236,6 @@ function hook(goal) {
   if (event === undefined) return;
   if (goal === "load") atSessionStart(event);
   else atTurnEnd(host, event);
-}
-
-/** The whole bank adds absence, missing always files and layout; a missing named file errs. */
-function check(root, files = []) {
-  const absolute = realish(path.resolve(root));
-  const named = files.map((file) => toPosix(path.relative(absolute, realish(path.resolve(absolute, file)))));
-  const targets = named.length > 0 ? named : bankFiles(absolute);
-  const found = [];
-  const failures = [];
-  for (const file of targets) {
-    if (!fs.existsSync(path.join(absolute, file))) found.push(missing(file, "no such file", "write it or fix the name"));
-    else if (placeOf(file) === "root") found.push(...lintFile(absolute, file, RULES, failures));
-  }
-  if (named.length === 0) found.push(...missingFindings(absolute), ...structureFindings(absolute), ...loadFindings(absolute));
-  const errors = found.filter((finding) => finding.severity === ERROR);
-  const warnings = found.filter((finding) => finding.severity !== ERROR);
-  // Only the hook caps warnings; check prints them all.
-  const text = formatFindings(PLUGIN, { errors, warnings }, { warningsCap: Infinity });
-  return { errors, warnings, text, failures: [...new Set(failures)] };
 }
 
 // ---- sync ----------------------------------------------------------------------------------
@@ -379,18 +260,6 @@ const TARGET_FILES = [
 // Copilot reads AGENTS.md; its own file only points there.
 const COPILOT_FILE = ".github/copilot-instructions.md";
 const COPILOT_POINTER = "Project memory: [AGENTS.md](../AGENTS.md).";
-
-// Mirrors the skill's references/tools.md.
-const TOOL_FILES = {
-  claude: "CLAUDE.md",
-  codex: "AGENTS.md",
-  cursor: "AGENTS.md",
-  opencode: "AGENTS.md",
-  antigravity: "AGENTS.md",
-  copilot: "AGENTS.md",
-};
-
-class UnknownToolError extends Error {}
 
 function onDemandFiles(root) {
   return bankFiles(root).filter((file) => {
@@ -486,21 +355,10 @@ function spliceBlock(content, found, inner) {
   return [...lines.slice(0, found.openLine + 1), ...block, ...lines.slice(found.closeLine)].join("\n");
 }
 
-// No tool named: every target present, as the session start wants.
-function resolveTargets(tools) {
-  if (tools.length === 0) return TARGET_FILES;
-  const unknown = tools.filter((tool) => !Object.hasOwn(TOOL_FILES, tool));
-  if (unknown.length > 0) {
-    throw new UnknownToolError(`unknown tool ${unknown.join(", ")} (known: ${Object.keys(TOOL_FILES).join(", ")})`);
-  }
-  const wanted = new Set(tools.map((tool) => TOOL_FILES[tool]));
-  return TARGET_FILES.filter((target) => wanted.has(target.path));
-}
-
 /** Two names for one file are one target; CLAUDE.md takes `@` imports, any other a link. */
-function existingTargets(root, targets) {
+function existingTargets(root) {
   const claude = realish(path.join(root, "CLAUDE.md"));
-  return targets
+  return TARGET_FILES
     .filter((target) => fs.existsSync(path.join(root, target.path)))
     .map((target) => {
       const file = fs.realpathSync(path.join(root, target.path));
@@ -515,7 +373,7 @@ function filledBlock(original, inner, root) {
   const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
   const problem = blockProblem(original, current, legacy);
   if (problem !== null) return { problem };
-  if (current.status === "none" && legacy.status === "none") return { text: original, missing: true };
+  if (current.status === "none" && legacy.status === "none") return { text: original };
   // Compared with the disk, so a legacy marker is rewritten even when the list is unchanged.
   const migrated = migrateLegacyMarkers(original, legacy);
   const found = findBlock(migrated, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
@@ -525,8 +383,8 @@ function filledBlock(original, inner, root) {
   return { text: spliceBlock(migrated, found, inner) };
 }
 
-/** The pointer line replaces an old block, or is appended when `create`. */
-function pointedText(original, oldBlock, root, create) {
+/** The pointer line replaces an old block; adding it to a file holding none is the wiring's. */
+function pointedText(original, oldBlock, root) {
   const current = findBlock(original, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   const legacy = findBlock(original, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE, LOOSE_LEGACY_MARKER);
   const problem = blockProblem(original, current, legacy);
@@ -534,82 +392,48 @@ function pointedText(original, oldBlock, root, create) {
   const migrated = migrateLegacyMarkers(original, legacy);
   const found = findBlock(migrated, BLOCK_OPEN, BLOCK_CLOSE, LOOSE_MARKER);
   const lines = migrated.split("\n");
-  if (found.status !== "ok") {
-    if (!create || lines.some((line) => line.trim() === COPILOT_POINTER)) return { text: original };
-    return { text: original.trim() === "" ? `${COPILOT_POINTER}\n` : `${original.replace(/\n*$/u, "")}\n\n${COPILOT_POINTER}\n` };
-  }
+  if (found.status !== "ok") return { text: original };
   const foreign = foreignLine(lines.map((line) => line.replace(/\r$/u, "")), found, oldBlock, root);
   if (foreign !== null) return { held: foreign };
   return { text: [...lines.slice(0, found.openLine), COPILOT_POINTER, ...lines.slice(found.closeLine + 1)].join("\n") };
 }
 
-function tryWrite(file, text, shown, failed, report) {
+function tryWrite(file, text, shown, notSynced) {
   try {
     fs.writeFileSync(file, text, "utf8");
-    return true;
   } catch (error) {
-    failed.push(shown);
-    report(`${shown} not written (${error.code ?? error.message}), skipped`);
-    return false;
+    notSynced.push(`${shown} not written (${error.code ?? error.message}), skipped`);
   }
 }
 
-/** Stages nothing. A block it cannot fill is left as it is and named in `notSynced`, never forced. */
-function sync(root, tools = [], { quiet = false } = {}) {
+/** Stages nothing. A block it cannot fill is left as it is and named in the list it returns, never forced. */
+function sync(root) {
   const absolute = realish(path.resolve(root));
-  const result = { changed: [], unpaired: [], held: [], failed: [], notSynced: [] };
-  if (!fs.existsSync(path.join(absolute, DOCS_DIR))) return result;
+  const notSynced = [];
+  if (!fs.existsSync(path.join(absolute, DOCS_DIR))) return notSynced;
   const lists = { rooted: rootFiles(absolute), onDemand: onDemandFiles(absolute), owned: ownedFolders(absolute) };
-  const report = (message) => {
-    result.notSynced.push(message);
-    if (!quiet) process.stderr.write(`memory: ${message}\n`);
+  const settle = (shown, original, { text, problem, held }, file) => {
+    if (problem !== undefined) notSynced.push(`${shown} ${problem}, not synced`);
+    else if (held !== undefined) notSynced.push(`${shown} holds a line the memory block would not write ("${held}"), not synced`);
+    else if (text !== original) tryWrite(file, text, shown, notSynced);
   };
 
-  for (const target of existingTargets(absolute, resolveTargets(tools))) {
+  for (const target of existingTargets(absolute)) {
     const original = readTextOrNull(target.file);
     if (original === null) continue;
-    const inner = buildBlockLines(lists, target.syntax, target.prefix);
-    const { text, problem, held, missing } = filledBlock(original, inner, absolute);
-    if (missing && tools.length > 0) {
-      report(`${target.path} has no memory block, not synced`);
-    } else if (problem !== undefined) {
-      result.unpaired.push(target.path);
-      report(`${target.path} ${problem}, not synced`);
-    } else if (held !== undefined) {
-      result.held.push(target.path);
-      report(`${target.path} holds a line the memory block would not write ("${held}"), not synced`);
-    } else if (text !== original && tryWrite(target.file, text, target.path, result.failed, report)) {
-      result.changed.push(target.path);
-    }
+    settle(target.path, original, filledBlock(original, buildBlockLines(lists, target.syntax, target.prefix), absolute), target.file);
   }
 
+  // Copilot reads AGENTS.md: an old block in its own file becomes the pointer, unless it is AGENTS.md itself.
   const copilot = path.join(absolute, COPILOT_FILE);
-  const picked = tools.includes("copilot");
-  const sharesTarget = fs.existsSync(copilot) && ["CLAUDE.md", "AGENTS.md"].some((name) => realish(path.join(absolute, name)) === realish(copilot));
-  // A session start only retires an old block; creating the file is the pick's.
-  if ((picked || tools.length === 0) && !sharesTarget) {
-    const original = readTextOrNull(copilot) ?? "";
+  const original = readTextOrNull(copilot);
+  const sharesTarget = ["CLAUDE.md", "AGENTS.md"].some((name) => realish(path.join(absolute, name)) === realish(copilot));
+  if (original !== null && !sharesTarget) {
     const oldBlock = [...buildBlockLines(lists, "link", "../"), ...buildBlockLines(lists, "at")];
-    const { text, problem, held } = pointedText(original, oldBlock, absolute, picked);
-    if (problem !== undefined) {
-      result.unpaired.push(COPILOT_FILE);
-      report(`${COPILOT_FILE} ${problem}, not synced`);
-    } else if (held !== undefined) {
-      result.held.push(COPILOT_FILE);
-      report(`${COPILOT_FILE} holds a line the memory block would not write ("${held}"), not synced`);
-    } else if (text !== original) {
-      fs.mkdirSync(path.dirname(copilot), { recursive: true });
-      if (tryWrite(copilot, text, COPILOT_FILE, result.failed, report)) result.changed.push(COPILOT_FILE);
-    }
+    settle(COPILOT_FILE, original, pointedText(original, oldBlock, absolute), copilot);
   }
 
-  return result;
-}
-
-/** Writes `memory: <message>` to stderr and returns the error exit. */
-function fail(message) {
-  process.stderr.write(`memory: ${message}\n`);
-  return EXIT_ERRORS;
+  return notSynced;
 }
 
 function runHook(goal) {
@@ -621,46 +445,13 @@ function runHook(goal) {
   return EXIT_OK;
 }
 
-function runCheck([root = process.cwd(), ...files]) {
-  const { errors, text, failures } = check(root, files);
-  if (text !== "") process.stdout.write(`${text}\n`);
-  // A check whose rules could not run never passes.
-  for (const failure of failures) process.stderr.write(`${PLUGIN}: internal error: ${failure}\n`);
-  return errors.length > 0 || failures.length > 0 ? EXIT_ERRORS : EXIT_OK;
-}
-
-function runSync(args) {
-  // Other commands take `.` as root: a path here is that habit, not a tool.
-  const given = args.find((arg) => /[./\\]/u.test(arg));
-  if (given !== undefined) return fail(`sync takes tool names, run it from the project root (got "${given}")`);
-  const tools = args.map((arg) => arg.toLowerCase());
-  try {
-    const { unpaired, held, failed } = sync(process.cwd(), tools);
-    // An unnamed run never fails over a file the user has yet to repair.
-    return unpaired.length + held.length + failed.length > 0 && tools.length > 0 ? EXIT_ERRORS : EXIT_OK;
-  } catch (error) {
-    if (!(error instanceof UnknownToolError)) throw error;
-    return fail(error.message);
-  }
-}
-
-const COMMANDS = {
-  load: { run: () => runHook("load"), usage: "load" },
-  guard: { run: () => runHook("guard"), usage: "guard" },
-  check: { run: runCheck, usage: "check [root] [file...]" },
-  sync: { run: runSync, usage: "sync [tool...]" },
-};
-
-function main([command, ...args]) {
-  if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command].run(args);
-  process.stderr.write(`usage: memory.cjs ${Object.values(COMMANDS).map(({ usage }) => usage).join(" | ")}\n`);
-  return EXIT_ERRORS;
+function main([command]) {
+  if (command === "load" || command === "guard") return runHook(command);
+  process.stderr.write("usage: memory.cjs load | guard\n");
+  return EXIT_USAGE;
 }
 
 module.exports = {
-  ALWAYS_WRITTEN,
-  ACCEPTED_ALWAYS,
-  ROW_FILES,
   TARGET_FILES,
   BLOCK_OPEN,
   BLOCK_CLOSE,
@@ -669,8 +460,6 @@ module.exports = {
   COPILOT_FILE,
   COPILOT_POINTER,
   lintFile,
-  lintBank,
-  check,
   sync,
 };
 

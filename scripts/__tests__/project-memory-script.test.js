@@ -248,8 +248,7 @@ test("wire of claude and codex through one linked file adds the pair once", () =
 test("a context file wire created is one the hook's sync fills", () => {
   within({ [`${MEMORY}/architecture.md`]: "# A\n" }, (root) => {
     run(root, "wire", "codex");
-    const { changed } = require(HOOK).sync(root, [], { quiet: true });
-    assert.deepEqual(changed, ["AGENTS.md"]);
+    assert.deepEqual(require(HOOK).sync(root), []);
     assert.match(read(root, "AGENTS.md"), /^\[aidd_docs\/memory\/architecture\.md\]\(aidd_docs\/memory\/architecture\.md\)$/mu);
   });
 });

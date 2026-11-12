@@ -12,9 +12,8 @@ argument-hint: setup | refresh
 flowchart LR
   request((request)) --> read["read<br>actions/01-read.md"]
   read -->|"nothing to change"| done((done))
-  read -->|"questions"| user((user answers))
-  user --> write
-  read -->|"no question"| write["write<br>actions/02-write.md"]
+  read -->|"one message"| user((user answers))
+  user --> write["write<br>actions/02-write.md"]
   write --> wire["wire<br>actions/03-wire.md"]
   wire --> done
 ```
@@ -26,5 +25,6 @@ flowchart LR
 - A line already in the bank is the team's: quote it exactly and get a yes before you replace or remove it.
 - Ask everything in one message, then wait; never ask twice.
 - Edit no memory file outside write.
+- When the skill's script exits 1, fix the call from what it prints; never do its work by hand.
 - When the turn-end check lists lost lines, show them to the person exactly as given, then restore each one they did not approve.
 - Fix each error the turn-end check gives on a line you wrote; keep a warned line the code confirms.

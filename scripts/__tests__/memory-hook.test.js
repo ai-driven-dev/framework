@@ -521,10 +521,10 @@ test("hooks.json names each event's goal, loads at session start and guards at t
   assert.equal(hooks.Stop[0].hooks[0].statusMessage, "AIDD Context: check memory changes");
 });
 
-test("the engine keeps load, guard, check and sync and has dropped the plan, answer, report and changes commands and their libraries", () => {
-  for (const command of ["plan", "answer", "report", "changes"]) {
+test("the engine runs only as the hook: load and guard; check, sync and the older commands are gone", () => {
+  for (const command of ["check", "sync", "plan", "answer", "report", "changes"]) {
     const result = spawnSync(process.execPath, [path.join(HOOKS, ENTRY), command], { encoding: "utf8" });
-    assert.match(result.stderr, /^usage: memory\.cjs load \| guard \| check \[root\] \[file\.\.\.\] \| sync \[tool\.\.\.\]\n$/u, command);
+    assert.equal(result.stderr, "usage: memory.cjs load | guard\n", command);
     assert.equal(result.status, 1, command);
   }
   for (const lib of ["plan", "fact-sheet", "report", "changes", "bank-guard"]) assert.equal(fs.existsSync(path.join(HOOKS, "lib", `${lib}.cjs`)), false, lib);

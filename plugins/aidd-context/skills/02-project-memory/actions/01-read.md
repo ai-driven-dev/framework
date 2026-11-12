@@ -8,7 +8,7 @@ The project root, and the bank when one exists.
 
 ## Process
 
-1. On a refresh, find the bank's last commit with `git log -1 --format=%H -- aidd_docs/memory`, then list what changed since with `git diff --stat <commit>`; with no such commit, read everything.
+1. From the project root, run the skill's `scripts/project-memory.cjs changes` with node: the bank's last commit, the files changed since, each misplaced folder.
 2. Read the project in the order of [reading sources](../references/reading-sources.md), the changed files first on a refresh.
 3. Find its [capabilities](../references/capabilities.md) and its [outside tools](../references/ecosystem-signals.md).
 4. On a refresh, review the bank per the [review protocol](../references/review-protocol.md).
