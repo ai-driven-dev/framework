@@ -30,5 +30,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [04-run-scenarios.md](skills/01-acceptance-qa/actions/04-run-scenarios.md) | - |
 | `assets` | [qa-report-template.md](skills/01-acceptance-qa/assets/qa-report-template.md) | - |
 | `references` | [interface-browser-playwright-cli.md](skills/01-acceptance-qa/references/interface-browser-playwright-cli.md) | - |
+| `references` | [publish-evidence.md](skills/01-acceptance-qa/references/publish-evidence.md) | - |
 | `-` | [SKILL.md](skills/01-acceptance-qa/SKILL.md) | `Validate a reviewed candidate's observable behavior against its acceptance criteria and record short named videos as reviewer evidence. Use when acceptance criteria exist and a browser-observable journey needs proof it holds. Do NOT use for diff review, unit or integration tests, or application fixes.` |
 

@@ -8,7 +8,7 @@ argument-hint: acceptance criteria | reviewed candidate
 
 ```mermaid
 flowchart LR
-  scope["load-scope"] --> prerequisites["prerequisites"] --> prepare["prepare-run"] --> run["run-scenarios"] --> report["qa.md"]
+  scope["load-scope"] --> prerequisites["prerequisites"] --> prepare["prepare-run"] --> run["run-scenarios"] --> report["PR / MR comment"]
   scope -- skipped --> report
 ```
 
@@ -28,5 +28,6 @@ Read only the next action's file before running it.
 - Run against a reviewed change and never patch the application.
 - Never delete data not proven test-only.
 - Never derive a scenario from the diff or the source code; every scenario traces to an acceptance criterion.
+- Keep QA reports and videos outside the repository; never commit videos.
 - Never spawn agents. Batch independent reads and tool checks, but keep state-changing browser work sequential.
 - Do not narrate action transitions, searches, fixtures, selectors, or successful checks. Report only a blocker, a required decision, or the final verdict and paths.
