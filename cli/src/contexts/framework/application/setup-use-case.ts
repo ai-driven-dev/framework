@@ -102,7 +102,7 @@ export class SetupUseCase {
     context: ProjectContext | undefined,
     tools: ToolCatalog
   ): Promise<SetupToolsResult> {
-    const { aiTools, ideTools } = await this.resolveTools(flow, context);
+    const { aiTools, ideTools } = await this.resolveTools(flow, context, tools);
     const version = this.currentVersionProvider.get();
     return this.setupToolsUseCase.execute({
       projectRoot: flow.projectRoot,
@@ -116,7 +116,8 @@ export class SetupUseCase {
 
   private async resolveTools(
     flow: SetupFlow,
-    context: ProjectContext | undefined
+    context: ProjectContext | undefined,
+    tools: ToolCatalog
   ): Promise<{ aiTools: readonly AiToolId[]; ideTools: readonly IdeToolId[] }> {
     if (this.setupToolsPromptUseCase === undefined) {
       return { aiTools: flow.aiTools as AiToolId[], ideTools: flow.ideTools as IdeToolId[] };
@@ -125,6 +126,7 @@ export class SetupUseCase {
       interactive: flow.interactive,
       aiTools: flow.aiTools as AiToolId[],
       ideTools: flow.ideTools as IdeToolId[],
+      tools,
       context,
     });
   }

@@ -1,4 +1,4 @@
-import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
+import type { AiToolId } from "../../../kernel/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import {
   FRAMEWORK_BUILD_MODES,
@@ -16,13 +16,11 @@ export interface FrameworkBuildTargetMode {
 }
 
 /** A tool supports a mode when its profile declares a build contract for it. Takes the catalog
- * explicitly so the rule can be probed with synthetic tools. Walks the kernel's tool order, never
+ * explicitly so the rule can be probed with synthetic tools. Walks the catalog's canonical order, never
  * the order the tools were registered in. */
 export function buildTargetModesOf(tools: ToolCatalog): readonly FrameworkBuildTargetMode[] {
   const pairs: FrameworkBuildTargetMode[] = [];
-  const registered = new Set(tools.inHelpOrder("ai"));
-  for (const target of AI_TOOL_IDS) {
-    if (!registered.has(target)) continue;
+  for (const target of tools.aiIdsInCanonicalOrder()) {
     const profile = tools.aiProfile(target);
     for (const mode of FRAMEWORK_BUILD_MODES) {
       if (profile.buildContract(mode) !== null) pairs.push({ target, mode });

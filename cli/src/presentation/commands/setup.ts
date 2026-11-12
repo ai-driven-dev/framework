@@ -6,12 +6,7 @@ import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { ToolId } from "../../kernel/tool.js";
-import {
-  AI_TOOL_IDS,
-  assertToolIdsMatchCategory,
-  IDE_TOOL_IDS,
-  isIdeToolId,
-} from "../../kernel/tool.js";
+import { assertToolIdsMatchCategory, IDE_TOOL_IDS, isIdeToolId } from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printDetectedContext,
@@ -65,10 +60,11 @@ export function expandAllKeyword(raw: string | undefined, all: readonly ToolId[]
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
   cmdOptions: SetupCmdOptions,
-  errorHandler: ErrorHandler
+  errorHandler: ErrorHandler,
+  tools: ToolCatalog
 ): { aiTools: ToolId[]; ideTools: ToolId[] } | null {
-  const aiIds = expandAllKeyword(cmdOptions.ai, AI_TOOL_IDS);
-  const ids = expandAllKeyword(cmdOptions.ide, [...AI_TOOL_IDS, ...IDE_TOOL_IDS]);
+  const aiIds = expandAllKeyword(cmdOptions.ai, tools.aiIdsInCanonicalOrder());
+  const ids = expandAllKeyword(cmdOptions.ide, [...tools.aiIdsInCanonicalOrder(), ...IDE_TOOL_IDS]);
   try {
     if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all")
       assertToolIdsMatchCategory(aiIds, "ai");
@@ -153,7 +149,7 @@ export function registerSetupCommand(program: Command, catalog: ToolCatalog): vo
 
       const source = parseSourceFlag(cmdOptions, output);
       const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
-      const toolIds = parseToolIds(cmdOptions, errorHandler);
+      const toolIds = parseToolIds(cmdOptions, errorHandler, catalog);
       if (toolIds === null) return;
 
       const hasScriptingFlags = !!(

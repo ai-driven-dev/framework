@@ -2,7 +2,6 @@ import { NoManifestError, PluginNotFoundError } from "../../../../kernel/errors.
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -35,7 +34,7 @@ export class UninstallPluginUseCase {
     const { pluginName, toolIds, projectRoot } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError();
-    const scope = this.resolveToolScope(toolIds, manifest);
+    const scope = this.resolveToolScope(toolIds, manifest, options.tools);
     const userTools = scope.filter((toolId) =>
       manifest.getPlugins(toolId).some((p) => p.name === pluginName && p.scope === "user")
     );
@@ -70,9 +69,9 @@ export class UninstallPluginUseCase {
     return results;
   }
 
-  private resolveToolScope(toolIds: ToolId[], manifest: Manifest): AiToolId[] {
+  private resolveToolScope(toolIds: ToolId[], manifest: Manifest, tools: ToolCatalog): AiToolId[] {
     if (toolIds.length > 0) return toolIds.filter((id) => manifest.hasTool(id)) as AiToolId[];
-    return AI_TOOL_IDS.filter((id) => manifest.hasTool(id)) as AiToolId[];
+    return tools.aiIdsInCanonicalOrder().filter((id) => manifest.hasTool(id));
   }
 
   private async removeFromTools(

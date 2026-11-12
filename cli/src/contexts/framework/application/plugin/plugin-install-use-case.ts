@@ -6,7 +6,7 @@ import {
   type PluginSource,
   parsePluginSourceShorthand,
 } from "../../../../kernel/source.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../../kernel/tool.js";
 import type { PluginPick } from "../../../../presentation/prompts/plugin-pick-use-case.js";
 import type { MarketplaceTrustStore } from "../../../distribution/domain/ports/marketplace-trust-store.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
@@ -60,19 +60,22 @@ export class PluginInstallUseCase {
     scope: InstallScope,
     tools: ToolCatalog
   ): Promise<void> {
-    const targets = await this.resolveTargetTools(toolIds);
+    const targets = await this.resolveTargetTools(toolIds, tools);
     for (const toolId of targets) {
       const requiresUserScope = tools.aiProfile(toolId).plugins()?.requiresUserScope() === true;
       assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope));
     }
   }
 
-  private async resolveTargetTools(toolIds: AiToolId[] | "all"): Promise<readonly AiToolId[]> {
+  private async resolveTargetTools(
+    toolIds: AiToolId[] | "all",
+    tools: ToolCatalog
+  ): Promise<readonly AiToolId[]> {
     if (toolIds !== "all") return toolIds;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) return AI_TOOL_IDS;
+    if (manifest === null) return tools.aiIdsInCanonicalOrder();
     const installed = manifest.getInstalledToolIds();
-    return AI_TOOL_IDS.filter((id) => installed.includes(id));
+    return tools.aiIdsInCanonicalOrder().filter((id) => installed.includes(id));
   }
 
   private isSourceArg(arg: string): boolean {

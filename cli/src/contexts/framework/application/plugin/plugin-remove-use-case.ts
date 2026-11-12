@@ -93,7 +93,7 @@ export class PluginRemoveUseCase {
     }
     const { pluginName, toolIds, projectRoot, tools } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
     for (const toolId of resolvedToolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
@@ -205,7 +205,7 @@ export class PluginRemoveUseCase {
     if (repo === undefined)
       throw new Error("User manifest repository is required for user-scope plugin removal.");
     const manifest = await loadPluginManifest(repo);
-    const toolIds = resolvePluginToolIds(options.toolIds, manifest);
+    const toolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
     const targets = toolIds.flatMap((toolId) => {
       const plugin = manifest
         .getPlugins(toolId)

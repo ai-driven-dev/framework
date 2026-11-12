@@ -7,7 +7,7 @@ import {
 } from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { UnresolvableUserScopeError } from "../../../../../src/kernel/errors.js";
-import { registeredAiConfig, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
 const homedir = () => HOME;
@@ -18,7 +18,10 @@ describe("resolvePluginToolIds()", () => {
     manifest.addTool("cursor", "1.0.0", []);
     manifest.addTool("claude", "1.0.0", []);
 
-    expect(resolvePluginToolIds("all", manifest)).toStrictEqual(["claude", "cursor"]);
+    expect(resolvePluginToolIds("all", manifest, registeredCatalog())).toStrictEqual([
+      "claude",
+      "cursor",
+    ]);
   });
 });
 
@@ -69,7 +72,7 @@ describe("resolvePluginToolIds() order", () => {
       manifest.addTool(id, "1.0.0", []);
     }
 
-    expect(resolvePluginToolIds("all", manifest)).toStrictEqual([
+    expect(resolvePluginToolIds("all", manifest, registeredCatalog())).toStrictEqual([
       "copilot",
       "opencode",
       "kilo",

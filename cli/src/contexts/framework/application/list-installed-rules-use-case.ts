@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { posixRelative } from "../../../kernel/paths.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
+import type { AiToolId } from "../../../kernel/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { InstalledRule } from "../domain/installed-rule.js";
 import { toInstalledRule } from "../domain/installed-rule.js";
@@ -31,7 +31,7 @@ export class ListInstalledRulesUseCase {
 
   async execute(input: ListInstalledRulesInput): Promise<ListInstalledRulesResult> {
     const rules: InstalledRule[] = [];
-    for (const toolId of AI_TOOL_IDS) {
+    for (const toolId of input.tools.aiIdsInCanonicalOrder()) {
       const location = input.tools.aiProfile(toolId).installedRulesLocation();
       if (location === null) continue;
       rules.push(...(await this.rulesUnder(input.projectRoot, toolId, location)));

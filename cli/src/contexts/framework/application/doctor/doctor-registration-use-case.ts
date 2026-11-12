@@ -329,7 +329,7 @@ export class DoctorRegistrationUseCase {
     // No machine-local file means the tool writes no machine-local registration at all, so
     // there is nothing here to check.
     const registration = tool.marketplaceRegistration();
-    const file = registration?.machineLocalFiles()[0];
+    const file = tool.machineLocalFiles()[0];
     return registration === null || file === undefined ? undefined : { file, registration };
   }
 

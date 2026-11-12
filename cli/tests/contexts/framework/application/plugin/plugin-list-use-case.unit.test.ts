@@ -3,6 +3,7 @@ import { PluginListUseCase } from "../../../../../src/contexts/framework/applica
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../../src/contexts/framework/domain/ports/manifest-repository.js";
+import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 function makeManifestWithPlugin(): Manifest {
   const manifest = Manifest.create();
@@ -34,7 +35,7 @@ describe("PluginListUseCase", () => {
       const manifest = makeManifestWithPlugin();
       const repo = makeManifestRepository(manifest);
       const useCase = new PluginListUseCase(repo);
-      const result = await useCase.execute({ toolIds: ["claude"] });
+      const result = await useCase.execute({ toolIds: ["claude"], tools: registeredCatalog() });
       expect(result.has("claude")).toBe(true);
       const plugins = result.get("claude") ?? [];
       expect(plugins).toHaveLength(1);
@@ -47,7 +48,7 @@ describe("PluginListUseCase", () => {
       manifest.addTool("claude", "1.0.0", []);
       const repo = makeManifestRepository(manifest);
       const useCase = new PluginListUseCase(repo);
-      const result = await useCase.execute({ toolIds: ["claude"] });
+      const result = await useCase.execute({ toolIds: ["claude"], tools: registeredCatalog() });
       expect(result.get("claude")).toHaveLength(0);
     });
   });

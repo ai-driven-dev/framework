@@ -6,7 +6,6 @@ import {
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,
@@ -63,13 +62,13 @@ export class UserMarketplaceRemoveUseCase {
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace.name}': no user manifest.`
       );
-    const plugins = AI_TOOL_IDS.flatMap((toolId) =>
+    const plugins = options.tools.aiIdsInCanonicalOrder().flatMap((toolId) =>
       manifest
         .getPlugins(toolId)
         .filter((plugin) => plugin.scope === "user" && plugin.marketplace === marketplace.name)
         .map((plugin) => ({ toolId, plugin }))
     );
-    const native = AI_TOOL_IDS.flatMap((toolId) => {
+    const native = options.tools.aiIdsInCanonicalOrder().flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       return registrations.marketplaces

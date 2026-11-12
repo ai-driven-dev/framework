@@ -174,7 +174,7 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output, tools);
-        const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
+        const result = await deps.marketplaceCheckUseCase.execute({ projectRoot, tools });
         printMarketplaceCheck(output, result);
       } catch (error) {
         errorHandler.handle(error);

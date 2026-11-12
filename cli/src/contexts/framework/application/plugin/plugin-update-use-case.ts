@@ -51,9 +51,9 @@ export class PluginUpdateUseCase {
   async execute(options: PluginUpdateOptions): Promise<string[]> {
     if (options.scope === "user")
       throw new Error("User-scope plugin update requires UserPluginUpdateUseCase.");
-    const { pluginNames, toolIds, projectRoot } = options;
+    const { pluginNames, toolIds, projectRoot, tools } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {

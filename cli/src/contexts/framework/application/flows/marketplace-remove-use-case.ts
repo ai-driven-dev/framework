@@ -3,8 +3,7 @@ import {
   MarketplaceNotFoundError,
 } from "../../../../kernel/errors.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { ToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,
@@ -56,7 +55,7 @@ export class MarketplaceRemoveUseCase {
       throw new Error("User-scope marketplace removal requires UserMarketplaceRemoveUseCase.");
     const marketplace = await this.findOrThrow(options.projectRoot, options.name, "project");
     const manifest = await this.manifestRepo.load();
-    const orphans = manifest ? this.collectOrphans(manifest, options.name) : [];
+    const orphans = manifest ? this.collectOrphans(manifest, options.name, options.tools) : [];
     const nativeRefs = new Map<ToolId, readonly string[]>();
     if (manifest !== null) {
       for (const { toolId, plugin } of orphans) {
@@ -90,9 +89,13 @@ export class MarketplaceRemoveUseCase {
     return found;
   }
 
-  private collectOrphans(manifest: Manifest, marketplaceName: string): OrphanRef[] {
+  private collectOrphans(
+    manifest: Manifest,
+    marketplaceName: string,
+    tools: ToolCatalog
+  ): OrphanRef[] {
     const orphans: OrphanRef[] = [];
-    for (const toolId of AI_TOOL_IDS) {
+    for (const toolId of tools.aiIdsInCanonicalOrder()) {
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.marketplace === marketplaceName) orphans.push({ toolId, plugin });
       }

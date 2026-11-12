@@ -4,7 +4,6 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
@@ -61,7 +60,7 @@ export class RestoreAllPluginsUseCase {
     let totalFiles = 0;
     const restoredNames = new Set<string>();
     const nativeOnlyToolIds: AiToolId[] = [];
-    for (const toolId of AI_TOOL_IDS) {
+    for (const toolId of tools.aiIdsInCanonicalOrder()) {
       if (!manifest.hasTool(toolId)) continue;
       if (toolIds !== undefined && !toolIds.includes(toolId)) continue;
       const toolConfig = tools.aiProfile(toolId);
@@ -90,7 +89,7 @@ export class RestoreAllPluginsUseCase {
   }
 
   private targetPlugins(
-    toolId: (typeof AI_TOOL_IDS)[number],
+    toolId: AiToolId,
     manifest: Manifest,
     pluginName: string | undefined
   ): readonly InstalledPlugin[] {
@@ -103,7 +102,7 @@ export class RestoreAllPluginsUseCase {
   }
 
   private async restoreToolPlugins(
-    toolId: (typeof AI_TOOL_IDS)[number],
+    toolId: AiToolId,
     manifest: Manifest,
     toolConfig: AiToolProfile,
     projectRoot: string,

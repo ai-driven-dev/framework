@@ -84,7 +84,7 @@ export class PluginAddUseCase implements PluginAdd {
     const existingMachine = await this.userManifestRepo.load();
     const machine =
       existingMachine === null ? Manifest.create() : Manifest.fromJSON(existingMachine.toJSON());
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, options.tools);
     const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
     if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
       await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest, machine);

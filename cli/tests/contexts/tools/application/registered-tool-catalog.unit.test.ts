@@ -48,6 +48,29 @@ describe("the registered tool catalog", () => {
     expect(sorted[0]?.toolId).toBe("antigravity");
   });
 
+  describe("the AI ids in the canonical order", () => {
+    it("is the order the kernel names the AI tools in, which is neither the help order nor the id order", () => {
+      const ids = catalogOf().aiIdsInCanonicalOrder();
+
+      expect(ids.indexOf("opencode")).toBeLessThan(ids.indexOf("codex"));
+      expect(ids).not.toEqual(catalogOf().inHelpOrder("ai"));
+    });
+
+    it("holds whatever order its profiles were registered in", () => {
+      const reversed = catalogOf([...REGISTERED_PROFILES].reverse());
+
+      expect(reversed.aiIdsInCanonicalOrder()).toEqual(catalogOf().aiIdsInCanonicalOrder());
+    });
+
+    it("names only the AI tools it holds", () => {
+      const held = REGISTERED_PROFILES.filter((profile) =>
+        ["codex", "claude", "vscode"].includes(profile.toolId)
+      );
+
+      expect(catalogOf(held).aiIdsInCanonicalOrder()).toEqual(["claude", "codex"]);
+    });
+  });
+
   it("answers the profile of a registered id, and refuses an unregistered one", () => {
     expect(catalogOf().profile("claude").toolId).toBe("claude");
     expect(() => catalogOf([]).profile("claude")).toThrow(UnregisteredToolError);

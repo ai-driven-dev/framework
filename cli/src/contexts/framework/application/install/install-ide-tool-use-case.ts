@@ -5,7 +5,6 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, IdeToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
@@ -50,7 +49,7 @@ export class InstallIdeToolUseCase {
   ): Promise<void> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return;
-    for (const aiId of AI_TOOL_IDS) {
+    for (const aiId of tools.aiIdsInCanonicalOrder()) {
       if (!manifest.hasTool(aiId)) continue;
       await this.mergeAiToolSettings(aiId, ideId, projectRoot, manifest, tools);
     }

@@ -110,13 +110,13 @@ describe("aidd plugin — the group with no subcommand", () => {
 describe("aidd plugin list", () => {
   it("sweeps every installed tool when none was named", async () => {
     expect(await run("list")).toEqual(["claude:", "  aidd-dev@1.0.0"]);
-    expect(pluginList).toHaveBeenCalledWith({ toolIds: "all" });
+    expect(pluginList).toHaveBeenCalledWith({ toolIds: "all", tools: CATALOG });
   });
 
   it("narrows to the one tool that was named", async () => {
     await run("list", "--tool", "codex");
 
-    expect(pluginList).toHaveBeenCalledWith({ toolIds: ["codex"] });
+    expect(pluginList).toHaveBeenCalledWith({ toolIds: ["codex"], tools: CATALOG });
   });
 
   it("refuses a tool no profile declares, before any use case runs", async () => {

@@ -72,6 +72,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
         const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const result = await deps.pluginListUseCase.execute({
           toolIds: parseToolOption(cmdOptions.tool),
+          tools: catalog,
         });
         printInstalledPlugins(output, result);
       } catch (error) {

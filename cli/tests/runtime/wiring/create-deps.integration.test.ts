@@ -78,6 +78,7 @@ describe("createDeps", () => {
         walked += 1;
         return real.inHelpOrder(category);
       },
+      aiIdsInCanonicalOrder: () => real.aiIdsInCanonicalOrder(),
       sortedById: () => real.sortedById(),
     };
 

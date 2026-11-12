@@ -1,14 +1,18 @@
 import { UnresolvableUserScopeError } from "../../../../kernel/errors.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { getToolSupportedScope } from "../../domain/install-scope.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PluginScope } from "../../domain/plugins/installed-plugin.js";
 
-export function resolvePluginToolIds(toolIds: AiToolId[] | "all", manifest: Manifest): AiToolId[] {
+export function resolvePluginToolIds(
+  toolIds: AiToolId[] | "all",
+  manifest: Manifest,
+  tools: ToolCatalog
+): AiToolId[] {
   if (toolIds !== "all") return toolIds;
-  return AI_TOOL_IDS.filter((id) => manifest.hasTool(id)) as AiToolId[];
+  return tools.aiIdsInCanonicalOrder().filter((id) => manifest.hasTool(id));
 }
 
 /** The scope a fresh install writes to the manifest, read once from the tool's own profile.

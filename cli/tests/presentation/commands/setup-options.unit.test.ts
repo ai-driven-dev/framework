@@ -8,6 +8,7 @@ import {
   parseToolIds,
 } from "../../../src/presentation/commands/setup.js";
 import { ErrorHandler } from "../../../src/presentation/error-handler.js";
+import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 function refuseByThrowing() {
@@ -75,13 +76,18 @@ describe("parseToolIds", () => {
   it("selects no tool at all when neither category was given", () => {
     const errorHandler = new ErrorHandler(new CapturingOutput(false));
 
-    expect(parseToolIds({}, errorHandler)).toEqual({ aiTools: [], ideTools: [] });
+    expect(parseToolIds({}, errorHandler, registeredCatalog())).toEqual({
+      aiTools: [],
+      ideTools: [],
+    });
   });
 
   it("splits the ids given per category", () => {
     const errorHandler = new ErrorHandler(new CapturingOutput(false));
 
-    expect(parseToolIds({ ai: "claude", ide: "vscode" }, errorHandler)).toEqual({
+    expect(
+      parseToolIds({ ai: "claude", ide: "vscode" }, errorHandler, registeredCatalog())
+    ).toEqual({
       aiTools: ["claude"],
       ideTools: ["vscode"],
     });
@@ -91,7 +97,9 @@ describe("parseToolIds", () => {
     const output = new CapturingOutput(false);
     const exit = refuseByThrowing();
 
-    expect(() => parseToolIds({ ai: "vscode" }, new ErrorHandler(output))).toThrow("process.exit");
+    expect(() =>
+      parseToolIds({ ai: "vscode" }, new ErrorHandler(output), registeredCatalog())
+    ).toThrow("process.exit");
 
     expect(exit).toHaveBeenCalledWith(1);
     expect(output.at("error")).toHaveLength(1);
@@ -100,7 +108,9 @@ describe("parseToolIds", () => {
   it("files every id --ide names under the list its category decides", () => {
     const errorHandler = new ErrorHandler(new CapturingOutput(false));
 
-    expect(parseToolIds({ ide: "claude,vscode", ai: "codex" }, errorHandler)).toStrictEqual({
+    expect(
+      parseToolIds({ ide: "claude,vscode", ai: "codex" }, errorHandler, registeredCatalog())
+    ).toStrictEqual({
       aiTools: ["codex", "claude"],
       ideTools: ["vscode"],
     });
@@ -109,7 +119,7 @@ describe("parseToolIds", () => {
   it("accepts 'all' without checking it against the category", () => {
     const errorHandler = new ErrorHandler(new CapturingOutput(false));
 
-    expect(parseToolIds({ ai: "all" }, errorHandler)).toEqual({
+    expect(parseToolIds({ ai: "all" }, errorHandler, registeredCatalog())).toEqual({
       aiTools: [...AI_TOOL_IDS],
       ideTools: [],
     });

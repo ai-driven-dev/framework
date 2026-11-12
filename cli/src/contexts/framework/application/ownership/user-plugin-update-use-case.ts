@@ -28,7 +28,7 @@ export class UserPluginUpdateUseCase {
         "No machine manifest: cannot prove AIDD ownership for user-scope plugin update."
       );
     const manifest = Manifest.fromJSON(loaded.toJSON());
-    const toolIds = resolvePluginToolIds(options.toolIds, manifest);
+    const toolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
     const targets = toolIds.flatMap((toolId) =>
       manifest
         .getPlugins(toolId)

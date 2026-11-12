@@ -1,5 +1,11 @@
 import { DuplicateToolIdError, UnregisteredToolError } from "../../../kernel/errors.js";
-import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
+import {
+  AI_TOOL_IDS,
+  type AiToolId,
+  type IdeToolId,
+  type ToolCategory,
+  type ToolId,
+} from "../../../kernel/tool.js";
 import type { ToolCatalog } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";
 import type { BuiltToolConfig } from "../domain/profile/define-tool.js";
@@ -42,6 +48,10 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return [...this.#byId.values()]
       .filter((profile) => profile.kind === category)
       .map((profile) => profile.toolId);
+  }
+
+  aiIdsInCanonicalOrder(): readonly AiToolId[] {
+    return AI_TOOL_IDS.filter((id) => this.#byId.has(id));
   }
 
   sortedById(): readonly ToolProfile[] {

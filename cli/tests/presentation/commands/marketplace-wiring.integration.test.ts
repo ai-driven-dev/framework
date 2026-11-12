@@ -367,7 +367,7 @@ describe("aidd marketplace refresh", () => {
 describe("aidd marketplace check", () => {
   it("asks about this project alone, and says so when nothing is stale", async () => {
     expect(await run("check")).toEqual(["All marketplaces fresh."]);
-    expect(marketplaceCheck).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
+    expect(marketplaceCheck).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT, tools: CATALOG });
   });
 });
 
