@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/contract/tool-vocabulary.js";
-import { pluginAnswers } from "../../../../../src/contexts/tools/domain/profile/plugin-answers.js";
-import { nativeLayout } from "../../../../../src/contexts/tools/domain/sections/layout-section.js";
+import {
+  deliverySuits,
+  pluginAnswers,
+} from "../../../../../src/contexts/tools/domain/profile/plugin-answers.js";
+import {
+  flatPlacement,
+  nativeLayout,
+} from "../../../../../src/contexts/tools/domain/sections/layout-section.js";
 import {
   answersOf,
   flatOf,
@@ -52,6 +58,14 @@ describe("what a flat tool answers", () => {
     );
 
     expect(merging.deliversHooksToProject()).toBe(true);
+  });
+});
+
+describe("where a flat tool puts the hooks of a plugin", () => {
+  it("names no path when it declares no hooks directory", () => {
+    const answers = flatOf(answersOf(flatPlugins("refuses")));
+
+    expect(answers.hooksInstallPath("p", "hooks/hooks.json")).toBeNull();
   });
 });
 
@@ -116,6 +130,12 @@ describe("what a native tool answers", () => {
     ]);
   });
 
+  it("names the default hooks file when it merges into the project and the plugin names none", () => {
+    const answers = nativeOf(answersOf(nativePlugins({ hooks: projectMerge })));
+
+    expect(answers.hooksFilePath()).toBe("hooks/hooks.json");
+  });
+
   it("refuses a native layout with no manifest", () => {
     const { layout, hooks } = nativePlugins();
 
@@ -162,5 +182,24 @@ describe("a layout composed by hand", () => {
       "/h/.g",
       true,
     ]);
+  });
+});
+
+describe("which hooks deliveries a flat layout takes", () => {
+  const flat = flatPlacement({ namespacePrefix: "x-" });
+  const bridge = { kind: "bridge", flat: { dir: ".x/hooks/" } } as const;
+
+  it("takes a bridge, and a project merge that declares a flat part", () => {
+    expect([
+      deliverySuits(flat, bridge),
+      deliverySuits(flat, { ...projectMerge, flat: { dir: ".x/hooks/" } }),
+    ]).toEqual([true, true]);
+  });
+
+  it("refuses a project merge with no flat part, and a plugin-file delivery", () => {
+    expect([
+      deliverySuits(flat, projectMerge),
+      deliverySuits(flat, { kind: "plugin-file" }),
+    ]).toEqual([false, false]);
   });
 });
