@@ -664,6 +664,12 @@ Third re-review: no-go on two missing proofs; closed (heads `93197ca48`, `da13ce
 - The guards of the shipped config each have a red proof below; a profile answers one shipped file by name (`configAsset(name)`), and the list leaves the profile interfaces.
 - Mutation `tools` after these commits: 95.1 against floor 95.
 
+Verdict after the fourth review: go. The measures hold (C2: 2 files outside the profile against at most 7), the design bar is met, and every guard has its red proof. Closed after it (head `d5dcb200e`): a failing timeout case kills the hung script by the pid it wrote. Kept as limits, not fixed:
+
+- A declared shipped-config name that no tool bundles is not refused: content is imported where the profile declares it, so no code path holds both lists.
+- The test helper that replaces a profile's sections drops a settings section's own file with that section, by design: the file belongs to the section replaced.
+- Mutation `tools` stands one point above its floor; a later change under `tools` may need a test before it passes.
+
 ## Design bar (user requirement, checked at every design review)
 
 The pilot fails its review, whatever its measures, if any of these holds:
