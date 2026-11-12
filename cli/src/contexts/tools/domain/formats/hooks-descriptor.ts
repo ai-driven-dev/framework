@@ -17,6 +17,7 @@ import {
 } from "../../../../kernel/materialization/flat-paths.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { ArtifactContract, FlatHooksBridge } from "../../contract/build-contract.js";
+import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
 import { HooksCapability } from "../capabilities/hooks-capability.js";
 import {
   type HooksFileFormat,
@@ -29,7 +30,6 @@ import {
   pluginScriptPath,
   unmergeHooks,
 } from "../hooks/hooks-merge.js";
-import type { HookScript, ProjectHooksFormat } from "../plugins/plugin-params.js";
 
 /** The events a plugin's hooks may name, whichever tool runs them. */
 export const CANONICAL_HOOK_EVENTS = [

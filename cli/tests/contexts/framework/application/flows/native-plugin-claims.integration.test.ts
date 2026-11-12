@@ -25,6 +25,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 for (const [toolId, catalogPath] of [
@@ -102,9 +103,9 @@ for (const [toolId, catalogPath] of [
         sources,
         hostPlugins
       );
-      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
-        /active projects.*\/B/
-      );
+      await expect(
+        clean.execute({ tools: catalogOf().sortedById(), projectRoot: "/B", force: true })
+      ).rejects.toThrow(/active projects.*\/B/);
       expect(failing.uninstalledPlugins).toEqual([]);
       expect(
         repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
@@ -116,9 +117,9 @@ for (const [toolId, catalogPath] of [
         pluginClaims: [{ ref, dependents: [] }],
       });
       await repo.save(machine);
-      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
-        /uninstall.*failed.*claims retained/
-      );
+      await expect(
+        clean.execute({ tools: catalogOf().sortedById(), projectRoot: "/B", force: true })
+      ).rejects.toThrow(/uninstall.*failed.*claims retained/);
       expect(repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
       ]);
@@ -137,7 +138,7 @@ for (const [toolId, catalogPath] of [
         sources,
         hostPlugins
       );
-      await finish.execute({ projectRoot: "/B", force: true });
+      await finish.execute({ tools: catalogOf().sortedById(), projectRoot: "/B", force: true });
       expect(working.uninstalledPlugins).toEqual([ref]);
       expect(working.removedMarketplaces).toEqual(["real-catalog"]);
       expect(repo.getCurrent()).toBeNull();
@@ -258,6 +259,7 @@ for (const [toolId, catalogPath] of [
       if (toolId === "copilot") {
         expect(
           await update.execute({
+            tools: catalogOf().sortedById(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -285,6 +287,7 @@ for (const [toolId, catalogPath] of [
         );
         await expect(
           failingUpdate.execute({
+            tools: catalogOf().sortedById(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -297,6 +300,7 @@ for (const [toolId, catalogPath] of [
       } else {
         await expect(
           update.execute({
+            tools: catalogOf().sortedById(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -317,6 +321,7 @@ for (const [toolId, catalogPath] of [
       );
       await expect(
         removeMarketplace.execute({
+          tools: catalogOf().sortedById(),
           name: alias,
           projectRoot: "/A",
           autoConfirm: true,
@@ -375,19 +380,30 @@ for (const [toolId, catalogPath] of [
           user,
           sources
         );
-      await remove(a).execute({ pluginName: "test-plugin", toolIds: [toolId], projectRoot: "/A" });
+      await remove(a).execute({
+        tools: catalogOf().sortedById(),
+        pluginName: "test-plugin",
+        toolIds: [toolId],
+        projectRoot: "/A",
+      });
       expect(activator.uninstalledPlugins).toEqual([]);
       if (cachedBytes !== undefined)
         expect(removeFs.getFile(cachedBytes)).toBe("B still uses this cached plugin");
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: ["/B"] },
       ]);
-      await remove(b).execute({ pluginName: "test-plugin", toolIds: [toolId], projectRoot: "/B" });
+      await remove(b).execute({
+        tools: catalogOf().sortedById(),
+        pluginName: "test-plugin",
+        toolIds: [toolId],
+        projectRoot: "/B",
+      });
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
       ]);
       await remove(a).execute({
+        tools: catalogOf().sortedById(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
@@ -397,6 +413,7 @@ for (const [toolId, catalogPath] of [
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
       enabled = false;
       await removeMarketplace.execute({
+        tools: catalogOf().sortedById(),
         name: alias,
         projectRoot: "/A",
         autoConfirm: true,

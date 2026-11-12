@@ -54,7 +54,7 @@ export class SetupUseCase {
   ) {}
 
   async execute(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<SetupResult> {
-    if (flow.scope === "user") return this.runMachineScope(flow);
+    if (flow.scope === "user") return this.runMachineScope(flow, tools);
     const context = await this.detectContext(flow);
     // Resolved before initManifest: a non-interactive run with no --source must reject
     // before it ever writes .aidd/manifest.json or touches .gitignore, not after.
@@ -62,16 +62,19 @@ export class SetupUseCase {
     const isNew = await this.initManifest(flow);
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
     const install = await this.installTools(flow, context, tools);
-    if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
+    if (flow.registerDefaultMarketplace) await this.promptPlugins(flow, tools);
     const activation = await this.syncSettings(flow);
     return this.buildResult(isNew, install, activation, context);
   }
 
-  private async runMachineScope(flow: SetupFlow): Promise<SetupResult> {
+  private async runMachineScope(
+    flow: SetupFlow,
+    tools: readonly ToolProfile[]
+  ): Promise<SetupResult> {
     if (this.setupMachineScopeUseCase === undefined) {
       throw new UserScopeUnavailableError();
     }
-    return this.setupMachineScopeUseCase.execute(flow);
+    return this.setupMachineScopeUseCase.execute(flow, tools);
   }
 
   private async detectContext(flow: SetupFlow): Promise<ProjectContext | undefined> {
@@ -125,12 +128,13 @@ export class SetupUseCase {
     });
   }
 
-  private async promptPlugins(flow: SetupFlow): Promise<void> {
+  private async promptPlugins(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<void> {
     await this.setupPluginsPromptUseCase.execute({
       projectRoot: flow.projectRoot,
       mode: flow.pluginMode,
       pluginNames: [...flow.pluginNames],
       interactive: flow.interactive,
+      tools,
     });
   }
 

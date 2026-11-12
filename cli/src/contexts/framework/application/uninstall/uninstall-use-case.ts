@@ -8,6 +8,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { ToolId } from "../../../../kernel/tool.js";
 import { isAiToolId, VALID_TOOL_IDS } from "../../../../kernel/tool.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { UninstallPluginUseCase } from "./uninstall-plugin-use-case.js";
@@ -16,6 +17,7 @@ import { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";
 interface UninstallOptions {
   toolIds: ToolId[];
   projectRoot: string;
+  tools: readonly ToolProfile[];
   pluginName?: string;
 }
 
@@ -40,10 +42,10 @@ export class UninstallUseCase {
   }
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
-    const { toolIds, projectRoot, pluginName } = options;
+    const { toolIds, projectRoot, pluginName, tools } = options;
 
     if (pluginName !== undefined) {
-      return this.pluginUninstall.execute({ pluginName, toolIds, projectRoot });
+      return this.pluginUninstall.execute({ pluginName, toolIds, projectRoot, tools });
     }
 
     if (toolIds.length === 0) {
@@ -67,7 +69,7 @@ export class UninstallUseCase {
       if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
     }
 
-    const results = await this.toolsUninstall.execute({ toolIds, manifest, projectRoot });
+    const results = await this.toolsUninstall.execute({ toolIds, manifest, projectRoot, tools });
 
     await this.manifestRepo.save(manifest);
     await this.toolsUninstall.detachClaimsAfterSave(projectRoot, userPlugins, nativeRefs);

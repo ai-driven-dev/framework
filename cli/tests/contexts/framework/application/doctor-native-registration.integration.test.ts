@@ -4,6 +4,7 @@ import type { HostPluginRegistry } from "../../../../src/contexts/host-registrat
 import type { AiToolId } from "../../../../src/kernel/tool.js";
 import { buildDoctorUseCase, buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/dev/.claude/plugins/installed_plugins.json";
@@ -32,7 +33,10 @@ describe("doctor represents what claude's own registry answers", () => {
     ]);
 
     const useCase = buildDoctorUseCase(deps, undefined, hostRegistries);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const report = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(report.healthy).toBe(false);
     const nativeIssues = report.issues.filter((i) => i.message.includes("registry"));
@@ -60,7 +64,10 @@ describe("doctor represents what claude's own registry answers", () => {
     ]);
 
     const useCase = buildDoctorUseCase(deps, undefined, hostRegistries);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const report = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(report.healthy).toBe(true);
     expect(report.issues).toHaveLength(0);
@@ -73,7 +80,10 @@ describe("doctor represents what claude's own registry answers", () => {
     await deps.manifestRepo.save(await manifestWithTwoNativePlugins());
 
     const useCase = buildDoctorUseCase(deps, undefined, new Map());
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const report = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(report.healthy).toBe(true);
     const infoIssues = report.issues.filter((i) => i.severity === "info");

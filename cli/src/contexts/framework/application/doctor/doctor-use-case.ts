@@ -1,5 +1,6 @@
 import { ManifestValidationError, NoManifestError } from "../../../../kernel/errors.js";
 import { type ToolCategory, toolIdsForCategory } from "../../../../kernel/tool.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type {
   DoctorIssue,
   DoctorReport,
@@ -19,6 +20,7 @@ export interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
   pluginName?: string;
+  tools: readonly ToolProfile[];
 }
 
 export class DoctorUseCase {
@@ -33,7 +35,7 @@ export class DoctorUseCase {
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, category, pluginName } = options;
+    const { projectRoot, category, pluginName, tools } = options;
     const manifest = await this.loadManifest();
     const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
     const toolHealth = this.buildToolHealth(manifest, allowedIds);
@@ -42,6 +44,7 @@ export class DoctorUseCase {
       manifest,
       projectRoot,
       allowedIds,
+      tools,
       pluginName,
     });
     return this.buildReport(toolHealth, issues, pluginIssues);

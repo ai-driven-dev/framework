@@ -9,6 +9,7 @@ import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
@@ -49,6 +50,7 @@ async function legacyProject() {
   );
   const addPlugin = () =>
     add.execute({
+      tools: catalogOf().sortedById(),
       source: { kind: "local", path: FIXTURE },
       toolIds: ["opencode"],
       projectRoot: ROOT,
@@ -80,7 +82,11 @@ describe("plugin runtime files on an existing tool", () => {
     const plugin = manifest?.getPlugins("opencode")[0];
     if (!manifest || !plugin) throw new Error("fixture plugin was not installed");
     manifest.updatePlugin("opencode", plugin.withVersion("0.0.0"));
-    await update.execute({ toolIds: ["opencode"], projectRoot: ROOT });
+    await update.execute({
+      tools: catalogOf().sortedById(),
+      toolIds: ["opencode"],
+      projectRoot: ROOT,
+    });
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
     expect(
@@ -97,7 +103,13 @@ describe("plugin runtime files on an existing tool", () => {
     const plugin = deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0];
     await deps.fs.deleteFile(join(ROOT, HELPER));
 
-    expect(await update.execute({ toolIds: ["opencode"], projectRoot: ROOT })).toEqual([]);
+    expect(
+      await update.execute({
+        tools: catalogOf().sortedById(),
+        toolIds: ["opencode"],
+        projectRoot: ROOT,
+      })
+    ).toEqual([]);
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
     expect(deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0]).toEqual(plugin);

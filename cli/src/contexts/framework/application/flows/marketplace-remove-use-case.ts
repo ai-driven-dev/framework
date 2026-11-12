@@ -10,6 +10,8 @@ import {
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -17,6 +19,7 @@ import type { ProjectPluginCleanup } from "../ownership/project-plugin-cleanup.j
 
 export interface MarketplaceRemoveOptions {
   name: string;
+  tools: readonly ToolProfile[];
   projectRoot: string;
   autoConfirm: boolean;
   scope?: "project" | "user";
@@ -68,7 +71,7 @@ export class MarketplaceRemoveUseCase {
     const cleanup = await this.shouldCleanup(orphans.length, options.autoConfirm);
     let removed = 0;
     if (cleanup && manifest) {
-      removed = await this.removeOrphans(manifest, orphans, options.projectRoot);
+      removed = await this.removeOrphans(manifest, orphans, options.tools, options.projectRoot);
     }
     await this.registry.delete(options.projectRoot, marketplace.name, marketplace.scope);
     if (cleanup) {
@@ -107,14 +110,20 @@ export class MarketplaceRemoveUseCase {
   private async removeOrphans(
     manifest: Manifest,
     orphans: readonly OrphanRef[],
+    tools: readonly ToolProfile[],
     projectRoot: string
   ): Promise<number> {
     for (const { toolId, plugin } of orphans) {
-      await this.cleanup.assertLocalIntegrationRemovable(toolId, plugin, projectRoot);
+      await this.cleanup.assertLocalIntegrationRemovable(
+        aiProfileOf(tools, toolId),
+        plugin,
+        projectRoot
+      );
     }
     for (const { toolId, plugin } of orphans) {
-      await this.cleanup.removeLocalIntegration(toolId, plugin, projectRoot);
-      await this.cleanup.deleteLocalFiles(toolId, plugin, projectRoot);
+      const tool = aiProfileOf(tools, toolId);
+      await this.cleanup.removeLocalIntegration(tool, plugin, projectRoot);
+      await this.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
       const hostName = registrations?.marketplaces.find(
         (m) => m.alias === plugin.marketplace

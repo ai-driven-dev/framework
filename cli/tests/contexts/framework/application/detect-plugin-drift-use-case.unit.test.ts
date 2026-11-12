@@ -5,6 +5,7 @@ import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js"
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../src/kernel/file.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const HASH_A = "abc123abc123abc123abc123abc123ab";
 const HASH_B = "def456def456def456def456def456de";
@@ -47,7 +48,12 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
     const fs = makeFs(new Set(["one.md", "two.md"]));
     const useCase = new DetectPluginDriftUseCase(fs);
 
-    const drifts = await useCase.execute({ manifest, projectRoot: "/proj", toolIds: ["cursor"] });
+    const drifts = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      manifest,
+      projectRoot: "/proj",
+      toolIds: ["cursor"],
+    });
 
     expect(drifts).toHaveLength(1);
     expect(drifts[0].notInstalledOnMachine).toBe(true);
@@ -60,7 +66,12 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
     const fs = makeFs(new Set(["one.md"]));
     const useCase = new DetectPluginDriftUseCase(fs);
 
-    const drifts = await useCase.execute({ manifest, projectRoot: "/proj", toolIds: ["cursor"] });
+    const drifts = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      manifest,
+      projectRoot: "/proj",
+      toolIds: ["cursor"],
+    });
 
     expect(drifts).toHaveLength(1);
     expect(drifts[0].notInstalledOnMachine).toBe(false);
@@ -85,7 +96,12 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
     const fs = makeFs(new Set(["one.md", "two.md"]));
     const useCase = new DetectPluginDriftUseCase(fs);
 
-    const drifts = await useCase.execute({ manifest, projectRoot: "/proj", toolIds: ["claude"] });
+    const drifts = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      manifest,
+      projectRoot: "/proj",
+      toolIds: ["claude"],
+    });
 
     expect(drifts).toHaveLength(1);
     expect(drifts[0].notInstalledOnMachine).toBe(false);
@@ -124,7 +140,12 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
     };
     const useCase = new DetectPluginDriftUseCase(fs);
 
-    const drifts = await useCase.execute({ manifest, projectRoot: "/proj", toolIds: ["cursor"] });
+    const drifts = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      manifest,
+      projectRoot: "/proj",
+      toolIds: ["cursor"],
+    });
 
     expect(drifts).toHaveLength(0);
     expect(checkedPaths).toContain(join("/proj", "a", "one.md"));
@@ -150,7 +171,12 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
     const fs = makeFs(new Set(["one.md", "two.md"]));
     const useCase = new DetectPluginDriftUseCase(fs);
 
-    const drifts = await useCase.execute({ manifest, projectRoot: "/proj", toolIds: ["cursor"] });
+    const drifts = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      manifest,
+      projectRoot: "/proj",
+      toolIds: ["cursor"],
+    });
 
     expect(drifts).toHaveLength(1);
     expect(drifts[0].notInstalledOnMachine).toBe(false);

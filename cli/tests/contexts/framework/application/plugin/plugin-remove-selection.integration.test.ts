@@ -14,6 +14,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const ROOT = "/test-project";
 const OTHER = "/another-project";
@@ -64,7 +65,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       userRepo
     );
 
-    await remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT });
+    await remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: ["cursor"],
+      projectRoot: ROOT,
+    });
 
     expect(project.getPlugins("cursor").map((entry) => entry.name)).toEqual(["other-plugin"]);
     expect(project.getPlugins("claude").map((entry) => entry.name)).toEqual(["other-plugin", NAME]);
@@ -105,7 +111,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       userRepo
     );
 
-    await remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT });
+    await remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: ["cursor"],
+      projectRoot: ROOT,
+    });
 
     expect(await fs.fileExists(join(ROOT, "owned.md"))).toBe(false);
     expect(fs.getFile(join(ROOT, "foreign.md"))).toBe("foreign");
@@ -137,7 +148,13 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       userRepo
     );
 
-    await remove.execute({ pluginName: NAME, toolIds: "all", projectRoot: ROOT, scope: "user" });
+    await remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: "all",
+      projectRoot: ROOT,
+      scope: "user",
+    });
 
     expect(machine.getPlugins("cursor").map((entry) => entry.toJSON())).toEqual([otherBefore]);
     expect(machine.getPlugins("claude").map((entry) => entry.toJSON())).toEqual([claudeBefore]);
@@ -164,7 +181,13 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await expect(
-      remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT, scope: "user" })
+      remove.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: NAME,
+        toolIds: ["cursor"],
+        projectRoot: ROOT,
+        scope: "user",
+      })
     ).rejects.toThrow(PluginNotFoundError);
 
     expect(machine.toJSON()).toEqual(before);
@@ -182,7 +205,13 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await expect(
-      remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT, scope: "user" })
+      remove.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: NAME,
+        toolIds: ["cursor"],
+        projectRoot: ROOT,
+        scope: "user",
+      })
     ).rejects.toThrow("User manifest repository is required for user-scope plugin removal.");
     expect(projectRepo.saveCount).toBe(0);
   });
@@ -213,6 +242,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await remove.execute({
+      tools: catalogOf().sortedById(),
       pluginName: NAME,
       toolIds: ["cursor"],
       projectRoot: ROOT,
@@ -250,7 +280,13 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await expect(
-      remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT, scope: "user" })
+      remove.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: NAME,
+        toolIds: ["cursor"],
+        projectRoot: ROOT,
+        scope: "user",
+      })
     ).rejects.toThrow(
       `Refusing partial removal of user-scope plugin '${NAME}': a tracked file escaped its boundary.`
     );
@@ -275,7 +311,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const remove = new PluginRemoveUseCase(fs, repo, new CapturingLogger(), new Map());
 
     await expect(
-      remove.execute({ pluginName: NAME, toolIds: ["cursor"], projectRoot: ROOT })
+      remove.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: NAME,
+        toolIds: ["cursor"],
+        projectRoot: ROOT,
+      })
     ).rejects.toThrow(/unproven legacy install digest/);
 
     expect(fs.getFile(file)).toBe("installed plugin bytes");
@@ -310,7 +351,12 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       userRepo
     );
 
-    await remove.execute({ pluginName: NAME, toolIds: ["claude"], projectRoot: ROOT });
+    await remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: ["claude"],
+      projectRoot: ROOT,
+    });
 
     expect(project.getNativeRegistrations("claude")?.pluginRefs).toEqual([
       ref,
@@ -427,7 +473,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const f = fixture();
     const marketplaces = f.record.getNativeRegistrations("claude")?.marketplaces;
 
-    await f.remove.execute({ pluginName: NAME, toolIds: ["claude"], projectRoot: ROOT });
+    await f.remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: ["claude"],
+      projectRoot: ROOT,
+    });
 
     expect(f.activator.uninstalledPlugins).toEqual([REF]);
     expect(f.activator.uninstalledPluginScopes).toEqual(["project"]);
@@ -449,7 +500,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     async (options) => {
       const f = fixture(options);
 
-      await f.remove.execute({ pluginName: NAME, toolIds: ["claude"], projectRoot: ROOT });
+      await f.remove.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: NAME,
+        toolIds: ["claude"],
+        projectRoot: ROOT,
+      });
 
       expect(f.record.getNativeRegistrations("claude")?.pluginRefs).toEqual([FOREIGN, REF]);
       expect(f.fs.getFile(f.cache)).toBe("target cache");
@@ -466,7 +522,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
   it("leaves an unclaimed enabled plugin on the host while removing only local files", async () => {
     const f = fixture({ enabled: false });
 
-    await f.remove.execute({ pluginName: NAME, toolIds: ["claude"], projectRoot: ROOT });
+    await f.remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: ["claude"],
+      projectRoot: ROOT,
+    });
 
     expect(f.activator.uninstalledPlugins).toEqual([]);
     expect(f.record.getNativeRegistrations("claude")?.pluginRefs).toEqual([FOREIGN]);
@@ -481,7 +542,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
   it("names the local alias when an unavailable host has no recorded catalogue", async () => {
     const f = fixture({ available: false, registrations: false });
 
-    await f.remove.execute({ pluginName: NAME, toolIds: ["claude"], projectRoot: ROOT });
+    await f.remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: ["claude"],
+      projectRoot: ROOT,
+    });
 
     expect(f.activator.uninstalledPlugins).toEqual([]);
     expect(f.record.getNativeRegistrations("claude")).toBeUndefined();
@@ -542,7 +608,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       ])
     );
 
-    await remove.execute({ pluginName: NAME, toolIds: "all", projectRoot: ROOT });
+    await remove.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: NAME,
+      toolIds: "all",
+      projectRoot: ROOT,
+    });
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(machine.getNativeRegistrations("codex")?.pluginRefs).toEqual([FOREIGN, REF]);

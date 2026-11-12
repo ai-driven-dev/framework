@@ -89,6 +89,7 @@ export class PluginInstallUseCase {
     const result = await this.pluginPickUseCase.execute({
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
+      tools: options.tools,
       interactive: true,
     });
     return { kind: "picked", installed: result.installed };
@@ -101,6 +102,7 @@ export class PluginInstallUseCase {
       source,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
+      tools: options.tools,
       interactive: options.interactive,
     });
     return { kind: "local", installed: [] };
@@ -129,6 +131,7 @@ export class PluginInstallUseCase {
       fromMarketplace: options.fromMarketplace,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
+      tools: options.tools,
       interactive: options.interactive,
       autoSelect: options.yes ?? false,
     });

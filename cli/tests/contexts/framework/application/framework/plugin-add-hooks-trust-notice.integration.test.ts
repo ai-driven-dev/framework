@@ -11,6 +11,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../../tools/testing/plugin-mode.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
@@ -36,6 +37,7 @@ async function installWithLogger(toolId: "codex" | "claude") {
     deps.userManifestRepo
   );
   await useCase.execute({
+    tools: catalogOf().sortedById(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,

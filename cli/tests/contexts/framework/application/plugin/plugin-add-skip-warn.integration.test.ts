@@ -11,6 +11,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -38,6 +39,7 @@ describe("PluginAddUseCase skip warnings", () => {
         deps.userManifestRepo
       );
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,

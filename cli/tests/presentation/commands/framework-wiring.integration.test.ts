@@ -210,6 +210,7 @@ describe("aidd framework remove", () => {
     expect(uninstallAiTools).toHaveBeenCalledWith({
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
+      tools: catalogOf().sortedById(),
     });
     expect(uninstallIdeTool).not.toHaveBeenCalled();
   });
@@ -231,6 +232,7 @@ describe("aidd framework remove", () => {
     expect(uninstallIdeTool).toHaveBeenCalledWith({
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
+      tools: catalogOf().sortedById(),
     });
     expect(uninstallAiTools).not.toHaveBeenCalled();
   });

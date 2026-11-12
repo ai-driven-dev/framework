@@ -2,12 +2,11 @@ import { createHash } from "node:crypto";
 import { dirname, join, posix } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type {
   ProjectHookEntry,
   ProjectHooksFormat,
-} from "../../../tools/domain/plugins/plugin-params.js";
-import { projectHooksDeliveryOf } from "../../../tools/domain/registry.js";
+} from "../../../tools/contract/tool-vocabulary.js";
 import type {
   InstalledPlugin,
   ProjectHooksProvenance,
@@ -27,11 +26,11 @@ export async function assertProjectHooksUnchanged(
   fs: FileReader,
   pluginName: string,
   provenance: ProjectHooksProvenance | undefined,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string,
   { overwriteEdited = false }: ProjectHooksGuard = {}
 ): Promise<{ existing: string | null }> {
-  const delivery = projectHooksDeliveryOf(toolId);
+  const delivery = tool.projectHooksDelivery();
   if (delivery === null) return { existing: null };
   const { format, toolName } = delivery;
   const hooksPath = join(projectRoot, delivery.relativePath);
@@ -88,18 +87,11 @@ export async function assertProjectHooksUnchanged(
 export async function assertProjectHooksRemovable(
   fs: FileReader,
   plugin: InstalledPlugin,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string,
   guard: ProjectHooksGuard = {}
 ): Promise<void> {
-  await assertProjectHooksUnchanged(
-    fs,
-    plugin.name,
-    plugin.projectHooks,
-    toolId,
-    projectRoot,
-    guard
-  );
+  await assertProjectHooksUnchanged(fs, plugin.name, plugin.projectHooks, tool, projectRoot, guard);
 }
 
 /** Unmerge only verified hook entries and tracked scripts; never delete a directory by name. */
@@ -107,18 +99,18 @@ export async function removeRecordedProjectHooks(
   fs: FileReader & FileWriter,
   pluginName: string,
   provenance: ProjectHooksProvenance | undefined,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string,
   guard: ProjectHooksGuard = {}
 ): Promise<boolean> {
-  const delivery = projectHooksDeliveryOf(toolId);
+  const delivery = tool.projectHooksDelivery();
   if (delivery === null) return false;
   const { format } = delivery;
   const { existing } = await assertProjectHooksUnchanged(
     fs,
     pluginName,
     provenance,
-    toolId,
+    tool,
     projectRoot,
     guard
   );
@@ -146,18 +138,11 @@ export async function removeRecordedProjectHooks(
 export async function removeProjectHooks(
   fs: FileReader & FileWriter,
   plugin: InstalledPlugin,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string,
   guard: ProjectHooksGuard = {}
 ): Promise<boolean> {
-  return removeRecordedProjectHooks(
-    fs,
-    plugin.name,
-    plugin.projectHooks,
-    toolId,
-    projectRoot,
-    guard
-  );
+  return removeRecordedProjectHooks(fs, plugin.name, plugin.projectHooks, tool, projectRoot, guard);
 }
 
 /** Hash of one merged hook entry, independent of other plugins' entries. */

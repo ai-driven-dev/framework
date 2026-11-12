@@ -4,9 +4,11 @@ import {
   deletePluginFilesForTool,
   loadPluginManifest,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-helpers.js";
+import { aiProfileOf } from "../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { NoManifestError } from "../../../../../src/kernel/errors.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -28,7 +30,13 @@ describe("deletePluginFilesForTool()", () => {
       ["b/second.md", "h2"],
     ]);
 
-    const deleted = await deletePluginFilesForTool(files, "project", "claude", PROJECT_ROOT, fs);
+    const deleted = await deletePluginFilesForTool(
+      files,
+      "project",
+      aiProfileOf(catalogOf().sortedById(), "claude"),
+      PROJECT_ROOT,
+      fs
+    );
 
     expect(deleted).toStrictEqual(["a/first.md", "b/second.md"]);
     expect(fs.listAll()).toStrictEqual([]);

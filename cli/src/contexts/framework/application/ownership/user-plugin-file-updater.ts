@@ -7,6 +7,7 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import {
   frameworkBuildModeFor,
   getToolConfig,
@@ -34,7 +35,7 @@ import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugi
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
-  readonly toolId: AiToolId;
+  readonly tool: AiToolProfile;
   readonly home: string;
   readonly baseDir: string;
   readonly files: readonly InstallationFile[];
@@ -52,21 +53,22 @@ export class UserPluginFileUpdater {
 
   async update(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     logger: Logger
   ): Promise<InstalledPlugin | null> {
-    const plan = await this.planUpdate(plugin, toolId, projectRoot, logger);
+    const plan = await this.planUpdate(plugin, tool, projectRoot, logger);
     return plan === null ? null : this.applyUpdate(plan, logger);
   }
 
   async planUpdate(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     logger: Logger,
     rebuild = false
   ): Promise<PlannedUserPluginFileUpdate | null> {
+    const toolId = tool.toolId;
     const dist = await this.loader.loadLatest(plugin, projectRoot);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
     const { files, componentPaths } = await this.materializeFiles(
@@ -83,11 +85,11 @@ export class UserPluginFileUpdater {
         `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
       );
     }
-    await this.assertWritable(plugin, toolId, files, home);
-    const baseDir = resolveBaseDirFromRecord("user", toolId, projectRoot, () => home);
+    await this.assertWritable(plugin, tool, files, home);
+    const baseDir = resolveBaseDirFromRecord("user", tool, projectRoot, () => home);
     return {
       plugin,
-      toolId,
+      tool,
       home,
       baseDir,
       files,
@@ -104,20 +106,20 @@ export class UserPluginFileUpdater {
   }
 
   async applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin> {
-    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.toolId, plan.home);
+    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.tool.toolId, plan.home);
     const oldSafe = await userScopeFilesSafeToDelete(
       this.fs,
       logger,
       present,
-      plan.toolId,
+      plan.tool.toolId,
       plan.home
     );
     if (oldSafe.size !== present.files.size || oldSafe.size !== plan.oldSafe.size) {
       throw new Error(
-        `${plan.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
+        `${plan.tool.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
       );
     }
-    await this.assertWritable(plan.plugin, plan.toolId, plan.files, plan.home);
+    await this.assertWritable(plan.plugin, plan.tool, plan.files, plan.home);
     await writePluginFiles([...plan.files], plan.baseDir, this.fs);
     const newPaths = new Set(plan.files.map((file) => file.relativePath));
     await deleteOldFiles(
@@ -132,15 +134,16 @@ export class UserPluginFileUpdater {
    * holds one plugin per subdirectory. Each layout has its own containment proof. */
   private async assertWritable(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     files: readonly InstallationFile[],
     home: string
   ): Promise<void> {
+    const toolId = tool.toolId;
     if (globalFilesOf(toolId) !== null) {
       await assertGlobalFilesWritable(this.fs, toolId, plugin, plugin.name, files, home);
       return;
     }
-    const baseDir = resolveBaseDirFromRecord("user", toolId, "", () => home);
+    const baseDir = resolveBaseDirFromRecord("user", tool, "", () => home);
     // A first install owns no file yet, and a restore may have lost the directory: it is created
     // so the containment proof has a real path to resolve. The name is one safe path segment.
     if (PLUGIN_NAME_REGEX.test(plugin.name)) {

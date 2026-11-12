@@ -18,6 +18,7 @@ import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
+type ToolProfiles = ReturnType<ToolCatalog["sortedById"]>;
 type Deps = Awaited<ReturnType<typeof createDeps>>;
 
 function categoryOf(toolId: ToolId): ToolCategory {
@@ -28,10 +29,11 @@ async function runFullDoctor(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
+  tools: ToolProfiles,
   pluginName: string | undefined
 ): Promise<void> {
-  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, pluginName);
-  const statusResult = await deps.statusAllUseCase.execute(projectRoot);
+  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, tools, pluginName);
+  const statusResult = await deps.statusAllUseCase.execute(projectRoot, tools);
   printReportErrors(output, doctorResult.errors);
 
   printInventory(output, "AI", doctorResult.ai, statusResult.aiTools.tools);
@@ -64,16 +66,23 @@ async function runScopedDoctor(
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId,
+  tools: ToolProfiles,
   pluginName: string | undefined
 ): Promise<void> {
   const category = categoryOf(toolId);
   // DoctorUseCase scopes by category, never by tool: the inventory below narrows to the exact
   // tool, the issue list stays category-wide.
-  const doctorReport = await deps.doctorUseCase.execute({ projectRoot, category, pluginName });
+  const doctorReport = await deps.doctorUseCase.execute({
+    projectRoot,
+    category,
+    pluginName,
+    tools,
+  });
   const statusReport = await deps.statusUseCase.execute({
     projectRoot,
     filterToolId: toolId,
     pluginName,
+    tools,
   });
 
   const scopedReport: DoctorReport = {
@@ -190,10 +199,11 @@ export function registerDoctorCommand(program: Command, tools: ToolCatalog): voi
             output,
             projectRoot,
             cmdOptions.tool as ToolId,
+            tools.sortedById(),
             cmdOptions.plugin
           );
         } else {
-          await runFullDoctor(deps, output, projectRoot, cmdOptions.plugin);
+          await runFullDoctor(deps, output, projectRoot, tools.sortedById(), cmdOptions.plugin);
         }
       } catch (error) {
         errorHandler.handle(error);

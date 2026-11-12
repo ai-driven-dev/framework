@@ -7,7 +7,9 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import { getToolConfig, type ToolConfig } from "../../../tools/domain/registry.js";
+import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import { getToolConfig } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -29,6 +31,7 @@ import { resolveBaseDirFromRecord, resolvePluginToolIds } from "./plugin-target-
 export interface PluginUpdateOptions {
   pluginNames?: string[];
   toolIds: AiToolId[] | "all";
+  tools: readonly ToolProfile[];
   projectRoot: string;
   scope?: "project" | "user";
   /** Re-materialize at the same version: the source changed, not the plugin's version. Read by
@@ -56,7 +59,7 @@ export class PluginUpdateUseCase {
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {
       const names = await this.updatePluginsForTool(
-        toolId,
+        aiProfileOf(options.tools, toolId),
         pluginNames,
         projectRoot,
         cacheDir,
@@ -69,19 +72,19 @@ export class PluginUpdateUseCase {
   }
 
   private async updatePluginsForTool(
-    toolId: AiToolId,
+    tool: AiToolProfile,
     pluginNames: string[] | undefined,
     projectRoot: string,
     cacheDir: string,
     manifest: Manifest
   ): Promise<string[]> {
-    const plugins = manifest.getPlugins(toolId);
+    const plugins = manifest.getPlugins(tool.toolId);
     const targets = pluginNames
       ? plugins.filter((p) => pluginNames.includes(p.name))
       : plugins.filter((plugin) => plugin.scope !== "user");
     const updated: string[] = [];
     for (const plugin of targets) {
-      const didUpdate = await this.updateOnePlugin(plugin, toolId, projectRoot, cacheDir, manifest);
+      const didUpdate = await this.updateOnePlugin(plugin, tool, projectRoot, cacheDir, manifest);
       if (didUpdate) updated.push(plugin.name);
     }
     return updated;
@@ -89,11 +92,12 @@ export class PluginUpdateUseCase {
 
   private async updateOnePlugin(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     cacheDir: string,
     manifest: Manifest
   ): Promise<boolean> {
+    const toolId = tool.toolId;
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
     const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
@@ -103,23 +107,24 @@ export class PluginUpdateUseCase {
       await this.pluginRuntime?.ensurePluginRuntimeFiles(runtimeProfile, projectRoot, manifest);
     }
     if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
-    await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest);
+    await this.replacePluginFiles(plugin, dist, tool, projectRoot, manifest);
     return true;
   }
 
   private async replacePluginFiles(
     plugin: InstalledPlugin,
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     manifest: Manifest
   ): Promise<void> {
-    const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, nodeHomedir);
+    const toolId = tool.toolId;
+    const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const toolConfig = getToolConfig(toolId);
-    const translator = this.resolveTranslator(toolConfig);
+    const translator = this.resolveTranslator(tool);
     if (translator !== null && plugin.marketplace !== undefined) {
-      await materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest);
+      await materializeViaTranslator(translator, dist, tool, plugin, projectRoot, manifest);
       return;
     }
     const { files: newFiles, componentPaths } = new PluginContentTranslator(
@@ -135,9 +140,9 @@ export class PluginUpdateUseCase {
   // Materializing tools (cursor/opencode) re-materialize from the BUILT tree, and Mode A
   // marketplace tools (claude/codex/copilot) re-register without writing files, so an
   // update matches whatever install would have done for that tool.
-  private resolveTranslator(toolConfig: ToolConfig): PluginTranslator | null {
+  private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
     if (this.builtDeps === undefined) return null;
-    return resolvePluginTranslator(toolConfig, {
+    return resolvePluginTranslator(tool, {
       fs: this.fs,
       hasher: this.hasher,
       homedir: this.builtDeps.homedir,

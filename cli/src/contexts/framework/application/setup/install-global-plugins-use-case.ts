@@ -1,10 +1,11 @@
 import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import type { ToolId } from "../../../../kernel/tool.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace-use-case.js";
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import { copiesPluginFilesGlobally } from "../../../tools/domain/registry.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { profileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugins/plugin-source-resolver.js";
@@ -17,6 +18,7 @@ import type {
 export interface InstallGlobalPluginsOptions {
   readonly projectRoot: string;
   readonly toolIds: readonly ToolId[];
+  readonly tools: readonly ToolProfile[];
   readonly mode: PluginInstallMode;
   readonly pluginNames: readonly string[];
 }
@@ -66,7 +68,8 @@ export class InstallGlobalPluginsUseCase {
     const entries = selectEntries(catalog?.plugins ?? [], options);
     const plans: { readonly plan: PlannedUserPluginFileUpdate; readonly owned: boolean }[] = [];
     for (const toolId of options.toolIds) {
-      if (!copiesPluginFilesGlobally(toolId)) continue;
+      const tool = profileOf(options.tools, toolId);
+      if (tool.kind !== "ai" || tool.plugins()?.copiesFilesGlobally() !== true) continue;
       for (const entry of entries) {
         const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === entry.name);
         const resolved = InstalledPlugin.fromMetadata(
@@ -83,7 +86,7 @@ export class InstallGlobalPluginsUseCase {
             : resolved.withFiles(owned.files).withDependents(owned.dependents);
         const plan = await this.fileUpdater.planUpdate(
           plugin,
-          toolId as AiToolId,
+          tool,
           options.projectRoot,
           this.logger,
           true
@@ -94,8 +97,8 @@ export class InstallGlobalPluginsUseCase {
     }
     for (const { plan, owned } of plans) {
       const next = await this.fileUpdater.applyUpdate(plan, this.logger);
-      if (owned) manifest.updatePlugin(plan.toolId, next);
-      else manifest.addPlugin(plan.toolId, next);
+      if (owned) manifest.updatePlugin(plan.tool.toolId, next);
+      else manifest.addPlugin(plan.tool.toolId, next);
       await record(manifest);
     }
     return { plugins: entries.map((entry) => entry.name) };

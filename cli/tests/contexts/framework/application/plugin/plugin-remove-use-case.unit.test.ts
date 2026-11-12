@@ -17,6 +17,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
@@ -76,6 +77,7 @@ async function installPlugin(
     deps.userManifestRepo
   );
   await addUseCase.execute({
+    tools: catalogOf().sortedById(),
     source: { kind: "local", path: fixture },
     toolIds: ["claude"],
     projectRoot: PROJECT_ROOT,
@@ -124,6 +126,7 @@ describe("PluginRemoveUseCase", () => {
         deps.nativePluginActivators
       );
       await removeUseCase.execute({
+        tools: catalogOf().sortedById(),
         pluginName: "sample-plugin",
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -151,6 +154,7 @@ describe("PluginRemoveUseCase", () => {
       );
       await expect(
         removeUseCase.execute({
+          tools: catalogOf().sortedById(),
           pluginName: "nonexistent-plugin",
           toolIds: ["claude"],
           projectRoot: PROJECT_ROOT,
@@ -186,6 +190,7 @@ describe("PluginRemoveUseCase", () => {
       );
 
       await removeUseCase.execute({
+        tools: catalogOf().sortedById(),
         pluginName: "aidd-context",
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -212,7 +217,12 @@ describe("PluginRemoveUseCase", () => {
         deps.manifestRepo,
         deps.logger,
         deps.nativePluginActivators
-      ).execute({ pluginName: "extra-plugin", toolIds: ["claude"], projectRoot: PROJECT_ROOT });
+      ).execute({
+        tools: catalogOf().sortedById(),
+        pluginName: "extra-plugin",
+        toolIds: ["claude"],
+        projectRoot: PROJECT_ROOT,
+      });
 
       expect([deps.fs.has(greet), deps.fs.has(bye)]).toStrictEqual([true, false]);
       expect(
@@ -229,6 +239,7 @@ describe("PluginRemoveUseCase", () => {
       const manifestRepo = manifestHolding("cursor", { name: "aidd-context", marketplace: "mkt" });
 
       await removeUseCaseOver(new InMemoryFileAdapter(), manifestRepo).execute({
+        tools: catalogOf().sortedById(),
         pluginName: "aidd-context",
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -245,6 +256,7 @@ describe("PluginRemoveUseCase", () => {
       const manifestRepo = manifestHolding("opencode", { name: "aidd-context" });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
+        tools: catalogOf().sortedById(),
         pluginName: "aidd-context",
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,
@@ -264,6 +276,7 @@ describe("PluginRemoveUseCase", () => {
       });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
+        tools: catalogOf().sortedById(),
         pluginName: "aidd-context",
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -282,6 +295,7 @@ describe("PluginRemoveUseCase", () => {
 
       await expect(
         removeUseCaseOver(fs, manifestRepo).execute({
+          tools: catalogOf().sortedById(),
           pluginName: "aidd-context",
           toolIds: ["opencode"],
           projectRoot: PROJECT_ROOT,

@@ -18,6 +18,8 @@ import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
 } from "../../../host-registration/contract/host-plugin-registry.js";
+import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import {
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
@@ -58,6 +60,7 @@ export interface PluginRemoveOptions {
   pluginName: string;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
+  tools: readonly ToolProfile[];
   scope?: "project" | "user";
 }
 
@@ -96,14 +99,19 @@ export class PluginRemoveUseCase {
       }
       return this.removeUserPlugin(options);
     }
-    const { pluginName, toolIds, projectRoot } = options;
+    const { pluginName, toolIds, projectRoot, tools } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
     for (const toolId of resolvedToolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
-      await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
-      await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
+      await assertProjectMcpEntriesRemovable(
+        this.fs,
+        plugin,
+        aiProfileOf(tools, toolId),
+        projectRoot
+      );
+      await assertProjectHooksRemovable(this.fs, plugin, aiProfileOf(tools, toolId), projectRoot);
       await this.assertProjectNativeSource(
         plugin,
         toolId,
@@ -124,7 +132,13 @@ export class PluginRemoveUseCase {
       )?.hostName;
       if (hostName !== undefined) nativeRefs.set(toolId, [`${pluginName}@${hostName}`]);
     }
-    const removed = await this.removeFromTools(pluginName, resolvedToolIds, projectRoot, manifest);
+    const removed = await this.removeFromTools(
+      pluginName,
+      resolvedToolIds,
+      tools,
+      projectRoot,
+      manifest
+    );
     if (!removed) throw new PluginNotFoundError(pluginName);
     await this.manifestRepo.save(manifest);
     await detachNativePluginRefs(this.userManifestRepo, this.fs, projectRoot, nativeRefs);
@@ -299,7 +313,14 @@ export class PluginRemoveUseCase {
       });
     }
     for (const { toolId, plugin, files } of safeFiles) {
-      await deletePluginFilesForTool(files, "user", toolId, options.projectRoot, this.fs, "user");
+      await deletePluginFilesForTool(
+        files,
+        "user",
+        aiProfileOf(options.tools, toolId),
+        options.projectRoot,
+        this.fs,
+        "user"
+      );
       manifest.removePlugin(toolId, plugin.name);
     }
     await repo.save(manifest);
@@ -308,16 +329,18 @@ export class PluginRemoveUseCase {
   private async removeFromTools(
     pluginName: string,
     toolIds: AiToolId[],
+    tools: readonly ToolProfile[],
     projectRoot: string,
     manifest: Manifest
   ): Promise<boolean> {
     let removed = false;
     for (const toolId of toolIds) {
+      const tool = aiProfileOf(tools, toolId);
       const plugins = manifest.getPlugins(toolId);
       const plugin = plugins.find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
       const registrations = manifest.getNativeRegistrations(toolId);
-      const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, nodeHomedir);
+      const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
       const confirmed = await this.removeNativeActivation(
         plugin,
         toolId,
@@ -327,8 +350,8 @@ export class PluginRemoveUseCase {
       if (confirmed !== undefined)
         await this.purgeCachedPlugin(registrations, toolId, plugin, confirmed);
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
-      await this.removeMcpEntries(plugin, toolId, projectRoot);
-      await removeProjectHooks(this.fs, plugin, toolId, projectRoot);
+      await this.removeMcpEntries(plugin, tool, projectRoot);
+      await removeProjectHooks(this.fs, plugin, tool, projectRoot);
       const hostName = registrations?.marketplaces.find(
         (m) => m.alias === plugin.marketplace
       )?.hostName;
@@ -561,11 +584,11 @@ export class PluginRemoveUseCase {
 
   private async removeMcpEntries(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string
   ): Promise<void> {
     if (plugin.mcpEntries.size === 0) return;
-    const mcpCap = frameworkPrimeFlatMcpOf(toolId);
+    const mcpCap = frameworkPrimeFlatMcpOf(tool);
     if (mcpCap === null) return;
     const outputRelPath = await mcpCap.resolveOutputPath((relativePath) =>
       this.fs.fileExists(join(projectRoot, relativePath))

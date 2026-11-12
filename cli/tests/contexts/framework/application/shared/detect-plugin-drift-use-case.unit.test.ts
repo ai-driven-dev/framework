@@ -6,6 +6,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_PLUGINS_DIR = join(homedir(), ".cursor", "plugins", "local");
@@ -41,6 +42,7 @@ describe("DetectPluginDriftUseCase", () => {
     const useCase = new DetectPluginDriftUseCase(new InMemoryFileAdapter({}, HASHER));
 
     const drifts = await useCase.execute({
+      tools: catalogOf().sortedById(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: ["cursor"],
@@ -63,6 +65,7 @@ describe("DetectPluginDriftUseCase", () => {
     const useCase = new DetectPluginDriftUseCase(fs);
 
     const drifts = await useCase.execute({
+      tools: catalogOf().sortedById(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: ["cursor"],

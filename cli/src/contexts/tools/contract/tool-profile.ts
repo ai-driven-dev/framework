@@ -1,8 +1,9 @@
-import type { ConfigAsset } from "../../../kernel/file.js";
+import type { ConfigAsset, FileHash } from "../../../kernel/file.js";
 import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-paths.js";
 import type { MergeStrategy } from "../../../kernel/merge.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../kernel/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
+import type { ProjectHooksLocation } from "./tool-vocabulary.js";
 
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
@@ -16,6 +17,8 @@ export interface PluginDelivery {
   /** Where a machine-scope install puts a plugin's files under `homedir`, or null for none. */
   userPluginsBaseDir(homedir: string): string | null;
   hooksAcceptance(): HooksAcceptance;
+  /** Whether its hooks are merged into the project's own hooks file rather than the plugin's directory. */
+  deliversHooksToProject(): boolean;
 }
 
 /** What a tool's own plugin CLI declares about itself. */
@@ -49,6 +52,8 @@ export interface NativePluginAnswers extends PluginDelivery {
   readonly kind: "native";
   /** Whether a plugin installed fresh lands at user scope, the only scope this tool takes. */
   requiresUserScope(): boolean;
+  /** Whether the plugin is installed by registering a marketplace with the host. */
+  translatesAsMarketplace(): boolean;
   /** The directory a plugin's files land in. */
   pluginOutputDir(pluginName: string): string;
   /** The manifest file relative to that directory, or null when the tool takes none. */
@@ -90,8 +95,30 @@ export interface SkillsSectionAnswers {
   serialize(fm: Record<string, unknown>, body: string): string;
 }
 
+/** What merging a plugin's mcp servers into a tool's shared file produced. */
+export interface McpPluginMerge {
+  mergedContent: string;
+  contributedEntries: ReadonlyMap<string, string>;
+  collisions: ReadonlyArray<string>;
+  editedPreviousEntries: ReadonlyArray<string>;
+}
+
 /** A tool's mcp file, as an install asks it. */
 export interface McpConfigAnswers {
+  /** Whether the tool keeps the framework half of one file it shares with its plugins. */
+  isFrameworkPrime(): boolean;
+  /** A plugin's mcp json rewritten to this tool's own shape. */
+  transform(mcpJson: string): string;
+  /** Adds the plugin's transformed servers to the existing file: what the plugin contributed
+   * before is replaced, a user-owned server is kept and reported as a collision. */
+  mergePluginServers(
+    existing: string | null,
+    incomingTransformed: string,
+    previousEntries: ReadonlyMap<string, string>,
+    hasher: { hash(content: string): FileHash }
+  ): McpPluginMerge;
+  /** Removes the servers a plugin contributed, refusing one edited since. */
+  removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string;
   /** The project-relative file the tool's mcp servers live in. */
   outputPath(): string;
   /** Whether the config asset named `fileName` is that file, merged over what a person keeps. */
@@ -128,6 +155,8 @@ export interface AiToolProfile {
     readonly manifest?: readonly string[];
     readonly marketplace?: readonly string[];
   };
+  /** Flat when its plugins are injected into the project tree, a marketplace otherwise. */
+  frameworkBuildMode(): FrameworkBuildMode;
   /** The framework-build contract for `mode`, or null when the tool declares none for it. */
   buildContract(mode: FrameworkBuildMode): ToolBuildContract | null;
   /** Rewrites source content to this tool's own conventions. */
@@ -153,6 +182,8 @@ export interface AiToolProfile {
   settingsFiles(): readonly SettingsFileAnswers[];
   /** The files its marketplace registration keeps on this machine, none when it keeps none. */
   machineLocalFiles(): readonly string[];
+  /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
+  projectHooksDelivery(): ProjectHooksLocation | null;
 }
 
 /** An editor, as an outside caller asks it. */

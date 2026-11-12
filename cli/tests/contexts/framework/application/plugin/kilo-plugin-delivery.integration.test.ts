@@ -57,6 +57,7 @@ async function existingProject(configPath: string) {
   );
   const install = () =>
     add.execute({
+      tools: catalogOf().sortedById(),
       source: { kind: "local", path: FIXTURE },
       toolIds: ["kilo"],
       projectRoot: ROOT,
@@ -107,9 +108,13 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
         '{"name":"sample-plugin","version":"2.0.0"}'
       );
       await deps.fs.deleteFile(join(ROOT, BRIDGE));
-      expect(await update.execute({ toolIds: ["kilo"], projectRoot: ROOT })).toEqual([
-        "sample-plugin",
-      ]);
+      expect(
+        await update.execute({
+          tools: catalogOf().sortedById(),
+          toolIds: ["kilo"],
+          projectRoot: ROOT,
+        })
+      ).toEqual(["sample-plugin"]);
       expect(await deps.fs.readFile(join(ROOT, configPath))).toBe(USER_CONFIG);
       expect(await deps.fs.readFile(join(ROOT, HOOK))).toBe(upgradedHook);
       expect(await deps.fs.readFile(join(ROOT, BRIDGE))).toContain('id: "sample-plugin-hooks"');

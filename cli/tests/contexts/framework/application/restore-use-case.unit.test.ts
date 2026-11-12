@@ -21,6 +21,7 @@ import {
   ScriptedPrompter,
 } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -42,6 +43,7 @@ async function installPlugin(
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
+    tools: catalogOf().sortedById(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,

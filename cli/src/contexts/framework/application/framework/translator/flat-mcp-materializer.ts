@@ -3,6 +3,7 @@ import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
+import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type {
   PluginTranslationSkip,
@@ -29,7 +30,7 @@ export async function materializeFlatMcp(
   fs: FileReader & FileWriter,
   hasher: Hasher,
   dist: PluginDistribution,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string,
   previousMcpEntries: ReadonlyMap<string, string>
 ): Promise<{
@@ -37,7 +38,7 @@ export async function materializeFlatMcp(
   mcpSkips: ReadonlySkipList;
   outputRelPath?: string;
 }> {
-  const mcpCap = dist.components.mcp.length === 0 ? null : frameworkPrimeFlatMcpOf(toolId);
+  const mcpCap = dist.components.mcp.length === 0 ? null : frameworkPrimeFlatMcpOf(tool);
   if (mcpCap === null) {
     return { mcpEntries: new Map(), mcpSkips: [], outputRelPath: undefined };
   }
@@ -61,7 +62,7 @@ export async function materializeFlatMcp(
     (reason): PluginTranslationSkip => ({
       pluginName: dist.manifest.name,
       component: "mcp",
-      toolId,
+      toolId: tool.toolId,
       reason,
     })
   );

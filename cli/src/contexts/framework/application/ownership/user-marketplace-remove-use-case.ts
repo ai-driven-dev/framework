@@ -12,6 +12,7 @@ import {
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
   MarketplaceRemoveOptions,
@@ -132,7 +133,14 @@ export class UserMarketplaceRemoveUseCase {
       activator.removeMarketplace(registration.hostName, "user");
     }
     for (const { toolId, plugin, files } of safeFiles) {
-      await deletePluginFilesForTool(files, "user", toolId, options.projectRoot, this.fs, "user");
+      await deletePluginFilesForTool(
+        files,
+        "user",
+        aiProfileOf(options.tools, toolId),
+        options.projectRoot,
+        this.fs,
+        "user"
+      );
       manifest.removePlugin(toolId, plugin.name);
     }
     for (const { toolId, registrations, registration } of nativeCalls) {

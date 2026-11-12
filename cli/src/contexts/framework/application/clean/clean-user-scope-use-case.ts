@@ -13,6 +13,8 @@ import type { HostActions } from "../../../host-registration/contract/host-actio
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import { nativeActivationOf } from "../../../tools/domain/registry.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -37,6 +39,7 @@ export interface CleanUserScopeOptions {
    * project-scope caller it usually serves — discarded by the adapter for scope `"user"`, since
    * this operation has no one project of its own. */
   projectRoot: string;
+  tools: readonly ToolProfile[];
   force: boolean;
   interactive?: boolean;
 }
@@ -134,7 +137,7 @@ export class CleanUserScopeUseCase {
         this.hostMarketplaceRegistries,
         undone
       );
-      await this.purgeCursorUserScopeFiles(manifest, options.projectRoot);
+      await this.purgeCursorUserScopeFiles(manifest, options.tools, options.projectRoot);
     }
     await this.purgeWhitelistedMachineState(options.projectRoot);
 
@@ -393,7 +396,11 @@ export class CleanUserScopeUseCase {
    * own files, listed by the user manifest and never deleted without `userScopeFilesSafeToDelete`'s
    * `realpath` + containment check — a `..` segment a corrupted entry carries, or a plugin
    * directory that became a symlink after install, is left in place and named. */
-  private async purgeCursorUserScopeFiles(manifest: Manifest, projectRoot: string): Promise<void> {
+  private async purgeCursorUserScopeFiles(
+    manifest: Manifest,
+    tools: readonly ToolProfile[],
+    projectRoot: string
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
@@ -405,7 +412,14 @@ export class CleanUserScopeUseCase {
           toolId,
           this.homeDir()
         );
-        await deletePluginFilesForTool(files, plugin.scope, toolId, projectRoot, this.fs, "user");
+        await deletePluginFilesForTool(
+          files,
+          plugin.scope,
+          aiProfileOf(tools, toolId),
+          projectRoot,
+          this.fs,
+          "user"
+        );
       }
     }
   }

@@ -131,6 +131,7 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
         ).execute({
           name,
           projectRoot,
+          tools: tools.sortedById(),
           autoConfirm: cmdOptions.yes ?? false,
           scope,
         });

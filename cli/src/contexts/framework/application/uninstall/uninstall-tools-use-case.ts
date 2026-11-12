@@ -9,6 +9,8 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { isAiToolId } from "../../../../kernel/tool.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
@@ -17,6 +19,7 @@ import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
 export interface UninstallToolsOptions {
   toolIds: ToolId[];
+  tools: readonly ToolProfile[];
   manifest: Manifest;
   projectRoot: string;
 }
@@ -35,10 +38,10 @@ export class UninstallToolsUseCase {
   ) {}
 
   async execute(options: UninstallToolsOptions): Promise<UninstallToolsResult[]> {
-    const { toolIds, manifest, projectRoot } = options;
+    const { toolIds, manifest, projectRoot, tools } = options;
     const results: UninstallToolsResult[] = [];
     for (const toolId of toolIds) {
-      results.push(await this.removeOneTool(toolId, toolIds, manifest, projectRoot));
+      results.push(await this.removeOneTool(toolId, toolIds, tools, manifest, projectRoot));
     }
     return results;
   }
@@ -57,6 +60,7 @@ export class UninstallToolsUseCase {
   private async removeOneTool(
     toolId: ToolId,
     allToolIds: ToolId[],
+    tools: readonly ToolProfile[],
     manifest: Manifest,
     projectRoot: string
   ): Promise<UninstallToolsResult> {
@@ -73,7 +77,7 @@ export class UninstallToolsUseCase {
       manifest,
       projectRoot
     );
-    await this.removeAllPluginFiles(toolId, manifest, projectRoot);
+    await this.removeAllPluginFiles(toolId, tools, manifest, projectRoot);
     manifest.removeTool(toolId);
     return { toolId, fileCount: deletedFiles.length, deletedFiles };
   }
@@ -111,12 +115,19 @@ export class UninstallToolsUseCase {
 
   private async removeAllPluginFiles(
     toolId: ToolId,
+    tools: readonly ToolProfile[],
     manifest: Manifest,
     projectRoot: string
   ): Promise<void> {
     if (!isAiToolId(toolId)) return;
     for (const plugin of manifest.getPlugins(toolId)) {
-      await deletePluginFilesForTool(plugin.files, plugin.scope, toolId, projectRoot, this.fs);
+      await deletePluginFilesForTool(
+        plugin.files,
+        plugin.scope,
+        aiProfileOf(tools, toolId),
+        projectRoot,
+        this.fs
+      );
     }
   }
 

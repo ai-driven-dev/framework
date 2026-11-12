@@ -332,6 +332,7 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
     mode: "named",
     pluginNames: [...PLUGINS],
     interactive: false,
+    tools: catalogOf().sortedById(),
   } as const;
   await d.setupPluginsPromptUseCase.execute(options);
   const before = await describeHookFiles(ws, [ws.project, ws.home]);
@@ -376,6 +377,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
   const d = await deps(ws.project);
   if (route === "plugin-remove") {
     await d.pluginRemoveUseCase.execute({
+      tools: catalogOf().sortedById(),
       pluginName: "aidd-context",
       toolIds: [toolId],
       projectRoot: ws.project,

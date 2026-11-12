@@ -7,6 +7,7 @@ import type { ManifestRepository } from "../../../../src/contexts/framework/doma
 import { FileHash } from "../../../../src/kernel/file.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../src/kernel/ports/hasher.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
@@ -66,7 +67,10 @@ describe("StatusUseCase — plugin drift", () => {
         new DetectPluginDriftUseCase(fs)
       );
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginDrift).toHaveLength(1);
       expect(report.pluginDrift[0].toolId).toBe("claude");
@@ -87,7 +91,10 @@ describe("StatusUseCase — plugin drift", () => {
         new DetectPluginDriftUseCase(fs)
       );
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginDrift).toHaveLength(0);
     });
@@ -104,7 +111,10 @@ describe("StatusUseCase — plugin drift", () => {
         new DetectPluginDriftUseCase(fs)
       );
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginDrift).toHaveLength(1);
       expect(report.pluginDrift[0].driftedFiles).toContain(PLUGIN_FILE);
@@ -122,7 +132,11 @@ describe("StatusUseCase — plugin drift", () => {
         new DetectPluginDriftUseCase(fs)
       );
 
-      const report = await useCase.execute({ projectRoot: "/proj", pluginName: "other-plugin" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+        pluginName: "other-plugin",
+      });
 
       expect(report.pluginDrift).toHaveLength(0);
     });

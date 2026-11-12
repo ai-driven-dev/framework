@@ -1,8 +1,8 @@
 import { dirname, join } from "node:path";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
-import type { AiToolId } from "../../../../../kernel/tool.js";
-import { projectHooksDeliveryOf } from "../../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
+import type { ProjectHooksLocation } from "../../../../tools/contract/tool-vocabulary.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
@@ -22,8 +22,6 @@ import {
 
 const HOOKS_MANIFEST_PATH = "hooks/hooks.json";
 
-type ProjectHooksDelivery = NonNullable<ReturnType<typeof projectHooksDeliveryOf>>;
-
 /**
  * Delivers a plugin's hooks to the destination a `hooksDestination: "project"` capability names —
  * merged into the project's own hooks file, scripts copied beside it — rather than into the
@@ -35,20 +33,20 @@ export class ProjectHooksMaterializer {
 
   async materialize(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string
   ): Promise<ReadonlySkipList> {
-    return (await this.materializeWithProvenance(dist, toolId, projectRoot)).skipped;
+    return (await this.materializeWithProvenance(dist, tool, projectRoot)).skipped;
   }
 
   async materializeWithProvenance(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     previous?: ProjectHooksProvenance,
     guard: ProjectHooksGuard = {}
   ): Promise<{ skipped: ReadonlySkipList; projectHooks?: ProjectHooksProvenance }> {
-    const delivery = projectHooksDeliveryOf(toolId);
+    const delivery = tool.projectHooksDelivery();
     if (delivery === null) return { skipped: [] };
     const manifestFile = dist.components.hooks.find((f) => f.relativePath === HOOKS_MANIFEST_PATH);
     if (manifestFile === undefined) {
@@ -57,7 +55,7 @@ export class ProjectHooksMaterializer {
           this.fs,
           dist.manifest.name,
           previous,
-          toolId,
+          tool,
           projectRoot,
           guard
         );
@@ -68,7 +66,7 @@ export class ProjectHooksMaterializer {
       this.fs,
       dist.manifest.name,
       previous,
-      toolId,
+      tool,
       projectRoot,
       guard
     );
@@ -86,8 +84,8 @@ export class ProjectHooksMaterializer {
         (reason): PluginTranslationSkip => ({
           pluginName: dist.manifest.name,
           component: "hooks",
-          toolId,
-          reason: `${toolId}: ${reason}`,
+          toolId: tool.toolId,
+          reason: `${tool.toolId}: ${reason}`,
         })
       ),
       projectHooks: { entries, scripts },
@@ -98,7 +96,7 @@ export class ProjectHooksMaterializer {
     dist: PluginDistribution,
     manifestFile: PluginComponentFile,
     projectRoot: string,
-    delivery: ProjectHooksDelivery
+    delivery: ProjectHooksLocation
   ): Promise<{ warnings: readonly string[]; entries: ProjectHooksProvenance["entries"] }> {
     const destPath = join(projectRoot, delivery.relativePath);
     const existing = await this.readExistingJson(destPath);
@@ -117,7 +115,7 @@ export class ProjectHooksMaterializer {
   private async assertScriptsNotUserOwned(
     dist: PluginDistribution,
     projectRoot: string,
-    delivery: ProjectHooksDelivery,
+    delivery: ProjectHooksLocation,
     previous?: ProjectHooksProvenance
   ): Promise<void> {
     for (const file of dist.components.hooks) {
@@ -135,7 +133,7 @@ export class ProjectHooksMaterializer {
   private async writeProjectHooksScripts(
     dist: PluginDistribution,
     projectRoot: string,
-    delivery: ProjectHooksDelivery
+    delivery: ProjectHooksLocation
   ): Promise<ReadonlyMap<string, string>> {
     const scripts = new Map<string, string>();
     for (const file of dist.components.hooks) {
@@ -154,7 +152,7 @@ export class ProjectHooksMaterializer {
     previous: ProjectHooksProvenance | undefined,
     current: ReadonlyMap<string, string>,
     projectRoot: string,
-    delivery: ProjectHooksDelivery,
+    delivery: ProjectHooksLocation,
     { overwriteEdited = false }: ProjectHooksGuard
   ): Promise<void> {
     if (previous === undefined) return;

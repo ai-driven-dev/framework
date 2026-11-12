@@ -58,6 +58,8 @@ type AiToolFields = Omit<
   | "mcpConfig"
   | "settingsFiles"
   | "machineLocalFiles"
+  | "projectHooksDelivery"
+  | "frameworkBuildMode"
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
@@ -179,6 +181,8 @@ export function defineAiTool<C extends ProfileSections>(
     kind: "ai",
     toolId,
     section: sectionReader(capabilities),
+    frameworkBuildMode: (): FrameworkBuildMode =>
+      capabilities.plugins?.kind === "flat" ? "flat" : "marketplace",
     buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
     configCapabilities: () => aiConfigCapabilities(capabilities),
     plugins: () => capabilities.plugins ?? null,
@@ -191,6 +195,12 @@ export function defineAiTool<C extends ProfileSections>(
     mcpConfig: () => capabilities.mcp ?? null,
     settingsFiles: () => settingsOf(capabilities),
     machineLocalFiles: () => machineLocalFilesOf(capabilities),
+    projectHooksDelivery: () => {
+      const delivery = capabilities.plugins?.projectHooksDelivery();
+      return delivery === null || delivery === undefined
+        ? null
+        : { ...delivery, toolName: spec.displayName };
+    },
   };
   return profile as AiTool<C> & ProfileBrand;
 }

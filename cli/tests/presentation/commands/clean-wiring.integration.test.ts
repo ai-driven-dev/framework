@@ -131,6 +131,7 @@ describe("aidd clean --scope", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: false,
+      tools: catalogOf().sortedById(),
     });
     expect(cleanProject).not.toHaveBeenCalled();
   });
@@ -156,6 +157,7 @@ describe("aidd clean --scope", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: true,
+      tools: catalogOf().sortedById(),
     });
     expect(lines[lines.length - 1]).toBe("No files removed.");
   });

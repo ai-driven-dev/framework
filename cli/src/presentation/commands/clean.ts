@@ -36,10 +36,12 @@ async function runUserScopeClean(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
-  cmdOptions: CleanCmdOptions
+  cmdOptions: CleanCmdOptions,
+  catalog: ToolCatalog
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUserScopeUseCase.execute({
+    tools: catalog.sortedById(),
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -69,7 +71,7 @@ export function registerCleanCommand(program: Command, catalog: ToolCatalog): vo
       try {
         const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         if (scope === "user") {
-          await runUserScopeClean(deps, output, projectRoot, cmdOptions);
+          await runUserScopeClean(deps, output, projectRoot, cmdOptions, catalog);
         } else {
           await runProjectScopeClean(deps, output, projectRoot, cmdOptions, catalog);
         }

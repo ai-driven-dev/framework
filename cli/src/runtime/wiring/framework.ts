@@ -289,10 +289,12 @@ export async function createDeps(
     resolveMarketplaceUseCase,
     prompter,
     {
-      execute: (options) =>
-        options.scope === "user"
-          ? userMarketplaceRemoveUseCase.execute(options)
-          : marketplaceRemoveUseCase.execute(options),
+      execute: (options) => {
+        const removal = { ...options, tools: tools.sortedById() };
+        return options.scope === "user"
+          ? userMarketplaceRemoveUseCase.execute(removal)
+          : marketplaceRemoveUseCase.execute(removal);
+      },
     }
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(

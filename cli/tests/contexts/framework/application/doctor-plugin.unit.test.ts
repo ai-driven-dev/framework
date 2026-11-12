@@ -16,6 +16,7 @@ import { FileHash } from "../../../../src/kernel/file.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../src/kernel/ports/hasher.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
@@ -90,7 +91,10 @@ describe("DoctorUseCase — plugin integrity", () => {
       const fs = makeFs(false, EXPECTED_HASH);
       const useCase = makeDoctorUseCase(fs, manifest);
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginIssues).toHaveLength(1);
       expect(report.pluginIssues[0].issue).toBe("missing");
@@ -106,7 +110,10 @@ describe("DoctorUseCase — plugin integrity", () => {
       const fs = makeFs(true, DRIFTED_HASH);
       const useCase = makeDoctorUseCase(fs, manifest);
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginIssues).toHaveLength(1);
       expect(report.pluginIssues[0].issue).toBe("hash-mismatch");
@@ -120,7 +127,10 @@ describe("DoctorUseCase — plugin integrity", () => {
       const fs = makeFs(true, EXPECTED_HASH);
       const useCase = makeDoctorUseCase(fs, manifest);
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginIssues).toHaveLength(0);
     });
@@ -132,7 +142,11 @@ describe("DoctorUseCase — plugin integrity", () => {
       const fs = makeFs(false, EXPECTED_HASH);
       const useCase = makeDoctorUseCase(fs, manifest);
 
-      const report = await useCase.execute({ projectRoot: "/proj", pluginName: "other-plugin" });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: "/proj",
+        pluginName: "other-plugin",
+      });
 
       expect(report.pluginIssues).toHaveLength(0);
     });
@@ -144,6 +158,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
       const issues = await useCase.execute({
+        tools: catalogOf().sortedById(),
         manifest: makeManifest(EXPECTED_HASH),
         projectRoot: "/proj",
         allowedIds: new Set(["cursor"]),
@@ -157,6 +172,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
       const issues = await useCase.execute({
+        tools: catalogOf().sortedById(),
         manifest: makeManifest(EXPECTED_HASH),
         projectRoot: "/proj",
         allowedIds: new Set(["claude"]),
@@ -186,7 +202,12 @@ describe("DoctorUseCase — plugin integrity", () => {
       const fs = makeFs(false, EXPECTED_HASH);
       const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
-      const issues = await useCase.execute({ manifest, projectRoot: "/proj", allowedIds: null });
+      const issues = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        manifest,
+        projectRoot: "/proj",
+        allowedIds: null,
+      });
 
       expect(issues).toHaveLength(1);
       expect(issues[0].issue).toBe("not-installed-on-machine");
@@ -228,6 +249,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const pluginUseCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
       await pluginUseCase.execute({
+        tools: catalogOf().sortedById(),
         manifest,
         projectRoot: "/proj",
         allowedIds: null,

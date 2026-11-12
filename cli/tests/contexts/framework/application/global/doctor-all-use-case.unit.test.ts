@@ -9,6 +9,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = "No AIDD manifest found. Run `aidd setup` to initialize your project.";
@@ -50,7 +51,7 @@ describe("DoctorAllUseCase", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT);
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
 
     expect(result).toStrictEqual({
       ai: null,
@@ -68,7 +69,7 @@ describe("DoctorAllUseCase", () => {
     const { deps, manifest } = await depsWithBothCategories();
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT);
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
 
     expect(result).toStrictEqual({
       ai: {
@@ -94,7 +95,7 @@ describe("DoctorAllUseCase", () => {
     await deleteOneTrackedFile(deps, manifest, "claude");
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT);
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
 
     expect(verdictOf(result)).toStrictEqual([false, false, true, []]);
   });
@@ -104,7 +105,7 @@ describe("DoctorAllUseCase", () => {
     await deleteOneTrackedFile(deps, manifest, "vscode");
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT);
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
 
     expect(verdictOf(result)).toStrictEqual([false, true, false, []]);
   });
@@ -125,7 +126,7 @@ describe("DoctorAllUseCase", () => {
     await deps.manifestRepo.save(manifest);
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT);
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
 
     const missing = {
       toolId: "claude",

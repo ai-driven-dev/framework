@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import type { ProjectHooksFormat } from "../../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import { pluginsCapability } from "../../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 import { flatOf, nativeOf, pluginModeOf } from "../../testing/plugin-mode.js";

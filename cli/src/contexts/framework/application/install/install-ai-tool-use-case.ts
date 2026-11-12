@@ -55,13 +55,14 @@ export class InstallAiToolUseCase {
     if (runtimeResult.skipped || !propagatePlugins) {
       return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };
     }
-    return this.propagateAndSync(toolId, projectRoot, runtimeResult);
+    return this.propagateAndSync(toolId, projectRoot, runtimeResult, tools);
   }
 
   private async propagateAndSync(
     toolId: AiToolId,
     projectRoot: string,
-    runtimeResult: InstallRuntimeConfigResult
+    runtimeResult: InstallRuntimeConfigResult,
+    tools: readonly ToolProfile[]
   ): Promise<InstallAiToolResult> {
     const freshManifest = await this.manifestRepo.load();
     if (freshManifest === null) {
@@ -75,7 +76,7 @@ export class InstallAiToolUseCase {
     const propagated: string[] = [];
     const warnings: string[] = [];
     for (const plugin of plugins) {
-      await this.propagatePlugin(plugin, toolId, projectRoot, propagated, warnings);
+      await this.propagatePlugin(plugin, toolId, projectRoot, propagated, warnings, tools);
     }
     const activation =
       propagated.length > 0
@@ -113,7 +114,8 @@ export class InstallAiToolUseCase {
     toolId: AiToolId,
     projectRoot: string,
     propagated: string[],
-    warnings: string[]
+    warnings: string[],
+    tools: readonly ToolProfile[]
   ): Promise<void> {
     if (plugin.marketplace === undefined) {
       this.warnNoMarketplace(plugin.name, toolId, warnings);
@@ -130,6 +132,7 @@ export class InstallAiToolUseCase {
         autoSelect: true,
         replace: true,
         requestedVersionPolicy: "prefer-catalog",
+        tools,
       });
       propagated.push(plugin.name);
     } catch (err) {

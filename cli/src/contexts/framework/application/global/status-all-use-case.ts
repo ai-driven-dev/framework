@@ -1,3 +1,4 @@
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { StatusQuery, StatusReport } from "../status-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 export interface StatusAllResult {
@@ -11,11 +12,12 @@ export interface StatusAllResult {
 export class StatusAllUseCase {
   constructor(private readonly statusUseCase: StatusQuery) {}
 
-  async execute(projectRoot: string): Promise<StatusAllResult> {
+  async execute(projectRoot: string, tools: readonly ToolProfile[]): Promise<StatusAllResult> {
     const errors: GlobalExecutionError[] = [];
     const [aiTools, ideTools] = await this.collectCategoryReports(
       this.statusUseCase,
       projectRoot,
+      tools,
       errors
     );
     return {
@@ -29,15 +31,16 @@ export class StatusAllUseCase {
   private async collectCategoryReports(
     useCase: StatusQuery,
     projectRoot: string,
+    tools: readonly ToolProfile[],
     errors: GlobalExecutionError[]
   ): Promise<[StatusReport | null, StatusReport | null]> {
     const aiTools = await this.runScope(
-      () => useCase.execute({ projectRoot, category: "ai" }),
+      () => useCase.execute({ projectRoot, category: "ai", tools }),
       "ai",
       errors
     );
     const ideTools = await this.runScope(
-      () => useCase.execute({ projectRoot, category: "ide" }),
+      () => useCase.execute({ projectRoot, category: "ide", tools }),
       "ide",
       errors
     );

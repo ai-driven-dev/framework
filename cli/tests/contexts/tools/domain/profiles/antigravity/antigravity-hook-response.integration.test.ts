@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
 const format = antigravity.section("plugins").projectHooksDelivery()?.format as ProjectHooksFormat;

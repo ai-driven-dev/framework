@@ -51,6 +51,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
           scope,
+          tools: catalog.sortedById(),
         });
         if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
         printPluginRemoved(output, name);
@@ -173,6 +174,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
           scope,
+          tools: catalog.sortedById(),
         });
         if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
         printPluginsUpdated(output, updated);

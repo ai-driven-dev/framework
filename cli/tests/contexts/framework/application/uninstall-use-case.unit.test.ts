@@ -10,6 +10,7 @@ import {
 } from "../../../../src/kernel/errors.js";
 import { type ToolId, VALID_TOOL_IDS } from "../../../../src/kernel/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -56,7 +57,11 @@ describe("uninstall", () => {
         deps.manifestRepo,
         deps.logger,
         deps.userManifestRepo
-      ).execute({ toolIds: [selected], projectRoot: PROJECT_ROOT });
+      ).execute({
+        tools: catalogOf().sortedById(),
+        toolIds: [selected],
+        projectRoot: PROJECT_ROOT,
+      });
 
       expect(deps.manifestRepo.getCurrent()?.hasTool(selected)).toBe(false);
       expect(deps.manifestRepo.getCurrent()?.hasTool(retainedTool)).toBe(true);
@@ -87,6 +92,7 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
+      tools: catalogOf().sortedById(),
       toolIds: ["claude" as ToolId],
       projectRoot: PROJECT_ROOT,
     });
@@ -107,7 +113,11 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await expect(
-      useCase.execute({ toolIds: ["claude" as ToolId], projectRoot: PROJECT_ROOT })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        toolIds: ["claude" as ToolId],
+        projectRoot: PROJECT_ROOT,
+      })
     ).resolves.not.toThrow();
   });
 
@@ -122,6 +132,7 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
+      tools: catalogOf().sortedById(),
       toolIds: ["claude" as ToolId],
       projectRoot: PROJECT_ROOT,
     });
@@ -140,6 +151,7 @@ describe("uninstall", () => {
 
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolIds: ["vscode" as ToolId],
         projectRoot: PROJECT_ROOT,
       });
@@ -157,6 +169,7 @@ describe("uninstall", () => {
 
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         toolIds: ["vscode" as ToolId],
         projectRoot: PROJECT_ROOT,
       });
@@ -173,6 +186,7 @@ describe("uninstall — refusals", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
+        tools: catalogOf().sortedById(),
         toolIds: [],
         projectRoot: PROJECT_ROOT,
       })
@@ -188,6 +202,7 @@ describe("uninstall — refusals", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
+        tools: catalogOf().sortedById(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       })
@@ -200,6 +215,7 @@ describe("uninstall — refusals", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
+        tools: catalogOf().sortedById(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       })

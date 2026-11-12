@@ -7,8 +7,10 @@ import {
   resolveScopeForInstall,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { aiProfileOf } from "../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { mcpCapabilityOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { UnresolvableUserScopeError } from "../../../../../src/kernel/errors.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
 const homedir = () => HOME;
@@ -25,23 +27,27 @@ describe("resolvePluginToolIds()", () => {
 
 describe("frameworkPrimeFlatMcpOf()", () => {
   it("answers the MCP capability of a flat tool merging framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf("opencode")).toBe(mcpCapabilityOf("opencode"));
-    expect(frameworkPrimeFlatMcpOf("kilo")).toBe(mcpCapabilityOf("kilo"));
+    expect(frameworkPrimeFlatMcpOf(aiProfileOf(catalogOf().sortedById(), "opencode"))).toBe(
+      mcpCapabilityOf("opencode")
+    );
+    expect(frameworkPrimeFlatMcpOf(aiProfileOf(catalogOf().sortedById(), "kilo"))).toBe(
+      mcpCapabilityOf("kilo")
+    );
   });
 
   it("answers null for a native tool merging framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf("copilot")).toBeNull();
+    expect(frameworkPrimeFlatMcpOf(aiProfileOf(catalogOf().sortedById(), "copilot"))).toBeNull();
   });
 
   it("answers null for a tool whose MCP does not merge framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf("claude")).toBeNull();
+    expect(frameworkPrimeFlatMcpOf(aiProfileOf(catalogOf().sortedById(), "claude"))).toBeNull();
   });
 });
 
 describe("resolveScopeForInstall()", () => {
   it("reads the scope a fresh install writes from the tool's own profile", () => {
-    expect(resolveScopeForInstall("cursor")).toBe("user");
-    expect(resolveScopeForInstall("claude")).toBe("project");
+    expect(resolveScopeForInstall(aiProfileOf(catalogOf().sortedById(), "cursor"))).toBe("user");
+    expect(resolveScopeForInstall(aiProfileOf(catalogOf().sortedById(), "claude"))).toBe("project");
   });
 });
 
@@ -49,21 +55,36 @@ describe("resolveBaseDirFromRecord() — the manifest's recorded scope, not the 
   it("resolves project scope to projectRoot regardless of what the tool's profile says", () => {
     // cursor's own profile declares installScope "user", so a manifest entry recorded
     // scope: "project" must still resolve under projectRoot.
-    const baseDir = resolveBaseDirFromRecord("project", "cursor", "/proj", homedir);
+    const baseDir = resolveBaseDirFromRecord(
+      "project",
+      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      "/proj",
+      homedir
+    );
     expect(baseDir).toBe("/proj");
     expect(baseDir).not.toContain(join(".cursor", "plugins", "local"));
   });
 
   it("resolves user scope to the tool's user-scope plugins dir", () => {
-    const baseDir = resolveBaseDirFromRecord("user", "cursor", "/proj", homedir);
+    const baseDir = resolveBaseDirFromRecord(
+      "user",
+      aiProfileOf(catalogOf().sortedById(), "cursor"),
+      "/proj",
+      homedir
+    );
     expect(baseDir).toBe(join(HOME, ".cursor", "plugins", "local"));
   });
 
   // A "user" scope the tool's current profile cannot explain must refuse to guess rather
   // than quietly resolve under projectRoot; claude declares no user-scope directory at all.
   it("throws, rather than falling back to projectRoot, when the tool declares no user-scope directory", () => {
-    expect(() => resolveBaseDirFromRecord("user", "claude", "/proj", homedir)).toThrow(
-      UnresolvableUserScopeError
-    );
+    expect(() =>
+      resolveBaseDirFromRecord(
+        "user",
+        aiProfileOf(catalogOf().sortedById(), "claude"),
+        "/proj",
+        homedir
+      )
+    ).toThrow(UnresolvableUserScopeError);
   });
 });

@@ -6,12 +6,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import {
-  getToolConfig,
-  isAiTool,
-  nativeActivationOf,
-  type ToolConfig,
-} from "../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import { getToolConfig, isAiTool, nativeActivationOf } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
@@ -96,7 +92,7 @@ export class RestoreAllPluginsUseCase {
   private async restoreToolPlugins(
     toolId: (typeof AI_TOOL_IDS)[number],
     manifest: Manifest,
-    toolConfig: ToolConfig,
+    toolConfig: AiToolProfile,
     projectRoot: string,
     cacheDir: string,
     fileFilter: ((p: string) => boolean) | null,
@@ -116,7 +112,7 @@ export class RestoreAllPluginsUseCase {
       ).execute({
         toolId,
         plugin,
-        toolConfig,
+        tool: toolConfig,
         projectRoot,
         cacheDir,
         manifest,

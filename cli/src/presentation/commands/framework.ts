@@ -102,19 +102,22 @@ async function runFrameworkRemove(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
-  toolId: ToolId
+  toolId: ToolId,
+  catalog: ToolCatalog
 ): Promise<void> {
   assertKnownToolId(toolId);
+  const tools = catalog.sortedById();
   if (isAiToolId(toolId)) {
     const results = await deps.uninstallUseCase.execute({
       toolIds: [toolId],
       projectRoot,
+      tools,
     });
     const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
     printToolRemoved(output, results[0].toolId, totalFileCount);
     return;
   }
-  const result = await deps.uninstallIdeUseCase.execute({ toolId, projectRoot });
+  const result = await deps.uninstallIdeUseCase.execute({ toolId, projectRoot, tools });
   printToolRemoved(output, result.toolId, result.fileCount);
 }
 
@@ -214,7 +217,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output, catalog);
-        await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool as ToolId);
+        await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool as ToolId, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }

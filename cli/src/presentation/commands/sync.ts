@@ -34,7 +34,8 @@ async function runUserScopeSync(
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
-  cmdOptions: SyncCmdOptions
+  cmdOptions: SyncCmdOptions,
+  catalog: ToolCatalog
 ): Promise<void> {
   // Neither has a user-scope counterpart, so both are refused rather than read and
   // silently discarded.
@@ -57,6 +58,7 @@ async function runUserScopeSync(
           projectRoot,
           scope: "user",
           rebuild: true,
+          tools: catalog.sortedById(),
         });
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
@@ -83,7 +85,7 @@ async function runSyncAction(
     const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
     if (scope === "user") {
-      await runUserScopeSync(deps, output, projectRoot, fileArgs, cmdOptions);
+      await runUserScopeSync(deps, output, projectRoot, fileArgs, cmdOptions, tools);
       return;
     }
 
@@ -93,7 +95,12 @@ async function runSyncAction(
     }
 
     const interactive = !cmdOptions.force && process.stdout.isTTY;
-    const result = await deps.restoreAllUseCase.execute(projectRoot, cmdOptions.force, interactive);
+    const result = await deps.restoreAllUseCase.execute(
+      projectRoot,
+      cmdOptions.force,
+      interactive,
+      tools.sortedById()
+    );
     printRestoreOutcome(output, result);
 
     // After restoration, never before: activation drives the host CLI that writes into the

@@ -6,9 +6,10 @@ import { InstallGlobalPluginsUseCase } from "../../../../../src/contexts/framewo
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginInstallMode } from "../../../../../src/contexts/framework/domain/setup-flow.js";
+import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash, InstallationFile } from "../../../../../src/kernel/file.js";
-import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const FRAMEWORK = Marketplace.create({
   name: "aidd-framework",
@@ -39,11 +40,11 @@ function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
   manifest.addTool("opencode", "1.0.0", []);
   manifest.addTool("claude", "1.0.0", []);
   const planUpdate = vi.fn(
-    async (plugin: InstalledPlugin, toolId: AiToolId): Promise<PlannedUserPluginFileUpdate> => {
+    async (plugin: InstalledPlugin, tool: AiToolProfile): Promise<PlannedUserPluginFileUpdate> => {
       const relativePath = `agents/${plugin.name}-reviewer.md`;
       return {
         plugin,
-        toolId,
+        tool,
         home: "/home",
         baseDir: "/home/.config/opencode",
         files: [new InstallationFile({ relativePath, content: "", hash: new FileHash(HASH) })],
@@ -77,6 +78,7 @@ function run(
   return useCase.execute(
     manifest,
     {
+      tools: catalogOf().sortedById(),
       projectRoot: "/project",
       toolIds: ["claude", "opencode"],
       mode,
@@ -110,6 +112,7 @@ describe("InstallGlobalPluginsUseCase", () => {
     await useCase.execute(
       manifest,
       {
+        tools: catalogOf().sortedById(),
         projectRoot: "/project",
         toolIds: ["cursor"],
         mode: "recommended",
@@ -123,7 +126,7 @@ describe("InstallGlobalPluginsUseCase", () => {
     ]);
     expect(planUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ name: "aidd-dev" }),
-      "cursor",
+      expect.objectContaining({ toolId: "cursor" }),
       "/project",
       expect.anything(),
       true
@@ -146,7 +149,13 @@ describe("InstallGlobalPluginsUseCase", () => {
 
     await useCase.execute(
       manifest,
-      { projectRoot: "/project", toolIds: ["opencode"], mode: "recommended", pluginNames: [] },
+      {
+        tools: catalogOf().sortedById(),
+        projectRoot: "/project",
+        toolIds: ["opencode"],
+        mode: "recommended",
+        pluginNames: [],
+      },
       async () => {}
     );
 
@@ -176,7 +185,13 @@ describe("InstallGlobalPluginsUseCase", () => {
     await expect(
       useCase.execute(
         manifest,
-        { projectRoot: "/project", toolIds: ["opencode"], mode: "all", pluginNames: [] },
+        {
+          tools: catalogOf().sortedById(),
+          projectRoot: "/project",
+          toolIds: ["opencode"],
+          mode: "all",
+          pluginNames: [],
+        },
         async (saved) => {
           recorded.push(saved.getPlugins("opencode").map((plugin) => plugin.name));
         }

@@ -13,6 +13,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/contract/tool-catalog.ts",
     "src/contexts/tools/contract/tool-profile.ts",
     "src/contexts/tools/contract/tool-profile-lookup.ts",
+    "src/contexts/tools/contract/tool-vocabulary.ts",
     // the tool contract and lookup surface
     "src/contexts/tools/domain/contracts.ts",
     "src/contexts/tools/domain/registry.ts",
@@ -25,8 +26,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // what a tool answers from the project's files: which tool's files are present
     "src/contexts/tools/application/detect-tool-signals.ts",
     // what a tool declares about plugins: installing is framework work
-    "src/contexts/tools/domain/plugins/plugins-capability.ts",
-    "src/contexts/tools/domain/plugins/plugin-params.ts",
     "src/contexts/tools/domain/plugins/marketplace-registration.ts",
     "src/contexts/tools/domain/plugin-translation-mode.ts",
     "src/contexts/tools/contract/plugin-install-notice.ts",

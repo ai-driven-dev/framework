@@ -13,6 +13,7 @@ import {
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -60,6 +61,7 @@ async function buildOpencodeProject(): Promise<{
 
 function addLocal(useCase: PluginAddUseCase, path: string, replace?: boolean): Promise<void> {
   return useCase.execute({
+    tools: catalogOf().sortedById(),
     source: { kind: "local", path },
     toolIds: ["opencode"],
     projectRoot: PROJECT_ROOT,
@@ -135,6 +137,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
         })
       );
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         source: { kind: "local", path: dir },
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -149,6 +152,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
     deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "mcp-plugin updated script");
 
     await useCase.execute({
+      tools: catalogOf().sortedById(),
       source: { kind: "local", path: MCP_PLUGIN_DIR },
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
@@ -200,6 +204,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
       );
 
       await useCase.execute({
+        tools: catalogOf().sortedById(),
         source: { kind: "local", path: MCP_PLUGIN_DIR },
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -259,6 +264,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
 
       await expect(
         useCase.execute({
+          tools: catalogOf().sortedById(),
           source: { kind: "local", path: MCP_PLUGIN_DIR },
           toolIds: ["opencode"],
           projectRoot: PROJECT_ROOT,

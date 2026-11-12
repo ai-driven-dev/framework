@@ -18,6 +18,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter, ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -95,7 +96,12 @@ describe("MarketplaceRemoveUseCase", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
     const { useCase } = buildUseCase();
     await expect(
-      useCase.execute({ name: "missing", projectRoot: PROJECT_ROOT, autoConfirm: true })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        name: "missing",
+        projectRoot: PROJECT_ROOT,
+        autoConfirm: true,
+      })
     ).rejects.toThrow(MarketplaceNotFoundError);
   });
 
@@ -112,6 +118,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -151,6 +158,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -198,6 +206,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -247,6 +256,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -275,6 +285,7 @@ describe("MarketplaceRemoveUseCase", () => {
 
     await expect(
       useCase.execute({
+        tools: catalogOf().sortedById(),
         name: FRAMEWORK_MARKETPLACE_NAME,
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -291,6 +302,7 @@ describe("MarketplaceRemoveUseCase", () => {
 
     await expect(
       useCase.execute({
+        tools: catalogOf().sortedById(),
         name: FRAMEWORK_MARKETPLACE_NAME,
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -311,6 +323,7 @@ describe("which marketplace a removal takes out", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -326,6 +339,7 @@ describe("which marketplace a removal takes out", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -381,7 +395,12 @@ describe("which plugins a removal orphans", () => {
     );
 
     await expect(
-      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        name: "awesome",
+        projectRoot: PROJECT_ROOT,
+        autoConfirm: true,
+      })
     ).rejects.toThrow(/outside.*project/);
 
     expect(projectRepo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
@@ -431,7 +450,12 @@ describe("which plugins a removal orphans", () => {
     );
 
     await expect(
-      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        name: "awesome",
+        projectRoot: PROJECT_ROOT,
+        autoConfirm: true,
+      })
     ).rejects.toThrow(/outside.*project|escapes.*project/);
 
     expect(manifestRepo.saveCount).toBe(0);
@@ -483,7 +507,12 @@ describe("which plugins a removal orphans", () => {
     );
 
     await expect(
-      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        name: "awesome",
+        projectRoot: PROJECT_ROOT,
+        autoConfirm: true,
+      })
     ).rejects.toThrow(/MCP write refused/);
 
     expect(manifestRepo.saveCount).toBe(0);
@@ -526,7 +555,12 @@ describe("which plugins a removal orphans", () => {
       JSON.stringify({ mcp: { mine: { type: "user-edited" }, theirs: { type: "remote" } } })
     );
     await expect(
-      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        name: "awesome",
+        projectRoot: PROJECT_ROOT,
+        autoConfirm: true,
+      })
     ).rejects.toThrow(/edited/);
     expect((await manifestRepo.load())?.getPlugins("opencode")).toHaveLength(1);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
@@ -537,7 +571,12 @@ describe("which plugins a removal orphans", () => {
       JSON.stringify({ mcp: { mine: { type: "local" }, theirs: { type: "remote" } } })
     );
 
-    await useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      name: "awesome",
+      projectRoot: PROJECT_ROOT,
+      autoConfirm: true,
+    });
 
     expect(JSON.parse(fs.getFile(mcpPath) ?? "null")).toEqual({
       mcp: { theirs: { type: "remote" } },
@@ -574,7 +613,12 @@ describe("which plugins a removal orphans", () => {
     });
     fs.setFile(path, edited);
     await expect(
-      useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        name: "awesome",
+        projectRoot: PROJECT_ROOT,
+        autoConfirm: true,
+      })
     ).rejects.toThrow(/edited.*beta|beta.*edited/);
     expect(fs.getFile(path)).toBe(edited);
     expect((await manifestRepo.load())?.getPlugins("opencode").map((p) => p.name)).toEqual([
@@ -593,6 +637,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -618,6 +663,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
@@ -645,6 +691,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
@@ -670,7 +717,12 @@ describe("which plugins a removal orphans", () => {
     );
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
-    await useCase.execute({ name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: false });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      name: "awesome",
+      projectRoot: PROJECT_ROOT,
+      autoConfirm: false,
+    });
 
     expect(prompter.confirmMessages).toStrictEqual([]);
     expect(manifestRepo.saves).toBe(0);
@@ -689,6 +741,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,

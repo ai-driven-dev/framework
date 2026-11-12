@@ -9,6 +9,7 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -80,6 +81,7 @@ async function installGithubPlugin(
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
+    tools: catalogOf().sortedById(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: ["claude"],
     projectRoot: PROJECT_ROOT,

@@ -10,6 +10,7 @@ import {
   type ToolId,
   toolIdsForCategory,
 } from "../../../kernel/tool.js";
+import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import { getToolConfig, machineLocalFilesOf } from "../../tools/domain/registry.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
@@ -46,6 +47,7 @@ export interface StatusOptions {
   filterToolId?: ToolId;
   category?: ToolCategory;
   pluginName?: string;
+  tools: readonly ToolProfile[];
 }
 
 /**
@@ -65,7 +67,7 @@ export class StatusUseCase implements StatusQuery {
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId, category, pluginName } = options;
+    const { projectRoot, filterToolId, category, pluginName, tools: profiles } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError();
     if (filterToolId && !manifest.hasTool(filterToolId))
@@ -77,6 +79,7 @@ export class StatusUseCase implements StatusQuery {
       installedToolIds,
       manifest,
       projectRoot,
+      profiles,
       pluginName
     );
     const inSync = tools.every((t) => t.drifted.length === 0) && pluginDrift.length === 0;
@@ -218,12 +221,14 @@ export class StatusUseCase implements StatusQuery {
     toolIds: ToolId[],
     manifest: Manifest,
     projectRoot: string,
+    tools: readonly ToolProfile[],
     pluginName?: string
   ): Promise<PluginDriftEntry[]> {
     const drifts = await this.detectPluginDrift.execute({
       manifest,
       projectRoot,
       toolIds,
+      tools,
       pluginName,
     });
     return drifts.map((drift) => ({

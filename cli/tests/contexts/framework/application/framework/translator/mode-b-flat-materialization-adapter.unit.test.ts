@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
+import { aiProfileOf } from "../../../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CursorProjectScopeUnsupportedError } from "../../../../../../src/kernel/errors.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
@@ -10,6 +11,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { catalogOf } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -55,7 +57,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        "opencode",
+        aiProfileOf(catalogOf().sortedById(), "opencode"),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -72,7 +74,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        "opencode",
+        aiProfileOf(catalogOf().sortedById(), "opencode"),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -98,7 +100,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       });
       await adapter.addPlugin(
         emptyDist,
-        "opencode",
+        aiProfileOf(catalogOf().sortedById(), "opencode"),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -119,7 +121,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       await expect(
         adapter.addPlugin(
           dist,
-          "claude",
+          aiProfileOf(catalogOf().sortedById(), "claude"),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,
@@ -150,7 +152,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       });
       await adapter.addPlugin(
         mcpOnlyDist,
-        "opencode",
+        aiProfileOf(catalogOf().sortedById(), "opencode"),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -199,13 +201,20 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const manifest = cursorManifest();
       const source = { kind: "local", path: "/plugin-source" } as const;
       const scriptPath = join(PROJECT_ROOT, ".cursor/hooks/hooks-plugin/pre.js");
-      await adapter.addPlugin(hooksDist(), "cursor", source, PROJECT_ROOT, manifest, undefined);
+      await adapter.addPlugin(
+        hooksDist(),
+        aiProfileOf(catalogOf().sortedById(), "cursor"),
+        source,
+        PROJECT_ROOT,
+        manifest,
+        undefined
+      );
       const installed = manifest.getPlugins("cursor").find((p) => p.name === "hooks-plugin");
       fs.setFile(scriptPath, "user edit");
       const reinstall = (guard?: { overwriteEdited: boolean }) =>
         adapter.addPlugin(
           hooksDist(),
-          "cursor",
+          aiProfileOf(catalogOf().sortedById(), "cursor"),
           source,
           PROJECT_ROOT,
           cursorManifest(),
@@ -253,7 +262,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       await expect(
         adapter.addPlugin(
           mcpDist({}),
-          "opencode",
+          aiProfileOf(catalogOf().sortedById(), "opencode"),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,
@@ -280,7 +289,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       await expect(
         adapter.addPlugin(
           mcpDist({ "local-tool": { command: "node", args: ["./server.js"] } }),
-          "opencode",
+          aiProfileOf(catalogOf().sortedById(), "opencode"),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,

@@ -14,6 +14,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-b
 import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -38,6 +39,7 @@ describe("UninstallUseCase — plugin scope", () => {
       fakeEnsureBuiltMarketplace(),
       deps.userManifestRepo
     ).execute({
+      tools: catalogOf().sortedById(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -48,6 +50,7 @@ describe("UninstallUseCase — plugin scope", () => {
     expect(deps.fs.has(pluginFile)).toBe(true);
 
     await new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
+      tools: catalogOf().sortedById(),
       toolIds: [],
       projectRoot: PROJECT_ROOT,
       pluginName: "sample-plugin",
@@ -64,6 +67,7 @@ describe("UninstallUseCase — plugin scope", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
+        tools: catalogOf().sortedById(),
         toolIds: [],
         projectRoot: PROJECT_ROOT,
         pluginName: "nonexistent",
@@ -100,6 +104,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
       fs.failOn("readFile", join(PROJECT_ROOT, "opencode.json"), scenario.error);
     const repo = new InMemoryManifestRepository(manifest);
     const operation = new UninstallPluginUseCase(fs, repo).execute({
+      tools: catalogOf().sortedById(),
       pluginName: "sample",
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
@@ -149,6 +154,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
 
     await expect(
       new UninstallPluginUseCase(fs, repo).execute({
+        tools: catalogOf().sortedById(),
         pluginName: "sample",
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,
@@ -191,6 +197,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     );
     await expect(
       new UninstallPluginUseCase(fs, repo).execute({
+        tools: catalogOf().sortedById(),
         pluginName: "sample",
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,
@@ -203,6 +210,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     );
 
     await new UninstallPluginUseCase(fs, repo).execute({
+      tools: catalogOf().sortedById(),
       pluginName: "sample",
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
@@ -236,7 +244,12 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
 
   it("refuses a project that has no manifest", async () => {
     await expect(
-      uninstallOver(null).execute({ pluginName: "sample", toolIds: [], projectRoot: PROJECT_ROOT })
+      uninstallOver(null).execute({
+        tools: catalogOf().sortedById(),
+        pluginName: "sample",
+        toolIds: [],
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow(NoManifestError);
   });
 
@@ -248,6 +261,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     manifest.addPlugin("codex", pluginNamed("sample"));
 
     const results = await uninstallOver(manifest).execute({
+      tools: catalogOf().sortedById(),
       pluginName: "sample",
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -266,6 +280,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     manifest.addPlugin("claude", pluginNamed("other"));
 
     const results = await uninstallOver(manifest).execute({
+      tools: catalogOf().sortedById(),
       pluginName: "other",
       toolIds: [],
       projectRoot: PROJECT_ROOT,

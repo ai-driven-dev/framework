@@ -93,7 +93,7 @@ async function run(...args: string[]): Promise<string[]> {
 describe("aidd sync — the whole project", () => {
   it("restores first, then re-drives every registered marketplace's activation", async () => {
     expect(await run()).toEqual(["Nothing to restore — all files are unmodified."]);
-    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, false);
+    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, false, expect.any(Array));
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
@@ -107,10 +107,10 @@ describe("aidd sync — the whole project", () => {
     pretendTerminal(true);
 
     await run();
-    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, true);
+    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, true, expect.any(Array));
 
     await run("--force");
-    expect(restoreAll).toHaveBeenLastCalledWith(PROJECT_ROOT, true, false);
+    expect(restoreAll).toHaveBeenLastCalledWith(PROJECT_ROOT, true, false, expect.any(Array));
   });
 
   it("names both the restoration's and the activation's refusals, and fails the process", async () => {
@@ -263,6 +263,7 @@ describe("aidd sync --scope user", () => {
       projectRoot: PROJECT_ROOT,
       scope: "user",
       rebuild: true,
+      tools: expect.any(Array),
     });
     expect(activation).toHaveBeenCalledWith(expect.objectContaining({ scope: "user" }));
   });

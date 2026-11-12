@@ -12,6 +12,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -89,7 +90,10 @@ describe("doctor", () => {
     await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
 
     const useCase = buildDoctorUseCase(deps);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const report = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(report.healthy).toBe(true);
     expect(report.issues).toHaveLength(0);
@@ -106,16 +110,18 @@ describe("doctor", () => {
       throw new Error("Manifest is corrupted");
     };
     const useCase = buildDoctorUseCase({ ...deps, manifestRepo: corruptRepo });
-    await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
-      "Manifest is corrupted"
-    );
+    await expect(
+      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT })
+    ).rejects.toThrow("Manifest is corrupted");
   });
 
   it("fails if project is not initialized", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
 
     const useCase = buildDoctorUseCase(deps);
-    await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow("aidd setup");
+    await expect(
+      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT })
+    ).rejects.toThrow("aidd setup");
   });
 
   it("warns about tool directory not registered in manifest", async () => {
@@ -129,7 +135,10 @@ describe("doctor", () => {
     );
 
     const useCase = buildDoctorUseCase(deps);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const report = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     const orphanIssue = report.issues.find(
       (i) => i.message.includes(".cursor/") && i.message.includes("Orphaned")
@@ -148,7 +157,10 @@ describe("doctor", () => {
     );
 
     const useCase = buildDoctorUseCase(deps);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const report = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     const brokenRefIssues = report.issues.filter((i) => i.message.startsWith("Broken reference"));
     expect(brokenRefIssues.every((i) => !i.message.includes(".claude/agents/"))).toBe(true);
@@ -165,7 +177,10 @@ describe("doctor", () => {
     );
 
     const useCase = buildDoctorUseCase(deps);
-    const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const report = await useCase.execute({
+      tools: catalogOf().sortedById(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(report.issues.every((i) => !i.message.includes("example.md"))).toBe(true);
   });
@@ -181,7 +196,10 @@ describe("doctor", () => {
       );
 
       const useCase = buildDoctorUseCase(deps);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+      });
 
       const githubOrphanIssue = report.issues.find(
         (i) => i.message.includes(".github/") && i.message.includes("Orphaned")
@@ -200,7 +218,10 @@ describe("doctor", () => {
       );
 
       const useCase = buildDoctorUseCase(deps);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+      });
 
       const orphanIssues = report.issues.filter(
         (i) => i.message.includes(".github/") && i.message.includes("Orphaned")
@@ -219,7 +240,10 @@ describe("doctor", () => {
       );
 
       const useCase = buildDoctorUseCase(deps);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+      });
 
       const githubOrphanIssue = report.issues.find(
         (i) => i.message.includes(".github/") && i.message.includes("Orphaned")
@@ -234,7 +258,10 @@ describe("doctor", () => {
       await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);
 
       const useCase = buildDoctorUseCase(deps);
-      const report = await useCase.execute({ projectRoot: PROJECT_ROOT });
+      const report = await useCase.execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+      });
 
       const mergeIssues = report.issues.filter(
         (i) => i.message.includes("merge file") || i.message.includes("key in")
@@ -264,7 +291,10 @@ describe("doctor", () => {
     it("reports one entry per installed tool with its file and merge-file counts", async () => {
       const { deps, manifest } = await installedBothCategories();
 
-      const report = await buildDoctorUseCase(deps).execute({ projectRoot: PROJECT_ROOT });
+      const report = await buildDoctorUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
+        projectRoot: PROJECT_ROOT,
+      });
 
       expect(report.toolHealth).toStrictEqual([
         healthOf(manifest, "claude"),
@@ -276,6 +306,7 @@ describe("doctor", () => {
       const { deps, manifest } = await installedBothCategories();
 
       const report = await buildDoctorUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
         projectRoot: PROJECT_ROOT,
         category: "ide",
       });
@@ -294,6 +325,7 @@ describe("doctor", () => {
       );
 
       const report = await buildDoctorUseCase(deps).execute({
+        tools: catalogOf().sortedById(),
         projectRoot: PROJECT_ROOT,
         category: "ai",
       });

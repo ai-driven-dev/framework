@@ -8,6 +8,7 @@ import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugi
 import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const REF = "sample-plugin@real-catalog";
 const OTHER = "other-plugin@other-catalog";
@@ -97,7 +98,12 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const useCase = new UninstallPluginUseCase(fs, projectRepo, machineRepo);
 
     await expect(
-      useCase.execute({ pluginName, toolIds: ["cursor"], projectRoot: "/A" })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        pluginName,
+        toolIds: ["cursor"],
+        projectRoot: "/A",
+      })
     ).rejects.toThrow(/EACCES/);
 
     expect(projectRepo.saveCount).toBe(0);
@@ -173,7 +179,12 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const machineRepo = new InMemoryManifestRepository(machine);
     const useCase = new UninstallPluginUseCase(fs, projectRepo, machineRepo);
 
-    await useCase.execute({ pluginName, toolIds: ["cursor"], projectRoot: "/A" });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      pluginName,
+      toolIds: ["cursor"],
+      projectRoot: "/A",
+    });
 
     expect(fs.getFile(aHooks)).toBeUndefined();
     expect(fs.getFile(aScript)).toBeUndefined();
@@ -226,7 +237,12 @@ describe("project plugin uninstall against shared native host ownership", () => 
       machineRepo
     );
 
-    await useCase.execute({ pluginName: "sample-plugin", toolIds: ["cursor"], projectRoot: "/A" });
+    await useCase.execute({
+      tools: catalogOf().sortedById(),
+      pluginName: "sample-plugin",
+      toolIds: ["cursor"],
+      projectRoot: "/A",
+    });
     expect(machineRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual(["/A", "/B"]);
     expect(machineRepo.saveCount).toBe(0);
   });
@@ -235,7 +251,12 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const f = fixture();
     const useCase = new UninstallPluginUseCase(f.fs, f.projectRepo, f.machineRepo);
     expect(
-      await useCase.execute({ pluginName: "sample-plugin", toolIds: ["codex"], projectRoot: "/A" })
+      await useCase.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: "sample-plugin",
+        toolIds: ["codex"],
+        projectRoot: "/A",
+      })
     ).toEqual([{ toolId: "codex", fileCount: 0, deletedFiles: [] }]);
     expect(f.projectRepo.getCurrent()?.getPlugins("codex")).toEqual([]);
     expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
@@ -253,7 +274,12 @@ describe("project plugin uninstall against shared native host ownership", () => 
     f.fs.setFile(userPath, "B's machine bytes");
     const useCase = new UninstallPluginUseCase(f.fs, f.projectRepo, f.machineRepo);
     expect(
-      await useCase.execute({ pluginName: "sample-plugin", toolIds: [], projectRoot: "/A" })
+      await useCase.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: "sample-plugin",
+        toolIds: [],
+        projectRoot: "/A",
+      })
     ).toEqual([{ toolId: "codex", fileCount: 0, deletedFiles: [] }]);
     expect(f.fs.getFile(userPath)).toBe("B's machine bytes");
     expect(
@@ -278,7 +304,12 @@ describe("project plugin uninstall against shared native host ownership", () => 
       f.machineRepo
     );
     await expect(
-      useCase.execute({ pluginName: "sample-plugin", toolIds: ["codex"], projectRoot: "/A" })
+      useCase.execute({
+        tools: catalogOf().sortedById(),
+        pluginName: "sample-plugin",
+        toolIds: ["codex"],
+        projectRoot: "/A",
+      })
     ).rejects.toThrow(/local delete failed/);
     expect(
       f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims?.[0]?.dependents
@@ -290,6 +321,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const f = fixture();
     await expect(
       new UninstallPluginUseCase(f.fs, f.projectRepo, f.machineRepo).execute({
+        tools: catalogOf().sortedById(),
         pluginName: "foreign-plugin",
         toolIds: ["codex"],
         projectRoot: "/A",

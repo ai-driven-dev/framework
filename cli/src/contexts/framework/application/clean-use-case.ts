@@ -25,8 +25,8 @@ import type { HostActions } from "../../host-registration/contract/host-actions.
 import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../host-registration/contract/host-plugin-registry.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
-import { profileOf } from "../../tools/contract/tool-profile-lookup.js";
+import type { AiToolProfile, ToolProfile } from "../../tools/contract/tool-profile.js";
+import { aiProfileOf, profileOf } from "../../tools/contract/tool-profile-lookup.js";
 import {
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
@@ -174,12 +174,13 @@ export class CleanUseCase {
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
+        const tool = aiProfileOf(options.tools, toolId);
         if (projectHooksFileOf(toolId) !== undefined) {
-          await assertProjectHooksRemovable(this.fs, plugin, toolId, options.projectRoot, {
+          await assertProjectHooksRemovable(this.fs, plugin, tool, options.projectRoot, {
             overwriteEdited: options.force,
           });
         }
-        await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, options.projectRoot);
+        await assertProjectMcpEntriesRemovable(this.fs, plugin, tool, options.projectRoot);
       }
     }
     // Read the other projects before host cleanup, but keep this project's claim until every
@@ -205,7 +206,7 @@ export class CleanUseCase {
     // Only ever safe once `undoNativeRegistrations` has actually asked that host to forget the
     // name (see `purgeNativeCaches`'s own post-conditions).
     await this.purgeNativeCaches(home, undone);
-    let deleted = await this.deleteAllToolFiles(manifest, options.projectRoot);
+    let deleted = await this.deleteAllToolFiles(manifest, options.tools, options.projectRoot);
     deleted += await this.deleteMachineLocalFiles(manifest, options.projectRoot, options.tools, {
       overwriteEdited: options.force,
     });
@@ -702,7 +703,13 @@ export class CleanUseCase {
     let count = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
       count += await this.deleteMachineLocalSettingsFiles(toolId, projectRoot, tools);
-      count += await this.removeProjectHooksForTool(manifest, toolId, projectRoot, hooksGuard);
+      count += await this.removeProjectHooksForTool(
+        manifest,
+        toolId,
+        tools,
+        projectRoot,
+        hooksGuard
+      );
     }
     return count;
   }
@@ -726,13 +733,23 @@ export class CleanUseCase {
   private async removeProjectHooksForTool(
     manifest: Manifest,
     toolId: ToolId,
+    tools: readonly ToolProfile[],
     projectRoot: string,
     hooksGuard: ProjectHooksGuard
   ): Promise<number> {
     if (projectHooksFileOf(toolId) === undefined || !isAiToolId(toolId)) return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
-      if (await removeProjectHooks(this.fs, plugin, toolId, projectRoot, hooksGuard)) count++;
+      if (
+        await removeProjectHooks(
+          this.fs,
+          plugin,
+          aiProfileOf(tools, toolId),
+          projectRoot,
+          hooksGuard
+        )
+      )
+        count++;
     }
     return count;
   }
@@ -801,14 +818,22 @@ export class CleanUseCase {
     return { dryRun: true, manifestFound: true, preview, fileCount: 0 };
   }
 
-  private async deleteAllToolFiles(manifest: Manifest, projectRoot: string): Promise<number> {
+  private async deleteAllToolFiles(
+    manifest: Manifest,
+    tools: readonly ToolProfile[],
+    projectRoot: string
+  ): Promise<number> {
     let deleted = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), projectRoot);
       deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), projectRoot);
       if (isAiToolId(toolId)) {
-        deleted += await this.deleteToolPluginFiles(manifest, toolId, projectRoot);
+        deleted += await this.deleteToolPluginFiles(
+          manifest,
+          aiProfileOf(tools, toolId),
+          projectRoot
+        );
       }
     }
     return deleted;
@@ -816,17 +841,18 @@ export class CleanUseCase {
 
   private async deleteToolPluginFiles(
     manifest: Manifest,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string
   ): Promise<number> {
     let count = 0;
+    const toolId = tool.toolId;
     for (const plugin of manifest.getPlugins(toolId)) {
       if (plugin.scope === "user") continue;
       const files = await this.filesSafeToDelete(plugin, toolId);
       const deleted = await deletePluginFilesForTool(
         files,
         plugin.scope,
-        toolId,
+        tool,
         projectRoot,
         this.fs
       );

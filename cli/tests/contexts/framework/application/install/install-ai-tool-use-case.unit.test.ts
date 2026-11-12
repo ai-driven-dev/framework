@@ -159,6 +159,7 @@ describe("InstallAiToolUseCase", () => {
       });
 
       expect(pluginInstallMock.execute).toHaveBeenCalledWith({
+        tools: expect.any(Array),
         pluginName: "my-plugin",
         version: "1.0.0",
         fromMarketplace: "aidd",

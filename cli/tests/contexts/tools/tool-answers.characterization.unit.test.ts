@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { ProjectHooksFormat } from "../../../src/contexts/tools/contract/tool-vocabulary.js";
 import { hasRules } from "../../../src/contexts/tools/domain/contracts.js";
 import type { MarketplaceRegistration } from "../../../src/contexts/tools/domain/plugins/marketplace-registration.js";
 import type { NativeActivation } from "../../../src/contexts/tools/domain/plugins/native-activation.js";
-import type {
-  GlobalFiles,
-  ProjectHooksFormat,
-} from "../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import type { GlobalFiles } from "../../../src/contexts/tools/domain/plugins/plugin-params.js";
 import type { PluginsCapability } from "../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { PROFILE_SECTION_KEYS } from "../../../src/contexts/tools/domain/profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";

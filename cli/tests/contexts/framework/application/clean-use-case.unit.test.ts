@@ -1249,9 +1249,13 @@ describe("clean", () => {
           () => "/fake-home",
           references
         );
-        await expect(userClean.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
-          "the shared framework source"
-        );
+        await expect(
+          userClean.execute({
+            tools: catalogOf().sortedById(),
+            projectRoot: PROJECT_ROOT,
+            force: true,
+          })
+        ).rejects.toThrow("the shared framework source");
       });
 
       it("names how many other projects still reference the source", async () => {

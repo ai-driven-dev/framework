@@ -20,11 +20,20 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const ALIAS = "project-alias";
 const HOST = "real-catalog";
 const REF = `test-plugin@${HOST}`;
-const OPTIONS = { name: ALIAS, projectRoot: "/A", autoConfirm: true, scope: "user" as const };
+function options() {
+  return {
+    name: ALIAS,
+    projectRoot: "/A",
+    autoConfirm: true,
+    scope: "user" as const,
+    tools: catalogOf().sortedById(),
+  };
+}
 
 function proofFor(): NativeMarketplaceSource {
   return {
@@ -101,7 +110,10 @@ for (const toolId of ["codex"] as const) {
       const f = await fixture(enabled());
       const list = vi.spyOn(f.registry, "list");
       await expect(
-        f.useCase.execute({ ...OPTIONS, name: FRAMEWORK_MARKETPLACE_NAME })
+        f.useCase.execute({
+          ...options(),
+          name: FRAMEWORK_MARKETPLACE_NAME,
+        })
       ).rejects.toThrow(/shared by every project.*aidd clean --scope user/);
       expect(list).not.toHaveBeenCalled();
       expect(f.activator.uninstalledPlugins).toEqual([]);
@@ -126,7 +138,7 @@ for (const toolId of ["codex"] as const) {
       const deletion = vi.spyOn(f.registry, "delete");
       const hostRemoval = vi.spyOn(f.activator, "removeMarketplace");
 
-      expect(await f.useCase.execute(OPTIONS)).toMatchObject({
+      expect(await f.useCase.execute(options())).toMatchObject({
         marketplace: { name: ALIAS, scope: "user" },
         removedPluginCount: 1,
       });
@@ -138,7 +150,7 @@ for (const toolId of ["codex"] as const) {
 
     it("defaults native uninstall to user only when the proven host ref has no scope", async () => {
       const f = await fixture(new Map([[REF, { enabled: true }]]));
-      await f.useCase.execute(OPTIONS);
+      await f.useCase.execute(options());
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.uninstalledPluginScopes).toEqual(["user"]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
@@ -151,7 +163,7 @@ for (const toolId of ["codex"] as const) {
         marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: proofFor() }],
         pluginRefs: [],
       });
-      expect(await f.useCase.execute(OPTIONS)).toMatchObject({ removedPluginCount: 0 });
+      expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 0 });
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)).toMatchObject({
@@ -166,7 +178,7 @@ for (const toolId of ["codex"] as const) {
       const f = await fixture(enabled());
       const before = await f.registry.list("/A");
       await f.repo.delete();
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/no user manifest/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(/no user manifest/);
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
       expect(await f.registry.list("/A")).toEqual(before);
@@ -175,7 +187,7 @@ for (const toolId of ["codex"] as const) {
 
     it("refuses B's live claim, including with autoConfirm", async () => {
       const f = await fixture(enabled(), { dependents: ["/B"] });
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(
+      await expect(f.useCase.execute(options())).rejects.toThrow(
         /user-scope marketplace 'project-alias'.*active projects.*\/B/
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
@@ -195,7 +207,7 @@ for (const toolId of ["codex"] as const) {
           addedAt: "2026-09-02T00:00:00.000Z",
         })
       );
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/Marketplace.*not registered/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(/Marketplace.*not registered/);
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
@@ -229,7 +241,7 @@ for (const toolId of ["codex"] as const) {
         f.registry,
         new NativeHostRegistrationGate(new Map([[toolId, f.activator]]), new Map())
       );
-      await expect(useCase.execute(OPTIONS)).rejects.toThrow(
+      await expect(useCase.execute(options())).rejects.toThrow(
         /changed while waiting for the machine lock/
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
@@ -247,7 +259,7 @@ for (const toolId of ["codex"] as const) {
         f.registry,
         new NativeHostRegistrationGate(new Map([[toolId, f.activator]]), new Map())
       );
-      await expect(useCase.execute(OPTIONS)).rejects.toThrow(/no user manifest/);
+      await expect(useCase.execute(options())).rejects.toThrow(/no user manifest/);
       expect(f.activator.uninstalledPlugins).toEqual([]);
     });
 
@@ -257,7 +269,7 @@ for (const toolId of ["codex"] as const) {
         [`foreign@${HOST}`, { enabled: true, scope: "user" as const }],
       ]);
       const f = await fixture(refs);
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(
+      await expect(f.useCase.execute(options())).rejects.toThrow(
         /foreign host ref.*foreign@real-catalog/
       );
       expect(f.activator.uninstalledPlugins).toEqual([]);
@@ -285,7 +297,7 @@ for (const toolId of ["codex"] as const) {
         f.registry,
         unreadable
       );
-      await expect(useCase.execute(OPTIONS)).rejects.toThrow(/host plugin registry unreadable/);
+      await expect(useCase.execute(options())).rejects.toThrow(/host plugin registry unreadable/);
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
@@ -294,7 +306,9 @@ for (const toolId of ["codex"] as const) {
 
     it("refuses an unavailable host CLI", async () => {
       const f = await fixture(enabled(), { available: false });
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/CLI or host registry unavailable/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(
+        /CLI or host registry unavailable/
+      );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
@@ -307,7 +321,7 @@ for (const toolId of ["codex"] as const) {
         new Map([[REF, { enabled: false, scope: "user" as const }]]),
       ]) {
         const f = await fixture(refs);
-        await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/still enabled/);
+        await expect(f.useCase.execute(options())).rejects.toThrow(/still enabled/);
         expect(f.activator.uninstalledPlugins).toEqual([]);
         expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
           { ref: REF, dependents: [] },
@@ -317,7 +331,7 @@ for (const toolId of ["codex"] as const) {
 
     it("keeps the canonical claim and registry if the host refuses unregister", async () => {
       const f = await fixture(enabled(), { failOnUninstall: true });
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/not installed/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(/not installed/);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);
@@ -327,7 +341,7 @@ for (const toolId of ["codex"] as const) {
 
     it("retains the claim and catalogue record if catalogue removal fails after ref uninstall", async () => {
       const f = await fixture(enabled(), { throwOnRemove: true });
-      await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/marketplace remove.*failed/);
+      await expect(f.useCase.execute(options())).rejects.toThrow(/marketplace remove.*failed/);
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
@@ -368,7 +382,7 @@ for (const toolId of ["codex"] as const) {
           new Map([[toolId, sourceReader()]])
         )
       );
-      await expect(useCase.execute(OPTIONS)).rejects.toThrow(/registry delete failed/);
+      await expect(useCase.execute(options())).rejects.toThrow(/registry delete failed/);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);
@@ -377,7 +391,7 @@ for (const toolId of ["codex"] as const) {
 
     it("unregisters the exact ref and real host catalogue after B detaches", async () => {
       const f = await fixture(enabled());
-      expect(await f.useCase.execute(OPTIONS)).toMatchObject({ removedPluginCount: 1 });
+      expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 1 });
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.uninstalledPluginScopes).toEqual(["user"]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
@@ -387,7 +401,7 @@ for (const toolId of ["codex"] as const) {
 
     it("uses the host's recorded ref scope rather than guessing user for native uninstall", async () => {
       const f = await fixture(new Map([[REF, { enabled: true, scope: "project" as const }]]));
-      await f.useCase.execute(OPTIONS);
+      await f.useCase.execute(options());
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.uninstalledPluginScopes).toEqual(["project"]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
@@ -412,7 +426,7 @@ for (const toolId of ["codex"] as const) {
           { ref: "other-plugin@other-catalog", dependents: ["/B"] },
         ],
       });
-      expect(await f.useCase.execute(OPTIONS)).toMatchObject({ removedPluginCount: 1 });
+      expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 1 });
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.removedMarketplaces).toEqual([HOST]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
@@ -472,7 +486,7 @@ describe("Copilot 1.0.83 targeted user marketplace removal", () => {
     );
     const useCase = new UserMarketplaceRemoveUseCase(fs, repo, registry, gate);
 
-    await expect(useCase.execute(OPTIONS)).rejects.toThrow(/host source reader unavailable/);
+    await expect(useCase.execute(options())).rejects.toThrow(/host source reader unavailable/);
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -541,21 +555,21 @@ describe("Cursor targeted user marketplace removal", () => {
 
   it("refuses a foreign user catalogue with no canonical plugin claim", async () => {
     const f = await fixture({ claim: false });
-    await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/Cannot prove AIDD ownership/);
+    await expect(f.useCase.execute(options())).rejects.toThrow(/Cannot prove AIDD ownership/);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
     expect(f.repo.getCurrent()?.getPlugins("cursor")).toEqual([]);
   });
 
   it("refuses B's live file claim before deleting any bytes", async () => {
     const f = await fixture({ dependents: ["/B"] });
-    await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/active projects.*\/B/);
+    await expect(f.useCase.execute(options())).rejects.toThrow(/active projects.*\/B/);
     expect(f.fs.getFile(join(f.pluginDir, "skills/demo/SKILL.md"))).toBe("bytes");
     expect(f.repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
   });
 
   it("refuses a symlinked plugin directory outside the user boundary", async () => {
     const f = await fixture({ escape: true });
-    await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/tracked file outside its boundary/);
+    await expect(f.useCase.execute(options())).rejects.toThrow(/tracked file outside its boundary/);
     expect(f.fs.getFile(join(f.foreign, "skills/demo/SKILL.md"))).toBe("bytes");
     expect(f.repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
   });
@@ -588,7 +602,7 @@ describe("Cursor targeted user marketplace removal", () => {
         dependents: [],
       })
     );
-    expect(await f.useCase.execute(OPTIONS)).toMatchObject({ removedPluginCount: 1 });
+    expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 1 });
     expect(
       f.repo
         .getCurrent()
@@ -599,7 +613,7 @@ describe("Cursor targeted user marketplace removal", () => {
 
   it("deletes exactly the owned user files and canonical record", async () => {
     const f = await fixture();
-    expect(await f.useCase.execute(OPTIONS)).toMatchObject({ removedPluginCount: 1 });
+    expect(await f.useCase.execute(options())).toMatchObject({ removedPluginCount: 1 });
     expect(f.fs.getFile(join(f.pluginDir, "skills/demo/SKILL.md"))).toBeUndefined();
     expect(f.repo.getCurrent()?.getPlugins("cursor")).toEqual([]);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeUndefined();
@@ -609,7 +623,7 @@ describe("Cursor targeted user marketplace removal", () => {
     const f = await fixture();
     const path = join(f.pluginDir, "skills/demo/SKILL.md");
     f.fs.setFile(path, "user-edited bytes");
-    await expect(f.useCase.execute(OPTIONS)).rejects.toThrow(/edited.*SKILL.md|SKILL.md.*edited/);
+    await expect(f.useCase.execute(options())).rejects.toThrow(/edited.*SKILL.md|SKILL.md.*edited/);
     expect(f.fs.getFile(path)).toBe("user-edited bytes");
     expect(f.repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
     expect((await f.registry.list("/A")).find((entry) => entry.name === ALIAS)).toBeDefined();
