@@ -5,7 +5,7 @@ import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 
 /**
  * What a directory's own catalog declares about itself — `name` and its plugin names, never
- * `version` — read from the same relative file a tool's own `distributionProbes.marketplace` names,
+ * `version` — read from the same relative file a tool's own `distributionPaths("marketplace")` names,
  * so this agrees with whatever that tool would actually read there. `undefined` when the directory
  * carries no readable catalog at that path, or the JSON found there names nothing: silence, not a
  * fact to invent, which is what lets a dead registry entry or an unbuilt tree answer "no fact"
@@ -33,7 +33,7 @@ export async function readMarketplaceCatalogIdentity(
 /** The exact path {@link readMarketplaceCatalogIdentity} reads, named so a caller whose read came
  * back `undefined` can report *which file* it found nothing readable at. `undefined` for the same
  * reason the read would answer nothing: not an AI tool, or one whose profile declares no
- * `distributionProbes.marketplace`. */
+ * `distributionPaths("marketplace")`. */
 export function marketplaceCatalogProbePath(tool: ToolProfile, dir: string): string | undefined {
   if (tool.kind !== "ai") return undefined;
   const catalogRelative = tool.distributionPaths("marketplace")[0];
