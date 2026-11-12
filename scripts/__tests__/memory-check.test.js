@@ -425,18 +425,29 @@ test("check: an always file under an accepted name of its row is not missing", (
   }
 });
 
-test("check: a row's file below the root and a team folder are warnings and exit 0", () => {
+// Where a file sits is the team's choice: the root loads every session, internal/ and external/ on demand.
+test("check: a row's file in internal/ is the team's choice, a folder outside every loading rule is a warning", () => {
   const root = fullBank({ "internal/auth.md": "# A\n", "kpi/q.md": "# K\n", "assets/diagram.png": "x" });
   try {
     const run = check(root);
     assert.equal(run.status, 0);
     assert.deepEqual(run.stdout.split("\n").slice(0, -1), [
-      "aidd-context: 0 errors, 4 warnings",
-      "aidd_docs/memory/internal/auth.md placement warning auth.md belongs at the bank's root => move it to aidd_docs/memory/auth.md",
+      "aidd-context: 0 errors, 3 warnings",
       "aidd_docs/memory/assets/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/assets/ to aidd_docs/memory/internal/assets/, or to the aidd_docs/ folder of the plugin that owns it",
       "aidd_docs/memory/kpi/ placement warning a folder outside the bank's root, internal/ and external/ => move aidd_docs/memory/kpi/ to aidd_docs/memory/internal/kpi/, or to the aidd_docs/ folder of the plugin that owns it",
       "aidd_docs/memory load warning every session loads 21 words, markup included, from 7 files => move what a session rarely needs to internal/ or external/",
     ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("check: an always-written file the team keeps in internal/ or external/ is present", () => {
+  const root = fullBank({ "internal/testing.md": "# T\n" });
+  try {
+    fs.rmSync(path.join(root, MEMORY, "testing.md"));
+    const run = check(root);
+    assert.doesNotMatch(run.stdout, /testing\.md/u, run.stdout);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -564,7 +575,7 @@ function treeState(root, relative = "") {
   });
 }
 
-const BEFORE = "# V\n\n## Setup\n\n- keep one\n- lose me\n- keep two\n\n## Run\n\n- run it\n";
+const BEFORE = "# V\n\n## Setup\n\n- keep one\n- release pipeline\n- keep two\n\n## Run\n\n- deployment checklist\n";
 const dline = (id, target, fact, answer) => `- ${id} | ${target} | ${fact} | aidd_docs/memory/vcs.md | ${answer}`;
 const approve = (line) => dline("D1", "vcs.md > Setup", `remove "${line}": stale`, "yes");
 
@@ -605,19 +616,19 @@ function lostLines(committed, working, sheetLines = []) {
   }
 }
 
-const LOSS = { "vcs.md": BEFORE.replace("- lose me\n", "") };
+const LOSS = { "vcs.md": BEFORE.replace("- release pipeline\n", "") };
 
 test("report, lost lines: a line gone with no D line answered yes is listed with exit 1, and nothing in the tree changes", () => {
   for (const answer of ["", "no"]) {
-    const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'remove "- lose me"', answer)]);
+    const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'remove "- release pipeline"', answer)]);
     assert.equal(run.status, 1, `answer "${answer}"`);
-    assert.equal(run.stdout, "vcs.md: - lose me\n");
+    assert.equal(run.stdout, "vcs.md: - release pipeline\n");
   }
   assert.equal(lostLines({ "vcs.md": BEFORE }, LOSS).run.status, 1);
 });
 
 test("report, lost lines: a line quoted by a remove or replace D line answered yes is not listed, exit 0", () => {
-  for (const verb of ['remove "- lose me"', 'replace "- lose me" with "- another"']) {
+  for (const verb of ['remove "- release pipeline"', 'replace "- release pipeline" with "- another"']) {
     const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", verb, "yes")]);
     assert.equal(run.status, 0, verb);
     assert.equal(run.stdout, "");
@@ -626,39 +637,73 @@ test("report, lost lines: a line quoted by a remove or replace D line answered y
 
 // A model quotes a list line without its marker as often as with it.
 test("report, lost lines: an approval may quote a list line without its marker", () => {
-  const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'replace "lose me" with "found"', "yes")]);
+  const { run } = lostLines({ "vcs.md": BEFORE }, LOSS, [dline("D1", "vcs.md > Setup", 'replace "release pipeline" with "found"', "yes")]);
   assert.equal(run.stdout, "");
   assert.equal(run.status, 0);
 });
 
 test("report, lost lines: an approval covers the line it quotes and no other", () => {
-  const two = { "vcs.md": BEFORE.replace("- lose me\n", "").replace("- run it\n", "") };
-  const { run } = lostLines({ "vcs.md": BEFORE }, two, [approve("- lose me")]);
-  assert.equal(run.stdout, "vcs.md: - run it\n");
+  const two = { "vcs.md": BEFORE.replace("- release pipeline\n", "").replace("- deployment checklist\n", "") };
+  const { run } = lostLines({ "vcs.md": BEFORE }, two, [approve("- release pipeline")]);
+  assert.equal(run.stdout, "vcs.md: - deployment checklist\n");
 });
 
 test("report, lost lines: the approval needs a D id, a remove or replace verb and an answer starting with yes", () => {
   const listed = (line) => lostLines({ "vcs.md": BEFORE }, LOSS, [line]).run.stdout;
-  assert.match(listed(dline("D1", "vcs.md > Setup", 'add "- lose me"', "yes")), /lose me/u, "not a removal");
-  assert.match(listed(dline("R1", "vcs.md > Setup", 'remove "- lose me"', "yes")), /lose me/u, "not a D line");
-  assert.match(listed(dline("D1", "vcs.md > Setup", "remove the lose me line", "yes")), /lose me/u, "the line is not quoted");
-  assert.equal(listed(dline("D1", "vcs.md > Setup", 'remove "- lose me"', "Yes, drop it")), "");
+  assert.match(listed(dline("D1", "vcs.md > Setup", 'add "- release pipeline"', "yes")), /release pipeline/u, "not a removal");
+  assert.match(listed(dline("R1", "vcs.md > Setup", 'remove "- release pipeline"', "yes")), /release pipeline/u, "not a D line");
+  assert.match(listed(dline("D1", "vcs.md > Setup", "remove the release pipeline line", "yes")), /release pipeline/u, "the line is not quoted");
+  assert.equal(listed(dline("D1", "vcs.md > Setup", 'remove "- release pipeline"', "Yes, drop it")), "");
 });
 
 test("report, lost lines: a line moved within its file or to another bank file is not listed, a duplicate copy gone is", () => {
-  const moved = BEFORE.replace("- lose me\n", "").replace("- run it\n", "- run it\n- lose me\n");
+  const moved = BEFORE.replace("- release pipeline\n", "").replace("- deployment checklist\n", "- deployment checklist\n- release pipeline\n");
   assert.equal(lostLines({ "vcs.md": BEFORE }, { "vcs.md": moved }).run.stdout, "");
-  assert.equal(lostLines({ "vcs.md": BEFORE }, { ...LOSS, "internal/other.md": "- lose me\n" }).run.stdout, "");
-  const twice = lostLines({ "vcs.md": "- dup\n- dup\n" }, { "vcs.md": "- dup\n" });
+  assert.equal(lostLines({ "vcs.md": BEFORE }, { ...LOSS, "internal/other.md": "- release pipeline\n" }).run.stdout, "");
+  const twice = lostLines({ "vcs.md": "- duplicate\n- duplicate\n" }, { "vcs.md": "- duplicate\n" });
   assert.equal(twice.run.status, 1);
-  assert.equal(twice.run.stdout, "vcs.md: - dup\n");
+  assert.equal(twice.run.stdout, "vcs.md: - duplicate\n");
+});
+
+test("report, lost lines: a heading or a table header left empty by approved removals is not a lost fact", () => {
+  const before = { "vcs.md": "# V\n\n## Conventions\n\n- release pipeline\n\n| Change | Deployment |\n| --- | --- |\n| release pipeline | staging |\n" };
+  const after = { "vcs.md": "# V\n" };
+  const approvals = [approve("- release pipeline"), dline("D2", "vcs.md > Setup", 'remove "| release pipeline | staging |"', "yes")];
+  assert.equal(lostLines(before, after, approvals).run.stdout, "");
+});
+
+// A real bank wraps its prose at a fixed width: a line is a piece of a sentence, and an approved
+// rewrite turns it into a list. What counts is a word the bank no longer holds, not a line.
+const WRAPPED = "# T\n\nThe checks run before every release, and the pipeline keeps 14\ntables under review. Failures block the deployment.\n";
+
+test("report, lost lines: a wrapped paragraph rewritten as a list with every word kept loses nothing", () => {
+  const listed = "# T\n\n- The checks run before every release.\n- The pipeline keeps 14 tables under review.\n- Failures block the deployment.\n";
+  assert.equal(lostLines({ "vcs.md": WRAPPED }, { "vcs.md": listed }).run.stdout, "");
+});
+
+test("report, lost lines: the rewrite that drops a number, a path or a whole sentence lists the line it came from", () => {
+  const noNumber = "# T\n\n- The checks run before every release.\n- The pipeline keeps tables under review.\n- Failures block the deployment.\n";
+  assert.equal(lostLines({ "vcs.md": WRAPPED }, { "vcs.md": noNumber }).run.stdout, "vcs.md: The checks run before every release, and the pipeline keeps 14\n");
+  const noSentence = "# T\n\n- The checks run before every release.\n- The pipeline keeps 14 tables under review.\n";
+  assert.equal(lostLines({ "vcs.md": WRAPPED }, { "vcs.md": noSentence }).run.stdout, "vcs.md: tables under review. Failures block the deployment.\n");
+  const reworded = "# T\n\n- The checks run before each release.\n- The pipeline keeps 14 tables under review.\n- Failures block the deployment.\n";
+  assert.equal(lostLines({ "vcs.md": WRAPPED }, { "vcs.md": reworded }).run.stdout, "", "one short word changed is a rewording");
+});
+
+test("report, lost lines: an approved move rewrites the paths it names before anything counts as lost", () => {
+  const before = { "vcs.md": "# V\n\n- See aidd_docs/memory/kpi/index.md for the indicators.\n" };
+  const after = { "vcs.md": "# V\n\n- See aidd_docs/memory/internal/kpi/index.md for the indicators.\n" };
+  const move = dline("D1", "vcs.md > Setup", "move aidd_docs/memory/kpi to aidd_docs/memory/internal/kpi", "yes");
+  assert.equal(lostLines(before, after, [move]).run.stdout, "");
+  assert.equal(lostLines(before, before, [move]).run.stdout, "", "a move approved and not made yet loses nothing");
+  assert.match(lostLines(before, after).run.stdout, /kpi\/index\.md/u, "an unapproved path change is a loss");
 });
 
 test("report, lost lines: a file with a non-ASCII name is guarded, and a file deleted from the working tree is listed whole", () => {
-  assert.equal(lostLines({ "décisions.md": "- kept\n- lost\n" }, { "décisions.md": "- kept\n" }).run.stdout, "décisions.md: - lost\n");
-  const gone = lostLines({ "internal/x.md": "- kept\n" }, { "internal/x.md": null });
+  assert.equal(lostLines({ "décisions.md": "- conservée\n- supprimée\n" }, { "décisions.md": "- conservée\n" }).run.stdout, "décisions.md: - supprimée\n");
+  const gone = lostLines({ "internal/x.md": "- maintained\n" }, { "internal/x.md": null });
   assert.equal(gone.run.status, 1);
-  assert.equal(gone.run.stdout, "internal/x.md: - kept\n");
+  assert.equal(gone.run.stdout, "internal/x.md: - maintained\n");
 });
 
 test("report, lost lines: no repository, or a bank never committed, lists nothing lost", () => {
@@ -704,7 +749,7 @@ test("report, lost lines: reads the repository of the root even when a hook expo
   write(root, SHEET_FILE, sheet());
   try {
     const run = lostOf(spawnSync("node", [ENGINE, "report", path.join(root, SHEET_FILE)], { encoding: "utf8", env: { ...process.env, GIT_DIR: path.join(os.tmpdir(), "no-such-git-dir") } }));
-    assert.equal(run.stdout, "vcs.md: - lose me\n");
+    assert.equal(run.stdout, "vcs.md: - release pipeline\n");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -1136,10 +1181,9 @@ test("plan, sheet check: a T line is no fact id, and every line names a memory f
   assert.equal(factsRun(sheet(GOOD, "- R2 | error handling | a fact | package.json |")).status, 1);
 });
 
-test("plan, sheet check: a | in a fact is named, and a bullet of another shape inside a block is a shape problem", () => {
-  const split = factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json | ok"));
-  assert.equal(split.status, 1);
-  assert.match(split.stdout, /R2.*a `\|` in a fact/u);
+// A memory is mostly tables: a fact quotes a row whole, its pipes kept, read from both ends of the line.
+test("plan, sheet check: a | in a fact is part of it, and a bullet of another shape inside a block is a shape problem", () => {
+  assert.equal(factsRun(sheet(GOOD, "- R2 | testing.md > Run | a | b | package.json | ok")).status, 0, "a fact holding a pipe");
   for (const bad of ["* R2 | testing.md > Run | fact | package.json |", "  - R2 | testing.md > Run | fact | package.json |", "| R2 | testing.md > Run | fact | package.json |"]) {
     const run = factsRun(sheet(GOOD, bad));
     assert.equal(run.status, 1, bad);
