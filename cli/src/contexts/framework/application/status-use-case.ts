@@ -128,12 +128,7 @@ export class StatusUseCase implements StatusQuery {
     const dir = tool.directory;
     const trackedSet = manifest.getTrackedPathsInDirectory(dir);
     drifted.push(
-      ...(await this.detectAddedFiles(
-        dir,
-        trackedSet,
-        projectRoot,
-        tool.kind === "ai" ? (tool.marketplaceRegistration()?.machineLocalFiles() ?? []) : []
-      ))
+      ...(await this.detectAddedFiles(dir, trackedSet, projectRoot, tool.machineLocalFiles()))
     );
     return { toolId, version, drifted };
   }

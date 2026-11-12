@@ -259,6 +259,9 @@ export interface AiToolProfile {
   configWrites(): readonly ConfigWrite[];
   /** Its marketplace registration in the shared settings file, or null for a tool driving none. */
   marketplaceRegistration(): MarketplaceRegistrationAnswers | null;
+  /** The files this tool keeps machine-local that an install must ignore and `status` must skip;
+   * none when it keeps none. */
+  machineLocalFiles(): readonly string[];
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */
   projectHooksDelivery(): ProjectHooksLocation | null;
   /** Where its installed rules live and what they end in, or null when it installs none. */
@@ -281,6 +284,9 @@ export interface IdeToolProfile {
   configWrites(): readonly ConfigWrite[];
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */
   signalDirectoryIn(projectRoot: string): SignalDirectory | null;
+  /** The files this tool keeps machine-local that an install must ignore and `status` must skip;
+   * none when it keeps none. */
+  machineLocalFiles(): readonly string[];
 }
 
 export type ToolProfile = AiToolProfile | IdeToolProfile;

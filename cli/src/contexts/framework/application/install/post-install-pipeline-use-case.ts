@@ -24,12 +24,7 @@ export class PostInstallPipelineUseCase {
     // installed tool's machine-local file.
     await this.gitignoreUseCase.execute(
       projectRoot,
-      aiddGitignoreEntries(manifest, (toolId) => {
-        const profile = tools.profile(toolId);
-        return profile.kind === "ai"
-          ? (profile.marketplaceRegistration()?.machineLocalFiles() ?? [])
-          : [];
-      })
+      aiddGitignoreEntries(manifest, (toolId) => tools.profile(toolId).machineLocalFiles())
     );
   }
 }

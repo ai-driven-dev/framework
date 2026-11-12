@@ -76,6 +76,7 @@ type AiToolFields = Omit<
   | "flatInstallPath"
   | "ownsFlatPath"
   | "marketplaceRegistration"
+  | "machineLocalFiles"
   | "installedRulesLocation"
   | "pluginEnablementIsMachineGlobal"
   | "signalDirectoryIn"
@@ -239,6 +240,10 @@ export function defineAiTool<C extends ProfileSections>(
       capabilities.plugins?.kind === "native"
         ? capabilities.plugins.marketplaceRegistration()
         : null,
+    machineLocalFiles: () =>
+      capabilities.plugins?.kind === "native"
+        ? (capabilities.plugins.marketplaceRegistration()?.machineLocalFiles() ?? [])
+        : [],
     installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
     pluginEnablementIsMachineGlobal: () =>
       capabilities.plugins?.kind === "native"
@@ -271,6 +276,7 @@ export function defineIdeTool<C extends ProfileSections>(
     configWrites: () => settingsWrites(capabilities),
     settingsFiles: () => settingsOf(capabilities),
     signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
+    machineLocalFiles: (): readonly string[] => [],
   };
   return profile as IdeToolConfig<C> & ProfileBrand;
 }
