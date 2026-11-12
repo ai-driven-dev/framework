@@ -221,8 +221,22 @@ describe.each(HOSTS)("the bridge generated with $name's parameters", (host) => {
 
   it("lets a script that never reads its payload exit without breaking the host", async () => {
     const { tool } = await open(host);
+    // A write to a script that has gone is an uncaught error in this process, which the runner
+    // would report apart from the case: take its handlers while the case runs, to attribute it.
+    const raised: unknown[] = [];
+    const runnerHandlers = process.listeners("uncaughtException");
+    process.removeAllListeners("uncaughtException");
+    process.on("uncaughtException", (error) => raised.push(error));
 
-    expect(await tool("deaf", { content: "x".repeat(2_000_000) })).toBe("done");
+    try {
+      expect(await tool("deaf", { content: "x".repeat(2_000_000) })).toBe("done");
+      await delay(200);
+    } finally {
+      process.removeAllListeners("uncaughtException");
+      for (const handler of runnerHandlers) process.on("uncaughtException", handler);
+    }
+
+    expect(raised).toEqual([]);
   });
 
   it("keeps a tool's arguments as they came when it names no written file", async () => {
