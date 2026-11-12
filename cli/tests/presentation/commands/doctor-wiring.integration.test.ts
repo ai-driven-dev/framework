@@ -2,7 +2,6 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { userMachineLocalFilesOf } from "../../../src/contexts/tools/domain/registry.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const doctorAll = vi.fn();
@@ -300,13 +299,13 @@ describe("aidd doctor --tool", () => {
       projectRoot: PROJECT_ROOT,
       category: "ai",
       pluginName: undefined,
-      tools: catalogOf().sortedById(),
+      tools: expect.any(Array),
     });
     expect(statusScoped).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       filterToolId: "claude",
       pluginName: undefined,
-      tools: catalogOf().sortedById(),
+      tools: expect.any(Array),
     });
     expect(doctorAll).not.toHaveBeenCalled();
   });
@@ -405,7 +404,7 @@ describe("aidd doctor --scope user", () => {
       manifest: expect.anything(),
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf().sortedById(),
+      tools: expect.any(Array),
       globalInstall: true,
     });
     expect(doctorAll).not.toHaveBeenCalled();

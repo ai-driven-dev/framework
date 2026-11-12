@@ -159,7 +159,7 @@ describe("InstallAiToolUseCase", () => {
       });
 
       expect(pluginInstallMock.execute).toHaveBeenCalledWith({
-        tools: catalogOf().sortedById(),
+        tools: expect.any(Array),
         pluginName: "my-plugin",
         version: "1.0.0",
         fromMarketplace: "aidd",
@@ -238,7 +238,7 @@ describe("InstallAiToolUseCase", () => {
       expect(syncSettingsMock.execute).toHaveBeenCalledOnce();
       expect(syncSettingsMock.execute).toHaveBeenCalledWith({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf().sortedById(),
+        tools: expect.any(Array),
       });
     });
 

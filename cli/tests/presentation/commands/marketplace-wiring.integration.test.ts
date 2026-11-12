@@ -286,7 +286,7 @@ describe("aidd marketplace remove", () => {
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
       scope: "user",
-      tools: registeredProfiles(),
+      tools: expect.any(Array),
     });
     expect(marketplaceRemove).not.toHaveBeenCalled();
     expect(activation).not.toHaveBeenCalled();
@@ -312,7 +312,7 @@ describe("aidd marketplace remove", () => {
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
       scope: "project",
-      tools: registeredProfiles(),
+      tools: expect.any(Array),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,

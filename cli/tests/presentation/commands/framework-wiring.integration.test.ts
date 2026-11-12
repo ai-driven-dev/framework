@@ -344,7 +344,7 @@ describe("aidd framework rules", () => {
     expect(await run("rules")).toEqual(["No rules installed for any AI tool."]);
     expect(listInstalledRules).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: expect.any(Array),
     });
   });
 

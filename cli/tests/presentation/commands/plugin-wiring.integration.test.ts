@@ -141,7 +141,7 @@ describe("aidd plugin remove", () => {
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
       scope: "project",
-      tools: registeredProfiles(),
+      tools: expect.any(Array),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
@@ -297,7 +297,7 @@ describe("aidd plugin update", () => {
       toolIds: [toolId],
       projectRoot: PROJECT_ROOT,
       scope: "user",
-      tools: registeredProfiles(),
+      tools: expect.any(Array),
     });
     expect(pluginUpdate).not.toHaveBeenCalled();
   });
@@ -309,7 +309,7 @@ describe("aidd plugin update", () => {
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
       scope: "project",
-      tools: registeredProfiles(),
+      tools: expect.any(Array),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,

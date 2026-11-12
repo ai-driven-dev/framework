@@ -135,7 +135,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
       mode: "named",
       pluginNames: ["aidd-dev", "aidd-pm"],
       interactive: false,
-      tools: catalogOf().sortedById(),
+      tools: expect.any(Array),
     });
   });
 

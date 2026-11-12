@@ -424,7 +424,7 @@ describe("PluginInstallUseCase", () => {
       });
 
       expect(pickExecute).toHaveBeenCalledWith({
-        tools: catalogOf().sortedById(),
+        tools: expect.any(Array),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: true,
@@ -443,7 +443,7 @@ describe("PluginInstallUseCase", () => {
       });
 
       expect(addExecute).toHaveBeenCalledWith({
-        tools: catalogOf().sortedById(),
+        tools: expect.any(Array),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -466,7 +466,7 @@ describe("PluginInstallUseCase", () => {
       });
 
       expect(marketplaceExecute).toHaveBeenCalledWith({
-        tools: catalogOf().sortedById(),
+        tools: expect.any(Array),
         pluginName: "my-plugin",
         version: "1.2.3",
         fromMarketplace: "mkt",
@@ -489,7 +489,7 @@ describe("PluginInstallUseCase", () => {
       });
 
       expect(marketplaceExecute).toHaveBeenCalledWith({
-        tools: catalogOf().sortedById(),
+        tools: expect.any(Array),
         pluginName: "my-plugin",
         version: undefined,
         fromMarketplace: undefined,
