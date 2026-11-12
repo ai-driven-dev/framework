@@ -110,18 +110,18 @@ machine cursor aidd-context scope=user: 0 hook files
   "entries": [
     {
       "event": "sessionStart",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs load",
+      "digest": "fa58cef07bb127e2fdf83bf433462395"
     },
     {
       "event": "stop",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs guard",
+      "digest": "8f5e5140e4899a709bf0ee5552744edf"
     },
     {
       "event": "sessionEnd",
-      "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
-      "digest": "54f3c593a31decd059c8f9dcb3b20834"
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs guard",
+      "digest": "8f5e5140e4899a709bf0ee5552744edf"
     }
   ],
   "scripts": {}

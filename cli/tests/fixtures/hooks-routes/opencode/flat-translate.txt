@@ -1,6 +1,3 @@
-## out-flat/.opencode/hooks/aidd-context/lib/common-rules.cjs
-script, identical to the plugin source
-
 ## out-flat/.opencode/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter for opencode
 
@@ -157,8 +154,8 @@ import { fileURLToPath } from "node:url";
 // itself, not a Node runtime able to run this plugin's own hook scripts.
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 
-const SESSION_START = [{"script":"memory.cjs","args":["hook"]}];
-const STOP = [{"script":"memory.cjs","args":["hook"]}];
+const SESSION_START = [{"script":"memory.cjs","args":["load"]}];
+const STOP = [{"script":"memory.cjs","args":["guard"]}];
 const POST_TOOL_USE = [];
 
 // Asynchronous on purpose: this can spawn one script per matching hook across every mapped

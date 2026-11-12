@@ -1,8 +1,5 @@
 second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
 
-## project/.kilo/hooks/aidd-context/lib/common-rules.cjs
-script, identical to the plugin source
-
 ## project/.kilo/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter for kilo
 
@@ -77,8 +74,8 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
-const SESSION_START = [{"script":"memory.cjs","args":["hook"]}];
-const STOP = [{"script":"memory.cjs","args":["hook"]}];
+const SESSION_START = [{"script":"memory.cjs","args":["load"]}];
+const STOP = [{"script":"memory.cjs","args":["guard"]}];
 const POST_TOOL_USE = [];
 
 function runHook(script, args, payload, directory) {
@@ -418,8 +415,7 @@ export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 
 
 # recorded
-project kilo aidd-context scope=project: 6 hook files
-  .kilo/hooks/aidd-context/lib/common-rules.cjs
+project kilo aidd-context scope=project: 5 hook files
   .kilo/hooks/aidd-context/lib/host.cjs
   .kilo/hooks/aidd-context/lib/markdown.cjs
   .kilo/hooks/aidd-context/lib/memory-rules.cjs

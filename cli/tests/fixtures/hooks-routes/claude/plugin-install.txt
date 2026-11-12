@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs load",
             "timeout": 5,
             "statusMessage": "AIDD Context: refresh project memory"
           }
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs guard",
             "timeout": 5,
             "statusMessage": "AIDD Context: check memory changes"
           }
@@ -28,9 +28,6 @@
   }
 }
 
-
-## project/.claude/plugins/aidd-context/hooks/lib/common-rules.cjs
-script, identical to the plugin source
 
 ## project/.claude/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-claude.cjs
@@ -149,9 +146,8 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 6 hook files
+project claude aidd-context scope=project: 5 hook files
   .claude/plugins/aidd-context/hooks/hooks.json
-  .claude/plugins/aidd-context/hooks/lib/common-rules.cjs
   .claude/plugins/aidd-context/hooks/lib/host.cjs
   .claude/plugins/aidd-context/hooks/lib/markdown.cjs
   .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs

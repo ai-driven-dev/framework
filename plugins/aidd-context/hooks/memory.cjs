@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 "use strict";
 /**
- * The memory bank's engine: `hook` snapshots the bank at session start and checks it at the turn
- * end, `check` is the one strict gate, `sync` keeps the context files' blocks true. The hook reads
- * its event only through `lib/host.cjs` and never blocks a write. Node built-ins only.
+ * The memory bank's engine: `load` snapshots the bank at session start, `guard` checks it at the
+ * turn end, `check` is the one strict gate, `sync` keeps the context files' blocks true. The hooks
+ * read their event only through `lib/host.cjs` and never block a write. Node built-ins only.
  */
 
 const crypto = require("node:crypto");
@@ -11,7 +11,6 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { RULES, ERROR, WARNING, wordsIn } = require("./lib/memory-rules.cjs");
-const { formatFindings } = require("./lib/common-rules.cjs");
 const { markdownLines } = require("./lib/markdown.cjs");
 
 const PLUGIN = "aidd-context";
@@ -59,6 +58,30 @@ const LOST_LINES_CAP = 15;
 
 const EXIT_OK = 0;
 const EXIT_ERRORS = 1;
+
+const WARNINGS_CAP = 10;
+
+function located({ file, line }) {
+  return line === undefined ? file : `${file}:${line}`;
+}
+
+function quoted(excerpt) {
+  return excerpt === undefined ? "" : ` "${String(excerpt).replace(/\r?\n/gu, " ").replace(/\\/gu, "\\\\").replace(/"/gu, '\\"')}"`;
+}
+
+function counted(count, noun) {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+// One count line, then the errors, then at most `warningsCap` warnings.
+function formatFindings(plugin, { errors, warnings }, { warningsCap = WARNINGS_CAP } = {}) {
+  if (errors.length + warnings.length === 0) return "";
+  return [
+    `${plugin}: ${counted(errors.length, "error")}, ${counted(warnings.length, "warning")}`,
+    ...errors.map((finding) => `${located(finding)} ${finding.rule}${quoted(finding.excerpt)} => ${finding.fix}`),
+    ...warnings.slice(0, warningsCap).map((finding) => `${located(finding)} ${finding.rule} warning ${finding.message} => ${finding.fix}`),
+  ].join("\n");
+}
 
 function toPosix(file) {
   return file.split(path.sep).join("/");
@@ -307,12 +330,12 @@ function atTurnEnd(host, event) {
   if (text !== "") host.answer({ level: 1, text, person: text });
 }
 
-function hook() {
+function hook(goal) {
   const host = require("./lib/host.cjs");
   const event = host.readEvent();
   if (event === undefined) return;
-  if (event.event === "SessionStart") atSessionStart(event);
-  else if (event.event === "Stop") atTurnEnd(host, event);
+  if (goal === "load") atSessionStart(event);
+  else atTurnEnd(host, event);
 }
 
 /** The whole bank adds absence, missing always files and layout; a missing named file errs. */
@@ -589,9 +612,9 @@ function fail(message) {
   return EXIT_ERRORS;
 }
 
-function runHook() {
+function runHook(goal) {
   try {
-    hook();
+    hook(goal);
   } catch {
     // A broken check never blocks a turn end or a session start.
   }
@@ -622,7 +645,8 @@ function runSync(args) {
 }
 
 const COMMANDS = {
-  hook: { run: runHook, usage: "hook" },
+  load: { run: () => runHook("load"), usage: "load" },
+  guard: { run: () => runHook("guard"), usage: "guard" },
   check: { run: runCheck, usage: "check [root] [file...]" },
   sync: { run: runSync, usage: "sync [tool...]" },
 };

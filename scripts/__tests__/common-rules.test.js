@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 
-const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-context/hooks/lib/common-rules.cjs");
+const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-ui/hooks/lib/common-rules.cjs");
 const { isShellWrite, formatFindings } = require(LIBRARY);
 
 test("the shared library exports exactly what every plugin's hooks call: the write test and the output shape", () => {

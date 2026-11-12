@@ -4,7 +4,7 @@
   "hooks": {
     "sessionStart": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs load",
         "timeout": 5
       },
       {
@@ -18,13 +18,13 @@
     ],
     "stop": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs guard",
         "timeout": 5
       }
     ],
     "sessionEnd": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs hook",
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs guard",
         "timeout": 5
       }
     ],
@@ -37,9 +37,6 @@
   }
 }
 
-
-## out-flat/.cursor/hooks/aidd-context/lib/common-rules.cjs
-script, identical to the plugin source
 
 ## out-flat/.cursor/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter host-cursor.cjs

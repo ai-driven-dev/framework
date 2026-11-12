@@ -108,9 +108,15 @@ function stopPayload(host, root, { active = false } = {}) {
   return payload;
 }
 
+/** The goal hooks.json gives each event: a session start loads, a turn end guards. */
+function goalOf(payload) {
+  const event = typeof payload === "string" ? "" : JSON.stringify(payload);
+  return /"(?:SessionStart|sessionStart)"/u.test(event) ? "load" : "guard";
+}
+
 /** A run's own system temp folder: nothing a run leaves there may reach another. */
 function run(host, payload, { cwd = os.tmpdir(), preload, tmp = tempDir("memory-hook-state-") } = {}) {
-  const args = [...(preload ? ["--require", preload] : []), hookFor(host), "hook"];
+  const args = [...(preload ? ["--require", preload] : []), hookFor(host), goalOf(payload)];
   const result = spawnSync(process.execPath, args, {
     input: typeof payload === "string" ? payload : JSON.stringify(payload),
     encoding: "utf8",
@@ -355,6 +361,15 @@ test("Stop reports a finding on a line the turn wrote, in a file it changed", ()
   assert.match(stopped(root, tmp).reason, /^aidd-context: 0 errors, 1 warning\naidd_docs\/memory\/vcs\.md:\d+ M5 warning /u);
 });
 
+test("Stop counts every warning but lists at most 10, so a long turn does not flood the answer", () => {
+  const longs = Array.from({ length: 12 }, (_, index) => `- Item ${index} ${Array(40).fill("word").join(" ")}.`).join("\n");
+  const { root, tmp } = started({ [VCS]: BANK });
+  write(root, VCS, `${BANK}${longs}\n`);
+  const { reason } = stopped(root, tmp);
+  assert.match(reason, /^aidd-context: 0 errors, 13 warnings\n/u, "12 long bullets and the file over its word limit");
+  assert.equal(reason.match(/ M\d warning /gu).length, 10);
+});
+
 test("Stop reports a file over the word limit that the turn made longer, though its title line was already there", () => {
   const filler = Array.from({ length: 55 }, (_, index) => `- Fact ${index} holds eight plain words here.`).join("\n");
   const { root, tmp } = started({ [VCS]: `${BANK}${filler}\n` });
@@ -468,7 +483,7 @@ test("the hook loads in a project whose package.json declares an ES module", () 
   fs.cpSync(TEMPLATES, path.join(root, "skills/02-project-memory/assets/templates/memory"), { recursive: true });
   const tmp = tempDir("memory-hook-state-");
   const hook = (payload) =>
-    spawnSync(process.execPath, [path.join(root, "hooks", ENTRY), "hook"], { input: JSON.stringify(payload), encoding: "utf8", cwd: root, env: { ...ENV, ...tempEnv(tmp) } });
+    spawnSync(process.execPath, [path.join(root, "hooks", ENTRY), goalOf(payload)], { input: JSON.stringify(payload), encoding: "utf8", cwd: root, env: { ...ENV, ...tempEnv(tmp) } });
   assert.equal(hook(sessionStartPayload("claude", root)).status, 0);
   write(root, VCS, "# VCS\n");
   const result = hook(stopPayload("claude", root));
@@ -484,28 +499,32 @@ test("the hook reads its event only through lib/host.cjs and never a host's payl
   }
 });
 
+test("aidd-context formats its own findings and carries no copy of another plugin's library", () => {
+  assert.equal(fs.existsSync(path.join(HOOKS, "lib", "common-rules.cjs")), false);
+});
+
 test("the entry and its libraries require only the built-ins the contract allows and their own modules", () => {
-  for (const file of [ENTRY, "lib/memory-rules.cjs", "lib/markdown.cjs", "lib/common-rules.cjs"]) {
+  for (const file of [ENTRY, "lib/memory-rules.cjs", "lib/markdown.cjs"]) {
     const required = [...fs.readFileSync(path.join(HOOKS, file), "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/gu)].map((m) => m[1]);
     for (const name of required) assert.ok(["node:crypto", "node:fs", "node:os", "node:path"].includes(name) || name.startsWith("./"), `${file} requires ${name}`);
   }
 });
 
-test("hooks.json runs the one entry, within 5 s, at session start and at the turn end, and no longer after a write", () => {
+test("hooks.json names each event's goal, loads at session start and guards at the turn end, within 5 s", () => {
   const { hooks } = JSON.parse(fs.readFileSync(path.join(HOOKS, "hooks.json"), "utf8"));
-  const command = "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs hook";
+  const goals = { SessionStart: "load", Stop: "guard" };
   assert.deepEqual(Object.keys(hooks).sort(), ["SessionStart", "Stop"]);
   for (const event of ["SessionStart", "Stop"]) {
-    assert.equal(hooks[event][0].hooks[0].command, command, event);
+    assert.equal(hooks[event][0].hooks[0].command, `node \${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs ${goals[event]}`, event);
     assert.equal(hooks[event][0].hooks[0].timeout, 5, `${event} declares the contract's 5 s timeout`);
   }
   assert.equal(hooks.Stop[0].hooks[0].statusMessage, "AIDD Context: check memory changes");
 });
 
-test("the engine keeps check, sync and hook and has dropped the plan, answer, report and changes commands and their libraries", () => {
+test("the engine keeps load, guard, check and sync and has dropped the plan, answer, report and changes commands and their libraries", () => {
   for (const command of ["plan", "answer", "report", "changes"]) {
     const result = spawnSync(process.execPath, [path.join(HOOKS, ENTRY), command], { encoding: "utf8" });
-    assert.match(result.stderr, /^usage: memory\.cjs hook \| check \[root\] \[file\.\.\.\] \| sync \[tool\.\.\.\]\n$/u, command);
+    assert.match(result.stderr, /^usage: memory\.cjs load \| guard \| check \[root\] \[file\.\.\.\] \| sync \[tool\.\.\.\]\n$/u, command);
     assert.equal(result.status, 1, command);
   }
   for (const lib of ["plan", "fact-sheet", "report", "changes", "bank-guard"]) assert.equal(fs.existsSync(path.join(HOOKS, "lib", `${lib}.cjs`)), false, lib);

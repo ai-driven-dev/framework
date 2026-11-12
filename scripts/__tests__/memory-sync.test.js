@@ -337,7 +337,7 @@ test("a session start, or any sync, never adds a block to a file holding none", 
   const root = sandbox({ "CLAUDE.md": TEAM, "AGENTS.md": TEAM });
   try {
     const payload = JSON.stringify({ hook_event_name: "SessionStart", session_id: "sync-no-block", cwd: root, source: "startup" });
-    const hook = spawnSync(process.execPath, [HOOK, "hook"], { cwd: root, env: HOOK_ENV, input: payload, encoding: "utf8" });
+    const hook = spawnSync(process.execPath, [HOOK, "load"], { cwd: root, env: HOOK_ENV, input: payload, encoding: "utf8" });
     assert.equal(hook.status, 0, hook.stderr);
     assert.equal(read(root, "CLAUDE.md"), TEAM, "the session start added a block");
     assert.deepEqual(sync(root), { status: 0, stdout: "", stderr: "" }, "a bare sync spoke about a file it never adds to");
@@ -419,7 +419,7 @@ test("a session start leaves a team line shaped like a generated one in place", 
   const root = sandbox({ "CLAUDE.md": team });
   try {
     const payload = JSON.stringify({ hook_event_name: "SessionStart", session_id: "sync-team-line", cwd: root, source: "startup" });
-    const result = spawnSync(process.execPath, [HOOK, "hook"], { cwd: root, env: HOOK_ENV, input: payload, encoding: "utf8" });
+    const result = spawnSync(process.execPath, [HOOK, "load"], { cwd: root, env: HOOK_ENV, input: payload, encoding: "utf8" });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(read(root, "CLAUDE.md"), team);
   } finally {

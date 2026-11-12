@@ -10,7 +10,7 @@ approval_policy = "on-request"
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs load",
             "timeout": 5,
             "statusMessage": "AIDD Context: refresh project memory"
           }
@@ -22,7 +22,7 @@ approval_policy = "on-request"
         "hooks": [
           {
             "type": "command",
-            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs hook",
+            "command": "node ${PLUGIN_ROOT}/hooks/memory.cjs guard",
             "timeout": 5,
             "statusMessage": "AIDD Context: check memory changes"
           }
@@ -32,9 +32,6 @@ approval_policy = "on-request"
   }
 }
 
-
-## project/.codex/plugins/aidd-context/hooks/lib/common-rules.cjs
-script, identical to the plugin source
 
 ## project/.codex/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-codex.cjs
@@ -142,9 +139,8 @@ script, identical to the plugin source
 script, identical to the plugin source
 
 # recorded
-project codex aidd-context scope=project: 6 hook files
+project codex aidd-context scope=project: 5 hook files
   .codex/plugins/aidd-context/hooks/hooks.json
-  .codex/plugins/aidd-context/hooks/lib/common-rules.cjs
   .codex/plugins/aidd-context/hooks/lib/host.cjs
   .codex/plugins/aidd-context/hooks/lib/markdown.cjs
   .codex/plugins/aidd-context/hooks/lib/memory-rules.cjs
