@@ -1,10 +1,12 @@
 ## Review comments
 
+<!-- aidd-answer-comments-summary -->
+
 Done: {{n}}{{ (short shas), when there are any}}. Answered: {{n}}.
 
 ### FAQ: your call
 
-1. **{{question}}** ([thread]({{url}})): {{option a}} / {{option b}}
+1. **{{question}}** ([thread]({{url}})){{options, if known}}
 
 ### To do
 
