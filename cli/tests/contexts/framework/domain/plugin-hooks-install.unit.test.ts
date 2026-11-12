@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AiTool, HasPlugins } from "../../../../src/contexts/tools/domain/profile.js";
+import type { AiTool, WithSections } from "../../../../src/contexts/tools/domain/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
@@ -23,7 +23,7 @@ const HOOKS_JSON = JSON.stringify({
   hooks: { SessionStart: [{ hooks: [{ type: "command", command: HOOK_COMMAND }] }] },
 });
 
-const HOOK_HOSTS: ReadonlyArray<AiTool<HasPlugins>> = [claude, cursor, copilot, codex];
+const HOOK_HOSTS: ReadonlyArray<AiTool<WithSections<"plugins">>> = [claude, cursor, copilot, codex];
 
 const MCP_JSON = JSON.stringify({
   mcpServers: { local: { command: `${SOURCE_TOKEN}/bin/server.js`, args: [] } },
@@ -43,7 +43,7 @@ function pluginWithHookAndScript(): PluginDistribution {
   });
 }
 
-function installedFor(tool: AiTool<HasPlugins>) {
+function installedFor(tool: AiTool<WithSections<"plugins">>) {
   return translator.translateWithComponentPaths(pluginWithHookAndScript(), tool);
 }
 

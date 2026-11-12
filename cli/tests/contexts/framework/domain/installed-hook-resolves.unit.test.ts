@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AiTool, HasPlugins } from "../../../../src/contexts/tools/domain/profile.js";
+import type { AiTool, WithSections } from "../../../../src/contexts/tools/domain/profile.js";
 import { buildClaudeContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { buildCodexContract } from "../../../../src/contexts/tools/domain/profiles/codex/build.js";
@@ -38,7 +38,7 @@ const HOOKS_JSON = JSON.stringify({
   },
 });
 
-const HOOK_HOSTS: ReadonlyArray<AiTool<HasPlugins>> = [claude, cursor, copilot, codex];
+const HOOK_HOSTS: ReadonlyArray<AiTool<WithSections<"plugins">>> = [claude, cursor, copilot, codex];
 
 function distribution(): PluginDistribution {
   const hooks = [
@@ -55,7 +55,7 @@ function distribution(): PluginDistribution {
 
 /** Every path a hook command names, as the tool would resolve it: its own plugin-root
  * variable and a leading `./` both mean the plugin's own directory. */
-function commandTargets(manifest: string, tool: AiTool<HasPlugins>): string[] {
+function commandTargets(manifest: string, tool: AiTool<WithSections<"plugins">>): string[] {
   const token = nativeOf(tool.section("plugins")).rootToken() ?? "";
   return [...manifest.matchAll(/"command":\s*"([^"]+)"/gu)]
     .flatMap((match) => (match[1] ?? "").split(" "))
@@ -63,7 +63,7 @@ function commandTargets(manifest: string, tool: AiTool<HasPlugins>): string[] {
     .map((word) => word.replace(token, "").replace(/^\.\//u, "").replace(/^\//u, ""));
 }
 
-function installed(tool: AiTool<HasPlugins>): { paths: string[]; manifest: string } {
+function installed(tool: AiTool<WithSections<"plugins">>): { paths: string[]; manifest: string } {
   const { files } = translator.translateWithComponentPaths(distribution(), tool);
   const root = nativeOf(tool.section("plugins")).pluginOutputDir(PLUGIN) ?? "";
   return {
@@ -111,7 +111,9 @@ describe("a hook that was installed", () => {
 
 /** The two routes write different layouts by design — one a bundle, the other a tool's own
  * directory — so what has to agree is the plugin's own file the command names. */
-const BUILT_BY: ReadonlyArray<[AiTool<HasPlugins>, () => { pluginRootToken?: string | null }]> = [
+const BUILT_BY: ReadonlyArray<
+  [AiTool<WithSections<"plugins">>, () => { pluginRootToken?: string | null }]
+> = [
   [claude, buildClaudeContract],
   [cursor, buildCursorContract],
   [copilot, buildCopilotMarketplaceContract],

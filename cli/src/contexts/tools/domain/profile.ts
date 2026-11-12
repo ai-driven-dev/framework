@@ -43,13 +43,8 @@ export function isProfileSectionKey(name: string): name is ProfileSectionKey {
   return PROFILE_SECTION_KEYS.some((key) => key === name);
 }
 
-export interface HasAgents {
-  readonly agents: AgentsSection;
-}
-
-export interface HasPlugins {
-  readonly plugins: PluginsCapability;
-}
+/** The declared type of a tool that holds every section named in `K`. */
+export type WithSections<K extends ProfileSectionKey> = Pick<Required<ProfileSections>, K>;
 
 /** The section keys a tool's own type declares, so asking for one needs no `null` check. */
 type DeclaredKey<C extends ProfileSections> = {

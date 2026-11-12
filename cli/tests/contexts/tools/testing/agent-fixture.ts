@@ -1,4 +1,4 @@
-import type { AiTool, HasAgents } from "../../../../src/contexts/tools/domain/profile.js";
+import type { AiTool, WithSections } from "../../../../src/contexts/tools/domain/profile.js";
 
 /** A Claude-format agent carrying every key a host may translate. */
 export const NAMED_AGENT = `---
@@ -17,7 +17,7 @@ Plan before building.
 `;
 
 /** What a plugin install writes for `planner.md`. */
-export function installed(tool: AiTool<HasAgents>, content: string): string {
+export function installed(tool: AiTool<WithSections<"agents">>, content: string): string {
   const agents = tool.section("agents");
   const { frontmatter, body } = agents.deserialize(content);
   return agents.serialize(agents.convertFrontmatter(frontmatter, "planner.md"), body);
@@ -26,7 +26,7 @@ export function installed(tool: AiTool<HasAgents>, content: string): string {
 /** Where and what a marketplace build writes for the plugin's `planner.md`. The flat build
  * is checked against the shipped agents in `tests/runtime/wiring/shipped-agents.integration.test.ts`. */
 export function inMarketplace(
-  tool: AiTool<HasAgents>,
+  tool: AiTool<WithSections<"agents">>,
   content: string
 ): { path: string; content: string } {
   const agents = tool.buildContracts?.marketplace?.().artifacts.agents;
