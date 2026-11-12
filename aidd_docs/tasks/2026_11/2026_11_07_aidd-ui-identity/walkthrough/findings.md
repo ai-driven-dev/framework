@@ -13,6 +13,19 @@ Ensuite : `feature`, `audit`, puis l'orchestrateur, selon la [feuille de route](
 
 | Projet | Skill | Seul | Dans le flow | Écart | Gravité |
 | --- | --- | --- | --- | --- | --- |
+| vierge | 01 | oui | | Première question : « Which task folder should history.md rows cite? ». Elle parle du mécanisme interne (history.md, citer) et demande un choix que la personne ne sait pas faire. Le skill devrait prendre un dossier par défaut et le dire, sans poser la question. | moyenne |
+| vierge | 01 | oui | | Deuxième question : persona, but et produit en une seule question. L'option 1 « I'll describe it, pick Other » double « Type something » : un choix vide. Le même doublon revient à la question suivante. Constaté : choisir cette option n'envoie aucun texte, et le skill doit reposer la question. | moyenne |
+| vierge | 01 | oui | | Troisième question : la liste des parcours et de leurs étapes est demandée à la personne. Proposer d'abord, puis faire approuver, devrait être le comportement par défaut, pas une option parmi d'autres. | moyenne |
+| vierge | 01 | oui | | La proposition de parcours est bonne : 4 parcours, des étapes concrètes. Mais le parcours 2 fait jouer un second acteur, le client, et contient une étape qui n'est pas un écran (« Designer gets notification »). Aucune règle de 01 ne couvre ni l'un ni l'autre : le skill a improvisé. | basse |
+| vierge | 01 | oui | | Juste après un passage propre de 01, `validate` sort en 1 sur T1 (tokens.json absent), avec 54 avertissements R18 (composant absent). La personne voit une erreur qu'elle ne peut pas corriger à cette étape. Et le conseil de T1, « run extract », n'a aucun sens sur un projet vierge, puisqu'il n'y a rien à extraire. | haute |
+| vierge | 01 + vitrine | oui | | Avis de la personne : « je comprends rien, c'est pas très beau ». | haute |
+| vierge | 01 + vitrine | oui | | Un wireframe n'affiche que le nom de ses zones, en texte brut (« nav summary actions invoice-list »), avec la police par défaut du navigateur : pas de boîtes, pas de mise en page. | haute |
+| vierge | 01 | oui | | Les quatre états d'un wireframe (default, empty, loading, error) sont identiques au caractère près : l'état n'apporte rien, et la vitrine demande pourtant un OK pour chacun. | haute |
+| vierge | vitrine | oui | | Sur chaque page de wireframe, un bloc « Engine checks » répète les avertissements R18 (composant absent). Le design system n'existe pas encore : c'est du bruit, écrit en jargon. | haute |
+| vierge | vitrine | oui | | Un parcours s'affiche en tableau Screen / Action, sans flèches ni enchaînement visible, et les écrans du tableau ne sont pas des liens. | moyenne |
+| vierge | vitrine | oui | | La rubrique des wireframes s'appelle « Templates » dans la navigation, un mot que rien n'explique. | moyenne |
+| vierge | vitrine | oui | | Dès la fin de 01, la vue d'ensemble demande de valider les 16 wireframes (« Still to review », « All OK, copy »), alors qu'il n'y a encore rien à juger. | moyenne |
+| vierge | 01 | oui | | Le compte rendu de fin est clair : où sont les fichiers, ce qui a été ajouté et pourquoi, rien de commité. | aucune, à garder |
 
 ## Frontières entre skills, vues par la machine
 

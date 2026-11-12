@@ -10,14 +10,15 @@ The request.
 
 1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
 2. Read `aidd_docs/ui/` and the UI code. Name the [case](../references/cases.md).
-3. Take the task folder the user named, else ask.
+3. Take the task folder the user named. Say which; never ask.
+   - Else one under `aidd_docs/tasks/`, named after the request.
    - It need not exist: only `history.md` rows cite it.
 4. Settle the persona:
    - A brief under `aidd_docs/` describing one: propose it as written.
-   - Otherwise ask who walks the journey and what they want.
+   - Otherwise draft one from the request: who, and what they want.
 5. Settle the journeys:
    - Code: deduce each from its routes and screens.
-   - Scratch: ask which journeys, and the steps of each.
+   - Scratch: draft them from the persona, each with its steps.
    - Change: name what is added or changed, and how.
    - A `revise` comment in a review is the request.
    - Show them and wait for the user's agreement. If refused, stop.

@@ -560,10 +560,10 @@ describe("aidd-ui owed problems", () => {
   };
   const rulesOf = (dir) => [...new Set(validate(dir).out.slice(1).flatMap((line) => line.split(" ").filter((word) => /^[A-Z]\d+$/.test(word)).slice(0, 1)))].sort();
 
-  it("name, for the brand alone, the one rule it leaves", () => {
+  it("name, for the brand alone, the one rule it leaves, and none while no element needs a token", () => {
     for (const entry of fs.readdirSync(path.join(tmp, UI))) if (entry !== "brand.md") fs.rmSync(path.join(tmp, UI, entry), { recursive: true });
     fs.rmSync(path.join(tmp, "src"), { recursive: true });
-    assert.deepEqual(rulesOf(tmp), ["T1"]);
+    assert.deepEqual(rulesOf(tmp), []);
     assert.deepEqual(owed("02-brand"), ["T1 another skill"]);
   });
 
@@ -605,6 +605,7 @@ const JOURNEY_FILLS = {
     state: "default",
     "first zone": "query",
     "next zone": "list",
+    "what this zone shows in this state, in plain HTML": "<p>Search</p>",
   },
 };
 
@@ -624,7 +625,7 @@ describe("aidd-ui journeys templates", () => {
     const render = filledJourney("wireframe-render");
     put(tmp, `${UI}/journeys/first-search.md`, filledJourney("journey"));
     put(tmp, `${UI}/wireframes/results.md`, filledJourney("wireframe"));
-    put(tmp, `${UI}/wireframes/results.html`, render.replace(/<section[\s\S]*<\/section>/, (section) => `${section}\n${section.replace('data-state="default"', 'data-state="empty"')}`));
+    put(tmp, `${UI}/wireframes/results.html`, render.replace(/<section[\s\S]*<\/section>/, (section) => `${section}\n${section.replace('data-state="default"', 'data-state="empty"').replaceAll("<p>Search</p>", "<p>Nothing found</p>")}`));
     assert.equal(engine("bump", "--task", TASK, "--created", "first-search", "results", "--root", tmp).status, 0);
     const { code, out } = validate(tmp);
     assert.deepEqual([code, out[0], out.slice(1).map((line) => line.split(" ").slice(0, 3).join(" "))], [0, "aidd-ui: 0 errors, 1 warning", [`${UI}/wireframes/results.md R18 warning`]]);
@@ -633,10 +634,10 @@ describe("aidd-ui journeys templates", () => {
 });
 
 describe("aidd-ui journeys skill", () => {
-  it("ends saying each record stays proposed until its review, and names the components the design system lacks", () => {
+  it("ends saying each record waits for its review, and names the components the design system lacks", () => {
     const conclude = fs.readFileSync(path.join(JOURNEYS, "actions/03-conclude.md"), "utf8");
-    assert.ok(conclude.includes("each journey and wireframe written is `proposed` until its review"));
+    assert.ok(conclude.includes("that each waits for the person's review"));
     assert.ok(fs.readFileSync(path.join(JOURNEYS, "references/wireframes.md"), "utf8").includes("warning R18"));
-    assert.ok(conclude.includes("each component a warning names, for the design system to add"));
+    assert.ok(conclude.includes("the components the wireframes expect, for the design system"));
   });
 });

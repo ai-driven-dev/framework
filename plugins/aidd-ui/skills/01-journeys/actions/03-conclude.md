@@ -15,10 +15,13 @@ The engine and the files written.
 4. Keep the `warning` lines.
 5. Keep the errors the [engine](../references/engine.md) says another skill owes.
 6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
-7. Reply with:
-   - the journeys and wireframes written or raised, with their versions
-   - each component a warning names, for the design system to add
-   - that each journey and wireframe written is `proposed` until its review.
+7. Reply, in plain words:
+   - the journeys and wireframes written or raised
+   - where to look: the showcase's index page
+   - that each waits for the person's review
+   - what comes next: the brand, then the design system
+   - the components the wireframes expect, for the design system
+   - an error another skill owes, as a next step, not a failure.
 
 ## Output
 
