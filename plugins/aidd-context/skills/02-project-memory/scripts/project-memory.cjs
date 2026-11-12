@@ -7,6 +7,7 @@
 const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
+const { ERROR, rootFiles, lintFile, formatFindings } = require("./lib/memory-lint.cjs");
 
 const MEMORY_DIR = "aidd_docs/memory";
 const DOCS_README = "aidd_docs/README.md";
@@ -33,7 +34,7 @@ const TOOL_FILES = Object.freeze({
   copilot: "AGENTS.md",
 });
 
-// Spelled as the turn-end check spells them; a test holds them equal.
+// Spelled as the memory hook spells them; a test holds them equal.
 const BLOCK_OPEN = "<!-- aidd_project_memory:start -->";
 const BLOCK_CLOSE = "<!-- aidd_project_memory:end -->";
 const LEGACY_BLOCK_OPEN = "<aidd_project_memory>";
@@ -42,7 +43,7 @@ const COPILOT_FILE = ".github/copilot-instructions.md";
 const COPILOT_POINTER = "Project memory: [AGENTS.md](../AGENTS.md).";
 const MARKERS = [BLOCK_OPEN, BLOCK_CLOSE, LEGACY_BLOCK_OPEN, LEGACY_BLOCK_CLOSE];
 
-const USAGE = "usage: project-memory.cjs changes | scaffold [file...] | wire <tool...>";
+const USAGE = "usage: project-memory.cjs changes | scaffold [file...] | wire <tool...> | check";
 
 class UsageError extends Error {}
 
@@ -148,7 +149,39 @@ function wire(root, tools) {
   return lines;
 }
 
-const COMMANDS = { changes, scaffold, wire };
+/** The lines of `file` written since `base`: every line when there is no base or it held no such file. */
+function addedLines(root, base, file) {
+  if (base === null || git(root, ["cat-file", "-e", `${base}:${file}`]) === null) return null;
+  const diff = git(root, ["diff", "-U0", "--no-color", "--no-ext-diff", base, "--", file]) ?? "";
+  const added = new Set();
+  for (const match of diff.matchAll(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gmu)) {
+    const start = Number(match[1]);
+    for (let line = start; line < start + Number(match[2] ?? 1); line += 1) added.add(line);
+  }
+  return added;
+}
+
+/** A finding on a line written since the bank's last commit; the word limit judges the whole file. */
+function written(finding, added) {
+  if (added === null) return true;
+  if (finding.rule === "M6") return added.size > 0;
+  const last = finding.endLine ?? finding.line;
+  for (let line = finding.line; line <= last; line += 1) if (added.has(line)) return true;
+  return false;
+}
+
+/** Lints the bank's root files, only the lines written since its last commit: the rest is the team's. */
+function check(root) {
+  const base = git(root, ["log", "-1", "--format=%H", "--", MEMORY_DIR]) || null;
+  const found = rootFiles(root).flatMap((file) => {
+    const added = addedLines(root, base, file);
+    return lintFile(root, file).filter((finding) => written(finding, added));
+  });
+  if (found.length === 0) return ["check: nothing to fix"];
+  return { lines: formatFindings("check", found), status: found.some((finding) => finding.severity === ERROR) ? 1 : 0 };
+}
+
+const COMMANDS = { changes, scaffold, wire, check };
 
 function main(argv) {
   const [command, ...args] = argv;
@@ -157,8 +190,10 @@ function main(argv) {
     return 1;
   }
   try {
-    process.stdout.write(`${COMMANDS[command](process.cwd(), args).join("\n")}\n`);
-    return 0;
+    const out = COMMANDS[command](process.cwd(), args);
+    const { lines, status } = Array.isArray(out) ? { lines: out, status: 0 } : out;
+    process.stdout.write(`${lines.join("\n")}\n`);
+    return status;
   } catch (error) {
     if (!(error instanceof UsageError)) throw error;
     process.stderr.write(`project-memory.cjs ${command}: ${error.message}\n`);

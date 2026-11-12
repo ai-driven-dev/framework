@@ -5,8 +5,8 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { lintFile } = require("../../plugins/aidd-context/hooks/memory.cjs");
-const { RULES } = require("../../plugins/aidd-context/hooks/lib/memory-rules.cjs");
+const { lintFile } = require("../../plugins/aidd-context/skills/02-project-memory/scripts/lib/memory-lint.cjs");
+const { RULES } = require("../../plugins/aidd-context/skills/02-project-memory/scripts/lib/memory-rules.cjs");
 
 const MEMORY = "aidd_docs/memory";
 const words = (count, word = "word") => Array(count).fill(word).join(" ");
@@ -200,28 +200,26 @@ test("M3: every question of every template is found when its file keeps it", () 
   }
 });
 
-// Where a build puts the hooks and the skill's templates, as `aidd translate --as flat` lays them
-// out per tool, the plugin tree, and a skill carrying its own copy of the hooks.
+// Where a build puts the skill, as `aidd translate --as flat` lays it out per tool, and the plugin tree.
 const LAYOUTS = {
-  "plugin tree": ["hooks", "skills/02-project-memory"],
-  claude: [".claude/hooks/aidd-context", ".claude/skills/aidd-context-02-project-memory"],
-  cursor: [".cursor/hooks/aidd-context", ".cursor/skills/aidd-context-02-project-memory"],
-  copilot: [".github/hooks/aidd-context", ".github/skills/aidd-context-02-project-memory"],
-  codex: [".codex/hooks/aidd-context", ".agents/skills/aidd-context-02-project-memory"],
-  opencode: [".opencode/hooks/aidd-context", ".opencode/skills/aidd-context/02-project-memory"],
-  kilo: [".kilo/hooks/aidd-context", ".kilo/skills/aidd-context/02-project-memory"],
-  "skill copy": ["skills/02-project-memory/hooks", "skills/02-project-memory"],
+  "plugin tree": "skills/02-project-memory",
+  claude: ".claude/skills/aidd-context-02-project-memory",
+  cursor: ".cursor/skills/aidd-context-02-project-memory",
+  copilot: ".github/skills/aidd-context-02-project-memory",
+  codex: ".agents/skills/aidd-context-02-project-memory",
+  opencode: ".opencode/skills/aidd-context/02-project-memory",
+  kilo: ".kilo/skills/aidd-context/02-project-memory",
 };
 
-test("M3 finds the templates in every layout a build produces, and flags nothing without them", () => {
-  const plugin = path.resolve(__dirname, "../../plugins/aidd-context");
-  for (const [layout, [hooks, skill]] of Object.entries(LAYOUTS)) {
+test("M3 finds the templates beside the skill in every layout a build produces, and flags nothing without them", () => {
+  const skillSource = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory");
+  for (const [layout, skill] of Object.entries(LAYOUTS)) {
     for (const withTemplates of [true, false]) {
       const root = fs.mkdtempSync(path.join(os.tmpdir(), "memory-layout-"));
       try {
-        fs.cpSync(path.join(plugin, "hooks"), path.join(root, hooks), { recursive: true });
-        if (withTemplates) fs.cpSync(path.join(plugin, "skills/02-project-memory/assets/templates"), path.join(root, skill, "assets/templates"), { recursive: true });
-        const script = `const { RULES } = require(${JSON.stringify(path.join(root, hooks, "lib/memory-rules.cjs"))});\nconsole.log(RULES.find((rule) => rule.id === "M3").check({ file: "aidd_docs/memory/vcs.md", text: process.argv[1] }).length);`;
+        fs.cpSync(path.join(skillSource, "scripts"), path.join(root, skill, "scripts"), { recursive: true });
+        if (withTemplates) fs.cpSync(path.join(skillSource, "assets/templates"), path.join(root, skill, "assets/templates"), { recursive: true });
+        const script = `const { RULES } = require(${JSON.stringify(path.join(root, skill, "scripts/lib/memory-rules.cjs"))});\nconsole.log(RULES.find((rule) => rule.id === "M3").check({ file: "aidd_docs/memory/vcs.md", text: process.argv[1] }).length);`;
         const run = spawnSync(process.execPath, ["-e", script, `# V\n\n- ${slotOf("vcs.md", 2)}\n`], { encoding: "utf8" });
         assert.equal(run.stdout.trim(), withTemplates ? "1" : "0", `${layout}${withTemplates ? "" : " without templates"}: ${run.stderr}`);
       } finally {

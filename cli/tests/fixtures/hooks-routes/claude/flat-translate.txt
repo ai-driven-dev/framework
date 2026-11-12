@@ -4,9 +4,6 @@ script, identical to the host adapter host-claude.cjs
 ## out-flat/.claude/hooks/aidd-context/lib/markdown.cjs
 script, identical to the plugin source
 
-## out-flat/.claude/hooks/aidd-context/lib/memory-rules.cjs
-script, identical to the plugin source
-
 ## out-flat/.claude/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
@@ -102,9 +99,9 @@ script, identical to the plugin source
         "hooks": [
           {
             "type": "command",
-            "command": "node ./.claude/hooks/aidd-context/memory.cjs guard",
+            "command": "node ./.claude/hooks/aidd-context/memory.cjs sync",
             "timeout": 5,
-            "statusMessage": "AIDD Context: check memory changes"
+            "statusMessage": "AIDD Context: sync project memory"
           }
         ]
       }

@@ -16,8 +16,8 @@ Project knowledge: memory, context files and generators.
 | Event | When | Does |
 | --- | --- | --- |
 | `SessionStart` | a session opens | refreshes the memory block of each context file, silently, so a new memory file is loaded |
-| `Stop` | the model ends its turn | if the bank changed since the last check, tells the model which memory lines are gone and what breaks a rule, and shows the person the same, once |
+| `Stop` | the model ends its turn | refreshes the same blocks; names a context file it could not refresh while that file misses a memory file |
 
-`SessionStart` runs `hooks/memory.cjs load`, `Stop` runs `hooks/memory.cjs guard`. Every tool in [Compatibility](../../docs/COMPATIBILITY.md) with hooks receives them; Antigravity receives `SessionStart` only, so no lost line is reported there. A missing always-written file is the skill's: its script creates it from the template.
+`SessionStart` runs `hooks/memory.cjs load`, `Stop` runs `hooks/memory.cjs sync`. Every tool in [Compatibility](../../docs/COMPATIBILITY.md) with hooks receives them; Antigravity receives `SessionStart` only, so a memory file added during a session reaches its context file at the next one. A missing always-written file is the skill's: its script creates it from the template.
 
-Limit: a line counts as lost only when its trimmed text is absent from every bank file; a reworded line is reported, a moved one is not. The bank as the session found it is kept in `.aidd/cache/`, which git ignores.
+The hook keeps no state and lints nothing. The skill checks the memory it writes with its own script, against the lines written since the bank's last commit.

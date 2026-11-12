@@ -6,8 +6,8 @@ const test = require("node:test");
 
 const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-context");
 const SKILL = path.join(PLUGIN, "skills/02-project-memory");
-const { lintFile } = require(path.join(PLUGIN, "hooks/memory.cjs"));
-const { RULES } = require(path.join(PLUGIN, "hooks/lib/memory-rules.cjs"));
+const { lintFile } = require(path.join(PLUGIN, "skills/02-project-memory/scripts/lib/memory-lint.cjs"));
+const { RULES } = require(path.join(PLUGIN, "skills/02-project-memory/scripts/lib/memory-rules.cjs"));
 
 const CAPABILITIES = [
   ...Array(6).fill("core"),

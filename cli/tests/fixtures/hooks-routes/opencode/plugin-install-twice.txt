@@ -6,9 +6,6 @@ script, identical to the host adapter for opencode
 ## project/.opencode/hooks/aidd-context/lib/markdown.cjs
 script, identical to the plugin source
 
-## project/.opencode/hooks/aidd-context/lib/memory-rules.cjs
-script, identical to the plugin source
-
 ## project/.opencode/hooks/aidd-context/memory.cjs
 script, identical to the plugin source
 
@@ -157,7 +154,7 @@ import { fileURLToPath } from "node:url";
 const HOOKS_DIR = fileURLToPath(new URL("../hooks/aidd-context/", import.meta.url));
 
 const SESSION_START = [{"script":"memory.cjs","args":["load"]}];
-const STOP = [{"script":"memory.cjs","args":["guard"]}];
+const STOP = [{"script":"memory.cjs","args":["sync"]}];
 const POST_TOOL_USE = [];
 
 // Asynchronous on purpose: this can spawn one script per matching hook across every mapped
@@ -521,10 +518,9 @@ export default {
 }
 
 # recorded
-project opencode aidd-context scope=project: 5 hook files
+project opencode aidd-context scope=project: 4 hook files
   .opencode/hooks/aidd-context/lib/host.cjs
   .opencode/hooks/aidd-context/lib/markdown.cjs
-  .opencode/hooks/aidd-context/lib/memory-rules.cjs
   .opencode/hooks/aidd-context/memory.cjs
   .opencode/plugin/aidd-context-hooks.js
   projectHooks null

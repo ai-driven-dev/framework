@@ -265,11 +265,85 @@ test("a context file wire created is one the hook's sync fills", () => {
   });
 });
 
-test("an unknown subcommand prints the usage and fails", () => {
-  within({}, (root) => {
+// ---- check ----
+
+/** A question of the named template, as a file holds it when nobody answered it. */
+const unfilled = (name, index = 0) => `- ${[...template(`memory/${name}`).matchAll(/\{\{[^{}\n]*\}\}/gu)][index][0]}`;
+const PLACEHOLDER = unfilled("vcs.md");
+const LONG = `- ${Array(40).fill("word").join(" ")}.`;
+const M3_AT = (file, line) => new RegExp(`^${MEMORY}/${file}:${line} M3 `, "mu");
+
+test("check outside git lints every line of the bank's root files and fails on an error", () => {
+  within({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${PLACEHOLDER}\n` }, (root) => {
+    const result = run(root, "check");
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stdout, /^check: 1 error, 0 warnings$/mu);
+    assert.match(result.stdout, M3_AT("vcs.md", 3));
+  });
+});
+
+test("check skips the lines the bank's last commit already held, so the team's own lines draw no finding", () => {
+  within({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${PLACEHOLDER}\n${LONG}\n` }, (root) => {
+    git(root, "init", "-q");
+    commitAll(root, "bank");
+    write(root, `${MEMORY}/vcs.md`, `# VCS\n\n${PLACEHOLDER}\n${LONG}\n- One short new line.\n`);
+    const result = run(root, "check");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "check: nothing to fix\n");
+  });
+});
+
+test("check reports a line written since the bank's last commit, at its line", () => {
+  within({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${PLACEHOLDER}\n` }, (root) => {
+    git(root, "init", "-q");
+    commitAll(root, "bank");
+    write(root, `${MEMORY}/vcs.md`, `# VCS\n\n${PLACEHOLDER}\n${unfilled("vcs.md", 1)}\n`);
     const result = run(root, "check");
     assert.equal(result.status, 1);
-    assert.equal(result.stderr, "usage: project-memory.cjs changes | scaffold [file...] | wire <tool...>\n");
+    assert.match(result.stdout, /^check: 1 error, 0 warnings$/mu);
+    assert.match(result.stdout, M3_AT("vcs.md", 4));
+  });
+});
+
+test("check lints every line of a bank file the last commit did not hold, and a bank never committed", () => {
+  within({ [`${MEMORY}/vcs.md`]: "# VCS\n\n- Clean.\n", "src/a.js": "x\n" }, (root) => {
+    git(root, "init", "-q");
+    commitAll(root, "code only");
+    git(root, "rm", "-q", "--cached", "-r", MEMORY);
+    git(root, "commit", "-q", "--no-verify", "-m", "no bank");
+    write(root, `${MEMORY}/api.md`, `# API\n\n${unfilled("api.md")}\n`);
+    assert.match(run(root, "check").stdout, M3_AT("api.md", 3));
+    commitAll(root, "bank");
+    write(root, `${MEMORY}/cli.md`, `# CLI\n\n${unfilled("cli.md")}\n`);
+    const result = run(root, "check");
+    assert.match(result.stdout, M3_AT("cli.md", 3));
+    assert.doesNotMatch(result.stdout, /api\.md/u);
+  });
+});
+
+test("check leaves out an on-demand file", () => {
+  within({ [`${MEMORY}/internal/notes.md`]: `# N\n\n${PLACEHOLDER}\n` }, (root) => {
+    assert.equal(run(root, "check").stdout, "check: nothing to fix\n");
+  });
+});
+
+test("check keeps a file over the word limit that a change made longer, though its title line was the team's", () => {
+  const filler = Array.from({ length: 55 }, (_, index) => `- Fact ${index} holds eight plain words here.`).join("\n");
+  within({ [`${MEMORY}/vcs.md`]: `# VCS\n\n${filler}\n` }, (root) => {
+    git(root, "init", "-q");
+    commitAll(root, "bank");
+    write(root, `${MEMORY}/vcs.md`, `# VCS\n\n${filler}\n- One more fact holds eight plain words here.\n`);
+    const result = run(root, "check");
+    assert.equal(result.status, 0, "a warning alone does not fail");
+    assert.match(result.stdout, /^aidd_docs\/memory\/vcs\.md:1 M6 warning /mu);
+  });
+});
+
+test("an unknown subcommand prints the usage and fails", () => {
+  within({}, (root) => {
+    const result = run(root, "nope");
+    assert.equal(result.status, 1);
+    assert.equal(result.stderr, "usage: project-memory.cjs changes | scaffold [file...] | wire <tool...> | check\n");
   });
 });
 

@@ -25,6 +25,5 @@ flowchart LR
 - A line already in the bank is the team's: quote it exactly and get a yes before you replace or remove it.
 - Ask everything in one message, then wait; never ask twice.
 - Edit no memory file outside write.
-- When the skill's script exits 1, fix the call from what it prints; never do its work by hand.
-- When the turn-end check lists lost lines, show them to the person exactly as given; restore one only if they ask.
-- Fix each error the turn-end check gives on a line you wrote; keep a warned line the code confirms.
+- When the skill's script rejects a call, fix the call from what it prints; never do its work by hand.
+- Fix each error the script's check gives on a line you wrote; keep a warned line the code confirms.

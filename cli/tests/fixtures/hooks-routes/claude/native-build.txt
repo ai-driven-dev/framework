@@ -18,9 +18,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs guard",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs sync",
             "timeout": 5,
-            "statusMessage": "AIDD Context: check memory changes"
+            "statusMessage": "AIDD Context: sync project memory"
           }
         ]
       }
@@ -33,9 +33,6 @@
 script, identical to the host adapter host-claude.cjs
 
 ## out-marketplace/plugins/aidd-context/hooks/lib/markdown.cjs
-script, identical to the plugin source
-
-## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
 ## out-marketplace/plugins/aidd-context/hooks/memory.cjs

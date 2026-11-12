@@ -20,9 +20,9 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs guard",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs sync",
             "timeout": 5,
-            "statusMessage": "AIDD Context: check memory changes"
+            "statusMessage": "AIDD Context: sync project memory"
           }
         ]
       }
@@ -35,9 +35,6 @@ second install threw DuplicatePluginError: Plugin 'aidd-context' is already inst
 script, identical to the host adapter host-claude.cjs
 
 ## project/.claude/plugins/aidd-context/hooks/lib/markdown.cjs
-script, identical to the plugin source
-
-## project/.claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
 ## project/.claude/plugins/aidd-context/hooks/memory.cjs
@@ -148,11 +145,10 @@ script, identical to the plugin source
 }
 
 # recorded
-project claude aidd-context scope=project: 5 hook files
+project claude aidd-context scope=project: 4 hook files
   .claude/plugins/aidd-context/hooks/hooks.json
   .claude/plugins/aidd-context/hooks/lib/host.cjs
   .claude/plugins/aidd-context/hooks/lib/markdown.cjs
-  .claude/plugins/aidd-context/hooks/lib/memory-rules.cjs
   .claude/plugins/aidd-context/hooks/memory.cjs
   projectHooks null
   dependents []

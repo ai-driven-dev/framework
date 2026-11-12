@@ -5,7 +5,8 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { deadPaths, markdownLines, proseLines, namesIn } = require("./markdown.cjs");
+const { markdownLines, proseLines } = require("./markdown.cjs");
+const { deadPaths, namesIn } = require("./paths.cjs");
 
 const ERROR = "error";
 const WARNING = "warning";
@@ -25,7 +26,6 @@ const TABLE_SEPARATOR = /^\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?$/u;
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/u;
 
 const TEMPLATE_SLOT = /\{\{[^{}\n]*\}\}/gu;
-const SKILL = "02-project-memory";
 const TEMPLATES = ["assets", "templates", "memory"];
 
 const MARKDOWN_LINK = /!?\[([^\]]*)\]\([^)]*\)/gu;
@@ -129,29 +129,10 @@ function volatileFacts({ file, text }) {
   return found;
 }
 
-/** The skill's own name, a plugin prefix on it, or a folder named for the plugin around it. */
-function templatesIn(skills) {
-  for (const entry of namesIn(skills)) {
-    for (const skill of [path.join(skills, entry), path.join(skills, entry, SKILL)]) {
-      const name = path.basename(skill);
-      const folder = path.join(skill, ...TEMPLATES);
-      if ((name === SKILL || name.endsWith(`-${SKILL}`)) && fs.existsSync(folder)) return folder;
-    }
-  }
-  return null;
-}
-
-/** Beside the hooks, in the tool's folder, under `.agents` for Codex, or in the skill's copy. */
+/** The skill's templates, which ship beside this script; null when a copy left them out. */
 function templatesFolder() {
-  const hooks = path.resolve(__dirname, "..");
-  const above = (levels, ...rest) => path.join(hooks, ...Array(levels).fill(".."), ...rest);
-  const own = path.join(hooks, "..", ...TEMPLATES);
-  return (
-    templatesIn(above(1, "skills")) ??
-    templatesIn(above(2, "skills")) ??
-    templatesIn(above(3, ".agents", "skills")) ??
-    (fs.existsSync(own) ? own : null)
-  );
+  const folder = path.join(__dirname, "..", "..", ...TEMPLATES);
+  return fs.existsSync(folder) ? folder : null;
 }
 
 function templateSlots(name, folder) {

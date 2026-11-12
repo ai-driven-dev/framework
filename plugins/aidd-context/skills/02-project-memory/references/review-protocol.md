@@ -16,7 +16,7 @@ Flag, with a reason and a location, when:
 - a claim is contradicted by the code or stale;
 - the code shows a decision, convention or gotcha the file omits;
 - a fact belongs in another file, for write to dedup;
-- the reader rules of [memory-rules.md](memory-rules.md) are breached; the machine rules are the turn-end check's, never yours.
+- the reader rules of [memory-rules.md](memory-rules.md) are breached; the machine rules are the script's check, never yours.
 
 Never flag a line the code is silent on: memory holds what the code cannot show.
 

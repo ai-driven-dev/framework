@@ -46,9 +46,9 @@ hooks = true
         "hooks": [
           {
             "type": "command",
-            "command": "node ./.codex/hooks/aidd-context/memory.cjs guard",
+            "command": "node ./.codex/hooks/aidd-context/memory.cjs sync",
             "timeout": 5,
-            "statusMessage": "AIDD Context: check memory changes"
+            "statusMessage": "AIDD Context: sync project memory"
           }
         ]
       }
@@ -73,9 +73,6 @@ hooks = true
 script, identical to the host adapter host-codex.cjs
 
 ## out-flat/.codex/hooks/aidd-context/lib/markdown.cjs
-script, identical to the plugin source
-
-## out-flat/.codex/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
 ## out-flat/.codex/hooks/aidd-context/memory.cjs

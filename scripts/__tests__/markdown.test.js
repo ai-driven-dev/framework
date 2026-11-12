@@ -4,8 +4,10 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-context/hooks/lib/markdown.cjs");
-const { deadPaths, markdownLines, proseLines } = require(LIBRARY);
+const LIBRARY = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory/scripts/lib/markdown.cjs");
+const PATHS = path.resolve(__dirname, "../../plugins/aidd-context/skills/02-project-memory/scripts/lib/paths.cjs");
+const { markdownLines, proseLines } = require(LIBRARY);
+const { deadPaths } = require(PATHS);
 
 /** A throwaway project holding `files`, removed after `body` runs. */
 function inProject(files, body) {
@@ -22,13 +24,15 @@ function inProject(files, body) {
   }
 }
 
-test("the markdown reader exports exactly its functions: the structure, the prose and the paths", () => {
-  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["deadPaths", "markdownLines", "namesIn", "proseLines"]);
+test("the markdown reader exports its structure and prose; the path reader its dead paths and folder names", () => {
+  assert.deepEqual(Object.keys(require(LIBRARY)).sort(), ["markdownLines", "proseLines"]);
+  assert.deepEqual(Object.keys(require(PATHS)).sort(), ["deadPaths", "namesIn"]);
 });
 
-test("the markdown reader requires only the built-ins the hook contract allows: node:fs, node:path", () => {
-  const required = [...fs.readFileSync(LIBRARY, "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/g)].map((m) => m[1]);
-  for (const name of required) assert.ok(["node:fs", "node:path"].includes(name), `requires ${name}`);
+test("the markdown reader requires nothing; the path reader only node:fs, node:path and the markdown reader", () => {
+  const requiredBy = (file) => [...fs.readFileSync(file, "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/g)].map((m) => m[1]);
+  assert.deepEqual(requiredBy(LIBRARY), []);
+  for (const name of requiredBy(PATHS)) assert.ok(["node:fs", "node:path", "./markdown.cjs"].includes(name), `requires ${name}`);
 });
 
 // deadPaths

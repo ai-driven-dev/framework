@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 "use strict";
 /**
- * The memory hook: `load` snapshots the bank at session start, `guard` reports at the turn end what
- * the turn lost or wrote wrong; both keep the context files' blocks true. It reads its event only
- * through `lib/host.cjs` and never blocks a write: the report reaches the model. Node built-ins only.
+ * The memory hook: `load` at session start and `sync` at the turn end keep the context files'
+ * memory blocks true. It keeps no state, reads its event only through `lib/host.cjs`, and at a turn
+ * end names a context file it could not sync that misses a bank file. Node built-ins only.
  */
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { RULES, ERROR } = require("./lib/memory-rules.cjs");
 const { markdownLines } = require("./lib/markdown.cjs");
 
 const PLUGIN = "aidd-context";
@@ -18,35 +17,8 @@ const MEMORY_DIR = `${DOCS_DIR}/${MEMORY_SUBDIR}`;
 const ON_DEMAND_DIRS = ["internal", "external"];
 const EXCLUDED_FILES = new Set([".gitkeep", "README.md"]);
 
-const SNAPSHOT_DIR = ".aidd/cache/aidd-context";
-const SNAPSHOT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-
 const EXIT_OK = 0;
 const EXIT_USAGE = 1;
-
-const WARNINGS_CAP = 10;
-
-function located({ file, line }) {
-  return line === undefined ? file : `${file}:${line}`;
-}
-
-function quoted(excerpt) {
-  return excerpt === undefined ? "" : ` "${String(excerpt).replace(/\r?\n/gu, " ").replace(/\\/gu, "\\\\").replace(/"/gu, '\\"')}"`;
-}
-
-function counted(count, noun) {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
-
-// One count line, then the errors, then at most WARNINGS_CAP warnings.
-function formatFindings(plugin, { errors, warnings }) {
-  if (errors.length + warnings.length === 0) return "";
-  return [
-    `${plugin}: ${counted(errors.length, "error")}, ${counted(warnings.length, "warning")}`,
-    ...errors.map((finding) => `${located(finding)} ${finding.rule}${quoted(finding.excerpt)} => ${finding.fix}`),
-    ...warnings.slice(0, WARNINGS_CAP).map((finding) => `${located(finding)} ${finding.rule} warning ${finding.message} => ${finding.fix}`),
-  ].join("\n");
-}
 
 function toPosix(file) {
   return file.split(path.sep).join("/");
@@ -91,36 +63,6 @@ function bankFiles(root) {
   return found.sort();
 }
 
-/** A rule that throws drops out: the others still report. */
-function runRules(rules, context) {
-  const found = [];
-  for (const rule of rules) {
-    try {
-      found.push(...rule.check(context).map((finding) => ({ ...finding, severity: rule.severity })));
-    } catch {
-      // One broken rule never silences the others.
-    }
-  }
-  return found;
-}
-
-function bySeverity(a, b) {
-  return Number(b.severity === ERROR) - Number(a.severity === ERROR);
-}
-
-/** Nothing for a file outside the bank's root, or gone. */
-function lintFile(root, file, rules = RULES) {
-  const relative = toPosix(path.isAbsolute(file) ? path.relative(root, file) : file);
-  const files = rootFiles(root);
-  if (!files.includes(relative)) return [];
-  const text = readTextOrNull(path.join(root, relative));
-  if (text === null) return [];
-  const others = Object.fromEntries(
-    files.filter((other) => other !== relative).map((other) => [other, readTextOrNull(path.join(root, other)) ?? ""])
-  );
-  return runRules(rules, { file: relative, text, root, others }).sort((a, b) => bySeverity(a, b) || a.line - b.line);
-}
-
 /** Links resolved; a missing path resolves through its nearest existing folder. */
 function realish(file) {
   try {
@@ -131,96 +73,10 @@ function realish(file) {
   }
 }
 
-/** Every markdown file of the bank, bank-relative path to text. */
-function bankTexts(root) {
-  return Object.fromEntries(bankFiles(root).filter((file) => file.endsWith(".md")).map((file) => [file, readTextOrNull(path.join(root, file)) ?? ""]));
-}
-
-/** The session's snapshot, in the project's AIDD cache, which git ignores. */
-function snapshotFile(root, sessionId) {
-  return path.join(root, SNAPSHOT_DIR, `${sessionId.replace(/[^\w.-]/gu, "_")}.json`);
-}
-
-/** A cache made without the CLI, which ignores it, ignores itself; a team's own ignore file is kept. */
-function writeSnapshot(file, texts) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  const ignore = path.join(path.dirname(file), "..", ".gitignore");
-  if (readTextOrNull(ignore) === null) fs.writeFileSync(ignore, "*\n", "utf8");
-  fs.writeFileSync(file, JSON.stringify(texts), "utf8");
-}
-
-function readSnapshot(file) {
-  const text = readTextOrNull(file);
-  return text === null ? null : JSON.parse(text);
-}
-
-function dropStaleSnapshots(dir) {
-  for (const entry of entriesOf(dir)) {
-    const file = path.join(dir, entry.name);
-    if (entry.isFile() && Date.now() - fs.statSync(file).mtimeMs > SNAPSHOT_MAX_AGE_MS) fs.rmSync(file, { force: true });
-  }
-}
-
-/** Non-blank trimmed lines of the snapshot that no current file holds, in snapshot order, each once. */
-function lostLines(before, now) {
-  const kept = new Set(Object.values(now).flatMap((text) => text.split(/\r?\n/u).map((line) => line.trim())));
-  const lost = new Map();
-  for (const [file, text] of Object.entries(before)) {
-    for (const line of text.split(/\r?\n/u).map((one) => one.trim())) {
-      if (line !== "" && !kept.has(line) && !lost.has(line)) lost.set(line, file);
-    }
-  }
-  return [...lost].map(([line, file]) => ({ line, file }));
-}
-
-function lostText(lost) {
-  return [
-    `${PLUGIN}: ${lost.length} memory lines gone from the bank since the last check`,
-    ...lost.map(({ line, file }) => `${file}: "${line}"`),
-    "Show these lines to the person as they are; restore one only if the person asks.",
-  ].join("\n");
-}
-
-/** Lint of the lines written since the snapshot: a line the file already held is the team's.
- * M6 judges the whole file, so a file the turn changed keeps it. */
-function changedFindings(root, before, now) {
-  const found = Object.keys(now)
-    .filter((file) => before[file] !== now[file])
-    .flatMap((file) => {
-      const held = new Set((before[file] ?? "").split(/\r?\n/u).map((line) => line.trim()));
-      const lines = now[file].split(/\r?\n/u);
-      return lintFile(root, file).filter((finding) => finding.rule === "M6" || !held.has((lines[finding.line - 1] ?? "").trim()));
-    });
-  return formatFindings(PLUGIN, { errors: found.filter((finding) => finding.severity === ERROR), warnings: found.filter((finding) => finding.severity !== ERROR) });
-}
-
-function atSessionStart(event) {
-  sync(event.cwd);
-  const root = realish(path.resolve(event.cwd));
-  dropStaleSnapshots(path.join(root, SNAPSHOT_DIR));
-  if (event.sessionId === null) return;
-  const file = snapshotFile(root, event.sessionId);
-  // A resume or a compact starts the same session again: its snapshot stays, so no loss is skipped.
-  if (readSnapshot(file) === null) writeSnapshot(file, bankTexts(root));
-}
-
 function atTurnEnd(host, event) {
-  // A turn ending with no bank still leaves a snapshot, so a bank the next turn writes is checked.
+  if (event.stopActive) return;
   const root = realish(path.resolve(event.cwd));
-  if (event.stopActive || event.sessionId === null) return;
-  const file = snapshotFile(root, event.sessionId);
-  const before = readSnapshot(file);
-  const now = bankTexts(root);
-  const notSynced = sync(root);
-  if (before === null || JSON.stringify(before) === JSON.stringify(now)) {
-    if (before === null) writeSnapshot(file, now);
-    return;
-  }
-  const lost = lostLines(before, now);
-  const findings = changedFindings(root, before, now);
-  writeSnapshot(file, now);
-  const unsynced = notSynced.map((message) => `${PLUGIN}: ${message}`).join("\n");
-  const text = [lost.length > 0 ? lostText(lost) : "", findings, unsynced].filter(Boolean).join("\n");
+  const text = sync(root, { onlyMissing: true }).map((message) => `${PLUGIN}: ${message}`).join("\n");
   if (text !== "") host.answer({ level: 1, text, person: text });
 }
 
@@ -228,7 +84,7 @@ function hook(goal) {
   const host = require("./lib/host.cjs");
   const event = host.readEvent();
   if (event === undefined) return;
-  if (goal === "load") atSessionStart(event);
+  if (goal === "load") sync(event.cwd);
   else atTurnEnd(host, event);
 }
 
@@ -400,16 +256,23 @@ function tryWrite(file, text, shown, notSynced) {
   }
 }
 
-/** Stages nothing. A block it cannot fill is left as it is and named in the list it returns, never forced. */
-function sync(root) {
+/**
+ * Stages nothing. A block it cannot fill is left as it is and named in the list it returns, never
+ * forced; with `onlyMissing`, named only while that file misses a bank file: one naming them all lost nothing.
+ */
+function sync(root, { onlyMissing = false } = {}) {
   const absolute = realish(path.resolve(root));
   const notSynced = [];
   if (!fs.existsSync(path.join(absolute, DOCS_DIR))) return notSynced;
   const lists = { rooted: rootFiles(absolute), onDemand: onDemandFiles(absolute), owned: ownedFolders(absolute) };
+  const wanted = [...lists.rooted, ...lists.onDemand];
   const settle = (shown, original, { text, problem, held }, file) => {
-    if (problem !== undefined) notSynced.push(`${shown} ${problem}, not synced`);
-    else if (held !== undefined) notSynced.push(`${shown} holds a line the memory block would not write ("${held}"), not synced`);
-    else if (text !== original) tryWrite(file, text, shown, notSynced);
+    const misses = !onlyMissing || wanted.some((bankFile) => !original.includes(bankFile));
+    if (problem !== undefined) {
+      if (misses) notSynced.push(`${shown} ${problem}, not synced`);
+    } else if (held !== undefined) {
+      if (misses) notSynced.push(`${shown} holds a line the memory block would not write ("${held}"), not synced`);
+    } else if (text !== original) tryWrite(file, text, shown, notSynced);
   };
 
   for (const target of existingTargets(absolute)) {
@@ -440,8 +303,8 @@ function runHook(goal) {
 }
 
 function main([command]) {
-  if (command === "load" || command === "guard") return runHook(command);
-  process.stderr.write("usage: memory.cjs load | guard\n");
+  if (command === "load" || command === "sync") return runHook(command);
+  process.stderr.write("usage: memory.cjs load | sync\n");
   return EXIT_USAGE;
 }
 
@@ -453,7 +316,6 @@ module.exports = {
   LEGACY_BLOCK_CLOSE,
   COPILOT_FILE,
   COPILOT_POINTER,
-  lintFile,
   sync,
 };
 

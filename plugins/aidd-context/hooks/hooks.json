@@ -17,9 +17,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs guard",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs sync",
             "timeout": 5,
-            "statusMessage": "AIDD Context: check memory changes"
+            "statusMessage": "AIDD Context: sync project memory"
           }
         ]
       }

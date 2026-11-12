@@ -10,7 +10,8 @@ The list of changes and the answers.
 
 1. From the project root, run the skill's `scripts/project-memory.cjs scaffold` with node, naming each conditional file to create: it creates the tree and each absent file from its template.
 2. Write each file from the list only, per [memory-rules](../references/memory-rules.md).
-3. Go on to [wire](03-wire.md).
+3. From the project root, run the skill's `scripts/project-memory.cjs check` with node; after a fix, run it once more.
+4. Go on to [wire](03-wire.md).
 
 ## Output
 

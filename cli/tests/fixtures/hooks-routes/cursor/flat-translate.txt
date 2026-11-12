@@ -18,13 +18,13 @@
     ],
     "stop": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs guard",
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
         "timeout": 5
       }
     ],
     "sessionEnd": [
       {
-        "command": "node ./.cursor/hooks/aidd-context/memory.cjs guard",
+        "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
         "timeout": 5
       }
     ],
@@ -42,9 +42,6 @@
 script, identical to the host adapter host-cursor.cjs
 
 ## out-flat/.cursor/hooks/aidd-context/lib/markdown.cjs
-script, identical to the plugin source
-
-## out-flat/.cursor/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
 ## out-flat/.cursor/hooks/aidd-context/memory.cjs
