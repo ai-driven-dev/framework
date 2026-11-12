@@ -4,7 +4,7 @@
 
 | | |
 | --- | --- |
-| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Antigravity CLI |
+| AI tools | Claude Code, Cursor, GitHub Copilot, Codex, OpenCode, Kilo Code, Kiro, Antigravity CLI |
 | IDE | VS Code |
 | Requires | Node.js 22.12 or later |
 | Requires for marketplace plugins | `git` |
@@ -183,6 +183,7 @@ The token resolves from the first hit:
 | `codex` | yes | yes | `.codex/` |
 | `opencode` | no | yes | `.opencode/` |
 | `kilo` | no | yes | `.kilo/` |
+| `kiro` | no | yes | `.kiro/` |
 | `antigravity` | no | yes | `.agents/` |
 
 ## Environment variables
@@ -228,6 +229,7 @@ Under `$AIDD_USER_CONFIG_DIR`, else `$XDG_CONFIG_HOME/aidd`, else `~/.config/aid
 | Codex | `.codex/config.toml` |
 | OpenCode | `opencode.json`, or `opencode.jsonc` when that is the one present |
 | Kilo Code | `.kilo/kilo.jsonc`, an existing `kilo.json[c]` is reused |
+| Kiro | None. Only `translate` merges a plugin's MCP servers, into `.kiro/settings/mcp.json` |
 | VS Code | `.vscode/settings.json`, `.vscode/extensions.json`, `.vscode/keybindings.json` |
 
 ## More
