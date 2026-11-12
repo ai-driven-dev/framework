@@ -54,6 +54,9 @@ export type HooksAcceptance = { accepts: true } | { accepts: false; reason: stri
 /** Flat skills go under `skills/<plugin>/`, or `skills/<plugin>-<skill>/` for a shallow-scan tool. */
 export type FlatSkillLayout = "nested" | "single-level";
 
+/** The sections a flat plugin's files are installed under. */
+export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";
+
 /** Where a flat-mode plugin lands and how its hooks are loaded; each part is `null` or
  * `"nested"` when the mode has none. */
 export interface FlatLayout {
@@ -218,6 +221,10 @@ export interface AiToolProfile {
   frameworkBuildMode(): FrameworkBuildMode;
   /** The framework-build contract for `mode`, or null when the tool declares none for it. */
   buildContract(mode: FrameworkBuildMode): ToolBuildContract | null;
+  /** Where a flat plugin's file of `section` lands, relative to the project root. */
+  flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
+  /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree. */
+  ownsFlatPath(relativePath: string, pluginName: string): boolean;
   /** Rewrites source content to this tool's own conventions. */
   rewriteContent(content: string): string;
   /** The tool's plugin delivery, or null when it declares none. */

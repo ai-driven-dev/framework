@@ -232,7 +232,7 @@ export class PluginContentTranslator {
     }
     for (const section of ["agents", "rules", "skills"] as const) {
       for (const file of dist.components[section]) {
-        const f = this.flatSectionFile(file, section, dist.manifest.name, tool, plugins);
+        const f = this.flatSectionFile(file, section, dist.manifest.name, tool);
         if (f !== null) result.push(f);
       }
     }
@@ -315,15 +315,14 @@ export class PluginContentTranslator {
     const filename = basename(file.relativePath);
     const raw = prefixCommandName(file.content, file.relativePath, prefix, pluginName);
     const content = tool.rewriteContent(raw);
-    return this.makeFile(`${tool.directory}commands/${pluginName}/${filename}`, content);
+    return this.makeFile(tool.flatInstallPath("commands", pluginName, filename), content);
   }
 
   private flatSectionFile(
     file: PluginComponentFile,
     section: "agents" | "rules" | "skills",
     pluginName: string,
-    tool: AiToolProfile,
-    plugins: FlatPluginAnswers
+    tool: AiToolProfile
   ): InstallationFile | null {
     const sectionDir = `${section}/`;
     const fileName = file.relativePath.slice(sectionDir.length);
@@ -349,11 +348,7 @@ export class PluginContentTranslator {
         );
       }
     }
-    const singleLevel = section === "skills" && plugins.flatLayout().skillLayout === "single-level";
-    const path = singleLevel
-      ? `${tool.directory}skills/${pluginName}-${fileName}`
-      : `${tool.directory}${section}/${pluginName}/${fileName}`;
-    return this.makeFile(path, content);
+    return this.makeFile(tool.flatInstallPath(section, pluginName, fileName), content);
   }
 
   private makeFile(relativePath: string, content: string): InstallationFile {

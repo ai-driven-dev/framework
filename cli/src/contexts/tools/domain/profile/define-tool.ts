@@ -8,6 +8,8 @@ import {
 } from "../../../../kernel/tool.js";
 import type {
   ConfigWrite,
+  FlatInstallSection,
+  FlatSkillLayout,
   FrameworkBuildMode,
   SettingsFileAnswers,
 } from "../../contract/tool-profile.js";
@@ -17,6 +19,7 @@ import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
 import { SkillsCapability } from "../capabilities/skills-capability.js";
 import type { AiTool, IdeToolConfig } from "../contracts.js";
+import { flatInstallPath, ownsFlatPath } from "../plugins/flat-install-paths.js";
 import type { NativeActivation } from "../plugins/native-activation.js";
 import {
   isProfileSectionKey,
@@ -69,6 +72,8 @@ type AiToolFields = Omit<
   | "projectHooksDelivery"
   | "frameworkBuildMode"
   | "distributionPaths"
+  | "flatInstallPath"
+  | "ownsFlatPath"
   | "marketplaceRegistration"
   | "installedRulesLocation"
   | "pluginEnablementIsMachineGlobal"
@@ -177,6 +182,10 @@ function ideToolId(id: string): IdeToolId {
   return known;
 }
 
+function skillLayoutOf(sections: ProfileSections): FlatSkillLayout {
+  return sections.plugins?.kind === "flat" ? sections.plugins.flatLayout().skillLayout : "nested";
+}
+
 export function defineAiTool<C extends ProfileSections>(
   spec: AiToolSpec<C>
 ): AiTool<C> & ProfileBrand {
@@ -204,6 +213,10 @@ export function defineAiTool<C extends ProfileSections>(
     buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
     distributionPaths: (kind: "manifest" | "marketplace") =>
       fields.distributionProbes?.[kind] ?? [],
+    flatInstallPath: (section: FlatInstallSection, pluginName: string, fileName: string) =>
+      flatInstallPath(spec.directory, skillLayoutOf(capabilities), section, pluginName, fileName),
+    ownsFlatPath: (relativePath: string, pluginName: string) =>
+      ownsFlatPath(spec.directory, skillLayoutOf(capabilities), relativePath, pluginName),
     configWrites: () => aiConfigWrites(capabilities),
     plugins: () => capabilities.plugins ?? null,
     supportsUserScopeActivation: () => capabilities.plugins?.supportsUserScopeActivation() ?? false,

@@ -184,18 +184,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   }
 
   private belongsToPlugin(rel: string, name: string, tool: AiToolProfile): boolean {
-    const segments = rel.split("/");
-    const toolDirectory = tool.directory.replace(/\/$/, "");
-    if (segments[0] !== toolDirectory || segments.length < 3) return false;
-    // `skills/` nests the whole plugin under one exactly-named segment; every other flat section
-    // hyphen-prefixes the leaf segment.
-    if (segments[1] === "skills") {
-      const plugins = tool.plugins();
-      return plugins?.kind === "flat" && plugins.flatLayout().skillLayout === "single-level"
-        ? segments[2].startsWith(`${name}-`)
-        : segments[2] === name;
-    }
-    return segments[2].startsWith(`${name}-`);
+    return tool.ownsFlatPath(rel, name);
   }
 
   private flatHookOutputPaths(dist: PluginDistribution, tool: AiToolProfile): ReadonlySet<string> {
