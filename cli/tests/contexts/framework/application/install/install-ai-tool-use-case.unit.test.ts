@@ -236,7 +236,10 @@ describe("InstallAiToolUseCase", () => {
       });
 
       expect(syncSettingsMock.execute).toHaveBeenCalledOnce();
-      expect(syncSettingsMock.execute).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
+      expect(syncSettingsMock.execute).toHaveBeenCalledWith({
+        projectRoot: PROJECT_ROOT,
+        tools: expect.any(Array),
+      });
     });
 
     it("surfaces the sync's own errors in its result rather than discarding them", async () => {

@@ -58,6 +58,7 @@ export class SetupMachineScopeUseCase {
         manifestRepo: this.userManifestRepo,
         toolIds: flow.aiTools,
         enablePlugins: plugins,
+        tools,
       });
     const install: SetupToolsResult = { results: [] };
     const outcome = { install, activation, context: undefined, globalPlugins: plugins };

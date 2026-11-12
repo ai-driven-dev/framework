@@ -283,8 +283,3 @@ export function mcpCapabilityOf(toolId: ToolId): McpCapability | null {
 export function resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
   return catalog.resolvePluginsCapability(toolId);
 }
-
-/** A tool's plugin capability when it installs natively, or `null`. */
-export function resolveNativePlugins(toolId: ToolId): NativePluginsCapability | null {
-  return catalog.resolveNativePlugins(toolId);
-}

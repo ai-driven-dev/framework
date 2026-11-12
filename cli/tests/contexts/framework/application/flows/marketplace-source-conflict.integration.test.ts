@@ -14,6 +14,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { registeredProfiles } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -181,7 +182,7 @@ async function sync(setup: Setup = {}) {
       ],
     ])
   );
-  const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+  const result = await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
   return { result, activator, manifestRepo, builtDir, catalogRelative };
 }
 

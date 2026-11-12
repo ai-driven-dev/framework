@@ -3,7 +3,12 @@ import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-
 import type { MergeStrategy } from "../../../kernel/merge.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../kernel/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
-import type { GlobalFiles, ProjectHooksLocation, SignalDirectory } from "./tool-vocabulary.js";
+import type {
+  GlobalFiles,
+  MarketplaceSettingsInput,
+  ProjectHooksLocation,
+  SignalDirectory,
+} from "./tool-vocabulary.js";
 
 /** One variable, as the caller reads it: a profile is a declaration and reaches no global. */
 export type EnvironmentReader = (name: string) => string | undefined;
@@ -179,6 +184,25 @@ export type ConfigWrite =
   | { readonly kind: "hooks"; readonly capability: HooksFileAnswers }
   | { readonly kind: "settings"; readonly capability: SettingsFileAnswers };
 
+/** How a tool whose own CLI drives the registration records marketplaces in its shared settings
+ * file, as a sync asks it. */
+export interface MarketplaceRegistrationAnswers {
+  /** The project file shared with teammates, where marketplaces are declared. */
+  sharedSettingsFile(): string;
+  /** Takes the marketplaces declaration out of a parsed shared file; whether one was there. */
+  dropMarketplaces(shared: Record<string, unknown>): boolean;
+  /** Whether the tool enables plugins in the shared file. */
+  writesEnabledPlugins(): boolean;
+  /** The enabled-plugins map a parsed shared file holds, empty when absent or not a map. */
+  enabledPluginsIn(shared: Record<string, unknown>): Record<string, unknown>;
+  /** Sets the enabled-plugins map of a parsed shared file; nothing when the tool writes none. */
+  recordEnabledPlugins(shared: Record<string, unknown>, entries: Record<string, unknown>): void;
+  /** The name a marketplace is keyed by in the enabled-plugins map, or null when none is written. */
+  entryKeyFor(input: MarketplaceSettingsInput): string | null;
+  /** Whether a declarative plugin entry may only be projected once the host proved the ref. */
+  requiresNativeProof(): boolean;
+}
+
 /** An AI assistant, as an outside caller asks it. */
 export interface AiToolProfile {
   readonly kind: "ai";
@@ -223,6 +247,8 @@ export interface AiToolProfile {
   configWrites(): readonly ConfigWrite[];
   /** The files its marketplace registration keeps on this machine, none when it keeps none. */
   machineLocalFiles(): readonly string[];
+  /** Its marketplace registration in the shared settings file, or null for a tool driving none. */
+  marketplaceRegistration(): MarketplaceRegistrationAnswers | null;
   /** The marketplace names a parsed settings file declares, none for a tool keeping no registration. */
   declaredMarketplaceNames(parsed: unknown): ReadonlySet<string>;
   /** Where it takes a plugin's hooks inside the project, or null when it takes none there. */

@@ -27,3 +27,8 @@ export function registeredAiProfile(id: AiToolId): AiToolProfile {
 export function registeredProfile(id: ToolId): ToolProfile {
   return profileOf(catalogOf().sortedById(), id);
 }
+
+/** Every registered profile in id order: what an edge hands a use case that asks its tools per call. */
+export function registeredProfiles(): readonly ToolProfile[] {
+  return catalogOf().sortedById();
+}

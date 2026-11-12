@@ -85,4 +85,48 @@ describe("what a project check asks a tool profile", () => {
       );
     });
   });
+
+  describe("how a tool registers marketplaces in its shared settings file", () => {
+    const input = { name: "aidd", source: { kind: "github", repo: "o/r" } } as const;
+
+    it("names the shared file, the enabled-plugins key and whether a ref needs proof", () => {
+      const claude = registeredAiProfile("claude").marketplaceRegistration();
+      const copilot = registeredAiProfile("copilot").marketplaceRegistration();
+
+      expect(claude?.sharedSettingsFile()).toBe(".claude/settings.json");
+      expect(claude?.writesEnabledPlugins()).toBe(true);
+      expect(claude?.requiresNativeProof()).toBe(false);
+      expect(copilot?.sharedSettingsFile()).toBe(".github/copilot/settings.json");
+      expect(copilot?.requiresNativeProof()).toBe(true);
+    });
+
+    it("reads and records the enabled-plugins map of a parsed shared file", () => {
+      const registration = registeredAiProfile("claude").marketplaceRegistration();
+      const shared: Record<string, unknown> = {};
+
+      registration?.recordEnabledPlugins(shared, { "p@m": true });
+
+      expect(shared).toStrictEqual({ enabledPlugins: { "p@m": true } });
+      expect(registration?.enabledPluginsIn(shared)).toStrictEqual({ "p@m": true });
+    });
+
+    it("drops the marketplaces declaration and says whether one was there", () => {
+      const registration = registeredAiProfile("claude").marketplaceRegistration();
+      const shared: Record<string, unknown> = { extraKnownMarketplaces: {}, keep: 1 };
+
+      expect(registration?.dropMarketplaces(shared)).toBe(true);
+      expect(shared).toStrictEqual({ keep: 1 });
+      expect(registration?.dropMarketplaces(shared)).toBe(false);
+    });
+
+    it("names the entry key a marketplace is keyed by", () => {
+      expect(registeredAiProfile("claude").marketplaceRegistration()?.entryKeyFor(input)).toBe(
+        "aidd"
+      );
+    });
+
+    it("answers none for a tool with no native plugin CLI", () => {
+      expect(registeredAiProfile("cursor").marketplaceRegistration()).toBeNull();
+    });
+  });
 });

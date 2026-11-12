@@ -53,7 +53,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
           scope,
           tools: catalog.sortedById(),
         });
-        if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
+        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
         printPluginRemoved(output, name);
       } catch (error) {
         errorHandler.handle(error);
@@ -122,6 +122,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
           await syncNativeActivation(
             deps,
             output,
+            catalog,
             projectRoot,
             cmdOptions.from !== undefined ? [cmdOptions.from] : undefined
           );
@@ -176,7 +177,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
           scope,
           tools: catalog.sortedById(),
         });
-        if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
+        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
         printPluginsUpdated(output, updated);
       } catch (error) {
         errorHandler.handle(error);

@@ -87,7 +87,7 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
             autoTrust: cmdOptions.yes ?? false,
             overwrite: cmdOptions.overwrite ?? false,
           });
-          await syncNativeActivation(deps, output, projectRoot, [result.marketplace.name]);
+          await syncNativeActivation(deps, output, tools, projectRoot, [result.marketplace.name]);
           printMarketplaceRegistered(output, result.marketplace.name);
         } catch (error) {
           errorHandler.handle(error);
@@ -135,7 +135,7 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
           autoConfirm: cmdOptions.yes ?? false,
           scope,
         });
-        if (scope !== "user") await syncNativeActivation(deps, output, projectRoot);
+        if (scope !== "user") await syncNativeActivation(deps, output, tools, projectRoot);
         printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
       } catch (error) {
         errorHandler.handle(error);
@@ -158,7 +158,7 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
           name,
           force: cmdOptions.force,
         });
-        await syncNativeActivation(deps, output, projectRoot);
+        await syncNativeActivation(deps, output, tools, projectRoot);
         printRefreshResults(output, results);
         if (failedCount > 0) process.exit(1);
       } catch (error) {

@@ -25,7 +25,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredProfiles } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 for (const [toolId, catalogPath] of [
@@ -230,9 +230,19 @@ for (const [toolId, catalogPath] of [
         sources
       );
 
-      await useCase.execute({ projectRoot: "/A", manifestRepo: a, toolIds: [toolId] });
+      await useCase.execute({
+        tools: registeredProfiles(),
+        projectRoot: "/A",
+        manifestRepo: a,
+        toolIds: [toolId],
+      });
       enabled = true;
-      await useCase.execute({ projectRoot: "/B", manifestRepo: b, toolIds: [toolId] });
+      await useCase.execute({
+        tools: registeredProfiles(),
+        projectRoot: "/B",
+        manifestRepo: b,
+        toolIds: [toolId],
+      });
       expect(activator.enabledPlugins).toEqual([ref]);
       expect(b.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toContain(ref);
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
@@ -354,6 +364,7 @@ for (const [toolId, catalogPath] of [
         sources
       );
       await foreignUseCase.execute({
+        tools: registeredProfiles(),
         projectRoot: "/foreign",
         manifestRepo: foreign,
         toolIds: [toolId],

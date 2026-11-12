@@ -66,6 +66,7 @@ type AiToolFields = Omit<
   | "machineLocalFiles"
   | "projectHooksDelivery"
   | "frameworkBuildMode"
+  | "marketplaceRegistration"
   | "declaredMarketplaceNames"
   | "installedRulesLocation"
   | "pluginEnablementIsMachineGlobal"
@@ -219,6 +220,10 @@ export function defineAiTool<C extends ProfileSections>(
     mcpConfig: () => capabilities.mcp ?? null,
     settingsFiles: () => settingsOf(capabilities),
     machineLocalFiles: () => machineLocalFilesOf(capabilities),
+    marketplaceRegistration: () =>
+      capabilities.plugins?.kind === "native"
+        ? capabilities.plugins.marketplaceRegistration()
+        : null,
     declaredMarketplaceNames: (parsed: unknown): ReadonlySet<string> =>
       capabilities.plugins?.kind === "native"
         ? (capabilities.plugins.marketplaceRegistration()?.declaredMarketplaceNames(parsed) ??

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredProfiles } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const pluginRemove = vi.fn();
@@ -145,6 +145,7 @@ describe("aidd plugin remove", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredProfiles(),
       marketplaceNames: undefined,
     });
   });
@@ -183,6 +184,7 @@ describe("aidd plugin install", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredProfiles(),
       marketplaceNames: undefined,
     });
   });
@@ -215,6 +217,7 @@ describe("aidd plugin install", () => {
     );
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredProfiles(),
       marketplaceNames: ["market-b"],
     });
   });
@@ -310,6 +313,7 @@ describe("aidd plugin update", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredProfiles(),
       marketplaceNames: undefined,
     });
   });

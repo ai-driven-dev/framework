@@ -63,7 +63,7 @@ export class SetupUseCase {
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
     const install = await this.installTools(flow, context, tools);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow, tools);
-    const activation = await this.syncSettings(flow);
+    const activation = await this.syncSettings(flow, tools);
     return this.buildResult(isNew, install, activation, context);
   }
 
@@ -82,8 +82,11 @@ export class SetupUseCase {
     return this.projectContextDetector.execute({ projectRoot: flow.projectRoot });
   }
 
-  private async syncSettings(flow: SetupFlow): Promise<MarketplaceSyncSettingsResult> {
-    return this.marketplaceSyncSettingsUseCase.execute({ projectRoot: flow.projectRoot });
+  private async syncSettings(
+    flow: SetupFlow,
+    tools: readonly ToolProfile[]
+  ): Promise<MarketplaceSyncSettingsResult> {
+    return this.marketplaceSyncSettingsUseCase.execute({ projectRoot: flow.projectRoot, tools });
   }
 
   private async initManifest(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<boolean> {

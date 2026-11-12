@@ -80,7 +80,7 @@ export class InstallAiToolUseCase {
     }
     const activation =
       propagated.length > 0
-        ? await this.marketplaceSyncSettings.execute({ projectRoot })
+        ? await this.marketplaceSyncSettings.execute({ projectRoot, tools })
         : undefined;
     return {
       runtimeResult,

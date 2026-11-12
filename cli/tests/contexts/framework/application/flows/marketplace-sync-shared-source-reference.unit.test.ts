@@ -21,6 +21,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { registeredProfiles } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -105,7 +106,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       proof.sources
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
 
     expect(await userSourceReferences.listAllReferencingProjects()).toContain(PROJECT_ROOT);
   });
@@ -146,7 +147,10 @@ describe("the shared source's own reference, recorded by sync", () => {
       proof.sources
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredProfiles(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result.errors).toEqual([]);
     expect(logger.warnMessages.some((m) => m.includes("references.json"))).toBe(true);
@@ -186,7 +190,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       new FakeCurrentVersion(VERSION)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
 
     expect(await userSourceReferences.listAllReferencingProjects()).not.toContain(PROJECT_ROOT);
   });
@@ -232,13 +236,17 @@ describe("the shared source's own reference, recorded by sync", () => {
       proof.sources
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredProfiles(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect((await registry.list(PROJECT_ROOT)).map((m) => m.name)).toContain(
       FRAMEWORK_MARKETPLACE_NAME
     );
     expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
     expect(await userSourceReferences.listAllReferencingProjects()).toContain(PROJECT_ROOT);
   });
 
@@ -257,7 +265,10 @@ describe("the shared source's own reference, recorded by sync", () => {
       fakeEnsureBuiltMarketplace()
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredProfiles(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result).toEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
   });
@@ -292,7 +303,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     );
 
     // No `recreateFrameworkIfMissing` — the same call shape `syncNativeActivation` uses.
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
 
     expect(await registry.list(PROJECT_ROOT)).toEqual([]);
   });
@@ -309,6 +320,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     );
 
     const result = await useCase.execute({
+      tools: registeredProfiles(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -338,7 +350,10 @@ describe("a project with no manifest to sync", () => {
       fakeEnsureBuiltMarketplace()
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredProfiles(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result).toStrictEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
     expect(activator.addedMarketplaces).toStrictEqual([]);
@@ -357,7 +372,10 @@ describe("a project with no manifest to sync", () => {
       fakeEnsureBuiltMarketplace()
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredProfiles(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result).toStrictEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
   });

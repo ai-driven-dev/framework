@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredProfiles } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const restoreAll = vi.fn();
@@ -96,6 +96,7 @@ describe("aidd sync — the whole project", () => {
     expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, false, expect.any(Array));
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredProfiles(),
       recreateFrameworkIfMissing: true,
     });
     expect(restoreAll.mock.invocationCallOrder[0]).toBeLessThan(
@@ -170,6 +171,7 @@ describe("aidd sync --tool", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredProfiles(),
       toolIds: ["claude"],
       recreateFrameworkIfMissing: true,
     });
@@ -235,6 +237,7 @@ describe("aidd sync --scope user", () => {
     expect(await run("--scope", "user")).toEqual(["Synced native activation for: claude"]);
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredProfiles(),
       scope: "user",
       manifestRepo: userManifestRepo,
       toolIds: undefined,

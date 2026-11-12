@@ -1,4 +1,4 @@
-import type { MarketplaceSettingsInput } from "./marketplace-settings.js";
+import type { MarketplaceSettingsInput } from "../contract/tool-vocabulary.js";
 
 /**
  * The key a Claude-schema tool records a marketplace under, or `null` when it cannot. The name

@@ -1,3 +1,4 @@
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { SyncFailedError } from "../../kernel/errors.js";
 import type { createDeps } from "../../runtime/wiring/framework.js";
 import { printScopedFailures } from "../display/framework-display.js";
@@ -15,6 +16,7 @@ interface SyncActivationOutcome {
 export async function syncNativeActivation(
   deps: Awaited<ReturnType<typeof createDeps>>,
   output: CLIOutput,
+  catalog: ToolCatalog,
   projectRoot: string,
   /** Narrows activation to these marketplaces alone; omitted, every registered one is
    * re-driven. */
@@ -22,6 +24,7 @@ export async function syncNativeActivation(
 ): Promise<void> {
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
+    tools: catalog.sortedById(),
     marketplaceNames,
   });
   reportSyncActivation(output, activation);

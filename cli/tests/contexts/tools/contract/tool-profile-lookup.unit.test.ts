@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aiProfileOf,
+  aiProfileOrNone,
   ideProfileOf,
   profileOf,
 } from "../../../../src/contexts/tools/contract/tool-profile-lookup.js";
@@ -28,5 +29,23 @@ describe("tool profile lookup", () => {
 
     expect(() => aiProfileOf(tools, ide as AiToolId)).toThrow(UnregisteredToolError);
     expect(() => ideProfileOf(tools, ai as IdeToolId)).toThrow(UnregisteredToolError);
+  });
+
+  describe("an AI profile or none", () => {
+    it("finds the AI profile of a tool the caller was handed", () => {
+      expect(aiProfileOrNone(catalogOf().sortedById(), "claude")?.toolId).toBe("claude");
+    });
+
+    it("answers none for an editor", () => {
+      expect(aiProfileOrNone(catalogOf().sortedById(), "vscode")).toBeUndefined();
+    });
+
+    it("refuses a tool absent from the profiles it was handed", () => {
+      const withoutClaude = catalogOf()
+        .sortedById()
+        .filter((profile) => profile.toolId !== "claude");
+
+      expect(() => aiProfileOrNone(withoutClaude, "claude")).toThrow(UnregisteredToolError);
+    });
   });
 });

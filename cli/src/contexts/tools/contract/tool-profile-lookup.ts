@@ -15,6 +15,15 @@ export function aiProfileOf(tools: readonly ToolProfile[], id: AiToolId): AiTool
   return profile;
 }
 
+/** The AI profile of `id`, or undefined for an editor. A tool the caller was not handed is refused. */
+export function aiProfileOrNone(
+  tools: readonly ToolProfile[],
+  id: ToolId
+): AiToolProfile | undefined {
+  const profile = profileOf(tools, id);
+  return profile.kind === "ai" ? profile : undefined;
+}
+
 export function ideProfileOf(tools: readonly ToolProfile[], id: IdeToolId): IdeToolProfile {
   const profile = profileOf(tools, id);
   if (profile.kind !== "ide") throw new UnregisteredToolError(id);

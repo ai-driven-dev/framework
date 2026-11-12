@@ -1,3 +1,5 @@
+import type { PluginSource } from "../../../kernel/source.js";
+
 /** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
 export type HookScript = (pluginPath: string, content: string) => string;
 
@@ -67,3 +69,9 @@ export interface GlobalPlugin {
 /** `"marketplace"`: register a plugin reference in the tool's native config, writing no plugin
  * files. `"flat"`: materialize the plugin's content as files on disk. */
 export type PluginTranslationMode = "marketplace" | "flat";
+
+/** A marketplace as a tool's settings file keys it: its name and where it comes from. */
+export interface MarketplaceSettingsInput {
+  name: string;
+  source: PluginSource;
+}

@@ -14,6 +14,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { registeredProfiles } from "../../../tools/testing/catalog-of.js";
 
 const REF = "test-plugin@aidd-framework";
 
@@ -77,7 +78,11 @@ async function globalActivation(toolId: "claude" | "copilot") {
     ])
   );
   const options = { projectRoot: "/project", scope: "user" as const, manifestRepo: userRepo };
-  const setup = await sync.execute({ ...options, enablePlugins: ["test-plugin"] });
+  const setup = await sync.execute({
+    tools: registeredProfiles(),
+    ...options,
+    enablePlugins: ["test-plugin"],
+  });
   expect(setup.errors).toEqual([]);
   expect(setup.warnings).toEqual([]);
   expect(userRepo.getCurrent()?.getPlugins(toolId)).toEqual([]);
@@ -102,7 +107,7 @@ describe.each(["claude", "copilot"] as const)("global %s native plugins", (toolI
         refs.delete(REF);
       }
 
-      const result = await sync.execute(options);
+      const result = await sync.execute({ ...options, tools: registeredProfiles() });
 
       expect(result.errors).toEqual([]);
       expect(result.warnings).toEqual([]);
