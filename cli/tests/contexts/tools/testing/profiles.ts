@@ -1,23 +1,19 @@
-import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
-import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type { ProjectHooksFormat } from "../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import type { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
-import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
+import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
 import type { NativePluginsParams } from "../../../../src/contexts/tools/domain/plugins/plugin-params.js";
 import {
   type PluginsCapability,
   pluginsCapability,
 } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import {
-  type BuiltToolConfig,
   defineAiTool,
-  defineIdeTool,
   type ProfileBrand,
 } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
-import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../../src/kernel/tool.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
 export type KitCapabilities = {
@@ -169,19 +165,6 @@ export class ProfileBuilder {
 
 export function aProfile(toolId: AiToolId = "claude"): ProfileBuilder {
   return new ProfileBuilder(toolId);
-}
-
-export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig & ProfileBrand {
-  return defineIdeTool({
-    toolId,
-    directory: ".fake-ide/",
-    signalDir: null,
-    capabilities: () => ({}),
-  });
-}
-
-export function aCatalog(...profiles: readonly BuiltToolConfig[]): ToolCatalog {
-  return new RegisteredToolCatalog(profiles);
 }
 
 export type InstallKind = "skills" | "agents" | "commands" | "rules";

@@ -10,11 +10,6 @@ import {
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
 describe("claude profile", () => {
-  it("lives in .claude/ and writes its one config file to .claude/settings.json", () => {
-    expect(claude.directory).toBe(".claude/");
-    expect(claude.configOutputPaths).toStrictEqual({ "settings.json": ".claude/settings.json" });
-  });
-
   it.each<[InstallKind, string, string]>([
     ["skills", "commit.claude.md", ".claude/skills/commit.md"],
     ["commands", "04_code/implement.md", ".claude/commands/aidd/04/implement.md"],

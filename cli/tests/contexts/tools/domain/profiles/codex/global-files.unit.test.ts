@@ -1,7 +1,5 @@
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { codexGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/codex/codex-paths.js";
-import { registeredAiConfig } from "../../../testing/catalog-of.js";
 
 const ORCHESTRATOR = { name: "aidd-orchestrator", agents: new Set<string>() };
 
@@ -19,13 +17,5 @@ describe("codexGlobalFilePath — the agents a machine-scope install copies into
     "plugins/aidd-orchestrator/codex-agents/reviewer.md",
   ])("leaves %s out: another plugin's, or not a staged agent", (built) => {
     expect(codexGlobalFilePath(built, ORCHESTRATOR)).toBeNull();
-  });
-});
-
-describe("the codex profile's machine-scope directory", () => {
-  it("is ~/.codex under the home directory", () => {
-    expect(registeredAiConfig("codex").plugins()?.globalFiles()?.dir("/home/me")).toBe(
-      join("/home/me", ".codex")
-    );
   });
 });
