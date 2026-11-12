@@ -114,6 +114,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
     const result = await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -155,6 +156,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     }
 
     const result = await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -178,6 +180,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     expect(before).toHaveLength(1);
 
     await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,

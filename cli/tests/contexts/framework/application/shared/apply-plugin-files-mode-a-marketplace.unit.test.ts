@@ -115,6 +115,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     }
 
     const result = await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -148,6 +149,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     await deps.fs.writeFile(join(PROJECT_ROOT, untrackedPath), "keep me");
 
     await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -169,6 +171,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     expect(before?.files.size).toBe(0);
 
     const result = await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf().sortedById(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,

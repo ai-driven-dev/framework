@@ -4,10 +4,10 @@ import type { FlatSkillLayout } from "../../contract/tool-profile.js";
 import type {
   GlobalFiles,
   HookScript,
+  PluginTranslationMode,
   ProjectHooksFormat,
 } from "../../contract/tool-vocabulary.js";
 import type { MarketplaceSettings } from "../marketplace-settings.js";
-import type { PluginTranslationMode } from "../plugin-translation-mode.js";
 import type { NativeActivationSpec } from "./native-activation.js";
 
 /** A hook lands in the plugin's own dir, or merged into the project hooks file measured to fire. */

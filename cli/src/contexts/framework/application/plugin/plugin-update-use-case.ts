@@ -9,7 +9,6 @@ import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
-import { getToolConfig } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -102,10 +101,7 @@ export class PluginUpdateUseCase {
     const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
     });
-    const runtimeProfile = getToolConfig(toolId);
-    if (runtimeProfile.kind === "ai") {
-      await this.pluginRuntime?.ensurePluginRuntimeFiles(runtimeProfile, projectRoot, manifest);
-    }
+    await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
     if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
     await this.replacePluginFiles(plugin, dist, tool, projectRoot, manifest);
     return true;
@@ -121,7 +117,6 @@ export class PluginUpdateUseCase {
     const toolId = tool.toolId;
     const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
     await deleteOldFiles(plugin.files, baseDir, this.fs);
-    const toolConfig = getToolConfig(toolId);
     const translator = this.resolveTranslator(tool);
     if (translator !== null && plugin.marketplace !== undefined) {
       await materializeViaTranslator(translator, dist, tool, plugin, projectRoot, manifest);
@@ -129,7 +124,7 @@ export class PluginUpdateUseCase {
     }
     const { files: newFiles, componentPaths } = new PluginContentTranslator(
       this.hasher
-    ).translateWithComponentPaths(dist, toolConfig);
+    ).translateWithComponentPaths(dist, tool);
     await writePluginFiles(newFiles, baseDir, this.fs);
     manifest.updatePlugin(
       toolId,

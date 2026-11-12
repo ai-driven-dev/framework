@@ -9,6 +9,7 @@ import { FileHash } from "../../../../src/kernel/file.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../src/kernel/ports/hasher.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const noopFs: FileReader & FileWriter = {
   fileExists: async () => false,
@@ -70,6 +71,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
     );
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -94,6 +96,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
     );
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -113,6 +116,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
     );
 
     const result = await useCase.execute({
+      tools: catalogOf().sortedById(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -148,6 +152,7 @@ describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
 
   it("names the tool when the one plugin asked for tracks zero files, whatever its others track", async () => {
     const result = await useCase().execute({
+      tools: catalogOf().sortedById(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,
@@ -159,6 +164,7 @@ describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
 
   it("does not name the tool when the plugin asked for tracks files", async () => {
     const result = await useCase().execute({
+      tools: catalogOf().sortedById(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,
@@ -170,6 +176,7 @@ describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
 
   it("does not name the tool when any of its plugins tracks files", async () => {
     const result = await useCase().execute({
+      tools: catalogOf().sortedById(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,

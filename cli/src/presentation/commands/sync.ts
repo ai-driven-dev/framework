@@ -90,7 +90,7 @@ async function runSyncAction(
     }
 
     if (cmdOptions.tool !== undefined) {
-      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions);
+      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, tools);
       return;
     }
 
@@ -125,7 +125,8 @@ async function runScopedSync(
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
-  cmdOptions: SyncCmdOptions
+  cmdOptions: SyncCmdOptions,
+  catalog: ToolCatalog
 ): Promise<void> {
   const toolId = cmdOptions.tool as ToolId;
   const manifest = await deps.manifestRepo.load();
@@ -140,6 +141,7 @@ async function runScopedSync(
     interactive: process.stdout.isTTY,
     manifest,
     pluginName: cmdOptions.plugin,
+    tools: catalog.sortedById(),
   });
   printToolRestoreOutcome(output, result);
 

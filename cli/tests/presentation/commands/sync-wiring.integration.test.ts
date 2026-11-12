@@ -166,6 +166,7 @@ describe("aidd sync --tool", () => {
       interactive: false,
       manifest: expect.anything(),
       pluginName: undefined,
+      tools: expect.any(Array),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,

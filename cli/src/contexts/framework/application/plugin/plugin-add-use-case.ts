@@ -18,7 +18,6 @@ import type { MarketplaceRegistry } from "../../../distribution/domain/ports/mar
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
@@ -294,10 +293,7 @@ export class PluginAddUseCase implements PluginAdd {
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
       const tool = aiProfileOf(tools, toolId);
-      const runtimeProfile = getToolConfig(toolId);
-      if (runtimeProfile.kind === "ai") {
-        await this.pluginRuntime?.ensurePluginRuntimeFiles(runtimeProfile, projectRoot, manifest);
-      }
+      await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
       const foreignDir = await this.userScopeDirNotInstalledHere(
         dist.manifest.name,
         tool,
@@ -424,8 +420,6 @@ export class PluginAddUseCase implements PluginAdd {
     userScopeDirTaken: boolean,
     previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
-    const toolConfig = getToolConfig(tool.toolId);
-    if (!isAiTool(toolConfig)) return { skipped: [], notices: [] };
     const adapter = this.resolveAdapter(tool);
     if (adapter?.mode === "flat") {
       const result = await adapter.addPlugin(
@@ -443,7 +437,7 @@ export class PluginAddUseCase implements PluginAdd {
     }
     const translated = new PluginContentTranslator(this.hasher).translateWithComponentPaths(
       dist,
-      toolConfig
+      tool
     );
     return this.materializeNativePlugin(
       dist,

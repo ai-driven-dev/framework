@@ -1,7 +1,6 @@
 import { CapabilityConfigError } from "../../../../kernel/errors.js";
 import type { HooksAcceptance } from "../../contract/tool-profile.js";
-import type { HookScript } from "../../contract/tool-vocabulary.js";
-import type { PluginTranslationMode } from "../plugin-translation-mode.js";
+import type { HookScript, PluginTranslationMode } from "../../contract/tool-vocabulary.js";
 import { MarketplaceRegistration } from "./marketplace-registration.js";
 import { NativeActivation } from "./native-activation.js";
 import {

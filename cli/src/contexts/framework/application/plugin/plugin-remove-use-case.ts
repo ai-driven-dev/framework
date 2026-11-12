@@ -20,10 +20,6 @@ import type {
 } from "../../../host-registration/contract/host-plugin-registry.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
-import {
-  nativeActivationOf,
-  pluginEnablementIsMachineGlobal,
-} from "../../../tools/domain/registry.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
@@ -114,7 +110,7 @@ export class PluginRemoveUseCase {
       await assertProjectHooksRemovable(this.fs, plugin, aiProfileOf(tools, toolId), projectRoot);
       await this.assertProjectNativeSource(
         plugin,
-        toolId,
+        aiProfileOf(tools, toolId),
         projectRoot,
         manifest.getNativeRegistrations(toolId)
       );
@@ -149,11 +145,12 @@ export class PluginRemoveUseCase {
 
   private async assertProjectNativeSource(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     registrations: NativeRegistrations | undefined
   ): Promise<void> {
-    const activation = nativeActivationOf(toolId);
+    const toolId = tool.toolId;
+    const activation = tool.nativeActivation();
     if (activation == null || plugin.marketplace === undefined) return;
     const activator = this.activators.get(activation.hostBinary());
     if (activator === undefined || !activator.isAvailable()) return;
@@ -166,7 +163,7 @@ export class PluginRemoveUseCase {
       );
     const ref = `${plugin.name}@${registration.hostName}`;
     if (
-      pluginEnablementIsMachineGlobal(toolId) &&
+      tool.pluginEnablementIsMachineGlobal() &&
       !(await isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref))
     )
       throw new Error(
@@ -190,7 +187,7 @@ export class PluginRemoveUseCase {
           `${toolId}: catalogue '${registration.hostName}' has unproven host source; reconcile manually.`
       );
     }
-    if (pluginEnablementIsMachineGlobal(toolId) || registrations?.pluginRefs.includes(ref) !== true)
+    if (tool.pluginEnablementIsMachineGlobal() || registrations?.pluginRefs.includes(ref) !== true)
       return;
     const reader = this.hostPluginRegistries.get(toolId);
     if (reader === undefined)
@@ -341,14 +338,9 @@ export class PluginRemoveUseCase {
       if (plugin === undefined) continue;
       const registrations = manifest.getNativeRegistrations(toolId);
       const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
-      const confirmed = await this.removeNativeActivation(
-        plugin,
-        toolId,
-        projectRoot,
-        registrations
-      );
+      const confirmed = await this.removeNativeActivation(plugin, tool, projectRoot, registrations);
       if (confirmed !== undefined)
-        await this.purgeCachedPlugin(registrations, toolId, plugin, confirmed);
+        await this.purgeCachedPlugin(registrations, tool, plugin, confirmed);
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);
@@ -359,7 +351,7 @@ export class PluginRemoveUseCase {
       const canDetachRef =
         confirmed === true ||
         (ref !== undefined &&
-          pluginEnablementIsMachineGlobal(toolId) &&
+          tool.pluginEnablementIsMachineGlobal() &&
           (await isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref)));
       if (hostName !== undefined && registrations !== undefined && canDetachRef) {
         manifest.setNativeRegistrations(toolId, {
@@ -385,11 +377,12 @@ export class PluginRemoveUseCase {
   // to gate on either; `true` or `false` otherwise, whether the host's own CLI confirmed it.
   private async removeNativeActivation(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     registrations: NativeRegistrations | undefined
   ): Promise<boolean | undefined> {
-    const nativeActivation = nativeActivationOf(toolId);
+    const toolId = tool.toolId;
+    const nativeActivation = tool.nativeActivation();
     if (nativeActivation == null || plugin.marketplace === undefined) return undefined;
     const activator = this.activators.get(nativeActivation.hostBinary());
     if (activator === undefined) return undefined;
@@ -400,7 +393,7 @@ export class PluginRemoveUseCase {
       );
       return false;
     }
-    await this.assertProjectNativeSource(plugin, toolId, projectRoot, registrations);
+    await this.assertProjectNativeSource(plugin, tool, projectRoot, registrations);
     const alias = plugin.marketplace;
     const registeredHostName = this.hostNameFor(registrations, alias);
     if (registeredHostName === undefined && registrations !== undefined) {
@@ -426,7 +419,7 @@ export class PluginRemoveUseCase {
     }
     const guardMessage = await this.describeGuardedPluginRef(
       nativeActivation.hostBinary(),
-      toolId,
+      tool,
       ref,
       alias,
       hostName,
@@ -475,7 +468,7 @@ export class PluginRemoveUseCase {
    */
   private async describeGuardedPluginRef(
     binary: string,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     ref: string,
     marketplaceAlias: string,
     hostName: string,
@@ -502,7 +495,7 @@ export class PluginRemoveUseCase {
     const guarded = refAnotherProjectStillNeeds({
       ref,
       sharedSourceHostName: hostName,
-      enablementIsMachineGlobal: pluginEnablementIsMachineGlobal(toolId),
+      enablementIsMachineGlobal: tool.pluginEnablementIsMachineGlobal(),
       otherProjects,
     });
     if (!guarded) return undefined;
@@ -556,12 +549,13 @@ export class PluginRemoveUseCase {
    */
   private async purgeCachedPlugin(
     registrations: NativeRegistrations | undefined,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     plugin: InstalledPlugin,
     confirmed: boolean
   ): Promise<void> {
     if (plugin.marketplace === undefined) return;
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(resolveHomeDir());
+    const toolId = tool.toolId;
+    const cacheRoot = tool.nativeActivation()?.pluginCacheRoot(resolveHomeDir());
     if (cacheRoot === undefined) return;
     const hostName = this.hostNameFor(registrations, plugin.marketplace);
     if (hostName === undefined) return;

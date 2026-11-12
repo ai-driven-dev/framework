@@ -6,8 +6,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { getToolConfig, isAiTool, nativeActivationOf } from "../../../tools/domain/registry.js";
+import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
+import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
@@ -24,6 +24,8 @@ interface RestoreAllPluginsOptions {
   /** Restrict which AI tools' plugins get touched. Undefined means every installed AI tool (unscoped). */
   toolIds?: readonly ToolId[];
   force?: boolean;
+  /** The tool profiles the restore asks. */
+  tools: readonly ToolProfile[];
 }
 
 export interface RestoreAllPluginsResult {
@@ -46,7 +48,15 @@ export class RestoreAllPluginsUseCase {
   ) {}
 
   async execute(options: RestoreAllPluginsOptions): Promise<RestoreAllPluginsResult> {
-    const { projectRoot, manifest, fileFilter, pluginName, toolIds, force = false } = options;
+    const {
+      projectRoot,
+      manifest,
+      fileFilter,
+      pluginName,
+      toolIds,
+      force = false,
+      tools,
+    } = options;
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     let totalFiles = 0;
     const restoredNames = new Set<string>();
@@ -54,10 +64,13 @@ export class RestoreAllPluginsUseCase {
     for (const toolId of AI_TOOL_IDS) {
       if (!manifest.hasTool(toolId)) continue;
       if (toolIds !== undefined && !toolIds.includes(toolId)) continue;
-      const toolConfig = getToolConfig(toolId);
-      if (!isAiTool(toolConfig)) continue;
+      const toolConfig = aiProfileOf(tools, toolId);
       const targets = this.targetPlugins(toolId, manifest, pluginName);
-      if (targets.length > 0 && this.everyTargetUntracked(targets) && nativeActivationOf(toolId)) {
+      if (
+        targets.length > 0 &&
+        this.everyTargetUntracked(targets) &&
+        toolConfig.nativeActivation()
+      ) {
         nativeOnlyToolIds.push(toolId);
       }
       const result = await this.restoreToolPlugins(

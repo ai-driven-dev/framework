@@ -56,7 +56,8 @@ export class RestoreAllUseCase {
       force,
       interactive,
       manifest,
-      errors
+      errors,
+      tools
     );
 
     return {
@@ -103,7 +104,8 @@ export class RestoreAllUseCase {
     force: boolean,
     interactive: boolean,
     manifest: Awaited<ReturnType<ManifestRepository["load"]>>,
-    errors: GlobalExecutionError[]
+    errors: GlobalExecutionError[],
+    tools: readonly ToolProfile[]
   ): Promise<{
     totalRestored: number;
     totalKept: number;
@@ -130,6 +132,7 @@ export class RestoreAllUseCase {
         force: force || interactive,
         interactive,
         manifest,
+        tools,
       });
       return {
         totalRestored: result.totalRestored,
