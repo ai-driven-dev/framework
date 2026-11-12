@@ -307,3 +307,149 @@ test('a plugin changed during release lookup is detected before any config write
   assert.deepEqual(f.calls,[]);
   assert.equal(fs.existsSync(`${f.config}.aidd-update.lock`),false);
 });
+
+function codexRecovery(t, enabled) {
+  const f = fixture(t,'codex');
+  const text = f.text.replace(current,release).replace('enabled = false',`enabled = ${enabled}`);
+  fs.writeFileSync(f.config,text);
+  for (const entry of f.state.installations) entry.source.ref = release;
+  f.state.installations[0].enabled = enabled;
+  f.state.installations[1].version = versions['plugins/aidd-dev'];
+  f.options.inspect = async () => {
+    f.state.installations[0].enabled = /^enabled = true$/m.test(fs.readFileSync(f.config,'utf8'));
+    return structuredClone(f.state);
+  };
+  f.options.run = async (binary,args,options) => {
+    f.calls.push({binary,args,cwd:options.cwd});
+    // Codex does not refresh caches when the catalogue is already current.
+    if (args[1] === 'marketplace') return;
+    assert.deepEqual(args,['plugin','add','aidd-context@aidd-framework','--json']);
+    fs.writeFileSync(f.config,fs.readFileSync(f.config,'utf8').replace('enabled = false','enabled = true'));
+    f.state.installations[0].version = versions['plugins/aidd-context'];
+  };
+  return {...f,text};
+}
+
+for (const enabled of [true,false]) {
+  test(`Codex repairs an already refreshed catalogue's stale cache and preserves enabled=${enabled}`, async t => {
+    const f = codexRecovery(t,enabled);
+    const result = await approved(f);
+    assert.equal(result.status,'updated');
+    assert.equal(f.state.installations[0].version,'2.10.0');
+    assert.equal(f.state.installations[0].enabled,enabled);
+    assert.equal(f.calls.length,2);
+    assert.equal(fs.readFileSync(f.config,'utf8'),f.text.replace(`ref = '${release}'`,`ref = "${release}"`));
+  });
+}
+
+for (const enabled of [true,false]) {
+  test(`Codex preserves enabled=${enabled} even when its reinstall fails after enabling it`, async t => {
+    const f = codexRecovery(t,enabled);
+    const run = f.options.run;
+    f.options.run = async (...args) => {
+      await run(...args);
+      if (args[1][1] === 'add') throw new Error('Install interrupted after activation');
+    };
+    await assert.rejects(approved(f),/Install interrupted after activation/);
+    assert.equal(f.calls.length,2);
+    assert.equal((await f.options.inspect()).installations[0].enabled,enabled);
+    assert.equal(fs.existsSync(`${f.config}.aidd-update.lock`),false);
+  });
+}
+
+test('Codex does not reinstall any cache already at the selected release', async t => {
+  const f = codexRecovery(t,false);
+  f.state.installations[0].version = versions['plugins/aidd-context'];
+  assert.equal((await approved(f)).status,'updated');
+  assert.equal(f.calls.length,1);
+  assert.equal(f.state.installations[0].enabled,false);
+});
+
+test('Codex restores disabled state without overwriting a concurrent source edit during reinstall', async t => {
+  const f = codexRecovery(t,false);
+  const run = f.options.run;
+  f.options.run = async (...args) => {
+    await run(...args);
+    if (args[1][1] === 'add') fs.writeFileSync(f.config,fs.readFileSync(f.config,'utf8').replace(release,'v5.14.0'));
+  };
+  await assert.rejects(approved(f),/configuration changed/i);
+  assert.equal(f.calls.length,2);
+  assert.match(fs.readFileSync(f.config,'utf8'),/^enabled = false$/m);
+  assert.equal(readNativeConfig('codex',f.options).source.ref,'v5.14.0');
+});
+
+test('Codex refuses changed inventory after refreshing before repairing any cache', async t => {
+  const f = codexRecovery(t,false);
+  const run = f.options.run;
+  f.options.run = async (...args) => {
+    await run(...args);
+    if (args[1][1] === 'marketplace') f.state.installations[0].version = '2.8.0';
+  };
+  await assert.rejects(approved(f));
+  assert.equal(f.calls.length,1);
+  assert.match(fs.readFileSync(f.config,'utf8'),/^enabled = false$/m);
+});
+
+test('Codex refuses a concurrent config edit after refreshing before repairing any cache', async t => {
+  const f = codexRecovery(t,false);
+  const run = f.options.run;
+  f.options.run = async (...args) => {
+    await run(...args);
+    fs.appendFileSync(f.config,'# Concurrent edit\n');
+  };
+  await assert.rejects(approved(f),/configuration changed/i);
+  assert.equal(f.calls.length,1);
+  assert.match(fs.readFileSync(f.config,'utf8'),/# Concurrent edit/);
+});
+
+test('Codex refuses ambiguous plugin activation before reinstalling', async t => {
+  const f = codexRecovery(t,false);
+  fs.appendFileSync(f.config,'[plugins."aidd-context@aidd-framework"]\nenabled = false\n');
+  await assert.rejects(approved(f),/Duplicate Codex plugin table/);
+  assert.equal(f.calls.length,1);
+});
+
+test('Codex identifies an activation it cannot restore after reinstall failure', async t => {
+  const f = codexRecovery(t,false);
+  const run = f.options.run;
+  f.options.run = async (...args) => {
+    await run(...args);
+    if (args[1][1] === 'add') {
+      fs.writeFileSync(f.config,fs.readFileSync(f.config,'utf8').replace('enabled = true','enabled = "invalid"'));
+      throw new Error('Install failed');
+    }
+  };
+  await assert.rejects(approved(f),/Could not restore the approved activation.*inspect its enabled state/);
+  assert.equal(f.calls.length,2);
+  assert.match(fs.readFileSync(f.config,'utf8'),/enabled = "invalid"/);
+});
+
+test('Codex leaves a concurrent multiline string containing a plugin table untouched', async t => {
+  const f = codexRecovery(t,false);
+  const changed = 'developer_instructions = """\n[plugins."aidd-context@aidd-framework"]\nenabled = true\n[example]\n"""\n';
+  const run = f.options.run;
+  f.options.run = async (...args) => {
+    await run(...args);
+    if (args[1][1] === 'add') fs.writeFileSync(f.config,changed);
+  };
+  await assert.rejects(approved(f),/Could not restore the approved activation/);
+  assert.equal(fs.readFileSync(f.config,'utf8'),changed);
+});
+
+test('Codex refuses a config parent replaced by a symlink before cache repair', async t => {
+  const f = codexRecovery(t,false);
+  const run = f.options.run;
+  const parent = path.dirname(f.config);
+  const foreign = `${parent}-foreign`;
+  f.options.run = async (...args) => {
+    await run(...args);
+    if (args[1][1] === 'marketplace') {
+      fs.cpSync(parent,foreign,{recursive:true});
+      fs.renameSync(parent,`${parent}-saved`);
+      fs.symlinkSync(foreign,parent,'dir');
+    }
+  };
+  await assert.rejects(approved(f));
+  assert.match(fs.readFileSync(path.join(foreign,'config.toml'),'utf8'),/^enabled = false$/m);
+  assert.equal(f.calls.length,1);
+});

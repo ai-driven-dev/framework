@@ -134,4 +134,28 @@ function readNativeConfig(tool, options = {}) {
   return configs[0];
 }
 
-module.exports = {listNativeConfigs, readNativeConfig};
+// Reinstalling through Codex enables the plugin. Locate only its explicit user flag.
+function codexActivation(text, ref) {
+  if (text.includes('"""') || text.includes("'''")) throw new Error('Multiline TOML requires manual activation review.');
+  let active = false, tables = 0, offset = 0, token;
+  for (const line of text.split(/(?<=\n)/)) {
+    if (/^\s*\[/.test(line)) {
+      const table = /^\s*\[plugins\.(?:"([^"\\]+)"|'([^']+)')\]\s*(?:#.*)?(?:\r?\n)?$/.exec(line);
+      if (/^\s*\[(?:plugins|"plugins"|'plugins')(?:\.|\])/.test(line) && !table)
+        throw new Error('Unsupported Codex plugin table; activation cannot be preserved.');
+      active = (table?.[1] || table?.[2]) === ref;
+      if (active && ++tables > 1) throw new Error('Duplicate Codex plugin table.');
+    } else if (active && !/^\s*(?:#.*)?$/.test(line)) {
+      const match = /^(\s*enabled\s*=\s*)(true|false)\s*(?:#.*)?(?:\r?\n)?$/.exec(line);
+      if (!match || token) throw new Error('Unsupported Codex plugin activation.');
+      token = {start:offset + match[1].length,end:offset + match[1].length + match[2].length,enabled:match[2] === 'true'};
+    } else if (/^\s*(?:plugins|"plugins"|'plugins')\s*[.=]/.test(line)) {
+      throw new Error('Unsupported Codex plugin table; activation cannot be preserved.');
+    }
+    offset += line.length;
+  }
+  if (!token) throw new Error('An explicit Codex plugin activation is required for repair.');
+  return {enabled:token.enabled,replaceEnabled:enabled => text.slice(0,token.start) + String(enabled) + text.slice(token.end)};
+}
+
+module.exports = {listNativeConfigs, readNativeConfig, codexActivation};

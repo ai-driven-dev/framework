@@ -5,7 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const {execFile} = require('node:child_process');
 const {inspectInventory} = require('./lib/inventory.cjs');
-const {readNativeConfig} = require('./lib/native-config.cjs');
+const {readNativeConfig, codexActivation} = require('./lib/native-config.cjs');
 const {releaseTag, semver, compare} = require('./lib/versions.cjs');
 const {releaseTitle} = require('./lib/releases.cjs');
 
@@ -94,6 +94,58 @@ function readConfigSnapshot(file) {
   } finally { fs.closeSync(descriptor); }
 }
 
+function replaceConfig(file, expected, replacement) {
+  if (fs.realpathSync(file) !== path.resolve(file)) throw new Error('A symbolic-link configuration cannot be updated.');
+  const {text,mode} = readConfigSnapshot(file);
+  if (text !== expected) throw new Error('Native configuration changed before writing.');
+  const temporary = `${file}.aidd-${crypto.randomUUID()}.tmp`;
+  try {
+    const descriptor = fs.openSync(temporary,'wx',mode);
+    try {
+      fs.writeFileSync(descriptor,replacement);
+      fs.fchmodSync(descriptor,mode);
+    } finally { fs.closeSync(descriptor); }
+    if (fs.realpathSync(file) !== path.resolve(file) || readConfigSnapshot(file).text !== expected)
+      throw new Error('Native configuration changed before writing.');
+    fs.renameSync(temporary,file);
+  } finally { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); }
+}
+
+async function repairCodexCaches(options, preview, config) {
+  const expected = config.replaceRef(options.release);
+  const current = await options.inspect({cwd:options.cwd,env:options.env,home:options.home,tool:'codex'});
+  if (current.warnings?.some(warning => warning.tool === 'codex')) throw new Error('Codex inventory is incomplete after refresh.');
+  const installed = current.installations.filter(entry => entry.manager === 'native' && entry.tool === 'codex' && entry.ref?.endsWith('@aidd-framework'));
+  if (installed.length !== preview.updates.length) throw new Error('Codex installations changed during refresh.');
+  const stale = preview.updates.filter(target => {
+    const entry = installed.find(entry => identity(entry) === identity(target));
+    if (!entry || entry.managed || entry.restricted || entry.enabled !== target.enabled ||
+        entry.source?.kind !== 'github' || entry.source.repo !== REPO || entry.source.ref !== options.release ||
+        ![target.version,target.targetVersion].includes(entry.version))
+      throw new Error('Codex installations changed during refresh.');
+    return entry.version !== target.targetVersion;
+  });
+  for (const target of stale) {
+    if (fs.realpathSync(config.path) !== path.resolve(config.path) || readConfigSnapshot(config.path).text !== expected)
+      throw new Error('Native configuration changed before cache repair.');
+    const activation = codexActivation(expected,target.ref);
+    if (activation.enabled !== target.enabled) throw new Error('Codex plugin activation does not match the approved inventory.');
+    try {
+      await options.run('codex',['plugin','add',target.ref,'--json'],{cwd:options.cwd,env:options.env});
+    } finally {
+      // Restore this flag even after a host failure, preserving concurrent edits to other keys.
+      let text;
+      try {
+        ({text} = readConfigSnapshot(config.path));
+        const current = codexActivation(text,target.ref);
+        if (current.enabled !== activation.enabled) replaceConfig(config.path,text,current.replaceEnabled(activation.enabled));
+      } catch { throw new Error(`Could not restore the approved activation of ${target.ref}; inspect its enabled state before retrying.`); }
+      if (text !== expected && text !== activation.replaceEnabled(true))
+        throw new Error('Native configuration changed during cache repair.');
+    }
+  }
+}
+
 async function updateNative(input) {
   const options = {cwd:process.cwd(),home:os.homedir(),env:process.env,fetcher:fetch,inspect:inspectInventory,run:runNative,...input};
   const {config,preview} = await prepare(options);
@@ -102,7 +154,6 @@ async function updateNative(input) {
   const lockPath = `${config.path}.aidd-update.lock`;
   if (fs.realpathSync(config.path) !== path.resolve(config.path)) throw new Error('A symbolic-link configuration cannot be updated.');
   const lock = fs.openSync(lockPath,'wx',0o600);
-  const temporary = `${config.path}.aidd-${crypto.randomUUID()}.tmp`;
   let changed = false;
   try {
     const current = await options.inspect({cwd:options.cwd,home:options.home,env:options.env,tool:options.tool});
@@ -110,22 +161,14 @@ async function updateNative(input) {
     if (JSON.stringify(impact) !== JSON.stringify(preview.impact) || current.warnings?.some(warning =>
       warning.tool === options.tool && !(preview.recovery && warning.code === 'native-catalogue-source-mismatch')))
       throw new Error('Native installations changed after the preview.');
-    const {text,mode} = readConfigSnapshot(config.path);
-    if (text !== config.text) throw new Error('Native configuration changed after the preview.');
-    const file = fs.openSync(temporary,'wx',mode);
-    try {
-      fs.writeFileSync(file,config.replaceRef(options.release));
-      fs.fchmodSync(file,mode);
-    } finally { fs.closeSync(file); }
-    if (fs.realpathSync(config.path) !== path.resolve(config.path) || readConfigSnapshot(config.path).text !== config.text)
-      throw new Error('Native configuration changed before writing.');
-    fs.renameSync(temporary,config.path);
+    replaceConfig(config.path,config.text,config.replaceRef(options.release));
     changed = true;
     const {tool,cwd,env,run} = options;
     const args = tool === 'codex' ? ['plugin','marketplace','upgrade','aidd-framework','--json'] :
       tool === 'claude' ? ['plugin','marketplace','add',`${REPO}#${options.release}`,'--scope',config.scope] :
         ['plugin','marketplace','update','aidd-framework'];
     await run(tool,args,{cwd,env});
+    if (tool === 'codex') await repairCodexCaches(options,preview,config);
     if (tool !== 'codex') for (const target of preview.updates) {
       const args = ['plugin','update',target.ref];
       if (tool === 'claude') args.push('--scope',target.scope);
@@ -146,7 +189,6 @@ async function updateNative(input) {
     if (changed) throw new Error(`Native update incomplete after setting ${options.release}. Inspect the source and installed plugins before retrying. ${error.message}`);
     throw error;
   } finally {
-    if (fs.existsSync(temporary)) fs.unlinkSync(temporary);
     fs.closeSync(lock); fs.unlinkSync(lockPath);
   }
 }
