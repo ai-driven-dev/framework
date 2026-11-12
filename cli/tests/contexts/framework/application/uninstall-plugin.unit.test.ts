@@ -39,7 +39,7 @@ describe("UninstallUseCase — plugin scope", () => {
       fakeEnsureBuiltMarketplace(),
       deps.userManifestRepo
     ).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -50,7 +50,7 @@ describe("UninstallUseCase — plugin scope", () => {
     expect(deps.fs.has(pluginFile)).toBe(true);
 
     await new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: [],
       projectRoot: PROJECT_ROOT,
       pluginName: "sample-plugin",
@@ -67,7 +67,7 @@ describe("UninstallUseCase — plugin scope", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: [],
         projectRoot: PROJECT_ROOT,
         pluginName: "nonexistent",
@@ -104,7 +104,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
       fs.failOn("readFile", join(PROJECT_ROOT, "opencode.json"), scenario.error);
     const repo = new InMemoryManifestRepository(manifest);
     const operation = new UninstallPluginUseCase(fs, repo).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: "sample",
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
@@ -154,7 +154,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
 
     await expect(
       new UninstallPluginUseCase(fs, repo).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample",
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,
@@ -197,7 +197,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     );
     await expect(
       new UninstallPluginUseCase(fs, repo).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample",
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,
@@ -210,7 +210,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     );
 
     await new UninstallPluginUseCase(fs, repo).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: "sample",
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
@@ -245,7 +245,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
   it("refuses a project that has no manifest", async () => {
     await expect(
       uninstallOver(null).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample",
         toolIds: [],
         projectRoot: PROJECT_ROOT,
@@ -261,7 +261,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     manifest.addPlugin("codex", pluginNamed("sample"));
 
     const results = await uninstallOver(manifest).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: "sample",
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -280,7 +280,7 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     manifest.addPlugin("claude", pluginNamed("other"));
 
     const results = await uninstallOver(manifest).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: "other",
       toolIds: [],
       projectRoot: PROJECT_ROOT,

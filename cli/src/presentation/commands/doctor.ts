@@ -18,7 +18,6 @@ import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
-type ToolProfiles = ReturnType<ToolCatalog["sortedById"]>;
 type Deps = Awaited<ReturnType<typeof createDeps>>;
 
 function categoryOf(toolId: ToolId): ToolCategory {
@@ -29,7 +28,7 @@ async function runFullDoctor(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
-  tools: ToolProfiles,
+  tools: ToolCatalog,
   pluginName: string | undefined
 ): Promise<void> {
   const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, tools, pluginName);
@@ -66,7 +65,7 @@ async function runScopedDoctor(
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId,
-  tools: ToolProfiles,
+  tools: ToolCatalog,
   pluginName: string | undefined
 ): Promise<void> {
   const category = categoryOf(toolId);
@@ -153,7 +152,7 @@ async function runUserScopeDoctor(
     manifest,
     projectRoot,
     allowedIds,
-    tools: tools.sortedById(),
+    tools,
     globalInstall: true,
   });
   printScopeIssues(output, "User scope", { issues });
@@ -200,11 +199,11 @@ export function registerDoctorCommand(program: Command, tools: ToolCatalog): voi
             output,
             projectRoot,
             cmdOptions.tool as ToolId,
-            tools.sortedById(),
+            tools,
             cmdOptions.plugin
           );
         } else {
-          await runFullDoctor(deps, output, projectRoot, tools.sortedById(), cmdOptions.plugin);
+          await runFullDoctor(deps, output, projectRoot, tools, cmdOptions.plugin);
         }
       } catch (error) {
         errorHandler.handle(error);

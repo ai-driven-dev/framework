@@ -236,7 +236,7 @@ describe("clean --scope user", () => {
       );
 
       const result = clean.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/project",
         force: true,
       });
@@ -301,7 +301,7 @@ describe("clean --scope user", () => {
     );
 
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
     ).rejects.toThrow(/user-scope plugin files.*active projects.*\/project-b/);
 
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -344,7 +344,7 @@ describe("clean --scope user", () => {
       new Map([["claude", hostPlugins]])
     );
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/foreign.*ref.*foreign@aidd-framework/);
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -412,7 +412,7 @@ describe("clean --scope user", () => {
       provenHostPlugins(machine)
     );
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/current host source differs.*reconcile manually/);
     expect(claude.uninstalledPlugins).toEqual([]);
     expect(claude.removedMarketplaces).toEqual([]);
@@ -463,7 +463,7 @@ describe("clean --scope user", () => {
       new Map([["codex", source]])
     );
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/current host source differs.*reconcile manually/);
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -503,7 +503,7 @@ describe("clean --scope user", () => {
       provenHostPlugins(machine)
     );
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/active projects.*\/B/);
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -514,7 +514,7 @@ describe("clean --scope user", () => {
       ...registrations,
       pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: [] }],
     });
-    await useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true });
+    await useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true });
     expect(activator.uninstalledPlugins).toEqual(["aidd-context@aidd-framework"]);
     expect(activator.removedMarketplaces).toEqual(["aidd-framework"]);
     expect(repo.getCurrent()).toBeNull();
@@ -565,11 +565,11 @@ describe("clean --scope user", () => {
     );
 
     expect(
-      (await useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: false }))
-        .preview.activePluginDependents
+      (await useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: false })).preview
+        .activePluginDependents
     ).toEqual(["/B"]);
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/\/B/);
     expect(fs.has(userFile)).toBe(true);
     expect(fs.has(projectFile)).toBe(true);
@@ -581,7 +581,7 @@ describe("clean --scope user", () => {
     ).toEqual(["/B"]);
 
     machine.updatePlugin("cursor", shared.withDependents([]));
-    await useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true });
+    await useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true });
     expect(repo.getCurrent()).toBeNull();
     expect(fs.has(userFile)).toBe(false);
     expect(fs.order).toContain(`deleteFile:${userFile}`);
@@ -603,7 +603,7 @@ describe("clean --scope user", () => {
       () => USER_CONFIG_DIR
     );
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/A", force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/registry delete failed/);
     expect(repo.getCurrent()).not.toBeNull();
   });
@@ -644,7 +644,7 @@ describe("clean --scope user", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/the shared framework source.*active projects.*\/project-a/);
       expect(fs.order).not.toContain(`deleteDirectory:${join(USER_CONFIG_DIR, "cache", "built")}`);
       // No manifest means no `nativeRegistrations` to drive a host's own CLI through —
@@ -695,7 +695,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -736,7 +736,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -765,7 +765,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -795,7 +795,7 @@ describe("clean --scope user", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: "/wherever",
           force: true,
         });
@@ -850,7 +850,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -883,7 +883,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -913,7 +913,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -963,7 +963,7 @@ describe("clean --scope user", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/tracked file.*escaped/);
 
       expect(await fs.fileExists(join(escapeTarget, "evil.md"))).toBe(true);
@@ -988,7 +988,7 @@ describe("clean --scope user", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/claude.*not on the PATH.*1 marketplace.*1 plugin ref/s);
       // The whitelist step still purges userConfigDir()'s own cache/built/, unrelated
       // to this host's own cache — only claude's own directory must survive untouched.
@@ -1020,7 +1020,7 @@ describe("clean --scope user", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
       });
@@ -1047,7 +1047,7 @@ describe("clean --scope user", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
       });
@@ -1074,7 +1074,7 @@ describe("clean --scope user", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/active projects.*\/project-a/);
       expect(manifestRepo.getCurrent()).not.toBeNull();
     });
@@ -1099,7 +1099,7 @@ describe("clean --scope user", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
         interactive: true,
@@ -1131,7 +1131,7 @@ describe("clean --scope user", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
         interactive: true,
@@ -1159,7 +1159,7 @@ describe("clean --scope user", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
       });
@@ -1193,7 +1193,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
         interactive: true,
@@ -1238,7 +1238,7 @@ describe("clean --scope user", () => {
       const useCase = buildClaudeUseCase(fs, new CapturingLogger());
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -1264,7 +1264,7 @@ describe("clean --scope user", () => {
       const useCase = buildClaudeUseCase(fs, logger);
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -1291,7 +1291,7 @@ describe("clean --scope user", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -1333,7 +1333,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
       });
@@ -1362,7 +1362,7 @@ describe("clean --scope user", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/Cannot read.*references.json/);
       expect(await fs.fileExists(join(USER_CONFIG_DIR, "references.json"))).toBe(true);
     });
@@ -1385,7 +1385,7 @@ describe("clean --scope user", () => {
       fs.setFile(join(USER_CONFIG_DIR, "cache", "built", "1.0.0", "aidd-framework", "x"), "1");
 
       const result = await buildPreviewUseCase(fs).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
       });
@@ -1397,7 +1397,7 @@ describe("clean --scope user", () => {
       const fs = new StrictListingFileAdapter();
 
       const result = await buildPreviewUseCase(fs).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: false,
       });
@@ -1410,7 +1410,7 @@ describe("clean --scope user", () => {
 
       await expect(
         buildPreviewUseCase(fs).execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: "/wherever",
           force: false,
         })
@@ -1454,7 +1454,7 @@ describe("clean --scope user", () => {
       });
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -1485,7 +1485,7 @@ describe("clean --scope user", () => {
         logger: new CapturingLogger(),
         nativeSources: new Map(),
         hostPlugins: new Map(),
-      }).execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true });
+      }).execute({ tools: catalogOf(), projectRoot: "/wherever", force: true });
 
       expect(result).toEqual({
         dryRun: false,
@@ -1521,7 +1521,7 @@ describe("clean --scope user", () => {
           activator,
           logger: new CapturingLogger(),
           nativeSources: new Map([["claude", source]]),
-        }).execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        }).execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow("claude: catalogue source unproven.");
 
       expect(fs.order).toEqual([]);
@@ -1563,7 +1563,7 @@ describe("clean --scope user", () => {
           activator,
           logger: new CapturingLogger(),
           nativeSources: new Map([["claude", source]]),
-        }).execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        }).execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(
         `claude: registration left in place, the claude CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). Its cache survives at: ${join(CLAUDE_CACHE, "aidd-framework")}. User clean refused; canonical claims retained.`
       );
@@ -1622,7 +1622,7 @@ describe("clean --scope user", () => {
             activator,
             hostPlugins,
             logger: new CapturingLogger(),
-          }).execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+          }).execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
         ).rejects.toThrow(/canonical catalogue source|duplicate canonical native ref|not enabled/);
 
         expect(activator.uninstalledPlugins).toEqual([]);
@@ -1666,7 +1666,7 @@ describe("clean --scope user", () => {
       });
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/copilot CLI is not on the PATH.*claims retained/);
       expect(claude.uninstalledPlugins).toEqual([]);
       expect(claude.removedMarketplaces).toEqual([]);
@@ -1705,7 +1705,7 @@ describe("clean --scope user", () => {
 
         await expect(
           useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: "/wherever",
             force: true,
           })
@@ -1744,7 +1744,7 @@ describe("clean --scope user", () => {
       });
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/ambiguous.*aidd-framework/);
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
@@ -1763,7 +1763,7 @@ describe("clean --scope user", () => {
       const useCase = buildUseCase({ fs: new InMemoryFileAdapter(), logger, activator });
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/plugin uninstall.*failed.*claims retained/);
 
       expect(logger.warnMessages).toStrictEqual([
@@ -1781,7 +1781,7 @@ describe("clean --scope user", () => {
       });
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -1799,7 +1799,7 @@ describe("clean --scope user", () => {
       });
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/marketplace remove.*failed.*claims retained/);
 
       expect(logger.warnMessages).toStrictEqual([
@@ -1860,7 +1860,7 @@ describe("clean --scope user", () => {
       });
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(/marketplace remove.*failed.*claims retained/);
 
       expect(fs.has(leftover)).toBe(true);
@@ -1901,7 +1901,7 @@ describe("clean --scope user", () => {
       );
       try {
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: "/wherever",
           force: true,
         });
@@ -1992,7 +1992,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -2018,7 +2018,7 @@ describe("clean --scope user", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -2048,7 +2048,7 @@ describe("clean --scope user", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/wherever", force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow("permission denied");
 
       expect(fs.has(source)).toBe(false);
@@ -2071,7 +2071,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });
@@ -2102,7 +2102,7 @@ describe("clean --scope user", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/wherever",
         force: true,
       });

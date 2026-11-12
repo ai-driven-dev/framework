@@ -2,14 +2,13 @@ import { join } from "node:path";
 import { posixRelative } from "../../../kernel/paths.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { InstalledRule } from "../domain/installed-rule.js";
 import { toInstalledRule } from "../domain/installed-rule.js";
 
 export interface ListInstalledRulesInput {
   readonly projectRoot: string;
-  readonly tools: readonly ToolProfile[];
+  readonly tools: ToolCatalog;
 }
 
 export interface ListInstalledRulesResult {
@@ -33,7 +32,7 @@ export class ListInstalledRulesUseCase {
   async execute(input: ListInstalledRulesInput): Promise<ListInstalledRulesResult> {
     const rules: InstalledRule[] = [];
     for (const toolId of AI_TOOL_IDS) {
-      const location = aiProfileOf(input.tools, toolId).installedRulesLocation();
+      const location = input.tools.aiProfile(toolId).installedRulesLocation();
       if (location === null) continue;
       rules.push(...(await this.rulesUnder(input.projectRoot, toolId, location)));
     }

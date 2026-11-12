@@ -81,7 +81,7 @@ async function installMarketplacePlugin(
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: ["cursor"],
     projectRoot: PROJECT_ROOT,
@@ -114,7 +114,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -156,7 +156,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     }
 
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -180,7 +180,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     expect(before).toHaveLength(1);
 
     await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,

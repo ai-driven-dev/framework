@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
-import { catalogOf, registeredProfiles } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const pluginRemove = vi.fn();
@@ -141,11 +141,11 @@ describe("aidd plugin remove", () => {
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
       scope: "project",
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });
@@ -175,7 +175,7 @@ describe("aidd plugin install", () => {
     expect(pluginInstall).toHaveBeenCalledWith({
       pluginArg: "aidd-dev",
       toolIds: "all",
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       interactive: false,
       fromMarketplace: undefined,
@@ -184,7 +184,7 @@ describe("aidd plugin install", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });
@@ -217,7 +217,7 @@ describe("aidd plugin install", () => {
     );
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       marketplaceNames: ["market-b"],
     });
   });
@@ -297,7 +297,7 @@ describe("aidd plugin update", () => {
       toolIds: [toolId],
       projectRoot: PROJECT_ROOT,
       scope: "user",
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(pluginUpdate).not.toHaveBeenCalled();
   });
@@ -309,11 +309,11 @@ describe("aidd plugin update", () => {
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
       scope: "project",
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });

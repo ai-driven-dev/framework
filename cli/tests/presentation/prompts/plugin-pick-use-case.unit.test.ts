@@ -84,7 +84,7 @@ describe("PluginPickUseCase", () => {
     const { useCase } = await buildUseCase();
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -96,7 +96,7 @@ describe("PluginPickUseCase", () => {
     const { useCase } = await buildUseCase();
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: true,
@@ -125,7 +125,7 @@ describe("PluginPickUseCase", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -147,7 +147,7 @@ describe("PluginPickUseCase", () => {
     await registerMarketplace(registry, "second", MKT_DIR_2);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -163,7 +163,7 @@ describe("PluginPickUseCase", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: true,
@@ -177,7 +177,7 @@ describe("PluginPickUseCase", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -201,7 +201,7 @@ describe("PluginPickUseCase", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -217,7 +217,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -233,7 +233,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -252,7 +252,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
     await registerMarketplace(registry, "second", MKT_DIR_2);
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -272,7 +272,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -298,7 +298,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
@@ -331,14 +331,14 @@ describe("PluginPickUseCase — what it hands the installer", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
 
     expect(add).toHaveBeenCalledWith({
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -366,7 +366,7 @@ describe("PluginPickUseCase — what it hands the installer", () => {
     await registerMarketplace(registry, "local", MKT_DIR);
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       interactive: true,

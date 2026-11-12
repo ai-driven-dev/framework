@@ -1,6 +1,6 @@
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -20,7 +20,7 @@ export interface InstallAiToolOptions {
   force: boolean;
   version: string;
   propagatePlugins: boolean;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export interface InstallAiToolResult {
@@ -62,7 +62,7 @@ export class InstallAiToolUseCase {
     toolId: AiToolId,
     projectRoot: string,
     runtimeResult: InstallRuntimeConfigResult,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<InstallAiToolResult> {
     const freshManifest = await this.manifestRepo.load();
     if (freshManifest === null) {
@@ -115,7 +115,7 @@ export class InstallAiToolUseCase {
     projectRoot: string,
     propagated: string[],
     warnings: string[],
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
     if (plugin.marketplace === undefined) {
       this.warnNoMarketplace(plugin.name, toolId, warnings);

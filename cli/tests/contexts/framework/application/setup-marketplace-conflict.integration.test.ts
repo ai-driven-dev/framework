@@ -138,10 +138,7 @@ describe("setup surfaces a marketplace source conflict instead of exiting clean"
   it("reports the conflict in its own activation result rather than discarding it", async () => {
     const { useCase, activator } = await buildUseCaseWithConflict();
 
-    const result = await useCase.execute(
-      remoteFlow(["claude" as ToolId]),
-      catalogOf().sortedById()
-    );
+    const result = await useCase.execute(remoteFlow(["claude" as ToolId]), catalogOf());
 
     expect(activator.addedMarketplaces).toHaveLength(0);
     expect(result.activation.errors).toHaveLength(1);

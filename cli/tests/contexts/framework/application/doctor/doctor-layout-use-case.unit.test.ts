@@ -34,7 +34,7 @@ async function issuesFor(onDisk: Record<string, string>, authReader?: TokenProvi
   return new DoctorLayoutUseCase(new InMemoryFileAdapter(files, hasher), authReader).execute({
     manifest: manifestTrackingClaude(),
     projectRoot: PROJECT_ROOT,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   });
 }
 

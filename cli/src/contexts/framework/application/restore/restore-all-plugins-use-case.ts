@@ -6,8 +6,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
@@ -25,7 +25,7 @@ interface RestoreAllPluginsOptions {
   toolIds?: readonly ToolId[];
   force?: boolean;
   /** The tool profiles the restore asks. */
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export interface RestoreAllPluginsResult {
@@ -64,7 +64,7 @@ export class RestoreAllPluginsUseCase {
     for (const toolId of AI_TOOL_IDS) {
       if (!manifest.hasTool(toolId)) continue;
       if (toolIds !== undefined && !toolIds.includes(toolId)) continue;
-      const toolConfig = aiProfileOf(tools, toolId);
+      const toolConfig = tools.aiProfile(toolId);
       const targets = this.targetPlugins(toolId, manifest, pluginName);
       if (
         targets.length > 0 &&

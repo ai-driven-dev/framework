@@ -1,13 +1,13 @@
 import { NoManifestError, ToolNotInstalledError } from "../../../../kernel/errors.js";
 import type { IdeToolId } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";
 
 export interface UninstallIdeOptions {
   toolId: IdeToolId;
   projectRoot: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export interface UninstallIdeResult {

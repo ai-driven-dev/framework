@@ -92,7 +92,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -111,7 +111,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -128,7 +128,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -143,7 +143,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = makeDoctorUseCase(fs, manifest);
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
         pluginName: "other-plugin",
       });
@@ -158,7 +158,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
       const issues = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         manifest: makeManifest(EXPECTED_HASH),
         projectRoot: "/proj",
         allowedIds: new Set(["cursor"]),
@@ -172,7 +172,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
       const issues = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         manifest: makeManifest(EXPECTED_HASH),
         projectRoot: "/proj",
         allowedIds: new Set(["claude"]),
@@ -203,7 +203,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
       const issues = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         manifest,
         projectRoot: "/proj",
         allowedIds: null,
@@ -249,7 +249,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       const pluginUseCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
 
       await pluginUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         manifest,
         projectRoot: "/proj",
         allowedIds: null,

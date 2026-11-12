@@ -23,9 +23,7 @@ function makeDeps() {
 }
 
 function isSupported(target: FrameworkBuildTarget, mode: FrameworkBuildMode): boolean {
-  return buildTargetModesOf(catalogOf().sortedById()).some(
-    (e) => e.target === target && e.mode === mode
-  );
+  return buildTargetModesOf(catalogOf()).some((e) => e.target === target && e.mode === mode);
 }
 
 /**

@@ -7,8 +7,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, IdeToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import type { SettingsFileAnswers, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
@@ -23,7 +23,7 @@ export interface InstallIdeToolOptions {
   manifest: Manifest;
   force: boolean;
   version: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export class InstallIdeToolUseCase {
@@ -46,7 +46,7 @@ export class InstallIdeToolUseCase {
   private async propagateAiStaticSettings(
     ideId: IdeToolId,
     projectRoot: string,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return;
@@ -61,9 +61,10 @@ export class InstallIdeToolUseCase {
     ideId: IdeToolId,
     projectRoot: string,
     manifest: Manifest,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
-    const toMerge = aiProfileOf(tools, aiId)
+    const toMerge = tools
+      .aiProfile(aiId)
       .settingsFiles()
       .filter((c) => c.requiredTool() === ideId);
     if (toMerge.length === 0) return;
@@ -79,7 +80,7 @@ export class InstallIdeToolUseCase {
     aiId: AiToolId,
     existingEntries: MergeFileEntry[],
     manifest: Manifest,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
     const fullPath = join(projectRoot, cap.outputPath());
     const content = this.resolveCapabilityContent(cap, aiId);

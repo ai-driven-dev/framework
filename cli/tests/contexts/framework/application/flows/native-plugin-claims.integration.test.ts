@@ -27,7 +27,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import {
   catalogOf,
   registeredAiConfig,
-  registeredProfiles,
+  registeredCatalog,
 } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
@@ -107,7 +107,7 @@ for (const [toolId, catalogPath] of [
         hostPlugins
       );
       await expect(
-        clean.execute({ tools: catalogOf().sortedById(), projectRoot: "/B", force: true })
+        clean.execute({ tools: catalogOf(), projectRoot: "/B", force: true })
       ).rejects.toThrow(/active projects.*\/B/);
       expect(failing.uninstalledPlugins).toEqual([]);
       expect(
@@ -121,7 +121,7 @@ for (const [toolId, catalogPath] of [
       });
       await repo.save(machine);
       await expect(
-        clean.execute({ tools: catalogOf().sortedById(), projectRoot: "/B", force: true })
+        clean.execute({ tools: catalogOf(), projectRoot: "/B", force: true })
       ).rejects.toThrow(/uninstall.*failed.*claims retained/);
       expect(repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
@@ -141,7 +141,7 @@ for (const [toolId, catalogPath] of [
         sources,
         hostPlugins
       );
-      await finish.execute({ tools: catalogOf().sortedById(), projectRoot: "/B", force: true });
+      await finish.execute({ tools: catalogOf(), projectRoot: "/B", force: true });
       expect(working.uninstalledPlugins).toEqual([ref]);
       expect(working.removedMarketplaces).toEqual(["real-catalog"]);
       expect(repo.getCurrent()).toBeNull();
@@ -234,14 +234,14 @@ for (const [toolId, catalogPath] of [
       );
 
       await useCase.execute({
-        tools: registeredProfiles(),
+        tools: registeredCatalog(),
         projectRoot: "/A",
         manifestRepo: a,
         toolIds: [toolId],
       });
       enabled = true;
       await useCase.execute({
-        tools: registeredProfiles(),
+        tools: registeredCatalog(),
         projectRoot: "/B",
         manifestRepo: b,
         toolIds: [toolId],
@@ -272,7 +272,7 @@ for (const [toolId, catalogPath] of [
       if (toolId === "copilot") {
         expect(
           await update.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -300,7 +300,7 @@ for (const [toolId, catalogPath] of [
         );
         await expect(
           failingUpdate.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -313,7 +313,7 @@ for (const [toolId, catalogPath] of [
       } else {
         await expect(
           update.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -334,7 +334,7 @@ for (const [toolId, catalogPath] of [
       );
       await expect(
         removeMarketplace.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           name: alias,
           projectRoot: "/A",
           autoConfirm: true,
@@ -367,7 +367,7 @@ for (const [toolId, catalogPath] of [
         sources
       );
       await foreignUseCase.execute({
-        tools: registeredProfiles(),
+        tools: registeredCatalog(),
         projectRoot: "/foreign",
         manifestRepo: foreign,
         toolIds: [toolId],
@@ -397,7 +397,7 @@ for (const [toolId, catalogPath] of [
           sources
         );
       await remove(a).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
@@ -409,7 +409,7 @@ for (const [toolId, catalogPath] of [
         { ref, dependents: ["/B"] },
       ]);
       await remove(b).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/B",
@@ -419,7 +419,7 @@ for (const [toolId, catalogPath] of [
         { ref, dependents: [] },
       ]);
       await remove(a).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
@@ -429,7 +429,7 @@ for (const [toolId, catalogPath] of [
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
       enabled = false;
       await removeMarketplace.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: alias,
         projectRoot: "/A",
         autoConfirm: true,

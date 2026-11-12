@@ -5,10 +5,6 @@ import type {
   AiToolProfile,
   ToolProfile,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import {
-  aiProfileOf,
-  profileOf,
-} from "../../../../src/contexts/tools/contract/tool-profile-lookup.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
 import type { BuiltToolConfig } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { REGISTERED_PROFILES } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
@@ -23,17 +19,17 @@ export function catalogOf(profiles: readonly BuiltToolConfig[] = REGISTERED_PROF
 
 /** The registered profile of one AI tool, for a test that hands a profile to code that asks one. */
 export function registeredAiProfile(id: AiToolId): AiToolProfile {
-  return aiProfileOf(catalogOf().sortedById(), id);
+  return catalogOf().aiProfile(id);
 }
 
 /** The registered profile of one tool of either kind. */
 export function registeredProfile(id: ToolId): ToolProfile {
-  return profileOf(catalogOf().sortedById(), id);
+  return catalogOf().profile(id);
 }
 
-/** Every registered profile in id order: what an edge hands a use case that asks its tools per call. */
-export function registeredProfiles(): readonly ToolProfile[] {
-  return catalogOf().sortedById();
+/** The registered catalog: what an edge hands a use case that asks its tools per call. */
+export function registeredCatalog(): ToolCatalog {
+  return catalogOf();
 }
 
 /** The registered profile as the tools context holds it, for a test of what a profile declares

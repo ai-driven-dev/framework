@@ -39,7 +39,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
       })
     );
 
-    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf().sortedById() });
+    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
 
     expect(rules.map((rule) => rule.tool).sort()).toEqual([
       "claude",
@@ -58,7 +58,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
       readerOf({ [at(".codex/rules/1-naming.md")]: "---\ndescription: Names\n---\n" })
     );
 
-    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf().sortedById() });
+    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
 
     expect(rules).toEqual([
       {
@@ -75,7 +75,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
       readerOf({ [at(".claude/rules/deep/nested/1-naming.md")]: "---\n---\n" })
     );
 
-    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf().sortedById() });
+    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
 
     expect(rules[0]?.path).toBe(".claude/rules/deep/nested/1-naming.md");
   });
@@ -90,7 +90,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
       })
     );
 
-    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf().sortedById() });
+    const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
 
     expect(rules.map((rule) => rule.path)).toEqual([".cursor/rules/1-naming.mdc"]);
   });
@@ -98,8 +98,8 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
   it("answers an empty list, never an error, for a project holding no rule at all", async () => {
     const useCase = new ListInstalledRulesUseCase(readerOf({}));
 
-    await expect(
-      useCase.execute({ projectRoot: ROOT, tools: catalogOf().sortedById() })
-    ).resolves.toEqual({ rules: [] });
+    await expect(useCase.execute({ projectRoot: ROOT, tools: catalogOf() })).resolves.toEqual({
+      rules: [],
+    });
   });
 });

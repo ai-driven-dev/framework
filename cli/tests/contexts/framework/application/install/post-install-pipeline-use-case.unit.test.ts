@@ -27,7 +27,7 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     await new PostInstallPipelineUseCase(deps.manifestRepo, deps.gitignoreUseCase).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -49,7 +49,7 @@ describe("post-install pipeline", () => {
 
     const recordingGitignore = new RecordingGitignoreUseCase(deps.fs);
     await new PostInstallPipelineUseCase(deps.manifestRepo, recordingGitignore).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -67,7 +67,7 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     await new PostInstallPipelineUseCase(deps.manifestRepo, deps.gitignoreUseCase).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });

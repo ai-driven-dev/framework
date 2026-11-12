@@ -274,7 +274,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -319,7 +319,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -362,7 +362,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -397,7 +397,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -419,7 +419,7 @@ describe("clean purges a host's own plugin cache", () => {
       aiddMarketplaceRegistry: registry,
     });
     await noRepoUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -457,7 +457,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -502,7 +502,7 @@ describe("clean purges a host's own plugin cache", () => {
       userManifestRepo: userRepo,
     });
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -538,7 +538,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -574,7 +574,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -608,7 +608,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -649,7 +649,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -681,7 +681,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
     ).rejects.toThrow("absent on the host");
 
     expect(fs.getFile(cacheEntry)).toBe("{}");
@@ -711,7 +711,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
     ).rejects.toThrow("EACCES");
 
     expect(fs.getFile(cacheEntry)).toBe("{}");
@@ -757,7 +757,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
     ).rejects.toThrow("absent on the host");
 
     // The real reader resolves the sentinel HOME, not the user's real registry.
@@ -792,7 +792,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -826,7 +826,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -859,7 +859,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -891,7 +891,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -925,7 +925,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -951,7 +951,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -977,7 +977,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -1006,7 +1006,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });

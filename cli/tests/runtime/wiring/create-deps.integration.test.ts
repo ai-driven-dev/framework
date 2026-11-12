@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { AiToolId, ToolCategory, ToolId } from "../../../src/kernel/tool.js";
+import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { createDeps, createMenuDeps } from "../../../src/runtime/wiring/framework.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
@@ -72,6 +72,8 @@ describe("createDeps", () => {
     const handed = {
       profile: (id: ToolId) => real.profile(id),
       aiProfile: (id: AiToolId) => real.aiProfile(id),
+      ideProfile: (id: IdeToolId) => real.ideProfile(id),
+      aiProfileIfAny: (id: ToolId) => real.aiProfileIfAny(id),
       inHelpOrder: (category: ToolCategory) => {
         walked += 1;
         return real.inHelpOrder(category);

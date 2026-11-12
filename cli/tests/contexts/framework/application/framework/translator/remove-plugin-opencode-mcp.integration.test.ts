@@ -67,7 +67,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
       new Map()
     );
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
@@ -106,7 +106,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
       new Map()
     );
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
@@ -144,7 +144,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     );
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,

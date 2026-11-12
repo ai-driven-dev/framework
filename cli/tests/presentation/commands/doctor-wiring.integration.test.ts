@@ -104,8 +104,15 @@ describe("aidd doctor — every tool at once", () => {
       "",
       "Installation is healthy",
     ]);
-    expect(doctorAll).toHaveBeenCalledWith(PROJECT_ROOT, expect.any(Array), undefined);
-    expect(statusAll).toHaveBeenCalledWith(PROJECT_ROOT, expect.any(Array));
+    expect(doctorAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) }),
+      undefined
+    );
+    expect(statusAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
   });
 
   it("names each equipped tool with its version and what it carries", async () => {
@@ -189,7 +196,11 @@ describe("aidd doctor — every tool at once", () => {
 
     const lines = await run("--plugin", "aidd-dev");
 
-    expect(doctorAll).toHaveBeenCalledWith(PROJECT_ROOT, expect.any(Array), "aidd-dev");
+    expect(doctorAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) }),
+      "aidd-dev"
+    );
     expect(errors.join("")).toBe("");
     expect(lines[lines.length - 1]).toBe("Installation is healthy");
   });
@@ -299,13 +310,13 @@ describe("aidd doctor --tool", () => {
       projectRoot: PROJECT_ROOT,
       category: "ai",
       pluginName: undefined,
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(statusScoped).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       filterToolId: "claude",
       pluginName: undefined,
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(doctorAll).not.toHaveBeenCalled();
   });
@@ -406,7 +417,7 @@ describe("aidd doctor --scope user", () => {
       manifest: expect.anything(),
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
       globalInstall: true,
     });
     expect(doctorAll).not.toHaveBeenCalled();

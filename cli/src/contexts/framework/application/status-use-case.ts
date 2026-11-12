@@ -10,8 +10,8 @@ import {
   type ToolId,
   toolIdsForCategory,
 } from "../../../kernel/tool.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
-import { profileOf } from "../../tools/contract/tool-profile-lookup.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { DetectPluginDriftUseCase } from "./shared/detect-plugin-drift-use-case.js";
@@ -47,7 +47,7 @@ export interface StatusOptions {
   filterToolId?: ToolId;
   category?: ToolCategory;
   pluginName?: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 /**
@@ -105,11 +105,11 @@ export class StatusUseCase implements StatusQuery {
     toolIds: ToolId[],
     manifest: Manifest,
     projectRoot: string,
-    profiles: readonly ToolProfile[]
+    profiles: ToolCatalog
   ): Promise<ToolStatus[]> {
     const tools: ToolStatus[] = [];
     for (const toolId of toolIds) {
-      tools.push(await this.checkOneTool(profileOf(profiles, toolId), manifest, projectRoot));
+      tools.push(await this.checkOneTool(profiles.profile(toolId), manifest, projectRoot));
     }
     return tools;
   }
@@ -228,7 +228,7 @@ export class StatusUseCase implements StatusQuery {
     toolIds: ToolId[],
     manifest: Manifest,
     projectRoot: string,
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     pluginName?: string
   ): Promise<PluginDriftEntry[]> {
     const drifts = await this.detectPluginDrift.execute({

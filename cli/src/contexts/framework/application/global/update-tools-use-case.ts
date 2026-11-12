@@ -1,6 +1,6 @@
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { ToolId } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { BulkConflictState } from "./resolve-update-decision-use-case.js";
@@ -15,7 +15,7 @@ export interface UpdateToolsInput<T extends ToolId> {
   projectRoot: string;
   userForce: boolean;
   interactive: boolean;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export interface UpdateToolsResult {

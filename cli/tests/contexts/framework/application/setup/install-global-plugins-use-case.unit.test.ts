@@ -78,7 +78,7 @@ function run(
   return useCase.execute(
     manifest,
     {
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: "/project",
       toolIds: ["claude", "opencode"],
       mode,
@@ -112,7 +112,7 @@ describe("InstallGlobalPluginsUseCase", () => {
     await useCase.execute(
       manifest,
       {
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/project",
         toolIds: ["cursor"],
         mode: "recommended",
@@ -150,7 +150,7 @@ describe("InstallGlobalPluginsUseCase", () => {
     await useCase.execute(
       manifest,
       {
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/project",
         toolIds: ["opencode"],
         mode: "recommended",
@@ -186,7 +186,7 @@ describe("InstallGlobalPluginsUseCase", () => {
       useCase.execute(
         manifest,
         {
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: "/project",
           toolIds: ["opencode"],
           mode: "all",

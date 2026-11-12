@@ -5,7 +5,7 @@ import { FlatBuildStrategy } from "../../../../../src/contexts/translate/applica
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredFlatContract, registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, registeredFlatContract } from "../../../tools/testing/catalog-of.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-agent-path");
@@ -23,7 +23,8 @@ const ASSETS: AssetProvider = {
 
 /** The registered tools that build flat and declare an agents artifact. */
 function flatTools(): ToolId[] {
-  return registeredProfiles()
+  return registeredCatalog()
+    .sortedById()
     .map((profile) => profile.toolId)
     .filter((id) => registeredFlatContract(id)?.artifacts.agents.supported === true);
 }

@@ -10,7 +10,7 @@ import type { ResolveMarketplaceUseCase } from "../../../distribution/applicatio
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugins/plugin-source-resolver.js";
 import {
   DEFAULT_REQUESTED_VERSION_POLICY,
@@ -24,7 +24,7 @@ export interface PluginInstallFromMarketplaceOptions {
   fromMarketplace?: string;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   interactive: boolean;
   autoSelect?: boolean;
   /** When true, drop existing plugin entry before adding (idempotent setup re-runs). */

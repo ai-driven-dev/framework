@@ -14,7 +14,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -127,7 +127,7 @@ describe("settings synchronization under the machine ownership lock", () => {
     async (scope) => {
       const f = await fixture();
       const result = await f.sync.execute({
-        tools: registeredProfiles(),
+        tools: registeredCatalog(),
         projectRoot: PROJECT_ROOT,
         scope,
       });
@@ -143,7 +143,7 @@ describe("settings synchronization under the machine ownership lock", () => {
   it("does not reacquire the project ownership lock during an explicit user-scope sync", async () => {
     const f = await fixture();
     const result = await f.sync.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -160,7 +160,7 @@ describe("settings synchronization under the machine ownership lock", () => {
       throw error;
     });
     await expect(
-      f.sync.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT })
+      f.sync.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT })
     ).rejects.toBe(error);
     expect(f.load).not.toHaveBeenCalled();
     expect(f.projectRepo.saveCount).toBe(0);
@@ -196,7 +196,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       proof.sources
     );
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     // No plugin declared here, so nothing to enable: this asserts the marketplace
     // registration path ran at all, and the next test declares one for enablePlugin.
@@ -250,7 +250,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -306,7 +306,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -331,7 +331,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       fakeEnsureBuiltMarketplace()
     );
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     // resolve(): the write carries a drive letter on win32, which a forward-slash template
     // literal never matches.
@@ -356,7 +356,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
       manifestRepo: overrideRepo,
@@ -395,7 +395,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -434,7 +434,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       proof.sources
     );
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(added).toHaveLength(1);
   });

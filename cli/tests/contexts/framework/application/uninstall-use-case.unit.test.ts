@@ -58,7 +58,7 @@ describe("uninstall", () => {
         deps.logger,
         deps.userManifestRepo
       ).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: [selected],
         projectRoot: PROJECT_ROOT,
       });
@@ -92,7 +92,7 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude" as ToolId],
       projectRoot: PROJECT_ROOT,
     });
@@ -114,7 +114,7 @@ describe("uninstall", () => {
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude" as ToolId],
         projectRoot: PROJECT_ROOT,
       })
@@ -132,7 +132,7 @@ describe("uninstall", () => {
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude" as ToolId],
       projectRoot: PROJECT_ROOT,
     });
@@ -151,7 +151,7 @@ describe("uninstall", () => {
 
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["vscode" as ToolId],
         projectRoot: PROJECT_ROOT,
       });
@@ -169,7 +169,7 @@ describe("uninstall", () => {
 
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["vscode" as ToolId],
         projectRoot: PROJECT_ROOT,
       });
@@ -186,7 +186,7 @@ describe("uninstall — refusals", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: [],
         projectRoot: PROJECT_ROOT,
       })
@@ -202,7 +202,7 @@ describe("uninstall — refusals", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       })
@@ -215,7 +215,7 @@ describe("uninstall — refusals", () => {
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       })

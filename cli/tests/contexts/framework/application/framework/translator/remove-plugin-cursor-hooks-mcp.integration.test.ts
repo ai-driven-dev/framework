@@ -153,7 +153,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
       new Map()
     );
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
@@ -236,7 +236,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -266,7 +266,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -287,7 +287,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const repo = new InMemoryManifestRepository(manifest);
     const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,

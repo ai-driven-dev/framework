@@ -102,7 +102,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     const { useCase, pick, installer } = await build(ONE_MARKETPLACE);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "none",
       pluginNames: ["aidd-dev"],
@@ -118,7 +118,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     const { useCase, installer } = await build();
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "named",
       pluginNames: ["aidd-dev", "aidd-pm"],
@@ -133,7 +133,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     const { useCase, installer } = await build(ONE_MARKETPLACE);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "recommended",
       pluginNames: [],
@@ -148,7 +148,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     const { useCase } = await build(ONE_MARKETPLACE);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "all",
       pluginNames: [],
@@ -167,7 +167,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "all",
       pluginNames: [],
@@ -190,7 +190,7 @@ describe("SetupPluginsPromptUseCase — the mode decides what is installed", () 
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "all",
       pluginNames: [],
@@ -206,7 +206,7 @@ describe("SetupPluginsPromptUseCase — what each install is asked for", () => {
     const { useCase, installer } = await build();
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "named",
       pluginNames: ["aidd-dev"],
@@ -215,7 +215,7 @@ describe("SetupPluginsPromptUseCase — what each install is asked for", () => {
 
     expect(installer.calls).toEqual([
       {
-        tools: expect.any(Array),
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
         pluginName: "aidd-dev",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -230,7 +230,7 @@ describe("SetupPluginsPromptUseCase — what each install is asked for", () => {
     const { useCase, installer } = await build();
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "named",
       pluginNames: ["aidd-dev"],
@@ -246,7 +246,7 @@ describe("SetupPluginsPromptUseCase — the interactive pick", () => {
     const { useCase, pick } = await build(ONE_MARKETPLACE, ["aidd-dev", "aidd-pm"]);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "interactive",
       pluginNames: [],
@@ -255,7 +255,12 @@ describe("SetupPluginsPromptUseCase — the interactive pick", () => {
 
     expect(result).toEqual({ installed: ["aidd-dev", "aidd-pm"] });
     expect(pick.calls).toEqual([
-      { tools: expect.any(Array), toolIds: "all", projectRoot: PROJECT_ROOT, interactive: true },
+      {
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
+        toolIds: "all",
+        projectRoot: PROJECT_ROOT,
+        interactive: true,
+      },
     ]);
   });
 
@@ -265,7 +270,7 @@ describe("SetupPluginsPromptUseCase — the interactive pick", () => {
     const { useCase, pick, installer } = await build(ONE_MARKETPLACE);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "interactive",
       pluginNames: [],
@@ -290,7 +295,7 @@ describe("SetupPluginsPromptUseCase — the interactive pick", () => {
     );
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       mode: "interactive",
       pluginNames: [],

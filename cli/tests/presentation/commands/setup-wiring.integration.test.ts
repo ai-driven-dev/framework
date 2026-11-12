@@ -111,7 +111,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
       scope: "project",
     });
     expect(setupTools).toHaveBeenCalledWith({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       aiTools: ["claude"],
       ideTools: [],
@@ -135,7 +135,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
       mode: "named",
       pluginNames: ["aidd-dev", "aidd-pm"],
       interactive: false,
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
   });
 

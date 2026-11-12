@@ -18,7 +18,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -231,7 +231,7 @@ describe("how many times the manifest is written back", () => {
     const activator = new FakeHostActions({ available: false });
     const { useCase, manifestRepo, fs } = await build({ toolIds: ["claude", "codex"], activator });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(0);
     expect(fs.listUnder(resolve(PROJECT_ROOT))).toStrictEqual([]);
@@ -241,7 +241,7 @@ describe("how many times the manifest is written back", () => {
     const activator = new FakeHostActions({ available: false });
     const { useCase, manifestRepo, fs } = await build({ withPlugin: true, activator });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(1);
     expect(JSON.parse(await fs.readFile(SETTINGS_ABSOLUTE))).toStrictEqual({
@@ -252,7 +252,7 @@ describe("how many times the manifest is written back", () => {
   it("once when only the host registration changed", async () => {
     const { useCase, manifestRepo, manifest } = await build();
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(1);
     expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
@@ -264,8 +264,8 @@ describe("how many times the manifest is written back", () => {
       settingsOnDisk: "{}",
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(1);
   });
@@ -273,10 +273,10 @@ describe("how many times the manifest is written back", () => {
   it("never on a second run that enables the same plugin ref again", async () => {
     const activator = new FakeHostActions({ available: true });
     const { useCase, manifestRepo, manifest } = await build({ withPlugin: true, activator });
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
     const afterFirstRun = manifestRepo.saves;
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(afterFirstRun);
     expect(recorded(manifest)?.pluginRefs).toStrictEqual([`${PLUGIN}@${MARKETPLACE}`]);
@@ -290,7 +290,7 @@ describe("how many times the manifest is written back", () => {
       existingRegistrations: FRAMEWORK_ONLY,
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(manifestRepo.saves).toBe(1);
     expect(trackedSettingsHash(manifest)).toBe(hasher.hash(onDisk).value);
@@ -308,7 +308,7 @@ describe("how many times the manifest is written back", () => {
       activator,
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     const written = await fs.readFile(SETTINGS_ABSOLUTE);
     expect(manifestRepo.saves).toBe(1);
@@ -322,7 +322,7 @@ describe("what the tracked settings hash follows", () => {
     const { useCase, manifest, hasher } = await build({ trackedSettings: "{}" });
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -336,7 +336,7 @@ describe("what the tracked settings hash follows", () => {
       settingsOnDisk: "{}",
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(manifest.getToolFiles("claude").map((file) => file.relativePath)).toStrictEqual([
       "CLAUDE.md",
@@ -354,7 +354,7 @@ describe("when a recorded registration is replaced", () => {
       },
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
   });
@@ -368,7 +368,7 @@ describe("when a recorded registration is replaced", () => {
       },
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
   });
@@ -381,7 +381,7 @@ describe("when a recorded registration is replaced", () => {
       existingRegistrations: FRAMEWORK_ONLY,
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)).toStrictEqual({
       ...FRAMEWORK_ONLY,
@@ -402,7 +402,7 @@ describe("when a recorded registration is replaced", () => {
       },
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)).toStrictEqual({
       binary: "claude",
@@ -433,7 +433,7 @@ describe("when a recorded registration is replaced", () => {
       },
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
   });
@@ -450,7 +450,7 @@ describe("when a recorded registration is replaced", () => {
       },
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)?.marketplaces).toStrictEqual([
       ...FRAMEWORK_ONLY.marketplaces,
@@ -471,7 +471,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
   it("records no marketplace the host kept under another registration", async () => {
     const { useCase, manifest } = await build({ activator: refusingHost("live") });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
   });
@@ -487,7 +487,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
       },
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)?.marketplaces).toStrictEqual([
       { alias: MARKETPLACE, hostName: MARKETPLACE },
@@ -503,7 +503,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
     });
     const { useCase, manifest } = await build({ activator });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
   });
@@ -519,7 +519,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
       hostRegisteredSource: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude"),
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
   });
@@ -561,7 +561,7 @@ describe("registration changes isolated from the catalogue provenance", () => {
     async (_field, existingRegistrations) => {
       const { useCase, manifest, manifestRepo } = await build({ existingRegistrations });
 
-      await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+      await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
       expect(recorded(manifest)).toStrictEqual(FRAMEWORK_ONLY);
       expect(manifestRepo.saves).toBe(1);
@@ -575,7 +575,7 @@ describe("registration changes isolated from the catalogue provenance", () => {
       existingRegistrations: { ...FRAMEWORK_ONLY, binary: "old-cli", pluginClaims },
     });
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(recorded(manifest)).toStrictEqual({ ...FRAMEWORK_ONLY, pluginClaims });
     expect(manifestRepo.saves).toBe(1);
@@ -594,7 +594,7 @@ describe("registration changes isolated from the catalogue provenance", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -628,7 +628,7 @@ describe("machine ownership recorded by a user-scope sync", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -665,7 +665,7 @@ describe("machine ownership recorded by a user-scope sync", () => {
     });
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -677,7 +677,7 @@ describe("machine ownership recorded by a user-scope sync", () => {
     });
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });

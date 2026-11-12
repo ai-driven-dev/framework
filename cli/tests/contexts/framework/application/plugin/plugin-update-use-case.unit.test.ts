@@ -65,7 +65,7 @@ async function setup(
 
 async function addLocal(addUseCase: PluginAddUseCase, path = PLUGIN_FIXTURE): Promise<void> {
   await addUseCase.execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     source: { kind: "local", path },
     toolIds: ["claude"],
     projectRoot: PROJECT_ROOT,
@@ -95,7 +95,7 @@ describe("PluginUpdateUseCase", () => {
     await initAndInstall(deps, PROJECT_ROOT, "cursor");
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
@@ -104,7 +104,7 @@ describe("PluginUpdateUseCase", () => {
     const machineBefore = deps.userManifestRepo.getCurrent()?.toJSON();
     expect(
       await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
       })
@@ -117,7 +117,7 @@ describe("PluginUpdateUseCase", () => {
     await initAndInstall(deps, PROJECT_ROOT, "cursor");
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
@@ -125,7 +125,7 @@ describe("PluginUpdateUseCase", () => {
     });
     await expect(
       updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginNames: ["sample-plugin"],
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -140,7 +140,7 @@ describe("PluginUpdateUseCase", () => {
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -151,7 +151,7 @@ describe("PluginUpdateUseCase", () => {
       const contentBefore = deps.fs.getFile(pluginFile);
 
       await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       });
@@ -168,7 +168,7 @@ describe("PluginUpdateUseCase", () => {
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -184,7 +184,7 @@ describe("PluginUpdateUseCase", () => {
       await deps.manifestRepo.save(manifest);
 
       await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       });
@@ -203,7 +203,7 @@ describe("PluginUpdateUseCase", () => {
       await addLocal(addUseCase);
 
       const updated = await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       });
@@ -219,7 +219,7 @@ describe("PluginUpdateUseCase", () => {
       await recordVersion(deps, "sample-plugin", "0.0.1");
 
       const updated = await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       });
@@ -238,7 +238,7 @@ describe("PluginUpdateUseCase", () => {
       await recordVersion(deps, "extra-plugin", "0.0.1");
 
       const updated = await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginNames: ["extra-plugin"],
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -261,7 +261,7 @@ describe("PluginUpdateUseCase", () => {
       await addLocal(addUseCase);
 
       await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       });
@@ -285,7 +285,7 @@ describe("PluginUpdateUseCase", () => {
       await recordVersion(deps, "sample-plugin", "0.0.1");
 
       await updateUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
       });

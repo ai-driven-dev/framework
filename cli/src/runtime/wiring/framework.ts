@@ -290,7 +290,7 @@ export async function createDeps(
     prompter,
     {
       execute: (options) => {
-        const removal = { ...options, tools: tools.sortedById() };
+        const removal = { ...options, tools };
         return options.scope === "user"
           ? userMarketplaceRemoveUseCase.execute(removal)
           : marketplaceRemoveUseCase.execute(removal);

@@ -50,7 +50,7 @@ describe("clean and the .aidd/ directory itself", () => {
     const logger = new CapturingLogger();
 
     await buildUseCase(logger).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot,
       force: true,
     });
@@ -63,7 +63,7 @@ describe("clean and the .aidd/ directory itself", () => {
     const logger = new CapturingLogger();
 
     const result = await buildUseCase(logger).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot,
       force: true,
     });

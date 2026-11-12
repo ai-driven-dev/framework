@@ -9,8 +9,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { isAiToolId } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
@@ -19,7 +18,7 @@ import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
 export interface UninstallToolsOptions {
   toolIds: ToolId[];
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   manifest: Manifest;
   projectRoot: string;
 }
@@ -60,7 +59,7 @@ export class UninstallToolsUseCase {
   private async removeOneTool(
     toolId: ToolId,
     allToolIds: ToolId[],
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     manifest: Manifest,
     projectRoot: string
   ): Promise<UninstallToolsResult> {
@@ -115,7 +114,7 @@ export class UninstallToolsUseCase {
 
   private async removeAllPluginFiles(
     toolId: ToolId,
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     manifest: Manifest,
     projectRoot: string
   ): Promise<void> {
@@ -124,7 +123,7 @@ export class UninstallToolsUseCase {
       await deletePluginFilesForTool(
         plugin.files,
         plugin.scope,
-        aiProfileOf(tools, toolId),
+        tools.aiProfile(toolId),
         projectRoot,
         this.fs
       );

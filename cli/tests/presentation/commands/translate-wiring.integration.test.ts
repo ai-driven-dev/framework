@@ -130,7 +130,7 @@ describe("aidd translate — what it refuses", () => {
     ).rejects.toThrow("exited");
 
     expect(errors.join("")).toBe(
-      `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets(wireTools().sortedById()).join(", ")}.\n`
+      `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets(wireTools()).join(", ")}.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();

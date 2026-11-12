@@ -16,7 +16,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 describe("native catalogue source provenance", () => {
   async function hostPluginProofFixture(
@@ -108,7 +108,7 @@ describe("native catalogue source provenance", () => {
           catalogue: { location: "/host/catalogues.json", unreadable: "permission denied" },
         }
       );
-      const result = await f.sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+      const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
       expect(result.errors).toEqual([]);
       expect(result.warnings.join(" ")).toMatch(/same-name.*host registry is unreadable/);
       expect(f.activator.addedMarketplaces).toEqual([]);
@@ -142,7 +142,7 @@ describe("native catalogue source provenance", () => {
         plugins: [{ name: "test-plugin" }],
       });
       f.fs.setFile("/foreign/claude/.claude-plugin/marketplace.json", foreignCatalog);
-      const result = await f.sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+      const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
       expect(result.errors).toEqual([]);
       expect(result.warnings.join(" ")).toContain("without a canonical AIDD claim");
       expect(f.projectRepo.getCurrent()?.getNativeRegistrations("claude")).toMatchObject({
@@ -237,7 +237,7 @@ describe("native catalogue source provenance", () => {
       });
 
       for (let run = 0; run < 2; run += 1) {
-        const result = await f.sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+        const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
         expect(result.errors).toEqual([]);
         expect(result.warnings).toEqual([]);
         expect(f.projectRepo.getCurrent()?.getNativeRegistrations(toolId)).toEqual({
@@ -269,7 +269,7 @@ describe("native catalogue source provenance", () => {
         { location: "/host/plugins.json", refs: new Map() },
         { toolId, marketplaceScope: "user", plugin: false }
       );
-      const result = await f.sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+      const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
       expect(result.errors).toEqual([]);
       expect(result.warnings).toEqual([]);
       expect(f.machineRepo.getCurrent()?.hasTool(toolId)).toBe(true);
@@ -290,7 +290,7 @@ describe("native catalogue source provenance", () => {
       { location: "/host/plugins.json", absent: true },
       { toolId: "claude", catalogue: { location: "/host/catalogues.json", absent: true } }
     );
-    const result = await f.sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+    const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
     expect(result.errors).toEqual([]);
     expect(result.warnings).toEqual([]);
     expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
@@ -319,7 +319,7 @@ describe("native catalogue source provenance", () => {
     },
   ])("refuses fresh Codex activation with $label", async ({ reading, reason }) => {
     const f = await hostPluginProofFixture(reading);
-    const result = await f.sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+    const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
     expect(result.warnings.join(" ")).toContain("unreadable host plugin registry");
     expect(result.warnings.join(" ")).toContain(reason);
     expect(f.activator.addedMarketplaces).toEqual([]);
@@ -337,7 +337,7 @@ describe("native catalogue source provenance", () => {
 
   it("accepts an explicitly absent host plugin registry only after proving the newly added source", async () => {
     const f = await hostPluginProofFixture({ location: "/host/plugins.json", absent: true });
-    const result = await f.sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+    const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
     expect(result.errors).toEqual([]);
     expect(result.warnings).toEqual([]);
     expect(f.activator.addedMarketplaces).toEqual(["/built/codex"]);
@@ -449,7 +449,7 @@ describe("native catalogue source provenance", () => {
         machineRepo,
         new Map([["codex", source]])
       );
-      const result = await sync.execute({ tools: registeredProfiles(), projectRoot: "/A" });
+      const result = await sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
       expect(result.warnings.join(" ")).toMatch(
         /post-add|add returned.*effective host source.*reconcile manually/i
       );
@@ -559,7 +559,7 @@ describe("native catalogue source provenance", () => {
         machineRepo,
         new Map([["copilot", source]])
       );
-      const result = await sync.execute({ tools: registeredProfiles(), projectRoot });
+      const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
       expect(result.warnings.join(" ")).toContain(reason);
       expect(activator.addedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([]);
@@ -640,7 +640,7 @@ describe("native catalogue source provenance", () => {
       machineRepo,
       new Map([["codex", source]])
     );
-    const result = await sync.execute({ tools: registeredProfiles(), projectRoot });
+    const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
     expect(result.errors).toEqual([]);
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
@@ -700,7 +700,7 @@ describe("native catalogue source provenance", () => {
       machineRepo,
       new Map([["codex", source]])
     );
-    await syncB.execute({ tools: registeredProfiles(), projectRoot: "/B" });
+    await syncB.execute({ tools: registeredCatalog(), projectRoot: "/B" });
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
       { ref: "test-plugin@same-name", dependents: ["/A", "/B"] },
@@ -785,7 +785,7 @@ describe("native catalogue source provenance", () => {
       machineRepo,
       new Map([["codex", source]])
     );
-    const result = await sync.execute({ tools: registeredProfiles(), projectRoot });
+    const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
     expect(result.warnings.join(" ")).toMatch(/same-name.*source.*reconcile manually/i);
     expect(activator.addedMarketplaces).toEqual([]);
     expect(activator.enabledPlugins).toEqual([]);

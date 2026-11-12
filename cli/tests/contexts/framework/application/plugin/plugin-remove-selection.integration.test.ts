@@ -66,7 +66,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: ["cursor"],
       projectRoot: ROOT,
@@ -112,7 +112,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: ["cursor"],
       projectRoot: ROOT,
@@ -149,7 +149,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: "all",
       projectRoot: ROOT,
@@ -182,7 +182,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: NAME,
         toolIds: ["cursor"],
         projectRoot: ROOT,
@@ -206,7 +206,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: NAME,
         toolIds: ["cursor"],
         projectRoot: ROOT,
@@ -242,7 +242,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: ["cursor"],
       projectRoot: ROOT,
@@ -281,7 +281,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: NAME,
         toolIds: ["cursor"],
         projectRoot: ROOT,
@@ -312,7 +312,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: NAME,
         toolIds: ["cursor"],
         projectRoot: ROOT,
@@ -352,7 +352,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     );
 
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: ["claude"],
       projectRoot: ROOT,
@@ -474,7 +474,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const marketplaces = f.record.getNativeRegistrations("claude")?.marketplaces;
 
     await f.remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: ["claude"],
       projectRoot: ROOT,
@@ -501,7 +501,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       const f = fixture(options);
 
       await f.remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: NAME,
         toolIds: ["claude"],
         projectRoot: ROOT,
@@ -523,7 +523,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const f = fixture({ enabled: false });
 
     await f.remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: ["claude"],
       projectRoot: ROOT,
@@ -543,7 +543,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const f = fixture({ available: false, registrations: false });
 
     await f.remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: ["claude"],
       projectRoot: ROOT,
@@ -609,7 +609,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     );
 
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: NAME,
       toolIds: "all",
       projectRoot: ROOT,

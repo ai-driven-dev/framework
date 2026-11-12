@@ -131,7 +131,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -152,7 +152,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -174,7 +174,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -215,7 +215,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -241,7 +241,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     );
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -261,7 +261,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const removeUseCase = new PluginRemoveUseCase(fs, manifestRepo, logger, new Map());
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -306,7 +306,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["copilot"],
         projectRoot: PROJECT_ROOT,

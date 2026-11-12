@@ -12,7 +12,6 @@ import {
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
   MarketplaceRemoveOptions,
@@ -104,7 +103,7 @@ export class UserMarketplaceRemoveUseCase {
           this.fs,
           { debug() {}, info() {}, warn() {} },
           plugin,
-          aiProfileOf(options.tools, toolId),
+          options.tools.aiProfile(toolId),
           resolveHomeDir()
         );
         if (files.size !== plugin.files.size)
@@ -120,7 +119,7 @@ export class UserMarketplaceRemoveUseCase {
         registrations,
         registration,
         ...(await this.nativeHost.planMarketplaceRemoval(
-          aiProfileOf(options.tools, toolId),
+          options.tools.aiProfile(toolId),
           registrations,
           registration,
           options.projectRoot
@@ -136,7 +135,7 @@ export class UserMarketplaceRemoveUseCase {
       await deletePluginFilesForTool(
         files,
         "user",
-        aiProfileOf(options.tools, toolId),
+        options.tools.aiProfile(toolId),
         options.projectRoot,
         this.fs,
         "user"

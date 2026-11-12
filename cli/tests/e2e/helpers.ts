@@ -324,7 +324,7 @@ export async function initProject(projectDir: string, _frameworkPath: string): P
   const deps = await createDeps(projectDir, { verbose: false }, output);
   await new InitUseCase(deps.fs, deps.manifestRepo).execute({
     projectRoot: projectDir,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   });
 }
 

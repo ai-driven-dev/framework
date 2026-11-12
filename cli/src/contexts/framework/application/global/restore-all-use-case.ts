@@ -1,7 +1,7 @@
 import { NoManifestError } from "../../../../kernel/errors.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { RestoreUseCase } from "../restore/restore-use-case.js";
@@ -31,7 +31,7 @@ export class RestoreAllUseCase {
     projectRoot: string,
     force: boolean,
     interactive: boolean,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<RestoreAllResult> {
     const errors: GlobalExecutionError[] = [];
     const manifest = await this.manifestRepo.load();
@@ -81,7 +81,7 @@ export class RestoreAllUseCase {
 
   private async promptForFiles(
     projectRoot: string,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<string[] | undefined> {
     const report = await this.statusUseCase.execute({ projectRoot, tools });
     const driftedFiles = report.tools.flatMap((t) =>
@@ -105,7 +105,7 @@ export class RestoreAllUseCase {
     interactive: boolean,
     manifest: Awaited<ReturnType<ManifestRepository["load"]>>,
     errors: GlobalExecutionError[],
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<{
     totalRestored: number;
     totalKept: number;

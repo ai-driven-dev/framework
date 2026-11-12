@@ -61,7 +61,7 @@ async function buildOpencodeProject(): Promise<{
 
 function addLocal(useCase: PluginAddUseCase, path: string, replace?: boolean): Promise<void> {
   return useCase.execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     source: { kind: "local", path },
     toolIds: ["opencode"],
     projectRoot: PROJECT_ROOT,
@@ -137,7 +137,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
         })
       );
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         source: { kind: "local", path: dir },
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -152,7 +152,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
     deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "mcp-plugin updated script");
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       source: { kind: "local", path: MCP_PLUGIN_DIR },
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
@@ -204,7 +204,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         source: { kind: "local", path: MCP_PLUGIN_DIR },
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -264,7 +264,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
 
       await expect(
         useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           source: { kind: "local", path: MCP_PLUGIN_DIR },
           toolIds: ["opencode"],
           projectRoot: PROJECT_ROOT,

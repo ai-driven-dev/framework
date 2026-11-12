@@ -103,7 +103,7 @@ function restore(
     force: true,
     interactive: false,
     fileFilter: null,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     ...overrides,
   });
 }

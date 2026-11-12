@@ -81,7 +81,7 @@ async function installGithubPlugin(
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: ["claude"],
     projectRoot: PROJECT_ROOT,
@@ -115,7 +115,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     }
 
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -149,7 +149,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     await deps.fs.writeFile(join(PROJECT_ROOT, untrackedPath), "keep me");
 
     await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -171,7 +171,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     expect(before?.files.size).toBe(0);
 
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,

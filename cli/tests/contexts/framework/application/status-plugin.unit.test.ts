@@ -68,7 +68,7 @@ describe("StatusUseCase — plugin drift", () => {
       );
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -92,7 +92,7 @@ describe("StatusUseCase — plugin drift", () => {
       );
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -112,7 +112,7 @@ describe("StatusUseCase — plugin drift", () => {
       );
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -133,7 +133,7 @@ describe("StatusUseCase — plugin drift", () => {
       );
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
         pluginName: "other-plugin",
       });

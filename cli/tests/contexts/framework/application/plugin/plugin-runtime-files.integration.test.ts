@@ -50,7 +50,7 @@ async function legacyProject() {
   );
   const addPlugin = () =>
     add.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       source: { kind: "local", path: FIXTURE },
       toolIds: ["opencode"],
       projectRoot: ROOT,
@@ -83,7 +83,7 @@ describe("plugin runtime files on an existing tool", () => {
     if (!manifest || !plugin) throw new Error("fixture plugin was not installed");
     manifest.updatePlugin("opencode", plugin.withVersion("0.0.0"));
     await update.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["opencode"],
       projectRoot: ROOT,
     });
@@ -105,7 +105,7 @@ describe("plugin runtime files on an existing tool", () => {
 
     expect(
       await update.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolIds: ["opencode"],
         projectRoot: ROOT,
       })

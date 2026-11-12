@@ -127,7 +127,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -152,7 +152,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -177,7 +177,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -200,7 +200,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -224,7 +224,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -248,7 +248,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -271,7 +271,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -294,7 +294,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -321,7 +321,7 @@ describe("clean", () => {
       deps.gitignoreUseCase
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -354,7 +354,7 @@ describe("clean", () => {
       new GitignoreUseCase(fs)
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -390,7 +390,7 @@ describe("clean", () => {
       new GitignoreUseCase(fs)
     );
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -539,7 +539,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -607,7 +607,7 @@ describe("clean", () => {
           );
 
           await useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           });
@@ -655,7 +655,7 @@ describe("clean", () => {
           );
 
           await useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           });
@@ -715,7 +715,7 @@ describe("clean", () => {
           );
 
           await useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           });
@@ -748,7 +748,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -798,7 +798,7 @@ describe("clean", () => {
           );
 
           await useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           });
@@ -876,7 +876,7 @@ describe("clean", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
       ).rejects.toThrow("differs");
 
       expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
@@ -934,7 +934,7 @@ describe("clean", () => {
       );
 
       await expect(
-        useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+        useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
       ).rejects.toThrow("foreign");
 
       expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
@@ -959,7 +959,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -999,7 +999,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -1084,7 +1084,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1125,7 +1125,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1178,7 +1178,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1229,7 +1229,7 @@ describe("clean", () => {
 
         await expect(
           useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           })
@@ -1251,7 +1251,7 @@ describe("clean", () => {
         );
         await expect(
           userClean.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           })
@@ -1291,7 +1291,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1342,7 +1342,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1384,7 +1384,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1428,7 +1428,7 @@ describe("clean", () => {
         );
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: false,
         });
@@ -1475,7 +1475,7 @@ describe("clean", () => {
         );
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: false,
         });
@@ -1521,7 +1521,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1572,7 +1572,7 @@ describe("clean", () => {
         );
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: false,
         });
@@ -1617,7 +1617,7 @@ describe("clean", () => {
         );
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1643,7 +1643,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -1683,7 +1683,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -1719,7 +1719,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -1742,7 +1742,7 @@ describe("clean", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
       });
@@ -1811,7 +1811,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -1859,7 +1859,7 @@ describe("clean", () => {
         });
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1894,7 +1894,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1921,7 +1921,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1948,7 +1948,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -1978,7 +1978,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2002,7 +2002,7 @@ describe("clean", () => {
 
         await expect(
           useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           })
@@ -2057,7 +2057,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2092,7 +2092,7 @@ describe("clean", () => {
         );
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2132,7 +2132,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2178,7 +2178,7 @@ describe("clean", () => {
         );
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2200,7 +2200,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2223,7 +2223,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2247,7 +2247,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2269,7 +2269,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2298,7 +2298,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2330,7 +2330,7 @@ describe("clean", () => {
         });
 
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2390,7 +2390,7 @@ describe("clean", () => {
           seedMarketplaceRegistry()
         );
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -2450,7 +2450,7 @@ describe("clean", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
       });
@@ -2491,7 +2491,7 @@ describe("clean", () => {
         deps.gitignoreUseCase
       );
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -2541,7 +2541,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -2598,7 +2598,7 @@ describe("clean", () => {
         new GitignoreUseCase(fs)
       );
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -2711,7 +2711,7 @@ describe("clean", () => {
 
       await expect(
         useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: false,
           interactive: true,
@@ -2788,7 +2788,7 @@ describe("clean", () => {
     );
 
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT, force: true })
+      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT, force: true })
     ).rejects.toThrow("edited");
 
     expect(await references.listAllReferencingProjects()).toContain(PROJECT_ROOT);
@@ -2827,7 +2827,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -2866,7 +2866,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -2890,7 +2890,7 @@ describe("clean", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -2926,7 +2926,7 @@ describe("clean", () => {
       const useCase = buildConfirmingUseCase(fs, prompter);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
         interactive: true,
@@ -2947,7 +2947,7 @@ describe("clean", () => {
       const useCase = buildConfirmingUseCase(fs, new RecordingPrompter(false));
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
         interactive: true,
@@ -2968,7 +2968,7 @@ describe("clean", () => {
       const useCase = buildConfirmingUseCase(fs, prompter);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
       });
@@ -2987,7 +2987,7 @@ describe("clean", () => {
       const useCase = buildConfirmingUseCase(fs, undefined);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
         interactive: true,
@@ -3017,7 +3017,7 @@ describe("clean", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
       });
@@ -3050,7 +3050,7 @@ describe("clean", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
       });
@@ -3083,7 +3083,7 @@ describe("clean", () => {
       );
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: false,
       });
@@ -3120,7 +3120,7 @@ describe("clean", () => {
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md", "b.md"]), logger);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -3137,7 +3137,7 @@ describe("clean", () => {
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -3150,7 +3150,7 @@ describe("clean", () => {
       const useCase = buildCountingUseCase(fs, seedTrackedFiles(fs, ["a.md"]));
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -3190,7 +3190,7 @@ describe("clean", () => {
       const useCase = buildCountingUseCase(fs, manifest);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -3216,7 +3216,7 @@ describe("clean", () => {
       const useCase = buildCountingUseCase(fs, manifest);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -3254,7 +3254,7 @@ describe("clean", () => {
         );
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -3268,7 +3268,7 @@ describe("clean", () => {
         const useCase = buildCountingUseCase(fs, seedMerged(fs, '{"owned":1}', ["owned"]));
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -3282,7 +3282,7 @@ describe("clean", () => {
         const useCase = buildCountingUseCase(fs, seedMerged(fs, '{"theirs":2}', []));
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -3296,7 +3296,7 @@ describe("clean", () => {
         const useCase = buildCountingUseCase(fs, seedMerged(fs, null, ["owned"]));
 
         const result = await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -3319,7 +3319,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });
@@ -3342,7 +3342,7 @@ describe("clean", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         force: true,
       });

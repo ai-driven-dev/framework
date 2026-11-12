@@ -138,7 +138,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -209,7 +209,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     );
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["codex"],
       projectRoot: PROJECT_ROOT,
@@ -266,7 +266,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -291,7 +291,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -329,7 +329,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -354,7 +354,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -385,7 +385,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -413,7 +413,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,

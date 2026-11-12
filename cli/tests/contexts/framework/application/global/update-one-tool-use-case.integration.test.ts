@@ -76,7 +76,7 @@ describe("UpdateOneToolUseCase integration", () => {
         "test",
         errors,
         {
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           userForce: false,
           interactive: false,
           bulkState: new BulkConflictState(),
@@ -104,7 +104,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
       const result = await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         userForce: true,
         interactive: false,
         bulkState: new BulkConflictState(),
@@ -133,7 +133,7 @@ describe("UpdateOneToolUseCase integration", () => {
 
       await expect(
         useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           userForce: false,
           interactive: false,
           bulkState: new BulkConflictState(),
@@ -166,7 +166,7 @@ describe("UpdateOneToolUseCase integration", () => {
         "test",
         errors,
         {
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           userForce: false,
           interactive: false,
           bulkState: new BulkConflictState(),
@@ -196,7 +196,7 @@ describe("UpdateOneToolUseCase integration", () => {
         "test",
         errors,
         {
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           userForce: false,
           interactive: false,
           bulkState: new BulkConflictState(),
@@ -222,7 +222,7 @@ describe("UpdateOneToolUseCase integration", () => {
         "test",
         errors,
         {
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           userForce: false,
           interactive: false,
           bulkState: new BulkConflictState(),
@@ -250,7 +250,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
       await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         userForce: false,
         interactive: true,
         bulkState: new BulkConflictState(),
@@ -277,7 +277,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
       const result = await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         userForce: false,
         interactive: true,
         bulkState: new BulkConflictState(),

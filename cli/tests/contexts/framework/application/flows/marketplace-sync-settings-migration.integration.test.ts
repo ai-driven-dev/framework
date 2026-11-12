@@ -31,7 +31,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_BUILT_DIR = "/shared/built/claude";
@@ -143,7 +143,7 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -176,7 +176,7 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -237,7 +237,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -276,7 +276,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -324,7 +324,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       fakeEnsureBuiltMarketplace(() => builtDir)
     );
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
@@ -398,7 +398,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -452,7 +452,7 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
 
     return {
       activator,
-      result: await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT }),
+      result: await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT }),
     };
   }
 
@@ -541,7 +541,7 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
 
     const before = await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`);
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -604,7 +604,7 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
 
     const before = await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`);
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -678,7 +678,7 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -709,7 +709,7 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -775,7 +775,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -815,7 +815,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -865,7 +865,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -904,7 +904,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -942,7 +942,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1027,7 +1027,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1085,7 +1085,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1117,7 +1117,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1158,7 +1158,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1195,7 +1195,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1222,7 +1222,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1245,7 +1245,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
       scope: "user",
@@ -1268,7 +1268,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -1289,7 +1289,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1324,7 +1324,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1358,7 +1358,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1465,7 +1465,7 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       manifest,
       projectRoot: PROJECT_A,
       allowedIds: null,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
     expect(before.some((issue) => issue.fix.includes("aidd sync"))).toBe(true);
 
@@ -1529,7 +1529,7 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
     );
 
     const syncResult = await sync.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_A,
       recreateFrameworkIfMissing: true,
     });
@@ -1539,7 +1539,7 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       manifest,
       projectRoot: PROJECT_A,
       allowedIds: null,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
     expect(after).toEqual([]);
 

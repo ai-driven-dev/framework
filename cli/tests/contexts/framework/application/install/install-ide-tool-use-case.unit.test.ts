@@ -20,7 +20,7 @@ import { catalogOf } from "../../../tools/testing/catalog-of.js";
 function toolsWithCursor(cursorProfile: BuiltToolConfig) {
   return catalogOf(
     REGISTERED_PROFILES.map((profile) => (profile.toolId === "cursor" ? cursorProfile : profile))
-  ).sortedById();
+  );
 }
 
 const PROJECT_ROOT = "/test-project";
@@ -48,7 +48,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -69,7 +69,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -91,7 +91,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -117,7 +117,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -136,7 +136,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,

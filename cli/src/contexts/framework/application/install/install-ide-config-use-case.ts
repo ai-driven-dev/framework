@@ -8,8 +8,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { IdeToolId } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import type { SettingsFileAnswers, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { ideProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
@@ -20,7 +20,7 @@ export interface InstallIdeConfigOptions {
   force: boolean;
   version: string;
   /** The profiles the install answers from: the tool's own and every installed one. */
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
   onBeforeWriteRegularFile?: (relativePath: string) => Promise<"write" | "skip">;
 }
@@ -74,7 +74,7 @@ export class InstallIdeConfigUseCase {
   private async buildSettingsFiles(
     options: InstallIdeConfigOptions
   ): Promise<{ regularFiles: InstallationFile[]; mergeFiles: InstallationFile[] }> {
-    const capabilities = ideProfileOf(options.tools, options.toolId).settingsFiles();
+    const capabilities = options.tools.ideProfile(options.toolId).settingsFiles();
     const regularFiles: InstallationFile[] = [];
     const mergeFiles: InstallationFile[] = [];
     for (const capability of capabilities) {

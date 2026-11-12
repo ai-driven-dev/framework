@@ -19,11 +19,11 @@ import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   MarketplaceRegistrationAnswers,
   ToolProfile,
 } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf, profileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
@@ -38,7 +38,7 @@ export interface DoctorRegistrationOptions {
   manifest: Manifest;
   projectRoot: string;
   allowedIds: Set<string> | null;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   /** A global install declares nothing in a project's settings, so it skips that check. */
   globalInstall?: boolean;
 }
@@ -114,7 +114,7 @@ export class DoctorRegistrationUseCase {
     const issues: DoctorIssue[] = [];
     for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
       if (!isAiToolId(toolId)) continue;
-      const profile = aiProfileOf(tools, toolId);
+      const profile = tools.aiProfile(toolId);
       if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) continue;
       const reader = this.hostMarketplaceRegistries.get(toolId);
       if (reader === undefined) continue;
@@ -226,7 +226,7 @@ export class DoctorRegistrationUseCase {
     const { projectRoot, tools } = options;
     const issues: DoctorIssue[] = [];
     for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
-      const profile = profileOf(tools, toolId);
+      const profile = tools.profile(toolId);
       const settings = this.untrackedSettingsOf(profile);
       if (settings === undefined) continue;
       // A tool that writes its own registration cannot have written one while its binary was out
@@ -252,7 +252,7 @@ export class DoctorRegistrationUseCase {
     const issues: DoctorIssue[] = [];
     for (const toolId of this.retainedToolIds(manifest, allowedIds)) {
       if (!isAiToolId(toolId)) continue;
-      if (aiProfileOf(tools, toolId).nativeActivation() === undefined) continue;
+      if (tools.aiProfile(toolId).nativeActivation() === undefined) continue;
       const expected = this.expectedNativeRegistrations(manifest, toolId);
       if (expected.length === 0) continue;
       const reading = await this.hostRegistries.get(toolId)?.read(projectRoot);

@@ -70,7 +70,7 @@ function fixture(
   );
   const execute = (pluginName: string | readonly string[]) =>
     update.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginNames: typeof pluginName === "string" ? [pluginName] : [...pluginName],
       toolIds: [toolId],
       projectRoot: "/A",
@@ -78,7 +78,7 @@ function fixture(
     });
   const executeAll = () =>
     update.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: [toolId],
       projectRoot: "/A",
       scope: "user",

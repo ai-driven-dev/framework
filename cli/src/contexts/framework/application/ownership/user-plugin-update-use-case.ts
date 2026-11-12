@@ -1,6 +1,5 @@
 import { PluginNotFoundError } from "../../../../kernel/errors.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -72,7 +71,7 @@ export class UserPluginUpdateUseCase {
     for (const { toolId, plugin } of targets) {
       const plan = await this.fileUpdater.planUpdate(
         plugin,
-        aiProfileOf(options.tools, toolId),
+        options.tools.aiProfile(toolId),
         options.projectRoot,
         this.logger,
         options.rebuild === true
@@ -84,7 +83,7 @@ export class UserPluginUpdateUseCase {
         toolId,
         claim,
         activator: await this.nativeHost.requireTargetedUpdate(
-          aiProfileOf(options.tools, toolId),
+          options.tools.aiProfile(toolId),
           claim,
           options.projectRoot,
           registrations

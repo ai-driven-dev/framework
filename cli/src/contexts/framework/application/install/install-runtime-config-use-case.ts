@@ -8,12 +8,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import type {
-  AiToolProfile,
-  SettingsFileAnswers,
-  ToolProfile,
-} from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
@@ -24,7 +20,7 @@ export interface InstallRuntimeConfigOptions {
   force: boolean;
   version: string;
   /** The profiles the install answers from: the tool's own and every installed one. */
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
   onBeforeWriteRegularFile?: (relativePath: string) => Promise<"write" | "skip">;
 }
@@ -97,7 +93,7 @@ export class InstallRuntimeConfigUseCase {
   private async buildConfigFiles(
     options: InstallRuntimeConfigOptions
   ): Promise<InstallationFile[]> {
-    const profile = aiProfileOf(options.tools, options.toolId);
+    const profile = options.tools.aiProfile(options.toolId);
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(profile.configFiles())) {
       const resolvedPath = await this.resolveConfigPath(profile, fileName, outputPath, options);
@@ -150,7 +146,7 @@ export class InstallRuntimeConfigUseCase {
 
   private buildStaticSettingsFiles(options: InstallRuntimeConfigOptions): InstallationFile[] {
     const result: InstallationFile[] = [];
-    for (const cap of aiProfileOf(options.tools, options.toolId).settingsFiles()) {
+    for (const cap of options.tools.aiProfile(options.toolId).settingsFiles()) {
       const file = this.buildStaticSettingsFile(cap, options);
       if (file !== null) result.push(file);
     }

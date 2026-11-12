@@ -84,7 +84,7 @@ describe("project marketplace removal against machine native claims", () => {
       const before = f.projectRepo.getCurrent()?.getNativeRegistrations("codex");
       expect(
         await f.useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           name: NAME,
           projectRoot: "/A",
           autoConfirm: true,
@@ -106,7 +106,7 @@ describe("project marketplace removal against machine native claims", () => {
     const before = f.projectRepo.getCurrent()?.getNativeRegistrations("codex");
     expect(
       await f.useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: true,
@@ -199,7 +199,7 @@ describe("project marketplace removal against machine native claims", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: true,
@@ -218,7 +218,7 @@ describe("project marketplace removal against machine native claims", () => {
     const f = await fixture();
     await expect(
       f.useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: true,
@@ -241,7 +241,7 @@ describe("project marketplace removal against machine native claims", () => {
     );
     expect(
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: true,
@@ -257,7 +257,7 @@ describe("project marketplace removal against machine native claims", () => {
     const f = await fixture();
     expect(
       await f.useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: true,
@@ -293,7 +293,7 @@ describe("project marketplace removal against machine native claims", () => {
     );
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: true,
@@ -316,7 +316,7 @@ describe("project marketplace removal against machine native claims", () => {
     );
     expect(
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: false,
@@ -414,7 +414,7 @@ describe("project marketplace removal against machine native claims", () => {
     );
     expect(
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: NAME,
         projectRoot: "/A",
         autoConfirm: true,

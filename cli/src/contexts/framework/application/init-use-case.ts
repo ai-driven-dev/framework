@@ -7,6 +7,7 @@ import {
 import { AIDD_DIR } from "../../../kernel/paths.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
@@ -35,7 +36,7 @@ export async function detectToolSignals(
 interface InitOptions {
   projectRoot: string;
   force?: boolean;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 interface InitResult {
@@ -72,11 +73,8 @@ export class InitUseCase {
     }
   }
 
-  private async hasAiddSignals(
-    projectRoot: string,
-    tools: readonly ToolProfile[]
-  ): Promise<boolean> {
-    for (const tool of tools) {
+  private async hasAiddSignals(projectRoot: string, tools: ToolCatalog): Promise<boolean> {
+    for (const tool of tools.sortedById()) {
       if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) return true;
     }
     return false;

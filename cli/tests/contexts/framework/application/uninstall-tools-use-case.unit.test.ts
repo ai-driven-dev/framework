@@ -46,7 +46,7 @@ describe("UninstallToolsUseCase — cursor plugin file (user-scope)", () => {
     const fs = new RecordingFileAdapter();
     const useCase = new UninstallToolsUseCase(fs, new CapturingLogger());
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["cursor"],
       manifest,
       projectRoot: PROJECT_ROOT,
@@ -94,7 +94,7 @@ function remove(
   logger = new CapturingLogger()
 ) {
   return new UninstallToolsUseCase(target.fs, logger).execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     toolIds,
     manifest: target.manifest,
     projectRoot: PROJECT_ROOT,

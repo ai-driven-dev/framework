@@ -16,7 +16,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -146,7 +146,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       marketplaceNames: ["market-b"],
     });
@@ -161,10 +161,10 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
     // A first full run seeds both marketplaces' own registrations.
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       marketplaceNames: ["market-b"],
     });
@@ -199,7 +199,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       marketplaceNames: ["market-b"],
     });
@@ -218,7 +218,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       marketplaceNames: ["nope"],
     });
@@ -234,7 +234,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.addedMarketplaces.sort()).toEqual(["/built/market-a", "/built/market-b"]);
     expect(activator.enabledPlugins.sort()).toEqual(["plugin-a@market-a", "plugin-b@market-b"]);
@@ -247,7 +247,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       marketplaceNames: ["market-b"],
     });
@@ -289,7 +289,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
 
     await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       marketplaceNames: ["market-a", "market-b"],
     });

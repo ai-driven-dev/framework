@@ -3,8 +3,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
@@ -15,7 +14,7 @@ import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 export interface UninstallPluginOptions {
   pluginName: string;
   toolIds: ToolId[];
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   projectRoot: string;
 }
 
@@ -46,7 +45,7 @@ export class UninstallPluginUseCase {
       const plugin = manifest.getPlugins(toolId).find((candidate) => candidate.name === pluginName);
       if (plugin !== undefined)
         await cleanup.assertLocalIntegrationRemovable(
-          aiProfileOf(options.tools, toolId),
+          options.tools.aiProfile(toolId),
           plugin,
           projectRoot
         );
@@ -79,7 +78,7 @@ export class UninstallPluginUseCase {
   private async removeFromTools(
     pluginName: string,
     toolIds: AiToolId[],
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest
   ): Promise<UninstallPluginResult[]> {
@@ -88,7 +87,7 @@ export class UninstallPluginUseCase {
     for (const toolId of toolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
-      const tool = aiProfileOf(tools, toolId);
+      const tool = tools.aiProfile(toolId);
       await cleanup.removeLocalIntegration(tool, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
       const hostName = registrations?.marketplaces.find(

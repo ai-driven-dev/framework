@@ -1,8 +1,8 @@
 import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import {
   FRAMEWORK_BUILD_MODES,
   type FrameworkBuildMode,
-  type ToolProfile,
 } from "../../tools/contract/tool-profile.js";
 
 /** The tool a framework build produces for. An alias rather than its own union: every AI tool
@@ -15,16 +15,15 @@ export interface FrameworkBuildTargetMode {
   readonly mode: FrameworkBuildMode;
 }
 
-/** A tool supports a mode when its profile declares a build contract for it. Takes the profiles
+/** A tool supports a mode when its profile declares a build contract for it. Takes the catalog
  * explicitly so the rule can be probed with synthetic tools. Walks the kernel's tool order, never
- * the order the profiles come in. */
-export function buildTargetModesOf(
-  profiles: readonly ToolProfile[]
-): readonly FrameworkBuildTargetMode[] {
+ * the order the tools were registered in. */
+export function buildTargetModesOf(tools: ToolCatalog): readonly FrameworkBuildTargetMode[] {
   const pairs: FrameworkBuildTargetMode[] = [];
+  const registered = new Set(tools.inHelpOrder("ai"));
   for (const target of AI_TOOL_IDS) {
-    const profile = profiles.find((candidate) => candidate.toolId === target);
-    if (profile === undefined || profile.kind !== "ai") continue;
+    if (!registered.has(target)) continue;
+    const profile = tools.aiProfile(target);
     for (const mode of FRAMEWORK_BUILD_MODES) {
       if (profile.buildContract(mode) !== null) pairs.push({ target, mode });
     }
@@ -33,10 +32,8 @@ export function buildTargetModesOf(
 }
 
 /** Every target with at least one supported build mode. */
-export function supportedBuildTargets(
-  profiles: readonly ToolProfile[]
-): readonly FrameworkBuildTarget[] {
-  return [...new Set(buildTargetModesOf(profiles).map((entry) => entry.target))];
+export function supportedBuildTargets(tools: ToolCatalog): readonly FrameworkBuildTarget[] {
+  return [...new Set(buildTargetModesOf(tools).map((entry) => entry.target))];
 }
 
 export interface FrameworkBuildOptions {

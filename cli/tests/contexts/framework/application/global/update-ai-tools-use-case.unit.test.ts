@@ -31,7 +31,7 @@ describe("UpdateAiToolsUseCase", () => {
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
       });
@@ -50,7 +50,7 @@ describe("UpdateAiToolsUseCase", () => {
 
       const useCase = buildUseCase(deps, buildUpdateOneToolUseCase(deps));
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
       });
@@ -71,7 +71,7 @@ describe("UpdateAiToolsUseCase", () => {
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolArg: "claude",
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
@@ -104,7 +104,7 @@ describe("UpdateAiToolsUseCase", () => {
 
       const useCase = buildUseCase(deps, updateOneTool);
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
       });
@@ -159,7 +159,7 @@ describe("UpdateAiToolsUseCase", () => {
       }
 
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         userForce: false,
         interactive: true,

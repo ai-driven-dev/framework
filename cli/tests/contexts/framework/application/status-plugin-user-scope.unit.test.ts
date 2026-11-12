@@ -82,7 +82,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         noopHasher,
         new DetectPluginDriftUseCase(fs)
       );
-      await useCase.execute({ tools: catalogOf().sortedById(), projectRoot: "/proj" });
+      await useCase.execute({ tools: catalogOf(), projectRoot: "/proj" });
 
       expect(checkedPaths.some((p) => p.includes(join(".cursor", "plugins", "local")))).toBe(true);
       expect(checkedPaths.every((p) => !p.includes(join("/proj", PLUGIN_KEY)))).toBe(true);
@@ -99,7 +99,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
       );
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -134,7 +134,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
       );
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 
@@ -156,7 +156,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
       );
 
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: "/proj",
       });
 

@@ -1,5 +1,5 @@
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { SetupFlow } from "../../domain/setup-flow.js";
@@ -32,7 +32,7 @@ export class SetupMachineScopeUseCase {
     private readonly installGlobalPluginsUseCase?: InstallGlobalPluginsUseCase
   ) {}
 
-  async execute(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<SetupResult> {
+  async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
     const source = await this.setupMarketplaceRegistration.resolveSourceIfNeeded(flow);
     if (this.userManifestRepo.withExclusiveAccess !== undefined) {
       return this.userManifestRepo.withExclusiveAccess(() =>
@@ -45,7 +45,7 @@ export class SetupMachineScopeUseCase {
   private async executeLocked(
     flow: SetupFlow,
     source: Awaited<ReturnType<SetupMarketplaceRegistrationUseCase["resolveSourceIfNeeded"]>>,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<SetupResult> {
     const isNew = await this.initUserManifest();
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
@@ -69,7 +69,7 @@ export class SetupMachineScopeUseCase {
    * native activation then enables machine-wide. */
   private async installGlobalPlugins(
     flow: SetupFlow,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<readonly string[]> {
     if (this.installGlobalPluginsUseCase === undefined) return [];
     const manifest = await this.userManifestRepo.load();

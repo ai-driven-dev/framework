@@ -4,7 +4,7 @@ import type { FileHash } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import { type AiToolId, type IdeToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import type { SyncConflictResolverUseCase } from "../../../../presentation/prompts/sync-conflict-resolver-use-case.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstallIdeConfigUseCase } from "../install/install-ide-config-use-case.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
@@ -22,7 +22,7 @@ export interface UpdateOneToolOptions {
   userForce: boolean;
   interactive: boolean;
   bulkState: BulkConflictState;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export class UpdateOneToolUseCase {
@@ -102,7 +102,7 @@ export class UpdateOneToolUseCase {
     manifest: Manifest,
     projectRoot: string,
     version: string,
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     onBeforeWriteRegularFile: (relativePath: string) => Promise<"write" | "skip">
   ): Promise<{ toolId: ToolId; fileCount: number } | null> {
     const result = isAiToolId(toolId)

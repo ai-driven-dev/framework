@@ -3,8 +3,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { purgeCacheIfEmptyAndConfirmed, resolveCacheCandidate } from "./purge-declared-cache.js";
 
@@ -22,11 +21,11 @@ export async function purgeAllNativeCaches(
   home: string,
   hostMarketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
   undone: ReadonlyMap<ToolId, UndoneToolRegistrations>,
-  tools: readonly ToolProfile[]
+  tools: ToolCatalog
 ): Promise<void> {
   for (const [toolId, { registrations, removedHostNames }] of undone) {
     if (!isAiToolId(toolId)) continue;
-    const cacheRoot = aiProfileOf(tools, toolId).nativeActivation()?.pluginCacheRoot(home);
+    const cacheRoot = tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home);
     if (cacheRoot === undefined) continue;
     for (const { hostName } of registrations.marketplaces) {
       await purgeNativeMarketplaceCache(

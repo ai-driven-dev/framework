@@ -99,7 +99,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName,
         toolIds: ["cursor"],
         projectRoot: "/A",
@@ -180,7 +180,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const useCase = new UninstallPluginUseCase(fs, projectRepo, machineRepo);
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName,
       toolIds: ["cursor"],
       projectRoot: "/A",
@@ -238,7 +238,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
     );
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: "sample-plugin",
       toolIds: ["cursor"],
       projectRoot: "/A",
@@ -252,7 +252,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const useCase = new UninstallPluginUseCase(f.fs, f.projectRepo, f.machineRepo);
     expect(
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: ["codex"],
         projectRoot: "/A",
@@ -275,7 +275,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const useCase = new UninstallPluginUseCase(f.fs, f.projectRepo, f.machineRepo);
     expect(
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: [],
         projectRoot: "/A",
@@ -305,7 +305,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
     );
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: ["codex"],
         projectRoot: "/A",
@@ -321,7 +321,7 @@ describe("project plugin uninstall against shared native host ownership", () => 
     const f = fixture();
     await expect(
       new UninstallPluginUseCase(f.fs, f.projectRepo, f.machineRepo).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "foreign-plugin",
         toolIds: ["codex"],
         projectRoot: "/A",

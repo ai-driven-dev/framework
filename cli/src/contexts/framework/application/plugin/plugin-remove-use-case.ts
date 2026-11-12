@@ -18,8 +18,8 @@ import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
 } from "../../../host-registration/contract/host-plugin-registry.js";
-import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
@@ -56,7 +56,7 @@ export interface PluginRemoveOptions {
   pluginName: string;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   scope?: "project" | "user";
 }
 
@@ -101,16 +101,11 @@ export class PluginRemoveUseCase {
     for (const toolId of resolvedToolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
-      await assertProjectMcpEntriesRemovable(
-        this.fs,
-        plugin,
-        aiProfileOf(tools, toolId),
-        projectRoot
-      );
-      await assertProjectHooksRemovable(this.fs, plugin, aiProfileOf(tools, toolId), projectRoot);
+      await assertProjectMcpEntriesRemovable(this.fs, plugin, tools.aiProfile(toolId), projectRoot);
+      await assertProjectHooksRemovable(this.fs, plugin, tools.aiProfile(toolId), projectRoot);
       await this.assertProjectNativeSource(
         plugin,
-        aiProfileOf(tools, toolId),
+        tools.aiProfile(toolId),
         projectRoot,
         manifest.getNativeRegistrations(toolId)
       );
@@ -256,7 +251,7 @@ export class PluginRemoveUseCase {
           this.fs,
           this.logger,
           plugin,
-          aiProfileOf(options.tools, toolId),
+          options.tools.aiProfile(toolId),
           resolveHomeDir()
         );
         if (files.size !== plugin.files.size)
@@ -313,7 +308,7 @@ export class PluginRemoveUseCase {
       await deletePluginFilesForTool(
         files,
         "user",
-        aiProfileOf(options.tools, toolId),
+        options.tools.aiProfile(toolId),
         options.projectRoot,
         this.fs,
         "user"
@@ -326,13 +321,13 @@ export class PluginRemoveUseCase {
   private async removeFromTools(
     pluginName: string,
     toolIds: AiToolId[],
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest
   ): Promise<boolean> {
     let removed = false;
     for (const toolId of toolIds) {
-      const tool = aiProfileOf(tools, toolId);
+      const tool = tools.aiProfile(toolId);
       const plugins = manifest.getPlugins(toolId);
       const plugin = plugins.find((p) => p.name === pluginName);
       if (plugin === undefined) continue;

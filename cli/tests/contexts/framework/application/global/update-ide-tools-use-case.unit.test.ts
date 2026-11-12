@@ -28,7 +28,7 @@ describe("UpdateIdeToolsUseCase", () => {
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
       });
@@ -48,7 +48,7 @@ describe("UpdateIdeToolsUseCase", () => {
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolArg: "vscode",
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
@@ -77,7 +77,7 @@ describe("UpdateIdeToolsUseCase", () => {
 
       const useCase = buildUseCase(deps, updateOneTool);
       const result = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
       });

@@ -30,7 +30,7 @@ describe("InstallIdeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -52,7 +52,7 @@ describe("InstallIdeConfigUseCase", () => {
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -61,7 +61,7 @@ describe("InstallIdeConfigUseCase", () => {
     });
 
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -83,7 +83,7 @@ describe("InstallIdeConfigUseCase", () => {
     await initProject(deps, PROJECT_ROOT);
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -94,7 +94,7 @@ describe("InstallIdeConfigUseCase", () => {
     await deps.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), userContent);
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -117,7 +117,7 @@ describe("InstallIdeConfigUseCase", () => {
     const assets = new StubAssetProvider({ "vscode/keybindings.json": text }, deps.assetProvider);
 
     await buildUseCase(deps, assets).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -134,7 +134,7 @@ describe("InstallIdeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -144,7 +144,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -162,7 +162,7 @@ describe("InstallIdeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -175,7 +175,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -198,7 +198,7 @@ describe("InstallIdeConfigUseCase", () => {
     const warnSpy = vi.spyOn(deps.logger, "warn");
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest,

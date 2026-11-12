@@ -34,7 +34,7 @@ describe("doctor represents what claude's own registry answers", () => {
 
     const useCase = buildDoctorUseCase(deps, undefined, hostRegistries);
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -65,7 +65,7 @@ describe("doctor represents what claude's own registry answers", () => {
 
     const useCase = buildDoctorUseCase(deps, undefined, hostRegistries);
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -81,7 +81,7 @@ describe("doctor represents what claude's own registry answers", () => {
 
     const useCase = buildDoctorUseCase(deps, undefined, new Map());
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 

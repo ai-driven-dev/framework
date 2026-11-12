@@ -51,7 +51,7 @@ describe("DoctorAllUseCase", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
     expect(result).toStrictEqual({
       ai: null,
@@ -69,7 +69,7 @@ describe("DoctorAllUseCase", () => {
     const { deps, manifest } = await depsWithBothCategories();
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
     expect(result).toStrictEqual({
       ai: {
@@ -95,7 +95,7 @@ describe("DoctorAllUseCase", () => {
     await deleteOneTrackedFile(deps, manifest, "claude");
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
     expect(verdictOf(result)).toStrictEqual([false, false, true, []]);
   });
@@ -105,7 +105,7 @@ describe("DoctorAllUseCase", () => {
     await deleteOneTrackedFile(deps, manifest, "vscode");
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
     expect(verdictOf(result)).toStrictEqual([false, true, false, []]);
   });
@@ -126,7 +126,7 @@ describe("DoctorAllUseCase", () => {
     await deps.manifestRepo.save(manifest);
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf().sortedById());
+    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
     const missing = {
       toolId: "claude",

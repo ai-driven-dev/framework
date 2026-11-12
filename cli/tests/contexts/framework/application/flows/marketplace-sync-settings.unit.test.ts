@@ -17,7 +17,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredProfiles } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const SHARED_SETTINGS = resolve(PROJECT_ROOT, ".claude/settings.json");
@@ -202,7 +202,7 @@ async function sync(setup: SyncSetup = {}) {
       ],
     ])
   );
-  const result = await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+  const result = await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
   const written = (await fs.fileExists(SHARED_SETTINGS))
     ? (JSON.parse(await fs.readFile(SHARED_SETTINGS)) as Record<string, unknown>)
     : undefined;
@@ -434,7 +434,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       toolIds: ["claude"],
     });
@@ -487,7 +487,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       toolIds: ["claude"],
     });
@@ -616,7 +616,7 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
     );
 
     const result = await useCase.execute({
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 

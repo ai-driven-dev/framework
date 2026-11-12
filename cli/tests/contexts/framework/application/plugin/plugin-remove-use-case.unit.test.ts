@@ -77,7 +77,7 @@ async function installPlugin(
     deps.userManifestRepo
   );
   await addUseCase.execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     source: { kind: "local", path: fixture },
     toolIds: ["claude"],
     projectRoot: PROJECT_ROOT,
@@ -126,7 +126,7 @@ describe("PluginRemoveUseCase", () => {
         deps.nativePluginActivators
       );
       await removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -154,7 +154,7 @@ describe("PluginRemoveUseCase", () => {
       );
       await expect(
         removeUseCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           pluginName: "nonexistent-plugin",
           toolIds: ["claude"],
           projectRoot: PROJECT_ROOT,
@@ -190,7 +190,7 @@ describe("PluginRemoveUseCase", () => {
       );
 
       await removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "aidd-context",
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -218,7 +218,7 @@ describe("PluginRemoveUseCase", () => {
         deps.logger,
         deps.nativePluginActivators
       ).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "extra-plugin",
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -239,7 +239,7 @@ describe("PluginRemoveUseCase", () => {
       const manifestRepo = manifestHolding("cursor", { name: "aidd-context", marketplace: "mkt" });
 
       await removeUseCaseOver(new InMemoryFileAdapter(), manifestRepo).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "aidd-context",
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
@@ -256,7 +256,7 @@ describe("PluginRemoveUseCase", () => {
       const manifestRepo = manifestHolding("opencode", { name: "aidd-context" });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "aidd-context",
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,
@@ -276,7 +276,7 @@ describe("PluginRemoveUseCase", () => {
       });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "aidd-context",
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -295,7 +295,7 @@ describe("PluginRemoveUseCase", () => {
 
       await expect(
         removeUseCaseOver(fs, manifestRepo).execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           pluginName: "aidd-context",
           toolIds: ["opencode"],
           projectRoot: PROJECT_ROOT,

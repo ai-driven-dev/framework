@@ -58,11 +58,11 @@ async function runUserScopeSync(
           projectRoot,
           scope: "user",
           rebuild: true,
-          tools: catalog.sortedById(),
+          tools: catalog,
         });
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
-    tools: catalog.sortedById(),
+    tools: catalog,
     scope: "user",
     manifestRepo: deps.userManifestRepo,
     toolIds,
@@ -100,7 +100,7 @@ async function runSyncAction(
       projectRoot,
       cmdOptions.force,
       interactive,
-      tools.sortedById()
+      tools
     );
     printRestoreOutcome(output, result);
 
@@ -108,7 +108,7 @@ async function runSyncAction(
     // settings file restoration regenerates, which must be on disk before that CLI runs.
     const activation = await deps.marketplaceSyncSettingsUseCase.execute({
       projectRoot,
-      tools: tools.sortedById(),
+      tools,
       recreateFrameworkIfMissing: true,
     });
     printActivationOutcome(output, activation);
@@ -143,7 +143,7 @@ async function runScopedSync(
     interactive: process.stdout.isTTY,
     manifest,
     pluginName: cmdOptions.plugin,
-    tools: catalog.sortedById(),
+    tools: catalog,
   });
   printToolRestoreOutcome(output, result);
 
@@ -151,7 +151,7 @@ async function runScopedSync(
   // installed tool's activation.
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
-    tools: catalog.sortedById(),
+    tools: catalog,
     toolIds: [toolId],
     recreateFrameworkIfMissing: true,
   });

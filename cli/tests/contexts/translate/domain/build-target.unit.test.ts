@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildTargetModesOf } from "../../../../src/contexts/translate/domain/build-target.js";
+import {
+  buildTargetModesOf,
+  supportedBuildTargets,
+} from "../../../../src/contexts/translate/domain/build-target.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { anEmptyContract, aProfile } from "../../tools/testing/profiles.js";
 
@@ -13,10 +16,24 @@ describe("buildTargetModesOf", () => {
       aProfile("opencode").withBuildContract("flat", anEmptyContract()).build(),
     ]);
 
-    expect(buildTargetModesOf(catalog.sortedById())).toEqual([
+    expect(buildTargetModesOf(catalog)).toEqual([
       { target: "claude", mode: "marketplace" },
       { target: "claude", mode: "flat" },
       { target: "opencode", mode: "flat" },
+    ]);
+  });
+});
+
+describe("supportedBuildTargets", () => {
+  it("lists the registered targets in the kernel tool order, which the usage message prints", () => {
+    expect(supportedBuildTargets(catalogOf())).toEqual([
+      "claude",
+      "cursor",
+      "copilot",
+      "opencode",
+      "kilo",
+      "codex",
+      "antigravity",
     ]);
   });
 });

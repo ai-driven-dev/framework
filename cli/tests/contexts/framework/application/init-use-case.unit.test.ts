@@ -12,7 +12,7 @@ describe("init", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const result = await new InitUseCase(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
 
     expect(result.manifest).not.toBeNull();
@@ -29,7 +29,7 @@ describe("init", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await new InitUseCase(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
 
     const docsFiles = deps.fs.listUnder(join(PROJECT_ROOT, "aidd_docs"));
@@ -43,7 +43,7 @@ describe("init", () => {
 
     await new InitUseCase(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
 
     expect(deps.fs.getFile(docFile)).toBe("custom content");
@@ -55,7 +55,7 @@ describe("init", () => {
       await expect(
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).resolves.toBeUndefined();
     });
@@ -70,7 +70,7 @@ describe("init", () => {
       await expect(
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).rejects.toThrow("AIDD files detected but no manifest found");
     });
@@ -85,7 +85,7 @@ describe("init", () => {
       await expect(
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).resolves.toBeUndefined();
     });
@@ -94,12 +94,12 @@ describe("init", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await new InitUseCase(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
       });
       await expect(
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).rejects.toThrow(/Already initialized/);
     });
@@ -110,18 +110,18 @@ describe("init", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await new InitUseCase(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
       });
       await expect(
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).rejects.toThrow(/aidd clean --force/);
       await expect(
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).rejects.not.toThrow(/aidd init --force/);
     });
@@ -132,7 +132,7 @@ describe("init", () => {
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           force: true,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).rejects.toThrow("No AIDD manifest found");
     });
@@ -141,13 +141,13 @@ describe("init", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await new InitUseCase(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
       });
       await expect(
         new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           force: true,
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
         })
       ).resolves.toBeUndefined();
     });
@@ -162,7 +162,7 @@ describe("init", () => {
       const result = await new InitUseCase(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
       });
       expect(result.manifest.toJSON()).toEqual(before);
       expect(deps.fs.getFile(join(PROJECT_ROOT, ".gitignore"))).toBe("# User-owned\n");
@@ -179,7 +179,7 @@ describe("init", () => {
       await new InitUseCase(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
       });
 
       const manifestAfter = await deps.manifestRepo.load();

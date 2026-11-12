@@ -139,9 +139,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf().sortedById())).rejects.toThrow(
-      CatalogFetchAuthError
-    );
+    await expect(useCase.execute(flow, catalogOf())).rejects.toThrow(CatalogFetchAuthError);
   });
 
   it("proceeds when source is remote, no token, but repo is public", async () => {
@@ -154,7 +152,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf().sortedById())).resolves.toBeDefined();
+    await expect(useCase.execute(flow, catalogOf())).resolves.toBeDefined();
   });
 
   it("proceeds without error when source is remote and a token is present", async () => {
@@ -167,7 +165,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf().sortedById())).resolves.toBeDefined();
+    await expect(useCase.execute(flow, catalogOf())).resolves.toBeDefined();
   });
 
   it("proceeds without error when source is local (no token required)", async () => {
@@ -180,6 +178,6 @@ describe("SetupUseCase — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf().sortedById())).resolves.toBeDefined();
+    await expect(useCase.execute(flow, catalogOf())).resolves.toBeDefined();
   });
 });

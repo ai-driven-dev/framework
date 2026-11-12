@@ -36,7 +36,7 @@ async function existingProject(configPath: string) {
     ideTools: [],
     force: false,
     version: "test",
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   };
   await setup.execute(setupOptions);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
@@ -57,7 +57,7 @@ async function existingProject(configPath: string) {
   );
   const install = () =>
     add.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       source: { kind: "local", path: FIXTURE },
       toolIds: ["kilo"],
       projectRoot: ROOT,
@@ -110,7 +110,7 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
       await deps.fs.deleteFile(join(ROOT, BRIDGE));
       expect(
         await update.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           toolIds: ["kilo"],
           projectRoot: ROOT,
         })

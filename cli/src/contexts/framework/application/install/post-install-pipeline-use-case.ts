@@ -1,5 +1,4 @@
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { profileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { aiddGitignoreEntries } from "../../domain/manifest-gitignore-entries.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -9,7 +8,7 @@ interface PostInstallPipelineOptions {
   projectRoot: string;
   manifest: Manifest;
   /** The profiles the installed tools are answered from. */
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export class PostInstallPipelineUseCase {
@@ -26,7 +25,7 @@ export class PostInstallPipelineUseCase {
     await this.gitignoreUseCase.execute(
       projectRoot,
       aiddGitignoreEntries(manifest, (toolId) => {
-        const profile = profileOf(tools, toolId);
+        const profile = tools.profile(toolId);
         return profile.kind === "ai"
           ? (profile.marketplaceRegistration()?.machineLocalFiles() ?? [])
           : [];

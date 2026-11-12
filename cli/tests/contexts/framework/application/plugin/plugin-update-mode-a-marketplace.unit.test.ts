@@ -84,7 +84,7 @@ async function installStaleGithubPlugin(
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
@@ -114,7 +114,7 @@ describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
     });
@@ -136,7 +136,7 @@ describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot
     await installStaleGithubPlugin(deps, registry, "claude");
 
     await makeUpdateUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
     });
@@ -158,7 +158,7 @@ describe("PluginUpdateUseCase — flat-mode tools are unaffected (regression gua
     deps.fs.setFile(BUILT_OPENCODE_SKILL, "# Demo skill v2");
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
     });

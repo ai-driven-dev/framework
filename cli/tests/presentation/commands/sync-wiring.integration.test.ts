@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf, registeredProfiles } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const restoreAll = vi.fn();
@@ -93,10 +93,15 @@ async function run(...args: string[]): Promise<string[]> {
 describe("aidd sync — the whole project", () => {
   it("restores first, then re-drives every registered marketplace's activation", async () => {
     expect(await run()).toEqual(["Nothing to restore — all files are unmodified."]);
-    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, false, expect.any(Array));
+    expect(restoreAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      false,
+      false,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       recreateFrameworkIfMissing: true,
     });
     expect(restoreAll.mock.invocationCallOrder[0]).toBeLessThan(
@@ -108,10 +113,20 @@ describe("aidd sync — the whole project", () => {
     pretendTerminal(true);
 
     await run();
-    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, true, expect.any(Array));
+    expect(restoreAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      false,
+      true,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
 
     await run("--force");
-    expect(restoreAll).toHaveBeenLastCalledWith(PROJECT_ROOT, true, false, expect.any(Array));
+    expect(restoreAll).toHaveBeenLastCalledWith(
+      PROJECT_ROOT,
+      true,
+      false,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
   });
 
   it("names both the restoration's and the activation's refusals, and fails the process", async () => {
@@ -167,11 +182,11 @@ describe("aidd sync --tool", () => {
       interactive: false,
       manifest: expect.anything(),
       pluginName: undefined,
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       toolIds: ["claude"],
       recreateFrameworkIfMissing: true,
     });
@@ -237,7 +252,7 @@ describe("aidd sync --scope user", () => {
     expect(await run("--scope", "user")).toEqual(["Synced native activation for: claude"]);
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       scope: "user",
       manifestRepo: userManifestRepo,
       toolIds: undefined,
@@ -267,7 +282,7 @@ describe("aidd sync --scope user", () => {
       projectRoot: PROJECT_ROOT,
       scope: "user",
       rebuild: true,
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith(expect.objectContaining({ scope: "user" }));
   });

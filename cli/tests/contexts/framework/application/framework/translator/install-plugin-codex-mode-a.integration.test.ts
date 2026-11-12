@@ -17,7 +17,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredProfiles } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, registeredCatalog } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -159,7 +159,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       new CapturingLogger(),
       activator
     );
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     // Registers the BUILT (transformed) tree, not the raw source. A fresh add
     // succeeds outright — no pre-emptive remove on a clean install.
@@ -189,7 +189,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       new CapturingLogger(),
       activator
     );
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(activator.enabledPlugins).toEqual([`aidd-context@${MARKETPLACE_NAME}`]);
@@ -215,7 +215,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       logger,
       activator
     );
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toEqual([`aidd-vcs@${MARKETPLACE_NAME}`]);
     expect(logger.warnMessages.some((m) => m.includes("aidd-context@aidd-framework"))).toBe(true);
@@ -237,7 +237,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       new Map([["codex", activator]]),
       fakeEnsureBuiltMarketplace()
     );
-    await useCase.execute({ tools: registeredProfiles(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.addedMarketplaces).toEqual([]);
     expect(activator.enabledPlugins).toEqual([]);

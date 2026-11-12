@@ -116,7 +116,7 @@ async function issuesFor(
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds: null,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   });
   // Not filtered by `NAME`, this project's own local alias: a conflict message names the
   // catalog's own declared name, which a test may diverge from the alias entirely.
@@ -291,7 +291,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
         manifest,
         projectRoot: PROJECT_ROOT,
         allowedIds: null,
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
       })
     ).resolves.toStrictEqual([]);
   });
@@ -336,7 +336,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
 
     expect(issues).toStrictEqual([]);
@@ -391,7 +391,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
 
     expect(hostReader.reads).toBe(2);
@@ -440,7 +440,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
   }
 

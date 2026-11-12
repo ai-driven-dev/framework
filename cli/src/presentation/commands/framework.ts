@@ -60,7 +60,7 @@ async function installAiTool(
     force: cmdOptions.force,
     version,
     propagatePlugins: cmdOptions.plugins,
-    tools: catalog.sortedById(),
+    tools: catalog,
   });
   if (result.runtimeResult.skipped) {
     printToolAlreadyInstalled(output, toolId);
@@ -89,7 +89,7 @@ async function installIdeTool(
     manifest,
     force: cmdOptions.force,
     version,
-    tools: catalog.sortedById(),
+    tools: catalog,
   });
   if (result.skipped) {
     printToolAlreadyInstalled(output, result.toolId);
@@ -106,18 +106,18 @@ async function runFrameworkRemove(
   catalog: ToolCatalog
 ): Promise<void> {
   assertKnownToolId(toolId);
-  const tools = catalog.sortedById();
+
   if (isAiToolId(toolId)) {
     const results = await deps.uninstallUseCase.execute({
       toolIds: [toolId],
       projectRoot,
-      tools,
+      tools: catalog,
     });
     const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
     printToolRemoved(output, results[0].toolId, totalFileCount);
     return;
   }
-  const result = await deps.uninstallIdeUseCase.execute({ toolId, projectRoot, tools });
+  const result = await deps.uninstallIdeUseCase.execute({ toolId, projectRoot, tools: catalog });
   printToolRemoved(output, result.toolId, result.fileCount);
 }
 
@@ -139,7 +139,7 @@ async function runFrameworkUpdate(
         projectRoot,
         userForce: cmdOptions.force,
         interactive,
-        tools: catalog.sortedById(),
+        tools: catalog,
       });
       printUpdateResult(output, result.updatedTools, result.errors);
     } else {
@@ -148,7 +148,7 @@ async function runFrameworkUpdate(
         projectRoot,
         userForce: cmdOptions.force,
         interactive,
-        tools: catalog.sortedById(),
+        tools: catalog,
       });
       printUpdateResult(output, result.updatedTools, result.errors);
     }
@@ -160,13 +160,13 @@ async function runFrameworkUpdate(
     projectRoot,
     userForce: cmdOptions.force,
     interactive,
-    tools: catalog.sortedById(),
+    tools: catalog,
   });
   const ide = await deps.updateIdeToolsUseCase.execute({
     projectRoot,
     userForce: cmdOptions.force,
     interactive,
-    tools: catalog.sortedById(),
+    tools: catalog,
   });
   printUpdateResult(
     output,
@@ -259,7 +259,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
         const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const { rules } = await deps.listInstalledRulesUseCase.execute({
           projectRoot,
-          tools: catalog.sortedById(),
+          tools: catalog,
         });
         if (cmdOptions.json) printInstalledRulesJson(output, rules);
         else printInstalledRules(output, rules);

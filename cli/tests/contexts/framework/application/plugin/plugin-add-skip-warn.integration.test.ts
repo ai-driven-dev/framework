@@ -39,7 +39,7 @@ describe("PluginAddUseCase skip warnings", () => {
         deps.userManifestRepo
       );
       await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,

@@ -42,7 +42,7 @@ describe("DetectPluginDriftUseCase", () => {
     const useCase = new DetectPluginDriftUseCase(new InMemoryFileAdapter({}, HASHER));
 
     const drifts = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: ["cursor"],
@@ -65,7 +65,7 @@ describe("DetectPluginDriftUseCase", () => {
     const useCase = new DetectPluginDriftUseCase(fs);
 
     const drifts = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
       toolIds: ["cursor"],

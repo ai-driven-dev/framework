@@ -1,6 +1,6 @@
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { detectToolSignals } from "../init-use-case.js";
@@ -8,7 +8,7 @@ import { detectToolSignals } from "../init-use-case.js";
 export interface DoctorLayoutOptions {
   manifest: Manifest;
   projectRoot: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export class DoctorLayoutUseCase {
@@ -27,11 +27,11 @@ export class DoctorLayoutUseCase {
   private async checkOrphanedDirectories(
     manifest: Manifest,
     projectRoot: string,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
     const installedToolDirs = manifest.getInstalledDirectories();
-    for (const tool of tools) {
+    for (const tool of tools.sortedById()) {
       if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) {
         if (!installedToolDirs.has(tool.directory)) {
           issues.push({

@@ -97,7 +97,7 @@ describe("MarketplaceRemoveUseCase", () => {
     const { useCase } = buildUseCase();
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: "missing",
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -118,7 +118,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -158,7 +158,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -206,7 +206,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -256,7 +256,7 @@ describe("MarketplaceRemoveUseCase", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -285,7 +285,7 @@ describe("MarketplaceRemoveUseCase", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: FRAMEWORK_MARKETPLACE_NAME,
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -302,7 +302,7 @@ describe("MarketplaceRemoveUseCase", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: FRAMEWORK_MARKETPLACE_NAME,
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -323,7 +323,7 @@ describe("which marketplace a removal takes out", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -339,7 +339,7 @@ describe("which marketplace a removal takes out", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -396,7 +396,7 @@ describe("which plugins a removal orphans", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: "awesome",
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -451,7 +451,7 @@ describe("which plugins a removal orphans", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: "awesome",
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -508,7 +508,7 @@ describe("which plugins a removal orphans", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: "awesome",
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -556,7 +556,7 @@ describe("which plugins a removal orphans", () => {
     );
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: "awesome",
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -572,7 +572,7 @@ describe("which plugins a removal orphans", () => {
     );
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -614,7 +614,7 @@ describe("which plugins a removal orphans", () => {
     fs.setFile(path, edited);
     await expect(
       useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         name: "awesome",
         projectRoot: PROJECT_ROOT,
         autoConfirm: true,
@@ -637,7 +637,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,
@@ -663,7 +663,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, awesome);
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
@@ -691,7 +691,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
@@ -718,7 +718,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
@@ -741,7 +741,7 @@ describe("which plugins a removal orphans", () => {
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       name: "awesome",
       projectRoot: PROJECT_ROOT,
       autoConfirm: true,

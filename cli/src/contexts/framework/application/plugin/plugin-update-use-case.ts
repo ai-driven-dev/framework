@@ -7,8 +7,8 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -30,7 +30,7 @@ import { resolveBaseDirFromRecord, resolvePluginToolIds } from "./plugin-target-
 export interface PluginUpdateOptions {
   pluginNames?: string[];
   toolIds: AiToolId[] | "all";
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   projectRoot: string;
   scope?: "project" | "user";
   /** Re-materialize at the same version: the source changed, not the plugin's version. Read by
@@ -58,7 +58,7 @@ export class PluginUpdateUseCase {
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {
       const names = await this.updatePluginsForTool(
-        aiProfileOf(options.tools, toolId),
+        options.tools.aiProfile(toolId),
         pluginNames,
         projectRoot,
         cacheDir,

@@ -227,7 +227,7 @@ describe("setup validates before any side effect", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf().sortedById())).rejects.toThrow(/--source/);
+    await expect(useCase.execute(flow, catalogOf())).rejects.toThrow(/--source/);
 
     expect(await deps.manifestRepo.load()).toBeNull();
     expect(deps.fs.has(join(PROJECT_ROOT, ".gitignore"))).toBe(false);
@@ -239,7 +239,7 @@ describe("setup without TTY", () => {
     const { useCase } = await buildUseCase();
     const result = await useCase.execute(
       remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(result.kind).toBe("initialized");
@@ -250,7 +250,7 @@ describe("setup without TTY", () => {
 
   it("fresh project without tool flags initializes docs only and installs no tools", async () => {
     const { useCase } = await buildUseCase();
-    const result = await useCase.execute(remoteFlow(), catalogOf().sortedById());
+    const result = await useCase.execute(remoteFlow(), catalogOf());
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
@@ -264,7 +264,7 @@ describe("setup without TTY", () => {
 
     const result = await useCase.execute(
       remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(result.kind).toBe("initialized");
@@ -279,7 +279,7 @@ describe("setup without TTY", () => {
 
     const result = await useCase.execute(
       remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(result.kind).toBe("up-to-date");
@@ -292,7 +292,7 @@ describe("setup without TTY", () => {
     const { useCase, deps } = await buildUseCase();
     await initProject(deps, PROJECT_ROOT);
 
-    const result = await useCase.execute(remoteFlow(), catalogOf().sortedById());
+    const result = await useCase.execute(remoteFlow(), catalogOf());
 
     expect(result.kind).toBe("up-to-date");
     if (result.kind === "up-to-date") {
@@ -304,7 +304,7 @@ describe("setup without TTY", () => {
     const { useCase, deps } = await buildUseCase();
     await initAndInstall(deps, PROJECT_ROOT, "claude");
 
-    const result = await useCase.execute(remoteFlow(), catalogOf().sortedById());
+    const result = await useCase.execute(remoteFlow(), catalogOf());
 
     expect(result.kind).toBe("up-to-date");
   });
@@ -315,7 +315,7 @@ describe("setup without TTY", () => {
     });
     deps.fs.setFile(join(PROJECT_ROOT, "tsconfig.json"), "{}");
 
-    const result = await useCase.execute(remoteFlow(), catalogOf().sortedById());
+    const result = await useCase.execute(remoteFlow(), catalogOf());
 
     expect(result.context).toStrictEqual(
       new ProjectContext({ stack: "typescript", isMonorepo: false, hasFramework: false })
@@ -340,11 +340,11 @@ describe("setup without TTY", () => {
     it("installs each named plugin on every tool once the framework marketplace is registered", async () => {
       const { useCase, pluginInstallFromMarketplace } = await buildUseCase();
 
-      await useCase.execute(namedFlow(true), catalogOf().sortedById());
+      await useCase.execute(namedFlow(true), catalogOf());
 
       expect(pluginInstallFromMarketplace.execute).toHaveBeenCalledTimes(1);
       expect(pluginInstallFromMarketplace.execute).toHaveBeenCalledWith({
-        tools: expect.any(Array),
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
         pluginName: "aidd-context",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
@@ -357,7 +357,7 @@ describe("setup without TTY", () => {
     it("installs no plugin when the default marketplace is opted out", async () => {
       const { useCase, pluginInstallFromMarketplace } = await buildUseCase();
 
-      await useCase.execute(namedFlow(false), catalogOf().sortedById());
+      await useCase.execute(namedFlow(false), catalogOf());
 
       expect(pluginInstallFromMarketplace.execute).not.toHaveBeenCalled();
     });
@@ -366,10 +366,7 @@ describe("setup without TTY", () => {
   describe("default marketplace opt-out (#197)", () => {
     it("registers framework marketplace by default", async () => {
       const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
-      await useCase.execute(
-        remoteFlow({ aiTools: ["claude" as ToolId] }),
-        catalogOf().sortedById()
-      );
+      await useCase.execute(remoteFlow({ aiTools: ["claude" as ToolId] }), catalogOf());
       expect(marketplaceRegisterFramework.execute).toHaveBeenCalledOnce();
       expect(marketplaceRefresh.execute).toHaveBeenCalledOnce();
     });
@@ -387,7 +384,7 @@ describe("setup without TTY", () => {
           interactive: false,
           registerDefaultMarketplace: false,
         }),
-        catalogOf().sortedById()
+        catalogOf()
       );
       expect(marketplaceRegisterFramework.execute).not.toHaveBeenCalled();
       expect(marketplaceRefresh.execute).not.toHaveBeenCalled();
@@ -406,7 +403,7 @@ describe("setup without TTY", () => {
           interactive: false,
           registerDefaultMarketplace: false,
         }),
-        catalogOf().sortedById()
+        catalogOf()
       );
       expect(result.kind).toBe("initialized");
       if (result.kind === "initialized") {
@@ -421,10 +418,7 @@ describe("setup without TTY", () => {
       const userSourceReferences = makeRecordingUserSourceReferences();
       const { useCase, deps } = await buildUseCase(undefined, userSourceReferences);
 
-      await useCase.execute(
-        remoteFlow({ aiTools: ["claude" as ToolId] }),
-        catalogOf().sortedById()
-      );
+      await useCase.execute(remoteFlow({ aiTools: ["claude" as ToolId] }), catalogOf());
 
       expect(userSourceReferences.added).toEqual([
         { version: deps.currentVersionProvider.get(), projectRoot: PROJECT_ROOT },
@@ -446,7 +440,7 @@ describe("setup without TTY", () => {
           interactive: false,
           registerDefaultMarketplace: false,
         }),
-        catalogOf().sortedById()
+        catalogOf()
       );
 
       expect(userSourceReferences.added).toEqual([]);
@@ -466,7 +460,7 @@ describe("setup without TTY", () => {
 
       const result = await useCase.execute(
         remoteFlow({ aiTools: ["claude" as ToolId] }),
-        catalogOf().sortedById()
+        catalogOf()
       );
 
       expect(result.kind).toBe("initialized");
@@ -482,7 +476,7 @@ describe("setup without TTY", () => {
 
       const result = await useCase.execute(
         remoteFlow({ aiTools: ["claude" as ToolId] }),
-        catalogOf().sortedById()
+        catalogOf()
       );
 
       expect(result.kind).toBe("initialized");
@@ -495,7 +489,7 @@ describe("setup without TTY", () => {
 
       const result = await useCase.execute(
         remoteFlow({ aiTools: ["opencode" as ToolId] }),
-        catalogOf().sortedById()
+        catalogOf()
       );
 
       expect(result.kind).toBe("initialized");
@@ -511,7 +505,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
 
-      const result = await useCase.execute(remoteFlow(), catalogOf().sortedById());
+      const result = await useCase.execute(remoteFlow(), catalogOf());
 
       expect(result.kind).toBe("initialized");
     });
@@ -522,10 +516,7 @@ describe("setup without TTY", () => {
       deps.fs.writeFile(join(PROJECT_ROOT, ".aidd/.keep"), "");
       deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/README.md"), "my custom readme");
 
-      await useCase.execute(
-        remoteFlow({ aiTools: ["claude" as ToolId] }),
-        catalogOf().sortedById()
-      );
+      await useCase.execute(remoteFlow({ aiTools: ["claude" as ToolId] }), catalogOf());
 
       const content = deps.fs.getFile(join(PROJECT_ROOT, "aidd_docs/README.md")) ?? "";
       expect(content).toBe("my custom readme");
@@ -556,7 +547,7 @@ describe("setup interactive tool selection", () => {
     const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
     const { useCase } = await buildUseCase(setupToolsPromptUseCase);
 
-    const result = await useCase.execute(interactiveFlow(), catalogOf().sortedById());
+    const result = await useCase.execute(interactiveFlow(), catalogOf());
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
@@ -572,7 +563,7 @@ describe("setup interactive tool selection", () => {
 
     const result = await useCase.execute(
       interactiveFlow({ aiTools: ["cursor" as ToolId] }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(result.kind).toBe("initialized");
@@ -587,7 +578,7 @@ describe("setup interactive tool selection", () => {
     const setupToolsPromptUseCase = new SetupToolsPromptUseCase(prompter);
     const { useCase } = await buildUseCase(setupToolsPromptUseCase);
 
-    const result = await useCase.execute(remoteFlow(), catalogOf().sortedById());
+    const result = await useCase.execute(remoteFlow(), catalogOf());
 
     expect(result.kind).toBe("initialized");
     if (result.kind === "initialized") {
@@ -601,10 +592,7 @@ describe("setup --scope user", () => {
     const { useCase } = await buildUseCase();
 
     await expect(
-      useCase.execute(
-        remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-        catalogOf().sortedById()
-      )
+      useCase.execute(remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }), catalogOf())
     ).rejects.toThrow(UserScopeUnavailableError);
   });
 
@@ -614,7 +602,7 @@ describe("setup --scope user", () => {
 
     const result = await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(result).toStrictEqual({
@@ -632,7 +620,7 @@ describe("setup --scope user", () => {
 
     const result = await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(result).toStrictEqual({
@@ -652,7 +640,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toStrictEqual(["codex", "claude"]);
@@ -664,7 +652,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(userManifestRepo.getCurrent()?.getToolFiles("claude")).toStrictEqual([]);
@@ -679,7 +667,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(userManifestRepo.getCurrent()?.getToolVersion("claude")).toBe("9.9.9");
@@ -694,7 +682,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(deps.fs.listUnder(PROJECT_ROOT)).toEqual([]);
@@ -708,7 +696,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(userManifestRepo.getCurrent()?.getInstalledToolIds()).toContain("claude");
@@ -728,7 +716,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(marketplaceSyncSettingsUseCase.execute).toHaveBeenCalledWith(
@@ -742,7 +730,7 @@ describe("setup --scope user", () => {
 
     const result = await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(result.install.results).toEqual([]);
@@ -757,7 +745,7 @@ describe("setup --scope user", () => {
 
     await useCase.execute(
       remoteFlow({ aiTools: ["claude" as ToolId], scope: "user" }),
-      catalogOf().sortedById()
+      catalogOf()
     );
 
     expect(userSourceReferences.added).toEqual([]);

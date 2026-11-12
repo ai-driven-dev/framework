@@ -106,7 +106,7 @@ for (const toolId of ["codex", "copilot"] as const) {
 
     const execute = (remove: PluginRemoveUseCase, pluginName: string) =>
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName,
         toolIds: [toolId],
         projectRoot: "/A",
@@ -343,7 +343,7 @@ describe("Cursor user plugin boundary", () => {
     fs.setFile(path, "user-edited plugin.json");
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: ["cursor"],
         projectRoot: "/A",
@@ -354,7 +354,7 @@ describe("Cursor user plugin boundary", () => {
     expect(repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
     fs.setFile(path, "owned bytes");
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: "sample-plugin",
       toolIds: ["cursor"],
       projectRoot: "/A",
@@ -411,7 +411,7 @@ describe("Cursor user plugin boundary", () => {
     );
     await expect(
       remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: ["cursor"],
         projectRoot: "/A",

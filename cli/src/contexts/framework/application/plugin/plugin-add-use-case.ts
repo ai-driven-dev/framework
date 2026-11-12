@@ -16,8 +16,8 @@ import type { PluginSource } from "../../../../kernel/source.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
@@ -45,7 +45,7 @@ export interface PluginAddOptions {
   source: PluginSource;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   interactive: boolean;
   marketplace?: string;
   requiredVersion?: string;
@@ -144,11 +144,11 @@ export class PluginAddUseCase implements PluginAdd {
 
   private buildAdapterMap(
     toolIds: AiToolId[],
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Map<AiToolId, PluginTranslator | null> {
     const map = new Map<AiToolId, PluginTranslator | null>();
     for (const id of toolIds) {
-      map.set(id, this.resolveAdapter(aiProfileOf(tools, id)));
+      map.set(id, this.resolveAdapter(tools.aiProfile(id)));
     }
     return map;
   }
@@ -169,7 +169,7 @@ export class PluginAddUseCase implements PluginAdd {
           version,
           source,
           pluginMetadata.strict,
-          resolveScopeForInstall(aiProfileOf(options.tools, toolId)),
+          resolveScopeForInstall(options.tools.aiProfile(toolId)),
           marketplace
         )
       );
@@ -241,12 +241,12 @@ export class PluginAddUseCase implements PluginAdd {
     toolIds: readonly AiToolId[],
     manifest: Manifest,
     projectRoot: string,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
     for (const toolId of toolIds) {
       const previous = manifest.getPlugins(toolId).find((plugin) => plugin.name === pluginName);
       if (previous === undefined) continue;
-      const tool = aiProfileOf(tools, toolId);
+      const tool = tools.aiProfile(toolId);
       await assertProjectMcpEntriesRemovable(this.fs, previous, tool, projectRoot);
       await assertProjectHooksRemovable(this.fs, previous, tool, projectRoot);
     }
@@ -287,12 +287,12 @@ export class PluginAddUseCase implements PluginAdd {
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>,
     machine: Manifest,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
-      const tool = aiProfileOf(tools, toolId);
+      const tool = tools.aiProfile(toolId);
       await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
       const foreignDir = await this.userScopeDirNotInstalledHere(
         dist.manifest.name,

@@ -138,7 +138,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       );
       await expect(
         remove.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["claude"],
           projectRoot: PROJECT_ROOT,
@@ -203,7 +203,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     );
 
     await remove.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -273,7 +273,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       );
 
       await remove.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -375,7 +375,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
         await expect(
           remove.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             pluginName: PLUGIN_NAME,
             toolIds: ["claude"],
             projectRoot: PROJECT_ROOT,
@@ -413,7 +413,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     );
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -475,7 +475,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     );
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -544,7 +544,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -576,7 +576,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -596,7 +596,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -625,7 +625,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -654,7 +654,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -679,7 +679,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -720,7 +720,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -781,7 +781,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -807,7 +807,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -837,7 +837,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -880,7 +880,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -911,7 +911,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -934,7 +934,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
@@ -956,7 +956,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -987,7 +987,7 @@ describe("PluginRemoveUseCase undoes only the activation this project made", () 
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,

@@ -84,7 +84,7 @@ export function registerTranslateCommand(program: Command, tools: ToolCatalog): 
     .action(async (source: string, cmdOptions: TranslateCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
-      const targets = supportedBuildTargets(tools.sortedById());
+      const targets = supportedBuildTargets(tools);
       if (!(targets as readonly string[]).includes(cmdOptions.to)) {
         output.error(
           `Unsupported target '${cmdOptions.to}'. Supported targets: ${targets.join(", ")}.`

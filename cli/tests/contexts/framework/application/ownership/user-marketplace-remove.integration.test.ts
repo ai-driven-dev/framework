@@ -31,7 +31,7 @@ function options() {
     projectRoot: "/A",
     autoConfirm: true,
     scope: "user" as const,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   };
 }
 

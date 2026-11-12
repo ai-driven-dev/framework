@@ -21,7 +21,7 @@ import { catalogOf } from "../../../tools/testing/catalog-of.js";
 function toolsWithCursor(cursorProfile: BuiltToolConfig) {
   return catalogOf(
     REGISTERED_PROFILES.map((profile) => (profile.toolId === "cursor" ? cursorProfile : profile))
-  ).sortedById();
+  );
 }
 
 const PROJECT_ROOT = "/test-project";
@@ -48,7 +48,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const assets = new StubAssetProvider({ "claude/settings.json": content }, deps.assetProvider);
 
     const result = await buildUseCase(deps, assets).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -78,7 +78,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -100,7 +100,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -110,7 +110,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -136,7 +136,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -157,7 +157,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -170,7 +170,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -192,7 +192,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const warnSpy = vi.spyOn(deps.logger, "warn");
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "claude",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -212,7 +212,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "kilo",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -231,7 +231,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "kilo",
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -253,7 +253,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -269,7 +269,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     manifest.updateTrackedFileHash(toolId, path, deps.hasher.hash(merged));
 
     await buildUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -294,7 +294,7 @@ describe("InstallRuntimeConfigUseCase", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "copilot",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -313,7 +313,7 @@ describe("InstallRuntimeConfigUseCase", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "copilot",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -335,7 +335,7 @@ describe("InstallRuntimeConfigUseCase", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "copilot",
         projectRoot: PROJECT_ROOT,
         manifest,

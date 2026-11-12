@@ -2,8 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
 
@@ -32,7 +31,7 @@ export interface DetectPluginDriftOptions {
   manifest: Manifest;
   projectRoot: string;
   toolIds: Iterable<ToolId>;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   pluginName?: string;
 }
 
@@ -52,7 +51,7 @@ export class DetectPluginDriftUseCase {
       for (const plugin of targets) {
         const baseDir = resolveBaseDirFromRecord(
           plugin.scope,
-          aiProfileOf(tools, toolId),
+          tools.aiProfile(toolId),
           projectRoot,
           homedir
         );

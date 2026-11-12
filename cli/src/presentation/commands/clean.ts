@@ -23,7 +23,7 @@ async function runProjectScopeClean(
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUseCase.execute({
-    tools: catalog.sortedById(),
+    tools: catalog,
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -41,7 +41,7 @@ async function runUserScopeClean(
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUserScopeUseCase.execute({
-    tools: catalog.sortedById(),
+    tools: catalog,
     projectRoot,
     force: cmdOptions.force,
     interactive,

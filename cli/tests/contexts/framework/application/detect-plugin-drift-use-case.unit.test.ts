@@ -49,7 +49,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
     const useCase = new DetectPluginDriftUseCase(fs);
 
     const drifts = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: ["cursor"],
@@ -67,7 +67,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
     const useCase = new DetectPluginDriftUseCase(fs);
 
     const drifts = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: ["cursor"],
@@ -97,7 +97,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
     const useCase = new DetectPluginDriftUseCase(fs);
 
     const drifts = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: ["claude"],
@@ -141,7 +141,7 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
     const useCase = new DetectPluginDriftUseCase(fs);
 
     const drifts = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: ["cursor"],
@@ -172,7 +172,7 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
     const useCase = new DetectPluginDriftUseCase(fs);
 
     const drifts = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
       toolIds: ["cursor"],

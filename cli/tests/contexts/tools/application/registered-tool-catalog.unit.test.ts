@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { DuplicateToolIdError, UnregisteredToolError } from "../../../../src/kernel/errors.js";
-import type { AiToolId } from "../../../../src/kernel/tool.js";
+import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
 import { catalogOf } from "../testing/catalog-of.js";
 
 describe("the registered tool catalog", () => {
@@ -60,11 +60,24 @@ describe("the registered tool catalog", () => {
 
   describe("asked by kind", () => {
     const ide: string = "vscode";
+    const ai: string = "claude";
 
     it("answers the AI profile of an AI id, and refuses an editor or an unregistered id", () => {
       expect(catalogOf().aiProfile("claude").toolId).toBe("claude");
       expect(() => catalogOf().aiProfile(ide as AiToolId)).toThrow(UnregisteredToolError);
       expect(() => catalogOf([]).aiProfile("claude")).toThrow(UnregisteredToolError);
+    });
+
+    it("answers the IDE profile of an editor id, and refuses an AI tool or an unregistered id", () => {
+      expect(catalogOf().ideProfile("vscode").toolId).toBe("vscode");
+      expect(() => catalogOf().ideProfile(ai as IdeToolId)).toThrow(UnregisteredToolError);
+      expect(() => catalogOf([]).ideProfile("vscode")).toThrow(UnregisteredToolError);
+    });
+
+    it("answers the AI profile of an id, or null for an editor, and refuses an unregistered id", () => {
+      expect(catalogOf().aiProfileIfAny("claude")?.toolId).toBe("claude");
+      expect(catalogOf().aiProfileIfAny("vscode")).toBeNull();
+      expect(() => catalogOf([]).aiProfileIfAny("claude")).toThrow(UnregisteredToolError);
     });
   });
 });

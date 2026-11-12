@@ -1,4 +1,4 @@
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorReport } from "../../domain/doctor.js";
 import type { DoctorUseCase } from "../doctor/doctor-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
@@ -17,7 +17,7 @@ export class DoctorAllUseCase {
 
   async execute(
     projectRoot: string,
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     pluginName?: string
   ): Promise<DoctorAllResult> {
     const errors: GlobalExecutionError[] = [];

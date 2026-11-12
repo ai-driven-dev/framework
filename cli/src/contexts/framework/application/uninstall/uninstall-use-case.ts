@@ -8,7 +8,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { ToolId } from "../../../../kernel/tool.js";
 import { isAiToolId, VALID_TOOL_IDS } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { UninstallPluginUseCase } from "./uninstall-plugin-use-case.js";
@@ -17,7 +17,7 @@ import { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";
 interface UninstallOptions {
   toolIds: ToolId[];
   projectRoot: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   pluginName?: string;
 }
 

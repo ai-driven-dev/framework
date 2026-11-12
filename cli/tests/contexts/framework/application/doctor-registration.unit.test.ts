@@ -66,7 +66,7 @@ async function issuesFor(
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     globalInstall: machine,
   });
 }
@@ -191,7 +191,7 @@ async function nativeIssuesFor(
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds: null,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   });
 }
 

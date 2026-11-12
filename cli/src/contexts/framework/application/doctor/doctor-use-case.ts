@@ -1,6 +1,6 @@
 import { ManifestValidationError, NoManifestError } from "../../../../kernel/errors.js";
 import { type ToolCategory, toolIdsForCategory } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   DoctorIssue,
   DoctorReport,
@@ -20,7 +20,7 @@ export interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
   pluginName?: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export class DoctorUseCase {
@@ -78,7 +78,7 @@ export class DoctorUseCase {
     manifest: Manifest,
     projectRoot: string,
     allowedIds: Set<string> | null,
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     category?: ToolCategory
   ): Promise<DoctorIssue[]> {
     const trackedFileList = this.trackedFiles.collectTrackedFiles(manifest, allowedIds);

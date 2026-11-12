@@ -112,7 +112,7 @@ export async function initProject(
   projectRoot: string
 ): Promise<void> {
   const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
-  await initUseCase.execute({ projectRoot, tools: catalogOf().sortedById() });
+  await initUseCase.execute({ projectRoot, tools: catalogOf() });
 }
 
 export async function installTool(
@@ -124,7 +124,7 @@ export async function installTool(
   const version = "test";
   if (isIdeToolId(toolId)) {
     return deps.installIdeConfigUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId,
       projectRoot,
       manifest,
@@ -133,7 +133,7 @@ export async function installTool(
     });
   }
   return deps.installRuntimeConfigUseCase.execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     toolId,
     projectRoot,
     manifest,

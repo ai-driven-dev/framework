@@ -1,7 +1,7 @@
 import { CategoryMismatchError } from "../../../../kernel/errors.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS, isAiToolId } from "../../../../kernel/tool.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
@@ -21,7 +21,7 @@ export interface SetupToolsOptions {
   ideTools: readonly ToolId[];
   force: boolean;
   version: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export interface SetupToolsResult {

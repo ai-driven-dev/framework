@@ -91,7 +91,7 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -111,7 +111,7 @@ describe("doctor", () => {
     };
     const useCase = buildDoctorUseCase({ ...deps, manifestRepo: corruptRepo });
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT })
+      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
     ).rejects.toThrow("Manifest is corrupted");
   });
 
@@ -120,7 +120,7 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     await expect(
-      useCase.execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT })
+      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
     ).rejects.toThrow("aidd setup");
   });
 
@@ -136,7 +136,7 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -158,7 +158,7 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -178,7 +178,7 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -197,7 +197,7 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -219,7 +219,7 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -241,7 +241,7 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -259,7 +259,7 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -292,7 +292,7 @@ describe("doctor", () => {
       const { deps, manifest } = await installedBothCategories();
 
       const report = await buildDoctorUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -306,7 +306,7 @@ describe("doctor", () => {
       const { deps, manifest } = await installedBothCategories();
 
       const report = await buildDoctorUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         category: "ide",
       });
@@ -325,7 +325,7 @@ describe("doctor", () => {
       );
 
       const report = await buildDoctorUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         category: "ai",
       });

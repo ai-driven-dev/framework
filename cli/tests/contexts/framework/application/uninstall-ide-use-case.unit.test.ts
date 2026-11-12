@@ -33,7 +33,7 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     expect(managedKeys.length).toBeGreaterThan(0);
 
     await makeUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
     });
@@ -53,7 +53,7 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     await deps.fs.writeFile(SETTINGS, JSON.stringify(withUserKey, null, 2));
 
     await makeUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
     });
@@ -70,7 +70,7 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     expect(before.length).toBeGreaterThan(0);
 
     await makeUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
     });
@@ -87,7 +87,7 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     await installTool(deps, PROJECT_ROOT, "vscode");
 
     await makeUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
     });
@@ -103,7 +103,7 @@ describe("UninstallIdeUseCase — refusals and report", () => {
 
     await expect(
       makeUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
       })
@@ -116,7 +116,7 @@ describe("UninstallIdeUseCase — refusals and report", () => {
 
     await expect(
       makeUseCase(deps).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
       })
@@ -129,7 +129,7 @@ describe("UninstallIdeUseCase — refusals and report", () => {
     await installTool(deps, PROJECT_ROOT, "vscode");
 
     const result = await makeUseCase(deps).execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
     });

@@ -3,14 +3,14 @@ import type { PluginCatalogEntry } from "../../contexts/distribution/domain/cata
 import type { MarketplaceRegistry } from "../../contexts/distribution/domain/ports/marketplace-registry.js";
 import type { PluginInstallFromMarketplace } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import type { PluginInstallMode } from "../../contexts/framework/domain/setup-flow.js";
-import type { ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { PluginPick } from "./plugin-pick-use-case.js";
 export interface SetupPluginsPromptOptions {
   projectRoot: string;
   mode: PluginInstallMode;
   pluginNames: readonly string[];
   interactive: boolean;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
 }
 
 export interface SetupPluginsPromptResult {

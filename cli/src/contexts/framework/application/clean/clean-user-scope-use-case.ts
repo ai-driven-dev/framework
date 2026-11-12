@@ -13,8 +13,7 @@ import type { HostActions } from "../../../host-registration/contract/host-actio
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { aiProfileOf } from "../../../tools/contract/tool-profile-lookup.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -38,7 +37,7 @@ export interface CleanUserScopeOptions {
    * project-scope caller it usually serves — discarded by the adapter for scope `"user"`, since
    * this operation has no one project of its own. */
   projectRoot: string;
-  tools: readonly ToolProfile[];
+  tools: ToolCatalog;
   force: boolean;
   interactive?: boolean;
 }
@@ -204,7 +203,7 @@ export class CleanUserScopeUseCase {
 
   private async assertTrackedUserPluginFilesSafe(
     manifest: Manifest,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
@@ -214,7 +213,7 @@ export class CleanUserScopeUseCase {
           this.fs,
           this.logger,
           plugin,
-          aiProfileOf(tools, toolId),
+          tools.aiProfile(toolId),
           this.homeDir()
         );
         if (safe.size !== plugin.files.size) {
@@ -255,7 +254,7 @@ export class CleanUserScopeUseCase {
 
   private async undoNativeRegistrations(
     manifest: Manifest,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<ReadonlyMap<ToolId, UndoneToolRegistrations>> {
     const undone = new Map<ToolId, UndoneToolRegistrations>();
     for (const toolId of manifest.getInstalledToolIds()) {
@@ -267,7 +266,7 @@ export class CleanUserScopeUseCase {
     return undone;
   }
 
-  private assertNativeActivatorsAvailable(manifest: Manifest, tools: readonly ToolProfile[]): void {
+  private assertNativeActivatorsAvailable(manifest: Manifest, tools: ToolCatalog): void {
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
@@ -282,7 +281,7 @@ export class CleanUserScopeUseCase {
   private async assertNativeSourcesProven(
     manifest: Manifest,
     projectRoot: string,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
@@ -333,7 +332,7 @@ export class CleanUserScopeUseCase {
           registration.hostName,
           owned,
           projectRoot,
-          aiProfileOf(tools, toolId)
+          tools.aiProfile(toolId)
         );
         for (const ref of refsByHost.get(registration.hostName) ?? []) {
           if (hostRefs.get(ref)?.enabled !== true)
@@ -348,7 +347,7 @@ export class CleanUserScopeUseCase {
   private async undoToolNativeRegistrations(
     toolId: ToolId,
     registrations: NativeRegistrations,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<ReadonlySet<string> | undefined> {
     const { binary } = registrations;
     const activator = this.activators.get(binary);
@@ -390,7 +389,7 @@ export class CleanUserScopeUseCase {
   private describeBinaryAbsent(
     toolId: ToolId,
     registrations: NativeRegistrations,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): string {
     const { binary } = registrations;
     const base =
@@ -398,9 +397,7 @@ export class CleanUserScopeUseCase {
       `It would have unregistered ${registrations.marketplaces.length} marketplace(s) ` +
       `and ${registrations.pluginClaims?.length ?? 0} plugin ref(s).`;
     if (!isAiToolId(toolId)) return base;
-    const cacheRoot = aiProfileOf(tools, toolId)
-      .nativeActivation()
-      ?.pluginCacheRoot(this.homeDir());
+    const cacheRoot = tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(this.homeDir());
     if (cacheRoot === undefined) return base;
     const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
     if (paths.length === 0) return base;
@@ -413,7 +410,7 @@ export class CleanUserScopeUseCase {
    * directory that became a symlink after install, is left in place and named. */
   private async purgeCursorUserScopeFiles(
     manifest: Manifest,
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     projectRoot: string
   ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
@@ -424,13 +421,13 @@ export class CleanUserScopeUseCase {
           this.fs,
           this.logger,
           plugin,
-          aiProfileOf(tools, toolId),
+          tools.aiProfile(toolId),
           this.homeDir()
         );
         await deletePluginFilesForTool(
           files,
           plugin.scope,
-          aiProfileOf(tools, toolId),
+          tools.aiProfile(toolId),
           projectRoot,
           this.fs,
           "user"

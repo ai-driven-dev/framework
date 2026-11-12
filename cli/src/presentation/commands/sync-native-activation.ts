@@ -24,7 +24,7 @@ export async function syncNativeActivation(
 ): Promise<void> {
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
-    tools: catalog.sortedById(),
+    tools: catalog,
     marketplaceNames,
   });
   reportSyncActivation(output, activation);

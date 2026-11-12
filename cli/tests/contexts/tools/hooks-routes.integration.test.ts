@@ -115,10 +115,10 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
   );
   await new InitUseCase(d.fs, d.manifestRepo).execute({
     projectRoot: project,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   });
   await d.installAiToolUseCase.execute({
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     toolId,
     projectRoot: project,
     force: false,
@@ -132,7 +132,7 @@ async function installPlugin(project: string, toolId: AiToolId, plugin: string):
   await d.pluginInstallUseCase.execute({
     pluginArg: join(REPOSITORY_ROOT, "plugins", plugin),
     toolIds: [toolId],
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
     projectRoot: project,
     interactive: false,
     yes: true,
@@ -335,7 +335,7 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
     mode: "named",
     pluginNames: [...PLUGINS],
     interactive: false,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   } as const;
   await d.setupPluginsPromptUseCase.execute(options);
   const before = await describeHookFiles(ws, [ws.project, ws.home]);
@@ -380,7 +380,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
   const d = await deps(ws.project);
   if (route === "plugin-remove") {
     await d.pluginRemoveUseCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       pluginName: "aidd-context",
       toolIds: [toolId],
       projectRoot: ws.project,
@@ -391,7 +391,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
     projectRoot: ws.project,
     force: true,
     interactive: false,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   });
   return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
 }

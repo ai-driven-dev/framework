@@ -11,7 +11,7 @@ import { registerTranslateCommand } from "../../../src/presentation/commands/tra
 describe("translate --to help text", () => {
   it("names exactly the targets the command accepts", () => {
     const tools = wireTools();
-    const targets: readonly string[] = supportedBuildTargets(tools.sortedById());
+    const targets: readonly string[] = supportedBuildTargets(tools);
     const program = new Command();
     registerTranslateCommand(program, tools);
 

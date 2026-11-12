@@ -71,7 +71,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -96,7 +96,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -116,7 +116,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: "/proj",
       manifest,
       fileFilter: null,
@@ -152,7 +152,7 @@ describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
 
   it("names the tool when the one plugin asked for tracks zero files, whatever its others track", async () => {
     const result = await useCase().execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,
@@ -164,7 +164,7 @@ describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
 
   it("does not name the tool when the plugin asked for tracks files", async () => {
     const result = await useCase().execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,
@@ -176,7 +176,7 @@ describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
 
   it("does not name the tool when any of its plugins tracks files", async () => {
     const result = await useCase().execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: "/proj",
       manifest: claudeWithMixedPlugins(),
       fileFilter: null,

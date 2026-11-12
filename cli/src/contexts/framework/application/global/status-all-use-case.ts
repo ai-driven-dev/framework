@@ -1,4 +1,4 @@
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { StatusQuery, StatusReport } from "../status-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 export interface StatusAllResult {
@@ -12,7 +12,7 @@ export interface StatusAllResult {
 export class StatusAllUseCase {
   constructor(private readonly statusUseCase: StatusQuery) {}
 
-  async execute(projectRoot: string, tools: readonly ToolProfile[]): Promise<StatusAllResult> {
+  async execute(projectRoot: string, tools: ToolCatalog): Promise<StatusAllResult> {
     const errors: GlobalExecutionError[] = [];
     const [aiTools, ideTools] = await this.collectCategoryReports(
       this.statusUseCase,
@@ -31,7 +31,7 @@ export class StatusAllUseCase {
   private async collectCategoryReports(
     useCase: StatusQuery,
     projectRoot: string,
-    tools: readonly ToolProfile[],
+    tools: ToolCatalog,
     errors: GlobalExecutionError[]
   ): Promise<[StatusReport | null, StatusReport | null]> {
     const aiTools = await this.runScope(

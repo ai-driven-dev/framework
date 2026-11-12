@@ -227,14 +227,14 @@ describe("clean guards a ref another project on this machine still needs", () =>
       if (outcome === "fails")
         await expect(
           useCase.execute({
-            tools: catalogOf().sortedById(),
+            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           })
         ).rejects.toThrow("gitignore cleanup failed");
       else
         await useCase.execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -294,7 +294,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -326,7 +326,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -357,7 +357,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -388,7 +388,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -421,7 +421,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -452,7 +452,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -484,7 +484,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });

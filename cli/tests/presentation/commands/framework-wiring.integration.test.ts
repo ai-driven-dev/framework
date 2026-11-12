@@ -103,7 +103,7 @@ describe("aidd framework install", () => {
       force: false,
       version: "5.2.2",
       propagatePlugins: true,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
     expect(installIdeTool).not.toHaveBeenCalled();
   });
@@ -161,7 +161,7 @@ describe("aidd framework install", () => {
   it("sends an IDE tool down its own install, with the manifest it loaded", async () => {
     expect(await run("install", "--tool", "vscode")).toEqual(["Installed vscode (2 files)"]);
     expect(installIdeTool).toHaveBeenCalledWith({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest: expect.anything(),
@@ -210,7 +210,7 @@ describe("aidd framework remove", () => {
     expect(uninstallAiTools).toHaveBeenCalledWith({
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
     expect(uninstallIdeTool).not.toHaveBeenCalled();
   });
@@ -232,7 +232,7 @@ describe("aidd framework remove", () => {
     expect(uninstallIdeTool).toHaveBeenCalledWith({
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
     expect(uninstallAiTools).not.toHaveBeenCalled();
   });
@@ -251,13 +251,13 @@ describe("aidd framework update", () => {
 
     expect(await run("update")).toEqual(["Updated claude (5 files)", "Updated vscode (2 files)"]);
     expect(updateAiTools).toHaveBeenCalledWith({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
     });
     expect(updateIdeTools).toHaveBeenCalledWith({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
@@ -273,7 +273,7 @@ describe("aidd framework update", () => {
     await run("update", "--tool", "claude", "--force");
 
     expect(updateAiTools).toHaveBeenCalledWith({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolArg: "claude",
       projectRoot: PROJECT_ROOT,
       userForce: true,
@@ -286,7 +286,7 @@ describe("aidd framework update", () => {
     await run("update", "--tool", "vscode");
 
     expect(updateIdeTools).toHaveBeenCalledWith({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       toolArg: "vscode",
       projectRoot: PROJECT_ROOT,
       userForce: false,
@@ -344,7 +344,7 @@ describe("aidd framework rules", () => {
     expect(await run("rules")).toEqual(["No rules installed for any AI tool."]);
     expect(listInstalledRules).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
   });
 

@@ -5,7 +5,7 @@ import type { VersionReader } from "../../../kernel/ports/version-reader.js";
 import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { SetupPluginsPromptUseCase } from "../../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import type { SetupToolsPromptUseCase } from "../../../presentation/prompts/setup-tools-prompt-use-case.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { ProjectContext } from "../domain/project-context.js";
 import type { SetupFlow } from "../domain/setup-flow.js";
@@ -53,7 +53,7 @@ export class SetupUseCase {
     private readonly setupMachineScopeUseCase?: SetupMachineScopeUseCase
   ) {}
 
-  async execute(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<SetupResult> {
+  async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
     if (flow.scope === "user") return this.runMachineScope(flow, tools);
     const context = await this.detectContext(flow);
     // Resolved before initManifest: a non-interactive run with no --source must reject
@@ -67,10 +67,7 @@ export class SetupUseCase {
     return this.buildResult(isNew, install, activation, context);
   }
 
-  private async runMachineScope(
-    flow: SetupFlow,
-    tools: readonly ToolProfile[]
-  ): Promise<SetupResult> {
+  private async runMachineScope(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
     if (this.setupMachineScopeUseCase === undefined) {
       throw new UserScopeUnavailableError();
     }
@@ -84,12 +81,12 @@ export class SetupUseCase {
 
   private async syncSettings(
     flow: SetupFlow,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<MarketplaceSyncSettingsResult> {
     return this.marketplaceSyncSettingsUseCase.execute({ projectRoot: flow.projectRoot, tools });
   }
 
-  private async initManifest(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<boolean> {
+  private async initManifest(flow: SetupFlow, tools: ToolCatalog): Promise<boolean> {
     const existing = await this.manifestRepo.load();
     if (existing !== null) return false;
     await new InitUseCase(this.fs, this.manifestRepo).execute({
@@ -103,7 +100,7 @@ export class SetupUseCase {
   private async installTools(
     flow: SetupFlow,
     context: ProjectContext | undefined,
-    tools: readonly ToolProfile[]
+    tools: ToolCatalog
   ): Promise<SetupToolsResult> {
     const { aiTools, ideTools } = await this.resolveTools(flow, context);
     const version = this.currentVersionProvider.get();
@@ -132,7 +129,7 @@ export class SetupUseCase {
     });
   }
 
-  private async promptPlugins(flow: SetupFlow, tools: readonly ToolProfile[]): Promise<void> {
+  private async promptPlugins(flow: SetupFlow, tools: ToolCatalog): Promise<void> {
     await this.setupPluginsPromptUseCase.execute({
       projectRoot: flow.projectRoot,
       mode: flow.pluginMode,

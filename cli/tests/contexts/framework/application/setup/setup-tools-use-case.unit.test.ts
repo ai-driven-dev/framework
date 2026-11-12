@@ -30,7 +30,7 @@ function options(aiTools: ToolId[], ideTools: ToolId[]) {
     ideTools,
     force: false,
     version: VERSION,
-    tools: catalogOf().sortedById(),
+    tools: catalogOf(),
   };
 }
 

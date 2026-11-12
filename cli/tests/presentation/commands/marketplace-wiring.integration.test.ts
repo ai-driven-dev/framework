@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePluginSourceShorthand } from "../../../src/kernel/source.js";
-import { catalogOf, registeredProfiles } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const marketplaceAdd = vi.fn();
@@ -135,7 +135,7 @@ describe("aidd marketplace add", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       marketplaceNames: ["market-b"],
     });
   });
@@ -286,7 +286,7 @@ describe("aidd marketplace remove", () => {
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
       scope: "user",
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(marketplaceRemove).not.toHaveBeenCalled();
     expect(activation).not.toHaveBeenCalled();
@@ -312,11 +312,11 @@ describe("aidd marketplace remove", () => {
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
       scope: "project",
-      tools: expect.any(Array),
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredProfiles(),
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });

@@ -59,7 +59,7 @@ describe("StatusUseCase", () => {
   describe("which tools are reported", () => {
     it("fails when no manifest exists", async () => {
       await expect(
-        statusOver({}, null).execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT })
+        statusOver({}, null).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
       ).rejects.toThrow(NoManifestError);
     });
 
@@ -69,7 +69,7 @@ describe("StatusUseCase", () => {
 
       await expect(
         statusOver({}, manifest).execute({
-          tools: catalogOf().sortedById(),
+          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           filterToolId: "cursor",
         })
@@ -82,7 +82,7 @@ describe("StatusUseCase", () => {
       manifest.addTool("vscode", "test", []);
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         filterToolId: "claude",
       });
@@ -100,7 +100,7 @@ describe("StatusUseCase", () => {
       manifest.addTool("vscode", "test", []);
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         category: "ide",
       });
@@ -117,7 +117,7 @@ describe("StatusUseCase", () => {
       manifest.addTool("claude", "test", []);
 
       const report = await statusOver({}, manifest).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -138,7 +138,7 @@ describe("StatusUseCase", () => {
 
     it("reports an untouched tracked file as in sync", async () => {
       const report = await statusOver({ [TRACKED]: CONTENT }, manifestTracking()).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -151,7 +151,7 @@ describe("StatusUseCase", () => {
 
     it("calls a tracked file whose content changed modified", async () => {
       const report = await statusOver({ [TRACKED]: "edited\n" }, manifestTracking()).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -170,7 +170,7 @@ describe("StatusUseCase", () => {
 
     it("calls a tracked file gone from disk deleted", async () => {
       const report = await statusOver({}, manifestTracking()).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -187,7 +187,7 @@ describe("StatusUseCase", () => {
       const report = await statusOver(
         { [TRACKED]: CONTENT, ".claude/rules/two.md": "two\n" },
         manifestTracking()
-      ).execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT });
+      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([
         {
@@ -202,7 +202,7 @@ describe("StatusUseCase", () => {
       const report = await statusOver(
         { [TRACKED]: CONTENT, ".claude/rules/one.md.backup": "old\n" },
         manifestTracking()
-      ).execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT });
+      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([inSyncTool("claude")]);
     });
@@ -221,7 +221,7 @@ describe("StatusUseCase", () => {
       const report = await statusOver(
         { [MERGE_PATH]: `{ "${KEY}": true }` },
         manifestMerging()
-      ).execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT });
+      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
       expect(report).toStrictEqual({
         tools: [inSyncTool("vscode")],
@@ -232,7 +232,7 @@ describe("StatusUseCase", () => {
 
     it("calls every managed key of a missing merge file deleted", async () => {
       const report = await statusOver({}, manifestMerging()).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -247,7 +247,7 @@ describe("StatusUseCase", () => {
 
     it("calls a managed key missing from the merge file deleted", async () => {
       const report = await statusOver({ [MERGE_PATH]: "{}" }, manifestMerging()).execute({
-        tools: catalogOf().sortedById(),
+        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -264,7 +264,7 @@ describe("StatusUseCase", () => {
       const report = await statusOver(
         { [MERGE_PATH]: `{ "${KEY}": false }` },
         manifestMerging()
-      ).execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT });
+      ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
       expect(report.tools).toStrictEqual([
         {
@@ -282,7 +282,7 @@ describe("status", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await new InitUseCase(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
 
     const useCase = new StatusUseCase(
@@ -292,7 +292,7 @@ describe("status", () => {
       new DetectPluginDriftUseCase(deps.fs)
     );
     const report = await useCase.execute({
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -304,7 +304,7 @@ describe("status", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await new InitUseCase(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
-      tools: catalogOf().sortedById(),
+      tools: catalogOf(),
     });
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest missing");
@@ -327,7 +327,7 @@ describe("status", () => {
       deps.manifestRepo,
       deps.hasher,
       new DetectPluginDriftUseCase(deps.fs)
-    ).execute({ tools: catalogOf().sortedById(), projectRoot: PROJECT_ROOT });
+    ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
     const drifted = report.tools.flatMap((tool) => tool.drifted);
     expect(drifted).toEqual([]);
