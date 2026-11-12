@@ -75,6 +75,9 @@ script, identical to the plugin source
 ## out-flat/.codex/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter host-codex.cjs
 
+## out-flat/.codex/hooks/aidd-context/lib/markdown.cjs
+script, identical to the plugin source
+
 ## out-flat/.codex/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 

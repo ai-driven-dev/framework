@@ -5,7 +5,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { deadPaths, markdownLines, proseLines, namesIn } = require("./common-rules.cjs");
+const { deadPaths, markdownLines, proseLines, namesIn } = require("./markdown.cjs");
 
 const ERROR = "error";
 const WARNING = "warning";

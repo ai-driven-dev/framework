@@ -4,6 +4,9 @@ script, identical to the plugin source
 ## project/.kilo/hooks/aidd-context/lib/host.cjs
 script, identical to the host adapter for kilo
 
+## project/.kilo/hooks/aidd-context/lib/markdown.cjs
+script, identical to the plugin source
+
 ## project/.kilo/hooks/aidd-context/lib/memory-rules.cjs
 script, identical to the plugin source
 
@@ -413,9 +416,10 @@ export default { id: "aidd-telemetry-hooks", server: AiddTelemetryKiloHooks };
 
 
 # recorded
-project kilo aidd-context scope=project: 5 hook files
+project kilo aidd-context scope=project: 6 hook files
   .kilo/hooks/aidd-context/lib/common-rules.cjs
   .kilo/hooks/aidd-context/lib/host.cjs
+  .kilo/hooks/aidd-context/lib/markdown.cjs
   .kilo/hooks/aidd-context/lib/memory-rules.cjs
   .kilo/hooks/aidd-context/memory.cjs
   .kilo/plugin/aidd-context-hooks.js

@@ -485,7 +485,7 @@ test("the hook reads its event only through lib/host.cjs and never a host's payl
 });
 
 test("the entry and its libraries require only the built-ins the contract allows and their own modules", () => {
-  for (const file of [ENTRY, "lib/memory-rules.cjs", "lib/common-rules.cjs"]) {
+  for (const file of [ENTRY, "lib/memory-rules.cjs", "lib/markdown.cjs", "lib/common-rules.cjs"]) {
     const required = [...fs.readFileSync(path.join(HOOKS, file), "utf8").matchAll(/require\(\s*["']([^"']+)["']\s*\)/gu)].map((m) => m[1]);
     for (const name of required) assert.ok(["node:crypto", "node:fs", "node:os", "node:path"].includes(name) || name.startsWith("./"), `${file} requires ${name}`);
   }

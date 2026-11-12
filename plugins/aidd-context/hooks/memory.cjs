@@ -11,7 +11,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { RULES, ERROR, WARNING, wordsIn } = require("./lib/memory-rules.cjs");
-const { formatFindings, markdownLines } = require("./lib/common-rules.cjs");
+const { formatFindings } = require("./lib/common-rules.cjs");
+const { markdownLines } = require("./lib/markdown.cjs");
 
 const PLUGIN = "aidd-context";
 const DOCS_DIR = "aidd_docs";

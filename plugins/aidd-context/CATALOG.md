@@ -46,6 +46,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 |------|
 | [common-rules.cjs](hooks/lib/common-rules.cjs) |
 | [host.cjs](hooks/lib/host.cjs) |
+| [markdown.cjs](hooks/lib/markdown.cjs) |
 | [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
 
 ### `skills`

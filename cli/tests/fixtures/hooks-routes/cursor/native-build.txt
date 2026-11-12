@@ -40,6 +40,9 @@ script, identical to the plugin source
 ## out-marketplace/plugins/aidd-context/hooks/lib/host.cjs
 script, identical to the host adapter host-cursor.cjs
 
+## out-marketplace/plugins/aidd-context/hooks/lib/markdown.cjs
+script, identical to the plugin source
+
 ## out-marketplace/plugins/aidd-context/hooks/lib/memory-rules.cjs
 script, identical to the plugin source
 
