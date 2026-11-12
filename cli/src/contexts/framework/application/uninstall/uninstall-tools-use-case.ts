@@ -9,7 +9,6 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { isAiToolId } from "../../../../kernel/tool.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
@@ -163,7 +162,7 @@ export class UninstallToolsUseCase {
       relativePath,
       manifest
     );
-    const isIdeTool = !isAiTool(getToolConfig(toolId));
+    const isIdeTool = !isAiToolId(toolId);
     return !otherOwnersExist && !isIdeTool;
   }
 

@@ -1,17 +1,5 @@
-import {
-  CategoryMismatchError,
-  DuplicateToolIdError,
-  UnknownToolCategoryError,
-  UnregisteredToolError,
-} from "../../../kernel/errors.js";
-import {
-  AI_TOOL_IDS,
-  type AiToolId,
-  IDE_TOOL_IDS,
-  type IdeToolId,
-  type ToolCategory,
-  type ToolId,
-} from "../../../kernel/tool.js";
+import { DuplicateToolIdError, UnregisteredToolError } from "../../../kernel/errors.js";
+import type { AiToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
 import type { EnvironmentReader } from "../contract/tool-profile.js";
 import type { ToolBuildContract } from "./build-contract.js";
 import type { McpCapability } from "./capabilities/mcp-capability.js";
@@ -42,30 +30,6 @@ export function declaresSection(tool: ToolConfig, name: string): boolean {
 
 export function isAiTool(config: ToolConfig): config is AiTool {
   return config.kind === "ai";
-}
-
-export function toolIdsForCategory(category: ToolCategory): readonly ToolId[] {
-  switch (category) {
-    case "ai":
-      return AI_TOOL_IDS;
-    case "ide":
-      return IDE_TOOL_IDS;
-    default: {
-      const _exhaustive: never = category;
-      throw new UnknownToolCategoryError(String(_exhaustive));
-    }
-  }
-}
-
-export function isIdeToolId(id: string): id is IdeToolId {
-  return (IDE_TOOL_IDS as readonly string[]).includes(id);
-}
-
-export function assertToolIdsMatchCategory(toolIds: ToolId[], category: ToolCategory): void {
-  const allowed = toolIdsForCategory(category);
-  const wrong = toolIds.filter((id) => !(allowed as readonly string[]).includes(id));
-  if (wrong.length === 0) return;
-  throw new CategoryMismatchError(wrong, category, allowed);
 }
 
 export class ToolCatalog {

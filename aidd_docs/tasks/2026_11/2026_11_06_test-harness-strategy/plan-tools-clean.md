@@ -119,6 +119,11 @@ Deviation from §1.4 and the line above, decided at P8.
 | `copiesFilesGlobally()`, `globalFiles()` | `copiesPluginFilesGlobally`, `globalFilesOf` |
 | `projectHooksDelivery()` | `projectHooksDeliveryOf`, `projectHooksFileOf` |
 
+Deviation from §3.1, decided at P7.
+- The tool id rules (`toolIdsForCategory`, `isIdeToolId`, `assertToolIdsMatchCategory`) are not catalog members. They read the kernel's id lists and nothing a profile declares, so they live in `kernel/tool.ts` beside `isAiToolId`. No file is added: the `old-layout-count` kernel path set is exact.
+- A caller that asked only the category of an id (`update-one-tool`, `setup-tools`, `uninstall-tools`) now asks `isAiToolId`, not `isAiTool(getToolConfig(id))`. Limit: an id no profile registers no longer fails at that line with `UnregisteredToolError`.
+- The profile publishes only what a caller outside the context asks today: `kind`, `toolId`, `plugins()` and `nativeActivation()`, the activation answered on the profile rather than through `plugins().activation()`. The rest of the table lands with its caller.
+
 Declared values approved as stored answers, outside the table above. Each is a value the caller needs as written, kept in the arch guard's allowlist (`tests/architecture/plugins-are-asked-not-read.arch.test.ts`) with its reason, shrink-only:
 
 | Member | Why it stays a stored answer |

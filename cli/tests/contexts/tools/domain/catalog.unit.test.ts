@@ -1,16 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { MarketplaceSettings } from "../../../../src/contexts/tools/domain/marketplace-settings.js";
 import type { NativeActivationSpec } from "../../../../src/contexts/tools/domain/plugins/native-activation.js";
-import {
-  assertToolIdsMatchCategory,
-  toolIdsForCategory,
-} from "../../../../src/contexts/tools/domain/registry.js";
-import {
-  CategoryMismatchError,
-  DuplicateToolIdError,
-  UnregisteredToolError,
-} from "../../../../src/kernel/errors.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
+import { DuplicateToolIdError, UnregisteredToolError } from "../../../../src/kernel/errors.js";
+import type { ToolId } from "../../../../src/kernel/tool.js";
 import {
   aCatalog,
   anIdeProfile,
@@ -218,28 +210,5 @@ describe("what a profile's plugins capability says about activation", () => {
     expect(catalog.buildContractFor("claude", "flat")).toBeDefined();
     expect(catalog.buildContractFor("claude", "marketplace")).toBeUndefined();
     expect(catalog.buildContractFor("vscode", "flat")).toBeUndefined();
-  });
-});
-
-describe("the kernel's tool categories", () => {
-  it("lists the AI ids for 'ai' and the IDE ids for 'ide'", () => {
-    expect(toolIdsForCategory("ai")).toEqual(AI_TOOL_IDS);
-    expect(toolIdsForCategory("ide")).toEqual(IDE_TOOL_IDS);
-  });
-
-  it("accepts ids of the category", () => {
-    expect(() => assertToolIdsMatchCategory(["claude", "cursor"], "ai")).not.toThrow();
-    expect(() => assertToolIdsMatchCategory(["vscode"], "ide")).not.toThrow();
-  });
-
-  it("names every id outside the category", () => {
-    expect(() => assertToolIdsMatchCategory(["vscode"], "ai")).toThrow(/vscode is not an AI tool/);
-    expect(() => assertToolIdsMatchCategory(["claude"], "ide")).toThrow(
-      /claude is not an IDE tool/
-    );
-    expect(() => assertToolIdsMatchCategory(["claude", "cursor"], "ide")).toThrow(
-      /claude, cursor are not IDE tools/
-    );
-    expect(() => assertToolIdsMatchCategory(["claude"], "ide")).toThrow(CategoryMismatchError);
   });
 });

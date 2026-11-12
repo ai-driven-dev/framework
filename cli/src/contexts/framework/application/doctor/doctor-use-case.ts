@@ -1,6 +1,5 @@
 import { ManifestValidationError, NoManifestError } from "../../../../kernel/errors.js";
-import type { ToolCategory } from "../../../../kernel/tool.js";
-import { toolIdsForCategory } from "../../../tools/domain/registry.js";
+import { type ToolCategory, toolIdsForCategory } from "../../../../kernel/tool.js";
 import type {
   DoctorIssue,
   DoctorReport,

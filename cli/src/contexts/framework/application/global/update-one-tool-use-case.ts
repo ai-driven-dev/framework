@@ -2,9 +2,8 @@ import { join } from "node:path";
 import { InputRequiredError } from "../../../../kernel/errors.js";
 import type { FileHash } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { AiToolId, IdeToolId, ToolId } from "../../../../kernel/tool.js";
+import { type AiToolId, type IdeToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import type { SyncConflictResolverUseCase } from "../../../../presentation/prompts/sync-conflict-resolver-use-case.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstallIdeConfigUseCase } from "../install/install-ide-config-use-case.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
@@ -96,8 +95,7 @@ export class UpdateOneToolUseCase {
     version: string,
     onBeforeWriteRegularFile: (relativePath: string) => Promise<"write" | "skip">
   ): Promise<{ toolId: ToolId; fileCount: number } | null> {
-    const config = getToolConfig(toolId);
-    const result = isAiTool(config)
+    const result = isAiToolId(toolId)
       ? await this.installRuntimeConfigUseCase.execute({
           toolId: toolId as AiToolId,
           projectRoot,

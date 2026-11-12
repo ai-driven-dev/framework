@@ -4,12 +4,13 @@ import type { FileHash } from "../../../kernel/file.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../kernel/merge.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../kernel/ports/hasher.js";
-import type { AiToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
 import {
-  getToolConfig,
-  machineLocalFilesOf,
+  type AiToolId,
+  type ToolCategory,
+  type ToolId,
   toolIdsForCategory,
-} from "../../tools/domain/registry.js";
+} from "../../../kernel/tool.js";
+import { getToolConfig, machineLocalFilesOf } from "../../tools/domain/registry.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { DetectPluginDriftUseCase } from "./shared/detect-plugin-drift-use-case.js";

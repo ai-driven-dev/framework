@@ -18,8 +18,7 @@ import { PostInstallPipelineUseCase } from "../../../src/contexts/framework/appl
 import { DetectPluginDriftUseCase } from "../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { isIdeToolId } from "../../../src/contexts/tools/domain/registry.js";
-import type { ToolId } from "../../../src/kernel/tool.js";
+import { isIdeToolId, type ToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";

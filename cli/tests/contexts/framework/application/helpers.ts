@@ -11,10 +11,9 @@ import { PostInstallPipelineUseCase } from "../../../../src/contexts/framework/a
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { isIdeToolId } from "../../../../src/contexts/tools/domain/registry.js";
 import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
 import type { VersionReader } from "../../../../src/kernel/ports/version-reader.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+import { isIdeToolId, type ToolId } from "../../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { BundledAssetProviderAdapter } from "../../../../src/runtime/assets/asset-loader.js";
 import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";

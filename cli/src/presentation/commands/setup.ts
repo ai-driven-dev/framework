@@ -5,9 +5,13 @@ import { SetupUseCase } from "../../contexts/framework/application/setup-use-cas
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
-import { assertToolIdsMatchCategory } from "../../contexts/tools/domain/registry.js";
 import type { ToolId } from "../../kernel/tool.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../kernel/tool.js";
+import {
+  AI_TOOL_IDS,
+  assertToolIdsMatchCategory,
+  IDE_TOOL_IDS,
+  isIdeToolId,
+} from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printDetectedContext,
@@ -72,9 +76,8 @@ export function parseToolIds(
     errorHandler.handle(e);
     return null;
   }
-  const isIde = (id: ToolId) => (IDE_TOOL_IDS as readonly string[]).includes(id);
   const unique = [...new Set([...aiIds, ...ids])];
-  return { aiTools: unique.filter((id) => !isIde(id)), ideTools: unique.filter(isIde) };
+  return { aiTools: unique.filter((id) => !isIdeToolId(id)), ideTools: unique.filter(isIdeToolId) };
 }
 
 type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";

@@ -1,9 +1,8 @@
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import { Manifest } from "../../contexts/framework/domain/manifest.js";
-import { isIdeToolId } from "../../contexts/tools/domain/registry.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../kernel/tool.js";
-import { isAiToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
+import { isAiToolId, isIdeToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printToolAlreadyInstalled,
