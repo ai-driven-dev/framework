@@ -75,6 +75,10 @@ export interface NativeActivation {
   upgradeVerb?: string;
   /** Exact host command for updating one installed plugin ref. Copilot declares `update`; Codex does not. */
   updateVerb?: string;
+  /** Targeted refresh of an existing installation after a framework release update. */
+  releaseUpdateVerb?: string;
+  /** Reinstall an already-owned plugin from the rebuilt local catalogue after an explicit release update. */
+  refreshOwnedOnReleaseUpdate?: boolean;
   /** Verb this CLI uses to enable a plugin, after `plugin`. Omit when the tool loads plugins
    * from a project file this CLI writes. */
   enableVerb?: string;
@@ -123,7 +127,7 @@ export interface GlobalFiles {
   readonly map: (builtPath: string, plugin: GlobalPlugin) => string | null;
 }
 
-/** The plugin a global file is read for: its name, and the agents its source ships, by base
+/** The plugin a machine file is read for: its name, and the agents its source ships, by base
  * name. A flat build prefixes an agent with its plugin, so a prefix alone cannot tell
  * `aidd-dev`'s agents from those of a plugin named `aidd-dev-tools`. */
 export interface GlobalPlugin {
@@ -132,7 +136,7 @@ export interface GlobalPlugin {
 }
 
 /**
- * The global-file mapping of a flat tool whose user configuration directory takes the same
+ * The machine-file mapping of a flat tool whose user configuration directory takes the same
  * `skills/` and `agents/` its project directory does (OpenCode, Kilo): a plugin's skills and
  * agents under `directory` keep their path below it. Hooks, commands and MCP entries stay
  * project-scoped.
@@ -151,6 +155,7 @@ export function flatGlobalFilePath(directory: string): GlobalFiles["map"] {
 /** Shared by every mode: where a tool's machine-scope files go, when it has any. */
 interface GlobalFilesParams {
   globalFiles?: GlobalFiles;
+  startupTui?: { readonly plugin: string; readonly directory: string; readonly module: string };
 }
 
 export interface NativePluginsParams extends ProjectHooksDelivery {
@@ -205,6 +210,8 @@ export type FlatHooksSupport =
        * a bridge must be told to run. Omit where the loader has no such convention.
        */
       flatHooksLoaderEntry?: FlatHooksLoaderEntry;
+      /** Host-specific placement for hook files, shared by build and direct installation. */
+      flatHooksPath?: (plugin: string, relativePath: string) => string;
       /** See {@link FlatHooksBridge}. Omit when this loader triggers a plugin's hooks some
        * other way. */
       flatHooksBridge?: FlatHooksBridge;
@@ -270,6 +277,7 @@ export class PluginsCapability {
   readonly flatHooksDir: string | null;
   /** See {@link FlatHooksSupport.flatHooksLoaderEntry}. */
   readonly flatHooksLoaderEntry: FlatHooksLoaderEntry | null;
+  readonly flatHooksPath: ((plugin: string, relativePath: string) => string) | null;
   /** See {@link FlatHooksBridge}, or `null` when this capability declares none. */
   readonly flatHooksBridge: FlatHooksBridge | null;
   readonly flatSkillLayout: FlatSkillLayout;
@@ -282,12 +290,18 @@ export class PluginsCapability {
   readonly installScope: "project" | "user";
   /** See {@link GlobalFiles}, or `null` when a machine-scope install copies no file. */
   readonly globalFiles: GlobalFiles | null;
+  readonly startupTui: {
+    readonly plugin: string;
+    readonly directory: string;
+    readonly module: string;
+  } | null;
 
   private readonly _userPluginsDir?: (homedir: string) => string;
 
   constructor(params: PluginsParams) {
     this.mode = params.mode;
     this.globalFiles = params.globalFiles ?? null;
+    this.startupTui = params.startupTui ?? null;
     this.translationMode = PluginsCapability.resolveTranslationMode(params);
     this.installScope = PluginsCapability.resolveInstallScope(params);
     PluginsCapability.validateUserScope(params);
@@ -308,6 +322,7 @@ export class PluginsCapability {
       this.projectHooksFormat = params.projectHooksFormat ?? null;
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
+      this.flatHooksPath = null;
       this.flatHooksBridge = null;
       this.flatSkillLayout = "nested";
       this.hookScript = params.hookScript ?? AS_SHIPPED;
@@ -324,6 +339,7 @@ export class PluginsCapability {
       this.flatHooksLoaderEntry = params.acceptsHooks
         ? (params.flatHooksLoaderEntry ?? null)
         : null;
+      this.flatHooksPath = params.acceptsHooks ? (params.flatHooksPath ?? null) : null;
       this.flatHooksBridge = params.acceptsHooks ? (params.flatHooksBridge ?? null) : null;
       this.flatSkillLayout = params.flatSkillLayout ?? "nested";
       this.hookScript = params.acceptsHooks ? (params.hookScript ?? AS_SHIPPED) : AS_SHIPPED;
@@ -350,6 +366,7 @@ export class PluginsCapability {
       this.hooksUnsupportedReason = params.hooksUnsupportedReason;
       this.flatHooksDir = null;
       this.flatHooksLoaderEntry = null;
+      this.flatHooksPath = null;
       this.flatHooksBridge = null;
       this.flatSkillLayout = "nested";
       this.hookScript = AS_SHIPPED;

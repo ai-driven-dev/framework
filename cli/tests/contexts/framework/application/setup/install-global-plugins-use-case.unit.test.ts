@@ -2,8 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import type { PinnedUserFramework } from "../../../../../src/contexts/framework/application/ownership/release/pinned-user-framework.js";
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { InstallGlobalPluginsUseCase } from "../../../../../src/contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
@@ -37,7 +39,7 @@ const CATALOG: PluginCatalogEntry[] = [
 
 const HASH = "0".repeat(32);
 
-function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
+function setup(marketplaces: Marketplace[] = [FRAMEWORK], session?: PinnedUserFramework) {
   const manifest = Manifest.create();
   manifest.addTool("opencode", "1.0.0", []);
   manifest.addTool("claude", "1.0.0", []);
@@ -56,6 +58,18 @@ function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
     }
   );
   const applyUpdate = vi.fn(async (plan: PlannedUserPluginFileUpdate) => plan.next);
+  const events: string[] = [];
+  const withPinnedSession =
+    session === undefined
+      ? undefined
+      : async <T>(action: (pinned?: PinnedUserFramework) => Promise<T>) => {
+          events.push("opened");
+          try {
+            return await action(session);
+          } finally {
+            events.push("closed");
+          }
+        };
   const useCase = new InstallGlobalPluginsUseCase(
     { list: async () => marketplaces },
     {
@@ -65,10 +79,10 @@ function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
         localPath: "/fw",
       }),
     },
-    { planUpdate, applyUpdate },
+    { planUpdate, applyUpdate, withPinnedSession },
     new CapturingLogger()
   );
-  return { manifest, useCase, planUpdate, applyUpdate };
+  return { manifest, useCase, planUpdate, applyUpdate, events };
 }
 
 function run(
@@ -90,7 +104,84 @@ function run(
 }
 
 describe("InstallGlobalPluginsUseCase", () => {
-  it("records each chosen plugin's global files for a tool that copies them, and names every one", async () => {
+  it("keeps an explicitly updated official release pinned on setup", async () => {
+    const { manifest, useCase, planUpdate } = setup();
+    const source = {
+      kind: "git-subdir",
+      url: "https://github.com/ai-driven-dev/framework.git",
+      path: "plugins/aidd-dev",
+      ref: "v5.13.0",
+      sha: "a".repeat(40),
+    } as const;
+    manifest.addPlugin(
+      "opencode",
+      InstalledPlugin.fromMetadata(
+        "aidd-dev",
+        "1.0.0",
+        source,
+        true,
+        "user",
+        "aidd-framework"
+      ).withFiles(new Map([["agents/old.md", HASH]]))
+    );
+    await run(useCase, manifest, "recommended");
+    expect(planUpdate.mock.calls[0][0].source).toEqual(source);
+  });
+
+  it("takes the source this run resolved for a plugin it already owns, and keeps its files", async () => {
+    const { manifest, useCase, planUpdate } = setup();
+    manifest.addPlugin(
+      "opencode",
+      InstalledPlugin.fromMetadata(
+        "aidd-dev",
+        "1.0.0",
+        { kind: "local", path: "/moved-away" },
+        true,
+        "user",
+        "aidd-framework"
+      ).withFiles(new Map([["agents/old.md", HASH]]))
+    );
+
+    await useCase.execute(
+      manifest,
+      { projectRoot: "/project", toolIds: ["opencode"], mode: "recommended", pluginNames: [] },
+      async () => {}
+    );
+
+    const planned = planUpdate.mock.calls[0][0];
+    expect(planned.source).not.toEqual({ kind: "local", path: "/moved-away" });
+    expect([...planned.files.keys()]).toEqual(["agents/old.md"]);
+  });
+
+  it("shares one session across all machine plugins and closes it", async () => {
+    const session: PinnedUserFramework = {
+      build: async () => {
+        throw new Error("unused");
+      },
+    };
+    const { manifest, useCase, planUpdate, events } = setup([FRAMEWORK], session);
+    manifest.addTool("kilo", "1.0.0", []);
+    await useCase.execute(
+      manifest,
+      { projectRoot: "/project", toolIds: ["opencode", "kilo"], mode: "all", pluginNames: [] },
+      async () => {}
+    );
+    expect(planUpdate).toHaveBeenCalledTimes(4);
+    for (const tool of ["opencode", "kilo"])
+      for (const name of ["aidd-dev", "aidd-pm"])
+        expect(planUpdate).toHaveBeenCalledWith(
+          expect.objectContaining({ name }),
+          tool,
+          "/project",
+          expect.anything(),
+          true,
+          undefined,
+          session
+        );
+    expect(events).toEqual(["opened", "closed"]);
+  });
+
+  it("records each chosen plugin's machine files for a tool that copies them, and names every one", async () => {
     const { manifest, useCase, planUpdate } = setup();
 
     const result = await run(useCase, manifest, "all");
@@ -131,31 +222,6 @@ describe("InstallGlobalPluginsUseCase", () => {
       expect.anything(),
       true
     );
-  });
-
-  it("takes the source this run resolved for a plugin it already owns, and keeps its files", async () => {
-    const { manifest, useCase, planUpdate } = setup();
-    manifest.addPlugin(
-      "opencode",
-      InstalledPlugin.fromMetadata(
-        "aidd-dev",
-        "1.0.0",
-        { kind: "local", path: "/moved-away" },
-        true,
-        "user",
-        "aidd-framework"
-      ).withFiles(new Map([["agents/old.md", HASH]]))
-    );
-
-    await useCase.execute(
-      manifest,
-      { projectRoot: "/project", toolIds: ["opencode"], mode: "recommended", pluginNames: [] },
-      async () => {}
-    );
-
-    const planned = planUpdate.mock.calls[0][0];
-    expect(planned.source).not.toEqual({ kind: "local", path: "/moved-away" });
-    expect([...planned.files.keys()]).toEqual(["agents/old.md"]);
   });
 
   it("writes nothing when a later plugin's plan is refused", async () => {

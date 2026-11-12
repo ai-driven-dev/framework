@@ -1,5 +1,15 @@
 import { constants } from "node:fs";
-import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
+import {
+  access,
+  lstat,
+  mkdir,
+  readdir,
+  readFile,
+  realpath,
+  rm,
+  rmdir,
+  stat,
+} from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import { JsonParseError } from "../../kernel/errors.js";
@@ -18,6 +28,10 @@ import { stripJsonComments } from "../../kernel/reading/jsonc.js";
 import { atomicWriteFile } from "./atomic-write.js";
 
 export class FileAdapter implements FileReader, FileWriter, FileMerger {
+  async assertWritableDirectory(path: string): Promise<void> {
+    await access(path, constants.W_OK);
+  }
+
   async isExecutable(path: string): Promise<boolean> {
     try {
       await access(path, constants.X_OK);
@@ -109,6 +123,16 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  async entryExists(path: string): Promise<boolean> {
+    try {
+      await lstat(path);
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+      throw error;
     }
   }
 

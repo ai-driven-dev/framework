@@ -10,13 +10,13 @@ The macro technical shape: the stack, how the pieces fit, and the decisions behi
 | --- | --- |
 | Product | markdown — skills, agents, rules, templates. No framework runtime; an LLM interprets them. |
 | Delivery | Node `>=22.12`, pnpm. `cli/` is the `aidd` binary; `kanban/` is a private package. |
-| Manifest | `.claude-plugin/marketplace.json`, the plugin manifest: 9 plugins, no version among them. Versions are release-please's, in `deployment.md`. |
+| Manifest | `.claude-plugin/marketplace.json`, the plugin manifest: 10 plugins, no version among them. Versions are release-please's, in `deployment.md`. |
 
 ## How it fits together
 
 ```mermaid
 flowchart LR
-    Manifest[".claude-plugin/marketplace.json"] -->|lists| Plugins["plugins/ · 9"]
+    Manifest[".claude-plugin/marketplace.json"] -->|lists| Plugins["plugins/ · 10"]
     Plugins -->|ships| Surfaces["skills · agents · commands · hooks · rules"]
     CLI["cli/ · aidd"] -->|reads| Manifest
     CLI -->|installs| Target["a project's AI tool dir"]
@@ -40,6 +40,6 @@ The concern-to-plugin taxonomy is canonical in [`docs/ARCHITECTURE.md`](../../do
 
 ## Gotchas
 
-- 9 plugins ship, 3 off the curated install path: `aidd-ui` is alpha, `aidd-telemetry` beta and opt-in, `aidd-qa` new and unproven outside this repository.
+- 10 plugins ship, 3 off the curated install path: `aidd-ui` is alpha, `aidd-telemetry` beta and opt-in, `aidd-qa` new and unproven outside this repository.
 - A skill never links outside itself: the tree ships both flat and as a marketplace, so no relative path survives both.
 - Bundled hooks run Node. No `node` on `PATH`, no memory refresh and no question about the task.

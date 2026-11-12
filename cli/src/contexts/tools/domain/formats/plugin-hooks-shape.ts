@@ -18,14 +18,17 @@ export interface BridgeHookCall {
 // Only `node <plugin root>/hooks/<rel> [args...]` can be replayed; any other shape is one only
 // Claude Code's own settings run, and is dropped rather than guessed at.
 const SOURCE_PLUGIN_ROOT = "\\$" + "\\{CLAUDE_PLUGIN_ROOT\\}";
-const BRIDGED_COMMAND = new RegExp(`^node\\s+${SOURCE_PLUGIN_ROOT}/hooks/(\\S+)(.*)$`);
+const BRIDGED_COMMAND = new RegExp(
+  `^node\\s+(?:"${SOURCE_PLUGIN_ROOT}/hooks/([^"]+)"|${SOURCE_PLUGIN_ROOT}/hooks/(\\S+))(.*)$`
+);
 
 function bridgedCall(command: string | undefined): BridgeHookCall | null {
   if (typeof command !== "string") return null;
   const match = BRIDGED_COMMAND.exec(command.trim());
   if (match === null) return null;
-  const [, script, rest] = match;
-  return { script, args: rest.length === 0 ? [] : rest.trim().split(/\s+/) };
+  const [, quotedScript, bareScript, rest] = match;
+  const script = quotedScript ?? bareScript;
+  return { script, args: rest.trim().length === 0 ? [] : rest.trim().split(/\s+/) };
 }
 
 // A host that offers `apply_patch` writes files through it instead of `edit` and `write`; a

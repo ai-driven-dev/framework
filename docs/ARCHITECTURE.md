@@ -42,6 +42,7 @@ Every other plugin delegates to it.
 | `aidd-ui` | UI and UX design |
 | `aidd-qa` | Acceptance QA with video evidence |
 | `aidd-telemetry` | Token measurement |
+| `aidd-maintenance` | Framework version and update discovery |
 
 ## How a skill runs
 

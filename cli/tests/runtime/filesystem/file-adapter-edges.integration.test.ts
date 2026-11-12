@@ -22,6 +22,29 @@ describe("FileAdapter, at the edges", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
+  describe("assertWritableDirectory()", () => {
+    it("accepts an existing writable directory and rejects a missing one", async () => {
+      await expect(fs.assertWritableDirectory(tempDir)).resolves.toBeUndefined();
+      await expect(fs.assertWritableDirectory(join(tempDir, "missing"))).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+    });
+
+    it.skipIf(process.platform === "win32" || process.getuid?.() === 0)(
+      "rejects a directory without write permission",
+      async () => {
+        await chmod(tempDir, 0o555);
+        try {
+          await expect(fs.assertWritableDirectory(tempDir)).rejects.toMatchObject({
+            code: "EACCES",
+          });
+        } finally {
+          await chmod(tempDir, 0o700);
+        }
+      }
+    );
+  });
+
   describe("listFilesRecursive()", () => {
     it("lists every file below the directory by absolute path", async () => {
       await mkdir(join(tempDir, "a", "b"), { recursive: true });

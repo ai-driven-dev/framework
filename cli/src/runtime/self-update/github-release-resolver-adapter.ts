@@ -16,7 +16,8 @@ const ROOT_RELEASE_TAG_REGEX = /^v\d/;
 export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
   constructor(
     private readonly http: HttpGet,
-    private readonly tokenProvider?: TokenProvider
+    private readonly tokenProvider?: TokenProvider,
+    private readonly fetchAsset: typeof fetch = fetch
   ) {}
 
   async resolveLatest(repo: string): Promise<string | null> {
@@ -53,6 +54,51 @@ export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
     }
   }
 
+  /** Checks the exact published tag, even when component releases fill the first page. */
+  async resolvePublishedRelease(
+    repo: string,
+    tag: string
+  ): Promise<{ title: string | null } | null> {
+    const url = `${GITHUB_API_BASE}/repos/${repo}/releases/tags/${encodeURIComponent(tag)}`;
+    const token = (await this.tokenProvider?.resolve()) ?? undefined;
+    try {
+      const { body } = await this.http.get(url, { token });
+      if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+      const release = body as {
+        tag_name?: unknown;
+        draft?: unknown;
+        name?: unknown;
+        assets?: unknown;
+      };
+      if (release.tag_name !== tag || release.draft !== false) return null;
+      let title = cleanTitle(release.name);
+      if (title === tag) title = "";
+      if (
+        Array.isArray(release.assets) &&
+        (release.assets as { name?: unknown }[]).some(
+          (asset) => asset?.name === "release-video.json"
+        )
+      ) {
+        try {
+          const encodedRepo = repo.split("/").map(encodeURIComponent).join("/");
+          const response = await this.fetchAsset(
+            `https://github.com/${encodedRepo}/releases/download/${encodeURIComponent(tag)}/release-video.json`,
+            { signal: AbortSignal.timeout(1500) }
+          );
+          if (response.ok) {
+            const video = (await response.json()) as { title?: unknown } | null;
+            title = cleanTitle(video?.title) || title;
+          }
+        } catch {
+          return { title: title || null };
+        }
+      }
+      return { title: title || null };
+    } catch (err) {
+      return this.handleError(err, url);
+    }
+  }
+
   async isRepoPublic(repo: string): Promise<boolean> {
     // Deliberately tokenless: only a 404 unambiguously means "auth required", so any other
     // error resolves true and a rate-limited or offline public user is not sent to login.
@@ -71,4 +117,15 @@ export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
     const detail = err instanceof Error ? err.message : String(err);
     throw new CatalogFetchError(url, detail);
   }
+}
+
+function cleanTitle(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return (
+    value
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters must not reach the terminal.
+      .replace(/[\x00-\x1f\x7f]+/g, " ")
+      .trim()
+      .slice(0, 180)
+  );
 }

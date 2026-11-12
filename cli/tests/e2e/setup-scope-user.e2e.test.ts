@@ -56,6 +56,7 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
       expect(setup.exitCode).toBe(0);
       expect(setup.stdout).toContain("Installed for every project on this machine: aidd-dev.");
       expect(await gitStatusPorcelain(projectDir)).toBe("");
+      expect(await readdir(projectDir)).toEqual([".git"]);
       const agent = join(opencode, "agents", "aidd-dev-reviewer.md");
       expect(await readFile(agent, "utf-8")).toMatch(/^mode: '?subagent'?$/m);
       const skills = await readdir(join(opencode, "skills", "aidd-dev"));
@@ -64,6 +65,7 @@ describe("E2E: setup --scope user writes nothing under the project", () => {
       const sync = await runCli(["sync", "--global"], projectDir, fakeHome);
       expect(sync.exitCode).toBe(0);
       expect(sync.stdout).toContain("Refreshed global files for: aidd-dev");
+      expect(await readdir(projectDir)).toEqual([".git"]);
 
       const clean = await runCli(["clean", "--global", "--force"], projectDir, fakeHome);
       expect(clean.exitCode).toBe(0);

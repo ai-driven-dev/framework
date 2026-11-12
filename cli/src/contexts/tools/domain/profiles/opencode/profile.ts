@@ -24,10 +24,10 @@ import {
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
-import { OPENCODE_HOOKS } from "./hooks.js";
+import { OPENCODE_HOOKS, opencodeGlobalFilePath } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
-import { OPENCODE_DIRECTORY, opencodeGlobalFilePath } from "./opencode-paths.js";
+import { OPENCODE_DIRECTORY } from "./opencode-paths.js";
 
 const DIRECTORY = OPENCODE_DIRECTORY;
 const TOOL_SUFFIX = ".opencode.md";

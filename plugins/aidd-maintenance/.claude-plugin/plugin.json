@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "aidd-maintenance",
+  "version": "0.1.0",
+  "description": "Maintenance of an AI-Driven Development installation: release notices and updates.",
+  "author": {
+    "name": "AI-Driven Dev",
+    "url": "https://github.com/ai-driven-dev"
+  },
+  "skills": ["./skills/01-update"],
+  "keywords": ["maintenance", "updates", "releases"],
+  "repository": "https://github.com/ai-driven-dev/framework",
+  "homepage": "https://ai-driven.dev",
+  "license": "MIT"
+}

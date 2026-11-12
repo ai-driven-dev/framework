@@ -124,7 +124,9 @@ export const codex: AiTool<
       ...nativeHooksSupport(CODEX_HOOKS),
       nativeActivation: {
         binary: "codex",
-        upgradeVerb: "upgrade",
+        // Codex rejects `marketplace upgrade` for the local catalogue we compile. Re-adding an
+        // owned plugin refreshes its installed cache from that rebuilt catalogue instead.
+        refreshOwnedOnReleaseUpdate: true,
         enableVerb: "add",
         disableVerb: "remove",
         // Codex's own `plugin remove` deletes a marketplace's cached content but leaves the

@@ -4,7 +4,11 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
+import {
+  getToolConfig,
+  isAiTool,
+  resolvePluginsCapability,
+} from "../../../tools/domain/registry.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
@@ -12,7 +16,57 @@ import { isFrameworkPrimeFlatMcp } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
 import { assertProjectPathWithinRoot } from "./project-path-boundary.js";
+import { planTuiInstall, planTuiRemoval } from "./tui/tui-config.js";
 import { detachUserPlugin } from "./user-plugin-ownership.js";
+
+export async function assertProjectTuiUnchanged(
+  fs: FileReader,
+  plugin: InstalledPlugin,
+  toolId: AiToolId,
+  projectRoot: string
+): Promise<void> {
+  if (plugin.tuiPlugin === undefined) return;
+  const tui = resolvePluginsCapability(toolId)?.startupTui;
+  if (tui?.plugin !== plugin.name || plugin.scope !== "project")
+    throw new Error(`${toolId}: cannot locate the owned TUI configuration.`);
+  await planTuiInstall(
+    fs,
+    join(projectRoot, tui.directory),
+    projectRoot,
+    tui.module,
+    plugin.tuiPlugin
+  );
+}
+
+export async function planProjectTuiRemoval(
+  fs: FileReader,
+  plugin: InstalledPlugin,
+  toolId: AiToolId,
+  projectRoot: string
+) {
+  const tui = resolvePluginsCapability(toolId)?.startupTui;
+  if (tui?.plugin !== plugin.name || plugin.scope !== "project" || plugin.tuiPlugin === undefined)
+    return undefined;
+  return planTuiRemoval(
+    fs,
+    join(projectRoot, tui.directory),
+    projectRoot,
+    tui.module,
+    plugin.tuiPlugin
+  );
+}
+
+export async function removeProjectTui(
+  fs: FileReader & FileWriter,
+  plugin: InstalledPlugin,
+  toolId: AiToolId,
+  projectRoot: string
+): Promise<boolean> {
+  const plan = await planProjectTuiRemoval(fs, plugin, toolId, projectRoot);
+  if (plan === undefined) return false;
+  await fs.writeFile(plan.path, plan.content);
+  return true;
+}
 
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */
 export async function assertProjectMcpEntriesRemovable(
@@ -60,6 +114,7 @@ export class ProjectPluginCleanup {
   ): Promise<void> {
     await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
     await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
+    await planProjectTuiRemoval(this.fs, plugin, toolId, projectRoot);
   }
 
   async removeLocalIntegration(
@@ -68,6 +123,7 @@ export class ProjectPluginCleanup {
     projectRoot: string
   ): Promise<void> {
     const mcpUpdate = await planProjectMcpRemoval(this.fs, plugin, toolId, projectRoot);
+    await removeProjectTui(this.fs, plugin, toolId, projectRoot);
     await removeProjectHooks(this.fs, plugin, toolId, projectRoot);
     if (mcpUpdate !== undefined) {
       await assertProjectPathWithinRoot(this.fs, projectRoot, mcpUpdate.output);

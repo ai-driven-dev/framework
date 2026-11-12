@@ -10,6 +10,8 @@ import "../../contexts/tools/domain/profiles/opencode/profile.js";
 import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import type { HostMarketplaceRegistryReader } from "../../contexts/tools/domain/ports/host-marketplace-registry-reader.js";
 import type { NativePluginActivator } from "../../contexts/tools/domain/ports/native-plugin-activator.js";
+import { kiloHeadlessRun } from "../../contexts/tools/domain/profiles/kilo/headless-run.js";
+import { opencodeHeadlessRun } from "../../contexts/tools/domain/profiles/opencode/headless-run.js";
 import { nativeActivationOf } from "../../contexts/tools/domain/registry.js";
 import { hostMarketplaceRegistryReaders } from "../../contexts/tools/infrastructure/host-marketplace-registry-reader-adapter.js";
 import { NativePluginCliAdapter } from "../../contexts/tools/infrastructure/native-plugin-cli-adapter.js";
@@ -31,3 +33,6 @@ export function wireTools(): {
   ]);
   return { nativePluginActivators, hostMarketplaceRegistries: hostMarketplaceRegistryReaders() };
 }
+
+/** Tools whose headless run command cannot display their session-start notice. */
+export const headlessRunTools = { opencode: opencodeHeadlessRun, kilo: kiloHeadlessRun } as const;

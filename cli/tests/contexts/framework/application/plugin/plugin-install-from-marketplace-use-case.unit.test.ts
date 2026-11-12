@@ -93,6 +93,71 @@ function installedSamplePlugin(deps: Awaited<ReturnType<typeof buildUnitDeps>>) 
 }
 
 describe("PluginInstallFromMarketplaceUseCase", () => {
+  it("refreshes the distribution when the release source was verified", async () => {
+    const { useCase, deps, registry } = await buildUseCase();
+    const marketplaceSource = {
+      kind: "github" as const,
+      repo: "ai-driven-dev/framework",
+      ref: "v5.13.0",
+    };
+    const expectedSource = {
+      kind: "git-subdir" as const,
+      url: "https://github.com/ai-driven-dev/framework.git",
+      path: "plugins/sample-plugin",
+      ref: "v5.13.0",
+    };
+    seedMarketplaceFile(deps.fs, MKT1_DIR, [
+      { name: "sample-plugin", source: "./plugins/sample-plugin", version: "1.0.0" },
+    ]);
+    deps.pluginFetcher.register(marketplaceSource, MKT1_DIR);
+    deps.pluginFetcher.register(expectedSource, PLUGIN_FIXTURE);
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "aidd-framework",
+        source: marketplaceSource,
+        scope: "project",
+        addedAt: "2026-05-01T00:00:00.000Z",
+      })
+    );
+    const fetch = vi.spyOn(deps.pluginFetcher, "fetch");
+
+    await useCase.execute({
+      pluginName: "sample-plugin",
+      version: "1.0.0",
+      expectedSource,
+      toolIds: ["claude"],
+      projectRoot: PROJECT_ROOT,
+      interactive: false,
+    });
+
+    expect(fetch).toHaveBeenCalledWith(expectedSource, expect.any(String), { forceRefresh: true });
+    expect(installedSamplePlugin(deps)?.version).toBe("1.0.0");
+  });
+
+  it("refuses a source changed after review before installing anything", async () => {
+    const { useCase, deps, registry } = await buildUseCase();
+    seedMarketplaceFile(deps.fs, MKT1_DIR, [
+      { name: "sample-plugin", source: { kind: "local", path: PLUGIN_FIXTURE }, version: "1.0.0" },
+    ]);
+    await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
+    await expect(
+      useCase.execute({
+        pluginName: "sample-plugin",
+        version: "1.0.0",
+        expectedSource: {
+          kind: "git-subdir",
+          url: "https://github.com/ai-driven-dev/framework.git",
+          path: "plugins/sample-plugin",
+          ref: "v5.13.0",
+        },
+        toolIds: ["claude"],
+        projectRoot: PROJECT_ROOT,
+        interactive: false,
+      })
+    ).rejects.toThrow(/source.*changed/i);
+    expect(installedSamplePlugin(deps)).toBeUndefined();
+  });
   it("installs a plugin found in a single marketplace and tags it", async () => {
     const { useCase, deps, registry } = await buildUseCase();
     seedMarketplaceFile(deps.fs, MKT1_DIR, [

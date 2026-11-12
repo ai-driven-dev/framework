@@ -41,6 +41,11 @@ export type ComponentPathMap = BrandedMap<"ComponentPathMap">;
 /** MCP server name → MD5 hash of the contributed server JSON (OpenCode merge tracking). */
 export type McpDigestMap = BrandedMap<"McpDigestMap">;
 
+export interface TuiPluginProvenance {
+  readonly config: "tui.json" | "tui.jsonc";
+  readonly entry: string;
+}
+
 /** Exact merged Cursor hook commands and copied project scripts recorded at install. */
 export interface ProjectHooksProvenance {
   entries: readonly { event: string; command: string; digest: string }[];
@@ -76,6 +81,7 @@ export interface PluginEntryData {
   componentPaths?: Record<string, string>;
   mcpEntries?: Record<string, string>;
   projectHooks?: ProjectHooksEntryData;
+  tuiPlugin?: TuiPluginProvenance;
   marketplace?: string;
   /** Canonical project roots using machine-owned user-scope files. Only the user manifest owns this list. */
   dependents?: string[];
@@ -91,6 +97,7 @@ export class InstalledPlugin {
   readonly componentPaths: ComponentPathMap;
   readonly mcpEntries: McpDigestMap;
   readonly projectHooks?: ProjectHooksProvenance;
+  readonly tuiPlugin?: TuiPluginProvenance;
   readonly marketplace?: string;
   readonly dependents: readonly string[];
 
@@ -104,6 +111,7 @@ export class InstalledPlugin {
     componentPaths: ComponentPathMap;
     mcpEntries: McpDigestMap;
     projectHooks?: ProjectHooksProvenance;
+    tuiPlugin?: TuiPluginProvenance;
     marketplace?: string;
     dependents: readonly string[];
   }) {
@@ -116,6 +124,7 @@ export class InstalledPlugin {
     this.componentPaths = params.componentPaths;
     this.mcpEntries = params.mcpEntries;
     this.projectHooks = params.projectHooks;
+    this.tuiPlugin = params.tuiPlugin;
     this.marketplace = params.marketplace;
     this.dependents = params.dependents;
   }
@@ -154,6 +163,7 @@ export class InstalledPlugin {
       componentPaths: plugin.componentPaths,
       mcpEntries: asMcpDigestMap(mcpEntries),
       projectHooks: plugin.projectHooks,
+      tuiPlugin: plugin.tuiPlugin,
       marketplace: plugin.marketplace,
       dependents: plugin.dependents,
     });
@@ -173,6 +183,7 @@ export class InstalledPlugin {
       componentPaths: plugin.componentPaths,
       mcpEntries: plugin.mcpEntries,
       projectHooks,
+      tuiPlugin: plugin.tuiPlugin,
       marketplace: plugin.marketplace,
       dependents: plugin.dependents,
     });
@@ -257,6 +268,7 @@ export class InstalledPlugin {
               entries: data.projectHooks.entries,
               scripts: new Map(Object.entries(data.projectHooks.scripts)),
             },
+      tuiPlugin: data.tuiPlugin,
       marketplace: data.marketplace,
       dependents: data.dependents ?? [],
     });
@@ -280,12 +292,17 @@ export class InstalledPlugin {
       };
     }
     if (this.marketplace !== undefined) data.marketplace = this.marketplace;
+    if (this.tuiPlugin !== undefined) data.tuiPlugin = this.tuiPlugin;
     if (this.dependents.length > 0) data.dependents = [...this.dependents];
     return data;
   }
 
   isFileTracked(relPath: string): boolean {
     return this.files.has(relPath);
+  }
+
+  withTuiPlugin(provenance: TuiPluginProvenance | undefined): InstalledPlugin {
+    return InstalledPlugin.fromJSON({ ...this.toJSON(), tuiPlugin: provenance });
   }
 
   withVersion(v: string): InstalledPlugin {
@@ -299,6 +316,7 @@ export class InstalledPlugin {
       componentPaths: this.componentPaths,
       mcpEntries: this.mcpEntries,
       projectHooks: this.projectHooks,
+      tuiPlugin: this.tuiPlugin,
       marketplace: this.marketplace,
       dependents: this.dependents,
     });
@@ -315,6 +333,7 @@ export class InstalledPlugin {
       componentPaths: this.componentPaths,
       mcpEntries: this.mcpEntries,
       projectHooks: this.projectHooks,
+      tuiPlugin: this.tuiPlugin,
       marketplace: this.marketplace,
       dependents: this.dependents,
     });
@@ -331,6 +350,7 @@ export class InstalledPlugin {
       componentPaths: this.componentPaths,
       mcpEntries: this.mcpEntries,
       projectHooks: this.projectHooks,
+      tuiPlugin: this.tuiPlugin,
       marketplace: this.marketplace,
       dependents: [...new Set(dependents)],
     });

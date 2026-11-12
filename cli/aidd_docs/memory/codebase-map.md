@@ -22,8 +22,11 @@ src/
 │   │   │   ├── install/
 │   │   │   │   └── content/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
+│   │   │   │   ├── release/  # recoverable machine release updates
+│   │   │   │   └── tui/      # owned startup TUI configuration
 │   │   │   ├── plugin/
 │   │   │   ├── recipes/
+│   │   │   ├── release/     # prepared project release bytes and native impact
 │   │   │   ├── restore/
 │   │   │   ├── setup/
 │   │   │   ├── shared/
@@ -91,7 +94,8 @@ src/
 │   ├── ports/    # a port two or more contexts both need
 │   └── reading/    # getting at a file's location and its content safely
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
-│   ├── commands/    # one file per command, wiring only
+│   ├── commands/    # command wiring
+│   │   └── run/    # headless tool launcher
 │   ├── display/    # rendering a result
 │   │   └── telemetry/    # the telemetry report, which outgrew one file beside the others
 │   └── prompts/    # asking the user; the decision stays in the context

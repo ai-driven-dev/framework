@@ -87,6 +87,15 @@
       "metadata": {
         "recommended": false
       }
+    },
+    {
+      "name": "aidd-maintenance",
+      "source": "./plugins/aidd-maintenance",
+      "description": "Framework maintenance: show the installed marketplace version and update available installations.",
+      "strict": true,
+      "metadata": {
+        "recommended": false
+      }
     }
   ]
 }

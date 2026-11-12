@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
@@ -13,6 +14,7 @@ import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { FrameworkBuildMode } from "../../../tools/domain/registry.js";
 import type { FrameworkBuild } from "../../../translate/application/translate-source.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
+import { assertNoSymlinksWithinRoot } from "../ownership/project-path-boundary.js";
 
 /** `undefined` when the target/mode pair has no build. */
 export type FrameworkBuildFor = (
@@ -67,10 +69,14 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     // `resolve()`, matching `sourceDir` below: on Windows a drive-less `projectRoot` yields a
     // drive-less `builtDir` here while the build resolves its own outDir copy for validation only,
     // leaving the write target diverging from the path that gets checked. Both scopes need it.
+    const userRoot = options.marketplace.scope === "user" ? this.userCacheRoot() : null;
+    const cacheBoundary = resolve(userRoot ?? options.projectRoot);
+    if (userRoot !== null && !(await this.fs.fileExists(cacheBoundary)))
+      await this.fs.createDirectory(cacheBoundary);
     const builtDir = resolve(
-      options.marketplace.scope === "user"
+      userRoot !== null
         ? userBuiltMarketplaceDir(
-            this.userCacheRoot(),
+            userRoot,
             this.version.get(),
             options.marketplace.name,
             options.target
@@ -85,13 +91,15 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     const sentinel = this.sentinelValue(resolved.catalog?.version);
     const memoKey = `${options.marketplace.name}:${options.target}:${sentinel}`;
     const memoized = this.memo.get(memoKey);
+    await assertNoSymlinksWithinRoot(this.fs, cacheBoundary, builtDir);
     if (memoized !== undefined) return memoized;
     const result = await this.ensure(
       options,
       builtDir,
       resolve(resolved.localPath),
       sentinel,
-      this.versionIsTrustworthy(options)
+      this.versionIsTrustworthy(options),
+      cacheBoundary
     );
     this.memo.set(memoKey, result);
     return result;
@@ -120,13 +128,14 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     builtDir: string,
     sourceDir: string,
     sentinel: string,
-    versionIsTrustworthy: boolean
+    versionIsTrustworthy: boolean,
+    cacheBoundary: string
   ): Promise<EnsureBuiltMarketplaceResult> {
     const version = sentinel.split(":")[1];
     if (versionIsTrustworthy && (await this.isFresh(builtDir, sentinel))) {
       return { builtDir, version, rebuilt: false };
     }
-    await this.build(options.target, options.mode, sourceDir, builtDir);
+    await this.build(options.target, options.mode, sourceDir, builtDir, cacheBoundary);
     await this.fs.writeFile(join(builtDir, SENTINEL_FILE), sentinel);
     return { builtDir, version, rebuilt: true };
   }
@@ -143,12 +152,16 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    builtDir: string
+    builtDir: string,
+    cacheBoundary: string
   ): Promise<void> {
     if (this.nested(sourceDir, builtDir)) {
-      await this.buildViaTemp(target, mode, sourceDir, builtDir);
+      await this.buildViaTemp(target, mode, sourceDir, builtDir, cacheBoundary);
       return;
     }
+    // This is an AIDD-owned disposable cache; a new build must not inherit deleted files.
+    await assertNoSymlinksWithinRoot(this.fs, cacheBoundary, builtDir);
+    await this.fs.deleteDirectory(builtDir);
     await this.runBuild(target, mode, sourceDir, builtDir);
   }
 
@@ -160,14 +173,20 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    builtDir: string
+    builtDir: string,
+    cacheBoundary: string
   ): Promise<void> {
-    const temp = join(tmpdir(), `aidd-built-${target}-${mode}`);
-    await this.fs.deleteDirectory(temp);
-    await this.runBuild(target, mode, sourceDir, temp);
-    await this.fs.deleteDirectory(builtDir);
-    await this.copyDir(temp, builtDir);
-    await this.fs.deleteDirectory(temp);
+    const temp = join(tmpdir(), `aidd-built-${target}-${mode}-${randomUUID()}`);
+    if (await this.fs.entryExists?.(temp))
+      throw new Error("Temporary build directory already exists.");
+    try {
+      await this.runBuild(target, mode, sourceDir, temp);
+      await assertNoSymlinksWithinRoot(this.fs, cacheBoundary, builtDir);
+      await this.fs.deleteDirectory(builtDir);
+      await this.copyDir(temp, builtDir);
+    } finally {
+      await this.fs.deleteDirectory(temp);
+    }
   }
 
   // Every outDir reaching this method is either `builtMarketplaceDir()` or a temp dir this class

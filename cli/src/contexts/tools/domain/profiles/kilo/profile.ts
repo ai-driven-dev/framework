@@ -3,7 +3,7 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { flatGlobalFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import type {
@@ -24,7 +24,7 @@ import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
 import { buildKiloFlatContract } from "./build.js";
-import { KILO_HOOKS } from "./hooks.js";
+import { KILO_HOOKS, KILO_STARTUP_TUI, kiloGlobalFilePath } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
 import { KILO_DIRECTORY, resolveKiloConfigPath } from "./kilo-paths.js";
@@ -87,8 +87,9 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       flatNamespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "kilo"),
-        map: flatGlobalFilePath(KILO_DIRECTORY),
+        map: kiloGlobalFilePath,
       },
+      startupTui: KILO_STARTUP_TUI,
       ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
   },

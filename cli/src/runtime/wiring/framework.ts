@@ -1,4 +1,5 @@
-import { homedir } from "node:os";
+import { mkdtemp } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
 import "../../contexts/tools/domain/profiles/antigravity/profile.js";
 import { join } from "node:path";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
@@ -40,6 +41,8 @@ import { PostInstallPipelineUseCase } from "../../contexts/framework/application
 import { ListInstalledRulesUseCase } from "../../contexts/framework/application/list-installed-rules-use-case.js";
 import { NativeHostRegistrationGate } from "../../contexts/framework/application/ownership/native-host-registration-gate.js";
 import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { UpgradeUserFrameworkUseCase } from "../../contexts/framework/application/ownership/release/upgrade-user-framework-use-case.js";
+import { UserReleaseJournal } from "../../contexts/framework/application/ownership/release/user-release-journal.js";
 import { UserMarketplaceRemoveUseCase } from "../../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../../contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../contexts/framework/application/ownership/user-plugin-update-use-case.js";
@@ -52,6 +55,8 @@ import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin
 import { PluginSearchUseCase } from "../../contexts/framework/application/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../../contexts/framework/application/plugin/plugin-update-use-case.js";
 import { ValidateRecipesUseCase } from "../../contexts/framework/application/recipes/validate-recipes-use-case.js";
+import { NativeReleaseImpact } from "../../contexts/framework/application/release/native-release-impact.js";
+import { PrepareFrameworkReleaseUseCase } from "../../contexts/framework/application/release/prepare-framework-release-use-case.js";
 import { RestoreUseCase } from "../../contexts/framework/application/restore/restore-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../../contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
@@ -68,20 +73,27 @@ import { StatusUseCase } from "../../contexts/framework/application/status-use-c
 import { UninstallIdeUseCase } from "../../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../../contexts/framework/application/uninstall/uninstall-use-case.js";
+import { UpgradeFrameworkUseCase } from "../../contexts/framework/application/upgrade-framework-use-case.js";
 import type { Environment } from "../../contexts/framework/domain/ports/environment.js";
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
 import { EnvironmentAdapter } from "../../contexts/framework/infrastructure/environment-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
+import { PinnedUserFrameworkAdapter } from "../../contexts/framework/infrastructure/pinned-user-framework-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
+import { UserReleaseJournalStoreAdapter } from "../../contexts/framework/infrastructure/user-release-journal-store.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import { claudeConfigDir } from "../../contexts/telemetry/domain/claude-projects-root.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
 import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
-import { hostPluginRegistryReaders } from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
+import {
+  claudeInstallations,
+  hostPluginRegistryReaders,
+} from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
 import {
   HostRegistryMarketplaceSourceReaderAdapter,
   NativeMarketplaceSourceReaderAdapter,
@@ -92,6 +104,7 @@ import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import type { VersionReader } from "../../kernel/ports/version-reader.js";
+import { resolveHomeDir } from "../../kernel/reading/home-dir.js";
 import type { AiToolId } from "../../kernel/tool.js";
 import { CLIOutput } from "../../presentation/output.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
@@ -146,6 +159,8 @@ interface Deps {
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
+  upgradeFrameworkUseCase: UpgradeFrameworkUseCase;
+  upgradeUserFrameworkUseCase: UpgradeUserFrameworkUseCase;
   userPluginUpdateUseCase: UserPluginUpdateUseCase;
   marketplaceAddUseCase: MarketplaceAddUseCase;
   marketplaceListUseCase: MarketplaceListUseCase;
@@ -215,7 +230,14 @@ export async function createDeps(
   const fs = new FileAdapter(hasher, logger);
   const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
+  let userReleaseJournal: UserReleaseJournal;
+  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile, () =>
+    userReleaseJournal.recover()
+  );
+  userReleaseJournal = new UserReleaseJournal(fs, hasher, userManifestRepo, {
+    home: homedir,
+    store: new UserReleaseJournalStoreAdapter(() => userManifestRepo.path),
+  });
   const http = new HttpClient();
   const authStorage = new AuthStorage();
   const ghCliAdapter = new GhCliAdapter();
@@ -259,11 +281,14 @@ export async function createDeps(
   }
   // Read once, reused wherever a use case needs the scope a plugin is actually registered
   // at: removal, clean, and doctor's own registration check.
+  const hostHome = resolveHomeDir();
+  const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, hostHome);
   const hostPluginRegistries = hostPluginRegistryReaders();
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const userSourceReferences = new UserSourceReferencesAdapter(fs, userConfigDir);
   const {
+    pluginCatalogRepository,
     pluginFetcher,
     marketplaceRegistry,
     marketplaceTrustStore,
@@ -459,6 +484,55 @@ export async function createDeps(
     doctorRegistrationUseCase
   );
   const releaseResolver = new GitHubReleaseResolverAdapter(http, authReader);
+  const prepareFrameworkReleaseUseCase = new PrepareFrameworkReleaseUseCase({
+    fs,
+    hasher,
+    logger,
+    manifestRepo,
+    userManifestRepo,
+    marketplaceRegistry,
+    reader: pluginDistributionReader,
+    buildFor: frameworkBuildFor,
+    version: currentVersionProvider,
+    userCacheRoot: userConfigDir,
+    homedir,
+    temporaryDirectory: () => mkdtemp(join(tmpdir(), "aidd-upgrade-preview-")),
+    pluginRuntime: installRuntimeConfigUseCase,
+    drift: detectPluginDriftUseCase,
+    impact: new NativeReleaseImpact({
+      fs,
+      repo: manifestRepo,
+      reader: nativeSources.get("claude"),
+      installations: (catalogue) => claudeInstallations(claudeDir, catalogue),
+      configDir: claudeDir,
+      toolId: "claude",
+      defaultConfigDir: join(hostHome, ".claude"),
+      configVariable: "CLAUDE_CONFIG_DIR",
+      projectScope: "local",
+      cacheRoot: userConfigDir,
+      version: currentVersionProvider,
+    }),
+    sync: marketplaceSyncSettingsUseCase,
+  });
+  const upgradeFrameworkUseCase = new UpgradeFrameworkUseCase({
+    listMarketplaces: (root) => marketplaceRegistry.list(root),
+    saveMarketplace: (root, marketplace) => marketplaceRegistry.save(root, marketplace),
+    loadManifest: () => manifestRepo.load(),
+    loadUserManifest: () => userManifestRepo.load(),
+    resolvePublishedRelease: (repo, release) =>
+      releaseResolver.resolvePublishedRelease(repo, release),
+    resolveTarget: (marketplace, root) =>
+      resolveMarketplaceUseCase.execute({ marketplace, projectRoot: root, forceRefresh: true }),
+    readTargetVersion: async (localPath, pluginName) => {
+      const distribution = await pluginDistributionReader.read(
+        join(localPath, "plugins", pluginName)
+      );
+      if (distribution.manifest.name !== pluginName)
+        throw new Error(`Cannot verify the target plugin '${pluginName}'.`);
+      return distribution.manifest.version;
+    },
+    preflight: (input) => prepareFrameworkReleaseUseCase.execute(input),
+  });
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
     prompter,
     releaseResolver
@@ -490,10 +564,20 @@ export async function createDeps(
   );
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
+  const pinnedUserFramework = new PinnedUserFrameworkAdapter(
+    fs,
+    hasher,
+    pluginFetcher,
+    pluginCatalogRepository,
+    pluginDistributionReader,
+    frameworkBuildFor
+  );
   const builtMaterializationDeps = {
     ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
     homedir,
+    userCacheRoot: userConfigDir,
+    pinnedFramework: pinnedUserFramework,
   };
   // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
   const userPluginFileUpdater = new UserPluginFileUpdater(
@@ -531,6 +615,15 @@ export async function createDeps(
     logger,
     nativeHostRegistrationGate
   );
+  const upgradeUserFrameworkUseCase = new UpgradeUserFrameworkUseCase({
+    repo: userManifestRepo,
+    builder: pinnedUserFramework,
+    updater: userPluginFileUpdater,
+    journal: userReleaseJournal,
+    logger,
+    resolvePublishedRelease: (repo, release) =>
+      releaseResolver.resolvePublishedRelease(repo, release),
+  });
   const restoreUseCase = new RestoreUseCase(
     fs,
     manifestRepo,
@@ -616,7 +709,9 @@ export async function createDeps(
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,
+    upgradeFrameworkUseCase,
     userPluginUpdateUseCase,
+    upgradeUserFrameworkUseCase,
     marketplaceAddUseCase,
     marketplaceListUseCase,
     marketplaceRemoveUseCase,

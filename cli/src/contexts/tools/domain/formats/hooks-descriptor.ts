@@ -55,6 +55,8 @@ export interface FlatHooksRoute {
   /** A loader that imports a module instead of reading a hooks file: the hooks reach it
    * through a bridge generated per plugin, written beside the loader's own module. */
   readonly loaderEntry?: FlatHooksLoaderEntry;
+  /** A native module placed outside the usual script folder; undefined keeps the default. */
+  readonly scriptPath?: (plugin: string, relativePath: string) => string | undefined;
 }
 
 /** Where `plugin install` puts the hooks of a tool that never runs a plugin-scope hooks file. */
@@ -211,6 +213,8 @@ function hooksBridge(
 }
 
 function flatHooksPath(route: FlatHooksRoute, plugin: string, rel: string): string {
+  const nativePath = route.scriptPath?.(plugin, rel);
+  if (nativePath !== undefined) return nativePath;
   if (route.loaderEntry !== undefined) {
     return flatHooksPathWithLoaderEntry(route.scriptsDir, route.loaderEntry, plugin, rel);
   }
@@ -252,6 +256,7 @@ export function flatHooksSupport(
   readonly flatHooksDir: string;
   readonly flatHooksLoaderEntry?: FlatHooksLoaderEntry;
   readonly flatHooksBridge?: FlatHooksBridge;
+  readonly flatHooksPath?: (plugin: string, relativePath: string) => string;
   readonly hookScript?: HookScript;
 } {
   const route = descriptor.flat;
@@ -259,6 +264,9 @@ export function flatHooksSupport(
   return {
     acceptsHooks: true,
     flatHooksDir: route.scriptsDir,
+    ...(route.scriptPath === undefined
+      ? {}
+      : { flatHooksPath: (plugin: string, rel: string) => flatHooksPath(route, plugin, rel) }),
     ...withHookScript(descriptor),
     ...(loaderEntry === undefined ? {} : { flatHooksLoaderEntry: loaderEntry }),
     ...(loaderEntry !== undefined && bridge !== undefined

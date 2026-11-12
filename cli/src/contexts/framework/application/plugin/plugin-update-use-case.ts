@@ -7,7 +7,11 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import { compareSemver } from "../../../../kernel/semver.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import { getToolConfig, type ToolConfig } from "../../../tools/domain/registry.js";
+import {
+  getToolConfig,
+  resolvePluginsCapability,
+  type ToolConfig,
+} from "../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -16,6 +20,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
 import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
 import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
+import { assertProjectTuiUnchanged } from "../ownership/project-plugin-cleanup.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import {
@@ -112,10 +117,16 @@ export class PluginUpdateUseCase {
     manifest: Manifest
   ): Promise<void> {
     const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, nodeHomedir);
+    await assertProjectTuiUnchanged(this.fs, plugin, toolId, projectRoot);
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const toolConfig = getToolConfig(toolId);
     const translator = this.resolveTranslator(toolConfig);
-    if (translator !== null && plugin.marketplace !== undefined) {
+    if (
+      translator !== null &&
+      (plugin.marketplace !== undefined ||
+        (translator.mode === "flat" &&
+          resolvePluginsCapability(toolId)?.startupTui?.plugin === plugin.name))
+    ) {
       await materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest);
       return;
     }

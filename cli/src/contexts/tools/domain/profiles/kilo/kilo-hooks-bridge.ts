@@ -94,7 +94,7 @@ function stopReasonOf(script, args, payload, directory) {
   });
 }
 
-function answerOf(script, args, payload, directory) {
+function answerOf(script, args, payload, directory, systemMessage = false) {
   return new Promise((resolve) => {
     let stdout = "";
     let stderr = "";
@@ -115,7 +115,12 @@ function answerOf(script, args, payload, directory) {
         fail("exited with code " + String(code) + (signal === null ? "" : " (" + signal + ")"));
         return;
       }
-      resolve(answerFrom(code, stdout, stderr));
+      if (systemMessage) {
+        try { resolve(String(JSON.parse(stdout)?.systemMessage ?? "").trim()); }
+        catch { resolve(""); }
+      } else {
+        resolve(answerFrom(code, stdout, stderr));
+      }
     });
     child.stdin.on("error", () => {});
     child.stdin.end(JSON.stringify(payload));
@@ -128,9 +133,10 @@ function reportHookFailure(script, error) {
 
 function sessionStartCallsFor(event, directory) {
   if (event?.type !== "session.created") return [];
-  return SESSION_START.map((hook) => ({
+  return SESSION_START${plugin === "aidd-maintenance" ? '.filter((hook) => hook.matcher !== "startup")' : ""}.map((hook) => ({
     script: hook.script,
     args: hook.args,
+    ...(hook.matcher === "startup" ? { notify: true } : {}),
     payload: { hook_event_name: "SessionStart", session_id: event.properties?.sessionID ?? null, cwd: event.properties?.info?.directory ?? directory },
   }));
 }
@@ -168,7 +174,16 @@ const ${identifier} = async ({ directory, client }) => {
         }
       }
       for (const call of calls) {
-        runHook(call.script, call.args, call.payload, call.payload.cwd);
+        if (call.notify) {
+          const message = await answerOf(call.script, call.args, { ...call.payload, tool: "kilo" }, call.payload.cwd, true);
+          if (message && typeof client?.tui?.showToast === "function") {
+            await client.tui.showToast({ body: { message, variant: "info" } });
+          } else if (message) {
+            console.warn("[aidd] Kilo cannot display the startup message: " + message);
+          }
+        } else {
+          runHook(call.script, call.args, call.payload, call.payload.cwd);
+        }
       }
     } catch (error) {
       console.warn("[aidd] Kilo hook dispatch failed: " + String(error));

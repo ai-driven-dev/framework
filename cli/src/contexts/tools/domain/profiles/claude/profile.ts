@@ -121,6 +121,7 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
           enableVerb: "install",
           disableVerb: "uninstall",
           upgradeVerb: "update",
+          releaseUpdateVerb: "update",
           // `--yes` gates a prune confirmation these calls never request, but a headless
           // stdin has no terminal to answer any prompt at all.
           pluginArgs: ["--yes"],

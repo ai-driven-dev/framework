@@ -11,7 +11,7 @@ Unify **engineering teams** around **standardized workflows** and **shared best 
 🧱 **IDE agnostic** · 🏗️ **Legacy systems** · 🌱 **Token-optimized** · 🇫🇷 **Made in France**
 
 <p>
-  <!--counts:start--><kbd>9 plugins</kbd> · <kbd>55 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
+  <!--counts:start--><kbd>10 plugins</kbd> · <kbd>56 skills</kbd> · <kbd>4 agents</kbd><!--counts:end-->
 </p>
 
 [![Open Source](https://img.shields.io/badge/Open_Source-Yes-yellow?logo=open-source-initiative&logoColor=white)](https://opensource.org/)
@@ -205,6 +205,18 @@ Token usage per task, opt-in
 Acceptance QA with video evidence
 </a>
 </td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+<a href="plugins/aidd-maintenance/README.md">
+<img align="right" alt="preview" src="https://img.shields.io/badge/preview-0969da?style=flat-square" />
+<h3>🔄 aidd-maintenance</h3>
+1 skill · 1 hook<br />
+Framework version and updates
+</a>
+</td>
+<td width="33%"></td>
+<td width="33%"></td>
 </tr>
 </table>
 

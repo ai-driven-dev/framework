@@ -60,9 +60,8 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
       return failedRead(this.path, error);
     }
     try {
-      const parsed = JSON.parse(content) as { plugins?: Record<string, ClaudeEntry[]> };
-      const plugins = parsed.plugins;
-      if (plugins === undefined || typeof plugins !== "object") {
+      const plugins = parseClaudePlugins(content);
+      if (plugins === undefined) {
         return { location: this.path, unreadable: "no `plugins` object" };
       }
       const refs = new Map<string, HostPluginRegistryEntry>();
@@ -76,6 +75,46 @@ class ClaudeInstalledPluginsReader implements HostPluginRegistryReader {
       return { location: this.path, unreadable: describeError(error) };
     }
   }
+}
+
+/** Claude's recorded installations sharing a marketplace. Presence does not prove enablement. */
+export async function claudeInstallations(
+  configDir: string,
+  catalogue: string
+): Promise<{ ref: string; scope: "user" | "project" | "local"; projectPath?: string }[]> {
+  const content = await readFile(join(configDir, "plugins", "installed_plugins.json"), "utf8");
+  const plugins = parseClaudePlugins(content);
+  if (!plugins) throw new Error("Cannot inspect Claude's installed plugins.");
+  const installations: {
+    ref: string;
+    scope: "user" | "project" | "local";
+    projectPath?: string;
+  }[] = [];
+  for (const [ref, entries] of Object.entries(plugins).sort(([a], [b]) => a.localeCompare(b))) {
+    if (!ref.endsWith(`@${catalogue}`)) continue;
+    if (!Array.isArray(entries)) throw new Error(`Cannot inspect Claude installation '${ref}'.`);
+    for (const entry of entries) {
+      if (entry?.scope === "user") installations.push({ ref, scope: "user" });
+      else if (
+        (entry?.scope === "local" || entry?.scope === "project") &&
+        typeof entry.projectPath === "string"
+      )
+        installations.push({
+          ref,
+          scope: entry.scope,
+          projectPath: await resolvedPath(entry.projectPath),
+        });
+      else throw new Error(`Cannot inspect Claude installation '${ref}'.`);
+    }
+  }
+  return installations;
+}
+
+function parseClaudePlugins(content: string): Record<string, ClaudeEntry[]> | undefined {
+  const parsed = JSON.parse(content) as { plugins?: Record<string, ClaudeEntry[]> };
+  return parsed.plugins && typeof parsed.plugins === "object" && !Array.isArray(parsed.plugins)
+    ? parsed.plugins
+    : undefined;
 }
 
 /**

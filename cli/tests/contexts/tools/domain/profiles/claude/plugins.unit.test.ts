@@ -52,6 +52,7 @@ describe("claude plugins", () => {
         enableVerb: "install",
         disableVerb: "uninstall",
         upgradeVerb: "update",
+        releaseUpdateVerb: "update",
         pluginArgs: ["--yes"],
         marketplaceRegistry: expect.any(Function),
         pluginCacheDir: expect.any(Function),

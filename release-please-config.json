@@ -116,6 +116,16 @@
         }
       ]
     },
+    "plugins/aidd-maintenance": {
+      "package-name": "aidd-maintenance",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
     "cli": {
       "release-type": "node",
       "package-name": "@ai-driven-dev/cli"

@@ -6,6 +6,7 @@ import type { ManifestRepository } from "../../domain/ports/manifest-repository.
 import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
 import type { PluginUpdateOptions } from "../plugin/plugin-update-use-case.js";
 import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
+import type { PinnedUserFramework } from "./release/pinned-user-framework.js";
 import type { UserPluginFileUpdater } from "./user-plugin-file-updater.js";
 
 export class UserPluginUpdateUseCase {
@@ -17,11 +18,15 @@ export class UserPluginUpdateUseCase {
   ) {}
 
   async execute(options: PluginUpdateOptions): Promise<string[]> {
-    const run = () => this.updateLocked(options);
+    const run = () =>
+      this.fileUpdater.withPinnedSession((session) => this.updateLocked(options, session));
     return this.repo.withExclusiveAccess === undefined ? run() : this.repo.withExclusiveAccess(run);
   }
 
-  private async updateLocked(options: PluginUpdateOptions): Promise<string[]> {
+  private async updateLocked(
+    options: PluginUpdateOptions,
+    session?: PinnedUserFramework
+  ): Promise<string[]> {
     const loaded = await this.repo.load();
     if (loaded === null)
       throw new Error(
@@ -74,7 +79,9 @@ export class UserPluginUpdateUseCase {
         toolId,
         options.projectRoot,
         this.logger,
-        options.rebuild === true
+        options.rebuild === true,
+        undefined,
+        session
       );
       filePlans.push({ toolId, plugin, plan });
     }

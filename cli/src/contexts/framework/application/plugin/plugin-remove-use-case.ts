@@ -38,7 +38,12 @@ import {
   isMachineOwnedNativeRef,
 } from "../ownership/native-plugin-ownership.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
+import {
+  assertProjectMcpEntriesRemovable,
+  planProjectTuiRemoval,
+  removeProjectTui,
+} from "../ownership/project-plugin-cleanup.js";
+import { planUserTuiRemoval, removeUserTui } from "../ownership/tui/user-tui-removal.js";
 import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
@@ -112,6 +117,7 @@ export class PluginRemoveUseCase {
       if (plugin === undefined) continue;
       await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
       await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
+      await planProjectTuiRemoval(this.fs, plugin, toolId, projectRoot);
       await this.assertProjectNativeSource(
         plugin,
         toolId,
@@ -249,6 +255,7 @@ export class PluginRemoveUseCase {
     }
     const safeFiles = await Promise.all(
       targets.map(async ({ toolId, plugin }) => {
+        await planUserTuiRemoval(this.fs, toolId, plugin, resolveHomeDir());
         const files = await userScopeFilesSafeToDelete(
           this.fs,
           this.logger,
@@ -307,6 +314,7 @@ export class PluginRemoveUseCase {
       });
     }
     for (const { toolId, plugin, files } of safeFiles) {
+      await removeUserTui(this.fs, toolId, plugin, resolveHomeDir());
       await deletePluginFilesForTool(files, "user", toolId, options.projectRoot, this.fs, "user");
       manifest.removePlugin(toolId, plugin.name);
     }
@@ -324,6 +332,7 @@ export class PluginRemoveUseCase {
       const plugins = manifest.getPlugins(toolId);
       const plugin = plugins.find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
+      await removeProjectTui(this.fs, plugin, toolId, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
       const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, nodeHomedir);
       const confirmed = await this.removeNativeActivation(

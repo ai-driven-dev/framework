@@ -118,10 +118,10 @@ function hooksTableOf(plugin) {
 
 const concernsTable = () => tableWithColumns(DOC, "Plugin", "Owns");
 
-/** The scripts a plugin's `hooks/hooks.json` runs, relative to the plugin. */
+/** The source manifest uses Claude's plugin root before translation to other hosts. */
 function declaredHookScripts(plugin) {
   const manifest = fs.readFileSync(path.join(ROOT, "plugins", plugin, "hooks/hooks.json"), "utf8");
-  return [...new Set([...manifest.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/g)].map((m) => m[1]))].sort();
+  return [...new Set([...manifest.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"\\]+)/g)].map((m) => m[1]))].sort();
 }
 
 test("every plugin that declares hooks lists them in its catalog section, and no other does", () => {

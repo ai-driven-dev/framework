@@ -8,6 +8,7 @@ Thirty leaf commands. Read them live: `aidd --help`, then each group's. `scripts
 
 - `setup`, `doctor`, `sync`, `clean`: bring a project to a correct state, keep it there.
 - `framework install | update | remove | rules`, chosen by `--tool <id>`.
+- `framework update --release <tag>` lists project plugin/tool pairs and asks before updating their source; `--yes` accepts non-interactively, and `--allow-shared` separately approves a shared marketplace.
 - `plugin install | list | remove | search | update`.
 - `marketplace add | list | remove | refresh | check`.
 - `auth login | logout | status`.

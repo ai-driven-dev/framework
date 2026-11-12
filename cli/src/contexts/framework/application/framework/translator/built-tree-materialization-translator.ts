@@ -24,7 +24,9 @@ import type { Manifest } from "../../../domain/manifest.js";
 import {
   InstalledPlugin,
   type ProjectHooksProvenance,
+  type TuiPluginProvenance,
 } from "../../../domain/plugins/installed-plugin.js";
+import { planTuiInstall } from "../../ownership/tui/tui-config.js";
 import { isPluginFileAtDesiredState } from "../../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
@@ -60,7 +62,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     previousMcpEntries: ReadonlyMap<string, string> = new Map(),
     userScopeDirTaken = false,
     previousProjectHooks?: ProjectHooksProvenance,
-    hooksGuard: ProjectHooksGuard = {}
+    hooksGuard: ProjectHooksGuard = {},
+    previousTui?: TuiPluginProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const resolved =
       marketplace === undefined ? null : await this.findMarketplace(marketplace, projectRoot);
@@ -75,9 +78,23 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         previousMcpEntries,
         userScopeDirTaken,
         previousProjectHooks,
-        hooksGuard
+        hooksGuard,
+        previousTui
       );
     }
+    const tui = resolvePluginsCapability(toolId)?.startupTui;
+    const hasTuiEntry = tui?.plugin === dist.manifest.name && !userScopeDirTaken;
+    previousTui ??= manifest
+      .getPlugins(toolId)
+      .find((p) => p.name === dist.manifest.name)?.tuiPlugin;
+    if (hasTuiEntry)
+      await planTuiInstall(
+        this.fs,
+        join(projectRoot, tui.directory),
+        projectRoot,
+        tui.module,
+        previousTui
+      );
     const mode = frameworkBuildModeFor(toolId);
     const { builtDir } = await this.ensureBuilt.execute({
       projectRoot,
@@ -121,6 +138,22 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         : resolveBaseDirFromRecord(scope, toolId, projectRoot, this.homedir);
     const owned = userScopeDirTaken ? [] : files;
     const written = await this.writeChangedFiles(owned, baseDir);
+    let tuiPlugin = previousTui;
+    if (hasTuiEntry) {
+      const plan = await planTuiInstall(
+        this.fs,
+        join(projectRoot, tui.directory),
+        projectRoot,
+        tui.module,
+        previousTui
+      );
+      if (
+        !(await this.fs.fileExists(plan.path)) ||
+        (await this.fs.readFile(plan.path)) !== plan.content
+      )
+        await this.fs.writeFile(plan.path, plan.content);
+      tuiPlugin = plan.provenance;
+    }
     manifest.addPlugin(
       toolId,
       InstalledPlugin.withProjectHooks(
@@ -134,7 +167,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
           marketplace
         ),
         hooks.projectHooks
-      )
+      ).withTuiPlugin(tuiPlugin)
     );
     return { skipped: [...mcp.mcpSkips, ...hooks.skipped], written };
   }
@@ -159,11 +192,11 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   // sibling by relative path, under `skills/<plugin>/` or, `single-level`, `skills/<plugin>-<skill>/`.
   // Hooks land under `flatHooksDir/<plugin>/`, except the loader's own runtime module, renamed to
   // the plugin's name in the loader's directory — so hook paths are matched by path, not by name.
-  private async readFlatFiles(
+  async readFlatFiles(
     builtDir: string,
     dist: PluginDistribution,
     toolId: AiToolId,
-    deliversHooksToProject: boolean
+    deliversHooksToProject = resolvePluginsCapability(toolId)?.hooksDestination === "project"
   ): Promise<InstallationFile[]> {
     const name = dist.manifest.name;
     const hookPaths = deliversHooksToProject
@@ -204,13 +237,15 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const paths = new Set(
       dist.components.hooks
         .filter((f) => f.relativePath !== "hooks/hooks.json")
-        .map((f) =>
-          flatHooksPathWithLoaderEntry(
-            flatHooksDir,
-            plugins.flatHooksLoaderEntry,
-            name,
-            f.relativePath
-          )
+        .map(
+          (f) =>
+            plugins.flatHooksPath?.(name, f.relativePath) ??
+            flatHooksPathWithLoaderEntry(
+              flatHooksDir,
+              plugins.flatHooksLoaderEntry,
+              name,
+              f.relativePath
+            )
         )
     );
     const bridge = plugins.flatHooksBridge;

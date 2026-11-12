@@ -7,7 +7,11 @@ import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { PluginSource } from "../../../../../kernel/source.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
 import type { PluginsCapability } from "../../../../tools/domain/capabilities/plugins-capability.js";
-import { getToolConfig, isAiTool } from "../../../../tools/domain/registry.js";
+import {
+  getToolConfig,
+  isAiTool,
+  resolvePluginsCapability,
+} from "../../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
@@ -16,7 +20,9 @@ import {
   InstalledPlugin,
   type PluginScope,
   type ProjectHooksProvenance,
+  type TuiPluginProvenance,
 } from "../../../domain/plugins/installed-plugin.js";
+import { planTuiInstall } from "../../ownership/tui/tui-config.js";
 import { isPluginFileAtDesiredState } from "../../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
@@ -54,10 +60,24 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     previousMcpEntries: ReadonlyMap<string, string> = new Map(),
     userScopeDirTaken = false,
     previousProjectHooks?: ProjectHooksProvenance,
-    hooksGuard: ProjectHooksGuard = {}
+    hooksGuard: ProjectHooksGuard = {},
+    previousTui?: TuiPluginProvenance
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
+    const tui = resolvePluginsCapability(toolId)?.startupTui;
+    const hasTuiEntry = tui?.plugin === dist.manifest.name && !userScopeDirTaken;
+    previousTui ??= manifest
+      .getPlugins(toolId)
+      .find((p) => p.name === dist.manifest.name)?.tuiPlugin;
+    if (hasTuiEntry)
+      await planTuiInstall(
+        this.fs,
+        join(projectRoot, tui.directory),
+        projectRoot,
+        tui.module,
+        previousTui
+      );
     const mcp = await materializeFlatMcp(
       this.fs,
       this.hasher,
@@ -90,6 +110,23 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       ctx.scope,
       manifest
     );
+    if (hasTuiEntry) {
+      const plan = await planTuiInstall(
+        this.fs,
+        join(projectRoot, tui.directory),
+        projectRoot,
+        tui.module,
+        previousTui
+      );
+      if (
+        !(await this.fs.fileExists(plan.path)) ||
+        (await this.fs.readFile(plan.path)) !== plan.content
+      )
+        await this.fs.writeFile(plan.path, plan.content);
+      const plugin = manifest.getPlugins(toolId).find((p) => p.name === dist.manifest.name);
+      if (plugin !== undefined)
+        manifest.updatePlugin(toolId, plugin.withTuiPlugin(plan.provenance));
+    }
     return { skipped: allSkipped, written };
   }
 
