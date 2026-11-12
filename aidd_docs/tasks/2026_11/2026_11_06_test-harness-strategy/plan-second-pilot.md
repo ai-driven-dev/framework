@@ -650,12 +650,19 @@ Fixes after the no-go (heads `0bca4d0dc`, `ba0d017f4`, `b2a6b6f9e`):
 
 Second re-review: no-go on one citation, T-A13 cited `:117` for the rule at `:15,115`; corrected. Its should-fixes, closed (heads `98f6937a6`, `e02bc141d`, `c8953fc1b`):
 
-- Shipped config: one `ShippedConfig { name, content, destination, delivery }` list per profile (`target/04-tools-and-translate.md:66`); `configOutputPaths` and `pluginRuntimeFiles` are gone, a destination is required by type. Limit: two entries with one name are not refused, the first wins.
+- Shipped config: one `ShippedConfig { name, content, destination, delivery }` list per profile (`target/04-tools-and-translate.md:66`); `configOutputPaths` and `pluginRuntimeFiles` are gone, a destination is required by type. `defineTool` refuses a profile that ships one name twice or ships a settings-section file at a path none of its sections writes. Limit: a declared name bundled for no tool is not caught, since content is imported where it is declared.
 - Bridge tests: the generated-text comparisons are deleted, each with its holder (golden, `tests/fixtures/hooks-routes/`, the bridge integration runs); the broken-pipe case runs the module (`target/04-tools-and-translate.md:293`).
 - `SOURCE_PLUGIN_ROOT_TOKEN` names the token by its role; it and `plugin-root-token-rewrite.ts` left `IDENTIFIER_BASELINE`.
 - `config-refs.ts`, read by `framework`'s restore, is E-T12.
 - The bridge integration file failed once on `ENOTEMPTY` at temp-directory removal (opencode's load-time SessionStart script racing the cleanup); its cleanup now retries the removal. Limit: a race longer than five retries still fails.
 - Mutation `tools` after these commits: 95.8 against floor 95.
+
+Third re-review: no-go on two missing proofs; closed (heads `93197ca48`, `da13cec11`, `207bcacb1`):
+
+- The bridge's script timeout was held by text snapshots alone, against T-A8: a case now runs the generated module with a script that never exits and checks it is killed (about 5 s real time, opencode only, the timeout being shared code).
+- A stdin write error was reported by vitest as unattributed; the case now collects it and fails on it.
+- The guards of the shipped config each have a red proof below; a profile answers one shipped file by name (`configAsset(name)`), and the list leaves the profile interfaces.
+- Mutation `tools` after these commits: 95.1 against floor 95.
 
 ## Design bar (user requirement, checked at every design review)
 
@@ -708,4 +715,14 @@ Phases 3 and 6 end with an opus design review against this bar before the phase 
 | the same guard over `tools/contract/` and the shared marketplace modules | `const claudeDir = 1;` in `contract/tool-catalog.ts`, `domain/marketplace-catalog.ts`, `domain/marketplace-entry.ts`, one at a time | `+ "src/contexts/tools/contract/tool-catalog.ts"` in the added list, likewise for the other two |
 | a profile ships its config assets | `configAssets` not yet on the profile | `catalog.profile(...).configAssets is not a function`, 9 cases |
 | the shared event adapter is bundled | `opencode-events.js` dropped from opencode's `configAssets` | 3 cases red, among them "bundles the shared event adapter as executable source text" |
+| the bridge kills a script that never exits | `timeout: 5000` raised to `60000` in `event-bridge.ts` | `expected 'still waiting' to be 'done'` |
+| a stdin write error is attributed to its case | `child.stdin.on("error", ...)` dropped | `expected [ Error: write EPIPE ] to deeply equal []`, kilo and opencode cases |
+| each shipped file is declared once, runtime files | `runtimeFiles: () => ({})` | `expected {} to strictly equal { 'bridge.js': '.x/bridge.js' }` |
+| each shipped file is declared once, config files | runtime entries dropped from `configFiles` | `expected { 'settings.json': '.x/settings.json' } to strictly equal { …(2) }` |
+| each shipped file is declared once, delivery filter | `asset.delivery !== "x"` | `expected { …(3) } to strictly equal { …(2) }` |
+| each shipped file is declared once, names | the list returns `[]` | `expected [] to deeply equal [ 'settings.json', 'bridge.js', …(1) ]` |
+| a shipped file needs a destination | `destination?: string` in `ShippedConfig` | `shipped-config.unit.test.ts(52,7): error TS2578: Unused '@ts-expect-error' directive` |
+| a profile ships one name once | the duplicate check disabled | `Error: the profile was accepted`, AI and IDE |
+| a section's shipped file lands where the section writes | `delivery === "x"` in the check | `Error: the profile was accepted`, AI and IDE |
+| a profile answers one shipped file by name | `asset.name !== name` | `expected undefined to be defined` |
 
