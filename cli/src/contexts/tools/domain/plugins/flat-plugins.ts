@@ -45,6 +45,9 @@ export class FlatPlugins extends PluginDeliveryBase {
   get kind(): "flat" {
     return "flat";
   }
+  override materializesFromBuiltTree(): boolean {
+    return true;
+  }
   hooksAcceptance(): HooksAcceptance {
     return this.#acceptance;
   }

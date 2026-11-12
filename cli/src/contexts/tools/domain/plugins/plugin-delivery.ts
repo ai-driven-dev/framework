@@ -37,7 +37,7 @@ export abstract class PluginDeliveryBase implements PluginDelivery {
     return false;
   }
   materializesFromBuiltTree(): boolean {
-    return this.kind === "flat" || this.requiresUserScope();
+    return this.requiresUserScope();
   }
   deliversHooksToProject(): boolean {
     return this.projectHooksDelivery() !== null;
