@@ -326,6 +326,18 @@ describe("UserManifestRepositoryAdapter", () => {
       }
     );
 
+    it.skipIf(process.platform === "win32")(
+      "preserves a FIFO lock without waiting for a writer",
+      async () => {
+        const lock = `${adapter.path}.lock`;
+        await execFileAsync("mkfifo", [lock]);
+        const action = vi.fn(async () => {});
+        await expectBusy(() => adapter.withExclusiveAccess(action));
+        expect(action).not.toHaveBeenCalled();
+        expect((await lstat(lock)).isFIFO()).toBe(true);
+      }
+    );
+
     it("does not probe or remove a dead owner when the process realm is unavailable", async () => {
       const realm = await currentRealm();
       const pid = await stoppedPid();

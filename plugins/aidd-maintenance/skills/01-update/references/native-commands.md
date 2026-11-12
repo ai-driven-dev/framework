@@ -10,7 +10,7 @@ Run with `--tool claude|codex|copilot --scope project|user --release <tag>`. Wit
 | Codex | `user` | Repoint the editable Git source and upgrade the marketplace; all installed plugins from it, including disabled ones, are affected |
 | Copilot CLI | `user` | Repoint the editable GitHub source, refresh the marketplace, then update installed plugin references |
 
-The scripts preserve configuration comments and unrelated values, then verify plugin versions and enabled states. They support ordinary Codex marketplace tables and Claude/Copilot JSON or JSONC settings. Codex files containing multiline TOML strings are refused, even outside the marketplace table. Unsupported encodings, conflicting declarations, symbolic-link configurations and incomplete inventories stop before writing.
+The scripts preserve configuration comments and unrelated values, then verify plugin versions and enabled states. They support ordinary Codex marketplace tables and Claude/Copilot JSON or JSONC settings. Codex files containing multiline TOML strings are refused, even outside the marketplace table. Unsupported encodings, conflicting declarations, symbolic-link configurations or parent directories, and incomplete inventories stop before writing. Configure a canonical host directory when its path uses an alias.
 
 A host command can fail after the ref changes: inspect the reported partial state before a separately approved retry. Native commands do not form an atomic transaction with their settings file. The preview resolves the release commit; hosts install its tag, and their inventory does not attest the installed commit. Restart affected sessions after success.
 

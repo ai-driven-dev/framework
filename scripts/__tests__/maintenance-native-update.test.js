@@ -14,7 +14,7 @@ const versions = {'.':'5.13.0', 'plugins/aidd-context':'2.10.0', 'plugins/aidd-d
 const commit = 'a'.repeat(40);
 
 function fixture(t, tool = 'claude', scope = tool === 'claude' ? 'project' : 'user') {
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'maintenance-native-'));
+  const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'maintenance-native-')));
   t.after(() => fs.rmSync(home, {recursive:true,force:true}));
   const cwd = path.join(home,'project');
   const host = path.join(home,`.${tool}`);
@@ -114,13 +114,14 @@ for (const tool of ['claude','codex','copilot']) {
   test(`${tool} updates with native commands while preserving unrelated bytes, permissions and disabled plugins`, async t => {
     const f = fixture(t,tool);
     const initial = structuredClone(f.state.installations);
+    const initialMode = fs.statSync(f.config).mode & 0o777;
     const result = await approved(f);
     assert.equal(result.status,'updated');
     const expected = tool === 'codex'
       ? f.text.replace(`ref = '${current}'`,`ref = "${release}"`)
       : f.text.replace(`"ref":"${current}"`,`"ref":"${release}"`);
     assert.equal(fs.readFileSync(f.config,'utf8'),expected);
-    assert.equal(fs.statSync(f.config).mode & 0o777,0o600);
+    assert.equal(fs.statSync(f.config).mode & 0o777,initialMode);
     assert.deepEqual(f.state.installations.map(item=>item.enabled),initial.map(item=>item.enabled));
     const commands = tool === 'claude'
       ? [['plugin','marketplace','add',`${repo}#${release}`,'--scope','user'],['plugin','update','aidd-context@aidd-framework','--scope','local']]
@@ -227,15 +228,20 @@ test('rejects project scope on a machine-scoped native host', async t => {
   assert.deepEqual(f.calls,[]);
 });
 
-test('refuses a symlinked config without changing its target', async t => {
-  const f = fixture(t);
-  const target = path.join(f.options.home,'user-settings.json');
-  fs.renameSync(f.config,target);
-  fs.symlinkSync(target,f.config);
-  await assert.rejects(approved(f));
-  assert.equal(fs.readFileSync(target,'utf8'),f.text);
-  assert.deepEqual(f.calls,[]);
-});
+for (const link of ['config','parent directory']) {
+  test(`refuses a symlinked ${link} without changing its target`, async t => {
+    const f = fixture(t);
+    const source = link === 'config' ? f.config : path.dirname(f.config);
+    const target = path.join(f.options.home,link === 'config' ? 'user-settings.json' : 'user-config');
+    fs.renameSync(source,target);
+    fs.symlinkSync(target,source,link === 'config' ? 'file' : 'dir');
+    await assert.rejects(approved(f),/symbolic-link configuration/);
+    assert.equal(fs.readFileSync(f.config,'utf8'),f.text);
+    assert.equal(fs.lstatSync(source).isSymbolicLink(),true);
+    assert.deepEqual(f.calls,[]);
+    assert.equal(fs.existsSync(`${f.config}.aidd-update.lock`),false);
+  });
+}
 
 test('a configuration edited during approval checks is preserved before native execution', async t => {
   const f = fixture(t);

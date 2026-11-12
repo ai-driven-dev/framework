@@ -1,9 +1,10 @@
 import { execFile as execFileCallback } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { constants } from "node:fs";
 import {
   link,
-  lstat,
   mkdir,
+  open,
   readFile,
   readlink,
   rm,
@@ -136,11 +137,18 @@ async function removeDeadOwner(lock: string, realm: string | undefined): Promise
   if (realm === undefined) return;
   let owner: unknown;
   try {
-    const stat = await lstat(lock);
-    if (!stat.isFile() || stat.size > 1024) return;
-    owner = JSON.parse(await readFile(lock, "utf8"));
+    // Check and read one file; a substituted symlink is never followed and a FIFO never blocks.
+    const file = await open(lock, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    try {
+      const stat = await file.stat();
+      if (!stat.isFile() || stat.size > 1024) return;
+      owner = JSON.parse(await file.readFile("utf8"));
+    } finally {
+      await file.close();
+    }
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT" || error instanceof SyntaxError) return;
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ENOENT" || code === "ELOOP" || error instanceof SyntaxError) return;
     throw error;
   }
   if (

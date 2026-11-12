@@ -87,6 +87,13 @@ function runNative(tool,args,{cwd,env}) {
   }));
 }
 
+function readConfigSnapshot(file) {
+  const descriptor = fs.openSync(file,fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0));
+  try {
+    return {text:fs.readFileSync(descriptor,'utf8'),mode:fs.fstatSync(descriptor).mode & 0o777};
+  } finally { fs.closeSync(descriptor); }
+}
+
 async function updateNative(input) {
   const options = {cwd:process.cwd(),home:os.homedir(),env:process.env,fetcher:fetch,inspect:inspectInventory,run:runNative,...input};
   const {config,preview} = await prepare(options);
@@ -103,14 +110,14 @@ async function updateNative(input) {
     if (JSON.stringify(impact) !== JSON.stringify(preview.impact) || current.warnings?.some(warning =>
       warning.tool === options.tool && !(preview.recovery && warning.code === 'native-catalogue-source-mismatch')))
       throw new Error('Native installations changed after the preview.');
-    if (fs.readFileSync(config.path,'utf8') !== config.text) throw new Error('Native configuration changed after the preview.');
-    const mode = fs.statSync(config.path).mode & 0o777;
+    const {text,mode} = readConfigSnapshot(config.path);
+    if (text !== config.text) throw new Error('Native configuration changed after the preview.');
     const file = fs.openSync(temporary,'wx',mode);
     try {
       fs.writeFileSync(file,config.replaceRef(options.release));
       fs.fchmodSync(file,mode);
     } finally { fs.closeSync(file); }
-    if (fs.realpathSync(config.path) !== path.resolve(config.path) || fs.readFileSync(config.path,'utf8') !== config.text)
+    if (fs.realpathSync(config.path) !== path.resolve(config.path) || readConfigSnapshot(config.path).text !== config.text)
       throw new Error('Native configuration changed before writing.');
     fs.renameSync(temporary,config.path);
     changed = true;
