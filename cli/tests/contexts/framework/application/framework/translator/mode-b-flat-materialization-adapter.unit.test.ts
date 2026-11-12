@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
+import { pluginsCapability } from "../../../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CursorProjectScopeUnsupportedError } from "../../../../../../src/kernel/errors.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
@@ -11,6 +12,7 @@ import {
 } from "../../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { aProfile } from "../../../../tools/testing/profiles.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -127,6 +129,33 @@ describe("ModeBFlatMaterializationTranslator", () => {
           undefined
         )
       ).rejects.toThrow(CursorProjectScopeUnsupportedError);
+    });
+  });
+
+  describe("when tool takes no plugin at all", () => {
+    it("does not refuse the project scope the way a native tool does", async () => {
+      const { adapter } = buildAdapter();
+      const manifest = Manifest.create();
+      manifest.addTool("antigravity", "test", []);
+      const profile = aProfile("antigravity")
+        .withPlugins(
+          pluginsCapability({
+            mode: "unsupported",
+            hooksUnsupportedReason: "synthetic",
+          })
+        )
+        .build();
+
+      const added = adapter.addPlugin(
+        buildDist("test-plugin"),
+        profile,
+        { kind: "local", path: "/plugin-source" },
+        PROJECT_ROOT,
+        manifest,
+        undefined
+      );
+
+      await expect(added).resolves.toEqual({ skipped: [] });
     });
   });
 

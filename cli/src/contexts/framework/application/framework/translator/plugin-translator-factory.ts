@@ -26,7 +26,7 @@ export function resolveTranslator(
   plugins: PluginAnswers,
   deps: TranslatorDeps
 ): PluginTranslator | null {
-  if (plugins.kind === "flat" || plugins.requiresUserScope()) {
+  if (plugins.materializesFromBuiltTree()) {
     return new BuiltTreeMaterializationTranslator(
       deps.fs,
       deps.hasher,

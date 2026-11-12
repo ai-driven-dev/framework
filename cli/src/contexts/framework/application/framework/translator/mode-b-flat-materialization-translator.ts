@@ -111,7 +111,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
   } | null {
     const pluginsCap = tool.plugins();
     if (pluginsCap === null) return null;
-    if (pluginsCap.kind === "native" && !pluginsCap.requiresUserScope()) {
+    if (pluginsCap.kind === "native" && !pluginsCap.materializesFromBuiltTree()) {
       throw new CursorProjectScopeUnsupportedError();
     }
     const distForNative = pluginsCap.deliversHooksToProject() ? withoutHooks(dist) : dist;

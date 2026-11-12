@@ -215,3 +215,44 @@ describe("PluginsCapability native construction", () => {
     ]).toEqual([".claude/settings.json", "claude"]);
   });
 });
+
+describe("PluginsCapability.materializesFromBuiltTree()", () => {
+  const native = {
+    mode: "native",
+    pluginRootToken: "$X_PLUGIN_ROOT",
+    acceptsHooks: true,
+    pluginsDir: ".x/plugins/",
+    pluginManifestRelativePath: null,
+  } as const;
+
+  it("is true for a flat tool, which copies the built tree", () => {
+    const cap = pluginsCapability({
+      mode: "flat",
+      acceptsHooks: true,
+      flatHooksDir: ".x/hooks/",
+      flatNamespacePrefix: "x-",
+    });
+
+    expect(cap.materializesFromBuiltTree()).toBe(true);
+  });
+
+  it("is true for a native tool that installs at user scope", () => {
+    const cap = pluginsCapability({
+      ...native,
+      installScope: "user",
+      userPluginsDir: (home) => `${home}/.x/plugins`,
+    });
+
+    expect(cap.materializesFromBuiltTree()).toBe(true);
+  });
+
+  it("is false for a native tool that installs at project scope", () => {
+    expect(pluginsCapability(native).materializesFromBuiltTree()).toBe(false);
+  });
+
+  it("is false for a tool that takes no plugin", () => {
+    const cap = pluginsCapability({ mode: "unsupported", hooksUnsupportedReason: "synthetic" });
+
+    expect(cap.materializesFromBuiltTree()).toBe(false);
+  });
+});

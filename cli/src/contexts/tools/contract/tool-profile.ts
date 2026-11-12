@@ -17,6 +17,9 @@ export type EnvironmentReader = (name: string) => string | undefined;
 export interface PluginDelivery {
   /** Whether a plugin installed fresh lands at user scope, the only scope this tool takes. */
   requiresUserScope(): boolean;
+  /** Whether an install copies the per-target built tree verbatim: a flat tool, or a native one
+   * that installs at user scope. */
+  materializesFromBuiltTree(): boolean;
   /** Whether `--scope user` has anywhere to point this tool. */
   supportsUserScopeActivation(): boolean;
   /** Whether a machine-scope install writes the plugin's files itself. */
