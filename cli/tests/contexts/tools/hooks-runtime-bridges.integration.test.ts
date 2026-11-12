@@ -65,7 +65,10 @@ const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.ru
 
 afterEach(async () => {
   vi.unstubAllEnvs();
-  await Promise.all(created.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+  // A hook child can still hold its project folder as cwd after its record lands; Windows
+  // then refuses the removal with EBUSY until the child exits.
+  const removal = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 };
+  await Promise.all(created.splice(0).map((dir) => rm(dir, removal)));
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
