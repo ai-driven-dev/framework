@@ -6,10 +6,10 @@ The language of the `tools` context. A name in the code means what this page say
 | --- | --- | --- |
 | Profile | The declaration of one tool the CLI targets, an AI assistant or an editor. Only the factory builds one; a caller asks it questions | `defineAiTool`, `defineIdeTool`, `BuiltToolConfig`, `domain/profiles/<tool>/profile.ts` |
 | Profile as asked | What an outside caller sees of a profile: answers, never structure | `AiToolProfile`, `IdeToolProfile`, `contract/tool-profile.ts` |
-| Catalog | The registered profiles, asked by id or walked in one of two orders: registration order for help, sorted by id for setup and doctor. Built once, handed to every use case | `ToolCatalog`, `RegisteredToolCatalog`, `wireTools` |
+| Catalog | The registered profiles, asked by id or walked in one of three orders, never mixed: registration order for help (`inHelpOrder`), the kernel's order for install, uninstall and listing (`aiIdsInCanonicalOrder`), sorted by id for setup and doctor (`sortedById`). Built once, handed to every use case | `ToolCatalog`, `RegisteredToolCatalog`, `wireTools` |
 | Registration list | The one list of profiles the catalog is built from; a new tool adds its line | `REGISTERED_PROFILES` |
 | Contract | The only folder another context or presentation imports from `tools`: the answers, the catalog and the build contract | `contract/` |
-| Section | One part a profile declares: agents, skills, commands, rules, mcp, hooks, plugins or config. A missing one is a missing declaration | `ProfileSections`, `domain/sections/` |
+| Section | One part a profile declares: agents, skills, commands, rules, mcp, hooks, layout, manifest or config. A missing one is a missing declaration | `ProfileSections`, `domain/sections/` |
 | Plugin delivery | How a tool takes plugins, asked through methods. It comes in three kinds | `pluginAnswers`, `HooksDelivery` |
 | Native delivery | The tool installs a plugin through its own plugin CLI | `nativeLayout`, `NativePluginAnswers` |
 | Flat delivery | The tool has the plugin's files injected into the project tree | `flatPlacement`, `FlatPluginAnswers` |

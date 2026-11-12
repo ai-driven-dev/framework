@@ -21,14 +21,18 @@ paths:
 - Outside callers import `tools/contract/` only. `domain/` and `application/` are the composition root's, held by Biome (`HELD_BY_BIOME`, `APPLICATION_CLOSED` in `tests/architecture/helpers.ts`).
 - Use cases receive a `ToolCatalog`, built once by `wireTools()` in `src/composition/tools.ts`; none reaches a profile by import.
 - A caller asks a profile a question and never reads its structure.
-- Adding a tool is one profile folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`; the conformance suite checks it.
+- Adding a tool is one profile folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`, plus its id in `kernel/tool.ts` (M-T1); the conformance suite checks it. The files still in `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) name a tool outside its profile and may need it too; the list only shrinks.
 - Only `src/composition/` reads `domain/`: `tools.ts`, `native-registrations.ts` and `host-registration.ts`.
 
 ## Exceptions in force
 
 - E-T3: the `.cjs` host adapters in `assets/` keep their own `EVENTS` table, held equal to the descriptor by conformance.
 - E-T4: `domain/formats/toml.ts` is the only domain file that imports a package.
-- E-T7: the native section types stay here as data.
+- E-T7: the native section types stay here as data, in `domain/native-registration/`.
+- E-T8: the generated hooks bridge keeps two property seams no test reads.
+- E-T9: `translate` keeps its own list of the other hosts' manifest paths.
+- E-T10: the profile folders keep their `*-paths.ts`, `*-agent.ts` and `build.ts` files.
+- M-T1 to M-T3: the written id union, the catalog passed as a `tools` option, and other contexts' tests importing this context's kit (migration state).
 - Each is in section 9 of `reference-context.md`, with the line it deviates from and when it goes.
 
 ## Tests
