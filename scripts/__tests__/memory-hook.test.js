@@ -355,6 +355,13 @@ test("Stop reports a finding on a line the turn wrote, in a file it changed", ()
   assert.match(stopped(root, tmp).reason, /^aidd-context: 0 errors, 1 warning\naidd_docs\/memory\/vcs\.md:\d+ M5 warning /u);
 });
 
+test("Stop reports a file over the word limit that the turn made longer, though its title line was already there", () => {
+  const filler = Array.from({ length: 55 }, (_, index) => `- Fact ${index} holds eight plain words here.`).join("\n");
+  const { root, tmp } = started({ [VCS]: `${BANK}${filler}\n` });
+  write(root, VCS, `${BANK}${filler}\n- One more fact holds eight plain words here.\n- And another fact holds eight plain words here.\n`);
+  assert.match(stopped(root, tmp).reason, /^aidd_docs\/memory\/vcs\.md:1 M6 warning /mu);
+});
+
 test("Stop lints a new bank file", () => {
   const { root, tmp } = started();
   write(root, `${MEMORY}/api.md`, `# API\n\n- Use ${slotOf("api.md")} here.\n`);
@@ -400,6 +407,14 @@ test("Stop runs the sync when a loss is also reported", () => {
   write(root, VCS, "# VCS\n");
   assert.ok(stopped(root, tmp));
   assert.match(fs.readFileSync(path.join(root, "AGENTS.md"), "utf8"), /aidd_docs\/memory\/vcs\.md/u);
+});
+
+test("Stop says which context file it could not sync, and leaves the team's line in place", () => {
+  const team = "# P\n\n<!-- aidd_project_memory:start -->\n- Answer in French.\n<!-- aidd_project_memory:end -->\n";
+  const { root, tmp } = started({ "CLAUDE.md": team, [VCS]: BANK });
+  write(root, `${MEMORY}/internal/new.md`, "# New\n");
+  assert.match(stopped(root, tmp).reason, /^aidd-context: CLAUDE\.md holds a line the memory block would not write \("- Answer in French\."\), not synced$/mu);
+  assert.equal(fs.readFileSync(path.join(root, "CLAUDE.md"), "utf8"), team);
 });
 
 // ---- Stop: what the person sees -------------------------------------------------------------

@@ -266,14 +266,15 @@ function lostText(lost) {
   ].join("\n");
 }
 
-/** Lint of the lines written since the snapshot: a line the file already held is the team's. */
+/** Lint of the lines written since the snapshot: a line the file already held is the team's.
+ * M6 judges the whole file, so a file the turn changed keeps it. */
 function changedFindings(root, before, now) {
   const found = Object.keys(now)
     .filter((file) => before[file] !== now[file])
     .flatMap((file) => {
       const held = new Set((before[file] ?? "").split(/\r?\n/u).map((line) => line.trim()));
       const lines = now[file].split(/\r?\n/u);
-      return lintFile(root, file).filter((finding) => !held.has((lines[finding.line - 1] ?? "").trim()));
+      return lintFile(root, file).filter((finding) => finding.rule === "M6" || !held.has((lines[finding.line - 1] ?? "").trim()));
     });
   return formatFindings(PLUGIN, { errors: found.filter((finding) => finding.severity === ERROR), warnings: found.filter((finding) => finding.severity !== ERROR) });
 }
@@ -292,7 +293,7 @@ function atTurnEnd(host, event) {
   const file = snapshotFile(root, event.sessionId);
   const before = readSnapshot(file);
   const now = bankTexts(root);
-  sync(root, [], { quiet: true });
+  const { notSynced } = sync(root, [], { quiet: true });
   if (before === null || JSON.stringify(before) === JSON.stringify(now)) {
     if (before === null) writeSnapshot(file, now);
     return;
@@ -300,7 +301,8 @@ function atTurnEnd(host, event) {
   const lost = lostLines(before, now);
   const findings = changedFindings(root, before, now);
   writeSnapshot(file, now);
-  const text = [lost.length > 0 ? lostText(lost) : "", findings].filter(Boolean).join("\n");
+  const unsynced = notSynced.map((message) => `${PLUGIN}: ${message}`).join("\n");
+  const text = [lost.length > 0 ? lostText(lost) : "", findings, unsynced].filter(Boolean).join("\n");
   if (text !== "") host.answer({ level: 1, text, person: text });
 }
 
@@ -517,24 +519,25 @@ function pointedText(original, oldBlock, root, create) {
   return { text: [...lines.slice(0, found.openLine), COPILOT_POINTER, ...lines.slice(found.closeLine + 1)].join("\n") };
 }
 
-function tryWrite(file, text, shown, failed) {
+function tryWrite(file, text, shown, failed, report) {
   try {
     fs.writeFileSync(file, text, "utf8");
     return true;
   } catch (error) {
     failed.push(shown);
-    process.stderr.write(`memory: ${shown} not written (${error.code ?? error.message}), skipped\n`);
+    report(`${shown} not written (${error.code ?? error.message}), skipped`);
     return false;
   }
 }
 
-/** Stages nothing. A block it cannot fill is left as it is and reported, never forced. */
+/** Stages nothing. A block it cannot fill is left as it is and named in `notSynced`, never forced. */
 function sync(root, tools = [], { quiet = false } = {}) {
   const absolute = realish(path.resolve(root));
-  const result = { changed: [], unpaired: [], held: [], failed: [] };
+  const result = { changed: [], unpaired: [], held: [], failed: [], notSynced: [] };
   if (!fs.existsSync(path.join(absolute, DOCS_DIR))) return result;
   const lists = { rooted: rootFiles(absolute), onDemand: onDemandFiles(absolute), owned: ownedFolders(absolute) };
   const report = (message) => {
+    result.notSynced.push(message);
     if (!quiet) process.stderr.write(`memory: ${message}\n`);
   };
 
@@ -551,7 +554,7 @@ function sync(root, tools = [], { quiet = false } = {}) {
     } else if (held !== undefined) {
       result.held.push(target.path);
       report(`${target.path} holds a line the memory block would not write ("${held}"), not synced`);
-    } else if (text !== original && tryWrite(target.file, text, target.path, result.failed)) {
+    } else if (text !== original && tryWrite(target.file, text, target.path, result.failed, report)) {
       result.changed.push(target.path);
     }
   }
@@ -572,7 +575,7 @@ function sync(root, tools = [], { quiet = false } = {}) {
       report(`${COPILOT_FILE} holds a line the memory block would not write ("${held}"), not synced`);
     } else if (text !== original) {
       fs.mkdirSync(path.dirname(copilot), { recursive: true });
-      if (tryWrite(copilot, text, COPILOT_FILE, result.failed)) result.changed.push(COPILOT_FILE);
+      if (tryWrite(copilot, text, COPILOT_FILE, result.failed, report)) result.changed.push(COPILOT_FILE);
     }
   }
 
