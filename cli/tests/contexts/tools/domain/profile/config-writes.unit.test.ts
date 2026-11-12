@@ -26,17 +26,19 @@ function ideTool(declared: SettingsCapability[]): IdeToolConfig {
   });
 }
 
-describe("configCapabilities, the config files a tool declares", () => {
+describe("configWrites, the config files a tool writes in the order they claim a config", () => {
   describe("an IDE tool", () => {
     it("lists each settings file of a tool declaring several", () => {
-      expect(ideTool([extensions, settings]).configCapabilities()).toStrictEqual([
-        extensions,
-        settings,
+      expect(ideTool([extensions, settings]).configWrites()).toStrictEqual([
+        { kind: "settings", capability: extensions },
+        { kind: "settings", capability: settings },
       ]);
     });
 
     it("lists the one settings file of a tool declaring a single one", () => {
-      expect(ideTool([settings]).configCapabilities()).toStrictEqual([settings]);
+      expect(ideTool([settings]).configWrites()).toStrictEqual([
+        { kind: "settings", capability: settings },
+      ]);
     });
   });
 
@@ -44,17 +46,24 @@ describe("configCapabilities, the config files a tool declares", () => {
     it("lists mcp, hooks and settings in that order", () => {
       const tool = stubAiTool("claude", { mcp, hooks, settings: [settings] });
 
-      expect(tool.configCapabilities()).toStrictEqual([mcp, hooks, settings]);
+      expect(tool.configWrites()).toStrictEqual([
+        { kind: "mcp", capability: mcp },
+        { kind: "hooks", capability: hooks },
+        { kind: "settings", capability: settings },
+      ]);
     });
 
     it("lists each settings file of a tool declaring several", () => {
       const tool = stubAiTool("claude", { settings: [extensions, settings] });
 
-      expect(tool.configCapabilities()).toStrictEqual([extensions, settings]);
+      expect(tool.configWrites()).toStrictEqual([
+        { kind: "settings", capability: extensions },
+        { kind: "settings", capability: settings },
+      ]);
     });
 
     it("lists nothing for a tool declaring no config capability", () => {
-      expect(stubAiTool("claude", {}).configCapabilities()).toStrictEqual([]);
+      expect(stubAiTool("claude", {}).configWrites()).toStrictEqual([]);
     });
   });
 });

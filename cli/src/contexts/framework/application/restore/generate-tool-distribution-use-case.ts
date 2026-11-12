@@ -49,7 +49,7 @@ export class GenerateToolDistributionUseCase {
     projectRoot: string
   ): Promise<InstallationFile[]> {
     const configFiles = await new InstallConfigUseCase(this.fs, this.hasher).execute({
-      capabilities: config.configCapabilities(),
+      writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
       projectRoot,
@@ -66,7 +66,7 @@ export class GenerateToolDistributionUseCase {
   ): Promise<InstallationFile[]> {
     const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
     const configFiles = await new InstallConfigUseCase(this.fs, this.hasher).execute({
-      capabilities: config.configCapabilities(),
+      writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
       projectRoot,

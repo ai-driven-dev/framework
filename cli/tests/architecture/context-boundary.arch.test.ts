@@ -19,9 +19,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/domain/registry.ts",
     "src/contexts/tools/contract/build-contract.ts",
     // co-owned configuration (settings.json, .mcp.json et al.)
-    "src/contexts/tools/domain/capabilities/mcp-capability.ts",
-    "src/contexts/tools/domain/mcp-launch-command.ts",
-    "src/contexts/tools/domain/capabilities/settings-capability.ts",
     "src/contexts/tools/contract/config-refs.ts",
     // what a tool answers from the project's files: which tool's files are present
     // what a tool declares about plugins: installing is framework work

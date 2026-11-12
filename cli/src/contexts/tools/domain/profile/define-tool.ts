@@ -6,13 +6,17 @@ import {
   IDE_TOOL_IDS,
   type IdeToolId,
 } from "../../../../kernel/tool.js";
-import type { FrameworkBuildMode, SettingsFileAnswers } from "../../contract/tool-profile.js";
+import type {
+  ConfigWrite,
+  FrameworkBuildMode,
+  SettingsFileAnswers,
+} from "../../contract/tool-profile.js";
 import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
 import { AgentsCapability } from "../capabilities/agents-capability.js";
 import { CommandsCapability } from "../capabilities/commands-capability.js";
 import { RulesCapability } from "../capabilities/rules-capability.js";
 import { SkillsCapability } from "../capabilities/skills-capability.js";
-import type { AiTool, ConfigCapability, IdeToolConfig } from "../contracts.js";
+import type { AiTool, IdeToolConfig } from "../contracts.js";
 import type { NativeActivation } from "../plugins/native-activation.js";
 import {
   isProfileSectionKey,
@@ -48,7 +52,7 @@ type AiToolFields = Omit<
   | "toolId"
   | "section"
   | "buildContract"
-  | "configCapabilities"
+  | "configWrites"
   | "plugins"
   | "supportsUserScopeActivation"
   | "nativeActivation"
@@ -125,12 +129,18 @@ function sectionReader(
   return (key) => sections[key] ?? null;
 }
 
-function aiConfigCapabilities(sections: ProfileSections): ConfigCapability[] {
+function aiConfigWrites(sections: ProfileSections): readonly ConfigWrite[] {
   return [
-    ...(sections.mcp === undefined ? [] : [sections.mcp]),
-    ...(sections.hooks === undefined ? [] : [sections.hooks]),
-    ...(sections.settings ?? []),
+    ...(sections.mcp === undefined ? [] : [{ kind: "mcp" as const, capability: sections.mcp }]),
+    ...(sections.hooks === undefined
+      ? []
+      : [{ kind: "hooks" as const, capability: sections.hooks }]),
+    ...settingsWrites(sections),
   ];
+}
+
+function settingsWrites(sections: ProfileSections): readonly ConfigWrite[] {
+  return settingsOf(sections).map((capability) => ({ kind: "settings" as const, capability }));
 }
 
 function nativeActivationOf(sections: ProfileSections): NativeActivation | undefined {
@@ -196,7 +206,7 @@ export function defineAiTool<C extends ProfileSections>(
     frameworkBuildMode: (): FrameworkBuildMode =>
       capabilities.plugins?.kind === "flat" ? "flat" : "marketplace",
     buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
-    configCapabilities: () => aiConfigCapabilities(capabilities),
+    configWrites: () => aiConfigWrites(capabilities),
     plugins: () => capabilities.plugins ?? null,
     supportsUserScopeActivation: () => capabilities.plugins?.supportsUserScopeActivation() ?? false,
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
@@ -243,7 +253,7 @@ export function defineIdeTool<C extends ProfileSections>(
     kind: "ide",
     toolId,
     section: sectionReader(capabilities),
-    configCapabilities: () => [...(capabilities.settings ?? [])],
+    configWrites: () => settingsWrites(capabilities),
     settingsFiles: () => settingsOf(capabilities),
     signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
   };

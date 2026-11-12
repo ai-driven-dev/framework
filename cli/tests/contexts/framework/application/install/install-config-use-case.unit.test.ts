@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { transformFor } from "../../../../src/contexts/tools/domain/mcp-launch-command.js";
+import { transformMcpForPlatform as transformFor } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
 
 function makeConfig(servers: Record<string, object>): string {
   return JSON.stringify({ mcpServers: servers }, null, 2);

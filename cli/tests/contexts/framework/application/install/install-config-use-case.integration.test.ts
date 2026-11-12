@@ -40,7 +40,7 @@ describe("InstallConfigUseCase — staticContent", () => {
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -62,7 +62,7 @@ describe("InstallConfigUseCase — staticContent", () => {
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [{ name: "irrelevantSignal", path: "config/irrelevant.json" }],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -79,7 +79,7 @@ describe("InstallConfigUseCase — staticContent", () => {
     const assetProvider = new BundledAssetProviderAdapter();
 
     const results = await useCase.execute({
-      capabilities: copilot.configCapabilities(),
+      writes: copilot.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -108,7 +108,7 @@ describe("InstallConfigUseCase — staticContent", () => {
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [{ name: "someSignal", path: "config/some.json" }],
       contentFiles: new Map(), // no content for 'config/some.json'
       projectRoot: PROJECT_ROOT,
@@ -127,7 +127,7 @@ describe("InstallConfigUseCase — staticContent", () => {
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -150,7 +150,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       const { useCase } = buildUseCase();
 
       const results = await useCase.execute({
-        capabilities: [fromAsset],
+        writes: [{ kind: "settings", capability: fromAsset }],
         configRefs: [],
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
@@ -165,7 +165,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       const { useCase } = buildUseCase();
 
       const results = await useCase.execute({
-        capabilities: [fromAsset],
+        writes: [{ kind: "settings", capability: fromAsset }],
         configRefs: [],
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
@@ -181,7 +181,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       const text = '{\n  // kept as written\n  "t": 1\n}';
 
       const results = await useCase.execute({
-        capabilities: [fromAsset],
+        writes: [{ kind: "settings", capability: fromAsset }],
         configRefs: [],
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
@@ -217,7 +217,7 @@ describe("InstallConfigUseCase — MCP config", () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      capabilities: [mcpCapability()],
+      writes: [{ kind: "mcp", capability: mcpCapability() }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -238,7 +238,7 @@ describe("InstallConfigUseCase — MCP config", () => {
     });
 
     const results = await useCase.execute({
-      capabilities: [both],
+      writes: [{ kind: "settings", capability: both }],
       configRefs: [HOOKS_REF],
       contentFiles: new Map([[HOOKS_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -252,7 +252,7 @@ describe("InstallConfigUseCase — MCP config", () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      capabilities: [mcpCapability("framework-prime")],
+      writes: [{ kind: "mcp", capability: mcpCapability("framework-prime") }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -266,7 +266,7 @@ describe("InstallConfigUseCase — MCP config", () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      capabilities: [mcpCapability()],
+      writes: [{ kind: "mcp", capability: mcpCapability() }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -318,7 +318,7 @@ describe("InstallConfigUseCase — the order a tool's config is written in", () 
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      capabilities: declaredTool().configCapabilities(),
+      writes: declaredTool().configWrites(),
       configRefs: [SHARED_REF, HOOKS_REF, SETTINGS_REF],
       contentFiles: new Map([
         [SHARED_REF.path, '{"from":"shared"}'],

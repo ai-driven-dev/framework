@@ -115,6 +115,9 @@ export interface McpPluginMerge {
 
 /** A tool's mcp file, as an install asks it. */
 export interface McpConfigAnswers {
+  /** Whether the tool takes the framework config artifact named `configName` into this file. */
+  consumes(configName: string): boolean;
+  mergeStrategy(): "user-prime" | "framework-prime" | "none";
   /** Whether the tool keeps the framework half of one file it shares with its plugins. */
   isFrameworkPrime(): boolean;
   /** A plugin's mcp json rewritten to this tool's own shape. */
@@ -145,6 +148,8 @@ export interface McpConfigAnswers {
 
 /** A settings file a tool writes, as an install asks it. */
 export interface SettingsFileAnswers {
+  /** Whether the tool takes the framework config artifact named `configName` into this file. */
+  consumes(configName: string): boolean;
   /** The tool that must be installed for this file to apply, or null. */
   requiredTool(): ToolId | null;
   outputPath(): string;
@@ -152,6 +157,21 @@ export interface SettingsFileAnswers {
   /** The file's fixed content, loaded through `loadAsset` when it lives in an asset. */
   resolveStaticContent(loadAsset?: (fileName: string) => ConfigAsset): string | null;
 }
+
+/** A hooks file a tool writes, as an install asks it. */
+export interface HooksFileAnswers {
+  /** Whether the tool takes the framework config artifact named `configName` into this file. */
+  consumes(configName: string): boolean;
+  outputPath(): string;
+  mergeStrategy(): "user-prime" | "none";
+}
+
+/** One config file a tool writes. The list a tool answers is in the order they claim a config
+ * artifact: the first that consumes it writes it. */
+export type ConfigWrite =
+  | { readonly kind: "mcp"; readonly capability: McpConfigAnswers }
+  | { readonly kind: "hooks"; readonly capability: HooksFileAnswers }
+  | { readonly kind: "settings"; readonly capability: SettingsFileAnswers };
 
 /** An AI assistant, as an outside caller asks it. */
 export interface AiToolProfile {
@@ -193,6 +213,8 @@ export interface AiToolProfile {
   mcpConfig(): McpConfigAnswers | null;
   /** The settings files the tool declares, none when it declares none. */
   settingsFiles(): readonly SettingsFileAnswers[];
+  /** The config files an install writes: mcp, then hooks, then each settings file. */
+  configWrites(): readonly ConfigWrite[];
   /** The files its marketplace registration keeps on this machine, none when it keeps none. */
   machineLocalFiles(): readonly string[];
   /** The marketplace names a parsed settings file declares, none for a tool keeping no registration. */
@@ -215,6 +237,8 @@ export interface IdeToolProfile {
   readonly directory: string;
   /** The settings files the tool declares, none when it declares none. */
   settingsFiles(): readonly SettingsFileAnswers[];
+  /** The config files an install writes: each settings file. */
+  configWrites(): readonly ConfigWrite[];
   /** Where its own commands sit in the project at `projectRoot`, or null when it declares none. */
   signalDirectoryIn(projectRoot: string): SignalDirectory | null;
 }

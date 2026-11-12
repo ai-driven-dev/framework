@@ -3,10 +3,7 @@ import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { AiToolProfile, IdeToolProfile } from "../contract/tool-profile.js";
 import type { AgentsCapability } from "./capabilities/agents-capability.js";
 import type { CommandsCapability } from "./capabilities/commands-capability.js";
-import type { HooksCapability } from "./capabilities/hooks-capability.js";
-import type { McpCapability } from "./capabilities/mcp-capability.js";
 import type { RulesCapability } from "./capabilities/rules-capability.js";
-import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { SkillsCapability } from "./capabilities/skills-capability.js";
 import type { NativeActivation } from "./plugins/native-activation.js";
 import type { PluginsCapability } from "./plugins/plugins-capability.js";
@@ -31,8 +28,6 @@ export interface HasCommands {
 export interface HasRules {
   readonly rules: RulesCapability;
 }
-
-export type ConfigCapability = McpCapability | HooksCapability | SettingsCapability;
 
 export interface HasPlugins {
   readonly plugins: PluginsCapability;
@@ -74,8 +69,6 @@ export interface AiTool<C extends ProfileSections = ProfileSections> extends AiT
    * own type declares answers without `null`. */
   section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
-  /** The config files this tool writes: mcp, hooks, then each settings file. */
-  configCapabilities(): ConfigCapability[];
   /** The plugins section the tool declares, or null. */
   plugins(): PluginsCapability | null;
   /** The native plugin CLI declaration of a native plugins capability, or undefined. */
@@ -89,8 +82,6 @@ export interface IdeToolConfig<C extends ProfileSections = ProfileSections> exte
   readonly signalDir: string | null;
   section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
   section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
-  /** The config files this tool writes: each settings file. */
-  configCapabilities(): ConfigCapability[];
 }
 
 /** Whether this tool declares a rules capability at all. Generic over the tool's own capability
