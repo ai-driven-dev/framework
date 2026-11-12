@@ -117,7 +117,7 @@ describe("aidd-ui showcase", () => {
 
     it("writes the persona line as its text alone when the text already opens with the persona's name", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "An analyst opening", "A first-time analyst opening");
-      assert.match(headerOf(pagesOf()["onboarding.html"]), /<p class="persona">For a first-time analyst opening the product for the first time, looking for one answer\.<\/p>/);
+      assert.match(headerOf(pagesOf()["onboarding.html"]), /<p class="persona">A first-time analyst opening the product for the first time, looking for one answer\.<\/p>/);
     });
 
     it("holds no Uses row on a journey, whose storyboard already shows its screens", () => {
@@ -371,7 +371,19 @@ describe("aidd-ui showcase", () => {
       const article = articleOf(home, "loading");
       assert.match(article, /data-current="none"/);
       assert.match(article, /<p class="outdated" data-version="0">outdated, v0<\/p>/);
-      assert.match(home, /<p class="count" data-ok="1" data-total="4">1\/4 OK<\/p>/);
+      assert.doesNotMatch(home, /class="count"/);
+    });
+
+    it("keeps one tally, the drawer's, and none above the tabs", () => {
+      verdicts(["home", "default", "1", "ok", ""]);
+      const home = pagesOf()["home.html"];
+      assert.doesNotMatch(home, /class="count"|\d+\/\d+ OK/);
+    });
+
+    it("lets the review drawer float over the page instead of narrowing it", () => {
+      const home = pagesOf()["home.html"];
+      assert.doesNotMatch(home, /reviewing/);
+      assert.match(home, /\.drawer \{ position: fixed;/);
     });
 
     it("shows the comment of a verdict, and a pending one as pending", () => {
@@ -392,7 +404,7 @@ describe("aidd-ui showcase", () => {
       verdicts(["home", "default", "1", "ok", ""], ["home", "default", "1", "pending", ""]);
       const home = pagesOf()["home.html"];
       assert.match(articleOf(home, "default"), /data-current="ok"/);
-      assert.match(home, /<p class="count" data-ok="1" data-total="4">1\/4 OK<\/p>/);
+      assert.doesNotMatch(home, /class="count"/);
     });
 
     it("puts the states with no verdict or a pending one first, the others in the record's order", () => {

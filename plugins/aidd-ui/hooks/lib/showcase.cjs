@@ -41,7 +41,6 @@ const LABELS = {
     appearsIn: "Appears in",
     checks: "Engine checks",
     review: "Review",
-    count: "{ok}/{total} OK",
     ok: "OK",
     revise: "Revise",
     comment: "What should change?",
@@ -83,7 +82,6 @@ const LABELS = {
     appearsIn: "Apparaît dans",
     checks: "Contrôles du moteur",
     review: "Revue",
-    count: "{ok}/{total} OK",
     ok: "OK",
     revise: "À revoir",
     comment: "Que faut-il changer ?",
@@ -145,8 +143,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 #copy { background: var(--accent); border-color: var(--accent); color: #fff; }
 #copy:hover:not(:disabled) { background: var(--accent-hover); }
 select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); height: 32px; padding: 0 var(--s5) 0 var(--s2); }
-.shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; transition: margin-right 160ms; }
-body.reviewing .shell { margin-right: var(--drawer); }
+.shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
 .shell > nav { position: sticky; top: 0; height: 100vh; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s6); }
 .shell > main { min-width: 0; padding: var(--s6) var(--s7) var(--s7); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
 nav .brand { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) var(--s2) var(--s4); font-size: var(--t-sm); font-weight: 600; }
@@ -214,7 +211,6 @@ nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
 .mini.empty { display: grid; place-content: center; border-style: dashed; box-shadow: none; background: var(--sunken); color: var(--faint); font-size: var(--t-sm); }
 .review { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); overflow: hidden; }
 .bar-top { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: var(--s3) var(--s4) var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
-.count { margin: 0; padding: 0 var(--s2); border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-sm); line-height: 22px; }
 .toolbar { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: var(--s2) var(--s5); border-bottom: 1px solid var(--line); background: var(--bg); }
 .gallery .toolbar { border: 1px solid var(--line); border-radius: var(--r2); }
 .review fieldset, .gallery fieldset { border: 0; display: flex; gap: var(--s2); align-items: center; padding: 0; margin: 0; }
@@ -476,9 +472,7 @@ function marked(state) {
 function show(on) {
   drawer.hidden = !on;
   opener.setAttribute("aria-expanded", String(on));
-  document.body.classList.toggle("reviewing", on);
   keep(STORE + "-open", on ? "1" : null);
-  if (typeof frames === "function") setTimeout(() => frames().forEach(fit), 200);
 }
 items.forEach((item) => rowsOf(item).forEach((row) => {
   const state = row.dataset.state;
@@ -610,13 +604,13 @@ function miniatureOf(project, record, tokens, labels) {
 }
 
 /** The persona of a journey as one line under its title: "For" the name the front matter gives, then the
- * text of its Persona section, which carries the name itself when it already opens with it. */
+ * text of its Persona section. A text that already opens with the name is a sentence, shown as written. */
 function personaOf(record, labels) {
   const said = (record.sections[PERSONA_SECTION]?.lines ?? []).map((line) => line.trim()).filter(Boolean).join(" ");
   const name = String(fm(record).persona ?? "").trim();
   if (!said && !name) return "";
   const opensWithName = name && said.toLowerCase().startsWith(name.toLowerCase());
-  const line = !said ? `${labels.forPersona} ${name}` : !name ? said : opensWithName ? `${labels.forPersona} ${name}${said.slice(name.length)}` : `${labels.forPersona} ${name}: ${said}`;
+  const line = !said ? `${labels.forPersona} ${name}` : !name ? said : opensWithName ? said : `${labels.forPersona} ${name}: ${said}`;
   return `<p class="persona">${escaped(line)}</p>`;
 }
 
@@ -815,10 +809,9 @@ const settledOf = (states) => states.filter(({ verdict }) => !UNRESOLVED.include
 function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
   const render = text(project, renderOf(record));
   const ordered = orderedStates(rows, record);
-  const ok = ordered.filter(({ verdict }) => verdict.current === "ok").length;
   return [
     `<section class="review" data-record="${escaped(fm(record).id)}" data-version="${escaped(String(fm(record).version))}">`,
-    `<div class="bar-top"><h2>${labels.states}</h2><p class="count" data-ok="${ok}" data-total="${ordered.length}">${filled(labels.count, { ok, total: ordered.length })}</p></div>`,
+    `<div class="bar-top"><h2>${labels.states}</h2></div>`,
     toolbarOf(system, labels),
     tabsOf(ordered, labels),
     ...ordered.map(({ state, verdict }, at) => stateOf({ record, state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
