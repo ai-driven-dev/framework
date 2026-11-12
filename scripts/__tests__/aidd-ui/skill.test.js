@@ -280,6 +280,14 @@ describe("aidd-ui change flow", () => {
 });
 
 describe("aidd-ui review skill", () => {
+  it("asks for the one copy the review panel makes, not one per page", () => {
+    const propose = fs.readFileSync(path.join(SKILL("06-review"), "actions/02-propose.md"), "utf8");
+    const choose = fs.readFileSync(path.join(SKILL("06-review"), "actions/03-choose.md"), "utf8");
+    assert.ok(propose.includes("The review panel, on every page, gathers every verdict."));
+    assert.equal(/home page copies|copied block of each record/.test(propose), false);
+    assert.equal(choose.includes("own page paste wins"), false);
+  });
+
   it("validates once filled, with a row for each state, and holds no pending row", () => {
     const template = filled("review");
     assert.equal(/\| pending \|/.test(template), false);
