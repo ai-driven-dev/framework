@@ -8,7 +8,6 @@
 
 const crypto = require("node:crypto");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { RULES, ERROR } = require("./lib/memory-rules.cjs");
 const { markdownLines } = require("./lib/markdown.cjs");
@@ -67,6 +66,7 @@ function unlessMissing(read, fallback) {
 
 const entriesOf = (dir) => unlessMissing(() => fs.readdirSync(dir, { withFileTypes: true }), []);
 const readTextOrNull = (file) => unlessMissing(() => fs.readFileSync(file, "utf8"), null);
+const isDirectory = (file) => unlessMissing(() => fs.statSync(file).isDirectory(), false);
 
 function partsOf(file) {
   return file.slice(MEMORY_DIR.length + 1).split("/");
@@ -145,9 +145,23 @@ function bankTexts(root) {
   return Object.fromEntries(bankFiles(root).filter((file) => file.endsWith(".md")).map((file) => [file, readTextOrNull(path.join(root, file)) ?? ""]));
 }
 
+/** The repository's git folder, searched up from `root`: `.git` itself, or where a `.git` file points. Null outside git. */
+function gitDir(root) {
+  for (let dir = root; ; dir = path.dirname(dir)) {
+    const dotGit = path.join(dir, ".git");
+    if (isDirectory(dotGit)) return dotGit;
+    const pointer = /^gitdir:\s*(.+?)\s*$/mu.exec(readTextOrNull(dotGit) ?? "");
+    if (pointer !== null) return path.resolve(dir, pointer[1]);
+    if (path.dirname(dir) === dir) return null;
+  }
+}
+
+/** The session's snapshot, private to the repository and never committed; null outside git. */
 function snapshotFile(root, sessionId) {
+  const dir = gitDir(root);
+  if (dir === null) return null;
   const project = crypto.createHash("sha1").update(root).digest("hex");
-  return path.join(os.tmpdir(), SNAPSHOT_DIR, `${project}-${sessionId.replace(/[^\w.-]/gu, "_")}.json`);
+  return path.join(dir, SNAPSHOT_DIR, `${project}-${sessionId.replace(/[^\w.-]/gu, "_")}.json`);
 }
 
 function writeSnapshot(file, texts) {
@@ -160,8 +174,7 @@ function readSnapshot(file) {
   return text === null ? null : JSON.parse(text);
 }
 
-function dropStaleSnapshots() {
-  const dir = path.join(os.tmpdir(), SNAPSHOT_DIR);
+function dropStaleSnapshots(dir) {
   for (const entry of entriesOf(dir)) {
     const file = path.join(dir, entry.name);
     if (entry.isFile() && Date.now() - fs.statSync(file).mtimeMs > SNAPSHOT_MAX_AGE_MS) fs.rmSync(file, { force: true });
@@ -207,14 +220,17 @@ function atSessionStart(event) {
   sync(event.cwd);
   if (event.sessionId === null) return;
   const root = realish(path.resolve(event.cwd));
-  dropStaleSnapshots();
-  writeSnapshot(snapshotFile(root, event.sessionId), bankTexts(root));
+  const file = snapshotFile(root, event.sessionId);
+  if (file === null) return;
+  dropStaleSnapshots(path.dirname(file));
+  writeSnapshot(file, bankTexts(root));
 }
 
 function atTurnEnd(host, event) {
   const root = projectRoot(event.cwd);
   if (event.stopActive || root === null || event.sessionId === null) return;
   const file = snapshotFile(root, event.sessionId);
+  if (file === null) return;
   const before = readSnapshot(file);
   const now = bankTexts(root);
   const notSynced = sync(root);

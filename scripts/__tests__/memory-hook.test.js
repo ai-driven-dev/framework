@@ -71,7 +71,7 @@ function project(files = {}, { always = ALWAYS } = {}) {
     fs.mkdirSync(path.dirname(full), { recursive: true });
     if (text !== null) fs.writeFileSync(full, text);
   }
-  return root;
+  return gitInit(root);
 }
 
 function write(root, name, text) {
@@ -126,10 +126,16 @@ function run(host, payload, { cwd = os.tmpdir(), preload, tmp = tempDir("memory-
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
 }
 
-const snapshotDir = (tmp) => path.join(tmp, "aidd-context");
+/** The snapshots live in the repository's own git folder, never in the system temp folder. */
+const snapshotDir = (root) => path.join(root, ".git", "aidd-context");
 const snapshotName = (root, session = SESSION) => `${crypto.createHash("sha1").update(fs.realpathSync(root)).digest("hex")}-${session}.json`;
-const snapshotPath = (tmp, root, session) => path.join(snapshotDir(tmp), snapshotName(root, session));
-const readSnapshot = (tmp, root) => JSON.parse(fs.readFileSync(snapshotPath(tmp, root), "utf8"));
+const snapshotPath = (root, session) => path.join(snapshotDir(root), snapshotName(root, session));
+const readSnapshot = (root) => JSON.parse(fs.readFileSync(snapshotPath(root), "utf8"));
+
+function gitInit(root) {
+  assert.equal(spawnSync("git", ["init", "-q"], { cwd: root, env: ENV }).status, 0);
+  return root;
+}
 
 /** A claude session over `root`: its session start has run, so the bank is snapshotted. */
 function started(files, host = "claude") {
@@ -152,7 +158,7 @@ const SHOW_THEM = "Show these lines to the person as they are, and restore any t
 
 // ---- SessionStart: the snapshot -------------------------------------------------------------
 
-test("a session start snapshots every markdown file of the bank, nested ones included, to the system temp folder", () => {
+test("a session start snapshots every markdown file of the bank, nested ones included, to the git folder", () => {
   const files = { [VCS]: "# VCS\n\n- one\n", [`${MEMORY}/internal/notes.md`]: "# N\n\n- deep\n", [`${MEMORY}/external/x.txt`]: "not markdown\n" };
   const { root, tmp } = started(files);
   const expected = Object.fromEntries(
@@ -160,8 +166,8 @@ test("a session start snapshots every markdown file of the bank, nested ones inc
       .filter(([name]) => name.endsWith(".md"))
       .sort(([a], [b]) => a.localeCompare(b))
   );
-  assert.deepEqual(readSnapshot(tmp, root), expected);
-  assert.deepEqual(fs.readdirSync(snapshotDir(tmp)), [snapshotName(root)]);
+  assert.deepEqual(readSnapshot(root), expected);
+  assert.deepEqual(fs.readdirSync(snapshotDir(root)), [snapshotName(root)]);
 });
 
 test("a session start with no session id writes no snapshot", () => {
@@ -170,18 +176,18 @@ test("a session start with no session id writes no snapshot", () => {
   const payload = sessionStartPayload("claude", root);
   delete payload.session_id;
   assert.deepEqual(run("claude", payload, { tmp }), { status: 0, stdout: "", stderr: "" });
-  assert.equal(fs.existsSync(snapshotDir(tmp)), false);
+  assert.equal(fs.existsSync(snapshotDir(root)), false);
 });
 
 test("a session start in a project with no bank snapshots an empty bank", () => {
-  const root = tempDir("memory-project-");
+  const root = gitInit(tempDir("memory-project-"));
   const tmp = tempDir("memory-hook-state-");
   assert.deepEqual(run("claude", sessionStartPayload("claude", root), { tmp }), { status: 0, stdout: "", stderr: "" });
-  assert.deepEqual(readSnapshot(tmp, root), {});
+  assert.deepEqual(readSnapshot(root), {});
 });
 
 test("a setup after a session start with no bank gets its lint and its sync at Stop, with no lost line", () => {
-  const root = tempDir("memory-project-");
+  const root = gitInit(tempDir("memory-project-"));
   const tmp = tempDir("memory-hook-state-");
   write(root, "AGENTS.md", "# P\n\n<!-- aidd_project_memory:start -->\n<!-- aidd_project_memory:end -->\n");
   assert.deepEqual(run("claude", sessionStartPayload("claude", root), { tmp }), { status: 0, stdout: "", stderr: "" });
@@ -193,9 +199,9 @@ test("a setup after a session start with no bank gets its lint and its sync at S
 test("a session start deletes snapshots older than 7 days and keeps the others", () => {
   const root = project();
   const tmp = tempDir("memory-hook-state-");
-  fs.mkdirSync(snapshotDir(tmp));
-  const stale = path.join(snapshotDir(tmp), "stale-session.json");
-  const recent = path.join(snapshotDir(tmp), "recent-session.json");
+  fs.mkdirSync(snapshotDir(root));
+  const stale = path.join(snapshotDir(root), "stale-session.json");
+  const recent = path.join(snapshotDir(root), "recent-session.json");
   fs.writeFileSync(stale, "{}");
   fs.writeFileSync(recent, "{}");
   const old = new Date(Date.now() - 8 * DAY_MS);
@@ -203,7 +209,46 @@ test("a session start deletes snapshots older than 7 days and keeps the others",
   fs.utimesSync(stale, old, old);
   fs.utimesSync(recent, near, near);
   run("claude", sessionStartPayload("claude", root), { tmp });
-  assert.deepEqual(fs.readdirSync(snapshotDir(tmp)).sort(), ["recent-session.json", snapshotName(root)].sort());
+  assert.deepEqual(fs.readdirSync(snapshotDir(root)).sort(), ["recent-session.json", snapshotName(root)].sort());
+});
+
+test("a session start writes nothing to the system temp folder", () => {
+  const { tmp } = started({ [VCS]: BANK });
+  assert.deepEqual(fs.readdirSync(tmp), []);
+});
+
+test("a bank nested in a repository keeps its snapshot in that repository's git folder", () => {
+  const outer = gitInit(tempDir("memory-repo-"));
+  const root = path.join(outer, "cli");
+  write(outer, `cli/${VCS}`, BANK);
+  const tmp = tempDir("memory-hook-state-");
+  run("claude", sessionStartPayload("claude", root), { tmp });
+  assert.deepEqual(fs.readdirSync(snapshotDir(outer)), [snapshotName(root)]);
+  write(root, VCS, "# VCS\n");
+  assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(3)}\\n`, "u"));
+});
+
+test("a repository whose .git is a file keeps the snapshot in the git folder it points to", () => {
+  const root = project({ [VCS]: BANK });
+  const elsewhere = path.join(tempDir("memory-gitdir-"), "repo.git");
+  fs.renameSync(path.join(root, ".git"), elsewhere);
+  fs.writeFileSync(path.join(root, ".git"), `gitdir: ${path.relative(root, elsewhere)}\n`);
+  const tmp = tempDir("memory-hook-state-");
+  run("claude", sessionStartPayload("claude", root), { tmp });
+  assert.deepEqual(fs.readdirSync(path.join(elsewhere, "aidd-context")), [snapshotName(root)]);
+  write(root, VCS, "# VCS\n");
+  assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(3)}\\n`, "u"));
+});
+
+test("outside a git repository no snapshot is written and Stop names no lost line", () => {
+  const root = tempDir("memory-project-");
+  write(root, VCS, BANK);
+  const tmp = tempDir("memory-hook-state-");
+  assert.deepEqual(run("claude", sessionStartPayload("claude", root), { tmp }), { status: 0, stdout: "", stderr: "" });
+  write(root, VCS, "# VCS\n");
+  assert.equal(stopped(root, tmp), null);
+  assert.deepEqual(fs.readdirSync(tmp), []);
+  assert.equal(fs.existsSync(path.join(root, ".git")), false);
 });
 
 for (const host of HOSTS) {
@@ -294,10 +339,10 @@ test("Stop: an unchanged bank answers nothing", () => {
 
 test("Stop: a continuation turn answers nothing and leaves the snapshot as it was", () => {
   const { root, tmp } = started({ [VCS]: BANK });
-  const before = fs.readFileSync(snapshotPath(tmp, root), "utf8");
+  const before = fs.readFileSync(snapshotPath(root), "utf8");
   write(root, VCS, "# VCS\n");
   assert.equal(stopped(root, tmp, { active: true }), null);
-  assert.equal(fs.readFileSync(snapshotPath(tmp, root), "utf8"), before);
+  assert.equal(fs.readFileSync(snapshotPath(root), "utf8"), before);
 });
 
 test("Stop with no snapshot answers nothing and writes one, so the next loss is reported", () => {
@@ -305,7 +350,7 @@ test("Stop with no snapshot answers nothing and writes one, so the next loss is 
   const tmp = tempDir("memory-hook-state-");
   write(root, VCS, "# VCS\n\n- keep one\n");
   assert.equal(stopped(root, tmp), null);
-  assert.deepEqual(readSnapshot(tmp, root)[VCS], "# VCS\n\n- keep one\n");
+  assert.deepEqual(readSnapshot(root)[VCS], "# VCS\n\n- keep one\n");
   write(root, VCS, "# VCS\n");
   assert.match(stopped(root, tmp).reason, new RegExp(`^${GONE(1)}\\n`, "u"));
 });
@@ -322,14 +367,14 @@ test("Stop in a project with no bank answers nothing and writes no snapshot", ()
   const root = tempDir("memory-project-");
   const tmp = tempDir("memory-hook-state-");
   assert.equal(stopped(root, tmp), null);
-  assert.equal(fs.existsSync(snapshotDir(tmp)), false);
+  assert.equal(fs.existsSync(snapshotDir(root)), false);
 });
 
 test("Stop advances the snapshot: the same loss is not reported twice", () => {
   const { root, tmp } = started({ [VCS]: BANK });
   write(root, VCS, "# VCS\n\n- keep one\n- keep two\n");
   assert.ok(stopped(root, tmp));
-  assert.equal(readSnapshot(tmp, root)[VCS], "# VCS\n\n- keep one\n- keep two\n");
+  assert.equal(readSnapshot(root)[VCS], "# VCS\n\n- keep one\n- keep two\n");
   assert.equal(stopped(root, tmp), null);
 });
 
@@ -337,7 +382,7 @@ test("Stop advances the snapshot when only lint answers, and when nothing is los
   const { root, tmp } = started({ [VCS]: BANK });
   write(root, VCS, `${BANK}- Branch ${SLOT} here.\n`);
   assert.ok(stopped(root, tmp));
-  assert.equal(readSnapshot(tmp, root)[VCS], `${BANK}- Branch ${SLOT} here.\n`);
+  assert.equal(readSnapshot(root)[VCS], `${BANK}- Branch ${SLOT} here.\n`);
   assert.equal(stopped(root, tmp), null);
 });
 
