@@ -126,6 +126,9 @@ export interface McpConfigAnswers {
   mergeStrategy(): "user-prime" | "framework-prime" | "none";
   /** A plugin's mcp json rewritten to this tool's own shape. */
   transform(mcpJson: string): string;
+  /** How a server launch is rewritten for `platform` once the tool's own transform has run,
+   * or undefined when the platform needs none. */
+  launchTransformFor(platform: string): ((content: string) => string) | undefined;
   /** Adds the plugin's transformed servers to the existing file: what the plugin contributed
    * before is replaced, a user-owned server is kept and reported as a collision. */
   mergePluginServers(

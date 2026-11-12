@@ -25,6 +25,33 @@ type McpCapabilityParams = {
   consumes?: readonly string[];
 };
 
+interface McpServerWin32 {
+  command?: string;
+  args?: string[];
+  [key: string]: unknown;
+}
+
+interface McpConfigWin32 {
+  mcpServers?: Record<string, McpServerWin32>;
+  [key: string]: unknown;
+}
+
+function transformMcpForWin32(content: string): string {
+  const config = JSON.parse(content) as McpConfigWin32;
+  if (!config.mcpServers) return JSON.stringify(config, null, 2);
+  for (const server of Object.values(config.mcpServers)) {
+    if (server.command === "npx") {
+      server.args = ["/c", "npx", ...(server.args ?? [])];
+      server.command = "cmd";
+    } else if (server.command === "uvx") {
+      server.command = "uvx.exe";
+    } else if (server.command === "uv") {
+      server.command = "uv.exe";
+    }
+  }
+  return JSON.stringify(config, null, 2);
+}
+
 export class McpCapability {
   readonly #params: McpCapabilityParams;
 
@@ -63,6 +90,12 @@ export class McpCapability {
       return mcpJsonToToml(afterTransform);
     }
     return afterTransform;
+  }
+
+  /** How a server launch is rewritten for `platform` once the tool's own transform has run,
+   * or undefined when the platform needs none. */
+  launchTransformFor(platform: string): ((content: string) => string) | undefined {
+    return platform === "win32" ? transformMcpForWin32 : undefined;
   }
 
   /** The project-relative file this tool's MCP config goes in: the first tier of candidates for

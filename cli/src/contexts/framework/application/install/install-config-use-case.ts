@@ -8,39 +8,6 @@ import type { Platform } from "../../../../runtime/platform/platform.js";
 import { CONFIG_MCP, type ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ConfigWrite, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 
-interface McpServerWin32 {
-  command?: string;
-  args?: string[];
-  [key: string]: unknown;
-}
-
-interface McpConfigWin32 {
-  mcpServers?: Record<string, McpServerWin32>;
-  [key: string]: unknown;
-}
-
-function transformMcpForWin32(content: string): string {
-  const config = JSON.parse(content) as McpConfigWin32;
-  if (!config.mcpServers) return JSON.stringify(config, null, 2);
-  for (const server of Object.values(config.mcpServers)) {
-    if (server.command === "npx") {
-      server.args = ["/c", "npx", ...(server.args ?? [])];
-      server.command = "cmd";
-    } else if (server.command === "uvx") {
-      server.command = "uvx.exe";
-    } else if (server.command === "uv") {
-      server.command = "uv.exe";
-    }
-  }
-  return JSON.stringify(config, null, 2);
-}
-
-export function transformMcpForPlatform(
-  platform: string
-): ((content: string) => string) | undefined {
-  return platform === "win32" ? transformMcpForWin32 : undefined;
-}
-
 interface InstallConfigOptions {
   writes: readonly ConfigWrite[];
   configRefs: readonly ConfigRef[];
@@ -59,12 +26,12 @@ export class InstallConfigUseCase {
 
   async execute(options: InstallConfigOptions): Promise<InstallationFile[]> {
     const { writes, configRefs, contentFiles, projectRoot, platform } = options;
-    const win32Transform = transformMcpForPlatform(platform.current());
+    const platformName = platform.current();
     const results: InstallationFile[] = [];
     for (const ref of configRefs) {
       const write = writes.find((w) => w.capability.consumes(ref.name));
       if (write === undefined) continue;
-      const file = await this.processRef(ref, write, contentFiles, projectRoot, win32Transform);
+      const file = await this.processRef(ref, write, contentFiles, projectRoot, platformName);
       if (file !== null) results.push(file);
     }
     for (const write of writes) {
@@ -80,13 +47,13 @@ export class InstallConfigUseCase {
     write: ConfigWrite,
     contentFiles: Map<string, string>,
     projectRoot: string,
-    win32Transform: ((content: string) => string) | undefined
+    platformName: string
   ): Promise<InstallationFile | null> {
     const rawContent = contentFiles.get(ref.path);
     if (rawContent === undefined) return null;
     const outputPath = await this.resolveOutputPath(write, projectRoot);
     if (outputPath === null) return null;
-    const content = this.applyTransforms(write, ref.name, rawContent, win32Transform);
+    const content = this.applyTransforms(write, ref.name, rawContent, platformName);
     return new InstallationFile({
       relativePath: outputPath,
       content,
@@ -128,10 +95,11 @@ export class InstallConfigUseCase {
     write: ConfigWrite,
     configName: string,
     rawContent: string,
-    win32Transform: ((content: string) => string) | undefined
+    platformName: string
   ): string {
-    const toolContent = write.kind === "mcp" ? write.capability.transform(rawContent) : rawContent;
-    const isMcp = write.capability.consumes(CONFIG_MCP) && configName === CONFIG_MCP;
-    return isMcp && win32Transform ? win32Transform(toolContent) : toolContent;
+    if (write.kind !== "mcp") return rawContent;
+    const toolContent = write.capability.transform(rawContent);
+    const launch = write.capability.launchTransformFor(platformName);
+    return configName === CONFIG_MCP && launch ? launch(toolContent) : toolContent;
   }
 }
