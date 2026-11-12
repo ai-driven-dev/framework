@@ -15,6 +15,7 @@ export interface PluginDelivery {
   copiesFilesGlobally(): boolean;
   /** Where a machine-scope install puts a plugin's files under `homedir`, or null for none. */
   userPluginsBaseDir(homedir: string): string | null;
+  hooksAcceptance(): HooksAcceptance;
 }
 
 /** What a tool's own plugin CLI declares about itself. */
@@ -24,7 +25,8 @@ export interface NativeActivationAnswers {
 }
 
 /** Output layout: a marketplace dist versus a flat workspace inject. */
-export type FrameworkBuildMode = "marketplace" | "flat";
+export const FRAMEWORK_BUILD_MODES = ["marketplace", "flat"] as const;
+export type FrameworkBuildMode = (typeof FRAMEWORK_BUILD_MODES)[number];
 
 /** Whether a delivered hook runs on this tool, and why not when it does not. */
 export type HooksAcceptance = { accepts: true } | { accepts: false; reason: string };
@@ -47,7 +49,6 @@ export interface NativePluginAnswers extends PluginDelivery {
   readonly kind: "native";
   /** Whether a plugin installed fresh lands at user scope, the only scope this tool takes. */
   requiresUserScope(): boolean;
-  hooksAcceptance(): HooksAcceptance;
   /** The directory a plugin's files land in. */
   pluginOutputDir(pluginName: string): string;
   /** The manifest file relative to that directory, or null when the tool takes none. */
@@ -64,7 +65,6 @@ export interface NativePluginAnswers extends PluginDelivery {
 /** A tool whose plugins are injected into the project tree, as an outside caller asks it. */
 export interface FlatPluginAnswers extends PluginDelivery {
   readonly kind: "flat";
-  hooksAcceptance(): HooksAcceptance;
   flatLayout(): FlatLayout;
   hookScript(pluginPath: string, content: string): string;
 }
@@ -72,7 +72,6 @@ export interface FlatPluginAnswers extends PluginDelivery {
 /** A tool that takes no plugin. */
 export interface UnsupportedPluginAnswers extends PluginDelivery {
   readonly kind: "unsupported";
-  hooksAcceptance(): HooksAcceptance;
 }
 
 export type PluginAnswers = NativePluginAnswers | FlatPluginAnswers | UnsupportedPluginAnswers;

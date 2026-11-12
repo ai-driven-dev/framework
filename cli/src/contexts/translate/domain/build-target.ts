@@ -1,5 +1,9 @@
 import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
-import type { FrameworkBuildMode, ToolProfile } from "../../tools/contract/tool-profile.js";
+import {
+  FRAMEWORK_BUILD_MODES,
+  type FrameworkBuildMode,
+  type ToolProfile,
+} from "../../tools/contract/tool-profile.js";
 
 /** The tool a framework build produces for. An alias rather than its own union: every AI tool
  * is buildable, so a sixth tool is a sixth target by construction, and writing the members
@@ -11,8 +15,6 @@ export interface FrameworkBuildTargetMode {
   readonly mode: FrameworkBuildMode;
 }
 
-const BUILD_MODES: readonly FrameworkBuildMode[] = ["marketplace", "flat"];
-
 /** A tool supports a mode when its profile declares a build contract for it. Takes the profiles
  * explicitly so the rule can be probed with synthetic tools. Walks the kernel's tool order, never
  * the order the profiles come in. */
@@ -23,7 +25,7 @@ export function buildTargetModesOf(
   for (const target of AI_TOOL_IDS) {
     const profile = profiles.find((candidate) => candidate.toolId === target);
     if (profile === undefined || profile.kind !== "ai") continue;
-    for (const mode of BUILD_MODES) {
+    for (const mode of FRAMEWORK_BUILD_MODES) {
       if (profile.buildContract(mode) !== null) pairs.push({ target, mode });
     }
   }

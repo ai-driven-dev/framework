@@ -22,7 +22,7 @@ const ANSWERING_DIRS = [
   "src/contexts/tools/domain/plugins",
 ];
 
-const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\)|\.plugins\(\)|\.nativePlugins\(\)|\.nativeActivation\(\))`;
+const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\)|\.plugins\(\)|\.nativeActivation\(\))`;
 /** `kind` is the one read allowed: the discriminant a caller narrows the variant on. */
 const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(?!kind\b)(\w+)\b(?!\s*\()`, "g");
 const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
@@ -281,9 +281,9 @@ describe("a tool's plugin delivery is asked, never read", () => {
       "const e = (x as PluginsCapability).acceptsMcp;",
       "const f = catalog.resolveNativePlugins(id).hookScript;",
       "const g = profile.plugins()?.hooksAcceptance;",
-      "const h = profile.nativePlugins()?.hookScript;",
+      "const h = profile.plugins()?.hookScript;",
       "const i = profile.nativeActivation()?.cliShape;",
-      "const { hookScript: j } = profile.nativePlugins();",
+      "const { hookScript: j } = profile.plugins();",
     ];
     const found = written.map((line) => [...line.matchAll(FIELD_READ)].length);
     const destructured = written.map((line) => [...line.matchAll(DESTRUCTURING)].length);
