@@ -61,8 +61,14 @@ export const codex = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "Codex",
   signalDir: `${DIRECTORY}commands`,
-  configOutputPaths: { "config.toml": ".codex/config.toml" },
-  configAssets: { "config.toml": codexConfigToml },
+  configAssets: [
+    {
+      name: "config.toml",
+      content: codexConfigToml,
+      destination: ".codex/config.toml",
+      delivery: "install",
+    },
+  ],
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
   capabilities: (bound) => ({

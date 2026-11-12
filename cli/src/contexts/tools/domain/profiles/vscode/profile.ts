@@ -16,30 +16,48 @@ import { defineIdeTool } from "../../profile/define-tool.js";
 import { ConfigSection } from "../../sections/config-section.js";
 
 const DIRECTORY = ".vscode/";
+const EXTENSIONS_PATH = ".vscode/extensions.json";
+const KEYBINDINGS_PATH = ".vscode/keybindings.json";
+const SETTINGS_PATH = ".vscode/settings.json";
 
 export const vscode = defineIdeTool({
   toolId: "vscode",
   directory: DIRECTORY,
   signalDir: null,
-  configAssets: {
-    "settings.json": vscodeSettings,
-    "keybindings.json": vscodeKeybindings,
-    "extensions.json": vscodeExtensions,
-  },
+  configAssets: [
+    {
+      name: "settings.json",
+      content: vscodeSettings,
+      destination: SETTINGS_PATH,
+      delivery: "section",
+    },
+    {
+      name: "keybindings.json",
+      content: vscodeKeybindings,
+      destination: KEYBINDINGS_PATH,
+      delivery: "section",
+    },
+    {
+      name: "extensions.json",
+      content: vscodeExtensions,
+      destination: EXTENSIONS_PATH,
+      delivery: "section",
+    },
+  ],
   capabilities: () => ({
     config: [
       new ConfigSection({
-        outputPath: ".vscode/extensions.json",
+        outputPath: EXTENSIONS_PATH,
         mergeStrategy: "user-prime",
         consumes: [CONFIG_VSCODE_EXTENSIONS],
       }),
       new ConfigSection({
-        outputPath: ".vscode/keybindings.json",
+        outputPath: KEYBINDINGS_PATH,
         mergeStrategy: "none",
         consumes: [CONFIG_VSCODE_KEYBINDINGS],
       }),
       new ConfigSection({
-        outputPath: ".vscode/settings.json",
+        outputPath: SETTINGS_PATH,
         mergeStrategy: "user-prime",
         consumes: [CONFIG_VSCODE_SETTINGS],
       }),

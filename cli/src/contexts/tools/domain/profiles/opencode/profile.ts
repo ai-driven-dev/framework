@@ -34,9 +34,20 @@ export const opencode = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "OpenCode",
   signalDir: ".opencode/commands",
-  configOutputPaths: { "opencode.json": "opencode.json" },
-  configAssets: { "opencode.json": opencodeJson, "opencode-events.js": opencodeEvents },
-  pluginRuntimeFiles: { [OPENCODE_HOOKS.bridgeRuntime.asset]: OPENCODE_HOOKS.bridgeRuntime.path },
+  configAssets: [
+    {
+      name: "opencode.json",
+      content: opencodeJson,
+      destination: "opencode.json",
+      delivery: "install",
+    },
+    {
+      name: OPENCODE_HOOKS.bridgeRuntime.asset,
+      content: opencodeEvents,
+      destination: OPENCODE_HOOKS.bridgeRuntime.path,
+      delivery: "runtime",
+    },
+  ],
   buildContracts: { flat: buildOpencodeFlatContract },
 
   capabilities: (bound) => ({

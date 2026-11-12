@@ -27,8 +27,9 @@ export const kilo = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kilo Code",
   signalDir: ".kilo/commands",
-  configOutputPaths: { "kilo.json": ".kilo/kilo.jsonc" },
-  configAssets: { "kilo.json": kiloJson },
+  configAssets: [
+    { name: "kilo.json", content: kiloJson, destination: ".kilo/kilo.jsonc", delivery: "install" },
+  ],
   buildContracts: { flat: buildKiloFlatContract },
 
   capabilities: (bound) => ({

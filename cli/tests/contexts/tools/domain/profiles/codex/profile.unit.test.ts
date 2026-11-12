@@ -9,7 +9,7 @@ describe("codex profile", () => {
     expect(codex.directory).toBe(".codex/");
     expect(codex.toolSuffix).toBe(".codex.md");
     expect(codex.signalDir).toBe(".codex/commands");
-    expect(codex.configOutputPaths).toStrictEqual({ "config.toml": ".codex/config.toml" });
+    expect(codex.configFiles()).toStrictEqual({ "config.toml": ".codex/config.toml" });
   });
 
   it.each<[InstallKind, string, string]>([

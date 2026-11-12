@@ -23,9 +23,13 @@ describe("config assets per tool", () => {
   it.each(REGISTERED_PROFILES.map((profile) => profile.toolId))(
     "%s declares exactly the config assets bundled for it",
     (toolId) => {
-      expect(Object.keys(catalog.profile(toolId).configAssets()).sort()).toEqual(
-        shippedBy(toolId).sort()
-      );
+      expect(
+        catalog
+          .profile(toolId)
+          .configAssets()
+          .map((asset) => asset.name)
+          .sort()
+      ).toEqual(shippedBy(toolId).sort());
     }
   );
 
@@ -43,7 +47,10 @@ describe("config assets per tool", () => {
 
   it("serves the asset the profile declares, by identity", () => {
     expect(provider.loadConfigAsset("claude", "settings.json")).toBe(
-      catalog.profile("claude").configAssets()["settings.json"]
+      catalog
+        .profile("claude")
+        .configAssets()
+        .find((asset) => asset.name === "settings.json")?.content
     );
   });
 });

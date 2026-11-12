@@ -1,6 +1,5 @@
 import { isAbsolute, join } from "node:path";
 import { InvalidToolProfileError } from "../../../../kernel/errors.js";
-import type { ConfigAsset } from "../../../../kernel/file.js";
 import {
   AI_TOOL_IDS,
   type AiToolId,
@@ -14,6 +13,7 @@ import type {
   FrameworkBuildMode,
   PluginAnswers,
   SettingsFileAnswers,
+  ShippedConfig,
 } from "../../contract/tool-profile.js";
 import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
 import type { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
@@ -89,14 +89,14 @@ type AiToolFields = Omit<
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
   readonly toolId: string;
-  /** The config files the tool ships, by asset name, each imported where it is declared. */
-  readonly configAssets?: Readonly<Record<string, ConfigAsset>>;
+  /** The config files the tool ships, each with its content imported where it is declared. */
+  readonly configAssets?: readonly ShippedConfig[];
   readonly capabilities: (bound: BoundTool) => C;
 }
 
 export interface IdeToolSpec<C extends ProfileSections> {
   readonly toolId: string;
-  readonly configAssets?: Readonly<Record<string, ConfigAsset>>;
+  readonly configAssets?: readonly ShippedConfig[];
   readonly directory: string;
   readonly signalDir: string | null;
   readonly capabilities: () => C;
@@ -234,6 +234,17 @@ function marketplaceOf(sections: ProfileSections): MarketplaceRegistration | und
   return sections.layout?.mode === "native" ? sections.layout.marketplace : undefined;
 }
 
+function destinationsOf(
+  assets: readonly ShippedConfig[] | undefined,
+  delivery: ShippedConfig["delivery"]
+): Record<string, string> {
+  return Object.fromEntries(
+    (assets ?? [])
+      .filter((asset) => asset.delivery === delivery)
+      .map((a) => [a.name, a.destination])
+  );
+}
+
 export function defineAiTool<C extends ProfileSections>(
   spec: AiToolSpec<C>
 ): AiTool<C> & ProfileBrand {
@@ -275,9 +286,12 @@ export function defineAiTool<C extends ProfileSections>(
     nativeActivation: () => nativeActivationOf(capabilities),
     hostRefInUse: (enabled: boolean) =>
       nativeActivationOf(capabilities)?.takesRefForInUse(enabled) ?? true,
-    configFiles: () => ({ ...fields.configOutputPaths, ...fields.pluginRuntimeFiles }),
-    runtimeFiles: () => ({ ...fields.pluginRuntimeFiles }),
-    configAssets: () => ({ ...spec.configAssets }),
+    configFiles: () => ({
+      ...destinationsOf(spec.configAssets, "install"),
+      ...destinationsOf(spec.configAssets, "runtime"),
+    }),
+    runtimeFiles: () => destinationsOf(spec.configAssets, "runtime"),
+    configAssets: (): readonly ShippedConfig[] => spec.configAssets ?? [],
     mcpConfig: () => capabilities.mcp?.config ?? null,
     flatPluginMcp: () =>
       capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
@@ -317,7 +331,7 @@ export function defineIdeTool<C extends ProfileSections>(
     section: sectionReader(capabilities),
     configWrites: () => settingsWrites(capabilities),
     settingsFiles: () => settingsOf(capabilities),
-    configAssets: () => ({ ...spec.configAssets }),
+    configAssets: (): readonly ShippedConfig[] => spec.configAssets ?? [],
     signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
     machineLocalFiles: (): readonly string[] => [],
   };

@@ -26,6 +26,8 @@ const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = COPILOT_WORKSPACE_DIR;
 const TOOL_SUFFIX = ".copilot.md";
+const VSCODE_SETTINGS_ASSET = "vscode-settings.json";
+const VSCODE_SETTINGS_PATH = ".vscode/settings.json";
 
 // Canon's framework-doc reference placeholders. Copilot is the only tool that rewrites
 // content between the canonical form and its own workspace-relative paths, so these
@@ -206,7 +208,14 @@ export const copilot = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "GitHub Copilot",
   signalDir: ".github/prompts",
-  configAssets: { "vscode-settings.json": copilotVscodeSettings },
+  configAssets: [
+    {
+      name: VSCODE_SETTINGS_ASSET,
+      content: copilotVscodeSettings,
+      destination: VSCODE_SETTINGS_PATH,
+      delivery: "section",
+    },
+  ],
   buildContracts: {
     marketplace: buildCopilotMarketplaceContract,
     flat: buildCopilotFlatContract,
@@ -260,9 +269,9 @@ export const copilot = defineAiTool({
     },
     config: [
       new ConfigSection({
-        outputPath: ".vscode/settings.json",
+        outputPath: VSCODE_SETTINGS_PATH,
         mergeStrategy: "framework-prime",
-        staticContentAssetFile: "vscode-settings.json",
+        staticContentAssetFile: VSCODE_SETTINGS_ASSET,
         requiresTool: "vscode",
       }),
     ],

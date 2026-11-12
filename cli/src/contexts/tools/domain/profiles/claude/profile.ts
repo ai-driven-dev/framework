@@ -36,8 +36,14 @@ export const claude = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "Claude Code",
   signalDir: ".claude/commands",
-  configOutputPaths: { "settings.json": ".claude/settings.json" },
-  configAssets: { "settings.json": claudeSettings },
+  configAssets: [
+    {
+      name: "settings.json",
+      content: claudeSettings,
+      destination: ".claude/settings.json",
+      delivery: "install",
+    },
+  ],
   buildContracts: { marketplace: buildClaudeContract, flat: buildClaudeFlatContract },
 
   capabilities: (bound) => ({

@@ -37,8 +37,14 @@ export const cursor = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "Cursor",
   signalDir: ".cursor/commands",
-  configOutputPaths: { "settings.json": ".cursor/settings.json" },
-  configAssets: { "settings.json": cursorSettings },
+  configAssets: [
+    {
+      name: "settings.json",
+      content: cursorSettings,
+      destination: ".cursor/settings.json",
+      delivery: "install",
+    },
+  ],
   buildContracts: { marketplace: buildCursorContract, flat: buildCursorFlatContract },
 
   capabilities: (bound) => ({

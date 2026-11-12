@@ -26,11 +26,14 @@ export class BundledAssetProviderAdapter implements AssetProvider {
   constructor(private readonly tools: ToolCatalog) {}
 
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
-    const asset = this.tools.profile(toolId).configAssets()[fileName];
-    if (asset === undefined) {
+    const shipped = this.tools
+      .profile(toolId)
+      .configAssets()
+      .find((a) => a.name === fileName);
+    if (shipped === undefined) {
       throw new AssetNotFoundError(`${toolId}/${fileName}`);
     }
-    return asset;
+    return shipped.content;
   }
 
   loadSchema(name: SchemaName): object {
