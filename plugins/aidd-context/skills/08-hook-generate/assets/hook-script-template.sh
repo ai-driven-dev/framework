@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Backing script for a command hook.
-# Reads the event JSON on stdin, does its work, and signals back.
+# Reads the event JSON on stdin, does its work, and signals back via exit code + stdout.
 set -euo pipefail
 
 input="$(cat)"
@@ -10,7 +10,6 @@ input="$(cat)"
 
 # Do the work here.
 
-# Signal the result the way the target tool reads it: an exit code, and stdout where the tool honors it.
+# Exit 0 = success. Stdout (JSON) steers the session; see references/hook-authoring.md.
+# Exit 2 = blocking error on an event that honors it; stderr surfaces to the model.
 exit 0
-
-# Replace the placeholder logic, then delete the example comments and this note.

@@ -175,13 +175,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [hook-script-template.sh](skills/08-hook-generate/assets/hook-script-template.sh) | - |
 | `assets` | [hook-template.json](skills/08-hook-generate/assets/hook-template.json) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
-| `references` | [hook-handlers.md](skills/08-hook-generate/references/hook-handlers.md) | - |
-| `references` | [hook-moments.md](skills/08-hook-generate/references/hook-moments.md) | - |
-| `references` | [hook-paths.md](skills/08-hook-generate/references/hook-paths.md) | - |
-| `references` | [hook-scopes.md](skills/08-hook-generate/references/hook-scopes.md) | - |
-| `references` | [hook-shapes.md](skills/08-hook-generate/references/hook-shapes.md) | - |
-| `references` | [hook-support.md](skills/08-hook-generate/references/hook-support.md) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create or scaffold one.` |
+| `references` | [tool-paths.md](skills/08-hook-generate/references/tool-paths.md) | - |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generate a hook, a handler that runs at a lifecycle event, across the host AI tools. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills or rules.` |
 
 #### `skills/09-mermaid`
 

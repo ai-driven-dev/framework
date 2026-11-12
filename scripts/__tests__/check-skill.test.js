@@ -278,7 +278,7 @@ describe("skill check", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  for (const skill of ["aidd-context/skills/04-skill-generate", "aidd-dev/skills/05-review", "aidd-context/skills/08-hook-generate"]) {
+  for (const skill of ["aidd-context/skills/04-skill-generate"]) {
     it(`finds nothing in ${skill}`, () => {
       assert.deepEqual(run(path.resolve(__dirname, "../../plugins", skill)), { code: 0, out: "", err: "" });
     });

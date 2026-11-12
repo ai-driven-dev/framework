@@ -1,43 +1,40 @@
 # 01 - Capture hook
 
-Produce the confirmed decisions for the hook: what fires, on what, where it goes and for which tools.
+Clarify what fires, on what, where it goes, and for which tools before touching a file.
 
 ## Input
 
 A free-form request to add a hook.
-
-## Process
-
-1. Read every file in `references/` and `assets/` before asking or writing anything.
-2. Detect the installed tools.
-3. Check each against [hook-support.md](../references/hook-support.md), and confirm which to target.
-   - A tool without hooks: skip it with the reason, and give the user its note from `hook-support.md`.
-4. Pick the narrowest lifecycle moment that fits per [hook-authoring.md](../references/hook-authoring.md).
-5. Check each target tool exposes the moment in [hook-moments.md](../references/hook-moments.md).
-   - A tool without the moment: skip it with the reason.
-6. Ask what the hook does when it fires, offering only the intents the moment and each confirmed tool support in [hook-handlers.md](../references/hook-handlers.md).
-   - A tool that cannot carry the intent: say what it does instead.
-   - Decide what the backing script checks or runs to serve it.
-7. Set a matcher only when the moment must be filtered, per `hook-authoring.md`.
-8. Choose the write mode: a host project or a plugin source.
-   - Plugin source: name the plugin. The scope is the plugin scope of [hook-scopes.md](../references/hook-scopes.md), so ask no scope question.
-9. For a host project, ask where to install, offering only the scopes the target tools support in `hook-scopes.md`.
-   - Component scope: name the exact skill or agent file, and confirm the moment fits per `hook-scopes.md`.
-10. Confirm every decision in writing with the user, naming the resolved scope and file, then read [write hook](02-write-hook.md).
 
 ## Output
 
 In-context decisions, nothing written yet:
 
 - the lifecycle moment the hook targets
-- the backing script the hook runs
-- the intent, and what each tool does instead where it cannot carry it
+- the intent: inform, block before a tool, require a fix, keep the turn going, or side effect only, per tool
+- the action it runs, and whether it needs a backing script
 - the matcher, or none for every occurrence
-- the scope to install into: the plugin scope for a plugin source
-- the plugin name for a plugin source, or the skill or agent file for a component scope
+- the scope to install into
 - the confirmed tools, and any skipped with a reason
 - the write mode: a host project, or a plugin source
 
-## Rules
+## Process
 
-- Stop when every tool is skipped, and report the reasons.
+1. **Gate.** Run the asset-access precheck ([tool-paths.md](../references/tool-paths.md)).
+2. **Tools.** Detect the installed tools and confirm which to target ([tool-paths.md](../references/tool-paths.md)). Skip a tool that does not support hooks, with its reason.
+3. **Moment.** Pick the narrowest lifecycle moment that fits ([hook-authoring.md](../references/hook-authoring.md)).
+   - Confirm each target tool exposes that moment ([tool-paths.md](../references/tool-paths.md)). Skip a tool that lacks it, with its reason.
+4. **Intent.** Ask what the hook should do when it fires, offering only what the moment and each confirmed tool support ([hook-authoring.md](../references/hook-authoring.md), [tool-paths.md](../references/tool-paths.md)): inform the model, block before a tool runs, require a fix after a write, keep the turn going at Stop, or side effect only. Where a tool cannot do it, say so and what it does instead. The user's answer decides.
+5. **Action.** Decide what runs at the moment, and whether it needs a backing script ([hook-authoring.md](../references/hook-authoring.md)).
+6. **Matcher.** Set a matcher only when the moment must be filtered. Prefer a precise filter ([hook-authoring.md](../references/hook-authoring.md)).
+7. **Scope.** Ask the user where to install: a single agent or skill component, the shared project, the project local-only, or the user's global config. Offer only the scopes the target tools support ([tool-paths.md](../references/tool-paths.md)).
+   - For a component scope, name the exact skill or agent file, and confirm the moment fits a component-scoped hook ([tool-paths.md](../references/tool-paths.md)).
+   - State the resolved file and confirm. Never pick silently.
+8. **Write mode.** Host project, or a plugin source. For a plugin source, name the plugin.
+
+## Test
+
+- The intent is asked, never assumed.
+- Every decision is stated and confirmed in writing.
+- The resolved scope and file are named before any write.
+- Each tool was confirmed to support the moment, or skipped with its reason.

@@ -1,25 +1,30 @@
 ---
 name: 08-hook-generate
-description: Generates a hook, a handler run at a lifecycle event, across the host AI tools, when the user wants to create or scaffold one.
+description: Generate a hook, a handler that runs at a lifecycle event, across the host AI tools. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills or rules.
 argument-hint: event | action
 ---
 
 # Hook Generate
 
-```mermaid
-flowchart LR
-  event([event]) --> capture["actions/01-capture-hook.md"]
-  action([action]) --> capture
-  capture & write & validate -->|"a cited reference cannot be read"| missing((plugin not installed))
-  capture -->|"every target tool skipped"| notool((no tool left))
-  capture -->|"a target, scope or decision to confirm"| user((user answers)) --> capture
-  capture --> write["actions/02-write-hook.md"] --> validate["actions/03-validate.md"]
-  validate -->|"a check fails"| validate
-  validate -->|"a fix outside the confirmed scope or not completable"| invalid((write target invalid))
-  validate -->|"every check passes"| done((hook written))
-```
+Builds one hook: an entry merged into the chosen scope for each supported tool, plus the backing script.
 
-## Transversal rules
+## Actions
 
-- If a cited reference cannot be read, stop and report that the plugin is not installed in this host.
-- Write every file in English, unless the user asks otherwise.
+| #   | Action         | Role                                              | Input             |
+| --- | -------------- | ------------------------------------------------- | ----------------- |
+| 01  | `capture-hook` | Clarify the moment, intent, action, matcher, scope, tools | user request      |
+| 02  | `write-hook`   | Merge the entry per tool, write the script         | the captured spec |
+| 03  | `validate`     | Check the file, the merge, and the moment fit      | files written     |
+
+Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
+Before running an action, read its file in `actions/`, not only the table or assets.
+
+## References
+
+- `references/hook-authoring.md`: the contract (R1-R7), the lifecycle moments, the intent options, and the handler, matcher, and exit-code model.
+- `references/tool-paths.md`: per-tool support, moment-to-event names, file formats, scopes, and write targets.
+
+## Assets
+
+- `assets/hook-template.json`: the entry scaffold.
+- `assets/hook-script-template.sh`: the backing-script scaffold.
