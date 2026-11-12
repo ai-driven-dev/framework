@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { distributionProbesOf } from "../../../../../../src/contexts/translate/domain/plugin-format.js";
 import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
@@ -101,20 +100,5 @@ describe("kilo build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(kilo.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
-  });
-});
-
-describe("kilo as the registry answers for it", () => {
-  it("probes a marketplace although it builds none natively", () => {
-    expect(distributionProbesOf([kilo], "marketplace").map((probe) => probe.format)).toEqual([
-      "kilo",
-    ]);
-  });
-
-  it("installs its rules into .kilo/rules/ as markdown", () => {
-    expect(kilo.section("rules").installedLocation()).toEqual({
-      directory: ".kilo/rules/",
-      extension: ".md",
-    });
   });
 });

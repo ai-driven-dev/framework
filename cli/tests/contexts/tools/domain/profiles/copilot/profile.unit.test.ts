@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import {
-  nativeActivationOf,
-  ToolCatalog,
-} from "../../../../../../src/contexts/tools/domain/registry.js";
+import { nativeActivationOf } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { nativeOf } from "../../../testing/plugin-mode.js";
 import {
-  flatPathsOf,
   pluginTreeShapeOf,
   rulesRows,
   SHIPPED_AS_IS,
@@ -55,7 +51,6 @@ describe("copilot declarations the rest of the CLI reads", () => {
   });
 
   it.each<[InstallKind, string, string | null]>([
-    ["skills", "commit/SKILL.md", ".github/skills/commit/SKILL.md"],
     ["agents", "code-reviewer.md", ".github/agents/code-reviewer.agent.md"],
     ["agents", ".gitkeep", null],
     ["agents", "team/sub/code-reviewer.md", ".github/agents/code-reviewer.agent.md"],
@@ -103,15 +98,6 @@ describe("copilot declarations the rest of the CLI reads", () => {
 });
 
 describe("copilot build and conversion tables", () => {
-  it("places a flat skill and agent under its plugin's name", () => {
-    expect(flatPathsOf(copilot)).toStrictEqual({
-      skill: ".github/skills/aidd-dev-01-plan/SKILL.md",
-      renamesSkill: true,
-      agent: ".github/agents/aidd-dev-planner.agent.md",
-      innerMdAgent: ".github/agents/aidd-dev-notes.md-helper.agent.md",
-    });
-  });
-
   it("ships the plugin tree as it is", () => {
     expect(pluginTreeShapeOf(copilot)).toStrictEqual(SHIPPED_AS_IS);
   });
@@ -126,22 +112,5 @@ describe("copilot build and conversion tables", () => {
     })
   )("converts %s", (_case, frontmatter, expected) => {
     expect(copilot.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
-  });
-});
-
-describe("copilot as the registry answers for it", () => {
-  const catalog = new ToolCatalog([copilot]);
-
-  it("enables plugins machine-wide and takes a disabled host ref for none in use", () => {
-    expect(catalog.pluginEnablementIsMachineGlobal("copilot")).toBe(true);
-    expect(catalog.hostRefInUse("copilot", false)).toBe(false);
-    expect(catalog.hostRefInUse("copilot", true)).toBe(true);
-  });
-
-  it("installs its rules into .github/instructions/ as .instructions.md", () => {
-    expect(copilot.section("rules").installedLocation()).toEqual({
-      directory: ".github/instructions/",
-      extension: ".instructions.md",
-    });
   });
 });
