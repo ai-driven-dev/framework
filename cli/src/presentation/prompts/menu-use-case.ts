@@ -45,7 +45,7 @@ const INSTALLED_NODES: MenuNode[] = [
         description: "Scope the report to a single AI or IDE tool",
         command: ["doctor", "--tool"],
         inputPrompt:
-          "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, antigravity, vscode)",
+          "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, kiro, antigravity, vscode)",
       },
       {
         name: "Plugins",
@@ -66,7 +66,7 @@ const INSTALLED_NODES: MenuNode[] = [
         description: "Add a tool to this project",
         command: ["framework", "install", "--tool"],
         inputPrompt:
-          "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, antigravity, vscode)",
+          "Tool (e.g. claude, cursor, copilot, codex, opencode, kilo, kiro, antigravity, vscode)",
       },
       {
         name: "Remove",

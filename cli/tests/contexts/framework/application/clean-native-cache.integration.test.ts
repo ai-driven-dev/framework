@@ -13,6 +13,7 @@ import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kiro/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";

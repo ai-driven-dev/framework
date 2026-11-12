@@ -1,5 +1,6 @@
 import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../../../src/contexts/tools/domain/profiles/kiro/profile.js";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
@@ -14,6 +15,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";
 const KILO_BUILT = "/built/kilo";
+const KIRO_BUILT = "/built/kiro";
 
 function dist(): PluginDistribution {
   return new PluginDistribution({
@@ -275,6 +277,71 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
     expect(manifest.getToolFiles("kilo")[0]?.hash).toEqual(
       hasher.hash(await fs.readFile(configPath))
     );
+  });
+});
+
+describe("BuiltTreeMaterializationTranslator — kiro (integration)", () => {
+  // Kiro lists a skill only one level below `skills/`, so its flat skills are hyphen-prefixed
+  // like agents, not nested under the plugin's own segment.
+  it("copies Kiro's hyphen-prefixed skills and JSON agents, merges its hooks, and takes no other plugin's", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(`${KIRO_BUILT}/.kiro/skills/aidd-vcs-01-commit/SKILL.md`, "skill");
+    fs.setFile(`${KIRO_BUILT}/.kiro/skills/aidd-vcs-01-commit/references/x.md`, "ref");
+    fs.setFile(`${KIRO_BUILT}/.kiro/agents/aidd-vcs-helper.json`, "agent");
+    fs.setFile(`${KIRO_BUILT}/.kiro/hooks/aidd-vcs/update_memory.js`, "hook");
+    fs.setFile(`${KIRO_BUILT}/.kiro/hooks/aidd.json`, "every plugin's hooks");
+    fs.setFile(`${KIRO_BUILT}/.kiro/skills/aidd-dev-01-plan/SKILL.md`, "OTHER PLUGIN");
+
+    const manifest = Manifest.create();
+    manifest.addTool("kiro", "test", []);
+    const translator = new BuiltTreeMaterializationTranslator(
+      fs,
+      new DeterministicHasher(),
+      () => "/home/u",
+      fakeEnsureBuiltMarketplace(),
+      await makeRegistry()
+    );
+    const distribution = new PluginDistribution({
+      manifest: { name: "aidd-vcs", version: "1.0.0" },
+      format: "claude",
+      files: [],
+      components: {
+        commands: [],
+        agents: [],
+        rules: [],
+        skills: [],
+        mcp: [],
+        hooks: [
+          { relativePath: "hooks/hooks.json", content: sessionStartHooksJson() },
+          { relativePath: "hooks/update_memory.js", content: "hook" },
+        ],
+      },
+    });
+
+    await translator.addPlugin(
+      distribution,
+      "kiro",
+      { kind: "local", path: "/plugin-source" },
+      PROJECT_ROOT,
+      manifest,
+      "aidd-framework"
+    );
+
+    expect(fs.listUnder(PROJECT_ROOT).sort()).toStrictEqual(
+      [
+        `${PROJECT_ROOT}/.kiro/agents/aidd-vcs-helper.json`,
+        `${PROJECT_ROOT}/.kiro/hooks/aidd-vcs/update_memory.js`,
+        `${PROJECT_ROOT}/.kiro/hooks/aidd.json`,
+        `${PROJECT_ROOT}/.kiro/skills/aidd-vcs-01-commit/SKILL.md`,
+        `${PROJECT_ROOT}/.kiro/skills/aidd-vcs-01-commit/references/x.md`,
+      ].sort()
+    );
+    const hooks = JSON.parse(fs.getFile(`${PROJECT_ROOT}/.kiro/hooks/aidd.json`) ?? "null") as {
+      hooks: { name: string; trigger: string }[];
+    };
+    expect(hooks.hooks.map((hook) => `${hook.trigger} ${hook.name}`)).toEqual([
+      "SessionStart aidd-vcs-update_memory.js",
+    ]);
   });
 });
 

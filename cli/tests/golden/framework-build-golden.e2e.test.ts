@@ -28,6 +28,7 @@ const FLAT_TARGETS = [
   "codex",
   "opencode",
   "kilo",
+  "kiro",
   "antigravity",
 ] as const;
 
@@ -120,7 +121,7 @@ const captures = twoCaptures("fb-golden-det", (env) =>
   captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
 );
 
-describe.concurrent("Framework build golden — 11-cell matrix", () => {
+describe.concurrent("Framework build golden — 12-cell matrix", () => {
   afterAll(captures.cleanup);
 
   // Two full 9-cell builds measured just past the 60s default on a Windows runner, not a
@@ -137,7 +138,7 @@ describe.concurrent("Framework build golden — 11-cell matrix", () => {
     }
   }, 120_000);
 
-  it("every one of the 11 cells is byte-identical to its stored baseline", async () => {
+  it("every one of the 12 cells is byte-identical to its stored baseline", async () => {
     const captured = await captures.first();
 
     if (process.env.UPDATE_FRAMEWORK_GOLDEN === "1") {

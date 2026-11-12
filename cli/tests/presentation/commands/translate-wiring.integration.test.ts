@@ -7,6 +7,7 @@ import "../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../src/contexts/tools/domain/profiles/kiro/profile.js";
 import "../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
@@ -212,7 +213,7 @@ describe("aidd translate — the help surface", () => {
     ).toEqual([
       [
         "--to <target>",
-        "Conversion target (claude, cursor, copilot, codex, opencode, kilo, antigravity)",
+        "Conversion target (claude, cursor, copilot, codex, opencode, kilo, kiro, antigravity)",
         undefined,
       ],
       ["--out <dir>", "Output directory (marketplace dist or project root)", undefined],

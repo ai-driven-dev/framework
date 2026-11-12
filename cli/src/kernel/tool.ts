@@ -6,6 +6,7 @@ export type AiToolId =
   | "copilot"
   | "opencode"
   | "kilo"
+  | "kiro"
   | "codex"
   | "antigravity";
 export type IdeToolId = "vscode";
@@ -18,6 +19,7 @@ export const AI_TOOL_IDS: readonly AiToolId[] = [
   "copilot",
   "opencode",
   "kilo",
+  "kiro",
   "codex",
   "antigravity",
 ];

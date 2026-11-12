@@ -4,7 +4,7 @@
  * host was seen sending (the repository's hook-payload fixtures); where a case was never seen,
  * the test name says it is derived from a captured payload.
  * OpenCode and Kilo receive what their bridge sends, so they are read through the bridge in
- * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all six adapters here.
+ * `hooks-runtime-bridges.integration.test.ts`; garbage reaches all seven adapters here.
  */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -16,7 +16,7 @@ import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 // Beside this package, never the repository's: a mutation run mutates its own copy.
 const RUNTIME = join(import.meta.dirname, "..", "..", "..", "assets", "hooks-runtime");
 const PAYLOADS = join(REPOSITORY_ROOT, "scripts", "__tests__", "fixtures", "hook-payloads");
-const HOSTS = ["claude", "codex", "copilot", "cursor", "antigravity", "bridge"] as const;
+const HOSTS = ["claude", "codex", "copilot", "cursor", "antigravity", "kiro", "bridge"] as const;
 
 const require = createRequire(import.meta.url);
 const fs = require("node:fs") as typeof import("node:fs");
@@ -725,6 +725,45 @@ describe("Antigravity CLI", () => {
     const { payload } = sample("antigravity-SessionStart.json", 0);
     const { adapter } = read("antigravity", payload);
     adapter.answer({ level: 2, text: "x" });
+    adapter.continueTurn("x");
+
+    expect(printed).toStrictEqual([]);
+  });
+});
+
+describe("Kiro", () => {
+  it("reads SessionStart from its captured payload, its session id as the host spells it", () => {
+    const { payload } = sample("kiro-SessionStart.json", 0);
+
+    expect(read("kiro", payload).event).toStrictEqual({
+      host: "kiro",
+      event: "SessionStart",
+      files: [],
+      stopActive: false,
+      sessionId: `sess_${SESSION}`,
+      cwd: CWD,
+      raw: payload,
+    });
+  });
+
+  it.each(["UserPromptSubmit", "PreToolUse", "PostToolUse", "Stop"])(
+    "reads %s as no event: only SessionStart is delivered to it (derived from the captured SessionStart)",
+    (event) => {
+      const { payload } = sample("kiro-SessionStart.json", 0);
+
+      expect(read("kiro", { ...payload, hook_event_name: event }).event).toBe(undefined);
+    }
+  );
+
+  it("informs at SessionStart with the bare text the model was seen reading", () => {
+    const { adapter } = read("kiro", sample("kiro-SessionStart.json", 1).payload);
+    adapter.answer({ level: 1, text: "The session token is ZEBRA-4417." });
+
+    expect(printed).toStrictEqual(["The session token is ZEBRA-4417.\n"]);
+  });
+
+  it("continues no turn: no turn end is delivered to it", () => {
+    const { adapter } = read("kiro", sample("kiro-SessionStart.json", 0).payload);
     adapter.continueTurn("x");
 
     expect(printed).toStrictEqual([]);

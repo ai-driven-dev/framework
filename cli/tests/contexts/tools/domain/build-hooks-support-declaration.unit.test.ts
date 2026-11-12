@@ -15,6 +15,8 @@ import { buildCursorFlatContract } from "../../../../src/contexts/tools/domain/p
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { buildKiloFlatContract } from "../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import { buildKiroFlatContract } from "../../../../src/contexts/tools/domain/profiles/kiro/build.js";
+import { kiro } from "../../../../src/contexts/tools/domain/profiles/kiro/profile.js";
 import { buildOpencodeFlatContract } from "../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 
@@ -33,6 +35,7 @@ const FLAT_CONTRACTS: ReadonlyArray<[HooksDeclaringTool, () => ToolBuildContract
   [copilot, buildCopilotFlatContract],
   [codex, buildCodexFlatContract],
   [kilo, buildKiloFlatContract],
+  [kiro, buildKiroFlatContract],
   [antigravity, buildAntigravityFlatContract],
   [opencode, buildOpencodeFlatContract],
 ];

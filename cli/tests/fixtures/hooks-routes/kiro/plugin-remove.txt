@@ -1,0 +1,97 @@
+## project/.kiro/hooks/aidd-telemetry/catch-up.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/aidd.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/binding.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/claude-only.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/consent.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/context.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/declaration.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/git.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/hook-io.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/jsonl.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/lookup.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/presence.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/lib/tool.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/prompt-gate.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd-telemetry/session-start.cjs
+script, identical to the plugin source
+
+## project/.kiro/hooks/aidd.json
+{
+  "version": "<version>",
+  "hooks": [
+    {
+      "name": "aidd-telemetry-session-start.cjs",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/session-start.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --"
+      },
+      "timeout": 10
+    },
+    {
+      "name": "aidd-telemetry-catch-up.cjs",
+      "trigger": "SessionStart",
+      "action": {
+        "type": "command",
+        "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/catch-up.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --"
+      },
+      "timeout": 120
+    }
+  ]
+}
+
+
+# recorded
+project kiro aidd-telemetry scope=project: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "SessionStart",
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/session-start.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --",
+      "digest": "6197b13cea437e1a9d4478134a3147bd"
+    },
+    {
+      "event": "SessionStart",
+      "command": "node -e \"const p=require('path'),f=require('fs'),os=require('os');const r='.kiro/hooks/aidd-telemetry/catch-up.cjs';const s=[p.join(os.homedir(),r),p.resolve(r)].find(x=>f.existsSync(x));if(!s){console.error('aidd: hook script not found: '+r);process.exit(0)}const c=require('child_process').spawnSync(process.execPath,[s,...process.argv.slice(1)],{stdio:'inherit'});process.exit(c.status===null?1:c.status)\" --",
+      "digest": "d35a69dbb3ab363509babe543f1267ba"
+    }
+  ],
+  "scripts": {}
+}
+  dependents []
+project kiro nativeRegistrations pluginRefs null
+machine: no manifest
