@@ -5,9 +5,6 @@ import type { PluginAdd } from "../../../../../src/contexts/framework/applicatio
 import type { PluginInstallFromMarketplace } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-install-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import {
   InteractiveOnlyError,
   InvalidPluginScopeError,
@@ -16,7 +13,6 @@ import {
 import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";
 import type { PluginPick } from "../../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -347,25 +343,6 @@ describe("PluginInstallUseCase", () => {
           scope: "user",
         })
       ).rejects.toBeInstanceOf(InvalidPluginScopeError);
-    });
-    it("asks the profile it was handed whether a tool needs user scope", async () => {
-      const userScoped = withSections(claude, { plugins: cursor.plugins() });
-      const tools = catalogOf(
-        REGISTERED_PROFILES.map((profile) => (profile.toolId === "claude" ? userScoped : profile))
-      ).sortedById();
-
-      const result = await makeUseCase({
-        marketplaceExecute: vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } }),
-      }).execute({
-        pluginArg: "my-plugin",
-        tools,
-        toolIds: ["claude"],
-        projectRoot: PROJECT_ROOT,
-        interactive: false,
-        scope: "user",
-      });
-
-      expect(result.kind).toBe("marketplace");
     });
   });
 

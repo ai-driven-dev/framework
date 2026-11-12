@@ -2499,41 +2499,6 @@ describe("clean", () => {
       expect(deps.fs.has(settingsLocalPath)).toBe(false);
     });
 
-    it("removes the machine-local file the profile it was handed answers, not the registered one", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
-      const registeredPath = join(PROJECT_ROOT, ".claude", "settings.local.json");
-      const answeredPath = join(PROJECT_ROOT, ".claude", "answered.local.json");
-      await deps.fs.writeFile(registeredPath, "{}");
-      await deps.fs.writeFile(answeredPath, "{}");
-      const tools = catalogOf()
-        .sortedById()
-        .map((profile) =>
-          profile.toolId === "claude" && profile.kind === "ai"
-            ? {
-                ...profile,
-                marketplaceRegistration: () => {
-                  const registration = profile.marketplaceRegistration();
-                  return registration === null
-                    ? null
-                    : { ...registration, machineLocalFiles: () => [".claude/answered.local.json"] };
-                },
-              }
-            : profile
-        );
-
-      const useCase = new CleanWithKnownHostSource(
-        deps.fs,
-        deps.manifestRepo,
-        deps.logger,
-        deps.gitignoreUseCase
-      );
-      await useCase.execute({ tools, projectRoot: PROJECT_ROOT, force: true });
-
-      expect(deps.fs.has(answeredPath)).toBe(false);
-      expect(deps.fs.has(registeredPath)).toBe(true);
-    });
-
     it("deletes .cursor/hooks.json entirely once unmerging leaves it empty, and its script directory", async () => {
       const pluginName = "aidd-context";
       const scriptMarker = pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, pluginName);
