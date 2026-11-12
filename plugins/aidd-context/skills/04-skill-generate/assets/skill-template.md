@@ -1,8 +1,6 @@
 ---
 name: <skill-name>
 description: <description>
-argument-hint: <cases or consumed artifact>
-<risk step>
 ---
 
 # <Skill Name>
@@ -16,4 +14,4 @@ flowchart LR
 
 - <rule>
 
-> Fill every `<...>` and delete this line. Omit the risk step line and Transversal rules when empty.
+> Fill every `<...>` and delete this line. Omit Transversal rules when empty.
