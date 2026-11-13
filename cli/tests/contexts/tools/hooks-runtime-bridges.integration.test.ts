@@ -65,7 +65,12 @@ const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.ru
 
 afterEach(async () => {
   vi.unstubAllEnvs();
-  await Promise.all(created.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+  // A SessionStart hook runs detached in `project/`; Windows refuses to remove a live process's cwd (EBUSY).
+  await Promise.all(
+    created
+      .splice(0)
+      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }))
+  );
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
