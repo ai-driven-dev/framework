@@ -137,4 +137,15 @@ describe("RulesSection file acceptance", () => {
     expect(mdc.acceptsFileName("a.cursor.md")).toBe(true);
     expect(mdc.acceptsFileName("a.claude.md")).toBe(false);
   });
+
+  it("answers nothing when the probe stem sits in a directory and not in the file name", () => {
+    const cap = new RulesSection({
+      directory: ".claude/",
+      toolSuffix: ".claude.md",
+      ...stubParams,
+      buildInstallPath: () => ".x/aidd-installed-location-probe/rule.md",
+    });
+
+    expect(cap.installedLocation()).toBeNull();
+  });
 });

@@ -97,4 +97,21 @@ describe("wrapped command hooks", () => {
       wrappedCommandHooksScriptPath(target, "p", "other/a.sh"),
     ]).toEqual([".h/hooks/p/", ".h/hooks/p/a.sh", ".h/hooks/p/other/a.sh"]);
   });
+
+  it("keeps a path outside hooks/ as it is when no locator is given", () => {
+    const { content } = mergeWrappedCommandHooks(target, null, pluginHooks(`${ROOT}/b.sh`), "p");
+    const command = JSON.parse(content).p.SessionStart[0].command as string;
+
+    expect(Buffer.from(command.split(" ").at(-1) as string, "base64").toString()).toBe("./b.sh");
+  });
+
+  it("writes no timeout for a command that has none, and no handler for a group without hooks", () => {
+    const json = JSON.stringify({
+      hooks: { SessionStart: [{ hooks: [{ type: "command", command: "x" }] }, {}] },
+    });
+    const handlers = JSON.parse(merged(null, json).content).p.SessionStart;
+
+    expect(handlers).toHaveLength(1);
+    expect(handlers[0]).not.toHaveProperty("timeout");
+  });
 });

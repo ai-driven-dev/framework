@@ -447,3 +447,87 @@ describe("plugin sections that disagree", () => {
     );
   });
 });
+
+describe("what a refused profile says", () => {
+  const sayOf = (build: () => unknown) => refusalOf(build).message;
+  const shipped = (name: string, destination: string, delivery: "install" | "section") => ({
+    name,
+    content: {},
+    destination,
+    delivery,
+  });
+
+  it("names the tool and the directory it refuses", () => {
+    expect(sayOf(() => defineAiTool({ ...aiSpec, directory: "/abs/" }))).toBe(
+      "The profile of 'claude' breaks 'directory-not-relative': '/abs/' must be relative to the project root."
+    );
+    expect(sayOf(() => defineAiTool({ ...aiSpec, directory: ".x" }))).toBe(
+      "The profile of 'claude' breaks 'directory-without-trailing-slash': '.x' must end with '/'."
+    );
+  });
+
+  it("names the id no tool carries, for an AI tool and for an IDE tool", () => {
+    expect(sayOf(() => defineAiTool({ ...aiSpec, toolId: "emacs" }))).toBe(
+      "The profile of 'emacs' breaks 'unknown-tool-id': no AI tool is named 'emacs'."
+    );
+    expect(sayOf(() => defineIdeTool({ ...ideSpec, toolId: "claude" }))).toBe(
+      "The profile of 'claude' breaks 'unknown-tool-id': no IDE tool is named 'claude'."
+    );
+  });
+
+  it("names the section no tool can declare", () => {
+    expect(
+      sayOf(() =>
+        defineAiTool({ ...aiSpec, capabilities: () => ({ config: [settings], bogus: 1 }) })
+      )
+    ).toBe("The profile of 'claude' breaks 'unknown-section': 'bogus' is no section.");
+  });
+
+  it("says an AI tool needs a marketplace or a flat build contract", () => {
+    expect(sayOf(() => defineAiTool({ ...aiSpec, buildContracts: {} }))).toBe(
+      "The profile of 'claude' breaks 'no-build-contract': an AI tool declares a marketplace or a flat build contract."
+    );
+  });
+
+  it("names the shipped file declared twice, and the one no section writes", () => {
+    expect(
+      sayOf(() =>
+        defineAiTool({
+          ...aiSpec,
+          configAssets: [
+            shipped("a.json", ".x/a", "install"),
+            shipped("a.json", ".x/b", "install"),
+          ],
+        })
+      )
+    ).toBe("The profile of 'claude' breaks 'shipped-config-disagrees': 'a.json' is shipped twice.");
+    expect(
+      sayOf(() =>
+        defineAiTool({ ...aiSpec, configAssets: [shipped("a.json", ".x/a.json", "section")] })
+      )
+    ).toBe(
+      "The profile of 'claude' breaks 'shipped-config-disagrees': 'a.json' lands at .x/a.json, which no settings section writes."
+    );
+  });
+});
+
+describe("a profile that declares no plugin layout, no mcp and no activation", () => {
+  const bare = defineAiTool(aiSpec);
+
+  it("builds as a marketplace and shares no flat plugin mcp", () => {
+    expect(bare.frameworkBuildMode()).toBe("marketplace");
+    expect([bare.mcpConfig(), bare.flatPluginMcp()]).toStrictEqual([null, null]);
+  });
+
+  it("keeps plugin enablement machine-global", () => {
+    expect(bare.pluginEnablementIsMachineGlobal()).toBe(true);
+  });
+
+  it("places and owns a native tool's skills as nested ones", () => {
+    const native = defineAiTool({ ...aiSpec, capabilities: () => sectionsOf(nativePlugins()) });
+
+    expect(native.ownsFlatPath(".x/skills/p/plan/SKILL.md", "p")).toBe(true);
+    expect(native.ownsFlatPath(".x/skills/p-plan/SKILL.md", "p")).toBe(false);
+    expect(native.pluginEnablementIsMachineGlobal()).toBe(true);
+  });
+});

@@ -75,3 +75,11 @@ describe("buildAiddCommandFilePath", () => {
     expect(buildAiddCommandFilePath(".claude/", "plan.md")).toBe(".claude/commands/aidd/plan.md");
   });
 });
+
+describe("buildAiddCommandFilePath without a directory", () => {
+  it("does not read the leading digits of a bare file name as a phase", () => {
+    expect(buildAiddCommandFilePath(".claude/", "12-plan.md")).toBe(
+      ".claude/commands/aidd/12-plan.md"
+    );
+  });
+});

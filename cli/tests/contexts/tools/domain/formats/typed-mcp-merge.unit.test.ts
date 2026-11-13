@@ -253,6 +253,39 @@ describe("buildTypedMcpFlatConfig", () => {
   });
 });
 
+describe("buildTypedMcpFlatConfig merged list keys", () => {
+  const base = JSON.stringify({ instructions: ["rules/a.md", "rules/b.md"] });
+
+  it("appends the generated entries the existing list lacks, after the user's own", () => {
+    const config = JSON.parse(
+      buildTypedMcpFlatConfig(
+        base,
+        JSON.stringify({ instructions: ["rules/a.md", "mine.md"] }),
+        {},
+        ["instructions"]
+      )
+    ) as { instructions: string[] };
+
+    expect(config.instructions).toEqual(["rules/a.md", "mine.md", "rules/b.md"]);
+  });
+
+  it("writes the generated entries alone when no existing config has the list", () => {
+    const merged = (existing: string | null) =>
+      (
+        JSON.parse(buildTypedMcpFlatConfig(base, existing, {}, ["instructions"])) as {
+          instructions: string[];
+        }
+      ).instructions;
+
+    expect(merged(null)).toEqual(["rules/a.md", "rules/b.md"]);
+    expect(merged("{}")).toEqual(["rules/a.md", "rules/b.md"]);
+    expect(merged(JSON.stringify({ instructions: "mine.md" }))).toEqual([
+      "rules/a.md",
+      "rules/b.md",
+    ]);
+  });
+});
+
 describe("unmergeTypedMcp", () => {
   it("removes only the tracked entries, preserving other servers", () => {
     const existing = makeExisting({ plugin: LOCAL_SERVER, user: REMOTE_SERVER });
@@ -291,5 +324,33 @@ describe("unmergeTypedMcp", () => {
     expect(() =>
       unmergeTypedMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", ""]]))
     ).toThrow(/unproven.*plugin|plugin.*unproven/);
+  });
+
+  it("does not call a tracked server edited when the user already removed it", () => {
+    const merged = mergeTypedMcp(
+      makeExisting({ user: REMOTE_SERVER }),
+      makeIncoming({}),
+      new Map([["gone", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]),
+      hasher
+    );
+
+    expect(merged.editedPreviousEntries).toEqual([]);
+  });
+
+  it.each([
+    ["a prefix before the digest", `x${"a".repeat(32)}`],
+    ["a suffix after the digest", `${"a".repeat(32)}x`],
+  ])("refuses %s as an unproven digest", (_case, digest) => {
+    expect(() =>
+      unmergeTypedMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", digest]]))
+    ).toThrow("OpenCode MCP server 'plugin' has an unproven install digest; removal refused.");
+  });
+
+  it("names the server a user edited after install", () => {
+    const digest = hasher.hash(JSON.stringify(LOCAL_SERVER)).value;
+
+    expect(() =>
+      unmergeTypedMcp(makeExisting({ plugin: REMOTE_SERVER }), new Map([["plugin", digest]]))
+    ).toThrow("OpenCode MCP server 'plugin' was edited after install; removal refused.");
   });
 });

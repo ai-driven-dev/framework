@@ -3,7 +3,6 @@ import {
   NativeActivation,
   type NativeActivationSpec,
 } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
-import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
 
 const driven = { binary: "claude", enableVerb: "install", disableVerb: "uninstall" } as const;
 
@@ -26,14 +25,18 @@ describe("NativeActivation", () => {
   });
 
   it("refuses a declaration whose binary is empty", () => {
-    expect(() => new NativeActivation({ ...driven, binary: "" })).toThrow(CapabilityConfigError);
+    expect(() => new NativeActivation({ ...driven, binary: "" })).toThrow(
+      "A native activation declares an empty binary"
+    );
   });
 
   it("refuses sources read from a marketplace registry the tool does not declare", () => {
     expect(
       () =>
         new NativeActivation({ ...driven, marketplaceSources: { from: "marketplace-registry" } })
-    ).toThrow(CapabilityConfigError);
+    ).toThrow(
+      "A native activation reads its marketplace sources from a registry it does not declare"
+    );
   });
 
   it("accepts sources read from the marketplace registry it declares", () => {

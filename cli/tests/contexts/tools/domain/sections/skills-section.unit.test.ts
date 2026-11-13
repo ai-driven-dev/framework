@@ -114,3 +114,29 @@ describe("SkillsSection file acceptance", () => {
     ).toBe(false);
   });
 });
+
+describe("SkillsSection construction and equality details", () => {
+  const params = {
+    buildInstallPath: (f: string) => f,
+    convertFrontmatter: (fm: Record<string, unknown>) => fm,
+  };
+
+  it("names the two options it needs", () => {
+    expect(() => new SkillsSection(params)).toThrow(
+      "SkillsSection requires either agentsSkillsDirectory or directory"
+    );
+  });
+
+  it("differs when only the agents skills directory flag differs", () => {
+    const a = new SkillsSection({ ...params, directory: ".x/", agentsSkillsDirectory: true });
+    const b = new SkillsSection({ ...params, directory: ".x/" });
+    expect(a.equals(b)).toBe(false);
+  });
+
+  it("refuses any tool's suffix when it declares none of its own", () => {
+    expect(new SkillsSection({ ...params, directory: ".x/" }).acceptsFileName("a.cursor.md")).toBe(
+      false
+    );
+    expect(new SkillsSection({ ...params, directory: ".x/" }).acceptsFileName("a.md")).toBe(true);
+  });
+});

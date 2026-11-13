@@ -41,12 +41,11 @@ export function wrappedCommandHooksScriptPath(
 }
 
 function toHandler(hook: ProjectHookEntry): ProjectHookEntry {
-  const handler: ProjectHookEntry = {
+  return {
     type: "command",
     command: `node -e "${JSON_RESPONSE}" ${toBase64(hook.command)}`,
+    timeout: hook.timeout,
   };
-  if (hook.timeout !== undefined) handler.timeout = hook.timeout;
-  return handler;
 }
 
 function convert(

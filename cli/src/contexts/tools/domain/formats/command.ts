@@ -1,5 +1,5 @@
 function buildCommandName(fm: Record<string, unknown>, relativeFileName: string): string {
-  const phase = relativeFileName.split("/")[0]?.match(/^(\d+)/)?.[1];
+  const phase = relativeFileName.match(/^(\d+)/)?.[1];
   const baseName = String(fm.name ?? "");
   return phase ? `aidd:${phase}:${baseName}` : baseName;
 }
@@ -25,13 +25,11 @@ export function convertCommandFrontmatterNoHint(
 export function buildAiddCommandFilePath(dir: string, fileName: string): string {
   const slashIdx = fileName.indexOf("/");
   if (slashIdx !== -1) {
-    const phaseDir = fileName.slice(0, slashIdx);
-    const baseName = fileName.slice(slashIdx + 1);
-    const phase = phaseDir.match(/^(\d+)/)?.[1];
+    const phase = fileName.match(/^(\d+)/)?.[1];
     if (phase) {
-      return `${dir}commands/aidd/${phase}/${baseName}`;
+      return `${dir}commands/aidd/${phase}/${fileName.slice(slashIdx + 1)}`;
     }
   }
-  const baseName = fileName.split("/").at(-1) ?? fileName;
+  const baseName = fileName.slice(fileName.lastIndexOf("/") + 1);
   return `${dir}commands/aidd/${baseName}`;
 }

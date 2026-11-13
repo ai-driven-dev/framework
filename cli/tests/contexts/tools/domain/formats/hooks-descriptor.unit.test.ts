@@ -394,3 +394,26 @@ describe("a tool's plugins capability, as far as hooks go", () => {
     });
   });
 });
+
+describe("what a descriptor refusal says", () => {
+  it("names the plugin root token a native tool lacks", () => {
+    expect(() => nativeHooksSupport(routed({}))).toThrow("native mode requires a pluginRootToken.");
+  });
+
+  it("carries the trust notice of a project route, and none without one", () => {
+    const route = {
+      rootToken: ROOT,
+      file: FLAT_FILE,
+      project: {
+        pluginFile: "hooks.json",
+        sharedFile: ".tool/hooks.json",
+        scriptsDir: ".tool/hooks/",
+      },
+    };
+
+    expect(projectHooksSupport(routed({ ...route, trustNotice: "trust it" })).trustNotice).toBe(
+      "trust it"
+    );
+    expect(projectHooksSupport(routed(route))).not.toHaveProperty("trustNotice");
+  });
+});

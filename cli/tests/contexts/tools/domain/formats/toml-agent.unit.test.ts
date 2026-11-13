@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
-import { tomlAgentMarkdownToToml } from "../../../../../src/contexts/tools/domain/formats/toml-agent.js";
+import {
+  tomlAgentFrontmatter,
+  tomlAgentMarkdownToToml,
+} from "../../../../../src/contexts/tools/domain/formats/toml-agent.js";
 
 describe("tomlAgentMarkdownToToml()", () => {
   describe("name resolution", () => {
@@ -154,5 +157,12 @@ describe("the name a Codex agent falls back to", () => {
     ).toBe(
       'name = "aidd-dev-notes.md-helper"\ndescription = "Plans"\ndeveloper_instructions = "Body.\\n"\n'
     );
+  });
+
+  it("writes an empty name and description when the frontmatter holds none that is a string", () => {
+    expect(tomlAgentFrontmatter({ name: 5, description: 7 })).toEqual({
+      name: "",
+      description: "",
+    });
   });
 });

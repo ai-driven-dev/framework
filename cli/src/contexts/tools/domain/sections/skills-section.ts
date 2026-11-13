@@ -23,7 +23,7 @@ export class SkillsSection {
         "SkillsSection requires either agentsSkillsDirectory or directory"
       );
     }
-    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix ?? "");
+    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildInstallPath(fileName: string): string | null {
@@ -46,7 +46,7 @@ export class SkillsSection {
     if (this.#params.agentsSkillsDirectory) {
       return relativePath.startsWith(AGENTS_SKILLS_PREFIX);
     }
-    return relativePath.startsWith(this.#params.directory ?? "");
+    return relativePath.startsWith(this.#params.directory as string);
   }
 
   equals(other: SkillsSection): boolean {

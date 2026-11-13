@@ -23,26 +23,29 @@ const UNIVERSAL_FIELDS = [
   "disabled_tools",
 ] as const;
 
+/** An absent field stays `undefined`; the TOML writer leaves it out. */
+function universalFields(raw: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(UNIVERSAL_FIELDS.map((field) => [field, raw[field]]));
+}
+
 function buildStdioTomlEntry(raw: StdioServer & Record<string, unknown>): Record<string, unknown> {
-  const entry: Record<string, unknown> = { command: raw.command };
-  if (raw.args !== undefined) entry.args = raw.args;
-  if (raw.env !== undefined) entry.env = raw.env;
-  if (raw.cwd !== undefined) entry.cwd = raw.cwd;
-  for (const field of UNIVERSAL_FIELDS) {
-    if (raw[field] !== undefined) entry[field] = raw[field];
-  }
-  return entry;
+  return {
+    command: raw.command,
+    args: raw.args,
+    env: raw.env,
+    cwd: raw.cwd,
+    ...universalFields(raw),
+  };
 }
 
 function buildHttpTomlEntry(raw: HttpServer & Record<string, unknown>): Record<string, unknown> {
-  const entry: Record<string, unknown> = { url: raw.url };
-  if (raw.bearerTokenEnvVar !== undefined) entry.bearer_token_env_var = raw.bearerTokenEnvVar;
-  if (raw.http_headers !== undefined) entry.http_headers = raw.http_headers;
-  if (raw.env_http_headers !== undefined) entry.env_http_headers = raw.env_http_headers;
-  for (const field of UNIVERSAL_FIELDS) {
-    if (raw[field] !== undefined) entry[field] = raw[field];
-  }
-  return entry;
+  return {
+    url: raw.url,
+    bearer_token_env_var: raw.bearerTokenEnvVar,
+    http_headers: raw.http_headers,
+    env_http_headers: raw.env_http_headers,
+    ...universalFields(raw),
+  };
 }
 
 function mapServerToToml(raw: Record<string, unknown>): Record<string, unknown> {

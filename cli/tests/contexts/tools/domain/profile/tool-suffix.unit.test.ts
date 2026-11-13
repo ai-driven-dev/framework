@@ -42,4 +42,17 @@ describe("ToolSuffix", () => {
       expect(suffix.isForeign("a.cursor.md/plan.md")).toBe(false);
     });
   });
+
+  it("names the refused value and the expected shape", () => {
+    expect(() => new ToolSuffix("claude")).toThrow(
+      '"claude" is not a tool suffix, expected ".<tool>.md".'
+    );
+  });
+
+  it("keeps the directory of a name that has one and strips a bare name too", () => {
+    const suffix = new ToolSuffix(".claude.md");
+    expect(suffix.strip("plan.claude.md")).toBe("plan.md");
+    expect(suffix.isForeign("a/plan.claude.md")).toBe(true);
+    expect(suffix.isForeign("a.claude.md/plan.md")).toBe(false);
+  });
 });

@@ -33,12 +33,11 @@ export class RulesSection {
     const installed = this.buildInstallPath(`${RulesSection.#PROBE_STEM}${suffix}`);
     if (installed === null) return null;
     const lastSlash = installed.lastIndexOf("/");
-    const basename = installed.slice(lastSlash + 1);
-    const stemAt = basename.indexOf(RulesSection.#PROBE_STEM);
+    const stemAt = installed.indexOf(RulesSection.#PROBE_STEM, lastSlash + 1);
     if (stemAt === -1) return null;
     return {
       directory: installed.slice(0, lastSlash + 1),
-      extension: basename.slice(stemAt + RulesSection.#PROBE_STEM.length),
+      extension: installed.slice(stemAt + RulesSection.#PROBE_STEM.length),
     };
   }
 

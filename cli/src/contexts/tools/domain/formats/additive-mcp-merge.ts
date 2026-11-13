@@ -26,8 +26,7 @@ function parseExisting(
   full: Record<string, unknown>;
   servers: Record<string, unknown>;
 } {
-  if (content === null) return { full: {}, servers: {} };
-  const parsed = JSON.parse(content) as Record<string, unknown>;
+  const parsed = content === null ? {} : (JSON.parse(content) as Record<string, unknown>);
   return {
     full: parsed,
     servers: (parsed[serversKey] as Record<string, unknown>) ?? {},
