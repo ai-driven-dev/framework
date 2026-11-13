@@ -42,7 +42,7 @@ Each phase: write the test, see it red, implement, see it green, apply the liste
    - A set entry keeps today's compare copy shape exactly, emitted once any variant is decided. A lone set copy is byte-identical to today's compare copy.
    - Guards: a set alone gives the old copy (mutation: wrap single entries); records and sets mixed give a list (mutation: filter sets out); "all OK" never marks a variant (mutation: count set rows as remaining); revise without comment blocks the copy (mutation: drop the set check).
 6. **Delete compare.** Remove `drafts.compare`, `page.cjs`, `compareSet`, `COMPARE_USAGE`, compare's help; messages say "run showcase"; the set and copy format move to `help showcase`, with exit 1. Move or drop the compare tests; keep `keep` and D1 to D5 tests. Guard: `compare` exits 2 as an unknown command. Mutation: put it back in the command list.
-7. **Skills.** Engine references of 02 to 05 call `showcase --lang <code>`. Propose and write steps: "Write the showcase per engine. Fix what it reports." Choose steps read the entry with `set` and leave record entries; 06 leaves entries with `set`. 02's variants reference: palette values as hex, axes named in the user's plain words, no jargon. Guard on the hex rule. README drops `compare`.
+7. **Skills.** Engine references of 02 to 05 call `showcase --lang <code>`. Propose and write steps: "Write the showcase per engine. Fix what it reports." Choose steps read the entry with `set` and leave record entries; 06 leaves entries with `set`. 02's variants reference: palette values as hex, axes named in the user's plain words, no jargon. No test reads skill prose: checked by walking 02 on blank4. README drops `compare`.
 
 ## Lost
 
@@ -99,7 +99,7 @@ Asked by the person after the fifth blank walkthrough: three directions, then no
     - Prepare asks what the person starts from; a site is read with the host's fetch tool, screenshots by the model. No address is fetched without the person giving it.
     - Propose says, per axis, which reference it draws on; range far in round 1.
     - Choose reads picks, builds the mix, proposes round 2 close around it with picked axes locked; "go further" widens the range.
-    - Guard on the start question and on the lock rule.
+    - No test reads skill prose: checked by walking 02 on blank4.
 
 ### Limits
 
@@ -109,3 +109,7 @@ Asked by the person after the fifth blank walkthrough: three directions, then no
 ### Order
 
 Phases 4 and 5 land, then 6 and 7. The person walks 02 again on blank4 in the set page. Only then phases 8 to 11: that walk shows whether picks and rounds are wanted as written.
+
+## Later: tests that read skill prose
+
+The person judges today's suite heavy and coupled to skill wording. Engine tests stay; tests asserting sentences in a skill go. Sorted out with the skill-generate pass, at the end.
