@@ -19,6 +19,12 @@ const latestOf = (variants) => {
 /** The file a set's page is written to. */
 const setFileOf = (id) => `${SET_PREFIX}${id}.html`;
 
+/** A variant's slug as a title: its hyphens as spaces, its first letter capital. */
+const titleOf = (name) => {
+  const words = String(name).replaceAll("-", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
+
 const filled = (label, values) => label.replace(/\{(\w+)\}/g, (_, key) => values[key]);
 
 /** A markdown text cut at its `## ` headings: what comes before the first one has no heading. */
@@ -102,7 +108,7 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent }) {
     const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
     return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3>${documentOf(text)}</div>`] : [];
   });
-  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(variant.name)}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${files.concat(screens ?? []).join("")}</section>`;
+  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${files.concat(screens ?? []).join("")}</section>`;
 }
 
 /** The body of a set's page: its name, then the problems that keep it from being shown, else the paths the

@@ -75,7 +75,7 @@ describe("aidd-ui showcase sets", () => {
     it("shows one column per variant: its name, its intent and its axes", () => {
       const columns = columnsOf(pagesOf([SET()])["_set-layout.html"]);
       assert.deepEqual(columns.map((column) => column.name), ["a", "b"]);
-      assert.match(columns[0].html, /<h2>a<\/h2>/);
+      assert.match(columns[0].html, /<h2>A<\/h2>/);
       assert.match(columns[0].html, /Intent of a/);
       assert.match(columns[1].html, /<th>Tone<\/th><td><button[^>]*>bold<\/button><\/td>/);
       assert.match(columns[1].html, /<th>Density<\/th><td><button[^>]*>roomy<\/button><\/td>/);
@@ -226,6 +226,17 @@ describe("aidd-ui showcase sets", () => {
       assert.doesNotMatch(startOf(pages["home.html"]), /data-start/);
       const restore = /if \(([^)]*)stored\(STORE \+ "-open"\) === "1"\) show\(true\);/.exec(pages["_set-layout.html"]);
       assert.ok(restore && restore[1].includes('drawer.dataset.start !== "closed"'), "the restore of the open drawer stands down on that attribute");
+    });
+  });
+
+  describe("the name of a variant", () => {
+    it("reads as words in its column title, the slug kept in the data, the drawer and the choice", () => {
+      const set = SET();
+      set.variants[0].name = "affiche-de-quartier";
+      const html = pagesOf([set])["_set-layout.html"];
+      assert.match(html, /<section class="variant" data-variant="affiche-de-quartier"><h2>Affiche de quartier<\/h2>/);
+      assert.match(html, /data-variant="affiche-de-quartier" aria-pressed="false"/);
+      assert.match(html, /<li class="pvariant" data-variant="affiche-de-quartier"><span class="pick">affiche-de-quartier<\/span>/);
     });
   });
 
