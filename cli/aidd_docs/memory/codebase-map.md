@@ -30,7 +30,6 @@ src/
 │   │   │   │   └── content/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
-│   │   │   ├── recipes/
 │   │   │   ├── restore/
 │   │   │   ├── setup/
 │   │   │   ├── shared/
@@ -39,9 +38,13 @@ src/
 │   │   │   ├── formats/
 │   │   │   ├── manifest/
 │   │   │   ├── plugins/
-│   │   │   ├── ports/
-│   │   │   └── recipes/
+│   │   │   └── ports/
 │   │   └── infrastructure/
+│   ├── recipes/    # checking a recipe's structure, examples and local links
+│   │   ├── application/
+│   │   ├── domain/
+│   │   ├── infrastructure/
+│   │   └── ports/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
 │   │   ├── contract/
@@ -135,7 +138,7 @@ src/
 - `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it.
 - `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
-- `src/contexts/`: the eight bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
+- `src/contexts/`: the nine bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
 - `src/runtime/`: services that are not a context — git, assets, filesystem, the latest-release resolver — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.

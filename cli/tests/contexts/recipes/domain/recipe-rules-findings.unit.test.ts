@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
-import { inspectRecipe } from "../../../../../src/contexts/framework/domain/recipes/recipe-validation.js";
+import { inspectRecipe } from "../../../../src/contexts/recipes/domain/recipe-rules.js";
 
 const file = "publish.md";
 const example = "```bash\necho ready\n```";

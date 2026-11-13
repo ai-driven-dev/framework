@@ -53,6 +53,8 @@ const PURE_FOLDERS = [
   "src/contexts/auth/domain/**/*.ts",
   "src/contexts/auth/ports/**/*.ts",
   "src/contexts/auth/contract/**/*.ts",
+  "src/contexts/recipes/domain/**/*.ts",
+  "src/contexts/recipes/ports/**/*.ts",
   "src/shared/ports/**/*.ts",
 ] as const;
 const PURE_BUILTINS: ReadonlySet<string> = new Set(["path", "crypto"]);
@@ -181,6 +183,10 @@ describe("the guard itself", () => {
       "src/contexts/auth/ports",
       "src/contexts/update/application",
       "src/contexts/update/infrastructure",
+      "src/contexts/recipes/domain",
+      "src/contexts/recipes/ports",
+      "src/contexts/recipes/application",
+      "src/contexts/recipes/infrastructure",
       "src/contexts/distribution/infrastructure",
       "src/composition",
     ]) {
@@ -314,6 +320,25 @@ describe("the guard itself", () => {
       writeFileSync(
         join(planted, `src/contexts/update/${folder}/spawns.ts`),
         'import { execSync } from "node:child_process";\nexport const run = execSync;\n'
+      );
+    }
+    for (const folder of ["application", "infrastructure"]) {
+      writeFileSync(join(planted, `src/contexts/recipes/${folder}/reads.ts`), imports("node:fs"));
+    }
+    writeFileSync(join(planted, "src/contexts/recipes/domain/imports-fs.ts"), imports("node:fs"));
+    writeFileSync(join(planted, "src/contexts/recipes/ports/imports-fs.ts"), imports("node:fs"));
+    writeFileSync(
+      join(planted, "src/contexts/recipes/domain/reaches-framework.ts"),
+      'import type { Registry } from "../../framework/domain/registry.js";\nexport type Reached = Registry;\n'
+    );
+    writeFileSync(
+      join(planted, "src/contexts/framework/application/reaches-recipes.ts"),
+      'import type { Run } from "../../recipes/application/validate-recipes.js";\nexport type Reached = Run;\n'
+    );
+    for (const folder of ["domain", "application"]) {
+      writeFileSync(
+        join(planted, `src/presentation/display/reaches-recipes-${folder}.ts`),
+        `import type { Reached } from "../../contexts/recipes/${folder}/x.js";\nexport type Used = Reached;\n`
       );
     }
     writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
@@ -471,6 +496,32 @@ describe("the guard itself", () => {
     expect(findings).not.toContain(`src/contexts/update/infrastructure/spawns.ts:${rule}`);
   });
 
+  it("flags the recipes context's application reading the disk, and not its infrastructure", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    expect(findings, findings.join(", ")).toContain(
+      `src/contexts/recipes/application/reads.ts:${rule}`
+    );
+    expect(findings).not.toContain(`src/contexts/recipes/infrastructure/reads.ts:${rule}`);
+  });
+
+  it("flags recipes reaching framework, framework reaching recipes, and presentation reaching recipes beyond its commands", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    for (const file of [
+      "src/contexts/recipes/domain/reaches-framework.ts",
+      "src/contexts/framework/application/reaches-recipes.ts",
+      "src/presentation/display/reaches-recipes-domain.ts",
+    ]) {
+      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    }
+    expect(findings).not.toContain(
+      `src/presentation/display/reaches-recipes-application.ts:${rule}`
+    );
+  });
+
   it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
@@ -498,6 +549,8 @@ describe("the guard itself", () => {
       "src/contexts/auth/domain/pure/imports-bare-fs.ts",
       "src/contexts/auth/ports/imports-fs.ts",
       "src/contexts/auth/contract/imports-fs.ts",
+      "src/contexts/recipes/domain/imports-fs.ts",
+      "src/contexts/recipes/ports/imports-fs.ts",
       "src/shared/ports/imports-fs.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);

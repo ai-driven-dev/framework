@@ -24,7 +24,7 @@ vi.mock("../../../src/runtime/wiring/framework.js", () => ({
     updateAiToolsUseCase: { execute: updateAiTools },
     updateIdeToolsUseCase: { execute: updateIdeTools },
     listInstalledRulesUseCase: { execute: listInstalledRules },
-    validateRecipesUseCase: { execute: validateRecipes },
+    validateRecipes: { execute: validateRecipes },
     manifestRepo: { load: loadManifest },
     currentVersionProvider: { get: currentVersion },
   })),
