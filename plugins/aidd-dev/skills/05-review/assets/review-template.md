@@ -1,15 +1,15 @@
-# Review: {{the plan's title, else the task folder's slug}}
+# Review: {{plan title or task folder slug}}
 
-## Round {{the count of round headings, this one included}}
+## Round {{round count}}
 
 - Diff: `{{base}}...{{short sha of HEAD}}`
 - Uncommitted changes: {{yes | no}}
-- Axes: {{the axes that ran}}
+- Axes: {{axes that ran}}
 - Verdict: {{approve | changes-requested | blocked}}, because {{what sets it}}
 
 ### Criteria
 
-- [x] {{criterion met}} — {{file:line, or the run record}}
+- [x] {{criterion met}} — {{file:line or run record}}
 - [ ] {{criterion unmet}} — {{gap}}
 - Unverified at runtime: {{criterion}} — {{what a run would show}}
 - Out of the diff: {{phase-name}} ({{n}} criteria)
@@ -28,6 +28,7 @@
 
 <!--
 - Append one round per pass, never rewrite an earlier one.
+- Set the round count to the number of round headings, this one included.
 - Replace every `{{...}}` and delete every comment.
 - Leave out what has nothing to hold.
 -->
