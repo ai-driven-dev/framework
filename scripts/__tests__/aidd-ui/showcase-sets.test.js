@@ -293,6 +293,36 @@ describe("aidd-ui showcase sets", () => {
     });
   });
 
+  describe("the large view of a screen", () => {
+    const look = () => SET({ variants: [{ ...variant("a", "calm", []), axes: [["Palette", "#0b0f14 #e8eef3 #7fd4f2"]] }, { ...variant("b", "bold", []), axes: [["Palette", "#ffffff #111111 #cc0000"]] }] });
+
+    it("opens from a button of each column in a dialog with previous and next, in the language", () => {
+      for (const lang of ["en", "fr"]) {
+        const html = pagesOf([look()], { lang })["_set-layout.html"];
+        const dialog = html.match(/<dialog id="large"[^>]*>([\s\S]*?)<\/dialog>/);
+        assert.ok(dialog, "the dialog");
+        assert.match(dialog[1], new RegExp(`<button type="button" data-step="-1"[^>]*>${LABELS[lang].previousVariant}</button>`));
+        assert.match(dialog[1], new RegExp(`<button type="button" data-step="1"[^>]*>${LABELS[lang].nextVariant}</button>`));
+        assert.match(dialog[1], /<iframe/);
+        assert.deepEqual(columnsOf(html).map((column) => column.html.match(new RegExp(`<button type="button" class="large" data-variant="[^"]+">${LABELS[lang].large}</button>`))?.length), [1, 1]);
+      }
+      assert.deepEqual([LABELS.en.large, LABELS.fr.large], ["View large", "Voir en grand"]);
+    });
+
+    it("gives the dialog its script: modal, desktop width, scaled to the window, stepping across the columns of the round", () => {
+      const html = pagesOf([look()])["_set-layout.html"];
+      assert.match(html, /showModal\(\)/);
+      assert.match(html, /1280/);
+    });
+
+    it("has neither dialog nor button when the preview is the fallback", () => {
+      const set = SET();
+      const html = pagesOf([set])["_set-layout.html"];
+      assert.doesNotMatch(html, /<dialog/);
+      assert.doesNotMatch(html, /class="large"/);
+    });
+  });
+
   describe("the words", () => {
     it("are the same keys in both languages, plain in French", () => {
       for (const key of ["choose", "desktop", "mobile", "same", "keep", "discard"]) assert.ok(LABELS.en[key] && LABELS.fr[key], key);

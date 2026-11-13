@@ -108,6 +108,7 @@ function framesOf({ variant, file, tokens, labels }) {
   return `<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3><div class="frames">${SIZES.map((size) => frameOf({ variant, path: file.path, doc, label: labels[size[0]], size })).join("")}</div></div>`;
 }
 
+const DESKTOP = SIZES.find(([size]) => size === "desktop");
 const MOBILE = SIZES.find(([size]) => size === "mobile");
 
 /** The one screen a column shows: the first dressed wireframe in a mobile frame, and the document of each
@@ -132,8 +133,15 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent }) {
     return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3>${documentOf(text)}</div>`] : [];
   });
   const full = documents.length ? `<details class="fulltext"><summary>${escaped(labels.full)}</summary>${documents.join("")}</details>` : "";
-  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${renders.concat(screens ?? [], full).join("")}</section>`;
+  const large = screens ? `<button type="button" class="large" data-variant="${escaped(variant.name)}">${escaped(labels.large)}</button>` : "";
+  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${renders.concat(screens ?? [], large, full).join("")}</section>`;
 }
+
+/** The dialog that shows the screen of a variant at desktop width, one script for all the columns. */
+const largeOf = (labels) => {
+  const [, width, height] = DESKTOP;
+  return `<dialog id="large" aria-label="${escaped(labels.large)}" data-width="${width}" data-height="${height}"><div class="large-head"><button type="button" data-step="-1">${escaped(labels.previousVariant)}</button><strong id="large-title"></strong><button type="button" data-step="1">${escaped(labels.nextVariant)}</button><button type="button" class="close" id="large-close" aria-label="${escaped(labels.close)}">&times;</button></div><div class="large-fit"><iframe title="${escaped(labels.large)}"></iframe></div></dialog>`;
+};
 
 /** The body of a set's page: its name, then the problems that keep it from being shown, else the paths the
  * variants share and one column per variant. */
@@ -145,6 +153,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
   }
   const rounds = [...new Set(set.variants.map((variant) => variant.round ?? 1))].sort((a, b) => a - b);
   const options = wireframes.map((wireframe) => `<option value="${escaped(wireframe.path)}">${escaped(wireframe.path)}</option>`).join("");
+  const dressed = wireframes.length && set.variants.some(lookOf);
   const note = wireframes.length && set.variants.some(lookOf) ? `<div class="preview-bar"><p class="preview-note">${escaped(labels.preview)}</p><label class="screen-pick">${escaped(labels.screen)} <select id="screen-pick">${options}</select></label></div>` : "";
   const roundBody = (round) => {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
@@ -154,7 +163,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     const body = [same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
   };
-  return [head, note, ...rounds.map(roundBody)].filter(Boolean).join("\n");
+  return [head, note, ...rounds.map(roundBody), dressed ? largeOf(labels) : ""].filter(Boolean).join("\n");
 }
 
 /** The look of a set's page, added to the shell's. */
@@ -189,6 +198,13 @@ const STYLE = `
 .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin: 0 0 var(--s4); }
 .screen-pick { font-size: var(--t-sm); color: var(--muted); }
 .preview-note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
+.large { align-self: flex-start; }
+#large { padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r3); max-inline-size: 96vw; background: var(--surface); }
+#large::backdrop { background: rgba(24, 24, 20, 0.5); }
+.large-head { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); }
+.large-head strong { flex: 1; text-align: center; }
+.large-fit { position: relative; overflow: hidden; margin-inline: auto; }
+.large-fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: #fff; }
 .fulltext > summary { cursor: pointer; font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
 .fulltext[open] > summary { margin-bottom: var(--s3); }
 .same { margin: 0; color: var(--muted); font-size: var(--t-sm); }
@@ -217,6 +233,36 @@ function fitFrames() {
 }
 fitFrames();
 window.addEventListener("resize", fitFrames);
+const large = document.getElementById("large");
+if (large) {
+  const frame = large.querySelector("iframe");
+  const box = large.querySelector(".large-fit");
+  const width = Number(large.dataset.width);
+  const height = Number(large.dataset.height);
+  let column = null;
+  const round = () => [...column.closest(".variants").querySelectorAll(".variant")].filter((each) => each.querySelector(".screen"));
+  function showLarge() {
+    const scale = Math.min(1, (window.innerWidth * 0.9) / width, (window.innerHeight * 0.8) / height);
+    frame.style.width = width + "px";
+    frame.style.height = height + "px";
+    frame.style.transform = "scale(" + scale + ")";
+    box.style.width = Math.ceil(width * scale) + "px";
+    box.style.height = Math.ceil(height * scale) + "px";
+    frame.srcdoc = column.querySelector(".screen iframe").srcdoc;
+    document.getElementById("large-title").textContent = column.querySelector("h2").textContent;
+  }
+  document.querySelectorAll("button.large").forEach((button) => button.addEventListener("click", () => {
+    column = button.closest(".variant");
+    showLarge();
+    large.showModal();
+  }));
+  large.querySelectorAll("[data-step]").forEach((button) => button.addEventListener("click", () => {
+    const all = round();
+    column = all[(all.indexOf(column) + Number(button.dataset.step) + all.length) % all.length];
+    showLarge();
+  }));
+  document.getElementById("large-close").addEventListener("click", () => large.close());
+}
 const pick = document.getElementById("screen-pick");
 if (pick) pick.addEventListener("change", () => {
   for (const screen of document.querySelectorAll(".screen")) {
