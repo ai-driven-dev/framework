@@ -1,46 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { inMarketplace, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+
+const NATIVE = `---
+name: 'planner'
+description: 'Plans the work'
+model: 'm'
+reasoningEffort: 'high'
+include-custom-instructions: true
+---
+Plan before building.
+`;
 
 describe("copilot agents", () => {
-  describe("capabilities.agents.convertFrontmatter()", () => {
-    it("strips extra fields for agents sections — only name and description", () => {
-      const fm = { name: "alexia", description: "Agent", model: "opus" };
-      const result = copilot.capabilities.agents.convertFrontmatter(fm);
-      expect(result).toEqual({ name: "alexia", description: "Agent" });
+  describe("name resolution", () => {
+    it("installs a plugin agent under its declared name, with the repository instructions", () => {
+      expect(installed(copilot, NAMED_AGENT)).toBe(NATIVE);
     });
 
-    it("names an unnamed agent after its own file, whatever folders it sits in", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter(
-          { description: "Reviews code" },
-          "team/reviews/code-reviewer.md"
-        )
-      ).toStrictEqual({ name: "code-reviewer", description: "Reviews code" });
+    it("names an unnamed plugin agent after its file", () => {
+      expect(installed(copilot, UNNAMED_AGENT)).toBe(`---
+name: 'planner'
+description: 'Plans the work'
+include-custom-instructions: true
+---
+Plan before building.
+`);
     });
 
-    it("drops only the trailing .md from the file it names an agent after", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter(
-          { description: "Helps" },
-          "notes.md-helper.md"
-        )
-      ).toStrictEqual({ name: "notes.md-helper", description: "Helps" });
-    });
-
-    it("leaves an agent unnamed when neither its frontmatter nor a file name gives one", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter({ description: "Helps" })
-      ).toStrictEqual({
-        name: undefined,
-        description: "Helps",
+    it("keeps the declared name inside the plugin of a marketplace build", () => {
+      expect(inMarketplace(copilot, NAMED_AGENT)).toStrictEqual({
+        path: "agents/planner.md",
+        content: NATIVE,
       });
     });
+  });
 
-    it("drops a name that is not a string rather than writing it", () => {
-      expect(
-        copilot.capabilities.agents.convertFrontmatter({ name: 42, description: "Helps" }, "x.md")
-      ).toStrictEqual({ name: undefined, description: "Helps" });
-    });
+  it("keeps an explicit opt-out of the repository instructions", () => {
+    expect(
+      copilot.capabilities.agents.convertFrontmatter({
+        name: "reviewer",
+        "include-custom-instructions": false,
+      })
+    ).toHaveProperty("include-custom-instructions", false);
   });
 
   describe("capabilities.agents.buildInstallPath()", () => {

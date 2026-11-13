@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  codex,
-  mergeCodexHooksJson,
-} from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { buildCodexFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
+import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
 
 describe("codex hooks", () => {
   describe("capabilities.hooks", () => {
@@ -31,64 +32,47 @@ describe("codex hooks", () => {
   });
 });
 
-describe("mergeCodexHooksJson()", () => {
-  const AIDD_ENTRY = {
-    matcher: "startup|resume",
-    hooks: [
-      {
-        type: "command",
-        command: "node .aidd/scripts/update_memory.cjs",
-        statusMessage: "Syncing AIDD memory...",
-        timeout: 30,
-      },
-    ],
-  };
+describe("the telemetry plugin's hooks on both Codex routes", () => {
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a plugin's hooks name
+  const ROOT = "${CLAUDE_PLUGIN_ROOT}";
 
-  it("subscribes the memory refresh to a fresh session, on startup and on resume", () => {
-    expect(mergeCodexHooksJson("")).toBe(JSON.stringify({ SessionStart: [AIDD_ENTRY] }, null, 2));
-  });
+  it("writes the same entries as the plugin tree, so one trust review covers both", () => {
+    const shipped = readFileSync(
+      join(REPOSITORY_ROOT, "plugins", "aidd-telemetry", "hooks", "hooks.json"),
+      "utf8"
+    );
+    const hooks = buildCodexFlatContract().artifacts.hooks;
+    if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
+    const merged = hooks.hooksFile.merge(null, shipped, "aidd-telemetry", (path) => path).content;
 
-  it("keeps a user's own hooks and appends the memory refresh after them", () => {
-    const existing = JSON.stringify({
-      PreToolUse: [{ hooks: [{ type: "command", command: "user.sh" }] }],
-      SessionStart: [{ hooks: [{ type: "command", command: "user-start.sh" }] }],
-    });
-
-    expect(mergeCodexHooksJson(existing)).toBe(
-      JSON.stringify(
-        {
-          PreToolUse: [{ hooks: [{ type: "command", command: "user.sh" }] }],
-          SessionStart: [{ hooks: [{ type: "command", command: "user-start.sh" }] }, AIDD_ENTRY],
-        },
-        null,
-        2
-      )
+    expect(JSON.parse(merged)).toStrictEqual(
+      JSON.parse(shipped.replaceAll(`${ROOT}/hooks/`, "./.codex/hooks/aidd-telemetry/"))
     );
   });
+});
 
-  it("adds nothing on a second run over its own output", () => {
-    const once = mergeCodexHooksJson("");
-    expect(mergeCodexHooksJson(once)).toBe(once);
-  });
+describe("the Codex flat hooks file", () => {
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a plugin's hooks name
+  const ROOT = "${CLAUDE_PLUGIN_ROOT}";
 
-  it("finds its own hook inside any group of a user's SessionStart, and adds no second one", () => {
-    const existing = JSON.stringify(
-      {
-        SessionStart: [
-          { hooks: [{ type: "command", command: "user-start.sh" }] },
-          { hooks: [{ type: "command", command: "user-two.sh" }, AIDD_ENTRY.hooks[0]] },
+  it("keeps only the items that run a command, and skips a group that lists none", () => {
+    const shipped = JSON.stringify({
+      hooks: {
+        Stop: [
+          { matcher: "x" },
+          {
+            hooks: [{ type: "prompt", prompt: "check" }, { command: `node ${ROOT}/hooks/a.cjs` }],
+          },
         ],
       },
-      null,
-      2
-    );
+    });
+    const hooks = buildCodexFlatContract().artifacts.hooks;
+    if (!hooks.supported || hooks.hooksFile === undefined) throw new Error("no hooks file");
 
-    expect(mergeCodexHooksJson(existing)).toBe(existing);
-  });
-
-  it("starts over from a file it cannot read rather than failing the install", () => {
-    expect(mergeCodexHooksJson("{ not json")).toBe(
-      JSON.stringify({ SessionStart: [AIDD_ENTRY] }, null, 2)
-    );
+    expect(
+      JSON.parse(hooks.hooksFile.merge(null, shipped, "p", (path) => path).content)
+    ).toStrictEqual({
+      hooks: { Stop: [{ hooks: [{ command: "node ./.codex/hooks/p/a.cjs", type: "command" }] }] },
+    });
   });
 });

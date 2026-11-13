@@ -17,6 +17,7 @@ Where the project runs and how it ships: CI/CD, environments, and release.
 | `dependabot-auto-merge.yml` | merges dependency PRs that pass |
 | `close-finished-milestones.yml` | closes a milestone once its issues are |
 | `star-history.yml` | refreshes the README star chart |
+| `opencode.yml` | runs the OpenCode agent on a `/opencode` comment from the repository owner, nobody else |
 
 Push to `main` is automatic. Manual runs: `promote.yml`, `close-finished-milestones.yml`, `star-history.yml`.
 
@@ -39,7 +40,7 @@ Branch model in `vcs.md`, cadence and safety rules in [`RELEASE.md`](../../RELEA
 flowchart TD
     RP["release-please PR, auto-merged"] --> Tags["tags + umbrella release as draft"]
     Tags --> Back["back-merge.yml: main into next"]
-    Tags --> Jobs["attach: bundle, 9 distributions, plugin archives, video"]
+    Tags --> Jobs["attach: bundle, per-tool distributions, plugin archives, video"]
     Tags --> Cli["publish-cli: npm"]
     Jobs --> Pub["publish-release: draft to latest"]
     Cli --> Recap
@@ -62,6 +63,10 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 ## Gotchas
 
 - `build-per-tool` builds the CLI from this run's own checkout (`pnpm build`, then `node cli/dist/cli.js translate`), never a pinned published version: nothing to bump, nothing to go stale.
+
+## Local reload
+
+`make reload` installs every plugin into the installed hosts with `aidd setup --global` from this checkout, then syncs generic delegation guidance; details in `scripts/dev-sync.sh`.
 
 ## Monitoring
 

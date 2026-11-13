@@ -52,6 +52,23 @@ export async function userScopeFilesSafeToDelete(
   return allowed;
 }
 
+/** The plugin without the recorded files nothing stands at any more, which an update writes back.
+ * A dangling symlink counts as gone: the atomic write replaces the link, and never follows it. */
+export async function withoutMissingFiles(
+  fs: FileReader,
+  plugin: InstalledPlugin,
+  toolId: AiToolId,
+  homedir: string
+): Promise<InstalledPlugin> {
+  const boundary = resolvePluginsCapability(toolId)?.userPluginsBaseDir(homedir);
+  if (boundary === null || boundary === undefined) return plugin;
+  const present = new Map<string, string>();
+  for (const [relativePath, hash] of plugin.files) {
+    if (await fs.fileExists(join(boundary, relativePath))) present.set(relativePath, hash);
+  }
+  return plugin.withFiles(present);
+}
+
 /** Refuse a machine update if a new path, existing parent, or plugin directory escapes its declared base. */
 export async function assertUserScopeWriteBoundary(
   fs: FileReader,

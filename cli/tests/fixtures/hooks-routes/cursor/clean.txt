@@ -1,0 +1,49 @@
+no hook file
+
+# recorded
+project: no manifest
+machine cursor aidd-context scope=user: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs load",
+      "digest": "fa58cef07bb127e2fdf83bf433462395"
+    },
+    {
+      "event": "stop",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+      "digest": "8854ed7708a15016cb1713219a3d1101"
+    },
+    {
+      "event": "sessionEnd",
+      "command": "node ./.cursor/hooks/aidd-context/memory.cjs sync",
+      "digest": "8854ed7708a15016cb1713219a3d1101"
+    }
+  ],
+  "scripts": {}
+}
+  dependents []
+machine cursor aidd-telemetry scope=user: 0 hook files
+  projectHooks {
+  "entries": [
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-telemetry/session-start.cjs",
+      "digest": "daac9d4ea10fff9226f4b1604070a0f5"
+    },
+    {
+      "event": "sessionStart",
+      "command": "node ./.cursor/hooks/aidd-telemetry/catch-up.cjs",
+      "digest": "0a4ab6089fa2ff8a93f649eceff1a720"
+    },
+    {
+      "event": "beforeSubmitPrompt",
+      "command": "node ./.cursor/hooks/aidd-telemetry/prompt-gate.cjs",
+      "digest": "9cd664ac5f179902b97cbfd28ab6bb51"
+    }
+  ],
+  "scripts": {}
+}
+  dependents []
+machine cursor nativeRegistrations pluginRefs null

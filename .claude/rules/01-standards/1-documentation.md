@@ -10,11 +10,18 @@ paths:
 
 # Concise documentation
 
-- Edit durable, authored Markdown individually; exclude history, generated content and fixtures.
-- Architecture: components, boundaries, flows, invariants. README: purpose, usage, limits.
-- Use descriptive, hierarchical headings; include only relevant facts, once per document.
-- Preserve contracts, decisions, rationale, limits, procedures, linked anchors and generator markers. Keep memory safeguards self-contained; never invent performance requirements.
-- Remove filler, repetition, narrated history, dates, counters, ticket/run IDs, snapshots, temporary evidence and measured timings, ratios or comparisons.
-- Prefer diagrams for relationships and tables for roles; keep necessary prose concise. Retain required versions, constants and useful examples.
-- State actions and verification commands; link canonical sources for supporting details.
-- Read back: check section scope, preserved information, commands and links.
+- Scope: authored Markdown. Skip history, generated blocks and fixtures.
+- README: purpose, usage, limits. Architecture: components, boundaries, flows, invariants.
+- No prose: tables, lists, diagrams and code.
+- One sentence per bullet or cell, 25 words at most.
+- Tables for roles, diagrams for relationships.
+- One fact, one home: link the file that owns it.
+- Detail fits the place: a README links, the owner holds the detail.
+- Keep contracts, decisions, rationale, limits, procedures, anchors and generator markers.
+- Keep memory safeguards self-contained.
+- Keep required versions, constants and useful examples.
+- Drop filler, narrated history, plans, snapshots and measured timings or comparisons.
+- No counts, except one a generator rewrites or the owner keeps in sync.
+- Never invent a performance requirement.
+- State each action with its verification command.
+- Read back: section scope, facts kept, commands and links.

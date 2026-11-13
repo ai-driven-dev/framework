@@ -12,28 +12,6 @@ flowchart LR
 
 The root files load every session through the project memory block in each AI context file. `internal/` and `external/` load only when relevant.
 
-## Files
-
-Refreshed automatically by the memory hook. Do not edit by hand.
-
-<!-- files:start -->
-- [architecture.md](architecture.md)
-- [backlog.md](backlog.md)
-- [cli.md](cli.md)
-- [codebase-map.md](codebase-map.md)
-- [coding-assertions.md](coding-assertions.md)
-- [deployment.md](deployment.md)
-- [ecosystem.md](ecosystem.md)
-- [project-brief.md](project-brief.md)
-- [testing.md](testing.md)
-- [vcs.md](vcs.md)
-
-Read on demand:
-
-- [internal/decisions/a-price-table-is-the-destination-s.md](internal/decisions/a-price-table-is-the-destination-s.md)
-- [internal/decisions/measurement-may-reach-a-hosted-destination.md](internal/decisions/measurement-may-reach-a-hosted-destination.md)
-<!-- files:end -->
-
 ## Maintaining it
 
 The AI writes and refreshes these files. When you edit one by hand:

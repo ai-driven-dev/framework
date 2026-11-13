@@ -37,6 +37,7 @@ describe("copilot declarations the rest of the CLI reads", () => {
       disableVerb: "uninstall",
       sourceCheckVerb: "update",
       forceRemoveArgs: ["--force"],
+      uninstallLeavesRefDisabled: true,
     });
   });
 });

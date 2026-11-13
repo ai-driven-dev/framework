@@ -48,6 +48,7 @@ describe("claude plugins", () => {
       expect(claude.capabilities.plugins.nativeActivation).toStrictEqual({
         binary: "claude",
         scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+        userRemoveArgs: [],
         enableVerb: "install",
         disableVerb: "uninstall",
         upgradeVerb: "update",

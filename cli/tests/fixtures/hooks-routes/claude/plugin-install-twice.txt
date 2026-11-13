@@ -1,0 +1,177 @@
+second install threw DuplicatePluginError: Plugin 'aidd-context' is already installed.
+
+## project/.claude/plugins/aidd-context/hooks/hooks.json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs load",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs sync",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: sync project memory"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+
+## project/.claude/plugins/aidd-context/hooks/lib/host.cjs
+script, identical to the host adapter host-claude.cjs
+
+## project/.claude/plugins/aidd-context/hooks/lib/markdown.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-context/hooks/memory.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/catch-up.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/hooks.json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.cjs",
+            "statusMessage": "AIDD Telemetry: carry Claude session task",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/catch-up.cjs",
+            "statusMessage": "AIDD Telemetry: update measurement ledger",
+            "async": true,
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/prompt-gate.cjs",
+            "statusMessage": "AIDD Telemetry: check task declaration",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
+
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/binding.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/consent.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/context.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/git.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/presence.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/lib/tool.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+script, identical to the plugin source
+
+## project/.claude/plugins/aidd-telemetry/hooks/session-start.cjs
+script, identical to the plugin source
+
+## project/.claude/settings.json
+{
+  "respectGitignore": false,
+  "permissions": {
+    "deny": [
+      "Read(./node_modules/**)",
+      "Read(./.git/**)"
+    ]
+  }
+}
+
+# recorded
+project claude aidd-context scope=project: 4 hook files
+  .claude/plugins/aidd-context/hooks/hooks.json
+  .claude/plugins/aidd-context/hooks/lib/host.cjs
+  .claude/plugins/aidd-context/hooks/lib/markdown.cjs
+  .claude/plugins/aidd-context/hooks/memory.cjs
+  projectHooks null
+  dependents []
+project claude aidd-telemetry scope=project: 18 hook files
+  .claude/plugins/aidd-telemetry/hooks/catch-up.cjs
+  .claude/plugins/aidd-telemetry/hooks/hooks.json
+  .claude/plugins/aidd-telemetry/hooks/lib/aidd.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/binding.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/claude-only.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/codex-session-file.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/consent.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/context.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/declaration.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/git.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/hook-io.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/jsonl.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/lookup.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/presence.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/telemetry-dir.cjs
+  .claude/plugins/aidd-telemetry/hooks/lib/tool.cjs
+  .claude/plugins/aidd-telemetry/hooks/prompt-gate.cjs
+  .claude/plugins/aidd-telemetry/hooks/session-start.cjs
+  projectHooks null
+  dependents []
+project claude nativeRegistrations pluginRefs null
+machine: no manifest

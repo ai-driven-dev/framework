@@ -1,0 +1,108 @@
+## out-flat/.github/hooks/aidd-context.hooks.json
+{
+  "version": 1,
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node ./.github/hooks/aidd-context/memory.cjs load",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./.github/hooks/aidd-context/memory.cjs sync",
+        "timeout": 5
+      }
+    ]
+  }
+}
+
+
+## out-flat/.github/hooks/aidd-context/lib/host.cjs
+script, identical to the host adapter host-copilot.cjs
+
+## out-flat/.github/hooks/aidd-context/lib/markdown.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-context/memory.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry.hooks.json
+{
+  "version": 1,
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node ./.github/hooks/aidd-telemetry/session-start.cjs",
+        "timeout": 10
+      },
+      {
+        "type": "command",
+        "command": "node ./.github/hooks/aidd-telemetry/catch-up.cjs",
+        "timeout": 120
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "node ./.github/hooks/aidd-telemetry/prompt-gate.cjs",
+        "timeout": 30
+      }
+    ]
+  }
+}
+
+
+## out-flat/.github/hooks/aidd-telemetry/catch-up.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/aidd.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/binding.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/claude-only.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/codex-session-file.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/consent.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/context.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/declaration.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/git.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/hook-io.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/jsonl.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/lookup.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/presence.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/telemetry-dir.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/lib/tool.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/prompt-gate.cjs
+script, identical to the plugin source
+
+## out-flat/.github/hooks/aidd-telemetry/session-start.cjs
+script, identical to the plugin source

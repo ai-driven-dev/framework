@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
-const TEXT_EXTENSIONS = [".md", ".toml", ".txt"] as const;
+const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
 export default defineConfig({
   plugins: [textLoader(TEXT_EXTENSIONS)],
@@ -41,6 +41,8 @@ export default defineConfig({
           globals: false,
           environment: "node",
           testTimeout: 60000,
+          // A `beforeEach` that spawns git is slower than the 10s default on a loaded Windows runner.
+          hookTimeout: 60000,
           globalSetup: [
             "./tests/helpers/sweep-stale-temp-dirs.ts",
             "./tests/helpers/throwaway-profile.ts",

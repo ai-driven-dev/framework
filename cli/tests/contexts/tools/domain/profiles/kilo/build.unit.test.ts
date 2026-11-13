@@ -1,12 +1,36 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../../src/contexts/tools/domain/build-contract.js";
+import type {
+  ArtifactContract,
+  ConfigArtifact,
+  ConfigArtifactFile,
+} from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { KiloDualConfigError } from "../../../../../../src/kernel/errors.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 
 function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supported: true }> {
   if (!artifact.supported) throw new Error("artifact is declared unsupported");
   return artifact;
+}
+
+function configArtifactOf(): ConfigArtifact {
+  const step = buildKiloFlatContract().configArtifact;
+  if (step === undefined) throw new Error("kilo flat declares no config artifact");
+  return step;
+}
+
+function emit(input: {
+  builtPlugins?: readonly string[];
+  pluginMcp?: ReadonlyMap<string, string>;
+  existing?: Readonly<Record<string, string>>;
+  asset?: string | Record<string, unknown>;
+}): readonly ConfigArtifactFile[] {
+  return configArtifactOf().emit({
+    builtPlugins: input.builtPlugins ?? [],
+    pluginMcp: input.pluginMcp ?? new Map(),
+    existing: new Map(Object.entries(input.existing ?? {})),
+    present: new Set(),
+    assets: new Map([["kilo.json", input.asset ?? { $schema: "https://app.kilo.ai/config.json" }]]),
+  });
 }
 
 describe("buildKiloFlatContract", () => {
@@ -26,27 +50,37 @@ describe("buildKiloFlatContract", () => {
     expect(hooks.hooksBridge?.path("aidd-context")).toBe(".kilo/plugin/aidd-context-hooks.js");
   });
 
-  it("writes Kilo's project-local base config and Kilo-compatible MCP entries", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/source/plugins/aidd-dev/.mcp.json": JSON.stringify({
-        mcpServers: { context: { command: "node", args: ["server.js"] } },
-      }),
-    });
-    await buildKiloFlatContract().emitConfigArtifact?.(
-      ["aidd-dev"],
-      "/out",
-      "/source",
-      fs,
-      { validate: () => undefined },
-      {
-        loadConfigAsset: () => ({
-          $schema: "https://app.kilo.ai/config.json",
-        }),
-        loadSchema: () => ({}),
-      }
+  it("drops the name from a flat agent: Kilo names it after its file", () => {
+    const transform = supported(buildKiloFlatContract().artifacts.agents).transform;
+    expect(transform?.("---\nname: x\ndescription: Reads\n---\nBody.\n", "aidd-dev", "x.md")).toBe(
+      "---\ndescription: 'Reads'\nmode: 'subagent'\n---\nBody.\n"
     );
+  });
 
-    expect(JSON.parse(fs.getFile("/out/.kilo/kilo.jsonc") ?? "null")).toEqual({
+  it("reads every config file Kilo may keep, beside its artifacts and at the root", () => {
+    expect(configArtifactOf().reads([])).toStrictEqual([
+      ".kilo/kilo.json",
+      ".kilo/kilo.jsonc",
+      "kilo.json",
+      "kilo.jsonc",
+    ]);
+    expect(configArtifactOf().assets).toStrictEqual({ tool: "kilo", names: ["kilo.json"] });
+    expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([]);
+  });
+
+  it("writes Kilo's project-local base config and Kilo-compatible MCP entries", () => {
+    const files = emit({
+      builtPlugins: ["aidd-dev"],
+      pluginMcp: new Map([
+        [
+          "aidd-dev",
+          JSON.stringify({ mcpServers: { context: { command: "node", args: ["server.js"] } } }),
+        ],
+      ]),
+    });
+
+    expect(files.map((f) => f.path)).toStrictEqual([".kilo/kilo.jsonc"]);
+    expect(JSON.parse(files[0]?.content ?? "null")).toEqual({
       $schema: "https://app.kilo.ai/config.json",
       mcp: {
         "aidd-dev-context": { type: "local", command: ["node", "server.js"], enabled: true },
@@ -54,81 +88,73 @@ describe("buildKiloFlatContract", () => {
     });
   });
 
-  it("preserves existing JSONC configuration", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/out/.kilo/kilo.jsonc":
-        '{\n  // project-owned\n  "instructions": ["project.md"],\n  "theme": "dark",\n}',
-    });
-    const emit = buildKiloFlatContract().emitConfigArtifact;
-    const asset = {
-      loadConfigAsset: () => ({
-        $schema: "https://app.kilo.ai/config.json",
-      }),
-      loadSchema: () => ({}),
-    };
-    await emit?.([], "/out", "/source", fs, { validate: () => undefined }, asset);
-    const once = fs.getFile("/out/.kilo/kilo.jsonc");
-    await emit?.([], "/out", "/source", fs, { validate: () => undefined }, asset);
+  it("takes a bundled base config that comes as text as written", () => {
+    const files = emit({ asset: '{"$schema":"https://app.kilo.ai/config.json"}' });
 
-    expect(JSON.parse(once ?? "null")).toEqual({
+    expect(JSON.parse(files[0]?.content ?? "null")).toEqual({
+      $schema: "https://app.kilo.ai/config.json",
+    });
+  });
+
+  it("preserves existing JSONC configuration", () => {
+    const jsonc = '{\n  // project-owned\n  "instructions": ["project.md"],\n  "theme": "dark",\n}';
+    const once = emit({ existing: { ".kilo/kilo.jsonc": jsonc } });
+    const twice = emit({ existing: { ".kilo/kilo.jsonc": once[0]?.content ?? "" } });
+
+    expect(once.map((f) => f.path)).toStrictEqual([".kilo/kilo.jsonc"]);
+    expect(JSON.parse(once[0]?.content ?? "null")).toEqual({
       $schema: "https://app.kilo.ai/config.json",
       instructions: ["project.md"],
       theme: "dark",
     });
-    expect(fs.getFile("/out/.kilo/kilo.jsonc")).toBe(once);
-    expect(fs.getFile("/out/.kilo/kilo.json")).toBeUndefined();
+    expect(twice).toStrictEqual(once);
   });
 
-  it("preserves a user-owned MCP server on a generated-key collision", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/out/.kilo/kilo.jsonc": JSON.stringify({
-        mcp: {
-          "aidd-dev-context": { type: "local", command: ["user-server"] },
-        },
-      }),
-      "/source/plugins/aidd-dev/.mcp.json": JSON.stringify({
-        mcpServers: { context: { command: "node", args: ["server.js"] } },
-      }),
-    });
-    await buildKiloFlatContract().emitConfigArtifact?.(
-      ["aidd-dev"],
-      "/out",
-      "/source",
-      fs,
-      { validate: () => undefined },
-      {
-        loadConfigAsset: () => ({ $schema: "https://app.kilo.ai/config.json" }),
-        loadSchema: () => ({}),
-      }
-    );
+  it.each([
+    [".kilo/kilo.json", ".kilo/kilo.json"],
+    ["kilo.jsonc", "kilo.jsonc"],
+    ["kilo.json", "kilo.json"],
+  ])("writes into %s when the project already keeps it", (kept, written) => {
+    const files = emit({ existing: { [kept]: "{}" } });
 
-    const config = JSON.parse(fs.getFile("/out/.kilo/kilo.jsonc") ?? "null") as {
+    expect(files.map((f) => f.path)).toStrictEqual([written]);
+  });
+
+  it.each([".kilo/kilo.json", ".kilo/kilo.jsonc"])(
+    "prefers %s beside Kilo's artifacts over one at the root",
+    (beside) => {
+      const files = emit({ existing: { "kilo.json": "{}", [beside]: "{}" } });
+
+      expect(files.map((f) => f.path)).toStrictEqual([beside]);
+    }
+  );
+
+  it("preserves a user-owned MCP server on a generated-key collision", () => {
+    const files = emit({
+      builtPlugins: ["aidd-dev"],
+      pluginMcp: new Map([
+        [
+          "aidd-dev",
+          JSON.stringify({ mcpServers: { context: { command: "node", args: ["server.js"] } } }),
+        ],
+      ]),
+      existing: {
+        ".kilo/kilo.jsonc": JSON.stringify({
+          mcp: { "aidd-dev-context": { type: "local", command: ["user-server"] } },
+        }),
+      },
+    });
+
+    const config = JSON.parse(files[0]?.content ?? "null") as {
       mcp: Record<string, { command: string[] }>;
     };
     expect(config.mcp["aidd-dev-context"].command).toEqual(["user-server"]);
   });
 
-  it("rejects ambiguous Kilo config files without modifying either", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/out/.kilo/kilo.json": "{}",
-      "/out/.kilo/kilo.jsonc": "{}",
-    });
-    const emit = buildKiloFlatContract().emitConfigArtifact;
-
-    await expect(
-      emit?.(
-        [],
-        "/out",
-        "/source",
-        fs,
-        { validate: () => undefined },
-        {
-          loadConfigAsset: () => ({}),
-          loadSchema: () => ({}),
-        }
-      )
-    ).rejects.toThrow(KiloDualConfigError);
-    expect(fs.getFile("/out/.kilo/kilo.json")).toBe("{}");
-    expect(fs.getFile("/out/.kilo/kilo.jsonc")).toBe("{}");
+  it.each([
+    [".kilo/kilo.json", ".kilo/kilo.jsonc"],
+    ["kilo.json", "kilo.jsonc"],
+  ])("rejects ambiguous Kilo config files %s and %s", (json, jsonc) => {
+    expect(() => emit({ existing: { [json]: "{}", [jsonc]: "{}" } })).toThrow(KiloDualConfigError);
   });
 });

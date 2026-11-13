@@ -49,4 +49,18 @@ describe("PluginDistributionLoader", () => {
       forceRefresh: true,
     });
   });
+
+  it("fetches a global install's plugin in the given cache, outside the project", async () => {
+    const fetch = vi.fn().mockResolvedValue("/cache/fetched");
+    const loader = new PluginDistributionLoader(
+      { fetch },
+      { read: async () => dist },
+      () => "/config/cache"
+    );
+    const plugin = InstalledPlugin.fromMetadata("sample", "0.0.1", source, false, "user");
+
+    await loader.loadLatest(plugin, "/project");
+
+    expect(fetch).toHaveBeenCalledWith(source, "/config/cache", { forceRefresh: true });
+  });
 });

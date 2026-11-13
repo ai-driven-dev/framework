@@ -14,12 +14,12 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     reason: "deleting a manifest, then its empty directory, must not fail an uninstall midway",
   },
   "src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts": {
-    count: 2,
+    count: 3,
     reason:
       "the bridge text shipped into OpenCode: a hook that fails must never surface as a thrown error inside the host",
   },
   "tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.unit.test.ts": {
-    count: 2,
+    count: 3,
     reason: "asserts that same bridge text byte for byte",
   },
   "src/runtime/filesystem/file-adapter.ts": {

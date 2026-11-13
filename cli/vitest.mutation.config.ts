@@ -3,7 +3,7 @@ import { CheapestKillerFirst } from "./tests/helpers/mutation-sequencer.js";
 import { UnloadableFileAsFailedTest } from "./tests/helpers/unloadable-file-as-failed-test.js";
 import { textLoader } from "./tests/helpers/vitest-text-loader.js";
 
-const TEXT_EXTENSIONS = [".md", ".toml", ".txt"] as const;
+const TEXT_EXTENSIONS = [".md", ".toml", ".txt", ".cjs"] as const;
 
 /**
  * The projects a mutation run may use: the two that measure behaviour.
@@ -55,6 +55,7 @@ export default defineConfig({
           environment: "node",
           globalSetup: ["./tests/helpers/throwaway-profile.ts"],
           testTimeout: 60000,
+          hookTimeout: 60000,
         },
       },
     ],

@@ -7,23 +7,20 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   genericFlatAgentPath,
-  genericFlatHooksFile,
-  genericFlatHooksScriptPath,
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { stripAgentFrontmatter } from "../../formats/agent-frontmatter-strip.js";
-import { flattenCopilotHooksShape } from "../../formats/flat-hooks-merge.js";
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
   resolveDescription,
   resolveVersion,
   synthesizeClaudeStyleManifest,
-  transformClaudeAgent,
 } from "../../marketplace-catalog.js";
+import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
+import { COPILOT_HOOKS } from "./hooks.js";
 
 const OUTPUT_PLUGIN_MANIFEST_RELATIVE = ".plugin/plugin.json";
 
@@ -35,9 +32,6 @@ const FLAT_GITHUB_AGENTS_PREFIX = `${COPILOT_WORKSPACE_DIR}agents/`;
 /** Output prefix for skills in flat mode: .github/skills/<plugin>/<name>/ */
 const FLAT_GITHUB_SKILLS_PREFIX = `${COPILOT_WORKSPACE_DIR}skills/`;
 
-/** Output prefix for hooks in flat mode: .github/hooks/<plugin>.hooks.json */
-const FLAT_GITHUB_HOOKS_PREFIX = `${COPILOT_WORKSPACE_DIR}hooks/`;
-
 const FLAT_VSCODE_MCP_PATH = COPILOT_VSCODE_MCP_PATH;
 
 const FLAT_AGENT_OUTPUT_EXT = ".agent.md";
@@ -46,12 +40,12 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_PLUGIN_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: PLUGIN_ROOT_TOKEN,
+    pluginRootToken: COPILOT_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeClaudeStyleManifest(source, presence, {
         agentsField: true,
-        hooksField: true,
+        hooksField: COPILOT_HOOKS.manifestNamesHooks,
       }),
     manifestSchemaName: null, // Copilot does not use AJV for the plugin manifest
     artifacts: {
@@ -64,18 +58,14 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
         path: (_p, rel) => rel,
-        transform: transformClaudeAgent,
+        transform: transformCopilotAgent,
       },
       mcp: {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: (_p, rel) => rel,
-      },
+      hooks: pluginTreeHooksArtifact(COPILOT_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -115,23 +105,23 @@ function copilotFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(FLAT_GITHUB_SKILLS_PREFIX, plugin, rel.replace(/^skills\//, ""));
 }
 
-function copilotFlatHooksPath(plugin: string, rel: string): string {
-  const rest = rel.replace(/^hooks\//, "");
-  if (rest === `${plugin}.hooks.json`)
-    return genericFlatHooksFile(FLAT_GITHUB_HOOKS_PREFIX, plugin);
-  return genericFlatHooksScriptPath(FLAT_GITHUB_HOOKS_PREFIX, plugin, rest);
+function transformCopilotAgent(content: string, _plugin: string, outName: string): string {
+  const { frontmatter, body } = parseFrontmatter(content);
+  const rewrittenBody = rewriteRelativeLinks(body, {
+    currentFilePluginRelative: `agents/${outName}`,
+  });
+  return serializeFrontmatter(copilotAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
 function transformCopilotFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const stripped = stripAgentFrontmatter(frontmatter);
   const flatRelPath = copilotFlatAgentPath(plugin, `agents/${outName}`);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
   });
-  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...stripped, name: prefixedName }, rewrittenBody);
+  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter(copilotAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
 }
 
 function copilotFlatResolveTarget(plugin: string, rel: string): string {
@@ -156,7 +146,6 @@ export function buildCopilotFlatContract(): ToolBuildContract {
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },
-        ext: FLAT_AGENT_OUTPUT_EXT,
         path: copilotFlatAgentPath,
         transform: transformCopilotFlatAgent,
       },
@@ -168,12 +157,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: copilotFlatHooksPath,
-        hooksTransform: (rewrittenJson) => flattenCopilotHooksShape(rewrittenJson),
-      },
+      hooks: flatHooksArtifact(COPILOT_HOOKS, { tool: "copilot" }),
       rules: { supported: false },
       commands: { supported: false },
     },

@@ -11,9 +11,8 @@ flowchart LR
   source -->|"missing, empty, or ambiguous"| sourceStop([stop])
   gather -->|"no candidates"| gatherEnd([end])
   assess -->|"all covered"| assessEnd([end])
-  write -->|"memory or ADR"| sync
+  write -->|"memory or ADR"| writeEnd([end])
   write -->|"rule or skill"| handoff([handoff])
-  sync -->|"failure"| syncStop([stop])
 ```
 
 ## Actions
@@ -26,7 +25,6 @@ Run the flow above. Read only the next action file.
 | gather | read the origin and extract candidates |
 | assess | score, reconcile, show, and confirm |
 | write | write or hand off approved lessons |
-| sync | refresh memory references |
 
 ## Transversal rules
 

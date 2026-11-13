@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { homedir } from "node:os";
 import { describe, expect, it, vi } from "vitest";
 import { NativePluginCliAdapter } from "../../../../src/contexts/tools/infrastructure/native-plugin-cli-adapter.js";
 
@@ -77,6 +78,80 @@ describe("ClaudeCliAdapter — plugin enable/uninstall carry the requested scope
       "claude",
       ["plugin", "uninstall", "aidd-context@aidd-framework", "--scope", "user"],
       expect.anything()
+    );
+  });
+});
+
+describe("ClaudeCliAdapter — removing a user-scope marketplace deletes its registration", () => {
+  const adapter = () =>
+    new NativePluginCliAdapter("claude", {
+      scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
+      userRemoveArgs: [],
+    });
+
+  function listing(stdout: string, status = 0) {
+    mockSpawnSync.mockReset();
+    mockSpawnSync.mockImplementation((_binary, args) =>
+      (args as string[])[1] === "list" ? makeResult({ stdout, status }) : makeResult({})
+    );
+  }
+
+  const removeArgs = () => mockSpawnSync.mock.calls.at(-1)?.[1];
+
+  it("names no scope when no project uses it, from the home directory, so the registration goes too", () => {
+    listing('[{"id":"aidd-dev@aidd-framework","scope":"user"},{"id":"x@other","scope":"local"}]');
+
+    adapter().removeMarketplace("aidd-framework", "user");
+
+    expect(mockSpawnSync).toHaveBeenLastCalledWith(
+      "claude",
+      ["plugin", "marketplace", "remove", "aidd-framework"],
+      expect.objectContaining({ cwd: homedir() })
+    );
+  });
+
+  it("stays at user scope when a project installed from it, so that project keeps its plugins", () => {
+    listing('[{"id":"aidd-dev@aidd-framework","scope":"local","projectPath":"/p"}]');
+
+    adapter().removeMarketplace("aidd-framework", "user");
+
+    expect(removeArgs()).toEqual([
+      "plugin",
+      "marketplace",
+      "remove",
+      "aidd-framework",
+      "--scope",
+      "user",
+    ]);
+  });
+
+  it.each([
+    ["fails", "", 1],
+    ["answers no JSON", "not json", 0],
+  ])("stays at user scope when the list %s, never the wider removal", (_case, stdout, status) => {
+    listing(stdout, status);
+
+    adapter().removeMarketplace("aidd-framework", "user");
+
+    expect(removeArgs()).toEqual([
+      "plugin",
+      "marketplace",
+      "remove",
+      "aidd-framework",
+      "--scope",
+      "user",
+    ]);
+  });
+
+  it("keeps the project scope's own arguments, from the current directory", () => {
+    mockSpawnSync.mockReturnValue(makeResult({}));
+
+    adapter().removeMarketplace("aidd-framework", "project");
+
+    expect(mockSpawnSync).toHaveBeenCalledWith(
+      "claude",
+      ["plugin", "marketplace", "remove", "aidd-framework", "--scope", "local"],
+      expect.not.objectContaining({ cwd: expect.anything() })
     );
   });
 });

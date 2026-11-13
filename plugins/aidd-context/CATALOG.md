@@ -8,6 +8,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 - [`.claude-plugin`](#claude-plugin)
 - [`hooks`](#hooks)
+  - [`hooks/lib`](#hookslib)
 - [`skills`](#skills)
   - [`skills/00-onboard`](#skills00-onboard)
   - [`skills/01-bootstrap`](#skills01-bootstrap)
@@ -22,6 +23,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
   - [`skills/10-learn`](#skills10-learn)
   - [`skills/11-explore`](#skills11-explore)
   - [`skills/12-cook`](#skills12-cook)
+  - [`skills/13-access-check`](#skills13-access-check)
 
 ---
 
@@ -36,7 +38,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | File |
 |------|
 | [hooks.json](hooks/hooks.json) |
-| [update_memory.js](hooks/update_memory.js) |
+| [memory.cjs](hooks/memory.cjs) |
+
+#### `hooks/lib`
+
+| File |
+|------|
+| [host.cjs](hooks/lib/host.cjs) |
+| [markdown.cjs](hooks/lib/markdown.cjs) |
 
 ### `skills`
 
@@ -71,21 +80,17 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-scan.md](skills/02-project-memory/actions/01-scan.md) | - |
+| `actions` | [01-read.md](skills/02-project-memory/actions/01-read.md) | - |
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
-| `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
-| `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [report.md](skills/02-project-memory/assets/report.md) | - |
-| `assets` | [scan-summary.md](skills/02-project-memory/assets/scan-summary.md) | - |
-| `references` | [capability-signals.md](skills/02-project-memory/references/capability-signals.md) | - |
+| `actions` | [03-wire.md](skills/02-project-memory/actions/03-wire.md) | - |
+| `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
-| `references` | [memory-destinations.md](skills/02-project-memory/references/memory-destinations.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
-| `references` | [structure.md](skills/02-project-memory/references/structure.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Build the project's memory of its architecture, conventions, and decisions, and wire it into your AI tools. Use when the user wants to set up or refresh project memory, or rewire it into a tool. Not for editing one existing memory file.` |
+| `scripts` | [project-memory.cjs](skills/02-project-memory/scripts/project-memory.cjs) | - |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or wire the project memory of its architecture, conventions and decisions into your AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.` |
 
 #### `skills/03-context-generate`
 
@@ -123,6 +128,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [rule-discovery.md](skills/05-rule-generate/references/rule-discovery.md) | - |
 | `references` | [rule-publication.md](skills/05-rule-generate/references/rule-publication.md) | - |
+| `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
 | `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`
@@ -178,7 +184,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-gather.md](skills/10-learn/actions/02-gather.md) | - |
 | `actions` | [03-assess.md](skills/10-learn/actions/03-assess.md) | - |
 | `actions` | [04-write.md](skills/10-learn/actions/04-write.md) | - |
-| `actions` | [05-sync.md](skills/10-learn/actions/05-sync.md) | - |
 | `assets` | [adr-template.md](skills/10-learn/assets/adr-template.md) | - |
 | `assets` | [learning-packet.md](skills/10-learn/assets/learning-packet.md) | - |
 | `assets` | [recommendation-table.md](skills/10-learn/assets/recommendation-table.md) | - |
@@ -188,7 +193,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [gather-protocol.md](skills/10-learn/references/gather-protocol.md) | - |
 | `references` | [review-protocol.md](skills/10-learn/references/review-protocol.md) | - |
 | `references` | [sources.md](skills/10-learn/references/sources.md) | - |
-| `references` | [sync-arguments.md](skills/10-learn/references/sync-arguments.md) | - |
 | `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings. Use when the user wants to remember, record, or formalize a decision, convention, lesson, pitfall, reusable workflow, or review finding. Not for preferences or temporary notes.` |
 
 #### `skills/11-explore`
@@ -217,4 +221,12 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [recipe-locations.md](skills/12-cook/references/recipe-locations.md) | - |
 | `references` | [research-playbook.md](skills/12-cook/references/research-playbook.md) | - |
 | `-` | [SKILL.md](skills/12-cook/SKILL.md) | `Manages project recipes and practical guides. Use when the user wants to find a recipe, document a technique, research improvements, follow an existing guide, or check that its steps are usable.` |
+
+#### `skills/13-access-check`
+
+| Group | File | Description |
+|-------|------|---|
+| `actions` | [01-check.md](skills/13-access-check/actions/01-check.md) | - |
+| `assets` | [access-report.md](skills/13-access-check/assets/access-report.md) | - |
+| `-` | [SKILL.md](skills/13-access-check/SKILL.md) | `Check that the assistant can reach the services recorded in project memory, read-only. Use when the user wants to verify or diagnose service access. Not for installing or configuring services.` |
 

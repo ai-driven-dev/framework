@@ -1,6 +1,7 @@
 import { stat } from "node:fs/promises";
 // `FRAMEWORK_BUILD_REGISTRY` is built at module load from the tool registry, so this module
 // registers the profiles itself rather than rely on import order elsewhere.
+import "../../contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
@@ -79,10 +80,9 @@ function frameworkBuildFactoryFor(
   return (deps, ctx) =>
     buildFrameworkUseCase(
       deps,
-      (d, av) =>
+      (d) =>
         new FlatBuildStrategy(
           d.fs,
-          av,
           d.assetProvider,
           buildContract(),
           ctx.force,

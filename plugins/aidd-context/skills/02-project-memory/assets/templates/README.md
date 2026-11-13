@@ -1,17 +1,36 @@
 # Project AI Docs
 
-Structured context the AI assistant reads to work on this project, so it does not rediscover the codebase each session. AIDD generates this folder and keeps it in sync.
+## What the AI knows
 
-## What lives here
+| Folder | Holds | Loaded |
+| --- | --- | --- |
+| `memory/` | the architecture, conventions and decisions, one file per concern | every session |
+| `memory/internal/` | decision records and workflow notes | when a task needs it |
+| `memory/external/` | outside documentation | when you ask |
+| `rules/` | coding standards, published to each AI tool's rules | automatically |
 
-- `memory/`: the project memory bank loaded each session. See [`memory/README.md`](memory/README.md).
-- `recipes/`: project-specific how-to recipes created or updated by the cook skill.
-- `GUIDELINES.md`: how this team operates the AI on this project.
-- `CONTRIBUTING.md`: how to add or change project context.
-- `tasks/`: specs, plans, and run summaries, created as work happens.
+## What it produces
 
-The project memory block inside each AI context file (`CLAUDE.md`, `AGENTS.md`, and the rest) is generated and kept in sync, never edited by hand. To change what the AI sees, add or remove files under `memory/`. See [`memory/README.md`](memory/README.md) for the load tiers and the current file index.
+| Path | Holds |
+| --- | --- |
+| `tasks/` | specs, plans and reviews, one folder per piece of work |
+| `backlog/` | epics, user stories, tasks, spikes and defects |
+| `product/` | product briefs |
+| `ui/` | the design system |
+| `recipes/` | how-to sheets |
+| INSTALL.md | the install guide of a new project |
 
-## The framework
+## Keep it current
 
-AIDD ships skills, agents, rules, and generators as a plugin marketplace. For the full catalog, the install guide, and the end-to-end workflow, see the framework docs: <https://github.com/ai-driven-dev/framework>.
+| When | What happens |
+| --- | --- |
+| A turn ends | the memory lines it wrote are checked, a lost line is named, and the AI is told what to fix |
+| A session starts or a turn ends | the context block of each AI context file lists the memory files |
+| You add a line to the context block | kept, and the block stops updating until you remove it |
+| The memory drifts from the code | run the project-memory skill, `aidd-context:02-project-memory` |
+
+## Learn more
+
+- [Get started](https://github.com/ai-driven-dev/framework#get-started)
+- [Guides](https://github.com/ai-driven-dev/framework/blob/main/docs/GUIDES.md)
+- [Concepts](https://github.com/ai-driven-dev/framework/blob/main/docs/CONCEPTS.md)

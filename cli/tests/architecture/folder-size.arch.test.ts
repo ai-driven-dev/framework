@@ -21,10 +21,6 @@ const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
   // lets a command's rendering be asserted without running the binary. Fewer files would mean
   // one module rendering several commands, which is what put the printing in the actions.
   { path: "src/presentation/display", count: 15 },
-  // `marketplace-source-conflict.ts` is read by both the sync-time guard and `doctor`, and no
-  // grouping here fits it: the marketplace files beside it are each a tool-build concern it is
-  // not, and moving one out to make room is the shuffle this rule refuses.
-  { path: "src/contexts/tools/domain", count: 11 },
 
   // `marketplace-source-drift.ts` decides a version/migration drift, a fact about aidd's own
   // migration: that concern belongs to `framework`, not `tools`.

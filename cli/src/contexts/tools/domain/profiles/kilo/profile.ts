@@ -1,8 +1,9 @@
+import { join } from "node:path";
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
+import { flatGlobalFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import type {
@@ -19,18 +20,14 @@ import {
   convertCommandFrontmatterNoHint,
   stripToolSuffix,
 } from "../../formats/command.js";
+import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
 import { buildKiloFlatContract } from "./build.js";
+import { KILO_HOOKS } from "./hooks.js";
+import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import {
-  KILO_DIRECTORY,
-  KILO_HOOKS_DIR,
-  KILO_PLUGIN_DIR,
-  KILO_PLUGIN_ENTRY_BASENAME,
-  makeKiloHooksBridgePath,
-  resolveKiloConfigPath,
-} from "./kilo-paths.js";
+import { KILO_DIRECTORY, resolveKiloConfigPath } from "./kilo-paths.js";
 
 const TOOL_SUFFIX = ".kilo.md";
 
@@ -50,7 +47,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       directory: KILO_DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       format: "markdown",
-      convertFrontmatter: (fm) => ({ description: fm.description, mode: "subagent" }),
+      frontmatter: kiloAgentFrontmatter,
     }),
     skills: new SkillsCapability({
       directory: KILO_DIRECTORY,
@@ -88,14 +85,11 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
     plugins: new PluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
-      acceptsHooks: true,
-      flatHooksDir: KILO_HOOKS_DIR,
-      flatHooksLoaderEntry: { dir: KILO_PLUGIN_DIR, baseName: KILO_PLUGIN_ENTRY_BASENAME },
-      flatHooksBridge: {
-        generate: generateKiloHooksBridge,
-        path: makeKiloHooksBridgePath,
-        skipIfSourceHas: KILO_PLUGIN_ENTRY_BASENAME,
+      globalFiles: {
+        dir: (homedir) => join(homedir, ".config", "kilo"),
+        map: flatGlobalFilePath(KILO_DIRECTORY),
       },
+      ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
   },
 
