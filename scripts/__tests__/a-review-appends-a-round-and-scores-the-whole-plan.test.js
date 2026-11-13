@@ -43,7 +43,7 @@ describe("a review appends a round and scores the whole plan", () => {
   });
 
   it("the round goes to the folder named, else the plan's, and alone the reply can hold it", () => {
-    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\. Neither: ask whether to keep it in a file/u);
+    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\.\n\s+- Neither: ask whether to keep it in a file\./u);
     assert.match(read("actions/03-conclude.md"), /no: the reply holds it/u);
   });
 
