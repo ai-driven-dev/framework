@@ -1,7 +1,7 @@
 ---
 name: 05-rule-generate
-description: Creates, updates or removes a coding rule across the host AI tools when the user adds or changes a convention, not for skills, agents or hooks.
-argument-hint: add | update | remove
+description: Creates, updates, publishes or removes a coding rule across host AI tools when the user adds or changes a convention, not for skills, agents or hooks.
+argument-hint: add | update | remove | publish
 ---
 
 # Rule Generate
@@ -20,8 +20,9 @@ flowchart LR
   frame -->|"no supported host"| unsupported((unsupported))
   draft --> plan
   plan -->|"approved"| write
-  plan -->|"revision or refusal"| draft
-  plan -->|"keep or cancel"| cancelled((cancelled))
+  plan -->|"revision or request refusal"| draft
+  plan -->|"cancel"| cancelled((cancelled))
+  plan -->|"other refusal"| stopped
   write -->|"no drift"| written((written))
   write -->|"refusal, drift or blocked path"| stopped((stopped))
   frame & draft & plan & write -->|"reference unreadable"| stopped
@@ -30,6 +31,4 @@ flowchart LR
 ## Transversal rules
 
 - If a cited reference cannot be read, stop and name it.
-- Write only after the user approves the candidate shown last.
-- Change an existing source or publication only with permission naming it.
-- Keep or cancel leaves project bytes unchanged.
+- Write only after the user approves the candidate shown last, naming each existing source or publication it changes.

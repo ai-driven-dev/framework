@@ -12,18 +12,18 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | Option | Effect |
 | --- | --- |
 | `--project` | Real absolute project directory. |
-| `--tools` | Comma-separated confirmed host IDs, added to the source's `targets`. |
+| `--tools` | Comma-separated confirmed host IDs, added to the source's `targets`: required with `--input`, optional with `--publish`, refused with `--remove` and `--check`. |
 | `--input <file>` | Writes the source `aidd_docs/rules/<category>/<slug>.md`, then publishes it. |
-| `--delete <category>/<slug>` | Deletes the source, its copies and its index line. |
-| `--publish` | Republishes every source. |
+| `--remove <category>/<slug>` | Deletes the source, its copies and its index line. |
+| `--publish` | Republishes every source to its own `targets`. |
 | `--plan` | Writes nothing, prints `{plan, files, conflicts, legacy}`. |
 | `--check` | With `--publish`: writes nothing, prints `{drift}`. |
-| `--force` | Overwrites the copies listed in `conflicts`. |
+| `--force` | Overwrites every copy listed in `conflicts`, all or none. |
 
 | Field | Means |
 | --- | --- |
-| `files` | Paths a run writes or deletes. |
-| `conflicts` | Copies whose content the writer did not produce. |
+| `files` | `{path, operation}` per path a run writes or deletes. |
+| `conflicts` | Copies whose content the writer did not produce; never `AGENTS.md`. |
 | `legacy` | Signed copies, `aidd_rule` headers or a signed `AGENTS.md` block it converts. |
 | `drift` | Copies that differ from their source's rendering. |
 | `error` | `{code, message}`: `REFUSED`, `USAGE` or the system error code. |
@@ -41,4 +41,5 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | 3 | File operation failed while writing. | `written`, `failed`, `pending` |
 
 - Every non-zero exit prints JSON on stdout.
-- It refuses an unknown host, a category or slug outside `rule-authoring.md`, a comma in a path, a symlink or a path outside the project, invalid UTF-8, and an Antigravity copy over the size `hosts.md` states.
+- `targets` only grow: drop a host by removing the rule, then adding it again.
+- It refuses an `AGENTS.md` index block it cannot trust, an unknown host, a category or slug outside `rule-authoring.md`, a comma in a path, a symlink or a path outside the project, invalid UTF-8, and an Antigravity copy over the size `hosts.md` states.

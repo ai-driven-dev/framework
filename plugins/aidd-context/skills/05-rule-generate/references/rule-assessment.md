@@ -22,6 +22,6 @@ How a candidate compares with each found policy, and what to offer.
 | Label | Offer |
 | --- | --- |
 | new | create, cancel |
-| covered | keep, cancel |
+| covered | cancel |
 | overlap | create, merge, cancel |
-| conflict | update the policy, rescope the candidate, cancel |
+| conflict | rescope the candidate, cancel |

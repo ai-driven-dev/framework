@@ -9,14 +9,14 @@ The candidate and its findings, or the source to remove or publish.
 ## Process
 
 1. Resolve the writer per [writer.md](../references/writer.md), then run it with `--plan`.
-   - Refusal: read [draft](02-draft.md) and revise the candidate.
-2. Present the candidate in full (body, description, scope, hosts), the planned paths and every finding.
-   - Remove or publish: present the paths written and deleted.
-   - Conflict: show the copy's diff, then ask to overwrite or keep it.
+   - Refusal of a request field: read [draft](02-draft.md) and revise the candidate.
+   - Other refusal: quote it, then stop.
+2. Present the candidate in full (body, description, scope, hosts), each planned path with its operation, and every finding.
+   - Conflict: show each conflicting copy, then ask to overwrite them all or cancel.
    - Legacy: name each file the writer converts.
 3. End the turn and wait for the answer.
    - Revision: read [draft](02-draft.md).
-   - Keep or cancel: stop, cancelled.
+   - Cancel: stop, cancelled.
 4. Read [write](04-write.md) once approved.
 
 ## Output

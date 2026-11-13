@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 "use strict";
-// Usage: node write-rule.cjs --project <abs dir> --tools <claude,cursor,copilot,antigravity,codex,opencode> (--input <request.json> | --delete <category>/<slug> | --publish) [--plan | --check] [--force]
+// Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan | --check] [--force]
+// Tool ids: claude,cursor,copilot,antigravity,codex,opencode. --tools adds hosts to the rules it publishes; --check takes none.
 // Publishes aidd_docs/rules sources as native copies.
 // Exit 0 ok, 1 refusal/conflict/drift/unexpected error, 2 usage error, 3 filesystem blocked or failed.
 // Every non-zero exit prints a JSON object on stdout.
@@ -14,7 +15,7 @@ const SOURCE_DIR = "aidd_docs/rules";
 // Hosts without native rules read a line of the root AGENTS.md index instead of a copy.
 const INDEX_TOOLS = ["codex", "opencode"];
 const FLAG_OPTIONS = ["--publish", "--plan", "--check", "--force"];
-const VALUE_OPTIONS = ["--project", "--tools", "--input", "--delete"];
+const VALUE_OPTIONS = ["--project", "--tools", "--input", "--remove"];
 const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
 const ANTIGRAVITY_MAX_BYTES = 24000;
 const EXIT = { OK: 0, REFUSED: 1, USAGE: 2, FILESYSTEM: 3 };
@@ -42,10 +43,6 @@ function parseTools(list) {
   return TOOLS.filter((tool) => list.includes(tool));
 }
 
-function mergeTargets(targets, tools) {
-  return parseTools([...targets, ...tools]);
-}
-
 function parseArgs(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
@@ -65,10 +62,12 @@ function parseArgs(argv) {
 }
 
 function assertOptionsConsistent(options) {
-  if (!options["--project"] || !options["--tools"]) rejectUsage("--project and --tools are required.");
-  const actions = ["--input", "--delete", "--publish"].filter((name) => name in options);
-  if (actions.length !== 1) rejectUsage("Choose exactly one of --input, --delete, --publish.");
-  if (options["--check"] && (!options["--publish"] || options["--plan"])) rejectUsage("--check applies to --publish only, without --plan.");
+  if (!options["--project"]) rejectUsage("--project is required.");
+  const actions = ["--input", "--remove", "--publish"].filter((name) => name in options);
+  if (actions.length !== 1) rejectUsage("Choose exactly one of --input, --remove, --publish.");
+  if (options["--input"] && !options["--tools"]) rejectUsage("--input requires --tools.");
+  if (options["--remove"] && options["--tools"]) rejectUsage("--remove takes no --tools.");
+  if (options["--check"] && (!options["--publish"] || options["--plan"] || options["--tools"])) rejectUsage("--check applies to --publish only, without --plan or --tools.");
 }
 
 function validateRule(rule) {
@@ -144,7 +143,7 @@ function renderNative(rule, tool) {
   const globs = quote(rule.paths.join(","));
   const frontmatter = {
     claude: scoped ? `paths:\n${yamlPaths(rule.paths)}` : "",
-    cursor: `description: ${quote(rule.description)}\n${scoped ? `globs: ${globs}\n` : ""}alwaysApply: ${!scoped}\n`,
+    cursor: `description: ${quote(rule.description)}\n${scoped ? `globs: ${rule.paths.join(", ")}\n` : ""}alwaysApply: ${!scoped}\n`,
     copilot: `applyTo: ${scoped ? globs : '"**"'}\n`,
     antigravity: `description: ${quote(rule.description)}\n${scoped ? `trigger: glob\nglobs: ${globs}\n` : "trigger: always_on\n"}`,
   }[tool];
@@ -203,7 +202,7 @@ function agentsIndexLines(sources) {
     .filter(([, rule]) => isIndexed(rule))
     .map(([relativePath, rule]) => {
       const scope = rule.paths.length ? rule.paths.map((glob) => `\`${glob}\``).join(", ") : "all files";
-      const title = /^# (.+)$/m.exec(rule.body)?.[1].trim() || rule.slug;
+      const title = /^# (.+)$/m.exec(rule.body.replace(/^```[\s\S]*?^```/gm, ""))?.[1].trim() || rule.slug;
       return `- ${scope}: [${title}](${relativePath})`;
     });
 }
@@ -276,28 +275,30 @@ function loadSources(project) {
 
 // ---------- planning: decides writes, deletes and conflicts, touches nothing ----------
 
-function collectItems(project, options, tools, sources) {
+// Targets only grow: --tools adds hosts to a rule, never drops one.
+function collectItems(options, sources) {
+  const tools = options["--tools"] ? parseTools(options["--tools"].split(",")) : [];
   if (options["--input"]) return [itemFromRequest(options["--input"], tools, sources)];
-  if (options["--delete"]) return [itemFromDeletion(options["--delete"], tools, sources)];
-  return [...sources.values()].map((prior) => ({ rule: { ...prior, targets: mergeTargets(prior.targets, tools) }, prior }));
+  if (options["--remove"]) return [itemFromRemoval(options["--remove"], sources)];
+  return [...sources.values()].map((prior) => ({ rule: { ...prior, targets: parseTools([...prior.targets, ...tools]) }, prior }));
 }
 
 function itemFromRequest(inputFile, tools, sources) {
   const request = parseRequest(readUtf8(path.resolve(inputFile)));
   const rule = validateRule({ paths: [], ...request, targets: tools });
   const prior = sources.get(sourcePath(rule));
-  return { rule: { ...rule, targets: mergeTargets(prior ? prior.targets : [], tools) }, prior };
+  return { rule: { ...rule, targets: parseTools([...(prior ? prior.targets : []), ...tools]) }, prior };
 }
 
-function itemFromDeletion(identity, tools, sources) {
+function itemFromRemoval(identity, sources) {
   const prior = sources.get(`${SOURCE_DIR}/${identity}.md`);
-  if (!prior) refuse("Cannot delete an absent rule.");
-  return { rule: { ...prior, targets: mergeTargets(prior.targets, tools) }, prior, deleting: true };
+  if (!prior) refuse("Cannot remove an absent rule.");
+  return { rule: prior, prior, deleting: true };
 }
 
-function planChanges(project, options, tools) {
+function planChanges(project, options) {
   const sources = loadSources(project);
-  const items = collectItems(project, options, tools, sources);
+  const items = collectItems(options, sources);
   const plan = { writes: new Map(), conflicts: [], legacy: new Set() };
   const force = "--force" in options;
   const finalSources = planRuleFiles(plan, project, items, sources, force);
@@ -345,10 +346,7 @@ function planCopy(plan, project, force, relativePath, wanted, previous) {
 function planAgentsIndex(plan, project, finalSources) {
   const current = project.read("AGENTS.md") ?? "";
   const next = reindexAgents(current, agentsIndexLines(finalSources));
-  if (!next) {
-    plan.conflicts.push("AGENTS.md");
-    return;
-  }
+  if (!next) refuse("AGENTS.md has an aidd_rules block the writer cannot trust; repair or remove it by hand.");
   if (next.legacy) plan.legacy.add("AGENTS.md");
   if (next.text !== current) plan.writes.set("AGENTS.md", next.text || null);
 }
@@ -370,8 +368,15 @@ function nearestExisting(file) {
   return candidate;
 }
 
-function writabilityProbe(operation) {
-  return operation.operation === "delete" ? path.dirname(operation.file) : nearestExisting(operation.file);
+// Every write lands through a rename in its parent, so only the parent directory must be writable.
+function assertWritableDirectory(directory) {
+  if (!fs.statSync(directory).isDirectory()) throw Object.assign(new Error(`${directory} is not a directory`), { code: "ENOTDIR" });
+  fs.accessSync(directory, fs.constants.W_OK);
+}
+
+function parentToCheck(operation) {
+  const parent = path.dirname(operation.file);
+  return operation.operation === "delete" ? parent : nearestExisting(parent);
 }
 
 function describeFailure(operation, error) {
@@ -382,7 +387,7 @@ function findBlocked(operations) {
   const blocked = [];
   for (const operation of operations) {
     try {
-      fs.accessSync(writabilityProbe(operation), fs.constants.W_OK);
+      assertWritableDirectory(parentToCheck(operation));
     } catch (error) {
       blocked.push(describeFailure(operation, error));
     }
@@ -396,7 +401,19 @@ function performOperation(operation) {
     return;
   }
   fs.mkdirSync(path.dirname(operation.file), { recursive: true });
-  fs.writeFileSync(operation.file, operation.text);
+  writeAtomically(operation.file, operation.text);
+}
+
+// A crash leaves the old file or the new one, never a truncated one.
+function writeAtomically(file, text) {
+  const temporary = `${file}.${process.pid}.tmp`;
+  fs.writeFileSync(temporary, text);
+  try {
+    fs.renameSync(temporary, file);
+  } catch (error) {
+    fs.rmSync(temporary, { force: true });
+    throw error;
+  }
 }
 
 function applyOperations(operations) {
@@ -437,14 +454,13 @@ function report({ payload, exitCode, message }) {
 
 function execute(argv) {
   const options = parseArgs(argv);
-  const tools = parseTools(options["--tools"].split(","));
   const project = openProject(options["--project"]);
-  const plan = planChanges(project, options, tools);
-  const files = [...plan.writes.keys()];
+  const plan = planChanges(project, options);
+  const files = [...plan.writes].map(([relativePath, text]) => ({ path: relativePath, operation: text === null ? "delete" : "write" }));
   const summary = { files, conflicts: plan.conflicts, legacy: [...plan.legacy] };
   if (options["--plan"]) return { payload: { plan: true, ...summary }, exitCode: EXIT.OK };
   if (options["--check"]) {
-    const drift = [...new Set([...files, ...plan.conflicts])];
+    const drift = [...new Set([...plan.writes.keys(), ...plan.conflicts])];
     return { payload: { drift }, exitCode: drift.length ? EXIT.REFUSED : EXIT.OK };
   }
   if (plan.conflicts.length && !("--force" in options)) return { payload: { ...summary, files: [] }, exitCode: EXIT.REFUSED };

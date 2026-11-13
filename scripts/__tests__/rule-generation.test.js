@@ -16,8 +16,9 @@ const COPILOT = ".github/instructions/01-naming.instructions.md";
 const AGY = ".agents/rules/1-naming.md";
 const sha = (t) => createHash("sha256").update(t).digest("hex");
 const json = (r) => JSON.parse(r.stdout);
+const paths = (files, operation) => files.filter((file) => !operation || file.operation === operation).map((file) => file.path).sort();
 
-function fixture(t) {
+function fixture(t, fault) {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "aidd-rule-")));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const project = path.join(dir, "project");
@@ -26,11 +27,11 @@ function fixture(t) {
   fs.cpSync(skill, installed, { recursive: true });
   const script = path.join(installed, "scripts/write-rule.cjs");
   assert.ok(fs.existsSync(script), "installed skill must contain its standalone script");
-  const exec = (...args) => spawnSync(process.execPath, [script, "--project", project, ...args], { encoding: "utf8", cwd: dir, env: { PATH: "" } });
+  const exec = (...args) => spawnSync(process.execPath, [...(fault ? ["--require", fault] : []), script, "--project", project, ...args], { encoding: "utf8", cwd: dir, env: { PATH: "" } });
   function run(request = rule, tools = NATIVE, extra = []) {
     const input = path.join(dir, "input.json");
     fs.writeFileSync(input, Buffer.isBuffer(request) ? request : JSON.stringify(request));
-    return exec("--tools", tools, ...(extra.length ? extra : ["--input", input]));
+    return exec(...(tools ? ["--tools", tools] : []), ...(extra.length ? extra : ["--input", input]));
   }
   const put = (name, content) => {
     const file = path.join(project, name);
@@ -58,7 +59,7 @@ test("scoped native copies are pure and byte exact", (t) => {
   assert.equal(r.status, 0, r.stderr);
   const g = "src/**/*.ts,test/**/*.ts";
   assert.equal(f.read(CLAUDE), `---\npaths:\n  - "src/**/*.ts"\n  - "test/**/*.ts"\n---\n${rule.body}`);
-  assert.equal(f.read(CURSOR), `---\ndescription: "Naming"\nglobs: "${g}"\nalwaysApply: false\n---\n${rule.body}`);
+  assert.equal(f.read(CURSOR), `---\ndescription: "Naming"\nglobs: src/**/*.ts, test/**/*.ts\nalwaysApply: false\n---\n${rule.body}`);
   assert.equal(f.read(COPILOT), `---\napplyTo: "${g}"\n---\n${rule.body}`);
   assert.equal(f.read(AGY), `---\ndescription: "Naming"\ntrigger: glob\nglobs: "${g}"\n---\n${rule.body}`);
   assert.equal(f.read(SRC), `---\ndescription: "Naming"\npaths:\n  - "src/**/*.ts"\n  - "test/**/*.ts"\ntargets: [claude, cursor, copilot, antigravity]\n---\n\n${rule.body}`);
@@ -90,8 +91,8 @@ test("codex index is created, updated, removed and outside text is preserved", (
   f.put("AGENTS.md", f.read("AGENTS.md") + "Suffix\n");
   assert.equal(f.run({ ...rule, slug: "1-other", paths: [], body: "- No title.\n" }, "codex").status, 0);
   assert.equal(f.read("AGENTS.md"), `${user}\n${block(`${first}\n- all files: [1-other](aidd_docs/rules/01-standards/1-other.md)`)}Suffix\n`);
-  assert.equal(f.run(null, "codex", ["--delete", "01-standards/1-other"]).status, 0);
-  assert.equal(f.run(null, "codex", ["--delete", "01-standards/1-naming"]).status, 0);
+  assert.equal(f.run(null, null, ["--remove", "01-standards/1-other"]).status, 0);
+  assert.equal(f.run(null, null, ["--remove", "01-standards/1-naming"]).status, 0);
   assert.equal(f.read("AGENTS.md"), `${user}Suffix\n`);
   assert.ok(!f.has(SRC));
 });
@@ -100,7 +101,7 @@ test("codex creates AGENTS.md when absent and deletes it when emptied", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, "codex").status, 0);
   assert.ok(f.read("AGENTS.md").startsWith("<!-- aidd_rules:start -->\n"));
-  assert.equal(f.run(null, "codex", ["--delete", "01-standards/1-naming"]).status, 0);
+  assert.equal(f.run(null, null, ["--remove", "01-standards/1-naming"]).status, 0);
   assert.ok(!f.has("AGENTS.md"));
 });
 
@@ -144,30 +145,30 @@ test("--plan writes nothing and lists files, conflicts and legacy", (t) => {
   assert.equal(r.status, 0, r.stderr);
   const p = json(r);
   assert.equal(p.plan, true);
-  assert.deepEqual(p.files.sort(), [SRC, CLAUDE, CURSOR, COPILOT, AGY, "AGENTS.md"].sort());
+  assert.deepEqual(paths(p.files, "write"), [SRC, CLAUDE, CURSOR, COPILOT, AGY, "AGENTS.md"].sort());
   assert.deepEqual([p.conflicts, p.legacy], [[], []]);
   assert.deepEqual(f.snapshot(), before);
   assert.equal(f.run().status, 0);
-  const del = f.run(null, NATIVE, ["--plan", "--delete", "01-standards/1-naming"]);
+  const del = f.run(null, null, ["--plan", "--remove", "01-standards/1-naming"]);
   assert.equal(del.status, 0);
-  assert.ok(json(del).files.includes(CLAUDE) && json(del).files.includes(SRC));
-  assert.equal(f.run(null, NATIVE, ["--plan", "--delete", "01-standards/1-absent"]).status, 1);
+  assert.deepEqual(paths(json(del).files, "delete"), [SRC, CLAUDE, CURSOR, COPILOT, AGY].sort());
+  assert.equal(f.run(null, null, ["--plan", "--remove", "01-standards/1-absent"]).status, 1);
 });
 
 test("--check --publish is clean, then detects drift without writing", (t) => {
   const f = fixture(t);
   assert.equal(f.run().status, 0);
-  const clean = f.run(null, NATIVE, ["--check", "--publish"]);
+  const clean = f.run(null, null, ["--check", "--publish"]);
   assert.equal(clean.status, 0, clean.stderr);
   assert.deepEqual(json(clean).drift, []);
   f.put(COPILOT, "edited\n");
   const before = f.snapshot();
-  const drift = f.run(null, NATIVE, ["--check", "--publish"]);
+  const drift = f.run(null, null, ["--check", "--publish"]);
   assert.equal(drift.status, 1);
   assert.deepEqual(json(drift).drift, [COPILOT]);
   assert.deepEqual(f.snapshot(), before);
   fs.rmSync(path.join(f.project, CLAUDE));
-  assert.deepEqual(json(f.run(null, NATIVE, ["--check", "--publish"])).drift.sort(), [CLAUDE, COPILOT].sort());
+  assert.deepEqual(json(f.run(null, null, ["--check", "--publish"])).drift.sort(), [CLAUDE, COPILOT].sort());
 });
 
 test("--publish after a source edit conflicts on stale copies, --force republishes", (t) => {
@@ -184,7 +185,7 @@ test("--delete removes source, copies and index line", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, `${NATIVE},codex`).status, 0);
   assert.ok(f.read("AGENTS.md").includes("[Naming]"));
-  const r = f.run(null, "claude", ["--delete", "01-standards/1-naming"]);
+  const r = f.run(null, null, ["--remove", "01-standards/1-naming"]);
   assert.equal(r.status, 0, r.stderr);
   for (const n of [SRC, CLAUDE, CURSOR, COPILOT, AGY, "AGENTS.md"]) assert.ok(!f.has(n), n);
 });
@@ -194,7 +195,7 @@ test("delete conflicts on an edited copy", (t) => {
   assert.equal(f.run().status, 0);
   f.put(CLAUDE, "edited\n");
   const before = f.snapshot();
-  assert.equal(f.run(null, NATIVE, ["--delete", "01-standards/1-naming"]).status, 1);
+  assert.equal(f.run(null, null, ["--remove", "01-standards/1-naming"]).status, 1);
   assert.deepEqual(f.snapshot(), before);
 });
 
@@ -237,7 +238,7 @@ test("unknown tool refuses and bad usage exits 2", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, "claude,nope").status, 1);
   assert.equal(f.exec("--tools", "claude").status, 2);
-  assert.equal(f.exec("--tools", "claude", "--check", "--delete", "01-standards/1-naming").status, 2);
+  assert.equal(f.exec("--tools", "claude", "--check", "--remove", "01-standards/1-naming").status, 2);
   assert.equal(f.exec("--tools", "claude", "--plan").status, 2);
 });
 
@@ -263,12 +264,38 @@ test("legacy inline AGENTS block is converted to the index", (t) => {
   assert.equal(r.status, 0, r.stderr);
   assert.ok(json(r).legacy.includes("AGENTS.md"));
   assert.equal(f.read("AGENTS.md"), "User\n\n<!-- aidd_rules:start -->\nBefore editing a file, read each rule whose scope matches it.\n\n- all files: [Naming](aidd_docs/rules/01-standards/1-naming.md)\n<!-- aidd_rules:end -->\nTail\n");
-  // an edited legacy block is a conflict
+  // an edited legacy block is refused, even with --force
   f.put("AGENTS.md", `<!-- aidd_rules:start sha256=${h} separator=0 -->\n${payload}<!-- aidd_rules:end -->\n`);
   const before = f.snapshot();
-  const bad = f.run(null, "codex", ["--publish"]);
-  assert.equal(bad.status, 1);
-  assert.deepEqual(json(bad).conflicts, ["AGENTS.md"]);
+  for (const extra of [["--publish"], ["--publish", "--force"]]) {
+    const bad = f.run(null, null, extra);
+    assert.equal(bad.status, 1, bad.stdout);
+    assert.equal(json(bad).error.code, "REFUSED");
+  }
+  assert.deepEqual(f.snapshot(), before);
+});
+
+test("publish and check keep each rule's own hosts unless --tools adds some", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run(rule, "claude").status, 0);
+  assert.equal(f.run({ ...rule, slug: "1-other" }, "cursor,codex").status, 0);
+  const before = f.snapshot();
+  const check = f.run(null, null, ["--check", "--publish"]);
+  assert.equal(check.status, 0, check.stdout);
+  assert.equal(f.run(null, null, ["--publish"]).status, 0);
+  assert.deepEqual(f.snapshot(), before);
+  assert.equal(f.run(null, "claude", ["--check", "--publish"]).status, 2);
+  const added = f.run(null, "copilot", ["--plan", "--publish"]);
+  assert.ok(paths(json(added).files).includes(COPILOT));
+});
+
+test("a file where a directory is expected blocks before any write", (t) => {
+  const f = fixture(t);
+  f.put(".cursor", "a file where a directory must be\n");
+  const before = f.snapshot();
+  const r = f.run();
+  assert.equal(r.status, 3, r.stdout);
+  assert.equal(json(r).blocked[0].code, "ENOTDIR");
   assert.deepEqual(f.snapshot(), before);
 });
 
@@ -334,7 +361,7 @@ test("unwritable parent blocks a delete before any removal", { skip: asRoot && "
   const f = fixture(t);
   assert.equal(f.run().status, 0);
   const before = f.snapshot();
-  const r = runLocked([path.join(f.project, path.dirname(CLAUDE))], () => f.run(null, NATIVE, ["--delete", "01-standards/1-naming"]));
+  const r = runLocked([path.join(f.project, path.dirname(CLAUDE))], () => f.run(null, null, ["--remove", "01-standards/1-naming"]));
   assert.equal(r.status, 3);
   const out = json(r);
   assert.deepEqual(out.written, []);
@@ -343,10 +370,13 @@ test("unwritable parent blocks a delete before any removal", { skip: asRoot && "
 });
 
 test("mid-apply failure stops and reports written, failed and pending", (t) => {
-  const f = fixture(t);
-  f.put(".cursor", "a file where a directory must be\n");
+  const fault = path.join(os.tmpdir(), `aidd-rule-fault-${process.pid}.cjs`);
+  fs.writeFileSync(fault, `const fs = require("node:fs"); const rename = fs.renameSync;
+fs.renameSync = (from, to) => { if (String(to).endsWith(".mdc")) throw Object.assign(new Error("injected"), { code: "EIO" }); return rename(from, to); };`);
+  t.after(() => fs.rmSync(fault, { force: true }));
+  const f = fixture(t, fault);
   const r = f.run();
-  assert.equal(r.status, 3);
+  assert.equal(r.status, 3, r.stdout);
   const out = json(r);
   assert.deepEqual(out.written, [SRC, CLAUDE]);
   assert.equal(out.failed.path, CURSOR);
@@ -354,6 +384,7 @@ test("mid-apply failure stops and reports written, failed and pending", (t) => {
   assert.ok(out.failed.code && out.failed.message);
   assert.deepEqual(out.pending, [COPILOT, AGY]);
   assert.ok(f.has(SRC) && f.has(CLAUDE) && !f.has(COPILOT) && !f.has(AGY));
+  assert.ok(!Object.keys(f.snapshot()).some((name) => name.endsWith(".tmp")));
   assert.ok(r.stderr);
 });
 
@@ -374,7 +405,7 @@ test("every non-zero exit prints parseable JSON on stdout", (t) => {
   assert.deepEqual(json(conflict).conflicts, [CURSOR]);
   assert.equal(f.run(rule, NATIVE, [...input(f), "--force"]).status, 0);
   f.put(COPILOT, "edited\n");
-  const drift = f.run(null, NATIVE, ["--check", "--publish"]);
+  const drift = f.run(null, null, ["--check", "--publish"]);
   assert.equal(drift.status, 1);
   assert.ok(Array.isArray(json(drift).drift));
 });
