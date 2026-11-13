@@ -371,11 +371,46 @@ describe("aidd-ui showcase sets", () => {
       assert.equal((cell.match(/class="swatch"/g) ?? []).length, 2);
       assert.match(cell, /<i class="swatch" style="background: #1A2b3C"><\/i><code>#1A2b3C<\/code>/);
       assert.match(cell, /<i class="swatch" style="background: #fff0e6"><\/i><code>#fff0e6<\/code>/);
-      assert.match(cell, /^ink .* on .*, plain$/);
+      assert.match(cell, /^ink .* on .*, plain<span class="sample"/);
     });
 
     it("leaves a cell without colour as escaped text", () => {
       assert.deepEqual(cellsOf([["Tone", "<b>calm</b> #12345"]]), ["&lt;b&gt;calm&lt;/b&gt; #12345"]);
+    });
+  });
+
+  describe("the style tile", () => {
+    const rowsOf = (axes, lang = "en") => {
+      const set = SET();
+      set.variants[0].axes = axes;
+      return [...columnsOf(pagesOf([set], { lang })["_set-layout.html"])[0].html.matchAll(/<tr[^>]*><th>([\s\S]*?)<\/th><td[^>]*>(<button[^>]*>[\s\S]*?<\/button>)<\/td><\/tr>/g)].map((match) => match[2]);
+    };
+
+    it("keeps one take button per axis row, with its axis, its variant and its pressed state", () => {
+      const rows = rowsOf([["Palette", "#0b0f14 #e8eef3 #7fd4f2"], ["Lettres", "monospace"], ["Ton", "calme"]]);
+      assert.equal(rows.length, 3);
+      for (const row of rows) assert.match(row, /^<button type="button" class="take" data-axis="[^"]+" data-variant="a" aria-pressed="false">/);
+    });
+
+    it("shows a type cell as a heading and a body line in its font, at the sizes of the size cell", () => {
+      const [, type] = rowsOf([["Palette", "#0b0f14 #e8eef3 #7fd4f2"], ["Lettres", "Mono, monospace"], ["Taille", "texte 17 px, titres 31 px"]]);
+      assert.match(type, /<span class="specimen" style="font-family: ui-monospace, monospace">/);
+      assert.match(type, /<b style="font-size: 31px">Heading<\/b>/);
+      assert.match(type, /<span style="font-size: 17px">[^<]+<\/span>/);
+      assert.match(rowsOf([["Lettres", "serif"]], "fr")[0], /<b>Titre<\/b>/);
+    });
+
+    it("shows a type cell at the browser sizes when there is no size cell, and a cell of text as text", () => {
+      const [type, text] = rowsOf([["Lettres", "sans-serif"], ["Ton", "calme"]]);
+      assert.match(type, /<span class="specimen" style="font-family: system-ui, sans-serif"><b>Heading<\/b><span>/);
+      assert.match(text, />calme<\/button>$/);
+      assert.doesNotMatch(text, /specimen/);
+    });
+
+    it("shows the colours as large swatches with their code under, and a sample button in the accent", () => {
+      const [palette] = rowsOf([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]);
+      assert.equal((palette.match(/<span class="tone"><i class="swatch" style="background: #[0-9a-f]{6}"><\/i><code>#[0-9a-f]{6}<\/code><\/span>/g) ?? []).length, 3);
+      assert.match(palette, /<span class="sample" style="background: #7fd4f2; color: #0b0f14">Sample button<\/span>/);
     });
   });
 

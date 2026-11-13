@@ -59,13 +59,6 @@ const valueOf = (cell) => String(cell ?? "").toLowerCase().replace(/\s+/g, " ").
 
 const COLOUR = /(#[0-9a-f]{6})\b/gi;
 
-/** What an axis cell says: each `#rrggbb` as a swatch beside its code, the rest as escaped text. */
-const cellOf = (value) =>
-  String(value ?? "")
-    .split(COLOUR)
-    .map((part, at) => (at % 2 ? `<i class="swatch" style="background: ${part}"></i><code>${part}</code>` : escaped(part)))
-    .join("");
-
 const PALETTE_AXIS = /palette|colou?r|couleur/i;
 const FAMILY = /\b(sans-serif|serif|monospace)\b/i;
 const PIXELS = /(\d+(?:\.\d+)?)\s*px\b/gi;
@@ -78,8 +71,8 @@ function lookOf(variant) {
   const colours = variant.axes.filter(([axis]) => PALETTE_AXIS.test(axis)).flatMap(([, value]) => String(value ?? "").match(COLOUR) ?? []);
   if (colours.length < 2) return null;
   const family = variant.axes.filter(([axis]) => !PALETTE_AXIS.test(axis)).map(([, value]) => FAMILY.exec(String(value ?? ""))?.[1]?.toLowerCase()).find(Boolean);
-  const sizes = variant.axes.map(([, value]) => [...String(value ?? "").matchAll(PIXELS)].map((match) => match[1])).find((found) => found.length >= 2);
-  return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font: family ? FAMILIES[family] : null, sizes: sizes ?? null };
+  const sizes = sizesOf(variant);
+  return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font: family ? FAMILIES[family] : null, sizes };
 }
 
 const STATE_ATTRIBUTE = /data-state="([^"]*)"/g;
@@ -88,6 +81,30 @@ const STATE_ATTRIBUTE = /data-state="([^"]*)"/g;
 function firstStateOf(html) {
   const states = [...html.matchAll(STATE_ATTRIBUTE)].map((match) => match[1]);
   return states.includes("default") ? "default" : (states[0] ?? null);
+}
+
+/** The generic font family a cell names, or null. */
+const familyOf = (value) => FAMILY.exec(String(value ?? ""))?.[1]?.toLowerCase() ?? null;
+
+/** The sizes in `px` of the first cell that gives two or more, or null. */
+const sizesOf = (variant) => variant.axes.map(([, value]) => [...String(value ?? "").matchAll(PIXELS)].map((match) => match[1])).find((found) => found.length >= 2) ?? null;
+
+/** What an axis cell says as a tile: each `#rrggbb` as a swatch with its code under it, a sample button in the accent
+ * after the first colours of a look, a generic font family as a heading and a body line in that font at the sizes
+ * the variant gives, the rest as escaped text. */
+function cellOf(value, { variant, labels, sampled }) {
+  const text = String(value ?? "");
+  const tones = text
+    .split(COLOUR)
+    .map((part, at) => (at % 2 ? `<span class="tone"><i class="swatch" style="background: ${part}"></i><code>${part}</code></span>` : escaped(part)))
+    .join("");
+  const look = text.split(COLOUR).length > 1 ? lookOf(variant) : null;
+  const sample = look && !sampled.done ? ((sampled.done = true), `<span class="sample" style="background: ${look.accent}; color: ${look.background}">${escaped(labels.sample)}</span>`) : "";
+  const family = familyOf(text);
+  const [body, heading] = sizesOf(variant) ?? [];
+  const size = (px) => (px ? ` style="font-size: ${px}px"` : "");
+  const specimen = family ? `<span class="specimen" style="font-family: ${FAMILIES[family]}"><b${size(heading)}>${escaped(labels.specimenHeading)}</b><span${size(body)}>${escaped(labels.specimenBody)}</span></span>` : "";
+  return tones + sample + specimen;
 }
 
 /** A wireframe dressed in a look by element styles alone: its structure stays as written, only its first state shown. */
@@ -130,7 +147,8 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
   const before = new Map(parent?.axes ?? []);
   const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: parent.name }))}"` : "");
   const same = (axis) => siblings.length > 1 && siblings.every((each) => valueOf(each.axes.find(([name]) => name === axis)?.[1]) === valueOf(variant.axes.find(([name]) => name === axis)?.[1]));
-  const axes = variant.axes.map(([axis, value]) => `<tr${same(axis) ? " data-same" : ""}><th>${escaped(axis)}${same(axis) ? ` <small class="same-tag">${escaped(labels.identical)}</small>` : ""}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
+  const sampled = { done: false };
+  const axes = variant.axes.map(([axis, value]) => `<tr${same(axis) ? " data-same" : ""}><th>${escaped(axis)}${same(axis) ? ` <small class="same-tag">${escaped(labels.identical)}</small>` : ""}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value, { variant, labels, sampled })}</button></td></tr>`).join("");
   const renders = screens ? [] : variant.files.filter((file) => RENDER_FILE.test(file.path)).map((file) => framesOf({ variant, file, tokens, labels }));
   const documents = variant.files.filter((file) => MARKDOWN_FILE.test(file.path)).flatMap((file) => {
     const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
@@ -197,8 +215,11 @@ const STYLE = `
 .vote[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow-1); color: var(--text); }
 .vote[data-verdict="keep"][aria-pressed="true"] { color: var(--ok); }
 .vote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
-.axes .swatch { display: inline-block; inline-size: 14px; block-size: 14px; margin-inline-end: 4px; vertical-align: -2px; }
-.axes td code { margin-inline-end: 6px; }
+.tone { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: 0 6px 6px 0; vertical-align: top; }
+.axes .swatch { display: block; inline-size: 44px; block-size: 44px; border: 1px solid var(--line-strong); border-radius: var(--r1); }
+.axes td code { font-size: 10px; }
+.sample { display: inline-block; padding: 6px 14px; border-radius: 8px; font-size: 13px; vertical-align: top; }
+.specimen { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
 .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin: 0 0 var(--s4); }
 .screen-pick { font-size: var(--t-sm); color: var(--muted); }
 .preview-note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
