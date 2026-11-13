@@ -1,10 +1,9 @@
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  type MarketplaceRegisterFramework,
-  type MarketplaceRegisterFrameworkOptions,
-  MarketplaceRegisterFrameworkUseCase,
-} from "../../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
+  RegisterFrameworkMarketplace,
+  type RegisterFrameworkMarketplaceCommand,
+} from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
@@ -139,7 +138,7 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     await useCase.execute({
@@ -172,7 +171,7 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     await useCase.execute({
@@ -771,7 +770,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     await useCase.execute({
@@ -811,7 +810,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     const result = await useCase.execute({
@@ -861,7 +860,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       failingBuild,
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     const result = await useCase.execute({
@@ -900,7 +899,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     const result = await useCase.execute({
@@ -938,7 +937,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     await useCase.execute({
@@ -999,7 +998,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry),
+      new RegisterFrameworkMarketplace(registry),
       undefined,
       undefined,
       readableHostPlugins("claude"),
@@ -1058,8 +1057,8 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
   }
 
   function recordingRegister(
-    calls: MarketplaceRegisterFrameworkOptions[]
-  ): MarketplaceRegisterFramework {
+    calls: RegisterFrameworkMarketplaceCommand[]
+  ): Pick<RegisterFrameworkMarketplace, "execute"> {
     return {
       execute: async (options) => {
         calls.push(options);
@@ -1081,7 +1080,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     await useCase.execute({
@@ -1113,7 +1112,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       },
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     await useCase.execute({
@@ -1154,7 +1153,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       codexBuildFails,
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     const result = await useCase.execute({
@@ -1186,7 +1185,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry),
+      new RegisterFrameworkMarketplace(registry),
       undefined,
       undefined,
       readableHostPlugins("claude"),
@@ -1218,7 +1217,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map(),
       () => "",
-      new MarketplaceRegisterFrameworkUseCase(registry)
+      new RegisterFrameworkMarketplace(registry)
     );
 
     await useCase.execute({
@@ -1309,7 +1308,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const calls: MarketplaceRegisterFrameworkOptions[] = [];
+    const calls: RegisterFrameworkMarketplaceCommand[] = [];
     const useCase = new MarketplaceSyncSettingsUseCase(
       new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
       new InMemoryManifestRepository(manifestWithClaude()),
@@ -1343,7 +1342,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const calls: MarketplaceRegisterFrameworkOptions[] = [];
+    const calls: RegisterFrameworkMarketplaceCommand[] = [];
     const useCase = new MarketplaceSyncSettingsUseCase(
       new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
       new InMemoryManifestRepository(manifestWithClaude()),
@@ -1505,7 +1504,7 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       fakeEnsureBuiltMarketplace(() => sharedBuiltDir),
       new Map([["claude", hostReader]]),
       () => USER_CACHE_ROOT,
-      new MarketplaceRegisterFrameworkUseCase(registry),
+      new RegisterFrameworkMarketplace(registry),
       undefined,
       fakeVersion(CURRENT_VERSION),
       readableHostPlugins("claude"),

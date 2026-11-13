@@ -18,7 +18,7 @@ import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { MarketplaceScope } from "../../../../kernel/scope.js";
 import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
-import type { MarketplaceRegisterFramework } from "../../../distribution/application/marketplace-register-framework-use-case.js";
+import type { RegisterFrameworkMarketplace } from "../../../distribution/application/register-framework-marketplace.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,
@@ -176,7 +176,10 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly userCacheRoot: () => string = () => "",
     /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
      * Absent keeps the silent no-op instead of guessing what to register. */
-    private readonly marketplaceRegisterFrameworkUseCase?: MarketplaceRegisterFramework,
+    private readonly marketplaceRegisterFrameworkUseCase?: Pick<
+      RegisterFrameworkMarketplace,
+      "execute"
+    >,
     private readonly userSourceReferences?: UserSourceReferences,
     private readonly currentVersionProvider?: VersionReader,
     private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),

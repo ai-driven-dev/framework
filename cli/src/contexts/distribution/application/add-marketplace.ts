@@ -11,9 +11,9 @@ import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../domain/marketplace.j
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 import type { MarketplaceRemover } from "../ports/marketplace-remover.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
-import type { ResolveMarketplaceUseCase } from "./resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "./resolve-marketplace.js";
 
-export interface MarketplaceAddOptions {
+export interface AddMarketplaceCommand {
   source: PluginSource;
   name: string;
   scope: MarketplaceScope;
@@ -22,20 +22,20 @@ export interface MarketplaceAddOptions {
   overwrite?: boolean;
 }
 
-export interface MarketplaceAddResult {
+export interface AddMarketplaceResult {
   marketplace: Marketplace;
 }
 
-export class MarketplaceAddUseCase {
+export class AddMarketplace {
   constructor(
     private readonly registry: MarketplaceRegistry,
     private readonly trustStore: MarketplaceTrustStore,
-    private readonly resolveMarketplace: ResolveMarketplaceUseCase,
+    private readonly resolveMarketplace: ResolveMarketplace,
     private readonly prompter: Prompter,
     private readonly remover: MarketplaceRemover
   ) {}
 
-  async execute(options: MarketplaceAddOptions): Promise<MarketplaceAddResult> {
+  async execute(options: AddMarketplaceCommand): Promise<AddMarketplaceResult> {
     if (options.name === FRAMEWORK_MARKETPLACE_NAME) {
       throw new InvalidMarketplaceNameError(
         `"${FRAMEWORK_MARKETPLACE_NAME}" is reserved for the framework auto-register entry`
@@ -77,7 +77,7 @@ export class MarketplaceAddUseCase {
     });
   }
 
-  private async ensureTrust(options: MarketplaceAddOptions): Promise<void> {
+  private async ensureTrust(options: AddMarketplaceCommand): Promise<void> {
     if (await this.trustStore.isTrusted(options.projectRoot, options.source)) return;
     if (options.autoTrust) {
       await this.trustStore.trust(options.projectRoot, options.source);

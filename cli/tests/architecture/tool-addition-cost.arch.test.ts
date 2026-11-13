@@ -118,8 +118,8 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
  * profile consumes.
  */
 const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
-  { path: "src/contexts/distribution/application/fetch-marketplace-source-use-case.ts", named: 1 },
-  { path: "src/contexts/distribution/application/marketplace-refresh-use-case.ts", named: 1 },
+  { path: "src/contexts/distribution/application/fetch-marketplace-source.ts", named: 1 },
+  { path: "src/contexts/distribution/application/refresh-marketplace.ts", named: 1 },
   { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
   {
     path: "src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",

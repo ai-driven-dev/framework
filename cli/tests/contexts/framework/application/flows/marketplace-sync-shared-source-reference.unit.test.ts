@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type {
-  MarketplaceRegisterFramework,
-  MarketplaceRegisterFrameworkOptions,
-  MarketplaceRegisterFrameworkResult,
-} from "../../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
+  RegisterFrameworkMarketplace,
+  RegisterFrameworkMarketplaceCommand,
+  RegisterFrameworkMarketplaceResult,
+} from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
@@ -207,10 +207,10 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       () => "/fake-home/.config/aidd"
     );
-    const registerFramework: MarketplaceRegisterFramework = {
+    const registerFramework: Pick<RegisterFrameworkMarketplace, "execute"> = {
       execute: async (
-        options: MarketplaceRegisterFrameworkOptions
-      ): Promise<MarketplaceRegisterFrameworkResult> => {
+        options: RegisterFrameworkMarketplaceCommand
+      ): Promise<RegisterFrameworkMarketplaceResult> => {
         await registry.save(options.projectRoot, frameworkMarketplace());
         return { registered: true, scope: "user" as const };
       },
@@ -280,8 +280,8 @@ describe("the shared source's own reference, recorded by sync", () => {
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry(); // empty, on purpose
-    const registerFramework: MarketplaceRegisterFramework = {
-      execute: async (options: MarketplaceRegisterFrameworkOptions) => {
+    const registerFramework: Pick<RegisterFrameworkMarketplace, "execute"> = {
+      execute: async (options: RegisterFrameworkMarketplaceCommand) => {
         await registry.save(options.projectRoot, frameworkMarketplace());
         return { registered: true, scope: "user" as const };
       },

@@ -1,9 +1,9 @@
 import type { TokenProvider } from "../contexts/auth/contract/token-provider.js";
-import { FetchMarketplaceSourceUseCase } from "../contexts/distribution/application/fetch-marketplace-source-use-case.js";
-import { MarketplaceListUseCase } from "../contexts/distribution/application/marketplace-list-use-case.js";
-import { MarketplaceRefreshUseCase } from "../contexts/distribution/application/marketplace-refresh-use-case.js";
-import { MarketplaceRegisterFrameworkUseCase } from "../contexts/distribution/application/marketplace-register-framework-use-case.js";
-import { ResolveMarketplaceUseCase } from "../contexts/distribution/application/resolve-marketplace-use-case.js";
+import { FetchMarketplaceSource } from "../contexts/distribution/application/fetch-marketplace-source.js";
+import { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
+import { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
+import { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
+import { ResolveMarketplace } from "../contexts/distribution/application/resolve-marketplace.js";
 import { GitHubRawFetcherAdapter } from "../contexts/distribution/infrastructure/github-raw-fetcher-adapter.js";
 import { GitHubReleaseAdapter } from "../contexts/distribution/infrastructure/github-release-adapter.js";
 import { MarketplaceCacheAdapter } from "../contexts/distribution/infrastructure/marketplace-cache-adapter.js";
@@ -41,10 +41,10 @@ export interface DistributionDeps {
   marketplaceRegistry: MarketplaceRegistry;
   marketplaceTrustStore: MarketplaceTrustStore;
   releaseResolver: ReleaseLister & RepositoryVisibility;
-  resolveMarketplaceUseCase: ResolveMarketplaceUseCase;
-  marketplaceListUseCase: MarketplaceListUseCase;
-  marketplaceRefreshUseCase: MarketplaceRefreshUseCase;
-  marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
+  resolveMarketplaceUseCase: ResolveMarketplace;
+  marketplaceListUseCase: ListMarketplaces;
+  marketplaceRefreshUseCase: RefreshMarketplace;
+  marketplaceRegisterFrameworkUseCase: RegisterFrameworkMarketplace;
 }
 
 /** `marketplaceAddUseCase` is deliberately absent: it takes framework's
@@ -58,32 +58,30 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
   const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
   const releaseResolver = new GitHubReleaseAdapter(shared.http, shared.tokenProvider);
   const rawCatalogFetcher = new GitHubRawFetcherAdapter(shared.http, shared.tokenProvider);
-  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(
+  const fetchMarketplaceSource = new FetchMarketplaceSource(
     pluginFetcher,
     rawCatalogFetcher,
     shared.fs,
     shared.logger
   );
-  const resolveMarketplaceUseCase = new ResolveMarketplaceUseCase(
+  const resolveMarketplaceUseCase = new ResolveMarketplace(
     fetchMarketplaceSource,
     pluginCatalogRepository,
     userConfigDir
   );
-  const marketplaceListUseCase = new MarketplaceListUseCase(
+  const marketplaceListUseCase = new ListMarketplaces(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
     shared.logger
   );
-  const marketplaceRefreshUseCase = new MarketplaceRefreshUseCase(
+  const marketplaceRefreshUseCase = new RefreshMarketplace(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
     marketplaceCache,
     shared.logger,
     shared.fs
   );
-  const marketplaceRegisterFrameworkUseCase = new MarketplaceRegisterFrameworkUseCase(
-    marketplaceRegistry
-  );
+  const marketplaceRegisterFrameworkUseCase = new RegisterFrameworkMarketplace(marketplaceRegistry);
   return {
     pluginCatalogRepository,
     pluginFetcher,

@@ -1,4 +1,4 @@
-import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../contexts/distribution/domain/catalog.js";
 import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
 import type { PluginInstallFromMarketplace } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
@@ -22,7 +22,7 @@ export class SetupPluginsPromptUseCase {
     private readonly pluginPickUseCase: PluginPick,
     private readonly pluginInstallFromMarketplaceUseCase: PluginInstallFromMarketplace,
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplaceUseCase: ResolveMarketplace
+    private readonly resolveMarketplaceUseCase: Pick<ResolveMarketplace, "execute">
   ) {}
 
   async execute(options: SetupPluginsPromptOptions): Promise<SetupPluginsPromptResult> {

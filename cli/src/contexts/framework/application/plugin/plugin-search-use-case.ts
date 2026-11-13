@@ -1,4 +1,4 @@
-import type { ResolveMarketplaceUseCase } from "../../../distribution/application/resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
@@ -22,7 +22,7 @@ export interface PluginSearchResult {
 export class PluginSearchUseCase {
   constructor(
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: ResolveMarketplaceUseCase
+    private readonly resolveMarketplace: ResolveMarketplace
   ) {}
 
   async execute(options: PluginSearchOptions): Promise<PluginSearchResult> {

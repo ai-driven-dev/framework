@@ -2,26 +2,26 @@ import type { Logger } from "../../../kernel/ports/logger.js";
 import type { PluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
-import type { ResolveMarketplaceUseCase } from "./resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "./resolve-marketplace.js";
 
-export interface MarketplaceListOptions {
+export interface ListMarketplacesCommand {
   projectRoot: string;
   withCatalogs?: boolean;
 }
 
-export interface MarketplaceListResult {
+export interface ListMarketplacesResult {
   marketplaces: readonly Marketplace[];
   catalogs?: Map<string, PluginCatalog>;
 }
 
-export class MarketplaceListUseCase {
+export class ListMarketplaces {
   constructor(
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace?: ResolveMarketplaceUseCase,
+    private readonly resolveMarketplace?: ResolveMarketplace,
     private readonly logger?: Logger
   ) {}
 
-  async execute(options: MarketplaceListOptions): Promise<MarketplaceListResult> {
+  async execute(options: ListMarketplacesCommand): Promise<ListMarketplacesResult> {
     const marketplaces = await this.registry.list(options.projectRoot);
     if (!options.withCatalogs) return { marketplaces };
     const catalogs = await this.fetchCatalogs(marketplaces, options.projectRoot);

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
-import type { MarketplaceRefresh } from "../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFramework } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
-import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
@@ -62,7 +62,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
   };
 }
 
-function makeNoOpResolveMarketplace(): ResolveMarketplace {
+function makeNoOpResolveMarketplace(): Pick<ResolveMarketplace, "execute"> {
   return {
     execute: vi
       .fn()
@@ -70,11 +70,11 @@ function makeNoOpResolveMarketplace(): ResolveMarketplace {
   };
 }
 
-function makeNoOpRegisterFramework(): MarketplaceRegisterFramework {
+function makeNoOpRegisterFramework(): Pick<RegisterFrameworkMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ registered: false, scope: "user" }) };
 }
 
-function makeNoOpRefresh(): MarketplaceRefresh {
+function makeNoOpRefresh(): Pick<RefreshMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }) };
 }
 

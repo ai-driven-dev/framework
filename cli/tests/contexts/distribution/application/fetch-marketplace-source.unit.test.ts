@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { FetchMarketplaceSourceUseCase } from "../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { RawCatalogFetcher } from "../../../../src/contexts/distribution/ports/raw-catalog-fetcher.js";
 import type { PluginSourceGitHub } from "../../../../src/kernel/source.js";
@@ -68,11 +68,11 @@ function makeSpyFileAdapter(
   return adapter as InMemoryFileAdapter & { deletedFiles: string[] };
 }
 
-describe("FetchMarketplaceSourceUseCase", () => {
+describe("FetchMarketplaceSource", () => {
   describe("local source", () => {
     it("delegates to pluginFetcher for local sources", async () => {
       const fetcher = new FixturePluginFetcher();
-      const uc = new FetchMarketplaceSourceUseCase(fetcher);
+      const uc = new FetchMarketplaceSource(fetcher);
 
       const result = await uc.execute({ marketplace: makeLocalMarketplace(), cacheDir: CACHE_DIR });
 
@@ -85,7 +85,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
       const fetcher = new FixturePluginFetcher({
         '{"kind":"github","repo":"owner/repo"}': "/cached/path",
       });
-      const uc = new FetchMarketplaceSourceUseCase(fetcher);
+      const uc = new FetchMarketplaceSource(fetcher);
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -100,7 +100,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
     it("routes github sources through rawCatalogFetcher and returns cacheDir", async () => {
       const spy = new SpyRawCatalogFetcher();
       const fetcher = new FixturePluginFetcher();
-      const uc = new FetchMarketplaceSourceUseCase(fetcher, spy);
+      const uc = new FetchMarketplaceSource(fetcher, spy);
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace("v3.9.0"),
@@ -113,7 +113,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
 
     it("preserves ref when routing github source to rawCatalogFetcher", async () => {
       const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher(), spy);
+      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy);
 
       await uc.execute({
         marketplace: makeGitHubMarketplace("v4.1.0-beta.14"),
@@ -125,7 +125,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
 
     it("passes undefined ref to rawCatalogFetcher when no ref set", async () => {
       const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher(), spy);
+      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy);
 
       await uc.execute({
         marketplace: makeGitHubMarketplace(undefined),
@@ -137,7 +137,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
 
     it("passes cacheDir to rawCatalogFetcher", async () => {
       const spy = new SpyRawCatalogFetcher();
-      const uc = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher(), spy);
+      const uc = new FetchMarketplaceSource(new FixturePluginFetcher(), spy);
 
       await uc.execute({
         marketplace: makeGitHubMarketplace("v3.9.0"),
@@ -155,7 +155,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSourceUseCase(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
 
       await uc.execute({ marketplace: makeGitHubMarketplace(), cacheDir: CACHE_DIR });
 
@@ -168,7 +168,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
         '{"kind":"github","repo":"owner/repo"}': FALLBACK_PATH,
       });
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSourceUseCase(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -184,7 +184,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: RELATIVE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSourceUseCase(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
 
       await uc.execute({ marketplace: makeGitHubMarketplace("HEAD"), cacheDir: CACHE_DIR });
 
@@ -204,7 +204,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: ABSOLUTE_CATALOG_JSON });
-      const uc = new FetchMarketplaceSourceUseCase(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -222,7 +222,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({});
-      const uc = new FetchMarketplaceSourceUseCase(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -241,7 +241,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
       const fetcher = new FixturePluginFetcher();
       fetcher.fetch = fetchSpy;
       const fsAdapter = makeSpyFileAdapter({ [CATALOG_FILE_PATH]: "not-json" });
-      const uc = new FetchMarketplaceSourceUseCase(fetcher, spy, fsAdapter);
+      const uc = new FetchMarketplaceSource(fetcher, spy, fsAdapter);
 
       const result = await uc.execute({
         marketplace: makeGitHubMarketplace(),
@@ -262,7 +262,7 @@ describe("FetchMarketplaceSourceUseCase", () => {
         calls.push({ forceRefresh: opts?.forceRefresh });
         return origFetch(source, cacheDir, opts);
       };
-      const uc = new FetchMarketplaceSourceUseCase(fetcher);
+      const uc = new FetchMarketplaceSource(fetcher);
 
       await uc.execute({
         marketplace: makeLocalMarketplace(),

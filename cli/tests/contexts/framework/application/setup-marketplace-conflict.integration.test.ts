@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { MarketplaceRefresh } from "../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFramework } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
+import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
@@ -33,11 +33,11 @@ function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   };
 }
 
-function makeNoOpMarketplaceRegisterFramework(): MarketplaceRegisterFramework {
+function makeNoOpMarketplaceRegisterFramework(): Pick<RegisterFrameworkMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ registered: false, scope: "user" }) };
 }
 
-function makeNoOpMarketplaceRefresh(): MarketplaceRefresh {
+function makeNoOpMarketplaceRefresh(): Pick<RefreshMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }) };
 }
 

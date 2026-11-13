@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import type { MarketplaceRefresh } from "../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFramework } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
-import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../../src/contexts/distribution/domain/catalog.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
@@ -52,8 +52,10 @@ function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   };
 }
 
-type RegisterFrameworkMock = MarketplaceRegisterFramework & { execute: ReturnType<typeof vi.fn> };
-type RefreshMock = MarketplaceRefresh & { execute: ReturnType<typeof vi.fn> };
+type RegisterFrameworkMock = Pick<RegisterFrameworkMarketplace, "execute"> & {
+  execute: ReturnType<typeof vi.fn>;
+};
+type RefreshMock = Pick<RefreshMarketplace, "execute"> & { execute: ReturnType<typeof vi.fn> };
 
 function makeNoOpMarketplaceRegisterFramework(): RegisterFrameworkMock {
   const execute = vi.fn().mockResolvedValue({ registered: false, scope: "user" });
@@ -83,7 +85,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
   };
 }
 
-function makeNoOpResolveMarketplace(): ResolveMarketplace {
+function makeNoOpResolveMarketplace(): Pick<ResolveMarketplace, "execute"> {
   return {
     execute: vi
       .fn()

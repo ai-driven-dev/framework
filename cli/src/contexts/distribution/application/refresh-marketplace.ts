@@ -9,9 +9,9 @@ import {
 import type { Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceCachePort } from "../ports/marketplace-cache.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
-import type { ResolveMarketplaceUseCase } from "./resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "./resolve-marketplace.js";
 
-export interface MarketplaceRefreshOptions {
+export interface RefreshMarketplaceCommand {
   projectRoot: string;
   name?: string;
   force?: boolean;
@@ -23,28 +23,24 @@ export interface RefreshEntryResult {
   error?: string;
 }
 
-export interface MarketplaceRefreshResult {
+export interface RefreshMarketplaceResult {
   results: readonly RefreshEntryResult[];
   failedCount: number;
 }
 
 const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
 
-/** Refreshing registered marketplace catalogs, as its callers need it. */
-export interface MarketplaceRefresh {
-  execute(options: MarketplaceRefreshOptions): Promise<MarketplaceRefreshResult>;
-}
-
-export class MarketplaceRefreshUseCase implements MarketplaceRefresh {
+/** Refreshing registered marketplace catalogs. */
+export class RefreshMarketplace {
   constructor(
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: ResolveMarketplaceUseCase,
+    private readonly resolveMarketplace: ResolveMarketplace,
     private readonly cache: MarketplaceCachePort,
     private readonly logger?: Logger,
     private readonly fs?: FileReader
   ) {}
 
-  async execute(options: MarketplaceRefreshOptions): Promise<MarketplaceRefreshResult> {
+  async execute(options: RefreshMarketplaceCommand): Promise<RefreshMarketplaceResult> {
     if (options.force) await this.cache.clear(options.name);
     const all = await this.registry.list(options.projectRoot);
     const targets = options.name ? all.filter((m) => m.name === options.name) : all;

@@ -37,9 +37,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/ports/release-lister.ts",
     "src/contexts/distribution/ports/repository-visibility.ts",
     // the three operations other contexts genuinely ask for
-    "src/contexts/distribution/application/resolve-marketplace-use-case.ts",
-    "src/contexts/distribution/application/marketplace-refresh-use-case.ts",
-    "src/contexts/distribution/application/marketplace-register-framework-use-case.ts",
+    "src/contexts/distribution/application/resolve-marketplace.ts",
+    "src/contexts/distribution/application/refresh-marketplace.ts",
+    "src/contexts/distribution/application/register-framework-marketplace.ts",
   ],
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.

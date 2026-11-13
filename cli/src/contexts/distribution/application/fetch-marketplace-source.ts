@@ -14,13 +14,13 @@ import type { RawCatalogFetcher } from "../ports/raw-catalog-fetcher.js";
 
 const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
 
-export interface FetchMarketplaceSourceOptions {
+export interface FetchMarketplaceSourceCommand {
   marketplace: Marketplace;
   cacheDir: string;
   fetchOptions?: PluginFetchOptions;
 }
 
-export class FetchMarketplaceSourceUseCase {
+export class FetchMarketplaceSource {
   constructor(
     private readonly pluginFetcher: PluginFetcher,
     private readonly rawCatalogFetcher?: RawCatalogFetcher,
@@ -28,7 +28,7 @@ export class FetchMarketplaceSourceUseCase {
     private readonly logger?: Logger
   ) {}
 
-  async execute(options: FetchMarketplaceSourceOptions): Promise<string> {
+  async execute(options: FetchMarketplaceSourceCommand): Promise<string> {
     const { marketplace, cacheDir, fetchOptions } = options;
     if (marketplace.source.kind === "github" && this.rawCatalogFetcher !== undefined) {
       await this.rawCatalogFetcher.fetchCatalog(

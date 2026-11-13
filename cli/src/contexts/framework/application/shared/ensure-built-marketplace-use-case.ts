@@ -8,7 +8,7 @@ import {
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
-import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuild } from "../../../translate/application/translate-source.js";
@@ -52,7 +52,7 @@ export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
 
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly resolveMarketplace: ResolveMarketplace,
+    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
     private readonly buildFor: FrameworkBuildFor,
     private readonly version: VersionReader,
     /**

@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSourceUseCase } from "../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
-import { MarketplaceAddUseCase } from "../../../../src/contexts/distribution/application/marketplace-add-use-case.js";
-import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import { AddMarketplace } from "../../../../src/contexts/distribution/application/add-marketplace.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import type {
   MarketplaceRemovalRequest,
@@ -38,8 +38,8 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   await seedFromDirectory(fs, MARKETPLACE_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const trustStore = new InMemoryMarketplaceTrustStore();
-  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
-  const resolveMarketplace = new ResolveMarketplaceUseCase(
+  const fetchMarketplaceSource = new FetchMarketplaceSource(new FixturePluginFetcher());
+  const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
@@ -57,17 +57,11 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
       await registry.delete(request.projectRoot, request.name, request.scope ?? "project");
     },
   };
-  const useCase = new MarketplaceAddUseCase(
-    registry,
-    trustStore,
-    resolveMarketplace,
-    prompter,
-    remover
-  );
+  const useCase = new AddMarketplace(registry, trustStore, resolveMarketplace, prompter, remover);
   return { useCase, registry, trustStore, events, removals };
 }
 
-describe("MarketplaceAddUseCase", () => {
+describe("AddMarketplace", () => {
   describe("happy path", () => {
     it("persists the marketplace and trusts the source", async () => {
       const { useCase, registry, trustStore } = await buildUseCase(new KeepPrompter());

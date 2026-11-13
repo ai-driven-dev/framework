@@ -3,7 +3,7 @@ import type { PluginSource } from "../../../kernel/source.js";
 import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
-export interface MarketplaceRegisterFrameworkOptions {
+export interface RegisterFrameworkMarketplaceCommand {
   projectRoot: string;
   force?: boolean;
   frameworkPath?: string;
@@ -11,7 +11,7 @@ export interface MarketplaceRegisterFrameworkOptions {
   pluginSource?: PluginSource;
 }
 
-export interface MarketplaceRegisterFrameworkResult {
+export interface RegisterFrameworkMarketplaceResult {
   registered: boolean;
   /** The scope this registration actually lives at once `execute` returns — always `"user"`
    * today, since a pre-existing project-scope entry is migrated unconditionally. Carried back
@@ -19,19 +19,13 @@ export interface MarketplaceRegisterFrameworkResult {
   scope: MarketplaceScope;
 }
 
-/** Registering the bundled framework marketplace, as its callers need it. */
-export interface MarketplaceRegisterFramework {
-  execute(
-    options: MarketplaceRegisterFrameworkOptions
-  ): Promise<MarketplaceRegisterFrameworkResult>;
-}
-
-export class MarketplaceRegisterFrameworkUseCase implements MarketplaceRegisterFramework {
+/** Registering the bundled framework marketplace. */
+export class RegisterFrameworkMarketplace {
   constructor(private readonly registry: MarketplaceRegistry) {}
 
   async execute(
-    options: MarketplaceRegisterFrameworkOptions
-  ): Promise<MarketplaceRegisterFrameworkResult> {
+    options: RegisterFrameworkMarketplaceCommand
+  ): Promise<RegisterFrameworkMarketplaceResult> {
     const list = await this.registry.list(options.projectRoot);
     const found = list.find((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
     if (found?.scope === "project") {

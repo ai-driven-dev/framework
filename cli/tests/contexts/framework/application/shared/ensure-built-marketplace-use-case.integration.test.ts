@@ -3,8 +3,8 @@ import { join, resolve, sep } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import type {
   ResolveMarketplace,
-  ResolveMarketplaceOptions,
-} from "../../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+  ResolveMarketplaceCommand,
+} from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   EnsureBuiltMarketplaceUseCase,
@@ -86,14 +86,17 @@ function makeUserMarketplace(): Marketplace {
   });
 }
 
-function fakeResolve(localPath: string, version: string | undefined): ResolveMarketplace {
+function fakeResolve(
+  localPath: string,
+  version: string | undefined
+): Pick<ResolveMarketplace, "execute"> {
   return {
-    execute: async ({ marketplace }: ResolveMarketplaceOptions) => ({
+    execute: async ({ marketplace }: ResolveMarketplaceCommand) => ({
       marketplace,
       localPath,
       catalog: version === undefined ? null : { version, plugins: [] },
     }),
-  } satisfies ResolveMarketplace;
+  } satisfies Pick<ResolveMarketplace, "execute">;
 }
 
 function fakeVersion(value: string): VersionReader {
@@ -349,8 +352,8 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 
   it("asks the resolver for exactly the marketplace, project and refresh flag it was given", async () => {
-    const asked: ResolveMarketplaceOptions[] = [];
-    const recordingResolve: ResolveMarketplace = {
+    const asked: ResolveMarketplaceCommand[] = [];
+    const recordingResolve: Pick<ResolveMarketplace, "execute"> = {
       execute: async (options) => {
         asked.push(options);
         return { marketplace: options.marketplace, localPath: "/src/framework", catalog: null };

@@ -16,7 +16,7 @@ One registration of `aidd-framework` per machine, shared by every project. Read 
 
 ## Migration
 
-- `MarketplaceRegisterFrameworkUseCase` normalizes a project-scope `aidd-framework` entry to the shared registry on `setup` or `sync`. This is local metadata, not authority to take over the native host.
+- `RegisterFrameworkMarketplace` normalizes a project-scope `aidd-framework` entry to the shared registry on `setup` or `sync`. This is local metadata, not authority to take over the native host.
 - `MarketplaceRegistryAdapter.list()` answers project-scope entries first, so a leftover would otherwise shadow the shared entry. Normalization carries the entry's own recorded source, never the local-path default.
 - A Claude host still tracking a pre-migration cache is repointed only if the old machine manifest, current host registry source, old catalogue/version, and complete host refs prove the exact AIDD cache with no foreign ref. It then records both projects' claims.
 - Unproven legacy host state is left for manual reconciliation. Codex and Copilot do not reclaim a reserved name by force when the current source cannot be proved.

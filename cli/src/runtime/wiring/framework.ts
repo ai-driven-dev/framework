@@ -8,10 +8,10 @@ import { type UpdateDeps, wireUpdate } from "../../composition/update.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.js";
-import { MarketplaceAddUseCase } from "../../contexts/distribution/application/marketplace-add-use-case.js";
-import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
-import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFrameworkUseCase } from "../../contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { AddMarketplace } from "../../contexts/distribution/application/add-marketplace.js";
+import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
+import type { RefreshMarketplace } from "../../contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../contexts/distribution/application/register-framework-marketplace.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -126,11 +126,11 @@ interface Deps {
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
   userPluginUpdateUseCase: UserPluginUpdateUseCase;
-  marketplaceAddUseCase: MarketplaceAddUseCase;
-  marketplaceListUseCase: MarketplaceListUseCase;
+  marketplaceAddUseCase: AddMarketplace;
+  marketplaceListUseCase: ListMarketplaces;
   marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
   userMarketplaceRemoveUseCase: UserMarketplaceRemoveUseCase;
-  marketplaceRefreshUseCase: MarketplaceRefreshUseCase;
+  marketplaceRefreshUseCase: RefreshMarketplace;
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   userSourceReferences: UserSourceReferences;
   installAiToolUseCase: InstallAiToolUseCase;
@@ -138,7 +138,7 @@ interface Deps {
   uninstallIdeUseCase: UninstallIdeUseCase;
   assetProvider: AssetProvider;
   pluginSearchUseCase: PluginSearchUseCase;
-  marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
+  marketplaceRegisterFrameworkUseCase: RegisterFrameworkMarketplace;
   pluginInstallUseCase: PluginInstallUseCase;
   marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
   doctorUseCase: DoctorUseCase;
@@ -270,7 +270,7 @@ export async function createDeps(
   // `marketplace add --overwrite` removes before it adds, and removing deletes installed
   // plugin files — framework work — so the orchestration belongs here rather than pulling
   // framework into distribution's own wiring.
-  const marketplaceAddUseCase = new MarketplaceAddUseCase(
+  const marketplaceAddUseCase = new AddMarketplace(
     marketplaceRegistry,
     marketplaceTrustStore,
     resolveMarketplaceUseCase,

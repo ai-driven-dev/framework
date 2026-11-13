@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { MarketplaceRegisterFrameworkUseCase } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 
-describe("MarketplaceRegisterFrameworkUseCase", () => {
+describe("RegisterFrameworkMarketplace", () => {
   it("registers using github source when pluginSource is github", async () => {
     const registry = new InMemoryMarketplaceRegistry();
-    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
+    const useCase = new RegisterFrameworkMarketplace(registry);
 
     const result = await useCase.execute({
       projectRoot: PROJECT_ROOT,
@@ -29,7 +29,7 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
 
   it("defaults to local dot source when no pluginSource is supplied", async () => {
     const registry = new InMemoryMarketplaceRegistry();
-    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
+    const useCase = new RegisterFrameworkMarketplace(registry);
 
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
@@ -40,7 +40,7 @@ describe("MarketplaceRegisterFrameworkUseCase", () => {
 
   it("is idempotent — does not duplicate when called twice", async () => {
     const registry = new InMemoryMarketplaceRegistry();
-    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
+    const useCase = new RegisterFrameworkMarketplace(registry);
 
     const first = await useCase.execute({ projectRoot: PROJECT_ROOT });
     const second = await useCase.execute({ projectRoot: PROJECT_ROOT });

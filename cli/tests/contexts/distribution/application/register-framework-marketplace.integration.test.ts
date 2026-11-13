@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { MarketplaceRegisterFrameworkUseCase } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
@@ -11,7 +11,7 @@ import { makeRegistryAdapter } from "../testing/registry-adapter.js";
 
 // Measured against the real `MarketplaceRegistryAdapter`, not the in-memory fake: the fake's
 // user store is keyed per `projectRoot` and would hide the machine-wide sharing this proves.
-describe("MarketplaceRegisterFrameworkUseCase — machine-scope registration", () => {
+describe("RegisterFrameworkMarketplace — machine-scope registration", () => {
   let projectA: string;
   let projectB: string;
   let homeDir: string;
@@ -35,7 +35,7 @@ describe("MarketplaceRegisterFrameworkUseCase — machine-scope registration", (
 
   it("writes a single entry in userConfigDir()/marketplaces.json for two distinct projectRoots, with the same source", async () => {
     const registry = makeRegistryAdapter();
-    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
+    const useCase = new RegisterFrameworkMarketplace(registry);
 
     const first = await useCase.execute({ projectRoot: projectA, frameworkPath: "/src/framework" });
     const second = await useCase.execute({
@@ -75,7 +75,7 @@ describe("MarketplaceRegisterFrameworkUseCase — machine-scope registration", (
         addedAt: "2026-01-01T00:00:00Z",
       })
     );
-    const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
+    const useCase = new RegisterFrameworkMarketplace(registry);
 
     const result = await useCase.execute({
       projectRoot: projectA,

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
-import type { MarketplaceRefresh } from "../../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFramework } from "../../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
+import type { RefreshMarketplace } from "../../../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { MarketplaceSourceMode } from "../../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../../../src/contexts/distribution/ports/repository-visibility.js";
@@ -28,7 +28,9 @@ function makeNoOpLatestResolver(isRepoPublic = true): ReleaseLister & Repository
   };
 }
 
-function makeRegisterFramework(scope: MarketplaceScope): MarketplaceRegisterFramework {
+function makeRegisterFramework(
+  scope: MarketplaceScope
+): Pick<RegisterFrameworkMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ registered: true, scope }) };
 }
 
@@ -44,10 +46,10 @@ function makeUseCase(
   collaborators: Collaborators = {}
 ): {
   useCase: SetupMarketplaceRegistrationUseCase;
-  refresh: MarketplaceRefresh;
-  register: MarketplaceRegisterFramework;
+  refresh: Pick<RefreshMarketplace, "execute">;
+  register: Pick<RegisterFrameworkMarketplace, "execute">;
 } {
-  const refresh: MarketplaceRefresh = {
+  const refresh: Pick<RefreshMarketplace, "execute"> = {
     execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }),
   };
   const register = makeRegisterFramework(collaborators.registeredScope ?? "user");
@@ -66,7 +68,9 @@ function makeUseCase(
   return { useCase, refresh, register };
 }
 
-async function register(environment: InMemoryEnvironment): Promise<MarketplaceRefresh> {
+async function register(
+  environment: InMemoryEnvironment
+): Promise<Pick<RefreshMarketplace, "execute">> {
   const { useCase, refresh } = makeUseCase(environment);
   const flow = new SetupFlow({
     supportsUserScopeActivation: () => true,

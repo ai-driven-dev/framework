@@ -2,9 +2,9 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FetchMarketplaceSourceUseCase } from "../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
-import { MarketplaceListUseCase } from "../../../../src/contexts/distribution/application/marketplace-list-use-case.js";
-import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ListMarketplaces } from "../../../../src/contexts/distribution/application/list-marketplaces.js";
+import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalog } from "../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/ports/plugin-catalog-repository.js";
@@ -17,7 +17,7 @@ const SAMPLE_MARKETPLACE = Marketplace.create({
   addedAt: "2026-04-29T10:00:00.000Z",
 });
 
-describe("MarketplaceListUseCase", () => {
+describe("ListMarketplaces", () => {
   let projectRoot: string;
   let homeDir: string;
   let originalHome: string | undefined;
@@ -47,7 +47,7 @@ describe("MarketplaceListUseCase", () => {
       const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
-      const useCase = new MarketplaceListUseCase(registry);
+      const useCase = new ListMarketplaces(registry);
       const result = await useCase.execute({ projectRoot });
 
       expect(result.marketplaces).toHaveLength(1);
@@ -56,7 +56,7 @@ describe("MarketplaceListUseCase", () => {
     });
 
     it("returns empty when nothing registered", async () => {
-      const useCase = new MarketplaceListUseCase(makeRegistryAdapter());
+      const useCase = new ListMarketplaces(makeRegistryAdapter());
       const result = await useCase.execute({ projectRoot });
       expect(result.marketplaces).toEqual([]);
     });
@@ -78,15 +78,15 @@ describe("MarketplaceListUseCase", () => {
           },
         ],
       };
-      const fakeFetcher = new FetchMarketplaceSourceUseCase({
+      const fakeFetcher = new FetchMarketplaceSource({
         fetch: async () => "/fake/local-path",
       });
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => fakeCatalog,
       };
-      const resolveMarketplace = new ResolveMarketplaceUseCase(fakeFetcher, fakeCatalogRepo);
+      const resolveMarketplace = new ResolveMarketplace(fakeFetcher, fakeCatalogRepo);
 
-      const useCase = new MarketplaceListUseCase(registry, resolveMarketplace);
+      const useCase = new ListMarketplaces(registry, resolveMarketplace);
       const result = await useCase.execute({ projectRoot, withCatalogs: true });
 
       expect(result.marketplaces).toHaveLength(1);
@@ -98,7 +98,7 @@ describe("MarketplaceListUseCase", () => {
       const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
-      const failingFetcher = new FetchMarketplaceSourceUseCase({
+      const failingFetcher = new FetchMarketplaceSource({
         fetch: async () => {
           throw new Error("network error");
         },
@@ -106,9 +106,9 @@ describe("MarketplaceListUseCase", () => {
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => null,
       };
-      const resolveMarketplace = new ResolveMarketplaceUseCase(failingFetcher, fakeCatalogRepo);
+      const resolveMarketplace = new ResolveMarketplace(failingFetcher, fakeCatalogRepo);
 
-      const useCase = new MarketplaceListUseCase(registry, resolveMarketplace);
+      const useCase = new ListMarketplaces(registry, resolveMarketplace);
       const result = await useCase.execute({ projectRoot, withCatalogs: true });
 
       expect(result.marketplaces).toHaveLength(1);
@@ -120,7 +120,7 @@ describe("MarketplaceListUseCase", () => {
       const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
-      const failingFetcher = new FetchMarketplaceSourceUseCase({
+      const failingFetcher = new FetchMarketplaceSource({
         fetch: async () => {
           throw new Error("network error");
         },
@@ -128,10 +128,10 @@ describe("MarketplaceListUseCase", () => {
       const fakeCatalogRepo: PluginCatalogRepository = {
         load: async () => null,
       };
-      const resolveMarketplace = new ResolveMarketplaceUseCase(failingFetcher, fakeCatalogRepo);
+      const resolveMarketplace = new ResolveMarketplace(failingFetcher, fakeCatalogRepo);
       const logger = { info: vi.fn(), debug: vi.fn(), warn: vi.fn() };
 
-      const useCase = new MarketplaceListUseCase(registry, resolveMarketplace, logger);
+      const useCase = new ListMarketplaces(registry, resolveMarketplace, logger);
       await useCase.execute({ projectRoot, withCatalogs: true });
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -143,7 +143,7 @@ describe("MarketplaceListUseCase", () => {
       const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
-      const useCase = new MarketplaceListUseCase(registry);
+      const useCase = new ListMarketplaces(registry);
       const result = await useCase.execute({ projectRoot, withCatalogs: true });
 
       expect(result.marketplaces).toHaveLength(1);

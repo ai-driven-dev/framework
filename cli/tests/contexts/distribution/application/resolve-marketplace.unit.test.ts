@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSourceUseCase } from "../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
-import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
@@ -20,11 +20,8 @@ function seedMarketplaceJson(
 }
 
 function buildUseCase(fs: InMemoryFileAdapter) {
-  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
-  return new ResolveMarketplaceUseCase(
-    fetchMarketplaceSource,
-    new PluginCatalogRepositoryAdapter(fs)
-  );
+  const fetchMarketplaceSource = new FetchMarketplaceSource(new FixturePluginFetcher());
+  return new ResolveMarketplace(fetchMarketplaceSource, new PluginCatalogRepositoryAdapter(fs));
 }
 
 function makeMarketplace(name: string): Marketplace {
@@ -36,10 +33,10 @@ function makeMarketplace(name: string): Marketplace {
   });
 }
 
-describe("ResolveMarketplaceUseCase", () => {
+describe("ResolveMarketplace", () => {
   it("keeps a user-scope source's clone out of the project, and a project-scope one in it", () => {
-    const useCase = new ResolveMarketplaceUseCase(
-      new FetchMarketplaceSourceUseCase(new FixturePluginFetcher()),
+    const useCase = new ResolveMarketplace(
+      new FetchMarketplaceSource(new FixturePluginFetcher()),
       new PluginCatalogRepositoryAdapter(new InMemoryFileAdapter({}, new DeterministicHasher())),
       () => "/config/aidd"
     );

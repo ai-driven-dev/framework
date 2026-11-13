@@ -1,5 +1,5 @@
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { ResolveMarketplaceUseCase } from "../../../distribution/application/resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import {
   isMarketplaceStale,
   type Marketplace,
@@ -42,7 +42,7 @@ export class MarketplaceCheckUseCase {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: ResolveMarketplaceUseCase
+    private readonly resolveMarketplace: ResolveMarketplace
   ) {}
 
   async execute(options: MarketplaceCheckOptions): Promise<MarketplaceCheckResult> {

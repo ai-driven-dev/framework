@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSourceUseCase } from "../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
-import { MarketplaceRefreshUseCase } from "../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
-import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
+import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { serializePluginSource } from "../../../../src/kernel/source.js";
@@ -25,13 +25,13 @@ async function buildUseCase() {
   const pluginFetcher = new FixturePluginFetcher({
     [JSON.stringify(serializePluginSource({ kind: "local", path: VALID_FIXTURE }))]: VALID_FIXTURE,
   });
-  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(pluginFetcher);
-  const resolveMarketplace = new ResolveMarketplaceUseCase(
+  const fetchMarketplaceSource = new FetchMarketplaceSource(pluginFetcher);
+  const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
   const logger = new CapturingLogger();
-  const useCase = new MarketplaceRefreshUseCase(
+  const useCase = new RefreshMarketplace(
     registry,
     resolveMarketplace,
     new InMemoryMarketplaceCache(),
@@ -40,7 +40,7 @@ async function buildUseCase() {
   return { useCase, registry, logger };
 }
 
-describe("MarketplaceRefreshUseCase — progress output", () => {
+describe("RefreshMarketplace — progress output", () => {
   it("emits a fetching message for each marketplace being refreshed", async () => {
     const { useCase, registry, logger } = await buildUseCase();
     await registry.save(

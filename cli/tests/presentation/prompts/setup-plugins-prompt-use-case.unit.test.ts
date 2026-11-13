@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type {
   ResolveMarketplace,
-  ResolveMarketplaceOptions,
+  ResolveMarketplaceCommand,
   ResolveMarketplaceResult,
-} from "../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+} from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type {
@@ -63,10 +63,10 @@ class RecordingInstaller implements PluginInstallFromMarketplace {
   }
 }
 
-class SeededResolveMarketplace implements ResolveMarketplace {
+class SeededResolveMarketplace implements Pick<ResolveMarketplace, "execute"> {
   constructor(private readonly catalogs: ReadonlyMap<string, readonly PluginCatalogEntry[]>) {}
 
-  async execute(options: ResolveMarketplaceOptions): Promise<ResolveMarketplaceResult> {
+  async execute(options: ResolveMarketplaceCommand): Promise<ResolveMarketplaceResult> {
     const plugins = this.catalogs.get(options.marketplace.name);
     return {
       marketplace: options.marketplace,
