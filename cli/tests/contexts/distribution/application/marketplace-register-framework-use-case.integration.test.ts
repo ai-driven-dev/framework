@@ -7,7 +7,7 @@ import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceRegistryAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
+import { makeRegistryAdapter } from "../testing/registry-adapter.js";
 
 // Measured against the real `MarketplaceRegistryAdapter`, not the in-memory fake: the fake's
 // user store is keyed per `projectRoot` and would hide the machine-wide sharing this proves.
@@ -34,7 +34,7 @@ describe("MarketplaceRegisterFrameworkUseCase — machine-scope registration", (
   });
 
   it("writes a single entry in userConfigDir()/marketplaces.json for two distinct projectRoots, with the same source", async () => {
-    const registry = new MarketplaceRegistryAdapter();
+    const registry = makeRegistryAdapter();
     const useCase = new MarketplaceRegisterFrameworkUseCase(registry);
 
     const first = await useCase.execute({ projectRoot: projectA, frameworkPath: "/src/framework" });
@@ -65,7 +65,7 @@ describe("MarketplaceRegisterFrameworkUseCase — machine-scope registration", (
   // `list()` puts a project entry first and filters a user one of the same name out, so writing
   // the migrated entry beside a stale project one would leave `list()` answering the old one.
   it("migrates a pre-existing project-scope entry to the shared user-scope one on the next run, leaving a single entry", async () => {
-    const registry = new MarketplaceRegistryAdapter();
+    const registry = makeRegistryAdapter();
     await registry.save(
       projectA,
       Marketplace.create({

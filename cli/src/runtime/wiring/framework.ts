@@ -277,11 +277,11 @@ export async function createDeps(
     resolveMarketplaceUseCase,
     prompter,
     {
-      execute: (options) => {
-        const removal = { ...options, tools };
-        return options.scope === "user"
+      remove: async (request) => {
+        const removal = { ...request, tools };
+        await (request.scope === "user"
           ? userMarketplaceRemoveUseCase.execute(removal)
-          : marketplaceRemoveUseCase.execute(removal);
+          : marketplaceRemoveUseCase.execute(removal));
       },
     }
   );

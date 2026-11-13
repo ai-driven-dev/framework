@@ -8,7 +8,7 @@ import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution
 import type { PluginCatalog } from "../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/domain/ports/plugin-catalog-repository.js";
-import { MarketplaceRegistryAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
+import { makeRegistryAdapter } from "../testing/registry-adapter.js";
 
 const SAMPLE_MARKETPLACE = Marketplace.create({
   name: "awesome",
@@ -44,7 +44,7 @@ describe("MarketplaceListUseCase", () => {
 
   describe("without withCatalogs", () => {
     it("returns marketplaces from the registry", async () => {
-      const registry = new MarketplaceRegistryAdapter();
+      const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
       const useCase = new MarketplaceListUseCase(registry);
@@ -56,7 +56,7 @@ describe("MarketplaceListUseCase", () => {
     });
 
     it("returns empty when nothing registered", async () => {
-      const useCase = new MarketplaceListUseCase(new MarketplaceRegistryAdapter());
+      const useCase = new MarketplaceListUseCase(makeRegistryAdapter());
       const result = await useCase.execute({ projectRoot });
       expect(result.marketplaces).toEqual([]);
     });
@@ -64,7 +64,7 @@ describe("MarketplaceListUseCase", () => {
 
   describe("withCatalogs: true", () => {
     it("returns catalogs map keyed by marketplace name", async () => {
-      const registry = new MarketplaceRegistryAdapter();
+      const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
       const fakeCatalog: PluginCatalog = {
@@ -95,7 +95,7 @@ describe("MarketplaceListUseCase", () => {
     });
 
     it("skips marketplace when catalog fetch fails and continues", async () => {
-      const registry = new MarketplaceRegistryAdapter();
+      const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
       const failingFetcher = new FetchMarketplaceSourceUseCase({
@@ -117,7 +117,7 @@ describe("MarketplaceListUseCase", () => {
     });
 
     it("logs a warning through the logger when the catalog fetch fails", async () => {
-      const registry = new MarketplaceRegistryAdapter();
+      const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
       const failingFetcher = new FetchMarketplaceSourceUseCase({
@@ -140,7 +140,7 @@ describe("MarketplaceListUseCase", () => {
     });
 
     it("skips catalog fetching entirely when resolveMarketplace is not wired", async () => {
-      const registry = new MarketplaceRegistryAdapter();
+      const registry = makeRegistryAdapter();
       await registry.save(projectRoot, SAMPLE_MARKETPLACE);
 
       const useCase = new MarketplaceListUseCase(registry);

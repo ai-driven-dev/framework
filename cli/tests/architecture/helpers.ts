@@ -170,12 +170,8 @@ export const BASELINE: readonly {
   readonly imports: number;
   readonly files: number;
 }[] = [
-  // `marketplace add --overwrite` removes before it adds, and removing deletes installed
-  // plugin files — framework work the calling side, not distribution, should orchestrate.
-  { edge: "distribution->framework", imports: 1, files: 1 },
-  // The http client, the git token injection, the user-config directory and `atomicWriteFile`
-  // are concrete: a real dependency on runtime, resolved by inverting them into ports.
-  { edge: "distribution->runtime", imports: 3, files: 2 },
+  // The git token injection is concrete: a real dependency on runtime, until it moves in.
+  { edge: "distribution->runtime", imports: 1, files: 1 },
   // Three framework orchestrators still name the prompt classes they are handed, type-only.
   // Inverting them into a port is a design change, so the edge is measured rather than moved.
   { edge: "framework->presentation", imports: 4, files: 3 },

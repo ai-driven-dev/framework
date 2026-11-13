@@ -6,7 +6,8 @@ import {
   Marketplace,
   type MarketplaceData,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceRegistryAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
+import type { MarketplaceRegistryAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-registry-adapter.js";
+import { makeRegistryAdapter } from "../testing/registry-adapter.js";
 
 const baseData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome",
@@ -35,7 +36,7 @@ describe("MarketplaceRegistryAdapter", () => {
     // Faking the home alone is not enough: the CLI falls back to `homedir()` only when
     // `AIDD_USER_CONFIG_DIR` is unset, so a leaked value sends this test at a real registry.
     process.env.AIDD_USER_CONFIG_DIR = join(homeDir, ".config", "aidd");
-    adapter = new MarketplaceRegistryAdapter();
+    adapter = makeRegistryAdapter();
   });
 
   afterEach(async () => {

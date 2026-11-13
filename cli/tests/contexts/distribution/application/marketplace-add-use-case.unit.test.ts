@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { FetchMarketplaceSourceUseCase } from "../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
 import { MarketplaceAddUseCase } from "../../../../src/contexts/distribution/application/marketplace-add-use-case.js";
 import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import type {
+  MarketplaceRemovalRequest,
+  MarketplaceRemover,
+} from "../../../../src/contexts/distribution/domain/ports/marketplace-remover.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { MarketplaceRemoveUseCase } from "../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
-import { ProjectPluginCleanup } from "../../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
 import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,
@@ -16,7 +18,6 @@ import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { InMemoryMarketplaceTrustStore } from "../../../helpers/ports/in-memory-marketplace-trust-store.js";
 import { KeepPrompter } from "../../../helpers/ports/scripted-prompter.js";
@@ -37,26 +38,33 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   await seedFromDirectory(fs, MARKETPLACE_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const trustStore = new InMemoryMarketplaceTrustStore();
-  const manifestRepo = new InMemoryManifestRepository();
   const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
   const resolveMarketplace = new ResolveMarketplaceUseCase(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
-  const removeUseCase = new MarketplaceRemoveUseCase(
-    new ProjectPluginCleanup(fs),
-    manifestRepo,
-    registry,
-    prompter
-  );
+  const events: string[] = [];
+  const resolve = resolveMarketplace.execute.bind(resolveMarketplace);
+  resolveMarketplace.execute = async (command) => {
+    events.push("resolve");
+    return resolve(command);
+  };
+  const removals: MarketplaceRemovalRequest[] = [];
+  const remover: MarketplaceRemover = {
+    remove: async (request) => {
+      events.push("remove");
+      removals.push(request);
+      await registry.delete(request.projectRoot, request.name, request.scope ?? "project");
+    },
+  };
   const useCase = new MarketplaceAddUseCase(
     registry,
     trustStore,
     resolveMarketplace,
     prompter,
-    removeUseCase
+    remover
   );
-  return { useCase, registry, trustStore };
+  return { useCase, registry, trustStore, events, removals };
 }
 
 describe("MarketplaceAddUseCase", () => {
@@ -158,7 +166,7 @@ describe("MarketplaceAddUseCase", () => {
     });
 
     it("with overwrite, a fetch failure leaves the previous entry removed", async () => {
-      const { useCase, registry } = await buildUseCase();
+      const { useCase, registry, events, removals } = await buildUseCase();
       const source = { kind: "local" as const, path: MARKETPLACE_FIXTURE };
       const command = { name: "awesome", scope: "project" as const, projectRoot: PROJECT_ROOT };
       await useCase.execute({ ...command, source, autoTrust: true });
@@ -173,6 +181,10 @@ describe("MarketplaceAddUseCase", () => {
       ).rejects.toThrow(InvalidPluginManifestError);
 
       expect(await registry.list(PROJECT_ROOT)).toHaveLength(0);
+      expect(events).toEqual(["resolve", "remove", "resolve"]);
+      expect(removals).toEqual([
+        { name: "awesome", projectRoot: PROJECT_ROOT, autoConfirm: true, scope: "project" },
+      ]);
     });
 
     it("throws InvalidPluginManifestError when marketplace.json is missing at the source", async () => {

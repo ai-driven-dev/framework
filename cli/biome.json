@@ -3145,6 +3145,7 @@
                   },
                   {
                     "group": [
+                      "**/framework/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3158,7 +3159,7 @@
                   },
                   {
                     "group": ["**/manifest.js"],
-                    "message": "distribution reads a marketplace, never framework's installation record \u2014 marketplace-add-use-case.ts's own MarketplaceRemoveUseCase dependency is the one grandfathered exception (context-graph.arch.test.ts BASELINE), not a licence to read manifest.js too"
+                    "message": "distribution reads a marketplace, never framework's installation record, manifest.js included (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],

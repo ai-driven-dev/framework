@@ -20,6 +20,7 @@ import type { Hasher } from "../../kernel/ports/hasher.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { FileMerger } from "../../shared/ports/file-merger.js";
+import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { userConfigDir } from "../user-config-dir.js";
 
 export interface DistributionWiringShared {
@@ -48,7 +49,7 @@ export interface DistributionDeps {
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
   const marketplaceCache = new MarketplaceCacheAdapter(shared.projectRoot);
-  const marketplaceRegistry = new MarketplaceRegistryAdapter();
+  const marketplaceRegistry = new MarketplaceRegistryAdapter(userConfigDir, atomicWriteFile);
   const marketplaceTrustStore = new MarketplaceTrustStoreAdapter(shared.hasher);
   const pluginFetcher = new PluginFetcherAdapter(shared.fs, shared.tokenProvider);
   const rawCatalogFetcher = new GitHubRawFetcherAdapter(shared.http, shared.tokenProvider);
