@@ -15,6 +15,7 @@ The output of [prepare](01-prepare.md).
    - Write the showcase per [engine](../references/engine.md), in the project memory's language. Fix what it reports.
    - Give the user the set's page. Ask them to choose, then paste the copied feedback here.
    - Wait for the feedback.
+     - Read the entry with `set`. Leave record entries.
      - Read a comment against the state it names.
      - Keep: a candidate as it is. Discard: out.
      - Revise: a lead. Its comment says what to change.

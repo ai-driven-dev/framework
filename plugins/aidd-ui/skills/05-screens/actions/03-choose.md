@@ -4,13 +4,14 @@ Keep the variant the user chooses.
 
 ## Input
 
-The set, compared.
+The set, in the showcase.
 
 ## Process
 
-1. Give the user the comparison page.
-   - Ask them to paste the copied feedback here.
+1. Give the user the set's page.
+   - Ask them to choose, then paste the copied feedback here.
 2. Wait for the feedback.
+   - Read the entry with `set`. Leave record entries.
 3. Weigh the feedback.
    - Keep: a candidate as it is.
    - Revise: a lead. Its comment says what to change.

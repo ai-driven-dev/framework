@@ -10,6 +10,7 @@ The pastes.
 
 1. Read each paste: its record, its version, and a verdict per state.
    - A paste may list several records.
+   - Leave entries with `set`.
    - Two pastes for one record: the latest wins.
    - A paste for another version than the record's: ask again.
    - A state with no verdict: ask before writing.

@@ -14,6 +14,8 @@ A direction is a variant of the brand.
 An axis is one choice on which the directions differ.
 
 - Draw the axes from the subject and the exchange.
+- Name each axis in the user's plain words.
+- Write a palette as hex values.
 
 ## Preview
 
