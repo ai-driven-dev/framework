@@ -10,9 +10,7 @@ const TOOL_SUFFIX = ".antigravity.md";
 const SKILLS_PREFIX = "aidd-";
 
 function skillName(fileName: string): string {
-  const parts = fileName.split("/");
-  if (parts.length > 1) return parts[0] as string;
-  const base = parts[0] as string;
+  const base = fileName.split("/")[0] as string;
   return base.endsWith(TOOL_SUFFIX)
     ? base.slice(0, -TOOL_SUFFIX.length)
     : base.replace(/\.md$/, "");

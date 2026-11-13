@@ -21,6 +21,7 @@ describe("antigravity", () => {
     ["01-plan/SKILL.antigravity.md", ".agents/skills/aidd-01-plan/SKILL.md"],
     ["plan.antigravity.md", ".agents/skills/aidd-plan/SKILL.md"],
     ["plan.md", ".agents/skills/aidd-plan/SKILL.md"],
+    ["plan.mdx.md", ".agents/skills/aidd-plan.mdx/SKILL.md"],
   ])("installs skill file %s at %s", (built, path) => {
     expect(installPathOf(antigravity, "skills", built)).toBe(path);
   });
@@ -30,6 +31,13 @@ describe("antigravity", () => {
       true
     );
     expect(antigravity.section("skills").accepts(".kilo/skills/x/SKILL.md")).toBe(false);
+    expect(antigravity.section("skills").accepts(".agents/agents/x/agent.md")).toBe(false);
+  });
+
+  it("keeps a skill's frontmatter as it is", () => {
+    const frontmatter = { name: "plan", description: "Plans." };
+
+    expect(antigravity.section("skills").convertFrontmatter(frontmatter)).toEqual(frontmatter);
   });
 
   it("is a flat host merging plugin hooks into .agents/hooks.json, scripts under .agents/hooks/", () => {

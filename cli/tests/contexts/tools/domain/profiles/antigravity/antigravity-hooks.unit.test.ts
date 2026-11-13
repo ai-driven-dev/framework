@@ -165,6 +165,16 @@ describe("antigravity's project hooks format", () => {
     });
   });
 
+  describe("contributedEntries on a malformed file", () => {
+    it("names Antigravity, the plugin and the event when handlers are not an array", () => {
+      const content = JSON.stringify({ "aidd-context": { SessionStart: {} } });
+
+      expect(() => format.contributedEntries(content, "aidd-context")).toThrow(
+        "Antigravity hook 'aidd-context.SessionStart' must be an array."
+      );
+    });
+  });
+
   describe("isEmpty", () => {
     it("is true only once no named hook is left", () => {
       expect(format.isEmpty("{}\n")).toBe(true);
