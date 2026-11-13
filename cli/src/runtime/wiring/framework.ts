@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
 import { wireHostRegistration } from "../../composition/host-registration.js";
+import { type RecipesDeps, wireRecipes } from "../../composition/recipes.js";
 import { type UpdateDeps, wireUpdate } from "../../composition/update.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
@@ -49,7 +50,6 @@ import { PluginListUseCase } from "../../contexts/framework/application/plugin/p
 import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { PluginSearchUseCase } from "../../contexts/framework/application/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../../contexts/framework/application/plugin/plugin-update-use-case.js";
-import { ValidateRecipesUseCase } from "../../contexts/framework/application/recipes/validate-recipes-use-case.js";
 import { RestoreUseCase } from "../../contexts/framework/application/restore/restore-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../../contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
@@ -70,7 +70,6 @@ import type { ManifestRepository } from "../../contexts/framework/domain/ports/m
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
@@ -167,7 +166,7 @@ interface Deps {
   cleanUserScopeUseCase: CleanUserScopeUseCase;
   doctorAllUseCase: DoctorAllUseCase;
   listInstalledRulesUseCase: ListInstalledRulesUseCase;
-  validateRecipesUseCase: ValidateRecipesUseCase;
+  validateRecipes: RecipesDeps["validateRecipes"];
   printUpdateNotice: UpdateDeps["printUpdateNotice"];
   refreshUpdateCheck: UpdateDeps["refreshUpdateCheck"];
   telemetry: TelemetryDeps;
@@ -580,7 +579,7 @@ export async function createDeps(
     version: currentVersionProvider,
   });
   const deps: Deps = {
-    validateRecipesUseCase: new ValidateRecipesUseCase(new RecipeFilesAdapter()),
+    validateRecipes: wireRecipes().validateRecipes,
     fs,
     manifestRepo,
     userManifestRepo,

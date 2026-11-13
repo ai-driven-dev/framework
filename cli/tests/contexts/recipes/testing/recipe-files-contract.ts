@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { RecipeFiles } from "../../../../src/contexts/framework/domain/ports/recipe-files.js";
+import type { RecipeFiles } from "../../../../src/contexts/recipes/ports/recipe-files.js";
 
 export interface RecipeFilesSubject {
   readonly files: RecipeFiles;

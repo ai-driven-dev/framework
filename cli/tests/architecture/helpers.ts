@@ -137,7 +137,13 @@ export const ALLOWED = new Set([
  * keep the three folders below to themselves and the composition root. The list is data for
  * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
  */
-export const HELD_BY_BIOME: readonly string[] = ["auth", "host-registration", "tools", "update"];
+export const HELD_BY_BIOME: readonly string[] = [
+  "auth",
+  "host-registration",
+  "recipes",
+  "tools",
+  "update",
+];
 
 const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
 

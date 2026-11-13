@@ -1,26 +1,25 @@
 import path from "node:path";
-import { InputRequiredError } from "../../../../kernel/errors.js";
-import type { RecipeDirectory, RecipeFiles } from "../../domain/ports/recipe-files.js";
-import {
-  headingAnchors,
-  inspectRecipe,
-  normalizedAnchor,
-  type RecipeFinding,
-  type RecipeInspection,
-  type RecipeValidationResult,
-} from "../../domain/recipes/recipe-validation.js";
+import { InputRequiredError } from "../../../kernel/errors.js";
+import { headingAnchors, normalizedAnchor, type RecipeFinding } from "../domain/markdown-scan.js";
+import { inspectRecipe, type RecipeInspection } from "../domain/recipe-rules.js";
+import type { RecipeDirectory, RecipeFiles } from "../ports/recipe-files.js";
 
-export interface ValidateRecipesInput {
+export interface ValidateRecipesCommand {
   readonly files: readonly string[];
   readonly directories: readonly RecipeDirectory[];
 }
 
+export interface ValidateRecipesResult {
+  readonly findings: RecipeFinding[];
+  readonly fileCount: number;
+}
+
 type LinkTarget = { anchors: Set<string> | null } | { error: string };
 
-export class ValidateRecipesUseCase {
+export class ValidateRecipes {
   constructor(private readonly files: RecipeFiles) {}
 
-  execute(input: ValidateRecipesInput): RecipeValidationResult {
+  execute(input: ValidateRecipesCommand): ValidateRecipesResult {
     const candidates = [
       ...input.files,
       ...input.directories.flatMap((directory) => this.files.list(directory)),

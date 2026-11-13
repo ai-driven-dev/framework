@@ -3,7 +3,7 @@ import type {
   RecipeDirectory,
   RecipeFiles,
   RecipeSource,
-} from "../../../../src/contexts/framework/domain/ports/recipe-files.js";
+} from "../../../../src/contexts/recipes/ports/recipe-files.js";
 
 function failure(code: string): Error {
   return Object.assign(new Error(code), { code });
@@ -57,7 +57,7 @@ export class InMemoryRecipeFiles implements RecipeFiles {
   private isDirectory(candidate: string): boolean {
     return (
       this.directories.has(candidate) ||
-      [...this.files.keys()].some((file) => file.startsWith(`${candidate}/`))
+      [...this.files.keys()].some((file) => path.dirname(file) === candidate)
     );
   }
 }

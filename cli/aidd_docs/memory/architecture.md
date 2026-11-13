@@ -16,6 +16,7 @@ Every edge is a real import direction: the inter-context arrows are exactly `ALL
 flowchart LR
     Presentation["presentation"] --> Distribution["distribution"]
     Presentation --> Framework["framework"]
+    Presentation --> Recipes["recipes"]
     Presentation --> Tools["tools"]
     Presentation --> Translate["translate"]
     Runtime["runtime"] --> Distribution
@@ -38,6 +39,7 @@ flowchart LR
     HostRegistration --> Kernel
     Auth --> Shared
     Update --> Auth
+    Recipes --> Kernel
     Update --> Kernel
     Update --> Shared
     Translate --> Kernel

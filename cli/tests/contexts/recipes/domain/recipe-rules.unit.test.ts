@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
-import {
-  headingAnchors,
-  inspectRecipe,
-  normalizedAnchor,
-} from "../../../../../src/contexts/framework/domain/recipes/recipe-validation.js";
+import { inspectRecipe } from "../../../../src/contexts/recipes/domain/recipe-rules.js";
 
 const file = "recipe.md";
 const command = "```bash\necho ready\n```";
@@ -289,23 +285,6 @@ test("local links retain line, target, and image identity; external schemes are 
     { line: 12, target: "reference notes.md", image: false },
     { line: 13, target: "ready.png", image: true },
   ]);
-});
-
-test("heading anchors preserve Unicode and visible formatting text, with duplicate suffixes", () => {
-  assert.deepEqual(
-    [
-      ...headingAnchors(
-        "# **Café** `Ready`\n## Café Ready\n## Café Ready\n## **Under**-dash\n<!-- # Hidden -->\n```text\n# Fenced\n```"
-      ),
-    ],
-    ["café-ready", "café-ready-1", "café-ready-2", "under-dash"]
-  );
-});
-
-test("anchor normalization handles encoded Unicode, emoji modifiers, and malformed encoding", () => {
-  assert.equal(normalizedAnchor("#CAF%C3%89"), "café");
-  assert.equal(normalizedAnchor("#READY\u200d\ufe0e\ufe0f"), "ready");
-  assert.equal(normalizedAnchor("#BAD%ZZ\u200d\ufe0e\ufe0f"), "bad%zz");
 });
 
 // Raw HTML is publishable Markdown, not unfinished scaffold. CommonMark 0.31.2

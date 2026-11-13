@@ -283,7 +283,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
           directories.push({ path: join(projectRoot, "aidd_docs", "recipes"), optional: true });
         if (options.bundled)
           directories.push({ path: resolve(projectRoot, options.bundled), optional: false });
-        const result = deps.validateRecipesUseCase.execute({
+        const result = deps.validateRecipes.execute({
           files: paths.map((file) => resolve(projectRoot, file)),
           directories,
         });
