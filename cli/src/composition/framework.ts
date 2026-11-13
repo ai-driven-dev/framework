@@ -58,6 +58,7 @@ import { UninstallToolsUseCase } from "../contexts/framework/application/uninsta
 import { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
 import { BundledAssetProviderAdapter } from "../contexts/framework/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../contexts/framework/infrastructure/hasher-adapter.js";
+import { JsonFileMergerAdapter } from "../contexts/framework/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PlatformAdapter } from "../contexts/framework/infrastructure/platform-adapter.js";
 import { PluginDistributionReaderAdapter } from "../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
@@ -75,7 +76,7 @@ import {
   InquirerPrompterAdapter,
   SilentPrompterAdapter,
 } from "../presentation/terminal/prompter-adapter.js";
-import { type MergeStrategy, mergeIntoJsonFile } from "../shared/domain/merge.js";
+
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
@@ -119,11 +120,7 @@ export async function createDeps(
   if (cached !== undefined) return cached;
   const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
-  const files = new FileAdapter(hasher, logger);
-  const fs = Object.assign(files, {
-    mergeJsonFile: (path: string, content: string, strategy: MergeStrategy) =>
-      mergeIntoJsonFile(files, path, content, strategy),
-  });
+  const fs = new JsonFileMergerAdapter(new FileAdapter(hasher, logger));
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
     pluginManifestProbes(tools)
