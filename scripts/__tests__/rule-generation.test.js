@@ -137,16 +137,15 @@ test("updating a rule rewrites its own previous copies without conflict", (t) =>
   assert.ok(f.read(CLAUDE).endsWith("- New.\n"));
 });
 
-test("--plan writes nothing and lists files, conflicts, unsupported and legacy", (t) => {
+test("--plan writes nothing and lists files, conflicts and legacy", (t) => {
   const f = fixture(t);
   const before = f.snapshot();
   const r = f.run(rule, NATIVE + ",opencode", ["--plan", ...input(f)]);
   assert.equal(r.status, 0, r.stderr);
   const p = json(r);
   assert.equal(p.plan, true);
-  assert.deepEqual(p.files.sort(), [SRC, CLAUDE, CURSOR, COPILOT, AGY].sort());
+  assert.deepEqual(p.files.sort(), [SRC, CLAUDE, CURSOR, COPILOT, AGY, "AGENTS.md"].sort());
   assert.deepEqual([p.conflicts, p.legacy], [[], []]);
-  assert.equal(p.unsupported.length, 1);
   assert.deepEqual(f.snapshot(), before);
   assert.equal(f.run().status, 0);
   const del = f.run(null, NATIVE, ["--plan", "--delete", "01-standards/1-naming"]);
@@ -273,115 +272,16 @@ test("legacy inline AGENTS block is converted to the index", (t) => {
   assert.deepEqual(f.snapshot(), before);
 });
 
-test("opencode instructions entry is reported missing, then present", (t) => {
+test("opencode shares the codex index line and never touches opencode.json", (t) => {
   const f = fixture(t);
-  const r = f.run(rule, "opencode");
-  assert.equal(r.status, 0, r.stderr);
-  assert.deepEqual(json(r).unsupported, [{ tool: "opencode", missing: "aidd_docs/rules/*/*.md", file: "opencode.json" }]);
-  assert.ok(!f.has("opencode.json") && !f.has("AGENTS.md"));
-  f.put("opencode.json", '{"instructions":["aidd_docs/rules/*/*.md"]}');
-  const before = f.snapshot();
-  const ok = f.run(rule, "opencode");
-  assert.deepEqual(json(ok).unsupported, []);
-  assert.deepEqual(f.snapshot(), before);
-});
-
-const ENTRY = "aidd_docs/rules/*/*.md";
-const OPENCODE = "opencode.json";
-const withEntry = (...flags) => (f) => f.run(rule, "opencode", ["--input", path.join(f.dir, "input.json"), "--opencode-entry", ...flags]);
-
-test("--opencode-entry creates an absent opencode.json", (t) => {
-  const f = fixture(t);
-  const created = f.run(rule, "opencode", [...input(f), "--opencode-entry"]);
-  assert.equal(created.status, 0, created.stderr);
-  assert.ok(json(created).files.includes(OPENCODE));
-  assert.deepEqual(json(created).unsupported, []);
-  assert.equal(f.read(OPENCODE), `{"$schema":"https://opencode.ai/config.json","instructions":["${ENTRY}"]}\n`);
-});
-
-test("--opencode-entry leaves a file that already has the entry untouched", (t) => {
-  const f = fixture(t);
-  f.put(OPENCODE, `{\n  "instructions": ["${ENTRY}"]\n}\n`);
-  const r = withEntry()(f);
-  assert.equal(r.status, 0, r.stderr);
-  assert.ok(!json(r).files.includes(OPENCODE));
-  assert.equal(f.read(OPENCODE), `{\n  "instructions": ["${ENTRY}"]\n}\n`);
-});
-
-test("--opencode-entry adds instructions to an inline object keeping other bytes", (t) => {
-  const f = fixture(t);
-  f.put(OPENCODE, '{"$schema":"x"}');
-  assert.equal(withEntry()(f).status, 0);
-  assert.equal(f.read(OPENCODE), `{"$schema":"x","instructions":["${ENTRY}"]}`);
-});
-
-test("--opencode-entry appends to a pretty-printed instructions array keeping other bytes", (t) => {
-  const f = fixture(t);
-  f.put(OPENCODE, '{\n  "model": "m",\n  "instructions": [\n    "docs/*.md"\n  ],\n  "theme": "t"\n}\n');
-  assert.equal(withEntry()(f).status, 0);
-  assert.equal(f.read(OPENCODE), `{\n  "model": "m",\n  "instructions": [\n    "docs/*.md",\n    "${ENTRY}"\n  ],\n  "theme": "t"\n}\n`);
-});
-
-test("--opencode-entry adds a member to a pretty-printed object", (t) => {
-  const f = fixture(t);
-  f.put(OPENCODE, '{\n  "model": "m"\n}\n');
-  assert.equal(withEntry()(f).status, 0);
-  assert.equal(f.read(OPENCODE), `{\n  "model": "m",\n  "instructions": ["${ENTRY}"]\n}\n`);
-});
-
-for (const [name, content, reason] of [
-  ["JSON with comments", '{\n  // note\n  "model": "m"\n}\n', /not valid JSON/],
-  ["instructions that is not an array", '{"instructions":"docs"}', /must be an array/],
-  ["a top level that is not an object", '["x"]', /must be a JSON object/],
-]) {
-  test(`--opencode-entry refuses ${name} and writes nothing`, (t) => {
-    const f = fixture(t);
-    f.put(OPENCODE, content);
-    const before = f.snapshot();
-    const r = withEntry()(f);
-    assert.equal(r.status, 1);
-    assert.equal(json(r).error.code, "REFUSED");
-    assert.match(json(r).error.message, reason);
-    assert.deepEqual(f.snapshot(), before);
-  });
-}
-
-test("--opencode-entry refuses when only opencode.jsonc exists", (t) => {
-  const f = fixture(t);
-  f.put("opencode.jsonc", "{}");
-  const before = f.snapshot();
-  const r = withEntry()(f);
-  assert.equal(r.status, 1);
-  assert.match(json(r).error.message, /opencode\.jsonc.*by hand/);
-  assert.deepEqual(f.snapshot(), before);
-});
-
-test("--opencode-entry refuses a symlinked opencode.json", (t) => {
-  const f = fixture(t);
-  f.put("elsewhere.json", "{}");
-  fs.symlinkSync(path.join(f.project, "elsewhere.json"), path.join(f.project, OPENCODE));
-  const before = f.snapshot();
-  const r = withEntry()(f);
-  assert.equal(r.status, 1);
-  assert.match(json(r).error.message, /Symlink/);
-  assert.deepEqual(f.snapshot(), before);
-});
-
-test("--opencode-entry usage errors", (t) => {
-  const f = fixture(t);
-  const withoutOpencode = f.run(rule, "claude", [...input(f), "--opencode-entry"]);
-  assert.equal(withoutOpencode.status, 2);
-  assert.equal(json(withoutOpencode).error.code, "USAGE");
-  assert.equal(f.run(null, "opencode", ["--publish", "--check", "--opencode-entry"]).status, 2);
-});
-
-test("--opencode-entry with --plan lists opencode.json and writes nothing", (t) => {
-  const f = fixture(t);
-  const r = withEntry("--plan")(f);
-  assert.equal(r.status, 0, r.stderr);
-  assert.ok(json(r).files.includes(OPENCODE));
-  assert.deepEqual(json(r).unsupported, []);
-  assert.deepEqual(f.snapshot(), {});
+  f.put("opencode.json", "{}\n");
+  assert.equal(f.run(rule, "opencode").status, 0);
+  const index = f.read("AGENTS.md");
+  assert.equal(f.run(rule, "codex,opencode").status, 0);
+  assert.equal(f.read("AGENTS.md"), index);
+  assert.equal(index.match(/1-naming\.md/g).length, 1);
+  assert.equal(f.read("opencode.json"), "{}\n");
+  assert.ok(!f.has(CLAUDE));
 });
 
 test("antigravity output over 24000 bytes refuses", (t) => {
@@ -401,17 +301,6 @@ function runLocked(dirs, action) {
     for (const dir of dirs) fs.chmodSync(dir, 0o755);
   }
 }
-
-test("--opencode-entry on an unwritable opencode.json blocks with exit 3", { skip: asRoot && "root ignores permissions" }, (t) => {
-  const f = fixture(t);
-  f.put(OPENCODE, '{"model":"m"}');
-  fs.chmodSync(path.join(f.project, OPENCODE), 0o444);
-  const before = f.snapshot();
-  const r = withEntry()(f);
-  assert.equal(r.status, 3);
-  assert.deepEqual(json(r).blocked.map((b) => b.path), [OPENCODE]);
-  assert.deepEqual(f.snapshot(), before);
-});
 
 test("unwritable target blocks everything before any write", { skip: asRoot && "root ignores permissions" }, (t) => {
   const f = fixture(t);

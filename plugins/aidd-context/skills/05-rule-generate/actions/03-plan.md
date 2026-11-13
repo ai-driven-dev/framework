@@ -14,7 +14,6 @@ The candidate and its findings, or the source to remove or publish.
    - Remove or publish: present the paths written and deleted.
    - Conflict: show the copy's diff, then ask to overwrite or keep it.
    - Legacy: name each file the writer converts.
-   - Missing OpenCode entry: propose adding it to `opencode.json`.
 3. End the turn and wait for the answer.
    - Revision: read [draft](02-draft.md).
    - Keep or cancel: stop, cancelled.
@@ -23,3 +22,7 @@ The candidate and its findings, or the source to remove or publish.
 ## Output
 
 The approved candidate, paths and overwrites, or the cancellation.
+
+## Rules
+
+- A choice, merge, edit, rename or assumed answer is not an approval: show the revision and wait.

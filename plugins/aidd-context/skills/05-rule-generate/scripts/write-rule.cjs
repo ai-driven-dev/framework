@@ -1,22 +1,19 @@
 #!/usr/bin/env node
 "use strict";
-// Usage: node write-rule.cjs --project <abs dir> --tools <claude,cursor,copilot,antigravity,codex,opencode> (--input <request.json> | --delete <category>/<slug> | --publish) [--plan | --check] [--force] [--opencode-entry]
+// Usage: node write-rule.cjs --project <abs dir> --tools <claude,cursor,copilot,antigravity,codex,opencode> (--input <request.json> | --delete <category>/<slug> | --publish) [--plan | --check] [--force]
 // Publishes aidd_docs/rules sources as native copies.
-// --opencode-entry (needs opencode in --tools; not with --check) adds "aidd_docs/rules/*/*.md" to opencode.json instructions; without it a missing entry is only reported as unsupported.
 // Exit 0 ok, 1 refusal/conflict/drift/unexpected error, 2 usage error, 3 filesystem blocked or failed.
 // Every non-zero exit prints a JSON object on stdout.
 const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
-const { isDeepStrictEqual } = require("node:util");
 
 const TOOLS = ["claude", "cursor", "copilot", "antigravity", "codex", "opencode"];
 const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"].map((name, index) => `0${index}-${name}`);
 const SOURCE_DIR = "aidd_docs/rules";
-const OPENCODE_INSTRUCTIONS = "aidd_docs/rules/*/*.md";
-const OPENCODE_CONFIG = "opencode.json";
-const OPENCODE_SCHEMA = "https://opencode.ai/config.json";
-const FLAG_OPTIONS = ["--publish", "--plan", "--check", "--force", "--opencode-entry"];
+// Hosts without native rules read a line of the root AGENTS.md index instead of a copy.
+const INDEX_TOOLS = ["codex", "opencode"];
+const FLAG_OPTIONS = ["--publish", "--plan", "--check", "--force"];
 const VALUE_OPTIONS = ["--project", "--tools", "--input", "--delete"];
 const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
 const ANTIGRAVITY_MAX_BYTES = 24000;
@@ -72,8 +69,6 @@ function assertOptionsConsistent(options) {
   const actions = ["--input", "--delete", "--publish"].filter((name) => name in options);
   if (actions.length !== 1) rejectUsage("Choose exactly one of --input, --delete, --publish.");
   if (options["--check"] && (!options["--publish"] || options["--plan"])) rejectUsage("--check applies to --publish only, without --plan.");
-  if (options["--opencode-entry"] && options["--check"]) rejectUsage("--opencode-entry cannot be combined with --check.");
-  if (options["--opencode-entry"] && !options["--tools"].split(",").includes("opencode")) rejectUsage("--opencode-entry requires opencode in --tools.");
 }
 
 function validateRule(rule) {
@@ -158,7 +153,8 @@ function renderNative(rule, tool) {
   return text;
 }
 
-const copyTools = (targets) => targets.filter((tool) => tool !== "codex" && tool !== "opencode");
+const isIndexed = (rule) => rule.targets.some((tool) => INDEX_TOOLS.includes(tool));
+const copyTools = (targets) => targets.filter((tool) => !INDEX_TOOLS.includes(tool));
 
 // Legacy copies ended with a sha256 trailer; only a valid one proves we wrote the file.
 function isLegacySigned(text, relativePath) {
@@ -204,7 +200,7 @@ function reindexAgents(text, lines) {
 function agentsIndexLines(sources) {
   return [...sources]
     .sort(([a], [b]) => (a < b ? -1 : 1))
-    .filter(([, rule]) => rule.targets.includes("codex"))
+    .filter(([, rule]) => isIndexed(rule))
     .map(([relativePath, rule]) => {
       const scope = rule.paths.length ? rule.paths.map((glob) => `\`${glob}\``).join(", ") : "all files";
       const title = /^# (.+)$/m.exec(rule.body)?.[1].trim() || rule.slug;
@@ -302,14 +298,10 @@ function itemFromDeletion(identity, tools, sources) {
 function planChanges(project, options, tools) {
   const sources = loadSources(project);
   const items = collectItems(project, options, tools, sources);
-  const plan = { writes: new Map(), conflicts: [], legacy: new Set(), unsupported: [] };
+  const plan = { writes: new Map(), conflicts: [], legacy: new Set() };
   const force = "--force" in options;
   const finalSources = planRuleFiles(plan, project, items, sources, force);
-  if (items.some((item) => item.rule.targets.includes("codex"))) planAgentsIndex(plan, project, finalSources);
-  if (items.some((item) => item.rule.targets.includes("opencode"))) {
-    if (options["--opencode-entry"]) planOpencodeEntry(plan, project);
-    else planOpencodeCheck(plan, project);
-  }
+  if (items.some((item) => isIndexed(item.rule))) planAgentsIndex(plan, project, finalSources);
   return plan;
 }
 
@@ -359,112 +351,6 @@ function planAgentsIndex(plan, project, finalSources) {
   }
   if (next.legacy) plan.legacy.add("AGENTS.md");
   if (next.text !== current) plan.writes.set("AGENTS.md", next.text || null);
-}
-
-function planOpencodeCheck(plan, project) {
-  const configs = [OPENCODE_CONFIG, "opencode.jsonc"].filter((name) => project.read(name) !== null);
-  if (configs.some((name) => project.read(name).includes(OPENCODE_INSTRUCTIONS))) return;
-  plan.unsupported.push({ tool: "opencode", missing: OPENCODE_INSTRUCTIONS, file: configs[0] || OPENCODE_CONFIG });
-}
-
-function planOpencodeEntry(plan, project) {
-  const current = project.read(OPENCODE_CONFIG);
-  if (current === null && project.read("opencode.jsonc") !== null) refuse(`opencode.jsonc is not supported; ${addByHand()}`);
-  const next = current === null ? renderOpencodeConfig() : withInstructionsEntry(current);
-  if (next !== current) plan.writes.set(OPENCODE_CONFIG, next);
-}
-
-// ---------- opencode.json text edit: pure, keeps every other byte ----------
-
-const addByHand = () => `add ${quote(OPENCODE_INSTRUCTIONS)} to its instructions by hand.`;
-
-function renderOpencodeConfig() {
-  return `${JSON.stringify({ $schema: OPENCODE_SCHEMA, instructions: [OPENCODE_INSTRUCTIONS] })}\n`;
-}
-
-function parseOpencodeConfig(text) {
-  let config;
-  try {
-    config = JSON.parse(text);
-  } catch {
-    refuse(`${OPENCODE_CONFIG} is not valid JSON; ${addByHand()}`);
-  }
-  if (!config || typeof config !== "object" || Array.isArray(config)) refuse(`${OPENCODE_CONFIG} must be a JSON object; ${addByHand()}`);
-  if ("instructions" in config && !Array.isArray(config.instructions)) refuse(`${OPENCODE_CONFIG} "instructions" must be an array; ${addByHand()}`);
-  return config;
-}
-
-function skipWhitespace(text, index) {
-  while (/\s/.test(text[index])) index++;
-  return index;
-}
-
-function endOfString(text, start) {
-  let index = start + 1;
-  while (text[index] !== '"') index += text[index] === "\\" ? 2 : 1;
-  return index + 1;
-}
-
-function endOfValue(text, start) {
-  if (text[start] === '"') return endOfString(text, start);
-  if (text[start] === "{" || text[start] === "[") return readContainer(text, start).closeIndex + 1;
-  return start + /^[^\s,\]}]+/.exec(text.slice(start))[0].length;
-}
-
-// Locates the members of a valid JSON object or array: where each begins, where its value starts and ends.
-function readContainer(text, openIndex) {
-  const closer = text[openIndex] === "{" ? "}" : "]";
-  const items = [];
-  let index = skipWhitespace(text, openIndex + 1);
-  while (text[index] !== closer) {
-    const item = { begin: index };
-    if (closer === "}") {
-      const keyEnd = endOfString(text, index);
-      item.key = JSON.parse(text.slice(index, keyEnd));
-      item.keyEnd = keyEnd;
-      index = skipWhitespace(text, skipWhitespace(text, keyEnd) + 1);
-    }
-    item.valueStart = index;
-    item.end = endOfValue(text, index);
-    items.push(item);
-    index = skipWhitespace(text, item.end);
-    if (text[index] === ",") index = skipWhitespace(text, index + 1);
-  }
-  return { items, closeIndex: index };
-}
-
-function separatorBetweenItems(text, openIndex, items) {
-  if (items.length > 1) return text.slice(items[0].end, items[1].begin);
-  const leading = text.slice(openIndex + 1, items[0].begin);
-  return leading.includes("\n") ? `,\n${leading.slice(leading.lastIndexOf("\n") + 1)}` : `,${leading}`;
-}
-
-function appendItem(text, openIndex, items, rendered) {
-  if (!items.length) return text.slice(0, openIndex + 1) + rendered + text.slice(openIndex + 1);
-  const last = items[items.length - 1];
-  return text.slice(0, last.end) + separatorBetweenItems(text, openIndex, items) + rendered + text.slice(last.end);
-}
-
-function addInstructionsMember(text, rootIndex, members) {
-  const colon = members.length ? text.slice(members[0].keyEnd, members[0].valueStart) : ":";
-  return appendItem(text, rootIndex, members, `"instructions"${colon}[${quote(OPENCODE_INSTRUCTIONS)}]`);
-}
-
-function appendToInstructions(text, member) {
-  const { items } = readContainer(text, member.valueStart);
-  return appendItem(text, member.valueStart, items, quote(OPENCODE_INSTRUCTIONS));
-}
-
-function withInstructionsEntry(text) {
-  const config = parseOpencodeConfig(text);
-  if (config.instructions?.includes(OPENCODE_INSTRUCTIONS)) return text;
-  const rootIndex = skipWhitespace(text, 0);
-  const members = readContainer(text, rootIndex).items;
-  const instructions = members.filter((member) => member.key === "instructions").pop();
-  const edited = instructions ? appendToInstructions(text, instructions) : addInstructionsMember(text, rootIndex, members);
-  const expected = { ...config, instructions: [...(config.instructions ?? []), OPENCODE_INSTRUCTIONS] };
-  if (!isDeepStrictEqual(JSON.parse(edited), expected)) refuse(`Editing ${OPENCODE_CONFIG} would change more than the entry; ${addByHand()}`);
-  return edited;
 }
 
 // ---------- effects: preflight, apply ----------
@@ -555,7 +441,7 @@ function execute(argv) {
   const project = openProject(options["--project"]);
   const plan = planChanges(project, options, tools);
   const files = [...plan.writes.keys()];
-  const summary = { files, conflicts: plan.conflicts, unsupported: plan.unsupported, legacy: [...plan.legacy] };
+  const summary = { files, conflicts: plan.conflicts, legacy: [...plan.legacy] };
   if (options["--plan"]) return { payload: { plan: true, ...summary }, exitCode: EXIT.OK };
   if (options["--check"]) {
     const drift = [...new Set([...files, ...plan.conflicts])];

@@ -16,16 +16,14 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | `--input <file>` | Writes the source `aidd_docs/rules/<category>/<slug>.md`, then publishes it. |
 | `--delete <category>/<slug>` | Deletes the source, its copies and its index line. |
 | `--publish` | Republishes every source. |
-| `--plan` | Writes nothing, prints `{plan, files, conflicts, unsupported, legacy}`. |
+| `--plan` | Writes nothing, prints `{plan, files, conflicts, legacy}`. |
 | `--check` | With `--publish`: writes nothing, prints `{drift}`. |
 | `--force` | Overwrites the copies listed in `conflicts`. |
-| `--opencode-entry` | With `opencode` in `--tools`: adds the `instructions` entry to `opencode.json`, other bytes unchanged. |
 
 | Field | Means |
 | --- | --- |
 | `files` | Paths a run writes or deletes. |
 | `conflicts` | Copies whose content the writer did not produce. |
-| `unsupported` | An `opencode.json` without the `instructions` entry, when `--opencode-entry` is absent. |
 | `legacy` | Signed copies, `aidd_rule` headers or a signed `AGENTS.md` block it converts. |
 | `drift` | Copies that differ from their source's rendering. |
 | `error` | `{code, message}`: `REFUSED`, `USAGE` or the system error code. |
@@ -43,4 +41,4 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | 3 | File operation failed while writing. | `written`, `failed`, `pending` |
 
 - Every non-zero exit prints JSON on stdout.
-- It refuses an unknown host, a category or slug outside `rule-authoring.md`, a comma in a path, a symlink or a path outside the project, invalid UTF-8, an Antigravity copy over the size `hosts.md` states, and an `opencode.json` it cannot parse as JSON.
+- It refuses an unknown host, a category or slug outside `rule-authoring.md`, a comma in a path, a symlink or a path outside the project, invalid UTF-8, and an Antigravity copy over the size `hosts.md` states.
